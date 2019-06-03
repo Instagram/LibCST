@@ -53,10 +53,7 @@ class _BaseTwoTokenOp(CSTNode, ABC):
     whitespace_after: BaseParenthesizableWhitespace
 
     def _validate(self) -> None:
-        if (
-            isinstance(self.whitespace_between, SimpleWhitespace)
-            and len(self.whitespace_between.value) == 0
-        ):
+        if self.whitespace_between.empty:
             raise CSTValidationError("Must have at least one space between not and in.")
 
     def _visit_and_replace_children(self, visitor: CSTVisitor) -> "_BaseTwoTokenOp":

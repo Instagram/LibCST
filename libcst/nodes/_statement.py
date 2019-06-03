@@ -202,7 +202,7 @@ class Return(BaseSmallStatement):
             whitespace_after_return = self.whitespace_after_return
             has_no_gap = (
                 not isinstance(whitespace_after_return, MaybeSentinel)
-                and len(whitespace_after_return.value) == 0
+                and whitespace_after_return.empty
             )
             if has_no_gap and not value._safe_to_use_with_word_operator(
                 ExpressionPosition.RIGHT
@@ -1744,7 +1744,7 @@ class Raise(BaseSmallStatement):
             whitespace_after_raise = self.whitespace_after_raise
             has_no_gap = (
                 not isinstance(whitespace_after_raise, MaybeSentinel)
-                and len(whitespace_after_raise.value) == 0
+                and whitespace_after_raise.empty
             )
             if has_no_gap and not exc._safe_to_use_with_word_operator(
                 ExpressionPosition.RIGHT
@@ -1756,8 +1756,8 @@ class Raise(BaseSmallStatement):
         if exc is not None and cause is not None:
             whitespace_before_from = self.cause.whitespace_before_from
             has_no_gap = (
-                isinstance(whitespace_before_from, SimpleWhitespace)
-                and len(whitespace_before_from.value) == 0
+                not isinstance(whitespace_before_from, MaybeSentinel)
+                and whitespace_before_from.empty
             )
             if has_no_gap and not exc._safe_to_use_with_word_operator(
                 ExpressionPosition.LEFT

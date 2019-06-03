@@ -735,15 +735,14 @@ class ComparisonTarget(CSTNode):
         # Validate operator spacing rules
         if (
             isinstance(self.operator, (In, NotIn, Is, IsNot))
-            and isinstance(self.operator.whitespace_after, SimpleWhitespace)
-            and self.operator.whitespace_after.value == ""
-        ):
-            if not self.comparator._safe_to_use_with_word_operator(
+            and self.operator.whitespace_after.empty
+            and not self.comparator._safe_to_use_with_word_operator(
                 ExpressionPosition.RIGHT
-            ):
-                raise CSTValidationError(
-                    "Must have at least one space around comparison operator."
-                )
+            )
+        ):
+            raise CSTValidationError(
+                "Must have at least one space around comparison operator."
+            )
 
     def _visit_and_replace_children(self, visitor: CSTVisitor) -> "ComparisonTarget":
         return ComparisonTarget(
@@ -783,20 +782,15 @@ class Comparison(BaseExpression):
             raise CSTValidationError("Must have at least one ComparisonTarget.")
 
         # Validate operator spacing rules
+        operator = self.comparisons[0].operator
         if (
-            isinstance(self.comparisons[0].operator, (In, NotIn, Is, IsNot))
-            and isinstance(
-                # pyre-fixme[16]: `BaseCompOp` has no attribute `whitespace_before`.
-                self.comparisons[0].operator.whitespace_before,
-                SimpleWhitespace,
-            )
-            # pyre-fixme[16]: `BaseCompOp` has no attribute `whitespace_before`.
-            and self.comparisons[0].operator.whitespace_before.value == ""
+            isinstance(operator, (In, NotIn, Is, IsNot))
+            and operator.whitespace_before.empty
+            and not self.left._safe_to_use_with_word_operator(ExpressionPosition.LEFT)
         ):
-            if not self.left._safe_to_use_with_word_operator(ExpressionPosition.LEFT):
-                raise CSTValidationError(
-                    "Must have at least one space around comparison operator."
-                )
+            raise CSTValidationError(
+                "Must have at least one space around comparison operator."
+            )
 
     def _visit_and_replace_children(self, visitor: CSTVisitor) -> "Comparison":
         return Comparison(
@@ -840,15 +834,12 @@ class UnaryOperation(BaseExpression):
 
         if (
             isinstance(self.operator, Not)
-            and isinstance(self.operator.whitespace_after, SimpleWhitespace)
-            and self.operator.whitespace_after.value == ""
-        ):
-            if not self.expression._safe_to_use_with_word_operator(
+            and self.operator.whitespace_after.empty
+            and not self.expression._safe_to_use_with_word_operator(
                 ExpressionPosition.RIGHT
-            ):
-                raise CSTValidationError(
-                    "Must have at least one space after not operator."
-                )
+            )
+        ):
+            raise CSTValidationError("Must have at least one space after not operator.")
 
     def _visit_and_replace_children(self, visitor: CSTVisitor) -> "UnaryOperation":
         return UnaryOperation(
@@ -929,21 +920,19 @@ class BooleanOperation(BaseExpression):
         super(BooleanOperation, self)._validate()
         # Validate spacing rules
         if (
-            isinstance(self.operator.whitespace_before, SimpleWhitespace)
-            and self.operator.whitespace_before.value == ""
+            self.operator.whitespace_before.empty
+            and not self.left._safe_to_use_with_word_operator(ExpressionPosition.LEFT)
         ):
-            if not self.left._safe_to_use_with_word_operator(ExpressionPosition.LEFT):
-                raise CSTValidationError(
-                    "Must have at least one space around boolean operator."
-                )
+            raise CSTValidationError(
+                "Must have at least one space around boolean operator."
+            )
         if (
-            isinstance(self.operator.whitespace_after, SimpleWhitespace)
-            and self.operator.whitespace_after.value == ""
+            self.operator.whitespace_after.empty
+            and not self.right._safe_to_use_with_word_operator(ExpressionPosition.RIGHT)
         ):
-            if not self.right._safe_to_use_with_word_operator(ExpressionPosition.RIGHT):
-                raise CSTValidationError(
-                    "Must have at least one space around boolean operator."
-                )
+            raise CSTValidationError(
+                "Must have at least one space around boolean operator."
+            )
 
     def _visit_and_replace_children(self, visitor: CSTVisitor) -> "BooleanOperation":
         return BooleanOperation(
@@ -1544,8 +1533,8 @@ class Lambda(BaseExpression):
                         "Lambda params cannot have type annotations."
                     )
             if (
-                isinstance(self.whitespace_after_lambda, SimpleWhitespace)
-                and len(self.whitespace_after_lambda.value) == 0
+                isinstance(self.whitespace_after_lambda, BaseParenthesizableWhitespace)
+                and self.whitespace_after_lambda.empty
             ):
                 raise CSTValidationError(
                     "Must have at least one space after lambda when specifying params"
@@ -1831,10 +1820,7 @@ class Await(BaseExpression):
         # Validate any super-class stuff, whatever it may be.
         super(Await, self)._validate()
         # Make sure we don't run identifiers together.
-        if (
-            isinstance(self.whitespace_after_await, SimpleWhitespace)
-            and len(self.whitespace_after_await.value) == 0
-        ):
+        if self.whitespace_after_await.empty:
             raise CSTValidationError("Must have at least one space after await")
 
     def _visit_and_replace_children(self, visitor: CSTVisitor) -> "Await":
@@ -1887,39 +1873,33 @@ class IfExp(BaseExpression):
         super(IfExp, self)._validate()
         # Validate spacing rules
         if (
-            isinstance(self.whitespace_before_if, SimpleWhitespace)
-            and self.whitespace_before_if.value == ""
+            self.whitespace_before_if.empty
+            and not self.body._safe_to_use_with_word_operator(ExpressionPosition.LEFT)
         ):
-            if not self.body._safe_to_use_with_word_operator(ExpressionPosition.LEFT):
-                raise CSTValidationError(
-                    "Must have at least one space before 'if' keyword."
-                )
+            raise CSTValidationError(
+                "Must have at least one space before 'if' keyword."
+            )
         if (
-            isinstance(self.whitespace_after_if, SimpleWhitespace)
-            and self.whitespace_after_if.value == ""
+            self.whitespace_after_if.empty
+            and not self.test._safe_to_use_with_word_operator(ExpressionPosition.RIGHT)
         ):
-            if not self.test._safe_to_use_with_word_operator(ExpressionPosition.RIGHT):
-                raise CSTValidationError(
-                    "Must have at least one space after 'if' keyword."
-                )
+            raise CSTValidationError("Must have at least one space after 'if' keyword.")
         if (
-            isinstance(self.whitespace_before_else, SimpleWhitespace)
-            and self.whitespace_before_else.value == ""
+            self.whitespace_before_else.empty
+            and not self.test._safe_to_use_with_word_operator(ExpressionPosition.LEFT)
         ):
-            if not self.test._safe_to_use_with_word_operator(ExpressionPosition.LEFT):
-                raise CSTValidationError(
-                    "Must have at least one space before 'else' keyword."
-                )
+            raise CSTValidationError(
+                "Must have at least one space before 'else' keyword."
+            )
         if (
-            isinstance(self.whitespace_after_else, SimpleWhitespace)
-            and self.whitespace_after_else.value == ""
-        ):
-            if not self.orelse._safe_to_use_with_word_operator(
+            self.whitespace_after_else.empty
+            and not self.orelse._safe_to_use_with_word_operator(
                 ExpressionPosition.RIGHT
-            ):
-                raise CSTValidationError(
-                    "Must have at least one space after 'else' keyword."
-                )
+            )
+        ):
+            raise CSTValidationError(
+                "Must have at least one space after 'else' keyword."
+            )
 
     def _visit_and_replace_children(self, visitor: CSTVisitor) -> "IfExp":
         return IfExp(
@@ -1971,8 +1951,8 @@ class From(CSTNode):
 
     def _validate(self) -> None:
         if (
-            isinstance(self.whitespace_after_from, SimpleWhitespace)
-            and self.whitespace_after_from.value == ""
+            isinstance(self.whitespace_after_from, BaseParenthesizableWhitespace)
+            and self.whitespace_after_from.empty
             and not self.item._safe_to_use_with_word_operator(ExpressionPosition.RIGHT)
         ):
             raise CSTValidationError(
@@ -2027,8 +2007,8 @@ class Yield(BaseExpression):
         super(Yield, self)._validate()
         # Our own rules
         if (
-            isinstance(self.whitespace_after_yield, SimpleWhitespace)
-            and self.whitespace_after_yield.value == ""
+            isinstance(self.whitespace_after_yield, BaseParenthesizableWhitespace)
+            and self.whitespace_after_yield.empty
         ):
             if isinstance(self.value, From):
                 raise CSTValidationError(
