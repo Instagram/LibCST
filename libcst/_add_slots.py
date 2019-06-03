@@ -11,9 +11,6 @@ _T = TypeVar("_T")
 
 
 def add_slots(cls: Type[_T]) -> Type[_T]:
-    # TODO: This doesn't work under Python3.7 due to the type(cls) call below.
-    return cls
-
     # Need to create a new class, since we can't set __slots__
     #  after a class has been created.
 
@@ -33,11 +30,15 @@ def add_slots(cls: Type[_T]) -> Type[_T]:
     cls_dict.pop("__dict__", None)
     # And finally create the class.
     qualname = getattr(cls, "__qualname__", None)
-    # GenericMeta in py3.6 requires us to track __orig_bases__. This is fixed in py3.7
-    # by the removal of GenericMeta. We should just be able to use cls.__bases__ in the
-    # future.
-    bases = getattr(cls, "__orig_bases__", cls.__bases__)
-    cls = type(cls)(cls.__name__, bases, cls_dict)
+    try:
+        # GenericMeta in py3.6 requires us to track __orig_bases__. This is fixed in py3.7
+        # by the removal of GenericMeta. We should just be able to use cls.__bases__ in the
+        # future.
+        bases = getattr(cls, "__orig_bases__", cls.__bases__)
+        cls = type(cls)(cls.__name__, bases, cls_dict)
+    except TypeError:
+        # We're in py3.7 and should use cls.__bases__
+        cls = type(cls)(cls.__name__, cls.__bases__, cls_dict)
     if qualname is not None:
         cls.__qualname__ = qualname
     return cls
