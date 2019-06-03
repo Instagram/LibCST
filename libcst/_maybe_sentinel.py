@@ -3,6 +3,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+# pyre-strict
 from enum import Enum, auto
 
 
@@ -14,3 +15,6 @@ class MaybeSentinel(Enum):
     """
 
     DEFAULT = auto()
+
+    def __repr__(self) -> str:
+        return str(self)

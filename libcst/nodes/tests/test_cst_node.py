@@ -153,7 +153,7 @@ class CSTNodeTest(UnitTest):
                 SimpleStatementLine(
                     body=[
                         Pass(
-                            semicolon=<MaybeSentinel.DEFAULT: 1>,
+                            semicolon=MaybeSentinel.DEFAULT,
                         ),
                     ],
                     leading_lines=[
