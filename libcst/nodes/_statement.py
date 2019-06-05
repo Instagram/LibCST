@@ -27,6 +27,7 @@ from libcst.nodes._expression import (
     Name,
     Parameters,
     RightParen,
+    Tuple,
 )
 from libcst.nodes._internal import (
     CodegenState,
@@ -1578,7 +1579,9 @@ class For(BaseCompoundStatement):
     """
 
     # The target of the iterator in the for statement.
-    target: Name  # TODO: Should be a Union[Name, Tuple, List] once we support this.
+    target: Union[
+        Name, Tuple
+    ]  # TODO: Should be a Union[Name, Tuple, List] once we support this.
 
     # The iterable expression we will loop over.
     iter: BaseExpression

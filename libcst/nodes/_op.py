@@ -166,8 +166,13 @@ class Colon(_BaseOneTokenOp):
 @dataclass(frozen=True)
 class Comma(_BaseOneTokenOp):
     """
-    Used by ImportAlias as a separator between subsequent ImportAliases contained
-    within a Import or ImportFrom.
+    Syntactic trivia used as a separator between subsequent items in various parts of
+    the grammar.
+
+    Some use-cases are:
+    - Import or ImportFrom
+    - Function arguments
+    - Tuple/list/set/dict elements
     """
 
     whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace("")

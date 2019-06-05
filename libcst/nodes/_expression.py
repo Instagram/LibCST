@@ -6,7 +6,7 @@
 # pyre-strict
 
 import re
-from abc import ABC
+from abc import ABC, abstractmethod
 from contextlib import contextmanager
 from dataclasses import dataclass
 from enum import Enum, auto
@@ -2048,3 +2048,187 @@ class Yield(BaseExpression):
                 value._codegen(state, default_space="")
             elif value is not None:
                 value._codegen(state)
+
+
+class BaseElement(CSTNode, ABC):
+    """
+    An element of a literal list, tuple, or set. For elements of a literal dict, see
+    BaseMappingElement. (TODO)
+    """
+
+    # pyre-fixme[13]: Attribute `value` is never initialized.
+    value: BaseExpression
+    comma: Union[Comma, MaybeSentinel] = MaybeSentinel.DEFAULT
+    # Used if we don't have a comma, otherwise the parser will attach the whitespace to
+    # the comma.
+    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace("")
+
+    @abstractmethod
+    def _codegen(
+        self,
+        state: CodegenState,
+        default_comma: bool = False,
+        default_comma_whitespace: bool = False,  # False for a single-item tuple
+    ) -> None:
+        ...
+
+
+@add_slots
+@dataclass(frozen=True)
+class Element(BaseElement):
+    value: BaseExpression
+
+    # Any trailing comma
+    comma: Union[Comma, MaybeSentinel] = MaybeSentinel.DEFAULT
+
+    # Whitespace
+    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace("")
+
+    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "Element":
+        return Element(
+            value=visit_required("value", self.value, visitor),
+            comma=visit_sentinel("comma", self.comma, visitor),
+            whitespace_after=visit_required(
+                "whitespace_after", self.whitespace_after, visitor
+            ),
+        )
+
+    def _codegen(
+        self,
+        state: CodegenState,
+        default_comma: bool = False,
+        default_comma_whitespace: bool = False,
+    ) -> None:
+        self.value._codegen(state)
+        self.whitespace_after._codegen(state)
+        comma = self.comma
+        if comma is MaybeSentinel.DEFAULT and default_comma:
+            if default_comma_whitespace:
+                state.tokens.append(", ")
+            else:
+                state.tokens.append(",")
+        elif isinstance(comma, Comma):
+            comma._codegen(state)
+
+
+@add_slots
+@dataclass(frozen=True)
+class StarredElement(BaseElement, _BaseParenthesizedNode):
+    value: BaseExpression
+
+    # Any trailing comma
+    comma: Union[Comma, MaybeSentinel] = MaybeSentinel.DEFAULT
+
+    # Parentheses around the leading asterisk and the value. Functionally equivalent to
+    # parentheses around the value, but in a different position.
+    lpar: Sequence[LeftParen] = ()
+    rpar: Sequence[RightParen] = ()
+
+    # Whitespace
+    whitespace_before_value: BaseParenthesizableWhitespace = SimpleWhitespace("")
+    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace("")
+
+    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "StarredElement":
+        return StarredElement(
+            lpar=visit_sequence("lpar", self.lpar, visitor),
+            whitespace_before_value=visit_required(
+                "whitespace_before_value", self.whitespace_before_value, visitor
+            ),
+            value=visit_required("value", self.value, visitor),
+            whitespace_after=visit_required(
+                "whitespace_after", self.whitespace_after, visitor
+            ),
+            rpar=visit_sequence("rpar", self.rpar, visitor),
+            comma=visit_sentinel("comma", self.comma, visitor),
+        )
+
+    def _codegen(
+        self,
+        state: CodegenState,
+        default_comma: bool = False,
+        default_comma_whitespace: bool = False,
+    ) -> None:
+        with self._parenthesize(state):
+            state.tokens.append("*")
+            self.whitespace_before_value._codegen(state)
+            self.value._codegen(state)
+        comma = self.comma
+        if comma is MaybeSentinel.DEFAULT and default_comma:
+            if default_comma_whitespace:
+                state.tokens.append(", ")
+            else:
+                state.tokens.append(",")
+        elif isinstance(comma, Comma):
+            comma._codegen(state)
+        self.whitespace_after._codegen(state)
+
+
+@add_slots
+@dataclass(frozen=True)
+class Tuple(BaseExpression):
+    elements: Sequence[Union[Element, StarredElement]]
+
+    # Sequence of open parenthesis for precedence dictation.
+    lpar: Sequence[LeftParen] = (LeftParen(),)
+
+    # Sequence of close parenthesis for precedence dictation.
+    rpar: Sequence[RightParen] = (RightParen(),)
+
+    def _safe_to_use_with_word_operator(self, position: ExpressionPosition) -> bool:
+        if super(Tuple, self)._safe_to_use_with_word_operator(position):
+            # if we have parenthesis, we're safe.
+            return True
+        # elements[-1] and elements[0] must exist past this point, because
+        # we're not parenthesized, meaning we must have at least one element.
+        elements = self.elements
+        if position == ExpressionPosition.LEFT:
+            last_element = elements[-1]
+            return (
+                not last_element.whitespace_after.empty
+                or isinstance(last_element.comma, Comma)
+                or (
+                    isinstance(last_element, StarredElement)
+                    and len(last_element.rpar) > 0
+                )
+                or last_element.value._safe_to_use_with_word_operator(position)
+            )
+        else:  # ExpressionPosition.RIGHT
+            first_element = elements[0]
+            # starred elements are always safe because they begin with ( or *
+            return isinstance(
+                first_element, StarredElement
+            ) or first_element.value._safe_to_use_with_word_operator(position)
+
+    def _validate(self) -> None:
+        # Paren validation and such
+        super(Tuple, self)._validate()
+
+        if len(self.elements) == 0:
+            if len(self.lpar) == 0:  # assumes len(lpar) == len(rpar), via superclass
+                raise CSTValidationError(
+                    "A zero-length tuple must be wrapped in parentheses."
+                )
+        # Invalid commas aren't possible, because MaybeSentinel will ensure that there
+        # is a comma where required.
+
+    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "Tuple":
+        return Tuple(
+            lpar=visit_sequence("lpar", self.lpar, visitor),
+            elements=visit_sequence("elements", self.elements, visitor),
+            rpar=visit_sequence("rpar", self.rpar, visitor),
+        )
+
+    def _codegen(self, state: CodegenState) -> None:
+        with self._parenthesize(state):
+            elements = self.elements
+            if len(elements) == 1:
+                elements[0]._codegen(
+                    state, default_comma=True, default_comma_whitespace=False
+                )
+            else:
+                for idx, el in enumerate(elements):
+                    el._codegen(
+                        state,
+                        default_comma=(idx < len(elements) - 1),
+                        default_comma_whitespace=True,
+                    )
