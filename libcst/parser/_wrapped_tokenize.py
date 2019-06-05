@@ -146,7 +146,13 @@ def _convert_token(
     whitespace_before = state.previous_whitespace_state
 
     if ct_type is _INDENT or ct_type is _DEDENT or ct_type is _ENDMARKER:
-        # Don't update whitespace state for these dummy tokens.
+        # Don't update whitespace state for these dummy tokens. This makes it possible
+        # to partially parse whitespace for IndentedBlock footers, and then parse the
+        # rest of the whitespace in the following statement's leading_lines.
+        # Unfortunately, that means that the indentation is either wrong for the footer
+        # comments, or for the next line. We've chosen to allow it to be wrong for the
+        # IndentedBlock footer and manually override the state when parsing whitespace
+        # in that particular node.
         whitespace_after = whitespace_before
         ct_end_pos = ct_start_pos
     else:

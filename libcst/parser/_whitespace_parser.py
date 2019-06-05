@@ -16,7 +16,7 @@ Fortunately this isn't hard for us to parse ourselves, so we just use our own
 hand-rolled recursive descent parser.
 """
 
-from typing import Optional, Sequence, Union
+from typing import List, Optional, Sequence, Tuple, Union
 
 import libcst.nodes as cst
 from libcst.nodes._whitespace import COMMENT_RE, NEWLINE_RE, SIMPLE_WHITESPACE_RE
@@ -54,14 +54,54 @@ def parse_simple_whitespace(
 
 
 def parse_empty_lines(
-    config: BaseWhitespaceParserConfig, state: State
+    config: BaseWhitespaceParserConfig,
+    state: State,
+    *,
+    override_absolute_indent: Optional[str] = None,
 ) -> Sequence[cst.EmptyLine]:
-    result = []
-    el = _parse_empty_line(config, state)
-    while el is not None:
-        result.append(el)
-        el = _parse_empty_line(config, state)
-    return result
+    # If override_absolute_indent is true, then we need to parse all lines up
+    # to and including the last line that is indented at our level. These all
+    # belong to the footer and not to the next line's leading_lines. All lines
+    # that have indent=False and come after the last line where indent=True
+    # do not belong to this node.
+    state_for_line = State(
+        state.line, state.column, state.absolute_indent, state.is_parenthesized
+    )
+    lines: List[Tuple[State, cst.EmptyLine]] = []
+    while True:
+        el = _parse_empty_line(
+            config, state_for_line, override_absolute_indent=override_absolute_indent
+        )
+        if el is None:
+            break
+
+        # Store the updated state with the element we parsed. Then make a new state
+        # clone for the next element.
+        lines.append((state_for_line, el))
+        state_for_line = State(
+            state_for_line.line,
+            state_for_line.column,
+            state.absolute_indent,
+            state.is_parenthesized,
+        )
+
+    if override_absolute_indent is not None:
+        # We need to find the last element that is indented, and then split the list
+        # at that point.
+        for i in range(len(lines) - 1, -1, -1):
+            if lines[i][1].indent:
+                lines = lines[: (i + 1)]
+                break
+        else:
+            # We didn't find any lines, throw them all away
+            lines = []
+
+    if lines:
+        # Update the state line and column to match the last line actually parsed.
+        final_state: State = lines[-1][0]
+        state.line = final_state.line
+        state.column = final_state.column
+    return [r[1] for r in lines]
 
 
 def parse_trailing_whitespace(
@@ -95,13 +135,18 @@ def parse_parenthesizable_whitespace(
 
 
 def _parse_empty_line(
-    config: BaseWhitespaceParserConfig, state: State
+    config: BaseWhitespaceParserConfig,
+    state: State,
+    *,
+    override_absolute_indent: Optional[str] = None,
 ) -> Optional[cst.EmptyLine]:
     # begin speculative parsing
     speculative_state = State(
         state.line, state.column, state.absolute_indent, state.is_parenthesized
     )
-    indent = _parse_indent(config, speculative_state)
+    indent = _parse_indent(
+        config, speculative_state, override_absolute_indent=override_absolute_indent
+    )
     whitespace = parse_simple_whitespace(config, speculative_state)
     comment = _parse_comment(config, speculative_state)
     newline = _parse_newline(config, speculative_state)
@@ -115,11 +160,20 @@ def _parse_empty_line(
     return cst.EmptyLine(indent, whitespace, comment, newline)
 
 
-def _parse_indent(config: BaseWhitespaceParserConfig, state: State) -> bool:
+def _parse_indent(
+    config: BaseWhitespaceParserConfig,
+    state: State,
+    *,
+    override_absolute_indent: Optional[str] = None,
+) -> bool:
     """
     Returns True if indentation was found, otherwise False.
     """
-    absolute_indent = state.absolute_indent
+    absolute_indent = (
+        override_absolute_indent
+        if override_absolute_indent is not None
+        else state.absolute_indent
+    )
     line_str = config.lines[state.line - 1]
     if state.column != 0:
         if state.column == len(line_str) and state.line == len(config.lines):

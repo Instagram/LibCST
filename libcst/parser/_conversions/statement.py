@@ -1244,5 +1244,20 @@ def convert_indented_suite(config: ParserConfig, children: Sequence[Any]) -> Any
             else indent.relative_indent
         ),
         body=stmts,
-        footer=parse_empty_lines(config, dedent.whitespace_after),
+        # We want to be able to only keep comments in the footer that are actually for
+        # this IndentedBlock. We do so by assuming that lines which are indented to the
+        # same level as the block itself are comments that go at the footer of the
+        # block. Comments that are indented to less than this indent are assumed to
+        # belong to the next line of code. We override the indent here because the
+        # dedent node's absolute indent is the resulting indentation after the dedent
+        # is performed. Its this way because the whitespace state for both the dedent's
+        # whitespace_after and the next BaseCompoundStatement's whitespace_before is
+        # shared. This allows us to partially parse here and parse the rest of the
+        # whitespace and comments on the next line, effectively making sure that
+        # comments are attached to the correct node.
+        footer=parse_empty_lines(
+            config,
+            dedent.whitespace_after,
+            override_absolute_indent=indent.whitespace_before.absolute_indent,
+        ),
     )

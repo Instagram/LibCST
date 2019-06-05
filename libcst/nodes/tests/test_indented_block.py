@@ -58,7 +58,7 @@ class IndentedBlockTest(CSTNodeTest):
                     (cst.SimpleStatementLine((cst.Pass(),)),),
                     footer=(cst.EmptyLine(comment=cst.Comment("# footer comment")),),
                 ),
-                "\n    pass\n# footer comment\n",
+                "\n    pass\n    # footer comment\n",
                 None,
             ),
             (
@@ -71,7 +71,7 @@ class IndentedBlockTest(CSTNodeTest):
                         ),
                     ),
                 ),
-                "\n    pass\n    # footer comment\n",
+                "\n    pass\n        # footer comment\n",
                 None,
             ),
             (

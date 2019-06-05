@@ -143,10 +143,11 @@ class TryTest(CSTNodeTest):
             # Verify whitespace in various locations
             (
                 cst.Try(
-                    cst.SimpleStatementSuite((cst.Pass(),)),
+                    leading_lines=(cst.EmptyLine(comment=cst.Comment("# 1")),),
+                    body=cst.SimpleStatementSuite((cst.Pass(),)),
                     handlers=(
                         cst.ExceptHandler(
-                            cst.SimpleStatementSuite((cst.Pass(),)),
+                            leading_lines=(cst.EmptyLine(comment=cst.Comment("# 2")),),
                             type=cst.Name("TypeError"),
                             name=cst.AsName(
                                 cst.Name("e"),
@@ -155,20 +156,22 @@ class TryTest(CSTNodeTest):
                             ),
                             whitespace_after_except=cst.SimpleWhitespace("  "),
                             whitespace_before_colon=cst.SimpleWhitespace(" "),
+                            body=cst.SimpleStatementSuite((cst.Pass(),)),
                         ),
                     ),
                     orelse=cst.Else(
-                        cst.SimpleStatementSuite((cst.Pass(),)),
+                        leading_lines=(cst.EmptyLine(comment=cst.Comment("# 3")),),
+                        body=cst.SimpleStatementSuite((cst.Pass(),)),
                         whitespace_before_colon=cst.SimpleWhitespace(" "),
                     ),
                     finalbody=cst.Finally(
-                        cst.SimpleStatementSuite((cst.Pass(),)),
+                        leading_lines=(cst.EmptyLine(comment=cst.Comment("# 4")),),
+                        body=cst.SimpleStatementSuite((cst.Pass(),)),
                         whitespace_before_colon=cst.SimpleWhitespace(" "),
                     ),
-                    leading_lines=(cst.EmptyLine(),),
                     whitespace_before_colon=cst.SimpleWhitespace(" "),
                 ),
-                "\ntry : pass\nexcept  TypeError  as  e : pass\nelse : pass\nfinally : pass\n",
+                "# 1\ntry : pass\n# 2\nexcept  TypeError  as  e : pass\n# 3\nelse : pass\n# 4\nfinally : pass\n",
                 parse_statement,
             ),
             # Please don't write code like this

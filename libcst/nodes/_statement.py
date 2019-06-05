@@ -558,10 +558,10 @@ class IndentedBlock(BaseSuite):
             # the token list.
             stmt._codegen(state)
 
-        state.indent.pop()
-
         for f in self.footer:
             f._codegen(state)
+
+        state.indent.pop()
 
 
 @add_slots
@@ -640,6 +640,7 @@ class ExceptHandler(CSTNode):
 
     def _visit_and_replace_children(self, visitor: CSTVisitor) -> "ExceptHandler":
         return ExceptHandler(
+            leading_lines=visit_sequence("leading_lines", self.leading_lines, visitor),
             whitespace_after_except=visit_required(
                 "whitespace_after_except", self.whitespace_after_except, visitor
             ),
@@ -652,6 +653,8 @@ class ExceptHandler(CSTNode):
         )
 
     def _codegen(self, state: CodegenState) -> None:
+        for ll in self.leading_lines:
+            ll._codegen(state)
         state.tokens.extend(state.indent)
         state.tokens.append("except")
         self.whitespace_after_except._codegen(state)
@@ -679,6 +682,7 @@ class Finally(CSTNode):
 
     def _visit_and_replace_children(self, visitor: CSTVisitor) -> "Finally":
         return Finally(
+            leading_lines=visit_sequence("leading_lines", self.leading_lines, visitor),
             whitespace_before_colon=visit_required(
                 "whitespace_before_colon", self.whitespace_before_colon, visitor
             ),
@@ -686,6 +690,8 @@ class Finally(CSTNode):
         )
 
     def _codegen(self, state: CodegenState) -> None:
+        for ll in self.leading_lines:
+            ll._codegen(state)
         state.tokens.extend(state.indent)
         state.tokens.append("finally")
         self.whitespace_before_colon._codegen(state)

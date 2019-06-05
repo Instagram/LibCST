@@ -50,7 +50,14 @@ def convert_DEDENT(config: ParserConfig, token: Token) -> Any:
 
 
 def convert_ENDMARKER(config: ParserConfig, token: Token) -> Any:
-    return parse_empty_lines(config, token.whitespace_before)
+    # Parse any and all empty lines with an indent similar to the header. That is,
+    # indent of nothing and including all indents. In some cases, like when the
+    # footer parser follows an indented suite, the state's indent can be wrong
+    # due to the fact that it is shared with the _DEDENT node. We know that if
+    # we're parsing the end of a file, we will have no indent.
+    return parse_empty_lines(
+        config, token.whitespace_before, override_absolute_indent=""
+    )
 
 
 def convert_FSTRING_START(config: ParserConfig, token: Token) -> Any:
