@@ -14,10 +14,10 @@ this_directory = path.abspath(path.dirname(__file__))
 with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
-extra_install_requires = []
+install_requires = ["parso", "typing_extensions"]
 if sys.version_info < (3, 7, 0):
     # install the backport
-    extra_install_requires.append("dataclasses")
+    install_requires.append("dataclasses")
 
 setuptools.setup(
     name="libcst",
@@ -27,5 +27,8 @@ setuptools.setup(
     version="0.1.dev0",
     packages=setuptools.find_packages(),
     python_requires=">=3.6",
-    install_requires=["parso", "typing_extensions", *extra_install_requires]
+    install_requires=install_requires,
+    extras_require={
+        "dev": ["isort", "black", "pyre-check"],
+    }
 )
