@@ -14,11 +14,6 @@ this_directory = path.abspath(path.dirname(__file__))
 with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
-install_requires = ["parso", "typing_extensions"]
-if sys.version_info < (3, 7, 0):
-    # install the backport
-    install_requires.append("dataclasses")
-
 setuptools.setup(
     name="libcst",
     description="A concrete syntax tree with AST-like properties for Python 3.7.",
@@ -27,8 +22,12 @@ setuptools.setup(
     version="0.1.dev0",
     packages=setuptools.find_packages(),
     python_requires=">=3.6",
-    install_requires=install_requires,
+    install_requires=[
+        "dataclasses; python_version < '3.7'",
+        "parso",
+        "typing_extensions",
+    ],
     extras_require={
-        "dev": ["isort", "black", "pyre-check"],
+        "dev": ["black", "isort", "pyre-check"],
     }
 )

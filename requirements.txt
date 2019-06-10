@@ -1,5 +1,3 @@
+dataclasses==0.6.0; python_version < '3.7'
 parso==0.4.0
 typing_extensions==3.7.2
-isort==4.3.20
-pyre-check==0.0.27
-black==19.3b0

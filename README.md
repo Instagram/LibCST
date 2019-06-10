@@ -22,7 +22,7 @@ cd libcst
 python3 -m venv ../libcst-env/  # just an example, put this wherever you want
 source ../libcst-env/bin/activate
 pip install --upgrade pip  # optional, if you have an old system version of pip
-pip install -r requirements.txt
+pip install -r requirements.txt -r requirements-dev.txt
 # If you're done with the virtualenv, you can leave it by running:
 deactivate
 ```
