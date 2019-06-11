@@ -55,7 +55,6 @@ from libcst.nodes._expression import (
     RightSquareBracket,
     SimpleString,
     Slice,
-    Starred,
     StarredElement,
     Subscript,
     Tuple,

@@ -688,38 +688,6 @@ class ConcatenatedString(BaseString):
 
 @add_slots
 @dataclass(frozen=True)
-class Starred(BaseAssignTargetExpression):
-    # The actual expression
-    expression: BaseExpression
-
-    # Sequence of open parenthesis for precedence dictation.
-    lpar: Sequence[LeftParen] = ()
-
-    # Sequence of close parenthesis for precedence dictation.
-    rpar: Sequence[RightParen] = ()
-
-    # Whitespace nodes
-    whitespace_after_star: BaseParenthesizableWhitespace = SimpleWhitespace("")
-
-    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "Starred":
-        return Starred(
-            lpar=visit_sequence("lpar", self.lpar, visitor),
-            whitespace_after_star=visit_required(
-                "whitespace_after_star", self.whitespace_after_star, visitor
-            ),
-            expression=visit_required("expression", self.expression, visitor),
-            rpar=visit_sequence("rpar", self.rpar, visitor),
-        )
-
-    def _codegen(self, state: CodegenState) -> None:
-        with self._parenthesize(state):
-            state.tokens.append("*")
-            self.whitespace_after_star._codegen(state)
-            self.expression._codegen(state)
-
-
-@add_slots
-@dataclass(frozen=True)
 class ComparisonTarget(CSTNode):
     """
     A target for a comparison. Owns the comparison operator itself.

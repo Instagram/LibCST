@@ -342,16 +342,7 @@ def convert_comp_op(config: ParserConfig, children: Sequence[Any]) -> Any:
 
 @with_production("star_expr", "'*' expr")
 def convert_star_expr(config: ParserConfig, children: Sequence[Any]) -> Any:
-    star, expr = children
-    return WithLeadingWhitespace(
-        cst.Starred(
-            expr.value,
-            whitespace_after_star=parse_parenthesizable_whitespace(
-                config, star.whitespace_after
-            ),
-        ),
-        star.whitespace_before,
-    )
+    return make_dummy_node(config, children)
 
 
 @with_production("expr", "xor_expr ('|' xor_expr)*")
