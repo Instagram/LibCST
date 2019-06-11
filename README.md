@@ -29,10 +29,11 @@ deactivate
 
 ## Auto-formatting code with isort and Black
 
-We use isort and black to format code. To format changes to be conformant, run the following in the root:
+We use isort and black to format code. To format changes to be conformant, run
+the following in the root:
 
 ```
-isort -q -w 88 -m 3 -tc -fgw 0 -lai 2 -ca -ns __init__.py -y && black --target-version py36 libcst/
+isort -q -y && black libcst/
 ```
 
 ## Running tests
@@ -40,7 +41,7 @@ isort -q -w 88 -m 3 -tc -fgw 0 -lai 2 -ca -ns __init__.py -y && black --target-v
 To run all tests, do the following in the root:
 
 ```
-find -name "test_*.py" -printf '%P\n' | xargs python3 -m unittest
+python3 setup.py test
 ```
 
 ## Verifying types with Pyre
@@ -48,5 +49,5 @@ find -name "test_*.py" -printf '%P\n' | xargs python3 -m unittest
 To verify types for the library, do the following in the root:
 
 ```
-pyre --source-directory . --search-path stubs/ check
+pyre check
 ```

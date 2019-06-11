@@ -21,6 +21,7 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     version="0.1.dev0",
     packages=setuptools.find_packages(),
+    test_suite="libcst",
     python_requires=">=3.6",
     install_requires=[
         "dataclasses; python_version < '3.7'",
