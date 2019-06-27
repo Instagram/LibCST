@@ -114,13 +114,13 @@ class Del(BaseSmallStatement):
         )
 
     def _codegen(self, state: CodegenState, default_semicolon: bool = False) -> None:
-        state.tokens.append("del")
+        state.add_token("del")
         self.whitespace_after_del._codegen(state)
         self.target._codegen(state)
         semicolon = self.semicolon
         if isinstance(semicolon, MaybeSentinel):
             if default_semicolon:
-                state.tokens.append("; ")
+                state.add_token("; ")
         elif isinstance(semicolon, Semicolon):
             semicolon._codegen(state)
 
@@ -136,11 +136,11 @@ class Pass(BaseSmallStatement):
         return Pass(semicolon=visit_sentinel("semicolon", self.semicolon, visitor))
 
     def _codegen(self, state: CodegenState, default_semicolon: bool = False) -> None:
-        state.tokens.append("pass")
+        state.add_token("pass")
         semicolon = self.semicolon
         if isinstance(semicolon, MaybeSentinel):
             if default_semicolon:
-                state.tokens.append("; ")
+                state.add_token("; ")
         elif isinstance(semicolon, Semicolon):
             semicolon._codegen(state)
 
@@ -156,11 +156,11 @@ class Break(BaseSmallStatement):
         return Break(semicolon=visit_sentinel("semicolon", self.semicolon, visitor))
 
     def _codegen(self, state: CodegenState, default_semicolon: bool = False) -> None:
-        state.tokens.append("break")
+        state.add_token("break")
         semicolon = self.semicolon
         if isinstance(semicolon, MaybeSentinel):
             if default_semicolon:
-                state.tokens.append("; ")
+                state.add_token("; ")
         elif isinstance(semicolon, Semicolon):
             semicolon._codegen(state)
 
@@ -176,11 +176,11 @@ class Continue(BaseSmallStatement):
         return Continue(semicolon=visit_sentinel("semicolon", self.semicolon, visitor))
 
     def _codegen(self, state: CodegenState, default_semicolon: bool = False) -> None:
-        state.tokens.append("continue")
+        state.add_token("continue")
         semicolon = self.semicolon
         if isinstance(semicolon, MaybeSentinel):
             if default_semicolon:
-                state.tokens.append("; ")
+                state.add_token("; ")
         elif isinstance(semicolon, Semicolon):
             semicolon._codegen(state)
 
@@ -222,12 +222,12 @@ class Return(BaseSmallStatement):
     def _codegen(self, state: CodegenState, default_semicolon: bool = False) -> None:
         value = self.value
 
-        state.tokens.append("return")
+        state.add_token("return")
 
         whitespace_after_return = self.whitespace_after_return
         if isinstance(whitespace_after_return, MaybeSentinel):
             if value is not None:
-                state.tokens.append(" ")
+                state.add_token(" ")
         else:
             whitespace_after_return._codegen(state)
 
@@ -237,7 +237,7 @@ class Return(BaseSmallStatement):
         semicolon = self.semicolon
         if isinstance(semicolon, MaybeSentinel):
             if default_semicolon:
-                state.tokens.append("; ")
+                state.add_token("; ")
         elif isinstance(semicolon, Semicolon):
             semicolon._codegen(state)
 
@@ -266,7 +266,7 @@ class Expr(BaseSmallStatement):
         semicolon = self.semicolon
         if isinstance(semicolon, MaybeSentinel):
             if default_semicolon:
-                state.tokens.append("; ")
+                state.add_token("; ")
         elif isinstance(semicolon, Semicolon):
             semicolon._codegen(state)
 
@@ -338,7 +338,7 @@ class SimpleStatementLine(_BaseSimpleStatement):
     def _codegen(self, state: CodegenState) -> None:
         for ll in self.leading_lines:
             ll._codegen(state)
-        state.tokens.extend(state.indent)
+        state.add_indent_tokens()
         _BaseSimpleStatement._codegen(self, state)
 
 
@@ -408,10 +408,10 @@ class Else(CSTNode):
     def _codegen(self, state: CodegenState) -> None:
         for ll in self.leading_lines:
             ll._codegen(state)
-        state.tokens.extend(state.indent)
-        state.tokens.append("else")
+        state.add_indent_tokens()
+        state.add_token("else")
         self.whitespace_before_colon._codegen(state)
-        state.tokens.append(":")
+        state.add_token(":")
         self.body._codegen(state)
 
 
@@ -469,12 +469,12 @@ class If(BaseCompoundStatement):
     def _codegen(self, state: CodegenState, is_elif: bool = False) -> None:
         for ll in self.leading_lines:
             ll._codegen(state)
-        state.tokens.extend(state.indent)
-        state.tokens.append("elif" if is_elif else "if")
+        state.add_indent_tokens()
+        state.add_token("elif" if is_elif else "if")
         self.whitespace_before_test._codegen(state)
         self.test._codegen(state)
         self.whitespace_after_test._codegen(state)
-        state.tokens.append(":")
+        state.add_token(":")
         self.body._codegen(state)
         orelse = self.orelse
         if orelse is not None:
@@ -551,7 +551,7 @@ class IndentedBlock(BaseSuite):
         self.header._codegen(state)
 
         indent = self.indent
-        state.indent.append(state.default_indent if indent is None else indent)
+        state.increase_indent(state.default_indent if indent is None else indent)
 
         for stmt in self.body:
             # IndentedBlock is responsible for adjusting the current indentation level,
@@ -562,7 +562,7 @@ class IndentedBlock(BaseSuite):
         for f in self.footer:
             f._codegen(state)
 
-        state.indent.pop()
+        state.decrease_indent()
 
 
 @add_slots
@@ -600,7 +600,7 @@ class AsName(CSTNode):
 
     def _codegen(self, state: CodegenState) -> None:
         self.whitespace_before_as._codegen(state)
-        state.tokens.append("as")
+        state.add_token("as")
         self.whitespace_after_as._codegen(state)
         self.name._codegen(state)
 
@@ -656,8 +656,8 @@ class ExceptHandler(CSTNode):
     def _codegen(self, state: CodegenState) -> None:
         for ll in self.leading_lines:
             ll._codegen(state)
-        state.tokens.extend(state.indent)
-        state.tokens.append("except")
+        state.add_indent_tokens()
+        state.add_token("except")
         self.whitespace_after_except._codegen(state)
         typenode = self.type
         if typenode is not None:
@@ -666,7 +666,7 @@ class ExceptHandler(CSTNode):
         if namenode is not None:
             namenode._codegen(state)
         self.whitespace_before_colon._codegen(state)
-        state.tokens.append(":")
+        state.add_token(":")
         self.body._codegen(state)
 
 
@@ -693,10 +693,10 @@ class Finally(CSTNode):
     def _codegen(self, state: CodegenState) -> None:
         for ll in self.leading_lines:
             ll._codegen(state)
-        state.tokens.extend(state.indent)
-        state.tokens.append("finally")
+        state.add_indent_tokens()
+        state.add_token("finally")
         self.whitespace_before_colon._codegen(state)
-        state.tokens.append(":")
+        state.add_token(":")
         self.body._codegen(state)
 
 
@@ -749,10 +749,10 @@ class Try(BaseCompoundStatement):
     def _codegen(self, state: CodegenState) -> None:
         for ll in self.leading_lines:
             ll._codegen(state)
-        state.tokens.extend(state.indent)
-        state.tokens.append("try")
+        state.add_indent_tokens()
+        state.add_token("try")
         self.whitespace_before_colon._codegen(state)
-        state.tokens.append(":")
+        state.add_token(":")
         self.body._codegen(state)
         for handler in self.handlers:
             handler._codegen(state)
@@ -801,7 +801,7 @@ class ImportAlias(CSTNode):
             asname._codegen(state)
         comma = self.comma
         if comma is MaybeSentinel.DEFAULT and default_comma:
-            state.tokens.append(", ")
+            state.add_token(", ")
         elif isinstance(comma, Comma):
             comma._codegen(state)
 
@@ -843,7 +843,7 @@ class Import(BaseSmallStatement):
         )
 
     def _codegen(self, state: CodegenState, default_semicolon: bool = False) -> None:
-        state.tokens.append("import")
+        state.add_token("import")
         self.whitespace_after_import._codegen(state)
         lastname = len(self.names) - 1
         for i, name in enumerate(self.names):
@@ -851,7 +851,7 @@ class Import(BaseSmallStatement):
         semicolon = self.semicolon
         if isinstance(semicolon, MaybeSentinel):
             if default_semicolon:
-                state.tokens.append("; ")
+                state.add_token("; ")
         elif isinstance(semicolon, Semicolon):
             semicolon._codegen(state)
 
@@ -948,7 +948,7 @@ class ImportFrom(BaseSmallStatement):
         )
 
     def _codegen(self, state: CodegenState, default_semicolon: bool = False) -> None:
-        state.tokens.append("from")
+        state.add_token("from")
         self.whitespace_after_from._codegen(state)
         for dot in self.relative:
             dot._codegen(state)
@@ -956,7 +956,7 @@ class ImportFrom(BaseSmallStatement):
         if module is not None:
             module._codegen(state)
         self.whitespace_before_import._codegen(state)
-        state.tokens.append("import")
+        state.add_token("import")
         self.whitespace_after_import._codegen(state)
         lpar = self.lpar
         if lpar is not None:
@@ -973,7 +973,7 @@ class ImportFrom(BaseSmallStatement):
         semicolon = self.semicolon
         if isinstance(semicolon, MaybeSentinel):
             if default_semicolon:
-                state.tokens.append("; ")
+                state.add_token("; ")
         elif isinstance(semicolon, Semicolon):
             semicolon._codegen(state)
 
@@ -1005,7 +1005,7 @@ class AssignTarget(CSTNode):
     def _codegen(self, state: CodegenState) -> None:
         self.target._codegen(state)
         self.whitespace_before_equal._codegen(state)
-        state.tokens.append("=")
+        state.add_token("=")
         self.whitespace_after_equal._codegen(state)
 
 
@@ -1044,7 +1044,7 @@ class Assign(BaseSmallStatement):
         semicolon = self.semicolon
         if isinstance(semicolon, MaybeSentinel):
             if default_semicolon:
-                state.tokens.append("; ")
+                state.add_token("; ")
         elif isinstance(semicolon, Semicolon):
             semicolon._codegen(state)
 
@@ -1095,7 +1095,7 @@ class AnnAssign(BaseSmallStatement):
         self.annotation._codegen(state, default_indicator=":")
         equal = self.equal
         if equal is MaybeSentinel.DEFAULT and self.value is not None:
-            state.tokens.append(" = ")
+            state.add_token(" = ")
         elif isinstance(equal, AssignEqual):
             equal._codegen(state)
         value = self.value
@@ -1104,7 +1104,7 @@ class AnnAssign(BaseSmallStatement):
         semicolon = self.semicolon
         if isinstance(semicolon, MaybeSentinel):
             if default_semicolon:
-                state.tokens.append("; ")
+                state.add_token("; ")
         elif isinstance(semicolon, Semicolon):
             semicolon._codegen(state)
 
@@ -1142,7 +1142,7 @@ class AugAssign(BaseSmallStatement):
         semicolon = self.semicolon
         if isinstance(semicolon, MaybeSentinel):
             if default_semicolon:
-                state.tokens.append("; ")
+                state.add_token("; ")
         elif isinstance(semicolon, Semicolon):
             semicolon._codegen(state)
 
@@ -1168,7 +1168,7 @@ class Asynchronous(CSTNode):
         )
 
     def _codegen(self, state: CodegenState) -> None:
-        state.tokens.append("async")
+        state.add_token("async")
         self.whitespace_after._codegen(state)
 
 
@@ -1221,8 +1221,8 @@ class Decorator(CSTNode):
     def _codegen(self, state: CodegenState) -> None:
         for ll in self.leading_lines:
             ll._codegen(state)
-        state.tokens.extend(state.indent)
-        state.tokens.append("@")
+        state.add_indent_tokens()
+        state.add_token("@")
         self.whitespace_after_at._codegen(state)
         self.decorator._codegen(state)
         self.trailing_whitespace._codegen(state)
@@ -1317,23 +1317,23 @@ class FunctionDef(BaseCompoundStatement):
             decorator._codegen(state)
         for lad in self.lines_after_decorators:
             lad._codegen(state)
-        state.tokens.extend(state.indent)
+        state.add_indent_tokens()
         asynchronous = self.asynchronous
         if asynchronous is not None:
             asynchronous._codegen(state)
-        state.tokens.append("def")
+        state.add_token("def")
         self.whitespace_after_def._codegen(state)
         self.name._codegen(state)
         self.whitespace_after_name._codegen(state)
-        state.tokens.append("(")
+        state.add_token("(")
         self.whitespace_before_params._codegen(state)
         self.params._codegen(state)
-        state.tokens.append(")")
+        state.add_token(")")
         returns = self.returns
         if returns is not None:
             returns._codegen(state, default_indicator="->")
         self.whitespace_before_colon._codegen(state)
-        state.tokens.append(":")
+        state.add_token(":")
         self.body._codegen(state)
 
 
@@ -1443,15 +1443,15 @@ class ClassDef(BaseCompoundStatement):
             decorator._codegen(state)
         for lad in self.lines_after_decorators:
             lad._codegen(state)
-        state.tokens.extend(state.indent)
-        state.tokens.append("class")
+        state.add_indent_tokens()
+        state.add_token("class")
         self.whitespace_after_class._codegen(state)
         self.name._codegen(state)
         self.whitespace_after_name._codegen(state)
         lpar = self.lpar
         if isinstance(lpar, MaybeSentinel):
             if self.bases or self.keywords:
-                state.tokens.append("(")
+                state.add_token("(")
         elif isinstance(lpar, LeftParen):
             lpar._codegen(state)
         args = [*self.bases, *self.keywords]
@@ -1461,11 +1461,11 @@ class ClassDef(BaseCompoundStatement):
         rpar = self.rpar
         if isinstance(rpar, MaybeSentinel):
             if self.bases or self.keywords:
-                state.tokens.append(")")
+                state.add_token(")")
         elif isinstance(rpar, RightParen):
             rpar._codegen(state)
         self.whitespace_before_colon._codegen(state)
-        state.tokens.append(":")
+        state.add_token(":")
         self.body._codegen(state)
 
 
@@ -1499,7 +1499,7 @@ class WithItem(CSTNode):
             asname._codegen(state)
         comma = self.comma
         if comma is MaybeSentinel.DEFAULT and default_comma:
-            state.tokens.append(", ")
+            state.add_token(", ")
         elif isinstance(comma, Comma):
             comma._codegen(state)
 
@@ -1557,17 +1557,17 @@ class With(BaseCompoundStatement):
     def _codegen(self, state: CodegenState) -> None:
         for ll in self.leading_lines:
             ll._codegen(state)
-        state.tokens.extend(state.indent)
+        state.add_indent_tokens()
         asynchronous = self.asynchronous
         if asynchronous is not None:
             asynchronous._codegen(state)
-        state.tokens.append("with")
+        state.add_token("with")
         self.whitespace_after_with._codegen(state)
         last_item = len(self.items) - 1
         for i, item in enumerate(self.items):
             item._codegen(state, default_comma=(i != last_item))
         self.whitespace_before_colon._codegen(state)
-        state.tokens.append(":")
+        state.add_token(":")
         self.body._codegen(state)
 
 
@@ -1648,19 +1648,19 @@ class For(BaseCompoundStatement):
     def _codegen(self, state: CodegenState) -> None:
         for ll in self.leading_lines:
             ll._codegen(state)
-        state.tokens.extend(state.indent)
+        state.add_indent_tokens()
         asynchronous = self.asynchronous
         if asynchronous is not None:
             asynchronous._codegen(state)
-        state.tokens.append("for")
+        state.add_token("for")
         self.whitespace_after_for._codegen(state)
         self.target._codegen(state)
         self.whitespace_before_in._codegen(state)
-        state.tokens.append("in")
+        state.add_token("in")
         self.whitespace_after_in._codegen(state)
         self.iter._codegen(state)
         self.whitespace_before_colon._codegen(state)
-        state.tokens.append(":")
+        state.add_token(":")
         self.body._codegen(state)
         orelse = self.orelse
         if orelse is not None:
@@ -1714,12 +1714,12 @@ class While(BaseCompoundStatement):
     def _codegen(self, state: CodegenState) -> None:
         for ll in self.leading_lines:
             ll._codegen(state)
-        state.tokens.extend(state.indent)
-        state.tokens.append("while")
+        state.add_indent_tokens()
+        state.add_token("while")
         self.whitespace_after_while._codegen(state)
         self.test._codegen(state)
         self.whitespace_before_colon._codegen(state)
-        state.tokens.append(":")
+        state.add_token(":")
         self.body._codegen(state)
         orelse = self.orelse
         if orelse is not None:
@@ -1787,12 +1787,12 @@ class Raise(BaseSmallStatement):
         exc = self.exc
         cause = self.cause
 
-        state.tokens.append("raise")
+        state.add_token("raise")
 
         whitespace_after_raise = self.whitespace_after_raise
         if isinstance(whitespace_after_raise, MaybeSentinel):
             if exc is not None:
-                state.tokens.append(" ")
+                state.add_token(" ")
         else:
             whitespace_after_raise._codegen(state)
 
@@ -1804,7 +1804,7 @@ class Raise(BaseSmallStatement):
         semicolon = self.semicolon
         if isinstance(semicolon, MaybeSentinel):
             if default_semicolon:
-                state.tokens.append("; ")
+                state.add_token("; ")
         elif isinstance(semicolon, Semicolon):
             semicolon._codegen(state)
 
@@ -1855,7 +1855,7 @@ class Assert(BaseSmallStatement):
         )
 
     def _codegen(self, state: CodegenState, default_semicolon: bool = False) -> None:
-        state.tokens.append("assert")
+        state.add_token("assert")
         self.whitespace_after_assert._codegen(state)
         self.test._codegen(state)
 
@@ -1863,7 +1863,7 @@ class Assert(BaseSmallStatement):
         msg = self.msg
         if isinstance(comma, MaybeSentinel):
             if msg is not None:
-                state.tokens.append(", ")
+                state.add_token(", ")
         else:
             comma._codegen(state)
         if msg is not None:
@@ -1872,7 +1872,7 @@ class Assert(BaseSmallStatement):
         semicolon = self.semicolon
         if isinstance(semicolon, MaybeSentinel):
             if default_semicolon:
-                state.tokens.append("; ")
+                state.add_token("; ")
         elif isinstance(semicolon, Semicolon):
             semicolon._codegen(state)
 
@@ -1905,7 +1905,7 @@ class NameItem(CSTNode):
         self.name._codegen(state)
         comma = self.comma
         if comma is MaybeSentinel.DEFAULT and default_comma:
-            state.tokens.append(", ")
+            state.add_token(", ")
         elif isinstance(comma, Comma):
             comma._codegen(state)
 
@@ -1950,7 +1950,7 @@ class Global(BaseSmallStatement):
         )
 
     def _codegen(self, state: CodegenState, default_semicolon: bool = False) -> None:
-        state.tokens.append("global")
+        state.add_token("global")
         self.whitespace_after_global._codegen(state)
         last_name = len(self.names) - 1
         for i, name in enumerate(self.names):
@@ -1959,7 +1959,7 @@ class Global(BaseSmallStatement):
         semicolon = self.semicolon
         if isinstance(semicolon, MaybeSentinel):
             if default_semicolon:
-                state.tokens.append("; ")
+                state.add_token("; ")
         elif isinstance(semicolon, Semicolon):
             semicolon._codegen(state)
 
@@ -2004,7 +2004,7 @@ class Nonlocal(BaseSmallStatement):
         )
 
     def _codegen(self, state: CodegenState, default_semicolon: bool = False) -> None:
-        state.tokens.append("nonlocal")
+        state.add_token("nonlocal")
         self.whitespace_after_nonlocal._codegen(state)
         last_name = len(self.names) - 1
         for i, name in enumerate(self.names):
@@ -2013,6 +2013,6 @@ class Nonlocal(BaseSmallStatement):
         semicolon = self.semicolon
         if isinstance(semicolon, MaybeSentinel):
             if default_semicolon:
-                state.tokens.append("; ")
+                state.add_token("; ")
         elif isinstance(semicolon, Semicolon):
             semicolon._codegen(state)

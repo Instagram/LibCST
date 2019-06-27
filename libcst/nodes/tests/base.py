@@ -203,9 +203,9 @@ class DummyIndentedBlock(cst.CSTNode):
     child: cst.CSTNode
 
     def _codegen(self, state: CodegenState) -> None:
-        state.indent.append(self.value)
+        state.increase_indent(self.value)
         self.child._codegen(state)
-        state.indent.pop()
+        state.decrease_indent()
 
     def _visit_and_replace_children(self, visitor: CSTVisitor) -> "DummyIndentedBlock":
         return DummyIndentedBlock(

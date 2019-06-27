@@ -70,7 +70,7 @@ class Module(CSTNode):
             if len(state.tokens) == 0:
                 # There was nothing in the header, footer, or body. Just add a newline
                 # to preserve the trailing newline.
-                state.tokens.append(state.default_newline)
+                state.add_token(state.default_newline)
         else:  # has_trailing_newline is false
             if len(state.tokens) > 0:
                 # EmptyLine and all statements generate newlines, so we can be sure that

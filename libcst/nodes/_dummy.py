@@ -21,7 +21,7 @@ from libcst.nodes._whitespace import EmptyLine, TrailingWhitespace
 @dataclass(frozen=True)
 class DummyNode(CSTNode):
 
-    children: Sequence[Union[CSTNode, str]] = ()
+    children: List[Union[CSTNode, str]]
 
     # HACK: So that we can support being used as an expression
     lpar: Sequence[LeftParen] = ()
@@ -64,6 +64,6 @@ class DummyNode(CSTNode):
             if isinstance(child, CSTNode):
                 child._codegen(state)
             else:
-                state.tokens.append(child)
+                state.add_token(child)
         for rpar in self.rpar:
             rpar._codegen(state)

@@ -73,7 +73,7 @@ class LeftSquareBracket(CSTNode):
         )
 
     def _codegen(self, state: CodegenState) -> None:
-        state.tokens.append("[")
+        state.add_token("[")
         self.whitespace_after._codegen(state)
 
 
@@ -96,7 +96,7 @@ class RightSquareBracket(CSTNode):
 
     def _codegen(self, state: CodegenState) -> None:
         self.whitespace_before._codegen(state)
-        state.tokens.append("]")
+        state.add_token("]")
 
 
 @add_slots
@@ -117,7 +117,7 @@ class LeftParen(CSTNode):
         )
 
     def _codegen(self, state: CodegenState) -> None:
-        state.tokens.append("(")
+        state.add_token("(")
         self.whitespace_after._codegen(state)
 
 
@@ -140,7 +140,7 @@ class RightParen(CSTNode):
 
     def _codegen(self, state: CodegenState) -> None:
         self.whitespace_before._codegen(state)
-        state.tokens.append(")")
+        state.add_token(")")
 
 
 class _BaseParenthesizedNode(CSTNode, ABC):
@@ -264,7 +264,7 @@ class Name(BaseAssignTargetExpression, BaseDelTargetExpression, BaseAtom):
 
     def _codegen(self, state: CodegenState) -> None:
         with self._parenthesize(state):
-            state.tokens.append(self.value)
+            state.add_token(self.value)
 
 
 @add_slots
@@ -288,7 +288,7 @@ class Ellipses(BaseAtom):
 
     def _codegen(self, state: CodegenState) -> None:
         with self._parenthesize(state):
-            state.tokens.append("...")
+            state.add_token("...")
 
 
 @add_slots
@@ -316,7 +316,7 @@ class Integer(_BaseParenthesizedNode):
 
     def _codegen(self, state: CodegenState) -> None:
         with self._parenthesize(state):
-            state.tokens.append(self.value)
+            state.add_token(self.value)
 
 
 @add_slots
@@ -344,7 +344,7 @@ class Float(_BaseParenthesizedNode):
 
     def _codegen(self, state: CodegenState) -> None:
         with self._parenthesize(state):
-            state.tokens.append(self.value)
+            state.add_token(self.value)
 
 
 @add_slots
@@ -372,7 +372,7 @@ class Imaginary(_BaseParenthesizedNode):
 
     def _codegen(self, state: CodegenState) -> None:
         with self._parenthesize(state):
-            state.tokens.append(self.value)
+            state.add_token(self.value)
 
 
 @add_slots
@@ -485,7 +485,7 @@ class SimpleString(BaseString):
 
     def _codegen(self, state: CodegenState) -> None:
         with self._parenthesize(state):
-            state.tokens.append(self.value)
+            state.add_token(self.value)
 
 
 class BaseFormattedStringContent(CSTNode, ABC):
@@ -506,7 +506,7 @@ class FormattedStringText(BaseFormattedStringContent):
         return FormattedStringText(value=self.value)
 
     def _codegen(self, state: CodegenState) -> None:
-        state.tokens.append(self.value)
+        state.add_token(self.value)
 
 
 @add_slots
@@ -552,20 +552,20 @@ class FormattedStringExpression(BaseFormattedStringContent):
         )
 
     def _codegen(self, state: CodegenState) -> None:
-        state.tokens.append("{")
+        state.add_token("{")
         self.whitespace_before_expression._codegen(state)
         self.expression._codegen(state)
         self.whitespace_after_expression._codegen(state)
         conversion = self.conversion
         if conversion is not None:
-            state.tokens.append("!")
-            state.tokens.append(conversion)
+            state.add_token("!")
+            state.add_token(conversion)
         format_spec = self.format_spec
         if format_spec is not None:
-            state.tokens.append(":")
+            state.add_token(":")
             for spec in format_spec:
                 spec._codegen(state)
-        state.tokens.append("}")
+        state.add_token("}")
 
 
 @add_slots
@@ -622,10 +622,10 @@ class FormattedString(BaseString):
 
     def _codegen(self, state: CodegenState) -> None:
         with self._parenthesize(state):
-            state.tokens.append(self.start)
+            state.add_token(self.start)
             for part in self.parts:
                 part._codegen(state)
-            state.tokens.append(self.end)
+            state.add_token(self.end)
 
 
 @add_slots
@@ -1018,7 +1018,7 @@ class Slice(CSTNode):
             upper._codegen(state)
         second_colon = self.second_colon
         if second_colon is MaybeSentinel.DEFAULT and self.step is not None:
-            state.tokens.append(":")
+            state.add_token(":")
         elif isinstance(second_colon, Colon):
             second_colon._codegen(state)
         step = self.step
@@ -1050,7 +1050,7 @@ class ExtSlice(CSTNode):
         self.slice._codegen(state)
         comma = self.comma
         if comma is MaybeSentinel.DEFAULT and default_comma:
-            state.tokens.append(", ")
+            state.add_token(", ")
         elif isinstance(comma, Comma):
             comma._codegen(state)
 
@@ -1178,12 +1178,12 @@ class Annotation(CSTNode):
             whitespace_before_indicator._codegen(state)
         elif isinstance(whitespace_before_indicator, MaybeSentinel):
             if indicator == "->":
-                state.tokens.append(" ")
+                state.add_token(" ")
         else:
             raise Exception("Logic error!")
 
         # Now, output the indicator and the rest of the annotation
-        state.tokens.append(indicator)
+        state.add_token(indicator)
         self.whitespace_after_indicator._codegen(state)
         self.annotation._codegen(state)
 
@@ -1202,7 +1202,7 @@ class ParamStar(CSTNode):
         return ParamStar(comma=visit_required("comma", self.comma, visitor))
 
     def _codegen(self, state: CodegenState) -> None:
-        state.tokens.append("*")
+        state.add_token("*")
         self.comma._codegen(state)
 
 
@@ -1280,7 +1280,7 @@ class Param(CSTNode):
                 )
             star = default_star
         if isinstance(star, str):
-            state.tokens.append(star)
+            state.add_token(star)
         self.whitespace_after_star._codegen(state)
         self.name._codegen(state)
         annotation = self.annotation
@@ -1288,7 +1288,7 @@ class Param(CSTNode):
             annotation._codegen(state, default_indicator=":")
         equal = self.equal
         if equal is MaybeSentinel.DEFAULT and self.default is not None:
-            state.tokens.append(" = ")
+            state.add_token(" = ")
         elif isinstance(equal, AssignEqual):
             equal._codegen(state)
         default = self.default
@@ -1296,7 +1296,7 @@ class Param(CSTNode):
             default._codegen(state)
         comma = self.comma
         if comma is MaybeSentinel.DEFAULT and default_comma:
-            state.tokens.append(", ")
+            state.add_token(", ")
         elif isinstance(comma, Comma):
             comma._codegen(state)
         self.whitespace_after_param._codegen(state)
@@ -1437,7 +1437,7 @@ class Parameters(CSTNode):
         # optional star_arg.
         if isinstance(star_arg, MaybeSentinel):
             if starincluded:
-                state.tokens.append("*, ")
+                state.add_token("*, ")
         elif isinstance(star_arg, Param):
             more_values = len(self.kwonly_params) > 0 or self.star_kwarg is not None
             star_arg._codegen(state, default_star="*", default_comma=more_values)
@@ -1522,7 +1522,7 @@ class Lambda(BaseExpression):
 
     def _codegen(self, state: CodegenState) -> None:
         with self._parenthesize(state):
-            state.tokens.append("lambda")
+            state.add_token("lambda")
             whitespace_after_lambda = self.whitespace_after_lambda
             if isinstance(whitespace_after_lambda, MaybeSentinel):
                 if not (
@@ -1533,7 +1533,7 @@ class Lambda(BaseExpression):
                     and self.params.star_kwarg is None
                 ):
                     # We have one or more params, provide a space
-                    state.tokens.append(" ")
+                    state.add_token(" ")
             elif isinstance(whitespace_after_lambda, BaseParenthesizableWhitespace):
                 whitespace_after_lambda._codegen(state)
             self.params._codegen(state)
@@ -1594,20 +1594,20 @@ class Arg(CSTNode):
         )
 
     def _codegen(self, state: CodegenState, default_comma: bool = False) -> None:
-        state.tokens.append(self.star)
+        state.add_token(self.star)
         self.whitespace_after_star._codegen(state)
         keyword = self.keyword
         if keyword is not None:
             keyword._codegen(state)
         equal = self.equal
         if equal is MaybeSentinel.DEFAULT and self.keyword is not None:
-            state.tokens.append(" = ")
+            state.add_token(" = ")
         elif isinstance(equal, AssignEqual):
             equal._codegen(state)
         self.value._codegen(state)
         comma = self.comma
         if comma is MaybeSentinel.DEFAULT and default_comma:
-            state.tokens.append(", ")
+            state.add_token(", ")
         elif isinstance(comma, Comma):
             comma._codegen(state)
         self.whitespace_after_arg._codegen(state)
@@ -1761,12 +1761,12 @@ class Call(_BaseExpressionWithArgs):
         with self._parenthesize(state):
             self.func._codegen(state)
             self.whitespace_after_func._codegen(state)
-            state.tokens.append("(")
+            state.add_token("(")
             self.whitespace_before_args._codegen(state)
             lastarg = len(self.args) - 1
             for i, arg in enumerate(self.args):
                 arg._codegen(state, default_comma=(i != lastarg))
-            state.tokens.append(")")
+            state.add_token(")")
 
 
 @add_slots
@@ -1803,7 +1803,7 @@ class Await(BaseExpression):
 
     def _codegen(self, state: CodegenState) -> None:
         with self._parenthesize(state):
-            state.tokens.append("await")
+            state.add_token("await")
             self.whitespace_after_await._codegen(state)
             self.expression._codegen(state)
 
@@ -1894,11 +1894,11 @@ class IfExp(BaseExpression):
         with self._parenthesize(state):
             self.body._codegen(state)
             self.whitespace_before_if._codegen(state)
-            state.tokens.append("if")
+            state.add_token("if")
             self.whitespace_after_if._codegen(state)
             self.test._codegen(state)
             self.whitespace_before_else._codegen(state)
-            state.tokens.append("else")
+            state.add_token("else")
             self.whitespace_after_else._codegen(state)
             self.orelse._codegen(state)
 
@@ -1943,8 +1943,8 @@ class From(CSTNode):
         if isinstance(whitespace_before_from, BaseParenthesizableWhitespace):
             whitespace_before_from._codegen(state)
         else:
-            state.tokens.append(default_space)
-        state.tokens.append("from")
+            state.add_token(default_space)
+        state.add_token("from")
         self.whitespace_after_from._codegen(state)
         self.item._codegen(state)
 
@@ -2003,14 +2003,14 @@ class Yield(BaseExpression):
 
     def _codegen(self, state: CodegenState) -> None:
         with self._parenthesize(state):
-            state.tokens.append("yield")
+            state.add_token("yield")
             whitespace_after_yield = self.whitespace_after_yield
             if isinstance(whitespace_after_yield, BaseParenthesizableWhitespace):
                 whitespace_after_yield._codegen(state)
             else:
                 # Only need a space after yield if there is a value to yield.
                 if self.value is not None:
-                    state.tokens.append(" ")
+                    state.add_token(" ")
             value = self.value
             if isinstance(value, From):
                 value._codegen(state, default_space="")
@@ -2072,9 +2072,9 @@ class Element(BaseElement):
         comma = self.comma
         if comma is MaybeSentinel.DEFAULT and default_comma:
             if default_comma_whitespace:
-                state.tokens.append(", ")
+                state.add_token(", ")
             else:
-                state.tokens.append(",")
+                state.add_token(",")
         elif isinstance(comma, Comma):
             comma._codegen(state)
 
@@ -2117,15 +2117,15 @@ class StarredElement(BaseElement, _BaseParenthesizedNode):
         default_comma_whitespace: bool = False,
     ) -> None:
         with self._parenthesize(state):
-            state.tokens.append("*")
+            state.add_token("*")
             self.whitespace_before_value._codegen(state)
             self.value._codegen(state)
         comma = self.comma
         if comma is MaybeSentinel.DEFAULT and default_comma:
             if default_comma_whitespace:
-                state.tokens.append(", ")
+                state.add_token(", ")
             else:
-                state.tokens.append(",")
+                state.add_token(",")
         elif isinstance(comma, Comma):
             comma._codegen(state)
         self.whitespace_after._codegen(state)

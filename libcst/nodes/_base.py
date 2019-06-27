@@ -275,7 +275,7 @@ class BaseValueToken(BaseLeaf, ABC):
     value: str
 
     def _codegen(self, state: CodegenState) -> None:
-        state.tokens.append(self.value)
+        state.add_token(self.value)
 
 
 class AnnotationIndicatorSentinel(Enum):

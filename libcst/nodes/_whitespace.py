@@ -99,7 +99,7 @@ class Newline(BaseLeaf):
             )
 
     def _codegen(self, state: CodegenState) -> None:
-        state.tokens.append(state.default_newline if self.value is None else self.value)
+        state.add_token(state.default_newline if self.value is None else self.value)
 
 
 @add_slots
@@ -180,7 +180,7 @@ class EmptyLine(CSTNode):
 
     def _codegen(self, state: CodegenState) -> None:
         if self.indent:
-            state.tokens.extend(state.indent)
+            state.add_indent_tokens()
         self.whitespace._codegen(state)
         if self.comment is not None:
             self.comment._codegen(state)
@@ -219,7 +219,7 @@ class ParenthesizedWhitespace(BaseParenthesizableWhitespace):
         for line in self.empty_lines:
             line._codegen(state)
         if self.indent:
-            state.tokens.extend(state.indent)
+            state.add_indent_tokens()
         self.last_line._codegen(state)
 
     @property

@@ -34,7 +34,7 @@ class _BaseOneTokenOp(CSTNode, ABC):
 
     def _codegen(self, state: CodegenState) -> None:
         self.whitespace_before._codegen(state)
-        state.tokens.append(self._get_token())
+        state.add_token(self._get_token())
         self.whitespace_after._codegen(state)
 
     @abstractmethod
@@ -71,9 +71,9 @@ class _BaseTwoTokenOp(CSTNode, ABC):
 
     def _codegen(self, state: CodegenState) -> None:
         self.whitespace_before._codegen(state)
-        state.tokens.append(self._get_tokens()[0])
+        state.add_token(self._get_tokens()[0])
         self.whitespace_between._codegen(state)
-        state.tokens.append(self._get_tokens()[1])
+        state.add_token(self._get_tokens()[1])
         self.whitespace_after._codegen(state)
 
     @abstractmethod
@@ -96,7 +96,7 @@ class BaseUnaryOp(CSTNode, ABC):
         )
 
     def _codegen(self, state: CodegenState) -> None:
-        state.tokens.append(self._get_token())
+        state.add_token(self._get_token())
         self.whitespace_after._codegen(state)
 
     @abstractmethod
@@ -205,7 +205,7 @@ class ImportStar(BaseLeaf):
     """
 
     def _codegen(self, state: CodegenState) -> None:
-        state.tokens.append("*")
+        state.add_token("*")
 
 
 @add_slots
@@ -465,7 +465,7 @@ class NotEqual(BaseCompOp):
 
     def _codegen(self, state: CodegenState) -> None:
         self.whitespace_before._codegen(state)
-        state.tokens.append(self.value)
+        state.add_token(self.value)
         self.whitespace_after._codegen(state)
 
 
