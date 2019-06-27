@@ -115,7 +115,7 @@ class BaseParser(Generic[_TokenT, _TokenTypeT, _NodeT]):
                 raise ParserSyntaxError(
                     message="incomplete input",
                     encountered=None,
-                    expected=tos.dfa.arcs.keys(),
+                    expected=list(tos.dfa.arcs.keys()),
                     pos=(len(self.lines), len(self.lines[-1])),
                     lines=self.lines,
                 )
@@ -155,7 +155,7 @@ class BaseParser(Generic[_TokenT, _TokenTypeT, _NodeT]):
                     raise ParserSyntaxError(
                         message="incomplete input",
                         encountered=token.string,
-                        expected=stack[-1].dfa.arcs.keys(),
+                        expected=list(stack[-1].dfa.arcs.keys()),
                         pos=token.start_pos,
                         lines=self.lines,
                     )

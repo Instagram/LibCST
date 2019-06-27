@@ -4,7 +4,6 @@
 # LICENSE file in the root directory of this source tree.
 
 # pyre-strict
-from dataclasses import dataclass
 from typing import Iterable, Optional, Sequence, Tuple
 
 from libcst._tabs import expand_tabs
@@ -14,17 +13,28 @@ _EOF_STR: str = "end of file (EOF)"
 _NEWLINE_CHARS: str = "\r\n"
 
 
-@dataclass(frozen=True, eq=False)
 class ParserSyntaxError(Exception):
     """
     Contains error information about the parser tree.
     """
 
-    message: str
-    encountered: Optional[str]  # None means EOF
-    expected: Optional[Iterable[str]]  # None means EOF
-    pos: Tuple[int, int]  # (one-indexed line, zero-indexed column)
-    lines: Sequence[str]  # source code, used to generate a human-readable output
+    def __init__(
+        self,
+        message: str,
+        encountered: Optional[str],  # None means EOF
+        expected: Optional[Iterable[str]],  # None means EOF
+        pos: Tuple[int, int],  # (one-indexed line, zero-indexed column)
+        lines: Sequence[str],  # source code, used to generate a human-readable output
+    ) -> None:
+        self.message = message
+        self.encountered = encountered
+        self.expected = expected
+        self.pos = pos
+        self.lines = lines
+        # Make pickling this error work
+        super(ParserSyntaxError, self).__init__(
+            message, encountered, expected, pos, lines
+        )
 
     def __str__(self) -> str:
         """
