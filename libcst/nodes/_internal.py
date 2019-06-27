@@ -5,8 +5,18 @@
 
 # pyre-strict
 
+import re
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Iterable, List, Optional, Sequence, TypeVar, Union
+from typing import (
+    TYPE_CHECKING,
+    Iterable,
+    List,
+    Optional,
+    Pattern,
+    Sequence,
+    TypeVar,
+    Union,
+)
 
 from libcst._add_slots import add_slots
 from libcst._maybe_sentinel import MaybeSentinel
@@ -22,6 +32,9 @@ if TYPE_CHECKING:
 _CSTNodeT = TypeVar("_CSTNodeT", bound="CSTNode")
 
 
+NEWLINE_RE: Pattern[str] = re.compile(r"\r\n?|\n")
+
+
 @add_slots
 @dataclass(frozen=False)
 class CodegenState:
@@ -31,6 +44,37 @@ class CodegenState:
 
     indent: List[str] = field(default_factory=list)
     tokens: List[str] = field(default_factory=list)
+
+    line: int = 1  # one-indexed
+    column: int = 0  # zero-indexed
+
+    def increase_indent(self, value: str) -> None:
+        self.indent.append(value)
+
+    def decrease_indent(self) -> None:
+        self.indent.pop()
+
+    def add_indent_tokens(self) -> None:
+        self.tokens.extend(self.indent)
+        for token in self.indent:
+            self._update_position(token)
+
+    def add_token(self, value: str) -> None:
+        self.tokens.append(value)
+        self._update_position(value)
+
+    def _update_position(self, value: str) -> None:
+        """
+        Computes new line and column numbers from adding the token [value].
+        """
+        segments = NEWLINE_RE.split(value)
+        if len(segments) == 1:  # contains no newlines
+            # no change to self.lines
+            self.column += len(value)
+        else:
+            self.line += len(segments) - 1
+            # newline resets column back to 0, but a trailing token may shift column
+            self.column = len(segments[-1])
 
 
 def visit_required(fieldname: str, node: _CSTNodeT, visitor: "CSTVisitor") -> _CSTNodeT:
