@@ -1033,6 +1033,7 @@ class Slice(CSTNode):
                 step._codegen(state)
 
 
+@add_slots
 @dataclass(frozen=True)
 class ExtSlice(CSTNode):
     """
@@ -1064,6 +1065,7 @@ class ExtSlice(CSTNode):
             comma._codegen(state)
 
 
+@add_slots
 @dataclass(frozen=True)
 class Subscript(BaseAssignTargetExpression, BaseDelTargetExpression):
     """
@@ -1131,6 +1133,7 @@ class Subscript(BaseAssignTargetExpression, BaseDelTargetExpression):
             self.rbracket._codegen(state)
 
 
+@add_slots
 @dataclass(frozen=True)
 class Annotation(CSTNode):
     """
@@ -1199,6 +1202,7 @@ class Annotation(CSTNode):
             self.annotation._codegen(state)
 
 
+@add_slots
 @dataclass(frozen=True)
 class ParamStar(CSTNode):
     """
@@ -1924,6 +1928,7 @@ class IfExp(BaseExpression):
             self.orelse._codegen(state)
 
 
+@add_slots
 @dataclass(frozen=True)
 class From(CSTNode):
     """

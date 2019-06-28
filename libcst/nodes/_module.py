@@ -22,7 +22,7 @@ builtin_bytes = bytes
 
 
 @add_slots
-@dataclass(frozen=False)
+@dataclass(frozen=True)
 class Module(CSTNode):
     """
     Contains some top-level information inferred from the file letting us set correct
@@ -41,6 +41,7 @@ class Module(CSTNode):
     default_newline: str = "\n"
     has_trailing_newline: bool = True
 
+    # TODO: remove these fields when metadata API is in place
     _positions: MutableMapping["CSTNode", CodePosition] = field(
         default_factory=dict, init=False, compare=False, repr=False
     )
@@ -102,6 +103,9 @@ class Module(CSTNode):
             default_indent=self.default_indent, default_newline=self.default_newline
         )
         node._codegen(state)
-        self._positions = state.positions
-        self._semantic_positions = state.semantic_positions
+
+        # TODO remove when metadata API is in place
+        object.__setattr__(self, "_positions", state.positions)
+        object.__setattr__(self, "_semantic_positions", state.semantic_positions)
+
         return "".join(state.tokens)

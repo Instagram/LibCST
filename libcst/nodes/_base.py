@@ -4,14 +4,31 @@
 # LICENSE file in the root directory of this source tree.
 
 from abc import ABC, abstractmethod
-from dataclasses import fields, replace
+from dataclasses import dataclass, field, fields, replace
 from enum import Enum, auto
-from typing import Any, List, Sequence, TypeVar, Union, cast
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    List,
+    MutableMapping,
+    Sequence,
+    Type,
+    TypeVar,
+    Union,
+    cast,
+)
 
 from libcst._base_visitor import CSTVisitor
 from libcst._removal_sentinel import RemovalSentinel
 from libcst.nodes._internal import CodegenState, CodePosition
 
+
+if TYPE_CHECKING:
+    from libcst.metadata.base_provider import BaseMetadataProvider
+
+
+_T = TypeVar("_T")
+_CSTMetadataMapping = MutableMapping[Type["BaseMetaDataProvider[_T]"], _T]
 
 _CSTNodeSelfT = TypeVar("_CSTNodeSelfT", bound="CSTNode")
 _EMPTY_SEQUENCE: Sequence["CSTNode"] = ()
@@ -52,7 +69,12 @@ def _indent(value: str) -> str:
     return "\n".join(f"    {l}" for l in value.split("\n"))
 
 
+@dataclass(frozen=True)
 class CSTNode(ABC):
+    __metadata__: MutableMapping[Type["BaseMetaDataProvider[_T]"], _T] = field(
+        default_factory=dict, init=False, repr=False, compare=False
+    )
+
     def __post_init__(self) -> None:
         # PERF: It might make more sense to move validation work into the visitor, which
         # would allow us to avoid validating the tree when parsing a file.
@@ -250,8 +272,8 @@ class CSTNode(ABC):
 
         lines = []
         lines.append(f"{type(self).__name__}(")
-        for field in fields(self):
-            key = field.name
+        for f in fields(self):
+            key = f.name
             if key[0] != "_":
                 value = getattr(self, key)
                 lines.append(_indent(f"{key}={_pretty_repr(value)},"))

@@ -5,7 +5,7 @@
 
 # pyre-strict
 from abc import ABC
-from typing import TYPE_CHECKING, TypeVar, Union
+from typing import TYPE_CHECKING, Any, Type, TypeVar, Union, cast
 
 from libcst._removal_sentinel import RemovalSentinel
 
@@ -13,12 +13,15 @@ from libcst._removal_sentinel import RemovalSentinel
 if TYPE_CHECKING:
     # Circular dependency for typing reasons only
     from libcst.nodes._base import CSTNode
+    from libcst.metadata.base_provider import BaseMetadataProvider
+
 
 # RemovalSentinel is re-exported
 __all__ = ["CSTVisitor", "RemovalSentinel"]
 
 
 CSTNodeT = TypeVar("CSTNodeT", bound="CSTNode")
+_T = TypeVar("_T")
 
 
 class CSTVisitor(ABC):
@@ -47,3 +50,15 @@ class CSTVisitor(ABC):
         This is not always possible, and may raise an exception.
         """
         return updated_node
+
+    @classmethod
+    def get_metadata(cls, key: Type["BaseMetadataProvider[_T]"], node: CSTNodeT) -> _T:
+        """
+        Gets metadata provided by the [key] provider if it is accessible from
+        this vistor. Metadata is accessible if [key] is the same as [cls] or
+        if [key] is in METADATA_DEPENDENCIES.
+        """
+        # TODO: runtime checks that metadata is available in this visitor
+
+        # pyre-fixme[33]: Given annotation cannot be `Any`.
+        return cast(Any, node).__metadata__[key]
