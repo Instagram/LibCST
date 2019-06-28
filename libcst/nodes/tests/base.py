@@ -3,6 +3,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+# pyre-strict
 import dataclasses
 from contextlib import ExitStack
 from dataclasses import dataclass
@@ -11,7 +12,7 @@ from unittest.mock import patch
 
 import libcst.nodes as cst
 from libcst._base_visitor import CSTVisitor
-from libcst.nodes._internal import CodegenState, visit_required
+from libcst.nodes._internal import CodegenState, CodePosition, visit_required
 from libcst.testing.utils import UnitTest
 
 
@@ -57,8 +58,9 @@ class CSTNodeTest(UnitTest):
         node: _CSTNodeT,
         code: str,
         parser: Optional[Callable[[str], _CSTNodeT]] = None,
+        expected_position: Optional[CodePosition] = None,
     ) -> None:
-        self.__assert_codegen(node, code)
+        self.__assert_codegen(node, code, expected_position)
 
         if parser is not None:
             parsed_node = parser(code)
@@ -79,11 +81,20 @@ class CSTNodeTest(UnitTest):
         with self.assertRaisesRegex(cst.CSTValidationError, expected_re):
             get_node()
 
-    def __assert_codegen(self, node: cst.CSTNode, expected: str) -> None:
+    def __assert_codegen(
+        self,
+        node: cst.CSTNode,
+        expected: str,
+        expected_position: Optional[CodePosition] = None,
+    ) -> None:
         """
         Verifies that the given node's `_codegen` method is correct.
         """
-        self.assertEqual(cst.Module([]).code_for_node(node), expected)
+        module = cst.Module([])
+        self.assertEqual(module.code_for_node(node), expected)
+        if expected_position is not None:
+            # TODO: replace this when metadata framework is in place
+            self.assertEqual(module._semantic_positions[node], expected_position)
 
     def __assert_children_match_codegen(self, node: cst.CSTNode) -> None:
         children = node.children

@@ -7,6 +7,7 @@
 from typing import Callable, Optional
 
 import libcst.nodes as cst
+from libcst.nodes._internal import CodePosition
 from libcst.nodes.tests.base import CSTNodeTest
 from libcst.parser import parse_statement
 from libcst.testing.utils import data_provider
@@ -105,8 +106,9 @@ class AssignTest(CSTNodeTest):
         node: cst.CSTNode,
         code: str,
         parser: Optional[Callable[[str], cst.CSTNode]],
+        position: Optional[CodePosition] = None,
     ) -> None:
-        self.validate_node(node, code, parser)
+        self.validate_node(node, code, parser, expected_position=position)
 
     @data_provider(
         (
@@ -262,8 +264,9 @@ class AnnAssignTest(CSTNodeTest):
         node: cst.CSTNode,
         code: str,
         parser: Optional[Callable[[str], cst.CSTNode]],
+        position: Optional[CodePosition] = None,
     ) -> None:
-        self.validate_node(node, code, parser)
+        self.validate_node(node, code, parser, expected_position=position)
 
     @data_provider(
         (
@@ -370,5 +373,6 @@ class AugAssignTest(CSTNodeTest):
         node: cst.CSTNode,
         code: str,
         parser: Optional[Callable[[str], cst.CSTNode]],
+        position: Optional[CodePosition] = None,
     ) -> None:
-        self.validate_node(node, code, parser)
+        self.validate_node(node, code, parser, expected_position=position)

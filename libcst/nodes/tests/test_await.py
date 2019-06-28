@@ -4,9 +4,10 @@
 # LICENSE file in the root directory of this source tree.
 
 # pyre-strict
-from typing import Callable
+from typing import Callable, Optional
 
 import libcst.nodes as cst
+from libcst.nodes._internal import CodePosition
 from libcst.nodes.tests.base import CSTNodeTest
 from libcst.parser import parse_expression
 from libcst.testing.utils import data_provider
@@ -27,13 +28,16 @@ class AwaitTest(CSTNodeTest):
                     rpar=(cst.RightParen(whitespace_before=cst.SimpleWhitespace(" ")),),
                 ),
                 "( await  test )",
+                CodePosition((1, 2), (1, 13)),
             ),
         )
     )
-    def test_valid(self, node: cst.CSTNode, code: str) -> None:
+    def test_valid(
+        self, node: cst.CSTNode, code: str, position: Optional[CodePosition] = None
+    ) -> None:
         # We don't have sentinel nodes for atoms, so we know that 100% of atoms
         # can be parsed identically to their creation.
-        self.validate_node(node, code, parse_expression)
+        self.validate_node(node, code, parse_expression, expected_position=position)
 
     @data_provider(
         (

@@ -7,6 +7,7 @@
 from typing import Callable, Optional
 
 import libcst.nodes as cst
+from libcst.nodes._internal import CodePosition
 from libcst.nodes.tests.base import CSTNodeTest
 from libcst.parser import parse_expression
 from libcst.testing.utils import data_provider
@@ -423,6 +424,20 @@ class CallTest(CSTNodeTest):
                 ),
                 "( foo ( pos1 ,  *  list1, kw1=1, ** dict1 ) )",
                 parse_expression,
+                CodePosition((1, 2), (1, 43)),
+            ),
+            # Test args
+            (
+                cst.Arg(
+                    star="*",
+                    whitespace_after_star=cst.SimpleWhitespace("  "),
+                    keyword=None,
+                    value=cst.Name("list1"),
+                    comma=cst.Comma(whitespace_after=cst.SimpleWhitespace(" ")),
+                ),
+                "*  list1, ",
+                None,
+                CodePosition((1, 0), (1, 8)),
             ),
         )
     )
@@ -431,8 +446,9 @@ class CallTest(CSTNodeTest):
         node: cst.CSTNode,
         code: str,
         parser: Optional[Callable[[str], cst.CSTNode]],
+        position: Optional[CodePosition] = None,
     ) -> None:
-        self.validate_node(node, code, parser)
+        self.validate_node(node, code, parser, expected_position=position)
 
     @data_provider(
         (

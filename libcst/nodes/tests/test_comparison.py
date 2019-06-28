@@ -4,9 +4,10 @@
 # LICENSE file in the root directory of this source tree.
 
 # pyre-strict
-from typing import Callable
+from typing import Callable, Optional
 
 import libcst.nodes as cst
+from libcst.nodes._internal import CodePosition
 from libcst.nodes.tests.base import CSTNodeTest
 from libcst.parser import parse_expression
 from libcst.testing.utils import data_provider
@@ -152,6 +153,7 @@ class ComparisonTest(CSTNodeTest):
                     ),
                 ),
                 "baz == (foo not in bar)",
+                CodePosition((1, 0), (1, 23)),
             ),
             (
                 cst.Comparison(
@@ -166,11 +168,14 @@ class ComparisonTest(CSTNodeTest):
                     ),
                 ),
                 "a > b > c",
+                CodePosition((1, 0), (1, 9)),
             ),
         )
     )
-    def test_valid(self, node: cst.CSTNode, code: str) -> None:
-        self.validate_node(node, code, parse_expression)
+    def test_valid(
+        self, node: cst.CSTNode, code: str, position: Optional[CodePosition] = None
+    ) -> None:
+        self.validate_node(node, code, parse_expression, expected_position=position)
 
     @data_provider(
         (

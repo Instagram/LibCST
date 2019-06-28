@@ -4,9 +4,10 @@
 # LICENSE file in the root directory of this source tree.
 
 # pyre-strict
-from typing import Callable
+from typing import Callable, Optional
 
 import libcst.nodes as cst
+from libcst.nodes._internal import CodePosition
 from libcst.nodes.tests.base import CSTNodeTest
 from libcst.parser import parse_expression
 from libcst.testing.utils import data_provider
@@ -50,6 +51,7 @@ class IfExpTest(CSTNodeTest):
                     ),
                 ),
                 "(foo)if(bar)else(baz)",
+                CodePosition((1, 0), (1, 21)),
             ),
             # Make sure that spacing works
             (
@@ -65,11 +67,14 @@ class IfExpTest(CSTNodeTest):
                     rpar=(cst.RightParen(whitespace_before=cst.SimpleWhitespace(" ")),),
                 ),
                 "( foo  if  bar  else  baz )",
+                CodePosition((1, 2), (1, 25)),
             ),
         )
     )
-    def test_valid(self, node: cst.CSTNode, code: str) -> None:
-        self.validate_node(node, code, parse_expression)
+    def test_valid(
+        self, node: cst.CSTNode, code: str, position: Optional[CodePosition] = None
+    ) -> None:
+        self.validate_node(node, code, parse_expression, expected_position=position)
 
     @data_provider(
         (

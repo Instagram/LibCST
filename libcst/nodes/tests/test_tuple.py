@@ -4,9 +4,10 @@
 # LICENSE file in the root directory of this source tree.
 
 # pyre-strict
-from typing import Callable
+from typing import Callable, Optional
 
 import libcst.nodes as cst
+from libcst.nodes._internal import CodePosition
 from libcst.nodes.tests.base import CSTNodeTest
 from libcst.testing.utils import data_provider
 
@@ -67,6 +68,7 @@ class TupleTest(CSTNodeTest):
                     ]
                 ),
                 "(one, *two,)",
+                CodePosition((1, 1), (1, 11)),
             ),
             # custom parenthesis on StarredElement
             (
@@ -80,6 +82,7 @@ class TupleTest(CSTNodeTest):
                     ]
                 ),
                 "((*abc),)",
+                CodePosition((1, 1), (1, 8)),
             ),
             # custom whitespace on Element
             (
@@ -94,6 +97,7 @@ class TupleTest(CSTNodeTest):
                     rpar=[],  # rpar can't own the trailing whitespace if it's not there
                 ),
                 "one, two  ",
+                CodePosition((1, 0), (1, 10)),
             ),
             # custom whitespace on StarredElement
             (
@@ -112,6 +116,7 @@ class TupleTest(CSTNodeTest):
                     rpar=[],  # rpar can't own the trailing whitespace if it's not there
                 ),
                 "one, (*  two)    ",
+                CodePosition((1, 0), (1, 17)),
             ),
             # missing spaces around tuple, okay with parenthesis
             (
@@ -166,8 +171,10 @@ class TupleTest(CSTNodeTest):
             ),
         )
     )
-    def test_valid(self, node: cst.CSTNode, code: str) -> None:
-        self.validate_node(node, code)
+    def test_valid(
+        self, node: cst.CSTNode, code: str, position: Optional[CodePosition] = None
+    ) -> None:
+        self.validate_node(node, code, expected_position=position)
 
     @data_provider(
         (

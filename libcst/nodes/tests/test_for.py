@@ -7,6 +7,7 @@
 from typing import Callable, Optional
 
 import libcst.nodes as cst
+from libcst.nodes._internal import CodePosition
 from libcst.nodes.tests.base import CSTNodeTest, DummyIndentedBlock
 from libcst.parser import parse_statement
 from libcst.testing.utils import data_provider
@@ -132,8 +133,9 @@ class ForTest(CSTNodeTest):
         node: cst.CSTNode,
         code: str,
         parser: Optional[Callable[[str], cst.CSTNode]],
+        position: Optional[CodePosition] = None,
     ) -> None:
-        self.validate_node(node, code, parser)
+        self.validate_node(node, code, parser, expected_position=position)
 
     @data_provider(
         (

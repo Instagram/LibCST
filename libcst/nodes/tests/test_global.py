@@ -4,9 +4,10 @@
 # LICENSE file in the root directory of this source tree.
 
 # pyre-strict
-from typing import Callable
+from typing import Callable, Optional
 
 import libcst.nodes as cst
+from libcst.nodes._internal import CodePosition
 from libcst.nodes.tests.base import CSTNodeTest
 from libcst.parser import parse_statement
 from libcst.testing.utils import data_provider
@@ -41,8 +42,10 @@ class GlobalConstructionTest(CSTNodeTest):
             ),
         )
     )
-    def test_valid(self, node: cst.CSTNode, code: str) -> None:
-        self.validate_node(node, code)
+    def test_valid(
+        self, node: cst.CSTNode, code: str, position: Optional[CodePosition] = None
+    ) -> None:
+        self.validate_node(node, code, expected_position=position)
 
     @data_provider(
         (
@@ -122,6 +125,13 @@ class GlobalParsingTest(CSTNodeTest):
             ),
         )
     )
-    def test_valid(self, node: cst.CSTNode, code: str) -> None:
-        # pyre-fixme[16]: `BaseSuite` has no attribute `__getitem__`.
-        self.validate_node(node, code, lambda code: parse_statement(code).body[0])
+    def test_valid(
+        self, node: cst.CSTNode, code: str, position: Optional[CodePosition] = None
+    ) -> None:
+        self.validate_node(
+            node,
+            code,
+            # pyre-fixme[16]: `BaseSuite` has no attribute `__getitem__`.
+            lambda code: parse_statement(code).body[0],
+            expected_position=position,
+        )

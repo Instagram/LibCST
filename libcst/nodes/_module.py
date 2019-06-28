@@ -3,7 +3,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import MutableMapping, Sequence, TypeVar, Union
 
 from libcst._add_slots import add_slots
@@ -41,7 +41,12 @@ class Module(CSTNode):
     default_newline: str = "\n"
     has_trailing_newline: bool = True
 
-    _positions: MutableMapping["CSTNode", CodePosition] = None
+    _positions: MutableMapping["CSTNode", CodePosition] = field(
+        default_factory=dict, init=False, compare=False, repr=False
+    )
+    _semantic_positions: MutableMapping["CSTNode", CodePosition] = field(
+        default_factory=dict, init=False, compare=False, repr=False
+    )
 
     def _visit_and_replace_children(self, visitor: CSTVisitor) -> "Module":
         return Module(
@@ -52,7 +57,6 @@ class Module(CSTNode):
             default_indent=self.default_indent,
             default_newline=self.default_newline,
             has_trailing_newline=self.has_trailing_newline,
-            _positions=self._positions,
         )
 
     def visit(self: _ModuleSelfT, visitor: CSTVisitor) -> _ModuleSelfT:
@@ -99,4 +103,5 @@ class Module(CSTNode):
         )
         node._codegen(state)
         self._positions = state.positions
+        self._semantic_positions = state.semantic_positions
         return "".join(state.tokens)

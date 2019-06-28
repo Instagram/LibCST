@@ -4,9 +4,10 @@
 # LICENSE file in the root directory of this source tree.
 
 # pyre-strict
-from typing import Callable
+from typing import Callable, Optional
 
 import libcst.nodes as cst
+from libcst.nodes._internal import CodePosition
 from libcst.nodes.tests.base import CSTNodeTest, DummyIndentedBlock
 from libcst.parser import parse_statement
 from libcst.testing.utils import data_provider
@@ -509,10 +510,86 @@ class FunctionDefCreationTest(CSTNodeTest):
                 ),
                 "\n# What an amazing decorator\n@ bar (  )\n# What a great function\nasync  def  foo  (  )  ->  str : pass\n",
             ),
+            # Decorators and annotations
+            (
+                cst.Decorator(
+                    whitespace_after_at=cst.SimpleWhitespace(" "),
+                    decorator=cst.Call(
+                        func=cst.Name("bar"),
+                        whitespace_after_func=cst.SimpleWhitespace(" "),
+                        whitespace_before_args=cst.SimpleWhitespace("  "),
+                    ),
+                ),
+                "@ bar (  )\n",
+                # CodePosition((1,0), (1,10))
+            ),
+            (
+                cst.Annotation(
+                    indicator=":",
+                    whitespace_before_indicator=cst.SimpleWhitespace("  "),
+                    whitespace_after_indicator=cst.SimpleWhitespace("  "),
+                    annotation=cst.Name("str"),
+                ),
+                "  :  str",
+                CodePosition((1, 5), (1, 8)),
+            ),
+            # Parameters
+            (
+                cst.Parameters(
+                    params=(
+                        cst.Param(cst.Name("first")),
+                        cst.Param(cst.Name("second")),
+                    ),
+                    default_params=(
+                        cst.Param(
+                            cst.Name("third"), default=cst.Number(cst.Float("1.0"))
+                        ),
+                        cst.Param(
+                            cst.Name("fourth"), default=cst.Number(cst.Float("1.5"))
+                        ),
+                    ),
+                    star_arg=cst.Param(
+                        cst.Name("params"), cst.Annotation(cst.Name("str"))
+                    ),
+                    kwonly_params=(
+                        cst.Param(
+                            cst.Name("bar"),
+                            cst.Annotation(cst.Name("str")),
+                            default=cst.SimpleString('"one"'),
+                        ),
+                        cst.Param(cst.Name("baz"), cst.Annotation(cst.Name("int"))),
+                        cst.Param(
+                            cst.Name("biz"),
+                            cst.Annotation(cst.Name("str")),
+                            default=cst.SimpleString('"two"'),
+                        ),
+                    ),
+                ),
+                'first, second, third = 1.0, fourth = 1.5, *params: str, bar: str = "one", baz: int, biz: str = "two"',
+                CodePosition((1, 0), (1, 100)),
+            ),
+            (
+                cst.Param(
+                    cst.Name("third"), star="", default=cst.Number(cst.Float("1.0"))
+                ),
+                "third = 1.0",
+                CodePosition((1, 0), (1, 5)),
+            ),
+            (
+                cst.Param(
+                    cst.Name("third"),
+                    star="*",
+                    whitespace_after_star=cst.SimpleWhitespace(" "),
+                ),
+                "* third",
+                CodePosition((1, 0), (1, 7)),
+            ),
         )
     )
-    def test_valid(self, node: cst.CSTNode, code: str) -> None:
-        self.validate_node(node, code)
+    def test_valid(
+        self, node: cst.CSTNode, code: str, position: Optional[CodePosition] = None
+    ) -> None:
+        self.validate_node(node, code, expected_position=position)
 
     @data_provider(
         (
@@ -1615,5 +1692,7 @@ class FunctionDefParserTest(CSTNodeTest):
             ),
         )
     )
-    def test_valid(self, node: cst.CSTNode, code: str) -> None:
-        self.validate_node(node, code, parse_statement)
+    def test_valid(
+        self, node: cst.CSTNode, code: str, position: Optional[CodePosition] = None
+    ) -> None:
+        self.validate_node(node, code, parse_statement, expected_position=position)
