@@ -42,21 +42,21 @@ class CodegenState:
     default_indent: str
     default_newline: str
 
-    indent: List[str] = field(default_factory=list)
+    indent_tokens: List[str] = field(default_factory=list)
     tokens: List[str] = field(default_factory=list)
 
     line: int = 1  # one-indexed
     column: int = 0  # zero-indexed
 
     def increase_indent(self, value: str) -> None:
-        self.indent.append(value)
+        self.indent_tokens.append(value)
 
     def decrease_indent(self) -> None:
-        self.indent.pop()
+        self.indent_tokens.pop()
 
     def add_indent_tokens(self) -> None:
-        self.tokens.extend(self.indent)
-        for token in self.indent:
+        self.tokens.extend(self.indent_tokens)
+        for token in self.indent_tokens:
             self._update_position(token)
 
     def add_token(self, value: str) -> None:
