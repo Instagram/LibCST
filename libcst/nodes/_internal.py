@@ -6,10 +6,12 @@
 # pyre-strict
 
 import re
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 from typing import (
     TYPE_CHECKING,
     Iterable,
+    Iterator,
     List,
     MutableMapping,
     Optional,
@@ -57,8 +59,10 @@ class CodegenState:
     line: int = 1  # one-indexed
     column: int = 0  # zero-indexed
 
-    positions: MutableMapping["CSTNode", CodePosition] = field(
-        default_factory=lambda: {}
+    positions: MutableMapping["CSTNode", CodePosition] = field(default_factory=dict)
+
+    semantic_positions: MutableMapping["CSTNode", CodePosition] = field(
+        default_factory=dict
     )
 
     def increase_indent(self, value: str) -> None:
@@ -91,6 +95,15 @@ class CodegenState:
 
     def update_position(self, node: _CSTNodeT, position: CodePosition) -> None:
         self.positions[node] = position
+
+    @contextmanager
+    def record_semantic_position(self, node: _CSTNodeT) -> Iterator[None]:
+        start = (self.line, self.column)
+        try:
+            yield
+        finally:
+            end = (self.line, self.column)
+            self.semantic_positions[node] = CodePosition(start, end)
 
 
 def visit_required(fieldname: str, node: _CSTNodeT, visitor: "CSTVisitor") -> _CSTNodeT:

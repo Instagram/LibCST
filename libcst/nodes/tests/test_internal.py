@@ -6,7 +6,8 @@
 # pyre-strict
 from typing import Tuple
 
-from libcst.nodes._internal import CodegenState
+import libcst.nodes as cst
+from libcst.nodes._internal import CodegenState, CodePosition
 from libcst.testing.utils import UnitTest
 
 
@@ -48,3 +49,23 @@ class InternalTest(UnitTest):
         state.decrease_indent()
         state.add_indent_tokens()
         self.assertEqual(position(state), (1, 8))
+
+    def test_context_manager(self) -> None:
+        # create a dummy node
+        node = cst.Pass()
+
+        # simulate codegen behavior for the dummy node
+        # generates the code " pass "
+        state = CodegenState(" " * 4, "\n")
+        start = (state.line, state.column)
+        state.add_token(" ")
+        with state.record_semantic_position(node):
+            state.add_token("pass")
+        state.add_token(" ")
+        end = (state.line, state.column)
+        state.update_position(node, CodePosition(start, end))
+
+        # check syntactic whitespace is correctly recorded (includes whitespace)
+        self.assertEqual(state.positions[node], CodePosition((1, 0), (1, 6)))
+        # check semantic whitespace is correctly recorded (ignoring whitespace)
+        self.assertEqual(state.semantic_positions[node], CodePosition((1, 1), (1, 5)))

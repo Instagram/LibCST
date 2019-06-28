@@ -188,9 +188,9 @@ class CSTNode(ABC):
         ...
 
     def _codegen(self, state: CodegenState, **kwargs: Any) -> None:
-        start = state.line, state.column
+        start = (state.line, state.column)
         self._codegen_impl(state, **kwargs)
-        end = state.line, state.column
+        end = (state.line, state.column)
         state.update_position(self, CodePosition(start, end))
 
     def with_changes(self: _CSTNodeSelfT, **changes: Any) -> _CSTNodeSelfT:
