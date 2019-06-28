@@ -34,6 +34,9 @@ def _node_repr_recursive(
         tokens: List[str] = [node.__class__.__name__]
         fields: Sequence[dataclasses.Field] = dataclasses.fields(node)
 
+        # Hide all fields prefixed with "_"
+        fields = [f for f in fields if f.name[0] != "_"]
+
         # Filter whitespace nodes if needed
         if not show_whitespace:
 

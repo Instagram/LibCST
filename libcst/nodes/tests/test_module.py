@@ -4,7 +4,10 @@
 # LICENSE file in the root directory of this source tree.
 
 # pyre-strict
+from typing import Tuple, cast
+
 import libcst.nodes as cst
+from libcst.nodes._internal import CodePosition
 from libcst.nodes.tests.base import CSTNodeTest
 from libcst.parser import parse_module
 from libcst.testing.utils import data_provider
@@ -112,3 +115,77 @@ class ModuleTest(CSTNodeTest):
     )
     def test_parser(self, *, code: str, expected: cst.Module) -> None:
         self.assertEqual(parse_module(code), expected)
+
+    @data_provider(
+        {
+            "empty": {"code": "", "expected": CodePosition((1, 0), (1, 0))},
+            "empty_with_newline": {
+                "code": "\n",
+                "expected": CodePosition((1, 0), (2, 0)),
+            },
+            "empty_program_with_comments": {
+                "code": "# 2345",
+                "expected": CodePosition((1, 0), (2, 0)),
+            },
+            "simple_pass": {"code": "pass\n", "expected": CodePosition((1, 0), (2, 0))},
+            "simple_pass_with_header_footer": {
+                "code": "# header\npass # trailing\n# footer\n",
+                "expected": CodePosition((1, 0), (4, 0)),
+            },
+        }
+    )
+    def test_module_position(self, *, code: str, expected: CodePosition) -> None:
+        module = parse_module(code)
+        module.code
+
+        self.assertEqual(module._positions[module], expected)
+
+    def cmp_position(
+        self,
+        module: cst.Module,
+        node: cst.CSTNode,
+        start: Tuple[int, int],
+        end: Tuple[int, int],
+    ) -> None:
+        self.assertEqual(module._positions[node], CodePosition(start, end))
+
+    def test_function_position(self) -> None:
+        module = parse_module("def foo():\n    pass")
+        module.code
+
+        fn = cast(cst.FunctionDef, module.body[0])
+        stmt = cast(cst.SimpleStatementLine, fn.body.body[0])
+        pass_stmt = cast(cst.Pass, stmt.body[0])
+        self.cmp_position(module, stmt, (2, 0), (3, 0))
+        self.cmp_position(module, pass_stmt, (2, 4), (2, 8))
+
+    def test_nested_indent_position(self) -> None:
+        module = parse_module(
+            "if True:\n    if False:\n        x = 1\nelse:\n    return"
+        )
+        module.code
+
+        outer_if = cast(cst.If, module.body[0])
+        inner_if = cast(cst.If, outer_if.body.body[0])
+        assign = cast(cst.SimpleStatementLine, inner_if.body.body[0]).body[0]
+
+        outer_else = cast(cst.Else, outer_if.orelse)
+        return_stmt = cast(cst.SimpleStatementLine, outer_else.body.body[0]).body[0]
+
+        self.cmp_position(module, outer_if, (1, 0), (6, 0))
+        self.cmp_position(module, inner_if, (2, 0), (4, 0))
+        self.cmp_position(module, assign, (3, 8), (3, 13))
+        self.cmp_position(module, outer_else, (4, 0), (6, 0))
+        self.cmp_position(module, return_stmt, (5, 4), (5, 10))
+
+    def test_multiline_string_position(self) -> None:
+        module = parse_module('"abc"\\\n"def"')
+        module.code
+
+        stmt = cast(cst.SimpleStatementLine, module.body[0])
+        expr = cast(cst.Expr, stmt.body[0])
+        string = expr.value
+
+        self.cmp_position(module, stmt, (1, 0), (3, 0))
+        self.cmp_position(module, expr, (1, 0), (2, 5))
+        self.cmp_position(module, string, (1, 0), (2, 5))

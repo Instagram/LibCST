@@ -11,9 +11,11 @@ from typing import (
     TYPE_CHECKING,
     Iterable,
     List,
+    MutableMapping,
     Optional,
     Pattern,
     Sequence,
+    Tuple,
     TypeVar,
     Union,
 )
@@ -35,6 +37,13 @@ _CSTNodeT = TypeVar("_CSTNodeT", bound="CSTNode")
 NEWLINE_RE: Pattern[str] = re.compile(r"\r\n?|\n")
 
 
+@dataclass(frozen=True)
+class CodePosition:
+    # start and end are each a tuple of (line, column) numbers
+    start: Tuple[int, int]
+    end: Tuple[int, int]
+
+
 @add_slots
 @dataclass(frozen=False)
 class CodegenState:
@@ -47,6 +56,10 @@ class CodegenState:
 
     line: int = 1  # one-indexed
     column: int = 0  # zero-indexed
+
+    positions: MutableMapping["CSTNode", CodePosition] = field(
+        default_factory=lambda: {}
+    )
 
     def increase_indent(self, value: str) -> None:
         self.indent_tokens.append(value)
@@ -75,6 +88,9 @@ class CodegenState:
             self.line += len(segments) - 1
             # newline resets column back to 0, but a trailing token may shift column
             self.column = len(segments[-1])
+
+    def update_position(self, node: _CSTNodeT, position: CodePosition) -> None:
+        self.positions[node] = position
 
 
 def visit_required(fieldname: str, node: _CSTNodeT, visitor: "CSTVisitor") -> _CSTNodeT:

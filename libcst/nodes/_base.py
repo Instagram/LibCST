@@ -10,7 +10,7 @@ from typing import Any, List, Sequence, TypeVar, Union, cast
 
 from libcst._base_visitor import CSTVisitor
 from libcst._removal_sentinel import RemovalSentinel
-from libcst.nodes._internal import CodegenState
+from libcst.nodes._internal import CodegenState, CodePosition
 
 
 _CSTNodeSelfT = TypeVar("_CSTNodeSelfT", bound="CSTNode")
@@ -184,8 +184,14 @@ class CSTNode(ABC):
         ...
 
     @abstractmethod
-    def _codegen(self, state: CodegenState) -> None:
+    def _codegen_impl(self, state: CodegenState) -> None:
         ...
+
+    def _codegen(self, state: CodegenState, **kwargs: Any) -> None:
+        start = state.line, state.column
+        self._codegen_impl(state, **kwargs)
+        end = state.line, state.column
+        state.update_position(self, CodePosition(start, end))
 
     def with_changes(self: _CSTNodeSelfT, **changes: Any) -> _CSTNodeSelfT:
         """
@@ -246,8 +252,9 @@ class CSTNode(ABC):
         lines.append(f"{type(self).__name__}(")
         for field in fields(self):
             key = field.name
-            value = getattr(self, key)
-            lines.append(_indent(f"{key}={_pretty_repr(value)},"))
+            if key[0] != "_":
+                value = getattr(self, key)
+                lines.append(_indent(f"{key}={_pretty_repr(value)},"))
         lines.append(")")
         return "\n".join(lines)
 
@@ -274,7 +281,7 @@ class BaseValueToken(BaseLeaf, ABC):
 
     value: str
 
-    def _codegen(self, state: CodegenState) -> None:
+    def _codegen_impl(self, state: CodegenState) -> None:
         state.add_token(self.value)
 
 

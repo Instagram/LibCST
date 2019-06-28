@@ -6,7 +6,7 @@
 import dataclasses
 from contextlib import ExitStack
 from dataclasses import dataclass
-from typing import Callable, Iterable, List, Optional, Sequence, Type, TypeVar
+from typing import Any, Callable, Iterable, List, Optional, Sequence, Type, TypeVar
 from unittest.mock import patch
 
 import libcst.nodes as cst
@@ -29,7 +29,9 @@ class _NOOPVisitor(CSTVisitor):
     pass
 
 
-def _cst_node_equality_func(a: cst.CSTNode, b: cst.CSTNode, msg=None) -> None:
+def _cst_node_equality_func(
+    a: cst.CSTNode, b: cst.CSTNode, msg: Optional[str] = None
+) -> None:
     """
     For use with addTypeEqualityFunc.
     """
@@ -121,8 +123,10 @@ class CSTNodeTest(UnitTest):
         children: List[cst.CSTNode] = []
         codegen_stack: List[cst.CSTNode] = []
 
-        def _get_codegen_override(target: _CSTCodegenPatchTarget):
-            def _codegen(self, *args, **kwargs) -> None:
+        def _get_codegen_override(
+            target: _CSTCodegenPatchTarget
+        ) -> Callable[..., None]:
+            def _codegen_impl(self: _CSTNodeT, *args: Any, **kwargs: Any) -> None:
                 should_pop = False
                 # Don't stick duplicates in the stack. This is needed so that we don't
                 # track calls to `super()._codegen()`.
@@ -138,7 +142,7 @@ class CSTNodeTest(UnitTest):
                 if should_pop:
                     codegen_stack.pop()
 
-            return _codegen
+            return _codegen_impl
 
         with ExitStack() as patch_stack:
             for t in patch_targets:
@@ -202,7 +206,7 @@ class DummyIndentedBlock(cst.CSTNode):
     value: str
     child: cst.CSTNode
 
-    def _codegen(self, state: CodegenState) -> None:
+    def _codegen_impl(self, state: CodegenState) -> None:
         state.increase_indent(self.value)
         self.child._codegen(state)
         state.decrease_indent()

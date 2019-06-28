@@ -72,7 +72,7 @@ class LeftSquareBracket(CSTNode):
             )
         )
 
-    def _codegen(self, state: CodegenState) -> None:
+    def _codegen_impl(self, state: CodegenState) -> None:
         state.add_token("[")
         self.whitespace_after._codegen(state)
 
@@ -94,7 +94,7 @@ class RightSquareBracket(CSTNode):
             )
         )
 
-    def _codegen(self, state: CodegenState) -> None:
+    def _codegen_impl(self, state: CodegenState) -> None:
         self.whitespace_before._codegen(state)
         state.add_token("]")
 
@@ -116,7 +116,7 @@ class LeftParen(CSTNode):
             )
         )
 
-    def _codegen(self, state: CodegenState) -> None:
+    def _codegen_impl(self, state: CodegenState) -> None:
         state.add_token("(")
         self.whitespace_after._codegen(state)
 
@@ -138,7 +138,7 @@ class RightParen(CSTNode):
             )
         )
 
-    def _codegen(self, state: CodegenState) -> None:
+    def _codegen_impl(self, state: CodegenState) -> None:
         self.whitespace_before._codegen(state)
         state.add_token(")")
 
@@ -262,7 +262,7 @@ class Name(BaseAssignTargetExpression, BaseDelTargetExpression, BaseAtom):
         if not self.value.isidentifier():
             raise CSTValidationError("Name is not a valid identifier.")
 
-    def _codegen(self, state: CodegenState) -> None:
+    def _codegen_impl(self, state: CodegenState) -> None:
         with self._parenthesize(state):
             state.add_token(self.value)
 
@@ -286,7 +286,7 @@ class Ellipses(BaseAtom):
             rpar=visit_sequence("rpar", self.rpar, visitor),
         )
 
-    def _codegen(self, state: CodegenState) -> None:
+    def _codegen_impl(self, state: CodegenState) -> None:
         with self._parenthesize(state):
             state.add_token("...")
 
@@ -314,7 +314,7 @@ class Integer(_BaseParenthesizedNode):
         if not re.fullmatch(INTNUMBER_RE, self.value):
             raise CSTValidationError("Number is not a valid integer.")
 
-    def _codegen(self, state: CodegenState) -> None:
+    def _codegen_impl(self, state: CodegenState) -> None:
         with self._parenthesize(state):
             state.add_token(self.value)
 
@@ -342,7 +342,7 @@ class Float(_BaseParenthesizedNode):
         if not re.fullmatch(FLOATNUMBER_RE, self.value):
             raise CSTValidationError("Number is not a valid float.")
 
-    def _codegen(self, state: CodegenState) -> None:
+    def _codegen_impl(self, state: CodegenState) -> None:
         with self._parenthesize(state):
             state.add_token(self.value)
 
@@ -370,7 +370,7 @@ class Imaginary(_BaseParenthesizedNode):
         if not re.fullmatch(IMAGNUMBER_RE, self.value):
             raise CSTValidationError("Number is not a valid imaginary.")
 
-    def _codegen(self, state: CodegenState) -> None:
+    def _codegen_impl(self, state: CodegenState) -> None:
         with self._parenthesize(state):
             state.add_token(self.value)
 
@@ -408,7 +408,7 @@ class Number(BaseAtom):
             rpar=visit_sequence("rpar", self.rpar, visitor),
         )
 
-    def _codegen(self, state: CodegenState) -> None:
+    def _codegen_impl(self, state: CodegenState) -> None:
         with self._parenthesize(state):
             operator = self.operator
             if operator is not None:
@@ -483,7 +483,7 @@ class SimpleString(BaseString):
             rpar=visit_sequence("rpar", self.rpar, visitor),
         )
 
-    def _codegen(self, state: CodegenState) -> None:
+    def _codegen_impl(self, state: CodegenState) -> None:
         with self._parenthesize(state):
             state.add_token(self.value)
 
@@ -505,7 +505,7 @@ class FormattedStringText(BaseFormattedStringContent):
     def _visit_and_replace_children(self, visitor: CSTVisitor) -> "FormattedStringText":
         return FormattedStringText(value=self.value)
 
-    def _codegen(self, state: CodegenState) -> None:
+    def _codegen_impl(self, state: CodegenState) -> None:
         state.add_token(self.value)
 
 
@@ -551,7 +551,7 @@ class FormattedStringExpression(BaseFormattedStringContent):
             ),
         )
 
-    def _codegen(self, state: CodegenState) -> None:
+    def _codegen_impl(self, state: CodegenState) -> None:
         state.add_token("{")
         self.whitespace_before_expression._codegen(state)
         self.expression._codegen(state)
@@ -620,7 +620,7 @@ class FormattedString(BaseString):
             rpar=visit_sequence("rpar", self.rpar, visitor),
         )
 
-    def _codegen(self, state: CodegenState) -> None:
+    def _codegen_impl(self, state: CodegenState) -> None:
         with self._parenthesize(state):
             state.add_token(self.start)
             for part in self.parts:
@@ -679,7 +679,7 @@ class ConcatenatedString(BaseString):
             rpar=visit_sequence("rpar", self.rpar, visitor),
         )
 
-    def _codegen(self, state: CodegenState) -> None:
+    def _codegen_impl(self, state: CodegenState) -> None:
         with self._parenthesize(state):
             self.left._codegen(state)
             self.whitespace_between._codegen(state)
@@ -718,7 +718,7 @@ class ComparisonTarget(CSTNode):
             comparator=visit_required("comparator", self.comparator, visitor),
         )
 
-    def _codegen(self, state: CodegenState) -> None:
+    def _codegen_impl(self, state: CodegenState) -> None:
         self.operator._codegen(state)
         self.comparator._codegen(state)
 
@@ -768,7 +768,7 @@ class Comparison(BaseExpression):
             rpar=visit_sequence("rpar", self.rpar, visitor),
         )
 
-    def _codegen(self, state: CodegenState) -> None:
+    def _codegen_impl(self, state: CodegenState) -> None:
         with self._parenthesize(state):
             self.left._codegen(state)
             for comp in self.comparisons:
@@ -817,7 +817,7 @@ class UnaryOperation(BaseExpression):
             rpar=visit_sequence("rpar", self.rpar, visitor),
         )
 
-    def _codegen(self, state: CodegenState) -> None:
+    def _codegen_impl(self, state: CodegenState) -> None:
         with self._parenthesize(state):
             self.operator._codegen(state)
             self.expression._codegen(state)
@@ -854,7 +854,7 @@ class BinaryOperation(BaseExpression):
             rpar=visit_sequence("rpar", self.rpar, visitor),
         )
 
-    def _codegen(self, state: CodegenState) -> None:
+    def _codegen_impl(self, state: CodegenState) -> None:
         with self._parenthesize(state):
             self.left._codegen(state)
             self.operator._codegen(state)
@@ -911,7 +911,7 @@ class BooleanOperation(BaseExpression):
             rpar=visit_sequence("rpar", self.rpar, visitor),
         )
 
-    def _codegen(self, state: CodegenState) -> None:
+    def _codegen_impl(self, state: CodegenState) -> None:
         with self._parenthesize(state):
             self.left._codegen(state)
             self.operator._codegen(state)
@@ -951,7 +951,7 @@ class Attribute(BaseAssignTargetExpression, BaseDelTargetExpression):
             rpar=visit_sequence("rpar", self.rpar, visitor),
         )
 
-    def _codegen(self, state: CodegenState) -> None:
+    def _codegen_impl(self, state: CodegenState) -> None:
         with self._parenthesize(state):
             self.value._codegen(state)
             self.dot._codegen(state)
@@ -971,7 +971,7 @@ class Index(CSTNode):
     def _visit_and_replace_children(self, visitor: CSTVisitor) -> "Index":
         return Index(value=visit_required("value", self.value, visitor))
 
-    def _codegen(self, state: CodegenState) -> None:
+    def _codegen_impl(self, state: CodegenState) -> None:
         self.value._codegen(state)
 
 
@@ -1008,7 +1008,7 @@ class Slice(CSTNode):
             step=visit_optional("step", self.step, visitor),
         )
 
-    def _codegen(self, state: CodegenState) -> None:
+    def _codegen_impl(self, state: CodegenState) -> None:
         lower = self.lower
         if lower is not None:
             lower._codegen(state)
@@ -1046,7 +1046,7 @@ class ExtSlice(CSTNode):
             comma=visit_sentinel("comma", self.comma, visitor),
         )
 
-    def _codegen(self, state: CodegenState, default_comma: bool = False) -> None:
+    def _codegen_impl(self, state: CodegenState, default_comma: bool = False) -> None:
         self.slice._codegen(state)
         comma = self.comma
         if comma is MaybeSentinel.DEFAULT and default_comma:
@@ -1105,7 +1105,7 @@ class Subscript(BaseAssignTargetExpression, BaseDelTargetExpression):
             rpar=visit_sequence("rpar", self.rpar, visitor),
         )
 
-    def _codegen(self, state: CodegenState) -> None:
+    def _codegen_impl(self, state: CodegenState) -> None:
         with self._parenthesize(state):
             self.value._codegen(state)
             self.whitespace_after_value._codegen(state)
@@ -1160,7 +1160,7 @@ class Annotation(CSTNode):
             annotation=visit_required("annotation", self.annotation, visitor),
         )
 
-    def _codegen(
+    def _codegen_impl(
         self, state: CodegenState, default_indicator: Optional[str] = None
     ) -> None:
         # First, figure out the indicator which tells us default whitespace.
@@ -1201,7 +1201,7 @@ class ParamStar(CSTNode):
     def _visit_and_replace_children(self, visitor: CSTVisitor) -> "ParamStar":
         return ParamStar(comma=visit_required("comma", self.comma, visitor))
 
-    def _codegen(self, state: CodegenState) -> None:
+    def _codegen_impl(self, state: CodegenState) -> None:
         state.add_token("*")
         self.comma._codegen(state)
 
@@ -1266,7 +1266,7 @@ class Param(CSTNode):
             ),
         )
 
-    def _codegen(
+    def _codegen_impl(
         self,
         state: CodegenState,
         default_star: Optional[str] = None,
@@ -1401,7 +1401,7 @@ class Parameters(CSTNode):
             star_kwarg=visit_optional("star_kwarg", self.star_kwarg, visitor),
         )
 
-    def _codegen(self, state: CodegenState) -> None:
+    def _codegen_impl(self, state: CodegenState) -> None:
         # Compute the star existence first so we can ask about whether
         # each element is the last in the list or not.
         star_arg = self.star_arg
@@ -1520,7 +1520,7 @@ class Lambda(BaseExpression):
             rpar=visit_sequence("rpar", self.rpar, visitor),
         )
 
-    def _codegen(self, state: CodegenState) -> None:
+    def _codegen_impl(self, state: CodegenState) -> None:
         with self._parenthesize(state):
             state.add_token("lambda")
             whitespace_after_lambda = self.whitespace_after_lambda
@@ -1593,7 +1593,7 @@ class Arg(CSTNode):
             ),
         )
 
-    def _codegen(self, state: CodegenState, default_comma: bool = False) -> None:
+    def _codegen_impl(self, state: CodegenState, default_comma: bool = False) -> None:
         state.add_token(self.star)
         self.whitespace_after_star._codegen(state)
         keyword = self.keyword
@@ -1757,7 +1757,7 @@ class Call(_BaseExpressionWithArgs):
             rpar=visit_sequence("rpar", self.rpar, visitor),
         )
 
-    def _codegen(self, state: CodegenState) -> None:
+    def _codegen_impl(self, state: CodegenState) -> None:
         with self._parenthesize(state):
             self.func._codegen(state)
             self.whitespace_after_func._codegen(state)
@@ -1801,7 +1801,7 @@ class Await(BaseExpression):
             rpar=visit_sequence("rpar", self.rpar, visitor),
         )
 
-    def _codegen(self, state: CodegenState) -> None:
+    def _codegen_impl(self, state: CodegenState) -> None:
         with self._parenthesize(state):
             state.add_token("await")
             self.whitespace_after_await._codegen(state)
@@ -1890,7 +1890,7 @@ class IfExp(BaseExpression):
             rpar=visit_sequence("rpar", self.rpar, visitor),
         )
 
-    def _codegen(self, state: CodegenState) -> None:
+    def _codegen_impl(self, state: CodegenState) -> None:
         with self._parenthesize(state):
             self.body._codegen(state)
             self.whitespace_before_if._codegen(state)
@@ -1938,7 +1938,7 @@ class From(CSTNode):
             ),
         )
 
-    def _codegen(self, state: CodegenState, default_space: str = "") -> None:
+    def _codegen_impl(self, state: CodegenState, default_space: str = "") -> None:
         whitespace_before_from = self.whitespace_before_from
         if isinstance(whitespace_before_from, BaseParenthesizableWhitespace):
             whitespace_before_from._codegen(state)
@@ -2001,7 +2001,7 @@ class Yield(BaseExpression):
             rpar=visit_sequence("rpar", self.rpar, visitor),
         )
 
-    def _codegen(self, state: CodegenState) -> None:
+    def _codegen_impl(self, state: CodegenState) -> None:
         with self._parenthesize(state):
             state.add_token("yield")
             whitespace_after_yield = self.whitespace_after_yield
@@ -2032,7 +2032,7 @@ class BaseElement(CSTNode, ABC):
     whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace("")
 
     @abstractmethod
-    def _codegen(
+    def _codegen_impl(
         self,
         state: CodegenState,
         default_comma: bool = False,
@@ -2061,7 +2061,7 @@ class Element(BaseElement):
             ),
         )
 
-    def _codegen(
+    def _codegen_impl(
         self,
         state: CodegenState,
         default_comma: bool = False,
@@ -2110,7 +2110,7 @@ class StarredElement(BaseElement, _BaseParenthesizedNode):
             comma=visit_sentinel("comma", self.comma, visitor),
         )
 
-    def _codegen(
+    def _codegen_impl(
         self,
         state: CodegenState,
         default_comma: bool = False,
@@ -2186,7 +2186,7 @@ class Tuple(BaseExpression):
             rpar=visit_sequence("rpar", self.rpar, visitor),
         )
 
-    def _codegen(self, state: CodegenState) -> None:
+    def _codegen_impl(self, state: CodegenState) -> None:
         with self._parenthesize(state):
             elements = self.elements
             if len(elements) == 1:

@@ -4,13 +4,13 @@
 # LICENSE file in the root directory of this source tree.
 
 from dataclasses import dataclass
-from typing import Sequence, TypeVar, Union
+from typing import MutableMapping, Sequence, TypeVar, Union
 
 from libcst._add_slots import add_slots
 from libcst._base_visitor import CSTVisitor
 from libcst._removal_sentinel import RemovalSentinel
 from libcst.nodes._base import CSTNode
-from libcst.nodes._internal import CodegenState, visit_sequence
+from libcst.nodes._internal import CodegenState, CodePosition, visit_sequence
 from libcst.nodes._statement import BaseCompoundStatement, SimpleStatementLine
 from libcst.nodes._whitespace import EmptyLine
 
@@ -22,7 +22,7 @@ builtin_bytes = bytes
 
 
 @add_slots
-@dataclass(frozen=True)
+@dataclass(frozen=False)
 class Module(CSTNode):
     """
     Contains some top-level information inferred from the file letting us set correct
@@ -41,6 +41,8 @@ class Module(CSTNode):
     default_newline: str = "\n"
     has_trailing_newline: bool = True
 
+    _positions: MutableMapping["CSTNode", CodePosition] = None
+
     def _visit_and_replace_children(self, visitor: CSTVisitor) -> "Module":
         return Module(
             header=visit_sequence("header", self.header, visitor),
@@ -50,6 +52,7 @@ class Module(CSTNode):
             default_indent=self.default_indent,
             default_newline=self.default_newline,
             has_trailing_newline=self.has_trailing_newline,
+            _positions=self._positions,
         )
 
     def visit(self: _ModuleSelfT, visitor: CSTVisitor) -> _ModuleSelfT:
@@ -59,7 +62,7 @@ class Module(CSTNode):
         else:  # is a Module
             return result
 
-    def _codegen(self, state: CodegenState) -> None:
+    def _codegen_impl(self, state: CodegenState) -> None:
         for h in self.header:
             h._codegen(state)
         for stmt in self.body:
@@ -95,4 +98,5 @@ class Module(CSTNode):
             default_indent=self.default_indent, default_newline=self.default_newline
         )
         node._codegen(state)
+        self._positions = state.positions
         return "".join(state.tokens)

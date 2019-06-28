@@ -98,7 +98,7 @@ class Newline(BaseLeaf):
                 f"Got an invalid value for newline node: {repr(self.value)}"
             )
 
-    def _codegen(self, state: CodegenState) -> None:
+    def _codegen_impl(self, state: CodegenState) -> None:
         state.add_token(state.default_newline if self.value is None else self.value)
 
 
@@ -146,7 +146,7 @@ class TrailingWhitespace(CSTNode):
             newline=visit_required("newline", self.newline, visitor),
         )
 
-    def _codegen(self, state: CodegenState) -> None:
+    def _codegen_impl(self, state: CodegenState) -> None:
         self.whitespace._codegen(state)
         if self.comment is not None:
             self.comment._codegen(state)
@@ -178,7 +178,7 @@ class EmptyLine(CSTNode):
             newline=visit_required("newline", self.newline, visitor),
         )
 
-    def _codegen(self, state: CodegenState) -> None:
+    def _codegen_impl(self, state: CodegenState) -> None:
         if self.indent:
             state.add_indent_tokens()
         self.whitespace._codegen(state)
@@ -214,7 +214,7 @@ class ParenthesizedWhitespace(BaseParenthesizableWhitespace):
             last_line=visit_required("last_line", self.last_line, visitor),
         )
 
-    def _codegen(self, state: CodegenState) -> None:
+    def _codegen_impl(self, state: CodegenState) -> None:
         self.first_line._codegen(state)
         for line in self.empty_lines:
             line._codegen(state)

@@ -57,7 +57,7 @@ class DummyNode(CSTNode):
             rpar=visit_sequence("rpar", self.rpar, visitor),
         )
 
-    def _codegen(self, state: CodegenState, **kwargs: Any) -> None:
+    def _codegen_impl(self, state: CodegenState, **kwargs: Any) -> None:
         for lpar in self.lpar:
             lpar._codegen(state)
         for child in self.children:
