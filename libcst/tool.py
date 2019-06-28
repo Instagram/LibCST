@@ -8,6 +8,8 @@
 # python -m libcst.tool --help
 # python -m libcst.tool print python_file.py
 
+# pyre-strict
+
 import argparse
 import dataclasses
 import sys
@@ -32,7 +34,7 @@ def _node_repr_recursive(
     if isinstance(node, CSTNode):
         # This is a CSTNode, we must pretty-print it.
         tokens: List[str] = [node.__class__.__name__]
-        fields: Sequence[dataclasses.Field] = dataclasses.fields(node)
+        fields: Sequence["dataclasses.Field[object]"] = dataclasses.fields(node)
 
         # Hide all fields prefixed with "_"
         fields = [f for f in fields if f.name[0] != "_"]
@@ -40,7 +42,7 @@ def _node_repr_recursive(
         # Filter whitespace nodes if needed
         if not show_whitespace:
 
-            def _is_whitespace(field: dataclasses.Field) -> bool:
+            def _is_whitespace(field: "dataclasses.Field[object]") -> bool:
                 if "whitespace" in field.name:
                     return True
                 if "leading_lines" in field.name:
@@ -65,7 +67,7 @@ def _node_repr_recursive(
         # Filter out values which aren't interesting if needed
         if not show_syntax:
 
-            def _is_syntax(field: dataclasses.Field) -> bool:
+            def _is_syntax(field: "dataclasses.Field[object]") -> bool:
                 if isinstance(node, Module) and field.name in [
                     "encoding",
                     "default_indent",
