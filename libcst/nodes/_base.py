@@ -20,6 +20,7 @@ from typing import (
 
 from libcst._base_visitor import CSTVisitor
 from libcst._removal_sentinel import RemovalSentinel
+from libcst._type_enforce import is_value_of_type
 from libcst.nodes._internal import CodegenState, CodePosition
 
 
@@ -105,8 +106,48 @@ class CSTNode(ABC):
 
         The function is called during `__init__`. It should check for possible mistakes
         that wouldn't be caught by a static type checker.
+
+        If you can't use a static type checker, and want to perform a runtime validation
+        of this node's types, use `validate_types` instead.
         """
         pass
+
+    def validate_types_shallow(self) -> None:
+        """
+        Compares the type annotations on a node's fields with those field's actual
+        values at runtime. Raises a TypeError is a mismatch is found.
+
+        Only validates the current node, not any of it's children. For a recursive
+        version, see `validate_types_deep`.
+
+        If you're using a static type checker (highly recommended), this is useless.
+        However, if your code doesn't use a static type checker, or if you're unable to
+        statically type your code for some reason, you can use this method to help
+        validate your tree.
+
+        Some (non-typing) validation is done unconditionally during the construction of
+        a node. That validation does not overlap with the work that `validate_types`
+        does.
+        """
+        for f in fields(self):
+            if f.name == "__metadata__":  # skip typechecking metadata field
+                continue
+
+            value = getattr(self, f.name)
+            if not is_value_of_type(value, f.type):
+                raise TypeError(
+                    f"Expected an instance of {f.type!r} on "
+                    + f"{type(self).__name__}'s '{f.name}' field, but instead got "
+                    + f"an instance of {type(value)!r}"
+                )
+
+    def validate_types_deep(self) -> None:
+        """
+        Like `validate_types_shallow`, but recursively validates the whole tree.
+        """
+        self.validate_types_shallow()
+        for ch in self.children:
+            ch.validate_types_deep()
 
     @property
     def children(self) -> Sequence["CSTNode"]:

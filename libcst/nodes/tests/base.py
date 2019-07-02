@@ -60,6 +60,7 @@ class CSTNodeTest(UnitTest):
         parser: Optional[Callable[[str], _CSTNodeT]] = None,
         expected_position: Optional[CodePosition] = None,
     ) -> None:
+        node.validate_types_deep()
         self.__assert_codegen(node, code, expected_position)
 
         if parser is not None:

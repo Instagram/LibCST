@@ -27,6 +27,7 @@ setuptools.setup(
         "dataclasses; python_version < '3.7'",
         "parso",
         "typing_extensions",
+        "typing_inspect",
     ],
     extras_require={
         "dev": ["black", "isort", "pyre-check"],
