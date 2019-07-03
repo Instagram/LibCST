@@ -7,7 +7,7 @@
 from typing import Callable, Optional
 
 import libcst.nodes as cst
-from libcst.nodes._internal import CodePosition
+from libcst.nodes._internal import CodeRange
 from libcst.nodes.tests.base import CSTNodeTest
 from libcst.parser import parse_expression
 from libcst.testing.utils import data_provider
@@ -23,7 +23,7 @@ class NumberTest(CSTNodeTest):
                 cst.Number(operator=cst.Minus(), number=cst.Integer("5")),
                 "-5",
                 parse_expression,
-                CodePosition((1, 0), (1, 2)),
+                CodeRange.create((1, 0), (1, 2)),
             ),
             # In parenthesis
             (
@@ -35,7 +35,7 @@ class NumberTest(CSTNodeTest):
                 ),
                 "(-5)",
                 parse_expression,
-                CodePosition((1, 1), (1, 3)),
+                CodeRange.create((1, 1), (1, 3)),
             ),
             (
                 cst.Number(
@@ -48,7 +48,7 @@ class NumberTest(CSTNodeTest):
                 ),
                 "(-(5))",
                 parse_expression,
-                CodePosition((1, 1), (1, 5)),
+                CodeRange.create((1, 1), (1, 5)),
             ),
             (
                 cst.UnaryOperation(
@@ -59,7 +59,7 @@ class NumberTest(CSTNodeTest):
                 ),
                 "--5",
                 parse_expression,
-                CodePosition((1, 0), (1, 3)),
+                CodeRange.create((1, 0), (1, 3)),
             ),
             # TODO: add test cases for "((5))" and "(+((5)))"
         )
@@ -69,7 +69,7 @@ class NumberTest(CSTNodeTest):
         node: cst.CSTNode,
         code: str,
         parser: Optional[Callable[[str], cst.CSTNode]],
-        position: Optional[CodePosition] = None,
+        position: Optional[CodeRange] = None,
     ) -> None:
         self.validate_node(node, code, parser, expected_position=position)
 

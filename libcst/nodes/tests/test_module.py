@@ -8,7 +8,7 @@ from typing import Tuple, cast
 
 import libcst.nodes as cst
 from libcst.metadata.position_provider import SyntacticPositionProvider
-from libcst.nodes._internal import CodePosition
+from libcst.nodes._internal import CodeRange
 from libcst.nodes.tests.base import CSTNodeTest
 from libcst.parser import parse_module
 from libcst.testing.utils import data_provider
@@ -119,23 +119,26 @@ class ModuleTest(CSTNodeTest):
 
     @data_provider(
         {
-            "empty": {"code": "", "expected": CodePosition((1, 0), (1, 0))},
+            "empty": {"code": "", "expected": CodeRange.create((1, 0), (1, 0))},
             "empty_with_newline": {
                 "code": "\n",
-                "expected": CodePosition((1, 0), (2, 0)),
+                "expected": CodeRange.create((1, 0), (2, 0)),
             },
             "empty_program_with_comments": {
                 "code": "# 2345",
-                "expected": CodePosition((1, 0), (2, 0)),
+                "expected": CodeRange.create((1, 0), (2, 0)),
             },
-            "simple_pass": {"code": "pass\n", "expected": CodePosition((1, 0), (2, 0))},
+            "simple_pass": {
+                "code": "pass\n",
+                "expected": CodeRange.create((1, 0), (2, 0)),
+            },
             "simple_pass_with_header_footer": {
                 "code": "# header\npass # trailing\n# footer\n",
-                "expected": CodePosition((1, 0), (4, 0)),
+                "expected": CodeRange.create((1, 0), (4, 0)),
             },
         }
     )
-    def test_module_position(self, *, code: str, expected: CodePosition) -> None:
+    def test_module_position(self, *, code: str, expected: CodeRange) -> None:
         module = parse_module(code)
         module.code
 
@@ -145,7 +148,7 @@ class ModuleTest(CSTNodeTest):
         self, node: cst.CSTNode, start: Tuple[int, int], end: Tuple[int, int]
     ) -> None:
         self.assertEqual(
-            node.__metadata__[SyntacticPositionProvider], CodePosition(start, end)
+            node.__metadata__[SyntacticPositionProvider], CodeRange.create(start, end)
         )
 
     def test_function_position(self) -> None:

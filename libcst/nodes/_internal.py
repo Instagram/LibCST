@@ -39,6 +39,7 @@ if TYPE_CHECKING:
 
 _CSTNodeT = TypeVar("_CSTNodeT", bound="CSTNode")
 _ProviderT = Union[Type["BasicPositionProvider"], Type["SyntacticPositionProvider"]]
+_CodePositionT = Union[Tuple[int, int], "CodePosition"]
 
 
 NEWLINE_RE: Pattern[str] = re.compile(r"\r\n?|\n")
@@ -47,9 +48,19 @@ NEWLINE_RE: Pattern[str] = re.compile(r"\r\n?|\n")
 @add_slots
 @dataclass(frozen=True)
 class CodePosition:
-    # start and end are each a tuple of (line, column) numbers
-    start: Tuple[int, int]
-    end: Tuple[int, int]
+    line: int
+    column: int
+
+
+@add_slots
+@dataclass(frozen=True)
+class CodeRange:
+    start: CodePosition
+    end: CodePosition
+
+    @classmethod
+    def create(cls, start: Tuple[int, int], end: Tuple[int, int]) -> "CodeRange":
+        return CodeRange(CodePosition(start[0], start[1]), CodePosition(end[0], end[1]))
 
 
 @add_slots
@@ -100,7 +111,7 @@ class CodegenState:
             # newline resets column back to 0, but a trailing token may shift column
             self.column = len(segments[-1])
 
-    def record_position(self, node: _CSTNodeT, position: CodePosition) -> None:
+    def record_position(self, node: _CSTNodeT, position: CodeRange) -> None:
         # Don't overwrite existing position information
         # (i.e. semantic position has already been recorded)
         if self.provider not in node.__metadata__:
@@ -123,12 +134,12 @@ class SyntacticCodegenState(CodegenState):
 
     @contextmanager
     def record_syntactic_position(self, node: _CSTNodeT) -> Iterator[None]:
-        start = (self.line, self.column)
+        start = CodePosition(self.line, self.column)
         try:
             yield
         finally:
-            end = (self.line, self.column)
-            node.__metadata__[self.provider] = CodePosition(start, end)
+            end = CodePosition(self.line, self.column)
+            node.__metadata__[self.provider] = CodeRange(start, end)
 
 
 def visit_required(fieldname: str, node: _CSTNodeT, visitor: "CSTVisitor") -> _CSTNodeT:

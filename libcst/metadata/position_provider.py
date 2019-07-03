@@ -6,10 +6,10 @@
 # pyre-strict
 import libcst.nodes as cst
 from libcst.metadata.base_provider import BaseMetadataProvider
-from libcst.nodes._internal import CodePosition
+from libcst.nodes._internal import CodeRange
 
 
-class BasicPositionProvider(BaseMetadataProvider[CodePosition]):
+class BasicPositionProvider(BaseMetadataProvider[CodeRange]):
     """
     Generates basic line and column metadata. Basic position is
     defined by the start and ending bounds of a node including all whitespace

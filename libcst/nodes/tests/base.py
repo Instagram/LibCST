@@ -13,7 +13,7 @@ from unittest.mock import patch
 import libcst.nodes as cst
 from libcst._base_visitor import CSTVisitor
 from libcst.metadata.position_provider import SyntacticPositionProvider
-from libcst.nodes._internal import CodegenState, CodePosition, visit_required
+from libcst.nodes._internal import CodegenState, CodeRange, visit_required
 from libcst.testing.utils import UnitTest
 
 
@@ -59,7 +59,7 @@ class CSTNodeTest(UnitTest):
         node: _CSTNodeT,
         code: str,
         parser: Optional[Callable[[str], _CSTNodeT]] = None,
-        expected_position: Optional[CodePosition] = None,
+        expected_position: Optional[CodeRange] = None,
     ) -> None:
         node.validate_types_deep()
         self.__assert_codegen(node, code, expected_position)
@@ -87,7 +87,7 @@ class CSTNodeTest(UnitTest):
         self,
         node: cst.CSTNode,
         expected: str,
-        expected_position: Optional[CodePosition] = None,
+        expected_position: Optional[CodeRange] = None,
     ) -> None:
         """
         Verifies that the given node's `_codegen` method is correct.

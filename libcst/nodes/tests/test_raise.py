@@ -7,7 +7,7 @@
 from typing import Callable, Optional
 
 import libcst.nodes as cst
-from libcst.nodes._internal import CodePosition
+from libcst.nodes._internal import CodeRange
 from libcst.nodes.tests.base import CSTNodeTest
 from libcst.parser import parse_statement
 from libcst.testing.utils import data_provider
@@ -70,7 +70,7 @@ class RaiseConstructionTest(CSTNodeTest):
         )
     )
     def test_valid(
-        self, node: cst.CSTNode, code: str, position: Optional[CodePosition] = None
+        self, node: cst.CSTNode, code: str, position: Optional[CodeRange] = None
     ) -> None:
         self.validate_node(node, code, expected_position=position)
 
@@ -190,7 +190,7 @@ class RaiseParsingTest(CSTNodeTest):
         )
     )
     def test_valid(
-        self, node: cst.CSTNode, code: str, position: Optional[CodePosition] = None
+        self, node: cst.CSTNode, code: str, position: Optional[CodeRange] = None
     ) -> None:
         self.validate_node(
             node,

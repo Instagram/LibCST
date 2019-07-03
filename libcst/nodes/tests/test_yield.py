@@ -7,7 +7,7 @@
 from typing import Callable, Optional
 
 import libcst.nodes as cst
-from libcst.nodes._internal import CodePosition
+from libcst.nodes._internal import CodeRange
 from libcst.nodes.tests.base import CSTNodeTest
 from libcst.parser import parse_statement
 from libcst.testing.utils import data_provider
@@ -38,7 +38,7 @@ class YieldConstructionTest(CSTNodeTest):
                     whitespace_after_yield=cst.SimpleWhitespace(""),
                 ),
                 "yield(a)",
-                CodePosition((1, 0), (1, 8)),
+                CodeRange.create((1, 0), (1, 8)),
             ),
             (
                 cst.Yield(
@@ -74,7 +74,7 @@ class YieldConstructionTest(CSTNodeTest):
                     rpar=(cst.RightParen(whitespace_before=cst.SimpleWhitespace(" ")),),
                 ),
                 "( yield  from  bla() )",
-                CodePosition((1, 2), (1, 20)),
+                CodeRange.create((1, 2), (1, 20)),
             ),
             # From expression position tests
             (
@@ -83,12 +83,12 @@ class YieldConstructionTest(CSTNodeTest):
                     whitespace_after_from=cst.SimpleWhitespace(" "),
                 ),
                 "from 5",
-                CodePosition((1, 0), (1, 6)),
+                CodeRange.create((1, 0), (1, 6)),
             ),
         )
     )
     def test_valid(
-        self, node: cst.CSTNode, code: str, position: Optional[CodePosition] = None
+        self, node: cst.CSTNode, code: str, position: Optional[CodeRange] = None
     ) -> None:
         self.validate_node(node, code, expected_position=position)
 
@@ -215,7 +215,7 @@ class YieldParsingTest(CSTNodeTest):
         )
     )
     def test_valid(
-        self, node: cst.CSTNode, code: str, position: Optional[CodePosition] = None
+        self, node: cst.CSTNode, code: str, position: Optional[CodeRange] = None
     ) -> None:
         # pyre-fixme[16]: `BaseSuite` has no attribute `__getitem__`.
         self.validate_node(node, code, lambda code: parse_statement(code).body[0].value)

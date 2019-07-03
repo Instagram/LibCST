@@ -7,7 +7,7 @@
 from typing import Callable, Optional
 
 import libcst.nodes as cst
-from libcst.nodes._internal import CodePosition
+from libcst.nodes._internal import CodeRange
 from libcst.nodes.tests.base import CSTNodeTest
 from libcst.parser import parse_expression
 from libcst.testing.utils import data_provider
@@ -51,7 +51,7 @@ class SubscriptTest(CSTNodeTest):
                 ),
                 "foo[1:2:3, 5]",
                 False,
-                CodePosition((1, 0), (1, 13)),
+                CodeRange.create((1, 0), (1, 13)),
             ),
             # Test parsing of subscript with slice/extslice.
             (
@@ -137,7 +137,7 @@ class SubscriptTest(CSTNodeTest):
                 ),
                 "foo[::3]",
                 False,
-                CodePosition((1, 0), (1, 8)),
+                CodeRange.create((1, 0), (1, 8)),
             ),
             # Some more wild slice parsings
             (
@@ -320,20 +320,20 @@ class SubscriptTest(CSTNodeTest):
                 ),
                 "( foo [ 1 : 2 : 3 ,  5 ] )",
                 True,
-                CodePosition((1, 2), (1, 24)),
+                CodeRange.create((1, 2), (1, 24)),
             ),
             # Test Index, Slice, ExtSlice
             (
                 cst.Index(cst.Number(cst.Integer("5"))),
                 "5",
                 False,
-                CodePosition((1, 0), (1, 1)),
+                CodeRange.create((1, 0), (1, 1)),
             ),
             (
                 cst.Slice(lower=None, upper=None, second_colon=cst.Colon(), step=None),
                 "::",
                 False,
-                CodePosition((1, 0), (1, 2)),
+                CodeRange.create((1, 0), (1, 2)),
             ),
             (
                 cst.ExtSlice(
@@ -357,7 +357,7 @@ class SubscriptTest(CSTNodeTest):
                 ),
                 "1 : 2 : 3 ,  ",
                 False,
-                CodePosition((1, 0), (1, 9)),
+                CodeRange.create((1, 0), (1, 9)),
             ),
         )
     )
@@ -366,7 +366,7 @@ class SubscriptTest(CSTNodeTest):
         node: cst.CSTNode,
         code: str,
         check_parsing: bool,
-        position: Optional[CodePosition] = None,
+        position: Optional[CodeRange] = None,
     ) -> None:
         if check_parsing:
             self.validate_node(node, code, parse_expression, expected_position=position)

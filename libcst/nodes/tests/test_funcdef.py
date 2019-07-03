@@ -7,7 +7,7 @@
 from typing import Callable, Optional
 
 import libcst.nodes as cst
-from libcst.nodes._internal import CodePosition
+from libcst.nodes._internal import CodeRange
 from libcst.nodes.tests.base import CSTNodeTest, DummyIndentedBlock
 from libcst.parser import parse_statement
 from libcst.testing.utils import data_provider
@@ -521,7 +521,7 @@ class FunctionDefCreationTest(CSTNodeTest):
                     ),
                 ),
                 "@ bar (  )\n",
-                # CodePosition((1,0), (1,10))
+                # CodeRange.create((1,0), (1,10))
             ),
             (
                 cst.Annotation(
@@ -531,7 +531,7 @@ class FunctionDefCreationTest(CSTNodeTest):
                     annotation=cst.Name("str"),
                 ),
                 "  :  str",
-                CodePosition((1, 5), (1, 8)),
+                CodeRange.create((1, 5), (1, 8)),
             ),
             # Parameters
             (
@@ -566,14 +566,14 @@ class FunctionDefCreationTest(CSTNodeTest):
                     ),
                 ),
                 'first, second, third = 1.0, fourth = 1.5, *params: str, bar: str = "one", baz: int, biz: str = "two"',
-                CodePosition((1, 0), (1, 100)),
+                CodeRange.create((1, 0), (1, 100)),
             ),
             (
                 cst.Param(
                     cst.Name("third"), star="", default=cst.Number(cst.Float("1.0"))
                 ),
                 "third = 1.0",
-                CodePosition((1, 0), (1, 5)),
+                CodeRange.create((1, 0), (1, 5)),
             ),
             (
                 cst.Param(
@@ -582,12 +582,12 @@ class FunctionDefCreationTest(CSTNodeTest):
                     whitespace_after_star=cst.SimpleWhitespace(" "),
                 ),
                 "* third",
-                CodePosition((1, 0), (1, 7)),
+                CodeRange.create((1, 0), (1, 7)),
             ),
         )
     )
     def test_valid(
-        self, node: cst.CSTNode, code: str, position: Optional[CodePosition] = None
+        self, node: cst.CSTNode, code: str, position: Optional[CodeRange] = None
     ) -> None:
         self.validate_node(node, code, expected_position=position)
 
@@ -1693,6 +1693,6 @@ class FunctionDefParserTest(CSTNodeTest):
         )
     )
     def test_valid(
-        self, node: cst.CSTNode, code: str, position: Optional[CodePosition] = None
+        self, node: cst.CSTNode, code: str, position: Optional[CodeRange] = None
     ) -> None:
         self.validate_node(node, code, parse_statement, expected_position=position)

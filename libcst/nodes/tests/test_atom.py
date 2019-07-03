@@ -7,7 +7,7 @@
 from typing import Callable, Optional
 
 import libcst.nodes as cst
-from libcst.nodes._internal import CodePosition
+from libcst.nodes._internal import CodeRange
 from libcst.nodes.tests.base import CSTNodeTest
 from libcst.parser import parse_expression
 from libcst.testing.utils import data_provider
@@ -22,7 +22,7 @@ class AtomTest(CSTNodeTest):
             (
                 cst.Name("test", lpar=(cst.LeftParen(),), rpar=(cst.RightParen(),)),
                 "(test)",
-                CodePosition((1, 1), (1, 5)),
+                CodeRange.create((1, 1), (1, 5)),
             ),
             # Decimal integers
             (cst.Number(cst.Integer("12345")), "12345"),
@@ -47,7 +47,7 @@ class AtomTest(CSTNodeTest):
                 ),
                 "(123)",
                 # TODO: fix numbers
-                # CodePosition((1, 1), (1, 4)),
+                # CodeRange.create((1, 1), (1, 4)),
             ),
             # Non-exponent floats
             (cst.Number(cst.Float("12345.")), "12345."),
@@ -74,7 +74,7 @@ class AtomTest(CSTNodeTest):
                 ),
                 "(123.4)",
                 # TODO: fix numbers
-                # CodePosition((1, 1), (1, 5)),
+                # CodeRange.create((1, 1), (1, 5)),
             ),
             # Imaginary numbers
             (cst.Number(cst.Imaginary("12345j")), "12345j"),
@@ -90,7 +90,7 @@ class AtomTest(CSTNodeTest):
                 ),
                 "(123.4j)",
                 # TODO: fix numbers
-                # CodePosition((1, 1), (1, 6)),
+                # CodeRange.create((1, 1), (1, 6)),
             ),
             # Simple elipses
             (cst.Ellipses(), "..."),
@@ -98,7 +98,7 @@ class AtomTest(CSTNodeTest):
             (
                 cst.Ellipses(lpar=(cst.LeftParen(),), rpar=(cst.RightParen(),)),
                 "(...)",
-                CodePosition((1, 1), (1, 4)),
+                CodeRange.create((1, 1), (1, 4)),
             ),
             # Simple strings
             (cst.SimpleString('""'), '""'),
@@ -119,7 +119,7 @@ class AtomTest(CSTNodeTest):
                     'rb"test"', lpar=(cst.LeftParen(),), rpar=(cst.RightParen(),)
                 ),
                 '(rb"test")',
-                CodePosition((1, 1), (1, 9)),
+                CodeRange.create((1, 1), (1, 9)),
             ),
             # Empty formatted strings
             (cst.FormattedString(start='f"', parts=(), end='"'), 'f""'),
@@ -234,7 +234,7 @@ class AtomTest(CSTNodeTest):
                     rpar=(cst.RightParen(),),
                 ),
                 '(f"")',
-                CodePosition((1, 1), (1, 4)),
+                CodeRange.create((1, 1), (1, 4)),
             ),
             # Concatenated strings
             (
@@ -263,12 +263,12 @@ class AtomTest(CSTNodeTest):
                     rpar=(cst.RightParen(whitespace_before=cst.SimpleWhitespace(" ")),),
                 ),
                 '( "ab" "c" )',
-                CodePosition((1, 2), (1, 10)),
+                CodeRange.create((1, 2), (1, 10)),
             ),
         )
     )
     def test_valid(
-        self, node: cst.CSTNode, code: str, position: Optional[CodePosition] = None
+        self, node: cst.CSTNode, code: str, position: Optional[CodeRange] = None
     ) -> None:
         # We don't have sentinel nodes for atoms, so we know that 100% of atoms
         # can be parsed identically to their creation.
@@ -282,12 +282,12 @@ class AtomTest(CSTNodeTest):
                     format_spec=(cst.FormattedStringText("%B %d, %Y"),),
                 ),
                 "{today:%B %d, %Y}",
-                CodePosition((1, 0), (1, 17)),
+                CodeRange.create((1, 0), (1, 17)),
             ),
         )
     )
     def test_valid_no_parse(
-        self, node: cst.CSTNode, code: str, position: Optional[CodePosition] = None
+        self, node: cst.CSTNode, code: str, position: Optional[CodeRange] = None
     ) -> None:
         # Test some nodes that aren't valid source code by themselves
         self.validate_node(node, code, expected_position=position)
