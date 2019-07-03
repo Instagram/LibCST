@@ -13,11 +13,11 @@ from typing import (
     Iterable,
     Iterator,
     List,
-    MutableMapping,
     Optional,
     Pattern,
     Sequence,
     Tuple,
+    Type,
     TypeVar,
     Union,
 )
@@ -31,14 +31,20 @@ if TYPE_CHECKING:
     # These are circular dependencies only used for typing purposes
     from libcst.nodes._base import CSTNode
     from libcst._base_visitor import CSTVisitor
+    from libcst.metadata.position_provider import (
+        BasicPositionProvider,
+        SyntacticPositionProvider,
+    )
 
 
 _CSTNodeT = TypeVar("_CSTNodeT", bound="CSTNode")
+_ProviderT = Union[Type["BasicPositionProvider"], Type["SyntacticPositionProvider"]]
 
 
 NEWLINE_RE: Pattern[str] = re.compile(r"\r\n?|\n")
 
 
+@add_slots
 @dataclass(frozen=True)
 class CodePosition:
     # start and end are each a tuple of (line, column) numbers
@@ -53,17 +59,18 @@ class CodegenState:
     default_indent: str
     default_newline: str
 
+    provider: _ProviderT = field(init=False)
+
     indent_tokens: List[str] = field(default_factory=list)
     tokens: List[str] = field(default_factory=list)
 
     line: int = 1  # one-indexed
     column: int = 0  # zero-indexed
 
-    positions: MutableMapping["CSTNode", CodePosition] = field(default_factory=dict)
+    def __post_init__(self) -> None:
+        from libcst.metadata.position_provider import BasicPositionProvider
 
-    semantic_positions: MutableMapping["CSTNode", CodePosition] = field(
-        default_factory=dict
-    )
+        self.provider = BasicPositionProvider
 
     def increase_indent(self, value: str) -> None:
         self.indent_tokens.append(value)
@@ -93,17 +100,35 @@ class CodegenState:
             # newline resets column back to 0, but a trailing token may shift column
             self.column = len(segments[-1])
 
-    def update_position(self, node: _CSTNodeT, position: CodePosition) -> None:
-        self.positions[node] = position
+    def record_position(self, node: _CSTNodeT, position: CodePosition) -> None:
+        # Don't overwrite existing position information
+        # (i.e. semantic position has already been recorded)
+        if self.provider not in node.__metadata__:
+            node.__metadata__[self.provider] = position
 
     @contextmanager
-    def record_semantic_position(self, node: _CSTNodeT) -> Iterator[None]:
+    def record_syntactic_position(self, node: _CSTNodeT) -> Iterator[None]:
+        yield
+
+
+class SyntacticCodegenState(CodegenState):
+    """
+    Pass to codegen to record the syntatic position of nodes.
+    """
+
+    def __post_init__(self) -> None:
+        from libcst.metadata.position_provider import SyntacticPositionProvider
+
+        self.provider = SyntacticPositionProvider
+
+    @contextmanager
+    def record_syntactic_position(self, node: _CSTNodeT) -> Iterator[None]:
         start = (self.line, self.column)
         try:
             yield
         finally:
             end = (self.line, self.column)
-            self.semantic_positions[node] = CodePosition(start, end)
+            node.__metadata__[self.provider] = CodePosition(start, end)
 
 
 def visit_required(fieldname: str, node: _CSTNodeT, visitor: "CSTVisitor") -> _CSTNodeT:

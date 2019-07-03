@@ -5,7 +5,7 @@
 
 # pyre-strict
 from abc import ABC
-from typing import TYPE_CHECKING, Any, Type, TypeVar, Union, cast
+from typing import TYPE_CHECKING, Type, TypeVar, Union
 
 from libcst._removal_sentinel import RemovalSentinel
 
@@ -60,5 +60,4 @@ class CSTVisitor(ABC):
         """
         # TODO: runtime checks that metadata is available in this visitor
 
-        # pyre-fixme[33]: Given annotation cannot be `Any`.
-        return cast(Any, node).__metadata__[key]
+        return node.__metadata__[key]

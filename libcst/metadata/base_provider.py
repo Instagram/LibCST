@@ -4,7 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 # pyre-strict
-from typing import Any, Generic, TypeVar, cast
+from typing import Generic, TypeVar
 
 import libcst.nodes as cst
 from libcst._base_visitor import CSTVisitor
@@ -37,5 +37,4 @@ class BaseMetadataProvider(CSTVisitor, Generic[_T]):
 
     @classmethod
     def set_metadata(cls, node: cst.CSTNode, value: _T) -> None:
-        # pyre-fixme[33]: Explicit annotation for `typing.cast` cannot be `Any`.
-        cast(Any, node).__metadata__[cls] = value
+        node.__metadata__[cls] = value

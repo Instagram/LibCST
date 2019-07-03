@@ -12,6 +12,7 @@ from unittest.mock import patch
 
 import libcst.nodes as cst
 from libcst._base_visitor import CSTVisitor
+from libcst.metadata.position_provider import SyntacticPositionProvider
 from libcst.nodes._internal import CodegenState, CodePosition, visit_required
 from libcst.testing.utils import UnitTest
 
@@ -94,8 +95,9 @@ class CSTNodeTest(UnitTest):
         module = cst.Module([])
         self.assertEqual(module.code_for_node(node), expected)
         if expected_position is not None:
-            # TODO: replace this when metadata framework is in place
-            self.assertEqual(module._semantic_positions[node], expected_position)
+            self.assertEqual(
+                node.__metadata__[SyntacticPositionProvider], expected_position
+            )
 
     def __assert_children_match_codegen(self, node: cst.CSTNode) -> None:
         children = node.children

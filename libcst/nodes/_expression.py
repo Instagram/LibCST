@@ -169,7 +169,7 @@ class _BaseParenthesizedNode(CSTNode, ABC):
     def _parenthesize(self, state: CodegenState) -> Generator[None, None, None]:
         for lpar in self.lpar:
             lpar._codegen(state)
-        with state.record_semantic_position(self):
+        with state.record_syntactic_position(self):
             yield
         for rpar in self.rpar:
             rpar._codegen(state)
@@ -556,7 +556,7 @@ class FormattedStringExpression(BaseFormattedStringContent):
         )
 
     def _codegen_impl(self, state: CodegenState) -> None:
-        with state.record_semantic_position(self):
+        with state.record_syntactic_position(self):
             state.add_token("{")
             self.whitespace_before_expression._codegen(state)
             self.expression._codegen(state)
@@ -977,7 +977,7 @@ class Index(CSTNode):
         return Index(value=visit_required("value", self.value, visitor))
 
     def _codegen_impl(self, state: CodegenState) -> None:
-        with state.record_semantic_position(self):
+        with state.record_syntactic_position(self):
             self.value._codegen(state)
 
 
@@ -1015,7 +1015,7 @@ class Slice(CSTNode):
         )
 
     def _codegen_impl(self, state: CodegenState) -> None:
-        with state.record_semantic_position(self):
+        with state.record_syntactic_position(self):
             lower = self.lower
             if lower is not None:
                 lower._codegen(state)
@@ -1055,7 +1055,7 @@ class ExtSlice(CSTNode):
         )
 
     def _codegen_impl(self, state: CodegenState, default_comma: bool = False) -> None:
-        with state.record_semantic_position(self):
+        with state.record_syntactic_position(self):
             self.slice._codegen(state)
 
         comma = self.comma
@@ -1198,7 +1198,7 @@ class Annotation(CSTNode):
         state.add_token(indicator)
         self.whitespace_after_indicator._codegen(state)
 
-        with state.record_semantic_position(self):
+        with state.record_syntactic_position(self):
             self.annotation._codegen(state)
 
 
@@ -1287,7 +1287,7 @@ class Param(CSTNode):
         default_star: Optional[str] = None,
         default_comma: bool = False,
     ) -> None:
-        with state.record_semantic_position(self):
+        with state.record_syntactic_position(self):
             star = self.star
             if isinstance(star, MaybeSentinel):
                 if default_star is None:
@@ -1421,7 +1421,7 @@ class Parameters(CSTNode):
 
     def _codegen_impl(self, state: CodegenState) -> None:
         # TODO: remove this when fallback to syntactic whitespace becomes available
-        with state.record_semantic_position(self):
+        with state.record_syntactic_position(self):
             # Compute the star existence first so we can ask about whether
             # each element is the last in the list or not.
             star_arg = self.star_arg
@@ -1616,7 +1616,7 @@ class Arg(CSTNode):
         )
 
     def _codegen_impl(self, state: CodegenState, default_comma: bool = False) -> None:
-        with state.record_semantic_position(self):
+        with state.record_syntactic_position(self):
             state.add_token(self.star)
             self.whitespace_after_star._codegen(state)
             keyword = self.keyword
@@ -1783,7 +1783,7 @@ class Call(_BaseExpressionWithArgs):
 
     def _codegen_impl(self, state: CodegenState) -> None:
         with self._parenthesize(state):
-            with state.record_semantic_position(self):
+            with state.record_syntactic_position(self):
                 self.func._codegen(state)
                 self.whitespace_after_func._codegen(state)
                 state.add_token("(")
@@ -1971,7 +1971,7 @@ class From(CSTNode):
         else:
             state.add_token(default_space)
 
-        with state.record_semantic_position(self):
+        with state.record_syntactic_position(self):
             state.add_token("from")
             self.whitespace_after_from._codegen(state)
             self.item._codegen(state)
@@ -2095,7 +2095,7 @@ class Element(BaseElement):
         default_comma: bool = False,
         default_comma_whitespace: bool = False,
     ) -> None:
-        with state.record_semantic_position(self):
+        with state.record_syntactic_position(self):
             self.value._codegen(state)
 
         self.whitespace_after._codegen(state)

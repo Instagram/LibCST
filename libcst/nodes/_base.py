@@ -254,7 +254,7 @@ class CSTNode(ABC):
         start = (state.line, state.column)
         self._codegen_impl(state, **kwargs)
         end = (state.line, state.column)
-        state.update_position(self, CodePosition(start, end))
+        state.record_position(self, CodePosition(start, end))
 
     def with_changes(self: _CSTNodeSelfT, **changes: Any) -> _CSTNodeSelfT:
         """

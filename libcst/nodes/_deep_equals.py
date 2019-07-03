@@ -48,7 +48,8 @@ def _deep_equals_cst_node(a: "CSTNode", b: "CSTNode") -> bool:
         return False
     if a is b:  # short-circuit
         return True
-    for field in fields(a):
+    # Ignore metadata and other hidden fields
+    for field in (f for f in fields(a) if f.compare is True):
         a_value = getattr(a, field.name)
         b_value = getattr(b, field.name)
         if not deep_equals(a_value, b_value):

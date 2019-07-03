@@ -3,19 +3,28 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from dataclasses import dataclass, field
-from typing import MutableMapping, Sequence, TypeVar, Union
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Optional, Sequence, Type, TypeVar, Union
 
 from libcst._add_slots import add_slots
 from libcst._base_visitor import CSTVisitor
 from libcst._removal_sentinel import RemovalSentinel
 from libcst.nodes._base import CSTNode
-from libcst.nodes._internal import CodegenState, CodePosition, visit_sequence
+from libcst.nodes._internal import CodegenState, SyntacticCodegenState, visit_sequence
 from libcst.nodes._statement import BaseCompoundStatement, SimpleStatementLine
 from libcst.nodes._whitespace import EmptyLine
 
 
+if TYPE_CHECKING:
+    # These are circular dependencies only used for typing purposes
+    from libcst.metadata.position_provider import (
+        BasicPositionProvider,
+        SyntacticPositionProvider,
+    )
+
+
 _ModuleSelfT = TypeVar("_ModuleSelfT", bound="Module")
+_ProviderT = Union[Type["BasicPositionProvider"], Type["SyntacticPositionProvider"]]
 
 # type alias needed for scope overlap in type definition
 builtin_bytes = bytes
@@ -40,14 +49,6 @@ class Module(CSTNode):
     default_indent: str = " " * 4
     default_newline: str = "\n"
     has_trailing_newline: bool = True
-
-    # TODO: remove these fields when metadata API is in place
-    _positions: MutableMapping["CSTNode", CodePosition] = field(
-        default_factory=dict, init=False, compare=False, repr=False
-    )
-    _semantic_positions: MutableMapping["CSTNode", CodePosition] = field(
-        default_factory=dict, init=False, compare=False, repr=False
-    )
 
     def _visit_and_replace_children(self, visitor: CSTVisitor) -> "Module":
         return Module(
@@ -93,19 +94,30 @@ class Module(CSTNode):
     def bytes(self) -> builtin_bytes:
         return self.code.encode(self.encoding)
 
-    def code_for_node(self, node: CSTNode) -> str:
+    def code_for_node(
+        self, node: CSTNode, provider: Optional[_ProviderT] = None
+    ) -> str:
         """
         Generates the code for the given node in the context of this module. This is a
         method of Module, not CSTNode, because we need to know the module's default
         indentation and newline formats.
-        """
-        state = CodegenState(
-            default_indent=self.default_indent, default_newline=self.default_newline
-        )
-        node._codegen(state)
 
-        # TODO remove when metadata API is in place
-        object.__setattr__(self, "_positions", state.positions)
-        object.__setattr__(self, "_semantic_positions", state.semantic_positions)
+        By default, this also generates syntactic line and column metadata for each
+        node. Passing BasicPositionProvider will generate basic line and column
+        metadata instead.
+        """
+
+        from libcst.metadata.position_provider import SyntacticPositionProvider
+
+        if provider is None or provider is SyntacticPositionProvider:
+            state = SyntacticCodegenState(
+                default_indent=self.default_indent, default_newline=self.default_newline
+            )
+        else:
+            state = CodegenState(
+                default_indent=self.default_indent, default_newline=self.default_newline
+            )
+
+        node._codegen(state)
 
         return "".join(state.tokens)
