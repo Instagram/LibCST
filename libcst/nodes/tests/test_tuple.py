@@ -4,110 +4,117 @@
 # LICENSE file in the root directory of this source tree.
 
 # pyre-strict
-from typing import Callable, Optional
+from typing import Any, Callable
 
 import libcst.nodes as cst
 from libcst.nodes._internal import CodeRange
 from libcst.nodes.tests.base import CSTNodeTest
+from libcst.parser import parse_expression, parse_statement
 from libcst.testing.utils import data_provider
 
 
 class TupleTest(CSTNodeTest):
     @data_provider(
-        (
+        [
             # zero-element tuple
-            (cst.Tuple([]), "()"),
-            # one-element tuple
-            (cst.Tuple([cst.Element(cst.Name("single_element"))]), "(single_element,)"),
-            # two-element tuple
-            (
-                cst.Tuple([cst.Element(cst.Name("one")), cst.Element(cst.Name("two"))]),
-                "(one, two)",
-            ),
+            {"node": cst.Tuple([]), "code": "()", "parser": parse_expression},
+            # one-element tuple, sentinel comma value
+            {
+                "node": cst.Tuple([cst.Element(cst.Name("single_element"))]),
+                "code": "(single_element,)",
+                "parser": None,
+            },
+            {
+                "node": cst.Tuple([cst.StarredElement(cst.Name("single_element"))]),
+                "code": "(*single_element,)",
+                "parser": None,
+            },
+            # two-element tuple, sentinel comma value
+            {
+                "node": cst.Tuple(
+                    [cst.Element(cst.Name("one")), cst.Element(cst.Name("two"))]
+                ),
+                "code": "(one, two)",
+                "parser": None,
+            },
             # remove parenthesis
-            (
-                cst.Tuple(
+            {
+                "node": cst.Tuple(
                     [cst.Element(cst.Name("one")), cst.Element(cst.Name("two"))],
                     lpar=[],
                     rpar=[],
                 ),
-                "one, two",
-            ),
+                "code": "one, two",
+                "parser": None,
+            },
             # add extra parenthesis
-            (
-                cst.Tuple(
+            {
+                "node": cst.Tuple(
                     [cst.Element(cst.Name("one")), cst.Element(cst.Name("two"))],
                     lpar=[cst.LeftParen(), cst.LeftParen()],
                     rpar=[cst.RightParen(), cst.RightParen()],
                 ),
-                "((one, two))",
-            ),
+                "code": "((one, two))",
+                "parser": None,
+            },
             # starred element
-            (
-                cst.Tuple(
-                    [cst.Element(cst.Name("one")), cst.StarredElement(cst.Name("two"))]
-                ),
-                "(one, *two)",
-            ),
-            # custom comma on Element
-            (
-                cst.Tuple(
+            {
+                "node": cst.Tuple(
                     [
-                        cst.Element(cst.Name("one")),
+                        cst.StarredElement(cst.Name("one")),
+                        cst.StarredElement(cst.Name("two")),
+                    ]
+                ),
+                "code": "(*one, *two)",
+                "parser": None,
+            },
+            # custom comma on Element
+            {
+                "node": cst.Tuple(
+                    [
+                        cst.Element(cst.Name("one"), comma=cst.Comma()),
                         cst.Element(cst.Name("two"), comma=cst.Comma()),
                     ]
                 ),
-                "(one, two,)",
-            ),
+                "code": "(one,two,)",
+                "parser": parse_expression,
+            },
             # custom comma on StarredElement
-            (
-                cst.Tuple(
+            {
+                "node": cst.Tuple(
                     [
-                        cst.Element(cst.Name("one")),
+                        cst.StarredElement(cst.Name("one"), comma=cst.Comma()),
                         cst.StarredElement(cst.Name("two"), comma=cst.Comma()),
                     ]
                 ),
-                "(one, *two,)",
-                CodeRange.create((1, 1), (1, 11)),
-            ),
+                "code": "(*one,*two,)",
+                "parser": parse_expression,
+                "expected_position": CodeRange.create((1, 1), (1, 11)),
+            },
             # custom parenthesis on StarredElement
-            (
-                cst.Tuple(
+            {
+                "node": cst.Tuple(
                     [
                         cst.StarredElement(
                             cst.Name("abc"),
                             lpar=[cst.LeftParen()],
                             rpar=[cst.RightParen()],
+                            comma=cst.Comma(),
                         )
                     ]
                 ),
-                "((*abc),)",
-                CodeRange.create((1, 1), (1, 8)),
-            ),
-            # custom whitespace on Element
-            (
-                cst.Tuple(
-                    [
-                        cst.Element(cst.Name("one")),
-                        cst.Element(
-                            cst.Name("two"), whitespace_after=cst.SimpleWhitespace("  ")
-                        ),
-                    ],
-                    lpar=[],
-                    rpar=[],  # rpar can't own the trailing whitespace if it's not there
-                ),
-                "one, two  ",
-                CodeRange.create((1, 0), (1, 10)),
-            ),
+                "code": "((*abc),)",
+                "parser": parse_expression,
+                "expected_position": CodeRange.create((1, 1), (1, 8)),
+            },
             # custom whitespace on StarredElement
-            (
-                cst.Tuple(
+            {
+                "node": cst.Tuple(
                     [
-                        cst.Element(cst.Name("one")),
+                        cst.Element(cst.Name("one"), comma=cst.Comma()),
                         cst.StarredElement(
                             cst.Name("two"),
                             whitespace_before_value=cst.SimpleWhitespace("  "),
-                            whitespace_after=cst.SimpleWhitespace("    "),
                             lpar=[cst.LeftParen()],
                             rpar=[cst.RightParen()],
                         ),
@@ -115,31 +122,37 @@ class TupleTest(CSTNodeTest):
                     lpar=[],
                     rpar=[],  # rpar can't own the trailing whitespace if it's not there
                 ),
-                "one, (*  two)    ",
-                CodeRange.create((1, 0), (1, 17)),
-            ),
+                "code": "one,(*  two)",
+                "parser": parse_expression,
+                "expected_position": CodeRange.create((1, 0), (1, 12)),
+            },
             # missing spaces around tuple, okay with parenthesis
-            (
-                cst.For(
+            {
+                "node": cst.For(
                     target=cst.Tuple(
-                        [cst.Element(cst.Name("k")), cst.Element(cst.Name("v"))]
+                        [
+                            cst.Element(cst.Name("k"), comma=cst.Comma()),
+                            cst.Element(cst.Name("v")),
+                        ]
                     ),
                     iter=cst.Name("abc"),
                     body=cst.SimpleStatementSuite([cst.Pass()]),
                     whitespace_after_for=cst.SimpleWhitespace(""),
                     whitespace_before_in=cst.SimpleWhitespace(""),
                 ),
-                "for(k, v)in abc: pass\n",
-            ),
+                "code": "for(k,v)in abc: pass\n",
+                "parser": parse_statement,
+            },
             # no spaces around tuple, but using values that are parenthesized
-            (
-                cst.For(
+            {
+                "node": cst.For(
                     target=cst.Tuple(
                         [
                             cst.Element(
                                 cst.Name(
                                     "k", lpar=[cst.LeftParen()], rpar=[cst.RightParen()]
-                                )
+                                ),
+                                comma=cst.Comma(),
                             ),
                             cst.Element(
                                 cst.Name(
@@ -155,26 +168,51 @@ class TupleTest(CSTNodeTest):
                     whitespace_after_for=cst.SimpleWhitespace(""),
                     whitespace_before_in=cst.SimpleWhitespace(""),
                 ),
-                "for(k), (v)in abc: pass\n",
-            ),
+                "code": "for(k),(v)in abc: pass\n",
+                "parser": parse_statement,
+            },
             # starred elements are safe to use without a space before them
-            (
-                cst.For(
+            {
+                "node": cst.For(
                     target=cst.Tuple(
-                        [cst.StarredElement(cst.Name("foo"))], lpar=[], rpar=[]
+                        [cst.StarredElement(cst.Name("foo"), comma=cst.Comma())],
+                        lpar=[],
+                        rpar=[],
                     ),
                     iter=cst.Name("bar"),
                     body=cst.SimpleStatementSuite([cst.Pass()]),
                     whitespace_after_for=cst.SimpleWhitespace(""),
                 ),
-                "for*foo, in bar: pass\n",
-            ),
-        )
+                "code": "for*foo, in bar: pass\n",
+                "parser": parse_statement,
+            },
+            # a trailing comma doesn't mess up TrailingWhitespace
+            {
+                "node": cst.SimpleStatementLine(
+                    [
+                        cst.Expr(
+                            cst.Tuple(
+                                [
+                                    cst.Element(cst.Name("one"), comma=cst.Comma()),
+                                    cst.Element(cst.Name("two"), comma=cst.Comma()),
+                                ],
+                                lpar=[],
+                                rpar=[],
+                            )
+                        )
+                    ],
+                    trailing_whitespace=cst.TrailingWhitespace(
+                        whitespace=cst.SimpleWhitespace("  "),
+                        comment=cst.Comment("# comment"),
+                    ),
+                ),
+                "code": "one,two,  # comment\n",
+                "parser": parse_statement,
+            },
+        ]
     )
-    def test_valid(
-        self, node: cst.CSTNode, code: str, position: Optional[CodeRange] = None
-    ) -> None:
-        self.validate_node(node, code, expected_position=position)
+    def test_valid(self, **kwargs: Any) -> None:
+        self.validate_node(**kwargs)
 
     @data_provider(
         (

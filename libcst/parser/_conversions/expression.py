@@ -75,15 +75,6 @@ def convert_expression_input(config: ParserConfig, children: Sequence[Any]) -> A
     return child
 
 
-@with_production("testlist_star_expr", "(test|star_expr) (',' (test|star_expr))* [',']")
-def convert_testlist_star_expr(config: ParserConfig, children: Sequence[Any]) -> Any:
-    if len(children) == 1:
-        (child,) = children
-        return child
-    else:
-        return make_dummy_node(config, children)
-
-
 @with_production("test", "or_test ['if' or_test 'else' test] | lambdef")
 def convert_test(config: ParserConfig, children: Sequence[Any]) -> Any:
     if len(children) == 1:
@@ -342,7 +333,19 @@ def convert_comp_op(config: ParserConfig, children: Sequence[Any]) -> Any:
 
 @with_production("star_expr", "'*' expr")
 def convert_star_expr(config: ParserConfig, children: Sequence[Any]) -> Any:
-    return make_dummy_node(config, children)
+    star, expr = children
+    return WithLeadingWhitespace(
+        cst.StarredElement(
+            expr.value,
+            whitespace_before_value=parse_parenthesizable_whitespace(
+                config, expr.whitespace_before
+            ),
+            # atom is responsible for parenthesis and trailing_whitespace if they exist
+            # testlist_comp, exprlist, dictorsetmaker, etc are responsible for the comma
+            # if it exists.
+        ),
+        whitespace_before=star.whitespace_before,
+    )
 
 
 @with_production("expr", "xor_expr ('|' xor_expr)*")
@@ -731,7 +734,7 @@ def convert_atom_basic(config: ParserConfig, children: Sequence[Any]) -> Any:
         raise Exception(f"Logic error, unexpected token {child.type.name}")
 
 
-@with_production("atom_squarebrackets", "'[' [testlist_comp] ']'")
+@with_production("atom_squarebrackets", "'[' [testlist_comp_list] ']'")
 def convert_atom_squarebrackets(config: ParserConfig, children: Sequence[Any]) -> Any:
     return make_dummy_node(config, children)
 
@@ -741,9 +744,21 @@ def convert_atom_curlybrackets(config: ParserConfig, children: Sequence[Any]) ->
     return make_dummy_node(config, children)
 
 
-@with_production("atom_parens", "'(' [yield_expr|testlist_comp] ')'")
+@with_production("atom_parens", "'(' [yield_expr|testlist_comp_tuple] ')'")
 def convert_atom_parens(config: ParserConfig, children: Sequence[Any]) -> Any:
-    lpar, *atoms, rpar = children
+    lpar_tok, *atoms, rpar_tok = children
+
+    lpar = cst.LeftParen(
+        whitespace_after=parse_parenthesizable_whitespace(
+            config, lpar_tok.whitespace_after
+        )
+    )
+
+    rpar = cst.RightParen(
+        whitespace_before=parse_parenthesizable_whitespace(
+            config, rpar_tok.whitespace_before
+        )
+    )
 
     if len(atoms) == 1:
         inner_atom = atoms[0].value
@@ -756,59 +771,22 @@ def convert_atom_parens(config: ParserConfig, children: Sequence[Any]) -> Any:
             return WithLeadingWhitespace(
                 inner_atom.with_changes(
                     number=inner_atom.number.with_changes(
-                        lpar=(
-                            (
-                                cst.LeftParen(
-                                    whitespace_after=parse_parenthesizable_whitespace(
-                                        config, lpar.whitespace_after
-                                    )
-                                ),
-                            )
-                            + tuple(inner_atom.lpar)
-                        ),
-                        rpar=(
-                            tuple(inner_atom.rpar)
-                            + (
-                                cst.RightParen(
-                                    whitespace_before=parse_parenthesizable_whitespace(
-                                        config, rpar.whitespace_before
-                                    )
-                                ),
-                            )
-                        ),
+                        lpar=(lpar, *inner_atom.lpar), rpar=(*inner_atom.rpar, rpar)
                     )
                 ),
-                lpar.whitespace_before,
+                lpar_tok.whitespace_before,
             )
         else:
             return WithLeadingWhitespace(
                 inner_atom.with_changes(
-                    lpar=(
-                        (
-                            cst.LeftParen(
-                                whitespace_after=parse_parenthesizable_whitespace(
-                                    config, lpar.whitespace_after
-                                )
-                            ),
-                        )
-                        + tuple(inner_atom.lpar)
-                    ),
-                    rpar=(
-                        tuple(inner_atom.rpar)
-                        + (
-                            cst.RightParen(
-                                whitespace_before=parse_parenthesizable_whitespace(
-                                    config, rpar.whitespace_before
-                                )
-                            ),
-                        )
-                    ),
+                    lpar=(lpar, *inner_atom.lpar), rpar=(*inner_atom.rpar, rpar)
                 ),
-                lpar.whitespace_before,
+                lpar_tok.whitespace_before,
             )
     else:
-        # We don't support tuples yet
-        return make_dummy_node(config, children)
+        return WithLeadingWhitespace(
+            cst.Tuple((), lpar=(lpar,), rpar=(rpar,)), lpar_tok.whitespace_before
+        )
 
 
 @with_production("atom_ellipses", "'...'")
@@ -938,23 +916,95 @@ def convert_fstring_format_spec(config: ParserConfig, children: Sequence[Any]) -
 
 
 @with_production(
-    "testlist_comp", "(test|star_expr) ( comp_for | (',' (test|star_expr))* [','] )"
+    "testlist_comp_tuple",
+    "(test|star_expr) ( comp_for | (',' (test|star_expr))* [','] )",
 )
-def convert_testlist_comp(config: ParserConfig, children: Sequence[Any]) -> Any:
-    if len(children) == 1:
-        (child,) = children
-        return child
+def convert_testlist_comp_tuple(config: ParserConfig, children: Sequence[Any]) -> Any:
+    return _convert_testlist_comp(
+        config,
+        children,
+        single_child_is_sequence=False,  # should be true for testlist_comp_list
+        sequence_type=cst.Tuple,
+    )
+
+
+@with_production(
+    "testlist_comp_list",
+    "(test|star_expr) ( comp_for | (',' (test|star_expr))* [','] )",
+)
+def convert_testlist_comp_list(config: ParserConfig, children: Sequence[Any]) -> Any:
+    return make_dummy_node(config, children)
+
+
+def _convert_testlist_comp(
+    config: ParserConfig,
+    children: Sequence[Any],
+    single_child_is_sequence: bool,
+    sequence_type: Type[cst.Tuple],
+) -> Any:
+    # This is either a single-element list, or the second token is a comma, so we're not
+    # in a generator.
+    if len(children) == 1 or isinstance(children[1], Token):
+        return _convert_sequencelike(
+            config, children, single_child_is_sequence, sequence_type
+        )
     else:
+        # TODO: make a generator/comprehension
         return make_dummy_node(config, children)
 
 
+@with_production("testlist_star_expr", "(test|star_expr) (',' (test|star_expr))* [',']")
 @with_production("testlist", "test (',' test)* [',']")
-def convert_testlist(config: ParserConfig, children: Sequence[Any]) -> Any:
-    if len(children) == 1:
-        (child,) = children
-        return child
-    else:
-        return make_dummy_node(config, children)
+@with_production("exprlist", "(expr|star_expr) (',' (expr|star_expr))* [',']")
+def convert_test_or_expr_list(config: ParserConfig, children: Sequence[Any]) -> Any:
+    # Used by expression statements and assignments. Neither of these cases want to
+    # treat a single child as a sequence.
+    return _convert_sequencelike(
+        config, children, single_child_is_sequence=False, sequence_type=cst.Tuple
+    )
+
+
+def _convert_sequencelike(
+    config: ParserConfig,
+    children: Sequence[Any],
+    single_child_is_sequence: bool,
+    sequence_type: Type[cst.Tuple],  # TODO: Type[Union[Tuple, List, Set]]
+) -> Any:
+    if not single_child_is_sequence and len(children) == 1:
+        return children[0]
+    # N.B. The parent node (e.g. atom) is responsible for computing and attaching
+    # whitespace_after on our last Element/StarredElement node.
+    elements = []
+    for wrapped_expr_or_starred_element, comma_token in grouper(children, 2):
+        expr_or_starred_element = wrapped_expr_or_starred_element.value
+        if comma_token is None:
+            comma = MaybeSentinel.DEFAULT
+        else:
+            comma = cst.Comma(
+                whitespace_before=parse_parenthesizable_whitespace(
+                    config, comma_token.whitespace_before
+                ),
+                # Only compute whitespace_after if we're not a trailing comma.
+                # If we're a trailing comma, that whitespace should be consumed by the
+                # TrailingWhitespace, parenthesis, etc.
+                whitespace_after=parse_parenthesizable_whitespace(
+                    config, comma_token.whitespace_after
+                )
+                if comma_token is not children[-1]
+                else cst.SimpleWhitespace(""),
+            )
+
+        if isinstance(expr_or_starred_element, cst.StarredElement):
+            starred_element = expr_or_starred_element
+            elements.append(starred_element.with_changes(comma=comma))
+        else:
+            expr = expr_or_starred_element
+            elements.append(cst.Element(value=expr, comma=comma))
+
+    # lpar/rpar are the responsibility of our parent
+    return WithLeadingWhitespace(
+        sequence_type(elements, lpar=(), rpar=()), children[0].whitespace_before
+    )
 
 
 @with_production(
@@ -968,15 +1018,6 @@ def convert_testlist(config: ParserConfig, children: Sequence[Any]) -> Any:
 )
 def convert_dictorsetmaker(config: ParserConfig, children: Sequence[Any]) -> Any:
     return make_dummy_node(config, children)
-
-
-@with_production("exprlist", "(expr|star_expr) (',' (expr|star_expr))* [',']")
-def convert_exprlist(config: ParserConfig, children: Sequence[Any]) -> Any:
-    if len(children) == 1:
-        (child,) = children
-        return child
-    else:
-        return make_dummy_node(config, children)
 
 
 @with_production("arglist", "argument (',' argument)* [',']")

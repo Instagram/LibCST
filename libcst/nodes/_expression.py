@@ -2055,9 +2055,6 @@ class BaseElement(CSTNode, ABC):
     # pyre-fixme[13]: Attribute `value` is never initialized.
     value: BaseExpression
     comma: Union[Comma, MaybeSentinel] = MaybeSentinel.DEFAULT
-    # Used if we don't have a comma, otherwise the parser will attach the whitespace to
-    # the comma.
-    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace("")
 
     @abstractmethod
     def _codegen_impl(
@@ -2077,16 +2074,10 @@ class Element(BaseElement):
     # Any trailing comma
     comma: Union[Comma, MaybeSentinel] = MaybeSentinel.DEFAULT
 
-    # Whitespace
-    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace("")
-
     def _visit_and_replace_children(self, visitor: CSTVisitor) -> "Element":
         return Element(
             value=visit_required("value", self.value, visitor),
             comma=visit_sentinel("comma", self.comma, visitor),
-            whitespace_after=visit_required(
-                "whitespace_after", self.whitespace_after, visitor
-            ),
         )
 
     def _codegen_impl(
@@ -2097,8 +2088,6 @@ class Element(BaseElement):
     ) -> None:
         with state.record_syntactic_position(self):
             self.value._codegen(state)
-
-        self.whitespace_after._codegen(state)
         comma = self.comma
         if comma is MaybeSentinel.DEFAULT and default_comma:
             if default_comma_whitespace:
@@ -2124,7 +2113,6 @@ class StarredElement(BaseElement, _BaseParenthesizedNode):
 
     # Whitespace
     whitespace_before_value: BaseParenthesizableWhitespace = SimpleWhitespace("")
-    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace("")
 
     def _visit_and_replace_children(self, visitor: CSTVisitor) -> "StarredElement":
         return StarredElement(
@@ -2133,9 +2121,6 @@ class StarredElement(BaseElement, _BaseParenthesizedNode):
                 "whitespace_before_value", self.whitespace_before_value, visitor
             ),
             value=visit_required("value", self.value, visitor),
-            whitespace_after=visit_required(
-                "whitespace_after", self.whitespace_after, visitor
-            ),
             rpar=visit_sequence("rpar", self.rpar, visitor),
             comma=visit_sentinel("comma", self.comma, visitor),
         )
@@ -2159,12 +2144,11 @@ class StarredElement(BaseElement, _BaseParenthesizedNode):
                 state.add_token(",")
         elif isinstance(comma, Comma):
             comma._codegen(state)
-        self.whitespace_after._codegen(state)
 
 
 @add_slots
 @dataclass(frozen=True)
-class Tuple(BaseExpression):
+class Tuple(BaseAtom, BaseAssignTargetExpression, BaseDelTargetExpression):
     elements: Sequence[Union[Element, StarredElement]]
 
     # Sequence of open parenthesis for precedence dictation.
@@ -2183,8 +2167,7 @@ class Tuple(BaseExpression):
         if position == ExpressionPosition.LEFT:
             last_element = elements[-1]
             return (
-                not last_element.whitespace_after.empty
-                or isinstance(last_element.comma, Comma)
+                isinstance(last_element.comma, Comma)
                 or (
                     isinstance(last_element, StarredElement)
                     and len(last_element.rpar) > 0
