@@ -142,13 +142,13 @@ class ModuleTest(CSTNodeTest):
         module = parse_module(code)
         module.code
 
-        self.assertEqual(module.__metadata__[SyntacticPositionProvider], expected)
+        self.assertEqual(module._metadata[SyntacticPositionProvider], expected)
 
     def cmp_position(
         self, node: cst.CSTNode, start: Tuple[int, int], end: Tuple[int, int]
     ) -> None:
         self.assertEqual(
-            node.__metadata__[SyntacticPositionProvider], CodeRange.create(start, end)
+            node._metadata[SyntacticPositionProvider], CodeRange.create(start, end)
         )
 
     def test_function_position(self) -> None:

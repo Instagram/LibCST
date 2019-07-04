@@ -3,12 +3,13 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from dataclasses import dataclass
-from typing import TYPE_CHECKING, Optional, Sequence, Type, TypeVar, Union
+from dataclasses import dataclass, field
+from typing import TYPE_CHECKING, MutableSet, Optional, Sequence, Type, TypeVar, Union
 
 from libcst._add_slots import add_slots
 from libcst._base_visitor import CSTVisitor
 from libcst._removal_sentinel import RemovalSentinel
+from libcst.metadata.runner import run as compute_metadata
 from libcst.nodes._base import CSTNode
 from libcst.nodes._internal import CodegenState, SyntacticCodegenState, visit_sequence
 from libcst.nodes._statement import BaseCompoundStatement, SimpleStatementLine
@@ -50,6 +51,13 @@ class Module(CSTNode):
     default_newline: str = "\n"
     has_trailing_newline: bool = True
 
+    _satisfied_dependencies: MutableSet["BaseMetadataProvider[Any]"] = field(
+        default_factory=set, init=False, repr=False, compare=False
+    )
+    _remaining_dependencies: MutableSet["BaseMetadataProvider[Any]"] = field(
+        default_factory=set, init=False, repr=False, compare=False
+    )
+
     def _visit_and_replace_children(self, visitor: CSTVisitor) -> "Module":
         return Module(
             header=visit_sequence("header", self.header, visitor),
@@ -62,6 +70,8 @@ class Module(CSTNode):
         )
 
     def visit(self: _ModuleSelfT, visitor: CSTVisitor) -> _ModuleSelfT:
+        compute_metadata(self, visitor)
+
         result = CSTNode.visit(self, visitor)
         if isinstance(result, RemovalSentinel):
             return self.with_changes(body=(), header=(), footer=())

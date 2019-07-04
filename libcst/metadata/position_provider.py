@@ -16,7 +16,7 @@ class BasicPositionProvider(BaseMetadataProvider[CodeRange]):
     owned by that node.
     """
 
-    def generate(self, module: cst.Module) -> None:
+    def run(self, module: cst.Module) -> None:
         """
         Override default generate behavior as position information is
         calculated through codegen instead of a standard visitor.

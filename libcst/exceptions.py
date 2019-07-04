@@ -78,3 +78,7 @@ class ParserSyntaxError(Exception):
         # Text editors use a one-indexed column, so we need to add one to our
         # zero-indexed column to get a human-readable result.
         return tab_adjusted_column + 1
+
+
+class MetadataException(Exception):
+    pass

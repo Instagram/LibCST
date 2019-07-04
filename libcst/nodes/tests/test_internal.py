@@ -76,7 +76,7 @@ class InternalTest(UnitTest):
 
         # check syntactic whitespace is correctly recorded
         self.assertEqual(
-            node.__metadata__[BasicPositionProvider], CodeRange.create((1, 0), (1, 6))
+            node._metadata[BasicPositionProvider], CodeRange.create((1, 0), (1, 6))
         )
 
     def test_semantic_position(self) -> None:
@@ -96,6 +96,5 @@ class InternalTest(UnitTest):
 
         # check semantic whitespace is correctly recorded (ignoring whitespace)
         self.assertEqual(
-            node.__metadata__[SyntacticPositionProvider],
-            CodeRange.create((1, 1), (1, 5)),
+            node._metadata[SyntacticPositionProvider], CodeRange.create((1, 1), (1, 5))
         )

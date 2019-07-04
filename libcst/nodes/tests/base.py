@@ -96,7 +96,7 @@ class CSTNodeTest(UnitTest):
         self.assertEqual(module.code_for_node(node), expected)
         if expected_position is not None:
             self.assertEqual(
-                node.__metadata__[SyntacticPositionProvider], expected_position
+                node._metadata[SyntacticPositionProvider], expected_position
             )
 
     def __assert_children_match_codegen(self, node: cst.CSTNode) -> None:

@@ -114,8 +114,8 @@ class CodegenState:
     def record_position(self, node: _CSTNodeT, position: CodeRange) -> None:
         # Don't overwrite existing position information
         # (i.e. semantic position has already been recorded)
-        if self.provider not in node.__metadata__:
-            node.__metadata__[self.provider] = position
+        if self.provider not in node._metadata:
+            node._metadata[self.provider] = position
 
     @contextmanager
     def record_syntactic_position(self, node: _CSTNodeT) -> Iterator[None]:
@@ -139,7 +139,7 @@ class SyntacticCodegenState(CodegenState):
             yield
         finally:
             end = CodePosition(self.line, self.column)
-            node.__metadata__[self.provider] = CodeRange(start, end)
+            node._metadata[self.provider] = CodeRange(start, end)
 
 
 def visit_required(fieldname: str, node: _CSTNodeT, visitor: "CSTVisitor") -> _CSTNodeT:

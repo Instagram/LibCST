@@ -5,7 +5,7 @@
 
 # pyre-strict
 from abc import ABC
-from typing import TYPE_CHECKING, Type, TypeVar, Union
+from typing import TYPE_CHECKING, ClassVar, Sequence, Type, TypeVar, Union
 
 from libcst._removal_sentinel import RemovalSentinel
 
@@ -23,6 +23,8 @@ __all__ = ["CSTVisitor", "RemovalSentinel"]
 CSTNodeT = TypeVar("CSTNodeT", bound="CSTNode")
 _T = TypeVar("_T")
 
+_UNDEFINED_DEFAULT = object()
+
 
 class CSTVisitor(ABC):
     """
@@ -31,6 +33,8 @@ class CSTVisitor(ABC):
     This shouldn't be used directly, instead we should provide a more user-friendly
     subclass.
     """
+
+    METADATA_DEPENDENCIES: ClassVar[Sequence[Type["BaseMetadataProvider[object]"]]] = ()
 
     def on_visit(self, node: "CSTNode") -> bool:
         """
@@ -52,12 +56,26 @@ class CSTVisitor(ABC):
         return updated_node
 
     @classmethod
-    def get_metadata(cls, key: Type["BaseMetadataProvider[_T]"], node: CSTNodeT) -> _T:
+    def get_metadata(
+        cls,
+        key: Type["BaseMetadataProvider[_T]"],
+        node: CSTNodeT,
+        default: _T = _UNDEFINED_DEFAULT,
+    ) -> _T:
         """
         Gets metadata provided by the [key] provider if it is accessible from
         this vistor. Metadata is accessible if [key] is the same as [cls] or
         if [key] is in METADATA_DEPENDENCIES.
         """
-        # TODO: runtime checks that metadata is available in this visitor
+        if key not in cls.METADATA_DEPENDENCIES and key is not cls:
+            raise KeyError(
+                f"{key.__name__} is not declared as a dependency from {cls.__name__}"
+            )
 
-        return node.__metadata__[key]
+        try:
+            return node._metadata[key]
+        except KeyError as err:
+            if default is not _UNDEFINED_DEFAULT:
+                return default
+            else:
+                raise err

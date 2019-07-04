@@ -72,7 +72,7 @@ def _indent(value: str) -> str:
 
 @dataclass(frozen=True)
 class CSTNode(ABC):
-    __metadata__: MutableMapping[Type["BaseMetaDataProvider[_T]"], _T] = field(
+    _metadata: MutableMapping[Type["BaseMetaDataProvider[_T]"], _T] = field(
         default_factory=dict, init=False, repr=False, compare=False
     )
 
@@ -130,7 +130,7 @@ class CSTNode(ABC):
         does.
         """
         for f in fields(self):
-            if f.name == "__metadata__":  # skip typechecking metadata field
+            if f.name == "_metadata":  # skip typechecking metadata field
                 continue
 
             value = getattr(self, f.name)
