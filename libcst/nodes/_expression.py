@@ -15,7 +15,7 @@ from tokenize import (
     Imagnumber as IMAGNUMBER_RE,
     Intnumber as INTNUMBER_RE,
 )
-from typing import Callable, Generator, List, Optional, Sequence, Union
+from typing import Callable, Generator, Optional, Sequence, Union
 
 from typing_extensions import Literal
 
@@ -1505,7 +1505,7 @@ class Lambda(BaseExpression):
         # Validate parents
         super(Lambda, self)._validate()
         # Sum up all parameters
-        all_params: List[Param] = [
+        all_params = [
             *self.params.params,
             *self.params.default_params,
             *self.params.kwonly_params,
@@ -2214,3 +2214,45 @@ class Tuple(BaseAtom, BaseAssignTargetExpression, BaseDelTargetExpression):
                         default_comma=(idx < len(elements) - 1),
                         default_comma_whitespace=True,
                     )
+
+
+@add_slots
+@dataclass(frozen=True)
+class List(BaseAtom, BaseAssignTargetExpression, BaseDelTargetExpression):
+    elements: Sequence[Union[Element, StarredElement]]
+
+    # Open bracket surrounding the list
+    lbracket: LeftSquareBracket = LeftSquareBracket()
+
+    # Close bracket surrounding the list
+    rbracket: RightSquareBracket = RightSquareBracket()
+
+    # Sequence of open parenthesis for precedence dictation.
+    lpar: Sequence[LeftParen] = ()
+
+    # Sequence of close parenthesis for precedence dictation.
+    rpar: Sequence[RightParen] = ()
+
+    def _safe_to_use_with_word_operator(self, position: ExpressionPosition) -> bool:
+        return True
+
+    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "List":
+        return List(
+            lpar=visit_sequence("lpar", self.lpar, visitor),
+            lbracket=visit_required("lbracket", self.lbracket, visitor),
+            elements=visit_sequence("elements", self.elements, visitor),
+            rbracket=visit_required("rbracket", self.rbracket, visitor),
+            rpar=visit_sequence("rpar", self.rpar, visitor),
+        )
+
+    def _codegen_impl(self, state: CodegenState) -> None:
+        with self._parenthesize(state):
+            self.lbracket._codegen(state)
+            elements = self.elements
+            for idx, el in enumerate(elements):
+                el._codegen(
+                    state,
+                    default_comma=(idx < len(elements) - 1),
+                    default_comma_whitespace=True,
+                )
+            self.rbracket._codegen(state)

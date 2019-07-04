@@ -9,7 +9,7 @@ from tokenize import (
     Imagnumber as IMAGNUMBER_RE,
     Intnumber as INTNUMBER_RE,
 )
-from typing import Any, Dict, List, Sequence, Type
+from typing import Any, Dict, List, Sequence, Type, Union
 
 import libcst.nodes as cst
 from libcst._maybe_sentinel import MaybeSentinel
@@ -736,7 +736,28 @@ def convert_atom_basic(config: ParserConfig, children: Sequence[Any]) -> Any:
 
 @with_production("atom_squarebrackets", "'[' [testlist_comp_list] ']'")
 def convert_atom_squarebrackets(config: ParserConfig, children: Sequence[Any]) -> Any:
-    return make_dummy_node(config, children)
+    lbracket_tok, *body, rbracket_tok = children
+    lbracket = cst.LeftSquareBracket(
+        whitespace_after=parse_parenthesizable_whitespace(
+            config, lbracket_tok.whitespace_after
+        )
+    )
+
+    rbracket = cst.RightSquareBracket(
+        whitespace_before=parse_parenthesizable_whitespace(
+            config, rbracket_tok.whitespace_before
+        )
+    )
+
+    if len(body) == 0:
+        list_node = cst.List((), lbracket=lbracket, rbracket=rbracket)
+    else:  # len(body) == 1
+        if isinstance(body[0].value, cst.List):  # TODO: Remove this conditional
+            list_node = body[0].value.with_changes(lbracket=lbracket, rbracket=rbracket)
+        else:  # TODO: Remove this branch; this handles for DummyNodes
+            list_node = cst.DummyNode([lbracket, body[0].value, rbracket])
+
+    return WithLeadingWhitespace(list_node, lbracket_tok.whitespace_before)
 
 
 @with_production("atom_curlybrackets", "'{' [dictorsetmaker] '}'")
@@ -921,10 +942,7 @@ def convert_fstring_format_spec(config: ParserConfig, children: Sequence[Any]) -
 )
 def convert_testlist_comp_tuple(config: ParserConfig, children: Sequence[Any]) -> Any:
     return _convert_testlist_comp(
-        config,
-        children,
-        single_child_is_sequence=False,  # should be true for testlist_comp_list
-        sequence_type=cst.Tuple,
+        config, children, single_child_is_sequence=False, sequence_type=cst.Tuple
     )
 
 
@@ -933,14 +951,16 @@ def convert_testlist_comp_tuple(config: ParserConfig, children: Sequence[Any]) -
     "(test|star_expr) ( comp_for | (',' (test|star_expr))* [','] )",
 )
 def convert_testlist_comp_list(config: ParserConfig, children: Sequence[Any]) -> Any:
-    return make_dummy_node(config, children)
+    return _convert_testlist_comp(
+        config, children, single_child_is_sequence=True, sequence_type=cst.List
+    )
 
 
 def _convert_testlist_comp(
     config: ParserConfig,
     children: Sequence[Any],
     single_child_is_sequence: bool,
-    sequence_type: Type[cst.Tuple],
+    sequence_type: Union[Type[cst.Tuple], Type[cst.List]],
 ) -> Any:
     # This is either a single-element list, or the second token is a comma, so we're not
     # in a generator.
@@ -968,7 +988,7 @@ def _convert_sequencelike(
     config: ParserConfig,
     children: Sequence[Any],
     single_child_is_sequence: bool,
-    sequence_type: Type[cst.Tuple],  # TODO: Type[Union[Tuple, List, Set]]
+    sequence_type: Union[Type[cst.Tuple], Type[cst.List]],  # TODO: support cst.Set
 ) -> Any:
     if not single_child_is_sequence and len(children) == 1:
         return children[0]

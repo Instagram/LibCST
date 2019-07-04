@@ -46,6 +46,7 @@ from libcst.nodes._expression import (
     Lambda,
     LeftParen,
     LeftSquareBracket,
+    List,
     Name,
     Number,
     Param,
