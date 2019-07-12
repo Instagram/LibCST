@@ -51,3 +51,8 @@ To verify types for the library, do the following in the root:
 ```
 pyre check
 ```
+
+# License
+
+LibCST is MIT licensed, as found in the LICENSE file.
+
