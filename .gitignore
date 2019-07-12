@@ -5,3 +5,4 @@
 *.egg-info/
 .pyre/
 __pycache__/
+.tox/
