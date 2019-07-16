@@ -21,6 +21,13 @@ class SimpleCompTest(CSTNodeTest):
                 ),
                 "code": "(a for b in c)",
             },
+            # simple ListComp
+            {
+                "node": cst.ListComp(
+                    cst.Name("a"), cst.CompFor(target=cst.Name("b"), iter=cst.Name("c"))
+                ),
+                "code": "[a for b in c]",
+            },
             # async GeneratorExp
             {
                 "node": cst.GeneratorExp(
@@ -121,6 +128,24 @@ class SimpleCompTest(CSTNodeTest):
                 ),
                 "code": "(\fa  for   b    in     c\tif\t\td\f\f)",
             },
+            # custom whitespace around ListComp's brackets
+            {
+                "node": cst.ListComp(
+                    cst.Name("a"),
+                    cst.CompFor(target=cst.Name("b"), iter=cst.Name("c")),
+                    lbracket=cst.LeftSquareBracket(
+                        whitespace_after=cst.SimpleWhitespace("\t")
+                    ),
+                    rbracket=cst.RightSquareBracket(
+                        whitespace_before=cst.SimpleWhitespace("\t\t")
+                    ),
+                    lpar=[cst.LeftParen(whitespace_after=cst.SimpleWhitespace("\f"))],
+                    rpar=[
+                        cst.RightParen(whitespace_before=cst.SimpleWhitespace("\f\f"))
+                    ],
+                ),
+                "code": "(\f[\ta for b in c\t\t]\f\f)",
+            },
             # no whitespace between elements
             {
                 "node": cst.GeneratorExp(
@@ -163,6 +188,50 @@ class SimpleCompTest(CSTNodeTest):
                 ),
                 "code": "((a)for(b)in(c)if(d)for(e)in(f))",
             },
+            # no whitespace before/after GeneratorExp is valid
+            {
+                "node": cst.Comparison(
+                    cst.GeneratorExp(
+                        cst.Name("a"),
+                        cst.CompFor(target=cst.Name("b"), iter=cst.Name("c")),
+                    ),
+                    [
+                        cst.ComparisonTarget(
+                            cst.Is(
+                                whitespace_before=cst.SimpleWhitespace(""),
+                                whitespace_after=cst.SimpleWhitespace(""),
+                            ),
+                            cst.GeneratorExp(
+                                cst.Name("d"),
+                                cst.CompFor(target=cst.Name("e"), iter=cst.Name("f")),
+                            ),
+                        )
+                    ],
+                ),
+                "code": "(a for b in c)is(d for e in f)",
+            },
+            # no whitespace before/after ListComp is valid
+            {
+                "node": cst.Comparison(
+                    cst.ListComp(
+                        cst.Name("a"),
+                        cst.CompFor(target=cst.Name("b"), iter=cst.Name("c")),
+                    ),
+                    [
+                        cst.ComparisonTarget(
+                            cst.Is(
+                                whitespace_before=cst.SimpleWhitespace(""),
+                                whitespace_after=cst.SimpleWhitespace(""),
+                            ),
+                            cst.ListComp(
+                                cst.Name("d"),
+                                cst.CompFor(target=cst.Name("e"), iter=cst.Name("f")),
+                            ),
+                        )
+                    ],
+                ),
+                "code": "[a for b in c]is[d for e in f]",
+            },
         ]
     )
     def test_valid(self, **kwargs: Any) -> None:
@@ -172,6 +241,15 @@ class SimpleCompTest(CSTNodeTest):
         (
             (
                 lambda: cst.GeneratorExp(
+                    cst.Name("a"),
+                    cst.CompFor(target=cst.Name("b"), iter=cst.Name("c")),
+                    lpar=[cst.LeftParen(), cst.LeftParen()],
+                    rpar=[cst.RightParen()],
+                ),
+                "unbalanced parens",
+            ),
+            (
+                lambda: cst.ListComp(
                     cst.Name("a"),
                     cst.CompFor(target=cst.Name("b"), iter=cst.Name("c")),
                     lpar=[cst.LeftParen(), cst.LeftParen()],

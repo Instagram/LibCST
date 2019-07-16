@@ -2241,10 +2241,11 @@ class Tuple(BaseAtom, BaseAssignTargetExpression, BaseDelTargetExpression):
                     )
 
 
-@add_slots
-@dataclass(frozen=True)
-class List(BaseAtom, BaseAssignTargetExpression, BaseDelTargetExpression):
-    elements: Sequence[Union[Element, StarredElement]]
+class BaseList(BaseAtom, ABC):
+    """
+    A Base class for List and ListComp, which both result in a list object when
+    evaluated.
+    """
 
     # Open bracket surrounding the list
     lbracket: LeftSquareBracket = LeftSquareBracket()
@@ -2261,6 +2262,22 @@ class List(BaseAtom, BaseAssignTargetExpression, BaseDelTargetExpression):
     def _safe_to_use_with_word_operator(self, position: ExpressionPosition) -> bool:
         return True
 
+    @contextmanager
+    def _bracketize(self, state: CodegenState) -> Generator[None, None, None]:
+        self.lbracket._codegen(state)
+        yield
+        self.rbracket._codegen(state)
+
+
+@add_slots
+@dataclass(frozen=True)
+class List(BaseList, BaseAssignTargetExpression, BaseDelTargetExpression):
+    elements: Sequence[Union[Element, StarredElement]]
+    lbracket: LeftSquareBracket = LeftSquareBracket()
+    rbracket: RightSquareBracket = RightSquareBracket()
+    lpar: Sequence[LeftParen] = ()
+    rpar: Sequence[RightParen] = ()
+
     def _visit_and_replace_children(self, visitor: CSTVisitor) -> "List":
         return List(
             lpar=visit_sequence("lpar", self.lpar, visitor),
@@ -2271,8 +2288,7 @@ class List(BaseAtom, BaseAssignTargetExpression, BaseDelTargetExpression):
         )
 
     def _codegen_impl(self, state: CodegenState) -> None:
-        with self._parenthesize(state):
-            self.lbracket._codegen(state)
+        with self._parenthesize(state), self._bracketize(state):
             elements = self.elements
             for idx, el in enumerate(elements):
                 el._codegen(
@@ -2280,7 +2296,6 @@ class List(BaseAtom, BaseAssignTargetExpression, BaseDelTargetExpression):
                     default_comma=(idx < len(elements) - 1),
                     default_comma_whitespace=True,
                 )
-            self.rbracket._codegen(state)
 
 
 @add_slots
@@ -2530,5 +2545,35 @@ class GeneratorExp(BaseSimpleComp):
 
     def _codegen_impl(self, state: CodegenState) -> None:
         with self._parenthesize(state):
+            self.elt._codegen(state)
+            self.for_in._codegen(state)
+
+
+@add_slots
+@dataclass(frozen=True)
+class ListComp(BaseList, BaseSimpleComp):
+    elt: BaseAssignTargetExpression
+    for_in: CompFor
+    lbracket: LeftSquareBracket = LeftSquareBracket()
+    rbracket: RightSquareBracket = RightSquareBracket()
+    lpar: Sequence[LeftParen] = ()
+    rpar: Sequence[RightParen] = ()
+
+    def _safe_to_use_with_word_operator(self, position: ExpressionPosition) -> bool:
+        # ListComp is always surrounded in square brackets
+        return True
+
+    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "ListComp":
+        return ListComp(
+            lpar=visit_sequence("lpar", self.lpar, visitor),
+            lbracket=visit_required("lbracket", self.lbracket, visitor),
+            elt=visit_required("elt", self.elt, visitor),
+            for_in=visit_required("for_in", self.for_in, visitor),
+            rbracket=visit_required("rbracket", self.rbracket, visitor),
+            rpar=visit_sequence("rpar", self.rpar, visitor),
+        )
+
+    def _codegen_impl(self, state: CodegenState) -> None:
+        with self._parenthesize(state), self._bracketize(state):
             self.elt._codegen(state)
             self.for_in._codegen(state)

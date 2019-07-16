@@ -52,6 +52,7 @@ from libcst.nodes._expression import (
     LeftParen,
     LeftSquareBracket,
     List,
+    ListComp,
     Name,
     Number,
     Param,
