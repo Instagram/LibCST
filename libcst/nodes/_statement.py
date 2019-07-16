@@ -15,6 +15,7 @@ from libcst.nodes._base import CSTNode, CSTValidationError
 from libcst.nodes._expression import (
     Annotation,
     Arg,
+    Asynchronous,
     Attribute,
     BaseAssignTargetExpression,
     BaseAtom,
@@ -464,6 +465,8 @@ class If(BaseCompoundStatement):
     leading_lines: Sequence[EmptyLine] = ()
     whitespace_before_test: SimpleWhitespace = SimpleWhitespace(" ")
     whitespace_after_test: SimpleWhitespace = SimpleWhitespace("")
+
+    # TODO: _validate
 
     def _visit_and_replace_children(self, visitor: CSTVisitor) -> "If":
         return If(
@@ -1172,31 +1175,6 @@ class AugAssign(BaseSmallStatement):
 
 @add_slots
 @dataclass(frozen=True)
-class Asynchronous(CSTNode):
-    """
-    Used by asynchronous function definitions, as well as async for and async with
-    """
-
-    whitespace_after: SimpleWhitespace = SimpleWhitespace(" ")
-
-    def _validate(self) -> None:
-        if len(self.whitespace_after.value) < 1:
-            raise CSTValidationError("Must have at least one space after Asynchronous.")
-
-    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "Asynchronous":
-        return Asynchronous(
-            whitespace_after=visit_required(
-                "whitespace_after", self.whitespace_after, visitor
-            )
-        )
-
-    def _codegen_impl(self, state: CodegenState) -> None:
-        state.add_token("async")
-        self.whitespace_after._codegen(state)
-
-
-@add_slots
-@dataclass(frozen=True)
 class Decorator(CSTNode):
     """
     A single decorator that decorates a FunctionDef or a ClassDef.
@@ -1624,23 +1602,27 @@ class For(BaseCompoundStatement):
     whitespace_before_colon: SimpleWhitespace = SimpleWhitespace("")
 
     def _validate(self) -> None:
-        has_no_gap = len(self.whitespace_after_for.value) == 0
-        if has_no_gap and not self.target._safe_to_use_with_word_operator(
-            ExpressionPosition.RIGHT
+        if (
+            self.whitespace_after_for.empty
+            and not self.target._safe_to_use_with_word_operator(
+                ExpressionPosition.RIGHT
+            )
         ):
             raise CSTValidationError(
                 "Must have at least one space after 'for' keyword."
             )
-        has_no_gap = len(self.whitespace_before_in.value) == 0
-        if has_no_gap and not self.target._safe_to_use_with_word_operator(
-            ExpressionPosition.LEFT
+
+        if (
+            self.whitespace_before_in.empty
+            and not self.target._safe_to_use_with_word_operator(ExpressionPosition.LEFT)
         ):
             raise CSTValidationError(
                 "Must have at least one space before 'in' keyword."
             )
-        has_no_gap = len(self.whitespace_after_in.value) == 0
-        if has_no_gap and not self.iter._safe_to_use_with_word_operator(
-            ExpressionPosition.RIGHT
+
+        if (
+            self.whitespace_after_in.empty
+            and not self.iter._safe_to_use_with_word_operator(ExpressionPosition.RIGHT)
         ):
             raise CSTValidationError("Must have at least one space after 'in' keyword.")
 

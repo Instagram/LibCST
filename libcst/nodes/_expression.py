@@ -143,6 +143,31 @@ class RightParen(CSTNode):
         state.add_token(")")
 
 
+@add_slots
+@dataclass(frozen=True)
+class Asynchronous(CSTNode):
+    """
+    Used by asynchronous function definitions, as well as `async for` and `async with`.
+    """
+
+    whitespace_after: SimpleWhitespace = SimpleWhitespace(" ")
+
+    def _validate(self) -> None:
+        if len(self.whitespace_after.value) < 1:
+            raise CSTValidationError("Must have at least one space after Asynchronous.")
+
+    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "Asynchronous":
+        return Asynchronous(
+            whitespace_after=visit_required(
+                "whitespace_after", self.whitespace_after, visitor
+            )
+        )
+
+    def _codegen_impl(self, state: CodegenState) -> None:
+        state.add_token("async")
+        self.whitespace_after._codegen(state)
+
+
 class _BaseParenthesizedNode(CSTNode, ABC):
     """
     We don't want to have another level of indirection for parenthesis in
@@ -1643,8 +1668,8 @@ class _BaseExpressionWithArgs(BaseExpression, ABC):
     in typing. So, we have common validation functions here.
     """
 
-    # Sequence of arguments that will be passed to the functgion call
-    args: Sequence[Arg] = ()  # TODO This can also be a single Generator.
+    # Sequence of arguments that will be passed to the function call
+    args: Sequence[Arg] = ()
 
     def _check_kwargs_or_keywords(
         self, arg: Arg
@@ -2256,3 +2281,254 @@ class List(BaseAtom, BaseAssignTargetExpression, BaseDelTargetExpression):
                     default_comma_whitespace=True,
                 )
             self.rbracket._codegen(state)
+
+
+@add_slots
+@dataclass(frozen=True)
+class CompFor(CSTNode):
+    """
+    One `for` clause in a `BaseComprehension`, or a nested hierarchy of `for`
+    clauses.
+
+    Nested loops in comprehensions are difficult to get right, but they can be thought
+    of as a flat representation of nested clauses.
+
+    ```
+    elt for a in b for c in d if e
+    ```
+
+    can be thought of as
+
+    ```
+    for a in b:
+        for c in d:
+            if e:
+                yield elt
+    ```
+
+    And that would form the following CST:
+
+    ```
+    ListComp(
+        elt=Name("elt"),
+        for_in=CompFor(
+            target=Name("a"),
+            iter=Name("b"),
+            ifs=[],
+            inner_comp_for=CompFor(
+                target=Name("c"),
+                iter=Name("d"),
+                ifs=[
+                    CompIf(
+                        test=Name("e"),
+                    ),
+                ],
+            ),
+        ),
+    )
+    ```
+    """
+
+    target: BaseAssignTargetExpression
+    iter: BaseExpression
+    ifs: Sequence["CompIf"] = ()
+    inner_for_in: Optional["CompFor"] = None
+
+    # Optional async modifier.
+    asynchronous: Optional[Asynchronous] = None
+
+    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_after_for: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_before_in: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_after_in: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+
+    def _validate(self) -> None:
+        if (
+            self.whitespace_after_for.empty
+            and not self.target._safe_to_use_with_word_operator(
+                ExpressionPosition.RIGHT
+            )
+        ):
+            raise CSTValidationError(
+                "Must have at least one space after 'for' keyword."
+            )
+
+        if (
+            self.whitespace_before_in.empty
+            and not self.target._safe_to_use_with_word_operator(ExpressionPosition.LEFT)
+        ):
+            raise CSTValidationError(
+                "Must have at least one space before 'in' keyword."
+            )
+
+        if (
+            self.whitespace_after_in.empty
+            and not self.iter._safe_to_use_with_word_operator(ExpressionPosition.RIGHT)
+        ):
+            raise CSTValidationError("Must have at least one space after 'in' keyword.")
+
+        prev_expr = self.iter
+        for if_clause in self.ifs:
+            if (
+                if_clause.whitespace_before.empty
+                and not prev_expr._safe_to_use_with_word_operator(
+                    ExpressionPosition.LEFT
+                )
+            ):
+                raise CSTValidationError(
+                    "Must have at least one space before 'if' keyword."
+                )
+            prev_expr = if_clause.test
+
+        inner_for_in = self.inner_for_in
+        if (
+            inner_for_in is not None
+            and inner_for_in.whitespace_before.empty
+            and not prev_expr._safe_to_use_with_word_operator(ExpressionPosition.LEFT)
+        ):
+            keyword = "async" if inner_for_in.asynchronous else "for"
+            raise CSTValidationError(
+                f"Must have at least one space before '{keyword}' keyword."
+            )
+
+    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "CompFor":
+        return CompFor(
+            whitespace_before=visit_required(
+                "whitespace_before", self.whitespace_before, visitor
+            ),
+            asynchronous=visit_optional("asynchronous", self.asynchronous, visitor),
+            whitespace_after_for=visit_required(
+                "whitespace_after_for", self.whitespace_after_for, visitor
+            ),
+            target=visit_required("target", self.target, visitor),
+            whitespace_before_in=visit_required(
+                "whitespace_before_in", self.whitespace_before_in, visitor
+            ),
+            whitespace_after_in=visit_required(
+                "whitespace_after_in", self.whitespace_after_in, visitor
+            ),
+            iter=visit_required("iter", self.iter, visitor),
+            ifs=visit_sequence("ifs", self.ifs, visitor),
+            inner_for_in=visit_optional("inner_for_in", self.inner_for_in, visitor),
+        )
+
+    def _codegen_impl(self, state: CodegenState) -> None:
+        self.whitespace_before._codegen(state)
+        asynchronous = self.asynchronous
+        if asynchronous is not None:
+            asynchronous._codegen(state)
+        state.add_token("for")
+        self.whitespace_after_for._codegen(state)
+        self.target._codegen(state)
+        self.whitespace_before_in._codegen(state)
+        state.add_token("in")
+        self.whitespace_after_in._codegen(state)
+        self.iter._codegen(state)
+        ifs = self.ifs
+        for if_clause in ifs:
+            if_clause._codegen(state)
+        inner_for_in = self.inner_for_in
+        if inner_for_in is not None:
+            inner_for_in._codegen(state)
+
+
+@add_slots
+@dataclass(frozen=True)
+class CompIf(CSTNode):
+    test: BaseExpression
+    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_before_test: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+
+    def _validate(self) -> None:
+        if (
+            self.whitespace_before_test.empty
+            and not self.test._safe_to_use_with_word_operator(ExpressionPosition.RIGHT)
+        ):
+            raise CSTValidationError("Must have at least one space after 'if' keyword.")
+
+    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "CompIf":
+        return CompIf(
+            whitespace_before=visit_required(
+                "whitespace_before", self.whitespace_before, visitor
+            ),
+            whitespace_before_test=visit_required(
+                "whitespace_before_test", self.whitespace_before_test, visitor
+            ),
+            test=visit_required("test", self.test, visitor),
+        )
+
+    def _codegen_impl(self, state: CodegenState) -> None:
+        self.whitespace_before._codegen(state)
+        state.add_token("if")
+        self.whitespace_before_test._codegen(state)
+        self.test._codegen(state)
+
+
+class BaseComp(BaseAtom, ABC):
+    # pyre-fixme[13]: Attribute `for_in` is never initialized.
+    for_in: CompFor
+
+
+class BaseSimpleComp(BaseComp, ABC):
+    """
+    The base class for `ListComp`, `SetComp`, and `Generator`. `DictComp` is not a
+    `BaseSimpleComp`, because it uses `key` and `value`.
+    """
+
+    # The expression evaluated during each iteration of the comprehension. This
+    # lexically comes before the `for_in` clause, but it is semantically the inner-most
+    # element, evaluated inside the `for_in` clause.
+    # pyre-fixme[13]: Attribute `elt` is never initialized.
+    elt: BaseAssignTargetExpression
+
+    # The `for ... in ... if ...` clause that lexically comes after `elt`. This may be a
+    # nested structure for nested comprehensions. See `ComprehensionFor` for details.
+    # pyre-fixme[13]: Attribute `for_in` is never initialized.
+    for_in: CompFor
+
+    def _validate(self) -> None:
+        super(BaseSimpleComp, self)._validate()
+
+        for_in = self.for_in
+        if (
+            for_in.whitespace_before.empty
+            and not self.elt._safe_to_use_with_word_operator(ExpressionPosition.LEFT)
+        ):
+            keyword = "async" if for_in.asynchronous else "for"
+            raise CSTValidationError(
+                f"Must have at least one space before '{keyword}' keyword."
+            )
+
+
+@add_slots
+@dataclass(frozen=True)
+class GeneratorExp(BaseSimpleComp):
+    elt: BaseAssignTargetExpression
+    for_in: CompFor
+    lpar: Sequence[LeftParen] = (LeftParen(),)
+    rpar: Sequence[RightParen] = (RightParen(),)
+
+    def _safe_to_use_with_word_operator(self, position: ExpressionPosition) -> bool:
+        # Generators are always parenthesized
+        return True
+
+    # A note about validation: Generators must always be parenthesized, but it's
+    # possible that this Generator node doesn't own those parenthesis (in the case of a
+    # function call with a single generator argument).
+    #
+    # Therefore, there's no useful validation we can do here. In theory, our parent
+    # could do the validation, but there's a ton of potential parents to a Generator, so
+    # it's not worth the effort.
+
+    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "GeneratorExp":
+        return GeneratorExp(
+            lpar=visit_sequence("lpar", self.lpar, visitor),
+            elt=visit_required("elt", self.elt, visitor),
+            for_in=visit_required("for_in", self.for_in, visitor),
+            rpar=visit_sequence("rpar", self.rpar, visitor),
+        )
+
+    def _codegen_impl(self, state: CodegenState) -> None:
+        with self._parenthesize(state):
+            self.elt._codegen(state)
+            self.for_in._codegen(state)
