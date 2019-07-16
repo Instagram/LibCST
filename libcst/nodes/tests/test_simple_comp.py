@@ -8,6 +8,7 @@ from typing import Any, Callable
 
 import libcst.nodes as cst
 from libcst.nodes.tests.base import CSTNodeTest
+from libcst.parser import parse_expression
 from libcst.testing.utils import data_provider
 
 
@@ -20,6 +21,7 @@ class SimpleCompTest(CSTNodeTest):
                     cst.Name("a"), cst.CompFor(target=cst.Name("b"), iter=cst.Name("c"))
                 ),
                 "code": "(a for b in c)",
+                "parser": parse_expression,
             },
             # simple ListComp
             {
@@ -27,6 +29,7 @@ class SimpleCompTest(CSTNodeTest):
                     cst.Name("a"), cst.CompFor(target=cst.Name("b"), iter=cst.Name("c"))
                 ),
                 "code": "[a for b in c]",
+                "parser": parse_expression,
             },
             # async GeneratorExp
             {
@@ -39,6 +42,7 @@ class SimpleCompTest(CSTNodeTest):
                     ),
                 ),
                 "code": "(a async for b in c)",
+                "parser": parse_expression,
             },
             # a generator doesn't have to own it's own parenthesis
             {
@@ -56,6 +60,7 @@ class SimpleCompTest(CSTNodeTest):
                     ],
                 ),
                 "code": "func(a for b in c)",
+                "parser": parse_expression,
             },
             # add a few 'if' clauses
             {
@@ -72,6 +77,7 @@ class SimpleCompTest(CSTNodeTest):
                     ),
                 ),
                 "code": "(a for b in c if d if e if f)",
+                "parser": parse_expression,
             },
             # nested/inner for-in clause
             {
@@ -86,6 +92,7 @@ class SimpleCompTest(CSTNodeTest):
                     ),
                 ),
                 "code": "(a for b in c for d in e)",
+                "parser": parse_expression,
             },
             # nested/inner for-in clause with an 'if' clause
             {
@@ -101,6 +108,7 @@ class SimpleCompTest(CSTNodeTest):
                     ),
                 ),
                 "code": "(a for b in c if d for e in f)",
+                "parser": parse_expression,
             },
             # custom whitespace
             {
@@ -127,6 +135,7 @@ class SimpleCompTest(CSTNodeTest):
                     ],
                 ),
                 "code": "(\fa  for   b    in     c\tif\t\td\f\f)",
+                "parser": parse_expression,
             },
             # custom whitespace around ListComp's brackets
             {
@@ -145,6 +154,7 @@ class SimpleCompTest(CSTNodeTest):
                     ],
                 ),
                 "code": "(\f[\ta for b in c\t\t]\f\f)",
+                "parser": parse_expression,
             },
             # no whitespace between elements
             {
@@ -187,6 +197,7 @@ class SimpleCompTest(CSTNodeTest):
                     rpar=[cst.RightParen()],
                 ),
                 "code": "((a)for(b)in(c)if(d)for(e)in(f))",
+                "parser": parse_expression,
             },
             # no whitespace before/after GeneratorExp is valid
             {
@@ -209,6 +220,7 @@ class SimpleCompTest(CSTNodeTest):
                     ],
                 ),
                 "code": "(a for b in c)is(d for e in f)",
+                "parser": parse_expression,
             },
             # no whitespace before/after ListComp is valid
             {
@@ -231,6 +243,7 @@ class SimpleCompTest(CSTNodeTest):
                     ],
                 ),
                 "code": "[a for b in c]is[d for e in f]",
+                "parser": parse_expression,
             },
         ]
     )

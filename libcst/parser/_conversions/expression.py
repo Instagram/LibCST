@@ -752,10 +752,8 @@ def convert_atom_squarebrackets(config: ParserConfig, children: Sequence[Any]) -
     if len(body) == 0:
         list_node = cst.List((), lbracket=lbracket, rbracket=rbracket)
     else:  # len(body) == 1
-        if isinstance(body[0].value, cst.List):  # TODO: Remove this conditional
-            list_node = body[0].value.with_changes(lbracket=lbracket, rbracket=rbracket)
-        else:  # TODO: Remove this branch; this handles for DummyNodes
-            list_node = cst.DummyNode([lbracket, body[0].value, rbracket])
+        # body[0] is a cst.List or cst.ListComp
+        list_node = body[0].value.with_changes(lbracket=lbracket, rbracket=rbracket)
 
     return WithLeadingWhitespace(list_node, lbracket_tok.whitespace_before)
 
@@ -798,6 +796,7 @@ def convert_atom_parens(config: ParserConfig, children: Sequence[Any]) -> Any:
                 lpar_tok.whitespace_before,
             )
         else:
+            # inner_atom is a _BaseParenthesizedNode
             return WithLeadingWhitespace(
                 inner_atom.with_changes(
                     lpar=(lpar, *inner_atom.lpar), rpar=(*inner_atom.rpar, rpar)
@@ -942,7 +941,11 @@ def convert_fstring_format_spec(config: ParserConfig, children: Sequence[Any]) -
 )
 def convert_testlist_comp_tuple(config: ParserConfig, children: Sequence[Any]) -> Any:
     return _convert_testlist_comp(
-        config, children, single_child_is_sequence=False, sequence_type=cst.Tuple
+        config,
+        children,
+        single_child_is_sequence=False,
+        sequence_type=cst.Tuple,
+        comprehension_type=cst.GeneratorExp,
     )
 
 
@@ -952,7 +955,11 @@ def convert_testlist_comp_tuple(config: ParserConfig, children: Sequence[Any]) -
 )
 def convert_testlist_comp_list(config: ParserConfig, children: Sequence[Any]) -> Any:
     return _convert_testlist_comp(
-        config, children, single_child_is_sequence=True, sequence_type=cst.List
+        config,
+        children,
+        single_child_is_sequence=True,
+        sequence_type=cst.List,
+        comprehension_type=cst.ListComp,
     )
 
 
@@ -961,6 +968,7 @@ def _convert_testlist_comp(
     children: Sequence[Any],
     single_child_is_sequence: bool,
     sequence_type: Union[Type[cst.Tuple], Type[cst.List]],
+    comprehension_type: Union[Type[cst.GeneratorExp], Type[cst.ListComp]],
 ) -> Any:
     # This is either a single-element list, or the second token is a comma, so we're not
     # in a generator.
@@ -969,8 +977,13 @@ def _convert_testlist_comp(
             config, children, single_child_is_sequence, sequence_type
         )
     else:
-        # TODO: make a generator/comprehension
-        return make_dummy_node(config, children)
+        # N.B. The parent node (e.g. atom) is responsible for computing and attaching
+        # whitespace information on any parenthesis, square brackets, or curly braces
+        elt, for_in = children
+        return WithLeadingWhitespace(
+            comprehension_type(elt=elt.value, for_in=for_in, lpar=(), rpar=()),
+            elt.whitespace_before,
+        )
 
 
 @with_production("testlist_star_expr", "(test|star_expr) (',' (test|star_expr))* [',']")
@@ -993,7 +1006,7 @@ def _convert_sequencelike(
     if not single_child_is_sequence and len(children) == 1:
         return children[0]
     # N.B. The parent node (e.g. atom) is responsible for computing and attaching
-    # whitespace_after on our last Element/StarredElement node.
+    # whitespace information on any parenthesis, square brackets, or curly braces
     elements = []
     for wrapped_expr_or_starred_element, comma_token in grouper(children, 2):
         expr_or_starred_element = wrapped_expr_or_starred_element.value
@@ -1075,9 +1088,8 @@ def convert_arg_assign_comp_for(config: ParserConfig, children: Sequence[Any]) -
         (child,) = children
         return cst.Arg(value=child.value)
     elif len(children) == 2:
-        # Comprehension, but we don't support comprehensions yet, so
-        # just set the value to a dummy node.
-        return cst.Arg(value=make_dummy_node(config, children).value)
+        elt, for_in = children
+        return cst.Arg(value=cst.GeneratorExp(elt.value, for_in, lpar=(), rpar=()))
     else:
         # "key = value" assignment argument
         lhs, equal, rhs = children
@@ -1107,25 +1119,67 @@ def convert_star_arg(config: ParserConfig, children: Sequence[Any]) -> Any:
     )
 
 
-@with_production("comp_iter", "comp_for | comp_if")
-def convert_comp_iter(config: ParserConfig, children: Sequence[Any]) -> Any:
-    (child,) = children
-    return child
-
-
-@with_production("sync_comp_for", "'for' exprlist 'in' or_test [comp_iter]")
+@with_production("sync_comp_for", "'for' exprlist 'in' or_test comp_if* [comp_for]")
 def convert_sync_comp_for(config: ParserConfig, children: Sequence[Any]) -> Any:
-    return make_dummy_node(config, children)
+    # unpack
+    for_tok, target, in_tok, iter, *trailing = children
+    if len(trailing) and isinstance(trailing[-1], cst.CompFor):
+        *ifs, inner_for_in = trailing
+    else:
+        ifs, inner_for_in = trailing, None
+
+    return cst.CompFor(
+        target=target.value,
+        iter=iter.value,
+        ifs=ifs,
+        inner_for_in=inner_for_in,
+        whitespace_before=parse_parenthesizable_whitespace(
+            config, for_tok.whitespace_before
+        ),
+        whitespace_after_for=parse_parenthesizable_whitespace(
+            config, for_tok.whitespace_after
+        ),
+        whitespace_before_in=parse_parenthesizable_whitespace(
+            config, in_tok.whitespace_before
+        ),
+        whitespace_after_in=parse_parenthesizable_whitespace(
+            config, in_tok.whitespace_after
+        ),
+    )
 
 
 @with_production("comp_for", "['async'] sync_comp_for")
 def convert_comp_for(config: ParserConfig, children: Sequence[Any]) -> Any:
-    return make_dummy_node(config, children)
+    if len(children) == 1:
+        (sync_comp_for,) = children
+        return sync_comp_for
+    else:
+        (async_tok, sync_comp_for) = children
+        return sync_comp_for.with_changes(
+            # asynchronous steals the `CompFor`'s `whitespace_before`.
+            asynchronous=cst.Asynchronous(
+                whitespace_after=sync_comp_for.whitespace_before
+            ),
+            # But, in exchange, `CompFor` gets to keep `async_tok`'s leading
+            # whitespace, because that's now the beginning of the `CompFor`.
+            whitespace_before=parse_parenthesizable_whitespace(
+                config, async_tok.whitespace_before
+            ),
+        )
 
 
-@with_production("comp_if", "'if' test_nocond [comp_iter]")
+@with_production("comp_if", "'if' test_nocond")
 def convert_comp_if(config: ParserConfig, children: Sequence[Any]) -> Any:
-    return make_dummy_node(config, children)
+    if_tok, test = children
+    return cst.CompIf(
+        test.value,
+        whitespace_before=parse_parenthesizable_whitespace(
+            config, if_tok.whitespace_before
+        ),
+        whitespace_before_test=parse_parenthesizable_whitespace(
+            config, test.whitespace_before
+        ),
+    )
 
 
 @with_production("yield_expr", "'yield' [yield_arg]")
