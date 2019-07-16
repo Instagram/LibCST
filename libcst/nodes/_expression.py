@@ -772,6 +772,17 @@ class Comparison(BaseExpression):
     # Sequence of close parenthesis for precedence dictation.
     rpar: Sequence[RightParen] = ()
 
+    def _safe_to_use_with_word_operator(self, position: ExpressionPosition) -> bool:
+        if super(Comparison, self)._safe_to_use_with_word_operator(position):
+            # we have parenthesis
+            return True
+        if position == ExpressionPosition.LEFT:
+            return self.comparisons[-1].comparator._safe_to_use_with_word_operator(
+                ExpressionPosition.LEFT
+            )
+        else:  # position == ExpressionPosition.RIGHT:
+            return self.left._safe_to_use_with_word_operator(ExpressionPosition.RIGHT)
+
     def _validate(self) -> None:
         # Perform any validation on base type
         super(Comparison, self)._validate()
@@ -780,15 +791,20 @@ class Comparison(BaseExpression):
             raise CSTValidationError("Must have at least one ComparisonTarget.")
 
         # Validate operator spacing rules
-        operator = self.comparisons[0].operator
-        if (
-            isinstance(operator, (In, NotIn, Is, IsNot))
-            and operator.whitespace_before.empty
-            and not self.left._safe_to_use_with_word_operator(ExpressionPosition.LEFT)
-        ):
-            raise CSTValidationError(
-                "Must have at least one space around comparison operator."
-            )
+        previous_comparator = self.left
+        for target in self.comparisons:
+            operator = target.operator
+            if (
+                isinstance(operator, (In, NotIn, Is, IsNot))
+                and operator.whitespace_before.empty
+                and not previous_comparator._safe_to_use_with_word_operator(
+                    ExpressionPosition.LEFT
+                )
+            ):
+                raise CSTValidationError(
+                    "Must have at least one space around comparison operator."
+                )
+            previous_comparator = target.comparator
 
     def _visit_and_replace_children(self, visitor: CSTVisitor) -> "Comparison":
         return Comparison(

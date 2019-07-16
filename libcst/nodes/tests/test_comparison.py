@@ -82,21 +82,30 @@ class ComparisonTest(CSTNodeTest):
             (
                 cst.Comparison(
                     left=cst.Name(
-                        "foo", lpar=(cst.LeftParen(),), rpar=(cst.RightParen(),)
+                        "a", lpar=(cst.LeftParen(),), rpar=(cst.RightParen(),)
                     ),
                     comparisons=(
                         cst.ComparisonTarget(
-                            operator=cst.NotIn(
+                            operator=cst.Is(
                                 whitespace_before=cst.SimpleWhitespace(""),
                                 whitespace_after=cst.SimpleWhitespace(""),
                             ),
                             comparator=cst.Name(
-                                "bar", lpar=(cst.LeftParen(),), rpar=(cst.RightParen(),)
+                                "b", lpar=(cst.LeftParen(),), rpar=(cst.RightParen(),)
+                            ),
+                        ),
+                        cst.ComparisonTarget(
+                            operator=cst.Is(
+                                whitespace_before=cst.SimpleWhitespace(""),
+                                whitespace_after=cst.SimpleWhitespace(""),
+                            ),
+                            comparator=cst.Name(
+                                "c", lpar=(cst.LeftParen(),), rpar=(cst.RightParen(),)
                             ),
                         ),
                     ),
                 ),
-                "(foo)not in(bar)",
+                "(a)is(b)is(c)",
             ),
             # Valid expressions that look like they shouldn't parse
             (
@@ -170,6 +179,58 @@ class ComparisonTest(CSTNodeTest):
                 "a > b > c",
                 CodeRange.create((1, 0), (1, 9)),
             ),
+            # Is safe to use with word operators if it's leading/trailing children are
+            (
+                cst.IfExp(
+                    body=cst.Comparison(
+                        left=cst.Name("a"),
+                        comparisons=(
+                            cst.ComparisonTarget(
+                                operator=cst.GreaterThan(),
+                                comparator=cst.Name(
+                                    "b",
+                                    lpar=(cst.LeftParen(),),
+                                    rpar=(cst.RightParen(),),
+                                ),
+                            ),
+                        ),
+                    ),
+                    test=cst.Comparison(
+                        left=cst.Name(
+                            "c", lpar=(cst.LeftParen(),), rpar=(cst.RightParen(),)
+                        ),
+                        comparisons=(
+                            cst.ComparisonTarget(
+                                operator=cst.GreaterThan(), comparator=cst.Name("d")
+                            ),
+                        ),
+                    ),
+                    orelse=cst.Name("e"),
+                    whitespace_before_if=cst.SimpleWhitespace(""),
+                    whitespace_after_if=cst.SimpleWhitespace(""),
+                ),
+                "a > (b)if(c) > d else e",
+            ),
+            # is safe to use with word operators if entirely surrounded in parenthesis
+            (
+                cst.IfExp(
+                    body=cst.Name("a"),
+                    test=cst.Comparison(
+                        left=cst.Name("b"),
+                        comparisons=(
+                            cst.ComparisonTarget(
+                                operator=cst.GreaterThan(), comparator=cst.Name("c")
+                            ),
+                        ),
+                        lpar=(cst.LeftParen(),),
+                        rpar=(cst.RightParen(),),
+                    ),
+                    orelse=cst.Name("d"),
+                    whitespace_after_if=cst.SimpleWhitespace(""),
+                    whitespace_before_else=cst.SimpleWhitespace(""),
+                ),
+                "a if(b > c)else d",
+            ),
         )
     )
     def test_valid(
@@ -230,6 +291,72 @@ class ComparisonTest(CSTNodeTest):
                     ),
                 ),
                 "at least one space around comparison operator",
+            ),
+            # multi-target comparisons
+            (
+                lambda: cst.Comparison(
+                    left=cst.Name("a"),
+                    comparisons=(
+                        cst.ComparisonTarget(
+                            operator=cst.Is(), comparator=cst.Name("b")
+                        ),
+                        cst.ComparisonTarget(
+                            operator=cst.Is(whitespace_before=cst.SimpleWhitespace("")),
+                            comparator=cst.Name("c"),
+                        ),
+                    ),
+                ),
+                "at least one space around comparison operator",
+            ),
+            (
+                lambda: cst.Comparison(
+                    left=cst.Name("a"),
+                    comparisons=(
+                        cst.ComparisonTarget(
+                            operator=cst.Is(), comparator=cst.Name("b")
+                        ),
+                        cst.ComparisonTarget(
+                            operator=cst.Is(whitespace_after=cst.SimpleWhitespace("")),
+                            comparator=cst.Name("c"),
+                        ),
+                    ),
+                ),
+                "at least one space around comparison operator",
+            ),
+            # whitespace around the comparision itself
+            # a ifb > c else d
+            (
+                lambda: cst.IfExp(
+                    body=cst.Name("a"),
+                    test=cst.Comparison(
+                        left=cst.Name("b"),
+                        comparisons=(
+                            cst.ComparisonTarget(
+                                operator=cst.GreaterThan(), comparator=cst.Name("c")
+                            ),
+                        ),
+                    ),
+                    orelse=cst.Name("d"),
+                    whitespace_after_if=cst.SimpleWhitespace(""),
+                ),
+                "Must have at least one space after 'if' keyword.",
+            ),
+            # a if b > celse d
+            (
+                lambda: cst.IfExp(
+                    body=cst.Name("a"),
+                    test=cst.Comparison(
+                        left=cst.Name("b"),
+                        comparisons=(
+                            cst.ComparisonTarget(
+                                operator=cst.GreaterThan(), comparator=cst.Name("c")
+                            ),
+                        ),
+                    ),
+                    orelse=cst.Name("d"),
+                    whitespace_before_else=cst.SimpleWhitespace(""),
+                ),
+                "Must have at least one space before 'else' keyword.",
             ),
         )
     )
