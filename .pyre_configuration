@@ -4,5 +4,8 @@
     ],
     "search_path": [
         "stubs"
+    ],
+    "exclude": [
+        ".*/\\.tox/.*"
     ]
 }
