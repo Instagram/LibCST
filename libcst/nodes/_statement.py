@@ -100,9 +100,11 @@ class Del(BaseSmallStatement):
     semicolon: Union[Semicolon, MaybeSentinel] = MaybeSentinel.DEFAULT
 
     def _validate(self) -> None:
-        has_no_gap = len(self.whitespace_after_del.value) == 0
-        if has_no_gap and not self.target._safe_to_use_with_word_operator(
-            ExpressionPosition.RIGHT
+        if (
+            self.whitespace_after_del.empty
+            and not self.target._safe_to_use_with_word_operator(
+                ExpressionPosition.RIGHT
+            )
         ):
             raise CSTValidationError("Must have at least one space after 'del'.")
 
@@ -650,7 +652,7 @@ class ExceptHandler(CSTNode):
             raise CSTValidationError(
                 "Must use a Name node for AsName name inside ExceptHandler."
             )
-        if self.type is not None and len(self.whitespace_after_except.value) == 0:
+        if self.type is not None and self.whitespace_after_except.empty:
             raise CSTValidationError(
                 "Must have at least one space after except when ExceptHandler has a type."
             )
@@ -846,7 +848,7 @@ class Import(BaseSmallStatement):
             raise CSTValidationError(
                 "An ImportStatement does not allow a trailing comma"
             )
-        if len(self.whitespace_after_import.value) == 0:
+        if self.whitespace_after_import.empty:
             raise CSTValidationError("Must have at least one space after import.")
 
     def _visit_and_replace_children(self, visitor: CSTVisitor) -> "Import":
@@ -929,11 +931,11 @@ class ImportFrom(BaseSmallStatement):
                 )
 
     def _validate_whitespace(self) -> None:
-        if len(self.whitespace_after_from.value) == 0:
+        if self.whitespace_after_from.empty:
             raise CSTValidationError("Must have at least one space after from.")
-        if len(self.whitespace_before_import.value) == 0:
+        if self.whitespace_before_import.empty:
             raise CSTValidationError("Must have at least one space before import.")
-        if len(self.whitespace_after_import.value) == 0 and self.lpar is None:
+        if self.whitespace_after_import.empty and self.lpar is None:
             raise CSTValidationError("Must have at least one space after import.")
 
     def _validate(self) -> None:
@@ -1274,7 +1276,7 @@ class FunctionDef(BaseCompoundStatement):
     def _validate(self) -> None:
         if len(self.name.lpar) > 0 or len(self.name.rpar) > 0:
             raise CSTValidationError("Cannot have parens around Name in a FunctionDef.")
-        if len(self.whitespace_after_def.value) == 0:
+        if self.whitespace_after_def.empty:
             raise CSTValidationError(
                 "There must be at least one space between 'def' and name."
             )
@@ -1383,7 +1385,7 @@ class ClassDef(BaseCompoundStatement):
     whitespace_before_colon: SimpleWhitespace = SimpleWhitespace("")
 
     def _validate_whitespace(self) -> None:
-        if len(self.whitespace_after_class.value) == 0:
+        if self.whitespace_after_class.empty:
             raise CSTValidationError(
                 "There must be at least one space between 'class' and name."
             )
@@ -1535,10 +1537,9 @@ class With(BaseCompoundStatement):
             raise CSTValidationError(
                 "The last WithItem in a With cannot have a trailing comma."
             )
-        has_no_gap = len(self.whitespace_after_with.value) == 0
-        if has_no_gap and not self.items[0].item._safe_to_use_with_word_operator(
-            ExpressionPosition.RIGHT
-        ):
+        if self.whitespace_after_with.empty and not self.items[
+            0
+        ].item._safe_to_use_with_word_operator(ExpressionPosition.RIGHT):
             raise CSTValidationError("Must have at least one space after with keyword.")
 
     def _visit_and_replace_children(self, visitor: CSTVisitor) -> "With":
@@ -1692,9 +1693,9 @@ class While(BaseCompoundStatement):
     whitespace_before_colon: SimpleWhitespace = SimpleWhitespace("")
 
     def _validate(self) -> None:
-        has_no_gap = len(self.whitespace_after_while.value) == 0
-        if has_no_gap and not self.test._safe_to_use_with_word_operator(
-            ExpressionPosition.RIGHT
+        if (
+            self.whitespace_after_while.empty
+            and not self.test._safe_to_use_with_word_operator(ExpressionPosition.RIGHT)
         ):
             raise CSTValidationError(
                 "Must have at least one space after 'while' keyword."
@@ -1838,9 +1839,9 @@ class Assert(BaseSmallStatement):
 
     def _validate(self) -> None:
         # Validate whitespace
-        has_no_gap = len(self.whitespace_after_assert.value) == 0
-        if has_no_gap and not self.test._safe_to_use_with_word_operator(
-            ExpressionPosition.RIGHT
+        if (
+            self.whitespace_after_assert.empty
+            and not self.test._safe_to_use_with_word_operator(ExpressionPosition.RIGHT)
         ):
             raise CSTValidationError("Must have at least one space after 'assert'.")
 
@@ -1942,7 +1943,7 @@ class Global(BaseSmallStatement):
             raise CSTValidationError(
                 "The last NameItem in a Global cannot have a trailing comma."
             )
-        if len(self.whitespace_after_global.value) == 0:
+        if self.whitespace_after_global.empty:
             raise CSTValidationError(
                 "Must have at least one space after 'global' keyword."
             )
@@ -1998,7 +1999,7 @@ class Nonlocal(BaseSmallStatement):
             raise CSTValidationError(
                 "The last NameItem in a Nonlocal cannot have a trailing comma."
             )
-        if len(self.whitespace_after_nonlocal.value) == 0:
+        if self.whitespace_after_nonlocal.empty:
             raise CSTValidationError(
                 "Must have at least one space after 'nonlocal' keyword."
             )
