@@ -790,7 +790,8 @@ def convert_atom_parens(config: ParserConfig, children: Sequence[Any]) -> Any:
             return WithLeadingWhitespace(
                 inner_atom.with_changes(
                     number=inner_atom.number.with_changes(
-                        lpar=(lpar, *inner_atom.lpar), rpar=(*inner_atom.rpar, rpar)
+                        lpar=(lpar, *inner_atom.number.lpar),
+                        rpar=(*inner_atom.number.rpar, rpar),
                     )
                 ),
                 lpar_tok.whitespace_before,

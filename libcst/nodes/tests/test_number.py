@@ -61,7 +61,34 @@ class NumberTest(CSTNodeTest):
                 parse_expression,
                 CodeRange.create((1, 0), (1, 3)),
             ),
-            # TODO: add test cases for "((5))" and "(+((5)))"
+            # multiple nested parenthesis
+            (
+                cst.Number(
+                    cst.Integer(
+                        "5",
+                        lpar=(cst.LeftParen(), cst.LeftParen()),
+                        rpar=(cst.RightParen(), cst.RightParen()),
+                    )
+                ),
+                "((5))",
+                parse_expression,
+                CodeRange.create((1, 0), (1, 5)),
+            ),
+            (
+                cst.Number(
+                    lpar=(cst.LeftParen(),),
+                    operator=cst.Plus(),
+                    number=cst.Integer(
+                        "5",
+                        lpar=(cst.LeftParen(), cst.LeftParen()),
+                        rpar=(cst.RightParen(), cst.RightParen()),
+                    ),
+                    rpar=(cst.RightParen(),),
+                ),
+                "(+((5)))",
+                parse_expression,
+                CodeRange.create((1, 1), (1, 7)),
+            ),
         )
     )
     def test_valid(
