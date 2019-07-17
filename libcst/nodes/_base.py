@@ -269,6 +269,14 @@ class CSTNode(ABC):
         """
         ...
 
+    def _is_removable(self) -> bool:
+        """
+        Intended to be overridden by nodes that will be iterated over inside
+        Module and IndentedBlock. Returning true signifies that this node is
+        essentially useless and can be dropped when doing a visit across it.
+        """
+        return False
+
     @abstractmethod
     def _codegen_impl(self, state: CodegenState) -> None:
         ...

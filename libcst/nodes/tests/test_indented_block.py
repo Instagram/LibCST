@@ -4,37 +4,28 @@
 # LICENSE file in the root directory of this source tree.
 
 # pyre-strict
-from typing import Callable, Optional, TypeVar, Union
+from typing import Callable, Optional
 
 import libcst.nodes as cst
-from libcst._removal_sentinel import RemovalSentinel
 from libcst.nodes.tests.base import CSTNodeTest
 from libcst.parser import parse_statement
 from libcst.testing.utils import data_provider
-from libcst.visitors import CSTTransformer
-
-
-_CSTNodeT = TypeVar("_CSTNodeT", bound=cst.CSTNode)
-
-
-class IfStatementRemovalVisitor(CSTTransformer):
-    def on_leave(
-        self, original_node: _CSTNodeT, updated_node: _CSTNodeT
-    ) -> Union[_CSTNodeT, RemovalSentinel]:
-        if isinstance(updated_node, cst.If):
-            return RemovalSentinel.REMOVE
-        else:
-            return updated_node
 
 
 class IndentedBlockTest(CSTNodeTest):
     @data_provider(
         (
+            # Standard render
             (
                 cst.IndentedBlock((cst.SimpleStatementLine((cst.Pass(),)),)),
                 "\n    pass\n",
                 None,
             ),
+            # Render with empty
+            (cst.IndentedBlock(()), "\n    pass\n", None),
+            # Render with empty subnodes
+            (cst.IndentedBlock((cst.SimpleStatementLine(()),)), "\n    pass\n", None),
+            # Test render with custom indent
             (
                 cst.IndentedBlock(
                     (cst.SimpleStatementLine((cst.Pass(),)),), indent="\t"
@@ -42,6 +33,7 @@ class IndentedBlockTest(CSTNodeTest):
                 "\n\tpass\n",
                 None,
             ),
+            # Test comments
             (
                 cst.IndentedBlock(
                     (cst.SimpleStatementLine((cst.Pass(),)),),
@@ -144,7 +136,6 @@ class IndentedBlockTest(CSTNodeTest):
 
     @data_provider(
         (
-            (lambda: cst.IndentedBlock(()), "at least one"),
             (
                 lambda: cst.IndentedBlock(
                     (cst.SimpleStatementLine((cst.Pass(),)),), indent=""
@@ -164,11 +155,3 @@ class IndentedBlockTest(CSTNodeTest):
         self, get_node: Callable[[], cst.CSTNode], expected_re: str
     ) -> None:
         self.assert_invalid(get_node, expected_re)
-
-    def test_removal_creates_pass(self) -> None:
-        original = cst.IndentedBlock(
-            (cst.If(cst.Name("conditional"), cst.SimpleStatementSuite((cst.Break(),))),)
-        )
-        expected = cst.IndentedBlock((cst.SimpleStatementLine((cst.Pass(),)),))
-
-        self.assertEqual(original.visit(IfStatementRemovalVisitor()), expected)

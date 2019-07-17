@@ -1,0 +1,113 @@
+# Copyright (c) Facebook, Inc. and its affiliates.
+#
+# This source code is licensed under the MIT license found in the
+# LICENSE file in the root directory of this source tree.
+
+# pyre-strict
+from typing import Type, TypeVar, Union
+
+import libcst.nodes as cst
+from libcst._removal_sentinel import RemovalSentinel
+from libcst.nodes.tests.base import CSTNodeTest
+from libcst.parser import parse_module
+from libcst.testing.utils import data_provider
+from libcst.visitors import CSTTransformer
+
+
+_CSTNodeT = TypeVar("_CSTNodeT", bound=cst.CSTNode)
+
+
+class IfStatementRemovalVisitor(CSTTransformer):
+    def on_leave(
+        self, original_node: _CSTNodeT, updated_node: _CSTNodeT
+    ) -> Union[_CSTNodeT, RemovalSentinel]:
+        if isinstance(updated_node, cst.If):
+            return RemovalSentinel.REMOVE
+        else:
+            return updated_node
+
+
+class ContinueStatementRemovalVisitor(CSTTransformer):
+    def on_leave(
+        self, original_node: _CSTNodeT, updated_node: _CSTNodeT
+    ) -> Union[_CSTNodeT, RemovalSentinel]:
+        if isinstance(updated_node, cst.Continue):
+            return RemovalSentinel.REMOVE
+        else:
+            return updated_node
+
+
+class SpecificImportRemovalVisitor(CSTTransformer):
+    def on_leave(
+        self, original_node: _CSTNodeT, updated_node: _CSTNodeT
+    ) -> Union[cst.Import, cst.ImportFrom, _CSTNodeT, RemovalSentinel]:
+        if isinstance(updated_node, cst.Import):
+            for alias in updated_node.names:
+                if isinstance(alias.name, cst.Name) and alias.name.value == "b":
+                    return RemovalSentinel.REMOVE
+        elif isinstance(updated_node, cst.ImportFrom):
+            if (
+                isinstance(updated_node.module, cst.Name)
+                and updated_node.module.value == "e"
+            ):
+                return RemovalSentinel.REMOVE
+        return updated_node
+
+
+class RemovalBehavior(CSTNodeTest):
+    @data_provider(
+        (
+            # Top of module doesn't require a pass, empty code is valid.
+            ("continue", "", ContinueStatementRemovalVisitor),
+            ("if condition: print('hello world')", "", IfStatementRemovalVisitor),
+            # Verify behavior within an indented block.
+            (
+                "while True:\n    continue",
+                "while True:\n    pass",
+                ContinueStatementRemovalVisitor,
+            ),
+            (
+                "while True:\n    if condition: print('hello world')",
+                "while True:\n    pass",
+                IfStatementRemovalVisitor,
+            ),
+            # Verify behavior within a simple statement suite.
+            (
+                "while True: continue",
+                "while True: pass",
+                ContinueStatementRemovalVisitor,
+            ),
+            # Verify with some imports
+            (
+                "import a\nimport b\n\nfrom c import d\nfrom e import f",
+                "import a\n\nfrom c import d",
+                SpecificImportRemovalVisitor,
+            ),
+            # Verify only one pass is generated even if we remove multiple statements
+            (
+                "while True:\n    continue\ncontinue",
+                "while True:\n    pass",
+                ContinueStatementRemovalVisitor,
+            ),
+            (
+                "while True: continue ; continue",
+                "while True: pass",
+                ContinueStatementRemovalVisitor,
+            ),
+        )
+    )
+    def test_removal_pass_behavior(
+        self, before: str, after: str, visitor: Type[CSTTransformer]
+    ) -> None:
+        if before.endswith("\n") or after.endswith("\n"):
+            raise Exception("Test cases should not be newline-terminated!")
+
+        # Test doesn't have newline termination case
+        before_module = parse_module(before)
+        after_module = before_module.visit(visitor())
+        self.assertEqual(after, after_module.code)
+
+        # Test does have newline termination case
+        before_module = parse_module(before + "\n")
+        after_module = before_module.visit(visitor())
+        self.assertEqual(after + "\n", after_module.code)

@@ -339,14 +339,3 @@ class SimpleStatementTest(CSTNodeTest):
         position: Optional[CodeRange] = None,
     ) -> None:
         self.validate_node(node, code, parser, expected_position=position)
-
-    @data_provider(
-        (
-            (lambda: cst.SimpleStatementLine(()), "empty"),
-            (lambda: cst.SimpleStatementSuite(()), "empty"),
-        )
-    )
-    def test_invalid(
-        self, get_node: Callable[[], cst.CSTNode], expected_re: str
-    ) -> None:
-        self.assert_invalid(get_node, expected_re)

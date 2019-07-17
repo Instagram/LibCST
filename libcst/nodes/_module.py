@@ -9,7 +9,12 @@ from typing import TYPE_CHECKING, Optional, Sequence, Type, TypeVar, Union
 from libcst._add_slots import add_slots
 from libcst._removal_sentinel import RemovalSentinel
 from libcst.nodes._base import CSTNode
-from libcst.nodes._internal import CodegenState, SyntacticCodegenState, visit_sequence
+from libcst.nodes._internal import (
+    CodegenState,
+    SyntacticCodegenState,
+    visit_body_sequence,
+    visit_sequence,
+)
 from libcst.nodes._statement import BaseCompoundStatement, SimpleStatementLine
 from libcst.nodes._whitespace import EmptyLine
 from libcst.visitors import CSTVisitorT
@@ -53,7 +58,7 @@ class Module(CSTNode):
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Module":
         return Module(
             header=visit_sequence("header", self.header, visitor),
-            body=visit_sequence("body", self.body, visitor),
+            body=visit_body_sequence("body", self.body, visitor),
             footer=visit_sequence("footer", self.footer, visitor),
             encoding=self.encoding,
             default_indent=self.default_indent,

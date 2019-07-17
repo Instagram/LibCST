@@ -30,6 +30,7 @@ from libcst.nodes._expression import (
 )
 from libcst.nodes._internal import (
     CodegenState,
+    visit_body_sequence,
     visit_optional,
     visit_required,
     visit_sentinel,
@@ -50,7 +51,7 @@ _INDENT_WHITESPACE_RE = re.compile(r"[ \f\t]+", re.UNICODE)
 
 class BaseSuite(CSTNode, ABC):
     """
-    A dummy base-class for both SmallStatementLine and IndentedBlock. This exists to
+    A dummy base-class for both SimpleStatementLine and IndentedBlock. This exists to
     simplify type definitions and isinstance checks.
 
     > A suite is a group of statements controlled by a clause. A suite can be one or
@@ -302,10 +303,6 @@ class _BaseSimpleStatement(CSTNode, ABC):
 
     def _validate(self) -> None:
         body = self.body
-        if len(body) == 0:
-            raise CSTValidationError(
-                "An empty StatementLine is useless, and should be removed."
-            )
         for small_stmt in body[:-1]:
             if small_stmt.semicolon is None:
                 raise CSTValidationError(
@@ -317,9 +314,14 @@ class _BaseSimpleStatement(CSTNode, ABC):
 
     def _codegen_impl(self, state: CodegenState) -> None:
         body = self.body
-        laststmt = len(body) - 1
-        for idx, stmt in enumerate(body):
-            stmt._codegen(state, default_semicolon=(idx != laststmt))
+        if body:
+            laststmt = len(body) - 1
+            for idx, stmt in enumerate(body):
+                stmt._codegen(state, default_semicolon=(idx != laststmt))
+        else:
+            # Empty simple statement blocks are not syntactically valid in Python
+            # unless they contain a 'pass' statement, so add one here.
+            state.add_token("pass")
         self.trailing_whitespace._codegen(state)
 
 
@@ -342,16 +344,18 @@ class SimpleStatementLine(_BaseSimpleStatement):
     def _visit_and_replace_children(
         self, visitor: CSTVisitorT
     ) -> "SimpleStatementLine":
-        leading_lines = visit_sequence("leading_lines", self.leading_lines, visitor)
-        new_body = visit_sequence("body", self.body, visitor)
         return SimpleStatementLine(
-            leading_lines=leading_lines,  # hoisted above to preserve order
-            # replace the body with a pass statement if it's empty
-            body=(Pass(),) if len(new_body) == 0 else new_body,
+            leading_lines=visit_sequence("leading_lines", self.leading_lines, visitor),
+            body=visit_sequence("body", self.body, visitor),
             trailing_whitespace=visit_required(
                 "trailing_whitespace", self.trailing_whitespace, visitor
             ),
         )
+
+    def _is_removable(self) -> bool:
+        # If we have an empty body, we are removable since we don't represent
+        # anything concrete.
+        return not self.body
 
     def _codegen_impl(self, state: CodegenState) -> None:
         for ll in self.leading_lines:
@@ -381,14 +385,11 @@ class SimpleStatementSuite(_BaseSimpleStatement, BaseSuite):
     def _visit_and_replace_children(
         self, visitor: CSTVisitorT
     ) -> "SimpleStatementSuite":
-        leading_whitespace = visit_required(
-            "leading_whitespace", self.leading_whitespace, visitor
-        )
-        new_body = visit_sequence("body", self.body, visitor)
         return SimpleStatementSuite(
-            leading_whitespace=leading_whitespace,  # hoisted above to preserve order
-            # replace the body with a pass statement if it's empty
-            body=(Pass(),) if len(new_body) == 0 else new_body,
+            leading_whitespace=visit_required(
+                "leading_whitespace", self.leading_whitespace, visitor
+            ),
+            body=visit_sequence("body", self.body, visitor),
             trailing_whitespace=visit_required(
                 "trailing_whitespace", self.trailing_whitespace, visitor
             ),
@@ -539,10 +540,6 @@ class IndentedBlock(BaseSuite):
     footer: Sequence[EmptyLine] = ()
 
     def _validate(self) -> None:
-        if len(self.body) == 0:
-            raise CSTValidationError(
-                "An indented block must have at least one StatementLine in the body."
-            )
         indent = self.indent
         if indent is not None:
             if len(indent) == 0:
@@ -555,15 +552,10 @@ class IndentedBlock(BaseSuite):
                 )
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "IndentedBlock":
-        header = visit_required("header", self.header, visitor)
-        body = visit_sequence("body", self.body, visitor)
-        if len(body) == 0:
-            # replace the body with a pass statement if it's empty
-            body = (SimpleStatementLine((Pass(),)),)
         return IndentedBlock(
-            header=header,
+            header=visit_required("header", self.header, visitor),
             indent=self.indent,
-            body=body,
+            body=visit_body_sequence("body", self.body, visitor),
             footer=visit_sequence("footer", self.footer, visitor),
         )
 
@@ -573,11 +565,18 @@ class IndentedBlock(BaseSuite):
         indent = self.indent
         state.increase_indent(state.default_indent if indent is None else indent)
 
-        for stmt in self.body:
-            # IndentedBlock is responsible for adjusting the current indentation level,
-            # but its children are responsible for actually adding that indentation to
-            # the token list.
-            stmt._codegen(state)
+        if self.body:
+            for stmt in self.body:
+                # IndentedBlock is responsible for adjusting the current indentation level,
+                # but its children are responsible for actually adding that indentation to
+                # the token list.
+                stmt._codegen(state)
+        else:
+            # Empty indented blocks are not syntactically valid in Python unless
+            # they contain a 'pass' statement, so add one here.
+            state.add_indent_tokens()
+            state.add_token("pass")
+            state.add_token(state.default_newline)
 
         for f in self.footer:
             f._codegen(state)

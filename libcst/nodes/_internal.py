@@ -205,3 +205,39 @@ def visit_sequence(
     iterable.
     """
     return tuple(visit_iterable(fieldname, children, visitor))
+
+
+def visit_body_iterable(
+    fieldname: str, children: Sequence[_CSTNodeT], visitor: "CSTVisitorT"
+) -> Iterable[_CSTNodeT]:
+    """
+    Similar to visit_iterable above, but capable of discarding empty SimpleStatementLine
+    nodes in order to preserve correct pass insertion behavior.
+    """
+
+    for child in children:
+        new_child = child._visit_impl(visitor)
+
+        # Don't yield a child if we removed it.
+        if isinstance(new_child, RemovalSentinel):
+            continue
+
+        # Don't yield a child if the old child wasn't empty
+        # and the new child is. This means a RemovalSentinel
+        # caused a child of this node to be dropped, and it
+        # is now useless.
+        if (not child._is_removable()) and new_child._is_removable():
+            continue
+
+        # Safe to yield child in this case.
+        yield new_child
+
+
+def visit_body_sequence(
+    fieldname: str, children: Sequence[_CSTNodeT], visitor: "CSTVisitorT"
+) -> Sequence[_CSTNodeT]:
+    """
+    A convenience wrapper for `visit_body_iterable` that returns a sequence
+    instead of an iterable.
+    """
+    return tuple(visit_body_iterable(fieldname, children, visitor))
