@@ -4,29 +4,64 @@
 # LICENSE file in the root directory of this source tree.
 
 # pyre-strict
-from typing import TYPE_CHECKING
+from typing import MutableSet, Type
 
+import libcst.nodes as cst
+from libcst.batched_visitor import visit as batched_visit
 from libcst.exceptions import MetadataException
+from libcst.metadata._interface import _MetadataInterface
+from libcst.metadata.base_provider import (
+    BaseMetadataProvider,
+    BatchableMetadataProvider,
+)
 
 
-if TYPE_CHECKING:
-    from libcst.visitors import CSTVisitorT
-    from libcst.nodes import Module
+ProviderT = Type[BaseMetadataProvider[object]]
 
 
-def run(module: "Module", visitor: "CSTVisitorT") -> None:
+class _MetadataRunner:
     """
-    Called by Module.visit to generate metadata dependencies before performing
+    Helper class for resolving metadata dependencies.
+    """
+
+    def __init__(self) -> None:
+        self.providers: MutableSet[ProviderT] = set()
+        self.satisfied: MutableSet[ProviderT] = set()
+
+    def gather_providers(self, root: ProviderT) -> None:
+        if root not in self.providers:
+            self.providers.add(root)
+            for dep in root.METADATA_DEPENDENCIES:
+                self.gather_providers(dep)
+
+
+def run(module: cst.Module, root: _MetadataInterface) -> None:
+    """
+    Called by Module.visit to resolve metadata dependencies before performing
     a visitor pass.
     """
-    for Provider in visitor.METADATA_DEPENDENCIES:
-        if Provider in module._remaining_dependencies:
-            raise MetadataException(
-                f"Detected circular dependency between {type(visitor).__name__} and {Provider.__name__}"
-            )
 
-        if Provider not in module._satisfied_dependencies:
-            module._remaining_dependencies.add(Provider)
-            Provider().run(module)
-            module._satisfied_dependencies.add(Provider)
-            module._remaining_dependencies.remove(Provider)
+    runner = _MetadataRunner()
+    for dep in root.METADATA_DEPENDENCIES:
+        runner.gather_providers(dep)
+
+    while len(runner.providers) > 0:
+        completed = set()
+        batchable = set()
+
+        for P in runner.providers:
+            if set(P.METADATA_DEPENDENCIES).issubset(runner.satisfied):
+                if issubclass(P, BatchableMetadataProvider):
+                    batchable.add(P)
+                else:
+                    P()._run(module)
+                    completed.add(P)
+
+        batched_visit(module, [p() for p in batchable])
+        runner.providers -= completed | batchable
+        runner.satisfied |= completed | batchable
+
+        if len(completed) == 0 and len(batchable) == 0:
+            # runner.providers must be non-empty at this point
+            names = ", ".join([P.__name__ for P in runner.providers])
+            raise MetadataException(f"Detected circular dependencies in {names}")

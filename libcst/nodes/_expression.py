@@ -2117,9 +2117,6 @@ class Element(BaseElement):
     # Any trailing comma
     comma: Union[Comma, MaybeSentinel] = MaybeSentinel.DEFAULT
 
-    # Whitespace
-    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace("")
-
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Element":
         return Element(
             value=visit_required("value", self.value, visitor),

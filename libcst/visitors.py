@@ -4,61 +4,27 @@
 # LICENSE file in the root directory of this source tree.
 
 # pyre-strict
-from abc import ABC
-from typing import TYPE_CHECKING, ClassVar, Sequence, Type, TypeVar, Union
+from typing import TYPE_CHECKING, TypeVar, Union
 
 from libcst._removal_sentinel import RemovalSentinel
+from libcst.metadata._interface import _MetadataInterface
 
 
 if TYPE_CHECKING:
     # Circular dependency for typing reasons only
     from libcst.nodes._base import CSTNode
-    from libcst.metadata.base_provider import BaseMetadataProvider
 
 
 CSTVisitorT = Union["CSTTransformer", "CSTVisitor"]
 CSTNodeT = TypeVar("CSTNodeT", bound="CSTNode")
-_T = TypeVar("_T")
-
-_THROWS_SENTINEL = object()
-
-
-class _MetadataInterface(ABC):
-    """
-    The low-level base visitor class.
-
-    This shouldn't be used directly, instead we provide two subclasses below.
-    """
-
-    METADATA_DEPENDENCIES: ClassVar[Sequence[Type["BaseMetadataProvider[object]"]]] = ()
-
-    @classmethod
-    def get_metadata(
-        cls,
-        key: Type["BaseMetadataProvider[_T]"],
-        node: CSTNodeT,
-        default: _T = _THROWS_SENTINEL,
-    ) -> _T:
-        """
-        Gets metadata provided by the [key] provider if it is accessible from
-        this vistor. Metadata is accessible if [key] is the same as [cls] or
-        if [key] is in METADATA_DEPENDENCIES.
-        """
-        if key not in cls.METADATA_DEPENDENCIES and key is not cls:
-            raise KeyError(
-                f"{key.__name__} is not declared as a dependency from {cls.__name__}"
-            )
-
-        try:
-            return node._metadata[key]
-        except KeyError as err:
-            if default is not _THROWS_SENTINEL:
-                return default
-            else:
-                raise err
 
 
 class CSTTransformer(_MetadataInterface):
+    """
+    The low-level base visitor class for traversing a CST and creating an
+    updated copy of the original CST.
+    """
+
     def on_visit(self, node: "CSTNode") -> bool:
         """
         Called every time a node is visited, before we've visited its children.
@@ -87,6 +53,10 @@ class CSTTransformer(_MetadataInterface):
 
 
 class CSTVisitor(_MetadataInterface):
+    """
+    The low-level base visitor class for traversing a CST.
+    """
+
     def on_visit(self, node: "CSTNode") -> bool:
         """
         Called every time a node is visited, before we've visited its children.

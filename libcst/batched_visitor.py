@@ -9,7 +9,8 @@ from typing import Callable, Iterable, List, Mapping, MutableMapping, Optional
 
 import libcst.nodes as cst
 from libcst.matchers import CSTMatchers
-from libcst.visitors import CSTNodeT, CSTVisitor, _MetadataInterface
+from libcst.metadata._interface import _MetadataInterface
+from libcst.visitors import CSTNodeT, CSTVisitor
 
 
 VisitorMethod = Callable[[cst.CSTNode], None]
@@ -18,8 +19,7 @@ _VisitorMethodCollection = Mapping[str, List[VisitorMethod]]
 
 class BatchableCSTVisitor(CSTMatchers, _MetadataInterface):
     """
-    Extend this class for each type of batched operation you want to perform on
-    the CST.
+    Extend this class for each type of batched operation you want to perform.
     """
 
     def get_visitors(self) -> Mapping[str, VisitorMethod]:
@@ -50,6 +50,14 @@ def visit(
     before_visit: Optional[VisitorMethod] = None,
     after_leave: Optional[VisitorMethod] = None,
 ) -> None:
+    """
+    Create and run a batched visitor composed of [visitors] over [module].
+
+    [before_visit] and [after_leave] are provided as optional hooks to
+    execute before visit_* and after leave_* methods are executed by the
+    batched visitor.
+    """
+
     visitor_methods = _get_visitor_methods(visitors)
     batched_visitor = _BatchedCSTVisitor(
         visitor_methods, before_visit=before_visit, after_leave=after_leave
