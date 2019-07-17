@@ -46,7 +46,7 @@ class DummyNode(CSTNode):
         new_children: List[Union[CSTNode, str]] = []
         for child in self.children:
             if isinstance(child, CSTNode):
-                new_child = child.visit(visitor)
+                new_child = child._visit_impl(visitor)
                 if not isinstance(new_child, RemovalSentinel):
                     new_children.append(new_child)
             else:

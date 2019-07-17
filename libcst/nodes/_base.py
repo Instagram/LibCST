@@ -20,6 +20,7 @@ from typing import (
 
 from libcst._removal_sentinel import RemovalSentinel
 from libcst._type_enforce import is_value_of_type
+from libcst.exceptions import MetadataException
 from libcst.nodes._internal import CodegenState, CodePosition, CodeRange
 from libcst.visitors import CSTVisitor, CSTVisitorT
 
@@ -176,6 +177,23 @@ class CSTNode(ABC):
         return visitor.children
 
     def visit(
+        self: _CSTNodeSelfT, visitor: CSTVisitorT
+    ) -> Union[_CSTNodeSelfT, RemovalSentinel]:
+        """
+        Main entry point for visitors.
+
+        This wraps [_visit_impl] to validate metadata dependencies prior to
+        performing a visitor pass.
+        """
+
+        if len(visitor.METADATA_DEPENDENCIES) > 0:
+            raise MetadataException(
+                f"{type(visitor).__name__} declares metadata dependencies and should only be called from the module level"
+            )
+
+        return self._visit_impl(visitor)
+
+    def _visit_impl(
         self: _CSTNodeSelfT, visitor: CSTVisitorT
     ) -> Union[_CSTNodeSelfT, RemovalSentinel]:
         """

@@ -4,7 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 # pyre-strict
-from typing import cast
+from unittest.mock import Mock
 
 import libcst.nodes as cst
 from libcst.exceptions import MetadataException
@@ -25,6 +25,8 @@ class MetadataRunnerTest(UnitTest):
             DependentProvider - > 2
         """
 
+        test = self
+
         class SimpleProvider(VisitorMetadataProvider[int]):
             def on_visit(self, node: cst.CSTNode) -> bool:
                 self.set_metadata(node, 1)
@@ -41,42 +43,54 @@ class MetadataRunnerTest(UnitTest):
             # Declare both providers so the visitor has acesss to both types of metadata
             METADATA_DEPENDENCIES = (DependentProvider, SimpleProvider)
 
-        module = parse_module("pass")
-        stmt = module.body[0]
-        visitor = DependentVisitor()
-        module.visit(visitor)
+            def visit_Module(self, module: cst.Module) -> None:
+                # Check metadata is set
+                test.assertEqual(self.get_metadata(SimpleProvider, module), 1)
+                test.assertEqual(self.get_metadata(DependentProvider, module), 2)
 
-        self.assertEqual(visitor.get_metadata(SimpleProvider, module), 1)
-        self.assertEqual(visitor.get_metadata(DependentProvider, module), 2)
-        self.assertEqual(visitor.get_metadata(SimpleProvider, stmt), 1)
-        self.assertEqual(visitor.get_metadata(DependentProvider, stmt), 2)
+            def visit_Pass(self, node: cst.Pass) -> None:
+                # Check metadata is set
+                test.assertEqual(self.get_metadata(SimpleProvider, node), 1)
+                test.assertEqual(self.get_metadata(DependentProvider, node), 2)
+
+        module = parse_module("pass")
+        module.visit(DependentVisitor())
 
     def test_batched_provider(self) -> None:
         """
         Sets metadata on:
             - pass: BatchedProviderA -> 1
-            - return: BatchedProviderB -> "a"
+                    BatchedProviderB -> "a"
 
         """
+        test = self
+        mock = Mock()
 
         class BatchedProviderA(BatchableMetadataProvider[int]):
             def visit_Pass(self, node: cst.Pass) -> None:
+                mock.visited_a()
                 self.set_metadata(node, 1)
 
         class BatchedProviderB(BatchableMetadataProvider[str]):
             def visit_Pass(self, node: cst.Pass) -> None:
+                mock.visited_b()
                 self.set_metadata(node, "a")
 
         class DependentVisitor(CSTTransformer):
             METADATA_DEPENDENCIES = (BatchedProviderA, BatchedProviderB)
 
-        module = parse_module("pass")
-        pass_ = cast(cst.SimpleStatementLine, module.body[0]).body[0]
-        visitor = DependentVisitor()
-        module.visit(visitor)
+            def visit_Module(self, module: cst.Module) -> None:
+                # Check batched visitors called only once each
+                mock.visited_a.assert_called_once()
+                mock.visited_b.assert_called_once()
 
-        self.assertEqual(visitor.get_metadata(BatchedProviderA, pass_), 1)
-        self.assertEqual(visitor.get_metadata(BatchedProviderB, pass_), "a")
+            def visit_Pass(self, node: cst.Pass) -> None:
+                # Check metadata is set
+                test.assertEqual(self.get_metadata(BatchedProviderA, node), 1)
+                test.assertEqual(self.get_metadata(BatchedProviderB, node), "a")
+
+        module = parse_module("pass")
+        module.visit(DependentVisitor())
 
     def test_mixed_providers(self) -> None:
         """
@@ -86,9 +100,12 @@ class MetadataRunnerTest(UnitTest):
             DependentProvider -> 5
             DependentBatched -> 4
         """
+        test = self
+        mock = Mock()
 
         class SimpleProvider(VisitorMetadataProvider[int]):
-            def on_visit(self, node: cst.CSTNode) -> bool:
+            def visit_Pass(self, node: cst.CSTNode) -> bool:
+                mock.visited_simple()
                 self.set_metadata(node, 1)
                 return True
 
@@ -96,12 +113,14 @@ class MetadataRunnerTest(UnitTest):
             METADATA_DEPENDENCIES = (SimpleProvider,)
 
             def visit_Pass(self, node: cst.Pass) -> None:
+                mock.visited_a()
                 self.set_metadata(node, 2)
 
         class BatchedProviderB(BatchableMetadataProvider[int]):
             METADATA_DEPENDENCIES = (SimpleProvider,)
 
             def visit_Pass(self, node: cst.Pass) -> None:
+                mock.visited_b()
                 self.set_metadata(node, 3)
 
         class DependentProvider(VisitorMetadataProvider[int]):
@@ -118,6 +137,7 @@ class MetadataRunnerTest(UnitTest):
             METADATA_DEPENDENCIES = (BatchedProviderA,)
 
             def visit_Pass(self, node: cst.Pass) -> None:
+                mock.visited_c()
                 self.set_metadata(node, self.get_metadata(BatchedProviderA, node) * 2)
 
         class DependentVisitor(CSTTransformer):
@@ -128,20 +148,27 @@ class MetadataRunnerTest(UnitTest):
                 DependentProvider,
             )
 
+            def visit_Module(self, module: cst.Module) -> None:
+                # Dependent visitor set metadata on all nodes but for module it
+                # defaulted to 0 because BatchedProviderA/B only set metadata on
+                # pass nodes
+                test.assertEqual(self.get_metadata(DependentProvider, module), 0)
+
+                # Check visitors called the correct number of times
+                mock.visited_simple.assert_called_once()
+                mock.visited_a.assert_called_once()
+                mock.visited_b.assert_called_once()
+                mock.visited_c.assert_called_once()
+
+            def visit_Pass(self, node: cst.Pass) -> None:
+                # Check metadata is set
+                test.assertEqual(self.get_metadata(BatchedProviderA, node), 2)
+                test.assertEqual(self.get_metadata(BatchedProviderB, node), 3)
+                test.assertEqual(self.get_metadata(BatchedProviderC, node), 4)
+                test.assertEqual(self.get_metadata(DependentProvider, node), 5)
+
         module = parse_module("pass")
-        pass_ = cast(cst.SimpleStatementLine, module.body[0]).body[0]
-        visitor = DependentVisitor()
-        module.visit(visitor)
-
-        self.assertEqual(visitor.get_metadata(BatchedProviderA, pass_), 2)
-        self.assertEqual(visitor.get_metadata(BatchedProviderB, pass_), 3)
-        self.assertEqual(visitor.get_metadata(BatchedProviderC, pass_), 4)
-        self.assertEqual(visitor.get_metadata(DependentProvider, pass_), 5)
-
-        # Dependent visitor set metadata on all nodes but for module it
-        # defaulted to 0 because BatchedProviderA/B only set metadata on
-        # pass
-        self.assertEqual(visitor.get_metadata(DependentProvider, module), 0)
+        module.visit(DependentVisitor())
 
     def test_circular_dependency(self) -> None:
         class ProviderA(VisitorMetadataProvider[str]):
@@ -208,3 +235,16 @@ class MetadataRunnerTest(UnitTest):
             KeyError, "ProviderB is not declared as a dependency from AVisitor"
         ):
             cst.Module([]).visit(AVisitor())
+
+    def test_invalid_entry_point(self) -> None:
+        class ProviderA(VisitorMetadataProvider[bool]):
+            pass
+
+        class AVisitor(CSTTransformer):
+            METADATA_DEPENDENCIES = (ProviderA,)
+
+        with self.assertRaisesRegex(
+            MetadataException,
+            "AVisitor declares metadata dependencies and should only be called from the module level",
+        ):
+            cst.Pass().visit(AVisitor())

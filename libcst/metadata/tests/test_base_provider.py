@@ -47,7 +47,7 @@ class BaseMetadataProviderTest(UnitTest):
             def visit_Pass(self, node: cst.Pass) -> None:
                 self.set_metadata(node, 1)
 
-            def visit_Return(self, node: cst.Return) -> None:
+            def leave_Return(self, node: cst.Return) -> None:
                 self.set_metadata(node, 2)
 
         module = parse_module("pass; return; pass")

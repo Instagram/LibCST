@@ -24,9 +24,7 @@ class BaseMetadataProvider(_MetadataInterface, Generic[_T_co]):
 
     def _run(self, module: cst.Module) -> None:
         """
-        Method to override to run metadata provider over a module. This method
-        is not intended to be called directly but will be used by the
-        metadata runner when a visitor declares metadata dependencies.
+        Entry point for metadata runner.
         """
         ...
 
@@ -44,7 +42,8 @@ class BatchableMetadataProvider(BatchableCSTVisitor, BaseMetadataProvider[_T_co]
 
     def _run(self, module: cst.Module) -> None:
         """
-        Batchable providers are not intended to be called directly.
+        Batchable providers are batched by the runner and should not be
+        called directly.
         """
         raise MetadataException(
             "BatchableMetadataProvider should not be called directly."
@@ -58,6 +57,6 @@ class VisitorMetadataProvider(CSTVisitor, BaseMetadataProvider[_T_co]):
 
     def _run(self, module: cst.Module) -> None:
         """
-        Convenience method to run metadata provider over a module.
+        Does not compute dependencies declared by this provider.
         """
-        module.visit(self)
+        module._visit_impl(self)
