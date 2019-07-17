@@ -4,10 +4,10 @@
 # LICENSE file in the root directory of this source tree.
 
 # pyre-strict
-from typing import Callable, Optional
+
+from typing import Any
 
 import libcst.nodes as cst
-from libcst.nodes._internal import CodeRange
 from libcst.nodes.tests.base import CSTNodeTest
 from libcst.parser import parse_statement
 from libcst.testing.utils import data_provider
@@ -17,13 +17,20 @@ class AssertConstructionTest(CSTNodeTest):
     @data_provider(
         (
             # Simple assert
-            {"node": cst.Assert(cst.Name("True")), "code": "assert True"},
+            {
+                "node": cst.Assert(cst.Name("True")),
+                "code": "assert True",
+                "parser": None,
+                "expected_position": None,
+            },
             # Assert with message
             {
                 "node": cst.Assert(
                     cst.Name("True"), cst.SimpleString('"Value should be true"')
                 ),
                 "code": 'assert True, "Value should be true"',
+                "parser": None,
+                "expected_position": None,
             },
             # Whitespace oddities test
             {
@@ -32,6 +39,8 @@ class AssertConstructionTest(CSTNodeTest):
                     whitespace_after_assert=cst.SimpleWhitespace(""),
                 ),
                 "code": "assert(True)",
+                "parser": None,
+                "expected_position": None,
             },
             # Whitespace rendering test
             {
@@ -45,13 +54,13 @@ class AssertConstructionTest(CSTNodeTest):
                     msg=cst.SimpleString('"Value should be true"'),
                 ),
                 "code": 'assert  True  ,  "Value should be true"',
+                "parser": None,
+                "expected_position": None,
             },
         )
     )
-    def test_valid(
-        self, node: cst.CSTNode, code: str, position: Optional[CodeRange] = None
-    ) -> None:
-        self.validate_node(node, code, expected_position=position)
+    def test_valid(self, **kwargs: Any) -> None:
+        self.validate_node(**kwargs)
 
     @data_provider(
         (
@@ -74,17 +83,21 @@ class AssertConstructionTest(CSTNodeTest):
             },
         )
     )
-    def test_invalid(
-        self, get_node: Callable[[], cst.CSTNode], expected_re: str
-    ) -> None:
-        self.assert_invalid(get_node, expected_re)
+    def test_invalid(self, **kwargs: Any) -> None:
+        self.assert_invalid(**kwargs)
 
 
 class AssertParsingTest(CSTNodeTest):
     @data_provider(
         (
             # Simple assert
-            {"node": cst.Assert(cst.Name("True")), "code": "assert True"},
+            {
+                "node": cst.Assert(cst.Name("True")),
+                "code": "assert True",
+                # pyre-ignore[16]
+                "parser": (lambda code: parse_statement(code).body[0]),
+                "expected_position": None,
+            },
             # Assert with message
             {
                 "node": cst.Assert(
@@ -93,6 +106,9 @@ class AssertParsingTest(CSTNodeTest):
                     comma=cst.Comma(whitespace_after=cst.SimpleWhitespace(" ")),
                 ),
                 "code": 'assert True, "Value should be true"',
+                # pyre-fixme[16]: `BaseSuite` has no attribute `__getitem__`.
+                "parser": (lambda code: parse_statement(code).body[0]),
+                "expected_position": None,
             },
             # Whitespace oddities test
             {
@@ -101,6 +117,9 @@ class AssertParsingTest(CSTNodeTest):
                     whitespace_after_assert=cst.SimpleWhitespace(""),
                 ),
                 "code": "assert(True)",
+                # pyre-fixme[16]: `BaseSuite` has no attribute `__getitem__`.
+                "parser": (lambda code: parse_statement(code).body[0]),
+                "expected_position": None,
             },
             # Whitespace rendering test
             {
@@ -114,16 +133,11 @@ class AssertParsingTest(CSTNodeTest):
                     msg=cst.SimpleString('"Value should be true"'),
                 ),
                 "code": 'assert  True  ,  "Value should be true"',
+                # pyre-fixme[16]: `BaseSuite` has no attribute `__getitem__`.
+                "parser": (lambda code: parse_statement(code).body[0]),
+                "expected_position": None,
             },
         )
     )
-    def test_valid(
-        self, node: cst.CSTNode, code: str, position: Optional[CodeRange] = None
-    ) -> None:
-        self.validate_node(
-            node,
-            code,
-            # pyre-fixme[16]: `BaseSuite` has no attribute `__getitem__`.
-            lambda code: parse_statement(code).body[0],
-            expected_position=position,
-        )
+    def test_valid(self, **kwargs: Any) -> None:
+        self.validate_node(**kwargs)
