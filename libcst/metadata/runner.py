@@ -6,24 +6,20 @@
 # pyre-strict
 from typing import MutableSet, Type
 
-import libcst.nodes as cst
-from libcst.batched_visitor import visit as batched_visit
 from libcst.exceptions import MetadataException
-from libcst.metadata._interface import _MetadataInterface
 from libcst.metadata.base_provider import (
     BaseMetadataProvider,
     BatchableMetadataProvider,
+    _run_batchable,
 )
+from libcst.nodes._module import _ModuleSelfT as _ModuleT
+from libcst.visitors import CSTVisitorT
 
 
 ProviderT = Type[BaseMetadataProvider[object]]
 
 
 class _MetadataRunner:
-    """
-    Helper class for resolving metadata dependencies.
-    """
-
     def __init__(self) -> None:
         self.providers: MutableSet[ProviderT] = set()
         self.satisfied: MutableSet[ProviderT] = set()
@@ -34,34 +30,43 @@ class _MetadataRunner:
             for dep in root.METADATA_DEPENDENCIES:
                 self.gather_providers(dep)
 
+    @staticmethod
+    def resolve(module: _ModuleT, visitor: CSTVisitorT) -> _ModuleT:
+        """
+        Returns a copy of the module that contains all metadata dependencies
+        declared by the visitor.
+        """
 
-def run(module: cst.Module, root: _MetadataInterface) -> None:
-    """
-    Called by Module.visit to resolve metadata dependencies before performing
-    a visitor pass.
-    """
+        if len(visitor.METADATA_DEPENDENCIES) == 0:
+            return module
 
-    runner = _MetadataRunner()
-    for dep in root.METADATA_DEPENDENCIES:
-        runner.gather_providers(dep)
+        # We need to deep clone to ensure that there are no duplicate nodes
+        module = module.deep_clone()
 
-    while len(runner.providers) > 0:
-        completed = set()
-        batchable = set()
+        runner = _MetadataRunner()
+        for dep in visitor.METADATA_DEPENDENCIES:
+            runner.gather_providers(dep)
 
-        for P in runner.providers:
-            if set(P.METADATA_DEPENDENCIES).issubset(runner.satisfied):
-                if issubclass(P, BatchableMetadataProvider):
-                    batchable.add(P)
-                else:
-                    P()._run(module)
-                    completed.add(P)
+        while len(runner.providers) > 0:
+            completed = set()
+            batchable = set()
 
-        batched_visit(module, [p() for p in batchable])
-        runner.providers -= completed | batchable
-        runner.satisfied |= completed | batchable
+            for P in runner.providers:
+                if set(P.METADATA_DEPENDENCIES).issubset(runner.satisfied):
+                    if issubclass(P, BatchableMetadataProvider):
+                        batchable.add(P)
+                    else:
+                        module = P()._run(module)
+                        completed.add(P)
 
-        if len(completed) == 0 and len(batchable) == 0:
-            # runner.providers must be non-empty at this point
-            names = ", ".join([P.__name__ for P in runner.providers])
-            raise MetadataException(f"Detected circular dependencies in {names}")
+            module = _run_batchable(module, [p() for p in batchable])
+
+            runner.providers -= completed | batchable
+            runner.satisfied |= completed | batchable
+
+            if len(completed) == 0 and len(batchable) == 0:
+                # runner.providers must be non-empty at this point
+                names = ", ".join([P.__name__ for P in runner.providers])
+                raise MetadataException(f"Detected circular dependencies in {names}")
+
+        return module

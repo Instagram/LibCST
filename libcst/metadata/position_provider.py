@@ -4,8 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 # pyre-strict
-import libcst.nodes as cst
-from libcst.metadata.base_provider import BaseMetadataProvider
+from libcst.metadata.base_provider import BaseMetadataProvider, _ModuleT
 from libcst.nodes._internal import CodeRange
 
 
@@ -16,12 +15,13 @@ class BasicPositionProvider(BaseMetadataProvider[CodeRange]):
     owned by that node.
     """
 
-    def run(self, module: cst.Module) -> None:
+    def _run(self, module: _ModuleT) -> _ModuleT:
         """
         Override default generate behavior as position information is
         calculated through codegen instead of a standard visitor.
         """
         module.code_for_node(module, provider=self.__class__)
+        return module
 
 
 class SyntacticPositionProvider(BasicPositionProvider):

@@ -22,7 +22,7 @@ from libcst._removal_sentinel import RemovalSentinel
 from libcst._type_enforce import is_value_of_type
 from libcst.exceptions import MetadataException
 from libcst.nodes._internal import CodegenState, CodePosition, CodeRange
-from libcst.visitors import CSTVisitor, CSTVisitorT
+from libcst.visitors import CSTTransformer, CSTVisitor, CSTVisitorT
 
 
 if TYPE_CHECKING:
@@ -51,6 +51,10 @@ class _ChildrenCollectionVisitor(CSTVisitor):
     def on_visit(self, node: "CSTNode") -> bool:
         self.children.append(node)
         return False  # Don't include transitive children
+
+
+class _NOOPVisitor(CSTTransformer):
+    pass
 
 
 def _pretty_repr(value: object) -> str:
@@ -180,15 +184,16 @@ class CSTNode(ABC):
         self: _CSTNodeSelfT, visitor: CSTVisitorT
     ) -> Union[_CSTNodeSelfT, RemovalSentinel]:
         """
-        Main entry point for visitors.
-
-        This wraps [_visit_impl] to validate metadata dependencies prior to
-        performing a visitor pass.
+        Public hook to visit the current node and all transitive children using
+        the given visitor.
         """
 
+        # Only modules can be visited a visitor that declare metadata dependencies.
+        # Module overrides this method to resolve metadata dependencies.
         if len(visitor.METADATA_DEPENDENCIES) > 0:
             raise MetadataException(
-                f"{type(visitor).__name__} declares metadata dependencies and should only be called from the module level"
+                f"{type(visitor).__name__} declares metadata dependencies "
+                + "and should only be called from the module level"
             )
 
         return self._visit_impl(visitor)
@@ -197,8 +202,8 @@ class CSTNode(ABC):
         self: _CSTNodeSelfT, visitor: CSTVisitorT
     ) -> Union[_CSTNodeSelfT, RemovalSentinel]:
         """
-        Visits the current node, its children, and all transitive children using the
-        given CSTVisitor's callbacks.
+        Visits the current node, its children, and all transitive children using
+        the given visitor's callbacks.
         """
         # visit self
         should_visit_children = visitor.on_visit(self)
@@ -310,6 +315,9 @@ class CSTNode(ABC):
         similar API in the future.
         """
         return replace(self, **changes)
+
+    def deep_clone(self: _CSTNodeSelfT) -> _CSTNodeSelfT:
+        return cast(_CSTNodeSelfT, self._visit_impl(_NOOPVisitor()))
 
     def deep_equals(self: _CSTNodeSelfT, other: _CSTNodeSelfT) -> bool:
         """

@@ -68,15 +68,16 @@ class Module(CSTNode):
 
     def visit(self: _ModuleSelfT, visitor: CSTVisitorT) -> _ModuleSelfT:
         """
+        Returns the result of running a visitor over this module.
+
         Module overrides the default visitor entry point to resolve metadata
-        dependencies for the visitor.
+        dependencies declared by [visitor].
         """
 
-        from libcst.metadata.runner import run
+        from libcst.metadata.runner import _MetadataRunner
 
-        run(self, visitor)
-
-        result = CSTNode._visit_impl(self, visitor)
+        module = _MetadataRunner.resolve(self, visitor)
+        result = CSTNode._visit_impl(module, visitor)
         if isinstance(result, RemovalSentinel):
             return self.with_changes(body=(), header=(), footer=())
         else:  # is a Module

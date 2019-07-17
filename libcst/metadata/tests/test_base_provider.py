@@ -7,10 +7,10 @@
 from typing import cast
 
 import libcst.nodes as cst
-from libcst.batched_visitor import visit
 from libcst.metadata.base_provider import (
     BatchableMetadataProvider,
     VisitorMetadataProvider,
+    _run_batchable,
 )
 from libcst.parser import parse_module
 from libcst.testing.utils import UnitTest
@@ -47,16 +47,16 @@ class BaseMetadataProviderTest(UnitTest):
             def visit_Pass(self, node: cst.Pass) -> None:
                 self.set_metadata(node, 1)
 
-            def leave_Return(self, node: cst.Return) -> None:
+            def visit_Return(self, node: cst.Return) -> None:
                 self.set_metadata(node, 2)
 
         module = parse_module("pass; return; pass")
+        provider = SimpleProvider()
+
+        module = _run_batchable(module, [provider])
         pass_ = cast(cst.SimpleStatementLine, module.body[0]).body[0]
         return_ = cast(cst.SimpleStatementLine, module.body[0]).body[1]
         pass_2 = cast(cst.SimpleStatementLine, module.body[0]).body[2]
-
-        provider = SimpleProvider()
-        visit(module, [provider])
 
         self.assertEqual(provider.get_metadata(SimpleProvider, pass_), 1)
         self.assertEqual(provider.get_metadata(SimpleProvider, return_), 2)

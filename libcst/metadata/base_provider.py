@@ -4,12 +4,17 @@
 # LICENSE file in the root directory of this source tree.
 
 # pyre-strict
-from typing import Generic, TypeVar
+from typing import Generic, Iterable, TypeVar, cast
 
 import libcst.nodes as cst
-from libcst.batched_visitor import BatchableCSTVisitor
+from libcst.batched_visitor import (
+    BatchableCSTVisitor,
+    _BatchedCSTVisitor,
+    _get_visitor_methods,
+)
 from libcst.exceptions import MetadataException
 from libcst.metadata._interface import _MetadataInterface
+from libcst.nodes._module import _ModuleSelfT as _ModuleT
 from libcst.visitors import CSTVisitor
 
 
@@ -22,9 +27,14 @@ class BaseMetadataProvider(_MetadataInterface, Generic[_T_co]):
     Abstract base class for all metadata providers.
     """
 
-    def _run(self, module: cst.Module) -> None:
+    def _run(self, module: _ModuleT) -> _ModuleT:
         """
-        Entry point for metadata runner.
+        Returns the given module with metadata from this provider.
+
+        This is a hook for metadata runner and should not be called directly.
+        Any implementation of this method should not handle any dependencies
+        declared by this provider and should not have any side effects besides
+        setting metadata computed by this provider.
         """
         ...
 
@@ -32,31 +42,45 @@ class BaseMetadataProvider(_MetadataInterface, Generic[_T_co]):
     # pyre-ignore[35]: Parameter type cannot be covariant. Pyre can't
     # detect that this method is not mutating the Provider class.
     def set_metadata(cls, node: cst.CSTNode, value: _T_co) -> None:
+        """
+        Stores given metadata from this provider on the given node.
+        """
         node._metadata[cls] = value
-
-
-class BatchableMetadataProvider(BatchableCSTVisitor, BaseMetadataProvider[_T_co]):
-    """
-    Base class for batchable visitor metadata providers.
-    """
-
-    def _run(self, module: cst.Module) -> None:
-        """
-        Batchable providers are batched by the runner and should not be
-        called directly.
-        """
-        raise MetadataException(
-            "BatchableMetadataProvider should not be called directly."
-        )
 
 
 class VisitorMetadataProvider(CSTVisitor, BaseMetadataProvider[_T_co]):
     """
-    Base class for non-batchable visitor metadata providers.
+    Extend this to compute metadata with a non-batchable visitor.
     """
 
-    def _run(self, module: cst.Module) -> None:
+    def _run(self, module: _ModuleT) -> _ModuleT:
         """
-        Does not compute dependencies declared by this provider.
+        Returns the given module with metadata from this provider.
         """
-        module._visit_impl(self)
+        # Cast is safe as metadata providers should never mutate the tree
+        return cast(_ModuleT, module._visit_impl(self))
+
+
+class BatchableMetadataProvider(BatchableCSTVisitor, BaseMetadataProvider[_T_co]):
+    """
+    Extend this to compute metadata with a batchable visitor.
+    """
+
+    def _run(self, module: _ModuleT) -> _ModuleT:
+        """
+        Batchable providers are resolved using [_run_batchable].
+        """
+        raise MetadataException("BatchableMetadataProvider cannot be called directly.")
+
+
+def _run_batchable(
+    module: _ModuleT, providers: Iterable[BatchableMetadataProvider[object]]
+) -> _ModuleT:
+    """
+    Returns the given module with metadata from the given batchable providers.
+    """
+
+    visitor_methods = _get_visitor_methods(providers)
+    batched_visitor = _BatchedCSTVisitor(visitor_methods)
+    # Cast is safe as metadata providers should never mutate the tree
+    return cast(_ModuleT, module._visit_impl(batched_visitor))
