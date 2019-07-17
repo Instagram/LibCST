@@ -20,7 +20,6 @@ from typing import Callable, Generator, Optional, Sequence, Union
 from typing_extensions import Literal
 
 from libcst._add_slots import add_slots
-from libcst._base_visitor import CSTVisitor
 from libcst._maybe_sentinel import MaybeSentinel
 from libcst.nodes._base import (
     AnnotationIndicatorSentinel,
@@ -53,6 +52,7 @@ from libcst.nodes._op import (
     Plus,
 )
 from libcst.nodes._whitespace import BaseParenthesizableWhitespace, SimpleWhitespace
+from libcst.visitors import CSTVisitorT
 
 
 @add_slots
@@ -65,7 +65,7 @@ class LeftSquareBracket(CSTNode):
 
     whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace("")
 
-    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "LeftSquareBracket":
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "LeftSquareBracket":
         return LeftSquareBracket(
             whitespace_after=visit_required(
                 "whitespace_after", self.whitespace_after, visitor
@@ -87,7 +87,7 @@ class RightSquareBracket(CSTNode):
 
     whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace("")
 
-    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "RightSquareBracket":
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "RightSquareBracket":
         return RightSquareBracket(
             whitespace_before=visit_required(
                 "whitespace_before", self.whitespace_before, visitor
@@ -109,7 +109,7 @@ class LeftParen(CSTNode):
 
     whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace("")
 
-    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "LeftParen":
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "LeftParen":
         return LeftParen(
             whitespace_after=visit_required(
                 "whitespace_after", self.whitespace_after, visitor
@@ -131,7 +131,7 @@ class RightParen(CSTNode):
 
     whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace("")
 
-    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "RightParen":
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "RightParen":
         return RightParen(
             whitespace_before=visit_required(
                 "whitespace_before", self.whitespace_before, visitor
@@ -156,7 +156,7 @@ class Asynchronous(CSTNode):
         if len(self.whitespace_after.value) < 1:
             raise CSTValidationError("Must have at least one space after Asynchronous.")
 
-    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "Asynchronous":
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Asynchronous":
         return Asynchronous(
             whitespace_after=visit_required(
                 "whitespace_after", self.whitespace_after, visitor
@@ -274,7 +274,7 @@ class Name(BaseAssignTargetExpression, BaseDelTargetExpression, BaseAtom):
     # Sequence of close parenthesis for precedence dictation.
     rpar: Sequence[RightParen] = ()
 
-    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "Name":
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Name":
         return Name(
             lpar=visit_sequence("lpar", self.lpar, visitor),
             value=self.value,
@@ -306,7 +306,7 @@ class Ellipses(BaseAtom):
     # Sequence of close parenthesis for precedence dictation.
     rpar: Sequence[RightParen] = ()
 
-    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "Ellipses":
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Ellipses":
         return Ellipses(
             lpar=visit_sequence("lpar", self.lpar, visitor),
             rpar=visit_sequence("rpar", self.rpar, visitor),
@@ -328,7 +328,7 @@ class Integer(_BaseParenthesizedNode):
     # Sequence of close parenthesis for precedence dictation.
     rpar: Sequence[RightParen] = ()
 
-    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "Integer":
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Integer":
         return Integer(
             lpar=visit_sequence("lpar", self.lpar, visitor),
             value=self.value,
@@ -356,7 +356,7 @@ class Float(_BaseParenthesizedNode):
     # Sequence of close parenthesis for precedence dictation.
     rpar: Sequence[RightParen] = ()
 
-    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "Float":
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Float":
         return Float(
             lpar=visit_sequence("lpar", self.lpar, visitor),
             value=self.value,
@@ -384,7 +384,7 @@ class Imaginary(_BaseParenthesizedNode):
     # Sequence of close parenthesis for precedence dictation.
     rpar: Sequence[RightParen] = ()
 
-    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "Imaginary":
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Imaginary":
         return Imaginary(
             lpar=visit_sequence("lpar", self.lpar, visitor),
             value=self.value,
@@ -426,7 +426,7 @@ class Number(BaseAtom):
             return True
         return super(Number, self)._safe_to_use_with_word_operator(position)
 
-    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "Number":
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Number":
         return Number(
             lpar=visit_sequence("lpar", self.lpar, visitor),
             operator=visit_optional("operator", self.operator, visitor),
@@ -505,7 +505,7 @@ class SimpleString(BaseString):
             prefix += c
         return prefix.lower()
 
-    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "SimpleString":
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "SimpleString":
         return SimpleString(
             lpar=visit_sequence("lpar", self.lpar, visitor),
             value=self.value,
@@ -531,7 +531,9 @@ class FormattedStringText(BaseFormattedStringContent):
     # The raw string value.
     value: str
 
-    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "FormattedStringText":
+    def _visit_and_replace_children(
+        self, visitor: CSTVisitorT
+    ) -> "FormattedStringText":
         return FormattedStringText(value=self.value)
 
     def _codegen_impl(self, state: CodegenState) -> None:
@@ -559,7 +561,7 @@ class FormattedStringExpression(BaseFormattedStringContent):
             raise CSTValidationError("Invalid f-string conversion.")
 
     def _visit_and_replace_children(
-        self, visitor: CSTVisitor
+        self, visitor: CSTVisitorT
     ) -> "FormattedStringExpression":
         format_spec = self.format_spec
         return FormattedStringExpression(
@@ -641,7 +643,7 @@ class FormattedString(BaseString):
             prefix += c
         return prefix.lower()
 
-    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "FormattedString":
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "FormattedString":
         return FormattedString(
             lpar=visit_sequence("lpar", self.lpar, visitor),
             start=self.start,
@@ -698,7 +700,7 @@ class ConcatenatedString(BaseString):
         if leftbytes != rightbytes:
             raise CSTValidationError("Cannot concatenate string and bytes.")
 
-    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "ConcatenatedString":
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "ConcatenatedString":
         return ConcatenatedString(
             lpar=visit_sequence("lpar", self.lpar, visitor),
             left=visit_required("left", self.left, visitor),
@@ -742,7 +744,7 @@ class ComparisonTarget(CSTNode):
                 "Must have at least one space around comparison operator."
             )
 
-    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "ComparisonTarget":
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "ComparisonTarget":
         return ComparisonTarget(
             operator=visit_required("operator", self.operator, visitor),
             comparator=visit_required("comparator", self.comparator, visitor),
@@ -806,7 +808,7 @@ class Comparison(BaseExpression):
                 )
             previous_comparator = target.comparator
 
-    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "Comparison":
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Comparison":
         return Comparison(
             lpar=visit_sequence("lpar", self.lpar, visitor),
             left=visit_required("left", self.left, visitor),
@@ -855,7 +857,7 @@ class UnaryOperation(BaseExpression):
         ):
             raise CSTValidationError("Must have at least one space after not operator.")
 
-    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "UnaryOperation":
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "UnaryOperation":
         return UnaryOperation(
             lpar=visit_sequence("lpar", self.lpar, visitor),
             operator=visit_required("operator", self.operator, visitor),
@@ -891,7 +893,7 @@ class BinaryOperation(BaseExpression):
     # Sequence of close parenthesis for precedence dictation.
     rpar: Sequence[RightParen] = ()
 
-    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "BinaryOperation":
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "BinaryOperation":
         return BinaryOperation(
             lpar=visit_sequence("lpar", self.lpar, visitor),
             left=visit_required("left", self.left, visitor),
@@ -948,7 +950,7 @@ class BooleanOperation(BaseExpression):
                 "Must have at least one space around boolean operator."
             )
 
-    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "BooleanOperation":
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "BooleanOperation":
         return BooleanOperation(
             lpar=visit_sequence("lpar", self.lpar, visitor),
             left=visit_required("left", self.left, visitor),
@@ -988,7 +990,7 @@ class Attribute(BaseAssignTargetExpression, BaseDelTargetExpression):
     # Sequence of close parenthesis for precedence dictation.
     rpar: Sequence[RightParen] = ()
 
-    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "Attribute":
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Attribute":
         return Attribute(
             lpar=visit_sequence("lpar", self.lpar, visitor),
             value=visit_required("value", self.value, visitor),
@@ -1014,7 +1016,7 @@ class Index(CSTNode):
     # The index value itself.
     value: BaseExpression
 
-    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "Index":
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Index":
         return Index(value=visit_required("value", self.value, visitor))
 
     def _codegen_impl(self, state: CodegenState) -> None:
@@ -1046,7 +1048,7 @@ class Slice(CSTNode):
     # The second slice operator, usually omitted
     second_colon: Union[Colon, MaybeSentinel] = MaybeSentinel.DEFAULT
 
-    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "Slice":
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Slice":
         return Slice(
             lower=visit_optional("lower", self.lower, visitor),
             first_colon=visit_required("first_colon", self.first_colon, visitor),
@@ -1089,7 +1091,7 @@ class ExtSlice(CSTNode):
     # Separating comma, with any whitespace it owns.
     comma: Union[Comma, MaybeSentinel] = MaybeSentinel.DEFAULT
 
-    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "ExtSlice":
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "ExtSlice":
         return ExtSlice(
             slice=visit_required("slice", self.slice, visitor),
             comma=visit_sentinel("comma", self.comma, visitor),
@@ -1141,7 +1143,7 @@ class Subscript(BaseAssignTargetExpression, BaseDelTargetExpression):
             if len(self.slice) < 1:
                 raise CSTValidationError("Cannot have empty ExtSlice.")
 
-    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "Subscript":
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Subscript":
         slice = self.slice
         return Subscript(
             lpar=visit_sequence("lpar", self.lpar, visitor),
@@ -1201,7 +1203,7 @@ class Annotation(CSTNode):
                 "An Annotation indicator must be one of ':', '->'."
             )
 
-    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "Annotation":
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Annotation":
         return Annotation(
             whitespace_before_indicator=visit_sentinel(
                 "whitespace_before_indicator", self.whitespace_before_indicator, visitor
@@ -1254,7 +1256,7 @@ class ParamStar(CSTNode):
     # Comma that comes after the star.
     comma: Comma = Comma(whitespace_after=SimpleWhitespace(" "))
 
-    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "ParamStar":
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "ParamStar":
         return ParamStar(comma=visit_required("comma", self.comma, visitor))
 
     def _codegen_impl(self, state: CodegenState) -> None:
@@ -1306,7 +1308,7 @@ class Param(CSTNode):
         ):
             raise CSTValidationError("A param Annotation must be denoted with a ':'.")
 
-    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "Param":
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Param":
         return Param(
             star=self.star,
             whitespace_after_star=visit_required(
@@ -1449,7 +1451,7 @@ class Parameters(CSTNode):
         # Validate that we don't have random stars on non star_kwarg.
         self._validate_stars()
 
-    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "Parameters":
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Parameters":
         return Parameters(
             params=visit_sequence("params", self.params, visitor),
             default_params=visit_sequence(
@@ -1571,7 +1573,7 @@ class Lambda(BaseExpression):
                     "Must have at least one space after lambda when specifying params"
                 )
 
-    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "Lambda":
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Lambda":
         return Lambda(
             lpar=visit_sequence("lpar", self.lpar, visitor),
             whitespace_after_lambda=visit_sentinel(
@@ -1641,7 +1643,7 @@ class Arg(CSTNode):
         if self.star in ("*", "**") and self.keyword is not None:
             raise CSTValidationError("Cannot specify a star and a keyword together.")
 
-    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "Arg":
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Arg":
         return Arg(
             star=self.star,
             whitespace_after_star=visit_required(
@@ -1808,7 +1810,7 @@ class Call(_BaseExpressionWithArgs):
             return True
         return super(Call, self)._safe_to_use_with_word_operator(position)
 
-    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "Call":
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Call":
         return Call(
             lpar=visit_sequence("lpar", self.lpar, visitor),
             func=visit_required("func", self.func, visitor),
@@ -1857,7 +1859,7 @@ class Await(BaseExpression):
         if self.whitespace_after_await.empty:
             raise CSTValidationError("Must have at least one space after await")
 
-    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "Await":
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Await":
         return Await(
             lpar=visit_sequence("lpar", self.lpar, visitor),
             whitespace_after_await=visit_required(
@@ -1935,7 +1937,7 @@ class IfExp(BaseExpression):
                 "Must have at least one space after 'else' keyword."
             )
 
-    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "IfExp":
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "IfExp":
         return IfExp(
             lpar=visit_sequence("lpar", self.lpar, visitor),
             body=visit_required("body", self.body, visitor),
@@ -1994,7 +1996,7 @@ class From(CSTNode):
                 "Must have at least one space after 'from' keyword."
             )
 
-    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "From":
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "From":
         return From(
             whitespace_before_from=visit_sentinel(
                 "whitespace_before_from", self.whitespace_before_from, visitor
@@ -2060,7 +2062,7 @@ class Yield(BaseExpression):
                     "Must have at least one space after 'yield' keyword."
                 )
 
-    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "Yield":
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Yield":
         return Yield(
             lpar=visit_sequence("lpar", self.lpar, visitor),
             whitespace_after_yield=visit_sentinel(
@@ -2115,7 +2117,10 @@ class Element(BaseElement):
     # Any trailing comma
     comma: Union[Comma, MaybeSentinel] = MaybeSentinel.DEFAULT
 
-    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "Element":
+    # Whitespace
+    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace("")
+
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Element":
         return Element(
             value=visit_required("value", self.value, visitor),
             comma=visit_sentinel("comma", self.comma, visitor),
@@ -2155,7 +2160,7 @@ class StarredElement(BaseElement, _BaseParenthesizedNode):
     # Whitespace
     whitespace_before_value: BaseParenthesizableWhitespace = SimpleWhitespace("")
 
-    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "StarredElement":
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "StarredElement":
         return StarredElement(
             lpar=visit_sequence("lpar", self.lpar, visitor),
             whitespace_before_value=visit_required(
@@ -2234,7 +2239,7 @@ class Tuple(BaseAtom, BaseAssignTargetExpression, BaseDelTargetExpression):
         # Invalid commas aren't possible, because MaybeSentinel will ensure that there
         # is a comma where required.
 
-    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "Tuple":
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Tuple":
         return Tuple(
             lpar=visit_sequence("lpar", self.lpar, visitor),
             elements=visit_sequence("elements", self.elements, visitor),
@@ -2294,7 +2299,7 @@ class List(BaseList, BaseAssignTargetExpression, BaseDelTargetExpression):
     lpar: Sequence[LeftParen] = ()
     rpar: Sequence[RightParen] = ()
 
-    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "List":
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "List":
         return List(
             lpar=visit_sequence("lpar", self.lpar, visitor),
             lbracket=visit_required("lbracket", self.lbracket, visitor),
@@ -2422,7 +2427,7 @@ class CompFor(CSTNode):
                 f"Must have at least one space before '{keyword}' keyword."
             )
 
-    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "CompFor":
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "CompFor":
         return CompFor(
             whitespace_before=visit_required(
                 "whitespace_before", self.whitespace_before, visitor
@@ -2477,7 +2482,7 @@ class CompIf(CSTNode):
         ):
             raise CSTValidationError("Must have at least one space after 'if' keyword.")
 
-    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "CompIf":
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "CompIf":
         return CompIf(
             whitespace_before=visit_required(
                 "whitespace_before", self.whitespace_before, visitor
@@ -2551,7 +2556,7 @@ class GeneratorExp(BaseSimpleComp):
     # could do the validation, but there's a ton of potential parents to a Generator, so
     # it's not worth the effort.
 
-    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "GeneratorExp":
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "GeneratorExp":
         return GeneratorExp(
             lpar=visit_sequence("lpar", self.lpar, visitor),
             elt=visit_required("elt", self.elt, visitor),
@@ -2579,7 +2584,7 @@ class ListComp(BaseList, BaseSimpleComp):
         # ListComp is always surrounded in square brackets
         return True
 
-    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "ListComp":
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "ListComp":
         return ListComp(
             lpar=visit_sequence("lpar", self.lpar, visitor),
             lbracket=visit_required("lbracket", self.lbracket, visitor),

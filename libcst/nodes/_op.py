@@ -3,15 +3,16 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+# pyre-strict
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Tuple
 
 from libcst._add_slots import add_slots
-from libcst._base_visitor import CSTVisitor
 from libcst.nodes._base import BaseLeaf, CSTNode, CSTValidationError
 from libcst.nodes._internal import CodegenState, visit_required
 from libcst.nodes._whitespace import BaseParenthesizableWhitespace, SimpleWhitespace
+from libcst.visitors import CSTVisitorT
 
 
 class _BaseOneTokenOp(CSTNode, ABC):
@@ -19,10 +20,12 @@ class _BaseOneTokenOp(CSTNode, ABC):
     Any node that has a static value and needs to own whitespace on both sides.
     """
 
+    # pyre-fixme[13]: Uninitialized attribute
     whitespace_before: BaseParenthesizableWhitespace
+    # pyre-fixme[13]: Uninitialized attribute
     whitespace_after: BaseParenthesizableWhitespace
 
-    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "_BaseOneTokenOp":
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "_BaseOneTokenOp":
         return self.__class__(
             whitespace_before=visit_required(
                 "whitespace_before", self.whitespace_before, visitor
@@ -48,15 +51,18 @@ class _BaseTwoTokenOp(CSTNode, ABC):
     in beteween them.
     """
 
+    # pyre-fixme[13]: Uninitialized attribute
     whitespace_before: BaseParenthesizableWhitespace
+    # pyre-fixme[13]: Uninitialized attribute
     whitespace_between: BaseParenthesizableWhitespace
+    # pyre-fixme[13]: Uninitialized attribute
     whitespace_after: BaseParenthesizableWhitespace
 
     def _validate(self) -> None:
         if self.whitespace_between.empty:
             raise CSTValidationError("Must have at least one space between not and in.")
 
-    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "_BaseTwoTokenOp":
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "_BaseTwoTokenOp":
         return self.__class__(
             whitespace_before=visit_required(
                 "whitespace_before", self.whitespace_before, visitor
@@ -86,9 +92,10 @@ class BaseUnaryOp(CSTNode, ABC):
     Any node that has a static value used in a Unary expression.
     """
 
+    # pyre-fixme[13]: Uninitialized attribute
     whitespace_after: BaseParenthesizableWhitespace
 
-    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "BaseUnaryOp":
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "BaseUnaryOp":
         return self.__class__(
             whitespace_after=visit_required(
                 "whitespace_after", self.whitespace_after, visitor
@@ -452,7 +459,7 @@ class NotEqual(BaseCompOp):
         if self.value not in ["!=", "<>"]:
             raise CSTValidationError("Invalid value for NotEqual node.")
 
-    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "BaseCompOp":
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "BaseCompOp":
         return self.__class__(
             whitespace_before=visit_required(
                 "whitespace_before", self.whitespace_before, visitor

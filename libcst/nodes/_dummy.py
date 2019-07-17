@@ -9,12 +9,12 @@ from dataclasses import dataclass
 from typing import Any, List, Sequence, Union
 
 from libcst._add_slots import add_slots
-from libcst._base_visitor import CSTVisitor
 from libcst._removal_sentinel import RemovalSentinel
 from libcst.nodes._base import CSTNode, CSTValidationError
 from libcst.nodes._expression import LeftParen, RightParen
 from libcst.nodes._internal import CodegenState, visit_sequence
 from libcst.nodes._whitespace import EmptyLine, TrailingWhitespace
+from libcst.visitors import CSTVisitorT
 
 
 @add_slots
@@ -39,7 +39,7 @@ class DummyNode(CSTNode):
         if len(self.children) < 1:
             raise CSTValidationError("Must have at least one child for dummy node.")
 
-    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "DummyNode":
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "DummyNode":
         # Preserve traversal order
         lpar = visit_sequence("lpar", self.lpar, visitor)
 

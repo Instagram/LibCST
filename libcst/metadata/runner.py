@@ -10,11 +10,11 @@ from libcst.exceptions import MetadataException
 
 
 if TYPE_CHECKING:
-    from libcst._base_visitor import CSTVisitor
+    from libcst.visitors import CSTVisitorT
     from libcst.nodes import Module
 
 
-def run(module: "Module", visitor: "CSTVisitor") -> None:
+def run(module: "Module", visitor: "CSTVisitorT") -> None:
     """
     Called by Module.visit to generate metadata dependencies before performing
     a visitor pass.

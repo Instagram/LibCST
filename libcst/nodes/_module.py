@@ -7,13 +7,13 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, MutableSet, Optional, Sequence, Type, TypeVar, Union
 
 from libcst._add_slots import add_slots
-from libcst._base_visitor import CSTVisitor
 from libcst._removal_sentinel import RemovalSentinel
 from libcst.metadata.runner import run as compute_metadata
 from libcst.nodes._base import CSTNode
 from libcst.nodes._internal import CodegenState, SyntacticCodegenState, visit_sequence
 from libcst.nodes._statement import BaseCompoundStatement, SimpleStatementLine
 from libcst.nodes._whitespace import EmptyLine
+from libcst.visitors import CSTVisitorT
 
 
 if TYPE_CHECKING:
@@ -58,7 +58,7 @@ class Module(CSTNode):
         default_factory=set, init=False, repr=False, compare=False
     )
 
-    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "Module":
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Module":
         return Module(
             header=visit_sequence("header", self.header, visitor),
             body=visit_sequence("body", self.body, visitor),
@@ -69,7 +69,7 @@ class Module(CSTNode):
             has_trailing_newline=self.has_trailing_newline,
         )
 
-    def visit(self: _ModuleSelfT, visitor: CSTVisitor) -> _ModuleSelfT:
+    def visit(self: _ModuleSelfT, visitor: CSTVisitorT) -> _ModuleSelfT:
         compute_metadata(self, visitor)
 
         result = CSTNode.visit(self, visitor)

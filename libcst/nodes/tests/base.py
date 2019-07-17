@@ -11,10 +11,10 @@ from typing import Any, Callable, Iterable, List, Optional, Sequence, Type, Type
 from unittest.mock import patch
 
 import libcst.nodes as cst
-from libcst._base_visitor import CSTVisitor
 from libcst.metadata.position_provider import SyntacticPositionProvider
 from libcst.nodes._internal import CodegenState, CodeRange, visit_required
 from libcst.testing.utils import UnitTest
+from libcst.visitors import CSTTransformer, CSTVisitorT
 
 
 _CSTNodeT = TypeVar("_CSTNodeT", bound="cst.CSTNode")
@@ -27,7 +27,7 @@ class _CSTCodegenPatchTarget:
     old_codegen: Callable[..., None]
 
 
-class _NOOPVisitor(CSTVisitor):
+class _NOOPVisitor(CSTTransformer):
     pass
 
 
@@ -225,7 +225,7 @@ class DummyIndentedBlock(cst.CSTNode):
         self.child._codegen(state)
         state.decrease_indent()
 
-    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "DummyIndentedBlock":
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "DummyIndentedBlock":
         return DummyIndentedBlock(
             value=self.value, child=visit_required("child", self.child, visitor)
         )

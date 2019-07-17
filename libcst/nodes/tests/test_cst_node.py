@@ -8,16 +8,16 @@ from textwrap import dedent
 from typing import TypeVar, Union
 
 import libcst.nodes as cst
-from libcst._base_visitor import CSTVisitor
 from libcst._removal_sentinel import RemovalSentinel
 from libcst.testing.utils import UnitTest, data_provider, none_throws
+from libcst.visitors import CSTTransformer
 
 
 _CSTNodeT = TypeVar("_CSTNodeT", bound="cst.CSTNode")
 _EMPTY_SIMPLE_WHITESPACE = cst.SimpleWhitespace("")
 
 
-class _TestVisitor(CSTVisitor):
+class _TestVisitor(CSTTransformer):
     def __init__(self, test: UnitTest) -> None:
         self.counter = 0
         self.test = test

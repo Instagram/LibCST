@@ -18,10 +18,10 @@ from typing import (
     cast,
 )
 
-from libcst._base_visitor import CSTVisitor
 from libcst._removal_sentinel import RemovalSentinel
 from libcst._type_enforce import is_value_of_type
 from libcst.nodes._internal import CodegenState, CodePosition, CodeRange
+from libcst.visitors import CSTVisitor, CSTVisitorT
 
 
 if TYPE_CHECKING:
@@ -176,7 +176,7 @@ class CSTNode(ABC):
         return visitor.children
 
     def visit(
-        self: _CSTNodeSelfT, visitor: CSTVisitor
+        self: _CSTNodeSelfT, visitor: CSTVisitorT
     ) -> Union[_CSTNodeSelfT, RemovalSentinel]:
         """
         Visits the current node, its children, and all transitive children using the
@@ -185,6 +185,7 @@ class CSTNode(ABC):
         # visit self
         should_visit_children = visitor.on_visit(self)
 
+        # TODO: provide traversal where children are not replaced
         # visit children (optionally)
         if should_visit_children:
             # It's not possible to define `_visit_and_replace_children` with the correct
@@ -196,7 +197,11 @@ class CSTNode(ABC):
         else:
             with_updated_children = self
 
-        leave_result = visitor.on_leave(self, with_updated_children)
+        if isinstance(visitor, CSTVisitor):
+            visitor.on_leave(self)
+            leave_result = self
+        else:
+            leave_result = visitor.on_leave(self, with_updated_children)
 
         # validate return type of the user-defined `visitor.on_leave` method
         if not isinstance(leave_result, (CSTNode, RemovalSentinel)):
@@ -217,14 +222,14 @@ class CSTNode(ABC):
     # needs to refer to the class' own constructor:
     #
     #   class While(CSTNode):
-    #       def _visit_and_replace_children(self, visitor: CSTVisitor) -> While:
+    #       def _visit_and_replace_children(self, visitor: CSTVisitorT) -> While:
     #           return While(...)
     #
     # You'll notice that because this implementation needs to call the `While`
     # constructor, the return type is also `While`. This function is a valid subtype of
-    # `Callable[[CSTVisitor], CSTNode]`.
+    # `Callable[[CSTVisitorT], CSTNode]`.
     #
-    # It is not a valid subtype of `Callable[[CSTVisitor], _CSTNodeSelfT]`. That's
+    # It is not a valid subtype of `Callable[[CSTVisitorT], _CSTNodeSelfT]`. That's
     # because the return type of this function wouldn't be valid for any subclasses.
     # In practice, that's not an issue, because we don't have any subclasses of `While`,
     # but there's no way to tell pyre that without a `@final` annotation.
@@ -232,7 +237,7 @@ class CSTNode(ABC):
     # Instead, we're just relying on an unchecked call to `cast()` in the `visit`
     # method.
     @abstractmethod
-    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "CSTNode":
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "CSTNode":
         """
         Intended to be overridden by subclasses to provide a low-level hook for the
         visitor API.
@@ -329,7 +334,7 @@ class BaseLeaf(CSTNode, ABC):
         return _EMPTY_SEQUENCE
 
     def _visit_and_replace_children(
-        self: _CSTNodeSelfT, visitor: CSTVisitor
+        self: _CSTNodeSelfT, visitor: CSTVisitorT
     ) -> _CSTNodeSelfT:
         return self
 

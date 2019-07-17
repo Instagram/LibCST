@@ -11,7 +11,6 @@ from dataclasses import dataclass
 from typing import Optional, Pattern, Sequence
 
 from libcst._add_slots import add_slots
-from libcst._base_visitor import CSTVisitor
 from libcst.nodes._base import BaseLeaf, BaseValueToken, CSTNode, CSTValidationError
 from libcst.nodes._internal import (
     CodegenState,
@@ -19,6 +18,7 @@ from libcst.nodes._internal import (
     visit_required,
     visit_sequence,
 )
+from libcst.visitors import CSTVisitorT
 
 
 # SimpleWhitespace includes continuation characters, which must be followed immediately
@@ -139,7 +139,7 @@ class TrailingWhitespace(CSTNode):
     comment: Optional[Comment] = None
     newline: Newline = Newline()
 
-    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "TrailingWhitespace":
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "TrailingWhitespace":
         return TrailingWhitespace(
             whitespace=visit_required("whitespace", self.whitespace, visitor),
             comment=visit_optional("comment", self.comment, visitor),
@@ -170,7 +170,7 @@ class EmptyLine(CSTNode):
     comment: Optional[Comment] = None
     newline: Newline = Newline()
 
-    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "EmptyLine":
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "EmptyLine":
         return EmptyLine(
             indent=self.indent,
             whitespace=visit_required("whitespace", self.whitespace, visitor),
@@ -205,7 +205,7 @@ class ParenthesizedWhitespace(BaseParenthesizableWhitespace):
     last_line: SimpleWhitespace = SimpleWhitespace("")
 
     def _visit_and_replace_children(
-        self, visitor: CSTVisitor
+        self, visitor: CSTVisitorT
     ) -> "ParenthesizedWhitespace":
         return ParenthesizedWhitespace(
             first_line=visit_required("first_line", self.first_line, visitor),

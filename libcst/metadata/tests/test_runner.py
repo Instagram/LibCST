@@ -4,15 +4,12 @@
 # LICENSE file in the root directory of this source tree.
 
 # pyre-strict
-from typing import Union
-
-from libcst._base_visitor import CSTVisitor
-from libcst._removal_sentinel import RemovalSentinel
 from libcst.exceptions import MetadataException
 from libcst.metadata.base_provider import BaseMetadataProvider
 from libcst.nodes import CSTNode, Module
 from libcst.parser import parse_module
 from libcst.testing.utils import UnitTest
+from libcst.visitors import CSTTransformer
 
 
 class MetadataRunnerTest(UnitTest):
@@ -29,7 +26,7 @@ class MetadataRunnerTest(UnitTest):
                 self.set_metadata(node, self.get_metadata(SimpleProvider, node) + 1)
                 return True
 
-        class DependentVisitor(CSTVisitor):
+        class DependentVisitor(CSTTransformer):
             METADATA_DEPENDENCIES = (DependentProvider, SimpleProvider)
 
         module = parse_module("pass")
@@ -48,7 +45,7 @@ class MetadataRunnerTest(UnitTest):
 
         ProviderA.METADATA_DEPENDENCIES = (ProviderA,)
 
-        class BadVisitor(CSTVisitor):
+        class BadVisitor(CSTTransformer):
             METADATA_DEPENDENCIES = (ProviderA,)
 
         with self.assertRaisesRegex(
@@ -65,15 +62,12 @@ class MetadataRunnerTest(UnitTest):
                 self.set_metadata(node, True)
                 return True
 
-            def on_leave(
-                self, original_node: CSTNode, updated_node: CSTNode
-            ) -> Union[CSTNode, RemovalSentinel]:
+            def on_leave(self, original_node: CSTNode) -> None:
                 test_runner.assertEqual(
                     self.get_metadata(type(self), original_node), True
                 )
-                return original_node
 
-        class AVisitor(CSTVisitor):
+        class AVisitor(CSTTransformer):
             METADATA_DEPENDENCIES = (ProviderA,)
 
         Module([]).visit(AVisitor())
@@ -82,7 +76,7 @@ class MetadataRunnerTest(UnitTest):
         class ProviderA(BaseMetadataProvider[bool]):
             pass
 
-        class AVisitor(CSTVisitor):
+        class AVisitor(CSTTransformer):
             METADATA_DEPENDENCIES = (ProviderA,)
 
             def on_visit(self, node: CSTNode) -> bool:
@@ -99,7 +93,7 @@ class MetadataRunnerTest(UnitTest):
         class ProviderB(BaseMetadataProvider[bool]):
             pass
 
-        class AVisitor(CSTVisitor):
+        class AVisitor(CSTTransformer):
             METADATA_DEPENDENCIES = (ProviderA,)
 
             def on_visit(self, node: CSTNode) -> bool:

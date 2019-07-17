@@ -9,7 +9,6 @@ from dataclasses import dataclass
 from typing import Optional, Sequence, Union
 
 from libcst._add_slots import add_slots
-from libcst._base_visitor import CSTVisitor
 from libcst._maybe_sentinel import MaybeSentinel
 from libcst.nodes._base import CSTNode, CSTValidationError
 from libcst.nodes._expression import (
@@ -43,6 +42,7 @@ from libcst.nodes._whitespace import (
     SimpleWhitespace,
     TrailingWhitespace,
 )
+from libcst.visitors import CSTVisitorT
 
 
 _INDENT_WHITESPACE_RE = re.compile(r"[ \f\t]+", re.UNICODE)
@@ -108,7 +108,7 @@ class Del(BaseSmallStatement):
         ):
             raise CSTValidationError("Must have at least one space after 'del'.")
 
-    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "Del":
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Del":
         return Del(
             target=visit_required("target", self.target, visitor),
             whitespace_after_del=visit_required(
@@ -138,7 +138,7 @@ class Pass(BaseSmallStatement):
     # Optional semicolon when this is used in a statement line
     semicolon: Union[Semicolon, MaybeSentinel] = MaybeSentinel.DEFAULT
 
-    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "Pass":
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Pass":
         return Pass(semicolon=visit_sentinel("semicolon", self.semicolon, visitor))
 
     def _codegen_impl(
@@ -160,7 +160,7 @@ class Break(BaseSmallStatement):
     # Optional semicolon when this is used in a statement line
     semicolon: Union[Semicolon, MaybeSentinel] = MaybeSentinel.DEFAULT
 
-    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "Break":
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Break":
         return Break(semicolon=visit_sentinel("semicolon", self.semicolon, visitor))
 
     def _codegen_impl(
@@ -182,7 +182,7 @@ class Continue(BaseSmallStatement):
     # Optional semicolon when this is used in a statement line
     semicolon: Union[Semicolon, MaybeSentinel] = MaybeSentinel.DEFAULT
 
-    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "Continue":
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Continue":
         return Continue(semicolon=visit_sentinel("semicolon", self.semicolon, visitor))
 
     def _codegen_impl(
@@ -222,7 +222,7 @@ class Return(BaseSmallStatement):
             ):
                 raise CSTValidationError("Must have at least one space after 'return'.")
 
-    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "Return":
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Return":
         return Return(
             whitespace_after_return=visit_sentinel(
                 "whitespace_after_return", self.whitespace_after_return, visitor
@@ -269,7 +269,7 @@ class Expr(BaseSmallStatement):
     # Optional semicolon when this is used in a statement line
     semicolon: Union[Semicolon, MaybeSentinel] = MaybeSentinel.DEFAULT
 
-    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "Expr":
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Expr":
         return Expr(
             value=visit_required("value", self.value, visitor),
             semicolon=visit_sentinel("semicolon", self.semicolon, visitor),
@@ -339,7 +339,9 @@ class SimpleStatementLine(_BaseSimpleStatement):
     leading_lines: Sequence[EmptyLine] = ()
     trailing_whitespace: TrailingWhitespace = TrailingWhitespace()
 
-    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "SimpleStatementLine":
+    def _visit_and_replace_children(
+        self, visitor: CSTVisitorT
+    ) -> "SimpleStatementLine":
         leading_lines = visit_sequence("leading_lines", self.leading_lines, visitor)
         new_body = visit_sequence("body", self.body, visitor)
         return SimpleStatementLine(
@@ -377,7 +379,7 @@ class SimpleStatementSuite(_BaseSimpleStatement, BaseSuite):
     trailing_whitespace: TrailingWhitespace = TrailingWhitespace()
 
     def _visit_and_replace_children(
-        self, visitor: CSTVisitor
+        self, visitor: CSTVisitorT
     ) -> "SimpleStatementSuite":
         leading_whitespace = visit_required(
             "leading_whitespace", self.leading_whitespace, visitor
@@ -412,7 +414,7 @@ class Else(CSTNode):
     leading_lines: Sequence[EmptyLine] = ()
     whitespace_before_colon: SimpleWhitespace = SimpleWhitespace("")
 
-    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "Else":
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Else":
         return Else(
             leading_lines=visit_sequence("leading_lines", self.leading_lines, visitor),
             whitespace_before_colon=visit_required(
@@ -470,7 +472,7 @@ class If(BaseCompoundStatement):
 
     # TODO: _validate
 
-    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "If":
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "If":
         return If(
             leading_lines=visit_sequence("leading_lines", self.leading_lines, visitor),
             whitespace_before_test=visit_required(
@@ -552,7 +554,7 @@ class IndentedBlock(BaseSuite):
                     "An indent must be composed of only whitespace characters."
                 )
 
-    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "IndentedBlock":
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "IndentedBlock":
         header = visit_required("header", self.header, visitor)
         body = visit_sequence("body", self.body, visitor)
         if len(body) == 0:
@@ -605,7 +607,7 @@ class AsName(CSTNode):
         if self.whitespace_before_as.empty:
             raise CSTValidationError("There must be at least one space before 'as'.")
 
-    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "AsName":
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "AsName":
         return AsName(
             whitespace_before_as=visit_required(
                 "whitespace_before_as", self.whitespace_before_as, visitor
@@ -657,7 +659,7 @@ class ExceptHandler(CSTNode):
                 "Must have at least one space after except when ExceptHandler has a type."
             )
 
-    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "ExceptHandler":
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "ExceptHandler":
         return ExceptHandler(
             leading_lines=visit_sequence("leading_lines", self.leading_lines, visitor),
             whitespace_after_except=visit_required(
@@ -699,7 +701,7 @@ class Finally(CSTNode):
     leading_lines: Sequence[EmptyLine] = ()
     whitespace_before_colon: SimpleWhitespace = SimpleWhitespace("")
 
-    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "Finally":
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Finally":
         return Finally(
             leading_lines=visit_sequence("leading_lines", self.leading_lines, visitor),
             whitespace_before_colon=visit_required(
@@ -752,7 +754,7 @@ class Try(BaseCompoundStatement):
                 + "to have an Else"
             )
 
-    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "Try":
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Try":
         return Try(
             leading_lines=visit_sequence("leading_lines", self.leading_lines, visitor),
             whitespace_before_colon=visit_required(
@@ -805,7 +807,7 @@ class ImportAlias(CSTNode):
                 "Must use a Name node for AsName name inside ImportAlias."
             )
 
-    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "ImportAlias":
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "ImportAlias":
         return ImportAlias(
             name=visit_required("name", self.name, visitor),
             asname=visit_optional("asname", self.asname, visitor),
@@ -851,7 +853,7 @@ class Import(BaseSmallStatement):
         if self.whitespace_after_import.empty:
             raise CSTValidationError("Must have at least one space after import.")
 
-    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "Import":
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Import":
         return Import(
             whitespace_after_import=visit_required(
                 "whitespace_after_import", self.whitespace_after_import, visitor
@@ -943,7 +945,7 @@ class ImportFrom(BaseSmallStatement):
         self._validate_names()
         self._validate_whitespace()
 
-    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "ImportFrom":
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "ImportFrom":
         names = self.names
         return ImportFrom(
             whitespace_after_from=visit_required(
@@ -1013,7 +1015,7 @@ class AssignTarget(CSTNode):
     whitespace_before_equal: SimpleWhitespace = SimpleWhitespace(" ")
     whitespace_after_equal: SimpleWhitespace = SimpleWhitespace(" ")
 
-    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "AssignTarget":
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "AssignTarget":
         return AssignTarget(
             target=visit_required("target", self.target, visitor),
             whitespace_before_equal=visit_required(
@@ -1052,7 +1054,7 @@ class Assign(BaseSmallStatement):
                 "An Assign statement must have at least one AssignTarget"
             )
 
-    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "Assign":
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Assign":
         return Assign(
             targets=visit_sequence("targets", self.targets, visitor),
             value=visit_required("value", self.value, visitor),
@@ -1105,7 +1107,7 @@ class AnnAssign(BaseSmallStatement):
                 "Must have a value when specifying an AssignEqual."
             )
 
-    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "AnnAssign":
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "AnnAssign":
         return AnnAssign(
             target=visit_required("target", self.target, visitor),
             annotation=visit_required("annotation", self.annotation, visitor),
@@ -1153,7 +1155,7 @@ class AugAssign(BaseSmallStatement):
     # Optional semicolon when this is used in a statement line
     semicolon: Union[Semicolon, MaybeSentinel] = MaybeSentinel.DEFAULT
 
-    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "AugAssign":
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "AugAssign":
         return AugAssign(
             target=visit_required("target", self.target, visitor),
             operator=visit_required("operator", self.operator, visitor),
@@ -1209,7 +1211,7 @@ class Decorator(CSTNode):
                 "Decorator call function must be an atom or attribute."
             )
 
-    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "Decorator":
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Decorator":
         return Decorator(
             leading_lines=visit_sequence("leading_lines", self.leading_lines, visitor),
             whitespace_after_at=visit_required(
@@ -1287,7 +1289,7 @@ class FunctionDef(BaseCompoundStatement):
         ):
             raise CSTValidationError("A return Annotation must be denoted with a '->'.")
 
-    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "FunctionDef":
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "FunctionDef":
         return FunctionDef(
             leading_lines=visit_sequence("leading_lines", self.leading_lines, visitor),
             decorators=visit_sequence("decorators", self.decorators, visitor),
@@ -1415,7 +1417,7 @@ class ClassDef(BaseCompoundStatement):
         self._validate_parens()
         self._validate_args()
 
-    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "ClassDef":
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "ClassDef":
         return ClassDef(
             leading_lines=visit_sequence("leading_lines", self.leading_lines, visitor),
             decorators=visit_sequence("decorators", self.decorators, visitor),
@@ -1488,7 +1490,7 @@ class WithItem(CSTNode):
     # inside a with block must contain a comma to separate them.
     comma: Union[Comma, MaybeSentinel] = MaybeSentinel.DEFAULT
 
-    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "WithItem":
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "WithItem":
         return WithItem(
             item=visit_required("item", self.item, visitor),
             asname=visit_optional("asname", self.asname, visitor),
@@ -1542,7 +1544,7 @@ class With(BaseCompoundStatement):
         ].item._safe_to_use_with_word_operator(ExpressionPosition.RIGHT):
             raise CSTValidationError("Must have at least one space after with keyword.")
 
-    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "With":
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "With":
         return With(
             leading_lines=visit_sequence("leading_lines", self.leading_lines, visitor),
             asynchronous=visit_optional("asynchronous", self.asynchronous, visitor),
@@ -1627,7 +1629,7 @@ class For(BaseCompoundStatement):
         ):
             raise CSTValidationError("Must have at least one space after 'in' keyword.")
 
-    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "For":
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "For":
         return For(
             leading_lines=visit_sequence("leading_lines", self.leading_lines, visitor),
             asynchronous=visit_optional("asynchronous", self.asynchronous, visitor),
@@ -1701,7 +1703,7 @@ class While(BaseCompoundStatement):
                 "Must have at least one space after 'while' keyword."
             )
 
-    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "While":
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "While":
         return While(
             leading_lines=visit_sequence("leading_lines", self.leading_lines, visitor),
             whitespace_after_while=visit_required(
@@ -1777,7 +1779,7 @@ class Raise(BaseSmallStatement):
             ):
                 raise CSTValidationError("Must have at least one space before 'from'.")
 
-    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "Raise":
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Raise":
         return Raise(
             whitespace_after_raise=visit_sentinel(
                 "whitespace_after_raise", self.whitespace_after_raise, visitor
@@ -1849,7 +1851,7 @@ class Assert(BaseSmallStatement):
         if self.msg is None and isinstance(self.comma, Comma):
             raise CSTValidationError("Cannot have trailing comma after 'test'.")
 
-    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "Assert":
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Assert":
         return Assert(
             whitespace_after_assert=visit_required(
                 "whitespace_after_assert", self.whitespace_after_assert, visitor
@@ -1903,7 +1905,7 @@ class NameItem(CSTNode):
         if len(self.name.lpar) > 0 or len(self.name.rpar) > 0:
             raise CSTValidationError("Cannot have parens around names in NameItem.")
 
-    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "NameItem":
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "NameItem":
         return NameItem(
             name=visit_required("name", self.name, visitor),
             comma=visit_sentinel("comma", self.comma, visitor),
@@ -1948,7 +1950,7 @@ class Global(BaseSmallStatement):
                 "Must have at least one space after 'global' keyword."
             )
 
-    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "Global":
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Global":
         return Global(
             whitespace_after_global=visit_required(
                 "whitespace_after_global", self.whitespace_after_global, visitor
@@ -2004,7 +2006,7 @@ class Nonlocal(BaseSmallStatement):
                 "Must have at least one space after 'nonlocal' keyword."
             )
 
-    def _visit_and_replace_children(self, visitor: CSTVisitor) -> "Nonlocal":
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Nonlocal":
         return Nonlocal(
             whitespace_after_nonlocal=visit_required(
                 "whitespace_after_nonlocal", self.whitespace_after_nonlocal, visitor

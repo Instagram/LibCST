@@ -7,7 +7,7 @@
 from typing import Generic, TypeVar
 
 import libcst.nodes as cst
-from libcst._base_visitor import CSTVisitor
+from libcst.visitors import CSTVisitor
 
 
 _T_co = TypeVar("_T_co", covariant=True)
