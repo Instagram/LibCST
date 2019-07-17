@@ -4,7 +4,8 @@
 # LICENSE file in the root directory of this source tree.
 
 # pyre-strict
-from typing import Callable, Optional
+
+from typing import Any
 
 import libcst.nodes as cst
 from libcst.nodes._internal import CodeRange
@@ -17,149 +18,379 @@ class AtomTest(CSTNodeTest):
     @data_provider(
         (
             # Simple identifier
-            (cst.Name("test"), "test"),
+            # pyre-fixme[6]: Incompatible parameter type
+            {
+                "node": cst.Name("test"),
+                "code": "test",
+                "parser": parse_expression,
+                "expected_position": None,
+            },
             # Parenthesized identifier
-            (
-                cst.Name("test", lpar=(cst.LeftParen(),), rpar=(cst.RightParen(),)),
-                "(test)",
-                CodeRange.create((1, 1), (1, 5)),
-            ),
+            {
+                "node": cst.Name(
+                    "test", lpar=(cst.LeftParen(),), rpar=(cst.RightParen(),)
+                ),
+                "code": "(test)",
+                "parser": parse_expression,
+                "expected_position": CodeRange.create((1, 1), (1, 5)),
+            },
             # Decimal integers
-            (cst.Integer("12345"), "12345"),
-            (cst.Integer("0000"), "0000"),
-            (cst.Integer("1_234_567"), "1_234_567"),
-            (cst.Integer("0_000"), "0_000"),
+            {
+                "node": cst.Integer("12345"),
+                "code": "12345",
+                "parser": parse_expression,
+                "expected_position": None,
+            },
+            {
+                "node": cst.Integer("0000"),
+                "code": "0000",
+                "parser": parse_expression,
+                "expected_position": None,
+            },
+            {
+                "node": cst.Integer("1_234_567"),
+                "code": "1_234_567",
+                "parser": parse_expression,
+                "expected_position": None,
+            },
+            {
+                "node": cst.Integer("0_000"),
+                "code": "0_000",
+                "parser": parse_expression,
+                "expected_position": None,
+            },
             # Binary integers
-            (cst.Integer("0b0000"), "0b0000"),
-            (cst.Integer("0B1011_0100"), "0B1011_0100"),
+            {
+                "node": cst.Integer("0b0000"),
+                "code": "0b0000",
+                "parser": parse_expression,
+                "expected_position": None,
+            },
+            {
+                "node": cst.Integer("0B1011_0100"),
+                "code": "0B1011_0100",
+                "parser": parse_expression,
+                "expected_position": None,
+            },
             # Octal integers
-            (cst.Integer("0o12345"), "0o12345"),
-            (cst.Integer("0O12_345"), "0O12_345"),
+            {
+                "node": cst.Integer("0o12345"),
+                "code": "0o12345",
+                "parser": parse_expression,
+                "expected_position": None,
+            },
+            {
+                "node": cst.Integer("0O12_345"),
+                "code": "0O12_345",
+                "parser": parse_expression,
+                "expected_position": None,
+            },
             # Hex numbers
-            (cst.Integer("0x123abc"), "0x123abc"),
-            (cst.Integer("0X12_3ABC"), "0X12_3ABC"),
+            {
+                "node": cst.Integer("0x123abc"),
+                "code": "0x123abc",
+                "parser": parse_expression,
+                "expected_position": None,
+            },
+            {
+                "node": cst.Integer("0X12_3ABC"),
+                "code": "0X12_3ABC",
+                "parser": parse_expression,
+                "expected_position": None,
+            },
             # Parenthesized integers
-            (
-                cst.Integer("123", lpar=(cst.LeftParen(),), rpar=(cst.RightParen(),)),
-                "(123)",
-                CodeRange.create((1, 1), (1, 4)),
-            ),
+            {
+                "node": cst.Integer(
+                    "123", lpar=(cst.LeftParen(),), rpar=(cst.RightParen(),)
+                ),
+                "code": "(123)",
+                "parser": parse_expression,
+                "expected_position": CodeRange.create((1, 1), (1, 4)),
+            },
             # Non-exponent floats
-            (cst.Float("12345."), "12345."),
-            (cst.Float("00.00"), "00.00"),
-            (cst.Float("12.21"), "12.21"),
-            (cst.Float(".321"), ".321"),
-            (cst.Float("1_234_567."), "1_234_567."),
-            (cst.Float("0.000_000"), "0.000_000"),
+            {
+                "node": cst.Float("12345."),
+                "code": "12345.",
+                "parser": parse_expression,
+                "expected_position": None,
+            },
+            {
+                "node": cst.Float("00.00"),
+                "code": "00.00",
+                "parser": parse_expression,
+                "expected_position": None,
+            },
+            {
+                "node": cst.Float("12.21"),
+                "code": "12.21",
+                "parser": parse_expression,
+                "expected_position": None,
+            },
+            {
+                "node": cst.Float(".321"),
+                "code": ".321",
+                "parser": parse_expression,
+                "expected_position": None,
+            },
+            {
+                "node": cst.Float("1_234_567."),
+                "code": "1_234_567.",
+                "parser": parse_expression,
+                "expected_position": None,
+            },
+            {
+                "node": cst.Float("0.000_000"),
+                "code": "0.000_000",
+                "parser": parse_expression,
+                "expected_position": None,
+            },
             # Exponent floats
-            (cst.Float("12345.e10"), "12345.e10"),
-            (cst.Float("00.00e10"), "00.00e10"),
-            (cst.Float("12.21e10"), "12.21e10"),
-            (cst.Float(".321e10"), ".321e10"),
-            (cst.Float("1_234_567.e10"), "1_234_567.e10"),
-            (cst.Float("0.000_000e10"), "0.000_000e10"),
-            (cst.Float("1e+10"), "1e+10"),
-            (cst.Float("1e-10"), "1e-10"),
+            {
+                "node": cst.Float("12345.e10"),
+                "code": "12345.e10",
+                "parser": parse_expression,
+                "expected_position": None,
+            },
+            {
+                "node": cst.Float("00.00e10"),
+                "code": "00.00e10",
+                "parser": parse_expression,
+                "expected_position": None,
+            },
+            {
+                "node": cst.Float("12.21e10"),
+                "code": "12.21e10",
+                "parser": parse_expression,
+                "expected_position": None,
+            },
+            {
+                "node": cst.Float(".321e10"),
+                "code": ".321e10",
+                "parser": parse_expression,
+                "expected_position": None,
+            },
+            {
+                "node": cst.Float("1_234_567.e10"),
+                "code": "1_234_567.e10",
+                "parser": parse_expression,
+                "expected_position": None,
+            },
+            {
+                "node": cst.Float("0.000_000e10"),
+                "code": "0.000_000e10",
+                "parser": parse_expression,
+                "expected_position": None,
+            },
+            {
+                "node": cst.Float("1e+10"),
+                "code": "1e+10",
+                "parser": parse_expression,
+                "expected_position": None,
+            },
+            {
+                "node": cst.Float("1e-10"),
+                "code": "1e-10",
+                "parser": parse_expression,
+                "expected_position": None,
+            },
             # Parenthesized floats
-            (
-                cst.Float("123.4", lpar=(cst.LeftParen(),), rpar=(cst.RightParen(),)),
-                "(123.4)",
-                CodeRange.create((1, 1), (1, 6)),
-            ),
+            {
+                "node": cst.Float(
+                    "123.4", lpar=(cst.LeftParen(),), rpar=(cst.RightParen(),)
+                ),
+                "code": "(123.4)",
+                "parser": parse_expression,
+                "expected_position": CodeRange.create((1, 1), (1, 6)),
+            },
             # Imaginary numbers
-            (cst.Imaginary("12345j"), "12345j"),
-            (cst.Imaginary("1_234_567J"), "1_234_567J"),
-            (cst.Imaginary("12345.e10j"), "12345.e10j"),
-            (cst.Imaginary(".321J"), ".321J"),
+            {
+                "node": cst.Imaginary("12345j"),
+                "code": "12345j",
+                "parser": parse_expression,
+                "expected_position": None,
+            },
+            {
+                "node": cst.Imaginary("1_234_567J"),
+                "code": "1_234_567J",
+                "parser": parse_expression,
+                "expected_position": None,
+            },
+            {
+                "node": cst.Imaginary("12345.e10j"),
+                "code": "12345.e10j",
+                "parser": parse_expression,
+                "expected_position": None,
+            },
+            {
+                "node": cst.Imaginary(".321J"),
+                "code": ".321J",
+                "parser": parse_expression,
+                "expected_position": None,
+            },
             # Parenthesized imaginary
-            (
-                cst.Imaginary(
+            {
+                "node": cst.Imaginary(
                     "123.4j", lpar=(cst.LeftParen(),), rpar=(cst.RightParen(),)
                 ),
-                "(123.4j)",
-                CodeRange.create((1, 1), (1, 7)),
-            ),
+                "code": "(123.4j)",
+                "parser": parse_expression,
+                "expected_position": CodeRange.create((1, 1), (1, 7)),
+            },
             # Simple elipses
-            (cst.Ellipses(), "..."),
+            {
+                "node": cst.Ellipses(),
+                "code": "...",
+                "parser": parse_expression,
+                "expected_position": None,
+            },
             # Parenthesized elipses
-            (
-                cst.Ellipses(lpar=(cst.LeftParen(),), rpar=(cst.RightParen(),)),
-                "(...)",
-                CodeRange.create((1, 1), (1, 4)),
-            ),
+            {
+                "node": cst.Ellipses(lpar=(cst.LeftParen(),), rpar=(cst.RightParen(),)),
+                "code": "(...)",
+                "parser": parse_expression,
+                "expected_position": CodeRange.create((1, 1), (1, 4)),
+            },
             # Simple strings
-            (cst.SimpleString('""'), '""'),
-            (cst.SimpleString("''"), "''"),
-            (cst.SimpleString('"test"'), '"test"'),
-            (cst.SimpleString('b"test"'), 'b"test"'),
-            (cst.SimpleString('r"test"'), 'r"test"'),
-            (cst.SimpleString('"""test"""'), '"""test"""'),
+            {
+                "node": cst.SimpleString('""'),
+                "code": '""',
+                "parser": parse_expression,
+                "expected_position": None,
+            },
+            {
+                "node": cst.SimpleString("''"),
+                "code": "''",
+                "parser": parse_expression,
+                "expected_position": None,
+            },
+            {
+                "node": cst.SimpleString('"test"'),
+                "code": '"test"',
+                "parser": parse_expression,
+                "expected_position": None,
+            },
+            {
+                "node": cst.SimpleString('b"test"'),
+                "code": 'b"test"',
+                "parser": parse_expression,
+                "expected_position": None,
+            },
+            {
+                "node": cst.SimpleString('r"test"'),
+                "code": 'r"test"',
+                "parser": parse_expression,
+                "expected_position": None,
+            },
+            {
+                "node": cst.SimpleString('"""test"""'),
+                "code": '"""test"""',
+                "parser": parse_expression,
+                "expected_position": None,
+            },
             # Validate parens
-            (
-                cst.SimpleString(
+            {
+                "node": cst.SimpleString(
                     '"test"', lpar=(cst.LeftParen(),), rpar=(cst.RightParen(),)
                 ),
-                '("test")',
-            ),
-            (
-                cst.SimpleString(
+                "code": '("test")',
+                "parser": parse_expression,
+                "expected_position": None,
+            },
+            {
+                "node": cst.SimpleString(
                     'rb"test"', lpar=(cst.LeftParen(),), rpar=(cst.RightParen(),)
                 ),
-                '(rb"test")',
-                CodeRange.create((1, 1), (1, 9)),
-            ),
+                "code": '(rb"test")',
+                "parser": parse_expression,
+                "expected_position": CodeRange.create((1, 1), (1, 9)),
+            },
             # Empty formatted strings
-            (cst.FormattedString(start='f"', parts=(), end='"'), 'f""'),
-            (cst.FormattedString(start="f'", parts=(), end="'"), "f''"),
-            (cst.FormattedString(start='f"""', parts=(), end='"""'), 'f""""""'),
-            (cst.FormattedString(start="f'''", parts=(), end="'''"), "f''''''"),
+            {
+                "node": cst.FormattedString(start='f"', parts=(), end='"'),
+                "code": 'f""',
+                "parser": parse_expression,
+                "expected_position": None,
+            },
+            {
+                "node": cst.FormattedString(start="f'", parts=(), end="'"),
+                "code": "f''",
+                "parser": parse_expression,
+                "expected_position": None,
+            },
+            {
+                "node": cst.FormattedString(start='f"""', parts=(), end='"""'),
+                "code": 'f""""""',
+                "parser": parse_expression,
+                "expected_position": None,
+            },
+            {
+                "node": cst.FormattedString(start="f'''", parts=(), end="'''"),
+                "code": "f''''''",
+                "parser": parse_expression,
+                "expected_position": None,
+            },
             # Non-empty formatted strings
-            (cst.FormattedString(parts=(cst.FormattedStringText("foo"),)), 'f"foo"'),
-            (
-                cst.FormattedString(
+            {
+                "node": cst.FormattedString(parts=(cst.FormattedStringText("foo"),)),
+                "code": 'f"foo"',
+                "parser": parse_expression,
+                "expected_position": None,
+            },
+            {
+                "node": cst.FormattedString(
                     parts=(cst.FormattedStringExpression(cst.Name("foo")),)
                 ),
-                'f"{foo}"',
-            ),
-            (
-                cst.FormattedString(
+                "code": 'f"{foo}"',
+                "parser": parse_expression,
+                "expected_position": None,
+            },
+            {
+                "node": cst.FormattedString(
                     parts=(
                         cst.FormattedStringText("foo "),
                         cst.FormattedStringExpression(cst.Name("bar")),
                         cst.FormattedStringText(" baz"),
                     )
                 ),
-                'f"foo {bar} baz"',
-            ),
-            (
-                cst.FormattedString(
+                "code": 'f"foo {bar} baz"',
+                "parser": parse_expression,
+                "expected_position": None,
+            },
+            {
+                "node": cst.FormattedString(
                     parts=(
                         cst.FormattedStringText("foo "),
                         cst.FormattedStringExpression(cst.Call(cst.Name("bar"))),
                         cst.FormattedStringText(" baz"),
                     )
                 ),
-                'f"foo {bar()} baz"',
-            ),
+                "code": 'f"foo {bar()} baz"',
+                "parser": parse_expression,
+                "expected_position": None,
+            },
             # Formatted strings with conversions and format specifiers
-            (
-                cst.FormattedString(
+            {
+                "node": cst.FormattedString(
                     parts=(
                         cst.FormattedStringExpression(cst.Name("foo"), conversion="s"),
                     )
                 ),
-                'f"{foo!s}"',
-            ),
-            (
-                cst.FormattedString(
+                "code": 'f"{foo!s}"',
+                "parser": parse_expression,
+                "expected_position": None,
+            },
+            {
+                "node": cst.FormattedString(
                     parts=(
                         cst.FormattedStringExpression(cst.Name("foo"), format_spec=()),
                     )
                 ),
-                'f"{foo:}"',
-            ),
-            (
-                cst.FormattedString(
+                "code": 'f"{foo:}"',
+                "parser": parse_expression,
+                "expected_position": None,
+            },
+            {
+                "node": cst.FormattedString(
                     parts=(
                         cst.FormattedStringExpression(
                             cst.Name("today"),
@@ -167,10 +398,12 @@ class AtomTest(CSTNodeTest):
                         ),
                     )
                 ),
-                'f"{today:%B %d, %Y}"',
-            ),
-            (
-                cst.FormattedString(
+                "code": 'f"{today:%B %d, %Y}"',
+                "parser": parse_expression,
+                "expected_position": None,
+            },
+            {
+                "node": cst.FormattedString(
                     parts=(
                         cst.FormattedStringExpression(
                             cst.Name("foo"),
@@ -180,10 +413,12 @@ class AtomTest(CSTNodeTest):
                         ),
                     )
                 ),
-                'f"{foo:{bar}}"',
-            ),
-            (
-                cst.FormattedString(
+                "code": 'f"{foo:{bar}}"',
+                "parser": parse_expression,
+                "expected_position": None,
+            },
+            {
+                "node": cst.FormattedString(
                     parts=(
                         cst.FormattedStringExpression(
                             cst.Name("foo"),
@@ -195,10 +430,12 @@ class AtomTest(CSTNodeTest):
                         ),
                     )
                 ),
-                'f"{foo:{bar}.{baz}}"',
-            ),
-            (
-                cst.FormattedString(
+                "code": 'f"{foo:{bar}.{baz}}"',
+                "parser": parse_expression,
+                "expected_position": None,
+            },
+            {
+                "node": cst.FormattedString(
                     parts=(
                         cst.FormattedStringExpression(
                             cst.Name("foo"),
@@ -209,260 +446,364 @@ class AtomTest(CSTNodeTest):
                         ),
                     )
                 ),
-                'f"{foo!s:{bar}}"',
-            ),
+                "code": 'f"{foo!s:{bar}}"',
+                "parser": parse_expression,
+                "expected_position": None,
+            },
             # Validate parens
-            (
-                cst.FormattedString(
+            {
+                "node": cst.FormattedString(
                     start='f"',
                     parts=(),
                     end='"',
                     lpar=(cst.LeftParen(),),
                     rpar=(cst.RightParen(),),
                 ),
-                '(f"")',
-                CodeRange.create((1, 1), (1, 4)),
-            ),
+                "code": '(f"")',
+                "parser": parse_expression,
+                "expected_position": CodeRange.create((1, 1), (1, 4)),
+            },
             # Concatenated strings
-            (
-                cst.ConcatenatedString(
+            {
+                "node": cst.ConcatenatedString(
                     cst.SimpleString('"ab"'), cst.SimpleString('"c"')
                 ),
-                '"ab""c"',
-            ),
-            (
-                cst.ConcatenatedString(
+                "code": '"ab""c"',
+                "parser": parse_expression,
+                "expected_position": None,
+            },
+            {
+                "node": cst.ConcatenatedString(
                     cst.SimpleString('"ab"'),
                     cst.ConcatenatedString(
                         cst.SimpleString('"c"'), cst.SimpleString('"d"')
                     ),
                 ),
-                '"ab""c""d"',
-            ),
+                "code": '"ab""c""d"',
+                "parser": parse_expression,
+                "expected_position": None,
+            },
             # mixed SimpleString and FormattedString
-            (
-                cst.ConcatenatedString(
+            {
+                "node": cst.ConcatenatedString(
                     cst.FormattedString([cst.FormattedStringText("ab")]),
                     cst.SimpleString('"c"'),
                 ),
-                'f"ab""c"',
-            ),
-            (
-                cst.ConcatenatedString(
+                "code": 'f"ab""c"',
+                "parser": parse_expression,
+                "expected_position": None,
+            },
+            {
+                "node": cst.ConcatenatedString(
                     cst.SimpleString('"ab"'),
                     cst.FormattedString([cst.FormattedStringText("c")]),
                 ),
-                '"ab"f"c"',
-            ),
+                "code": '"ab"f"c"',
+                "parser": parse_expression,
+                "expected_position": None,
+            },
             # Concatenated parenthesized strings
-            (
-                cst.ConcatenatedString(
+            {
+                "node": cst.ConcatenatedString(
                     lpar=(cst.LeftParen(),),
                     left=cst.SimpleString('"ab"'),
                     right=cst.SimpleString('"c"'),
                     rpar=(cst.RightParen(),),
                 ),
-                '("ab""c")',
-            ),
+                "code": '("ab""c")',
+                "parser": parse_expression,
+                "expected_position": None,
+            },
             # Validate spacing
-            (
-                cst.ConcatenatedString(
+            {
+                "node": cst.ConcatenatedString(
                     lpar=(cst.LeftParen(whitespace_after=cst.SimpleWhitespace(" ")),),
                     left=cst.SimpleString('"ab"'),
                     whitespace_between=cst.SimpleWhitespace(" "),
                     right=cst.SimpleString('"c"'),
                     rpar=(cst.RightParen(whitespace_before=cst.SimpleWhitespace(" ")),),
                 ),
-                '( "ab" "c" )',
-                CodeRange.create((1, 2), (1, 10)),
-            ),
+                "code": '( "ab" "c" )',
+                "parser": parse_expression,
+                "expected_position": CodeRange.create((1, 2), (1, 10)),
+            },
         )
     )
-    def test_valid(
-        self, node: cst.CSTNode, code: str, position: Optional[CodeRange] = None
-    ) -> None:
+    def test_valid(self, **kwargs: Any) -> None:
         # We don't have sentinel nodes for atoms, so we know that 100% of atoms
         # can be parsed identically to their creation.
-        self.validate_node(node, code, parse_expression, expected_position=position)
+        self.validate_node(**kwargs)
 
     @data_provider(
         (
-            (
-                cst.FormattedStringExpression(
+            {
+                "node": cst.FormattedStringExpression(
                     cst.Name("today"),
                     format_spec=(cst.FormattedStringText("%B %d, %Y"),),
                 ),
-                "{today:%B %d, %Y}",
-                CodeRange.create((1, 0), (1, 17)),
-            ),
+                "code": "{today:%B %d, %Y}",
+                "parser": None,
+                "expected_position": CodeRange.create((1, 0), (1, 17)),
+            },
         )
     )
-    def test_valid_no_parse(
-        self, node: cst.CSTNode, code: str, position: Optional[CodeRange] = None
-    ) -> None:
+    def test_valid_no_parse(self, **kwargs: Any) -> None:
         # Test some nodes that aren't valid source code by themselves
-        self.validate_node(node, code, expected_position=position)
+        self.validate_node(**kwargs)
 
     @data_provider(
         (
             # Expression wrapping parenthesis rules
-            (
-                lambda: cst.Name("foo", lpar=(cst.LeftParen(),)),
-                "left paren without right paren",
-            ),
-            (
-                lambda: cst.Name("foo", rpar=(cst.RightParen(),)),
-                "right paren without left paren",
-            ),
-            (
-                lambda: cst.Ellipses(lpar=(cst.LeftParen(),)),
-                "left paren without right paren",
-            ),
-            (
-                lambda: cst.Ellipses(rpar=(cst.RightParen(),)),
-                "right paren without left paren",
-            ),
-            (
-                lambda: cst.Integer("5", lpar=(cst.LeftParen(),)),
-                "left paren without right paren",
-            ),
-            (
-                lambda: cst.Integer("5", rpar=(cst.RightParen(),)),
-                "right paren without left paren",
-            ),
-            (
-                lambda: cst.Float("5.5", lpar=(cst.LeftParen(),)),
-                "left paren without right paren",
-            ),
-            (
-                lambda: cst.Float("5.5", rpar=(cst.RightParen(),)),
-                "right paren without left paren",
-            ),
-            (
-                lambda: cst.Imaginary("5j", lpar=(cst.LeftParen(),)),
-                "left paren without right paren",
-            ),
-            (
-                lambda: cst.Imaginary("5j", rpar=(cst.RightParen(),)),
-                "right paren without left paren",
-            ),
-            (
-                lambda: cst.Integer("5", lpar=(cst.LeftParen(),)),
-                "left paren without right paren",
-            ),
-            (
-                lambda: cst.Integer("5", rpar=(cst.RightParen(),)),
-                "right paren without left paren",
-            ),
-            (
-                lambda: cst.SimpleString("'foo'", lpar=(cst.LeftParen(),)),
-                "left paren without right paren",
-            ),
-            (
-                lambda: cst.SimpleString("'foo'", rpar=(cst.RightParen(),)),
-                "right paren without left paren",
-            ),
-            (
-                # pyre-fixme[6]: Expected `Sequence[BaseFormattedStringContent]` for
-                #  1st param but got `str`.
-                lambda: cst.FormattedString("f''", lpar=(cst.LeftParen(),)),
-                "left paren without right paren",
-            ),
-            (
-                # pyre-fixme[6]: Expected `Sequence[BaseFormattedStringContent]` for
-                #  1st param but got `str`.
-                lambda: cst.FormattedString("f''", rpar=(cst.RightParen(),)),
-                "right paren without left paren",
-            ),
-            (
-                lambda: cst.ConcatenatedString(
-                    cst.SimpleString("'foo'"),
-                    cst.SimpleString("'foo'"),
-                    lpar=(cst.LeftParen(),),
+            # pyre-fixme[6]: Incompatible parameter type
+            {
+                "get_node": (lambda: cst.Name("foo", lpar=(cst.LeftParen(),))),
+                "expected_re": "left paren without right paren",
+            },
+            {
+                "get_node": lambda: cst.Name("foo", rpar=(cst.RightParen(),)),
+                "expected_re": "right paren without left paren",
+            },
+            {
+                "get_node": lambda: cst.Ellipses(lpar=(cst.LeftParen(),)),
+                "expected_re": "left paren without right paren",
+            },
+            {
+                "get_node": lambda: cst.Ellipses(rpar=(cst.RightParen(),)),
+                "expected_re": "right paren without left paren",
+            },
+            {
+                "get_node": lambda: cst.Integer("5", lpar=(cst.LeftParen(),)),
+                "expected_re": "left paren without right paren",
+            },
+            {
+                "get_node": lambda: cst.Integer("5", rpar=(cst.RightParen(),)),
+                "expected_re": "right paren without left paren",
+            },
+            {
+                "get_node": lambda: cst.Float("5.5", lpar=(cst.LeftParen(),)),
+                "expected_re": "left paren without right paren",
+            },
+            {
+                "get_node": lambda: cst.Float("5.5", rpar=(cst.RightParen(),)),
+                "expected_re": "right paren without left paren",
+            },
+            {
+                "get_node": (lambda: cst.Imaginary("5j", lpar=(cst.LeftParen(),))),
+                "expected_re": "left paren without right paren",
+            },
+            {
+                "get_node": (lambda: cst.Imaginary("5j", rpar=(cst.RightParen(),))),
+                "expected_re": "right paren without left paren",
+            },
+            {
+                "get_node": (lambda: cst.Integer("5", lpar=(cst.LeftParen(),))),
+                "expected_re": "left paren without right paren",
+            },
+            {
+                "get_node": (lambda: cst.Integer("5", rpar=(cst.RightParen(),))),
+                "expected_re": "right paren without left paren",
+            },
+            {
+                "get_node": (
+                    lambda: cst.SimpleString("'foo'", lpar=(cst.LeftParen(),))
                 ),
-                "left paren without right paren",
-            ),
-            (
-                lambda: cst.ConcatenatedString(
-                    cst.SimpleString("'foo'"),
-                    cst.SimpleString("'foo'"),
-                    rpar=(cst.RightParen(),),
+                "expected_re": "left paren without right paren",
+            },
+            {
+                "get_node": (
+                    lambda: cst.SimpleString("'foo'", rpar=(cst.RightParen(),))
                 ),
-                "right paren without left paren",
-            ),
+                "expected_re": "right paren without left paren",
+            },
+            {
+                "get_node": (
+                    # pyre-fixme[6]: Expected `Sequence[BaseFormattedStringContent]` for
+                    #  1st param but got `str`.
+                    lambda: cst.FormattedString("f''", lpar=(cst.LeftParen(),))
+                ),
+                "expected_re": "left paren without right paren",
+            },
+            {
+                "get_node": (
+                    # pyre-fixme[6]: Expected `Sequence[BaseFormattedStringContent]` for
+                    #  1st param but got `str`.
+                    lambda: cst.FormattedString("f''", rpar=(cst.RightParen(),))
+                ),
+                "expected_re": "right paren without left paren",
+            },
+            {
+                "get_node": (
+                    lambda: cst.ConcatenatedString(
+                        cst.SimpleString("'foo'"),
+                        cst.SimpleString("'foo'"),
+                        lpar=(cst.LeftParen(),),
+                    )
+                ),
+                "expected_re": "left paren without right paren",
+            },
+            {
+                "get_node": (
+                    lambda: cst.ConcatenatedString(
+                        cst.SimpleString("'foo'"),
+                        cst.SimpleString("'foo'"),
+                        rpar=(cst.RightParen(),),
+                    )
+                ),
+                "expected_re": "right paren without left paren",
+            },
             # Node-specific rules
-            (lambda: cst.Name(""), "empty name identifier"),
-            (lambda: cst.Name(r"\/"), "not a valid identifier"),
-            (lambda: cst.Integer(""), "not a valid integer"),
-            (lambda: cst.Integer("012345"), "not a valid integer"),
-            (lambda: cst.Integer("012345"), "not a valid integer"),
-            (lambda: cst.Integer("_12345"), "not a valid integer"),
-            (lambda: cst.Integer("0b2"), "not a valid integer"),
-            (lambda: cst.Integer("0o8"), "not a valid integer"),
-            (lambda: cst.Integer("0xg"), "not a valid integer"),
-            (lambda: cst.Integer("123.45"), "not a valid integer"),
-            (lambda: cst.Integer("12345j"), "not a valid integer"),
-            (lambda: cst.Float("12.3.45"), "not a valid float"),
-            (lambda: cst.Float("12"), "not a valid float"),
-            (lambda: cst.Float("12.3j"), "not a valid float"),
-            (lambda: cst.Imaginary("_12345j"), "not a valid imaginary"),
-            (lambda: cst.Imaginary("0b0j"), "not a valid imaginary"),
-            (lambda: cst.Imaginary("0o0j"), "not a valid imaginary"),
-            (lambda: cst.Imaginary("0x0j"), "not a valid imaginary"),
-            (lambda: cst.SimpleString('wee""'), "Invalid string prefix"),
-            (lambda: cst.SimpleString(""), "must have enclosing quotes"),
-            (lambda: cst.SimpleString("'"), "must have enclosing quotes"),
-            (lambda: cst.SimpleString('"'), "must have enclosing quotes"),
-            (lambda: cst.SimpleString("\"'"), "must have matching enclosing quotes"),
-            (lambda: cst.SimpleString("'bla"), "must have matching enclosing quotes"),
-            (lambda: cst.SimpleString("f''"), "Invalid string prefix"),
-            (
-                lambda: cst.SimpleString("'''bla''"),
-                "must have matching enclosing quotes",
-            ),
-            (
-                lambda: cst.SimpleString("'''bla\"\"\""),
-                "must have matching enclosing quotes",
-            ),
-            (
-                lambda: cst.FormattedString(start="'", parts=(), end="'"),
-                "Invalid f-string prefix",
-            ),
-            (
-                lambda: cst.FormattedString(start="f'", parts=(), end='"'),
-                "must have matching enclosing quotes",
-            ),
-            (
-                lambda: cst.FormattedString(start="f'''", parts=(), end="''"),
-                "must have matching enclosing quotes",
-            ),
-            (
-                lambda: cst.ConcatenatedString(
-                    cst.SimpleString(
-                        '"ab"', lpar=(cst.LeftParen(),), rpar=(cst.RightParen(),)
-                    ),
-                    cst.SimpleString('"c"'),
+            {
+                "get_node": (lambda: cst.Name("")),
+                "expected_re": "empty name identifier",
+            },
+            {
+                "get_node": (lambda: cst.Name(r"\/")),
+                "expected_re": "not a valid identifier",
+            },
+            {
+                "get_node": (lambda: cst.Integer("")),
+                "expected_re": "not a valid integer",
+            },
+            {
+                "get_node": (lambda: cst.Integer("012345")),
+                "expected_re": "not a valid integer",
+            },
+            {
+                "get_node": (lambda: cst.Integer("012345")),
+                "expected_re": "not a valid integer",
+            },
+            {
+                "get_node": (lambda: cst.Integer("_12345")),
+                "expected_re": "not a valid integer",
+            },
+            {
+                "get_node": (lambda: cst.Integer("0b2")),
+                "expected_re": "not a valid integer",
+            },
+            {
+                "get_node": (lambda: cst.Integer("0o8")),
+                "expected_re": "not a valid integer",
+            },
+            {
+                "get_node": (lambda: cst.Integer("0xg")),
+                "expected_re": "not a valid integer",
+            },
+            {
+                "get_node": (lambda: cst.Integer("123.45")),
+                "expected_re": "not a valid integer",
+            },
+            {
+                "get_node": (lambda: cst.Integer("12345j")),
+                "expected_re": "not a valid integer",
+            },
+            {
+                "get_node": (lambda: cst.Float("12.3.45")),
+                "expected_re": "not a valid float",
+            },
+            {"get_node": (lambda: cst.Float("12")), "expected_re": "not a valid float"},
+            {
+                "get_node": (lambda: cst.Float("12.3j")),
+                "expected_re": "not a valid float",
+            },
+            {
+                "get_node": (lambda: cst.Imaginary("_12345j")),
+                "expected_re": "not a valid imaginary",
+            },
+            {
+                "get_node": (lambda: cst.Imaginary("0b0j")),
+                "expected_re": "not a valid imaginary",
+            },
+            {
+                "get_node": (lambda: cst.Imaginary("0o0j")),
+                "expected_re": "not a valid imaginary",
+            },
+            {
+                "get_node": (lambda: cst.Imaginary("0x0j")),
+                "expected_re": "not a valid imaginary",
+            },
+            {
+                "get_node": (lambda: cst.SimpleString('wee""')),
+                "expected_re": "Invalid string prefix",
+            },
+            {
+                "get_node": (lambda: cst.SimpleString("'")),
+                "expected_re": "must have enclosing quotes",
+            },
+            {
+                "get_node": (lambda: cst.SimpleString('"')),
+                "expected_re": "must have enclosing quotes",
+            },
+            {
+                "get_node": (lambda: cst.SimpleString("\"'")),
+                "expected_re": "must have matching enclosing quotes",
+            },
+            {
+                "get_node": (lambda: cst.SimpleString("")),
+                "expected_re": "must have enclosing quotes",
+            },
+            {
+                "get_node": (lambda: cst.SimpleString("'bla")),
+                "expected_re": "must have matching enclosing quotes",
+            },
+            {
+                "get_node": (lambda: cst.SimpleString("f''")),
+                "expected_re": "Invalid string prefix",
+            },
+            {
+                "get_node": (lambda: cst.SimpleString("'''bla''")),
+                "expected_re": "must have matching enclosing quotes",
+            },
+            {
+                "get_node": (lambda: cst.SimpleString("'''bla\"\"\"")),
+                "expected_re": "must have matching enclosing quotes",
+            },
+            {
+                "get_node": (lambda: cst.FormattedString(start="'", parts=(), end="'")),
+                "expected_re": "Invalid f-string prefix",
+            },
+            {
+                "get_node": (
+                    lambda: cst.FormattedString(start="f'", parts=(), end='"')
                 ),
-                "Cannot concatenate parenthesized",
-            ),
-            (
-                lambda: cst.ConcatenatedString(
-                    cst.SimpleString('"ab"'),
-                    cst.SimpleString(
-                        '"c"', lpar=(cst.LeftParen(),), rpar=(cst.RightParen(),)
-                    ),
+                "expected_re": "must have matching enclosing quotes",
+            },
+            {
+                "get_node": (
+                    lambda: cst.FormattedString(start="f'''", parts=(), end="''")
                 ),
-                "Cannot concatenate parenthesized",
-            ),
-            (
-                lambda: cst.ConcatenatedString(
-                    cst.SimpleString('"ab"'), cst.SimpleString('b"c"')
+                "expected_re": "must have matching enclosing quotes",
+            },
+            {
+                "get_node": (
+                    lambda: cst.ConcatenatedString(
+                        cst.SimpleString(
+                            '"ab"', lpar=(cst.LeftParen(),), rpar=(cst.RightParen(),)
+                        ),
+                        cst.SimpleString('"c"'),
+                    )
                 ),
-                "Cannot concatenate string and bytes",
-            ),
+                "expected_re": "Cannot concatenate parenthesized",
+            },
+            {
+                "get_node": (
+                    lambda: cst.ConcatenatedString(
+                        cst.SimpleString('"ab"'),
+                        cst.SimpleString(
+                            '"c"', lpar=(cst.LeftParen(),), rpar=(cst.RightParen(),)
+                        ),
+                    )
+                ),
+                "expected_re": "Cannot concatenate parenthesized",
+            },
+            {
+                "get_node": (
+                    lambda: cst.ConcatenatedString(
+                        cst.SimpleString('"ab"'), cst.SimpleString('b"c"')
+                    )
+                ),
+                "expected_re": "Cannot concatenate string and bytes",
+            },
         )
     )
-    def test_invalid(
-        self, get_node: Callable[[], cst.CSTNode], expected_re: str
-    ) -> None:
-        self.assert_invalid(get_node, expected_re)
+    def test_invalid(self, **kwargs: Any) -> None:
+        self.assert_invalid(**kwargs)
