@@ -4,10 +4,9 @@
 # LICENSE file in the root directory of this source tree.
 
 # pyre-strict
-from typing import Callable, Optional
+from typing import Any
 
 import libcst.nodes as cst
-from libcst.nodes._internal import CodeRange
 from libcst.nodes.tests.base import CSTNodeTest
 from libcst.parser import parse_statement
 from libcst.testing.utils import data_provider
@@ -17,26 +16,31 @@ class AssignTest(CSTNodeTest):
     @data_provider(
         (
             # Simple assignment creation case.
-            (
-                cst.Assign((cst.AssignTarget(cst.Name("foo")),), cst.Integer("5")),
-                "foo = 5",
-                None,
-            ),
+            # pyre-fixme[6]: Incompatible parameter type
+            {
+                "node": cst.Assign(
+                    (cst.AssignTarget(cst.Name("foo")),), cst.Integer("5")
+                ),
+                "code": "foo = 5",
+                "parser": None,
+                "expected_position": None,
+            },
             # Multiple targets creation
-            (
-                cst.Assign(
+            {
+                "node": cst.Assign(
                     (
                         cst.AssignTarget(cst.Name("foo")),
                         cst.AssignTarget(cst.Name("bar")),
                     ),
                     cst.Integer("5"),
                 ),
-                "foo = bar = 5",
-                None,
-            ),
+                "code": "foo = bar = 5",
+                "parser": None,
+                "expected_position": None,
+            },
             # Whitespace test for creating nodes
-            (
-                cst.Assign(
+            {
+                "node": cst.Assign(
                     (
                         cst.AssignTarget(
                             cst.Name("foo"),
@@ -46,24 +50,26 @@ class AssignTest(CSTNodeTest):
                     ),
                     cst.Integer("5"),
                 ),
-                "foo=5",
-                None,
-            ),
+                "code": "foo=5",
+                "parser": None,
+                "expected_position": None,
+            },
             # Simple assignment parser case.
-            (
-                cst.SimpleStatementLine(
+            {
+                "node": cst.SimpleStatementLine(
                     (
                         cst.Assign(
                             (cst.AssignTarget(cst.Name("foo")),), cst.Integer("5")
                         ),
                     )
                 ),
-                "foo = 5\n",
-                parse_statement,
-            ),
+                "code": "foo = 5\n",
+                "parser": parse_statement,
+                "expected_position": None,
+            },
             # Multiple targets parser
-            (
-                cst.SimpleStatementLine(
+            {
+                "node": cst.SimpleStatementLine(
                     (
                         cst.Assign(
                             (
@@ -74,12 +80,13 @@ class AssignTest(CSTNodeTest):
                         ),
                     )
                 ),
-                "foo = bar = 5\n",
-                parse_statement,
-            ),
+                "code": "foo = bar = 5\n",
+                "parser": parse_statement,
+                "expected_position": None,
+            },
             # Whitespace test parser
-            (
-                cst.SimpleStatementLine(
+            {
+                "node": cst.SimpleStatementLine(
                     (
                         cst.Assign(
                             (
@@ -93,66 +100,63 @@ class AssignTest(CSTNodeTest):
                         ),
                     )
                 ),
-                "foo=5\n",
-                parse_statement,
-            ),
+                "code": "foo=5\n",
+                "parser": parse_statement,
+                "expected_position": None,
+            },
         )
     )
-    def test_valid(
-        self,
-        node: cst.CSTNode,
-        code: str,
-        parser: Optional[Callable[[str], cst.CSTNode]],
-        position: Optional[CodeRange] = None,
-    ) -> None:
-        self.validate_node(node, code, parser, expected_position=position)
+    def test_valid(self, **kwargs: Any) -> None:
+        self.validate_node(**kwargs)
 
     @data_provider(
         (
-            (
-                lambda: cst.Assign(targets=(), value=cst.Integer("5")),
-                "at least one AssignTarget",
-            ),
+            {
+                "get_node": (lambda: cst.Assign(targets=(), value=cst.Integer("5"))),
+                "expected_re": "at least one AssignTarget",
+            },
         )
     )
-    def test_invalid(
-        self, get_node: Callable[[], cst.CSTNode], expected_re: str
-    ) -> None:
-        self.assert_invalid(get_node, expected_re)
+    def test_invalid(self, **kwargs: Any) -> None:
+        self.assert_invalid(**kwargs)
 
 
 class AnnAssignTest(CSTNodeTest):
     @data_provider(
         (
             # Simple assignment creation case.
-            (
-                cst.AnnAssign(
+            # pyre-fixme[6]: Incompatible parameter type
+            {
+                "node": cst.AnnAssign(
                     cst.Name("foo"), cst.Annotation(cst.Name("str")), cst.Integer("5")
                 ),
-                "foo: str = 5",
-                None,
-            ),
+                "code": "foo: str = 5",
+                "parser": None,
+                "expected_position": None,
+            },
             # Annotation creation without assignment
-            (
-                cst.AnnAssign(cst.Name("foo"), cst.Annotation(cst.Name("str"))),
-                "foo: str",
-                None,
-            ),
+            {
+                "node": cst.AnnAssign(cst.Name("foo"), cst.Annotation(cst.Name("str"))),
+                "code": "foo: str",
+                "parser": None,
+                "expected_position": None,
+            },
             # Complex annotation creation
-            (
-                cst.AnnAssign(
+            {
+                "node": cst.AnnAssign(
                     cst.Name("foo"),
                     cst.Annotation(
                         cst.Subscript(cst.Name("Optional"), cst.Index(cst.Name("str")))
                     ),
                     cst.Integer("5"),
                 ),
-                "foo: Optional[str] = 5",
-                None,
-            ),
+                "code": "foo: Optional[str] = 5",
+                "parser": None,
+                "expected_position": None,
+            },
             # Simple assignment parser case.
-            (
-                cst.SimpleStatementLine(
+            {
+                "node": cst.SimpleStatementLine(
                     (
                         cst.AnnAssign(
                             target=cst.Name("foo"),
@@ -166,12 +170,13 @@ class AnnAssignTest(CSTNodeTest):
                         ),
                     )
                 ),
-                "foo: str = 5\n",
-                parse_statement,
-            ),
+                "code": "foo: str = 5\n",
+                "parser": parse_statement,
+                "expected_position": None,
+            },
             # Annotation without assignment
-            (
-                cst.SimpleStatementLine(
+            {
+                "node": cst.SimpleStatementLine(
                     (
                         cst.AnnAssign(
                             target=cst.Name("foo"),
@@ -184,12 +189,13 @@ class AnnAssignTest(CSTNodeTest):
                         ),
                     )
                 ),
-                "foo: str\n",
-                parse_statement,
-            ),
+                "code": "foo: str\n",
+                "parser": parse_statement,
+                "expected_position": None,
+            },
             # Complex annotation
-            (
-                cst.SimpleStatementLine(
+            {
+                "node": cst.SimpleStatementLine(
                     (
                         cst.AnnAssign(
                             target=cst.Name("foo"),
@@ -205,12 +211,13 @@ class AnnAssignTest(CSTNodeTest):
                         ),
                     )
                 ),
-                "foo: Optional[str] = 5\n",
-                parse_statement,
-            ),
+                "code": "foo: Optional[str] = 5\n",
+                "parser": parse_statement,
+                "expected_position": None,
+            },
             # Whitespace test
-            (
-                cst.AnnAssign(
+            {
+                "node": cst.AnnAssign(
                     target=cst.Name("foo"),
                     annotation=cst.Annotation(
                         annotation=cst.Subscript(
@@ -225,11 +232,12 @@ class AnnAssignTest(CSTNodeTest):
                     ),
                     value=cst.Integer("5"),
                 ),
-                "foo :  Optional[str]  =  5",
-                None,
-            ),
-            (
-                cst.SimpleStatementLine(
+                "code": "foo :  Optional[str]  =  5",
+                "parser": None,
+                "expected_position": None,
+            },
+            {
+                "node": cst.SimpleStatementLine(
                     (
                         cst.AnnAssign(
                             target=cst.Name("foo"),
@@ -249,64 +257,66 @@ class AnnAssignTest(CSTNodeTest):
                         ),
                     )
                 ),
-                "foo :  Optional[str]  =  5\n",
-                parse_statement,
-            ),
+                "code": "foo :  Optional[str]  =  5\n",
+                "parser": parse_statement,
+                "expected_position": None,
+            },
         )
     )
-    def test_valid(
-        self,
-        node: cst.CSTNode,
-        code: str,
-        parser: Optional[Callable[[str], cst.CSTNode]],
-        position: Optional[CodeRange] = None,
-    ) -> None:
-        self.validate_node(node, code, parser, expected_position=position)
+    def test_valid(self, **kwargs: Any) -> None:
+        self.validate_node(**kwargs)
 
     @data_provider(
         (
-            (
-                lambda: cst.AnnAssign(
-                    target=cst.Name("foo"),
-                    annotation=cst.Annotation(cst.Name("str")),
-                    equal=cst.AssignEqual(),
-                    value=None,
+            {
+                "get_node": (
+                    lambda: cst.AnnAssign(
+                        target=cst.Name("foo"),
+                        annotation=cst.Annotation(cst.Name("str")),
+                        equal=cst.AssignEqual(),
+                        value=None,
+                    )
                 ),
-                "Must have a value when specifying an AssignEqual.",
-            ),
-            (
-                lambda: cst.AnnAssign(
+                "expected_re": "Must have a value when specifying an AssignEqual.",
+            },
+            {
+                "get_node": lambda: cst.AnnAssign(
                     target=cst.Name("foo"),
                     annotation=cst.Annotation(cst.Name("str"), "->"),
                     value=cst.Integer("5"),
                 ),
-                "must be denoted with a ':'",
-            ),
+                "expected_re": "must be denoted with a ':'",
+            },
         )
     )
-    def test_invalid(
-        self, get_node: Callable[[], cst.CSTNode], expected_re: str
-    ) -> None:
-        self.assert_invalid(get_node, expected_re)
+    def test_invalid(self, **kwargs: Any) -> None:
+        self.assert_invalid(**kwargs)
 
 
 class AugAssignTest(CSTNodeTest):
     @data_provider(
         (
             # Simple assignment constructor case.
-            (
-                cst.AugAssign(cst.Name("foo"), cst.AddAssign(), cst.Integer("5")),
-                "foo += 5",
-                None,
-            ),
-            (
-                cst.AugAssign(cst.Name("bar"), cst.MultiplyAssign(), cst.Name("foo")),
-                "bar *= foo",
-                None,
-            ),
+            # pyre-fixme[6]: Incompatible parameter type
+            {
+                "node": cst.AugAssign(
+                    cst.Name("foo"), cst.AddAssign(), cst.Integer("5")
+                ),
+                "code": "foo += 5",
+                "parser": None,
+                "expected_position": None,
+            },
+            {
+                "node": cst.AugAssign(
+                    cst.Name("bar"), cst.MultiplyAssign(), cst.Name("foo")
+                ),
+                "code": "bar *= foo",
+                "parser": None,
+                "expected_position": None,
+            },
             # Whitespace constructor test
-            (
-                cst.AugAssign(
+            {
+                "node": cst.AugAssign(
                     target=cst.Name("foo"),
                     operator=cst.LeftShiftAssign(
                         whitespace_before=cst.SimpleWhitespace("  "),
@@ -314,31 +324,34 @@ class AugAssignTest(CSTNodeTest):
                     ),
                     value=cst.Integer("5"),
                 ),
-                "foo  <<=  5",
-                None,
-            ),
+                "code": "foo  <<=  5",
+                "parser": None,
+                "expected_position": None,
+            },
             # Simple assignment parser case.
-            (
-                cst.SimpleStatementLine(
+            {
+                "node": cst.SimpleStatementLine(
                     (cst.AugAssign(cst.Name("foo"), cst.AddAssign(), cst.Integer("5")),)
                 ),
-                "foo += 5\n",
-                parse_statement,
-            ),
-            (
-                cst.SimpleStatementLine(
+                "code": "foo += 5\n",
+                "parser": parse_statement,
+                "expected_position": None,
+            },
+            {
+                "node": cst.SimpleStatementLine(
                     (
                         cst.AugAssign(
                             cst.Name("bar"), cst.MultiplyAssign(), cst.Name("foo")
                         ),
                     )
                 ),
-                "bar *= foo\n",
-                parse_statement,
-            ),
+                "code": "bar *= foo\n",
+                "parser": parse_statement,
+                "expected_position": None,
+            },
             # Whitespace parser test
-            (
-                cst.SimpleStatementLine(
+            {
+                "node": cst.SimpleStatementLine(
                     (
                         cst.AugAssign(
                             target=cst.Name("foo"),
@@ -350,16 +363,11 @@ class AugAssignTest(CSTNodeTest):
                         ),
                     )
                 ),
-                "foo  <<=  5\n",
-                parse_statement,
-            ),
+                "code": "foo  <<=  5\n",
+                "parser": parse_statement,
+                "expected_position": None,
+            },
         )
     )
-    def test_valid(
-        self,
-        node: cst.CSTNode,
-        code: str,
-        parser: Optional[Callable[[str], cst.CSTNode]],
-        position: Optional[CodeRange] = None,
-    ) -> None:
-        self.validate_node(node, code, parser, expected_position=position)
+    def test_valid(self, **kwargs: Any) -> None:
+        self.validate_node(**kwargs)
