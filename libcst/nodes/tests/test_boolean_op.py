@@ -4,7 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 # pyre-strict
-from typing import Callable, Optional
+from typing import Any
 
 import libcst.nodes as cst
 from libcst.nodes._internal import CodeRange
@@ -17,27 +17,38 @@ class BooleanOperationTest(CSTNodeTest):
     @data_provider(
         (
             # Simple boolean operations
-            (
-                cst.BooleanOperation(cst.Name("foo"), cst.And(), cst.Name("bar")),
-                "foo and bar",
-            ),
-            (
-                cst.BooleanOperation(cst.Name("foo"), cst.Or(), cst.Name("bar")),
-                "foo or bar",
-            ),
+            # pyre-fixme[6]: Incompatible parameter type
+            {
+                "node": cst.BooleanOperation(
+                    cst.Name("foo"), cst.And(), cst.Name("bar")
+                ),
+                "code": "foo and bar",
+                "parser": parse_expression,
+                "expected_position": None,
+            },
+            {
+                "node": cst.BooleanOperation(
+                    cst.Name("foo"), cst.Or(), cst.Name("bar")
+                ),
+                "code": "foo or bar",
+                "parser": parse_expression,
+                "expected_position": None,
+            },
             # Parenthesized boolean operation
-            (
-                cst.BooleanOperation(
+            {
+                "node": cst.BooleanOperation(
                     lpar=(cst.LeftParen(),),
                     left=cst.Name("foo"),
                     operator=cst.Or(),
                     right=cst.Name("bar"),
                     rpar=(cst.RightParen(),),
                 ),
-                "(foo or bar)",
-            ),
-            (
-                cst.BooleanOperation(
+                "code": "(foo or bar)",
+                "parser": parse_expression,
+                "expected_position": None,
+            },
+            {
+                "node": cst.BooleanOperation(
                     left=cst.Name(
                         "foo", lpar=(cst.LeftParen(),), rpar=(cst.RightParen(),)
                     ),
@@ -49,12 +60,13 @@ class BooleanOperationTest(CSTNodeTest):
                         "bar", lpar=(cst.LeftParen(),), rpar=(cst.RightParen(),)
                     ),
                 ),
-                "(foo)or(bar)",
-                CodeRange.create((1, 0), (1, 12)),
-            ),
+                "code": "(foo)or(bar)",
+                "parser": parse_expression,
+                "expected_position": CodeRange.create((1, 0), (1, 12)),
+            },
             # Make sure that spacing works
-            (
-                cst.BooleanOperation(
+            {
+                "node": cst.BooleanOperation(
                     lpar=(cst.LeftParen(whitespace_after=cst.SimpleWhitespace(" ")),),
                     left=cst.Name("foo"),
                     operator=cst.And(
@@ -64,34 +76,34 @@ class BooleanOperationTest(CSTNodeTest):
                     right=cst.Name("bar"),
                     rpar=(cst.RightParen(whitespace_before=cst.SimpleWhitespace(" ")),),
                 ),
-                "( foo  and  bar )",
-            ),
+                "code": "( foo  and  bar )",
+                "parser": parse_expression,
+                "expected_position": None,
+            },
         )
     )
-    def test_valid(
-        self, node: cst.CSTNode, code: str, position: Optional[CodeRange] = None
-    ) -> None:
-        self.validate_node(node, code, parse_expression, expected_position=position)
+    def test_valid(self, **kwargs: Any) -> None:
+        self.validate_node(**kwargs)
 
     @data_provider(
         (
-            (
-                lambda: cst.BooleanOperation(
+            {
+                "get_node": lambda: cst.BooleanOperation(
                     cst.Name("foo"), cst.And(), cst.Name("bar"), lpar=(cst.LeftParen(),)
                 ),
-                "left paren without right paren",
-            ),
-            (
-                lambda: cst.BooleanOperation(
+                "expected_re": "left paren without right paren",
+            },
+            {
+                "get_node": lambda: cst.BooleanOperation(
                     cst.Name("foo"),
                     cst.And(),
                     cst.Name("bar"),
                     rpar=(cst.RightParen(),),
                 ),
-                "right paren without left paren",
-            ),
-            (
-                lambda: cst.BooleanOperation(
+                "expected_re": "right paren without left paren",
+            },
+            {
+                "get_node": lambda: cst.BooleanOperation(
                     left=cst.Name("foo"),
                     operator=cst.Or(
                         whitespace_before=cst.SimpleWhitespace(""),
@@ -99,11 +111,9 @@ class BooleanOperationTest(CSTNodeTest):
                     ),
                     right=cst.Name("bar"),
                 ),
-                "at least one space around boolean operator",
-            ),
+                "expected_re": "at least one space around boolean operator",
+            },
         )
     )
-    def test_invalid(
-        self, get_node: Callable[[], cst.CSTNode], expected_re: str
-    ) -> None:
-        self.assert_invalid(get_node, expected_re)
+    def test_invalid(self, **kwargs: Any) -> None:
+        self.assert_invalid(**kwargs)
