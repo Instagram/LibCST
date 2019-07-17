@@ -4,7 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 # pyre-strict
-from typing import Callable, Optional
+from typing import Any
 
 import libcst.nodes as cst
 from libcst.nodes._internal import CodeRange
@@ -17,25 +17,27 @@ class AttributeTest(CSTNodeTest):
     @data_provider(
         (
             # Simple attribute access
-            (
-                cst.Attribute(cst.Name("foo"), cst.Name("bar")),
-                "foo.bar",
-                CodeRange.create((1, 0), (1, 7)),
-            ),
+            {
+                "node": cst.Attribute(cst.Name("foo"), cst.Name("bar")),
+                "code": "foo.bar",
+                "parser": parse_expression,
+                "expected_position": CodeRange.create((1, 0), (1, 7)),
+            },
             # Parenthesized attribute access
-            (
-                cst.Attribute(
+            {
+                "node": cst.Attribute(
                     lpar=(cst.LeftParen(),),
                     value=cst.Name("foo"),
                     attr=cst.Name("bar"),
                     rpar=(cst.RightParen(),),
                 ),
-                "(foo.bar)",
-                CodeRange.create((1, 1), (1, 8)),
-            ),
+                "code": "(foo.bar)",
+                "parser": parse_expression,
+                "expected_position": CodeRange.create((1, 1), (1, 8)),
+            },
             # Make sure that spacing works
-            (
-                cst.Attribute(
+            {
+                "node": cst.Attribute(
                     lpar=(cst.LeftParen(whitespace_after=cst.SimpleWhitespace(" ")),),
                     value=cst.Name("foo"),
                     dot=cst.Dot(
@@ -45,33 +47,34 @@ class AttributeTest(CSTNodeTest):
                     attr=cst.Name("bar"),
                     rpar=(cst.RightParen(whitespace_before=cst.SimpleWhitespace(" ")),),
                 ),
-                "( foo . bar )",
-                CodeRange.create((1, 2), (1, 11)),
-            ),
+                "code": "( foo . bar )",
+                "parser": parse_expression,
+                "expected_position": CodeRange.create((1, 2), (1, 11)),
+            },
         )
     )
-    def test_valid(
-        self, node: cst.CSTNode, code: str, position: Optional[CodeRange] = None
-    ) -> None:
-        self.validate_node(node, code, parse_expression, expected_position=position)
+    def test_valid(self, **kwargs: Any) -> None:
+        self.validate_node(**kwargs)
 
     @data_provider(
         (
-            (
-                lambda: cst.Attribute(
-                    cst.Name("foo"), cst.Name("bar"), lpar=(cst.LeftParen(),)
+            {
+                "get_node": (
+                    lambda: cst.Attribute(
+                        cst.Name("foo"), cst.Name("bar"), lpar=(cst.LeftParen(),)
+                    )
                 ),
-                "left paren without right paren",
-            ),
-            (
-                lambda: cst.Attribute(
-                    cst.Name("foo"), cst.Name("bar"), rpar=(cst.RightParen(),)
+                "expected_re": "left paren without right paren",
+            },
+            {
+                "get_node": (
+                    lambda: cst.Attribute(
+                        cst.Name("foo"), cst.Name("bar"), rpar=(cst.RightParen(),)
+                    )
                 ),
-                "right paren without left paren",
-            ),
+                "expected_re": "right paren without left paren",
+            },
         )
     )
-    def test_invalid(
-        self, get_node: Callable[[], cst.CSTNode], expected_re: str
-    ) -> None:
-        self.assert_invalid(get_node, expected_re)
+    def test_invalid(self, **kwargs: Any) -> None:
+        self.assert_invalid(**kwargs)
