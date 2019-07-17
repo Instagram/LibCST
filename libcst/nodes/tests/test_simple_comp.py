@@ -31,6 +31,14 @@ class SimpleCompTest(CSTNodeTest):
                 "code": "[a for b in c]",
                 "parser": parse_expression,
             },
+            # simple SetComp
+            {
+                "node": cst.SetComp(
+                    cst.Name("a"), cst.CompFor(target=cst.Name("b"), iter=cst.Name("c"))
+                ),
+                "code": "{a for b in c}",
+                "parser": parse_expression,
+            },
             # async GeneratorExp
             {
                 "node": cst.GeneratorExp(
@@ -156,6 +164,25 @@ class SimpleCompTest(CSTNodeTest):
                 "code": "(\f[\ta for b in c\t\t]\f\f)",
                 "parser": parse_expression,
             },
+            # custom whitespace around SetComp's braces
+            {
+                "node": cst.SetComp(
+                    cst.Name("a"),
+                    cst.CompFor(target=cst.Name("b"), iter=cst.Name("c")),
+                    lbrace=cst.LeftCurlyBrace(
+                        whitespace_after=cst.SimpleWhitespace("\t")
+                    ),
+                    rbrace=cst.RightCurlyBrace(
+                        whitespace_before=cst.SimpleWhitespace("\t\t")
+                    ),
+                    lpar=[cst.LeftParen(whitespace_after=cst.SimpleWhitespace("\f"))],
+                    rpar=[
+                        cst.RightParen(whitespace_before=cst.SimpleWhitespace("\f\f"))
+                    ],
+                ),
+                "code": "(\f{\ta for b in c\t\t}\f\f)",
+                "parser": parse_expression,
+            },
             # no whitespace between elements
             {
                 "node": cst.GeneratorExp(
@@ -245,6 +272,29 @@ class SimpleCompTest(CSTNodeTest):
                 "code": "[a for b in c]is[d for e in f]",
                 "parser": parse_expression,
             },
+            # no whitespace before/after SetComp is valid
+            {
+                "node": cst.Comparison(
+                    cst.SetComp(
+                        cst.Name("a"),
+                        cst.CompFor(target=cst.Name("b"), iter=cst.Name("c")),
+                    ),
+                    [
+                        cst.ComparisonTarget(
+                            cst.Is(
+                                whitespace_before=cst.SimpleWhitespace(""),
+                                whitespace_after=cst.SimpleWhitespace(""),
+                            ),
+                            cst.SetComp(
+                                cst.Name("d"),
+                                cst.CompFor(target=cst.Name("e"), iter=cst.Name("f")),
+                            ),
+                        )
+                    ],
+                ),
+                "code": "{a for b in c}is{d for e in f}",
+                "parser": parse_expression,
+            },
         ]
     )
     def test_valid(self, **kwargs: Any) -> None:
@@ -263,6 +313,15 @@ class SimpleCompTest(CSTNodeTest):
             ),
             (
                 lambda: cst.ListComp(
+                    cst.Name("a"),
+                    cst.CompFor(target=cst.Name("b"), iter=cst.Name("c")),
+                    lpar=[cst.LeftParen(), cst.LeftParen()],
+                    rpar=[cst.RightParen()],
+                ),
+                "unbalanced parens",
+            ),
+            (
+                lambda: cst.SetComp(
                     cst.Name("a"),
                     cst.CompFor(target=cst.Name("b"), iter=cst.Name("c")),
                     lpar=[cst.LeftParen(), cst.LeftParen()],

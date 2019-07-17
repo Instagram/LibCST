@@ -99,6 +99,50 @@ class RightSquareBracket(CSTNode):
 
 @add_slots
 @dataclass(frozen=True)
+class LeftCurlyBrace(CSTNode):
+    """
+    Used by various nodes to denote a dict or set. This doesn't own the whitespace to
+    the left of it since this is owned by the parent node.
+    """
+
+    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace("")
+
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "LeftCurlyBrace":
+        return LeftCurlyBrace(
+            whitespace_after=visit_required(
+                "whitespace_after", self.whitespace_after, visitor
+            )
+        )
+
+    def _codegen_impl(self, state: CodegenState) -> None:
+        state.add_token("{")
+        self.whitespace_after._codegen(state)
+
+
+@add_slots
+@dataclass(frozen=True)
+class RightCurlyBrace(CSTNode):
+    """
+    Used by various nodes to denote a dict or set. This doesn't own the whitespace to
+    the right of it since this is owned by the parent node.
+    """
+
+    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace("")
+
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "RightCurlyBrace":
+        return RightCurlyBrace(
+            whitespace_before=visit_required(
+                "whitespace_before", self.whitespace_before, visitor
+            )
+        )
+
+    def _codegen_impl(self, state: CodegenState) -> None:
+        self.whitespace_before._codegen(state)
+        state.add_token("}")
+
+
+@add_slots
+@dataclass(frozen=True)
 class LeftParen(CSTNode):
     """
     Used by various nodes to denote a parenthesized section. This doesn't own
@@ -2285,6 +2329,68 @@ class List(BaseList, BaseAssignTargetExpression, BaseDelTargetExpression):
                 )
 
 
+class BaseSet(BaseAtom, ABC):
+    # Open brace surrounding the list
+    lbrace: LeftCurlyBrace = LeftCurlyBrace()
+
+    # Close brace surrounding the list
+    rbrace: RightCurlyBrace = RightCurlyBrace()
+
+    # Sequence of open parenthesis for precedence dictation.
+    lpar: Sequence[LeftParen] = ()
+
+    # Sequence of close parenthesis for precedence dictation.
+    rpar: Sequence[RightParen] = ()
+
+    def _safe_to_use_with_word_operator(self, position: ExpressionPosition) -> bool:
+        return True
+
+    # brace-ize seems like a very made-up word. And it is!
+    @contextmanager
+    def _braceize(self, state: CodegenState) -> Generator[None, None, None]:
+        self.lbrace._codegen(state)
+        yield
+        self.rbrace._codegen(state)
+
+
+@add_slots
+@dataclass(frozen=True)
+class Set(BaseSet):
+    elements: Sequence[Union[Element, StarredElement]]
+    lbrace: LeftCurlyBrace = LeftCurlyBrace()
+    rbrace: RightCurlyBrace = RightCurlyBrace()
+    lpar: Sequence[LeftParen] = ()
+    rpar: Sequence[RightParen] = ()
+
+    def _validate(self) -> None:
+        super(Set, self)._validate()
+
+        if len(self.elements) == 0:
+            raise CSTValidationError(
+                "A literal set must have at least one element. A zero-element set "
+                + "would be syntatically ambiguous with an empty dict, `{}`."
+            )
+
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Set":
+        return Set(
+            lpar=visit_sequence("lpar", self.lpar, visitor),
+            lbrace=visit_required("lbrace", self.lbrace, visitor),
+            elements=visit_sequence("elements", self.elements, visitor),
+            rbrace=visit_required("rbrace", self.rbrace, visitor),
+            rpar=visit_sequence("rpar", self.rpar, visitor),
+        )
+
+    def _codegen_impl(self, state: CodegenState) -> None:
+        with self._parenthesize(state), self._braceize(state):
+            elements = self.elements
+            for idx, el in enumerate(elements):
+                el._codegen(
+                    state,
+                    default_comma=(idx < len(elements) - 1),
+                    default_comma_whitespace=True,
+                )
+
+
 @add_slots
 @dataclass(frozen=True)
 class CompFor(CSTNode):
@@ -2546,10 +2652,6 @@ class ListComp(BaseList, BaseSimpleComp):
     lpar: Sequence[LeftParen] = ()
     rpar: Sequence[RightParen] = ()
 
-    def _safe_to_use_with_word_operator(self, position: ExpressionPosition) -> bool:
-        # ListComp is always surrounded in square brackets
-        return True
-
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "ListComp":
         return ListComp(
             lpar=visit_sequence("lpar", self.lpar, visitor),
@@ -2562,5 +2664,31 @@ class ListComp(BaseList, BaseSimpleComp):
 
     def _codegen_impl(self, state: CodegenState) -> None:
         with self._parenthesize(state), self._bracketize(state):
+            self.elt._codegen(state)
+            self.for_in._codegen(state)
+
+
+@add_slots
+@dataclass(frozen=True)
+class SetComp(BaseSet, BaseSimpleComp):
+    elt: BaseAssignTargetExpression
+    for_in: CompFor
+    lbrace: LeftCurlyBrace = LeftCurlyBrace()
+    rbrace: RightCurlyBrace = RightCurlyBrace()
+    lpar: Sequence[LeftParen] = ()
+    rpar: Sequence[RightParen] = ()
+
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "SetComp":
+        return SetComp(
+            lpar=visit_sequence("lpar", self.lpar, visitor),
+            lbrace=visit_required("lbrace", self.lbrace, visitor),
+            elt=visit_required("elt", self.elt, visitor),
+            for_in=visit_required("for_in", self.for_in, visitor),
+            rbrace=visit_required("rbrace", self.rbrace, visitor),
+            rpar=visit_sequence("rpar", self.rpar, visitor),
+        )
+
+    def _codegen_impl(self, state: CodegenState) -> None:
+        with self._parenthesize(state), self._braceize(state):
             self.elt._codegen(state)
             self.for_in._codegen(state)

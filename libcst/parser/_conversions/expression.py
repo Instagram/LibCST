@@ -687,7 +687,7 @@ def convert_trailer_attribute(config: ParserConfig, children: Sequence[Any]) -> 
 
 @with_production(
     "atom",
-    "atom_parens | atom_squarebrackets | atom_curlybrackets | atom_string | atom_fstring | atom_basic | atom_ellipses",
+    "atom_parens | atom_squarebrackets | atom_curlybraces | atom_string | atom_fstring | atom_basic | atom_ellipses",
 )
 def convert_atom(config: ParserConfig, children: Sequence[Any]) -> Any:
     (child,) = children
@@ -746,9 +746,32 @@ def convert_atom_squarebrackets(config: ParserConfig, children: Sequence[Any]) -
     return WithLeadingWhitespace(list_node, lbracket_tok.whitespace_before)
 
 
-@with_production("atom_curlybrackets", "'{' [dictorsetmaker] '}'")
-def convert_atom_curlybrackets(config: ParserConfig, children: Sequence[Any]) -> Any:
-    return make_dummy_node(config, children)
+@with_production("atom_curlybraces", "'{' [dictorsetmaker] '}'")
+def convert_atom_curlybraces(config: ParserConfig, children: Sequence[Any]) -> Any:
+    lbrace_tok, *body, rbrace_tok = children
+
+    if len(body) == 0:
+        # TODO: Make an empty dict with lbrace and rbrace
+        return make_dummy_node(config, children)
+    else:  # len(body) == 1
+        # body[0] is a cst.Set, cst.SetComp, cst.Dict, or cst.DictComp
+        if isinstance(body[0].value, cst.DummyNode):
+            # TODO: Remove this once Dict/DictComp are implemented
+            return make_dummy_node(config, children)
+        lbrace = cst.LeftCurlyBrace(
+            whitespace_after=parse_parenthesizable_whitespace(
+                config, lbrace_tok.whitespace_after
+            )
+        )
+
+        rbrace = cst.RightCurlyBrace(
+            whitespace_before=parse_parenthesizable_whitespace(
+                config, rbrace_tok.whitespace_before
+            )
+        )
+        list_node = body[0].value.with_changes(lbrace=lbrace, rbrace=rbrace)
+
+    return WithLeadingWhitespace(list_node, lbrace_tok.whitespace_before)
 
 
 @with_production("atom_parens", "'(' [yield_expr|testlist_comp_tuple] ')'")
@@ -940,8 +963,10 @@ def _convert_testlist_comp(
     config: ParserConfig,
     children: Sequence[Any],
     single_child_is_sequence: bool,
-    sequence_type: Union[Type[cst.Tuple], Type[cst.List]],
-    comprehension_type: Union[Type[cst.GeneratorExp], Type[cst.ListComp]],
+    sequence_type: Union[Type[cst.Tuple], Type[cst.List], Type[cst.Set]],
+    comprehension_type: Union[
+        Type[cst.GeneratorExp], Type[cst.ListComp], Type[cst.SetComp]
+    ],
 ) -> Any:
     # This is either a single-element list, or the second token is a comma, so we're not
     # in a generator.
@@ -974,7 +999,7 @@ def _convert_sequencelike(
     config: ParserConfig,
     children: Sequence[Any],
     single_child_is_sequence: bool,
-    sequence_type: Union[Type[cst.Tuple], Type[cst.List]],  # TODO: support cst.Set
+    sequence_type: Union[Type[cst.Tuple], Type[cst.List], Type[cst.Set]],
 ) -> Any:
     if not single_child_is_sequence and len(children) == 1:
         return children[0]
@@ -1017,13 +1042,35 @@ def _convert_sequencelike(
     "dictorsetmaker",
     (
         "( ((test ':' test | '**' expr)"
-        + "(comp_for | (',' (test ':' test | '**' expr))* [','])) |"
+        + " (comp_for | (',' (test ':' test | '**' expr))* [','])) |"
         + "((test | star_expr) "
-        + "(comp_for | (',' (test | star_expr))* [','])) )"
+        + " (comp_for | (',' (test | star_expr))* [','])) )"
     ),
 )
 def convert_dictorsetmaker(config: ParserConfig, children: Sequence[Any]) -> Any:
+    # We'll always have at least one child. `atom_curlybraces` handles empty
+    # dicts.
+    if len(children) > 1 and (
+        (isinstance(children[1], Token) and children[1].string == ":")
+        or (isinstance(children[0], Token) and children[0].string == "**")
+    ):
+        return _convert_dict(config, children)
+    else:
+        return _convert_set(config, children)
+
+
+def _convert_dict(config: ParserConfig, children: Sequence[Any]) -> Any:
     return make_dummy_node(config, children)
+
+
+def _convert_set(config: ParserConfig, children: Sequence[Any]) -> Any:
+    return _convert_testlist_comp(
+        config,
+        children,
+        single_child_is_sequence=True,
+        sequence_type=cst.Set,
+        comprehension_type=cst.SetComp,
+    )
 
 
 @with_production("arglist", "argument (',' argument)* [',']")
