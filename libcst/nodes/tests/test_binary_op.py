@@ -18,26 +18,20 @@ class BinaryOperationTest(CSTNodeTest):
         (
             # Simple binary operations
             (
-                cst.BinaryOperation(
-                    cst.Name("foo"), cst.Add(), cst.Number(cst.Float("5.5"))
-                ),
+                cst.BinaryOperation(cst.Name("foo"), cst.Add(), cst.Float("5.5")),
                 "foo + 5.5",
             ),
             (
-                cst.BinaryOperation(
-                    cst.Name("foo"), cst.Subtract(), cst.Number(cst.Float("5.5"))
-                ),
+                cst.BinaryOperation(cst.Name("foo"), cst.Subtract(), cst.Float("5.5")),
                 "foo - 5.5",
             ),
             (
-                cst.BinaryOperation(
-                    cst.Name("foo"), cst.LeftShift(), cst.Number(cst.Integer("5"))
-                ),
+                cst.BinaryOperation(cst.Name("foo"), cst.LeftShift(), cst.Integer("5")),
                 "foo << 5",
             ),
             (
                 cst.BinaryOperation(
-                    cst.Name("foo"), cst.RightShift(), cst.Number(cst.Integer("5"))
+                    cst.Name("foo"), cst.RightShift(), cst.Integer("5")
                 ),
                 "foo >> 5",
             ),
@@ -54,32 +48,26 @@ class BinaryOperationTest(CSTNodeTest):
                 "foo | bar",
             ),
             (
-                cst.BinaryOperation(
-                    cst.Name("foo"), cst.Multiply(), cst.Number(cst.Float("5.5"))
-                ),
+                cst.BinaryOperation(cst.Name("foo"), cst.Multiply(), cst.Float("5.5")),
                 "foo * 5.5",
             ),
             (
                 cst.BinaryOperation(
-                    cst.Name("foo"), cst.MatrixMultiply(), cst.Number(cst.Float("5.5"))
+                    cst.Name("foo"), cst.MatrixMultiply(), cst.Float("5.5")
                 ),
                 "foo @ 5.5",
             ),
             (
-                cst.BinaryOperation(
-                    cst.Name("foo"), cst.Divide(), cst.Number(cst.Float("5.5"))
-                ),
+                cst.BinaryOperation(cst.Name("foo"), cst.Divide(), cst.Float("5.5")),
                 "foo / 5.5",
             ),
             (
-                cst.BinaryOperation(
-                    cst.Name("foo"), cst.Modulo(), cst.Number(cst.Float("5.5"))
-                ),
+                cst.BinaryOperation(cst.Name("foo"), cst.Modulo(), cst.Float("5.5")),
                 "foo % 5.5",
             ),
             (
                 cst.BinaryOperation(
-                    cst.Name("foo"), cst.FloorDivide(), cst.Number(cst.Float("5.5"))
+                    cst.Name("foo"), cst.FloorDivide(), cst.Float("5.5")
                 ),
                 "foo // 5.5",
             ),
@@ -89,7 +77,7 @@ class BinaryOperationTest(CSTNodeTest):
                     lpar=(cst.LeftParen(),),
                     left=cst.Name("foo"),
                     operator=cst.LeftShift(),
-                    right=cst.Number(cst.Integer("5")),
+                    right=cst.Integer("5"),
                     rpar=(cst.RightParen(),),
                 ),
                 "(foo << 5)",

@@ -46,10 +46,8 @@ from libcst.nodes._op import (
     In,
     Is,
     IsNot,
-    Minus,
     Not,
     NotIn,
-    Plus,
 )
 from libcst.nodes._whitespace import BaseParenthesizableWhitespace, SimpleWhitespace
 from libcst.visitors import CSTVisitorT
@@ -317,9 +315,26 @@ class Ellipses(BaseAtom):
             state.add_token("...")
 
 
+class BaseNumber(BaseAtom, ABC):
+    """
+    A type that can be used anywhere that you need to explicitly take any
+    number type.
+    """
+
+    def _safe_to_use_with_word_operator(self, position: ExpressionPosition) -> bool:
+        """
+        Numbers are funny. The expression "5in [1,2,3,4,5]" is a valid expression
+        which evaluates to "True". So, encapsulate that here by allowing zero spacing
+        with the left hand side of an expression with a comparison operator.
+        """
+        if position == ExpressionPosition.LEFT:
+            return True
+        return super(BaseNumber, self)._safe_to_use_with_word_operator(position)
+
+
 @add_slots
 @dataclass(frozen=True)
-class Integer(_BaseParenthesizedNode):
+class Integer(BaseNumber):
     value: str
 
     # Sequence of open parenthesis for precedence dictation.
@@ -347,7 +362,7 @@ class Integer(_BaseParenthesizedNode):
 
 @add_slots
 @dataclass(frozen=True)
-class Float(_BaseParenthesizedNode):
+class Float(BaseNumber):
     value: str
 
     # Sequence of open parenthesis for precedence dictation.
@@ -375,7 +390,7 @@ class Float(_BaseParenthesizedNode):
 
 @add_slots
 @dataclass(frozen=True)
-class Imaginary(_BaseParenthesizedNode):
+class Imaginary(BaseNumber):
     value: str
 
     # Sequence of open parenthesis for precedence dictation.
@@ -399,50 +414,6 @@ class Imaginary(_BaseParenthesizedNode):
     def _codegen_impl(self, state: CodegenState) -> None:
         with self._parenthesize(state):
             state.add_token(self.value)
-
-
-@add_slots
-@dataclass(frozen=True)
-class Number(BaseAtom):
-    # The actual number component
-    number: Union[Integer, Float, Imaginary]
-
-    # Any unary operator applied to the number
-    operator: Optional[Union[Plus, Minus]] = None
-
-    # Sequence of open parenthesis for precedence dictation.
-    lpar: Sequence[LeftParen] = ()
-
-    # Sequence of close parenthesis for precedence dictation.
-    rpar: Sequence[RightParen] = ()
-
-    def _safe_to_use_with_word_operator(self, position: ExpressionPosition) -> bool:
-        """
-        Numbers are funny. The expression "5in [1,2,3,4,5]" is a valid expression
-        which evaluates to "True". So, encapsulate that here by allowing zero spacing
-        with the left hand side of an expression with a comparison operator.
-        """
-        if position == ExpressionPosition.LEFT:
-            return True
-        return super(Number, self)._safe_to_use_with_word_operator(position)
-
-    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Number":
-        return Number(
-            lpar=visit_sequence("lpar", self.lpar, visitor),
-            operator=visit_optional("operator", self.operator, visitor),
-            number=visit_required("number", self.number, visitor),
-            rpar=visit_sequence("rpar", self.rpar, visitor),
-        )
-
-    def _codegen_impl(self, state: CodegenState) -> None:
-        # TODO: blocked until parsing numbers is fixed
-        # TODO: handle cases involving parentheses
-        # ex: "((1))"  "(+(1))"
-        with self._parenthesize(state):
-            operator = self.operator
-            if operator is not None:
-                operator._codegen(state)
-            self.number._codegen(state)
 
 
 class BaseString(BaseAtom, ABC):
@@ -827,9 +798,7 @@ class Comparison(BaseExpression):
 @dataclass(frozen=True)
 class UnaryOperation(BaseExpression):
     """
-    Any generic unary expression, such as "not x" or "-x". Note that this node
-    does not get used for immediate number negation such as "-5". For that,
-    the Number class is used.
+    Any generic unary expression, such as "not x" or "-x".
     """
 
     # The unary operator applied to the expression

@@ -25,72 +25,59 @@ class AtomTest(CSTNodeTest):
                 CodeRange.create((1, 1), (1, 5)),
             ),
             # Decimal integers
-            (cst.Number(cst.Integer("12345")), "12345"),
-            (cst.Number(cst.Integer("0000")), "0000"),
-            (cst.Number(cst.Integer("1_234_567")), "1_234_567"),
-            (cst.Number(cst.Integer("0_000")), "0_000"),
+            (cst.Integer("12345"), "12345"),
+            (cst.Integer("0000"), "0000"),
+            (cst.Integer("1_234_567"), "1_234_567"),
+            (cst.Integer("0_000"), "0_000"),
             # Binary integers
-            (cst.Number(cst.Integer("0b0000")), "0b0000"),
-            (cst.Number(cst.Integer("0B1011_0100")), "0B1011_0100"),
+            (cst.Integer("0b0000"), "0b0000"),
+            (cst.Integer("0B1011_0100"), "0B1011_0100"),
             # Octal integers
-            (cst.Number(cst.Integer("0o12345")), "0o12345"),
-            (cst.Number(cst.Integer("0O12_345")), "0O12_345"),
+            (cst.Integer("0o12345"), "0o12345"),
+            (cst.Integer("0O12_345"), "0O12_345"),
             # Hex numbers
-            (cst.Number(cst.Integer("0x123abc")), "0x123abc"),
-            (cst.Number(cst.Integer("0X12_3ABC")), "0X12_3ABC"),
+            (cst.Integer("0x123abc"), "0x123abc"),
+            (cst.Integer("0X12_3ABC"), "0X12_3ABC"),
             # Parenthesized integers
             (
-                cst.Number(
-                    cst.Integer(
-                        "123", lpar=(cst.LeftParen(),), rpar=(cst.RightParen(),)
-                    )
-                ),
+                cst.Integer("123", lpar=(cst.LeftParen(),), rpar=(cst.RightParen(),)),
                 "(123)",
-                # TODO: fix numbers
-                # CodeRange.create((1, 1), (1, 4)),
+                CodeRange.create((1, 1), (1, 4)),
             ),
             # Non-exponent floats
-            (cst.Number(cst.Float("12345.")), "12345."),
-            (cst.Number(cst.Float("00.00")), "00.00"),
-            (cst.Number(cst.Float("12.21")), "12.21"),
-            (cst.Number(cst.Float(".321")), ".321"),
-            (cst.Number(cst.Float("1_234_567.")), "1_234_567."),
-            (cst.Number(cst.Float("0.000_000")), "0.000_000"),
+            (cst.Float("12345."), "12345."),
+            (cst.Float("00.00"), "00.00"),
+            (cst.Float("12.21"), "12.21"),
+            (cst.Float(".321"), ".321"),
+            (cst.Float("1_234_567."), "1_234_567."),
+            (cst.Float("0.000_000"), "0.000_000"),
             # Exponent floats
-            (cst.Number(cst.Float("12345.e10")), "12345.e10"),
-            (cst.Number(cst.Float("00.00e10")), "00.00e10"),
-            (cst.Number(cst.Float("12.21e10")), "12.21e10"),
-            (cst.Number(cst.Float(".321e10")), ".321e10"),
-            (cst.Number(cst.Float("1_234_567.e10")), "1_234_567.e10"),
-            (cst.Number(cst.Float("0.000_000e10")), "0.000_000e10"),
-            (cst.Number(cst.Float("1e+10")), "1e+10"),
-            (cst.Number(cst.Float("1e-10")), "1e-10"),
+            (cst.Float("12345.e10"), "12345.e10"),
+            (cst.Float("00.00e10"), "00.00e10"),
+            (cst.Float("12.21e10"), "12.21e10"),
+            (cst.Float(".321e10"), ".321e10"),
+            (cst.Float("1_234_567.e10"), "1_234_567.e10"),
+            (cst.Float("0.000_000e10"), "0.000_000e10"),
+            (cst.Float("1e+10"), "1e+10"),
+            (cst.Float("1e-10"), "1e-10"),
             # Parenthesized floats
             (
-                cst.Number(
-                    cst.Float(
-                        "123.4", lpar=(cst.LeftParen(),), rpar=(cst.RightParen(),)
-                    )
-                ),
+                cst.Float("123.4", lpar=(cst.LeftParen(),), rpar=(cst.RightParen(),)),
                 "(123.4)",
-                # TODO: fix numbers
-                # CodeRange.create((1, 1), (1, 5)),
+                CodeRange.create((1, 1), (1, 6)),
             ),
             # Imaginary numbers
-            (cst.Number(cst.Imaginary("12345j")), "12345j"),
-            (cst.Number(cst.Imaginary("1_234_567J")), "1_234_567J"),
-            (cst.Number(cst.Imaginary("12345.e10j")), "12345.e10j"),
-            (cst.Number(cst.Imaginary(".321J")), ".321J"),
+            (cst.Imaginary("12345j"), "12345j"),
+            (cst.Imaginary("1_234_567J"), "1_234_567J"),
+            (cst.Imaginary("12345.e10j"), "12345.e10j"),
+            (cst.Imaginary(".321J"), ".321J"),
             # Parenthesized imaginary
             (
-                cst.Number(
-                    cst.Imaginary(
-                        "123.4j", lpar=(cst.LeftParen(),), rpar=(cst.RightParen(),)
-                    )
+                cst.Imaginary(
+                    "123.4j", lpar=(cst.LeftParen(),), rpar=(cst.RightParen(),)
                 ),
                 "(123.4j)",
-                # TODO: fix numbers
-                # CodeRange.create((1, 1), (1, 6)),
+                CodeRange.create((1, 1), (1, 7)),
             ),
             # Simple elipses
             (cst.Ellipses(), "..."),
@@ -336,11 +323,11 @@ class AtomTest(CSTNodeTest):
                 "right paren without left paren",
             ),
             (
-                lambda: cst.Number(cst.Integer("5"), lpar=(cst.LeftParen(),)),
+                lambda: cst.Integer("5", lpar=(cst.LeftParen(),)),
                 "left paren without right paren",
             ),
             (
-                lambda: cst.Number(cst.Integer("5"), rpar=(cst.RightParen(),)),
+                lambda: cst.Integer("5", rpar=(cst.RightParen(),)),
                 "right paren without left paren",
             ),
             (

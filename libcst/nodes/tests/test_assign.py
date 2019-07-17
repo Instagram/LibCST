@@ -18,9 +18,7 @@ class AssignTest(CSTNodeTest):
         (
             # Simple assignment creation case.
             (
-                cst.Assign(
-                    (cst.AssignTarget(cst.Name("foo")),), cst.Number(cst.Integer("5"))
-                ),
+                cst.Assign((cst.AssignTarget(cst.Name("foo")),), cst.Integer("5")),
                 "foo = 5",
                 None,
             ),
@@ -31,7 +29,7 @@ class AssignTest(CSTNodeTest):
                         cst.AssignTarget(cst.Name("foo")),
                         cst.AssignTarget(cst.Name("bar")),
                     ),
-                    cst.Number(cst.Integer("5")),
+                    cst.Integer("5"),
                 ),
                 "foo = bar = 5",
                 None,
@@ -46,7 +44,7 @@ class AssignTest(CSTNodeTest):
                             whitespace_after_equal=cst.SimpleWhitespace(""),
                         ),
                     ),
-                    cst.Number(cst.Integer("5")),
+                    cst.Integer("5"),
                 ),
                 "foo=5",
                 None,
@@ -56,8 +54,7 @@ class AssignTest(CSTNodeTest):
                 cst.SimpleStatementLine(
                     (
                         cst.Assign(
-                            (cst.AssignTarget(cst.Name("foo")),),
-                            cst.Number(cst.Integer("5")),
+                            (cst.AssignTarget(cst.Name("foo")),), cst.Integer("5")
                         ),
                     )
                 ),
@@ -73,7 +70,7 @@ class AssignTest(CSTNodeTest):
                                 cst.AssignTarget(cst.Name("foo")),
                                 cst.AssignTarget(cst.Name("bar")),
                             ),
-                            cst.Number(cst.Integer("5")),
+                            cst.Integer("5"),
                         ),
                     )
                 ),
@@ -92,7 +89,7 @@ class AssignTest(CSTNodeTest):
                                     whitespace_after_equal=cst.SimpleWhitespace(""),
                                 ),
                             ),
-                            cst.Number(cst.Integer("5")),
+                            cst.Integer("5"),
                         ),
                     )
                 ),
@@ -113,7 +110,7 @@ class AssignTest(CSTNodeTest):
     @data_provider(
         (
             (
-                lambda: cst.Assign(targets=(), value=cst.Number(cst.Integer("5"))),
+                lambda: cst.Assign(targets=(), value=cst.Integer("5")),
                 "at least one AssignTarget",
             ),
         )
@@ -130,9 +127,7 @@ class AnnAssignTest(CSTNodeTest):
             # Simple assignment creation case.
             (
                 cst.AnnAssign(
-                    cst.Name("foo"),
-                    cst.Annotation(cst.Name("str")),
-                    cst.Number(cst.Integer("5")),
+                    cst.Name("foo"), cst.Annotation(cst.Name("str")), cst.Integer("5")
                 ),
                 "foo: str = 5",
                 None,
@@ -150,7 +145,7 @@ class AnnAssignTest(CSTNodeTest):
                     cst.Annotation(
                         cst.Subscript(cst.Name("Optional"), cst.Index(cst.Name("str")))
                     ),
-                    cst.Number(cst.Integer("5")),
+                    cst.Integer("5"),
                 ),
                 "foo: Optional[str] = 5",
                 None,
@@ -167,7 +162,7 @@ class AnnAssignTest(CSTNodeTest):
                                 whitespace_before_indicator=cst.SimpleWhitespace(""),
                             ),
                             equal=cst.AssignEqual(),
-                            value=cst.Number(cst.Integer("5")),
+                            value=cst.Integer("5"),
                         ),
                     )
                 ),
@@ -206,7 +201,7 @@ class AnnAssignTest(CSTNodeTest):
                                 whitespace_before_indicator=cst.SimpleWhitespace(""),
                             ),
                             equal=cst.AssignEqual(),
-                            value=cst.Number(cst.Integer("5")),
+                            value=cst.Integer("5"),
                         ),
                     )
                 ),
@@ -228,7 +223,7 @@ class AnnAssignTest(CSTNodeTest):
                         whitespace_before=cst.SimpleWhitespace("  "),
                         whitespace_after=cst.SimpleWhitespace("  "),
                     ),
-                    value=cst.Number(cst.Integer("5")),
+                    value=cst.Integer("5"),
                 ),
                 "foo :  Optional[str]  =  5",
                 None,
@@ -250,7 +245,7 @@ class AnnAssignTest(CSTNodeTest):
                                 whitespace_before=cst.SimpleWhitespace("  "),
                                 whitespace_after=cst.SimpleWhitespace("  "),
                             ),
-                            value=cst.Number(cst.Integer("5")),
+                            value=cst.Integer("5"),
                         ),
                     )
                 ),
@@ -283,7 +278,7 @@ class AnnAssignTest(CSTNodeTest):
                 lambda: cst.AnnAssign(
                     target=cst.Name("foo"),
                     annotation=cst.Annotation(cst.Name("str"), "->"),
-                    value=cst.Number(cst.Integer("5")),
+                    value=cst.Integer("5"),
                 ),
                 "must be denoted with a ':'",
             ),
@@ -300,9 +295,7 @@ class AugAssignTest(CSTNodeTest):
         (
             # Simple assignment constructor case.
             (
-                cst.AugAssign(
-                    cst.Name("foo"), cst.AddAssign(), cst.Number(cst.Integer("5"))
-                ),
+                cst.AugAssign(cst.Name("foo"), cst.AddAssign(), cst.Integer("5")),
                 "foo += 5",
                 None,
             ),
@@ -319,7 +312,7 @@ class AugAssignTest(CSTNodeTest):
                         whitespace_before=cst.SimpleWhitespace("  "),
                         whitespace_after=cst.SimpleWhitespace("  "),
                     ),
-                    value=cst.Number(cst.Integer("5")),
+                    value=cst.Integer("5"),
                 ),
                 "foo  <<=  5",
                 None,
@@ -327,13 +320,7 @@ class AugAssignTest(CSTNodeTest):
             # Simple assignment parser case.
             (
                 cst.SimpleStatementLine(
-                    (
-                        cst.AugAssign(
-                            cst.Name("foo"),
-                            cst.AddAssign(),
-                            cst.Number(cst.Integer("5")),
-                        ),
-                    )
+                    (cst.AugAssign(cst.Name("foo"), cst.AddAssign(), cst.Integer("5")),)
                 ),
                 "foo += 5\n",
                 parse_statement,
@@ -359,7 +346,7 @@ class AugAssignTest(CSTNodeTest):
                                 whitespace_before=cst.SimpleWhitespace("  "),
                                 whitespace_after=cst.SimpleWhitespace("  "),
                             ),
-                            value=cst.Number(cst.Integer("5")),
+                            value=cst.Integer("5"),
                         ),
                     )
                 ),

@@ -26,7 +26,7 @@ class YieldConstructionTest(CSTNodeTest):
             (
                 cst.Yield(
                     lpar=(cst.LeftParen(),),
-                    value=cst.Number(cst.Integer("5")),
+                    value=cst.Integer("5"),
                     rpar=(cst.RightParen(),),
                 ),
                 "(yield 5)",
@@ -57,7 +57,7 @@ class YieldConstructionTest(CSTNodeTest):
             (
                 cst.Yield(
                     lpar=(cst.LeftParen(whitespace_after=cst.SimpleWhitespace(" ")),),
-                    value=cst.Number(cst.Integer("5")),
+                    value=cst.Integer("5"),
                     whitespace_after_yield=cst.SimpleWhitespace("  "),
                     rpar=(cst.RightParen(whitespace_before=cst.SimpleWhitespace(" ")),),
                 ),
@@ -79,8 +79,7 @@ class YieldConstructionTest(CSTNodeTest):
             # From expression position tests
             (
                 cst.From(
-                    cst.Number(cst.Integer("5")),
-                    whitespace_after_from=cst.SimpleWhitespace(" "),
+                    cst.Integer("5"), whitespace_after_from=cst.SimpleWhitespace(" ")
                 ),
                 "from 5",
                 CodeRange.create((1, 0), (1, 6)),
@@ -163,7 +162,7 @@ class YieldParsingTest(CSTNodeTest):
                 cst.Yield(
                     lpar=(cst.LeftParen(),),
                     whitespace_after_yield=cst.SimpleWhitespace(" "),
-                    value=cst.Number(cst.Integer("5")),
+                    value=cst.Integer("5"),
                     rpar=(cst.RightParen(),),
                 ),
                 "(yield 5)",
@@ -194,7 +193,7 @@ class YieldParsingTest(CSTNodeTest):
             (
                 cst.Yield(
                     lpar=(cst.LeftParen(whitespace_after=cst.SimpleWhitespace(" ")),),
-                    value=cst.Number(cst.Integer("5")),
+                    value=cst.Integer("5"),
                     whitespace_after_yield=cst.SimpleWhitespace("  "),
                     rpar=(cst.RightParen(whitespace_before=cst.SimpleWhitespace(" ")),),
                 ),

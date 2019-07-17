@@ -32,18 +32,14 @@ class CallTest(CSTNodeTest):
                 parse_expression,
             ),
             # Positional arguments render test
-            (
-                cst.Call(cst.Name("foo"), (cst.Arg(cst.Number(cst.Integer("1"))),)),
-                "foo(1)",
-                None,
-            ),
+            (cst.Call(cst.Name("foo"), (cst.Arg(cst.Integer("1")),)), "foo(1)", None),
             (
                 cst.Call(
                     cst.Name("foo"),
                     (
-                        cst.Arg(cst.Number(cst.Integer("1"))),
-                        cst.Arg(cst.Number(cst.Integer("2"))),
-                        cst.Arg(cst.Number(cst.Integer("3"))),
+                        cst.Arg(cst.Integer("1")),
+                        cst.Arg(cst.Integer("2")),
+                        cst.Arg(cst.Integer("3")),
                     ),
                 ),
                 "foo(1, 2, 3)",
@@ -51,9 +47,7 @@ class CallTest(CSTNodeTest):
             ),
             # Positional arguments parse test
             (
-                cst.Call(
-                    cst.Name("foo"), (cst.Arg(value=cst.Number(cst.Integer("1"))),)
-                ),
+                cst.Call(cst.Name("foo"), (cst.Arg(value=cst.Integer("1")),)),
                 "foo(1)",
                 parse_expression,
             ),
@@ -62,7 +56,7 @@ class CallTest(CSTNodeTest):
                     cst.Name("foo"),
                     (
                         cst.Arg(
-                            value=cst.Number(cst.Integer("1")),
+                            value=cst.Integer("1"),
                             whitespace_after_arg=cst.SimpleWhitespace(" "),
                         ),
                     ),
@@ -77,7 +71,7 @@ class CallTest(CSTNodeTest):
                     cst.Name("foo"),
                     (
                         cst.Arg(
-                            value=cst.Number(cst.Integer("1")),
+                            value=cst.Integer("1"),
                             comma=cst.Comma(whitespace_after=cst.SimpleWhitespace(" ")),
                         ),
                     ),
@@ -92,14 +86,14 @@ class CallTest(CSTNodeTest):
                     cst.Name("foo"),
                     (
                         cst.Arg(
-                            value=cst.Number(cst.Integer("1")),
+                            value=cst.Integer("1"),
                             comma=cst.Comma(whitespace_after=cst.SimpleWhitespace(" ")),
                         ),
                         cst.Arg(
-                            value=cst.Number(cst.Integer("2")),
+                            value=cst.Integer("2"),
                             comma=cst.Comma(whitespace_after=cst.SimpleWhitespace(" ")),
                         ),
-                        cst.Arg(value=cst.Number(cst.Integer("3"))),
+                        cst.Arg(value=cst.Integer("3")),
                     ),
                 ),
                 "foo(1, 2, 3)",
@@ -109,11 +103,7 @@ class CallTest(CSTNodeTest):
             (
                 cst.Call(
                     cst.Name("foo"),
-                    (
-                        cst.Arg(
-                            keyword=cst.Name("one"), value=cst.Number(cst.Integer("1"))
-                        ),
-                    ),
+                    (cst.Arg(keyword=cst.Name("one"), value=cst.Integer("1")),),
                 ),
                 "foo(one = 1)",
                 None,
@@ -122,16 +112,9 @@ class CallTest(CSTNodeTest):
                 cst.Call(
                     cst.Name("foo"),
                     (
-                        cst.Arg(
-                            keyword=cst.Name("one"), value=cst.Number(cst.Integer("1"))
-                        ),
-                        cst.Arg(
-                            keyword=cst.Name("two"), value=cst.Number(cst.Integer("2"))
-                        ),
-                        cst.Arg(
-                            keyword=cst.Name("three"),
-                            value=cst.Number(cst.Integer("3")),
-                        ),
+                        cst.Arg(keyword=cst.Name("one"), value=cst.Integer("1")),
+                        cst.Arg(keyword=cst.Name("two"), value=cst.Integer("2")),
+                        cst.Arg(keyword=cst.Name("three"), value=cst.Integer("3")),
                     ),
                 ),
                 "foo(one = 1, two = 2, three = 3)",
@@ -145,7 +128,7 @@ class CallTest(CSTNodeTest):
                         cst.Arg(
                             keyword=cst.Name("one"),
                             equal=cst.AssignEqual(),
-                            value=cst.Number(cst.Integer("1")),
+                            value=cst.Integer("1"),
                         ),
                     ),
                 ),
@@ -159,19 +142,19 @@ class CallTest(CSTNodeTest):
                         cst.Arg(
                             keyword=cst.Name("one"),
                             equal=cst.AssignEqual(),
-                            value=cst.Number(cst.Integer("1")),
+                            value=cst.Integer("1"),
                             comma=cst.Comma(whitespace_after=cst.SimpleWhitespace(" ")),
                         ),
                         cst.Arg(
                             keyword=cst.Name("two"),
                             equal=cst.AssignEqual(),
-                            value=cst.Number(cst.Integer("2")),
+                            value=cst.Integer("2"),
                             comma=cst.Comma(whitespace_after=cst.SimpleWhitespace(" ")),
                         ),
                         cst.Arg(
                             keyword=cst.Name("three"),
                             equal=cst.AssignEqual(),
-                            value=cst.Number(cst.Integer("3")),
+                            value=cst.Integer("3"),
                         ),
                     ),
                 ),
@@ -278,21 +261,13 @@ class CallTest(CSTNodeTest):
                         cst.Arg(star="*", value=cst.Name("list2")),
                         cst.Arg(value=cst.Name("pos4")),
                         cst.Arg(star="*", value=cst.Name("list3")),
-                        cst.Arg(
-                            keyword=cst.Name("kw1"), value=cst.Number(cst.Integer("1"))
-                        ),
+                        cst.Arg(keyword=cst.Name("kw1"), value=cst.Integer("1")),
                         cst.Arg(star="*", value=cst.Name("list4")),
-                        cst.Arg(
-                            keyword=cst.Name("kw2"), value=cst.Number(cst.Integer("2"))
-                        ),
+                        cst.Arg(keyword=cst.Name("kw2"), value=cst.Integer("2")),
                         cst.Arg(star="*", value=cst.Name("list5")),
-                        cst.Arg(
-                            keyword=cst.Name("kw3"), value=cst.Number(cst.Integer("3"))
-                        ),
+                        cst.Arg(keyword=cst.Name("kw3"), value=cst.Integer("3")),
                         cst.Arg(star="**", value=cst.Name("dict1")),
-                        cst.Arg(
-                            keyword=cst.Name("kw4"), value=cst.Number(cst.Integer("4"))
-                        ),
+                        cst.Arg(keyword=cst.Name("kw4"), value=cst.Integer("4")),
                         cst.Arg(star="**", value=cst.Name("dict2")),
                     ),
                 ),
@@ -338,7 +313,7 @@ class CallTest(CSTNodeTest):
                         cst.Arg(
                             keyword=cst.Name("kw1"),
                             equal=cst.AssignEqual(),
-                            value=cst.Number(cst.Integer("1")),
+                            value=cst.Integer("1"),
                             comma=cst.Comma(whitespace_after=cst.SimpleWhitespace(" ")),
                         ),
                         cst.Arg(
@@ -349,7 +324,7 @@ class CallTest(CSTNodeTest):
                         cst.Arg(
                             keyword=cst.Name("kw2"),
                             equal=cst.AssignEqual(),
-                            value=cst.Number(cst.Integer("2")),
+                            value=cst.Integer("2"),
                             comma=cst.Comma(whitespace_after=cst.SimpleWhitespace(" ")),
                         ),
                         cst.Arg(
@@ -360,7 +335,7 @@ class CallTest(CSTNodeTest):
                         cst.Arg(
                             keyword=cst.Name("kw3"),
                             equal=cst.AssignEqual(),
-                            value=cst.Number(cst.Integer("3")),
+                            value=cst.Integer("3"),
                             comma=cst.Comma(whitespace_after=cst.SimpleWhitespace(" ")),
                         ),
                         cst.Arg(
@@ -371,7 +346,7 @@ class CallTest(CSTNodeTest):
                         cst.Arg(
                             keyword=cst.Name("kw4"),
                             equal=cst.AssignEqual(),
-                            value=cst.Number(cst.Integer("4")),
+                            value=cst.Integer("4"),
                             comma=cst.Comma(whitespace_after=cst.SimpleWhitespace(" ")),
                         ),
                         cst.Arg(star="**", value=cst.Name("dict2")),
@@ -409,7 +384,7 @@ class CallTest(CSTNodeTest):
                                 whitespace_before=cst.SimpleWhitespace(""),
                                 whitespace_after=cst.SimpleWhitespace(""),
                             ),
-                            value=cst.Number(cst.Integer("1")),
+                            value=cst.Integer("1"),
                             comma=cst.Comma(whitespace_after=cst.SimpleWhitespace(" ")),
                         ),
                         cst.Arg(

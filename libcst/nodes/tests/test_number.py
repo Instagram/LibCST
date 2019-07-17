@@ -17,20 +17,20 @@ class NumberTest(CSTNodeTest):
     @data_provider(
         (
             # Simple number
-            (cst.Number(cst.Integer("5")), "5", parse_expression),
+            (cst.Integer("5"), "5", parse_expression),
             # Negted number
             (
-                cst.Number(operator=cst.Minus(), number=cst.Integer("5")),
+                cst.UnaryOperation(operator=cst.Minus(), expression=cst.Integer("5")),
                 "-5",
                 parse_expression,
                 CodeRange.create((1, 0), (1, 2)),
             ),
             # In parenthesis
             (
-                cst.Number(
+                cst.UnaryOperation(
                     lpar=(cst.LeftParen(),),
                     operator=cst.Minus(),
-                    number=cst.Integer("5"),
+                    expression=cst.Integer("5"),
                     rpar=(cst.RightParen(),),
                 ),
                 "(-5)",
@@ -38,10 +38,10 @@ class NumberTest(CSTNodeTest):
                 CodeRange.create((1, 1), (1, 3)),
             ),
             (
-                cst.Number(
+                cst.UnaryOperation(
                     lpar=(cst.LeftParen(),),
                     operator=cst.Minus(),
-                    number=cst.Integer(
+                    expression=cst.Integer(
                         "5", lpar=(cst.LeftParen(),), rpar=(cst.RightParen(),)
                     ),
                     rpar=(cst.RightParen(),),
@@ -53,8 +53,8 @@ class NumberTest(CSTNodeTest):
             (
                 cst.UnaryOperation(
                     operator=cst.Minus(),
-                    expression=cst.Number(
-                        operator=cst.Minus(), number=cst.Integer("5")
+                    expression=cst.UnaryOperation(
+                        operator=cst.Minus(), expression=cst.Integer("5")
                     ),
                 ),
                 "--5",
@@ -63,22 +63,20 @@ class NumberTest(CSTNodeTest):
             ),
             # multiple nested parenthesis
             (
-                cst.Number(
-                    cst.Integer(
-                        "5",
-                        lpar=(cst.LeftParen(), cst.LeftParen()),
-                        rpar=(cst.RightParen(), cst.RightParen()),
-                    )
+                cst.Integer(
+                    "5",
+                    lpar=(cst.LeftParen(), cst.LeftParen()),
+                    rpar=(cst.RightParen(), cst.RightParen()),
                 ),
                 "((5))",
                 parse_expression,
-                CodeRange.create((1, 0), (1, 5)),
+                CodeRange.create((1, 2), (1, 3)),
             ),
             (
-                cst.Number(
+                cst.UnaryOperation(
                     lpar=(cst.LeftParen(),),
                     operator=cst.Plus(),
-                    number=cst.Integer(
+                    expression=cst.Integer(
                         "5",
                         lpar=(cst.LeftParen(), cst.LeftParen()),
                         rpar=(cst.RightParen(), cst.RightParen()),
@@ -103,11 +101,27 @@ class NumberTest(CSTNodeTest):
     @data_provider(
         (
             (
-                lambda: cst.Number(cst.Integer("5"), lpar=(cst.LeftParen(),)),
+                lambda: cst.Integer("5", lpar=(cst.LeftParen(),)),
                 "left paren without right paren",
             ),
             (
-                lambda: cst.Number(cst.Integer("5"), rpar=(cst.RightParen(),)),
+                lambda: cst.Integer("5", rpar=(cst.RightParen(),)),
+                "right paren without left paren",
+            ),
+            (
+                lambda: cst.Float("5.5", lpar=(cst.LeftParen(),)),
+                "left paren without right paren",
+            ),
+            (
+                lambda: cst.Float("5.5", rpar=(cst.RightParen(),)),
+                "right paren without left paren",
+            ),
+            (
+                lambda: cst.Imaginary("5i", lpar=(cst.LeftParen(),)),
+                "left paren without right paren",
+            ),
+            (
+                lambda: cst.Imaginary("5i", rpar=(cst.RightParen(),)),
                 "right paren without left paren",
             ),
         )

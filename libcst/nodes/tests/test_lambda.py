@@ -17,14 +17,14 @@ class LambdaCreationTest(CSTNodeTest):
     @data_provider(
         (
             # Simple lambda
-            (cst.Lambda(cst.Parameters(), cst.Number(cst.Integer("5"))), "lambda: 5"),
+            (cst.Lambda(cst.Parameters(), cst.Integer("5")), "lambda: 5"),
             # Test basic positional params
             (
                 cst.Lambda(
                     cst.Parameters(
                         params=(cst.Param(cst.Name("bar")), cst.Param(cst.Name("baz")))
                     ),
-                    cst.Number(cst.Integer("5")),
+                    cst.Integer("5"),
                 ),
                 "lambda bar, baz: 5",
             ),
@@ -36,12 +36,10 @@ class LambdaCreationTest(CSTNodeTest):
                             cst.Param(
                                 cst.Name("bar"), default=cst.SimpleString('"one"')
                             ),
-                            cst.Param(
-                                cst.Name("baz"), default=cst.Number(cst.Integer("5"))
-                            ),
+                            cst.Param(cst.Name("baz"), default=cst.Integer("5")),
                         )
                     ),
-                    cst.Number(cst.Integer("5")),
+                    cst.Integer("5"),
                 ),
                 'lambda bar = "one", baz = 5: 5',
             ),
@@ -51,12 +49,10 @@ class LambdaCreationTest(CSTNodeTest):
                     cst.Parameters(
                         params=(cst.Param(cst.Name("bar")),),
                         default_params=(
-                            cst.Param(
-                                cst.Name("baz"), default=cst.Number(cst.Integer("5"))
-                            ),
+                            cst.Param(cst.Name("baz"), default=cst.Integer("5")),
                         ),
                     ),
-                    cst.Number(cst.Integer("5")),
+                    cst.Integer("5"),
                 ),
                 "lambda bar, baz = 5: 5",
             ),
@@ -71,7 +67,7 @@ class LambdaCreationTest(CSTNodeTest):
                             cst.Param(cst.Name("baz")),
                         )
                     ),
-                    cst.Number(cst.Integer("5")),
+                    cst.Integer("5"),
                 ),
                 'lambda *, bar = "one", baz: 5',
             ),
@@ -93,7 +89,7 @@ class LambdaCreationTest(CSTNodeTest):
                             ),
                         ),
                     ),
-                    cst.Number(cst.Integer("5")),
+                    cst.Integer("5"),
                 ),
                 'lambda first, second, *, bar = "one", baz, biz = "two": 5',
             ),
@@ -102,12 +98,8 @@ class LambdaCreationTest(CSTNodeTest):
                 cst.Lambda(
                     cst.Parameters(
                         default_params=(
-                            cst.Param(
-                                cst.Name("first"), default=cst.Number(cst.Float("1.0"))
-                            ),
-                            cst.Param(
-                                cst.Name("second"), default=cst.Number(cst.Float("1.5"))
-                            ),
+                            cst.Param(cst.Name("first"), default=cst.Float("1.0")),
+                            cst.Param(cst.Name("second"), default=cst.Float("1.5")),
                         ),
                         kwonly_params=(
                             cst.Param(
@@ -119,7 +111,7 @@ class LambdaCreationTest(CSTNodeTest):
                             ),
                         ),
                     ),
-                    cst.Number(cst.Integer("5")),
+                    cst.Integer("5"),
                 ),
                 'lambda first = 1.0, second = 1.5, *, bar = "one", baz, biz = "two": 5',
             ),
@@ -132,12 +124,8 @@ class LambdaCreationTest(CSTNodeTest):
                             cst.Param(cst.Name("second")),
                         ),
                         default_params=(
-                            cst.Param(
-                                cst.Name("third"), default=cst.Number(cst.Float("1.0"))
-                            ),
-                            cst.Param(
-                                cst.Name("fourth"), default=cst.Number(cst.Float("1.5"))
-                            ),
+                            cst.Param(cst.Name("third"), default=cst.Float("1.0")),
+                            cst.Param(cst.Name("fourth"), default=cst.Float("1.5")),
                         ),
                         kwonly_params=(
                             cst.Param(
@@ -149,7 +137,7 @@ class LambdaCreationTest(CSTNodeTest):
                             ),
                         ),
                     ),
-                    cst.Number(cst.Integer("5")),
+                    cst.Integer("5"),
                 ),
                 'lambda first, second, third = 1.0, fourth = 1.5, *, bar = "one", baz, biz = "two": 5',
                 CodeRange.create((1, 0), (1, 84)),
@@ -158,7 +146,7 @@ class LambdaCreationTest(CSTNodeTest):
             (
                 cst.Lambda(
                     cst.Parameters(star_arg=cst.Param(cst.Name("params"))),
-                    cst.Number(cst.Integer("5")),
+                    cst.Integer("5"),
                 ),
                 "lambda *params: 5",
             ),
@@ -177,7 +165,7 @@ class LambdaCreationTest(CSTNodeTest):
                             ),
                         ),
                     ),
-                    cst.Number(cst.Integer("5")),
+                    cst.Integer("5"),
                 ),
                 'lambda *params, bar = "one", baz, biz = "two": 5',
             ),
@@ -190,12 +178,8 @@ class LambdaCreationTest(CSTNodeTest):
                             cst.Param(cst.Name("second")),
                         ),
                         default_params=(
-                            cst.Param(
-                                cst.Name("third"), default=cst.Number(cst.Float("1.0"))
-                            ),
-                            cst.Param(
-                                cst.Name("fourth"), default=cst.Number(cst.Float("1.5"))
-                            ),
+                            cst.Param(cst.Name("third"), default=cst.Float("1.0")),
+                            cst.Param(cst.Name("fourth"), default=cst.Float("1.5")),
                         ),
                         star_arg=cst.Param(cst.Name("params")),
                         kwonly_params=(
@@ -208,7 +192,7 @@ class LambdaCreationTest(CSTNodeTest):
                             ),
                         ),
                     ),
-                    cst.Number(cst.Integer("5")),
+                    cst.Integer("5"),
                 ),
                 'lambda first, second, third = 1.0, fourth = 1.5, *params, bar = "one", baz, biz = "two": 5',
             ),
@@ -216,7 +200,7 @@ class LambdaCreationTest(CSTNodeTest):
             (
                 cst.Lambda(
                     cst.Parameters(star_kwarg=cst.Param(cst.Name("kwparams"))),
-                    cst.Number(cst.Integer("5")),
+                    cst.Integer("5"),
                 ),
                 "lambda **kwparams: 5",
             ),
@@ -227,7 +211,7 @@ class LambdaCreationTest(CSTNodeTest):
                         star_arg=cst.Param(cst.Name("params")),
                         star_kwarg=cst.Param(cst.Name("kwparams")),
                     ),
-                    cst.Number(cst.Integer("5")),
+                    cst.Integer("5"),
                 ),
                 "lambda *params, **kwparams: 5",
             ),
@@ -238,7 +222,7 @@ class LambdaCreationTest(CSTNodeTest):
                     whitespace_after_lambda=cst.SimpleWhitespace("  "),
                     params=cst.Parameters(),
                     colon=cst.Colon(whitespace_after=cst.SimpleWhitespace(" ")),
-                    body=cst.Number(cst.Integer("5")),
+                    body=cst.Integer("5"),
                     rpar=(cst.RightParen(whitespace_before=cst.SimpleWhitespace(" ")),),
                 ),
                 "( lambda  : 5 )",
@@ -256,7 +240,7 @@ class LambdaCreationTest(CSTNodeTest):
             (
                 lambda: cst.Lambda(
                     cst.Parameters(params=(cst.Param(cst.Name("arg")),)),
-                    cst.Number(cst.Integer("5")),
+                    cst.Integer("5"),
                     lpar=(cst.LeftParen(),),
                 ),
                 "left paren without right paren",
@@ -264,7 +248,7 @@ class LambdaCreationTest(CSTNodeTest):
             (
                 lambda: cst.Lambda(
                     cst.Parameters(params=(cst.Param(cst.Name("arg")),)),
-                    cst.Number(cst.Integer("5")),
+                    cst.Integer("5"),
                     rpar=(cst.RightParen(),),
                 ),
                 "right paren without left paren",
@@ -272,7 +256,7 @@ class LambdaCreationTest(CSTNodeTest):
             (
                 lambda: cst.Lambda(
                     cst.Parameters(params=(cst.Param(cst.Name("arg")),)),
-                    cst.Number(cst.Integer("5")),
+                    cst.Integer("5"),
                     whitespace_after_lambda=cst.SimpleWhitespace(""),
                 ),
                 "at least one space after lambda",
@@ -281,12 +265,10 @@ class LambdaCreationTest(CSTNodeTest):
                 lambda: cst.Lambda(
                     cst.Parameters(
                         default_params=(
-                            cst.Param(
-                                cst.Name("arg"), default=cst.Number(cst.Integer("5"))
-                            ),
+                            cst.Param(cst.Name("arg"), default=cst.Integer("5")),
                         )
                     ),
-                    cst.Number(cst.Integer("5")),
+                    cst.Integer("5"),
                     whitespace_after_lambda=cst.SimpleWhitespace(""),
                 ),
                 "at least one space after lambda",
@@ -294,7 +276,7 @@ class LambdaCreationTest(CSTNodeTest):
             (
                 lambda: cst.Lambda(
                     cst.Parameters(star_arg=cst.Param(cst.Name("arg"))),
-                    cst.Number(cst.Integer("5")),
+                    cst.Integer("5"),
                     whitespace_after_lambda=cst.SimpleWhitespace(""),
                 ),
                 "at least one space after lambda",
@@ -302,7 +284,7 @@ class LambdaCreationTest(CSTNodeTest):
             (
                 lambda: cst.Lambda(
                     cst.Parameters(kwonly_params=(cst.Param(cst.Name("arg")),)),
-                    cst.Number(cst.Integer("5")),
+                    cst.Integer("5"),
                     whitespace_after_lambda=cst.SimpleWhitespace(""),
                 ),
                 "at least one space after lambda",
@@ -310,7 +292,7 @@ class LambdaCreationTest(CSTNodeTest):
             (
                 lambda: cst.Lambda(
                     cst.Parameters(star_kwarg=cst.Param(cst.Name("arg"))),
-                    cst.Number(cst.Integer("5")),
+                    cst.Integer("5"),
                     whitespace_after_lambda=cst.SimpleWhitespace(""),
                 ),
                 "at least one space after lambda",
@@ -320,14 +302,14 @@ class LambdaCreationTest(CSTNodeTest):
                     cst.Parameters(
                         star_kwarg=cst.Param(cst.Name("bar"), equal=cst.AssignEqual())
                     ),
-                    cst.Number(cst.Integer("5")),
+                    cst.Integer("5"),
                 ),
                 "Must have a default when specifying an AssignEqual.",
             ),
             (
                 lambda: cst.Lambda(
                     cst.Parameters(star_kwarg=cst.Param(cst.Name("bar"), star="***")),
-                    cst.Number(cst.Integer("5")),
+                    cst.Integer("5"),
                 ),
                 r"Must specify either '', '\*' or '\*\*' for star.",
             ),
@@ -340,28 +322,27 @@ class LambdaCreationTest(CSTNodeTest):
                             ),
                         )
                     ),
-                    cst.Number(cst.Integer("5")),
+                    cst.Integer("5"),
                 ),
                 "Cannot have defaults for params",
             ),
             (
                 lambda: cst.Lambda(
                     cst.Parameters(default_params=(cst.Param(cst.Name("bar")),)),
-                    cst.Number(cst.Integer("5")),
+                    cst.Integer("5"),
                 ),
                 "Must have defaults for default_params",
             ),
             (
                 lambda: cst.Lambda(
-                    cst.Parameters(star_arg=cst.ParamStar()),
-                    cst.Number(cst.Integer("5")),
+                    cst.Parameters(star_arg=cst.ParamStar()), cst.Integer("5")
                 ),
                 "Must have at least one kwonly param if ParamStar is used.",
             ),
             (
                 lambda: cst.Lambda(
                     cst.Parameters(params=(cst.Param(cst.Name("bar"), star="*"),)),
-                    cst.Number(cst.Integer("5")),
+                    cst.Integer("5"),
                 ),
                 "Expecting a star prefix of ''",
             ),
@@ -376,7 +357,7 @@ class LambdaCreationTest(CSTNodeTest):
                             ),
                         )
                     ),
-                    cst.Number(cst.Integer("5")),
+                    cst.Integer("5"),
                 ),
                 "Expecting a star prefix of ''",
             ),
@@ -385,21 +366,21 @@ class LambdaCreationTest(CSTNodeTest):
                     cst.Parameters(
                         kwonly_params=(cst.Param(cst.Name("bar"), star="*"),)
                     ),
-                    cst.Number(cst.Integer("5")),
+                    cst.Integer("5"),
                 ),
                 "Expecting a star prefix of ''",
             ),
             (
                 lambda: cst.Lambda(
                     cst.Parameters(star_arg=cst.Param(cst.Name("bar"), star="**")),
-                    cst.Number(cst.Integer("5")),
+                    cst.Integer("5"),
                 ),
                 r"Expecting a star prefix of '\*'",
             ),
             (
                 lambda: cst.Lambda(
                     cst.Parameters(star_kwarg=cst.Param(cst.Name("bar"), star="*")),
-                    cst.Number(cst.Integer("5")),
+                    cst.Integer("5"),
                 ),
                 r"Expecting a star prefix of '\*\*'",
             ),
@@ -413,7 +394,7 @@ class LambdaCreationTest(CSTNodeTest):
                             ),
                         )
                     ),
-                    cst.Number(cst.Integer("5")),
+                    cst.Integer("5"),
                     whitespace_after_lambda=cst.SimpleWhitespace(""),
                 ),
                 "Lambda params cannot have type annotations",
@@ -424,12 +405,12 @@ class LambdaCreationTest(CSTNodeTest):
                         default_params=(
                             cst.Param(
                                 cst.Name("arg"),
-                                default=cst.Number(cst.Integer("5")),
+                                default=cst.Integer("5"),
                                 annotation=cst.Annotation(cst.Name("str")),
                             ),
                         )
                     ),
-                    cst.Number(cst.Integer("5")),
+                    cst.Integer("5"),
                     whitespace_after_lambda=cst.SimpleWhitespace(""),
                 ),
                 "Lambda params cannot have type annotations",
@@ -441,7 +422,7 @@ class LambdaCreationTest(CSTNodeTest):
                             cst.Name("arg"), annotation=cst.Annotation(cst.Name("str"))
                         )
                     ),
-                    cst.Number(cst.Integer("5")),
+                    cst.Integer("5"),
                     whitespace_after_lambda=cst.SimpleWhitespace(""),
                 ),
                 "Lambda params cannot have type annotations",
@@ -456,7 +437,7 @@ class LambdaCreationTest(CSTNodeTest):
                             ),
                         )
                     ),
-                    cst.Number(cst.Integer("5")),
+                    cst.Integer("5"),
                     whitespace_after_lambda=cst.SimpleWhitespace(""),
                 ),
                 "Lambda params cannot have type annotations",
@@ -468,7 +449,7 @@ class LambdaCreationTest(CSTNodeTest):
                             cst.Name("arg"), annotation=cst.Annotation(cst.Name("str"))
                         )
                     ),
-                    cst.Number(cst.Integer("5")),
+                    cst.Integer("5"),
                     whitespace_after_lambda=cst.SimpleWhitespace(""),
                 ),
                 "Lambda params cannot have type annotations",
@@ -485,7 +466,7 @@ class LambdaParserTest(CSTNodeTest):
     @data_provider(
         (
             # Simple lambda
-            (cst.Lambda(cst.Parameters(), cst.Number(cst.Integer("5"))), "lambda: 5"),
+            (cst.Lambda(cst.Parameters(), cst.Integer("5")), "lambda: 5"),
             # Test basic positional params
             (
                 cst.Lambda(
@@ -501,7 +482,7 @@ class LambdaParserTest(CSTNodeTest):
                             cst.Param(cst.Name("baz"), star=""),
                         )
                     ),
-                    cst.Number(cst.Integer("5")),
+                    cst.Integer("5"),
                     whitespace_after_lambda=cst.SimpleWhitespace(" "),
                 ),
                 "lambda bar, baz: 5",
@@ -522,13 +503,13 @@ class LambdaParserTest(CSTNodeTest):
                             ),
                             cst.Param(
                                 cst.Name("baz"),
-                                default=cst.Number(cst.Integer("5")),
+                                default=cst.Integer("5"),
                                 equal=cst.AssignEqual(),
                                 star="",
                             ),
                         )
                     ),
-                    cst.Number(cst.Integer("5")),
+                    cst.Integer("5"),
                     whitespace_after_lambda=cst.SimpleWhitespace(" "),
                 ),
                 'lambda bar = "one", baz = 5: 5',
@@ -549,13 +530,13 @@ class LambdaParserTest(CSTNodeTest):
                         default_params=(
                             cst.Param(
                                 cst.Name("baz"),
-                                default=cst.Number(cst.Integer("5")),
+                                default=cst.Integer("5"),
                                 equal=cst.AssignEqual(),
                                 star="",
                             ),
                         ),
                     ),
-                    cst.Number(cst.Integer("5")),
+                    cst.Integer("5"),
                     whitespace_after_lambda=cst.SimpleWhitespace(" "),
                 ),
                 "lambda bar, baz = 5: 5",
@@ -578,7 +559,7 @@ class LambdaParserTest(CSTNodeTest):
                             cst.Param(cst.Name("baz"), star=""),
                         ),
                     ),
-                    cst.Number(cst.Integer("5")),
+                    cst.Integer("5"),
                     whitespace_after_lambda=cst.SimpleWhitespace(" "),
                 ),
                 'lambda *, bar = "one", baz: 5',
@@ -629,7 +610,7 @@ class LambdaParserTest(CSTNodeTest):
                             ),
                         ),
                     ),
-                    cst.Number(cst.Integer("5")),
+                    cst.Integer("5"),
                     whitespace_after_lambda=cst.SimpleWhitespace(" "),
                 ),
                 'lambda first, second, *, bar = "one", baz, biz = "two": 5',
@@ -641,7 +622,7 @@ class LambdaParserTest(CSTNodeTest):
                         default_params=(
                             cst.Param(
                                 cst.Name("first"),
-                                default=cst.Number(cst.Float("1.0")),
+                                default=cst.Float("1.0"),
                                 equal=cst.AssignEqual(),
                                 star="",
                                 comma=cst.Comma(
@@ -650,7 +631,7 @@ class LambdaParserTest(CSTNodeTest):
                             ),
                             cst.Param(
                                 cst.Name("second"),
-                                default=cst.Number(cst.Float("1.5")),
+                                default=cst.Float("1.5"),
                                 equal=cst.AssignEqual(),
                                 star="",
                                 comma=cst.Comma(
@@ -684,7 +665,7 @@ class LambdaParserTest(CSTNodeTest):
                             ),
                         ),
                     ),
-                    cst.Number(cst.Integer("5")),
+                    cst.Integer("5"),
                     whitespace_after_lambda=cst.SimpleWhitespace(" "),
                 ),
                 'lambda first = 1.0, second = 1.5, *, bar = "one", baz, biz = "two": 5',
@@ -712,7 +693,7 @@ class LambdaParserTest(CSTNodeTest):
                         default_params=(
                             cst.Param(
                                 cst.Name("third"),
-                                default=cst.Number(cst.Float("1.0")),
+                                default=cst.Float("1.0"),
                                 equal=cst.AssignEqual(),
                                 star="",
                                 comma=cst.Comma(
@@ -721,7 +702,7 @@ class LambdaParserTest(CSTNodeTest):
                             ),
                             cst.Param(
                                 cst.Name("fourth"),
-                                default=cst.Number(cst.Float("1.5")),
+                                default=cst.Float("1.5"),
                                 equal=cst.AssignEqual(),
                                 star="",
                                 comma=cst.Comma(
@@ -755,7 +736,7 @@ class LambdaParserTest(CSTNodeTest):
                             ),
                         ),
                     ),
-                    cst.Number(cst.Integer("5")),
+                    cst.Integer("5"),
                     whitespace_after_lambda=cst.SimpleWhitespace(" "),
                 ),
                 'lambda first, second, third = 1.0, fourth = 1.5, *, bar = "one", baz, biz = "two": 5',
@@ -764,7 +745,7 @@ class LambdaParserTest(CSTNodeTest):
             (
                 cst.Lambda(
                     cst.Parameters(star_arg=cst.Param(cst.Name("params"), star="*")),
-                    cst.Number(cst.Integer("5")),
+                    cst.Integer("5"),
                     whitespace_after_lambda=cst.SimpleWhitespace(" "),
                 ),
                 "lambda *params: 5",
@@ -803,7 +784,7 @@ class LambdaParserTest(CSTNodeTest):
                             ),
                         ),
                     ),
-                    cst.Number(cst.Integer("5")),
+                    cst.Integer("5"),
                     whitespace_after_lambda=cst.SimpleWhitespace(" "),
                 ),
                 'lambda *params, bar = "one", baz, biz = "two": 5',
@@ -831,7 +812,7 @@ class LambdaParserTest(CSTNodeTest):
                         default_params=(
                             cst.Param(
                                 cst.Name("third"),
-                                default=cst.Number(cst.Float("1.0")),
+                                default=cst.Float("1.0"),
                                 equal=cst.AssignEqual(),
                                 star="",
                                 comma=cst.Comma(
@@ -840,7 +821,7 @@ class LambdaParserTest(CSTNodeTest):
                             ),
                             cst.Param(
                                 cst.Name("fourth"),
-                                default=cst.Number(cst.Float("1.5")),
+                                default=cst.Float("1.5"),
                                 equal=cst.AssignEqual(),
                                 star="",
                                 comma=cst.Comma(
@@ -878,7 +859,7 @@ class LambdaParserTest(CSTNodeTest):
                             ),
                         ),
                     ),
-                    cst.Number(cst.Integer("5")),
+                    cst.Integer("5"),
                     whitespace_after_lambda=cst.SimpleWhitespace(" "),
                 ),
                 'lambda first, second, third = 1.0, fourth = 1.5, *params, bar = "one", baz, biz = "two": 5',
@@ -889,7 +870,7 @@ class LambdaParserTest(CSTNodeTest):
                     cst.Parameters(
                         star_kwarg=cst.Param(cst.Name("kwparams"), star="**")
                     ),
-                    cst.Number(cst.Integer("5")),
+                    cst.Integer("5"),
                     whitespace_after_lambda=cst.SimpleWhitespace(" "),
                 ),
                 "lambda **kwparams: 5",
@@ -905,7 +886,7 @@ class LambdaParserTest(CSTNodeTest):
                         ),
                         star_kwarg=cst.Param(cst.Name("kwparams"), star="**"),
                     ),
-                    cst.Number(cst.Integer("5")),
+                    cst.Integer("5"),
                     whitespace_after_lambda=cst.SimpleWhitespace(" "),
                 ),
                 "lambda *params, **kwparams: 5",
@@ -919,7 +900,7 @@ class LambdaParserTest(CSTNodeTest):
                         whitespace_before=cst.SimpleWhitespace("  "),
                         whitespace_after=cst.SimpleWhitespace(" "),
                     ),
-                    body=cst.Number(cst.Integer("5")),
+                    body=cst.Integer("5"),
                     rpar=(cst.RightParen(whitespace_before=cst.SimpleWhitespace(" ")),),
                 ),
                 "( lambda  : 5 )",

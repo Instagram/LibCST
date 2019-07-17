@@ -90,9 +90,7 @@ class FunctionDefCreationTest(CSTNodeTest):
                             cst.Param(
                                 cst.Name("bar"), default=cst.SimpleString('"one"')
                             ),
-                            cst.Param(
-                                cst.Name("baz"), default=cst.Number(cst.Integer("5"))
-                            ),
+                            cst.Param(cst.Name("baz"), default=cst.Integer("5")),
                         )
                     ),
                     cst.SimpleStatementSuite((cst.Pass(),)),
@@ -113,7 +111,7 @@ class FunctionDefCreationTest(CSTNodeTest):
                             cst.Param(
                                 cst.Name("baz"),
                                 cst.Annotation(cst.Name("int")),
-                                default=cst.Number(cst.Integer("5")),
+                                default=cst.Integer("5"),
                             ),
                         )
                     ),
@@ -133,7 +131,7 @@ class FunctionDefCreationTest(CSTNodeTest):
                             cst.Param(
                                 cst.Name("baz"),
                                 cst.Annotation(cst.Name("int")),
-                                default=cst.Number(cst.Integer("5")),
+                                default=cst.Integer("5"),
                             ),
                         ),
                     ),
@@ -213,12 +211,8 @@ class FunctionDefCreationTest(CSTNodeTest):
                     cst.Name("foo"),
                     cst.Parameters(
                         default_params=(
-                            cst.Param(
-                                cst.Name("first"), default=cst.Number(cst.Float("1.0"))
-                            ),
-                            cst.Param(
-                                cst.Name("second"), default=cst.Number(cst.Float("1.5"))
-                            ),
+                            cst.Param(cst.Name("first"), default=cst.Float("1.0")),
+                            cst.Param(cst.Name("second"), default=cst.Float("1.5")),
                         ),
                         kwonly_params=(
                             cst.Param(
@@ -248,12 +242,8 @@ class FunctionDefCreationTest(CSTNodeTest):
                             cst.Param(cst.Name("second")),
                         ),
                         default_params=(
-                            cst.Param(
-                                cst.Name("third"), default=cst.Number(cst.Float("1.0"))
-                            ),
-                            cst.Param(
-                                cst.Name("fourth"), default=cst.Number(cst.Float("1.5"))
-                            ),
+                            cst.Param(cst.Name("third"), default=cst.Float("1.0")),
+                            cst.Param(cst.Name("fourth"), default=cst.Float("1.5")),
                         ),
                         kwonly_params=(
                             cst.Param(
@@ -318,12 +308,8 @@ class FunctionDefCreationTest(CSTNodeTest):
                             cst.Param(cst.Name("second")),
                         ),
                         default_params=(
-                            cst.Param(
-                                cst.Name("third"), default=cst.Number(cst.Float("1.0"))
-                            ),
-                            cst.Param(
-                                cst.Name("fourth"), default=cst.Number(cst.Float("1.5"))
-                            ),
+                            cst.Param(cst.Name("third"), default=cst.Float("1.0")),
+                            cst.Param(cst.Name("fourth"), default=cst.Float("1.5")),
                         ),
                         star_arg=cst.Param(
                             cst.Name("params"), cst.Annotation(cst.Name("str"))
@@ -541,12 +527,8 @@ class FunctionDefCreationTest(CSTNodeTest):
                         cst.Param(cst.Name("second")),
                     ),
                     default_params=(
-                        cst.Param(
-                            cst.Name("third"), default=cst.Number(cst.Float("1.0"))
-                        ),
-                        cst.Param(
-                            cst.Name("fourth"), default=cst.Number(cst.Float("1.5"))
-                        ),
+                        cst.Param(cst.Name("third"), default=cst.Float("1.0")),
+                        cst.Param(cst.Name("fourth"), default=cst.Float("1.5")),
                     ),
                     star_arg=cst.Param(
                         cst.Name("params"), cst.Annotation(cst.Name("str"))
@@ -569,9 +551,7 @@ class FunctionDefCreationTest(CSTNodeTest):
                 CodeRange.create((1, 0), (1, 100)),
             ),
             (
-                cst.Param(
-                    cst.Name("third"), star="", default=cst.Number(cst.Float("1.0"))
-                ),
+                cst.Param(cst.Name("third"), star="", default=cst.Float("1.0")),
                 "third = 1.0",
                 CodeRange.create((1, 0), (1, 5)),
             ),
@@ -894,7 +874,7 @@ class FunctionDefParserTest(CSTNodeTest):
                             cst.Param(
                                 cst.Name("baz"),
                                 equal=cst.AssignEqual(),
-                                default=cst.Number(cst.Integer("5")),
+                                default=cst.Integer("5"),
                                 star="",
                             ),
                         )
@@ -935,7 +915,7 @@ class FunctionDefParserTest(CSTNodeTest):
                                     ),
                                 ),
                                 equal=cst.AssignEqual(),
-                                default=cst.Number(cst.Integer("5")),
+                                default=cst.Integer("5"),
                                 star="",
                             ),
                         )
@@ -977,7 +957,7 @@ class FunctionDefParserTest(CSTNodeTest):
                                     ),
                                 ),
                                 equal=cst.AssignEqual(),
-                                default=cst.Number(cst.Integer("5")),
+                                default=cst.Integer("5"),
                                 star="",
                             ),
                         ),
@@ -1153,7 +1133,7 @@ class FunctionDefParserTest(CSTNodeTest):
                                 cst.Name("first"),
                                 annotation=None,
                                 equal=cst.AssignEqual(),
-                                default=cst.Number(cst.Float("1.0")),
+                                default=cst.Float("1.0"),
                                 star="",
                                 comma=cst.Comma(
                                     whitespace_after=cst.SimpleWhitespace(" ")
@@ -1163,7 +1143,7 @@ class FunctionDefParserTest(CSTNodeTest):
                                 cst.Name("second"),
                                 annotation=None,
                                 equal=cst.AssignEqual(),
-                                default=cst.Number(cst.Float("1.5")),
+                                default=cst.Float("1.5"),
                                 star="",
                                 comma=cst.Comma(
                                     whitespace_after=cst.SimpleWhitespace(" ")
@@ -1252,7 +1232,7 @@ class FunctionDefParserTest(CSTNodeTest):
                                 cst.Name("third"),
                                 annotation=None,
                                 equal=cst.AssignEqual(),
-                                default=cst.Number(cst.Float("1.0")),
+                                default=cst.Float("1.0"),
                                 star="",
                                 comma=cst.Comma(
                                     whitespace_after=cst.SimpleWhitespace(" ")
@@ -1262,7 +1242,7 @@ class FunctionDefParserTest(CSTNodeTest):
                                 cst.Name("fourth"),
                                 annotation=None,
                                 equal=cst.AssignEqual(),
-                                default=cst.Number(cst.Float("1.5")),
+                                default=cst.Float("1.5"),
                                 star="",
                                 comma=cst.Comma(
                                     whitespace_after=cst.SimpleWhitespace(" ")
@@ -1431,7 +1411,7 @@ class FunctionDefParserTest(CSTNodeTest):
                                 cst.Name("third"),
                                 annotation=None,
                                 equal=cst.AssignEqual(),
-                                default=cst.Number(cst.Float("1.0")),
+                                default=cst.Float("1.0"),
                                 star="",
                                 comma=cst.Comma(
                                     whitespace_after=cst.SimpleWhitespace(" ")
@@ -1441,7 +1421,7 @@ class FunctionDefParserTest(CSTNodeTest):
                                 cst.Name("fourth"),
                                 annotation=None,
                                 equal=cst.AssignEqual(),
-                                default=cst.Number(cst.Float("1.5")),
+                                default=cst.Float("1.5"),
                                 star="",
                                 comma=cst.Comma(
                                     whitespace_after=cst.SimpleWhitespace(" ")

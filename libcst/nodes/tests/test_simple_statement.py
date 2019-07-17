@@ -83,17 +83,17 @@ class SimpleStatementTest(CSTNodeTest):
             ),
             # Test some numbers
             (
-                cst.SimpleStatementLine((cst.Expr(cst.Number(cst.Integer("5"))),)),
+                cst.SimpleStatementLine((cst.Expr(cst.Integer("5")),)),
                 "5\n",
                 parse_statement,
             ),
             (
-                cst.SimpleStatementLine((cst.Expr(cst.Number(cst.Float("5.5"))),)),
+                cst.SimpleStatementLine((cst.Expr(cst.Float("5.5")),)),
                 "5.5\n",
                 parse_statement,
             ),
             (
-                cst.SimpleStatementLine((cst.Expr(cst.Number(cst.Imaginary("5j"))),)),
+                cst.SimpleStatementLine((cst.Expr(cst.Imaginary("5j")),)),
                 "5j\n",
                 parse_statement,
             ),
@@ -102,12 +102,8 @@ class SimpleStatementTest(CSTNodeTest):
                 cst.SimpleStatementLine(
                     (
                         cst.Expr(
-                            cst.Number(
-                                cst.Integer(
-                                    "5",
-                                    lpar=(cst.LeftParen(),),
-                                    rpar=(cst.RightParen(),),
-                                )
+                            cst.Integer(
+                                "5", lpar=(cst.LeftParen(),), rpar=(cst.RightParen(),)
                             )
                         ),
                     )
@@ -119,12 +115,8 @@ class SimpleStatementTest(CSTNodeTest):
                 cst.SimpleStatementLine(
                     (
                         cst.Expr(
-                            cst.Number(
-                                cst.Float(
-                                    "5.5",
-                                    lpar=(cst.LeftParen(),),
-                                    rpar=(cst.RightParen(),),
-                                )
+                            cst.Float(
+                                "5.5", lpar=(cst.LeftParen(),), rpar=(cst.RightParen(),)
                             )
                         ),
                     )
@@ -136,12 +128,8 @@ class SimpleStatementTest(CSTNodeTest):
                 cst.SimpleStatementLine(
                     (
                         cst.Expr(
-                            cst.Number(
-                                cst.Imaginary(
-                                    "5j",
-                                    lpar=(cst.LeftParen(),),
-                                    rpar=(cst.RightParen(),),
-                                )
+                            cst.Imaginary(
+                                "5j", lpar=(cst.LeftParen(),), rpar=(cst.RightParen(),)
                             )
                         ),
                     )

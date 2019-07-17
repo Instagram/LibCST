@@ -20,22 +20,14 @@ class ComparisonTest(CSTNodeTest):
             (
                 cst.Comparison(
                     cst.Name("foo"),
-                    (
-                        cst.ComparisonTarget(
-                            cst.LessThan(), cst.Number(cst.Integer("5"))
-                        ),
-                    ),
+                    (cst.ComparisonTarget(cst.LessThan(), cst.Integer("5")),),
                 ),
                 "foo < 5",
             ),
             (
                 cst.Comparison(
                     cst.Name("foo"),
-                    (
-                        cst.ComparisonTarget(
-                            cst.NotEqual(), cst.Number(cst.Integer("5"))
-                        ),
-                    ),
+                    (cst.ComparisonTarget(cst.NotEqual(), cst.Integer("5")),),
                 ),
                 "foo != 5",
             ),
@@ -110,7 +102,7 @@ class ComparisonTest(CSTNodeTest):
             # Valid expressions that look like they shouldn't parse
             (
                 cst.Comparison(
-                    left=cst.Number(cst.Integer("5")),
+                    left=cst.Integer("5"),
                     comparisons=(
                         cst.ComparisonTarget(
                             operator=cst.NotIn(
@@ -243,8 +235,6 @@ class ComparisonTest(CSTNodeTest):
             (
                 lambda: cst.Comparison(
                     cst.Name("foo"),
-                    # pyre-fixme[6]: Expected `BaseExpression` for 2nd param but got
-                    #  `Integer`.
                     (cst.ComparisonTarget(cst.LessThan(), cst.Integer("5")),),
                     lpar=(cst.LeftParen(),),
                 ),
@@ -253,8 +243,6 @@ class ComparisonTest(CSTNodeTest):
             (
                 lambda: cst.Comparison(
                     cst.Name("foo"),
-                    # pyre-fixme[6]: Expected `BaseExpression` for 2nd param but got
-                    #  `Integer`.
                     (cst.ComparisonTarget(cst.LessThan(), cst.Integer("5")),),
                     rpar=(cst.RightParen(),),
                 ),

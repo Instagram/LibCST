@@ -411,22 +411,10 @@ def convert_factor(config: ParserConfig, children: Sequence[Any]) -> Any:
     else:
         raise Exception(f"Unexpected token '{op.string}'!")
 
-    # Second, bump the operator into a number node if that's what the
-    # factor is. Otherwise, return a unary operator node.
-    if (
-        isinstance(factor.value, cst.Number)
-        and isinstance(opnode, (cst.Plus, cst.Minus))
-        and factor.value.operator is None
-    ):
-        return WithLeadingWhitespace(
-            cst.Number(operator=opnode, number=factor.value.number),
-            op.whitespace_before,
-        )
-    else:
-        return WithLeadingWhitespace(
-            cst.UnaryOperation(operator=opnode, expression=factor.value),
-            op.whitespace_before,
-        )
+    return WithLeadingWhitespace(
+        cst.UnaryOperation(operator=opnode, expression=factor.value),
+        op.whitespace_before,
+    )
 
 
 @with_production("power", "atom_expr ['**' factor]")
@@ -718,15 +706,15 @@ def convert_atom_basic(config: ParserConfig, children: Sequence[Any]) -> Any:
         # types up this way.
         if re.fullmatch(INTNUMBER_RE, child.string):
             return WithLeadingWhitespace(
-                cst.Number(cst.Integer(child.string)), child.whitespace_before
+                cst.Integer(child.string), child.whitespace_before
             )
         elif re.fullmatch(FLOATNUMBER_RE, child.string):
             return WithLeadingWhitespace(
-                cst.Number(cst.Float(child.string)), child.whitespace_before
+                cst.Float(child.string), child.whitespace_before
             )
         elif re.fullmatch(IMAGNUMBER_RE, child.string):
             return WithLeadingWhitespace(
-                cst.Number(cst.Imaginary(child.string)), child.whitespace_before
+                cst.Imaginary(child.string), child.whitespace_before
             )
         else:
             raise Exception("Unparseable number {child.string}")
@@ -780,30 +768,14 @@ def convert_atom_parens(config: ParserConfig, children: Sequence[Any]) -> Any:
     )
 
     if len(atoms) == 1:
+        # inner_atom is a _BaseParenthesizedNode
         inner_atom = atoms[0].value
-        # With numbers, we bubble up the parens to the innermost node since
-        # Number() is just a wrapper to match on any valid number. The only
-        # instance where we don't do this is in the case that a number has
-        # a unary operator associated with it. In this case, the outer parens
-        # are owned by the Number node instead of the inner Integer/Float/Imaginary.
-        if isinstance(inner_atom, cst.Number) and inner_atom.operator is None:
-            return WithLeadingWhitespace(
-                inner_atom.with_changes(
-                    number=inner_atom.number.with_changes(
-                        lpar=(lpar, *inner_atom.number.lpar),
-                        rpar=(*inner_atom.number.rpar, rpar),
-                    )
-                ),
-                lpar_tok.whitespace_before,
-            )
-        else:
-            # inner_atom is a _BaseParenthesizedNode
-            return WithLeadingWhitespace(
-                inner_atom.with_changes(
-                    lpar=(lpar, *inner_atom.lpar), rpar=(*inner_atom.rpar, rpar)
-                ),
-                lpar_tok.whitespace_before,
-            )
+        return WithLeadingWhitespace(
+            inner_atom.with_changes(
+                lpar=(lpar, *inner_atom.lpar), rpar=(*inner_atom.rpar, rpar)
+            ),
+            lpar_tok.whitespace_before,
+        )
     else:
         return WithLeadingWhitespace(
             cst.Tuple((), lpar=(lpar,), rpar=(rpar,)), lpar_tok.whitespace_before

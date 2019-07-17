@@ -159,7 +159,7 @@ class FooterBehaviorTest(UnitTest):
                                     targets=[
                                         cst.AssignTarget(target=cst.Name(value="x"))
                                     ],
-                                    value=cst.Number(number=cst.Integer(value="7")),
+                                    value=cst.Integer(value="7"),
                                 )
                             ],
                             leading_lines=[
