@@ -483,9 +483,9 @@ class ImportFromCreateTest(CSTNodeTest):
     @data_provider(
         (
             (
-                # pyre-fixme[6]: Expected `Union[Sequence[ImportAlias], ImportStar]`
-                #  for 2nd param but got `Tuple[Name]`.
-                lambda: cst.ImportFrom(module=None, names=(cst.Name("bar"),)),
+                lambda: cst.ImportFrom(
+                    module=None, names=(cst.ImportAlias(cst.Name("bar")),)
+                ),
                 "Must have a module specified",
             ),
             (

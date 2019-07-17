@@ -694,17 +694,13 @@ class AtomTest(CSTNodeTest):
             },
             {
                 "get_node": (
-                    # pyre-fixme[6]: Expected `Sequence[BaseFormattedStringContent]` for
-                    #  1st param but got `str`.
-                    lambda: cst.FormattedString("f''", lpar=(cst.LeftParen(),))
+                    lambda: cst.FormattedString(parts=(), lpar=(cst.LeftParen(),))
                 ),
                 "expected_re": "left paren without right paren",
             },
             {
                 "get_node": (
-                    # pyre-fixme[6]: Expected `Sequence[BaseFormattedStringContent]` for
-                    #  1st param but got `str`.
-                    lambda: cst.FormattedString("f''", rpar=(cst.RightParen(),))
+                    lambda: cst.FormattedString(parts=(), rpar=(cst.RightParen(),))
                 ),
                 "expected_re": "right paren without left paren",
             },

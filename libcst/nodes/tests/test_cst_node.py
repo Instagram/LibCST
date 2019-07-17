@@ -41,6 +41,8 @@ class _TestVisitor(CSTTransformer):
         self, original_node: _CSTNodeT, updated_node: _CSTNodeT
     ) -> Union[_CSTNodeT, RemovalSentinel]:
         self.test.assertTrue(original_node.deep_equals(updated_node))
+        # Don't allow type checkers to accidentally refine our return type.
+        return_node = updated_node
         if isinstance(updated_node, cst.Pass):
             self.assert_counter(3)
         elif isinstance(updated_node, cst.Newline):
@@ -49,9 +51,7 @@ class _TestVisitor(CSTTransformer):
             self.assert_counter(6)
         elif isinstance(updated_node, cst.Module):
             self.assert_counter(7)
-        # pyre: Expected `Union[RemovalSentinel, Variable[_CSTNodeT (bound to
-        # pyre-ignore[7]: cst._base.CSTNode)]]` but got `cst._statement.Pass`.
-        return updated_node
+        return return_node
 
 
 class CSTNodeTest(UnitTest):

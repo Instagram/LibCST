@@ -94,7 +94,7 @@ class AssertParsingTest(CSTNodeTest):
             {
                 "node": cst.Assert(cst.Name("True")),
                 "code": "assert True",
-                # pyre-ignore[16]
+                # pyre-fixme[16]: `BaseSuite` has no attribute `__getitem__`.
                 "parser": (lambda code: parse_statement(code).body[0]),
                 "expected_position": None,
             },

@@ -154,9 +154,7 @@ class BinaryOperationTest(CSTNodeTest):
                 "get_node": (
                     lambda: cst.BinaryOperation(
                         cst.Name("foo"),
-                        # pyre-fixme[6]: Expected `BaseBinaryOp` for 2nd param but got
-                        #  `Plus`.
-                        cst.Plus(),
+                        cst.Add(),
                         cst.Name("bar"),
                         lpar=(cst.LeftParen(),),
                     )
@@ -167,9 +165,7 @@ class BinaryOperationTest(CSTNodeTest):
                 "get_node": (
                     lambda: cst.BinaryOperation(
                         cst.Name("foo"),
-                        # pyre-fixme[6]: Expected `BaseBinaryOp` for 2nd param but got
-                        #  `Plus`.
-                        cst.Plus(),
+                        cst.Add(),
                         cst.Name("bar"),
                         rpar=(cst.RightParen(),),
                     )

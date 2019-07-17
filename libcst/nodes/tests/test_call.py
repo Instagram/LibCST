@@ -466,10 +466,8 @@ class CallTest(CSTNodeTest):
             (
                 lambda: cst.Call(
                     func=cst.Name("foo"),
-                    # pyre-fixme[6]: Expected `Union[typing_extensions.Literal[''],
-                    #  typing_extensions.Literal['*'],
-                    #  typing_extensions.Literal['**']]` for 1st param but got
-                    #  `typing_extensions.Literal['***']`.
+                    # pyre-ignore: Ignore type on 'star' since we're testing behavior
+                    # when somebody isn't using a type checker.
                     args=(cst.Arg(star="***", value=cst.SimpleString("'baz'")),),
                 ),
                 r"Must specify either '', '\*' or '\*\*' for star",
