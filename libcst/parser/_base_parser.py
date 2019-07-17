@@ -150,7 +150,18 @@ class BaseParser(Generic[_TokenT, _TokenTypeT, _NodeT]):
                 break
             except KeyError:
                 if stack[-1].dfa.is_final:
-                    self._pop()
+                    try:
+                        self._pop()
+                    except Exception:
+                        # convert_nonterminal may fail, try to recover enough to at
+                        # least tell us where in the file it failed.
+                        raise ParserSyntaxError(
+                            message="internal error",
+                            encountered="",  # TODO: encountered/expected are nonsense
+                            expected=[],
+                            pos=token.start_pos,
+                            lines=self.lines,
+                        )
                 else:
                     raise ParserSyntaxError(
                         message="incomplete input",

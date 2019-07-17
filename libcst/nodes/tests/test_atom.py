@@ -304,6 +304,83 @@ class AtomTest(CSTNodeTest):
                 "parser": parse_expression,
                 "expected_position": CodeRange.create((1, 1), (1, 9)),
             },
+            # Test that _safe_to_use_with_word_operator allows no space around quotes
+            {
+                "node": cst.Comparison(
+                    cst.SimpleString('"a"'),
+                    [
+                        cst.ComparisonTarget(
+                            cst.In(
+                                whitespace_before=cst.SimpleWhitespace(""),
+                                whitespace_after=cst.SimpleWhitespace(""),
+                            ),
+                            cst.SimpleString('"abc"'),
+                        )
+                    ],
+                ),
+                "code": '"a"in"abc"',
+                "parser": parse_expression,
+            },
+            {
+                "node": cst.Comparison(
+                    cst.SimpleString('"a"'),
+                    [
+                        cst.ComparisonTarget(
+                            cst.In(
+                                whitespace_before=cst.SimpleWhitespace(""),
+                                whitespace_after=cst.SimpleWhitespace(""),
+                            ),
+                            cst.ConcatenatedString(
+                                cst.SimpleString('"a"'), cst.SimpleString('"bc"')
+                            ),
+                        )
+                    ],
+                ),
+                "code": '"a"in"a""bc"',
+                "parser": parse_expression,
+            },
+            # Parenthesis make no spaces around a prefix okay
+            {
+                "node": cst.Comparison(
+                    cst.SimpleString('b"a"'),
+                    [
+                        cst.ComparisonTarget(
+                            cst.In(
+                                whitespace_before=cst.SimpleWhitespace(""),
+                                whitespace_after=cst.SimpleWhitespace(""),
+                            ),
+                            cst.SimpleString(
+                                'b"abc"',
+                                lpar=[cst.LeftParen()],
+                                rpar=[cst.RightParen()],
+                            ),
+                        )
+                    ],
+                ),
+                "code": 'b"a"in(b"abc")',
+                "parser": parse_expression,
+            },
+            {
+                "node": cst.Comparison(
+                    cst.SimpleString('b"a"'),
+                    [
+                        cst.ComparisonTarget(
+                            cst.In(
+                                whitespace_before=cst.SimpleWhitespace(""),
+                                whitespace_after=cst.SimpleWhitespace(""),
+                            ),
+                            cst.ConcatenatedString(
+                                cst.SimpleString('b"a"'),
+                                cst.SimpleString('b"bc"'),
+                                lpar=[cst.LeftParen()],
+                                rpar=[cst.RightParen()],
+                            ),
+                        )
+                    ],
+                ),
+                "code": 'b"a"in(b"a"b"bc")',
+                "parser": parse_expression,
+            },
             # Empty formatted strings
             {
                 "node": cst.FormattedString(start='f"', parts=(), end='"'),
@@ -802,6 +879,38 @@ class AtomTest(CSTNodeTest):
                     )
                 ),
                 "expected_re": "Cannot concatenate string and bytes",
+            },
+            # This isn't valid code: `"a" inb"abc"`
+            {
+                "get_node": (
+                    lambda: cst.Comparison(
+                        cst.SimpleString('"a"'),
+                        [
+                            cst.ComparisonTarget(
+                                cst.In(whitespace_after=cst.SimpleWhitespace("")),
+                                cst.SimpleString('b"abc"'),
+                            )
+                        ],
+                    )
+                ),
+                "expected_re": "Must have at least one space around comparison operator.",
+            },
+            # Also not valid: `"a" in b"a"b"bc"`
+            {
+                "get_node": (
+                    lambda: cst.Comparison(
+                        cst.SimpleString('"a"'),
+                        [
+                            cst.ComparisonTarget(
+                                cst.In(whitespace_after=cst.SimpleWhitespace("")),
+                                cst.ConcatenatedString(
+                                    cst.SimpleString('b"a"'), cst.SimpleString('b"bc"')
+                                ),
+                            )
+                        ],
+                    )
+                ),
+                "expected_re": "Must have at least one space around comparison operator.",
             },
         )
     )

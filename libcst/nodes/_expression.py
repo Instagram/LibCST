@@ -470,9 +470,30 @@ class BaseString(BaseAtom, ABC):
     pass
 
 
+class _BasePrefixedString(BaseString, ABC):
+    @abstractmethod
+    def _get_prefix(self) -> str:
+        ...
+
+    def _safe_to_use_with_word_operator(self, position: ExpressionPosition) -> bool:
+        """
+        `"a"in"abc` is okay, but if you add a prefix, (e.g. `b"a"inb"abc"`), the string
+        is no longer valid on the RHS of the word operator, because it's not clear where
+        the keyword ends and the prefix begins, unless it's parenthesized.
+        """
+        if position == ExpressionPosition.LEFT:
+            return True
+        elif self._get_prefix() == "":  # and position == ExpressionPosition.RIGHT
+            return True
+        else:
+            return super(_BasePrefixedString, self)._safe_to_use_with_word_operator(
+                position
+            )
+
+
 @add_slots
 @dataclass(frozen=True)
-class SimpleString(BaseString):
+class SimpleString(_BasePrefixedString):
     value: str
 
     # Sequence of open parenthesis for precidence dictation.
@@ -617,7 +638,7 @@ class FormattedStringExpression(BaseFormattedStringContent):
 
 @add_slots
 @dataclass(frozen=True)
-class FormattedString(BaseString):
+class FormattedString(_BasePrefixedString):
     # Sequence of formatted string parts
     parts: Sequence[BaseFormattedStringContent]
 
@@ -693,12 +714,22 @@ class ConcatenatedString(BaseString):
     # Whitespace between strings.
     whitespace_between: BaseParenthesizableWhitespace = SimpleWhitespace("")
 
+    def _safe_to_use_with_word_operator(self, position: ExpressionPosition) -> bool:
+        if super(ConcatenatedString, self)._safe_to_use_with_word_operator(position):
+            # if we have parenthesis, we're safe.
+            return True
+        elif position == ExpressionPosition.LEFT:
+            return self.right._safe_to_use_with_word_operator(position)
+        else:  # position == ExpressionPosition.RIGHT
+            return self.left._safe_to_use_with_word_operator(position)
+
     def _validate(self) -> None:
         super(ConcatenatedString, self)._validate()
 
         # Strings that are concatenated cannot have parens.
         if bool(self.left.lpar) or bool(self.left.rpar):
             raise CSTValidationError("Cannot concatenate parenthesized strings.")
+
         if bool(self.right.lpar) or bool(self.right.rpar):
             raise CSTValidationError("Cannot concatenate parenthesized strings.")
 
