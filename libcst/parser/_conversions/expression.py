@@ -687,7 +687,7 @@ def convert_trailer_attribute(config: ParserConfig, children: Sequence[Any]) -> 
 
 @with_production(
     "atom",
-    "atom_parens | atom_squarebrackets | atom_curlybraces | atom_string | atom_fstring | atom_basic | atom_ellipses",
+    "atom_parens | atom_squarebrackets | atom_curlybraces | atom_string | atom_basic | atom_ellipses",
 )
 def convert_atom(config: ParserConfig, children: Sequence[Any]) -> Any:
     (child,) = children
@@ -811,47 +811,12 @@ def convert_atom_ellipses(config: ParserConfig, children: Sequence[Any]) -> Any:
     return WithLeadingWhitespace(cst.Ellipses(), token.whitespace_before)
 
 
-@with_production("atom_string", "STRING atom_string | STRING STRING | STRING")
+@with_production("atom_string", "(STRING | fstring) [atom_string]")
 def convert_atom_string(config: ParserConfig, children: Sequence[Any]) -> Any:
     if len(children) == 1:
-        return WithLeadingWhitespace(
-            cst.SimpleString(children[0].string), children[0].whitespace_before
-        )
+        return children[0]
     else:
         left, right = children
-        if isinstance(right, Token):
-            return WithLeadingWhitespace(
-                cst.ConcatenatedString(
-                    left=cst.SimpleString(left.string),
-                    whitespace_between=parse_parenthesizable_whitespace(
-                        config, right.whitespace_before
-                    ),
-                    right=cst.SimpleString(right.string),
-                ),
-                left.whitespace_before,
-            )
-        else:
-            return WithLeadingWhitespace(
-                cst.ConcatenatedString(
-                    left=cst.SimpleString(left.string),
-                    whitespace_between=parse_parenthesizable_whitespace(
-                        config, right.whitespace_before
-                    ),
-                    right=right.value,
-                ),
-                left.whitespace_before,
-            )
-
-
-@with_production("atom_fstring", "fstring [ atom_fstring | fstring ]")
-def convert_atom_fstring(config: ParserConfig, children: Sequence[Any]) -> Any:
-    if len(children) == 1:
-        # Return the already-parsed f-string object
-        (child,) = children
-        return child
-    else:
-        left, right = children
-        # Return a concatenated version of these two f-strings
         return WithLeadingWhitespace(
             cst.ConcatenatedString(
                 left=left.value,

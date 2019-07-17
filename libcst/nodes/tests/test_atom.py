@@ -230,6 +230,30 @@ class AtomTest(CSTNodeTest):
                 ),
                 '"ab""c"',
             ),
+            (
+                cst.ConcatenatedString(
+                    cst.SimpleString('"ab"'),
+                    cst.ConcatenatedString(
+                        cst.SimpleString('"c"'), cst.SimpleString('"d"')
+                    ),
+                ),
+                '"ab""c""d"',
+            ),
+            # mixed SimpleString and FormattedString
+            (
+                cst.ConcatenatedString(
+                    cst.FormattedString([cst.FormattedStringText("ab")]),
+                    cst.SimpleString('"c"'),
+                ),
+                'f"ab""c"',
+            ),
+            (
+                cst.ConcatenatedString(
+                    cst.SimpleString('"ab"'),
+                    cst.FormattedString([cst.FormattedStringText("c")]),
+                ),
+                '"ab"f"c"',
+            ),
             # Concatenated parenthesized strings
             (
                 cst.ConcatenatedString(
