@@ -17,25 +17,25 @@ class AssertConstructionTest(CSTNodeTest):
     @data_provider(
         (
             # Simple assert
-            (cst.Assert(cst.Name("True")), "assert True"),
+            {"node": cst.Assert(cst.Name("True")), "code": "assert True"},
             # Assert with message
-            (
-                cst.Assert(
+            {
+                "node": cst.Assert(
                     cst.Name("True"), cst.SimpleString('"Value should be true"')
                 ),
-                'assert True, "Value should be true"',
-            ),
+                "code": 'assert True, "Value should be true"',
+            },
             # Whitespace oddities test
-            (
-                cst.Assert(
+            {
+                "node": cst.Assert(
                     cst.Name("True", lpar=(cst.LeftParen(),), rpar=(cst.RightParen(),)),
                     whitespace_after_assert=cst.SimpleWhitespace(""),
                 ),
-                "assert(True)",
-            ),
+                "code": "assert(True)",
+            },
             # Whitespace rendering test
-            (
-                cst.Assert(
+            {
+                "node": cst.Assert(
                     whitespace_after_assert=cst.SimpleWhitespace("  "),
                     test=cst.Name("True"),
                     comma=cst.Comma(
@@ -44,8 +44,8 @@ class AssertConstructionTest(CSTNodeTest):
                     ),
                     msg=cst.SimpleString('"Value should be true"'),
                 ),
-                'assert  True  ,  "Value should be true"',
-            ),
+                "code": 'assert  True  ,  "Value should be true"',
+            },
         )
     )
     def test_valid(
@@ -56,17 +56,22 @@ class AssertConstructionTest(CSTNodeTest):
     @data_provider(
         (
             # Validate whitespace handling
-            (
-                lambda: cst.Assert(
-                    cst.Name("True"), whitespace_after_assert=cst.SimpleWhitespace("")
+            {
+                "get_node": (
+                    lambda: cst.Assert(
+                        cst.Name("True"),
+                        whitespace_after_assert=cst.SimpleWhitespace(""),
+                    )
                 ),
-                "Must have at least one space after 'assert'",
-            ),
+                "expected_re": "Must have at least one space after 'assert'",
+            },
             # Validate comma handling
-            (
-                lambda: cst.Assert(test=cst.Name("True"), comma=cst.Comma()),
-                "Cannot have trailing comma after 'test'",
-            ),
+            {
+                "get_node": (
+                    lambda: cst.Assert(test=cst.Name("True"), comma=cst.Comma())
+                ),
+                "expected_re": "Cannot have trailing comma after 'test'",
+            },
         )
     )
     def test_invalid(
@@ -79,27 +84,27 @@ class AssertParsingTest(CSTNodeTest):
     @data_provider(
         (
             # Simple assert
-            (cst.Assert(cst.Name("True")), "assert True"),
+            {"node": cst.Assert(cst.Name("True")), "code": "assert True"},
             # Assert with message
-            (
-                cst.Assert(
+            {
+                "node": cst.Assert(
                     cst.Name("True"),
                     cst.SimpleString('"Value should be true"'),
                     comma=cst.Comma(whitespace_after=cst.SimpleWhitespace(" ")),
                 ),
-                'assert True, "Value should be true"',
-            ),
+                "code": 'assert True, "Value should be true"',
+            },
             # Whitespace oddities test
-            (
-                cst.Assert(
+            {
+                "node": cst.Assert(
                     cst.Name("True", lpar=(cst.LeftParen(),), rpar=(cst.RightParen(),)),
                     whitespace_after_assert=cst.SimpleWhitespace(""),
                 ),
-                "assert(True)",
-            ),
+                "code": "assert(True)",
+            },
             # Whitespace rendering test
-            (
-                cst.Assert(
+            {
+                "node": cst.Assert(
                     whitespace_after_assert=cst.SimpleWhitespace("  "),
                     test=cst.Name("True"),
                     comma=cst.Comma(
@@ -108,8 +113,8 @@ class AssertParsingTest(CSTNodeTest):
                     ),
                     msg=cst.SimpleString('"Value should be true"'),
                 ),
-                'assert  True  ,  "Value should be true"',
-            ),
+                "code": 'assert  True  ,  "Value should be true"',
+            },
         )
     )
     def test_valid(
