@@ -118,7 +118,13 @@ class CodegenState:
             node._metadata[self.provider] = position
 
     @contextmanager
-    def record_syntactic_position(self, node: _CSTNodeT) -> Iterator[None]:
+    def record_syntactic_position(
+        self,
+        node: _CSTNodeT,
+        *,
+        start_node: Optional[_CSTNodeT] = None,
+        end_node: Optional[_CSTNodeT] = None,
+    ) -> Iterator[None]:
         yield
 
 
@@ -133,12 +139,27 @@ class SyntacticCodegenState(CodegenState):
         self.provider = SyntacticPositionProvider
 
     @contextmanager
-    def record_syntactic_position(self, node: _CSTNodeT) -> Iterator[None]:
+    def record_syntactic_position(
+        self,
+        node: _CSTNodeT,
+        *,
+        start_node: Optional[_CSTNodeT] = None,
+        end_node: Optional[_CSTNodeT] = None,
+    ) -> Iterator[None]:
         start = CodePosition(self.line, self.column)
         try:
             yield
         finally:
             end = CodePosition(self.line, self.column)
+
+            # Override with positions hoisted from child nodes if provided
+            start = (
+                start_node._metadata[self.provider].start
+                if start_node is not None
+                else start
+            )
+            end = end_node._metadata[self.provider].end if end_node is not None else end
+
             node._metadata[self.provider] = CodeRange(start, end)
 
 

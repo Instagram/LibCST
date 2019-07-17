@@ -7,6 +7,7 @@
 from typing import Any, Callable
 
 import libcst.nodes as cst
+from libcst.nodes._internal import CodeRange
 from libcst.nodes.tests.base import CSTNodeTest
 from libcst.parser import parse_expression, parse_statement
 from libcst.testing.utils import data_provider
@@ -39,6 +40,7 @@ class ListTest(CSTNodeTest):
                 ),
                 "code": "[\tsingle_element    ]",
                 "parser": parse_expression,
+                "expected_position": CodeRange.create((1, 0), (1, 21)),
             },
             # two-element list, sentinel comma value
             {
@@ -57,6 +59,7 @@ class ListTest(CSTNodeTest):
                 ),
                 "code": "([one])",
                 "parser": None,
+                "expected_position": CodeRange.create((1, 1), (1, 6)),
             },
             # starred element
             {
@@ -68,6 +71,7 @@ class ListTest(CSTNodeTest):
                 ),
                 "code": "[*one, *two]",
                 "parser": None,
+                "expected_position": CodeRange.create((1, 0), (1, 12)),
             },
             # missing spaces around list, always okay
             {

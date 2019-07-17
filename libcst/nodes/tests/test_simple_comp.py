@@ -7,6 +7,7 @@
 from typing import Any, Callable
 
 import libcst.nodes as cst
+from libcst.nodes._internal import CodeRange
 from libcst.nodes.tests.base import CSTNodeTest
 from libcst.parser import parse_expression
 from libcst.testing.utils import data_provider
@@ -22,6 +23,7 @@ class SimpleCompTest(CSTNodeTest):
                 ),
                 "code": "(a for b in c)",
                 "parser": parse_expression,
+                "expected_position": CodeRange.create((1, 1), (1, 13)),
             },
             # simple ListComp
             {
@@ -30,6 +32,7 @@ class SimpleCompTest(CSTNodeTest):
                 ),
                 "code": "[a for b in c]",
                 "parser": parse_expression,
+                "expected_position": CodeRange.create((1, 0), (1, 14)),
             },
             # simple SetComp
             {
@@ -86,6 +89,7 @@ class SimpleCompTest(CSTNodeTest):
                 ),
                 "code": "(a for b in c if d if e if f)",
                 "parser": parse_expression,
+                "expected_position": CodeRange.create((1, 1), (1, 28)),
             },
             # nested/inner for-in clause
             {
@@ -144,6 +148,7 @@ class SimpleCompTest(CSTNodeTest):
                 ),
                 "code": "(\fa  for   b    in     c\tif\t\td\f\f)",
                 "parser": parse_expression,
+                "expected_position": CodeRange.create((1, 2), (1, 30)),
             },
             # custom whitespace around ListComp's brackets
             {
@@ -163,6 +168,7 @@ class SimpleCompTest(CSTNodeTest):
                 ),
                 "code": "(\f[\ta for b in c\t\t]\f\f)",
                 "parser": parse_expression,
+                "expected_position": CodeRange.create((1, 2), (1, 19)),
             },
             # custom whitespace around SetComp's braces
             {
@@ -225,6 +231,7 @@ class SimpleCompTest(CSTNodeTest):
                 ),
                 "code": "((a)for(b)in(c)if(d)for(e)in(f))",
                 "parser": parse_expression,
+                "expected_position": CodeRange.create((1, 1), (1, 31)),
             },
             # no whitespace before/after GeneratorExp is valid
             {

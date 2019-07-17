@@ -206,7 +206,8 @@ class Asynchronous(CSTNode):
         )
 
     def _codegen_impl(self, state: CodegenState) -> None:
-        state.add_token("async")
+        with state.record_syntactic_position(self):
+            state.add_token("async")
         self.whitespace_after._codegen(state)
 
 
@@ -598,21 +599,20 @@ class FormattedStringExpression(BaseFormattedStringContent):
         )
 
     def _codegen_impl(self, state: CodegenState) -> None:
-        with state.record_syntactic_position(self):
-            state.add_token("{")
-            self.whitespace_before_expression._codegen(state)
-            self.expression._codegen(state)
-            self.whitespace_after_expression._codegen(state)
-            conversion = self.conversion
-            if conversion is not None:
-                state.add_token("!")
-                state.add_token(conversion)
-            format_spec = self.format_spec
-            if format_spec is not None:
-                state.add_token(":")
-                for spec in format_spec:
-                    spec._codegen(state)
-            state.add_token("}")
+        state.add_token("{")
+        self.whitespace_before_expression._codegen(state)
+        self.expression._codegen(state)
+        self.whitespace_after_expression._codegen(state)
+        conversion = self.conversion
+        if conversion is not None:
+            state.add_token("!")
+            state.add_token(conversion)
+        format_spec = self.format_spec
+        if format_spec is not None:
+            state.add_token(":")
+            for spec in format_spec:
+                spec._codegen(state)
+        state.add_token("}")
 
 
 @add_slots
@@ -1033,8 +1033,7 @@ class Index(CSTNode):
         return Index(value=visit_required("value", self.value, visitor))
 
     def _codegen_impl(self, state: CodegenState) -> None:
-        with state.record_syntactic_position(self):
-            self.value._codegen(state)
+        self.value._codegen(state)
 
 
 @add_slots
@@ -1071,22 +1070,21 @@ class Slice(CSTNode):
         )
 
     def _codegen_impl(self, state: CodegenState) -> None:
-        with state.record_syntactic_position(self):
-            lower = self.lower
-            if lower is not None:
-                lower._codegen(state)
-            self.first_colon._codegen(state)
-            upper = self.upper
-            if upper is not None:
-                upper._codegen(state)
-            second_colon = self.second_colon
-            if second_colon is MaybeSentinel.DEFAULT and self.step is not None:
-                state.add_token(":")
-            elif isinstance(second_colon, Colon):
-                second_colon._codegen(state)
-            step = self.step
-            if step is not None:
-                step._codegen(state)
+        lower = self.lower
+        if lower is not None:
+            lower._codegen(state)
+        self.first_colon._codegen(state)
+        upper = self.upper
+        if upper is not None:
+            upper._codegen(state)
+        second_colon = self.second_colon
+        if second_colon is MaybeSentinel.DEFAULT and self.step is not None:
+            state.add_token(":")
+        elif isinstance(second_colon, Colon):
+            second_colon._codegen(state)
+        step = self.step
+        if step is not None:
+            step._codegen(state)
 
 
 @add_slots
@@ -1476,62 +1474,58 @@ class Parameters(CSTNode):
         )
 
     def _codegen_impl(self, state: CodegenState) -> None:
-        # TODO: remove this when fallback to syntactic whitespace becomes available
-        with state.record_syntactic_position(self):
-            # Compute the star existence first so we can ask about whether
-            # each element is the last in the list or not.
-            star_arg = self.star_arg
-            if isinstance(star_arg, MaybeSentinel):
-                starincluded = len(self.kwonly_params) > 0
-            elif isinstance(star_arg, (Param, ParamStar)):
-                starincluded = True
-            else:
-                starincluded = False
-            # Render out the params first, computing necessary trailing commas.
-            lastparam = len(self.params) - 1
-            more_values = (
-                len(self.default_params) > 0
-                or starincluded
-                or len(self.kwonly_params) > 0
-                or self.star_kwarg is not None
+        # Compute the star existence first so we can ask about whether
+        # each element is the last in the list or not.
+        star_arg = self.star_arg
+        if isinstance(star_arg, MaybeSentinel):
+            starincluded = len(self.kwonly_params) > 0
+        elif isinstance(star_arg, (Param, ParamStar)):
+            starincluded = True
+        else:
+            starincluded = False
+        # Render out the params first, computing necessary trailing commas.
+        lastparam = len(self.params) - 1
+        more_values = (
+            len(self.default_params) > 0
+            or starincluded
+            or len(self.kwonly_params) > 0
+            or self.star_kwarg is not None
+        )
+        for i, param in enumerate(self.params):
+            param._codegen(
+                state, default_star="", default_comma=(i < lastparam or more_values)
             )
-            for i, param in enumerate(self.params):
-                param._codegen(
-                    state, default_star="", default_comma=(i < lastparam or more_values)
-                )
-            # Render out the default_params next, computing necessary trailing commas.
-            lastparam = len(self.default_params) - 1
-            more_values = (
-                starincluded
-                or len(self.kwonly_params) > 0
-                or self.star_kwarg is not None
+        # Render out the default_params next, computing necessary trailing commas.
+        lastparam = len(self.default_params) - 1
+        more_values = (
+            starincluded or len(self.kwonly_params) > 0 or self.star_kwarg is not None
+        )
+        for i, param in enumerate(self.default_params):
+            param._codegen(
+                state, default_star="", default_comma=(i < lastparam or more_values)
             )
-            for i, param in enumerate(self.default_params):
-                param._codegen(
-                    state, default_star="", default_comma=(i < lastparam or more_values)
-                )
-            # Render out optional star sentinel if its explicitly included or
-            # if we are inferring it from kwonly_params. Otherwise, render out the
-            # optional star_arg.
-            if isinstance(star_arg, MaybeSentinel):
-                if starincluded:
-                    state.add_token("*, ")
-            elif isinstance(star_arg, Param):
-                more_values = len(self.kwonly_params) > 0 or self.star_kwarg is not None
-                star_arg._codegen(state, default_star="*", default_comma=more_values)
-            elif isinstance(star_arg, ParamStar):
-                star_arg._codegen(state)
-            # Render out the kwonly_args next, computing necessary trailing commas.
-            lastparam = len(self.kwonly_params) - 1
-            more_values = self.star_kwarg is not None
-            for i, param in enumerate(self.kwonly_params):
-                param._codegen(
-                    state, default_star="", default_comma=(i < lastparam or more_values)
-                )
-            # Finally, render out any optional star_kwarg
-            star_kwarg = self.star_kwarg
-            if star_kwarg is not None:
-                star_kwarg._codegen(state, default_star="**", default_comma=False)
+        # Render out optional star sentinel if its explicitly included or
+        # if we are inferring it from kwonly_params. Otherwise, render out the
+        # optional star_arg.
+        if isinstance(star_arg, MaybeSentinel):
+            if starincluded:
+                state.add_token("*, ")
+        elif isinstance(star_arg, Param):
+            more_values = len(self.kwonly_params) > 0 or self.star_kwarg is not None
+            star_arg._codegen(state, default_star="*", default_comma=more_values)
+        elif isinstance(star_arg, ParamStar):
+            star_arg._codegen(state)
+        # Render out the kwonly_args next, computing necessary trailing commas.
+        lastparam = len(self.kwonly_params) - 1
+        more_values = self.star_kwarg is not None
+        for i, param in enumerate(self.kwonly_params):
+            param._codegen(
+                state, default_star="", default_comma=(i < lastparam or more_values)
+            )
+        # Finally, render out any optional star_kwarg
+        star_kwarg = self.star_kwarg
+        if star_kwarg is not None:
+            star_kwarg._codegen(state, default_star="**", default_comma=False)
 
 
 @add_slots
@@ -1839,15 +1833,14 @@ class Call(_BaseExpressionWithArgs):
 
     def _codegen_impl(self, state: CodegenState) -> None:
         with self._parenthesize(state):
-            with state.record_syntactic_position(self):
-                self.func._codegen(state)
-                self.whitespace_after_func._codegen(state)
-                state.add_token("(")
-                self.whitespace_before_args._codegen(state)
-                lastarg = len(self.args) - 1
-                for i, arg in enumerate(self.args):
-                    arg._codegen(state, default_comma=(i != lastarg))
-                state.add_token(")")
+            self.func._codegen(state)
+            self.whitespace_after_func._codegen(state)
+            state.add_token("(")
+            self.whitespace_before_args._codegen(state)
+            lastarg = len(self.args) - 1
+            for i, arg in enumerate(self.args):
+                arg._codegen(state, default_comma=(i != lastarg))
+            state.add_token(")")
 
 
 @add_slots
@@ -2144,6 +2137,7 @@ class Element(BaseElement):
     ) -> None:
         with state.record_syntactic_position(self):
             self.value._codegen(state)
+
         comma = self.comma
         if comma is MaybeSentinel.DEFAULT and default_comma:
             if default_comma_whitespace:
