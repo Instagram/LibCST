@@ -4,7 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 # pyre-strict
-from typing import Callable, Optional
+from typing import Any
 
 import libcst.nodes as cst
 from libcst.nodes._internal import CodeRange
@@ -17,74 +17,119 @@ class BinaryOperationTest(CSTNodeTest):
     @data_provider(
         (
             # Simple binary operations
-            (
-                cst.BinaryOperation(cst.Name("foo"), cst.Add(), cst.Float("5.5")),
-                "foo + 5.5",
-            ),
-            (
-                cst.BinaryOperation(cst.Name("foo"), cst.Subtract(), cst.Float("5.5")),
-                "foo - 5.5",
-            ),
-            (
-                cst.BinaryOperation(cst.Name("foo"), cst.LeftShift(), cst.Integer("5")),
-                "foo << 5",
-            ),
-            (
-                cst.BinaryOperation(
+            # pyre-fixme[6]: Incompatible parameter type
+            {
+                "node": cst.BinaryOperation(
+                    cst.Name("foo"), cst.Add(), cst.Float("5.5")
+                ),
+                "code": "foo + 5.5",
+                "parser": parse_expression,
+                "expected_position": None,
+            },
+            {
+                "node": cst.BinaryOperation(
+                    cst.Name("foo"), cst.Subtract(), cst.Float("5.5")
+                ),
+                "code": "foo - 5.5",
+                "parser": parse_expression,
+                "expected_position": None,
+            },
+            {
+                "node": cst.BinaryOperation(
+                    cst.Name("foo"), cst.LeftShift(), cst.Integer("5")
+                ),
+                "code": "foo << 5",
+                "parser": parse_expression,
+                "expected_position": None,
+            },
+            {
+                "node": cst.BinaryOperation(
                     cst.Name("foo"), cst.RightShift(), cst.Integer("5")
                 ),
-                "foo >> 5",
-            ),
-            (
-                cst.BinaryOperation(cst.Name("foo"), cst.BitAnd(), cst.Name("bar")),
-                "foo & bar",
-            ),
-            (
-                cst.BinaryOperation(cst.Name("foo"), cst.BitXor(), cst.Name("bar")),
-                "foo ^ bar",
-            ),
-            (
-                cst.BinaryOperation(cst.Name("foo"), cst.BitOr(), cst.Name("bar")),
-                "foo | bar",
-            ),
-            (
-                cst.BinaryOperation(cst.Name("foo"), cst.Multiply(), cst.Float("5.5")),
-                "foo * 5.5",
-            ),
-            (
-                cst.BinaryOperation(
+                "code": "foo >> 5",
+                "parser": parse_expression,
+                "expected_position": None,
+            },
+            {
+                "node": cst.BinaryOperation(
+                    cst.Name("foo"), cst.BitAnd(), cst.Name("bar")
+                ),
+                "code": "foo & bar",
+                "parser": parse_expression,
+                "expected_position": None,
+            },
+            {
+                "node": cst.BinaryOperation(
+                    cst.Name("foo"), cst.BitXor(), cst.Name("bar")
+                ),
+                "code": "foo ^ bar",
+                "parser": parse_expression,
+                "expected_position": None,
+            },
+            {
+                "node": cst.BinaryOperation(
+                    cst.Name("foo"), cst.BitOr(), cst.Name("bar")
+                ),
+                "code": "foo | bar",
+                "parser": parse_expression,
+                "expected_position": None,
+            },
+            {
+                "node": cst.BinaryOperation(
+                    cst.Name("foo"), cst.Multiply(), cst.Float("5.5")
+                ),
+                "code": "foo * 5.5",
+                "parser": parse_expression,
+                "expected_position": None,
+            },
+            {
+                "node": cst.BinaryOperation(
                     cst.Name("foo"), cst.MatrixMultiply(), cst.Float("5.5")
                 ),
-                "foo @ 5.5",
-            ),
-            (
-                cst.BinaryOperation(cst.Name("foo"), cst.Divide(), cst.Float("5.5")),
-                "foo / 5.5",
-            ),
-            (
-                cst.BinaryOperation(cst.Name("foo"), cst.Modulo(), cst.Float("5.5")),
-                "foo % 5.5",
-            ),
-            (
-                cst.BinaryOperation(
+                "code": "foo @ 5.5",
+                "parser": parse_expression,
+                "expected_position": None,
+            },
+            {
+                "node": cst.BinaryOperation(
+                    cst.Name("foo"), cst.Divide(), cst.Float("5.5")
+                ),
+                "code": "foo / 5.5",
+                "parser": parse_expression,
+                "expected_position": None,
+            },
+            {
+                "node": cst.BinaryOperation(
+                    cst.Name("foo"), cst.Modulo(), cst.Float("5.5")
+                ),
+                "code": "foo % 5.5",
+                "parser": parse_expression,
+                "expected_position": None,
+            },
+            {
+                "node": cst.BinaryOperation(
                     cst.Name("foo"), cst.FloorDivide(), cst.Float("5.5")
                 ),
-                "foo // 5.5",
-            ),
+                "code": "foo // 5.5",
+                "parser": parse_expression,
+                "expected_position": None,
+            },
             # Parenthesized binary operation
-            (
-                cst.BinaryOperation(
+            {
+                "node": cst.BinaryOperation(
                     lpar=(cst.LeftParen(),),
                     left=cst.Name("foo"),
                     operator=cst.LeftShift(),
                     right=cst.Integer("5"),
                     rpar=(cst.RightParen(),),
                 ),
-                "(foo << 5)",
-            ),
+                "code": "(foo << 5)",
+                "parser": parse_expression,
+                "expected_position": None,
+            },
             # Make sure that spacing works
-            (
-                cst.BinaryOperation(
+            {
+                "node": cst.BinaryOperation(
                     lpar=(cst.LeftParen(whitespace_after=cst.SimpleWhitespace(" ")),),
                     left=cst.Name("foo"),
                     operator=cst.Multiply(
@@ -94,43 +139,44 @@ class BinaryOperationTest(CSTNodeTest):
                     right=cst.Name("bar"),
                     rpar=(cst.RightParen(whitespace_before=cst.SimpleWhitespace(" ")),),
                 ),
-                "( foo  *  bar )",
-                CodeRange.create((1, 2), (1, 13)),
-            ),
+                "code": "( foo  *  bar )",
+                "parser": parse_expression,
+                "expected_position": CodeRange.create((1, 2), (1, 13)),
+            },
         )
     )
-    def test_valid(
-        self, node: cst.CSTNode, code: str, position: Optional[CodeRange] = None
-    ) -> None:
-        self.validate_node(node, code, parse_expression, expected_position=position)
+    def test_valid(self, **kwargs: Any) -> None:
+        self.validate_node(**kwargs)
 
     @data_provider(
         (
-            (
-                lambda: cst.BinaryOperation(
-                    cst.Name("foo"),
-                    # pyre-fixme[6]: Expected `BaseBinaryOp` for 2nd param but got
-                    #  `Plus`.
-                    cst.Plus(),
-                    cst.Name("bar"),
-                    lpar=(cst.LeftParen(),),
+            {
+                "get_node": (
+                    lambda: cst.BinaryOperation(
+                        cst.Name("foo"),
+                        # pyre-fixme[6]: Expected `BaseBinaryOp` for 2nd param but got
+                        #  `Plus`.
+                        cst.Plus(),
+                        cst.Name("bar"),
+                        lpar=(cst.LeftParen(),),
+                    )
                 ),
-                "left paren without right paren",
-            ),
-            (
-                lambda: cst.BinaryOperation(
-                    cst.Name("foo"),
-                    # pyre-fixme[6]: Expected `BaseBinaryOp` for 2nd param but got
-                    #  `Plus`.
-                    cst.Plus(),
-                    cst.Name("bar"),
-                    rpar=(cst.RightParen(),),
+                "expected_re": "left paren without right paren",
+            },
+            {
+                "get_node": (
+                    lambda: cst.BinaryOperation(
+                        cst.Name("foo"),
+                        # pyre-fixme[6]: Expected `BaseBinaryOp` for 2nd param but got
+                        #  `Plus`.
+                        cst.Plus(),
+                        cst.Name("bar"),
+                        rpar=(cst.RightParen(),),
+                    )
                 ),
-                "right paren without left paren",
-            ),
+                "expected_re": "right paren without left paren",
+            },
         )
     )
-    def test_invalid(
-        self, get_node: Callable[[], cst.CSTNode], expected_re: str
-    ) -> None:
-        self.assert_invalid(get_node, expected_re)
+    def test_invalid(self, **kwargs: Any) -> None:
+        self.assert_invalid(**kwargs)
