@@ -4,7 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 # pyre-strict
-from typing import Callable, Optional
+from typing import Any
 
 import libcst.nodes as cst
 from libcst.nodes._internal import CodeRange
@@ -17,48 +17,62 @@ class AwaitTest(CSTNodeTest):
     @data_provider(
         (
             # Some simple calls
-            (cst.Await(cst.Name("test")), "await test"),
-            (cst.Await(cst.Call(cst.Name("test"))), "await test()"),
+            # pyre-fixme[6]: Incompatible parameter type
+            {
+                "node": cst.Await(cst.Name("test")),
+                "code": "await test",
+                "parser": parse_expression,
+                "expected_position": None,
+            },
+            {
+                "node": cst.Await(cst.Call(cst.Name("test"))),
+                "code": "await test()",
+                "parser": parse_expression,
+                "expected_position": None,
+            },
             # Whitespace
-            (
-                cst.Await(
+            {
+                "node": cst.Await(
                     cst.Name("test"),
                     whitespace_after_await=cst.SimpleWhitespace("  "),
                     lpar=(cst.LeftParen(whitespace_after=cst.SimpleWhitespace(" ")),),
                     rpar=(cst.RightParen(whitespace_before=cst.SimpleWhitespace(" ")),),
                 ),
-                "( await  test )",
-                CodeRange.create((1, 2), (1, 13)),
-            ),
+                "code": "( await  test )",
+                "parser": parse_expression,
+                "expected_position": CodeRange.create((1, 2), (1, 13)),
+            },
         )
     )
-    def test_valid(
-        self, node: cst.CSTNode, code: str, position: Optional[CodeRange] = None
-    ) -> None:
+    def test_valid(self, **kwargs: Any) -> None:
         # We don't have sentinel nodes for atoms, so we know that 100% of atoms
         # can be parsed identically to their creation.
-        self.validate_node(node, code, parse_expression, expected_position=position)
+        self.validate_node(**kwargs)
 
     @data_provider(
         (
             # Expression wrapping parenthesis rules
-            (
-                lambda: cst.Await(cst.Name("foo"), lpar=(cst.LeftParen(),)),
-                "left paren without right paren",
-            ),
-            (
-                lambda: cst.Await(cst.Name("foo"), rpar=(cst.RightParen(),)),
-                "right paren without left paren",
-            ),
-            (
-                lambda: cst.Await(
-                    cst.Name("foo"), whitespace_after_await=cst.SimpleWhitespace("")
+            {
+                "get_node": (
+                    lambda: cst.Await(cst.Name("foo"), lpar=(cst.LeftParen(),))
                 ),
-                "at least one space after await",
-            ),
+                "expected_re": "left paren without right paren",
+            },
+            {
+                "get_node": (
+                    lambda: cst.Await(cst.Name("foo"), rpar=(cst.RightParen(),))
+                ),
+                "expected_re": "right paren without left paren",
+            },
+            {
+                "get_node": (
+                    lambda: cst.Await(
+                        cst.Name("foo"), whitespace_after_await=cst.SimpleWhitespace("")
+                    )
+                ),
+                "expected_re": "at least one space after await",
+            },
         )
     )
-    def test_invalid(
-        self, get_node: Callable[[], cst.CSTNode], expected_re: str
-    ) -> None:
-        self.assert_invalid(get_node, expected_re)
+    def test_invalid(self, **kwargs: Any) -> None:
+        self.assert_invalid(**kwargs)
