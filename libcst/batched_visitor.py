@@ -5,12 +5,27 @@
 
 # pyre-strict
 import inspect
-from typing import Callable, Iterable, List, Mapping, MutableMapping, Optional
+from typing import (
+    TYPE_CHECKING,
+    Callable,
+    Iterable,
+    List,
+    Mapping,
+    MutableMapping,
+    Optional,
+    Sequence,
+    Type,
+    cast,
+)
 
 import libcst.nodes as cst
 from libcst.matchers import CSTMatchers
 from libcst.metadata._interface import _MetadataInterface
 from libcst.visitors import CSTNodeT, CSTVisitor
+
+
+if TYPE_CHECKING:
+    from libcst.metadata.base_provider import BaseMetadataProvider
 
 
 VisitorMethod = Callable[[cst.CSTNode], None]
@@ -45,24 +60,28 @@ class BatchableCSTVisitor(CSTMatchers, _MetadataInterface):
 
 
 def visit(
-    module: cst.CSTNode,
+    node: CSTNodeT,
     visitors: Iterable[BatchableCSTVisitor],
     before_visit: Optional[VisitorMethod] = None,
     after_leave: Optional[VisitorMethod] = None,
-) -> None:
+) -> CSTNodeT:
     """
-    Create and run a batched visitor composed of [visitors] over [module].
+    Returns the result of running all visitors [visitors] over [node].
 
     [before_visit] and [after_leave] are provided as optional hooks to
     execute before visit_* and after leave_* methods are executed by the
     batched visitor.
     """
 
+    class BatchedCSTVisitor(_BatchedCSTVisitor):
+        # pyre-ignore[4]: Attribute is inherited from a base class
+        METADATA_DEPENDENCIES = _get_visitor_dependencies(visitors)
+
     visitor_methods = _get_visitor_methods(visitors)
-    batched_visitor = _BatchedCSTVisitor(
+    batched_visitor = BatchedCSTVisitor(
         visitor_methods, before_visit=before_visit, after_leave=after_leave
     )
-    module.visit(batched_visitor)
+    return cast(CSTNodeT, node.visit(batched_visitor))
 
 
 def _get_visitor_methods(
@@ -75,7 +94,17 @@ def _get_visitor_methods(
     return visitor_methods
 
 
-class _BatchedCSTVisitor(CSTVisitor, _MetadataInterface):
+def _get_visitor_dependencies(
+    batchable_visitors: Iterable[BatchableCSTVisitor]
+) -> Sequence[Type["BaseMetadataProvider[object]"]]:
+    dependencies = set()
+    for visitor in batchable_visitors:
+        dependencies |= set(visitor.METADATA_DEPENDENCIES)
+
+    return tuple(dependencies)
+
+
+class _BatchedCSTVisitor(CSTVisitor):
 
     visitor_methods: _VisitorMethodCollection
     before_visit: Optional[VisitorMethod]

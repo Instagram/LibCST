@@ -5,6 +5,7 @@
 
 # pyre-strict
 import libcst.nodes as cst
+from libcst.batched_visitor import BatchableCSTVisitor, visit
 from libcst.metadata.position_provider import SyntacticPositionProvider
 from libcst.nodes._internal import CodeRange
 from libcst.parser import parse_module
@@ -31,3 +32,15 @@ class PositionProviderTest(UnitTest):
 
         module = parse_module("pass")
         module.visit(DependentVisitor())
+
+    def test_batchable_provider(self) -> None:
+        test = self
+
+        class ABatchable(BatchableCSTVisitor):
+            METADATA_DEPENDENCIES = (SyntacticPositionProvider,)
+
+            def visit_Pass(self, node: cst.Pass) -> None:
+                range = self.get_metadata(SyntacticPositionProvider, node)
+                test.assertEqual(range, CodeRange.create((1, 0), (1, 4)))
+
+        visit(parse_module("pass"), [ABatchable()])
