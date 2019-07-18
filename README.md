@@ -1,4 +1,5 @@
 # LibCST
+[![CircleCI](https://circleci.com/gh/Instagram/LibCST/tree/master.svg?style=svg&circle-token=f89ff46c689cf53116308db295a492d687bf5732)](https://circleci.com/gh/Instagram/LibCST/tree/master)
 
 TODO: Add documentation.
 
