@@ -13,7 +13,7 @@ from libcst._removal_sentinel import RemovalSentinel
 from libcst.nodes._base import CSTNode, CSTValidationError
 from libcst.nodes._expression import LeftParen, RightParen
 from libcst.nodes._internal import CodegenState, visit_sequence
-from libcst.nodes._whitespace import EmptyLine, TrailingWhitespace
+from libcst.nodes._whitespace import EmptyLine, TrailingWhitespace  # noqa: F401
 from libcst.visitors import CSTVisitorT
 
 

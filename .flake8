@@ -86,6 +86,7 @@ ignore =
   # I think these are internal to pycodestyle?
   # E901,  # SyntaxError or IndentationError
   # E902,  # IOError
+  F811,  # isn't aware of type-only imports, results in false-positives
   W191,  # indentation contains tabs
   W291,  # trailing whitespace; is same as TXT6 (Trailing Whitespace).
   W292,  # no newline at end of file; is same as TXT4 (File Does Not End in

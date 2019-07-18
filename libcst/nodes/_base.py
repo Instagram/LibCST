@@ -26,7 +26,7 @@ from libcst.visitors import CSTTransformer, CSTVisitor, CSTVisitorT
 
 
 if TYPE_CHECKING:
-    from libcst.metadata.base_provider import BaseMetadataProvider
+    from libcst.metadata.base_provider import BaseMetadataProvider  # noqa: F401
 
 
 _T = TypeVar("_T")

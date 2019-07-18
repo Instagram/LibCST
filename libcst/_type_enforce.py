@@ -15,7 +15,7 @@ except ImportError:  # py36
     from typing import _ForwardRef as ForwardRef
 
 
-def is_value_of_type(
+def is_value_of_type(  # noqa: C901 "too complex"
     value: Any, expected_type: Any, invariant_check: bool = False
 ) -> bool:
     """

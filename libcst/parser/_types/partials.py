@@ -6,7 +6,6 @@
 # pyre-strict
 
 from dataclasses import dataclass
-from enum import Enum
 from typing import Generic, Optional, Sequence, TypeVar, Union
 
 import libcst.nodes as cst

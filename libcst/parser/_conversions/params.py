@@ -14,7 +14,7 @@ from libcst.parser._types.partials import ParamStarPartial
 from libcst.parser._whitespace_parser import parse_parenthesizable_whitespace
 
 
-@with_production(
+@with_production(  # noqa: C901: too complex
     "typedargslist",
     (
         "(tfpdef_assign (',' tfpdef_assign)* "

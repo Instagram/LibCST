@@ -25,7 +25,7 @@ from libcst.visitors import CSTNodeT, CSTVisitor
 
 
 if TYPE_CHECKING:
-    from libcst.metadata.base_provider import BaseMetadataProvider
+    from libcst.metadata.base_provider import BaseMetadataProvider  # noqa: F401
 
 
 VisitorMethod = Callable[[cst.CSTNode], None]

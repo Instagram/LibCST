@@ -9,7 +9,6 @@
 # python -m libcst.tool print python_file.py
 
 # pyre-strict
-
 import argparse
 import dataclasses
 import sys
@@ -23,7 +22,7 @@ from libcst.parser import parse_module
 _DEFAULT_INDENT: str = "  "
 
 
-def _node_repr_recursive(
+def _node_repr_recursive(  # noqa: C901
     node: object,
     *,
     indent: str = _DEFAULT_INDENT,

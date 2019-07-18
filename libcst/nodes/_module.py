@@ -22,7 +22,7 @@ from libcst.visitors import CSTVisitorT
 
 if TYPE_CHECKING:
     # These are circular dependencies only used for typing purposes
-    from libcst.metadata.position_provider import (
+    from libcst.metadata.position_provider import (  # noqa: F401
         BasicPositionProvider,
         SyntacticPositionProvider,
     )

@@ -41,7 +41,7 @@ class BaseParenthesizableWhitespace(CSTNode, ABC):
 
     https://docs.python.org/3/reference/lexical_analysis.html#implicit-line-joining
 
-    ParenthesizableWhitespace may contain a backslash character (`\`), when used as a
+    ParenthesizableWhitespace may contain a backslash character (`\\`), when used as a
     line-continuation character. While the continuation character isn't technically
     "whitespace", it serves the same purpose.
 
@@ -84,7 +84,7 @@ class Newline(BaseLeaf):
     TrailingWhitespace).
 
     Other newlines may occur in the document after continuation characters (the
-    backslash, `\`), but those newlines are treated as part of the SimpleWhitespace.
+    backslash, `\\`), but those newlines are treated as part of the SimpleWhitespace.
     """
 
     # A value of 'None' indicates that the module's default newline sequence should be

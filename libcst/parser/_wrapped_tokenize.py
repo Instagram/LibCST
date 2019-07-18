@@ -105,7 +105,7 @@ def tokenize_lines(
         yield _convert_token(state, curr_token, None)
 
 
-def _convert_token(
+def _convert_token(  # noqa: C901: too complex
     state: _TokenizeState, curr_token: OrigToken, next_token: Optional[OrigToken]
 ) -> Token:
     ct_type = curr_token.type

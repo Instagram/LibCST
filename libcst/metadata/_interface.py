@@ -10,8 +10,8 @@ from typing import TYPE_CHECKING, ClassVar, Sequence, Type, TypeVar
 
 if TYPE_CHECKING:
     # Circular dependency for typing reasons only
-    from libcst.nodes._base import CSTNode
-    from libcst.metadata.base_provider import BaseMetadataProvider
+    from libcst.nodes._base import CSTNode  # noqa: F401
+    from libcst.metadata.base_provider import BaseMetadataProvider  # noqa: F401
 
 
 _T = TypeVar("_T")
