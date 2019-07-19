@@ -230,6 +230,7 @@ class AssignEqual(_BaseOneTokenOp):
         return "="
 
 
+@add_slots
 @dataclass(frozen=True)
 class Plus(BaseUnaryOp):
     whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace("")
@@ -238,6 +239,7 @@ class Plus(BaseUnaryOp):
         return "+"
 
 
+@add_slots
 @dataclass(frozen=True)
 class Minus(BaseUnaryOp):
     whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace("")
@@ -246,6 +248,7 @@ class Minus(BaseUnaryOp):
         return "-"
 
 
+@add_slots
 @dataclass(frozen=True)
 class BitInvert(BaseUnaryOp):
     whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace("")
@@ -254,6 +257,7 @@ class BitInvert(BaseUnaryOp):
         return "~"
 
 
+@add_slots
 @dataclass(frozen=True)
 class Not(BaseUnaryOp):
     whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
@@ -262,6 +266,7 @@ class Not(BaseUnaryOp):
         return "not"
 
 
+@add_slots
 @dataclass(frozen=True)
 class And(BaseBooleanOp):
     whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
@@ -271,6 +276,7 @@ class And(BaseBooleanOp):
         return "and"
 
 
+@add_slots
 @dataclass(frozen=True)
 class Or(BaseBooleanOp):
     whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
@@ -280,6 +286,7 @@ class Or(BaseBooleanOp):
         return "or"
 
 
+@add_slots
 @dataclass(frozen=True)
 class Add(BaseBinaryOp, _BaseOneTokenOp):
     whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
@@ -289,6 +296,7 @@ class Add(BaseBinaryOp, _BaseOneTokenOp):
         return "+"
 
 
+@add_slots
 @dataclass(frozen=True)
 class Subtract(BaseBinaryOp, _BaseOneTokenOp):
     whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
@@ -298,6 +306,7 @@ class Subtract(BaseBinaryOp, _BaseOneTokenOp):
         return "-"
 
 
+@add_slots
 @dataclass(frozen=True)
 class Multiply(BaseBinaryOp, _BaseOneTokenOp):
     whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
@@ -307,6 +316,7 @@ class Multiply(BaseBinaryOp, _BaseOneTokenOp):
         return "*"
 
 
+@add_slots
 @dataclass(frozen=True)
 class Divide(BaseBinaryOp, _BaseOneTokenOp):
     whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
@@ -316,6 +326,7 @@ class Divide(BaseBinaryOp, _BaseOneTokenOp):
         return "/"
 
 
+@add_slots
 @dataclass(frozen=True)
 class FloorDivide(BaseBinaryOp, _BaseOneTokenOp):
     whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
@@ -325,6 +336,7 @@ class FloorDivide(BaseBinaryOp, _BaseOneTokenOp):
         return "//"
 
 
+@add_slots
 @dataclass(frozen=True)
 class Modulo(BaseBinaryOp, _BaseOneTokenOp):
     whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
@@ -334,6 +346,7 @@ class Modulo(BaseBinaryOp, _BaseOneTokenOp):
         return "%"
 
 
+@add_slots
 @dataclass(frozen=True)
 class Power(BaseBinaryOp, _BaseOneTokenOp):
     whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
@@ -343,6 +356,7 @@ class Power(BaseBinaryOp, _BaseOneTokenOp):
         return "**"
 
 
+@add_slots
 @dataclass(frozen=True)
 class LeftShift(BaseBinaryOp, _BaseOneTokenOp):
     whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
@@ -352,6 +366,7 @@ class LeftShift(BaseBinaryOp, _BaseOneTokenOp):
         return "<<"
 
 
+@add_slots
 @dataclass(frozen=True)
 class RightShift(BaseBinaryOp, _BaseOneTokenOp):
     whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
@@ -370,6 +385,7 @@ class BitOr(BaseBinaryOp, _BaseOneTokenOp):
         return "|"
 
 
+@add_slots
 @dataclass(frozen=True)
 class BitAnd(BaseBinaryOp, _BaseOneTokenOp):
     whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
@@ -379,6 +395,7 @@ class BitAnd(BaseBinaryOp, _BaseOneTokenOp):
         return "&"
 
 
+@add_slots
 @dataclass(frozen=True)
 class BitXor(BaseBinaryOp, _BaseOneTokenOp):
     whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
@@ -388,6 +405,7 @@ class BitXor(BaseBinaryOp, _BaseOneTokenOp):
         return "^"
 
 
+@add_slots
 @dataclass(frozen=True)
 class MatrixMultiply(BaseBinaryOp, _BaseOneTokenOp):
     whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
@@ -397,6 +415,7 @@ class MatrixMultiply(BaseBinaryOp, _BaseOneTokenOp):
         return "@"
 
 
+@add_slots
 @dataclass(frozen=True)
 class LessThan(BaseCompOp, _BaseOneTokenOp):
     whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
@@ -406,6 +425,7 @@ class LessThan(BaseCompOp, _BaseOneTokenOp):
         return "<"
 
 
+@add_slots
 @dataclass(frozen=True)
 class GreaterThan(BaseCompOp, _BaseOneTokenOp):
     whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
@@ -415,6 +435,7 @@ class GreaterThan(BaseCompOp, _BaseOneTokenOp):
         return ">"
 
 
+@add_slots
 @dataclass(frozen=True)
 class Equal(BaseCompOp, _BaseOneTokenOp):
     whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
@@ -424,6 +445,7 @@ class Equal(BaseCompOp, _BaseOneTokenOp):
         return "=="
 
 
+@add_slots
 @dataclass(frozen=True)
 class LessThanEqual(BaseCompOp, _BaseOneTokenOp):
     whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
@@ -433,6 +455,7 @@ class LessThanEqual(BaseCompOp, _BaseOneTokenOp):
         return "<="
 
 
+@add_slots
 @dataclass(frozen=True)
 class GreaterThanEqual(BaseCompOp, _BaseOneTokenOp):
     whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
@@ -442,6 +465,7 @@ class GreaterThanEqual(BaseCompOp, _BaseOneTokenOp):
         return ">="
 
 
+@add_slots
 @dataclass(frozen=True)
 class NotEqual(BaseCompOp):
     """
@@ -476,6 +500,7 @@ class NotEqual(BaseCompOp):
         self.whitespace_after._codegen(state)
 
 
+@add_slots
 @dataclass(frozen=True)
 class In(BaseCompOp, _BaseOneTokenOp):
     whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
@@ -485,6 +510,7 @@ class In(BaseCompOp, _BaseOneTokenOp):
         return "in"
 
 
+@add_slots
 @dataclass(frozen=True)
 class NotIn(BaseCompOp, _BaseTwoTokenOp):
     whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
@@ -495,6 +521,7 @@ class NotIn(BaseCompOp, _BaseTwoTokenOp):
         return ("not", "in")
 
 
+@add_slots
 @dataclass(frozen=True)
 class Is(BaseCompOp, _BaseOneTokenOp):
     whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
@@ -504,6 +531,7 @@ class Is(BaseCompOp, _BaseOneTokenOp):
         return "is"
 
 
+@add_slots
 @dataclass(frozen=True)
 class IsNot(BaseCompOp, _BaseTwoTokenOp):
     whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
