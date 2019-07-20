@@ -308,13 +308,13 @@ class BaseDelTargetExpression(BaseExpression, ABC):
 @add_slots
 @dataclass(frozen=True)
 class Name(BaseAssignTargetExpression, BaseDelTargetExpression, BaseAtom):
-    # The actual identifier string
+    #: The actual identifier string
     value: str
 
-    # Sequence of open parenthesis for precedence dictation.
+    #: Sequence of open parenthesis for precedence dictation.
     lpar: Sequence[LeftParen] = ()
 
-    # Sequence of close parenthesis for precedence dictation.
+    #: Sequence of close parenthesis for precedence dictation.
     rpar: Sequence[RightParen] = ()
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Name":
@@ -343,10 +343,10 @@ class Ellipses(BaseAtom):
     An ellipses "..."
     """
 
-    # Sequence of open parenthesis for precedence dictation.
+    #: Sequence of open parenthesis for precedence dictation.
     lpar: Sequence[LeftParen] = ()
 
-    # Sequence of close parenthesis for precedence dictation.
+    #: Sequence of close parenthesis for precedence dictation.
     rpar: Sequence[RightParen] = ()
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Ellipses":
@@ -382,10 +382,10 @@ class BaseNumber(BaseAtom, ABC):
 class Integer(BaseNumber):
     value: str
 
-    # Sequence of open parenthesis for precedence dictation.
+    #: Sequence of open parenthesis for precedence dictation.
     lpar: Sequence[LeftParen] = ()
 
-    # Sequence of close parenthesis for precedence dictation.
+    #: Sequence of close parenthesis for precedence dictation.
     rpar: Sequence[RightParen] = ()
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Integer":
@@ -410,10 +410,10 @@ class Integer(BaseNumber):
 class Float(BaseNumber):
     value: str
 
-    # Sequence of open parenthesis for precedence dictation.
+    #: Sequence of open parenthesis for precedence dictation.
     lpar: Sequence[LeftParen] = ()
 
-    # Sequence of close parenthesis for precedence dictation.
+    #: Sequence of close parenthesis for precedence dictation.
     rpar: Sequence[RightParen] = ()
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Float":
@@ -438,10 +438,10 @@ class Float(BaseNumber):
 class Imaginary(BaseNumber):
     value: str
 
-    # Sequence of open parenthesis for precedence dictation.
+    #: Sequence of open parenthesis for precedence dictation.
     lpar: Sequence[LeftParen] = ()
 
-    # Sequence of close parenthesis for precedence dictation.
+    #: Sequence of close parenthesis for precedence dictation.
     rpar: Sequence[RightParen] = ()
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Imaginary":
@@ -496,10 +496,10 @@ class _BasePrefixedString(BaseString, ABC):
 class SimpleString(_BasePrefixedString):
     value: str
 
-    # Sequence of open parenthesis for precidence dictation.
+    #: Sequence of open parenthesis for precidence dictation.
     lpar: Sequence[LeftParen] = ()
 
-    # Sequence of close parenthesis for precidence dictation.
+    #: Sequence of close parenthesis for precidence dictation.
     rpar: Sequence[RightParen] = ()
 
     def _validate(self) -> None:
@@ -565,7 +565,7 @@ class BaseFormattedStringContent(CSTNode, ABC):
 @add_slots
 @dataclass(frozen=True)
 class FormattedStringText(BaseFormattedStringContent):
-    # The raw string value.
+    #: The raw string value.
     value: str
 
     def _visit_and_replace_children(
@@ -580,13 +580,13 @@ class FormattedStringText(BaseFormattedStringContent):
 @add_slots
 @dataclass(frozen=True)
 class FormattedStringExpression(BaseFormattedStringContent):
-    # The expression we will render when printing the string
+    #: The expression we will render when printing the string
     expression: BaseExpression
 
-    # An optional conversion specifier
+    #: An optional conversion specifier
     conversion: Optional[str] = None
 
-    # An optional format specifier
+    #: An optional format specifier
     format_spec: Optional[Sequence[BaseFormattedStringContent]] = None
 
     # Whitespace
@@ -639,19 +639,19 @@ class FormattedStringExpression(BaseFormattedStringContent):
 @add_slots
 @dataclass(frozen=True)
 class FormattedString(_BasePrefixedString):
-    # Sequence of formatted string parts
+    #: Sequence of formatted string parts
     parts: Sequence[BaseFormattedStringContent]
 
-    # String start indicator
+    #: String start indicator
     start: str = 'f"'
 
-    # String end indicator
+    #: String end indicator
     end: str = '"'
 
-    # Sequence of open parenthesis for precidence dictation.
+    #: Sequence of open parenthesis for precidence dictation.
     lpar: Sequence[LeftParen] = ()
 
-    # Sequence of close parenthesis for precidence dictation.
+    #: Sequence of close parenthesis for precidence dictation.
     rpar: Sequence[RightParen] = ()
 
     def _validate(self) -> None:
@@ -699,19 +699,19 @@ class FormattedString(_BasePrefixedString):
 @add_slots
 @dataclass(frozen=True)
 class ConcatenatedString(BaseString):
-    # String on the left of the concatenation.
+    #: String on the left of the concatenation.
     left: Union[SimpleString, FormattedString]
 
-    # String on the right of the concatenation.
+    #: String on the right of the concatenation.
     right: Union[SimpleString, FormattedString, "ConcatenatedString"]
 
-    # Sequence of open parenthesis for precidence dictation.
+    #: Sequence of open parenthesis for precidence dictation.
     lpar: Sequence[LeftParen] = ()
 
-    # Sequence of close parenthesis for precidence dictation.
+    #: Sequence of close parenthesis for precidence dictation.
     rpar: Sequence[RightParen] = ()
 
-    # Whitespace between strings.
+    #: Whitespace between strings.
     whitespace_between: BaseParenthesizableWhitespace = SimpleWhitespace("")
 
     def _safe_to_use_with_word_operator(self, position: ExpressionPosition) -> bool:
@@ -729,7 +729,6 @@ class ConcatenatedString(BaseString):
         # Strings that are concatenated cannot have parens.
         if bool(self.left.lpar) or bool(self.left.rpar):
             raise CSTValidationError("Cannot concatenate parenthesized strings.")
-
         if bool(self.right.lpar) or bool(self.right.rpar):
             raise CSTValidationError("Cannot concatenate parenthesized strings.")
 
@@ -771,10 +770,10 @@ class ComparisonTarget(CSTNode):
     A target for a comparison. Owns the comparison operator itself.
     """
 
-    # The actual comparison operator
+    #: The actual comparison operator
     operator: BaseCompOp
 
-    # The right hand side of the comparison operation
+    #: The right hand side of the comparison operation
     comparator: BaseExpression
 
     def _validate(self) -> None:
@@ -808,16 +807,16 @@ class Comparison(BaseExpression):
     Any comparison such as "x < y < z"
     """
 
-    # The left hand side of the comparison operation
+    #: The left hand side of the comparison operation
     left: BaseExpression
 
-    # The actual comparison operator
+    #: The actual comparison operator
     comparisons: Sequence[ComparisonTarget]
 
-    # Sequence of open parenthesis for precedence dictation.
+    #: Sequence of open parenthesis for precedence dictation.
     lpar: Sequence[LeftParen] = ()
 
-    # Sequence of close parenthesis for precedence dictation.
+    #: Sequence of close parenthesis for precedence dictation.
     rpar: Sequence[RightParen] = ()
 
     def _safe_to_use_with_word_operator(self, position: ExpressionPosition) -> bool:
@@ -876,16 +875,16 @@ class UnaryOperation(BaseExpression):
     Any generic unary expression, such as "not x" or "-x".
     """
 
-    # The unary operator applied to the expression
+    #: The unary operator applied to the expression
     operator: BaseUnaryOp
 
-    # The actual expression or atom
+    #: The actual expression or atom
     expression: BaseExpression
 
-    # Sequence of open parenthesis for precedence dictation.
+    #: Sequence of open parenthesis for precedence dictation.
     lpar: Sequence[LeftParen] = ()
 
-    # Sequence of close parenthesis for precedence dictation.
+    #: Sequence of close parenthesis for precedence dictation.
     rpar: Sequence[RightParen] = ()
 
     def _validate(self) -> None:
@@ -922,19 +921,19 @@ class BinaryOperation(BaseExpression):
     Any binary operation such as "x << y" or "y + z".
     """
 
-    # The left hand side of the operation
+    #: The left hand side of the operation
     left: BaseExpression
 
-    # The actual operator
+    #: The actual operator
     operator: BaseBinaryOp
 
-    # The right hand side of the operation
+    #: The right hand side of the operation
     right: BaseExpression
 
-    # Sequence of open parenthesis for precedence dictation.
+    #: Sequence of open parenthesis for precedence dictation.
     lpar: Sequence[LeftParen] = ()
 
-    # Sequence of close parenthesis for precedence dictation.
+    #: Sequence of close parenthesis for precedence dictation.
     rpar: Sequence[RightParen] = ()
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "BinaryOperation":
@@ -960,19 +959,19 @@ class BooleanOperation(BaseExpression):
     Any boolean operation such as "x or y" or "z and w"
     """
 
-    # The left hand side of the operation
+    #: The left hand side of the operation
     left: BaseExpression
 
-    # The actual operator
+    #: The actual operator
     operator: BaseBooleanOp
 
-    # The right hand side of the operation
+    #: The right hand side of the operation
     right: BaseExpression
 
-    # Sequence of open parenthesis for precedence dictation.
+    #: Sequence of open parenthesis for precedence dictation.
     lpar: Sequence[LeftParen] = ()
 
-    # Sequence of close parenthesis for precedence dictation.
+    #: Sequence of close parenthesis for precedence dictation.
     rpar: Sequence[RightParen] = ()
 
     def _validate(self) -> None:
@@ -1019,19 +1018,19 @@ class Attribute(BaseAssignTargetExpression, BaseDelTargetExpression):
     "x".
     """
 
-    # Expression which, when evaluated, will have 'attr' as an attribute
+    #: Expression which, when evaluated, will have 'attr' as an attribute
     value: BaseExpression
 
-    # Name of the attribute being accessed.
+    #: Name of the attribute being accessed.
     attr: Name
 
-    # Separating dot, with any whitespace it owns.
+    #: Separating dot, with any whitespace it owns.
     dot: Dot = Dot()
 
-    # Sequence of open parenthesis for precedence dictation.
+    #: Sequence of open parenthesis for precedence dictation.
     lpar: Sequence[LeftParen] = ()
 
-    # Sequence of close parenthesis for precedence dictation.
+    #: Sequence of close parenthesis for precedence dictation.
     rpar: Sequence[RightParen] = ()
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Attribute":
@@ -1057,7 +1056,7 @@ class Index(CSTNode):
     Any index as passed to a subscript.
     """
 
-    # The index value itself.
+    #: The index value itself.
     value: BaseExpression
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Index":
@@ -1076,19 +1075,19 @@ class Slice(CSTNode):
     are not supported here.
     """
 
-    # The lower bound in the slice, if present
+    #: The lower bound in the slice, if present
     lower: Optional[BaseExpression]
 
-    # The upper bound in the slice, if present
+    #: The upper bound in the slice, if present
     upper: Optional[BaseExpression]
 
-    # The step in the slice, if present
+    #: The step in the slice, if present
     step: Optional[BaseExpression] = None
 
-    # The first slice operator
+    #: The first slice operator
     first_colon: Colon = Colon()
 
-    # The second slice operator, usually omitted
+    #: The second slice operator, usually omitted
     second_colon: Union[Colon, MaybeSentinel] = MaybeSentinel.DEFAULT
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Slice":
@@ -1127,10 +1126,10 @@ class ExtSlice(CSTNode):
     "x".
     """
 
-    # A slice or index that is part of the extslice.
+    #: A slice or index that is part of the extslice.
     slice: Union[Index, Slice]
 
-    # Separating comma, with any whitespace it owns.
+    #: Separating comma, with any whitespace it owns.
     comma: Union[Comma, MaybeSentinel] = MaybeSentinel.DEFAULT
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "ExtSlice":
@@ -1157,25 +1156,25 @@ class Subscript(BaseAssignTargetExpression, BaseDelTargetExpression):
     A subscript reference such as "x[2]".
     """
 
-    # Expression which, when evaluated, will be subscripted.
+    #: Expression which, when evaluated, will be subscripted.
     value: BaseExpression
 
-    # Subscript to take on the value.
+    #: Subscript to take on the value.
     slice: Union[Index, Slice, Sequence[ExtSlice]]
 
-    # Open bracket surrounding the slice
+    #: Open bracket surrounding the slice
     lbracket: LeftSquareBracket = LeftSquareBracket()
 
-    # Close bracket surrounding the slice
+    #: Close bracket surrounding the slice
     rbracket: RightSquareBracket = RightSquareBracket()
 
-    # Sequence of open parenthesis for precedence dictation.
+    #: Sequence of open parenthesis for precedence dictation.
     lpar: Sequence[LeftParen] = ()
 
-    # Sequence of close parenthesis for precedence dictation.
+    #: Sequence of close parenthesis for precedence dictation.
     rpar: Sequence[RightParen] = ()
 
-    # Whitespace
+    #: Whitespace
     whitespace_after_value: BaseParenthesizableWhitespace = SimpleWhitespace("")
 
     def _validate(self) -> None:
@@ -1225,10 +1224,10 @@ class Annotation(CSTNode):
     An annotation.
     """
 
-    # The annotation itself.
+    #: The annotation itself.
     annotation: Union[Name, Attribute, BaseString, Subscript]
 
-    # The indicator token before the annotation.
+    #: The indicator token before the annotation.
     indicator: Union[
         str, AnnotationIndicatorSentinel
     ] = AnnotationIndicatorSentinel.DEFAULT
@@ -1314,22 +1313,22 @@ class Param(CSTNode):
     in some cases a default.
     """
 
-    # The parameter name itself
+    #: The parameter name itself
     name: Name
 
-    # Any optional annotation
+    #: Any optional annotation
     annotation: Optional[Annotation] = None
 
-    # The equals sign used to denote assignment if there is a default.
+    #: The equals sign used to denote assignment if there is a default.
     equal: Union[AssignEqual, MaybeSentinel] = MaybeSentinel.DEFAULT
 
-    # Any optional default
+    #: Any optional default
     default: Optional[BaseExpression] = None
 
-    # Any trailing comma
+    #: Any trailing comma
     comma: Union[Comma, MaybeSentinel] = MaybeSentinel.DEFAULT
 
-    # Optional star appearing before name for star_arg and star_kwarg
+    #: Optional star appearing before name for star_arg and star_kwarg
     star: Union[str, MaybeSentinel] = MaybeSentinel.DEFAULT
 
     # Whitespace
@@ -1412,20 +1411,20 @@ class Parameters(CSTNode):
     A function or lambda parameter list.
     """
 
-    # Positional parameters.
+    #: Positional parameters.
     params: Sequence[Param] = ()
 
-    # Positional parameters with defaults.
+    #: Positional parameters with defaults.
     default_params: Sequence[Param] = ()
 
     # Optional parameter that captures unspecified positional arguments or a sentinel
     # star that dictates parameters following are kwonly args.
     star_arg: Union[Param, ParamStar, MaybeSentinel] = MaybeSentinel.DEFAULT
 
-    # Keyword-only params that may or may not have defaults.
+    #: Keyword-only params that may or may not have defaults.
     kwonly_params: Sequence[Param] = ()
 
-    # Optional parameter that captures unspecified kwargs.
+    #: Optional parameter that captures unspecified kwargs.
     star_kwarg: Optional[Param] = None
 
     def _validate_stars_sequence(self, vals: Sequence[Param], *, section: str) -> None:
@@ -1562,19 +1561,19 @@ class Parameters(CSTNode):
 @add_slots
 @dataclass(frozen=True)
 class Lambda(BaseExpression):
-    # The parameters to the lambda
+    #: The parameters to the lambda
     params: Parameters
 
-    # The body of the lambda
+    #: The body of the lambda
     body: BaseExpression
 
-    # The colon separating the parameters from the body
+    #: The colon separating the parameters from the body
     colon: Colon = Colon(whitespace_after=SimpleWhitespace(" "))
 
-    # Sequence of open parenthesis for precedence dictation.
+    #: Sequence of open parenthesis for precedence dictation.
     lpar: Sequence[LeftParen] = ()
 
-    # Sequence of close parenthesis for precedence dictation.
+    #: Sequence of close parenthesis for precedence dictation.
     rpar: Sequence[RightParen] = ()
 
     # Whitespace
@@ -1652,19 +1651,19 @@ class Arg(CSTNode):
     the form of "keyword=expression" for named arguments.
     """
 
-    # The argument expression itself
+    #: The argument expression itself
     value: BaseExpression
 
-    # Optional keyword for the argument
+    #: Optional keyword for the argument
     keyword: Optional[Name] = None
 
-    # The equals sign used to denote assignment if there is a keyword.
+    #: The equals sign used to denote assignment if there is a keyword.
     equal: Union[AssignEqual, MaybeSentinel] = MaybeSentinel.DEFAULT
 
-    # Any trailing comma
+    #: Any trailing comma
     comma: Union[Comma, MaybeSentinel] = MaybeSentinel.DEFAULT
 
-    # Optional star appearing before name for * and ** expansion
+    #: Optional star appearing before name for * and ** expansion
     star: Literal["", "*", "**"] = ""
 
     # Whitespace
@@ -1724,7 +1723,7 @@ class _BaseExpressionWithArgs(BaseExpression, ABC):
     in typing. So, we have common validation functions here.
     """
 
-    # Sequence of arguments that will be passed to the function call
+    #: Sequence of arguments that will be passed to the function call
     args: Sequence[Arg] = ()
 
     def _check_kwargs_or_keywords(
@@ -1822,16 +1821,16 @@ class _BaseExpressionWithArgs(BaseExpression, ABC):
 @add_slots
 @dataclass(frozen=True)
 class Call(_BaseExpressionWithArgs):
-    # The expression resulting in a callable that we are to call
+    #: The expression resulting in a callable that we are to call
     func: Union[BaseAtom, Attribute, Subscript, "Call"]
 
-    # The arguments to pass to the resulting callable
-    args: Sequence[Arg] = ()  # TODO This can also be a single Generator.
+    #: The arguments to pass to the resulting callable
+    args: Sequence[Arg] = ()  #: TODO This can also be a single Generator.
 
-    # Sequence of open parenthesis for precedence dictation.
+    #: Sequence of open parenthesis for precedence dictation.
     lpar: Sequence[LeftParen] = ()
 
-    # Sequence of close parenthesis for precedence dictation.
+    #: Sequence of close parenthesis for precedence dictation.
     rpar: Sequence[RightParen] = ()
 
     # Whitespace nodes
@@ -1877,16 +1876,16 @@ class Call(_BaseExpressionWithArgs):
 @add_slots
 @dataclass(frozen=True)
 class Await(BaseExpression):
-    # The actual expression we need to await on
+    #: The actual expression we need to await on
     expression: BaseExpression
 
-    # Sequence of open parenthesis for precedence dictation.
+    #: Sequence of open parenthesis for precedence dictation.
     lpar: Sequence[LeftParen] = ()
 
-    # Sequence of close parenthesis for precedence dictation.
+    #: Sequence of close parenthesis for precedence dictation.
     rpar: Sequence[RightParen] = ()
 
-    # Whitespace nodes
+    #: Whitespace nodes
     whitespace_after_await: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
 
     def _validate(self) -> None:
@@ -1920,19 +1919,19 @@ class IfExp(BaseExpression):
     An if expression similar to "body if test else orelse".
     """
 
-    # The test to perform.
+    #: The test to perform.
     test: BaseExpression
 
-    # The expression to evaluate if the test is true.
+    #: The expression to evaluate if the test is true.
     body: BaseExpression
 
-    # The expression to evaluate if the test is false.
+    #: The expression to evaluate if the test is false.
     orelse: BaseExpression
 
-    # Sequence of open parenthesis for precedence dictation.
+    #: Sequence of open parenthesis for precedence dictation.
     lpar: Sequence[LeftParen] = ()
 
-    # Sequence of close parenthesis for precedence dictation.
+    #: Sequence of close parenthesis for precedence dictation.
     rpar: Sequence[RightParen] = ()
 
     # Whitespace nodes
@@ -2064,13 +2063,13 @@ class Yield(BaseExpression):
     A yield expression similar to "yield x" or "yield from fun()"
     """
 
-    # The test to perform.
+    #: The test to perform.
     value: Optional[Union[BaseExpression, From]] = None
 
-    # Sequence of open parenthesis for precedence dictation.
+    #: Sequence of open parenthesis for precedence dictation.
     lpar: Sequence[LeftParen] = ()
 
-    # Sequence of close parenthesis for precedence dictation.
+    #: Sequence of close parenthesis for precedence dictation.
     rpar: Sequence[RightParen] = ()
 
     # Whitespace nodes
@@ -2184,7 +2183,7 @@ class Element(BaseElement):
 class StarredElement(BaseElement, _BaseParenthesizedNode):
     value: BaseExpression
 
-    # Any trailing comma
+    #: Any trailing comma
     comma: Union[Comma, MaybeSentinel] = MaybeSentinel.DEFAULT
 
     # Parentheses around the leading asterisk and the value. Functionally equivalent to
@@ -2232,10 +2231,10 @@ class StarredElement(BaseElement, _BaseParenthesizedNode):
 class Tuple(BaseAtom, BaseAssignTargetExpression, BaseDelTargetExpression):
     elements: Sequence[Union[Element, StarredElement]]
 
-    # Sequence of open parenthesis for precedence dictation.
+    #: Sequence of open parenthesis for precedence dictation.
     lpar: Sequence[LeftParen] = (LeftParen(),)
 
-    # Sequence of close parenthesis for precedence dictation.
+    #: Sequence of close parenthesis for precedence dictation.
     rpar: Sequence[RightParen] = (RightParen(),)
 
     def _safe_to_use_with_word_operator(self, position: ExpressionPosition) -> bool:
@@ -2303,16 +2302,16 @@ class BaseList(BaseAtom, ABC):
     evaluated.
     """
 
-    # Open bracket surrounding the list
+    #: Open bracket surrounding the list
     lbracket: LeftSquareBracket = LeftSquareBracket()
 
-    # Close bracket surrounding the list
+    #: Close bracket surrounding the list
     rbracket: RightSquareBracket = RightSquareBracket()
 
-    # Sequence of open parenthesis for precedence dictation.
+    #: Sequence of open parenthesis for precedence dictation.
     lpar: Sequence[LeftParen] = ()
 
-    # Sequence of close parenthesis for precedence dictation.
+    #: Sequence of close parenthesis for precedence dictation.
     rpar: Sequence[RightParen] = ()
 
     def _safe_to_use_with_word_operator(self, position: ExpressionPosition) -> bool:
@@ -2355,16 +2354,16 @@ class List(BaseList, BaseAssignTargetExpression, BaseDelTargetExpression):
 
 
 class BaseSet(BaseAtom, ABC):
-    # Open brace surrounding the list
+    #: Open brace surrounding the list
     lbrace: LeftCurlyBrace = LeftCurlyBrace()
 
-    # Close brace surrounding the list
+    #: Close brace surrounding the list
     rbrace: RightCurlyBrace = RightCurlyBrace()
 
-    # Sequence of open parenthesis for precedence dictation.
+    #: Sequence of open parenthesis for precedence dictation.
     lpar: Sequence[LeftParen] = ()
 
-    # Sequence of close parenthesis for precedence dictation.
+    #: Sequence of close parenthesis for precedence dictation.
     rpar: Sequence[RightParen] = ()
 
     def _safe_to_use_with_word_operator(self, position: ExpressionPosition) -> bool:
