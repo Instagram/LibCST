@@ -75,6 +75,7 @@ from libcst.nodes._expression import (  # noqa: F401
     UnaryOperation,
     Yield,
 )
+from libcst.nodes._internal import CodePosition, CodeRange  # noqa: F401
 from libcst.nodes._module import Module  # noqa: F401
 from libcst.nodes._op import (  # noqa: F401
     Add,

@@ -4,7 +4,7 @@
 
 # pyre-strict
 import dataclasses
-from typing import Type, TypeVar
+from typing import Any, Mapping, Type, TypeVar
 
 
 _T = TypeVar("_T")
@@ -28,7 +28,8 @@ def add_slots(cls: Type[_T]) -> Type[_T]:
         cls_dict.pop(field_name, None)
     # Remove __dict__ itself.
     cls_dict.pop("__dict__", None)
-    # And finally create the class.
+
+    # Create the class.
     qualname = getattr(cls, "__qualname__", None)
     try:
         # GenericMeta in py3.6 requires us to track __orig_bases__. This is fixed in py3.7
@@ -41,4 +42,20 @@ def add_slots(cls: Type[_T]) -> Type[_T]:
         cls = type(cls)(cls.__name__, cls.__bases__, cls_dict)
     if qualname is not None:
         cls.__qualname__ = qualname
+
+    # Set __getstate__ and __setstate__ to workaround a bug with pickling frozen
+    # dataclasses with slots. See https://bugs.python.org/issue36424
+
+    def __getstate__(self: object) -> Mapping[str, Any]:
+        return {
+            slot: getattr(self, slot) for slot in self.__slots__ if hasattr(self, slot)
+        }
+
+    def __setstate__(self: object, state: Mapping[str, Any]) -> None:
+        for slot, value in state.items():
+            object.__setattr__(self, slot, value)
+
+    cls.__getstate__ = __getstate__
+    cls.__setstate__ = __setstate__
+
     return cls
