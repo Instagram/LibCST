@@ -4,8 +4,9 @@
 # LICENSE file in the root directory of this source tree.
 
 # pyre-strict
-from libcst.metadata.base_provider import BaseMetadataProvider, _ModuleT
+from libcst.metadata.base_provider import BaseMetadataProvider
 from libcst.nodes._internal import CodeRange
+from libcst.nodes._module import _ModuleSelfT as _ModuleT
 
 
 class BasicPositionProvider(BaseMetadataProvider[CodeRange]):

@@ -20,6 +20,8 @@ from libcst.visitors import CSTTransformer
 class MetadataRunnerTest(UnitTest):
     def test_visitor_provider(self) -> None:
         """
+        Tests that visitor providers are resolved correctly.
+
         Sets 2 metadata entries for every node:
             SimpleProvider -> 1
             DependentProvider - > 2
@@ -58,6 +60,8 @@ class MetadataRunnerTest(UnitTest):
 
     def test_batched_provider(self) -> None:
         """
+        Tests that batchable providers are resolved correctly.
+
         Sets metadata on:
             - pass: BatchedProviderA -> 1
                     BatchedProviderB -> "a"
@@ -79,11 +83,6 @@ class MetadataRunnerTest(UnitTest):
         class DependentVisitor(CSTTransformer):
             METADATA_DEPENDENCIES = (BatchedProviderA, BatchedProviderB)
 
-            def visit_Module(self, module: cst.Module) -> None:
-                # Check batched visitors called only once each
-                mock.visited_a.assert_called_once()
-                mock.visited_b.assert_called_once()
-
             def visit_Pass(self, node: cst.Pass) -> None:
                 # Check metadata is set
                 test.assertEqual(self.get_metadata(BatchedProviderA, node), 1)
@@ -92,8 +91,14 @@ class MetadataRunnerTest(UnitTest):
         module = parse_module("pass")
         module.visit(DependentVisitor())
 
+        # Check that each batchable visitor is only called once
+        mock.visited_a.assert_called_once()
+        mock.visited_b.assert_called_once()
+
     def test_mixed_providers(self) -> None:
         """
+        Tests that a mixed set of providers is resolved properly.
+
         Sets metadata on pass:
             BatchedProviderA -> 2
             BatchedProviderB -> 3
@@ -104,10 +109,9 @@ class MetadataRunnerTest(UnitTest):
         mock = Mock()
 
         class SimpleProvider(VisitorMetadataProvider[int]):
-            def visit_Pass(self, node: cst.CSTNode) -> bool:
+            def visit_Pass(self, node: cst.CSTNode) -> None:
                 mock.visited_simple()
                 self.set_metadata(node, 1)
-                return True
 
         class BatchedProviderA(BatchableMetadataProvider[int]):
             METADATA_DEPENDENCIES = (SimpleProvider,)
@@ -154,12 +158,6 @@ class MetadataRunnerTest(UnitTest):
                 # pass nodes
                 test.assertEqual(self.get_metadata(DependentProvider, module), 0)
 
-                # Check visitors called the correct number of times
-                mock.visited_simple.assert_called_once()
-                mock.visited_a.assert_called_once()
-                mock.visited_b.assert_called_once()
-                mock.visited_c.assert_called_once()
-
             def visit_Pass(self, node: cst.Pass) -> None:
                 # Check metadata is set
                 test.assertEqual(self.get_metadata(BatchedProviderA, node), 2)
@@ -170,21 +168,105 @@ class MetadataRunnerTest(UnitTest):
         module = parse_module("pass")
         module.visit(DependentVisitor())
 
-    def test_circular_dependency(self) -> None:
-        class ProviderA(VisitorMetadataProvider[str]):
-            pass
+        # Check each visitor is called once
+        mock.visited_simple.assert_called_once()
+        mock.visited_a.assert_called_once()
+        mock.visited_b.assert_called_once()
+        mock.visited_c.assert_called_once()
 
-        ProviderA.METADATA_DEPENDENCIES = (ProviderA,)
+    def test_inherited_metadata(self) -> None:
+        """
+        Tests that classes inherit access to metadata declared by their base
+        classes.
+        """
+        test_runner = self
+        mock = Mock()
 
-        class BadVisitor(CSTTransformer):
+        class SimpleProvider(VisitorMetadataProvider[int]):
+            def visit_Pass(self, node: cst.Pass) -> None:
+                mock.visited_simple()
+                self.set_metadata(node, 1)
+
+        class VisitorA(CSTTransformer):
+            METADATA_DEPENDENCIES = (SimpleProvider,)
+
+        class VisitorB(VisitorA):
+            def visit_Pass(self, node: cst.Pass) -> None:
+                test_runner.assertEqual(self.get_metadata(SimpleProvider, node), 1)
+
+        module = parse_module("pass")
+        module.visit(VisitorB())
+
+        # Check each visitor is called once
+        mock.visited_simple.assert_called_once()
+
+    def test_provider_inherited_metadata(self) -> None:
+        """
+        Tests that providers inherit access to metadata declared by their base
+        classes.
+        """
+        test_runner = self
+        mock = Mock()
+
+        class ProviderA(VisitorMetadataProvider[int]):
+            def visit_Pass(self, node: cst.Pass) -> None:
+                mock.visited_a()
+                self.set_metadata(node, 1)
+
+        class ProviderB(VisitorMetadataProvider[int]):
             METADATA_DEPENDENCIES = (ProviderA,)
 
-        with self.assertRaisesRegex(
-            MetadataException, "Detected circular dependencies in ProviderA"
-        ):
-            cst.Module([]).visit(BadVisitor())
+        class ProviderC(ProviderB):
+            def visit_Pass(self, node: cst.Pass) -> None:
+                mock.visited_c()
+                test_runner.assertEqual(self.get_metadata(ProviderA, node), 1)
+
+        class VisitorA(CSTTransformer):
+            METADATA_DEPENDENCIES = (ProviderC,)
+
+        module = parse_module("pass")
+        module.visit(VisitorA())
+
+        # Check each visitor is called once
+        mock.visited_a.assert_called_once()
+        mock.visited_c.assert_called_once()
+
+    def test_batchable_provider_inherited_metadata(self) -> None:
+        """
+        Tests that batchable providers inherit access to metadata declared by
+        their base classes.
+        """
+        test_runner = self
+        mock = Mock()
+
+        class ProviderA(VisitorMetadataProvider[int]):
+            def visit_Pass(self, node: cst.Pass) -> None:
+                mock.visited_a()
+                self.set_metadata(node, 1)
+
+        class ProviderB(BatchableMetadataProvider[int]):
+            METADATA_DEPENDENCIES = (ProviderA,)
+
+        class ProviderC(ProviderB):
+            def visit_Pass(self, node: cst.Pass) -> None:
+                mock.visited_c()
+                test_runner.assertEqual(self.get_metadata(ProviderA, node), 1)
+
+        class VisitorA(CSTTransformer):
+            METADATA_DEPENDENCIES = (ProviderC,)
+
+        module = parse_module("pass")
+        module.visit(VisitorA())
+
+        # Check each visitor is called once
+        mock.visited_a.assert_called_once()
+        mock.visited_c.assert_called_once()
 
     def test_self_metadata(self) -> None:
+        """
+        Tests a provider can access its own metadata (assuming it has been
+        set properly.)
+        """
         test_runner = self
 
         class ProviderA(VisitorMetadataProvider[bool]):
@@ -203,6 +285,10 @@ class MetadataRunnerTest(UnitTest):
         cst.Module([]).visit(AVisitor())
 
     def test_unset_metadata(self) -> None:
+        """
+        Tests that access to unset metadata throws a key error.
+        """
+
         class ProviderA(VisitorMetadataProvider[bool]):
             pass
 
@@ -216,7 +302,11 @@ class MetadataRunnerTest(UnitTest):
         with self.assertRaises(KeyError):
             cst.Module([]).visit(AVisitor())
 
-    def test_invalid_metadata(self) -> None:
+    def test_undeclared_metadata(self) -> None:
+        """
+        Tests that access to undeclared metadata throws a key error.
+        """
+
         class ProviderA(VisitorMetadataProvider[bool]):
             pass
 
@@ -236,7 +326,30 @@ class MetadataRunnerTest(UnitTest):
         ):
             cst.Module([]).visit(AVisitor())
 
+    def test_circular_dependency(self) -> None:
+        """
+        Tests that circular dependencies are detected.
+        """
+
+        class ProviderA(VisitorMetadataProvider[str]):
+            pass
+
+        ProviderA.METADATA_DEPENDENCIES = (ProviderA,)
+
+        class BadVisitor(CSTTransformer):
+            METADATA_DEPENDENCIES = (ProviderA,)
+
+        with self.assertRaisesRegex(
+            MetadataException, "Detected circular dependencies in ProviderA"
+        ):
+            cst.Module([]).visit(BadVisitor())
+
     def test_invalid_entry_point(self) -> None:
+        """
+        Tests that visitors that declare metadata can only be called by a
+        module.
+        """
+
         class ProviderA(VisitorMetadataProvider[bool]):
             pass
 

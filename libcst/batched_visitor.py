@@ -8,12 +8,12 @@ import inspect
 from typing import (
     TYPE_CHECKING,
     Callable,
+    Collection,
     Iterable,
     List,
     Mapping,
     MutableMapping,
     Optional,
-    Sequence,
     Type,
     cast,
 )
@@ -96,12 +96,12 @@ def _get_visitor_methods(
 
 def _get_visitor_dependencies(
     batchable_visitors: Iterable[BatchableCSTVisitor]
-) -> Sequence[Type["BaseMetadataProvider[object]"]]:
+) -> Collection[Type["BaseMetadataProvider[object]"]]:
     dependencies = set()
     for visitor in batchable_visitors:
-        dependencies |= set(visitor.METADATA_DEPENDENCIES)
+        dependencies.update(visitor.METADATA_DEPENDENCIES)
 
-    return tuple(dependencies)
+    return dependencies
 
 
 class _BatchedCSTVisitor(CSTVisitor):

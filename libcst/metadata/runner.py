@@ -37,14 +37,14 @@ class _MetadataRunner:
         declared by the visitor.
         """
 
-        if len(visitor.METADATA_DEPENDENCIES) == 0:
+        if len(visitor.INHERITED_METADATA_DEPENDENCIES) == 0:
             return module
 
         # We need to deep clone to ensure that there are no duplicate nodes
         module = module.deep_clone()
 
         runner = _MetadataRunner()
-        for dep in visitor.METADATA_DEPENDENCIES:
+        for dep in visitor.INHERITED_METADATA_DEPENDENCIES:
             runner.gather_providers(dep)
 
         while len(runner.providers) > 0:
