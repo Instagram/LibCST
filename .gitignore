@@ -6,3 +6,4 @@
 .pyre/
 __pycache__/
 .tox/
+docs/build/

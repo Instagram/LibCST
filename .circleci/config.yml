@@ -2,33 +2,53 @@
 #
 # Check https://circleci.com/docs/2.0/language-python/ for more details
 #
-version: 2
+version: 2.1
 workflows:
   version: 2
   test:
     jobs:
       - lint
+      - docs
       - pyre
-      - test-3.7
-      - test-3.6
+      - test-37
+      - test-36
 
-tox_command: &tox_command
-  steps:
-    - checkout
-    - run:
-        name: install tox
-        command: pip install --user tox
-    - run:
-        name: run tox
-        command: ~/.local/bin/tox
+commands:
+  tox:
+    description: "setup tox env and run tox command giving env parameter"
+    parameters:
+      env:
+        type: string
+        default: test
+    steps:
+      - checkout
+      - run:
+          name: install tox
+          command: pip install --user tox
+      - run:
+          name: run tox
+          command: ~/.local/bin/tox -e << parameters.env >>
 
 jobs:
   lint:
-    <<: *tox_command
+    docker:
+      - image: circleci/python:3.7
+    steps:
+      - tox:
+          env: "lint"
+
+  docs:
     docker:
       - image: circleci/python:3.7
         environment:
-          TOXENV: lint
+          TOXENV: docs
+    steps:
+      - tox:
+          env: "docs"
+      - store_artifacts:
+          path: docs/build
+          destination: doc
+
   pyre:
     docker:
       - image: circleci/python:3.7
@@ -43,16 +63,16 @@ jobs:
             pip install -r requirements.txt -r requirements-dev.txt
             pyre check
 
-  test-3.7:
-    <<: *tox_command
+  test-37:
     docker:
       - image: circleci/python:3.7
-        environment:
-          TOXENV: py37
+    steps:
+      - tox:
+          env: "docs"
 
-  test-3.6:
-    <<: *tox_command
+  test-36:
     docker:
       - image: circleci/python:3.6
-        environment:
-          TOXENV: py36
+    steps:
+      - tox:
+          env: "docs"
