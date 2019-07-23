@@ -4,7 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 # pyre-strict
-from typing import Callable, Optional
+from typing import Any
 
 import libcst.nodes as cst
 from libcst.nodes._internal import CodeRange
@@ -17,24 +17,37 @@ class CallTest(CSTNodeTest):
     @data_provider(
         (
             # Simple call
-            (cst.Call(cst.Name("foo")), "foo()", parse_expression),
-            (
-                cst.Call(
+            # pyre-fixme[6]: Incompatible parameter type
+            {
+                "node": cst.Call(cst.Name("foo")),
+                "code": "foo()",
+                "parser": parse_expression,
+                "expected_position": None,
+            },
+            {
+                "node": cst.Call(
                     cst.Name("foo"), whitespace_before_args=cst.SimpleWhitespace(" ")
                 ),
-                "foo( )",
-                parse_expression,
-            ),
+                "code": "foo( )",
+                "parser": parse_expression,
+                "expected_position": None,
+            },
             # Call with attribute dereference
-            (
-                cst.Call(cst.Attribute(cst.Name("foo"), cst.Name("bar"))),
-                "foo.bar()",
-                parse_expression,
-            ),
+            {
+                "node": cst.Call(cst.Attribute(cst.Name("foo"), cst.Name("bar"))),
+                "code": "foo.bar()",
+                "parser": parse_expression,
+                "expected_position": None,
+            },
             # Positional arguments render test
-            (cst.Call(cst.Name("foo"), (cst.Arg(cst.Integer("1")),)), "foo(1)", None),
-            (
-                cst.Call(
+            {
+                "node": cst.Call(cst.Name("foo"), (cst.Arg(cst.Integer("1")),)),
+                "code": "foo(1)",
+                "parser": None,
+                "expected_position": None,
+            },
+            {
+                "node": cst.Call(
                     cst.Name("foo"),
                     (
                         cst.Arg(cst.Integer("1")),
@@ -42,17 +55,19 @@ class CallTest(CSTNodeTest):
                         cst.Arg(cst.Integer("3")),
                     ),
                 ),
-                "foo(1, 2, 3)",
-                None,
-            ),
+                "code": "foo(1, 2, 3)",
+                "parser": None,
+                "expected_position": None,
+            },
             # Positional arguments parse test
-            (
-                cst.Call(cst.Name("foo"), (cst.Arg(value=cst.Integer("1")),)),
-                "foo(1)",
-                parse_expression,
-            ),
-            (
-                cst.Call(
+            {
+                "node": cst.Call(cst.Name("foo"), (cst.Arg(value=cst.Integer("1")),)),
+                "code": "foo(1)",
+                "parser": parse_expression,
+                "expected_position": None,
+            },
+            {
+                "node": cst.Call(
                     cst.Name("foo"),
                     (
                         cst.Arg(
@@ -63,11 +78,12 @@ class CallTest(CSTNodeTest):
                     whitespace_after_func=cst.SimpleWhitespace(" "),
                     whitespace_before_args=cst.SimpleWhitespace(" "),
                 ),
-                "foo ( 1 )",
-                parse_expression,
-            ),
-            (
-                cst.Call(
+                "code": "foo ( 1 )",
+                "parser": parse_expression,
+                "expected_position": None,
+            },
+            {
+                "node": cst.Call(
                     cst.Name("foo"),
                     (
                         cst.Arg(
@@ -78,11 +94,12 @@ class CallTest(CSTNodeTest):
                     whitespace_after_func=cst.SimpleWhitespace(" "),
                     whitespace_before_args=cst.SimpleWhitespace(" "),
                 ),
-                "foo ( 1, )",
-                parse_expression,
-            ),
-            (
-                cst.Call(
+                "code": "foo ( 1, )",
+                "parser": parse_expression,
+                "expected_position": None,
+            },
+            {
+                "node": cst.Call(
                     cst.Name("foo"),
                     (
                         cst.Arg(
@@ -96,20 +113,22 @@ class CallTest(CSTNodeTest):
                         cst.Arg(value=cst.Integer("3")),
                     ),
                 ),
-                "foo(1, 2, 3)",
-                parse_expression,
-            ),
+                "code": "foo(1, 2, 3)",
+                "parser": parse_expression,
+                "expected_position": None,
+            },
             # Keyword arguments render test
-            (
-                cst.Call(
+            {
+                "node": cst.Call(
                     cst.Name("foo"),
                     (cst.Arg(keyword=cst.Name("one"), value=cst.Integer("1")),),
                 ),
-                "foo(one = 1)",
-                None,
-            ),
-            (
-                cst.Call(
+                "code": "foo(one = 1)",
+                "parser": None,
+                "expected_position": None,
+            },
+            {
+                "node": cst.Call(
                     cst.Name("foo"),
                     (
                         cst.Arg(keyword=cst.Name("one"), value=cst.Integer("1")),
@@ -117,12 +136,13 @@ class CallTest(CSTNodeTest):
                         cst.Arg(keyword=cst.Name("three"), value=cst.Integer("3")),
                     ),
                 ),
-                "foo(one = 1, two = 2, three = 3)",
-                None,
-            ),
+                "code": "foo(one = 1, two = 2, three = 3)",
+                "parser": None,
+                "expected_position": None,
+            },
             # Keyword arguments parser test
-            (
-                cst.Call(
+            {
+                "node": cst.Call(
                     cst.Name("foo"),
                     (
                         cst.Arg(
@@ -132,11 +152,12 @@ class CallTest(CSTNodeTest):
                         ),
                     ),
                 ),
-                "foo(one = 1)",
-                parse_expression,
-            ),
-            (
-                cst.Call(
+                "code": "foo(one = 1)",
+                "parser": parse_expression,
+                "expected_position": None,
+            },
+            {
+                "node": cst.Call(
                     cst.Name("foo"),
                     (
                         cst.Arg(
@@ -158,17 +179,21 @@ class CallTest(CSTNodeTest):
                         ),
                     ),
                 ),
-                "foo(one = 1, two = 2, three = 3)",
-                parse_expression,
-            ),
+                "code": "foo(one = 1, two = 2, three = 3)",
+                "parser": parse_expression,
+                "expected_position": None,
+            },
             # Iterator expansion render test
-            (
-                cst.Call(cst.Name("foo"), (cst.Arg(star="*", value=cst.Name("one")),)),
-                "foo(*one)",
-                None,
-            ),
-            (
-                cst.Call(
+            {
+                "node": cst.Call(
+                    cst.Name("foo"), (cst.Arg(star="*", value=cst.Name("one")),)
+                ),
+                "code": "foo(*one)",
+                "parser": None,
+                "expected_position": None,
+            },
+            {
+                "node": cst.Call(
                     cst.Name("foo"),
                     (
                         cst.Arg(star="*", value=cst.Name("one")),
@@ -176,17 +201,21 @@ class CallTest(CSTNodeTest):
                         cst.Arg(star="*", value=cst.Name("three")),
                     ),
                 ),
-                "foo(*one, *two, *three)",
-                None,
-            ),
+                "code": "foo(*one, *two, *three)",
+                "parser": None,
+                "expected_position": None,
+            },
             # Iterator expansion parser test
-            (
-                cst.Call(cst.Name("foo"), (cst.Arg(star="*", value=cst.Name("one")),)),
-                "foo(*one)",
-                parse_expression,
-            ),
-            (
-                cst.Call(
+            {
+                "node": cst.Call(
+                    cst.Name("foo"), (cst.Arg(star="*", value=cst.Name("one")),)
+                ),
+                "code": "foo(*one)",
+                "parser": parse_expression,
+                "expected_position": None,
+            },
+            {
+                "node": cst.Call(
                     cst.Name("foo"),
                     (
                         cst.Arg(
@@ -202,17 +231,21 @@ class CallTest(CSTNodeTest):
                         cst.Arg(star="*", value=cst.Name("three")),
                     ),
                 ),
-                "foo(*one, *two, *three)",
-                parse_expression,
-            ),
+                "code": "foo(*one, *two, *three)",
+                "parser": parse_expression,
+                "expected_position": None,
+            },
             # Dictionary expansion render test
-            (
-                cst.Call(cst.Name("foo"), (cst.Arg(star="**", value=cst.Name("one")),)),
-                "foo(**one)",
-                None,
-            ),
-            (
-                cst.Call(
+            {
+                "node": cst.Call(
+                    cst.Name("foo"), (cst.Arg(star="**", value=cst.Name("one")),)
+                ),
+                "code": "foo(**one)",
+                "parser": None,
+                "expected_position": None,
+            },
+            {
+                "node": cst.Call(
                     cst.Name("foo"),
                     (
                         cst.Arg(star="**", value=cst.Name("one")),
@@ -220,17 +253,21 @@ class CallTest(CSTNodeTest):
                         cst.Arg(star="**", value=cst.Name("three")),
                     ),
                 ),
-                "foo(**one, **two, **three)",
-                None,
-            ),
+                "code": "foo(**one, **two, **three)",
+                "parser": None,
+                "expected_position": None,
+            },
             # Dictionary expansion parser test
-            (
-                cst.Call(cst.Name("foo"), (cst.Arg(star="**", value=cst.Name("one")),)),
-                "foo(**one)",
-                parse_expression,
-            ),
-            (
-                cst.Call(
+            {
+                "node": cst.Call(
+                    cst.Name("foo"), (cst.Arg(star="**", value=cst.Name("one")),)
+                ),
+                "code": "foo(**one)",
+                "parser": parse_expression,
+                "expected_position": None,
+            },
+            {
+                "node": cst.Call(
                     cst.Name("foo"),
                     (
                         cst.Arg(
@@ -246,12 +283,13 @@ class CallTest(CSTNodeTest):
                         cst.Arg(star="**", value=cst.Name("three")),
                     ),
                 ),
-                "foo(**one, **two, **three)",
-                parse_expression,
-            ),
+                "code": "foo(**one, **two, **three)",
+                "parser": parse_expression,
+                "expected_position": None,
+            },
             # Complicated mingling rules render test
-            (
-                cst.Call(
+            {
+                "node": cst.Call(
                     cst.Name("foo"),
                     (
                         cst.Arg(value=cst.Name("pos1")),
@@ -271,12 +309,13 @@ class CallTest(CSTNodeTest):
                         cst.Arg(star="**", value=cst.Name("dict2")),
                     ),
                 ),
-                "foo(pos1, *list1, pos2, pos3, *list2, pos4, *list3, kw1 = 1, *list4, kw2 = 2, *list5, kw3 = 3, **dict1, kw4 = 4, **dict2)",
-                None,
-            ),
+                "code": "foo(pos1, *list1, pos2, pos3, *list2, pos4, *list3, kw1 = 1, *list4, kw2 = 2, *list5, kw3 = 3, **dict1, kw4 = 4, **dict2)",
+                "parser": None,
+                "expected_position": None,
+            },
             # Complicated mingling rules parser test
-            (
-                cst.Call(
+            {
+                "node": cst.Call(
                     cst.Name("foo"),
                     (
                         cst.Arg(
@@ -352,12 +391,13 @@ class CallTest(CSTNodeTest):
                         cst.Arg(star="**", value=cst.Name("dict2")),
                     ),
                 ),
-                "foo(pos1, *list1, pos2, pos3, *list2, pos4, *list3, kw1 = 1, *list4, kw2 = 2, *list5, kw3 = 3, **dict1, kw4 = 4, **dict2)",
-                parse_expression,
-            ),
+                "code": "foo(pos1, *list1, pos2, pos3, *list2, pos4, *list3, kw1 = 1, *list4, kw2 = 2, *list5, kw3 = 3, **dict1, kw4 = 4, **dict2)",
+                "parser": parse_expression,
+                "expected_position": None,
+            },
             # Test whitespace
-            (
-                cst.Call(
+            {
+                "node": cst.Call(
                     lpar=(cst.LeftParen(whitespace_after=cst.SimpleWhitespace(" ")),),
                     func=cst.Name("foo"),
                     whitespace_after_func=cst.SimpleWhitespace(" "),
@@ -397,48 +437,46 @@ class CallTest(CSTNodeTest):
                     ),
                     rpar=(cst.RightParen(whitespace_before=cst.SimpleWhitespace(" ")),),
                 ),
-                "( foo ( pos1 ,  *  list1, kw1=1, ** dict1 ) )",
-                parse_expression,
-                CodeRange.create((1, 2), (1, 43)),
-            ),
+                "code": "( foo ( pos1 ,  *  list1, kw1=1, ** dict1 ) )",
+                "parser": parse_expression,
+                "expected_position": CodeRange.create((1, 2), (1, 43)),
+            },
             # Test args
-            (
-                cst.Arg(
+            {
+                "node": cst.Arg(
                     star="*",
                     whitespace_after_star=cst.SimpleWhitespace("  "),
                     keyword=None,
                     value=cst.Name("list1"),
                     comma=cst.Comma(whitespace_after=cst.SimpleWhitespace(" ")),
                 ),
-                "*  list1, ",
-                None,
-                CodeRange.create((1, 0), (1, 8)),
-            ),
+                "code": "*  list1, ",
+                "parser": None,
+                "expected_position": CodeRange.create((1, 0), (1, 8)),
+            },
         )
     )
-    def test_valid(
-        self,
-        node: cst.CSTNode,
-        code: str,
-        parser: Optional[Callable[[str], cst.CSTNode]],
-        position: Optional[CodeRange] = None,
-    ) -> None:
-        self.validate_node(node, code, parser, expected_position=position)
+    def test_valid(self, **kwargs: Any) -> None:
+        self.validate_node(**kwargs)
 
     @data_provider(
         (
             # Basic expression parenthesizing tests.
-            (
-                lambda: cst.Call(func=cst.Name("foo"), lpar=(cst.LeftParen(),)),
-                "left paren without right paren",
-            ),
-            (
-                lambda: cst.Call(func=cst.Name("foo"), rpar=(cst.RightParen(),)),
-                "right paren without left paren",
-            ),
+            {
+                "get_node": lambda: cst.Call(
+                    func=cst.Name("foo"), lpar=(cst.LeftParen(),)
+                ),
+                "expected_re": "left paren without right paren",
+            },
+            {
+                "get_node": lambda: cst.Call(
+                    func=cst.Name("foo"), rpar=(cst.RightParen(),)
+                ),
+                "expected_re": "right paren without left paren",
+            },
             # Test that we handle keyword stuff correctly.
-            (
-                lambda: cst.Call(
+            {
+                "get_node": lambda: cst.Call(
                     func=cst.Name("foo"),
                     args=(
                         cst.Arg(
@@ -446,11 +484,11 @@ class CallTest(CSTNodeTest):
                         ),
                     ),
                 ),
-                "Must have a keyword when specifying an AssignEqual",
-            ),
+                "expected_re": "Must have a keyword when specifying an AssignEqual",
+            },
             # Test that we separate *, ** and keyword args correctly
-            (
-                lambda: cst.Call(
+            {
+                "get_node": lambda: cst.Call(
                     func=cst.Name("foo"),
                     args=(
                         cst.Arg(
@@ -460,41 +498,41 @@ class CallTest(CSTNodeTest):
                         ),
                     ),
                 ),
-                "Cannot specify a star and a keyword together",
-            ),
+                "expected_re": "Cannot specify a star and a keyword together",
+            },
             # Test for expected star inputs only
-            (
-                lambda: cst.Call(
+            {
+                "get_node": lambda: cst.Call(
                     func=cst.Name("foo"),
                     # pyre-ignore: Ignore type on 'star' since we're testing behavior
                     # when somebody isn't using a type checker.
                     args=(cst.Arg(star="***", value=cst.SimpleString("'baz'")),),
                 ),
-                r"Must specify either '', '\*' or '\*\*' for star",
-            ),
+                "expected_re": r"Must specify either '', '\*' or '\*\*' for star",
+            },
             # Test ordering exceptions
-            (
-                lambda: cst.Call(
+            {
+                "get_node": lambda: cst.Call(
                     func=cst.Name("foo"),
                     args=(
                         cst.Arg(star="**", value=cst.Name("bar")),
                         cst.Arg(star="*", value=cst.Name("baz")),
                     ),
                 ),
-                "Cannot have iterable argument unpacking after keyword argument unpacking",
-            ),
-            (
-                lambda: cst.Call(
+                "expected_re": "Cannot have iterable argument unpacking after keyword argument unpacking",
+            },
+            {
+                "get_node": lambda: cst.Call(
                     func=cst.Name("foo"),
                     args=(
                         cst.Arg(star="**", value=cst.Name("bar")),
                         cst.Arg(value=cst.Name("baz")),
                     ),
                 ),
-                "Cannot have positional argument after keyword argument unpacking",
-            ),
-            (
-                lambda: cst.Call(
+                "expected_re": "Cannot have positional argument after keyword argument unpacking",
+            },
+            {
+                "get_node": lambda: cst.Call(
                     func=cst.Name("foo"),
                     args=(
                         cst.Arg(
@@ -503,11 +541,9 @@ class CallTest(CSTNodeTest):
                         cst.Arg(value=cst.SimpleString("'bar'")),
                     ),
                 ),
-                "Cannot have positional argument after keyword argument",
-            ),
+                "expected_re": "Cannot have positional argument after keyword argument",
+            },
         )
     )
-    def test_invalid(
-        self, get_node: Callable[[], cst.CSTNode], expected_re: str
-    ) -> None:
-        self.assert_invalid(get_node, expected_re)
+    def test_invalid(self, **kwargs: Any) -> None:
+        self.assert_invalid(**kwargs)
