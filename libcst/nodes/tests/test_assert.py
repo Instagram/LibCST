@@ -8,6 +8,7 @@
 from typing import Any
 
 import libcst.nodes as cst
+from libcst.helpers import ensure_type
 from libcst.nodes.tests.base import CSTNodeTest
 from libcst.parser import parse_statement
 from libcst.testing.utils import data_provider
@@ -87,6 +88,12 @@ class AssertConstructionTest(CSTNodeTest):
         self.assert_invalid(**kwargs)
 
 
+def _assert_parser(code: str) -> cst.Assert:
+    return ensure_type(
+        ensure_type(parse_statement(code), cst.SimpleStatementLine).body[0], cst.Assert
+    )
+
+
 class AssertParsingTest(CSTNodeTest):
     @data_provider(
         (
@@ -94,8 +101,7 @@ class AssertParsingTest(CSTNodeTest):
             {
                 "node": cst.Assert(cst.Name("True")),
                 "code": "assert True",
-                # pyre-fixme[16]: `BaseSuite` has no attribute `__getitem__`.
-                "parser": (lambda code: parse_statement(code).body[0]),
+                "parser": _assert_parser,
                 "expected_position": None,
             },
             # Assert with message
@@ -106,8 +112,7 @@ class AssertParsingTest(CSTNodeTest):
                     comma=cst.Comma(whitespace_after=cst.SimpleWhitespace(" ")),
                 ),
                 "code": 'assert True, "Value should be true"',
-                # pyre-fixme[16]: `BaseSuite` has no attribute `__getitem__`.
-                "parser": (lambda code: parse_statement(code).body[0]),
+                "parser": _assert_parser,
                 "expected_position": None,
             },
             # Whitespace oddities test
@@ -117,8 +122,7 @@ class AssertParsingTest(CSTNodeTest):
                     whitespace_after_assert=cst.SimpleWhitespace(""),
                 ),
                 "code": "assert(True)",
-                # pyre-fixme[16]: `BaseSuite` has no attribute `__getitem__`.
-                "parser": (lambda code: parse_statement(code).body[0]),
+                "parser": _assert_parser,
                 "expected_position": None,
             },
             # Whitespace rendering test
@@ -133,8 +137,7 @@ class AssertParsingTest(CSTNodeTest):
                     msg=cst.SimpleString('"Value should be true"'),
                 ),
                 "code": 'assert  True  ,  "Value should be true"',
-                # pyre-fixme[16]: `BaseSuite` has no attribute `__getitem__`.
-                "parser": (lambda code: parse_statement(code).body[0]),
+                "parser": _assert_parser,
                 "expected_position": None,
             },
         )

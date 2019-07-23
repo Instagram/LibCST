@@ -7,6 +7,7 @@
 from typing import Callable, Optional
 
 import libcst.nodes as cst
+from libcst.helpers import ensure_type
 from libcst.nodes._internal import CodeRange
 from libcst.nodes.tests.base import CSTNodeTest
 from libcst.parser import parse_statement
@@ -216,5 +217,11 @@ class YieldParsingTest(CSTNodeTest):
     def test_valid(
         self, node: cst.CSTNode, code: str, position: Optional[CodeRange] = None
     ) -> None:
-        # pyre-fixme[16]: `BaseSuite` has no attribute `__getitem__`.
-        self.validate_node(node, code, lambda code: parse_statement(code).body[0].value)
+        self.validate_node(
+            node,
+            code,
+            lambda code: ensure_type(
+                ensure_type(parse_statement(code), cst.SimpleStatementLine).body[0],
+                cst.Expr,
+            ).value,
+        )
