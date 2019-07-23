@@ -11,8 +11,8 @@ T = TypeVar("T")
 
 
 def mark_no_op(
-    f: Callable[["CSTMatchers", T], None]
-) -> Callable[["CSTMatchers", T], None]:
+    f: Callable[["CSTTypedVisitorFunctions", T], None]
+) -> Callable[["CSTTypedVisitorFunctions", T], None]:
     """
     Annotates stubs with a field to indicate they should not be collected
     by BatchableCSTVisitor.get_visitors() to reduce function call
@@ -23,6 +23,6 @@ def mark_no_op(
     return f
 
 
-class CSTMatchers:
-    # TODO: generate stubs for matchers with codegen
+class CSTTypedVisitorFunctions:
+    # TODO: generate stubs for visit/leave functions with codegen
     pass

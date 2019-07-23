@@ -19,8 +19,8 @@ from typing import (
 )
 
 import libcst.nodes as cst
-from libcst.matchers import CSTMatchers
 from libcst.metadata._interface import _MetadataInterface
+from libcst.typed_visitor_base import CSTTypedVisitorFunctions
 from libcst.visitors import CSTNodeT, CSTVisitor
 
 
@@ -32,7 +32,7 @@ VisitorMethod = Callable[[cst.CSTNode], None]
 _VisitorMethodCollection = Mapping[str, List[VisitorMethod]]
 
 
-class BatchableCSTVisitor(CSTMatchers, _MetadataInterface):
+class BatchableCSTVisitor(CSTTypedVisitorFunctions, _MetadataInterface):
     """
     Extend this class for each type of batched operation you want to perform.
     """
