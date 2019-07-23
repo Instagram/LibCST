@@ -12,7 +12,7 @@ from libcst.metadata._interface import _MetadataInterface
 
 if TYPE_CHECKING:
     # Circular dependency for typing reasons only
-    from libcst.nodes._base import CSTNode
+    from libcst.nodes._base import CSTNode  # noqa: F401
 
 
 CSTVisitorT = Union["CSTTransformer", "CSTVisitor"]
@@ -33,8 +33,11 @@ class CSTTransformer(_MetadataInterface):
         """
         visit_func = getattr(self, f"visit_{type(node).__name__}", None)
         if visit_func is not None:
-            visit_func(node)
-        return True
+            retval = visit_func(node)
+        else:
+            retval = True
+        # Don't visit children IFF the visit function returned False.
+        return False if retval is False else True
 
     def on_leave(
         self, original_node: CSTNodeT, updated_node: CSTNodeT
@@ -65,8 +68,11 @@ class CSTVisitor(_MetadataInterface):
         """
         visit_func = getattr(self, f"visit_{type(node).__name__}", None)
         if visit_func is not None:
-            visit_func(node)
-        return True
+            retval = visit_func(node)
+        else:
+            retval = True
+        # Don't visit children IFF the visit function returned False.
+        return False if retval is False else True
 
     def on_leave(self, original_node: CSTNodeT) -> None:
         """
