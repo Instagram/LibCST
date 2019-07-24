@@ -23,7 +23,7 @@ commands:
     steps:
       - checkout
       - restore_cache:
-         key: tox-v1-{{ checksum "tox.ini" }}-{{ checksum "requirements.txt" }}-{{ checksum "requirements-dev.txt" }}-{{ checksum "setup.py" }}-<< parameters.env >>
+         key: tox-v1-{{ checksum "tox.ini" }}-{{ checksum "requirements.txt" }}-{{ checksum "requirements-dev.txt" }}-{{ checksum "setup.py" }}-{{ checksum ".circleci/config.yml" }}-<< parameters.env >>
       - run:
           name: install tox
           command: pip install --user tox
@@ -31,7 +31,7 @@ commands:
           name: run tox
           command: ~/.local/bin/tox -e << parameters.env >>
       - save_cache:
-         key: tox-v1-{{ checksum "tox.ini" }}-{{ checksum "requirements.txt" }}-{{ checksum "requirements-dev.txt" }}-{{ checksum "setup.py" }}-<< parameters.env >>
+         key: tox-v1-{{ checksum "tox.ini" }}-{{ checksum "requirements.txt" }}-{{ checksum "requirements-dev.txt" }}-{{ checksum "setup.py" }}-{{ checksum ".circleci/config.yml" }}-<< parameters.env >>
          paths:
            - '.tox'
 
@@ -46,8 +46,6 @@ jobs:
   docs:
     docker:
       - image: circleci/python:3.7
-        environment:
-          TOXENV: docs
     steps:
       - run:
           command: sudo apt-get install graphviz
@@ -76,11 +74,11 @@ jobs:
       - image: circleci/python:3.7
     steps:
       - tox:
-          env: "docs"
+          env: "py37"
 
   test-36:
     docker:
       - image: circleci/python:3.6
     steps:
       - tox:
-          env: "docs"
+          env: "py36"
