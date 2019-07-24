@@ -22,12 +22,18 @@ commands:
         default: test
     steps:
       - checkout
+      - restore_cache:
+         key: tox-v1-{{ checksum "tox.ini" }}-{{ checksum "requirements.txt" }}-{{ checksum "requirements-dev.txt" }}-{{ checksum "setup.py" }}-<< parameters.env >>
       - run:
           name: install tox
           command: pip install --user tox
       - run:
           name: run tox
           command: ~/.local/bin/tox -e << parameters.env >>
+      - save_cache:
+         key: tox-v1-{{ checksum "tox.ini" }}-{{ checksum "requirements.txt" }}-{{ checksum "requirements-dev.txt" }}-{{ checksum "setup.py" }}-<< parameters.env >>
+         paths:
+           - '.tox'
 
 jobs:
   lint:
