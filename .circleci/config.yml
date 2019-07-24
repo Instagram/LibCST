@@ -49,6 +49,8 @@ jobs:
         environment:
           TOXENV: docs
     steps:
+      - run:
+          command: sudo apt-get install graphviz
       - tox:
           env: "docs"
       - store_artifacts:

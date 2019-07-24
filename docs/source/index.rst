@@ -18,6 +18,8 @@ Useful Modules
    :maxdepth: 2
    :caption: Contents:
 
+   why_libcst
+
 .. autosummary::
    :toctree: modules
 

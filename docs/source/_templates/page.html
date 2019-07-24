@@ -1,0 +1,14 @@
+{% extends "!page.html" %}
+
+{% block footer %}
+ <script type="text/javascript">
+    $(document).ready(function() {
+        $(".toggle > *").hide();
+        $(".toggle").show();
+        $(".toggle").click(function() {
+            $(this).children().toggle(200);
+            $(this).toggleClass("open");
+        })
+    });
+</script>
+{% endblock %}

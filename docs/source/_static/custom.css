@@ -1,0 +1,15 @@
+.toggle {
+    display: block;
+    clear: both;
+}
+
+.toggle:after {
+    content: "Show Code [+]";
+}
+
+.toggle.open:before {
+    content: "Hide Code [-]";
+}
+.toggle.open:after {
+    content: "";
+}
