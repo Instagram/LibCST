@@ -60,14 +60,20 @@ jobs:
       - image: circleci/python:3.7
     steps:
       - checkout
+      - restore_cache:
+         key: pyre-v1-{{ checksum "tox.ini" }}-{{ checksum "requirements.txt" }}-{{ checksum "requirements-dev.txt" }}-{{ checksum "setup.py" }}-{{ checksum ".circleci/config.yml" }}
       - run:
           name: run pyre
           command: |
-            python3 -m venv /tmp/libcst-env/
+            test -d /tmp/libcst-env/ || python3 -m venv /tmp/libcst-env/
             source /tmp/libcst-env/bin/activate
             pip install --upgrade pip
             pip install -r requirements.txt -r requirements-dev.txt
             pyre check
+      - save_cache:
+          key: pyre-v1-{{ checksum "tox.ini" }}-{{ checksum "requirements.txt" }}-{{ checksum "requirements-dev.txt" }}-{{ checksum "setup.py" }}-{{ checksum ".circleci/config.yml" }}
+          paths:
+            - '/tmp/libcst-env/'
 
   test-37:
     docker:
