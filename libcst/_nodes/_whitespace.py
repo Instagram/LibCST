@@ -36,18 +36,18 @@ class BaseParenthesizableWhitespace(CSTNode, ABC):
 
     The list of allowed characters in a whitespace depends on whether it is found
     inside a parentesized expression or not. This class allows nodes which can be
-    found inside or outside a (), [] or {} section to accept either whitespace
-    form.
+    found inside or outside a ``()``, ``[]`` or ``{}`` section to accept either
+    whitespace form.
 
     https://docs.python.org/3/reference/lexical_analysis.html#implicit-line-joining
 
-    ParenthesizableWhitespace may contain a backslash character (`\\`), when used as a
-    line-continuation character. While the continuation character isn't technically
+    Parenthesizable whitespace may contain a backslash character (``\\``), when used as
+    a line-continuation character. While the continuation character isn't technically
     "whitespace", it serves the same purpose.
 
-    ParenthesizableWhitespace is often non-semantic (optional), but in cases where whitespace
-    solves a grammar ambiguity between tokens (e.g. `if test`, versus `iftest`), it has
-    some semantic value.
+    Parenthesizable whitespace is often non-semantic (optional), but in cases where
+    whitespace solves a grammar ambiguity between tokens (e.g. ``if test``, versus
+    ``iftest``), it has some semantic value.
     """
 
     # TODO: Should we somehow differentiate places where we require non-zero whitespace
@@ -56,13 +56,37 @@ class BaseParenthesizableWhitespace(CSTNode, ABC):
     @property
     @abstractmethod
     def empty(self) -> bool:
+        """
+        Indicates that this node is empty (zero whitespace characters).
+        """
         ...
 
 
 @add_slots
 @dataclass(frozen=True)
 class SimpleWhitespace(BaseParenthesizableWhitespace, BaseValueToken):
+    """
+    This is the kind of whitespace you might see inside the body of a statement or
+    expression between two tokens. This is the most common type of whitespace.
 
+    A simple whitespace cannot contain a newline character unless it is directly
+    preceeded by a line continuation character (``\\``). It can contain zero or
+    more spaces or tabs. If you need a newline character without a line continuation
+    character, use :class:`ParenthesizedWhitespace` instead.
+
+    Simple whitespace is often non-semantic (optional), but in cases where whitespace
+    solves a grammar ambiguity between tokens (e.g. ``if test``, versus ``iftest``),
+    it has some semantic value.
+
+    An example :class:`SimpleWhitespace` containing a space, a line continuation,
+    a newline and another space is as follows::
+
+        SimpleWhitespace(r" \\\\n ")
+    """
+
+    #: Actual string value of the simple whitespace. A legal value contains only
+    #: space, ``\f`` and ``\t`` characters, and optionally a continuation
+    #: (``\``) followed by a newline (``\n`` or ``\r\n``).
     value: str
 
     def _validate(self) -> None:
@@ -73,6 +97,10 @@ class SimpleWhitespace(BaseParenthesizableWhitespace, BaseValueToken):
 
     @property
     def empty(self) -> bool:
+        """
+        Indicates that this node is empty (zero whitespace characters).
+        """
+
         return len(self.value) == 0
 
 
@@ -80,16 +108,22 @@ class SimpleWhitespace(BaseParenthesizableWhitespace, BaseValueToken):
 @dataclass(frozen=True)
 class Newline(BaseLeaf):
     """
-    Represents the newline that ends an EmptyLine or a statement (as part of
-    TrailingWhitespace).
+    Represents the newline that ends an :class:`EmptyLine` or a statement (as part of
+    :class:`TrailingWhitespace`).
 
     Other newlines may occur in the document after continuation characters (the
-    backslash, `\\`), but those newlines are treated as part of the SimpleWhitespace.
+    backslash, ``\\``), but those newlines are treated as part of the
+    :class:`SimpleWhitespace`.
+
+    Optionally, a value can be specified in order to overwrite the module's default
+    newline. In general, this should be left as the default, which is ``None``. This
+    is allowed because python modules are permitted to mix multiple unambiguous
+    newline markers.
     """
 
-    # A value of 'None' indicates that the module's default newline sequence should be
-    # used. A value is allowed only because python modules are permitted to mix multiple
-    # unambiguous newline markers.
+    #: A value of ``None`` indicates that the module's default newline sequence should
+    #: be used. A value of ``\n`` or ``\r\n`` indicates that the exact value specified
+    #: will be used for this newline.
     value: Optional[str] = None
 
     def _validate(self) -> None:
@@ -106,18 +140,20 @@ class Newline(BaseLeaf):
 @dataclass(frozen=True)
 class Comment(BaseValueToken):
     """
-    A comment including the leading pound (`#`) character.
+    A comment including the leading pound (``#``) character.
 
     The leading pound character is included in the 'value' property (instead of being
     stripped) to help re-enforce the idea that whitespace immediately after the pound
-    character may be significant. E.g:
+    character may be significant. E.g::
 
-        # comment with whitespace at the start (usually preferred), versus
+        # comment with whitespace at the start (usually preferred)
         #comment without whitespace at the start (usually not desirable)
 
-    Usually wrapped in a TrailingWhitespace or EmptyLine node.
+    Usually wrapped in a :class:`TrailingWhitespace` or :class:`EmptyLine` node.
     """
 
+    #: The comment itself. Valid values start with the pound (``#``) character followed
+    #: by zero or more non-newline characters. Comments cannot include newlines.
     value: str
 
     def _validate(self) -> None:
@@ -132,11 +168,16 @@ class Comment(BaseValueToken):
 class TrailingWhitespace(CSTNode):
     """
     The whitespace at the end of a line after a statement. If a line contains only
-    whitespace, EmptyLine should be used instead.
+    whitespace, :class:`EmptyLine` should be used instead.
     """
 
+    #: Any simple whitespace before any comment or newline.
     whitespace: SimpleWhitespace = SimpleWhitespace("")
+
+    #: An optional comment appearing after any simple whitespace.
     comment: Optional[Comment] = None
+
+    #: The newline character that terminates this trailing whitespace.
     newline: Newline = Newline()
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "TrailingWhitespace":
@@ -158,16 +199,22 @@ class TrailingWhitespace(CSTNode):
 class EmptyLine(CSTNode):
     """
     Represents a line with only whitespace/comments. Usually statements will own any
-    EmptyLine nodes above themselves, and a Module will own the document's header/footer
-    EmptyLine nodes.
+    :class:`EmptyLine` nodes above themselves, and a :class:`Module` will own the
+    document's header/footer :class:`EmptyLine` nodes.
     """
 
-    # An empty line doesn't have to correspond to the current indentation level. For
-    # example, this happens when all trailing whitespace is stripped.
+    #: An empty line doesn't have to correspond to the current indentation level. For
+    #: example, this happens when all trailing whitespace is stripped and there is
+    #: an empty line between two statements.
     indent: bool = True
-    # Extra whitespace after the indent, but before the comment
+
+    #: Extra whitespace after the indent, but before the comment.
     whitespace: SimpleWhitespace = SimpleWhitespace("")
+
+    #: An optional comment appearing after the indent and extra whitespace.
     comment: Optional[Comment] = None
+
+    #: The newline character that terminates this empty line.
     newline: Newline = Newline()
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "EmptyLine":
@@ -190,18 +237,29 @@ class EmptyLine(CSTNode):
 @add_slots
 @dataclass(frozen=True)
 class ParenthesizedWhitespace(BaseParenthesizableWhitespace):
+    """
+    This is the kind of whitespace you might see inside a parenthesized expression
+    or statement between two tokens when there is a newline without a line
+    continuation (``\\``) character.
 
-    # The whitespace that comes after the previous node, up to and including
-    # the end-of-line comment.
+    https://docs.python.org/3/reference/lexical_analysis.html#implicit-line-joining
+
+    A parenthesized whitespace cannot be empty since it requires at least one
+    :class:`TrailingWhitespace`. If you have whitespace that does not contain
+    comments or newlines, use :class:`SimpleWhitespace` instead.
+    """
+
+    #: The whitespace that comes after the previous node, up to and including
+    #: the end-of-line comment and newline.
     first_line: TrailingWhitespace = TrailingWhitespace()
 
-    # Any lines that contain only indentation and/or comments
+    #: Any lines after the first that contain only indentation and/or comments.
     empty_lines: Sequence[EmptyLine] = ()
 
-    # Whether or not the final comment is indented regularly
+    #: Whether or not the final simple whitespace is indented regularly.
     indent: bool = False
 
-    # Extra whitespace after the indent, but before the next node
+    #: Extra whitespace after the indent, but before the next node.
     last_line: SimpleWhitespace = SimpleWhitespace("")
 
     def _visit_and_replace_children(
@@ -224,6 +282,11 @@ class ParenthesizedWhitespace(BaseParenthesizableWhitespace):
 
     @property
     def empty(self) -> bool:
+        """
+        Indicates that this node is empty (zero whitespace characters). For
+        :class:`ParenthesizedWhitespace` this will always be ``False``.
+        """
+
         # Its not possible to have a ParenthesizedWhitespace with zero characers.
         # If we did, the TrailingWhitespace would not have parsed.
         return False
