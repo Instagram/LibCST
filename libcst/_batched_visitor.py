@@ -18,17 +18,17 @@ from typing import (
     cast,
 )
 
-import libcst.nodes as cst
+from libcst._typed_visitor_base import CSTTypedVisitorFunctions
+from libcst._visitors import CSTNodeT, CSTVisitor
 from libcst.metadata._interface import _MetadataInterface
-from libcst.typed_visitor_base import CSTTypedVisitorFunctions
-from libcst.visitors import CSTNodeT, CSTVisitor
 
 
 if TYPE_CHECKING:
+    from libcst.nodes._base import CSTNode  # noqa: F401
     from libcst.metadata.base_provider import BaseMetadataProvider  # noqa: F401
 
 
-VisitorMethod = Callable[[cst.CSTNode], None]
+VisitorMethod = Callable[["CSTNode"], None]
 _VisitorMethodCollection = Mapping[str, List[VisitorMethod]]
 
 
@@ -59,7 +59,7 @@ class BatchableCSTVisitor(CSTTypedVisitorFunctions, _MetadataInterface):
         return dict(methods)
 
 
-def visit(
+def visit_batched(
     node: CSTNodeT,
     visitors: Iterable[BatchableCSTVisitor],
     before_visit: Optional[VisitorMethod] = None,

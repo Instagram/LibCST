@@ -11,6 +11,7 @@ from dataclasses import dataclass
 from typing import Optional, Pattern, Sequence
 
 from libcst._add_slots import add_slots
+from libcst._visitors import CSTVisitorT
 from libcst.nodes._base import BaseLeaf, BaseValueToken, CSTNode, CSTValidationError
 from libcst.nodes._internal import (
     CodegenState,
@@ -18,7 +19,6 @@ from libcst.nodes._internal import (
     visit_required,
     visit_sequence,
 )
-from libcst.visitors import CSTVisitorT
 
 
 # SimpleWhitespace includes continuation characters, which must be followed immediately

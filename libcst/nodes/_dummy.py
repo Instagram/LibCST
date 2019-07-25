@@ -10,11 +10,11 @@ from typing import Any, List, Sequence, Union
 
 from libcst._add_slots import add_slots
 from libcst._removal_sentinel import RemovalSentinel
+from libcst._visitors import CSTVisitorT
 from libcst.nodes._base import CSTNode, CSTValidationError
 from libcst.nodes._expression import LeftParen, RightParen
 from libcst.nodes._internal import CodegenState, visit_sequence
 from libcst.nodes._whitespace import EmptyLine, TrailingWhitespace  # noqa: F401
-from libcst.visitors import CSTVisitorT
 
 
 @add_slots

@@ -8,7 +8,7 @@ from typing import cast
 from unittest.mock import Mock
 
 import libcst.nodes as cst
-from libcst.batched_visitor import BatchableCSTVisitor, visit
+from libcst._batched_visitor import BatchableCSTVisitor, visit_batched
 from libcst.parser import parse_module
 from libcst.testing.utils import UnitTest
 
@@ -27,7 +27,7 @@ class BatchedVisitorTest(UnitTest):
                 mock.visited_b()
                 object.__setattr__(node, "b_attr", 1)
 
-        module = visit(parse_module("pass"), [ABatchable(), BBatchable()])
+        module = visit_batched(parse_module("pass"), [ABatchable(), BBatchable()])
         pass_ = cast(cst.SimpleStatementLine, module.body[0]).body[0]
 
         # Check properties were set

@@ -7,15 +7,15 @@
 from typing import Generic, Iterable, TypeVar, cast
 
 import libcst.nodes as cst
-from libcst.batched_visitor import (
+from libcst._batched_visitor import (
     BatchableCSTVisitor,
     _BatchedCSTVisitor,
     _get_visitor_methods,
 )
-from libcst.exceptions import MetadataException
+from libcst._exceptions import MetadataException
+from libcst._visitors import CSTVisitor
 from libcst.metadata._interface import _MetadataInterface
 from libcst.nodes._module import _ModuleSelfT as _ModuleT
-from libcst.visitors import CSTVisitor
 
 
 _T_co = TypeVar("_T_co", covariant=True)

@@ -9,10 +9,10 @@ from dataclasses import dataclass
 from typing import Tuple
 
 from libcst._add_slots import add_slots
+from libcst._visitors import CSTVisitorT
 from libcst.nodes._base import BaseLeaf, CSTNode, CSTValidationError
 from libcst.nodes._internal import CodegenState, visit_required
 from libcst.nodes._whitespace import BaseParenthesizableWhitespace, SimpleWhitespace
-from libcst.visitors import CSTVisitorT
 
 
 class _BaseOneTokenOp(CSTNode, ABC):

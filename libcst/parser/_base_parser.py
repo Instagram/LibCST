@@ -30,7 +30,7 @@ from typing import Generic, Iterable, List, Sequence, TypeVar, Union
 from parso.pgen2.generator import DFAState, Grammar, ReservedString
 from parso.python.token import TokenType
 
-from libcst.exceptions import ParserSyntaxError
+from libcst._exceptions import ParserSyntaxError
 from libcst.parser._types.token import Token
 
 

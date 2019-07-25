@@ -18,11 +18,11 @@ from typing import (
     cast,
 )
 
+from libcst._exceptions import MetadataException
 from libcst._removal_sentinel import RemovalSentinel
 from libcst._type_enforce import is_value_of_type
-from libcst.exceptions import MetadataException
+from libcst._visitors import CSTTransformer, CSTVisitor, CSTVisitorT
 from libcst.nodes._internal import CodegenState, CodePosition, CodeRange
-from libcst.visitors import CSTTransformer, CSTVisitor, CSTVisitorT
 
 
 if TYPE_CHECKING:

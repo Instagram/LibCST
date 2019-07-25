@@ -10,6 +10,7 @@ from typing import Optional, Sequence, Union
 
 from libcst._add_slots import add_slots
 from libcst._maybe_sentinel import MaybeSentinel
+from libcst._visitors import CSTVisitorT
 from libcst.nodes._base import CSTNode, CSTValidationError
 from libcst.nodes._expression import (
     Annotation,
@@ -43,7 +44,6 @@ from libcst.nodes._whitespace import (
     SimpleWhitespace,
     TrailingWhitespace,
 )
-from libcst.visitors import CSTVisitorT
 
 
 _INDENT_WHITESPACE_RE = re.compile(r"[ \f\t]+", re.UNICODE)
@@ -1440,7 +1440,7 @@ class ClassDef(BaseCompoundStatement):
             body=visit_required("body", self.body, visitor),
         )
 
-    def _codegen_impl(self, state: CodegenState) -> None:
+    def _codegen_impl(self, state: CodegenState) -> None:  # noqa: C901
         for ll in self.leading_lines:
             ll._codegen(state)
         for decorator in self.decorators:

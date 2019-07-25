@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, Optional, Sequence, Type, TypeVar, Union
 
 from libcst._add_slots import add_slots
 from libcst._removal_sentinel import RemovalSentinel
+from libcst._visitors import CSTVisitorT
 from libcst.nodes._base import CSTNode
 from libcst.nodes._internal import (
     CodegenState,
@@ -17,7 +18,6 @@ from libcst.nodes._internal import (
 )
 from libcst.nodes._statement import BaseCompoundStatement, SimpleStatementLine
 from libcst.nodes._whitespace import EmptyLine
-from libcst.visitors import CSTVisitorT
 
 
 if TYPE_CHECKING:

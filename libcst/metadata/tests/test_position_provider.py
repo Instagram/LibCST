@@ -5,12 +5,12 @@
 
 # pyre-strict
 import libcst.nodes as cst
-from libcst.batched_visitor import BatchableCSTVisitor, visit
+from libcst._batched_visitor import BatchableCSTVisitor, visit_batched
+from libcst._visitors import CSTTransformer
 from libcst.metadata.position_provider import SyntacticPositionProvider
 from libcst.nodes._internal import CodeRange
 from libcst.parser import parse_module
 from libcst.testing.utils import UnitTest
-from libcst.visitors import CSTTransformer
 
 
 class PositionProviderTest(UnitTest):
@@ -43,4 +43,4 @@ class PositionProviderTest(UnitTest):
                 range = self.get_metadata(SyntacticPositionProvider, node)
                 test.assertEqual(range, CodeRange.create((1, 0), (1, 4)))
 
-        visit(parse_module("pass"), [ABatchable()])
+        visit_batched(parse_module("pass"), [ABatchable()])

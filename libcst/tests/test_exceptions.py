@@ -6,7 +6,7 @@
 # pyre-strict
 from textwrap import dedent
 
-from libcst.exceptions import ParserSyntaxError
+from libcst._exceptions import ParserSyntaxError
 from libcst.testing.utils import UnitTest, data_provider
 
 

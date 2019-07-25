@@ -21,6 +21,7 @@ from typing_extensions import Literal
 
 from libcst._add_slots import add_slots
 from libcst._maybe_sentinel import MaybeSentinel
+from libcst._visitors import CSTVisitorT
 from libcst.nodes._base import (
     AnnotationIndicatorSentinel,
     CSTCodegenError,
@@ -50,7 +51,6 @@ from libcst.nodes._op import (
     NotIn,
 )
 from libcst.nodes._whitespace import BaseParenthesizableWhitespace, SimpleWhitespace
-from libcst.visitors import CSTVisitorT
 
 
 @add_slots

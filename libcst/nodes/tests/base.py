@@ -11,10 +11,10 @@ from typing import Any, Callable, Iterable, List, Optional, Sequence, Type, Type
 from unittest.mock import patch
 
 import libcst.nodes as cst
+from libcst._visitors import CSTTransformer, CSTVisitorT
 from libcst.metadata.position_provider import SyntacticPositionProvider
 from libcst.nodes._internal import CodegenState, CodeRange, visit_required
 from libcst.testing.utils import UnitTest
-from libcst.visitors import CSTTransformer, CSTVisitorT
 
 
 _CSTNodeT = TypeVar("_CSTNodeT", bound="cst.CSTNode")

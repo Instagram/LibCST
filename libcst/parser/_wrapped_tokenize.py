@@ -33,7 +33,7 @@ from parso.python.tokenize import (
 from parso.utils import PythonVersionInfo, split_lines
 
 from libcst._add_slots import add_slots
-from libcst.exceptions import ParserSyntaxError
+from libcst._exceptions import ParserSyntaxError
 from libcst.parser._types.token import Token
 from libcst.parser._types.whitespace_state import WhitespaceState
 

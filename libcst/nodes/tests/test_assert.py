@@ -8,7 +8,7 @@
 from typing import Any
 
 import libcst.nodes as cst
-from libcst.helpers import ensure_type
+from libcst._helpers import ensure_type
 from libcst.nodes.tests.base import CSTNodeTest
 from libcst.parser import parse_statement
 from libcst.testing.utils import data_provider

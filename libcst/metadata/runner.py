@@ -6,14 +6,14 @@
 # pyre-strict
 from typing import MutableSet, Type
 
-from libcst.exceptions import MetadataException
+from libcst._exceptions import MetadataException
+from libcst._visitors import CSTVisitorT
 from libcst.metadata.base_provider import (
     BaseMetadataProvider,
     BatchableMetadataProvider,
     _run_batchable,
 )
 from libcst.nodes._module import _ModuleSelfT as _ModuleT
-from libcst.visitors import CSTVisitorT
 
 
 ProviderT = Type[BaseMetadataProvider[object]]

@@ -8,10 +8,10 @@ from typing import Type, TypeVar, Union
 
 import libcst.nodes as cst
 from libcst._removal_sentinel import RemovalSentinel
+from libcst._visitors import CSTTransformer
 from libcst.nodes.tests.base import CSTNodeTest
 from libcst.parser import parse_module
 from libcst.testing.utils import data_provider
-from libcst.visitors import CSTTransformer
 
 
 _CSTNodeT = TypeVar("_CSTNodeT", bound=cst.CSTNode)

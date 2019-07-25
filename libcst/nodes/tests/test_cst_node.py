@@ -9,8 +9,8 @@ from typing import TypeVar, Union
 
 import libcst.nodes as cst
 from libcst._removal_sentinel import RemovalSentinel
+from libcst._visitors import CSTTransformer
 from libcst.testing.utils import UnitTest, data_provider, none_throws
-from libcst.visitors import CSTTransformer
 
 
 _CSTNodeT = TypeVar("_CSTNodeT", bound="cst.CSTNode")

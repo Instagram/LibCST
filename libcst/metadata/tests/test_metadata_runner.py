@@ -7,14 +7,14 @@
 from unittest.mock import Mock
 
 import libcst.nodes as cst
-from libcst.exceptions import MetadataException
+from libcst._exceptions import MetadataException
+from libcst._visitors import CSTTransformer
 from libcst.metadata.base_provider import (
     BatchableMetadataProvider,
     VisitorMetadataProvider,
 )
 from libcst.parser import parse_module
 from libcst.testing.utils import UnitTest
-from libcst.visitors import CSTTransformer
 
 
 class MetadataRunnerTest(UnitTest):
