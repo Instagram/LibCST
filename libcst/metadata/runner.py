@@ -30,6 +30,8 @@ class _MetadataRunner:
             for dep in root.METADATA_DEPENDENCIES:
                 self.gather_providers(dep)
 
+    # TODO: decouple this from visit_Module. require users to first
+    # resolve a module + MetadataInterface and then
     @staticmethod
     def resolve(module: _ModuleT, visitor: CSTVisitorT) -> _ModuleT:
         """
@@ -41,7 +43,9 @@ class _MetadataRunner:
             return module
 
         # We need to deep clone to ensure that there are no duplicate nodes
-        module = module.deep_clone()
+        # TODO: this is disabled to not break lint and will no longer
+        # be necessary when we refactor the metadata API
+        # module = module.deep_clone()
 
         runner = _MetadataRunner()
         for dep in visitor.INHERITED_METADATA_DEPENDENCIES:
