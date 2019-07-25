@@ -40,19 +40,32 @@ builtin_bytes = bytes
 class Module(CSTNode):
     """
     Contains some top-level information inferred from the file letting us set correct
-    defaults when printing the tree about global formatting rules.
+    defaults when printing the tree about global formatting rules. All code parsed
+    with :func:`parse_module` will be encapsulated in a module.
     """
 
+    #: A list of zero or more statements that make up this module.
     body: Sequence[Union[SimpleStatementLine, BaseCompoundStatement]]
-    # Normally any whitespace/comments are assigned to the next node visited, but Module
-    # is a special case, and comments at the top of the file tend to refer to the module
-    # itself, so we assign them to the Module.
+
+    #: Normally any whitespace/comments are assigned to the next node visited, but
+    #: :class:`Module` is a special case, and comments at the top of the file tend
+    #: to refer to the module itself, so we assign them to the :class:`Module`
+    #: instead of the first statement in the body.
     header: Sequence[EmptyLine] = ()
+
+    #: Any trailing whitespace/comments found after the last statement.
     footer: Sequence[EmptyLine] = ()
 
+    #: The inferred file encoding.
     encoding: str = "utf-8"
+
+    #: The inferred indentation of the file, expressed as a series of tabs or spaces.
     default_indent: str = " " * 4
+
+    #: The inferred newline of the file, expressed as either ``\n`` or ``\r\n``.
     default_newline: str = "\n"
+
+    #: Whether the module has a trailing newline or not.
     has_trailing_newline: bool = True
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Module":
@@ -70,8 +83,8 @@ class Module(CSTNode):
         """
         Returns the result of running a visitor over this module.
 
-        Module overrides the default visitor entry point to resolve metadata
-        dependencies declared by [visitor].
+        :class:`Module` overrides the default visitor entry point to resolve metadata
+        dependencies declared by 'visitor'.
         """
 
         from libcst.metadata.runner import _MetadataRunner
@@ -103,10 +116,18 @@ class Module(CSTNode):
 
     @property
     def code(self) -> str:
+        """
+        The string representation of this module, respecting the inferred indentation
+        and newline type.
+        """
         return self.code_for_node(self)
 
     @property
     def bytes(self) -> builtin_bytes:
+        """
+        The bytes representation of this module, respecting the inferred indentation
+        and newline type, using the current encoding.
+        """
         return self.code.encode(self.encoding)
 
     def code_for_node(
