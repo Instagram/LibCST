@@ -5,8 +5,8 @@
 
 from typing import Any, List, Sequence, Union
 
-import libcst.nodes as cst
 from libcst.nodes._base import CSTNode
+from libcst.nodes._dummy import DummyNode
 from libcst.parser._types.config import ParserConfig
 from libcst.parser._types.partials import WithLeadingWhitespace
 from libcst.parser._types.token import Token
@@ -40,7 +40,7 @@ def make_dummy_node(config: ParserConfig, children: Sequence[Any]) -> Any:
 
     if hasattr(children[0], "whitespace_before"):
         return WithLeadingWhitespace(
-            cst.DummyNode(children=wrapped_children), children[0].whitespace_before
+            DummyNode(children=wrapped_children), children[0].whitespace_before
         )
     else:
-        return cst.DummyNode(children=wrapped_children)
+        return DummyNode(children=wrapped_children)

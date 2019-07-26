@@ -4,7 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 # pyre-strict
-import libcst.nodes as cst
+import libcst as cst
 from libcst.nodes.tests.base import CSTNodeTest, DummyIndentedBlock
 from libcst.testing.utils import data_provider
 

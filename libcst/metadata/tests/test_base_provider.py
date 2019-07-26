@@ -6,7 +6,7 @@
 # pyre-strict
 from typing import cast
 
-import libcst.nodes as cst
+import libcst as cst
 from libcst.metadata.base_provider import (
     BatchableMetadataProvider,
     VisitorMetadataProvider,

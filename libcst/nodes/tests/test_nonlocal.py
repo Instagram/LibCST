@@ -6,7 +6,7 @@
 # pyre-strict
 from typing import Callable, Optional
 
-import libcst.nodes as cst
+import libcst as cst
 from libcst._helpers import ensure_type
 from libcst.nodes._internal import CodeRange
 from libcst.nodes.tests.base import CSTNodeTest

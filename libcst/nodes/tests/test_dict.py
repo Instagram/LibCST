@@ -6,7 +6,7 @@
 # pyre-strict
 from typing import Any
 
-import libcst.nodes as cst
+import libcst as cst
 from libcst.nodes._internal import CodeRange
 from libcst.nodes.tests.base import CSTNodeTest
 from libcst.testing.utils import data_provider

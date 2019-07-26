@@ -6,7 +6,7 @@
 # pyre-strict
 from typing import Generic, Iterable, TypeVar, cast
 
-import libcst.nodes as cst
+import libcst as cst
 from libcst._batched_visitor import (
     BatchableCSTVisitor,
     _BatchedCSTVisitor,

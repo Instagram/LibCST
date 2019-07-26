@@ -5,7 +5,7 @@
 
 from typing import Any
 
-import libcst.nodes as cst
+import libcst as cst
 from libcst.parser._types.config import ParserConfig
 from libcst.parser._types.partials import WithLeadingWhitespace
 from libcst.parser._types.token import Token

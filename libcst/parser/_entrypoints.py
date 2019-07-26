@@ -12,7 +12,7 @@ information
 
 from typing import TypeVar, Union
 
-import libcst.nodes as cst
+import libcst as cst
 from libcst.parser._detect_config import detect_config
 from libcst.parser._grammar import get_grammar, validate_grammar
 from libcst.parser._python_parser import PythonCSTParser

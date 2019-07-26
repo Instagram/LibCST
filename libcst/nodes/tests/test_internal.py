@@ -6,7 +6,7 @@
 # pyre-strict
 from typing import Tuple
 
-import libcst.nodes as cst
+import libcst as cst
 from libcst.metadata.position_provider import (
     BasicPositionProvider,
     SyntacticPositionProvider,

@@ -11,8 +11,9 @@ from tokenize import (
 )
 from typing import Any, Dict, List, Sequence, Type, Union
 
-import libcst.nodes as cst
+import libcst as cst
 from libcst._maybe_sentinel import MaybeSentinel
+from libcst.nodes._dummy import DummyNode
 from libcst.parser._conversions.dummy import make_dummy_node
 from libcst.parser._custom_itertools import grouper
 from libcst.parser._production_decorator import with_production
@@ -755,7 +756,7 @@ def convert_atom_curlybraces(config: ParserConfig, children: Sequence[Any]) -> A
         return make_dummy_node(config, children)
     else:  # len(body) == 1
         # body[0] is a cst.Set, cst.SetComp, cst.Dict, or cst.DictComp
-        if isinstance(body[0].value, cst.DummyNode):
+        if isinstance(body[0].value, DummyNode):
             # TODO: Remove this once Dict/DictComp are implemented
             return make_dummy_node(config, children)
         lbrace = cst.LeftCurlyBrace(

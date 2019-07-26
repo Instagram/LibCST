@@ -5,7 +5,7 @@
 
 from typing import Any, Sequence
 
-import libcst.nodes as cst
+import libcst as cst
 from libcst.nodes._whitespace import NEWLINE_RE
 from libcst.parser._production_decorator import with_production
 from libcst.parser._types.config import ParserConfig

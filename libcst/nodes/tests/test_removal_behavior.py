@@ -6,7 +6,7 @@
 # pyre-strict
 from typing import Type, TypeVar, Union
 
-import libcst.nodes as cst
+import libcst as cst
 from libcst._removal_sentinel import RemovalSentinel
 from libcst._visitors import CSTTransformer
 from libcst.nodes.tests.base import CSTNodeTest

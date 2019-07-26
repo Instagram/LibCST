@@ -6,7 +6,7 @@
 # pyre-strict
 from unittest.mock import Mock
 
-import libcst.nodes as cst
+import libcst as cst
 from libcst._exceptions import MetadataException
 from libcst._visitors import CSTTransformer
 from libcst.metadata.base_provider import (

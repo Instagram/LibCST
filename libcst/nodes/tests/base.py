@@ -10,7 +10,7 @@ from dataclasses import dataclass
 from typing import Any, Callable, Iterable, List, Optional, Sequence, Type, TypeVar
 from unittest.mock import patch
 
-import libcst.nodes as cst
+import libcst as cst
 from libcst._visitors import CSTTransformer, CSTVisitorT
 from libcst.metadata.position_provider import SyntacticPositionProvider
 from libcst.nodes._internal import CodegenState, CodeRange, visit_required
@@ -166,7 +166,7 @@ class CSTNodeTest(UnitTest):
                     # pyre-ignore for 1st anonymous parameter to call
                     # pyre-ignore `contextlib.ExitStack.enter_context` but got
                     # pyre-ignore `unittest.mock._patch`.
-                    patch(f"libcst.nodes.{t.name}._codegen", _get_codegen_override(t))
+                    patch(f"libcst.{t.name}._codegen", _get_codegen_override(t))
                 )
             # Execute `node._codegen()`
             cst.Module([]).code_for_node(node)

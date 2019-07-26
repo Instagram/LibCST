@@ -6,7 +6,7 @@
 # pyre-strict
 from textwrap import dedent
 
-import libcst.nodes as cst
+import libcst as cst
 from libcst.nodes._deep_equals import deep_equals
 from libcst.parser import parse_module
 from libcst.testing.utils import UnitTest, data_provider

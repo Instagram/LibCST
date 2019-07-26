@@ -8,7 +8,7 @@
 from dataclasses import dataclass
 from typing import Generic, Optional, Sequence, TypeVar, Union
 
-import libcst.nodes as cst
+import libcst as cst
 from libcst._add_slots import add_slots
 from libcst.parser._types.whitespace_state import WhitespaceState
 

@@ -4,7 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 # pyre-strict
-import libcst.nodes as cst
+import libcst as cst
 from libcst._batched_visitor import BatchableCSTVisitor, visit_batched
 from libcst._visitors import CSTTransformer
 from libcst.metadata.position_provider import SyntacticPositionProvider

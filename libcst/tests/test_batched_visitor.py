@@ -7,8 +7,8 @@
 from typing import cast
 from unittest.mock import Mock
 
-import libcst.nodes as cst
-from libcst._batched_visitor import BatchableCSTVisitor, visit_batched
+import libcst as cst
+from libcst import BatchableCSTVisitor, visit_batched
 from libcst.parser import parse_module
 from libcst.testing.utils import UnitTest
 

@@ -5,7 +5,7 @@
 
 from typing import Any, Dict, List, Optional, Sequence, Tuple, Type
 
-import libcst.nodes as cst
+import libcst as cst
 from libcst._maybe_sentinel import MaybeSentinel
 from libcst.parser._custom_itertools import grouper
 from libcst.parser._production_decorator import with_production

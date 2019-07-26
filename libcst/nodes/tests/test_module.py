@@ -6,7 +6,7 @@
 # pyre-strict
 from typing import Tuple, cast
 
-import libcst.nodes as cst
+import libcst as cst
 from libcst.metadata.position_provider import SyntacticPositionProvider
 from libcst.nodes._internal import CodeRange
 from libcst.nodes.tests.base import CSTNodeTest
