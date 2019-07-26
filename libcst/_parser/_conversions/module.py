@@ -7,8 +7,8 @@ from typing import Any, Sequence
 
 from libcst._nodes._module import Module
 from libcst._nodes._whitespace import NEWLINE_RE
-from libcst.parser._production_decorator import with_production
-from libcst.parser._types.config import ParserConfig
+from libcst._parser._production_decorator import with_production
+from libcst._parser._types.config import ParserConfig
 
 
 @with_production("file_input", "(NEWLINE | stmt)* ENDMARKER")

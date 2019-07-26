@@ -28,7 +28,7 @@ from libcst._nodes._expression import (
 from libcst._nodes._op import AssignEqual, BaseAugOp, Colon, Dot
 from libcst._nodes._statement import AsName, BaseSmallStatement, Decorator, ImportAlias
 from libcst._nodes._whitespace import EmptyLine, SimpleWhitespace, TrailingWhitespace
-from libcst.parser._types.whitespace_state import WhitespaceState
+from libcst._parser._types.whitespace_state import WhitespaceState
 
 
 _T = TypeVar("_T")

@@ -11,7 +11,7 @@ from typing import Optional, Tuple
 from parso.python.token import TokenType
 
 from libcst._add_slots import add_slots
-from libcst.parser._types.whitespace_state import WhitespaceState
+from libcst._parser._types.whitespace_state import WhitespaceState
 
 
 @add_slots

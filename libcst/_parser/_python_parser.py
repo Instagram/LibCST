@@ -8,11 +8,14 @@ from typing import Any, Iterable, Mapping, Sequence
 from parso.pgen2.generator import Grammar
 from parso.python.token import TokenType
 
-from libcst.parser._base_parser import BaseParser
-from libcst.parser._grammar import get_nonterminal_conversions, get_terminal_conversions
-from libcst.parser._types.config import ParserConfig
-from libcst.parser._types.conversions import NonterminalConversion, TerminalConversion
-from libcst.parser._types.token import Token
+from libcst._parser._base_parser import BaseParser
+from libcst._parser._grammar import (
+    get_nonterminal_conversions,
+    get_terminal_conversions,
+)
+from libcst._parser._types.config import ParserConfig
+from libcst._parser._types.conversions import NonterminalConversion, TerminalConversion
+from libcst._parser._types.token import Token
 
 
 class PythonCSTParser(BaseParser[Token, TokenType, Any]):

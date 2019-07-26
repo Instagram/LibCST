@@ -77,10 +77,10 @@ from libcst._nodes._statement import (
     WithItem,
 )
 from libcst._nodes._whitespace import EmptyLine, SimpleWhitespace
-from libcst.parser._custom_itertools import grouper
-from libcst.parser._production_decorator import with_production
-from libcst.parser._types.config import ParserConfig
-from libcst.parser._types.partials import (
+from libcst._parser._custom_itertools import grouper
+from libcst._parser._production_decorator import with_production
+from libcst._parser._types.config import ParserConfig
+from libcst._parser._types.partials import (
     AnnAssignPartial,
     AssignPartial,
     AugAssignPartial,
@@ -92,8 +92,8 @@ from libcst.parser._types.partials import (
     SimpleStatementPartial,
     WithLeadingWhitespace,
 )
-from libcst.parser._types.token import Token
-from libcst.parser._whitespace_parser import (
+from libcst._parser._types.token import Token
+from libcst._parser._whitespace_parser import (
     parse_empty_lines,
     parse_parenthesizable_whitespace,
     parse_simple_whitespace,

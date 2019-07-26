@@ -5,8 +5,8 @@
 
 from typing import Any, Callable, Sequence
 
-from libcst.parser._types.config import ParserConfig
-from libcst.parser._types.token import Token
+from libcst._parser._types.config import ParserConfig
+from libcst._parser._types.token import Token
 
 
 NonterminalConversion = Callable[[ParserConfig, Sequence[Any]], Any]

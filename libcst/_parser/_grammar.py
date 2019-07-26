@@ -11,7 +11,7 @@ from typing import Iterator, Mapping, Tuple
 from parso.pgen2.generator import Grammar, generate_grammar
 from parso.python.token import PythonTokenTypes, TokenType
 
-from libcst.parser._conversions.expression import (
+from libcst._parser._conversions.expression import (
     convert_arg_assign_comp_for,
     convert_arglist,
     convert_argument,
@@ -60,15 +60,15 @@ from libcst.parser._conversions.expression import (
     convert_yield_arg,
     convert_yield_expr,
 )
-from libcst.parser._conversions.module import convert_file_input
-from libcst.parser._conversions.params import (
+from libcst._parser._conversions.module import convert_file_input
+from libcst._parser._conversions.params import (
     convert_argslist,
     convert_fpdef,
     convert_fpdef_assign,
     convert_fpdef_star,
     convert_fpdef_starstar,
 )
-from libcst.parser._conversions.statement import (
+from libcst._parser._conversions.statement import (
     convert_annassign,
     convert_assert_stmt,
     convert_assign,
@@ -119,7 +119,7 @@ from libcst.parser._conversions.statement import (
     convert_with_item,
     convert_with_stmt,
 )
-from libcst.parser._conversions.terminals import (
+from libcst._parser._conversions.terminals import (
     convert_DEDENT,
     convert_ENDMARKER,
     convert_FSTRING_END,
@@ -132,9 +132,9 @@ from libcst.parser._conversions.terminals import (
     convert_OP,
     convert_STRING,
 )
-from libcst.parser._production_decorator import get_productions
-from libcst.parser._types.conversions import NonterminalConversion, TerminalConversion
-from libcst.parser._types.production import Production
+from libcst._parser._production_decorator import get_productions
+from libcst._parser._types.conversions import NonterminalConversion, TerminalConversion
+from libcst._parser._types.production import Production
 
 
 # Keep this sorted alphabetically

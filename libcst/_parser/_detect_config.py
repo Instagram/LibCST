@@ -15,9 +15,9 @@ from parso.python.token import PythonTokenTypes, TokenType
 from parso.utils import split_lines
 
 from libcst._nodes._whitespace import NEWLINE_RE
-from libcst.parser._types.config import AutoConfig, ParserConfig, PartialParserConfig
-from libcst.parser._types.token import Token
-from libcst.parser._wrapped_tokenize import tokenize_lines
+from libcst._parser._types.config import AutoConfig, ParserConfig, PartialParserConfig
+from libcst._parser._types.token import Token
+from libcst._parser._wrapped_tokenize import tokenize_lines
 
 
 _INDENT: TokenType = PythonTokenTypes.INDENT

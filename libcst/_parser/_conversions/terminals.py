@@ -6,10 +6,10 @@
 from typing import Any
 
 from libcst._nodes._expression import SimpleString
-from libcst.parser._types.config import ParserConfig
-from libcst.parser._types.partials import WithLeadingWhitespace
-from libcst.parser._types.token import Token
-from libcst.parser._whitespace_parser import (
+from libcst._parser._types.config import ParserConfig
+from libcst._parser._types.partials import WithLeadingWhitespace
+from libcst._parser._types.token import Token
+from libcst._parser._whitespace_parser import (
     parse_empty_lines,
     parse_trailing_whitespace,
 )

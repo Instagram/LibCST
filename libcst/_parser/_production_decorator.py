@@ -6,8 +6,8 @@
 # pyre-strict
 from typing import Callable, Iterable, TypeVar
 
-from libcst.parser._types.conversions import NonterminalConversion
-from libcst.parser._types.production import Production
+from libcst._parser._types.conversions import NonterminalConversion
+from libcst._parser._types.production import Production
 
 
 _NonterminalConversionT = TypeVar(

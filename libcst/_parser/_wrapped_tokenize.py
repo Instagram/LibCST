@@ -34,8 +34,8 @@ from parso.utils import PythonVersionInfo, split_lines
 
 from libcst._add_slots import add_slots
 from libcst._exceptions import ParserSyntaxError
-from libcst.parser._types.token import Token
-from libcst.parser._types.whitespace_state import WhitespaceState
+from libcst._parser._types.token import Token
+from libcst._parser._types.whitespace_state import WhitespaceState
 
 
 _ERRORTOKEN: TokenType = PythonTokenTypes.ERRORTOKEN

@@ -177,9 +177,9 @@ from libcst._nodes._whitespace import (
     SimpleWhitespace,
     TrailingWhitespace,
 )
+from libcst._parser._entrypoints import parse_expression, parse_module, parse_statement
 from libcst._removal_sentinel import RemovalSentinel
 from libcst._visitors import CSTNodeT, CSTTransformer, CSTVisitor, CSTVisitorT
-from libcst.parser._entrypoints import parse_expression, parse_module, parse_statement
 
 
 __all__ = [

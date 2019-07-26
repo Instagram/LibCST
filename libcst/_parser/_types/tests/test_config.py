@@ -6,7 +6,7 @@
 # pyre-strict
 from typing import Callable
 
-from libcst.parser._types.config import PartialParserConfig
+from libcst._parser._types.config import PartialParserConfig
 from libcst.testing.utils import UnitTest, data_provider
 
 

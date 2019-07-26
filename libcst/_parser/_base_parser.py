@@ -31,7 +31,7 @@ from parso.pgen2.generator import DFAState, Grammar, ReservedString
 from parso.python.token import TokenType
 
 from libcst._exceptions import ParserSyntaxError
-from libcst.parser._types.token import Token
+from libcst._parser._types.token import Token
 
 
 _NodeT = TypeVar("_NodeT")

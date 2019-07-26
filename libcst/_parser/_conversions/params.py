@@ -8,11 +8,11 @@ from typing import Any, List, Optional, Sequence, Union
 from libcst._maybe_sentinel import MaybeSentinel
 from libcst._nodes._expression import Annotation, Name, Param, Parameters, ParamStar
 from libcst._nodes._op import AssignEqual, Comma
-from libcst.parser._custom_itertools import grouper
-from libcst.parser._production_decorator import with_production
-from libcst.parser._types.config import ParserConfig
-from libcst.parser._types.partials import ParamStarPartial
-from libcst.parser._whitespace_parser import parse_parenthesizable_whitespace
+from libcst._parser._custom_itertools import grouper
+from libcst._parser._production_decorator import with_production
+from libcst._parser._types.config import ParserConfig
+from libcst._parser._types.partials import ParamStarPartial
+from libcst._parser._whitespace_parser import parse_parenthesizable_whitespace
 
 
 @with_production(  # noqa: C901: too complex

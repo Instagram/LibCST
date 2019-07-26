@@ -7,10 +7,10 @@ from typing import Any, List, Sequence, Union
 
 from libcst._nodes._base import CSTNode
 from libcst._nodes._dummy import DummyNode
-from libcst.parser._types.config import ParserConfig
-from libcst.parser._types.partials import WithLeadingWhitespace
-from libcst.parser._types.token import Token
-from libcst.parser._whitespace_parser import parse_parenthesizable_whitespace
+from libcst._parser._types.config import ParserConfig
+from libcst._parser._types.partials import WithLeadingWhitespace
+from libcst._parser._types.token import Token
+from libcst._parser._whitespace_parser import parse_parenthesizable_whitespace
 
 
 def make_dummy_node(config: ParserConfig, children: Sequence[Any]) -> Any:

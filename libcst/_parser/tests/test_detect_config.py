@@ -6,8 +6,8 @@
 # pyre-strict
 from typing import Union
 
-from libcst.parser._detect_config import detect_config
-from libcst.parser._types.config import ParserConfig, PartialParserConfig
+from libcst._parser._detect_config import detect_config
+from libcst._parser._types.config import ParserConfig, PartialParserConfig
 from libcst.testing.utils import UnitTest, data_provider
 
 

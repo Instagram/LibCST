@@ -16,10 +16,10 @@ from libcst._nodes._base import CSTNode
 from libcst._nodes._expression import BaseExpression
 from libcst._nodes._module import Module
 from libcst._nodes._statement import BaseCompoundStatement, SimpleStatementLine
-from libcst.parser._detect_config import detect_config
-from libcst.parser._grammar import get_grammar, validate_grammar
-from libcst.parser._python_parser import PythonCSTParser
-from libcst.parser._types.config import PartialParserConfig
+from libcst._parser._detect_config import detect_config
+from libcst._parser._grammar import get_grammar, validate_grammar
+from libcst._parser._python_parser import PythonCSTParser
+from libcst._parser._types.config import PartialParserConfig
 
 
 _CSTNodeT = TypeVar("_CSTNodeT", bound=CSTNode)

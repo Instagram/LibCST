@@ -9,9 +9,9 @@ from typing import Callable, Sequence, TypeVar
 
 import libcst as cst
 from libcst._nodes._deep_equals import deep_equals
-from libcst.parser._types.config import BaseWhitespaceParserConfig
-from libcst.parser._types.whitespace_state import WhitespaceState as State
-from libcst.parser._whitespace_parser import (
+from libcst._parser._types.config import BaseWhitespaceParserConfig
+from libcst._parser._types.whitespace_state import WhitespaceState as State
+from libcst._parser._whitespace_parser import (
     parse_empty_lines,
     parse_simple_whitespace,
     parse_trailing_whitespace,

@@ -29,8 +29,8 @@ from libcst._nodes._whitespace import (
     SimpleWhitespace,
     TrailingWhitespace,
 )
-from libcst.parser._types.config import BaseWhitespaceParserConfig
-from libcst.parser._types.whitespace_state import WhitespaceState as State
+from libcst._parser._types.config import BaseWhitespaceParserConfig
+from libcst._parser._types.whitespace_state import WhitespaceState as State
 
 
 # BEGIN PARSER ENTRYPOINTS
