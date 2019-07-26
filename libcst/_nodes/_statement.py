@@ -121,9 +121,11 @@ class Del(BaseSmallStatement):
     def _codegen_impl(
         self, state: CodegenState, default_semicolon: bool = False
     ) -> None:
-        state.add_token("del")
-        self.whitespace_after_del._codegen(state)
-        self.target._codegen(state)
+        with state.record_syntactic_position(self):
+            state.add_token("del")
+            self.whitespace_after_del._codegen(state)
+            self.target._codegen(state)
+
         semicolon = self.semicolon
         if isinstance(semicolon, MaybeSentinel):
             if default_semicolon:
@@ -145,7 +147,9 @@ class Pass(BaseSmallStatement):
     def _codegen_impl(
         self, state: CodegenState, default_semicolon: bool = False
     ) -> None:
-        state.add_token("pass")
+        with state.record_syntactic_position(self):
+            state.add_token("pass")
+
         semicolon = self.semicolon
         if isinstance(semicolon, MaybeSentinel):
             if default_semicolon:
@@ -167,7 +171,9 @@ class Break(BaseSmallStatement):
     def _codegen_impl(
         self, state: CodegenState, default_semicolon: bool = False
     ) -> None:
-        state.add_token("break")
+        with state.record_syntactic_position(self):
+            state.add_token("break")
+
         semicolon = self.semicolon
         if isinstance(semicolon, MaybeSentinel):
             if default_semicolon:
@@ -189,7 +195,9 @@ class Continue(BaseSmallStatement):
     def _codegen_impl(
         self, state: CodegenState, default_semicolon: bool = False
     ) -> None:
-        state.add_token("continue")
+        with state.record_syntactic_position(self):
+            state.add_token("continue")
+
         semicolon = self.semicolon
         if isinstance(semicolon, MaybeSentinel):
             if default_semicolon:
@@ -235,19 +243,17 @@ class Return(BaseSmallStatement):
     def _codegen_impl(
         self, state: CodegenState, default_semicolon: bool = False
     ) -> None:
-        value = self.value
-
-        state.add_token("return")
-
-        whitespace_after_return = self.whitespace_after_return
-        if isinstance(whitespace_after_return, MaybeSentinel):
+        with state.record_syntactic_position(self):
+            state.add_token("return")
+            whitespace_after_return = self.whitespace_after_return
+            value = self.value
+            if isinstance(whitespace_after_return, MaybeSentinel):
+                if value is not None:
+                    state.add_token(" ")
+            else:
+                whitespace_after_return._codegen(state)
             if value is not None:
-                state.add_token(" ")
-        else:
-            whitespace_after_return._codegen(state)
-
-        if value is not None:
-            value._codegen(state)
+                value._codegen(state)
 
         semicolon = self.semicolon
         if isinstance(semicolon, MaybeSentinel):
@@ -279,7 +285,9 @@ class Expr(BaseSmallStatement):
     def _codegen_impl(
         self, state: CodegenState, default_semicolon: bool = False
     ) -> None:
-        self.value._codegen(state)
+        with state.record_syntactic_position(self):
+            self.value._codegen(state)
+
         semicolon = self.semicolon
         if isinstance(semicolon, MaybeSentinel):
             if default_semicolon:
@@ -316,12 +324,15 @@ class _BaseSimpleStatement(CSTNode, ABC):
         body = self.body
         if body:
             laststmt = len(body) - 1
-            for idx, stmt in enumerate(body):
-                stmt._codegen(state, default_semicolon=(idx != laststmt))
+            with state.record_syntactic_position(self, end_node=body[laststmt]):
+                for idx, stmt in enumerate(body):
+                    stmt._codegen(state, default_semicolon=(idx != laststmt))
         else:
             # Empty simple statement blocks are not syntactically valid in Python
             # unless they contain a 'pass' statement, so add one here.
-            state.add_token("pass")
+            with state.record_syntactic_position(self):
+                state.add_token("pass")
+
         self.trailing_whitespace._codegen(state)
 
 
@@ -428,10 +439,12 @@ class Else(CSTNode):
         for ll in self.leading_lines:
             ll._codegen(state)
         state.add_indent_tokens()
-        state.add_token("else")
-        self.whitespace_before_colon._codegen(state)
-        state.add_token(":")
-        self.body._codegen(state)
+
+        with state.record_syntactic_position(self, end_node=self.body):
+            state.add_token("else")
+            self.whitespace_before_colon._codegen(state)
+            state.add_token(":")
+            self.body._codegen(state)
 
 
 class BaseCompoundStatement(CSTNode, ABC):
@@ -491,18 +504,21 @@ class If(BaseCompoundStatement):
         for ll in self.leading_lines:
             ll._codegen(state)
         state.add_indent_tokens()
-        state.add_token("elif" if is_elif else "if")
-        self.whitespace_before_test._codegen(state)
-        self.test._codegen(state)
-        self.whitespace_after_test._codegen(state)
-        state.add_token(":")
-        self.body._codegen(state)
-        orelse = self.orelse
-        if orelse is not None:
-            if isinstance(orelse, If):  # special-case elif
-                orelse._codegen(state, is_elif=True)
-            else:  # is an Else clause
-                orelse._codegen(state)
+
+        end_node = self.body if self.orelse is None else self.orelse
+        with state.record_syntactic_position(self, end_node=end_node):
+            state.add_token("elif" if is_elif else "if")
+            self.whitespace_before_test._codegen(state)
+            self.test._codegen(state)
+            self.whitespace_after_test._codegen(state)
+            state.add_token(":")
+            self.body._codegen(state)
+            orelse = self.orelse
+            if orelse is not None:
+                if isinstance(orelse, If):  # special-case elif
+                    orelse._codegen(state, is_elif=True)
+                else:  # is an Else clause
+                    orelse._codegen(state)
 
 
 @add_slots
@@ -566,16 +582,20 @@ class IndentedBlock(BaseSuite):
         state.increase_indent(state.default_indent if indent is None else indent)
 
         if self.body:
-            for stmt in self.body:
-                # IndentedBlock is responsible for adjusting the current indentation level,
-                # but its children are responsible for actually adding that indentation to
-                # the token list.
-                stmt._codegen(state)
+            with state.record_syntactic_position(
+                self, start_node=self.body[0], end_node=self.body[-1]
+            ):
+                for stmt in self.body:
+                    # IndentedBlock is responsible for adjusting the current indentation level,
+                    # but its children are responsible for actually adding that indentation to
+                    # the token list.
+                    stmt._codegen(state)
         else:
             # Empty indented blocks are not syntactically valid in Python unless
             # they contain a 'pass' statement, so add one here.
             state.add_indent_tokens()
-            state.add_token("pass")
+            with state.record_syntactic_position(self):
+                state.add_token("pass")
             state.add_token(state.default_newline)
 
         for f in self.footer:

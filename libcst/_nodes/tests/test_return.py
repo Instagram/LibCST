@@ -4,7 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 # pyre-strict
-from typing import Callable, Optional
+from typing import Any
 
 import libcst as cst
 from libcst import parse_statement
@@ -16,42 +16,47 @@ from libcst.testing.utils import data_provider
 class ReturnCreateTest(CSTNodeTest):
     @data_provider(
         (
-            (cst.SimpleStatementLine([cst.Return()]), "return\n"),
-            (cst.SimpleStatementLine([cst.Return(cst.Name("abc"))]), "return abc\n"),
+            {
+                "node": cst.SimpleStatementLine([cst.Return()]),
+                "code": "return\n",
+                "expected_position": CodeRange.create((1, 0), (1, 6)),
+            },
+            {
+                "node": cst.SimpleStatementLine([cst.Return(cst.Name("abc"))]),
+                "code": "return abc\n",
+                "expected_position": CodeRange.create((1, 0), (1, 10)),
+            },
         )
     )
-    def test_valid(
-        self, node: cst.CSTNode, code: str, position: Optional[CodeRange] = None
-    ) -> None:
-        self.validate_node(node, code, expected_position=position)
+    def test_valid(self, **kwargs: Any) -> None:
+        self.validate_node(**kwargs)
 
     @data_provider(
         (
-            (
-                lambda: cst.Return(
+            {
+                "get_node": lambda: cst.Return(
                     cst.Name("abc"), whitespace_after_return=cst.SimpleWhitespace("")
                 ),
-                "Must have at least one space after 'return'.",
-            ),
+                "expected_re": "Must have at least one space after 'return'.",
+            },
         )
     )
-    def test_invalid(
-        self, get_node: Callable[[], cst.CSTNode], expected_re: str
-    ) -> None:
-        self.assert_invalid(get_node, expected_re)
+    def test_invalid(self, **kwargs: Any) -> None:
+        self.assert_invalid(**kwargs)
 
 
 class ReturnParseTest(CSTNodeTest):
     @data_provider(
         (
-            (
-                cst.SimpleStatementLine(
+            {
+                "node": cst.SimpleStatementLine(
                     [cst.Return(whitespace_after_return=cst.SimpleWhitespace(""))]
                 ),
-                "return\n",
-            ),
-            (
-                cst.SimpleStatementLine(
+                "code": "return\n",
+                "parser": parse_statement,
+            },
+            {
+                "node": cst.SimpleStatementLine(
                     [
                         cst.Return(
                             cst.Name("abc"),
@@ -59,10 +64,11 @@ class ReturnParseTest(CSTNodeTest):
                         )
                     ]
                 ),
-                "return abc\n",
-            ),
-            (
-                cst.SimpleStatementLine(
+                "code": "return abc\n",
+                "parser": parse_statement,
+            },
+            {
+                "node": cst.SimpleStatementLine(
                     [
                         cst.Return(
                             cst.Name("abc"),
@@ -70,10 +76,11 @@ class ReturnParseTest(CSTNodeTest):
                         )
                     ]
                 ),
-                "return   abc\n",
-            ),
-            (
-                cst.SimpleStatementLine(
+                "code": "return   abc\n",
+                "parser": parse_statement,
+            },
+            {
+                "node": cst.SimpleStatementLine(
                     [
                         cst.Return(
                             cst.Name(
@@ -83,10 +90,11 @@ class ReturnParseTest(CSTNodeTest):
                         )
                     ]
                 ),
-                "return(abc)\n",
-            ),
-            (
-                cst.SimpleStatementLine(
+                "code": "return(abc)\n",
+                "parser": parse_statement,
+            },
+            {
+                "node": cst.SimpleStatementLine(
                     [
                         cst.Return(
                             cst.Name("abc"),
@@ -95,11 +103,10 @@ class ReturnParseTest(CSTNodeTest):
                         )
                     ]
                 ),
-                "return abc;\n",
-            ),
+                "code": "return abc;\n",
+                "parser": parse_statement,
+            },
         )
     )
-    def test_valid(
-        self, node: cst.CSTNode, code: str, position: Optional[CodeRange] = None
-    ) -> None:
-        self.validate_node(node, code, parse_statement, expected_position=position)
+    def test_valid(self, **kwargs: Any) -> None:
+        self.validate_node(**kwargs)

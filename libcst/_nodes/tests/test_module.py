@@ -158,7 +158,7 @@ class ModuleTest(CSTNodeTest):
         fn = cast(cst.FunctionDef, module.body[0])
         stmt = cast(cst.SimpleStatementLine, fn.body.body[0])
         pass_stmt = cast(cst.Pass, stmt.body[0])
-        self.cmp_position(stmt, (2, 0), (3, 0))
+        self.cmp_position(stmt, (2, 4), (2, 8))
         self.cmp_position(pass_stmt, (2, 4), (2, 8))
 
     def test_nested_indent_position(self) -> None:
@@ -174,10 +174,10 @@ class ModuleTest(CSTNodeTest):
         outer_else = cast(cst.Else, outer_if.orelse)
         return_stmt = cast(cst.SimpleStatementLine, outer_else.body.body[0]).body[0]
 
-        self.cmp_position(outer_if, (1, 0), (6, 0))
-        self.cmp_position(inner_if, (2, 0), (4, 0))
+        self.cmp_position(outer_if, (1, 0), (5, 10))
+        self.cmp_position(inner_if, (2, 4), (3, 13))
         self.cmp_position(assign, (3, 8), (3, 13))
-        self.cmp_position(outer_else, (4, 0), (6, 0))
+        self.cmp_position(outer_else, (4, 0), (5, 10))
         self.cmp_position(return_stmt, (5, 4), (5, 10))
 
     def test_multiline_string_position(self) -> None:
@@ -188,6 +188,6 @@ class ModuleTest(CSTNodeTest):
         expr = cast(cst.Expr, stmt.body[0])
         string = expr.value
 
-        self.cmp_position(stmt, (1, 0), (3, 0))
+        self.cmp_position(stmt, (1, 0), (2, 5))
         self.cmp_position(expr, (1, 0), (2, 5))
         self.cmp_position(string, (1, 0), (2, 5))

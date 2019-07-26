@@ -4,7 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 # pyre-strict
-from typing import Callable, Optional
+from typing import Any
 
 import libcst as cst
 from libcst import parse_statement
@@ -17,18 +17,23 @@ class SimpleStatementTest(CSTNodeTest):
     @data_provider(
         (
             # a single-element SimpleStatementLine
-            (cst.SimpleStatementLine((cst.Pass(),)), "pass\n", parse_statement),
+            # pyre-fixme[6]: Incompatible parameter type
+            {
+                "node": cst.SimpleStatementLine((cst.Pass(),)),
+                "code": "pass\n",
+                "parser": parse_statement,
+            },
             # a multi-element SimpleStatementLine
-            (
-                cst.SimpleStatementLine(
+            {
+                "node": cst.SimpleStatementLine(
                     (cst.Pass(semicolon=cst.Semicolon()), cst.Continue())
                 ),
-                "pass;continue\n",
-                parse_statement,
-            ),
+                "code": "pass;continue\n",
+                "parser": parse_statement,
+            },
             # a multi-element SimpleStatementLine with whitespace
-            (
-                cst.SimpleStatementLine(
+            {
+                "node": cst.SimpleStatementLine(
                     (
                         cst.Pass(
                             semicolon=cst.Semicolon(
@@ -39,67 +44,70 @@ class SimpleStatementTest(CSTNodeTest):
                         cst.Continue(),
                     )
                 ),
-                "pass ;  continue\n",
-                parse_statement,
-            ),
+                "code": "pass ;  continue\n",
+                "parser": parse_statement,
+            },
             # A more complicated SimpleStatementLine
-            (
-                cst.SimpleStatementLine(
+            {
+                "node": cst.SimpleStatementLine(
                     (
                         cst.Pass(semicolon=cst.Semicolon()),
                         cst.Continue(semicolon=cst.Semicolon()),
                         cst.Break(),
                     )
                 ),
-                "pass;continue;break\n",
-                parse_statement,
-            ),
+                "code": "pass;continue;break\n",
+                "parser": parse_statement,
+                "expected_position": CodeRange.create((1, 0), (1, 19)),
+            },
             # a multi-element SimpleStatementLine, inferred semicolons
-            (
-                cst.SimpleStatementLine((cst.Pass(), cst.Continue(), cst.Break())),
-                "pass; continue; break\n",
-                None,  # No test for parsing, since we are using sentinels.
-            ),
+            {
+                "node": cst.SimpleStatementLine(
+                    (cst.Pass(), cst.Continue(), cst.Break())
+                ),
+                "code": "pass; continue; break\n",
+                "parser": None,  # No test for parsing, since we are using sentinels.
+            },
             # some expression statements
-            (
-                cst.SimpleStatementLine((cst.Expr(cst.Name("None")),)),
-                "None\n",
-                parse_statement,
-            ),
-            (
-                cst.SimpleStatementLine((cst.Expr(cst.Name("True")),)),
-                "True\n",
-                parse_statement,
-            ),
-            (
-                cst.SimpleStatementLine((cst.Expr(cst.Name("False")),)),
-                "False\n",
-                parse_statement,
-            ),
-            (
-                cst.SimpleStatementLine((cst.Expr(cst.Ellipses()),)),
-                "...\n",
-                parse_statement,
-            ),
+            {
+                "node": cst.SimpleStatementLine((cst.Expr(cst.Name("None")),)),
+                "code": "None\n",
+                "parser": parse_statement,
+            },
+            {
+                "node": cst.SimpleStatementLine((cst.Expr(cst.Name("True")),)),
+                "code": "True\n",
+                "parser": parse_statement,
+            },
+            {
+                "node": cst.SimpleStatementLine((cst.Expr(cst.Name("False")),)),
+                "code": "False\n",
+                "parser": parse_statement,
+            },
+            {
+                "node": cst.SimpleStatementLine((cst.Expr(cst.Ellipses()),)),
+                "code": "...\n",
+                "parser": parse_statement,
+            },
             # Test some numbers
-            (
-                cst.SimpleStatementLine((cst.Expr(cst.Integer("5")),)),
-                "5\n",
-                parse_statement,
-            ),
-            (
-                cst.SimpleStatementLine((cst.Expr(cst.Float("5.5")),)),
-                "5.5\n",
-                parse_statement,
-            ),
-            (
-                cst.SimpleStatementLine((cst.Expr(cst.Imaginary("5j")),)),
-                "5j\n",
-                parse_statement,
-            ),
+            {
+                "node": cst.SimpleStatementLine((cst.Expr(cst.Integer("5")),)),
+                "code": "5\n",
+                "parser": parse_statement,
+            },
+            {
+                "node": cst.SimpleStatementLine((cst.Expr(cst.Float("5.5")),)),
+                "code": "5.5\n",
+                "parser": parse_statement,
+            },
+            {
+                "node": cst.SimpleStatementLine((cst.Expr(cst.Imaginary("5j")),)),
+                "code": "5j\n",
+                "parser": parse_statement,
+            },
             # Test some numbers with parens
-            (
-                cst.SimpleStatementLine(
+            {
+                "node": cst.SimpleStatementLine(
                     (
                         cst.Expr(
                             cst.Integer(
@@ -108,11 +116,12 @@ class SimpleStatementTest(CSTNodeTest):
                         ),
                     )
                 ),
-                "(5)\n",
-                parse_statement,
-            ),
-            (
-                cst.SimpleStatementLine(
+                "code": "(5)\n",
+                "parser": parse_statement,
+                "expected_position": CodeRange.create((1, 0), (1, 3)),
+            },
+            {
+                "node": cst.SimpleStatementLine(
                     (
                         cst.Expr(
                             cst.Float(
@@ -121,11 +130,11 @@ class SimpleStatementTest(CSTNodeTest):
                         ),
                     )
                 ),
-                "(5.5)\n",
-                parse_statement,
-            ),
-            (
-                cst.SimpleStatementLine(
+                "code": "(5.5)\n",
+                "parser": parse_statement,
+            },
+            {
+                "node": cst.SimpleStatementLine(
                     (
                         cst.Expr(
                             cst.Imaginary(
@@ -134,17 +143,17 @@ class SimpleStatementTest(CSTNodeTest):
                         ),
                     )
                 ),
-                "(5j)\n",
-                parse_statement,
-            ),
+                "code": "(5j)\n",
+                "parser": parse_statement,
+            },
             # Test some strings
-            (
-                cst.SimpleStatementLine((cst.Expr(cst.SimpleString('"abc"')),)),
-                '"abc"\n',
-                parse_statement,
-            ),
-            (
-                cst.SimpleStatementLine(
+            {
+                "node": cst.SimpleStatementLine((cst.Expr(cst.SimpleString('"abc"')),)),
+                "code": '"abc"\n',
+                "parser": parse_statement,
+            },
+            {
+                "node": cst.SimpleStatementLine(
                     (
                         cst.Expr(
                             cst.ConcatenatedString(
@@ -153,11 +162,11 @@ class SimpleStatementTest(CSTNodeTest):
                         ),
                     )
                 ),
-                '"abc""def"\n',
-                parse_statement,
-            ),
-            (
-                cst.SimpleStatementLine(
+                "code": '"abc""def"\n',
+                "parser": parse_statement,
+            },
+            {
+                "node": cst.SimpleStatementLine(
                     (
                         cst.Expr(
                             cst.ConcatenatedString(
@@ -172,12 +181,13 @@ class SimpleStatementTest(CSTNodeTest):
                         ),
                     )
                 ),
-                '"abc" "def" "ghi"\n',
-                parse_statement,
-            ),
+                "code": '"abc" "def" "ghi"\n',
+                "parser": parse_statement,
+                "expected_position": CodeRange.create((1, 0), (1, 17)),
+            },
             # Test parenthesis rules
-            (
-                cst.SimpleStatementLine(
+            {
+                "node": cst.SimpleStatementLine(
                     (
                         cst.Expr(
                             cst.Ellipses(
@@ -186,12 +196,12 @@ class SimpleStatementTest(CSTNodeTest):
                         ),
                     )
                 ),
-                "(...)\n",
-                parse_statement,
-            ),
+                "code": "(...)\n",
+                "parser": parse_statement,
+            },
             # Test parenthesis with whitespace ownership
-            (
-                cst.SimpleStatementLine(
+            {
+                "node": cst.SimpleStatementLine(
                     (
                         cst.Expr(
                             cst.Ellipses(
@@ -209,11 +219,11 @@ class SimpleStatementTest(CSTNodeTest):
                         ),
                     )
                 ),
-                "( ... )\n",
-                parse_statement,
-            ),
-            (
-                cst.SimpleStatementLine(
+                "code": "( ... )\n",
+                "parser": parse_statement,
+            },
+            {
+                "node": cst.SimpleStatementLine(
                     (
                         cst.Expr(
                             cst.Ellipses(
@@ -243,12 +253,13 @@ class SimpleStatementTest(CSTNodeTest):
                         ),
                     )
                 ),
-                "( (  (   ...   )  ) )\n",
-                parse_statement,
-            ),
+                "code": "( (  (   ...   )  ) )\n",
+                "parser": parse_statement,
+                "expected_position": CodeRange.create((1, 0), (1, 21)),
+            },
             # Test parenthesis rules with expressions
-            (
-                cst.SimpleStatementLine(
+            {
+                "node": cst.SimpleStatementLine(
                     (
                         cst.Expr(
                             cst.Ellipses(
@@ -282,33 +293,36 @@ class SimpleStatementTest(CSTNodeTest):
                         ),
                     )
                 ),
-                "(\n# Wow, a comment!\n    ...\n)\n",
-                parse_statement,
-            ),
+                "code": "(\n# Wow, a comment!\n    ...\n)\n",
+                "parser": parse_statement,
+                "expected_position": CodeRange.create((1, 0), (4, 1)),
+            },
             # test trailing whitespace
-            (
-                cst.SimpleStatementLine(
+            {
+                "node": cst.SimpleStatementLine(
                     (cst.Pass(),),
                     trailing_whitespace=cst.TrailingWhitespace(
                         whitespace=cst.SimpleWhitespace("  "),
                         comment=cst.Comment("# trailing comment"),
                     ),
                 ),
-                "pass  # trailing comment\n",
-                parse_statement,
-            ),
+                "code": "pass  # trailing comment\n",
+                "parser": parse_statement,
+                "expected_position": CodeRange.create((1, 0), (1, 4)),
+            },
             # test leading comment
-            (
-                cst.SimpleStatementLine(
+            {
+                "node": cst.SimpleStatementLine(
                     (cst.Pass(),),
                     leading_lines=(cst.EmptyLine(comment=cst.Comment("# comment")),),
                 ),
-                "# comment\npass\n",
-                parse_statement,
-            ),
+                "code": "# comment\npass\n",
+                "parser": parse_statement,
+                "expected_position": CodeRange.create((2, 0), (2, 4)),
+            },
             # test indentation
-            (
-                DummyIndentedBlock(
+            {
+                "node": DummyIndentedBlock(
                     "    ",
                     cst.SimpleStatementLine(
                         (cst.Pass(),),
@@ -317,25 +331,23 @@ class SimpleStatementTest(CSTNodeTest):
                         ),
                     ),
                 ),
-                "    # comment\n    pass\n",
-                None,
-            ),
+                "code": "    # comment\n    pass\n",
+                "expected_position": CodeRange.create((2, 4), (2, 8)),
+            },
             # test suite variant
-            (cst.SimpleStatementSuite((cst.Pass(),)), " pass\n", None),
-            (
-                cst.SimpleStatementSuite(
+            {
+                "node": cst.SimpleStatementSuite((cst.Pass(),)),
+                "code": " pass\n",
+                "expected_position": CodeRange.create((1, 1), (1, 5)),
+            },
+            {
+                "node": cst.SimpleStatementSuite(
                     (cst.Pass(),), leading_whitespace=cst.SimpleWhitespace("")
                 ),
-                "pass\n",
-                None,
-            ),
+                "code": "pass\n",
+                "expected_position": CodeRange.create((1, 0), (1, 4)),
+            },
         )
     )
-    def test_valid(
-        self,
-        node: cst.CSTNode,
-        code: str,
-        parser: Optional[Callable[[str], cst.CSTNode]],
-        position: Optional[CodeRange] = None,
-    ) -> None:
-        self.validate_node(node, code, parser, expected_position=position)
+    def test_valid(self, **kwargs: Any) -> None:
+        self.validate_node(**kwargs)

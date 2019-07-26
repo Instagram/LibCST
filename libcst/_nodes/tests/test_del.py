@@ -4,7 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 # pyre-strict
-from typing import Callable, Optional
+from typing import Any
 
 import libcst as cst
 from libcst import parse_statement
@@ -16,9 +16,14 @@ from libcst.testing.utils import data_provider
 class DelTest(CSTNodeTest):
     @data_provider(
         (
-            (cst.SimpleStatementLine([cst.Del(cst.Name("abc"))]), "del abc\n"),
-            (
-                cst.SimpleStatementLine(
+            {
+                "node": cst.SimpleStatementLine([cst.Del(cst.Name("abc"))]),
+                "code": "del abc\n",
+                "parser": parse_statement,
+                "expected_position": CodeRange.create((1, 0), (1, 7)),
+            },
+            {
+                "node": cst.SimpleStatementLine(
                     [
                         cst.Del(
                             cst.Name("abc"),
@@ -26,10 +31,12 @@ class DelTest(CSTNodeTest):
                         )
                     ]
                 ),
-                "del   abc\n",
-            ),
-            (
-                cst.SimpleStatementLine(
+                "code": "del   abc\n",
+                "parser": parse_statement,
+                "expected_position": CodeRange.create((1, 0), (1, 9)),
+            },
+            {
+                "node": cst.SimpleStatementLine(
                     [
                         cst.Del(
                             cst.Name(
@@ -39,32 +46,32 @@ class DelTest(CSTNodeTest):
                         )
                     ]
                 ),
-                "del(abc)\n",
-            ),
-            (
-                cst.SimpleStatementLine(
+                "code": "del(abc)\n",
+                "parser": parse_statement,
+                "expected_position": CodeRange.create((1, 0), (1, 8)),
+            },
+            {
+                "node": cst.SimpleStatementLine(
                     [cst.Del(cst.Name("abc"), semicolon=cst.Semicolon())]
                 ),
-                "del abc;\n",
-            ),
+                "code": "del abc;\n",
+                "parser": parse_statement,
+                "expected_position": CodeRange.create((1, 0), (1, 7)),
+            },
         )
     )
-    def test_valid(
-        self, node: cst.CSTNode, code: str, position: Optional[CodeRange] = None
-    ) -> None:
-        self.validate_node(node, code, parse_statement, expected_position=position)
+    def test_valid(self, **kwargs: Any) -> None:
+        self.validate_node(**kwargs)
 
     @data_provider(
         (
-            (
-                lambda: cst.Del(
+            {
+                "get_node": lambda: cst.Del(
                     cst.Name("abc"), whitespace_after_del=cst.SimpleWhitespace("")
                 ),
-                "Must have at least one space after 'del'.",
-            ),
+                "expected_re": "Must have at least one space after 'del'.",
+            },
         )
     )
-    def test_invalid(
-        self, get_node: Callable[[], cst.CSTNode], expected_re: str
-    ) -> None:
-        self.assert_invalid(get_node, expected_re)
+    def test_invalid(self, **kwargs: Any) -> None:
+        self.assert_invalid(**kwargs)

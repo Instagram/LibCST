@@ -4,7 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 # pyre-strict
-from typing import Callable, Optional
+from typing import Any
 
 import libcst as cst
 from libcst import parse_statement
@@ -17,26 +17,29 @@ class IfTest(CSTNodeTest):
     @data_provider(
         (
             # Simple if without elif or else
-            (
-                cst.If(
+            # pyre-fixme[6]: Incompatible parameter type
+            {
+                "node": cst.If(
                     cst.Name("conditional"), cst.SimpleStatementSuite((cst.Pass(),))
                 ),
-                "if conditional: pass\n",
-                parse_statement,
-            ),
+                "code": "if conditional: pass\n",
+                "parser": parse_statement,
+                "expected_position": CodeRange.create((1, 0), (1, 20)),
+            },
             # else clause
-            (
-                cst.If(
+            {
+                "node": cst.If(
                     cst.Name("conditional"),
                     cst.SimpleStatementSuite((cst.Pass(),)),
                     orelse=cst.Else(cst.SimpleStatementSuite((cst.Pass(),))),
                 ),
-                "if conditional: pass\nelse: pass\n",
-                parse_statement,
-            ),
+                "code": "if conditional: pass\nelse: pass\n",
+                "parser": parse_statement,
+                "expected_position": CodeRange.create((1, 0), (2, 10)),
+            },
             # elif clause
-            (
-                cst.If(
+            {
+                "node": cst.If(
                     cst.Name("conditional"),
                     cst.SimpleStatementSuite((cst.Pass(),)),
                     orelse=cst.If(
@@ -45,12 +48,13 @@ class IfTest(CSTNodeTest):
                         orelse=cst.Else(cst.SimpleStatementSuite((cst.Pass(),))),
                     ),
                 ),
-                "if conditional: pass\nelif other_conditional: pass\nelse: pass\n",
-                parse_statement,
-            ),
+                "code": "if conditional: pass\nelif other_conditional: pass\nelse: pass\n",
+                "parser": parse_statement,
+                "expected_position": CodeRange.create((1, 0), (3, 10)),
+            },
             # indentation
-            (
-                DummyIndentedBlock(
+            {
+                "node": DummyIndentedBlock(
                     "    ",
                     cst.If(
                         cst.Name("conditional"),
@@ -58,36 +62,39 @@ class IfTest(CSTNodeTest):
                         orelse=cst.Else(cst.SimpleStatementSuite((cst.Pass(),))),
                     ),
                 ),
-                "    if conditional: pass\n    else: pass\n",
-                None,
-            ),
+                "code": "    if conditional: pass\n    else: pass\n",
+                "parser": None,
+                "expected_position": CodeRange.create((1, 4), (2, 14)),
+            },
             # with an indented body
-            (
-                DummyIndentedBlock(
+            {
+                "node": DummyIndentedBlock(
                     "    ",
                     cst.If(
                         cst.Name("conditional"),
                         cst.IndentedBlock((cst.SimpleStatementLine((cst.Pass(),)),)),
                     ),
                 ),
-                "    if conditional:\n        pass\n",
-                None,
-            ),
+                "code": "    if conditional:\n        pass\n",
+                "parser": None,
+                "expected_position": CodeRange.create((1, 4), (2, 12)),
+            },
             # leading_lines
-            (
-                cst.If(
+            {
+                "node": cst.If(
                     cst.Name("conditional"),
                     cst.SimpleStatementSuite((cst.Pass(),)),
                     leading_lines=(
                         cst.EmptyLine(comment=cst.Comment("# leading comment")),
                     ),
                 ),
-                "# leading comment\nif conditional: pass\n",
-                parse_statement,
-            ),
+                "code": "# leading comment\nif conditional: pass\n",
+                "parser": parse_statement,
+                "expected_position": CodeRange.create((2, 0), (2, 20)),
+            },
             # whitespace before/after test and else
-            (
-                cst.If(
+            {
+                "node": cst.If(
                     cst.Name("conditional"),
                     cst.SimpleStatementSuite((cst.Pass(),)),
                     whitespace_before_test=cst.SimpleWhitespace("   "),
@@ -97,12 +104,13 @@ class IfTest(CSTNodeTest):
                         whitespace_before_colon=cst.SimpleWhitespace(" "),
                     ),
                 ),
-                "if   conditional  : pass\nelse : pass\n",
-                parse_statement,
-            ),
+                "code": "if   conditional  : pass\nelse : pass\n",
+                "parser": parse_statement,
+                "expected_position": CodeRange.create((1, 0), (2, 11)),
+            },
             # empty lines between if/elif/else clauses, not captured by the suite.
-            (
-                cst.If(
+            {
+                "node": cst.If(
                     cst.Name("test_a"),
                     cst.SimpleStatementSuite((cst.Pass(),)),
                     orelse=cst.If(
@@ -115,16 +123,11 @@ class IfTest(CSTNodeTest):
                         ),
                     ),
                 ),
-                "if test_a: pass\n\nelif test_b: pass\n\nelse: pass\n",
-                parse_statement,
-            ),
+                "code": "if test_a: pass\n\nelif test_b: pass\n\nelse: pass\n",
+                "parser": parse_statement,
+                "expected_position": CodeRange.create((1, 0), (5, 10)),
+            },
         )
     )
-    def test_valid(
-        self,
-        node: cst.CSTNode,
-        code: str,
-        parser: Optional[Callable[[str], cst.CSTNode]],
-        position: Optional[CodeRange] = None,
-    ) -> None:
-        self.validate_node(node, code, parser, expected_position=position)
+    def test_valid(self, **kwargs: Any) -> None:
+        self.validate_node(**kwargs)

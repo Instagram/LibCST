@@ -4,7 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 # pyre-strict
-from typing import Optional
+from typing import Any
 
 import libcst as cst
 from libcst._nodes._internal import CodeRange
@@ -15,63 +15,68 @@ from libcst.testing.utils import data_provider
 class SmallStatementTest(CSTNodeTest):
     @data_provider(
         (
-            (cst.Pass(), "pass"),
-            (cst.Pass(semicolon=cst.Semicolon()), "pass;"),
-            (
-                cst.Pass(
+            # pyre-fixme[6]: Incompatible parameter type
+            {"node": cst.Pass(), "code": "pass"},
+            {"node": cst.Pass(semicolon=cst.Semicolon()), "code": "pass;"},
+            {
+                "node": cst.Pass(
                     semicolon=cst.Semicolon(
                         whitespace_before=cst.SimpleWhitespace("  "),
                         whitespace_after=cst.SimpleWhitespace("    "),
                     )
                 ),
-                "pass  ;    ",
-            ),
-            (cst.Continue(), "continue"),
-            (cst.Continue(semicolon=cst.Semicolon()), "continue;"),
-            (
-                cst.Continue(
+                "code": "pass  ;    ",
+                "expected_position": CodeRange.create((1, 0), (1, 4)),
+            },
+            {"node": cst.Continue(), "code": "continue"},
+            {"node": cst.Continue(semicolon=cst.Semicolon()), "code": "continue;"},
+            {
+                "node": cst.Continue(
                     semicolon=cst.Semicolon(
                         whitespace_before=cst.SimpleWhitespace("  "),
                         whitespace_after=cst.SimpleWhitespace("    "),
                     )
                 ),
-                "continue  ;    ",
-            ),
-            (cst.Break(), "break"),
-            (cst.Break(semicolon=cst.Semicolon()), "break;"),
-            (
-                cst.Break(
+                "code": "continue  ;    ",
+                "expected_position": CodeRange.create((1, 0), (1, 8)),
+            },
+            {"node": cst.Break(), "code": "break"},
+            {"node": cst.Break(semicolon=cst.Semicolon()), "code": "break;"},
+            {
+                "node": cst.Break(
                     semicolon=cst.Semicolon(
                         whitespace_before=cst.SimpleWhitespace("  "),
                         whitespace_after=cst.SimpleWhitespace("    "),
                     )
                 ),
-                "break  ;    ",
-            ),
-            (
-                cst.Expr(cst.BinaryOperation(cst.Name("x"), cst.Add(), cst.Name("y"))),
-                "x + y",
-            ),
-            (
-                cst.Expr(
+                "code": "break  ;    ",
+                "expected_position": CodeRange.create((1, 0), (1, 5)),
+            },
+            {
+                "node": cst.Expr(
+                    cst.BinaryOperation(cst.Name("x"), cst.Add(), cst.Name("y"))
+                ),
+                "code": "x + y",
+            },
+            {
+                "node": cst.Expr(
                     cst.BinaryOperation(cst.Name("x"), cst.Add(), cst.Name("y")),
                     semicolon=cst.Semicolon(),
                 ),
-                "x + y;",
-            ),
-            (
-                cst.Expr(
+                "code": "x + y;",
+            },
+            {
+                "node": cst.Expr(
                     cst.BinaryOperation(cst.Name("x"), cst.Add(), cst.Name("y")),
                     semicolon=cst.Semicolon(
                         whitespace_before=cst.SimpleWhitespace("  "),
                         whitespace_after=cst.SimpleWhitespace("    "),
                     ),
                 ),
-                "x + y  ;    ",
-            ),
+                "code": "x + y  ;    ",
+                "expected_position": CodeRange.create((1, 0), (1, 5)),
+            },
         )
     )
-    def test_valid(
-        self, node: cst.CSTNode, code: str, position: Optional[CodeRange] = None
-    ) -> None:
-        self.validate_node(node, code, expected_position=position)
+    def test_valid(self, **kwargs: Any) -> None:
+        self.validate_node(**kwargs)
