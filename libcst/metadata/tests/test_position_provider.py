@@ -6,9 +6,9 @@
 # pyre-strict
 import libcst as cst
 from libcst._batched_visitor import BatchableCSTVisitor, visit_batched
+from libcst._nodes._internal import CodeRange
 from libcst._visitors import CSTTransformer
 from libcst.metadata.position_provider import SyntacticPositionProvider
-from libcst.nodes._internal import CodeRange
 from libcst.parser import parse_module
 from libcst.testing.utils import UnitTest
 

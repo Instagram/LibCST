@@ -24,7 +24,7 @@ from libcst.metadata._interface import _MetadataInterface
 
 
 if TYPE_CHECKING:
-    from libcst.nodes._base import CSTNode  # noqa: F401
+    from libcst._nodes._base import CSTNode  # noqa: F401
     from libcst.metadata.base_provider import BaseMetadataProvider  # noqa: F401
 
 

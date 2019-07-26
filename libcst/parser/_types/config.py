@@ -15,7 +15,7 @@ from typing import Pattern, Sequence, Union
 from parso.utils import PythonVersionInfo, parse_version_string
 
 from libcst._add_slots import add_slots
-from libcst.nodes._whitespace import NEWLINE_RE
+from libcst._nodes._whitespace import NEWLINE_RE
 
 
 _INDENT_RE: Pattern[str] = re.compile(r"[ \t]+")

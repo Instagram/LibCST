@@ -13,9 +13,9 @@ from libcst._batched_visitor import (
     _get_visitor_methods,
 )
 from libcst._exceptions import MetadataException
+from libcst._nodes._module import _ModuleSelfT as _ModuleT
 from libcst._visitors import CSTVisitor
 from libcst.metadata._interface import _MetadataInterface
-from libcst.nodes._module import _ModuleSelfT as _ModuleT
 
 
 _T_co = TypeVar("_T_co", covariant=True)

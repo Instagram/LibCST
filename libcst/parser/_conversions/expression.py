@@ -13,7 +13,7 @@ from typing import Any, Dict, List, Sequence, Type, Union
 
 import libcst as cst
 from libcst._maybe_sentinel import MaybeSentinel
-from libcst.nodes._dummy import DummyNode
+from libcst._nodes._dummy import DummyNode
 from libcst.parser._conversions.dummy import make_dummy_node
 from libcst.parser._custom_itertools import grouper
 from libcst.parser._production_decorator import with_production

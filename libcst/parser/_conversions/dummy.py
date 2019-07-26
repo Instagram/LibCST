@@ -5,8 +5,8 @@
 
 from typing import Any, List, Sequence, Union
 
-from libcst.nodes._base import CSTNode
-from libcst.nodes._dummy import DummyNode
+from libcst._nodes._base import CSTNode
+from libcst._nodes._dummy import DummyNode
 from libcst.parser._types.config import ParserConfig
 from libcst.parser._types.partials import WithLeadingWhitespace
 from libcst.parser._types.token import Token

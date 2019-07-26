@@ -19,7 +19,7 @@ hand-rolled recursive descent parser.
 from typing import List, Optional, Sequence, Tuple, Union
 
 import libcst as cst
-from libcst.nodes._whitespace import COMMENT_RE, NEWLINE_RE, SIMPLE_WHITESPACE_RE
+from libcst._nodes._whitespace import COMMENT_RE, NEWLINE_RE, SIMPLE_WHITESPACE_RE
 from libcst.parser._types.config import BaseWhitespaceParserConfig
 from libcst.parser._types.whitespace_state import WhitespaceState as State
 

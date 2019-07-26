@@ -8,10 +8,8 @@ from libcst._batched_visitor import BatchableCSTVisitor, visit_batched
 from libcst._exceptions import MetadataException, ParserSyntaxError
 from libcst._helpers import ensure_type
 from libcst._maybe_sentinel import MaybeSentinel
-from libcst._removal_sentinel import RemovalSentinel
-from libcst._visitors import CSTNodeT, CSTTransformer, CSTVisitor, CSTVisitorT
-from libcst.nodes._base import CSTNode, CSTValidationError
-from libcst.nodes._expression import (
+from libcst._nodes._base import CSTNode, CSTValidationError
+from libcst._nodes._expression import (
     Annotation,
     Arg,
     Asynchronous,
@@ -75,9 +73,9 @@ from libcst.nodes._expression import (
     UnaryOperation,
     Yield,
 )
-from libcst.nodes._internal import CodePosition, CodeRange
-from libcst.nodes._module import Module
-from libcst.nodes._op import (
+from libcst._nodes._internal import CodePosition, CodeRange
+from libcst._nodes._module import Module
+from libcst._nodes._op import (
     Add,
     AddAssign,
     And,
@@ -132,7 +130,7 @@ from libcst.nodes._op import (
     Subtract,
     SubtractAssign,
 )
-from libcst.nodes._statement import (
+from libcst._nodes._statement import (
     AnnAssign,
     AsName,
     Assert,
@@ -171,7 +169,7 @@ from libcst.nodes._statement import (
     With,
     WithItem,
 )
-from libcst.nodes._whitespace import (
+from libcst._nodes._whitespace import (
     Comment,
     EmptyLine,
     Newline,
@@ -179,6 +177,8 @@ from libcst.nodes._whitespace import (
     SimpleWhitespace,
     TrailingWhitespace,
 )
+from libcst._removal_sentinel import RemovalSentinel
+from libcst._visitors import CSTNodeT, CSTTransformer, CSTVisitor, CSTVisitorT
 
 
 __all__ = [

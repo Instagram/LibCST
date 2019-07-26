@@ -12,7 +12,7 @@ from libcst.metadata._interface import _MetadataInterface
 
 if TYPE_CHECKING:
     # Circular dependency for typing reasons only
-    from libcst.nodes._base import CSTNode  # noqa: F401
+    from libcst._nodes._base import CSTNode  # noqa: F401
 
 
 CSTVisitorT = Union["CSTTransformer", "CSTVisitor"]

@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from typing import Callable, Sequence, TypeVar
 
 import libcst as cst
-from libcst.nodes._deep_equals import deep_equals
+from libcst._nodes._deep_equals import deep_equals
 from libcst.parser._types.config import BaseWhitespaceParserConfig
 from libcst.parser._types.whitespace_state import WhitespaceState as State
 from libcst.parser._whitespace_parser import (

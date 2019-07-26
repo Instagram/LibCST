@@ -7,13 +7,13 @@
 from typing import MutableSet, Type
 
 from libcst._exceptions import MetadataException
+from libcst._nodes._module import _ModuleSelfT as _ModuleT
 from libcst._visitors import CSTVisitorT
 from libcst.metadata.base_provider import (
     BaseMetadataProvider,
     BatchableMetadataProvider,
     _run_batchable,
 )
-from libcst.nodes._module import _ModuleSelfT as _ModuleT
 
 
 ProviderT = Type[BaseMetadataProvider[object]]

@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING, ClassVar, Collection, Type, TypeVar
 
 if TYPE_CHECKING:
     # Circular dependency for typing reasons only
-    from libcst.nodes._base import CSTNode  # noqa: F401
+    from libcst._nodes._base import CSTNode  # noqa: F401
     from libcst.metadata.base_provider import BaseMetadataProvider  # noqa: F401
 
 
