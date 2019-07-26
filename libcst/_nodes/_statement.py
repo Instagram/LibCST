@@ -1551,10 +1551,12 @@ class WithItem(CSTNode):
         )
 
     def _codegen_impl(self, state: CodegenState, default_comma: bool = False) -> None:
-        self.item._codegen(state)
-        asname = self.asname
-        if asname is not None:
-            asname._codegen(state)
+        with state.record_syntactic_position(self):
+            self.item._codegen(state)
+            asname = self.asname
+            if asname is not None:
+                asname._codegen(state)
+
         comma = self.comma
         if comma is MaybeSentinel.DEFAULT and default_comma:
             state.add_token(", ")
@@ -1615,17 +1617,19 @@ class With(BaseCompoundStatement):
         for ll in self.leading_lines:
             ll._codegen(state)
         state.add_indent_tokens()
-        asynchronous = self.asynchronous
-        if asynchronous is not None:
-            asynchronous._codegen(state)
-        state.add_token("with")
-        self.whitespace_after_with._codegen(state)
-        last_item = len(self.items) - 1
-        for i, item in enumerate(self.items):
-            item._codegen(state, default_comma=(i != last_item))
-        self.whitespace_before_colon._codegen(state)
-        state.add_token(":")
-        self.body._codegen(state)
+
+        with state.record_syntactic_position(self, end_node=self.body):
+            asynchronous = self.asynchronous
+            if asynchronous is not None:
+                asynchronous._codegen(state)
+            state.add_token("with")
+            self.whitespace_after_with._codegen(state)
+            last_item = len(self.items) - 1
+            for i, item in enumerate(self.items):
+                item._codegen(state, default_comma=(i != last_item))
+            self.whitespace_before_colon._codegen(state)
+            state.add_token(":")
+            self.body._codegen(state)
 
 
 @add_slots
@@ -1708,22 +1712,25 @@ class For(BaseCompoundStatement):
         for ll in self.leading_lines:
             ll._codegen(state)
         state.add_indent_tokens()
-        asynchronous = self.asynchronous
-        if asynchronous is not None:
-            asynchronous._codegen(state)
-        state.add_token("for")
-        self.whitespace_after_for._codegen(state)
-        self.target._codegen(state)
-        self.whitespace_before_in._codegen(state)
-        state.add_token("in")
-        self.whitespace_after_in._codegen(state)
-        self.iter._codegen(state)
-        self.whitespace_before_colon._codegen(state)
-        state.add_token(":")
-        self.body._codegen(state)
-        orelse = self.orelse
-        if orelse is not None:
-            orelse._codegen(state)
+
+        end_node = self.body if self.orelse is None else self.orelse
+        with state.record_syntactic_position(self, end_node=end_node):
+            asynchronous = self.asynchronous
+            if asynchronous is not None:
+                asynchronous._codegen(state)
+            state.add_token("for")
+            self.whitespace_after_for._codegen(state)
+            self.target._codegen(state)
+            self.whitespace_before_in._codegen(state)
+            state.add_token("in")
+            self.whitespace_after_in._codegen(state)
+            self.iter._codegen(state)
+            self.whitespace_before_colon._codegen(state)
+            state.add_token(":")
+            self.body._codegen(state)
+            orelse = self.orelse
+            if orelse is not None:
+                orelse._codegen(state)
 
 
 @add_slots
@@ -1774,15 +1781,18 @@ class While(BaseCompoundStatement):
         for ll in self.leading_lines:
             ll._codegen(state)
         state.add_indent_tokens()
-        state.add_token("while")
-        self.whitespace_after_while._codegen(state)
-        self.test._codegen(state)
-        self.whitespace_before_colon._codegen(state)
-        state.add_token(":")
-        self.body._codegen(state)
-        orelse = self.orelse
-        if orelse is not None:
-            orelse._codegen(state)
+
+        end_node = self.body if self.orelse is None else self.orelse
+        with state.record_syntactic_position(self, end_node=end_node):
+            state.add_token("while")
+            self.whitespace_after_while._codegen(state)
+            self.test._codegen(state)
+            self.whitespace_before_colon._codegen(state)
+            state.add_token(":")
+            self.body._codegen(state)
+            orelse = self.orelse
+            if orelse is not None:
+                orelse._codegen(state)
 
 
 @add_slots
