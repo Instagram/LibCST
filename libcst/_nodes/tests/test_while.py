@@ -4,11 +4,10 @@
 # LICENSE file in the root directory of this source tree.
 
 # pyre-strict
-from typing import Callable, Optional
+from typing import Any
 
 import libcst as cst
-from libcst import parse_statement
-from libcst._nodes._internal import CodeRange
+from libcst import CodeRange, parse_statement
 from libcst._nodes.tests.base import CSTNodeTest, DummyIndentedBlock
 from libcst.testing.utils import data_provider
 
@@ -17,61 +16,65 @@ class WhileTest(CSTNodeTest):
     @data_provider(
         (
             # Simple while block
-            (
-                cst.While(
+            # pyre-fixme[6]: Incompatible parameter type
+            {
+                "node": cst.While(
                     cst.Call(cst.Name("iter")), cst.SimpleStatementSuite((cst.Pass(),))
                 ),
-                "while iter(): pass\n",
-                parse_statement,
-            ),
+                "code": "while iter(): pass\n",
+                "parser": parse_statement,
+            },
             # While block with else
-            (
-                cst.While(
+            {
+                "node": cst.While(
                     cst.Call(cst.Name("iter")),
                     cst.SimpleStatementSuite((cst.Pass(),)),
                     cst.Else(cst.SimpleStatementSuite((cst.Pass(),))),
                 ),
-                "while iter(): pass\nelse: pass\n",
-                parse_statement,
-            ),
+                "code": "while iter(): pass\nelse: pass\n",
+                "parser": parse_statement,
+            },
             # indentation
-            (
-                DummyIndentedBlock(
+            {
+                "node": DummyIndentedBlock(
                     "    ",
                     cst.While(
                         cst.Call(cst.Name("iter")),
                         cst.SimpleStatementSuite((cst.Pass(),)),
                     ),
                 ),
-                "    while iter(): pass\n",
-                None,
-            ),
+                "code": "    while iter(): pass\n",
+                "parser": None,
+                "expected_position": CodeRange.create((1, 4), (1, 22)),
+            },
             # while an indented body
-            (
-                DummyIndentedBlock(
+            {
+                "node": DummyIndentedBlock(
                     "    ",
                     cst.While(
                         cst.Call(cst.Name("iter")),
                         cst.IndentedBlock((cst.SimpleStatementLine((cst.Pass(),)),)),
                     ),
                 ),
-                "    while iter():\n        pass\n",
-                None,
-            ),
+                "code": "    while iter():\n        pass\n",
+                "parser": None,
+                "expected_position": CodeRange.create((1, 4), (2, 12)),
+            },
             # leading_lines
-            (
-                cst.While(
+            {
+                "node": cst.While(
                     cst.Call(cst.Name("iter")),
                     cst.IndentedBlock((cst.SimpleStatementLine((cst.Pass(),)),)),
                     leading_lines=(
                         cst.EmptyLine(comment=cst.Comment("# leading comment")),
                     ),
                 ),
-                "# leading comment\nwhile iter():\n    pass\n",
-                parse_statement,
-            ),
-            (
-                cst.While(
+                "code": "# leading comment\nwhile iter():\n    pass\n",
+                "parser": parse_statement,
+                "expected_position": CodeRange.create((2, 0), (3, 8)),
+            },
+            {
+                "node": cst.While(
                     cst.Call(cst.Name("iter")),
                     cst.IndentedBlock((cst.SimpleStatementLine((cst.Pass(),)),)),
                     cst.Else(
@@ -84,12 +87,13 @@ class WhileTest(CSTNodeTest):
                         cst.EmptyLine(comment=cst.Comment("# leading comment")),
                     ),
                 ),
-                "# leading comment\nwhile iter():\n    pass\n# else comment\nelse:\n    pass\n",
-                None,
-            ),
+                "code": "# leading comment\nwhile iter():\n    pass\n# else comment\nelse:\n    pass\n",
+                "parser": None,
+                "expected_position": CodeRange.create((2, 0), (6, 8)),
+            },
             # Weird spacing rules
-            (
-                cst.While(
+            {
+                "node": cst.While(
                     cst.Call(
                         cst.Name("iter"),
                         lpar=(cst.LeftParen(),),
@@ -98,44 +102,38 @@ class WhileTest(CSTNodeTest):
                     cst.SimpleStatementSuite((cst.Pass(),)),
                     whitespace_after_while=cst.SimpleWhitespace(""),
                 ),
-                "while(iter()): pass\n",
-                parse_statement,
-            ),
+                "code": "while(iter()): pass\n",
+                "parser": parse_statement,
+                "expected_position": CodeRange.create((1, 0), (1, 19)),
+            },
             # Whitespace
-            (
-                cst.While(
+            {
+                "node": cst.While(
                     cst.Call(cst.Name("iter")),
                     cst.SimpleStatementSuite((cst.Pass(),)),
                     whitespace_after_while=cst.SimpleWhitespace("  "),
                     whitespace_before_colon=cst.SimpleWhitespace("  "),
                 ),
-                "while  iter()  : pass\n",
-                parse_statement,
-            ),
+                "code": "while  iter()  : pass\n",
+                "parser": parse_statement,
+                "expected_position": CodeRange.create((1, 0), (1, 21)),
+            },
         )
     )
-    def test_valid(
-        self,
-        node: cst.CSTNode,
-        code: str,
-        parser: Optional[Callable[[str], cst.CSTNode]],
-        position: Optional[CodeRange] = None,
-    ) -> None:
-        self.validate_node(node, code, parser, expected_position=position)
+    def test_valid(self, **kwargs: Any) -> None:
+        self.validate_node(**kwargs)
 
     @data_provider(
         (
-            (
-                lambda: cst.While(
+            {
+                "get_node": lambda: cst.While(
                     cst.Call(cst.Name("iter")),
                     cst.SimpleStatementSuite((cst.Pass(),)),
                     whitespace_after_while=cst.SimpleWhitespace(""),
                 ),
-                "Must have at least one space after 'while' keyword",
-            ),
+                "expected_re": "Must have at least one space after 'while' keyword",
+            },
         )
     )
-    def test_invalid(
-        self, get_node: Callable[[], cst.CSTNode], expected_re: str
-    ) -> None:
-        self.assert_invalid(get_node, expected_re)
+    def test_invalid(self, **kwargs: Any) -> None:
+        self.assert_invalid(**kwargs)

@@ -4,11 +4,10 @@
 # LICENSE file in the root directory of this source tree.
 
 # pyre-strict
-from typing import Callable, Optional
+from typing import Any
 
 import libcst as cst
-from libcst import parse_statement
-from libcst._nodes._internal import CodeRange
+from libcst import CodeRange, parse_statement
 from libcst._nodes.tests.base import CSTNodeTest, DummyIndentedBlock
 from libcst.testing.utils import data_provider
 
@@ -17,40 +16,41 @@ class ForTest(CSTNodeTest):
     @data_provider(
         (
             # Simple for block
-            (
-                cst.For(
+            # pyre-fixme[6]: Incompatible parameter type
+            {
+                "node": cst.For(
                     cst.Name("target"),
                     cst.Call(cst.Name("iter")),
                     cst.SimpleStatementSuite((cst.Pass(),)),
                 ),
-                "for target in iter(): pass\n",
-                parse_statement,
-            ),
+                "code": "for target in iter(): pass\n",
+                "parser": parse_statement,
+            },
             # Simple async for block
-            (
-                cst.For(
+            {
+                "node": cst.For(
                     cst.Name("target"),
                     cst.Call(cst.Name("iter")),
                     cst.SimpleStatementSuite((cst.Pass(),)),
                     asynchronous=cst.Asynchronous(),
                 ),
-                "async for target in iter(): pass\n",
-                parse_statement,
-            ),
+                "code": "async for target in iter(): pass\n",
+                "parser": parse_statement,
+            },
             # For block with else
-            (
-                cst.For(
+            {
+                "node": cst.For(
                     cst.Name("target"),
                     cst.Call(cst.Name("iter")),
                     cst.SimpleStatementSuite((cst.Pass(),)),
                     cst.Else(cst.SimpleStatementSuite((cst.Pass(),))),
                 ),
-                "for target in iter(): pass\nelse: pass\n",
-                parse_statement,
-            ),
+                "code": "for target in iter(): pass\nelse: pass\n",
+                "parser": parse_statement,
+            },
             # indentation
-            (
-                DummyIndentedBlock(
+            {
+                "node": DummyIndentedBlock(
                     "    ",
                     cst.For(
                         cst.Name("target"),
@@ -58,12 +58,12 @@ class ForTest(CSTNodeTest):
                         cst.SimpleStatementSuite((cst.Pass(),)),
                     ),
                 ),
-                "    for target in iter(): pass\n",
-                None,
-            ),
+                "code": "    for target in iter(): pass\n",
+                "parser": None,
+            },
             # for an indented body
-            (
-                DummyIndentedBlock(
+            {
+                "node": DummyIndentedBlock(
                     "    ",
                     cst.For(
                         cst.Name("target"),
@@ -71,12 +71,13 @@ class ForTest(CSTNodeTest):
                         cst.IndentedBlock((cst.SimpleStatementLine((cst.Pass(),)),)),
                     ),
                 ),
-                "    for target in iter():\n        pass\n",
-                None,
-            ),
+                "code": "    for target in iter():\n        pass\n",
+                "parser": None,
+                "expected_position": CodeRange.create((1, 4), (2, 12)),
+            },
             # leading_lines
-            (
-                cst.For(
+            {
+                "node": cst.For(
                     cst.Name("target"),
                     cst.Call(cst.Name("iter")),
                     cst.IndentedBlock((cst.SimpleStatementLine((cst.Pass(),)),)),
@@ -90,12 +91,13 @@ class ForTest(CSTNodeTest):
                         cst.EmptyLine(comment=cst.Comment("# leading comment")),
                     ),
                 ),
-                "# leading comment\nfor target in iter():\n    pass\n# else comment\nelse:\n    pass\n",
-                None,
-            ),
+                "code": "# leading comment\nfor target in iter():\n    pass\n# else comment\nelse:\n    pass\n",
+                "parser": None,
+                "expected_position": CodeRange.create((2, 0), (6, 8)),
+            },
             # Weird spacing rules
-            (
-                cst.For(
+            {
+                "node": cst.For(
                     cst.Name(
                         "target", lpar=(cst.LeftParen(),), rpar=(cst.RightParen(),)
                     ),
@@ -109,12 +111,13 @@ class ForTest(CSTNodeTest):
                     whitespace_before_in=cst.SimpleWhitespace(""),
                     whitespace_after_in=cst.SimpleWhitespace(""),
                 ),
-                "for(target)in(iter()): pass\n",
-                parse_statement,
-            ),
+                "code": "for(target)in(iter()): pass\n",
+                "parser": parse_statement,
+                "expected_position": CodeRange.create((1, 0), (1, 27)),
+            },
             # Whitespace
-            (
-                cst.For(
+            {
+                "node": cst.For(
                     cst.Name("target"),
                     cst.Call(cst.Name("iter")),
                     cst.SimpleStatementSuite((cst.Pass(),)),
@@ -123,52 +126,45 @@ class ForTest(CSTNodeTest):
                     whitespace_after_in=cst.SimpleWhitespace("  "),
                     whitespace_before_colon=cst.SimpleWhitespace("  "),
                 ),
-                "for  target  in  iter()  : pass\n",
-                parse_statement,
-            ),
+                "code": "for  target  in  iter()  : pass\n",
+                "parser": parse_statement,
+                "expected_position": CodeRange.create((1, 0), (1, 31)),
+            },
         )
     )
-    def test_valid(
-        self,
-        node: cst.CSTNode,
-        code: str,
-        parser: Optional[Callable[[str], cst.CSTNode]],
-        position: Optional[CodeRange] = None,
-    ) -> None:
-        self.validate_node(node, code, parser, expected_position=position)
+    def test_valid(self, **kwargs: Any) -> None:
+        self.validate_node(**kwargs)
 
     @data_provider(
         (
-            (
-                lambda: cst.For(
+            {
+                "get_node": lambda: cst.For(
                     cst.Name("target"),
                     cst.Call(cst.Name("iter")),
                     cst.SimpleStatementSuite((cst.Pass(),)),
                     whitespace_after_for=cst.SimpleWhitespace(""),
                 ),
-                "Must have at least one space after 'for' keyword",
-            ),
-            (
-                lambda: cst.For(
+                "expected_re": "Must have at least one space after 'for' keyword",
+            },
+            {
+                "get_node": lambda: cst.For(
                     cst.Name("target"),
                     cst.Call(cst.Name("iter")),
                     cst.SimpleStatementSuite((cst.Pass(),)),
                     whitespace_before_in=cst.SimpleWhitespace(""),
                 ),
-                "Must have at least one space before 'in' keyword",
-            ),
-            (
-                lambda: cst.For(
+                "expected_re": "Must have at least one space before 'in' keyword",
+            },
+            {
+                "get_node": lambda: cst.For(
                     cst.Name("target"),
                     cst.Call(cst.Name("iter")),
                     cst.SimpleStatementSuite((cst.Pass(),)),
                     whitespace_after_in=cst.SimpleWhitespace(""),
                 ),
-                "Must have at least one space after 'in' keyword",
-            ),
+                "expected_re": "Must have at least one space after 'in' keyword",
+            },
         )
     )
-    def test_invalid(
-        self, get_node: Callable[[], cst.CSTNode], expected_re: str
-    ) -> None:
-        self.assert_invalid(get_node, expected_re)
+    def test_invalid(self, **kwargs: Any) -> None:
+        self.assert_invalid(**kwargs)

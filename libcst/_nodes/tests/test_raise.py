@@ -4,12 +4,11 @@
 # LICENSE file in the root directory of this source tree.
 
 # pyre-strict
-from typing import Callable, Optional
+from typing import Any
 
 import libcst as cst
-from libcst import parse_statement
+from libcst import CodeRange, parse_statement
 from libcst._helpers import ensure_type
-from libcst._nodes._internal import CodeRange
 from libcst._nodes.tests.base import CSTNodeTest
 from libcst.testing.utils import data_provider
 
@@ -18,17 +17,24 @@ class RaiseConstructionTest(CSTNodeTest):
     @data_provider(
         (
             # Simple raise
-            (cst.Raise(), "raise"),
+            # pyre-fixme[6]: Incompatible parameter type
+            {"node": cst.Raise(), "code": "raise"},
             # Raise exception
-            (cst.Raise(cst.Call(cst.Name("Exception"))), "raise Exception()"),
+            {
+                "node": cst.Raise(cst.Call(cst.Name("Exception"))),
+                "code": "raise Exception()",
+                "expected_position": CodeRange.create((1, 0), (1, 17)),
+            },
             # Raise exception from cause
-            (
-                cst.Raise(cst.Call(cst.Name("Exception")), cst.From(cst.Name("cause"))),
-                "raise Exception() from cause",
-            ),
+            {
+                "node": cst.Raise(
+                    cst.Call(cst.Name("Exception")), cst.From(cst.Name("cause"))
+                ),
+                "code": "raise Exception() from cause",
+            },
             # Whitespace oddities test
-            (
-                cst.Raise(
+            {
+                "node": cst.Raise(
                     cst.Call(
                         cst.Name("Exception"),
                         lpar=(cst.LeftParen(),),
@@ -43,21 +49,23 @@ class RaiseConstructionTest(CSTNodeTest):
                     ),
                     whitespace_after_raise=cst.SimpleWhitespace(""),
                 ),
-                "raise(Exception())from(cause)",
-            ),
-            (
-                cst.Raise(
+                "code": "raise(Exception())from(cause)",
+                "expected_position": CodeRange.create((1, 0), (1, 29)),
+            },
+            {
+                "node": cst.Raise(
                     cst.Call(cst.Name("Exception")),
                     cst.From(
                         cst.Name("cause"),
                         whitespace_before_from=cst.SimpleWhitespace(""),
                     ),
                 ),
-                "raise Exception()from cause",
-            ),
+                "code": "raise Exception()from cause",
+                "expected_position": CodeRange.create((1, 0), (1, 27)),
+            },
             # Whitespace rendering test
-            (
-                cst.Raise(
+            {
+                "node": cst.Raise(
                     exc=cst.Call(cst.Name("Exception")),
                     cause=cst.From(
                         cst.Name("cause"),
@@ -66,74 +74,71 @@ class RaiseConstructionTest(CSTNodeTest):
                     ),
                     whitespace_after_raise=cst.SimpleWhitespace("  "),
                 ),
-                "raise  Exception()  from  cause",
-            ),
+                "code": "raise  Exception()  from  cause",
+                "expected_position": CodeRange.create((1, 0), (1, 31)),
+            },
         )
     )
-    def test_valid(
-        self, node: cst.CSTNode, code: str, position: Optional[CodeRange] = None
-    ) -> None:
-        self.validate_node(node, code, expected_position=position)
+    def test_valid(self, **kwargs: Any) -> None:
+        self.validate_node(**kwargs)
 
     @data_provider(
         (
             # Validate construction
-            (
-                lambda: cst.Raise(cause=cst.From(cst.Name("cause"))),
-                "Must have an 'exc' when specifying 'clause'. on Raise",
-            ),
+            {
+                "get_node": lambda: cst.Raise(cause=cst.From(cst.Name("cause"))),
+                "expected_re": "Must have an 'exc' when specifying 'clause'. on Raise",
+            },
             # Validate whitespace handling
-            (
-                lambda: cst.Raise(
+            {
+                "get_node": lambda: cst.Raise(
                     cst.Call(cst.Name("Exception")),
                     whitespace_after_raise=cst.SimpleWhitespace(""),
                 ),
-                "Must have at least one space after 'raise'",
-            ),
-            (
-                lambda: cst.Raise(
+                "expected_re": "Must have at least one space after 'raise'",
+            },
+            {
+                "get_node": lambda: cst.Raise(
                     cst.Name("exc"),
                     cst.From(
                         cst.Name("cause"),
                         whitespace_before_from=cst.SimpleWhitespace(""),
                     ),
                 ),
-                "Must have at least one space before 'from'",
-            ),
-            (
-                lambda: cst.Raise(
+                "expected_re": "Must have at least one space before 'from'",
+            },
+            {
+                "get_node": lambda: cst.Raise(
                     cst.Name("exc"),
                     cst.From(
                         cst.Name("cause"),
                         whitespace_after_from=cst.SimpleWhitespace(""),
                     ),
                 ),
-                "Must have at least one space after 'from'",
-            ),
+                "expected_re": "Must have at least one space after 'from'",
+            },
         )
     )
-    def test_invalid(
-        self, get_node: Callable[[], cst.CSTNode], expected_re: str
-    ) -> None:
-        self.assert_invalid(get_node, expected_re)
+    def test_invalid(self, **kwargs: Any) -> None:
+        self.assert_invalid(**kwargs)
 
 
 class RaiseParsingTest(CSTNodeTest):
     @data_provider(
         (
             # Simple raise
-            (cst.Raise(), "raise"),
+            {"node": cst.Raise(), "code": "raise"},
             # Raise exception
-            (
-                cst.Raise(
+            {
+                "node": cst.Raise(
                     cst.Call(cst.Name("Exception")),
                     whitespace_after_raise=cst.SimpleWhitespace(" "),
                 ),
-                "raise Exception()",
-            ),
+                "code": "raise Exception()",
+            },
             # Raise exception from cause
-            (
-                cst.Raise(
+            {
+                "node": cst.Raise(
                     cst.Call(cst.Name("Exception")),
                     cst.From(
                         cst.Name("cause"),
@@ -142,11 +147,11 @@ class RaiseParsingTest(CSTNodeTest):
                     ),
                     whitespace_after_raise=cst.SimpleWhitespace(" "),
                 ),
-                "raise Exception() from cause",
-            ),
+                "code": "raise Exception() from cause",
+            },
             # Whitespace oddities test
-            (
-                cst.Raise(
+            {
+                "node": cst.Raise(
                     cst.Call(
                         cst.Name("Exception"),
                         lpar=(cst.LeftParen(),),
@@ -161,10 +166,10 @@ class RaiseParsingTest(CSTNodeTest):
                     ),
                     whitespace_after_raise=cst.SimpleWhitespace(""),
                 ),
-                "raise(Exception())from(cause)",
-            ),
-            (
-                cst.Raise(
+                "code": "raise(Exception())from(cause)",
+            },
+            {
+                "node": cst.Raise(
                     cst.Call(cst.Name("Exception")),
                     cst.From(
                         cst.Name("cause"),
@@ -173,11 +178,11 @@ class RaiseParsingTest(CSTNodeTest):
                     ),
                     whitespace_after_raise=cst.SimpleWhitespace(" "),
                 ),
-                "raise Exception()from cause",
-            ),
+                "code": "raise Exception()from cause",
+            },
             # Whitespace rendering test
-            (
-                cst.Raise(
+            {
+                "node": cst.Raise(
                     exc=cst.Call(cst.Name("Exception")),
                     cause=cst.From(
                         cst.Name("cause"),
@@ -186,18 +191,14 @@ class RaiseParsingTest(CSTNodeTest):
                     ),
                     whitespace_after_raise=cst.SimpleWhitespace("  "),
                 ),
-                "raise  Exception()  from  cause",
-            ),
+                "code": "raise  Exception()  from  cause",
+            },
         )
     )
-    def test_valid(
-        self, node: cst.CSTNode, code: str, position: Optional[CodeRange] = None
-    ) -> None:
+    def test_valid(self, **kwargs: Any) -> None:
         self.validate_node(
-            node,
-            code,
-            lambda code: ensure_type(
+            parser=lambda code: ensure_type(
                 parse_statement(code), cst.SimpleStatementLine
             ).body[0],
-            expected_position=position,
+            **kwargs,
         )

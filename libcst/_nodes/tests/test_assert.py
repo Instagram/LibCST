@@ -8,7 +8,7 @@
 from typing import Any
 
 import libcst as cst
-from libcst import parse_statement
+from libcst import CodeRange, parse_statement
 from libcst._helpers import ensure_type
 from libcst._nodes.tests.base import CSTNodeTest
 from libcst.testing.utils import data_provider
@@ -18,6 +18,7 @@ class AssertConstructionTest(CSTNodeTest):
     @data_provider(
         (
             # Simple assert
+            # pyre-fixme[6]: Incompatible parameter type
             {
                 "node": cst.Assert(cst.Name("True")),
                 "code": "assert True",
@@ -41,7 +42,7 @@ class AssertConstructionTest(CSTNodeTest):
                 ),
                 "code": "assert(True)",
                 "parser": None,
-                "expected_position": None,
+                "expected_position": CodeRange.create((1, 0), (1, 12)),
             },
             # Whitespace rendering test
             {
@@ -56,7 +57,7 @@ class AssertConstructionTest(CSTNodeTest):
                 ),
                 "code": 'assert  True  ,  "Value should be true"',
                 "parser": None,
-                "expected_position": None,
+                "expected_position": CodeRange.create((1, 0), (1, 39)),
             },
         )
     )

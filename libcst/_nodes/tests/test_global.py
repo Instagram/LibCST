@@ -4,12 +4,11 @@
 # LICENSE file in the root directory of this source tree.
 
 # pyre-strict
-from typing import Callable, Optional
+from typing import Any
 
 import libcst as cst
-from libcst import parse_statement
+from libcst import CodeRange, parse_statement
 from libcst._helpers import ensure_type
-from libcst._nodes._internal import CodeRange
 from libcst._nodes.tests.base import CSTNodeTest
 from libcst.testing.utils import data_provider
 
@@ -18,15 +17,18 @@ class GlobalConstructionTest(CSTNodeTest):
     @data_provider(
         (
             # Single global statement
-            (cst.Global((cst.NameItem(cst.Name("a")),)), "global a"),
+            # pyre-fixme[6]: Incompatible parameter type
+            {"node": cst.Global((cst.NameItem(cst.Name("a")),)), "code": "global a"},
             # Multiple entries in global statement
-            (
-                cst.Global((cst.NameItem(cst.Name("a")), cst.NameItem(cst.Name("b")))),
-                "global a, b",
-            ),
+            {
+                "node": cst.Global(
+                    (cst.NameItem(cst.Name("a")), cst.NameItem(cst.Name("b")))
+                ),
+                "code": "global a, b",
+            },
             # Whitespace rendering test
-            (
-                cst.Global(
+            {
+                "node": cst.Global(
                     (
                         cst.NameItem(
                             cst.Name("a"),
@@ -39,38 +41,39 @@ class GlobalConstructionTest(CSTNodeTest):
                     ),
                     whitespace_after_global=cst.SimpleWhitespace("  "),
                 ),
-                "global  a  ,  b",
-            ),
+                "code": "global  a  ,  b",
+                "expected_position": CodeRange.create((1, 0), (1, 15)),
+            },
         )
     )
-    def test_valid(
-        self, node: cst.CSTNode, code: str, position: Optional[CodeRange] = None
-    ) -> None:
-        self.validate_node(node, code, expected_position=position)
+    def test_valid(self, **kwargs: Any) -> None:
+        self.validate_node(**kwargs)
 
     @data_provider(
         (
             # Validate construction
-            (
-                lambda: cst.Global(()),
-                "A Global statement must have at least one NameItem",
-            ),
+            {
+                "get_node": lambda: cst.Global(()),
+                "expected_re": "A Global statement must have at least one NameItem",
+            },
             # Validate whitespace handling
-            (
-                lambda: cst.Global(
+            {
+                "get_node": lambda: cst.Global(
                     (cst.NameItem(cst.Name("a")),),
                     whitespace_after_global=cst.SimpleWhitespace(""),
                 ),
-                "Must have at least one space after 'global' keyword",
-            ),
+                "expected_re": "Must have at least one space after 'global' keyword",
+            },
             # Validate comma handling
-            (
-                lambda: cst.Global((cst.NameItem(cst.Name("a"), comma=cst.Comma()),)),
-                "The last NameItem in a Global cannot have a trailing comma",
-            ),
+            {
+                "get_node": lambda: cst.Global(
+                    (cst.NameItem(cst.Name("a"), comma=cst.Comma()),)
+                ),
+                "expected_re": "The last NameItem in a Global cannot have a trailing comma",
+            },
             # Validate paren handling
-            (
-                lambda: cst.Global(
+            {
+                "get_node": lambda: cst.Global(
                     (
                         cst.NameItem(
                             cst.Name(
@@ -79,24 +82,22 @@ class GlobalConstructionTest(CSTNodeTest):
                         ),
                     )
                 ),
-                "Cannot have parens around names in NameItem",
-            ),
+                "expected_re": "Cannot have parens around names in NameItem",
+            },
         )
     )
-    def test_invalid(
-        self, get_node: Callable[[], cst.CSTNode], expected_re: str
-    ) -> None:
-        self.assert_invalid(get_node, expected_re)
+    def test_invalid(self, **kwargs: Any) -> None:
+        self.assert_invalid(**kwargs)
 
 
 class GlobalParsingTest(CSTNodeTest):
     @data_provider(
         (
             # Single global statement
-            (cst.Global((cst.NameItem(cst.Name("a")),)), "global a"),
+            {"node": cst.Global((cst.NameItem(cst.Name("a")),)), "code": "global a"},
             # Multiple entries in global statement
-            (
-                cst.Global(
+            {
+                "node": cst.Global(
                     (
                         cst.NameItem(
                             cst.Name("a"),
@@ -105,11 +106,11 @@ class GlobalParsingTest(CSTNodeTest):
                         cst.NameItem(cst.Name("b")),
                     )
                 ),
-                "global a, b",
-            ),
+                "code": "global a, b",
+            },
             # Whitespace rendering test
-            (
-                cst.Global(
+            {
+                "node": cst.Global(
                     (
                         cst.NameItem(
                             cst.Name("a"),
@@ -122,18 +123,14 @@ class GlobalParsingTest(CSTNodeTest):
                     ),
                     whitespace_after_global=cst.SimpleWhitespace("  "),
                 ),
-                "global  a  ,  b",
-            ),
+                "code": "global  a  ,  b",
+            },
         )
     )
-    def test_valid(
-        self, node: cst.CSTNode, code: str, position: Optional[CodeRange] = None
-    ) -> None:
+    def test_valid(self, **kwargs: Any) -> None:
         self.validate_node(
-            node,
-            code,
-            lambda code: ensure_type(
+            parser=lambda code: ensure_type(
                 parse_statement(code), cst.SimpleStatementLine
             ).body[0],
-            expected_position=position,
+            **kwargs,
         )

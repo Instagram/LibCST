@@ -4,7 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 # pyre-strict
-from libcst._nodes._internal import CodeRange
+from libcst import CodeRange
 from libcst._nodes._module import _ModuleSelfT as _ModuleT
 from libcst.metadata.base_provider import BaseMetadataProvider
 

@@ -37,7 +37,8 @@ class _BaseOneTokenOp(CSTNode, ABC):
 
     def _codegen_impl(self, state: CodegenState) -> None:
         self.whitespace_before._codegen(state)
-        state.add_token(self._get_token())
+        with state.record_syntactic_position(self):
+            state.add_token(self._get_token())
         self.whitespace_after._codegen(state)
 
     @abstractmethod
@@ -77,9 +78,10 @@ class _BaseTwoTokenOp(CSTNode, ABC):
 
     def _codegen_impl(self, state: CodegenState) -> None:
         self.whitespace_before._codegen(state)
-        state.add_token(self._get_tokens()[0])
-        self.whitespace_between._codegen(state)
-        state.add_token(self._get_tokens()[1])
+        with state.record_syntactic_position(self):
+            state.add_token(self._get_tokens()[0])
+            self.whitespace_between._codegen(state)
+            state.add_token(self._get_tokens()[1])
         self.whitespace_after._codegen(state)
 
     @abstractmethod

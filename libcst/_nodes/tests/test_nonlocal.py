@@ -4,12 +4,11 @@
 # LICENSE file in the root directory of this source tree.
 
 # pyre-strict
-from typing import Callable, Optional
+from typing import Any
 
 import libcst as cst
-from libcst import parse_statement
+from libcst import CodeRange, parse_statement
 from libcst._helpers import ensure_type
-from libcst._nodes._internal import CodeRange
 from libcst._nodes.tests.base import CSTNodeTest
 from libcst.testing.utils import data_provider
 
@@ -18,17 +17,22 @@ class NonlocalConstructionTest(CSTNodeTest):
     @data_provider(
         (
             # Single nonlocal statement
-            (cst.Nonlocal((cst.NameItem(cst.Name("a")),)), "nonlocal a"),
+            # pyre-fixme[6]: Incompatible parameter type
+            {
+                "node": cst.Nonlocal((cst.NameItem(cst.Name("a")),)),
+                "code": "nonlocal a",
+            },
             # Multiple entries in nonlocal statement
-            (
-                cst.Nonlocal(
+            {
+                "node": cst.Nonlocal(
                     (cst.NameItem(cst.Name("a")), cst.NameItem(cst.Name("b")))
                 ),
-                "nonlocal a, b",
-            ),
+                "code": "nonlocal a, b",
+                "expected_position": CodeRange.create((1, 0), (1, 13)),
+            },
             # Whitespace rendering test
-            (
-                cst.Nonlocal(
+            {
+                "node": cst.Nonlocal(
                     (
                         cst.NameItem(
                             cst.Name("a"),
@@ -41,38 +45,39 @@ class NonlocalConstructionTest(CSTNodeTest):
                     ),
                     whitespace_after_nonlocal=cst.SimpleWhitespace("  "),
                 ),
-                "nonlocal  a  ,  b",
-            ),
+                "code": "nonlocal  a  ,  b",
+                "expected_position": CodeRange.create((1, 0), (1, 17)),
+            },
         )
     )
-    def test_valid(
-        self, node: cst.CSTNode, code: str, position: Optional[CodeRange] = None
-    ) -> None:
-        self.validate_node(node, code, expected_position=position)
+    def test_valid(self, **kwargs: Any) -> None:
+        self.validate_node(**kwargs)
 
     @data_provider(
         (
             # Validate construction
-            (
-                lambda: cst.Nonlocal(()),
-                "A Nonlocal statement must have at least one NameItem",
-            ),
+            {
+                "get_node": lambda: cst.Nonlocal(()),
+                "expected_re": "A Nonlocal statement must have at least one NameItem",
+            },
             # Validate whitespace handling
-            (
-                lambda: cst.Nonlocal(
+            {
+                "get_node": lambda: cst.Nonlocal(
                     (cst.NameItem(cst.Name("a")),),
                     whitespace_after_nonlocal=cst.SimpleWhitespace(""),
                 ),
-                "Must have at least one space after 'nonlocal' keyword",
-            ),
+                "expected_re": "Must have at least one space after 'nonlocal' keyword",
+            },
             # Validate comma handling
-            (
-                lambda: cst.Nonlocal((cst.NameItem(cst.Name("a"), comma=cst.Comma()),)),
-                "The last NameItem in a Nonlocal cannot have a trailing comma",
-            ),
+            {
+                "get_node": lambda: cst.Nonlocal(
+                    (cst.NameItem(cst.Name("a"), comma=cst.Comma()),)
+                ),
+                "expected_re": "The last NameItem in a Nonlocal cannot have a trailing comma",
+            },
             # Validate paren handling
-            (
-                lambda: cst.Nonlocal(
+            {
+                "get_node": lambda: cst.Nonlocal(
                     (
                         cst.NameItem(
                             cst.Name(
@@ -81,24 +86,25 @@ class NonlocalConstructionTest(CSTNodeTest):
                         ),
                     )
                 ),
-                "Cannot have parens around names in NameItem",
-            ),
+                "expected_re": "Cannot have parens around names in NameItem",
+            },
         )
     )
-    def test_invalid(
-        self, get_node: Callable[[], cst.CSTNode], expected_re: str
-    ) -> None:
-        self.assert_invalid(get_node, expected_re)
+    def test_invalid(self, **kwargs: Any) -> None:
+        self.assert_invalid(**kwargs)
 
 
 class NonlocalParsingTest(CSTNodeTest):
     @data_provider(
         (
             # Single nonlocal statement
-            (cst.Nonlocal((cst.NameItem(cst.Name("a")),)), "nonlocal a"),
+            {
+                "node": cst.Nonlocal((cst.NameItem(cst.Name("a")),)),
+                "code": "nonlocal a",
+            },
             # Multiple entries in nonlocal statement
-            (
-                cst.Nonlocal(
+            {
+                "node": cst.Nonlocal(
                     (
                         cst.NameItem(
                             cst.Name("a"),
@@ -107,11 +113,11 @@ class NonlocalParsingTest(CSTNodeTest):
                         cst.NameItem(cst.Name("b")),
                     )
                 ),
-                "nonlocal a, b",
-            ),
+                "code": "nonlocal a, b",
+            },
             # Whitespace rendering test
-            (
-                cst.Nonlocal(
+            {
+                "node": cst.Nonlocal(
                     (
                         cst.NameItem(
                             cst.Name("a"),
@@ -124,18 +130,14 @@ class NonlocalParsingTest(CSTNodeTest):
                     ),
                     whitespace_after_nonlocal=cst.SimpleWhitespace("  "),
                 ),
-                "nonlocal  a  ,  b",
-            ),
+                "code": "nonlocal  a  ,  b",
+            },
         )
     )
-    def test_valid(
-        self, node: cst.CSTNode, code: str, position: Optional[CodeRange] = None
-    ) -> None:
+    def test_valid(self, **kwargs: Any) -> None:
         self.validate_node(
-            node,
-            code,
-            lambda code: ensure_type(
+            parser=lambda code: ensure_type(
                 parse_statement(code), cst.SimpleStatementLine
             ).body[0],
-            expected_position=position,
+            **kwargs,
         )

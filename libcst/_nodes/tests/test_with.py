@@ -4,11 +4,10 @@
 # LICENSE file in the root directory of this source tree.
 
 # pyre-strict
-from typing import Callable, Optional
+from typing import Any
 
 import libcst as cst
-from libcst import parse_statement
-from libcst._nodes._internal import CodeRange
+from libcst import CodeRange, parse_statement
 from libcst._nodes.tests.base import CSTNodeTest, DummyIndentedBlock
 from libcst.testing.utils import data_provider
 
@@ -17,38 +16,40 @@ class WithTest(CSTNodeTest):
     @data_provider(
         (
             # Simple with block
-            (
-                cst.With(
+            # pyre-fixme[6]: Incompatible parameter type
+            {
+                "node": cst.With(
                     (cst.WithItem(cst.Call(cst.Name("context_mgr"))),),
                     cst.SimpleStatementSuite((cst.Pass(),)),
                 ),
-                "with context_mgr(): pass\n",
-                parse_statement,
-            ),
+                "code": "with context_mgr(): pass\n",
+                "parser": parse_statement,
+                "expected_position": CodeRange.create((1, 0), (1, 24)),
+            },
             # Simple async with block
-            (
-                cst.With(
+            {
+                "node": cst.With(
                     (cst.WithItem(cst.Call(cst.Name("context_mgr"))),),
                     cst.SimpleStatementSuite((cst.Pass(),)),
                     asynchronous=cst.Asynchronous(),
                 ),
-                "async with context_mgr(): pass\n",
-                parse_statement,
-            ),
+                "code": "async with context_mgr(): pass\n",
+                "parser": parse_statement,
+            },
             # Multiple context managers
-            (
-                cst.With(
+            {
+                "node": cst.With(
                     (
                         cst.WithItem(cst.Call(cst.Name("foo"))),
                         cst.WithItem(cst.Call(cst.Name("bar"))),
                     ),
                     cst.SimpleStatementSuite((cst.Pass(),)),
                 ),
-                "with foo(), bar(): pass\n",
-                None,
-            ),
-            (
-                cst.With(
+                "code": "with foo(), bar(): pass\n",
+                "parser": None,
+            },
+            {
+                "node": cst.With(
                     (
                         cst.WithItem(
                             cst.Call(cst.Name("foo")),
@@ -58,12 +59,12 @@ class WithTest(CSTNodeTest):
                     ),
                     cst.SimpleStatementSuite((cst.Pass(),)),
                 ),
-                "with foo(), bar(): pass\n",
-                parse_statement,
-            ),
+                "code": "with foo(), bar(): pass\n",
+                "parser": parse_statement,
+            },
             # With block containing variable for context manager.
-            (
-                cst.With(
+            {
+                "node": cst.With(
                     (
                         cst.WithItem(
                             cst.Call(cst.Name("context_mgr")),
@@ -72,48 +73,51 @@ class WithTest(CSTNodeTest):
                     ),
                     cst.SimpleStatementSuite((cst.Pass(),)),
                 ),
-                "with context_mgr() as ctx: pass\n",
-                parse_statement,
-            ),
+                "code": "with context_mgr() as ctx: pass\n",
+                "parser": parse_statement,
+            },
             # indentation
-            (
-                DummyIndentedBlock(
+            {
+                "node": DummyIndentedBlock(
                     "    ",
                     cst.With(
                         (cst.WithItem(cst.Call(cst.Name("context_mgr"))),),
                         cst.SimpleStatementSuite((cst.Pass(),)),
                     ),
                 ),
-                "    with context_mgr(): pass\n",
-                None,
-            ),
+                "code": "    with context_mgr(): pass\n",
+                "parser": None,
+                "expected_position": CodeRange.create((1, 4), (1, 28)),
+            },
             # with an indented body
-            (
-                DummyIndentedBlock(
+            {
+                "node": DummyIndentedBlock(
                     "    ",
                     cst.With(
                         (cst.WithItem(cst.Call(cst.Name("context_mgr"))),),
                         cst.IndentedBlock((cst.SimpleStatementLine((cst.Pass(),)),)),
                     ),
                 ),
-                "    with context_mgr():\n        pass\n",
-                None,
-            ),
+                "code": "    with context_mgr():\n        pass\n",
+                "parser": None,
+                "expected_position": CodeRange.create((1, 4), (2, 12)),
+            },
             # leading_lines
-            (
-                cst.With(
+            {
+                "node": cst.With(
                     (cst.WithItem(cst.Call(cst.Name("context_mgr"))),),
                     cst.SimpleStatementSuite((cst.Pass(),)),
                     leading_lines=(
                         cst.EmptyLine(comment=cst.Comment("# leading comment")),
                     ),
                 ),
-                "# leading comment\nwith context_mgr(): pass\n",
-                parse_statement,
-            ),
+                "code": "# leading comment\nwith context_mgr(): pass\n",
+                "parser": parse_statement,
+                "expected_position": CodeRange.create((2, 0), (2, 24)),
+            },
             # Weird spacing rules
-            (
-                cst.With(
+            {
+                "node": cst.With(
                     (
                         cst.WithItem(
                             cst.Call(
@@ -126,12 +130,13 @@ class WithTest(CSTNodeTest):
                     cst.SimpleStatementSuite((cst.Pass(),)),
                     whitespace_after_with=cst.SimpleWhitespace(""),
                 ),
-                "with(context_mgr()): pass\n",
-                parse_statement,
-            ),
+                "code": "with(context_mgr()): pass\n",
+                "parser": parse_statement,
+                "expected_position": CodeRange.create((1, 0), (1, 25)),
+            },
             # Whitespace
-            (
-                cst.With(
+            {
+                "node": cst.With(
                     (
                         cst.WithItem(
                             cst.Call(cst.Name("context_mgr")),
@@ -146,30 +151,25 @@ class WithTest(CSTNodeTest):
                     whitespace_after_with=cst.SimpleWhitespace("  "),
                     whitespace_before_colon=cst.SimpleWhitespace("  "),
                 ),
-                "with  context_mgr()  as  ctx  : pass\n",
-                parse_statement,
-            ),
+                "code": "with  context_mgr()  as  ctx  : pass\n",
+                "parser": parse_statement,
+                "expected_position": CodeRange.create((1, 0), (1, 36)),
+            },
         )
     )
-    def test_valid(
-        self,
-        node: cst.CSTNode,
-        code: str,
-        parser: Optional[Callable[[str], cst.CSTNode]],
-        position: Optional[CodeRange] = None,
-    ) -> None:
-        self.validate_node(node, code, parser, expected_position=position)
+    def test_valid(self, **kwargs: Any) -> None:
+        self.validate_node(**kwargs)
 
     @data_provider(
         (
-            (
-                lambda: cst.With(
+            {
+                "get_node": lambda: cst.With(
                     (), cst.IndentedBlock((cst.SimpleStatementLine((cst.Pass(),)),))
                 ),
-                "A With statement must have at least one WithItem",
-            ),
-            (
-                lambda: cst.With(
+                "expected_re": "A With statement must have at least one WithItem",
+            },
+            {
+                "get_node": lambda: cst.With(
                     (
                         cst.WithItem(
                             cst.Call(cst.Name("foo")),
@@ -178,19 +178,17 @@ class WithTest(CSTNodeTest):
                     ),
                     cst.IndentedBlock((cst.SimpleStatementLine((cst.Pass(),)),)),
                 ),
-                "The last WithItem in a With cannot have a trailing comma",
-            ),
-            (
-                lambda: cst.With(
+                "expected_re": "The last WithItem in a With cannot have a trailing comma",
+            },
+            {
+                "get_node": lambda: cst.With(
                     (cst.WithItem(cst.Call(cst.Name("context_mgr"))),),
                     cst.SimpleStatementSuite((cst.Pass(),)),
                     whitespace_after_with=cst.SimpleWhitespace(""),
                 ),
-                "Must have at least one space after with keyword",
-            ),
+                "expected_re": "Must have at least one space after with keyword",
+            },
         )
     )
-    def test_invalid(
-        self, get_node: Callable[[], cst.CSTNode], expected_re: str
-    ) -> None:
-        self.assert_invalid(get_node, expected_re)
+    def test_invalid(self, **kwargs: Any) -> None:
+        self.assert_invalid(**kwargs)

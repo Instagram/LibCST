@@ -1855,22 +1855,20 @@ class Raise(BaseSmallStatement):
     def _codegen_impl(
         self, state: CodegenState, default_semicolon: bool = False
     ) -> None:
-        exc = self.exc
-        cause = self.cause
-
-        state.add_token("raise")
-
-        whitespace_after_raise = self.whitespace_after_raise
-        if isinstance(whitespace_after_raise, MaybeSentinel):
+        with state.record_syntactic_position(self):
+            exc = self.exc
+            cause = self.cause
+            state.add_token("raise")
+            whitespace_after_raise = self.whitespace_after_raise
+            if isinstance(whitespace_after_raise, MaybeSentinel):
+                if exc is not None:
+                    state.add_token(" ")
+            else:
+                whitespace_after_raise._codegen(state)
             if exc is not None:
-                state.add_token(" ")
-        else:
-            whitespace_after_raise._codegen(state)
-
-        if exc is not None:
-            exc._codegen(state)
-        if cause is not None:
-            cause._codegen(state, default_space=" ")
+                exc._codegen(state)
+            if cause is not None:
+                cause._codegen(state, default_space=" ")
 
         semicolon = self.semicolon
         if isinstance(semicolon, MaybeSentinel):
@@ -1928,19 +1926,20 @@ class Assert(BaseSmallStatement):
     def _codegen_impl(
         self, state: CodegenState, default_semicolon: bool = False
     ) -> None:
-        state.add_token("assert")
-        self.whitespace_after_assert._codegen(state)
-        self.test._codegen(state)
+        with state.record_syntactic_position(self):
+            state.add_token("assert")
+            self.whitespace_after_assert._codegen(state)
+            self.test._codegen(state)
 
-        comma = self.comma
-        msg = self.msg
-        if isinstance(comma, MaybeSentinel):
+            comma = self.comma
+            msg = self.msg
+            if isinstance(comma, MaybeSentinel):
+                if msg is not None:
+                    state.add_token(", ")
+            else:
+                comma._codegen(state)
             if msg is not None:
-                state.add_token(", ")
-        else:
-            comma._codegen(state)
-        if msg is not None:
-            msg._codegen(state)
+                msg._codegen(state)
 
         semicolon = self.semicolon
         if isinstance(semicolon, MaybeSentinel):
@@ -1975,7 +1974,9 @@ class NameItem(CSTNode):
         )
 
     def _codegen_impl(self, state: CodegenState, default_comma: bool = False) -> None:
-        self.name._codegen(state)
+        with state.record_syntactic_position(self):
+            self.name._codegen(state)
+
         comma = self.comma
         if comma is MaybeSentinel.DEFAULT and default_comma:
             state.add_token(", ")
@@ -2025,11 +2026,12 @@ class Global(BaseSmallStatement):
     def _codegen_impl(
         self, state: CodegenState, default_semicolon: bool = False
     ) -> None:
-        state.add_token("global")
-        self.whitespace_after_global._codegen(state)
-        last_name = len(self.names) - 1
-        for i, name in enumerate(self.names):
-            name._codegen(state, default_comma=(i != last_name))
+        with state.record_syntactic_position(self):
+            state.add_token("global")
+            self.whitespace_after_global._codegen(state)
+            last_name = len(self.names) - 1
+            for i, name in enumerate(self.names):
+                name._codegen(state, default_comma=(i != last_name))
 
         semicolon = self.semicolon
         if isinstance(semicolon, MaybeSentinel):
@@ -2081,11 +2083,12 @@ class Nonlocal(BaseSmallStatement):
     def _codegen_impl(
         self, state: CodegenState, default_semicolon: bool = False
     ) -> None:
-        state.add_token("nonlocal")
-        self.whitespace_after_nonlocal._codegen(state)
-        last_name = len(self.names) - 1
-        for i, name in enumerate(self.names):
-            name._codegen(state, default_comma=(i != last_name))
+        with state.record_syntactic_position(self):
+            state.add_token("nonlocal")
+            self.whitespace_after_nonlocal._codegen(state)
+            last_name = len(self.names) - 1
+            for i, name in enumerate(self.names):
+                name._codegen(state, default_comma=(i != last_name))
 
         semicolon = self.semicolon
         if isinstance(semicolon, MaybeSentinel):
