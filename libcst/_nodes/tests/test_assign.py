@@ -7,7 +7,7 @@
 from typing import Any
 
 import libcst as cst
-from libcst import parse_statement
+from libcst import CodeRange, parse_statement
 from libcst._nodes.tests.base import CSTNodeTest
 from libcst.testing.utils import data_provider
 
@@ -23,7 +23,7 @@ class AssignTest(CSTNodeTest):
                 ),
                 "code": "foo = 5",
                 "parser": None,
-                "expected_position": None,
+                "expected_position": CodeRange.create((1, 0), (1, 7)),
             },
             # Multiple targets creation
             {
@@ -36,7 +36,7 @@ class AssignTest(CSTNodeTest):
                 ),
                 "code": "foo = bar = 5",
                 "parser": None,
-                "expected_position": None,
+                "expected_position": CodeRange.create((1, 0), (1, 13)),
             },
             # Whitespace test for creating nodes
             {
@@ -52,7 +52,7 @@ class AssignTest(CSTNodeTest):
                 ),
                 "code": "foo=5",
                 "parser": None,
-                "expected_position": None,
+                "expected_position": CodeRange.create((1, 0), (1, 5)),
             },
             # Simple assignment parser case.
             {
@@ -132,14 +132,14 @@ class AnnAssignTest(CSTNodeTest):
                 ),
                 "code": "foo: str = 5",
                 "parser": None,
-                "expected_position": None,
+                "expected_position": CodeRange.create((1, 0), (1, 12)),
             },
             # Annotation creation without assignment
             {
                 "node": cst.AnnAssign(cst.Name("foo"), cst.Annotation(cst.Name("str"))),
                 "code": "foo: str",
                 "parser": None,
-                "expected_position": None,
+                "expected_position": CodeRange.create((1, 0), (1, 8)),
             },
             # Complex annotation creation
             {
@@ -152,7 +152,7 @@ class AnnAssignTest(CSTNodeTest):
                 ),
                 "code": "foo: Optional[str] = 5",
                 "parser": None,
-                "expected_position": None,
+                "expected_position": CodeRange.create((1, 0), (1, 22)),
             },
             # Simple assignment parser case.
             {
@@ -234,7 +234,7 @@ class AnnAssignTest(CSTNodeTest):
                 ),
                 "code": "foo :  Optional[str]  =  5",
                 "parser": None,
-                "expected_position": None,
+                "expected_position": CodeRange.create((1, 0), (1, 26)),
             },
             {
                 "node": cst.SimpleStatementLine(
@@ -304,7 +304,7 @@ class AugAssignTest(CSTNodeTest):
                 ),
                 "code": "foo += 5",
                 "parser": None,
-                "expected_position": None,
+                "expected_position": CodeRange.create((1, 0), (1, 8)),
             },
             {
                 "node": cst.AugAssign(
@@ -326,7 +326,7 @@ class AugAssignTest(CSTNodeTest):
                 ),
                 "code": "foo  <<=  5",
                 "parser": None,
-                "expected_position": None,
+                "expected_position": CodeRange.create((1, 0), (1, 11)),
             },
             # Simple assignment parser case.
             {

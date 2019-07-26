@@ -4,7 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 # pyre-strict
-from typing import Callable, Optional
+from typing import Any, Callable
 
 import libcst as cst
 from libcst import parse_statement
@@ -17,30 +17,34 @@ class ClassDefCreationTest(CSTNodeTest):
     @data_provider(
         (
             # Simple classdef
-            (
-                cst.ClassDef(cst.Name("Foo"), cst.SimpleStatementSuite((cst.Pass(),))),
-                "class Foo: pass\n",
-            ),
-            (
-                cst.ClassDef(
+            # pyre-fixme[6]: Incompatible parameter type
+            {
+                "node": cst.ClassDef(
+                    cst.Name("Foo"), cst.SimpleStatementSuite((cst.Pass(),))
+                ),
+                "code": "class Foo: pass\n",
+                "expected_position": CodeRange.create((1, 0), (1, 15)),
+            },
+            {
+                "node": cst.ClassDef(
                     cst.Name("Foo"),
                     cst.SimpleStatementSuite((cst.Pass(),)),
                     lpar=cst.LeftParen(),
                     rpar=cst.RightParen(),
                 ),
-                "class Foo(): pass\n",
-            ),
+                "code": "class Foo(): pass\n",
+            },
             # Positional arguments render test
-            (
-                cst.ClassDef(
+            {
+                "node": cst.ClassDef(
                     cst.Name("Foo"),
                     cst.SimpleStatementSuite((cst.Pass(),)),
                     bases=(cst.Arg(cst.Name("obj")),),
                 ),
-                "class Foo(obj): pass\n",
-            ),
-            (
-                cst.ClassDef(
+                "code": "class Foo(obj): pass\n",
+            },
+            {
+                "node": cst.ClassDef(
                     cst.Name("Foo"),
                     cst.SimpleStatementSuite((cst.Pass(),)),
                     bases=(
@@ -49,30 +53,31 @@ class ClassDefCreationTest(CSTNodeTest):
                         cst.Arg(cst.Name("object")),
                     ),
                 ),
-                "class Foo(Bar, Baz, object): pass\n",
-            ),
+                "code": "class Foo(Bar, Baz, object): pass\n",
+            },
             # Keyword arguments render test
-            (
-                cst.ClassDef(
+            {
+                "node": cst.ClassDef(
                     cst.Name("Foo"),
                     cst.SimpleStatementSuite((cst.Pass(),)),
                     keywords=(
                         cst.Arg(keyword=cst.Name("metaclass"), value=cst.Name("Bar")),
                     ),
                 ),
-                "class Foo(metaclass = Bar): pass\n",
-            ),
+                "code": "class Foo(metaclass = Bar): pass\n",
+                "expected_position": CodeRange.create((1, 0), (1, 32)),
+            },
             # Iterator expansion render test
-            (
-                cst.ClassDef(
+            {
+                "node": cst.ClassDef(
                     cst.Name("Foo"),
                     cst.SimpleStatementSuite((cst.Pass(),)),
                     bases=(cst.Arg(star="*", value=cst.Name("one")),),
                 ),
-                "class Foo(*one): pass\n",
-            ),
-            (
-                cst.ClassDef(
+                "code": "class Foo(*one): pass\n",
+            },
+            {
+                "node": cst.ClassDef(
                     cst.Name("Foo"),
                     cst.SimpleStatementSuite((cst.Pass(),)),
                     bases=(
@@ -81,19 +86,19 @@ class ClassDefCreationTest(CSTNodeTest):
                         cst.Arg(star="*", value=cst.Name("three")),
                     ),
                 ),
-                "class Foo(*one, *two, *three): pass\n",
-            ),
+                "code": "class Foo(*one, *two, *three): pass\n",
+            },
             # Dictionary expansion render test
-            (
-                cst.ClassDef(
+            {
+                "node": cst.ClassDef(
                     cst.Name("Foo"),
                     cst.SimpleStatementSuite((cst.Pass(),)),
                     keywords=(cst.Arg(star="**", value=cst.Name("one")),),
                 ),
-                "class Foo(**one): pass\n",
-            ),
-            (
-                cst.ClassDef(
+                "code": "class Foo(**one): pass\n",
+            },
+            {
+                "node": cst.ClassDef(
                     cst.Name("Foo"),
                     cst.SimpleStatementSuite((cst.Pass(),)),
                     keywords=(
@@ -102,14 +107,12 @@ class ClassDefCreationTest(CSTNodeTest):
                         cst.Arg(star="**", value=cst.Name("three")),
                     ),
                 ),
-                "class Foo(**one, **two, **three): pass\n",
-            ),
+                "code": "class Foo(**one, **two, **three): pass\n",
+            },
         )
     )
-    def test_valid(
-        self, node: cst.CSTNode, code: str, position: Optional[CodeRange] = None
-    ) -> None:
-        self.validate_node(node, code, expected_position=position)
+    def test_valid(self, **kwargs: Any) -> None:
+        self.validate_node(**kwargs)
 
     @data_provider(
         (
@@ -151,32 +154,35 @@ class ClassDefParserTest(CSTNodeTest):
     @data_provider(
         (
             # Simple classdef
-            (
-                cst.ClassDef(cst.Name("Foo"), cst.SimpleStatementSuite((cst.Pass(),))),
-                "class Foo: pass\n",
-            ),
-            (
-                cst.ClassDef(
+            # pyre-fixme[6]: Incompatible parameter type
+            {
+                "node": cst.ClassDef(
+                    cst.Name("Foo"), cst.SimpleStatementSuite((cst.Pass(),))
+                ),
+                "code": "class Foo: pass\n",
+            },
+            {
+                "node": cst.ClassDef(
                     cst.Name("Foo"),
                     cst.SimpleStatementSuite((cst.Pass(),)),
                     lpar=cst.LeftParen(),
                     rpar=cst.RightParen(),
                 ),
-                "class Foo(): pass\n",
-            ),
+                "code": "class Foo(): pass\n",
+            },
             # Positional arguments render test
-            (
-                cst.ClassDef(
+            {
+                "node": cst.ClassDef(
                     cst.Name("Foo"),
                     cst.SimpleStatementSuite((cst.Pass(),)),
                     lpar=cst.LeftParen(),
                     bases=(cst.Arg(cst.Name("obj")),),
                     rpar=cst.RightParen(),
                 ),
-                "class Foo(obj): pass\n",
-            ),
-            (
-                cst.ClassDef(
+                "code": "class Foo(obj): pass\n",
+            },
+            {
+                "node": cst.ClassDef(
                     cst.Name("Foo"),
                     cst.SimpleStatementSuite((cst.Pass(),)),
                     lpar=cst.LeftParen(),
@@ -193,11 +199,11 @@ class ClassDefParserTest(CSTNodeTest):
                     ),
                     rpar=cst.RightParen(),
                 ),
-                "class Foo(Bar, Baz, object): pass\n",
-            ),
+                "code": "class Foo(Bar, Baz, object): pass\n",
+            },
             # Keyword arguments render test
-            (
-                cst.ClassDef(
+            {
+                "node": cst.ClassDef(
                     cst.Name("Foo"),
                     cst.SimpleStatementSuite((cst.Pass(),)),
                     lpar=cst.LeftParen(),
@@ -210,21 +216,21 @@ class ClassDefParserTest(CSTNodeTest):
                     ),
                     rpar=cst.RightParen(),
                 ),
-                "class Foo(metaclass = Bar): pass\n",
-            ),
+                "code": "class Foo(metaclass = Bar): pass\n",
+            },
             # Iterator expansion render test
-            (
-                cst.ClassDef(
+            {
+                "node": cst.ClassDef(
                     cst.Name("Foo"),
                     cst.SimpleStatementSuite((cst.Pass(),)),
                     lpar=cst.LeftParen(),
                     bases=(cst.Arg(star="*", value=cst.Name("one")),),
                     rpar=cst.RightParen(),
                 ),
-                "class Foo(*one): pass\n",
-            ),
-            (
-                cst.ClassDef(
+                "code": "class Foo(*one): pass\n",
+            },
+            {
+                "node": cst.ClassDef(
                     cst.Name("Foo"),
                     cst.SimpleStatementSuite((cst.Pass(),)),
                     lpar=cst.LeftParen(),
@@ -243,21 +249,21 @@ class ClassDefParserTest(CSTNodeTest):
                     ),
                     rpar=cst.RightParen(),
                 ),
-                "class Foo(*one, *two, *three): pass\n",
-            ),
+                "code": "class Foo(*one, *two, *three): pass\n",
+            },
             # Dictionary expansion render test
-            (
-                cst.ClassDef(
+            {
+                "node": cst.ClassDef(
                     cst.Name("Foo"),
                     cst.SimpleStatementSuite((cst.Pass(),)),
                     lpar=cst.LeftParen(),
                     keywords=(cst.Arg(star="**", value=cst.Name("one")),),
                     rpar=cst.RightParen(),
                 ),
-                "class Foo(**one): pass\n",
-            ),
-            (
-                cst.ClassDef(
+                "code": "class Foo(**one): pass\n",
+            },
+            {
+                "node": cst.ClassDef(
                     cst.Name("Foo"),
                     cst.SimpleStatementSuite((cst.Pass(),)),
                     lpar=cst.LeftParen(),
@@ -276,21 +282,22 @@ class ClassDefParserTest(CSTNodeTest):
                     ),
                     rpar=cst.RightParen(),
                 ),
-                "class Foo(**one, **two, **three): pass\n",
-            ),
+                "code": "class Foo(**one, **two, **three): pass\n",
+            },
             # Decorator render tests
-            (
-                cst.ClassDef(
+            {
+                "node": cst.ClassDef(
                     cst.Name("Foo"),
                     cst.SimpleStatementSuite((cst.Pass(),)),
                     decorators=(cst.Decorator(cst.Name("foo")),),
                     lpar=cst.LeftParen(),
                     rpar=cst.RightParen(),
                 ),
-                "@foo\nclass Foo(): pass\n",
-            ),
-            (
-                cst.ClassDef(
+                "code": "@foo\nclass Foo(): pass\n",
+                "expected_position": CodeRange.create((2, 0), (2, 17)),
+            },
+            {
+                "node": cst.ClassDef(
                     leading_lines=(
                         cst.EmptyLine(),
                         cst.EmptyLine(comment=cst.Comment("# leading comment 1")),
@@ -322,11 +329,10 @@ class ClassDefParserTest(CSTNodeTest):
                     lpar=cst.LeftParen(),
                     rpar=cst.RightParen(),
                 ),
-                "\n# leading comment 1\n@foo\n# leading comment 2\n@bar\n# leading comment 3\n@baz\n# class comment\nclass Foo(): pass\n",
-            ),
+                "code": "\n# leading comment 1\n@foo\n# leading comment 2\n@bar\n# leading comment 3\n@baz\n# class comment\nclass Foo(): pass\n",
+                "expected_position": CodeRange.create((9, 0), (9, 17)),
+            },
         )
     )
-    def test_valid(
-        self, node: cst.CSTNode, code: str, position: Optional[CodeRange] = None
-    ) -> None:
-        self.validate_node(node, code, parse_statement, expected_position=position)
+    def test_valid(self, **kwargs: Any) -> None:
+        self.validate_node(**kwargs, parser=parse_statement)

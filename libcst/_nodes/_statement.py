@@ -1065,7 +1065,9 @@ class AssignTarget(CSTNode):
         )
 
     def _codegen_impl(self, state: CodegenState) -> None:
-        self.target._codegen(state)
+        with state.record_syntactic_position(self):
+            self.target._codegen(state)
+
         self.whitespace_before_equal._codegen(state)
         state.add_token("=")
         self.whitespace_after_equal._codegen(state)
@@ -1102,9 +1104,11 @@ class Assign(BaseSmallStatement):
     def _codegen_impl(
         self, state: CodegenState, default_semicolon: bool = False
     ) -> None:
-        for target in self.targets:
-            target._codegen(state)
-        self.value._codegen(state)
+        with state.record_syntactic_position(self):
+            for target in self.targets:
+                target._codegen(state)
+            self.value._codegen(state)
+
         semicolon = self.semicolon
         if isinstance(semicolon, MaybeSentinel):
             if default_semicolon:
@@ -1157,16 +1161,18 @@ class AnnAssign(BaseSmallStatement):
     def _codegen_impl(
         self, state: CodegenState, default_semicolon: bool = False
     ) -> None:
-        self.target._codegen(state)
-        self.annotation._codegen(state, default_indicator=":")
-        equal = self.equal
-        if equal is MaybeSentinel.DEFAULT and self.value is not None:
-            state.add_token(" = ")
-        elif isinstance(equal, AssignEqual):
-            equal._codegen(state)
-        value = self.value
-        if value is not None:
-            value._codegen(state)
+        with state.record_syntactic_position(self):
+            self.target._codegen(state)
+            self.annotation._codegen(state, default_indicator=":")
+            equal = self.equal
+            if equal is MaybeSentinel.DEFAULT and self.value is not None:
+                state.add_token(" = ")
+            elif isinstance(equal, AssignEqual):
+                equal._codegen(state)
+            value = self.value
+            if value is not None:
+                value._codegen(state)
+
         semicolon = self.semicolon
         if isinstance(semicolon, MaybeSentinel):
             if default_semicolon:
@@ -1204,9 +1210,11 @@ class AugAssign(BaseSmallStatement):
     def _codegen_impl(
         self, state: CodegenState, default_semicolon: bool = False
     ) -> None:
-        self.target._codegen(state)
-        self.operator._codegen(state)
-        self.value._codegen(state)
+        with state.record_syntactic_position(self):
+            self.target._codegen(state)
+            self.operator._codegen(state)
+            self.value._codegen(state)
+
         semicolon = self.semicolon
         if isinstance(semicolon, MaybeSentinel):
             if default_semicolon:
@@ -1265,9 +1273,12 @@ class Decorator(CSTNode):
         for ll in self.leading_lines:
             ll._codegen(state)
         state.add_indent_tokens()
-        state.add_token("@")
-        self.whitespace_after_at._codegen(state)
-        self.decorator._codegen(state)
+
+        with state.record_syntactic_position(self):
+            state.add_token("@")
+            self.whitespace_after_at._codegen(state)
+            self.decorator._codegen(state)
+
         self.trailing_whitespace._codegen(state)
 
 
@@ -1361,23 +1372,25 @@ class FunctionDef(BaseCompoundStatement):
         for lad in self.lines_after_decorators:
             lad._codegen(state)
         state.add_indent_tokens()
-        asynchronous = self.asynchronous
-        if asynchronous is not None:
-            asynchronous._codegen(state)
-        state.add_token("def")
-        self.whitespace_after_def._codegen(state)
-        self.name._codegen(state)
-        self.whitespace_after_name._codegen(state)
-        state.add_token("(")
-        self.whitespace_before_params._codegen(state)
-        self.params._codegen(state)
-        state.add_token(")")
-        returns = self.returns
-        if returns is not None:
-            returns._codegen(state, default_indicator="->")
-        self.whitespace_before_colon._codegen(state)
-        state.add_token(":")
-        self.body._codegen(state)
+
+        with state.record_syntactic_position(self, end_node=self.body):
+            asynchronous = self.asynchronous
+            if asynchronous is not None:
+                asynchronous._codegen(state)
+            state.add_token("def")
+            self.whitespace_after_def._codegen(state)
+            self.name._codegen(state)
+            self.whitespace_after_name._codegen(state)
+            state.add_token("(")
+            self.whitespace_before_params._codegen(state)
+            self.params._codegen(state)
+            state.add_token(")")
+            returns = self.returns
+            if returns is not None:
+                returns._codegen(state, default_indicator="->")
+            self.whitespace_before_colon._codegen(state)
+            state.add_token(":")
+            self.body._codegen(state)
 
 
 @add_slots
@@ -1487,29 +1500,31 @@ class ClassDef(BaseCompoundStatement):
         for lad in self.lines_after_decorators:
             lad._codegen(state)
         state.add_indent_tokens()
-        state.add_token("class")
-        self.whitespace_after_class._codegen(state)
-        self.name._codegen(state)
-        self.whitespace_after_name._codegen(state)
-        lpar = self.lpar
-        if isinstance(lpar, MaybeSentinel):
-            if self.bases or self.keywords:
-                state.add_token("(")
-        elif isinstance(lpar, LeftParen):
-            lpar._codegen(state)
-        args = [*self.bases, *self.keywords]
-        last_arg = len(args) - 1
-        for i, arg in enumerate(args):
-            arg._codegen(state, default_comma=(i != last_arg))
-        rpar = self.rpar
-        if isinstance(rpar, MaybeSentinel):
-            if self.bases or self.keywords:
-                state.add_token(")")
-        elif isinstance(rpar, RightParen):
-            rpar._codegen(state)
-        self.whitespace_before_colon._codegen(state)
-        state.add_token(":")
-        self.body._codegen(state)
+
+        with state.record_syntactic_position(self, end_node=self.body):
+            state.add_token("class")
+            self.whitespace_after_class._codegen(state)
+            self.name._codegen(state)
+            self.whitespace_after_name._codegen(state)
+            lpar = self.lpar
+            if isinstance(lpar, MaybeSentinel):
+                if self.bases or self.keywords:
+                    state.add_token("(")
+            elif isinstance(lpar, LeftParen):
+                lpar._codegen(state)
+            args = [*self.bases, *self.keywords]
+            last_arg = len(args) - 1
+            for i, arg in enumerate(args):
+                arg._codegen(state, default_comma=(i != last_arg))
+            rpar = self.rpar
+            if isinstance(rpar, MaybeSentinel):
+                if self.bases or self.keywords:
+                    state.add_token(")")
+            elif isinstance(rpar, RightParen):
+                rpar._codegen(state)
+            self.whitespace_before_colon._codegen(state)
+            state.add_token(":")
+            self.body._codegen(state)
 
 
 @dataclass(frozen=True)

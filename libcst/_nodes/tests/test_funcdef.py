@@ -4,7 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 # pyre-strict
-from typing import Callable, Optional
+from typing import Any, Callable
 
 import libcst as cst
 from libcst import parse_statement
@@ -17,59 +17,62 @@ class FunctionDefCreationTest(CSTNodeTest):
     @data_provider(
         (
             # Simple function definition without any arguments or return
-            (
-                cst.FunctionDef(
+            # pyre-fixme[6]: Incompatible parameter type
+            {
+                "node": cst.FunctionDef(
                     cst.Name("foo"),
                     cst.Parameters(),
                     cst.SimpleStatementSuite((cst.Pass(),)),
                 ),
-                "def foo(): pass\n",
-            ),
+                "code": "def foo(): pass\n",
+            },
             # Functiondef with a return annotation
-            (
-                cst.FunctionDef(
+            {
+                "node": cst.FunctionDef(
                     cst.Name("foo"),
                     cst.Parameters(),
                     cst.SimpleStatementSuite((cst.Pass(),)),
                     returns=cst.Annotation(cst.Name("str")),
                 ),
-                "def foo() -> str: pass\n",
-            ),
+                "code": "def foo() -> str: pass\n",
+                "expected_position": CodeRange.create((1, 0), (1, 22)),
+            },
             # Async function definition.
-            (
-                cst.FunctionDef(
+            {
+                "node": cst.FunctionDef(
                     cst.Name("foo"),
                     cst.Parameters(),
                     cst.SimpleStatementSuite((cst.Pass(),)),
                     asynchronous=cst.Asynchronous(),
                 ),
-                "async def foo(): pass\n",
-            ),
+                "code": "async def foo(): pass\n",
+            },
             # Async function definition with annotation.
-            (
-                cst.FunctionDef(
+            {
+                "node": cst.FunctionDef(
                     cst.Name("foo"),
                     cst.Parameters(),
                     cst.SimpleStatementSuite((cst.Pass(),)),
                     asynchronous=cst.Asynchronous(),
                     returns=cst.Annotation(cst.Name("int")),
                 ),
-                "async def foo() -> int: pass\n",
-            ),
+                "code": "async def foo() -> int: pass\n",
+                "expected_position": CodeRange.create((1, 0), (1, 28)),
+            },
             # Test basic positional params
-            (
-                cst.FunctionDef(
+            {
+                "node": cst.FunctionDef(
                     cst.Name("foo"),
                     cst.Parameters(
                         params=(cst.Param(cst.Name("bar")), cst.Param(cst.Name("baz")))
                     ),
                     cst.SimpleStatementSuite((cst.Pass(),)),
                 ),
-                "def foo(bar, baz): pass\n",
-            ),
+                "code": "def foo(bar, baz): pass\n",
+            },
             # Typed positional params
-            (
-                cst.FunctionDef(
+            {
+                "node": cst.FunctionDef(
                     cst.Name("foo"),
                     cst.Parameters(
                         params=(
@@ -79,11 +82,11 @@ class FunctionDefCreationTest(CSTNodeTest):
                     ),
                     cst.SimpleStatementSuite((cst.Pass(),)),
                 ),
-                "def foo(bar: str, baz: int): pass\n",
-            ),
+                "code": "def foo(bar: str, baz: int): pass\n",
+            },
             # Test basic positional default params
-            (
-                cst.FunctionDef(
+            {
+                "node": cst.FunctionDef(
                     cst.Name("foo"),
                     cst.Parameters(
                         default_params=(
@@ -95,11 +98,11 @@ class FunctionDefCreationTest(CSTNodeTest):
                     ),
                     cst.SimpleStatementSuite((cst.Pass(),)),
                 ),
-                'def foo(bar = "one", baz = 5): pass\n',
-            ),
+                "code": 'def foo(bar = "one", baz = 5): pass\n',
+            },
             # Typed positional default params
-            (
-                cst.FunctionDef(
+            {
+                "node": cst.FunctionDef(
                     cst.Name("foo"),
                     cst.Parameters(
                         default_params=(
@@ -117,11 +120,11 @@ class FunctionDefCreationTest(CSTNodeTest):
                     ),
                     cst.SimpleStatementSuite((cst.Pass(),)),
                 ),
-                'def foo(bar: str = "one", baz: int = 5): pass\n',
-            ),
+                "code": 'def foo(bar: str = "one", baz: int = 5): pass\n',
+            },
             # Mixed positional and default params.
-            (
-                cst.FunctionDef(
+            {
+                "node": cst.FunctionDef(
                     cst.Name("foo"),
                     cst.Parameters(
                         params=(
@@ -137,11 +140,11 @@ class FunctionDefCreationTest(CSTNodeTest):
                     ),
                     cst.SimpleStatementSuite((cst.Pass(),)),
                 ),
-                "def foo(bar: str, baz: int = 5): pass\n",
-            ),
+                "code": "def foo(bar: str, baz: int = 5): pass\n",
+            },
             # Test kwonly params
-            (
-                cst.FunctionDef(
+            {
+                "node": cst.FunctionDef(
                     cst.Name("foo"),
                     cst.Parameters(
                         kwonly_params=(
@@ -153,11 +156,11 @@ class FunctionDefCreationTest(CSTNodeTest):
                     ),
                     cst.SimpleStatementSuite((cst.Pass(),)),
                 ),
-                'def foo(*, bar = "one", baz): pass\n',
-            ),
+                "code": 'def foo(*, bar = "one", baz): pass\n',
+            },
             # Typed kwonly params
-            (
-                cst.FunctionDef(
+            {
+                "node": cst.FunctionDef(
                     cst.Name("foo"),
                     cst.Parameters(
                         kwonly_params=(
@@ -176,11 +179,11 @@ class FunctionDefCreationTest(CSTNodeTest):
                     ),
                     cst.SimpleStatementSuite((cst.Pass(),)),
                 ),
-                'def foo(*, bar: str = "one", baz: int, biz: str = "two"): pass\n',
-            ),
+                "code": 'def foo(*, bar: str = "one", baz: int, biz: str = "two"): pass\n',
+            },
             # Mixed params and kwonly_params
-            (
-                cst.FunctionDef(
+            {
+                "node": cst.FunctionDef(
                     cst.Name("foo"),
                     cst.Parameters(
                         params=(
@@ -203,11 +206,11 @@ class FunctionDefCreationTest(CSTNodeTest):
                     ),
                     cst.SimpleStatementSuite((cst.Pass(),)),
                 ),
-                'def foo(first, second, *, bar: str = "one", baz: int, biz: str = "two"): pass\n',
-            ),
+                "code": 'def foo(first, second, *, bar: str = "one", baz: int, biz: str = "two"): pass\n',
+            },
             # Mixed default_params and kwonly_params
-            (
-                cst.FunctionDef(
+            {
+                "node": cst.FunctionDef(
                     cst.Name("foo"),
                     cst.Parameters(
                         default_params=(
@@ -230,11 +233,11 @@ class FunctionDefCreationTest(CSTNodeTest):
                     ),
                     cst.SimpleStatementSuite((cst.Pass(),)),
                 ),
-                'def foo(first = 1.0, second = 1.5, *, bar: str = "one", baz: int, biz: str = "two"): pass\n',
-            ),
+                "code": 'def foo(first = 1.0, second = 1.5, *, bar: str = "one", baz: int, biz: str = "two"): pass\n',
+            },
             # Mixed params, default_params, and kwonly_params
-            (
-                cst.FunctionDef(
+            {
+                "node": cst.FunctionDef(
                     cst.Name("foo"),
                     cst.Parameters(
                         params=(
@@ -261,20 +264,20 @@ class FunctionDefCreationTest(CSTNodeTest):
                     ),
                     cst.SimpleStatementSuite((cst.Pass(),)),
                 ),
-                'def foo(first, second, third = 1.0, fourth = 1.5, *, bar: str = "one", baz: int, biz: str = "two"): pass\n',
-            ),
+                "code": 'def foo(first, second, third = 1.0, fourth = 1.5, *, bar: str = "one", baz: int, biz: str = "two"): pass\n',
+            },
             # Test star_arg
-            (
-                cst.FunctionDef(
+            {
+                "node": cst.FunctionDef(
                     cst.Name("foo"),
                     cst.Parameters(star_arg=cst.Param(cst.Name("params"))),
                     cst.SimpleStatementSuite((cst.Pass(),)),
                 ),
-                "def foo(*params): pass\n",
-            ),
+                "code": "def foo(*params): pass\n",
+            },
             # Typed star_arg, include kwonly_params
-            (
-                cst.FunctionDef(
+            {
+                "node": cst.FunctionDef(
                     cst.Name("foo"),
                     cst.Parameters(
                         star_arg=cst.Param(
@@ -296,11 +299,11 @@ class FunctionDefCreationTest(CSTNodeTest):
                     ),
                     cst.SimpleStatementSuite((cst.Pass(),)),
                 ),
-                'def foo(*params: str, bar: str = "one", baz: int, biz: str = "two"): pass\n',
-            ),
+                "code": 'def foo(*params: str, bar: str = "one", baz: int, biz: str = "two"): pass\n',
+            },
             # Mixed params default_params, star_arg and kwonly_params
-            (
-                cst.FunctionDef(
+            {
+                "node": cst.FunctionDef(
                     cst.Name("foo"),
                     cst.Parameters(
                         params=(
@@ -330,20 +333,20 @@ class FunctionDefCreationTest(CSTNodeTest):
                     ),
                     cst.SimpleStatementSuite((cst.Pass(),)),
                 ),
-                'def foo(first, second, third = 1.0, fourth = 1.5, *params: str, bar: str = "one", baz: int, biz: str = "two"): pass\n',
-            ),
+                "code": 'def foo(first, second, third = 1.0, fourth = 1.5, *params: str, bar: str = "one", baz: int, biz: str = "two"): pass\n',
+            },
             # Test star_arg and star_kwarg
-            (
-                cst.FunctionDef(
+            {
+                "node": cst.FunctionDef(
                     cst.Name("foo"),
                     cst.Parameters(star_kwarg=cst.Param(cst.Name("kwparams"))),
                     cst.SimpleStatementSuite((cst.Pass(),)),
                 ),
-                "def foo(**kwparams): pass\n",
-            ),
+                "code": "def foo(**kwparams): pass\n",
+            },
             # Test star_arg and kwarg
-            (
-                cst.FunctionDef(
+            {
+                "node": cst.FunctionDef(
                     cst.Name("foo"),
                     cst.Parameters(
                         star_arg=cst.Param(cst.Name("params")),
@@ -351,11 +354,11 @@ class FunctionDefCreationTest(CSTNodeTest):
                     ),
                     cst.SimpleStatementSuite((cst.Pass(),)),
                 ),
-                "def foo(*params, **kwparams): pass\n",
-            ),
+                "code": "def foo(*params, **kwparams): pass\n",
+            },
             # Test typed star_arg and star_kwarg
-            (
-                cst.FunctionDef(
+            {
+                "node": cst.FunctionDef(
                     cst.Name("foo"),
                     cst.Parameters(
                         star_arg=cst.Param(
@@ -367,20 +370,20 @@ class FunctionDefCreationTest(CSTNodeTest):
                     ),
                     cst.SimpleStatementSuite((cst.Pass(),)),
                 ),
-                "def foo(*params: str, **kwparams: int): pass\n",
-            ),
+                "code": "def foo(*params: str, **kwparams: int): pass\n",
+            },
             # Test decorators
-            (
-                cst.FunctionDef(
+            {
+                "node": cst.FunctionDef(
                     cst.Name("foo"),
                     cst.Parameters(),
                     cst.SimpleStatementSuite((cst.Pass(),)),
                     (cst.Decorator(cst.Name("bar")),),
                 ),
-                "@bar\ndef foo(): pass\n",
-            ),
-            (
-                cst.FunctionDef(
+                "code": "@bar\ndef foo(): pass\n",
+            },
+            {
+                "node": cst.FunctionDef(
                     cst.Name("foo"),
                     cst.Parameters(),
                     cst.SimpleStatementSuite((cst.Pass(),)),
@@ -396,10 +399,10 @@ class FunctionDefCreationTest(CSTNodeTest):
                         ),
                     ),
                 ),
-                "@bar(baz, '123')\ndef foo(): pass\n",
-            ),
-            (
-                cst.FunctionDef(
+                "code": "@bar(baz, '123')\ndef foo(): pass\n",
+            },
+            {
+                "node": cst.FunctionDef(
                     cst.Name("foo"),
                     cst.Parameters(),
                     cst.SimpleStatementSuite((cst.Pass(),)),
@@ -416,11 +419,12 @@ class FunctionDefCreationTest(CSTNodeTest):
                         ),
                     ),
                 ),
-                "@bar('123')\n@baz('456')\ndef foo(): pass\n",
-            ),
+                "code": "@bar('123')\n@baz('456')\ndef foo(): pass\n",
+                "expected_position": CodeRange.create((3, 0), (3, 15)),
+            },
             # Test indentation
-            (
-                DummyIndentedBlock(
+            {
+                "node": DummyIndentedBlock(
                     "    ",
                     cst.FunctionDef(
                         cst.Name("foo"),
@@ -429,11 +433,11 @@ class FunctionDefCreationTest(CSTNodeTest):
                         (cst.Decorator(cst.Name("bar")),),
                     ),
                 ),
-                "    @bar\n    def foo(): pass\n",
-            ),
+                "code": "    @bar\n    def foo(): pass\n",
+            },
             # With an indented body
-            (
-                DummyIndentedBlock(
+            {
+                "node": DummyIndentedBlock(
                     "    ",
                     cst.FunctionDef(
                         cst.Name("foo"),
@@ -442,11 +446,12 @@ class FunctionDefCreationTest(CSTNodeTest):
                         (cst.Decorator(cst.Name("bar")),),
                     ),
                 ),
-                "    @bar\n    def foo():\n        pass\n",
-            ),
+                "code": "    @bar\n    def foo():\n        pass\n",
+                "expected_position": CodeRange.create((2, 4), (3, 12)),
+            },
             # Leading lines
-            (
-                cst.FunctionDef(
+            {
+                "node": cst.FunctionDef(
                     cst.Name("foo"),
                     cst.Parameters(),
                     cst.SimpleStatementSuite((cst.Pass(),)),
@@ -454,11 +459,12 @@ class FunctionDefCreationTest(CSTNodeTest):
                         cst.EmptyLine(comment=cst.Comment("# leading comment")),
                     ),
                 ),
-                "# leading comment\ndef foo(): pass\n",
-            ),
+                "code": "# leading comment\ndef foo(): pass\n",
+                "expected_position": CodeRange.create((2, 0), (2, 15)),
+            },
             # Inner whitespace
-            (
-                cst.FunctionDef(
+            {
+                "node": cst.FunctionDef(
                     leading_lines=(
                         cst.EmptyLine(),
                         cst.EmptyLine(
@@ -494,11 +500,12 @@ class FunctionDefCreationTest(CSTNodeTest):
                     whitespace_before_colon=cst.SimpleWhitespace(" "),
                     body=cst.SimpleStatementSuite((cst.Pass(),)),
                 ),
-                "\n# What an amazing decorator\n@ bar (  )\n# What a great function\nasync  def  foo  (  )  ->  str : pass\n",
-            ),
+                "code": "\n# What an amazing decorator\n@ bar (  )\n# What a great function\nasync  def  foo  (  )  ->  str : pass\n",
+                "expected_position": CodeRange.create((5, 0), (5, 37)),
+            },
             # Decorators and annotations
-            (
-                cst.Decorator(
+            {
+                "node": cst.Decorator(
                     whitespace_after_at=cst.SimpleWhitespace(" "),
                     decorator=cst.Call(
                         func=cst.Name("bar"),
@@ -506,22 +513,22 @@ class FunctionDefCreationTest(CSTNodeTest):
                         whitespace_before_args=cst.SimpleWhitespace("  "),
                     ),
                 ),
-                "@ bar (  )\n",
-                # CodeRange.create((1,0), (1,10))
-            ),
-            (
-                cst.Annotation(
+                "code": "@ bar (  )\n",
+                "expected_position": CodeRange.create((1, 0), (1, 10)),
+            },
+            {
+                "node": cst.Annotation(
                     indicator=":",
                     whitespace_before_indicator=cst.SimpleWhitespace("  "),
                     whitespace_after_indicator=cst.SimpleWhitespace("  "),
                     annotation=cst.Name("str"),
                 ),
-                "  :  str",
-                CodeRange.create((1, 5), (1, 8)),
-            ),
+                "code": "  :  str",
+                "expected_position": CodeRange.create((1, 5), (1, 8)),
+            },
             # Parameters
-            (
-                cst.Parameters(
+            {
+                "node": cst.Parameters(
                     params=(
                         cst.Param(cst.Name("first")),
                         cst.Param(cst.Name("second")),
@@ -547,29 +554,27 @@ class FunctionDefCreationTest(CSTNodeTest):
                         ),
                     ),
                 ),
-                'first, second, third = 1.0, fourth = 1.5, *params: str, bar: str = "one", baz: int, biz: str = "two"',
-                CodeRange.create((1, 0), (1, 100)),
-            ),
-            (
-                cst.Param(cst.Name("third"), star="", default=cst.Float("1.0")),
-                "third = 1.0",
-                CodeRange.create((1, 0), (1, 5)),
-            ),
-            (
-                cst.Param(
+                "code": 'first, second, third = 1.0, fourth = 1.5, *params: str, bar: str = "one", baz: int, biz: str = "two"',
+                "expected_position": CodeRange.create((1, 0), (1, 100)),
+            },
+            {
+                "node": cst.Param(cst.Name("third"), star="", default=cst.Float("1.0")),
+                "code": "third = 1.0",
+                "expected_position": CodeRange.create((1, 0), (1, 5)),
+            },
+            {
+                "node": cst.Param(
                     cst.Name("third"),
                     star="*",
                     whitespace_after_star=cst.SimpleWhitespace(" "),
                 ),
-                "* third",
-                CodeRange.create((1, 0), (1, 7)),
-            ),
+                "code": "* third",
+                "expected_position": CodeRange.create((1, 0), (1, 7)),
+            },
         )
     )
-    def test_valid(
-        self, node: cst.CSTNode, code: str, position: Optional[CodeRange] = None
-    ) -> None:
-        self.validate_node(node, code, expected_position=position)
+    def test_valid(self, **kwargs: Any) -> None:
+        self.validate_node(**kwargs)
 
     @data_provider(
         (
@@ -1672,7 +1677,5 @@ class FunctionDefParserTest(CSTNodeTest):
             ),
         )
     )
-    def test_valid(
-        self, node: cst.CSTNode, code: str, position: Optional[CodeRange] = None
-    ) -> None:
-        self.validate_node(node, code, parse_statement, expected_position=position)
+    def test_valid(self, node: cst.CSTNode, code: str) -> None:
+        self.validate_node(node, code, parse_statement)
