@@ -696,17 +696,19 @@ class ExceptHandler(CSTNode):
         for ll in self.leading_lines:
             ll._codegen(state)
         state.add_indent_tokens()
-        state.add_token("except")
-        self.whitespace_after_except._codegen(state)
-        typenode = self.type
-        if typenode is not None:
-            typenode._codegen(state)
-        namenode = self.name
-        if namenode is not None:
-            namenode._codegen(state)
-        self.whitespace_before_colon._codegen(state)
-        state.add_token(":")
-        self.body._codegen(state)
+
+        with state.record_syntactic_position(self, end_node=self.body):
+            state.add_token("except")
+            self.whitespace_after_except._codegen(state)
+            typenode = self.type
+            if typenode is not None:
+                typenode._codegen(state)
+            namenode = self.name
+            if namenode is not None:
+                namenode._codegen(state)
+            self.whitespace_before_colon._codegen(state)
+            state.add_token(":")
+            self.body._codegen(state)
 
 
 @add_slots
@@ -733,10 +735,12 @@ class Finally(CSTNode):
         for ll in self.leading_lines:
             ll._codegen(state)
         state.add_indent_tokens()
-        state.add_token("finally")
-        self.whitespace_before_colon._codegen(state)
-        state.add_token(":")
-        self.body._codegen(state)
+
+        with state.record_syntactic_position(self, end_node=self.body):
+            state.add_token("finally")
+            self.whitespace_before_colon._codegen(state)
+            state.add_token(":")
+            self.body._codegen(state)
 
 
 @add_slots
@@ -789,18 +793,25 @@ class Try(BaseCompoundStatement):
         for ll in self.leading_lines:
             ll._codegen(state)
         state.add_indent_tokens()
-        state.add_token("try")
-        self.whitespace_before_colon._codegen(state)
-        state.add_token(":")
-        self.body._codegen(state)
-        for handler in self.handlers:
-            handler._codegen(state)
+
+        end_node = self.body
+        if len(self.handlers) > 0:
+            end_node = self.handlers[-1]
         orelse = self.orelse
-        if orelse is not None:
-            orelse._codegen(state)
+        end_node = end_node if orelse is None else orelse
         finalbody = self.finalbody
-        if finalbody is not None:
-            finalbody._codegen(state)
+        end_node = end_node if finalbody is None else finalbody
+        with state.record_syntactic_position(self, end_node=end_node):
+            state.add_token("try")
+            self.whitespace_before_colon._codegen(state)
+            state.add_token(":")
+            self.body._codegen(state)
+            for handler in self.handlers:
+                handler._codegen(state)
+            if orelse is not None:
+                orelse._codegen(state)
+            if finalbody is not None:
+                finalbody._codegen(state)
 
 
 @dataclass(frozen=True)
@@ -834,10 +845,12 @@ class ImportAlias(CSTNode):
         )
 
     def _codegen_impl(self, state: CodegenState, default_comma: bool = False) -> None:
-        self.name._codegen(state)
-        asname = self.asname
-        if asname is not None:
-            asname._codegen(state)
+        with state.record_syntactic_position(self):
+            self.name._codegen(state)
+            asname = self.asname
+            if asname is not None:
+                asname._codegen(state)
+
         comma = self.comma
         if comma is MaybeSentinel.DEFAULT and default_comma:
             state.add_token(", ")
@@ -884,11 +897,13 @@ class Import(BaseSmallStatement):
     def _codegen_impl(
         self, state: CodegenState, default_semicolon: bool = False
     ) -> None:
-        state.add_token("import")
-        self.whitespace_after_import._codegen(state)
-        lastname = len(self.names) - 1
-        for i, name in enumerate(self.names):
-            name._codegen(state, default_comma=(i != lastname))
+        with state.record_syntactic_position(self):
+            state.add_token("import")
+            self.whitespace_after_import._codegen(state)
+            lastname = len(self.names) - 1
+            for i, name in enumerate(self.names):
+                name._codegen(state, default_comma=(i != lastname))
+
         semicolon = self.semicolon
         if isinstance(semicolon, MaybeSentinel):
             if default_semicolon:
@@ -991,28 +1006,32 @@ class ImportFrom(BaseSmallStatement):
     def _codegen_impl(
         self, state: CodegenState, default_semicolon: bool = False
     ) -> None:
-        state.add_token("from")
-        self.whitespace_after_from._codegen(state)
-        for dot in self.relative:
-            dot._codegen(state)
-        module = self.module
-        if module is not None:
-            module._codegen(state)
-        self.whitespace_before_import._codegen(state)
-        state.add_token("import")
-        self.whitespace_after_import._codegen(state)
-        lpar = self.lpar
-        if lpar is not None:
-            lpar._codegen(state)
-        if isinstance(self.names, Sequence):
-            lastname = len(self.names) - 1
-            for i, name in enumerate(self.names):
-                name._codegen(state, default_comma=(i != lastname))
-        if isinstance(self.names, ImportStar):
-            self.names._codegen(state)
-        rpar = self.rpar
-        if rpar is not None:
-            rpar._codegen(state)
+        end_node = self.names[-1] if isinstance(self.names, Sequence) else self.names
+        end_node = end_node if self.rpar is None else self.rpar
+        with state.record_syntactic_position(self, end_node=end_node):
+            state.add_token("from")
+            self.whitespace_after_from._codegen(state)
+            for dot in self.relative:
+                dot._codegen(state)
+            module = self.module
+            if module is not None:
+                module._codegen(state)
+            self.whitespace_before_import._codegen(state)
+            state.add_token("import")
+            self.whitespace_after_import._codegen(state)
+            lpar = self.lpar
+            if lpar is not None:
+                lpar._codegen(state)
+            if isinstance(self.names, Sequence):
+                lastname = len(self.names) - 1
+                for i, name in enumerate(self.names):
+                    name._codegen(state, default_comma=(i != lastname))
+            if isinstance(self.names, ImportStar):
+                self.names._codegen(state)
+            rpar = self.rpar
+            if rpar is not None:
+                rpar._codegen(state)
+
         semicolon = self.semicolon
         if isinstance(semicolon, MaybeSentinel):
             if default_semicolon:

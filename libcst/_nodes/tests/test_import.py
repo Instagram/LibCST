@@ -4,7 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 # pyre-strict
-from typing import Callable, Optional
+from typing import Any
 
 import libcst as cst
 from libcst import parse_statement
@@ -18,30 +18,34 @@ class ImportCreateTest(CSTNodeTest):
     @data_provider(
         (
             # Simple import statement
-            (cst.Import(names=(cst.ImportAlias(cst.Name("foo")),)), "import foo"),
-            (
-                cst.Import(
+            # pyre-fixme[6]: Incompatible parameter type
+            {
+                "node": cst.Import(names=(cst.ImportAlias(cst.Name("foo")),)),
+                "code": "import foo",
+            },
+            {
+                "node": cst.Import(
                     names=(
                         cst.ImportAlias(
                             cst.Attribute(cst.Name("foo"), cst.Name("bar"))
                         ),
                     )
                 ),
-                "import foo.bar",
-            ),
-            (
-                cst.Import(
+                "code": "import foo.bar",
+            },
+            {
+                "node": cst.Import(
                     names=(
                         cst.ImportAlias(
                             cst.Attribute(cst.Name("foo"), cst.Name("bar"))
                         ),
                     )
                 ),
-                "import foo.bar",
-            ),
+                "code": "import foo.bar",
+            },
             # Comma-separated list of imports
-            (
-                cst.Import(
+            {
+                "node": cst.Import(
                     names=(
                         cst.ImportAlias(
                             cst.Attribute(cst.Name("foo"), cst.Name("bar"))
@@ -51,11 +55,12 @@ class ImportCreateTest(CSTNodeTest):
                         ),
                     )
                 ),
-                "import foo.bar, foo.baz",
-            ),
+                "code": "import foo.bar, foo.baz",
+                "expected_position": CodeRange.create((1, 0), (1, 23)),
+            },
             # Import with an alias
-            (
-                cst.Import(
+            {
+                "node": cst.Import(
                     names=(
                         cst.ImportAlias(
                             cst.Attribute(cst.Name("foo"), cst.Name("bar")),
@@ -63,11 +68,11 @@ class ImportCreateTest(CSTNodeTest):
                         ),
                     )
                 ),
-                "import foo.bar as baz",
-            ),
+                "code": "import foo.bar as baz",
+            },
             # Import with an alias, comma separated
-            (
-                cst.Import(
+            {
+                "node": cst.Import(
                     names=(
                         cst.ImportAlias(
                             cst.Attribute(cst.Name("foo"), cst.Name("bar")),
@@ -79,11 +84,11 @@ class ImportCreateTest(CSTNodeTest):
                         ),
                     )
                 ),
-                "import foo.bar as baz, foo.baz as bar",
-            ),
+                "code": "import foo.bar as baz, foo.baz as bar",
+            },
             # Combine for fun and profit
-            (
-                cst.Import(
+            {
+                "node": cst.Import(
                     names=(
                         cst.ImportAlias(
                             cst.Attribute(cst.Name("foo"), cst.Name("bar")),
@@ -100,11 +105,11 @@ class ImportCreateTest(CSTNodeTest):
                         ),
                     )
                 ),
-                "import foo.bar as baz, insta.gram, foo.baz, unittest as ut",
-            ),
+                "code": "import foo.bar as baz, insta.gram, foo.baz, unittest as ut",
+            },
             # Verify whitespace works everywhere.
-            (
-                cst.Import(
+            {
+                "node": cst.Import(
                     names=(
                         cst.ImportAlias(
                             cst.Attribute(
@@ -136,40 +141,42 @@ class ImportCreateTest(CSTNodeTest):
                     ),
                     whitespace_after_import=cst.SimpleWhitespace("  "),
                 ),
-                "import  foo . bar  as  baz ,  unittest  as  ut",
-            ),
+                "code": "import  foo . bar  as  baz ,  unittest  as  ut",
+                "expected_position": CodeRange.create((1, 0), (1, 46)),
+            },
         )
     )
-    def test_valid(
-        self, node: cst.CSTNode, code: str, position: Optional[CodeRange] = None
-    ) -> None:
-        self.validate_node(node, code, expected_position=position)
+    def test_valid(self, **kwargs: Any) -> None:
+        self.validate_node(**kwargs)
 
     @data_provider(
         (
-            (lambda: cst.Import(names=()), "at least one ImportAlias"),
-            (
-                lambda: cst.Import(names=(cst.ImportAlias(cst.Name("")),)),
-                "empty name identifier",
-            ),
-            (
-                lambda: cst.Import(
+            {
+                "get_node": lambda: cst.Import(names=()),
+                "expected_re": "at least one ImportAlias",
+            },
+            {
+                "get_node": lambda: cst.Import(names=(cst.ImportAlias(cst.Name("")),)),
+                "expected_re": "empty name identifier",
+            },
+            {
+                "get_node": lambda: cst.Import(
                     names=(
                         cst.ImportAlias(cst.Attribute(cst.Name(""), cst.Name("bla"))),
                     )
                 ),
-                "empty name identifier",
-            ),
-            (
-                lambda: cst.Import(
+                "expected_re": "empty name identifier",
+            },
+            {
+                "get_node": lambda: cst.Import(
                     names=(
                         cst.ImportAlias(cst.Attribute(cst.Name("bla"), cst.Name(""))),
                     )
                 ),
-                "empty name identifier",
-            ),
-            (
-                lambda: cst.Import(
+                "expected_re": "empty name identifier",
+            },
+            {
+                "get_node": lambda: cst.Import(
                     names=(
                         cst.ImportAlias(
                             cst.Attribute(cst.Name("foo"), cst.Name("bar")),
@@ -177,10 +184,10 @@ class ImportCreateTest(CSTNodeTest):
                         ),
                     )
                 ),
-                "trailing comma",
-            ),
-            (
-                lambda: cst.Import(
+                "expected_re": "trailing comma",
+            },
+            {
+                "get_node": lambda: cst.Import(
                     names=(
                         cst.ImportAlias(
                             cst.Attribute(cst.Name("foo"), cst.Name("bar"))
@@ -188,44 +195,45 @@ class ImportCreateTest(CSTNodeTest):
                     ),
                     whitespace_after_import=cst.SimpleWhitespace(""),
                 ),
-                "at least one space",
-            ),
+                "expected_re": "at least one space",
+            },
         )
     )
-    def test_invalid(
-        self, get_node: Callable[[], cst.CSTNode], expected_re: str
-    ) -> None:
-        self.assert_invalid(get_node, expected_re)
+    def test_invalid(self, **kwargs: Any) -> None:
+        self.assert_invalid(**kwargs)
 
 
 class ImportParseTest(CSTNodeTest):
     @data_provider(
         (
             # Simple import statement
-            (cst.Import(names=(cst.ImportAlias(cst.Name("foo")),)), "import foo"),
-            (
-                cst.Import(
+            {
+                "node": cst.Import(names=(cst.ImportAlias(cst.Name("foo")),)),
+                "code": "import foo",
+            },
+            {
+                "node": cst.Import(
                     names=(
                         cst.ImportAlias(
                             cst.Attribute(cst.Name("foo"), cst.Name("bar"))
                         ),
                     )
                 ),
-                "import foo.bar",
-            ),
-            (
-                cst.Import(
+                "code": "import foo.bar",
+            },
+            {
+                "node": cst.Import(
                     names=(
                         cst.ImportAlias(
                             cst.Attribute(cst.Name("foo"), cst.Name("bar"))
                         ),
                     )
                 ),
-                "import foo.bar",
-            ),
+                "code": "import foo.bar",
+            },
             # Comma-separated list of imports
-            (
-                cst.Import(
+            {
+                "node": cst.Import(
                     names=(
                         cst.ImportAlias(
                             cst.Attribute(cst.Name("foo"), cst.Name("bar")),
@@ -236,11 +244,11 @@ class ImportParseTest(CSTNodeTest):
                         ),
                     )
                 ),
-                "import foo.bar, foo.baz",
-            ),
+                "code": "import foo.bar, foo.baz",
+            },
             # Import with an alias
-            (
-                cst.Import(
+            {
+                "node": cst.Import(
                     names=(
                         cst.ImportAlias(
                             cst.Attribute(cst.Name("foo"), cst.Name("bar")),
@@ -248,11 +256,11 @@ class ImportParseTest(CSTNodeTest):
                         ),
                     )
                 ),
-                "import foo.bar as baz",
-            ),
+                "code": "import foo.bar as baz",
+            },
             # Import with an alias, comma separated
-            (
-                cst.Import(
+            {
+                "node": cst.Import(
                     names=(
                         cst.ImportAlias(
                             cst.Attribute(cst.Name("foo"), cst.Name("bar")),
@@ -265,11 +273,11 @@ class ImportParseTest(CSTNodeTest):
                         ),
                     )
                 ),
-                "import foo.bar as baz, foo.baz as bar",
-            ),
+                "code": "import foo.bar as baz, foo.baz as bar",
+            },
             # Combine for fun and profit
-            (
-                cst.Import(
+            {
+                "node": cst.Import(
                     names=(
                         cst.ImportAlias(
                             cst.Attribute(cst.Name("foo"), cst.Name("bar")),
@@ -289,11 +297,11 @@ class ImportParseTest(CSTNodeTest):
                         ),
                     )
                 ),
-                "import foo.bar as baz, insta.gram, foo.baz, unittest as ut",
-            ),
+                "code": "import foo.bar as baz, insta.gram, foo.baz, unittest as ut",
+            },
             # Verify whitespace works everywhere.
-            (
-                cst.Import(
+            {
+                "node": cst.Import(
                     names=(
                         cst.ImportAlias(
                             cst.Attribute(
@@ -325,20 +333,16 @@ class ImportParseTest(CSTNodeTest):
                     ),
                     whitespace_after_import=cst.SimpleWhitespace("  "),
                 ),
-                "import  foo . bar  as  baz ,  unittest  as  ut",
-            ),
+                "code": "import  foo . bar  as  baz ,  unittest  as  ut",
+            },
         )
     )
-    def test_valid(
-        self, node: cst.CSTNode, code: str, position: Optional[CodeRange] = None
-    ) -> None:
+    def test_valid(self, **kwargs: Any) -> None:
         self.validate_node(
-            node,
-            code,
-            lambda code: ensure_type(
+            parser=lambda code: ensure_type(
                 parse_statement(code), cst.SimpleStatementLine
             ).body[0],
-            expected_position=position,
+            **kwargs,
         )
 
 
@@ -346,15 +350,16 @@ class ImportFromCreateTest(CSTNodeTest):
     @data_provider(
         (
             # Simple from import statement
-            (
-                cst.ImportFrom(
+            # pyre-fixme[6]: Incompatible parameter type
+            {
+                "node": cst.ImportFrom(
                     module=cst.Name("foo"), names=(cst.ImportAlias(cst.Name("bar")),)
                 ),
-                "from foo import bar",
-            ),
+                "code": "from foo import bar",
+            },
             # From import statement with alias
-            (
-                cst.ImportFrom(
+            {
+                "node": cst.ImportFrom(
                     module=cst.Name("foo"),
                     names=(
                         cst.ImportAlias(
@@ -362,64 +367,66 @@ class ImportFromCreateTest(CSTNodeTest):
                         ),
                     ),
                 ),
-                "from foo import bar as baz",
-            ),
+                "code": "from foo import bar as baz",
+            },
             # Multiple imports
-            (
-                cst.ImportFrom(
+            {
+                "node": cst.ImportFrom(
                     module=cst.Name("foo"),
                     names=(
                         cst.ImportAlias(cst.Name("bar")),
                         cst.ImportAlias(cst.Name("baz")),
                     ),
                 ),
-                "from foo import bar, baz",
-            ),
+                "code": "from foo import bar, baz",
+            },
             # Trailing comma
-            (
-                cst.ImportFrom(
+            {
+                "node": cst.ImportFrom(
                     module=cst.Name("foo"),
                     names=(
                         cst.ImportAlias(cst.Name("bar"), comma=cst.Comma()),
                         cst.ImportAlias(cst.Name("baz"), comma=cst.Comma()),
                     ),
                 ),
-                "from foo import bar,baz,",
-            ),
+                "code": "from foo import bar,baz,",
+                "expected_position": CodeRange.create((1, 0), (1, 23)),
+            },
             # Star import statement
-            (
-                cst.ImportFrom(module=cst.Name("foo"), names=cst.ImportStar()),
-                "from foo import *",
-            ),
+            {
+                "node": cst.ImportFrom(module=cst.Name("foo"), names=cst.ImportStar()),
+                "code": "from foo import *",
+                "expected_position": CodeRange.create((1, 0), (1, 17)),
+            },
             # Simple relative import statement
-            (
-                cst.ImportFrom(
+            {
+                "node": cst.ImportFrom(
                     relative=(cst.Dot(),),
                     module=cst.Name("foo"),
                     names=(cst.ImportAlias(cst.Name("bar")),),
                 ),
-                "from .foo import bar",
-            ),
-            (
-                cst.ImportFrom(
+                "code": "from .foo import bar",
+            },
+            {
+                "node": cst.ImportFrom(
                     relative=(cst.Dot(), cst.Dot()),
                     module=cst.Name("foo"),
                     names=(cst.ImportAlias(cst.Name("bar")),),
                 ),
-                "from ..foo import bar",
-            ),
+                "code": "from ..foo import bar",
+            },
             # Relative only import
-            (
-                cst.ImportFrom(
+            {
+                "node": cst.ImportFrom(
                     relative=(cst.Dot(), cst.Dot()),
                     module=None,
                     names=(cst.ImportAlias(cst.Name("bar")),),
                 ),
-                "from .. import bar",
-            ),
+                "code": "from .. import bar",
+            },
             # Parenthesis
-            (
-                cst.ImportFrom(
+            {
+                "node": cst.ImportFrom(
                     module=cst.Name("foo"),
                     lpar=cst.LeftParen(),
                     names=(
@@ -429,11 +436,12 @@ class ImportFromCreateTest(CSTNodeTest):
                     ),
                     rpar=cst.RightParen(),
                 ),
-                "from foo import (bar as baz)",
-            ),
+                "code": "from foo import (bar as baz)",
+                "expected_position": CodeRange.create((1, 0), (1, 28)),
+            },
             # Verify whitespace works everywhere.
-            (
-                cst.ImportFrom(
+            {
+                "node": cst.ImportFrom(
                     relative=(
                         cst.Dot(
                             whitespace_before=cst.SimpleWhitespace(" "),
@@ -473,102 +481,99 @@ class ImportFromCreateTest(CSTNodeTest):
                     whitespace_before_import=cst.SimpleWhitespace("  "),
                     whitespace_after_import=cst.SimpleWhitespace("  "),
                 ),
-                "from   .  . foo  import  ( bar  as  baz ,  unittest  as  ut )",
-            ),
+                "code": "from   .  . foo  import  ( bar  as  baz ,  unittest  as  ut )",
+                "expected_position": CodeRange.create((1, 0), (1, 61)),
+            },
         )
     )
-    def test_valid(
-        self, node: cst.CSTNode, code: str, position: Optional[CodeRange] = None
-    ) -> None:
-        self.validate_node(node, code, expected_position=position)
+    def test_valid(self, **kwargs: Any) -> None:
+        self.validate_node(**kwargs)
 
     @data_provider(
         (
-            (
-                lambda: cst.ImportFrom(
+            {
+                "get_node": lambda: cst.ImportFrom(
                     module=None, names=(cst.ImportAlias(cst.Name("bar")),)
                 ),
-                "Must have a module specified",
-            ),
-            (
-                lambda: cst.ImportFrom(module=cst.Name("foo"), names=()),
-                "at least one ImportAlias",
-            ),
-            (
-                lambda: cst.ImportFrom(
+                "expected_re": "Must have a module specified",
+            },
+            {
+                "get_node": lambda: cst.ImportFrom(module=cst.Name("foo"), names=()),
+                "expected_re": "at least one ImportAlias",
+            },
+            {
+                "get_node": lambda: cst.ImportFrom(
                     module=cst.Name("foo"),
                     names=(cst.ImportAlias(cst.Name("bar")),),
                     lpar=cst.LeftParen(),
                 ),
-                "left paren without right paren",
-            ),
-            (
-                lambda: cst.ImportFrom(
+                "expected_re": "left paren without right paren",
+            },
+            {
+                "get_node": lambda: cst.ImportFrom(
                     module=cst.Name("foo"),
                     names=(cst.ImportAlias(cst.Name("bar")),),
                     rpar=cst.RightParen(),
                 ),
-                "right paren without left paren",
-            ),
-            (
-                lambda: cst.ImportFrom(
+                "expected_re": "right paren without left paren",
+            },
+            {
+                "get_node": lambda: cst.ImportFrom(
                     module=cst.Name("foo"), names=cst.ImportStar(), lpar=cst.LeftParen()
                 ),
-                "cannot have parens",
-            ),
-            (
-                lambda: cst.ImportFrom(
+                "expected_re": "cannot have parens",
+            },
+            {
+                "get_node": lambda: cst.ImportFrom(
                     module=cst.Name("foo"),
                     names=cst.ImportStar(),
                     rpar=cst.RightParen(),
                 ),
-                "cannot have parens",
-            ),
-            (
-                lambda: cst.ImportFrom(
+                "expected_re": "cannot have parens",
+            },
+            {
+                "get_node": lambda: cst.ImportFrom(
                     module=cst.Name("foo"),
                     names=(cst.ImportAlias(cst.Name("bar")),),
                     whitespace_after_from=cst.SimpleWhitespace(""),
                 ),
-                "one space after from",
-            ),
-            (
-                lambda: cst.ImportFrom(
+                "expected_re": "one space after from",
+            },
+            {
+                "get_node": lambda: cst.ImportFrom(
                     module=cst.Name("foo"),
                     names=(cst.ImportAlias(cst.Name("bar")),),
                     whitespace_before_import=cst.SimpleWhitespace(""),
                 ),
-                "one space before import",
-            ),
-            (
-                lambda: cst.ImportFrom(
+                "expected_re": "one space before import",
+            },
+            {
+                "get_node": lambda: cst.ImportFrom(
                     module=cst.Name("foo"),
                     names=(cst.ImportAlias(cst.Name("bar")),),
                     whitespace_after_import=cst.SimpleWhitespace(""),
                 ),
-                "one space after import",
-            ),
+                "expected_re": "one space after import",
+            },
         )
     )
-    def test_invalid(
-        self, get_node: Callable[[], cst.CSTNode], expected_re: str
-    ) -> None:
-        self.assert_invalid(get_node, expected_re)
+    def test_invalid(self, **kwargs: Any) -> None:
+        self.assert_invalid(**kwargs)
 
 
 class ImportFromParseTest(CSTNodeTest):
     @data_provider(
         (
             # Simple from import statement
-            (
-                cst.ImportFrom(
+            {
+                "node": cst.ImportFrom(
                     module=cst.Name("foo"), names=(cst.ImportAlias(cst.Name("bar")),)
                 ),
-                "from foo import bar",
-            ),
+                "code": "from foo import bar",
+            },
             # From import statement with alias
-            (
-                cst.ImportFrom(
+            {
+                "node": cst.ImportFrom(
                     module=cst.Name("foo"),
                     names=(
                         cst.ImportAlias(
@@ -576,11 +581,11 @@ class ImportFromParseTest(CSTNodeTest):
                         ),
                     ),
                 ),
-                "from foo import bar as baz",
-            ),
+                "code": "from foo import bar as baz",
+            },
             # Multiple imports
-            (
-                cst.ImportFrom(
+            {
+                "node": cst.ImportFrom(
                     module=cst.Name("foo"),
                     names=(
                         cst.ImportAlias(
@@ -590,11 +595,11 @@ class ImportFromParseTest(CSTNodeTest):
                         cst.ImportAlias(cst.Name("baz")),
                     ),
                 ),
-                "from foo import bar, baz",
-            ),
+                "code": "from foo import bar, baz",
+            },
             # Trailing comma
-            (
-                cst.ImportFrom(
+            {
+                "node": cst.ImportFrom(
                     module=cst.Name("foo"),
                     names=(
                         cst.ImportAlias(
@@ -604,42 +609,42 @@ class ImportFromParseTest(CSTNodeTest):
                         cst.ImportAlias(cst.Name("baz"), comma=cst.Comma()),
                     ),
                 ),
-                "from foo import bar, baz,",
-            ),
+                "code": "from foo import bar, baz,",
+            },
             # Star import statement
-            (
-                cst.ImportFrom(module=cst.Name("foo"), names=cst.ImportStar()),
-                "from foo import *",
-            ),
+            {
+                "node": cst.ImportFrom(module=cst.Name("foo"), names=cst.ImportStar()),
+                "code": "from foo import *",
+            },
             # Simple relative import statement
-            (
-                cst.ImportFrom(
+            {
+                "node": cst.ImportFrom(
                     relative=(cst.Dot(),),
                     module=cst.Name("foo"),
                     names=(cst.ImportAlias(cst.Name("bar")),),
                 ),
-                "from .foo import bar",
-            ),
-            (
-                cst.ImportFrom(
+                "code": "from .foo import bar",
+            },
+            {
+                "node": cst.ImportFrom(
                     relative=(cst.Dot(), cst.Dot()),
                     module=cst.Name("foo"),
                     names=(cst.ImportAlias(cst.Name("bar")),),
                 ),
-                "from ..foo import bar",
-            ),
+                "code": "from ..foo import bar",
+            },
             # Relative only import
-            (
-                cst.ImportFrom(
+            {
+                "node": cst.ImportFrom(
                     relative=(cst.Dot(), cst.Dot()),
                     module=None,
                     names=(cst.ImportAlias(cst.Name("bar")),),
                 ),
-                "from .. import bar",
-            ),
+                "code": "from .. import bar",
+            },
             # Parenthesis
-            (
-                cst.ImportFrom(
+            {
+                "node": cst.ImportFrom(
                     module=cst.Name("foo"),
                     lpar=cst.LeftParen(),
                     names=(
@@ -649,11 +654,11 @@ class ImportFromParseTest(CSTNodeTest):
                     ),
                     rpar=cst.RightParen(),
                 ),
-                "from foo import (bar as baz)",
-            ),
+                "code": "from foo import (bar as baz)",
+            },
             # Verify whitespace works everywhere.
-            (
-                cst.ImportFrom(
+            {
+                "node": cst.ImportFrom(
                     relative=(
                         cst.Dot(
                             whitespace_before=cst.SimpleWhitespace(""),
@@ -693,18 +698,14 @@ class ImportFromParseTest(CSTNodeTest):
                     whitespace_before_import=cst.SimpleWhitespace("  "),
                     whitespace_after_import=cst.SimpleWhitespace("  "),
                 ),
-                "from   .  . foo  import  ( bar  as  baz ,  unittest  as  ut )",
-            ),
+                "code": "from   .  . foo  import  ( bar  as  baz ,  unittest  as  ut )",
+            },
         )
     )
-    def test_valid(
-        self, node: cst.CSTNode, code: str, position: Optional[CodeRange] = None
-    ) -> None:
+    def test_valid(self, **kwargs: Any) -> None:
         self.validate_node(
-            node,
-            code,
-            lambda code: ensure_type(
+            parser=lambda code: ensure_type(
                 parse_statement(code), cst.SimpleStatementLine
             ).body[0],
-            expected_position=position,
+            **kwargs,
         )
