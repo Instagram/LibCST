@@ -7,12 +7,12 @@
 from typing import cast
 
 import libcst as cst
+from libcst import parse_module
 from libcst.metadata.base_provider import (
     BatchableMetadataProvider,
     VisitorMetadataProvider,
     _run_batchable,
 )
-from libcst.parser import parse_module
 from libcst.testing.utils import UnitTest
 
 

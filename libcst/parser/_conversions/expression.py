@@ -4,16 +4,101 @@
 # LICENSE file in the root directory of this source tree.
 
 import re
+import typing
 from tokenize import (
     Floatnumber as FLOATNUMBER_RE,
     Imagnumber as IMAGNUMBER_RE,
     Intnumber as INTNUMBER_RE,
 )
-from typing import Any, Dict, List, Sequence, Type, Union
 
-import libcst as cst
 from libcst._maybe_sentinel import MaybeSentinel
 from libcst._nodes._dummy import DummyNode
+from libcst._nodes._expression import (
+    Arg,
+    Asynchronous,
+    Attribute,
+    Await,
+    BinaryOperation,
+    BooleanOperation,
+    Call,
+    Comparison,
+    ComparisonTarget,
+    CompFor,
+    CompIf,
+    ConcatenatedString,
+    Element,
+    Ellipses,
+    ExtSlice,
+    Float,
+    FormattedString,
+    FormattedStringExpression,
+    FormattedStringText,
+    From,
+    GeneratorExp,
+    IfExp,
+    Imaginary,
+    Index,
+    Integer,
+    Lambda,
+    LeftCurlyBrace,
+    LeftParen,
+    LeftSquareBracket,
+    List,
+    ListComp,
+    Name,
+    Param,
+    Parameters,
+    RightCurlyBrace,
+    RightParen,
+    RightSquareBracket,
+    Set,
+    SetComp,
+    Slice,
+    StarredElement,
+    Subscript,
+    Tuple,
+    UnaryOperation,
+    Yield,
+)
+from libcst._nodes._op import (
+    Add,
+    And,
+    AssignEqual,
+    BaseBinaryOp,
+    BaseBooleanOp,
+    BaseCompOp,
+    BitAnd,
+    BitInvert,
+    BitOr,
+    BitXor,
+    Colon,
+    Comma,
+    Divide,
+    Dot,
+    Equal,
+    FloorDivide,
+    GreaterThan,
+    GreaterThanEqual,
+    In,
+    Is,
+    IsNot,
+    LeftShift,
+    LessThan,
+    LessThanEqual,
+    MatrixMultiply,
+    Minus,
+    Modulo,
+    Multiply,
+    Not,
+    NotEqual,
+    NotIn,
+    Or,
+    Plus,
+    Power,
+    RightShift,
+    Subtract,
+)
+from libcst._nodes._whitespace import SimpleWhitespace
 from libcst.parser._conversions.dummy import make_dummy_node
 from libcst.parser._custom_itertools import grouper
 from libcst.parser._production_decorator import with_production
@@ -32,33 +117,33 @@ from libcst.parser._types.token import Token
 from libcst.parser._whitespace_parser import parse_parenthesizable_whitespace
 
 
-BINOP_TOKEN_LUT: Dict[str, Type[cst.BaseBinaryOp]] = {
-    "*": cst.Multiply,
-    "@": cst.MatrixMultiply,
-    "/": cst.Divide,
-    "%": cst.Modulo,
-    "//": cst.FloorDivide,
-    "+": cst.Add,
-    "-": cst.Subtract,
-    "<<": cst.LeftShift,
-    ">>": cst.RightShift,
-    "&": cst.BitAnd,
-    "^": cst.BitXor,
-    "|": cst.BitOr,
+BINOP_TOKEN_LUT: typing.Dict[str, typing.Type[BaseBinaryOp]] = {
+    "*": Multiply,
+    "@": MatrixMultiply,
+    "/": Divide,
+    "%": Modulo,
+    "//": FloorDivide,
+    "+": Add,
+    "-": Subtract,
+    "<<": LeftShift,
+    ">>": RightShift,
+    "&": BitAnd,
+    "^": BitXor,
+    "|": BitOr,
 }
 
 
-BOOLOP_TOKEN_LUT: Dict[str, Type[cst.BaseBooleanOp]] = {"and": cst.And, "or": cst.Or}
+BOOLOP_TOKEN_LUT: typing.Dict[str, typing.Type[BaseBooleanOp]] = {"and": And, "or": Or}
 
 
-COMPOP_TOKEN_LUT: Dict[str, Type[cst.BaseCompOp]] = {
-    "<": cst.LessThan,
-    ">": cst.GreaterThan,
-    "==": cst.Equal,
-    "<=": cst.LessThanEqual,
-    ">=": cst.GreaterThanEqual,
-    "in": cst.In,
-    "is": cst.Is,
+COMPOP_TOKEN_LUT: typing.Dict[str, typing.Type[BaseCompOp]] = {
+    "<": LessThan,
+    ">": GreaterThan,
+    "==": Equal,
+    "<=": LessThanEqual,
+    ">=": GreaterThanEqual,
+    "in": In,
+    "is": Is,
 }
 
 
@@ -66,7 +151,9 @@ COMPOP_TOKEN_LUT: Dict[str, Type[cst.BaseCompOp]] = {
 # `testlist_star_expr` may not always be representable by a non-partial node, since it's
 # only used as part of `expr_stmt`.
 @with_production("expression_input", "(testlist | star_expr) ENDMARKER")
-def convert_expression_input(config: ParserConfig, children: Sequence[Any]) -> Any:
+def convert_expression_input(
+    config: ParserConfig, children: typing.Sequence[typing.Any]
+) -> typing.Any:
     (child, endmarker) = children
     # HACK: UGLY! REMOVE THIS SOON!
     # Unwrap WithLeadingWhitespace if it exists. It shouldn't exist by this point, but
@@ -77,14 +164,16 @@ def convert_expression_input(config: ParserConfig, children: Sequence[Any]) -> A
 
 
 @with_production("test", "or_test ['if' or_test 'else' test] | lambdef")
-def convert_test(config: ParserConfig, children: Sequence[Any]) -> Any:
+def convert_test(
+    config: ParserConfig, children: typing.Sequence[typing.Any]
+) -> typing.Any:
     if len(children) == 1:
         (child,) = children
         return child
     else:
         (body, if_token, test, else_token, orelse) = children
         return WithLeadingWhitespace(
-            cst.IfExp(
+            IfExp(
                 body=body.value,
                 test=test.value,
                 orelse=orelse.value,
@@ -106,21 +195,25 @@ def convert_test(config: ParserConfig, children: Sequence[Any]) -> Any:
 
 
 @with_production("test_nocond", "or_test | lambdef_nocond")
-def convert_test_nocond(config: ParserConfig, children: Sequence[Any]) -> Any:
+def convert_test_nocond(
+    config: ParserConfig, children: typing.Sequence[typing.Any]
+) -> typing.Any:
     (child,) = children
     return child
 
 
 @with_production("lambdef", "'lambda' [varargslist] ':' test")
 @with_production("lambdef_nocond", "'lambda' [varargslist] ':' test_nocond")
-def convert_lambda(config: ParserConfig, children: Sequence[Any]) -> Any:
+def convert_lambda(
+    config: ParserConfig, children: typing.Sequence[typing.Any]
+) -> typing.Any:
     lambdatoken, *params, colontoken, test = children
 
     # Grab the whitespace around the colon. If there are no params, then
     # the colon owns the whitespace before and after it. If there are
     # any params, then the last param owns the whitespace before the colon.
     # We handle the parameter movement below.
-    colon = cst.Colon(
+    colon = Colon(
         whitespace_before=parse_parenthesizable_whitespace(
             config, colontoken.whitespace_before
         ),
@@ -131,7 +224,7 @@ def convert_lambda(config: ParserConfig, children: Sequence[Any]) -> Any:
 
     # Unpack optional parameters
     if len(params) == 0:
-        parameters = cst.Parameters()
+        parameters = Parameters()
         whitespace_after_lambda = MaybeSentinel.DEFAULT
     else:
         (parameters,) = params
@@ -157,7 +250,7 @@ def convert_lambda(config: ParserConfig, children: Sequence[Any]) -> Any:
                         ),
                     )
                 )
-        elif isinstance(parameters.star_arg, cst.Param):
+        elif isinstance(parameters.star_arg, Param):
             if parameters.star_arg.comma == MaybeSentinel.DEFAULT:
                 parameters = parameters.with_changes(
                     star_arg=parameters.star_arg.with_changes(
@@ -186,11 +279,11 @@ def convert_lambda(config: ParserConfig, children: Sequence[Any]) -> Any:
                 )
 
         # Colon doesn't own its own pre-whitespace now.
-        colon = colon.with_changes(whitespace_before=cst.SimpleWhitespace(""))
+        colon = colon.with_changes(whitespace_before=SimpleWhitespace(""))
 
     # Return a lambda
     return WithLeadingWhitespace(
-        cst.Lambda(
+        Lambda(
             whitespace_after_lambda=whitespace_after_lambda,
             params=parameters,
             body=test.value,
@@ -202,7 +295,9 @@ def convert_lambda(config: ParserConfig, children: Sequence[Any]) -> Any:
 
 @with_production("or_test", "and_test ('or' and_test)*")
 @with_production("and_test", "not_test ('and' not_test)*")
-def convert_boolop(config: ParserConfig, children: Sequence[Any]) -> Any:
+def convert_boolop(
+    config: ParserConfig, children: typing.Sequence[typing.Any]
+) -> typing.Any:
     leftexpr, *rightexprs = children
     if len(rightexprs) == 0:
         return leftexpr
@@ -214,7 +309,7 @@ def convert_boolop(config: ParserConfig, children: Sequence[Any]) -> Any:
     for op, rightexpr in grouper(rightexprs, 2):
         if op.string not in BOOLOP_TOKEN_LUT:
             raise Exception(f"Unexpected token '{op.string}'!")
-        leftexpr = cst.BooleanOperation(
+        leftexpr = BooleanOperation(
             left=leftexpr,
             operator=BOOLOP_TOKEN_LUT[op.string](
                 whitespace_before=parse_parenthesizable_whitespace(
@@ -230,15 +325,17 @@ def convert_boolop(config: ParserConfig, children: Sequence[Any]) -> Any:
 
 
 @with_production("not_test", "'not' not_test | comparison")
-def convert_not_test(config: ParserConfig, children: Sequence[Any]) -> Any:
+def convert_not_test(
+    config: ParserConfig, children: typing.Sequence[typing.Any]
+) -> typing.Any:
     if len(children) == 1:
         (child,) = children
         return child
     else:
         nottoken, nottest = children
         return WithLeadingWhitespace(
-            cst.UnaryOperation(
-                operator=cst.Not(
+            UnaryOperation(
+                operator=Not(
                     whitespace_after=parse_parenthesizable_whitespace(
                         config, nottoken.whitespace_after
                     )
@@ -250,21 +347,23 @@ def convert_not_test(config: ParserConfig, children: Sequence[Any]) -> Any:
 
 
 @with_production("comparison", "expr (comp_op expr)*")
-def convert_comparison(config: ParserConfig, children: Sequence[Any]) -> Any:
+def convert_comparison(
+    config: ParserConfig, children: typing.Sequence[typing.Any]
+) -> typing.Any:
     if len(children) == 1:
         (child,) = children
         return child
 
     lhs, *rest = children
 
-    comparisons: List[cst.ComparisonTarget] = []
+    comparisons: typing.List[ComparisonTarget] = []
     for operator, comparator in grouper(rest, 2):
         comparisons.append(
-            cst.ComparisonTarget(operator=operator, comparator=comparator.value)
+            ComparisonTarget(operator=operator, comparator=comparator.value)
         )
 
     return WithLeadingWhitespace(
-        cst.Comparison(left=lhs.value, comparisons=tuple(comparisons)),
+        Comparison(left=lhs.value, comparisons=tuple(comparisons)),
         lhs.whitespace_before,
     )
 
@@ -272,7 +371,9 @@ def convert_comparison(config: ParserConfig, children: Sequence[Any]) -> Any:
 @with_production(
     "comp_op", "('<'|'>'|'=='|'>='|'<='|'<>'|'!='|'in'|'not' 'in'|'is'|'is' 'not')"
 )
-def convert_comp_op(config: ParserConfig, children: Sequence[Any]) -> Any:
+def convert_comp_op(
+    config: ParserConfig, children: typing.Sequence[typing.Any]
+) -> typing.Any:
     if len(children) == 1:
         (op,) = children
         if op.string in COMPOP_TOKEN_LUT:
@@ -287,7 +388,7 @@ def convert_comp_op(config: ParserConfig, children: Sequence[Any]) -> Any:
             )
         elif op.string in ["!=", "<>"]:
             # Not equal, which can take two forms in some cases
-            return cst.NotEqual(
+            return NotEqual(
                 whitespace_before=parse_parenthesizable_whitespace(
                     config, op.whitespace_before
                 ),
@@ -304,7 +405,7 @@ def convert_comp_op(config: ParserConfig, children: Sequence[Any]) -> Any:
         leftcomp, rightcomp = children
 
         if leftcomp.string == "not" and rightcomp.string == "in":
-            return cst.NotIn(
+            return NotIn(
                 whitespace_before=parse_parenthesizable_whitespace(
                     config, leftcomp.whitespace_before
                 ),
@@ -316,7 +417,7 @@ def convert_comp_op(config: ParserConfig, children: Sequence[Any]) -> Any:
                 ),
             )
         elif leftcomp.string == "is" and rightcomp.string == "not":
-            return cst.IsNot(
+            return IsNot(
                 whitespace_before=parse_parenthesizable_whitespace(
                     config, leftcomp.whitespace_before
                 ),
@@ -333,10 +434,12 @@ def convert_comp_op(config: ParserConfig, children: Sequence[Any]) -> Any:
 
 
 @with_production("star_expr", "'*' expr")
-def convert_star_expr(config: ParserConfig, children: Sequence[Any]) -> Any:
+def convert_star_expr(
+    config: ParserConfig, children: typing.Sequence[typing.Any]
+) -> typing.Any:
     star, expr = children
     return WithLeadingWhitespace(
-        cst.StarredElement(
+        StarredElement(
             expr.value,
             whitespace_before_value=parse_parenthesizable_whitespace(
                 config, expr.whitespace_before
@@ -355,7 +458,9 @@ def convert_star_expr(config: ParserConfig, children: Sequence[Any]) -> Any:
 @with_production("shift_expr", "arith_expr (('<<'|'>>') arith_expr)*")
 @with_production("arith_expr", "term (('+'|'-') term)*")
 @with_production("term", "factor (('*'|'@'|'/'|'%'|'//') factor)*")
-def convert_binop(config: ParserConfig, children: Sequence[Any]) -> Any:
+def convert_binop(
+    config: ParserConfig, children: typing.Sequence[typing.Any]
+) -> typing.Any:
     leftexpr, *rightexprs = children
     if len(rightexprs) == 0:
         return leftexpr
@@ -367,7 +472,7 @@ def convert_binop(config: ParserConfig, children: Sequence[Any]) -> Any:
     for op, rightexpr in grouper(rightexprs, 2):
         if op.string not in BINOP_TOKEN_LUT:
             raise Exception(f"Unexpected token '{op.string}'!")
-        leftexpr = cst.BinaryOperation(
+        leftexpr = BinaryOperation(
             left=leftexpr,
             operator=BINOP_TOKEN_LUT[op.string](
                 whitespace_before=parse_parenthesizable_whitespace(
@@ -383,7 +488,9 @@ def convert_binop(config: ParserConfig, children: Sequence[Any]) -> Any:
 
 
 @with_production("factor", "('+'|'-'|'~') factor | power")
-def convert_factor(config: ParserConfig, children: Sequence[Any]) -> Any:
+def convert_factor(
+    config: ParserConfig, children: typing.Sequence[typing.Any]
+) -> typing.Any:
     if len(children) == 1:
         (child,) = children
         return child
@@ -392,19 +499,19 @@ def convert_factor(config: ParserConfig, children: Sequence[Any]) -> Any:
 
     # First, tokenize the unary operator
     if op.string == "+":
-        opnode = cst.Plus(
+        opnode = Plus(
             whitespace_after=parse_parenthesizable_whitespace(
                 config, op.whitespace_after
             )
         )
     elif op.string == "-":
-        opnode = cst.Minus(
+        opnode = Minus(
             whitespace_after=parse_parenthesizable_whitespace(
                 config, op.whitespace_after
             )
         )
     elif op.string == "~":
-        opnode = cst.BitInvert(
+        opnode = BitInvert(
             whitespace_after=parse_parenthesizable_whitespace(
                 config, op.whitespace_after
             )
@@ -413,22 +520,23 @@ def convert_factor(config: ParserConfig, children: Sequence[Any]) -> Any:
         raise Exception(f"Unexpected token '{op.string}'!")
 
     return WithLeadingWhitespace(
-        cst.UnaryOperation(operator=opnode, expression=factor.value),
-        op.whitespace_before,
+        UnaryOperation(operator=opnode, expression=factor.value), op.whitespace_before
     )
 
 
 @with_production("power", "atom_expr ['**' factor]")
-def convert_power(config: ParserConfig, children: Sequence[Any]) -> Any:
+def convert_power(
+    config: ParserConfig, children: typing.Sequence[typing.Any]
+) -> typing.Any:
     if len(children) == 1:
         (child,) = children
         return child
 
     left, power, right = children
     return WithLeadingWhitespace(
-        cst.BinaryOperation(
+        BinaryOperation(
             left=left.value,
-            operator=cst.Power(
+            operator=Power(
                 whitespace_before=parse_parenthesizable_whitespace(
                     config, power.whitespace_before
                 ),
@@ -443,16 +551,20 @@ def convert_power(config: ParserConfig, children: Sequence[Any]) -> Any:
 
 
 @with_production("atom_expr", "atom_expr_await | atom_expr_trailer")
-def convert_atom_expr(config: ParserConfig, children: Sequence[Any]) -> Any:
+def convert_atom_expr(
+    config: ParserConfig, children: typing.Sequence[typing.Any]
+) -> typing.Any:
     (child,) = children
     return child
 
 
 @with_production("atom_expr_await", "'await' atom_expr_trailer")
-def convert_atom_expr_await(config: ParserConfig, children: Sequence[Any]) -> Any:
+def convert_atom_expr_await(
+    config: ParserConfig, children: typing.Sequence[typing.Any]
+) -> typing.Any:
     keyword, expr = children
     return WithLeadingWhitespace(
-        cst.Await(
+        Await(
             whitespace_after_await=parse_parenthesizable_whitespace(
                 config, keyword.whitespace_after
             ),
@@ -463,7 +575,9 @@ def convert_atom_expr_await(config: ParserConfig, children: Sequence[Any]) -> An
 
 
 @with_production("atom_expr_trailer", "atom trailer*")
-def convert_atom_expr_trailer(config: ParserConfig, children: Sequence[Any]) -> Any:
+def convert_atom_expr_trailer(
+    config: ParserConfig, children: typing.Sequence[typing.Any]
+) -> typing.Any:
     atom, *trailers = children
     whitespace_before = atom.whitespace_before
     atom = atom.value
@@ -473,7 +587,7 @@ def convert_atom_expr_trailer(config: ParserConfig, children: Sequence[Any]) -> 
     # left recursion due to limits in the parser.
     for trailer in trailers:
         if isinstance(trailer, SubscriptPartial):
-            atom = cst.Subscript(
+            atom = Subscript(
                 value=atom,
                 whitespace_after_value=parse_parenthesizable_whitespace(
                     config, trailer.whitespace_before
@@ -483,7 +597,7 @@ def convert_atom_expr_trailer(config: ParserConfig, children: Sequence[Any]) -> 
                 rbracket=trailer.rbracket,
             )
         elif isinstance(trailer, AttributePartial):
-            atom = cst.Attribute(value=atom, dot=trailer.dot, attr=trailer.attr)
+            atom = Attribute(value=atom, dot=trailer.dot, attr=trailer.attr)
         elif isinstance(trailer, CallPartial):
             # If the trailing argument doesn't have a comma, then it owns the
             # trailing whitespace before the rpar. Otherwise, the comma owns
@@ -500,7 +614,7 @@ def convert_atom_expr_trailer(config: ParserConfig, children: Sequence[Any]) -> 
                 )
             else:
                 args = trailer.args
-            atom = cst.Call(
+            atom = Call(
                 func=atom,
                 whitespace_after_func=parse_parenthesizable_whitespace(
                     config, trailer.lpar.whitespace_before
@@ -517,17 +631,21 @@ def convert_atom_expr_trailer(config: ParserConfig, children: Sequence[Any]) -> 
 @with_production(
     "trailer", "trailer_arglist | trailer_subscriptlist | trailer_attribute"
 )
-def convert_trailer(config: ParserConfig, children: Sequence[Any]) -> Any:
+def convert_trailer(
+    config: ParserConfig, children: typing.Sequence[typing.Any]
+) -> typing.Any:
     (child,) = children
     return child
 
 
 @with_production("trailer_arglist", "'(' [arglist] ')'")
-def convert_trailer_arglist(config: ParserConfig, children: Sequence[Any]) -> Any:
+def convert_trailer_arglist(
+    config: ParserConfig, children: typing.Sequence[typing.Any]
+) -> typing.Any:
     lpar, *arglist, rpar = children
     return CallPartial(
         lpar=WithLeadingWhitespace(
-            cst.LeftParen(
+            LeftParen(
                 whitespace_after=parse_parenthesizable_whitespace(
                     config, lpar.whitespace_after
                 )
@@ -535,7 +653,7 @@ def convert_trailer_arglist(config: ParserConfig, children: Sequence[Any]) -> An
             lpar.whitespace_before,
         ),
         args=() if not arglist else arglist[0].args,
-        rpar=cst.RightParen(
+        rpar=RightParen(
             whitespace_before=parse_parenthesizable_whitespace(
                 config, rpar.whitespace_before
             )
@@ -544,16 +662,18 @@ def convert_trailer_arglist(config: ParserConfig, children: Sequence[Any]) -> An
 
 
 @with_production("trailer_subscriptlist", "'[' subscriptlist ']'")
-def convert_trailer_subscriptlist(config: ParserConfig, children: Sequence[Any]) -> Any:
+def convert_trailer_subscriptlist(
+    config: ParserConfig, children: typing.Sequence[typing.Any]
+) -> typing.Any:
     (lbracket, subscriptlist, rbracket) = children
     return SubscriptPartial(
-        lbracket=cst.LeftSquareBracket(
+        lbracket=LeftSquareBracket(
             whitespace_after=parse_parenthesizable_whitespace(
                 config, lbracket.whitespace_after
             )
         ),
         slice=subscriptlist.value,
-        rbracket=cst.RightSquareBracket(
+        rbracket=RightSquareBracket(
             whitespace_before=parse_parenthesizable_whitespace(
                 config, rbracket.whitespace_before
             )
@@ -563,19 +683,21 @@ def convert_trailer_subscriptlist(config: ParserConfig, children: Sequence[Any])
 
 
 @with_production("subscriptlist", "subscript (',' subscript)* [',']")
-def convert_subscriptlist(config: ParserConfig, children: Sequence[Any]) -> Any:
+def convert_subscriptlist(
+    config: ParserConfig, children: typing.Sequence[typing.Any]
+) -> typing.Any:
     if len(children) > 1:
         # This is a list of ExtSlice, so construct as such by grouping every
         # subscript with an optional comma and adding to a list.
         extslices = []
         for slice, comma in grouper(children, 2):
             if comma is None:
-                extslices.append(cst.ExtSlice(slice=slice.value))
+                extslices.append(ExtSlice(slice=slice.value))
             else:
                 extslices.append(
-                    cst.ExtSlice(
+                    ExtSlice(
                         slice=slice.value,
-                        comma=cst.Comma(
+                        comma=Comma(
                             whitespace_before=parse_parenthesizable_whitespace(
                                 config, comma.whitespace_before
                             ),
@@ -593,11 +715,13 @@ def convert_subscriptlist(config: ParserConfig, children: Sequence[Any]) -> Any:
 
 
 @with_production("subscript", "test | [test] ':' [test] [sliceop]")
-def convert_subscript(config: ParserConfig, children: Sequence[Any]) -> Any:
+def convert_subscript(
+    config: ParserConfig, children: typing.Sequence[typing.Any]
+) -> typing.Any:
     if len(children) == 1 and not isinstance(children[0], Token):
         # This is just an index node
         (test,) = children
-        return WithLeadingWhitespace(cst.Index(test.value), test.whitespace_before)
+        return WithLeadingWhitespace(Index(test.value), test.whitespace_before)
 
     if isinstance(children[-1], SlicePartial):
         # We got a partial slice as the final param. Extract the final
@@ -631,9 +755,9 @@ def convert_subscript(config: ParserConfig, children: Sequence[Any]) -> Any:
 
     lower, first_colon, upper = slicechildren
     return WithLeadingWhitespace(
-        cst.Slice(
+        Slice(
             lower=lower.value if lower is not None else None,
-            first_colon=cst.Colon(
+            first_colon=Colon(
                 whitespace_before=parse_parenthesizable_whitespace(
                     config, first_colon.whitespace_before
                 ),
@@ -650,7 +774,9 @@ def convert_subscript(config: ParserConfig, children: Sequence[Any]) -> Any:
 
 
 @with_production("sliceop", "':' [test]")
-def convert_sliceop(config: ParserConfig, children: Sequence[Any]) -> Any:
+def convert_sliceop(
+    config: ParserConfig, children: typing.Sequence[typing.Any]
+) -> typing.Any:
     if len(children) == 2:
         colon, test = children
         step = test.value
@@ -658,7 +784,7 @@ def convert_sliceop(config: ParserConfig, children: Sequence[Any]) -> Any:
         (colon,) = children
         step = None
     return SlicePartial(
-        second_colon=cst.Colon(
+        second_colon=Colon(
             whitespace_before=parse_parenthesizable_whitespace(
                 config, colon.whitespace_before
             ),
@@ -671,10 +797,12 @@ def convert_sliceop(config: ParserConfig, children: Sequence[Any]) -> Any:
 
 
 @with_production("trailer_attribute", "'.' NAME")
-def convert_trailer_attribute(config: ParserConfig, children: Sequence[Any]) -> Any:
+def convert_trailer_attribute(
+    config: ParserConfig, children: typing.Sequence[typing.Any]
+) -> typing.Any:
     dot, name = children
     return AttributePartial(
-        dot=cst.Dot(
+        dot=Dot(
             whitespace_before=parse_parenthesizable_whitespace(
                 config, dot.whitespace_before
             ),
@@ -682,7 +810,7 @@ def convert_trailer_attribute(config: ParserConfig, children: Sequence[Any]) -> 
                 config, dot.whitespace_after
             ),
         ),
-        attr=cst.Name(name.string),
+        attr=Name(name.string),
     )
 
 
@@ -690,32 +818,32 @@ def convert_trailer_attribute(config: ParserConfig, children: Sequence[Any]) -> 
     "atom",
     "atom_parens | atom_squarebrackets | atom_curlybraces | atom_string | atom_basic | atom_ellipses",
 )
-def convert_atom(config: ParserConfig, children: Sequence[Any]) -> Any:
+def convert_atom(
+    config: ParserConfig, children: typing.Sequence[typing.Any]
+) -> typing.Any:
     (child,) = children
     return child
 
 
 @with_production("atom_basic", "NAME | NUMBER | 'None' | 'True' | 'False'")
-def convert_atom_basic(config: ParserConfig, children: Sequence[Any]) -> Any:
+def convert_atom_basic(
+    config: ParserConfig, children: typing.Sequence[typing.Any]
+) -> typing.Any:
     (child,) = children
     if child.type.name == "NAME":
         # This also handles 'None', 'True', and 'False' directly, but we
         # keep it in the grammar to be more correct.
-        return WithLeadingWhitespace(cst.Name(child.string), child.whitespace_before)
+        return WithLeadingWhitespace(Name(child.string), child.whitespace_before)
     elif child.type.name == "NUMBER":
         # We must determine what type of number it is since we split node
         # types up this way.
         if re.fullmatch(INTNUMBER_RE, child.string):
-            return WithLeadingWhitespace(
-                cst.Integer(child.string), child.whitespace_before
-            )
+            return WithLeadingWhitespace(Integer(child.string), child.whitespace_before)
         elif re.fullmatch(FLOATNUMBER_RE, child.string):
-            return WithLeadingWhitespace(
-                cst.Float(child.string), child.whitespace_before
-            )
+            return WithLeadingWhitespace(Float(child.string), child.whitespace_before)
         elif re.fullmatch(IMAGNUMBER_RE, child.string):
             return WithLeadingWhitespace(
-                cst.Imaginary(child.string), child.whitespace_before
+                Imaginary(child.string), child.whitespace_before
             )
         else:
             raise Exception("Unparseable number {child.string}")
@@ -724,48 +852,52 @@ def convert_atom_basic(config: ParserConfig, children: Sequence[Any]) -> Any:
 
 
 @with_production("atom_squarebrackets", "'[' [testlist_comp_list] ']'")
-def convert_atom_squarebrackets(config: ParserConfig, children: Sequence[Any]) -> Any:
+def convert_atom_squarebrackets(
+    config: ParserConfig, children: typing.Sequence[typing.Any]
+) -> typing.Any:
     lbracket_tok, *body, rbracket_tok = children
-    lbracket = cst.LeftSquareBracket(
+    lbracket = LeftSquareBracket(
         whitespace_after=parse_parenthesizable_whitespace(
             config, lbracket_tok.whitespace_after
         )
     )
 
-    rbracket = cst.RightSquareBracket(
+    rbracket = RightSquareBracket(
         whitespace_before=parse_parenthesizable_whitespace(
             config, rbracket_tok.whitespace_before
         )
     )
 
     if len(body) == 0:
-        list_node = cst.List((), lbracket=lbracket, rbracket=rbracket)
+        list_node = List((), lbracket=lbracket, rbracket=rbracket)
     else:  # len(body) == 1
-        # body[0] is a cst.List or cst.ListComp
+        # body[0] is a List or ListComp
         list_node = body[0].value.with_changes(lbracket=lbracket, rbracket=rbracket)
 
     return WithLeadingWhitespace(list_node, lbracket_tok.whitespace_before)
 
 
 @with_production("atom_curlybraces", "'{' [dictorsetmaker] '}'")
-def convert_atom_curlybraces(config: ParserConfig, children: Sequence[Any]) -> Any:
+def convert_atom_curlybraces(
+    config: ParserConfig, children: typing.Sequence[typing.Any]
+) -> typing.Any:
     lbrace_tok, *body, rbrace_tok = children
 
     if len(body) == 0:
         # TODO: Make an empty dict with lbrace and rbrace
         return make_dummy_node(config, children)
     else:  # len(body) == 1
-        # body[0] is a cst.Set, cst.SetComp, cst.Dict, or cst.DictComp
+        # body[0] is a Set, SetComp, Dict, or DictComp
         if isinstance(body[0].value, DummyNode):
             # TODO: Remove this once Dict/DictComp are implemented
             return make_dummy_node(config, children)
-        lbrace = cst.LeftCurlyBrace(
+        lbrace = LeftCurlyBrace(
             whitespace_after=parse_parenthesizable_whitespace(
                 config, lbrace_tok.whitespace_after
             )
         )
 
-        rbrace = cst.RightCurlyBrace(
+        rbrace = RightCurlyBrace(
             whitespace_before=parse_parenthesizable_whitespace(
                 config, rbrace_tok.whitespace_before
             )
@@ -776,16 +908,18 @@ def convert_atom_curlybraces(config: ParserConfig, children: Sequence[Any]) -> A
 
 
 @with_production("atom_parens", "'(' [yield_expr|testlist_comp_tuple] ')'")
-def convert_atom_parens(config: ParserConfig, children: Sequence[Any]) -> Any:
+def convert_atom_parens(
+    config: ParserConfig, children: typing.Sequence[typing.Any]
+) -> typing.Any:
     lpar_tok, *atoms, rpar_tok = children
 
-    lpar = cst.LeftParen(
+    lpar = LeftParen(
         whitespace_after=parse_parenthesizable_whitespace(
             config, lpar_tok.whitespace_after
         )
     )
 
-    rpar = cst.RightParen(
+    rpar = RightParen(
         whitespace_before=parse_parenthesizable_whitespace(
             config, rpar_tok.whitespace_before
         )
@@ -802,24 +936,28 @@ def convert_atom_parens(config: ParserConfig, children: Sequence[Any]) -> Any:
         )
     else:
         return WithLeadingWhitespace(
-            cst.Tuple((), lpar=(lpar,), rpar=(rpar,)), lpar_tok.whitespace_before
+            Tuple((), lpar=(lpar,), rpar=(rpar,)), lpar_tok.whitespace_before
         )
 
 
 @with_production("atom_ellipses", "'...'")
-def convert_atom_ellipses(config: ParserConfig, children: Sequence[Any]) -> Any:
+def convert_atom_ellipses(
+    config: ParserConfig, children: typing.Sequence[typing.Any]
+) -> typing.Any:
     (token,) = children
-    return WithLeadingWhitespace(cst.Ellipses(), token.whitespace_before)
+    return WithLeadingWhitespace(Ellipses(), token.whitespace_before)
 
 
 @with_production("atom_string", "(STRING | fstring) [atom_string]")
-def convert_atom_string(config: ParserConfig, children: Sequence[Any]) -> Any:
+def convert_atom_string(
+    config: ParserConfig, children: typing.Sequence[typing.Any]
+) -> typing.Any:
     if len(children) == 1:
         return children[0]
     else:
         left, right = children
         return WithLeadingWhitespace(
-            cst.ConcatenatedString(
+            ConcatenatedString(
                 left=left.value,
                 whitespace_between=parse_parenthesizable_whitespace(
                     config, right.whitespace_before
@@ -831,27 +969,33 @@ def convert_atom_string(config: ParserConfig, children: Sequence[Any]) -> Any:
 
 
 @with_production("fstring", "FSTRING_START fstring_content* FSTRING_END")
-def convert_fstring(config: ParserConfig, children: Sequence[Any]) -> Any:
+def convert_fstring(
+    config: ParserConfig, children: typing.Sequence[typing.Any]
+) -> typing.Any:
     start, *content, end = children
     return WithLeadingWhitespace(
-        cst.FormattedString(start=start.string, parts=tuple(content), end=end.string),
+        FormattedString(start=start.string, parts=tuple(content), end=end.string),
         start.whitespace_before,
     )
 
 
 @with_production("fstring_content", "FSTRING_STRING | fstring_expr")
-def convert_fstring_content(config: ParserConfig, children: Sequence[Any]) -> Any:
+def convert_fstring_content(
+    config: ParserConfig, children: typing.Sequence[typing.Any]
+) -> typing.Any:
     (child,) = children
     if isinstance(child, Token):
         # Construct and return a raw string portion.
-        return cst.FormattedStringText(child.string)
+        return FormattedStringText(child.string)
     else:
         # Pass the expression up one production.
         return child
 
 
 @with_production("fstring_conversion", "'!' NAME")
-def convert_fstring_conversion(config: ParserConfig, children: Sequence[Any]) -> Any:
+def convert_fstring_conversion(
+    config: ParserConfig, children: typing.Sequence[typing.Any]
+) -> typing.Any:
     exclaim, name = children
     # There cannot be a space between the two tokens, so no need to preserve this.
     return FormattedStringConversionPartial(name.string, exclaim.whitespace_before)
@@ -860,7 +1004,9 @@ def convert_fstring_conversion(config: ParserConfig, children: Sequence[Any]) ->
 @with_production(
     "fstring_expr", "'{' testlist [ fstring_conversion ] [ fstring_format_spec ] '}'"
 )
-def convert_fstring_expr(config: ParserConfig, children: Sequence[Any]) -> Any:
+def convert_fstring_expr(
+    config: ParserConfig, children: typing.Sequence[typing.Any]
+) -> typing.Any:
     openbrkt, testlist, *conversions, closebrkt = children
 
     # Extract any optional conversion
@@ -878,7 +1024,7 @@ def convert_fstring_expr(config: ParserConfig, children: Sequence[Any]) -> Any:
     else:
         format_spec = None
 
-    return cst.FormattedStringExpression(
+    return FormattedStringExpression(
         whitespace_before_expression=parse_parenthesizable_whitespace(
             config, testlist.whitespace_before
         ),
@@ -892,7 +1038,9 @@ def convert_fstring_expr(config: ParserConfig, children: Sequence[Any]) -> Any:
 
 
 @with_production("fstring_format_spec", "':' fstring_content*")
-def convert_fstring_format_spec(config: ParserConfig, children: Sequence[Any]) -> Any:
+def convert_fstring_format_spec(
+    config: ParserConfig, children: typing.Sequence[typing.Any]
+) -> typing.Any:
     colon, *content = children
     return FormattedStringFormatSpecPartial(tuple(content), colon.whitespace_before)
 
@@ -901,13 +1049,15 @@ def convert_fstring_format_spec(config: ParserConfig, children: Sequence[Any]) -
     "testlist_comp_tuple",
     "(test|star_expr) ( comp_for | (',' (test|star_expr))* [','] )",
 )
-def convert_testlist_comp_tuple(config: ParserConfig, children: Sequence[Any]) -> Any:
+def convert_testlist_comp_tuple(
+    config: ParserConfig, children: typing.Sequence[typing.Any]
+) -> typing.Any:
     return _convert_testlist_comp(
         config,
         children,
         single_child_is_sequence=False,
-        sequence_type=cst.Tuple,
-        comprehension_type=cst.GeneratorExp,
+        sequence_type=Tuple,
+        comprehension_type=GeneratorExp,
     )
 
 
@@ -915,25 +1065,29 @@ def convert_testlist_comp_tuple(config: ParserConfig, children: Sequence[Any]) -
     "testlist_comp_list",
     "(test|star_expr) ( comp_for | (',' (test|star_expr))* [','] )",
 )
-def convert_testlist_comp_list(config: ParserConfig, children: Sequence[Any]) -> Any:
+def convert_testlist_comp_list(
+    config: ParserConfig, children: typing.Sequence[typing.Any]
+) -> typing.Any:
     return _convert_testlist_comp(
         config,
         children,
         single_child_is_sequence=True,
-        sequence_type=cst.List,
-        comprehension_type=cst.ListComp,
+        sequence_type=List,
+        comprehension_type=ListComp,
     )
 
 
 def _convert_testlist_comp(
     config: ParserConfig,
-    children: Sequence[Any],
+    children: typing.Sequence[typing.Any],
     single_child_is_sequence: bool,
-    sequence_type: Union[Type[cst.Tuple], Type[cst.List], Type[cst.Set]],
-    comprehension_type: Union[
-        Type[cst.GeneratorExp], Type[cst.ListComp], Type[cst.SetComp]
+    sequence_type: typing.Union[
+        typing.Type[Tuple], typing.Type[List], typing.Type[Set]
     ],
-) -> Any:
+    comprehension_type: typing.Union[
+        typing.Type[GeneratorExp], typing.Type[ListComp], typing.Type[SetComp]
+    ],
+) -> typing.Any:
     # This is either a single-element list, or the second token is a comma, so we're not
     # in a generator.
     if len(children) == 1 or isinstance(children[1], Token):
@@ -953,20 +1107,24 @@ def _convert_testlist_comp(
 @with_production("testlist_star_expr", "(test|star_expr) (',' (test|star_expr))* [',']")
 @with_production("testlist", "test (',' test)* [',']")
 @with_production("exprlist", "(expr|star_expr) (',' (expr|star_expr))* [',']")
-def convert_test_or_expr_list(config: ParserConfig, children: Sequence[Any]) -> Any:
+def convert_test_or_expr_list(
+    config: ParserConfig, children: typing.Sequence[typing.Any]
+) -> typing.Any:
     # Used by expression statements and assignments. Neither of these cases want to
     # treat a single child as a sequence.
     return _convert_sequencelike(
-        config, children, single_child_is_sequence=False, sequence_type=cst.Tuple
+        config, children, single_child_is_sequence=False, sequence_type=Tuple
     )
 
 
 def _convert_sequencelike(
     config: ParserConfig,
-    children: Sequence[Any],
+    children: typing.Sequence[typing.Any],
     single_child_is_sequence: bool,
-    sequence_type: Union[Type[cst.Tuple], Type[cst.List], Type[cst.Set]],
-) -> Any:
+    sequence_type: typing.Union[
+        typing.Type[Tuple], typing.Type[List], typing.Type[Set]
+    ],
+) -> typing.Any:
     if not single_child_is_sequence and len(children) == 1:
         return children[0]
     # N.B. The parent node (e.g. atom) is responsible for computing and attaching
@@ -977,7 +1135,7 @@ def _convert_sequencelike(
         if comma_token is None:
             comma = MaybeSentinel.DEFAULT
         else:
-            comma = cst.Comma(
+            comma = Comma(
                 whitespace_before=parse_parenthesizable_whitespace(
                     config, comma_token.whitespace_before
                 ),
@@ -988,15 +1146,15 @@ def _convert_sequencelike(
                     config, comma_token.whitespace_after
                 )
                 if comma_token is not children[-1]
-                else cst.SimpleWhitespace(""),
+                else SimpleWhitespace(""),
             )
 
-        if isinstance(expr_or_starred_element, cst.StarredElement):
+        if isinstance(expr_or_starred_element, StarredElement):
             starred_element = expr_or_starred_element
             elements.append(starred_element.with_changes(comma=comma))
         else:
             expr = expr_or_starred_element
-            elements.append(cst.Element(value=expr, comma=comma))
+            elements.append(Element(value=expr, comma=comma))
 
     # lpar/rpar are the responsibility of our parent
     return WithLeadingWhitespace(
@@ -1013,7 +1171,9 @@ def _convert_sequencelike(
         + " (comp_for | (',' (test | star_expr))* [','])) )"
     ),
 )
-def convert_dictorsetmaker(config: ParserConfig, children: Sequence[Any]) -> Any:
+def convert_dictorsetmaker(
+    config: ParserConfig, children: typing.Sequence[typing.Any]
+) -> typing.Any:
     # We'll always have at least one child. `atom_curlybraces` handles empty
     # dicts.
     if len(children) > 1 and (
@@ -1025,22 +1185,28 @@ def convert_dictorsetmaker(config: ParserConfig, children: Sequence[Any]) -> Any
         return _convert_set(config, children)
 
 
-def _convert_dict(config: ParserConfig, children: Sequence[Any]) -> Any:
+def _convert_dict(
+    config: ParserConfig, children: typing.Sequence[typing.Any]
+) -> typing.Any:
     return make_dummy_node(config, children)
 
 
-def _convert_set(config: ParserConfig, children: Sequence[Any]) -> Any:
+def _convert_set(
+    config: ParserConfig, children: typing.Sequence[typing.Any]
+) -> typing.Any:
     return _convert_testlist_comp(
         config,
         children,
         single_child_is_sequence=True,
-        sequence_type=cst.Set,
-        comprehension_type=cst.SetComp,
+        sequence_type=Set,
+        comprehension_type=SetComp,
     )
 
 
 @with_production("arglist", "argument (',' argument)* [',']")
-def convert_arglist(config: ParserConfig, children: Sequence[Any]) -> Any:
+def convert_arglist(
+    config: ParserConfig, children: typing.Sequence[typing.Any]
+) -> typing.Any:
     args = []
     for argument, comma in grouper(children, 2):
         if comma is None:
@@ -1048,7 +1214,7 @@ def convert_arglist(config: ParserConfig, children: Sequence[Any]) -> Any:
         else:
             args.append(
                 argument.with_changes(
-                    comma=cst.Comma(
+                    comma=Comma(
                         whitespace_before=parse_parenthesizable_whitespace(
                             config, comma.whitespace_before
                         ),
@@ -1062,26 +1228,30 @@ def convert_arglist(config: ParserConfig, children: Sequence[Any]) -> Any:
 
 
 @with_production("argument", "arg_assign_comp_for | star_arg")
-def convert_argument(config: ParserConfig, children: Sequence[Any]) -> Any:
+def convert_argument(
+    config: ParserConfig, children: typing.Sequence[typing.Any]
+) -> typing.Any:
     (child,) = children
     return child
 
 
 @with_production("arg_assign_comp_for", "test [comp_for] | test '=' test")
-def convert_arg_assign_comp_for(config: ParserConfig, children: Sequence[Any]) -> Any:
+def convert_arg_assign_comp_for(
+    config: ParserConfig, children: typing.Sequence[typing.Any]
+) -> typing.Any:
     if len(children) == 1:
         # Simple test
         (child,) = children
-        return cst.Arg(value=child.value)
+        return Arg(value=child.value)
     elif len(children) == 2:
         elt, for_in = children
-        return cst.Arg(value=cst.GeneratorExp(elt.value, for_in, lpar=(), rpar=()))
+        return Arg(value=GeneratorExp(elt.value, for_in, lpar=(), rpar=()))
     else:
         # "key = value" assignment argument
         lhs, equal, rhs = children
-        return cst.Arg(
+        return Arg(
             keyword=lhs.value,
-            equal=cst.AssignEqual(
+            equal=AssignEqual(
                 whitespace_before=parse_parenthesizable_whitespace(
                     config, equal.whitespace_before
                 ),
@@ -1094,9 +1264,11 @@ def convert_arg_assign_comp_for(config: ParserConfig, children: Sequence[Any]) -
 
 
 @with_production("star_arg", "'**' test | '*' test")
-def convert_star_arg(config: ParserConfig, children: Sequence[Any]) -> Any:
+def convert_star_arg(
+    config: ParserConfig, children: typing.Sequence[typing.Any]
+) -> typing.Any:
     star, test = children
-    return cst.Arg(
+    return Arg(
         star=star.string,
         whitespace_after_star=parse_parenthesizable_whitespace(
             config, star.whitespace_after
@@ -1106,15 +1278,17 @@ def convert_star_arg(config: ParserConfig, children: Sequence[Any]) -> Any:
 
 
 @with_production("sync_comp_for", "'for' exprlist 'in' or_test comp_if* [comp_for]")
-def convert_sync_comp_for(config: ParserConfig, children: Sequence[Any]) -> Any:
+def convert_sync_comp_for(
+    config: ParserConfig, children: typing.Sequence[typing.Any]
+) -> typing.Any:
     # unpack
     for_tok, target, in_tok, iter, *trailing = children
-    if len(trailing) and isinstance(trailing[-1], cst.CompFor):
+    if len(trailing) and isinstance(trailing[-1], CompFor):
         *ifs, inner_for_in = trailing
     else:
         ifs, inner_for_in = trailing, None
 
-    return cst.CompFor(
+    return CompFor(
         target=target.value,
         iter=iter.value,
         ifs=ifs,
@@ -1135,7 +1309,9 @@ def convert_sync_comp_for(config: ParserConfig, children: Sequence[Any]) -> Any:
 
 
 @with_production("comp_for", "['async'] sync_comp_for")
-def convert_comp_for(config: ParserConfig, children: Sequence[Any]) -> Any:
+def convert_comp_for(
+    config: ParserConfig, children: typing.Sequence[typing.Any]
+) -> typing.Any:
     if len(children) == 1:
         (sync_comp_for,) = children
         return sync_comp_for
@@ -1143,9 +1319,7 @@ def convert_comp_for(config: ParserConfig, children: Sequence[Any]) -> Any:
         (async_tok, sync_comp_for) = children
         return sync_comp_for.with_changes(
             # asynchronous steals the `CompFor`'s `whitespace_before`.
-            asynchronous=cst.Asynchronous(
-                whitespace_after=sync_comp_for.whitespace_before
-            ),
+            asynchronous=Asynchronous(whitespace_after=sync_comp_for.whitespace_before),
             # But, in exchange, `CompFor` gets to keep `async_tok`'s leading
             # whitespace, because that's now the beginning of the `CompFor`.
             whitespace_before=parse_parenthesizable_whitespace(
@@ -1155,9 +1329,11 @@ def convert_comp_for(config: ParserConfig, children: Sequence[Any]) -> Any:
 
 
 @with_production("comp_if", "'if' test_nocond")
-def convert_comp_if(config: ParserConfig, children: Sequence[Any]) -> Any:
+def convert_comp_if(
+    config: ParserConfig, children: typing.Sequence[typing.Any]
+) -> typing.Any:
     if_tok, test = children
-    return cst.CompIf(
+    return CompIf(
         test.value,
         whitespace_before=parse_parenthesizable_whitespace(
             config, if_tok.whitespace_before
@@ -1169,15 +1345,17 @@ def convert_comp_if(config: ParserConfig, children: Sequence[Any]) -> Any:
 
 
 @with_production("yield_expr", "'yield' [yield_arg]")
-def convert_yield_expr(config: ParserConfig, children: Sequence[Any]) -> Any:
+def convert_yield_expr(
+    config: ParserConfig, children: typing.Sequence[typing.Any]
+) -> typing.Any:
     if len(children) == 1:
         # Yielding implicit none
         (yield_token,) = children
-        yield_node = cst.Yield(value=None)
+        yield_node = Yield(value=None)
     else:
         # Yielding explicit value
         (yield_token, yield_arg) = children
-        yield_node = cst.Yield(
+        yield_node = Yield(
             value=yield_arg.value,
             whitespace_after_yield=parse_parenthesizable_whitespace(
                 config, yield_arg.whitespace_before
@@ -1188,7 +1366,9 @@ def convert_yield_expr(config: ParserConfig, children: Sequence[Any]) -> Any:
 
 
 @with_production("yield_arg", "'from' test | testlist")
-def convert_yield_arg(config: ParserConfig, children: Sequence[Any]) -> Any:
+def convert_yield_arg(
+    config: ParserConfig, children: typing.Sequence[typing.Any]
+) -> typing.Any:
     if len(children) == 1:
         # Just a regular testlist, pass it up
         (child,) = children
@@ -1198,7 +1378,7 @@ def convert_yield_arg(config: ParserConfig, children: Sequence[Any]) -> Any:
         (from_token, test) = children
 
         return WithLeadingWhitespace(
-            cst.From(
+            From(
                 item=test.value,
                 whitespace_after_from=parse_parenthesizable_whitespace(
                     config, test.whitespace_before

@@ -4,7 +4,3 @@
 # LICENSE file in the root directory of this source tree.
 
 # pyre-strict
-from libcst.parser._entrypoints import parse_expression, parse_module, parse_statement
-
-
-__all__ = ["parse_module", "parse_expression", "parse_statement"]

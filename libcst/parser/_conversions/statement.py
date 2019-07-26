@@ -5,8 +5,78 @@
 
 from typing import Any, Dict, List, Optional, Sequence, Tuple, Type
 
-import libcst as cst
 from libcst._maybe_sentinel import MaybeSentinel
+from libcst._nodes._expression import (
+    Annotation,
+    Arg,
+    Asynchronous,
+    Attribute,
+    Call,
+    From,
+    LeftParen,
+    Name,
+    Param,
+    Parameters,
+    RightParen,
+)
+from libcst._nodes._op import (
+    AddAssign,
+    AssignEqual,
+    BaseAugOp,
+    BitAndAssign,
+    BitOrAssign,
+    BitXorAssign,
+    Comma,
+    DivideAssign,
+    Dot,
+    FloorDivideAssign,
+    ImportStar,
+    LeftShiftAssign,
+    MatrixMultiplyAssign,
+    ModuloAssign,
+    MultiplyAssign,
+    PowerAssign,
+    RightShiftAssign,
+    Semicolon,
+    SubtractAssign,
+)
+from libcst._nodes._statement import (
+    AnnAssign,
+    AsName,
+    Assert,
+    Assign,
+    AssignTarget,
+    AugAssign,
+    Break,
+    ClassDef,
+    Continue,
+    Decorator,
+    Del,
+    Else,
+    ExceptHandler,
+    Expr,
+    Finally,
+    For,
+    FunctionDef,
+    Global,
+    If,
+    Import,
+    ImportAlias,
+    ImportFrom,
+    IndentedBlock,
+    NameItem,
+    Nonlocal,
+    Pass,
+    Raise,
+    Return,
+    SimpleStatementLine,
+    SimpleStatementSuite,
+    Try,
+    While,
+    With,
+    WithItem,
+)
+from libcst._nodes._whitespace import EmptyLine, SimpleWhitespace
 from libcst.parser._custom_itertools import grouper
 from libcst.parser._production_decorator import with_production
 from libcst.parser._types.config import ParserConfig
@@ -30,20 +100,20 @@ from libcst.parser._whitespace_parser import (
 )
 
 
-AUGOP_TOKEN_LUT: Dict[str, Type[cst.BaseAugOp]] = {
-    "+=": cst.AddAssign,
-    "-=": cst.SubtractAssign,
-    "*=": cst.MultiplyAssign,
-    "@=": cst.MatrixMultiplyAssign,
-    "/=": cst.DivideAssign,
-    "%=": cst.ModuloAssign,
-    "&=": cst.BitAndAssign,
-    "|=": cst.BitOrAssign,
-    "^=": cst.BitXorAssign,
-    "<<=": cst.LeftShiftAssign,
-    ">>=": cst.RightShiftAssign,
-    "**=": cst.PowerAssign,
-    "//=": cst.FloorDivideAssign,
+AUGOP_TOKEN_LUT: Dict[str, Type[BaseAugOp]] = {
+    "+=": AddAssign,
+    "-=": SubtractAssign,
+    "*=": MultiplyAssign,
+    "@=": MatrixMultiplyAssign,
+    "/=": DivideAssign,
+    "%=": ModuloAssign,
+    "&=": BitAndAssign,
+    "|=": BitOrAssign,
+    "^=": BitXorAssign,
+    "<<=": LeftShiftAssign,
+    ">>=": RightShiftAssign,
+    "**=": PowerAssign,
+    "//=": FloorDivideAssign,
 }
 
 
@@ -69,15 +139,15 @@ def convert_simple_stmt_partial(config: ParserConfig, children: Sequence[Any]) -
         if semi is not None:
             if i == (last_stmt - 1):
                 # Trailing semicolons only own the whitespace before.
-                semi = cst.Semicolon(
+                semi = Semicolon(
                     whitespace_before=parse_simple_whitespace(
                         config, semi.whitespace_before
                     ),
-                    whitespace_after=cst.SimpleWhitespace(""),
+                    whitespace_after=SimpleWhitespace(""),
                 )
             else:
                 # Middle semicolons own the whitespace before and after.
-                semi = cst.Semicolon(
+                semi = Semicolon(
                     whitespace_before=parse_simple_whitespace(
                         config, semi.whitespace_before
                     ),
@@ -101,7 +171,7 @@ def convert_simple_stmt_line(config: ParserConfig, children: Sequence[Any]) -> A
     This function is similar to convert_simple_stmt_suite, but yields a different type
     """
     (partial,) = children
-    return cst.SimpleStatementLine(
+    return SimpleStatementLine(
         partial.body,
         leading_lines=parse_empty_lines(config, partial.whitespace_before),
         trailing_whitespace=partial.trailing_whitespace,
@@ -114,7 +184,7 @@ def convert_simple_stmt_suite(config: ParserConfig, children: Sequence[Any]) -> 
     This function is similar to convert_simple_stmt_line, but yields a different type
     """
     (partial,) = children
-    return cst.SimpleStatementSuite(
+    return SimpleStatementSuite(
         partial.body,
         leading_whitespace=parse_simple_whitespace(config, partial.whitespace_before),
         trailing_whitespace=partial.trailing_whitespace,
@@ -143,13 +213,13 @@ def convert_expr_stmt(config: ParserConfig, children: Sequence[Any]) -> Any:
         # This is an unassigned expr statement (like a function call)
         (test_node,) = children
         return WithLeadingWhitespace(
-            cst.Expr(value=test_node.value), test_node.whitespace_before
+            Expr(value=test_node.value), test_node.whitespace_before
         )
     elif len(children) == 2:
         lhs, rhs = children
         if isinstance(rhs, AnnAssignPartial):
             return WithLeadingWhitespace(
-                cst.AnnAssign(
+                AnnAssign(
                     target=lhs.value,
                     annotation=rhs.annotation,
                     equal=MaybeSentinel.DEFAULT if rhs.equal is None else rhs.equal,
@@ -159,7 +229,7 @@ def convert_expr_stmt(config: ParserConfig, children: Sequence[Any]) -> Any:
             )
         elif isinstance(rhs, AugAssignPartial):
             return WithLeadingWhitespace(
-                cst.AugAssign(target=lhs.value, operator=rhs.operator, value=rhs.value),
+                AugAssign(target=lhs.value, operator=rhs.operator, value=rhs.value),
                 lhs.whitespace_before,
             )
     # The only thing it could be at this point is an assign with one or more targets.
@@ -171,7 +241,7 @@ def convert_expr_stmt(config: ParserConfig, children: Sequence[Any]) -> Any:
         equal = children[i + 1].equal
 
         targets.append(
-            cst.AssignTarget(
+            AssignTarget(
                 target=target,
                 whitespace_before_equal=equal.whitespace_before,
                 whitespace_after_equal=equal.whitespace_after,
@@ -179,7 +249,7 @@ def convert_expr_stmt(config: ParserConfig, children: Sequence[Any]) -> Any:
         )
 
     return WithLeadingWhitespace(
-        cst.Assign(targets=tuple(targets), value=children[-1].value),
+        Assign(targets=tuple(targets), value=children[-1].value),
         children[0].whitespace_before,
     )
 
@@ -197,7 +267,7 @@ def convert_annassign(config: ParserConfig, children: Sequence[Any]) -> Any:
         colon, annotation, equal, value = children
         annotation = annotation.value
         value = value.value
-        equal = cst.AssignEqual(
+        equal = AssignEqual(
             whitespace_before=parse_simple_whitespace(config, equal.whitespace_before),
             whitespace_after=parse_simple_whitespace(config, equal.whitespace_after),
         )
@@ -205,7 +275,7 @@ def convert_annassign(config: ParserConfig, children: Sequence[Any]) -> Any:
         raise Exception("Invalid parser state!")
 
     return AnnAssignPartial(
-        annotation=cst.Annotation(
+        annotation=Annotation(
             whitespace_before_indicator=parse_simple_whitespace(
                 config, colon.whitespace_before
             ),
@@ -244,7 +314,7 @@ def convert_augassign(config: ParserConfig, children: Sequence[Any]) -> Any:
 def convert_assign(config: ParserConfig, children: Sequence[Any]) -> Any:
     equal, expr = children
     return AssignPartial(
-        equal=cst.AssignEqual(
+        equal=AssignEqual(
             whitespace_before=parse_simple_whitespace(config, equal.whitespace_before),
             whitespace_after=parse_simple_whitespace(config, equal.whitespace_after),
         ),
@@ -255,14 +325,14 @@ def convert_assign(config: ParserConfig, children: Sequence[Any]) -> Any:
 @with_production("pass_stmt", "'pass'")
 def convert_pass_stmt(config: ParserConfig, children: Sequence[Any]) -> Any:
     (name,) = children
-    return WithLeadingWhitespace(cst.Pass(), name.whitespace_before)
+    return WithLeadingWhitespace(Pass(), name.whitespace_before)
 
 
 @with_production("del_stmt", "'del' exprlist")
 def convert_del_stmt(config: ParserConfig, children: Sequence[Any]) -> Any:
     (del_name, exprlist) = children
     return WithLeadingWhitespace(
-        cst.Del(
+        Del(
             target=exprlist.value,
             whitespace_after_del=parse_simple_whitespace(
                 config, del_name.whitespace_after
@@ -275,13 +345,13 @@ def convert_del_stmt(config: ParserConfig, children: Sequence[Any]) -> Any:
 @with_production("continue_stmt", "'continue'")
 def convert_continue_stmt(config: ParserConfig, children: Sequence[Any]) -> Any:
     (name,) = children
-    return WithLeadingWhitespace(cst.Continue(), name.whitespace_before)
+    return WithLeadingWhitespace(Continue(), name.whitespace_before)
 
 
 @with_production("break_stmt", "'break'")
 def convert_break_stmt(config: ParserConfig, children: Sequence[Any]) -> Any:
     (name,) = children
-    return WithLeadingWhitespace(cst.Break(), name.whitespace_before)
+    return WithLeadingWhitespace(Break(), name.whitespace_before)
 
 
 @with_production("return_stmt", "'return' [testlist]")
@@ -289,13 +359,13 @@ def convert_return_stmt(config: ParserConfig, children: Sequence[Any]) -> Any:
     if len(children) == 1:
         (keyword,) = children
         return WithLeadingWhitespace(
-            cst.Return(whitespace_after_return=cst.SimpleWhitespace("")),
+            Return(whitespace_after_return=SimpleWhitespace("")),
             keyword.whitespace_before,
         )
     else:
         (keyword, testlist) = children
         return WithLeadingWhitespace(
-            cst.Return(
+            Return(
                 value=testlist.value,
                 whitespace_after_return=parse_simple_whitespace(
                     config, keyword.whitespace_after
@@ -315,7 +385,7 @@ def convert_import_stmt(config: ParserConfig, children: Sequence[Any]) -> Any:
 def convert_import_name(config: ParserConfig, children: Sequence[Any]) -> Any:
     importtoken, names = children
     return WithLeadingWhitespace(
-        cst.Import(
+        Import(
             names=names.names,
             whitespace_after_import=parse_simple_whitespace(
                 config, importtoken.whitespace_after
@@ -335,9 +405,9 @@ def convert_import_relative(config: ParserConfig, children: Sequence[Any]) -> An
             if child.string == "...":
                 dots.extend(
                     [
-                        cst.Dot(),
-                        cst.Dot(),
-                        cst.Dot(
+                        Dot(),
+                        Dot(),
+                        Dot(
                             whitespace_after=parse_simple_whitespace(
                                 config, child.whitespace_after
                             )
@@ -346,7 +416,7 @@ def convert_import_relative(config: ParserConfig, children: Sequence[Any]) -> An
                 )
             else:
                 dots.append(
-                    cst.Dot(
+                    Dot(
                         whitespace_after=parse_simple_whitespace(
                             config, child.whitespace_after
                         )
@@ -373,7 +443,7 @@ def convert_import_from(config: ParserConfig, children: Sequence[Any]) -> Any:
         (possible_star,) = importlist
         if isinstance(possible_star, Token):
             # Its a "*" import, so we must construct this node.
-            names = cst.ImportStar()
+            names = ImportStar()
         else:
             # Its an import as names partial, grab the names from that.
             names = possible_star.names
@@ -382,13 +452,13 @@ def convert_import_from(config: ParserConfig, children: Sequence[Any]) -> Any:
     else:
         # Its an import as names partial with parens
         lpartoken, namespartial, rpartoken = importlist
-        lpar = cst.LeftParen(
+        lpar = LeftParen(
             whitespace_after=parse_parenthesizable_whitespace(
                 config, lpartoken.whitespace_after
             )
         )
         names = namespartial.names
-        rpar = cst.RightParen(
+        rpar = RightParen(
             whitespace_before=parse_parenthesizable_whitespace(
                 config, rpartoken.whitespace_before
             )
@@ -401,7 +471,7 @@ def convert_import_from(config: ParserConfig, children: Sequence[Any]) -> Any:
         relative = (
             *import_relative.relative[:-1],
             import_relative.relative[-1].with_changes(
-                whitespace_after=cst.SimpleWhitespace("")
+                whitespace_after=SimpleWhitespace("")
             ),
         )
     else:
@@ -411,7 +481,7 @@ def convert_import_from(config: ParserConfig, children: Sequence[Any]) -> Any:
         relative = import_relative.relative
 
     return WithLeadingWhitespace(
-        cst.ImportFrom(
+        ImportFrom(
             whitespace_after_from=parse_simple_whitespace(
                 config, fromtoken.whitespace_after
             ),
@@ -433,19 +503,19 @@ def convert_import_from(config: ParserConfig, children: Sequence[Any]) -> Any:
 def convert_import_as_name(config: ParserConfig, children: Sequence[Any]) -> Any:
     if len(children) == 1:
         (dotted_name,) = children
-        return cst.ImportAlias(name=cst.Name(dotted_name.string), asname=None)
+        return ImportAlias(name=Name(dotted_name.string), asname=None)
     else:
         dotted_name, astoken, name = children
-        return cst.ImportAlias(
-            name=cst.Name(dotted_name.string),
-            asname=cst.AsName(
+        return ImportAlias(
+            name=Name(dotted_name.string),
+            asname=AsName(
                 whitespace_before_as=parse_simple_whitespace(
                     config, astoken.whitespace_before
                 ),
                 whitespace_after_as=parse_simple_whitespace(
                     config, astoken.whitespace_after
                 ),
-                name=cst.Name(name.string),
+                name=Name(name.string),
             ),
         )
 
@@ -454,19 +524,19 @@ def convert_import_as_name(config: ParserConfig, children: Sequence[Any]) -> Any
 def convert_dotted_as_name(config: ParserConfig, children: Sequence[Any]) -> Any:
     if len(children) == 1:
         (dotted_name,) = children
-        return cst.ImportAlias(name=dotted_name, asname=None)
+        return ImportAlias(name=dotted_name, asname=None)
     else:
         dotted_name, astoken, name = children
-        return cst.ImportAlias(
+        return ImportAlias(
             name=dotted_name,
-            asname=cst.AsName(
+            asname=AsName(
                 whitespace_before_as=parse_parenthesizable_whitespace(
                     config, astoken.whitespace_before
                 ),
                 whitespace_after_as=parse_parenthesizable_whitespace(
                     config, astoken.whitespace_after
                 ),
-                name=cst.Name(name.string),
+                name=Name(name.string),
             ),
         )
 
@@ -491,7 +561,7 @@ def _gather_import_names(
         else:
             names.append(
                 name.with_changes(
-                    comma=cst.Comma(
+                    comma=Comma(
                         whitespace_before=parse_parenthesizable_whitespace(
                             config, comma.whitespace_before
                         ),
@@ -508,12 +578,12 @@ def _gather_import_names(
 @with_production("dotted_name", "NAME ('.' NAME)*")
 def convert_dotted_name(config: ParserConfig, children: Sequence[Any]) -> Any:
     left, *rest = children
-    node = cst.Name(left.string)
+    node = Name(left.string)
 
     for dot, right in grouper(rest, 2):
-        node = cst.Attribute(
+        node = Attribute(
             value=node,
-            dot=cst.Dot(
+            dot=Dot(
                 whitespace_before=parse_parenthesizable_whitespace(
                     config, dot.whitespace_before
                 ),
@@ -521,7 +591,7 @@ def convert_dotted_name(config: ParserConfig, children: Sequence[Any]) -> Any:
                     config, dot.whitespace_after
                 ),
             ),
-            attr=cst.Name(right.string),
+            attr=Name(right.string),
         )
 
     return node
@@ -543,7 +613,7 @@ def convert_raise_stmt(config: ParserConfig, children: Sequence[Any]) -> Any:
         (raise_token, test, from_token, source) = children
         whitespace_after_raise = parse_simple_whitespace(config, test.whitespace_before)
         exc = test.value
-        cause = cst.From(
+        cause = From(
             whitespace_before_from=parse_simple_whitespace(
                 config, from_token.whitespace_before
             ),
@@ -556,23 +626,21 @@ def convert_raise_stmt(config: ParserConfig, children: Sequence[Any]) -> Any:
         raise Exception("Logic error!")
 
     return WithLeadingWhitespace(
-        cst.Raise(whitespace_after_raise=whitespace_after_raise, exc=exc, cause=cause),
+        Raise(whitespace_after_raise=whitespace_after_raise, exc=exc, cause=cause),
         raise_token.whitespace_before,
     )
 
 
-def _construct_nameitems(
-    config: ParserConfig, names: Sequence[Any]
-) -> List[cst.NameItem]:
-    nameitems: List[cst.NameItem] = []
+def _construct_nameitems(config: ParserConfig, names: Sequence[Any]) -> List[NameItem]:
+    nameitems: List[NameItem] = []
     for name, maybe_comma in grouper(names, 2):
         if maybe_comma is None:
-            nameitems.append(cst.NameItem(cst.Name(name.string)))
+            nameitems.append(NameItem(Name(name.string)))
         else:
             nameitems.append(
-                cst.NameItem(
-                    cst.Name(name.string),
-                    comma=cst.Comma(
+                NameItem(
+                    Name(name.string),
+                    comma=Comma(
                         whitespace_before=parse_simple_whitespace(
                             config, maybe_comma.whitespace_before
                         ),
@@ -589,7 +657,7 @@ def _construct_nameitems(
 def convert_global_stmt(config: ParserConfig, children: Sequence[Any]) -> Any:
     (global_token, *names) = children
     return WithLeadingWhitespace(
-        cst.Global(
+        Global(
             names=tuple(_construct_nameitems(config, names)),
             whitespace_after_global=parse_simple_whitespace(
                 config, names[0].whitespace_before
@@ -603,7 +671,7 @@ def convert_global_stmt(config: ParserConfig, children: Sequence[Any]) -> Any:
 def convert_nonlocal_stmt(config: ParserConfig, children: Sequence[Any]) -> Any:
     (nonlocal_token, *names) = children
     return WithLeadingWhitespace(
-        cst.Nonlocal(
+        Nonlocal(
             names=tuple(_construct_nameitems(config, names)),
             whitespace_after_nonlocal=parse_simple_whitespace(
                 config, names[0].whitespace_before
@@ -617,7 +685,7 @@ def convert_nonlocal_stmt(config: ParserConfig, children: Sequence[Any]) -> Any:
 def convert_assert_stmt(config: ParserConfig, children: Sequence[Any]) -> Any:
     if len(children) == 2:
         (assert_token, test) = children
-        assert_node = cst.Assert(
+        assert_node = Assert(
             whitespace_after_assert=parse_simple_whitespace(
                 config, test.whitespace_before
             ),
@@ -626,12 +694,12 @@ def convert_assert_stmt(config: ParserConfig, children: Sequence[Any]) -> Any:
         )
     else:
         (assert_token, test, comma_token, msg) = children
-        assert_node = cst.Assert(
+        assert_node = Assert(
             whitespace_after_assert=parse_simple_whitespace(
                 config, test.whitespace_before
             ),
             test=test.value,
-            comma=cst.Comma(
+            comma=Comma(
                 whitespace_before=parse_simple_whitespace(
                     config, comma_token.whitespace_before
                 ),
@@ -661,7 +729,7 @@ def convert_if_stmt(config: ParserConfig, children: Sequence[Any]) -> Any:
     else:
         orelse = None
 
-    return cst.If(
+    return If(
         leading_lines=parse_empty_lines(config, if_tok.whitespace_before),
         whitespace_before_test=parse_simple_whitespace(config, if_tok.whitespace_after),
         test=test.value,
@@ -683,7 +751,7 @@ def convert_if_stmt_elif(config: ParserConfig, children: Sequence[Any]) -> Any:
 @with_production("if_stmt_else", "'else' ':' suite")
 def convert_if_stmt_else(config: ParserConfig, children: Sequence[Any]) -> Any:
     else_tok, colon_tok, suite = children
-    return cst.Else(
+    return Else(
         leading_lines=parse_empty_lines(config, else_tok.whitespace_before),
         whitespace_before_colon=parse_simple_whitespace(
             config, colon_tok.whitespace_before
@@ -698,7 +766,7 @@ def convert_while_stmt(config: ParserConfig, children: Sequence[Any]) -> Any:
 
     if len(else_block) > 0:
         (else_token, else_colon_token, else_suite) = else_block
-        orelse = cst.Else(
+        orelse = Else(
             leading_lines=parse_empty_lines(config, else_token.whitespace_before),
             whitespace_before_colon=parse_simple_whitespace(
                 config, else_colon_token.whitespace_before
@@ -708,7 +776,7 @@ def convert_while_stmt(config: ParserConfig, children: Sequence[Any]) -> Any:
     else:
         orelse = None
 
-    return cst.While(
+    return While(
         leading_lines=parse_empty_lines(config, while_token.whitespace_before),
         whitespace_after_while=parse_simple_whitespace(
             config, while_token.whitespace_after
@@ -738,7 +806,7 @@ def convert_for_stmt(config: ParserConfig, children: Sequence[Any]) -> Any:
 
     if len(else_block) > 0:
         (else_token, else_colon_token, else_suite) = else_block
-        orelse = cst.Else(
+        orelse = Else(
             leading_lines=parse_empty_lines(config, else_token.whitespace_before),
             whitespace_before_colon=parse_simple_whitespace(
                 config, else_colon_token.whitespace_before
@@ -749,7 +817,7 @@ def convert_for_stmt(config: ParserConfig, children: Sequence[Any]) -> Any:
         orelse = None
 
     return WithLeadingWhitespace(
-        cst.For(
+        For(
             whitespace_after_for=parse_simple_whitespace(
                 config, for_token.whitespace_after
             ),
@@ -777,16 +845,16 @@ def convert_for_stmt(config: ParserConfig, children: Sequence[Any]) -> Any:
 )
 def convert_try_stmt(config: ParserConfig, children: Sequence[Any]) -> Any:
     trytoken, try_colon_token, try_suite, *rest = children
-    handlers: List[cst.ExceptHandler] = []
-    orelse: Optional[cst.Else] = None
-    finalbody: Optional[cst.Finally] = None
+    handlers: List[ExceptHandler] = []
+    orelse: Optional[Else] = None
+    finalbody: Optional[Finally] = None
 
     for clause, colon_token, suite in grouper(rest, 3):
         if isinstance(clause, Token):
             if clause.string == "else":
                 if orelse is not None:
                     raise Exception("Logic error!")
-                orelse = cst.Else(
+                orelse = Else(
                     leading_lines=parse_empty_lines(config, clause.whitespace_before),
                     whitespace_before_colon=parse_simple_whitespace(
                         config, colon_token.whitespace_before
@@ -796,7 +864,7 @@ def convert_try_stmt(config: ParserConfig, children: Sequence[Any]) -> Any:
             elif clause.string == "finally":
                 if finalbody is not None:
                     raise Exception("Logic error!")
-                finalbody = cst.Finally(
+                finalbody = Finally(
                     leading_lines=parse_empty_lines(config, clause.whitespace_before),
                     whitespace_before_colon=parse_simple_whitespace(
                         config, colon_token.whitespace_before
@@ -807,7 +875,7 @@ def convert_try_stmt(config: ParserConfig, children: Sequence[Any]) -> Any:
                 raise Exception("Logic error!")
         elif isinstance(clause, ExceptClausePartial):
             handlers.append(
-                cst.ExceptHandler(
+                ExceptHandler(
                     body=suite,
                     type=clause.type,
                     name=clause.name,
@@ -821,7 +889,7 @@ def convert_try_stmt(config: ParserConfig, children: Sequence[Any]) -> Any:
         else:
             raise Exception("Logic error!")
 
-    return cst.Try(
+    return Try(
         leading_lines=parse_empty_lines(config, trytoken.whitespace_before),
         whitespace_before_colon=parse_simple_whitespace(
             config, try_colon_token.whitespace_before
@@ -837,7 +905,7 @@ def convert_try_stmt(config: ParserConfig, children: Sequence[Any]) -> Any:
 def convert_except_clause(config: ParserConfig, children: Sequence[Any]) -> Any:
     if len(children) == 1:
         (except_token,) = children
-        whitespace_after_except = cst.SimpleWhitespace("")
+        whitespace_after_except = SimpleWhitespace("")
         test = None
         name = None
     elif len(children) == 2:
@@ -853,14 +921,14 @@ def convert_except_clause(config: ParserConfig, children: Sequence[Any]) -> Any:
             config, except_token.whitespace_after
         )
         test = test_node.value
-        name = cst.AsName(
+        name = AsName(
             whitespace_before_as=parse_simple_whitespace(
                 config, as_token.whitespace_before
             ),
             whitespace_after_as=parse_simple_whitespace(
                 config, as_token.whitespace_after
             ),
-            name=cst.Name(name_token.string),
+            name=Name(name_token.string),
         )
 
     return ExceptClausePartial(
@@ -874,13 +942,13 @@ def convert_except_clause(config: ParserConfig, children: Sequence[Any]) -> Any:
 @with_production("with_stmt", "'with' with_item (',' with_item)*  ':' suite")
 def convert_with_stmt(config: ParserConfig, children: Sequence[Any]) -> Any:
     (with_token, *items, colon_token, suite) = children
-    item_nodes: List[cst.WithItem] = []
+    item_nodes: List[WithItem] = []
 
     for with_item, maybe_comma in grouper(items, 2):
         if maybe_comma is not None:
             item_nodes.append(
                 with_item.with_changes(
-                    comma=cst.Comma(
+                    comma=Comma(
                         whitespace_before=parse_parenthesizable_whitespace(
                             config, maybe_comma.whitespace_before
                         ),
@@ -894,7 +962,7 @@ def convert_with_stmt(config: ParserConfig, children: Sequence[Any]) -> Any:
             item_nodes.append(with_item)
 
     return WithLeadingWhitespace(
-        cst.With(
+        With(
             whitespace_after_with=parse_simple_whitespace(
                 config, with_token.whitespace_after
             ),
@@ -913,7 +981,7 @@ def convert_with_item(config: ParserConfig, children: Sequence[Any]) -> Any:
     if len(children) == 3:
         (test, as_token, expr_node) = children
         test_node = test.value
-        asname = cst.AsName(
+        asname = AsName(
             whitespace_before_as=parse_simple_whitespace(
                 config, as_token.whitespace_before
             ),
@@ -927,12 +995,12 @@ def convert_with_item(config: ParserConfig, children: Sequence[Any]) -> Any:
         test_node = test.value
         asname = None
 
-    return cst.WithItem(item=test_node, asname=asname)
+    return WithItem(item=test_node, asname=asname)
 
 
 def _extract_async(
     config: ParserConfig, children: Sequence[Any]
-) -> Tuple[List[cst.EmptyLine], Optional[cst.Asynchronous], Any]:
+) -> Tuple[List[EmptyLine], Optional[Asynchronous], Any]:
     if len(children) == 1:
         (stmt,) = children
 
@@ -942,7 +1010,7 @@ def _extract_async(
         asynctoken, stmt = children
 
         whitespace_before = asynctoken.whitespace_before
-        asyncnode = cst.Asynchronous(
+        asyncnode = Asynchronous(
             whitespace_after=parse_simple_whitespace(
                 config, asynctoken.whitespace_after
             )
@@ -986,7 +1054,7 @@ def convert_funcdef(config: ParserConfig, children: Sequence[Any]) -> Any:
                     ),
                 )
             )
-    elif isinstance(parameters.star_arg, cst.Param):
+    elif isinstance(parameters.star_arg, Param):
         if parameters.star_arg.comma == MaybeSentinel.DEFAULT:
             parameters = parameters.with_changes(
                 star_arg=parameters.star_arg.with_changes(
@@ -1015,11 +1083,11 @@ def convert_funcdef(config: ParserConfig, children: Sequence[Any]) -> Any:
             )
 
     return WithLeadingWhitespace(
-        cst.FunctionDef(
+        FunctionDef(
             whitespace_after_def=parse_simple_whitespace(
                 config, defnode.whitespace_after
             ),
-            name=cst.Name(namenode.string),
+            name=Name(namenode.string),
             whitespace_after_name=parse_simple_whitespace(
                 config, namenode.whitespace_after
             ),
@@ -1039,13 +1107,13 @@ def convert_funcdef(config: ParserConfig, children: Sequence[Any]) -> Any:
 def convert_parameters(config: ParserConfig, children: Sequence[Any]) -> Any:
     lpar, *paramlist, rpar = children
     return FuncdefPartial(
-        lpar=cst.LeftParen(
+        lpar=LeftParen(
             whitespace_after=parse_parenthesizable_whitespace(
                 config, lpar.whitespace_after
             )
         ),
-        params=cst.Parameters() if not paramlist else paramlist[0],
-        rpar=cst.RightParen(
+        params=Parameters() if not paramlist else paramlist[0],
+        rpar=RightParen(
             whitespace_before=parse_parenthesizable_whitespace(
                 config, rpar.whitespace_before
             )
@@ -1056,7 +1124,7 @@ def convert_parameters(config: ParserConfig, children: Sequence[Any]) -> Any:
 @with_production("funcdef_annotation", "'->' test")
 def convert_funcdef_annotation(config: ParserConfig, children: Sequence[Any]) -> Any:
     arrow, typehint = children
-    return cst.Annotation(
+    return Annotation(
         whitespace_before_indicator=parse_parenthesizable_whitespace(
             config, arrow.whitespace_before
         ),
@@ -1077,13 +1145,13 @@ def convert_classdef(config: ParserConfig, children: Sequence[Any]) -> Any:
 
     # Compute common whitespace and nodes
     whitespace_after_class = parse_simple_whitespace(config, classdef.whitespace_after)
-    namenode = cst.Name(name.string)
+    namenode = Name(name.string)
     whitespace_after_name = parse_simple_whitespace(config, name.whitespace_after)
 
     # Now, construct the classdef node itself
     if not arglist:
         # No arglist, so no arguments to this class
-        return cst.ClassDef(
+        return ClassDef(
             leading_lines=leading_lines,
             lines_after_decorators=(),
             whitespace_after_class=whitespace_after_class,
@@ -1096,8 +1164,8 @@ def convert_classdef(config: ParserConfig, children: Sequence[Any]) -> Any:
         lpar, *args, rpar = arglist
         args = args[0].args if args else []
 
-        bases: List[cst.Arg] = []
-        keywords: List[cst.Arg] = []
+        bases: List[Arg] = []
+        keywords: List[Arg] = []
 
         current_arg = bases
         for arg in args:
@@ -1111,20 +1179,20 @@ def convert_classdef(config: ParserConfig, children: Sequence[Any]) -> Any:
                 raise Exception("Syntax error!")
             current_arg.append(arg)
 
-        return cst.ClassDef(
+        return ClassDef(
             leading_lines=leading_lines,
             lines_after_decorators=(),
             whitespace_after_class=whitespace_after_class,
             name=namenode,
             whitespace_after_name=whitespace_after_name,
-            lpar=cst.LeftParen(
+            lpar=LeftParen(
                 whitespace_after=parse_parenthesizable_whitespace(
                     config, lpar.whitespace_after
                 )
             ),
             bases=bases,
             keywords=keywords,
-            rpar=cst.RightParen(
+            rpar=RightParen(
                 whitespace_before=parse_parenthesizable_whitespace(
                     config, rpar.whitespace_before
                 )
@@ -1158,7 +1226,7 @@ def convert_decorator(config: ParserConfig, children: Sequence[Any]) -> Any:
                 )
             )
 
-        decoratornode = cst.Call(
+        decoratornode = Call(
             func=name,
             whitespace_after_func=parse_simple_whitespace(
                 config, lpar.whitespace_before
@@ -1169,7 +1237,7 @@ def convert_decorator(config: ParserConfig, children: Sequence[Any]) -> Any:
             args=tuple(args),
         )
 
-    return cst.Decorator(
+    return Decorator(
         leading_lines=parse_empty_lines(config, atsign.whitespace_before),
         whitespace_after_at=parse_simple_whitespace(config, atsign.whitespace_after),
         decorator=decoratornode,
@@ -1209,17 +1277,17 @@ def convert_decorated(config: ParserConfig, children: Sequence[Any]) -> Any:
 @with_production("asyncable_stmt", "['async'] (funcdef | with_stmt | for_stmt)")
 def convert_asyncable_stmt(config: ParserConfig, children: Sequence[Any]) -> Any:
     leading_lines, asyncnode, stmtnode = _extract_async(config, children)
-    if isinstance(stmtnode, cst.FunctionDef):
+    if isinstance(stmtnode, FunctionDef):
         return stmtnode.with_changes(
             asynchronous=asyncnode,
             leading_lines=leading_lines,
             lines_after_decorators=(),
         )
-    elif isinstance(stmtnode, cst.With):
+    elif isinstance(stmtnode, With):
         return stmtnode.with_changes(
             asynchronous=asyncnode, leading_lines=leading_lines
         )
-    elif isinstance(stmtnode, cst.For):
+    elif isinstance(stmtnode, For):
         return stmtnode.with_changes(
             asynchronous=asyncnode, leading_lines=leading_lines
         )
@@ -1236,7 +1304,7 @@ def convert_suite(config: ParserConfig, children: Sequence[Any]) -> Any:
 @with_production("indented_suite", "NEWLINE INDENT stmt+ DEDENT")
 def convert_indented_suite(config: ParserConfig, children: Sequence[Any]) -> Any:
     newline, indent, *stmts, dedent = children
-    return cst.IndentedBlock(
+    return IndentedBlock(
         header=newline,
         indent=(
             None

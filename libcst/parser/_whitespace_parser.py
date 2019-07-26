@@ -18,8 +18,17 @@ hand-rolled recursive descent parser.
 
 from typing import List, Optional, Sequence, Tuple, Union
 
-import libcst as cst
-from libcst._nodes._whitespace import COMMENT_RE, NEWLINE_RE, SIMPLE_WHITESPACE_RE
+from libcst._nodes._whitespace import (
+    COMMENT_RE,
+    NEWLINE_RE,
+    SIMPLE_WHITESPACE_RE,
+    Comment,
+    EmptyLine,
+    Newline,
+    ParenthesizedWhitespace,
+    SimpleWhitespace,
+    TrailingWhitespace,
+)
 from libcst.parser._types.config import BaseWhitespaceParserConfig
 from libcst.parser._types.whitespace_state import WhitespaceState as State
 
@@ -29,7 +38,7 @@ from libcst.parser._types.whitespace_state import WhitespaceState as State
 
 def parse_simple_whitespace(
     config: BaseWhitespaceParserConfig, state: State
-) -> cst.SimpleWhitespace:
+) -> SimpleWhitespace:
     # The match never fails because the pattern can match an empty string
     lines = config.lines
     # pyre-fixme[16]: Optional type has no attribute `group`.
@@ -50,7 +59,7 @@ def parse_simple_whitespace(
 
     # once we've finished collecting continuation characters
     state.column += len(ws_line)
-    return cst.SimpleWhitespace("".join(ws_line_list))
+    return SimpleWhitespace("".join(ws_line_list))
 
 
 def parse_empty_lines(
@@ -58,7 +67,7 @@ def parse_empty_lines(
     state: State,
     *,
     override_absolute_indent: Optional[str] = None,
-) -> Sequence[cst.EmptyLine]:
+) -> Sequence[EmptyLine]:
     # If override_absolute_indent is true, then we need to parse all lines up
     # to and including the last line that is indented at our level. These all
     # belong to the footer and not to the next line's leading_lines. All lines
@@ -67,7 +76,7 @@ def parse_empty_lines(
     state_for_line = State(
         state.line, state.column, state.absolute_indent, state.is_parenthesized
     )
-    lines: List[Tuple[State, cst.EmptyLine]] = []
+    lines: List[Tuple[State, EmptyLine]] = []
     while True:
         el = _parse_empty_line(
             config, state_for_line, override_absolute_indent=override_absolute_indent
@@ -106,7 +115,7 @@ def parse_empty_lines(
 
 def parse_trailing_whitespace(
     config: BaseWhitespaceParserConfig, state: State
-) -> cst.TrailingWhitespace:
+) -> TrailingWhitespace:
     trailing_whitespace = _parse_trailing_whitespace(config, state)
     if trailing_whitespace is None:
         raise Exception(
@@ -119,7 +128,7 @@ def parse_trailing_whitespace(
 
 def parse_parenthesizable_whitespace(
     config: BaseWhitespaceParserConfig, state: State
-) -> Union[cst.SimpleWhitespace, cst.ParenthesizedWhitespace]:
+) -> Union[SimpleWhitespace, ParenthesizedWhitespace]:
     if state.is_parenthesized:
         # First, try parenthesized (don't need speculation because it either
         # parses or doesn't modify state).
@@ -139,7 +148,7 @@ def _parse_empty_line(
     state: State,
     *,
     override_absolute_indent: Optional[str] = None,
-) -> Optional[cst.EmptyLine]:
+) -> Optional[EmptyLine]:
     # begin speculative parsing
     speculative_state = State(
         state.line, state.column, state.absolute_indent, state.is_parenthesized
@@ -157,7 +166,7 @@ def _parse_empty_line(
     state.line = speculative_state.line
     state.column = speculative_state.column
     # don't need to copy absolute_indent/is_parenthesized because they don't change.
-    return cst.EmptyLine(indent, whitespace, comment, newline)
+    return EmptyLine(indent, whitespace, comment, newline)
 
 
 def _parse_indent(
@@ -188,18 +197,18 @@ def _parse_indent(
 
 def _parse_comment(
     config: BaseWhitespaceParserConfig, state: State
-) -> Optional[cst.Comment]:
+) -> Optional[Comment]:
     comment_match = COMMENT_RE.match(config.lines[state.line - 1], state.column)
     if comment_match is None:
         return None
     comment = comment_match.group(0)
     state.column += len(comment)
-    return cst.Comment(comment)
+    return Comment(comment)
 
 
 def _parse_newline(
     config: BaseWhitespaceParserConfig, state: State
-) -> Optional[cst.Newline]:
+) -> Optional[Newline]:
     # begin speculative parsing
     line_str = config.lines[state.line - 1]
     newline_match = NEWLINE_RE.match(line_str, state.column)
@@ -216,16 +225,16 @@ def _parse_newline(
             state.column = 0
         if newline_str == config.default_newline:
             # Just inherit it from the Module instead of explicitly setting it.
-            return cst.Newline()
+            return Newline()
         else:
-            return cst.Newline(newline_str)
+            return Newline(newline_str)
     else:  # no newline was found, speculative parsing failed
         return None
 
 
 def _parse_trailing_whitespace(
     config: BaseWhitespaceParserConfig, state: State
-) -> Optional[cst.TrailingWhitespace]:
+) -> Optional[TrailingWhitespace]:
     # Begin speculative parsing
     speculative_state = State(
         state.line, state.column, state.absolute_indent, state.is_parenthesized
@@ -240,12 +249,12 @@ def _parse_trailing_whitespace(
     state.line = speculative_state.line
     state.column = speculative_state.column
     # don't need to copy absolute_indent/is_parenthesized because they don't change.
-    return cst.TrailingWhitespace(whitespace, comment, newline)
+    return TrailingWhitespace(whitespace, comment, newline)
 
 
 def _parse_parenthesized_whitespace(
     config: BaseWhitespaceParserConfig, state: State
-) -> Optional[cst.ParenthesizedWhitespace]:
+) -> Optional[ParenthesizedWhitespace]:
     first_line = _parse_trailing_whitespace(config, state)
     if first_line is None:
         # Speculative parsing failed
@@ -259,4 +268,4 @@ def _parse_parenthesized_whitespace(
         empty_lines = empty_lines + (empty_line,)
     indent = _parse_indent(config, state)
     last_line = parse_simple_whitespace(config, state)
-    return cst.ParenthesizedWhitespace(first_line, empty_lines, indent, last_line)
+    return ParenthesizedWhitespace(first_line, empty_lines, indent, last_line)

@@ -8,9 +8,9 @@
 from typing import Any
 
 import libcst as cst
+from libcst import parse_expression
 from libcst._nodes._internal import CodeRange
 from libcst._nodes.tests.base import CSTNodeTest
-from libcst.parser import parse_expression
 from libcst.testing.utils import data_provider
 
 

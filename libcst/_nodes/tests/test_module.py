@@ -7,10 +7,10 @@
 from typing import Tuple, cast
 
 import libcst as cst
+from libcst import parse_module
 from libcst._nodes._internal import CodeRange
 from libcst._nodes.tests.base import CSTNodeTest
 from libcst.metadata.position_provider import SyntacticPositionProvider
-from libcst.parser import parse_module
 from libcst.testing.utils import data_provider
 
 

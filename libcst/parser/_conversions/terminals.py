@@ -5,7 +5,7 @@
 
 from typing import Any
 
-import libcst as cst
+from libcst._nodes._expression import SimpleString
 from libcst.parser._types.config import ParserConfig
 from libcst.parser._types.partials import WithLeadingWhitespace
 from libcst.parser._types.token import Token
@@ -24,9 +24,7 @@ def convert_NUMBER(config: ParserConfig, token: Token) -> Any:
 
 
 def convert_STRING(config: ParserConfig, token: Token) -> Any:
-    return WithLeadingWhitespace(
-        cst.SimpleString(token.string), token.whitespace_before
-    )
+    return WithLeadingWhitespace(SimpleString(token.string), token.whitespace_before)
 
 
 def convert_OP(config: ParserConfig, token: Token) -> Any:

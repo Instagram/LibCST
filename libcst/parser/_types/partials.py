@@ -8,8 +8,26 @@
 from dataclasses import dataclass
 from typing import Generic, Optional, Sequence, TypeVar, Union
 
-import libcst as cst
 from libcst._add_slots import add_slots
+from libcst._nodes._expression import (
+    Annotation,
+    Arg,
+    Attribute,
+    BaseExpression,
+    BaseFormattedStringContent,
+    ExtSlice,
+    Index,
+    LeftParen,
+    LeftSquareBracket,
+    Name,
+    Parameters,
+    RightParen,
+    RightSquareBracket,
+    Slice,
+)
+from libcst._nodes._op import AssignEqual, BaseAugOp, Colon, Dot
+from libcst._nodes._statement import AsName, BaseSmallStatement, Decorator, ImportAlias
+from libcst._nodes._whitespace import EmptyLine, SimpleWhitespace, TrailingWhitespace
 from libcst.parser._types.whitespace_state import WhitespaceState
 
 
@@ -27,68 +45,68 @@ class WithLeadingWhitespace(Generic[_T]):
 @add_slots
 @dataclass(frozen=True)
 class SimpleStatementPartial:
-    body: Sequence[cst.BaseSmallStatement]
+    body: Sequence[BaseSmallStatement]
     whitespace_before: WhitespaceState
-    trailing_whitespace: cst.TrailingWhitespace
+    trailing_whitespace: TrailingWhitespace
 
 
 @add_slots
 @dataclass(frozen=True)
 class SlicePartial:
-    second_colon: cst.Colon
-    step: Optional[cst.BaseExpression]
+    second_colon: Colon
+    step: Optional[BaseExpression]
 
 
 @add_slots
 @dataclass(frozen=True)
 class AttributePartial:
-    dot: cst.Dot
-    attr: cst.Name
+    dot: Dot
+    attr: Name
 
 
 @add_slots
 @dataclass(frozen=True)
 class ArglistPartial:
-    args: Sequence[cst.Arg]
+    args: Sequence[Arg]
 
 
 @add_slots
 @dataclass(frozen=True)
 class CallPartial:
-    lpar: WithLeadingWhitespace[cst.LeftParen]
-    args: Sequence[cst.Arg]
-    rpar: cst.RightParen
+    lpar: WithLeadingWhitespace[LeftParen]
+    args: Sequence[Arg]
+    rpar: RightParen
 
 
 @add_slots
 @dataclass(frozen=True)
 class SubscriptPartial:
-    slice: Union[cst.Index, cst.Slice, Sequence[cst.ExtSlice]]
-    lbracket: cst.LeftSquareBracket
-    rbracket: cst.RightSquareBracket
+    slice: Union[Index, Slice, Sequence[ExtSlice]]
+    lbracket: LeftSquareBracket
+    rbracket: RightSquareBracket
     whitespace_before: WhitespaceState
 
 
 @add_slots
 @dataclass(frozen=True)
 class AnnAssignPartial:
-    annotation: cst.Annotation
-    equal: Optional[cst.AssignEqual]
-    value: Optional[cst.BaseExpression]
+    annotation: Annotation
+    equal: Optional[AssignEqual]
+    value: Optional[BaseExpression]
 
 
 @add_slots
 @dataclass(frozen=True)
 class AugAssignPartial:
-    operator: cst.BaseAugOp
-    value: cst.BaseExpression
+    operator: BaseAugOp
+    value: BaseExpression
 
 
 @add_slots
 @dataclass(frozen=True)
 class AssignPartial:
-    equal: cst.AssignEqual
-    value: cst.BaseExpression
+    equal: AssignEqual
+    value: BaseExpression
 
 
 class ParamStarPartial:
@@ -98,28 +116,28 @@ class ParamStarPartial:
 @add_slots
 @dataclass(frozen=True)
 class FuncdefPartial:
-    lpar: cst.LeftParen
-    params: cst.Parameters
-    rpar: cst.RightParen
+    lpar: LeftParen
+    params: Parameters
+    rpar: RightParen
 
 
 @add_slots
 @dataclass(frozen=True)
 class DecoratorPartial:
-    decorators: Sequence[cst.Decorator]
+    decorators: Sequence[Decorator]
 
 
 @add_slots
 @dataclass(frozen=True)
 class ImportPartial:
-    names: Sequence[cst.ImportAlias]
+    names: Sequence[ImportAlias]
 
 
 @add_slots
 @dataclass(frozen=True)
 class ImportRelativePartial:
-    relative: Sequence[cst.Dot]
-    module: Optional[Union[cst.Attribute, cst.Name]]
+    relative: Sequence[Dot]
+    module: Optional[Union[Attribute, Name]]
 
 
 @add_slots
@@ -132,14 +150,14 @@ class FormattedStringConversionPartial:
 @add_slots
 @dataclass(frozen=True)
 class FormattedStringFormatSpecPartial:
-    values: Sequence[cst.BaseFormattedStringContent]
+    values: Sequence[BaseFormattedStringContent]
     whitespace_before: WhitespaceState
 
 
 @add_slots
 @dataclass(frozen=True)
 class ExceptClausePartial:
-    leading_lines: Sequence[cst.EmptyLine]
-    whitespace_after_except: cst.SimpleWhitespace
-    type: Optional[cst.BaseExpression] = None
-    name: Optional[cst.AsName] = None
+    leading_lines: Sequence[EmptyLine]
+    whitespace_after_except: SimpleWhitespace
+    type: Optional[BaseExpression] = None
+    name: Optional[AsName] = None

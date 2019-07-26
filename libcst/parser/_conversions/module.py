@@ -5,7 +5,7 @@
 
 from typing import Any, Sequence
 
-import libcst as cst
+from libcst._nodes._module import Module
 from libcst._nodes._whitespace import NEWLINE_RE
 from libcst.parser._production_decorator import with_production
 from libcst.parser._types.config import ParserConfig
@@ -34,7 +34,7 @@ def convert_file_input(config: ParserConfig, children: Sequence[Any]) -> Any:
         first_stmt = body[0]
         header = first_stmt.leading_lines
         body[0] = first_stmt.with_changes(leading_lines=())
-    return cst.Module(
+    return Module(
         header=header,
         body=body,
         footer=footer,

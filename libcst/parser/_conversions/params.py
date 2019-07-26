@@ -5,8 +5,9 @@
 
 from typing import Any, List, Optional, Sequence, Union
 
-import libcst as cst
 from libcst._maybe_sentinel import MaybeSentinel
+from libcst._nodes._expression import Annotation, Name, Param, Parameters, ParamStar
+from libcst._nodes._op import AssignEqual, Comma
 from libcst.parser._custom_itertools import grouper
 from libcst.parser._production_decorator import with_production
 from libcst.parser._types.config import ParserConfig
@@ -31,19 +32,19 @@ from libcst.parser._whitespace_parser import parse_parenthesizable_whitespace
     ),
 )
 def convert_argslist(config: ParserConfig, children: Sequence[Any]) -> Any:
-    params: List[cst.Param] = []
-    default_params: List[cst.Param] = []
-    star_arg: Union[cst.Param, cst.ParamStar, MaybeSentinel] = MaybeSentinel.DEFAULT
-    kwonly_params: List[cst.Param] = []
-    star_kwarg: Optional[cst.Param] = None
+    params: List[Param] = []
+    default_params: List[Param] = []
+    star_arg: Union[Param, ParamStar, MaybeSentinel] = MaybeSentinel.DEFAULT
+    kwonly_params: List[Param] = []
+    star_kwarg: Optional[Param] = None
 
     def add_param(
-        current_param: Optional[List[cst.Param]], param: Union[cst.Param, cst.ParamStar]
-    ) -> Optional[List[cst.Param]]:
+        current_param: Optional[List[Param]], param: Union[Param, ParamStar]
+    ) -> Optional[List[Param]]:
         nonlocal star_arg
         nonlocal star_kwarg
 
-        if isinstance(param, cst.ParamStar):
+        if isinstance(param, ParamStar):
             # Only can add this if we don't already have a "*" or a "*param".
             if current_param in [params, default_params]:
                 star_arg = param
@@ -104,7 +105,7 @@ def convert_argslist(config: ParserConfig, children: Sequence[Any]) -> Any:
         return current_param
 
     # The parameter list we are adding to
-    current: Optional[List[cst.Param]] = params
+    current: Optional[List[Param]] = params
 
     # We should have every other item in the group as a param or a comma by now,
     # so split them up, add commas and then put them in the appropriate group.
@@ -116,7 +117,7 @@ def convert_argslist(config: ParserConfig, children: Sequence[Any]) -> Any:
             else:
                 current = add_param(current, parameter)
         else:
-            comma = cst.Comma(
+            comma = Comma(
                 whitespace_before=parse_parenthesizable_whitespace(
                     config, comma.whitespace_before
                 ),
@@ -125,11 +126,11 @@ def convert_argslist(config: ParserConfig, children: Sequence[Any]) -> Any:
                 ),
             )
             if isinstance(parameter, ParamStarPartial):
-                current = add_param(current, cst.ParamStar(comma=comma))
+                current = add_param(current, ParamStar(comma=comma))
             else:
                 current = add_param(current, parameter.with_changes(comma=comma))
 
-    return cst.Parameters(
+    return Parameters(
         params=tuple(params),
         default_params=tuple(default_params),
         star_arg=star_arg,
@@ -175,7 +176,7 @@ def convert_fpdef_assign(config: ParserConfig, children: Sequence[Any]) -> Any:
 
     param, equal, default = children
     return param.with_changes(
-        equal=cst.AssignEqual(
+        equal=AssignEqual(
             whitespace_before=parse_parenthesizable_whitespace(
                 config, equal.whitespace_before
             ),
@@ -193,13 +194,13 @@ def convert_fpdef(config: ParserConfig, children: Sequence[Any]) -> Any:
     if len(children) == 1:
         # This is just a parameter
         (child,) = children
-        namenode = cst.Name(child.string)
+        namenode = Name(child.string)
         annotation = None
     else:
         # This is a parameter with a type hint
         name, colon, typehint = children
-        namenode = cst.Name(name.string)
-        annotation = cst.Annotation(
+        namenode = Name(name.string)
+        annotation = Annotation(
             whitespace_before_indicator=parse_parenthesizable_whitespace(
                 config, colon.whitespace_before
             ),
@@ -210,4 +211,4 @@ def convert_fpdef(config: ParserConfig, children: Sequence[Any]) -> Any:
             annotation=typehint.value,
         )
 
-    return cst.Param(star="", name=namenode, annotation=annotation, default=None)
+    return Param(star="", name=namenode, annotation=annotation, default=None)

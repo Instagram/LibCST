@@ -14,9 +14,8 @@ import dataclasses
 import sys
 from typing import List, Sequence
 
-from libcst import CSTNode, IndentedBlock, Module
+from libcst import CSTNode, IndentedBlock, Module, parse_module
 from libcst._nodes._deep_equals import deep_equals
-from libcst.parser import parse_module
 
 
 _DEFAULT_INDENT: str = "  "

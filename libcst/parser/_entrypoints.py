@@ -12,14 +12,17 @@ information
 
 from typing import TypeVar, Union
 
-import libcst as cst
+from libcst._nodes._base import CSTNode
+from libcst._nodes._expression import BaseExpression
+from libcst._nodes._module import Module
+from libcst._nodes._statement import BaseCompoundStatement, SimpleStatementLine
 from libcst.parser._detect_config import detect_config
 from libcst.parser._grammar import get_grammar, validate_grammar
 from libcst.parser._python_parser import PythonCSTParser
 from libcst.parser._types.config import PartialParserConfig
 
 
-_CSTNodeT = TypeVar("_CSTNodeT", bound=cst.CSTNode)
+_CSTNodeT = TypeVar("_CSTNodeT", bound=CSTNode)
 _DEFAULT_PARTIAL_PARSER_CONFIG: PartialParserConfig = PartialParserConfig()
 
 
@@ -29,7 +32,7 @@ def _parse(
     config: PartialParserConfig,
     *,
     detect_trailing_newline: bool,
-) -> cst.CSTNode:
+) -> CSTNode:
     detection_result = detect_config(
         source, partial=config, detect_trailing_newline=detect_trailing_newline
     )
@@ -44,22 +47,22 @@ def _parse(
     )
     # The parser has an Any return type, we can at least refine it to CSTNode here.
     result = parser.parse()
-    assert isinstance(result, cst.CSTNode)
+    assert isinstance(result, CSTNode)
     return result
 
 
 def parse_module(
     source: Union[str, bytes],  # the only entrypoint that accepts bytes
     config: PartialParserConfig = _DEFAULT_PARTIAL_PARSER_CONFIG,
-) -> cst.Module:
+) -> Module:
     result = _parse("file_input", source, config, detect_trailing_newline=True)
-    assert isinstance(result, cst.Module)
+    assert isinstance(result, Module)
     return result
 
 
 def parse_statement(
     source: str, config: PartialParserConfig = _DEFAULT_PARTIAL_PARSER_CONFIG
-) -> Union[cst.SimpleStatementLine, cst.BaseCompoundStatement]:
+) -> Union[SimpleStatementLine, BaseCompoundStatement]:
     """
     Accepts a statement followed by a trailing newline. If a trailing newline is not
     provided, one will be added.
@@ -70,13 +73,13 @@ def parse_statement(
     """
     # use detect_trailing_newline to insert a newline
     result = _parse("stmt_input", source, config, detect_trailing_newline=True)
-    assert isinstance(result, (cst.SimpleStatementLine, cst.BaseCompoundStatement))
+    assert isinstance(result, (SimpleStatementLine, BaseCompoundStatement))
     return result
 
 
 def parse_expression(
     source: str, config: PartialParserConfig = _DEFAULT_PARTIAL_PARSER_CONFIG
-) -> cst.BaseExpression:
+) -> BaseExpression:
     result = _parse("expression_input", source, config, detect_trailing_newline=False)
-    assert isinstance(result, cst.BaseExpression)
+    assert isinstance(result, BaseExpression)
     return result

@@ -7,10 +7,10 @@
 from typing import Type, TypeVar, Union
 
 import libcst as cst
+from libcst import parse_module
 from libcst._nodes.tests.base import CSTNodeTest
 from libcst._removal_sentinel import RemovalSentinel
 from libcst._visitors import CSTTransformer
-from libcst.parser import parse_module
 from libcst.testing.utils import data_provider
 
 

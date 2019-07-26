@@ -179,6 +179,7 @@ from libcst._nodes._whitespace import (
 )
 from libcst._removal_sentinel import RemovalSentinel
 from libcst._visitors import CSTNodeT, CSTTransformer, CSTVisitor, CSTVisitorT
+from libcst.parser._entrypoints import parse_expression, parse_module, parse_statement
 
 
 __all__ = [
@@ -196,6 +197,9 @@ __all__ = [
     "RemovalSentinel",
     "ensure_type",
     "visit_batched",
+    "parse_module",
+    "parse_expression",
+    "parse_statement",
     "CSTNode",
     "Module",
     "Annotation",
