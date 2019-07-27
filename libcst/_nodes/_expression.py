@@ -2832,14 +2832,15 @@ class BaseSimpleComp(BaseComp, ABC):
     `BaseSimpleComp`, because it uses `key` and `value`.
     """
 
-    # The expression evaluated during each iteration of the comprehension. This
-    # lexically comes before the `for_in` clause, but it is semantically the inner-most
-    # element, evaluated inside the `for_in` clause.
+    #: The expression evaluated during each iteration of the comprehension. This
+    #: lexically comes before the ``for_in`` clause, but it is semantically the
+    #: inner-most element, evaluated inside the ``for_in`` clause.
     # pyre-fixme[13]: Attribute `elt` is never initialized.
     elt: BaseAssignTargetExpression
 
-    # The `for ... in ... if ...` clause that lexically comes after `elt`. This may be a
-    # nested structure for nested comprehensions. See `ComprehensionFor` for details.
+    #: The ``for ... in ... if ...`` clause that lexically comes after ``elt``. This may
+    #: be a nested structure for nested comprehensions. See :class:`.CompFor` for
+    #: details.
     # pyre-fixme[13]: Attribute `for_in` is never initialized.
     for_in: CompFor
 
@@ -2940,4 +2941,73 @@ class SetComp(BaseSet, BaseSimpleComp):
     def _codegen_impl(self, state: CodegenState) -> None:
         with self._parenthesize(state), self._braceize(state):
             self.elt._codegen(state)
+            self.for_in._codegen(state)
+
+
+@add_slots
+@dataclass(frozen=True)
+class DictComp(BaseDict, BaseComp):
+    """
+    A dictionary comprehension. ``key`` and ``value`` represent the dictionary entry
+    evaluated for each item.
+
+    All ``for ... in ...`` and ``if ...`` clauses are stored as a recursive
+    :class:`CompFor` data structure inside ``for_in``.
+    """
+
+    key: BaseAssignTargetExpression
+    value: BaseAssignTargetExpression
+
+    #: The ``for ... in ... if ...`` clause that lexically comes after ``key`` and
+    #: ``value``. This may be a nested structure for nested comprehensions. See
+    #: :class:`.CompFor` for details.
+    for_in: CompFor
+
+    lbrace: LeftCurlyBrace = LeftCurlyBrace()
+    rbrace: RightCurlyBrace = RightCurlyBrace()
+    lpar: Sequence[LeftParen] = ()
+    rpar: Sequence[RightParen] = ()
+
+    #: Whitespace after the key, but before the colon in ``key : value``.
+    whitespace_before_colon: BaseParenthesizableWhitespace = SimpleWhitespace("")
+    #: Whitespace after the colon, but before the value in ``key : value``.
+    whitespace_after_colon: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+
+    def _validate(self) -> None:
+        super(DictComp, self)._validate()
+
+        for_in = self.for_in
+        if (
+            for_in.whitespace_before.empty
+            and not self.value._safe_to_use_with_word_operator(ExpressionPosition.LEFT)
+        ):
+            keyword = "async" if for_in.asynchronous else "for"
+            raise CSTValidationError(
+                f"Must have at least one space before '{keyword}' keyword."
+            )
+
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "DictComp":
+        return DictComp(
+            lpar=visit_sequence("lpar", self.lpar, visitor),
+            lbrace=visit_required("lbrace", self.lbrace, visitor),
+            key=visit_required("key", self.key, visitor),
+            whitespace_before_colon=visit_required(
+                "whitespace_before_colon", self.whitespace_before_colon, visitor
+            ),
+            whitespace_after_colon=visit_required(
+                "whitespace_after_colon", self.whitespace_after_colon, visitor
+            ),
+            value=visit_required("value", self.value, visitor),
+            for_in=visit_required("for_in", self.for_in, visitor),
+            rbrace=visit_required("rbrace", self.rbrace, visitor),
+            rpar=visit_sequence("rpar", self.rpar, visitor),
+        )
+
+    def _codegen_impl(self, state: CodegenState) -> None:
+        with self._parenthesize(state), self._braceize(state):
+            self.key._codegen(state)
+            self.whitespace_before_colon._codegen(state)
+            state.add_token(":")
+            self.whitespace_after_colon._codegen(state)
+            self.value._codegen(state)
             self.for_in._codegen(state)

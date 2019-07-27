@@ -45,7 +45,7 @@ Expressions
 .. autoclass:: libcst.CompIf
 .. autoclass:: libcst.ConcatenatedString
 .. autoclass:: libcst.Dict
-.. .. autoclass:: libcst.DictComp
+.. autoclass:: libcst.DictComp
 .. autoclass:: libcst.DictElement
 .. autoclass:: libcst.Element
 .. autoclass:: libcst.Ellipses
