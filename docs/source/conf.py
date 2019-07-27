@@ -185,6 +185,10 @@ epub_exclude_files = ['search.html']
 
 # -- Extension configuration -------------------------------------------------
 autodoc_member_order = "bysource"
+autodoc_default_options = {
+    "members": True,
+    "undoc-members": True,
+}
 
 # -- Options for todo extension ----------------------------------------------
 

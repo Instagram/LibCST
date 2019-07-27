@@ -170,6 +170,7 @@ from libcst._nodes._statement import (
     WithItem,
 )
 from libcst._nodes._whitespace import (
+    BaseParenthesizableWhitespace,
     Comment,
     EmptyLine,
     Newline,
@@ -354,6 +355,7 @@ __all__ = [
     "While",
     "With",
     "WithItem",
+    "BaseParenthesizableWhitespace",
     "Comment",
     "EmptyLine",
     "Newline",

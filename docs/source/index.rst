@@ -11,21 +11,15 @@ LibCST
     :start-after: intro-start
     :end-before: intro-end
 
-Useful Modules
-==============
-
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
 
    why_libcst
+   parser
+   nodes
+   visitors
 
-.. autosummary::
-   :toctree: modules
-
-   libcst.nodes
-   libcst.parser
-   libcst.visitors
 
 Indices and tables
 ==================
