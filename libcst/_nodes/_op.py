@@ -48,7 +48,7 @@ class _BaseOneTokenOp(CSTNode, ABC):
 
 class _BaseTwoTokenOp(CSTNode, ABC):
     """
-    This node ends up as two tokens, so we must preserve the whitespace
+    Any node that ends up as two tokens, so we must preserve the whitespace
     in beteween them.
     """
 
@@ -91,7 +91,7 @@ class _BaseTwoTokenOp(CSTNode, ABC):
 
 class BaseUnaryOp(CSTNode, ABC):
     """
-    Any node that has a static value used in a Unary expression.
+    Any node that has a static value used in a :class:`UnaryOperation` expression.
     """
 
     # pyre-fixme[13]: Uninitialized attribute
@@ -115,29 +115,29 @@ class BaseUnaryOp(CSTNode, ABC):
 
 class BaseBooleanOp(_BaseOneTokenOp, ABC):
     """
-    Any node that has a static value used in a Binary expression. This node
-    is purely for typing.
+    Any node that has a static value used in a :class:`BooleanOperation` expression.
+    This node is purely for typing.
     """
 
 
 class BaseBinaryOp(CSTNode, ABC):
     """
-    Any node that has a static value used in a Binary expression. This node
-    is purely for typing.
+    Any node that has a static value used in a :class:`BinaryOperation` expression.
+    This node is purely for typing.
     """
 
 
 class BaseCompOp(CSTNode, ABC):
     """
-    Any node that has a static value used in a CompExpression. This node
-    is purely for typing.
+    Any node that has a static value used in a :class:`Comparison` expression.
+    This node is purely for typing.
     """
 
 
 class BaseAugOp(CSTNode, ABC):
     """
-    Any node that has a static value used in an AugAssign. This node is purely
-    for typing.
+    Any node that has a static value used in an :class:`AugAssign` assignment.
+    This node is purely for typing.
     """
 
 
@@ -145,11 +145,15 @@ class BaseAugOp(CSTNode, ABC):
 @dataclass(frozen=True)
 class Semicolon(_BaseOneTokenOp):
     """
-    Used by SmallStatement as a separator between subsequent SmallStatements contained
-    within a SimpleStatementLine or SimpleStatementSuite.
+    Used by any small statement (any subclass of :class:`BaseSmallStatement`
+    such as :class:`Pass`) as a separator between subsequent nodes contained
+    within a :class:`SimpleStatementLine` or :class:`SimpleStatementSuite`.
     """
 
+    #: Any space that appears directly before this semicolon.
     whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace("")
+
+    #: Any space that appears directly after this semicolon.
     whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace("")
 
     def _get_token(self) -> str:
@@ -160,11 +164,14 @@ class Semicolon(_BaseOneTokenOp):
 @dataclass(frozen=True)
 class Colon(_BaseOneTokenOp):
     """
-    Used by Slice as a separator between subsequent Expressions, and in Lambda
-    to separate arguments and body.
+    Used by :class:`Slice` as a separator between subsequent expressions,
+    and in :class:`Lambda` to separate arguments and body.
     """
 
+    #: Any space that appears directly before this colon.
     whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace("")
+
+    #: Any space that appears directly after this colon.
     whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace("")
 
     def _get_token(self) -> str:
@@ -175,16 +182,20 @@ class Colon(_BaseOneTokenOp):
 @dataclass(frozen=True)
 class Comma(_BaseOneTokenOp):
     """
-    Syntactic trivia used as a separator between subsequent items in various parts of
-    the grammar.
+    Syntactic trivia used as a separator between subsequent items in various
+    parts of the grammar.
 
     Some use-cases are:
-    - Import or ImportFrom
-    - Function arguments
-    - Tuple/list/set/dict elements
+
+    * :class:`Import` or :class:`ImportFrom`.
+    * :class:`FunctionDef` arguments.
+    * :class:`Tuple`/:class:`List`/:class:`Set`/:class:`Dict` elements.
     """
 
+    #: Any space that appears directly before this comma.
     whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace("")
+
+    #: Any space that appears directly after this comma.
     whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace("")
 
     def _get_token(self) -> str:
@@ -195,11 +206,13 @@ class Comma(_BaseOneTokenOp):
 @dataclass(frozen=True)
 class Dot(_BaseOneTokenOp):
     """
-    Used by Attribute and DottedName as a separator between subsequent
-    Name nodes.
+    Used by :class:`Attribute` as a separator between subsequent :class:`Name` nodes.
     """
 
+    #: Any space that appears directly before this dot.
     whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace("")
+
+    #: Any space that appears directly after this dot.
     whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace("")
 
     def _get_token(self) -> str:
@@ -210,7 +223,8 @@ class Dot(_BaseOneTokenOp):
 @dataclass(frozen=True)
 class ImportStar(BaseLeaf):
     """
-    Used by ImportFrom to denote a star import.
+    Used by :class:`ImportFrom` to denote a star import instead of a list
+    of importable objects.
     """
 
     def _codegen_impl(self, state: CodegenState) -> None:
@@ -221,11 +235,15 @@ class ImportStar(BaseLeaf):
 @dataclass(frozen=True)
 class AssignEqual(_BaseOneTokenOp):
     """
-    Used by AnnAssign to denote a single equal character when doing an
-    assignment on top of a type annotation.
+    Used by :class:`AnnAssign` to denote a single equal character when doing an
+    assignment on top of a type annotation. Also used by :class:`Param` and
+    :class:`Arg` to denote assignment of a default value.
     """
 
+    #: Any space that appears directly before this equal sign.
     whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+
+    #: Any space that appears directly after this equal sign.
     whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
 
     def _get_token(self) -> str:
@@ -235,6 +253,12 @@ class AssignEqual(_BaseOneTokenOp):
 @add_slots
 @dataclass(frozen=True)
 class Plus(BaseUnaryOp):
+    """
+    A unary operator that can be used in a :class:`UnaryOperation`
+    expression.
+    """
+
+    #: Any space that appears directly after this operator.
     whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace("")
 
     def _get_token(self) -> str:
@@ -244,6 +268,12 @@ class Plus(BaseUnaryOp):
 @add_slots
 @dataclass(frozen=True)
 class Minus(BaseUnaryOp):
+    """
+    A unary operator that can be used in a :class:`UnaryOperation`
+    expression.
+    """
+
+    #: Any space that appears directly after this operator.
     whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace("")
 
     def _get_token(self) -> str:
@@ -253,6 +283,12 @@ class Minus(BaseUnaryOp):
 @add_slots
 @dataclass(frozen=True)
 class BitInvert(BaseUnaryOp):
+    """
+    A unary operator that can be used in a :class:`UnaryOperation`
+    expression.
+    """
+
+    #: Any space that appears directly after this operator.
     whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace("")
 
     def _get_token(self) -> str:
@@ -262,6 +298,12 @@ class BitInvert(BaseUnaryOp):
 @add_slots
 @dataclass(frozen=True)
 class Not(BaseUnaryOp):
+    """
+    A unary operator that can be used in a :class:`UnaryOperation`
+    expression.
+    """
+
+    #: Any space that appears directly after this operator.
     whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
 
     def _get_token(self) -> str:
@@ -271,7 +313,15 @@ class Not(BaseUnaryOp):
 @add_slots
 @dataclass(frozen=True)
 class And(BaseBooleanOp):
+    """
+    A boolean operator that can be used in a :class:`BooleanOperation`
+    expression.
+    """
+
+    #: Any space that appears directly before this operator.
     whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+
+    #: Any space that appears directly after this operator.
     whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
 
     def _get_token(self) -> str:
@@ -281,7 +331,15 @@ class And(BaseBooleanOp):
 @add_slots
 @dataclass(frozen=True)
 class Or(BaseBooleanOp):
+    """
+    A boolean operator that can be used in a :class:`BooleanOperation`
+    expression.
+    """
+
+    #: Any space that appears directly before this operator.
     whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+
+    #: Any space that appears directly after this operator.
     whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
 
     def _get_token(self) -> str:
@@ -291,7 +349,15 @@ class Or(BaseBooleanOp):
 @add_slots
 @dataclass(frozen=True)
 class Add(BaseBinaryOp, _BaseOneTokenOp):
+    """
+    A binary operator that can be used in a :class:`BinaryOperation`
+    expression.
+    """
+
+    #: Any space that appears directly before this operator.
     whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+
+    #: Any space that appears directly after this operator.
     whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
 
     def _get_token(self) -> str:
@@ -301,7 +367,15 @@ class Add(BaseBinaryOp, _BaseOneTokenOp):
 @add_slots
 @dataclass(frozen=True)
 class Subtract(BaseBinaryOp, _BaseOneTokenOp):
+    """
+    A binary operator that can be used in a :class:`BinaryOperation`
+    expression.
+    """
+
+    #: Any space that appears directly before this operator.
     whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+
+    #: Any space that appears directly after this operator.
     whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
 
     def _get_token(self) -> str:
@@ -311,7 +385,15 @@ class Subtract(BaseBinaryOp, _BaseOneTokenOp):
 @add_slots
 @dataclass(frozen=True)
 class Multiply(BaseBinaryOp, _BaseOneTokenOp):
+    """
+    A binary operator that can be used in a :class:`BinaryOperation`
+    expression.
+    """
+
+    #: Any space that appears directly before this operator.
     whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+
+    #: Any space that appears directly after this operator.
     whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
 
     def _get_token(self) -> str:
@@ -321,7 +403,15 @@ class Multiply(BaseBinaryOp, _BaseOneTokenOp):
 @add_slots
 @dataclass(frozen=True)
 class Divide(BaseBinaryOp, _BaseOneTokenOp):
+    """
+    A binary operator that can be used in a :class:`BinaryOperation`
+    expression.
+    """
+
+    #: Any space that appears directly before this operator.
     whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+
+    #: Any space that appears directly after this operator.
     whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
 
     def _get_token(self) -> str:
@@ -331,7 +421,15 @@ class Divide(BaseBinaryOp, _BaseOneTokenOp):
 @add_slots
 @dataclass(frozen=True)
 class FloorDivide(BaseBinaryOp, _BaseOneTokenOp):
+    """
+    A binary operator that can be used in a :class:`BinaryOperation`
+    expression.
+    """
+
+    #: Any space that appears directly before this operator.
     whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+
+    #: Any space that appears directly after this operator.
     whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
 
     def _get_token(self) -> str:
@@ -341,7 +439,15 @@ class FloorDivide(BaseBinaryOp, _BaseOneTokenOp):
 @add_slots
 @dataclass(frozen=True)
 class Modulo(BaseBinaryOp, _BaseOneTokenOp):
+    """
+    A binary operator that can be used in a :class:`BinaryOperation`
+    expression.
+    """
+
+    #: Any space that appears directly before this operator.
     whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+
+    #: Any space that appears directly after this operator.
     whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
 
     def _get_token(self) -> str:
@@ -351,7 +457,15 @@ class Modulo(BaseBinaryOp, _BaseOneTokenOp):
 @add_slots
 @dataclass(frozen=True)
 class Power(BaseBinaryOp, _BaseOneTokenOp):
+    """
+    A binary operator that can be used in a :class:`BinaryOperation`
+    expression.
+    """
+
+    #: Any space that appears directly before this operator.
     whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+
+    #: Any space that appears directly after this operator.
     whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
 
     def _get_token(self) -> str:
@@ -361,7 +475,15 @@ class Power(BaseBinaryOp, _BaseOneTokenOp):
 @add_slots
 @dataclass(frozen=True)
 class LeftShift(BaseBinaryOp, _BaseOneTokenOp):
+    """
+    A binary operator that can be used in a :class:`BinaryOperation`
+    expression.
+    """
+
+    #: Any space that appears directly before this operator.
     whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+
+    #: Any space that appears directly after this operator.
     whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
 
     def _get_token(self) -> str:
@@ -371,7 +493,15 @@ class LeftShift(BaseBinaryOp, _BaseOneTokenOp):
 @add_slots
 @dataclass(frozen=True)
 class RightShift(BaseBinaryOp, _BaseOneTokenOp):
+    """
+    A binary operator that can be used in a :class:`BinaryOperation`
+    expression.
+    """
+
+    #: Any space that appears directly before this operator.
     whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+
+    #: Any space that appears directly after this operator.
     whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
 
     def _get_token(self) -> str:
@@ -380,7 +510,15 @@ class RightShift(BaseBinaryOp, _BaseOneTokenOp):
 
 @dataclass(frozen=True)
 class BitOr(BaseBinaryOp, _BaseOneTokenOp):
+    """
+    A binary operator that can be used in a :class:`BinaryOperation`
+    expression.
+    """
+
+    #: Any space that appears directly before this operator.
     whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+
+    #: Any space that appears directly after this operator.
     whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
 
     def _get_token(self) -> str:
@@ -390,7 +528,15 @@ class BitOr(BaseBinaryOp, _BaseOneTokenOp):
 @add_slots
 @dataclass(frozen=True)
 class BitAnd(BaseBinaryOp, _BaseOneTokenOp):
+    """
+    A binary operator that can be used in a :class:`BinaryOperation`
+    expression.
+    """
+
+    #: Any space that appears directly before this operator.
     whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+
+    #: Any space that appears directly after this operator.
     whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
 
     def _get_token(self) -> str:
@@ -400,7 +546,15 @@ class BitAnd(BaseBinaryOp, _BaseOneTokenOp):
 @add_slots
 @dataclass(frozen=True)
 class BitXor(BaseBinaryOp, _BaseOneTokenOp):
+    """
+    A binary operator that can be used in a :class:`BinaryOperation`
+    expression.
+    """
+
+    #: Any space that appears directly before this operator.
     whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+
+    #: Any space that appears directly after this operator.
     whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
 
     def _get_token(self) -> str:
@@ -410,7 +564,15 @@ class BitXor(BaseBinaryOp, _BaseOneTokenOp):
 @add_slots
 @dataclass(frozen=True)
 class MatrixMultiply(BaseBinaryOp, _BaseOneTokenOp):
+    """
+    A binary operator that can be used in a :class:`BinaryOperation`
+    expression.
+    """
+
+    #: Any space that appears directly before this operator.
     whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+
+    #: Any space that appears directly after this operator.
     whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
 
     def _get_token(self) -> str:
@@ -420,7 +582,14 @@ class MatrixMultiply(BaseBinaryOp, _BaseOneTokenOp):
 @add_slots
 @dataclass(frozen=True)
 class LessThan(BaseCompOp, _BaseOneTokenOp):
+    """
+    A comparision operator that can be used in a :class:`Comparison` expression.
+    """
+
+    #: Any space that appears directly before this operator.
     whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+
+    #: Any space that appears directly after this operator.
     whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
 
     def _get_token(self) -> str:
@@ -430,7 +599,14 @@ class LessThan(BaseCompOp, _BaseOneTokenOp):
 @add_slots
 @dataclass(frozen=True)
 class GreaterThan(BaseCompOp, _BaseOneTokenOp):
+    """
+    A comparision operator that can be used in a :class:`Comparison` expression.
+    """
+
+    #: Any space that appears directly before this operator.
     whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+
+    #: Any space that appears directly after this operator.
     whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
 
     def _get_token(self) -> str:
@@ -440,7 +616,14 @@ class GreaterThan(BaseCompOp, _BaseOneTokenOp):
 @add_slots
 @dataclass(frozen=True)
 class Equal(BaseCompOp, _BaseOneTokenOp):
+    """
+    A comparision operator that can be used in a :class:`Comparison` expression.
+    """
+
+    #: Any space that appears directly before this operator.
     whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+
+    #: Any space that appears directly after this operator.
     whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
 
     def _get_token(self) -> str:
@@ -450,7 +633,14 @@ class Equal(BaseCompOp, _BaseOneTokenOp):
 @add_slots
 @dataclass(frozen=True)
 class LessThanEqual(BaseCompOp, _BaseOneTokenOp):
+    """
+    A comparision operator that can be used in a :class:`Comparison` expression.
+    """
+
+    #: Any space that appears directly before this operator.
     whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+
+    #: Any space that appears directly after this operator.
     whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
 
     def _get_token(self) -> str:
@@ -460,7 +650,14 @@ class LessThanEqual(BaseCompOp, _BaseOneTokenOp):
 @add_slots
 @dataclass(frozen=True)
 class GreaterThanEqual(BaseCompOp, _BaseOneTokenOp):
+    """
+    A comparision operator that can be used in a :class:`Comparison` expression.
+    """
+
+    #: Any space that appears directly before this operator.
     whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+
+    #: Any space that appears directly after this operator.
     whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
 
     def _get_token(self) -> str:
@@ -471,14 +668,20 @@ class GreaterThanEqual(BaseCompOp, _BaseOneTokenOp):
 @dataclass(frozen=True)
 class NotEqual(BaseCompOp):
     """
+    A comparison operator that can be used in a :class:`Comparison` expression.
+
     This node defines a static value for convenience, but in reality due to
-    PEP 401 it can be one of two values, both of which should be a NotEqual
-    CompOp.
+    PEP 401 it can be one of two values, both of which should be a
+    :class:`NotEqual` :class:`Comparison` operator.
     """
 
+    #: The actual text value of this operator. Can be either ``!=`` or ``<>``.
     value: str = "!="
 
+    #: Any space that appears directly before this operator.
     whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+
+    #: Any space that appears directly after this operator.
     whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
 
     def _validate(self) -> None:
@@ -505,7 +708,14 @@ class NotEqual(BaseCompOp):
 @add_slots
 @dataclass(frozen=True)
 class In(BaseCompOp, _BaseOneTokenOp):
+    """
+    A comparision operator that can be used in a :class:`Comparison` expression.
+    """
+
+    #: Any space that appears directly before this operator.
     whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+
+    #: Any space that appears directly after this operator.
     whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
 
     def _get_token(self) -> str:
@@ -515,8 +725,20 @@ class In(BaseCompOp, _BaseOneTokenOp):
 @add_slots
 @dataclass(frozen=True)
 class NotIn(BaseCompOp, _BaseTwoTokenOp):
+    """
+    A comparision operator that can be used in a :class:`Comparison` expression.
+
+    This operator spans two tokens that must be separated by at least one space,
+    so there is a third whitespace attribute to represent this.
+    """
+
+    #: Any space that appears directly before this operator.
     whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+
+    #: Any space that appears between the ``not`` and ``in`` tokens.
     whitespace_between: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+
+    #: Any space that appears directly after this operator.
     whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
 
     def _get_tokens(self) -> Tuple[str, str]:
@@ -526,7 +748,14 @@ class NotIn(BaseCompOp, _BaseTwoTokenOp):
 @add_slots
 @dataclass(frozen=True)
 class Is(BaseCompOp, _BaseOneTokenOp):
+    """
+    A comparision operator that can be used in a :class:`Comparison` expression.
+    """
+
+    #: Any space that appears directly before this operator.
     whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+
+    #: Any space that appears directly after this operator.
     whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
 
     def _get_token(self) -> str:
@@ -536,8 +765,20 @@ class Is(BaseCompOp, _BaseOneTokenOp):
 @add_slots
 @dataclass(frozen=True)
 class IsNot(BaseCompOp, _BaseTwoTokenOp):
+    """
+    A comparision operator that can be used in a :class:`Comparison` expression.
+
+    This operator spans two tokens that must be separated by at least one space,
+    so there is a third whitespace attribute to represent this.
+    """
+
+    #: Any space that appears directly before this operator.
     whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+
+    #: Any space that appears between the ``is`` and ``not`` tokens.
     whitespace_between: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+
+    #: Any space that appears directly after this operator.
     whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
 
     def _get_tokens(self) -> Tuple[str, str]:
@@ -547,7 +788,15 @@ class IsNot(BaseCompOp, _BaseTwoTokenOp):
 @add_slots
 @dataclass(frozen=True)
 class AddAssign(BaseAugOp, _BaseOneTokenOp):
+    """
+    An augmented assignment operator that can be used in a :class:`AugAssign`
+    statement.
+    """
+
+    #: Any space that appears directly before this operator.
     whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+
+    #: Any space that appears directly after this operator.
     whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
 
     def _get_token(self) -> str:
@@ -557,7 +806,15 @@ class AddAssign(BaseAugOp, _BaseOneTokenOp):
 @add_slots
 @dataclass(frozen=True)
 class SubtractAssign(BaseAugOp, _BaseOneTokenOp):
+    """
+    An augmented assignment operator that can be used in a :class:`AugAssign`
+    statement.
+    """
+
+    #: Any space that appears directly before this operator.
     whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+
+    #: Any space that appears directly after this operator.
     whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
 
     def _get_token(self) -> str:
@@ -567,7 +824,15 @@ class SubtractAssign(BaseAugOp, _BaseOneTokenOp):
 @add_slots
 @dataclass(frozen=True)
 class MultiplyAssign(BaseAugOp, _BaseOneTokenOp):
+    """
+    An augmented assignment operator that can be used in a :class:`AugAssign`
+    statement.
+    """
+
+    #: Any space that appears directly before this operator.
     whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+
+    #: Any space that appears directly after this operator.
     whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
 
     def _get_token(self) -> str:
@@ -577,7 +842,15 @@ class MultiplyAssign(BaseAugOp, _BaseOneTokenOp):
 @add_slots
 @dataclass(frozen=True)
 class MatrixMultiplyAssign(BaseAugOp, _BaseOneTokenOp):
+    """
+    An augmented assignment operator that can be used in a :class:`AugAssign`
+    statement.
+    """
+
+    #: Any space that appears directly before this operator.
     whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+
+    #: Any space that appears directly after this operator.
     whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
 
     def _get_token(self) -> str:
@@ -587,7 +860,15 @@ class MatrixMultiplyAssign(BaseAugOp, _BaseOneTokenOp):
 @add_slots
 @dataclass(frozen=True)
 class DivideAssign(BaseAugOp, _BaseOneTokenOp):
+    """
+    An augmented assignment operator that can be used in a :class:`AugAssign`
+    statement.
+    """
+
+    #: Any space that appears directly before this operator.
     whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+
+    #: Any space that appears directly after this operator.
     whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
 
     def _get_token(self) -> str:
@@ -597,7 +878,15 @@ class DivideAssign(BaseAugOp, _BaseOneTokenOp):
 @add_slots
 @dataclass(frozen=True)
 class ModuloAssign(BaseAugOp, _BaseOneTokenOp):
+    """
+    An augmented assignment operator that can be used in a :class:`AugAssign`
+    statement.
+    """
+
+    #: Any space that appears directly before this operator.
     whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+
+    #: Any space that appears directly after this operator.
     whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
 
     def _get_token(self) -> str:
@@ -607,7 +896,15 @@ class ModuloAssign(BaseAugOp, _BaseOneTokenOp):
 @add_slots
 @dataclass(frozen=True)
 class BitAndAssign(BaseAugOp, _BaseOneTokenOp):
+    """
+    An augmented assignment operator that can be used in a :class:`AugAssign`
+    statement.
+    """
+
+    #: Any space that appears directly before this operator.
     whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+
+    #: Any space that appears directly after this operator.
     whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
 
     def _get_token(self) -> str:
@@ -617,7 +914,15 @@ class BitAndAssign(BaseAugOp, _BaseOneTokenOp):
 @add_slots
 @dataclass(frozen=True)
 class BitOrAssign(BaseAugOp, _BaseOneTokenOp):
+    """
+    An augmented assignment operator that can be used in a :class:`AugAssign`
+    statement.
+    """
+
+    #: Any space that appears directly before this operator.
     whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+
+    #: Any space that appears directly after this operator.
     whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
 
     def _get_token(self) -> str:
@@ -627,7 +932,15 @@ class BitOrAssign(BaseAugOp, _BaseOneTokenOp):
 @add_slots
 @dataclass(frozen=True)
 class BitXorAssign(BaseAugOp, _BaseOneTokenOp):
+    """
+    An augmented assignment operator that can be used in a :class:`AugAssign`
+    statement.
+    """
+
+    #: Any space that appears directly before this operator.
     whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+
+    #: Any space that appears directly after this operator.
     whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
 
     def _get_token(self) -> str:
@@ -637,7 +950,15 @@ class BitXorAssign(BaseAugOp, _BaseOneTokenOp):
 @add_slots
 @dataclass(frozen=True)
 class LeftShiftAssign(BaseAugOp, _BaseOneTokenOp):
+    """
+    An augmented assignment operator that can be used in a :class:`AugAssign`
+    statement.
+    """
+
+    #: Any space that appears directly before this operator.
     whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+
+    #: Any space that appears directly after this operator.
     whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
 
     def _get_token(self) -> str:
@@ -647,7 +968,15 @@ class LeftShiftAssign(BaseAugOp, _BaseOneTokenOp):
 @add_slots
 @dataclass(frozen=True)
 class RightShiftAssign(BaseAugOp, _BaseOneTokenOp):
+    """
+    An augmented assignment operator that can be used in a :class:`AugAssign`
+    statement.
+    """
+
+    #: Any space that appears directly before this operator.
     whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+
+    #: Any space that appears directly after this operator.
     whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
 
     def _get_token(self) -> str:
@@ -657,7 +986,15 @@ class RightShiftAssign(BaseAugOp, _BaseOneTokenOp):
 @add_slots
 @dataclass(frozen=True)
 class PowerAssign(BaseAugOp, _BaseOneTokenOp):
+    """
+    An augmented assignment operator that can be used in a :class:`AugAssign`
+    statement.
+    """
+
+    #: Any space that appears directly before this operator.
     whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+
+    #: Any space that appears directly after this operator.
     whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
 
     def _get_token(self) -> str:
@@ -667,7 +1004,15 @@ class PowerAssign(BaseAugOp, _BaseOneTokenOp):
 @add_slots
 @dataclass(frozen=True)
 class FloorDivideAssign(BaseAugOp, _BaseOneTokenOp):
+    """
+    An augmented assignment operator that can be used in a :class:`AugAssign`
+    statement.
+    """
+
+    #: Any space that appears directly before this operator.
     whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+
+    #: Any space that appears directly after this operator.
     whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
 
     def _get_token(self) -> str:
