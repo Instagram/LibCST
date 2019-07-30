@@ -2,4 +2,4 @@ black==19.3b0
 flake8==3.7.8
 isort==4.3.20
 pyre-check==0.0.27
-Sphinx==2.1.2
+git+https://github.com/jimmylai/sphinx.git@slots_type_annotation
