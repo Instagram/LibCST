@@ -87,7 +87,7 @@ class Module(CSTNode):
         dependencies declared by 'visitor'.
         """
 
-        from libcst.metadata.runner import _MetadataRunner
+        from libcst.metadata._resolver import _MetadataRunner
 
         module = _MetadataRunner.resolve(self, visitor)
         result = CSTNode._visit_impl(module, visitor)
