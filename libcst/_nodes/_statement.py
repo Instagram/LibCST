@@ -50,15 +50,15 @@ _INDENT_WHITESPACE_RE = re.compile(r"[ \f\t]+", re.UNICODE)
 
 class BaseSuite(CSTNode, ABC):
     """
-    A dummy base-class for both SimpleStatementLine and IndentedBlock. This exists to
-    simplify type definitions and isinstance checks.
+    A dummy base-class for both :class:`SimpleStatementSuite` and :class:`IndentedBlock`.
+    This exists to simplify type definitions and isinstance checks.
 
-    > A suite is a group of statements controlled by a clause. A suite can be one or
-    > more semicolon-separated simple statements on the same line as the header,
-    > following the header’s colon, or it can be one or more indented statements on
-    > subsequent lines.
+        A suite is a group of statements controlled by a clause. A suite can be one or
+        more semicolon-separated simple statements on the same line as the header,
+        following the header’s colon, or it can be one or more indented statements on
+        subsequent lines.
 
-    -- https://docs.python.org/3/reference/compound_stmts.html
+        -- https://docs.python.org/3/reference/compound_stmts.html
     """
 
     body: Union[
@@ -69,14 +69,17 @@ class BaseSuite(CSTNode, ABC):
 
 class BaseSmallStatement(CSTNode, ABC):
     """
-    Encapsulates a small statement, like "del" or "pass", and optionally adds a trailing
-    semicolon. A SmallStatement is always contained inside a SimpleStatementLine or
-    SimpleStatementSuite.
+    Encapsulates a small statement, like ``del`` or ``pass``, and optionally adds a
+    trailing semicolon. A small statement is always contained inside a
+    :class:`SimpleStatementLine` or :class:`SimpleStatementSuite`. This exists to
+    simplify type definitions and isinstance checks.
     """
 
-    #: This is optional for the last SmallStatement in a SimpleStatementLine or
-    #: SimpleStatementSuite, but all other SmallStatements inside a simple statement must
-    #: contain a semicolon to disambiguate multiple small statements on the same line.
+    #: An optional semicolon that appears after a small statement. This is optional
+    #: for the last small statement in a :class:`SimpleStatementLine` or
+    #: :class:`SimpleStatementSuite`, but all other small statements inside a simple
+    #: statement must contain a semicolon to disambiguate multiple small statements
+    #: on the same line.
     semicolon: Union[Semicolon, MaybeSentinel] = MaybeSentinel.DEFAULT
 
     @abstractmethod
@@ -448,15 +451,21 @@ class Else(CSTNode):
 
 class BaseCompoundStatement(CSTNode, ABC):
     """
-    > Compound statements contain (groups of) other statements; they affect or control
-    > the execution of those other statements in some way. In general, compound
-    > statements span multiple lines, although in simple incarnations a whole compound
-    > statement may be contained in one line.
+    Encapsulates a compound statement, like ``if True: pass`` or ``while True: pass``.
+    This exists to simplify type definitions and isinstance checks.
 
-    -- https://docs.python.org/3/reference/compound_stmts.html
+        Compound statements contain (groups of) other statements; they affect or control
+        the execution of those other statements in some way. In general, compound
+        statements span multiple lines, although in simple incarnations a whole compound
+        statement may be contained in one line.
+
+        -- https://docs.python.org/3/reference/compound_stmts.html
     """
 
+    #: The body of this compound statement.
     body: BaseSuite
+
+    #: Any empty lines or comments appearing before this statement.
     leading_lines: Sequence[EmptyLine]
 
 

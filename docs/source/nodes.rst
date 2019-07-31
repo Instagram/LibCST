@@ -100,9 +100,6 @@ Nodes that represent top-level statements.
 .. autoclass:: libcst.Assign
 .. autoclass:: libcst.AssignTarget
 .. autoclass:: libcst.AugAssign
-.. autoclass:: libcst.BaseCompoundStatement
-.. autoclass:: libcst.BaseSmallStatement
-.. autoclass:: libcst.BaseSuite
 .. autoclass:: libcst.Break
 .. autoclass:: libcst.ClassDef
 .. autoclass:: libcst.Continue
@@ -132,6 +129,12 @@ Nodes that represent top-level statements.
 .. autoclass:: libcst.With
 .. autoclass:: libcst.WithItem
 
+Additionally, various classes are defined purely for typing and isinstance checks.
+
+.. autoclass:: libcst.BaseCompoundStatement
+.. autoclass:: libcst.BaseSmallStatement
+.. autoclass:: libcst.BaseSuite
+
 Operators
 ---------
 
@@ -149,7 +152,7 @@ operation.
 .. class:: libcst.Not
 .. autoclass:: libcst.Plus
 
-In addition, :class:`~libcst.BaseUnaryOp` is defined purely for typing and instance
+In addition, :class:`~libcst.BaseUnaryOp` is defined purely for typing and isinstance
 checks.
 
 .. class:: libcst.BaseUnaryOp
@@ -163,7 +166,7 @@ operation.
 .. class:: libcst.And
 .. autoclass:: libcst.Or
 
-In addition, :class:`~libcst.BaseBooleanOp` is defined purely for typing and instance
+In addition, :class:`~libcst.BaseBooleanOp` is defined purely for typing and isinstance
 checks.
 
 .. class:: libcst.BaseBooleanOp
@@ -188,7 +191,7 @@ operation.
 .. class:: libcst.RightShift
 .. autoclass:: libcst.Subtract
 
-In addition, :class:`~libcst.BaseBinaryOp` is defined purely for typing and instance
+In addition, :class:`~libcst.BaseBinaryOp` is defined purely for typing and isinstance
 checks.
 
 .. class:: libcst.BaseBinaryOp
@@ -212,7 +215,7 @@ operation.
 .. class:: libcst.IsNot
 .. autoclass:: libcst.NotIn
 
-In addition, :class:`~libcst.BaseCompOp` is defined purely for typing and instance
+In addition, :class:`~libcst.BaseCompOp` is defined purely for typing and isinstance
 checks.
 
 .. class:: libcst.BaseCompOp
@@ -237,7 +240,7 @@ assignment.
 .. class:: libcst.RightShiftAssign
 .. autoclass:: libcst.SubtractAssign
 
-In addition, :class:`~libcst.BaseAugOp` is defined purely for typing and instance
+In addition, :class:`~libcst.BaseAugOp` is defined purely for typing and isinstance
 checks.
 
 .. class:: libcst.BaseAugOp
