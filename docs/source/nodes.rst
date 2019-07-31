@@ -31,7 +31,6 @@ Nodes that represent various expressions.
 .. autoclass:: libcst.Asynchronous
 .. autoclass:: libcst.Attribute
 .. autoclass:: libcst.Await
-.. autoclass:: libcst.BaseAtom
 .. autoclass:: libcst.BaseComp
 .. autoclass:: libcst.BaseDict
 .. autoclass:: libcst.BaseDictElement

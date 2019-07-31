@@ -269,18 +269,6 @@ class BaseExpression(_BaseParenthesizedNode, ABC):
         return len(self.lpar) > 0 and len(self.rpar) > 0
 
 
-class BaseAtom(BaseExpression, ABC):
-    """
-    > Atoms are the most basic elements of expressions. The simplest atoms are
-    > identifiers or literals. Forms enclosed in parentheses, brackets or braces are
-    > also categorized syntactically as atoms.
-
-    -- https://docs.python.org/3/reference/expressions.html#atoms
-    """
-
-    pass
-
-
 class BaseAssignTargetExpression(BaseExpression, ABC):
     """
     An expression that's valid on the left side of an assign statement.
@@ -314,7 +302,7 @@ class BaseDelTargetExpression(BaseExpression, ABC):
 
 @add_slots
 @dataclass(frozen=True)
-class Name(BaseAssignTargetExpression, BaseDelTargetExpression, BaseAtom):
+class Name(BaseAssignTargetExpression, BaseDelTargetExpression):
     #: The actual identifier string
     value: str
 
@@ -345,7 +333,7 @@ class Name(BaseAssignTargetExpression, BaseDelTargetExpression, BaseAtom):
 
 @add_slots
 @dataclass(frozen=True)
-class Ellipses(BaseAtom):
+class Ellipses(BaseExpression):
     """
     An ellipses "..."
     """
@@ -367,7 +355,7 @@ class Ellipses(BaseAtom):
             state.add_token("...")
 
 
-class BaseNumber(BaseAtom, ABC):
+class BaseNumber(BaseExpression, ABC):
     """
     A type that can be used anywhere that you need to explicitly take any
     number type.
@@ -468,7 +456,7 @@ class Imaginary(BaseNumber):
             state.add_token(self.value)
 
 
-class BaseString(BaseAtom, ABC):
+class BaseString(BaseExpression, ABC):
     """
     A type that can be used anywhere that you need to explicitly take any
     string.
@@ -1829,7 +1817,7 @@ class _BaseExpressionWithArgs(BaseExpression, ABC):
 @dataclass(frozen=True)
 class Call(_BaseExpressionWithArgs):
     #: The expression resulting in a callable that we are to call.
-    func: Union[BaseAtom, Attribute, Subscript, "Call"]
+    func: Union[BaseExpression]
 
     #: The arguments to pass to the resulting callable
     args: Sequence[Arg] = ()  #: TODO This can also be a single Generator.
@@ -2374,7 +2362,7 @@ class StarredDictElement(BaseDictElement):
 
 @add_slots
 @dataclass(frozen=True)
-class Tuple(BaseAtom, BaseAssignTargetExpression, BaseDelTargetExpression):
+class Tuple(BaseAssignTargetExpression, BaseDelTargetExpression):
     elements: Sequence[BaseElement]
 
     #: Sequence of open parenthesis for precedence dictation.
@@ -2442,7 +2430,7 @@ class Tuple(BaseAtom, BaseAssignTargetExpression, BaseDelTargetExpression):
                     )
 
 
-class BaseList(BaseAtom, ABC):
+class BaseList(BaseExpression, ABC):
     """
     A Base class for List and ListComp, which both result in a list object when
     evaluated.
@@ -2499,7 +2487,7 @@ class List(BaseList, BaseAssignTargetExpression, BaseDelTargetExpression):
                 )
 
 
-class _BaseSetOrDict(BaseAtom, ABC):
+class _BaseSetOrDict(BaseExpression, ABC):
     """
     An abstract base class for :class:`.BaseSet` and :class:`.BaseDict`.
 
@@ -2811,7 +2799,7 @@ class CompIf(CSTNode):
         self.test._codegen(state)
 
 
-class BaseComp(BaseAtom, ABC):
+class BaseComp(BaseExpression, ABC):
     # pyre-fixme[13]: Attribute `for_in` is never initialized.
     for_in: CompFor
 

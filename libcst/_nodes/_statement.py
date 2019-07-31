@@ -17,7 +17,6 @@ from libcst._nodes._expression import (
     Asynchronous,
     Attribute,
     BaseAssignTargetExpression,
-    BaseAtom,
     BaseDelTargetExpression,
     BaseExpression,
     Call,
@@ -1258,10 +1257,10 @@ class Decorator(CSTNode):
                 "Cannot have parens around decorator in a Decorator."
             )
         if isinstance(self.decorator, Call) and not isinstance(
-            self.decorator.func, (BaseAtom, Attribute)
+            self.decorator.func, (Name, Attribute)
         ):
             raise CSTValidationError(
-                "Decorator call function must be an atom or attribute."
+                "Decorator call function must be Name or Attribute node."
             )
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Decorator":
