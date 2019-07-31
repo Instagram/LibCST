@@ -12,7 +12,6 @@ from tokenize import (
 )
 
 from libcst._maybe_sentinel import MaybeSentinel
-from libcst._nodes._dummy import DummyNode
 from libcst._nodes._expression import (
     Arg,
     Asynchronous,
@@ -26,6 +25,9 @@ from libcst._nodes._expression import (
     CompFor,
     CompIf,
     ConcatenatedString,
+    Dict,
+    DictComp,
+    DictElement,
     Element,
     Ellipses,
     ExtSlice,
@@ -54,6 +56,7 @@ from libcst._nodes._expression import (
     Set,
     SetComp,
     Slice,
+    StarredDictElement,
     StarredElement,
     Subscript,
     Tuple,
@@ -99,7 +102,6 @@ from libcst._nodes._op import (
     Subtract,
 )
 from libcst._nodes._whitespace import SimpleWhitespace
-from libcst._parser._conversions.dummy import make_dummy_node
 from libcst._parser._custom_itertools import grouper
 from libcst._parser._production_decorator import with_production
 from libcst._parser._types.config import ParserConfig
@@ -882,29 +884,24 @@ def convert_atom_curlybraces(
     config: ParserConfig, children: typing.Sequence[typing.Any]
 ) -> typing.Any:
     lbrace_tok, *body, rbrace_tok = children
+    lbrace = LeftCurlyBrace(
+        whitespace_after=parse_parenthesizable_whitespace(
+            config, lbrace_tok.whitespace_after
+        )
+    )
+
+    rbrace = RightCurlyBrace(
+        whitespace_before=parse_parenthesizable_whitespace(
+            config, rbrace_tok.whitespace_before
+        )
+    )
 
     if len(body) == 0:
-        # TODO: Make an empty dict with lbrace and rbrace
-        return make_dummy_node(config, children)
+        dict_or_set_node = Dict((), lbrace=lbrace, rbrace=rbrace)
     else:  # len(body) == 1
-        # body[0] is a Set, SetComp, Dict, or DictComp
-        if isinstance(body[0].value, DummyNode):
-            # TODO: Remove this once Dict/DictComp are implemented
-            return make_dummy_node(config, children)
-        lbrace = LeftCurlyBrace(
-            whitespace_after=parse_parenthesizable_whitespace(
-                config, lbrace_tok.whitespace_after
-            )
-        )
+        dict_or_set_node = body[0].value.with_changes(lbrace=lbrace, rbrace=rbrace)
 
-        rbrace = RightCurlyBrace(
-            whitespace_before=parse_parenthesizable_whitespace(
-                config, rbrace_tok.whitespace_before
-            )
-        )
-        list_node = body[0].value.with_changes(lbrace=lbrace, rbrace=rbrace)
-
-    return WithLeadingWhitespace(list_node, lbrace_tok.whitespace_before)
+    return WithLeadingWhitespace(dict_or_set_node, lbrace_tok.whitespace_before)
 
 
 @with_production("atom_parens", "'(' [yield_expr|testlist_comp_tuple] ')'")
@@ -1142,11 +1139,13 @@ def _convert_sequencelike(
                 # Only compute whitespace_after if we're not a trailing comma.
                 # If we're a trailing comma, that whitespace should be consumed by the
                 # TrailingWhitespace, parenthesis, etc.
-                whitespace_after=parse_parenthesizable_whitespace(
-                    config, comma_token.whitespace_after
-                )
-                if comma_token is not children[-1]
-                else SimpleWhitespace(""),
+                whitespace_after=(
+                    parse_parenthesizable_whitespace(
+                        config, comma_token.whitespace_after
+                    )
+                    if comma_token is not children[-1]
+                    else SimpleWhitespace("")
+                ),
             )
 
         if isinstance(expr_or_starred_element, StarredElement):
@@ -1185,10 +1184,102 @@ def convert_dictorsetmaker(
         return _convert_set(config, children)
 
 
+def _convert_dict_element(
+    config: ParserConfig,
+    children_iter: typing.Iterator[typing.Any],
+    last_child: typing.Any,
+) -> typing.Union[DictElement, StarredDictElement]:
+    first = next(children_iter)
+    if isinstance(first, Token) and first.string == "**":
+        expr = next(children_iter)
+        element = StarredDictElement(
+            expr.value,
+            whitespace_before_value=parse_parenthesizable_whitespace(
+                config, expr.whitespace_before
+            ),
+        )
+    else:
+        key = first
+        colon_tok = next(children_iter)
+        value = next(children_iter)
+        element = DictElement(
+            key.value,
+            value.value,
+            whitespace_before_colon=parse_parenthesizable_whitespace(
+                config, colon_tok.whitespace_before
+            ),
+            whitespace_after_colon=parse_parenthesizable_whitespace(
+                config, colon_tok.whitespace_after
+            ),
+        )
+    # Handle the trailing comma (if there is one)
+    try:
+        comma_token = next(children_iter)
+        element = element.with_changes(
+            comma=Comma(
+                whitespace_before=parse_parenthesizable_whitespace(
+                    config, comma_token.whitespace_before
+                ),
+                # Only compute whitespace_after if we're not a trailing comma.
+                # If we're a trailing comma, that whitespace should be consumed by the
+                # RightBracket.
+                whitespace_after=(
+                    parse_parenthesizable_whitespace(
+                        config, comma_token.whitespace_after
+                    )
+                    if comma_token is not last_child
+                    else SimpleWhitespace("")
+                ),
+            )
+        )
+    except StopIteration:
+        pass
+    return element
+
+
 def _convert_dict(
     config: ParserConfig, children: typing.Sequence[typing.Any]
 ) -> typing.Any:
-    return make_dummy_node(config, children)
+    is_first_starred = isinstance(children[0], Token) and children[0].string == "**"
+    if is_first_starred:
+        possible_comp_for = None if len(children) < 3 else children[2]
+    else:
+        possible_comp_for = None if len(children) < 4 else children[3]
+    if isinstance(possible_comp_for, CompFor):
+        if is_first_starred:
+            # TODO: Make this a ParserSyntaxError
+            raise Exception("dict unpacking cannot be used in dict comprehension")
+        return _convert_dict_comp(config, children)
+
+    children_iter = iter(children)
+    last_child = children[-1]
+    elements = []
+    while True:
+        try:
+            elements.append(_convert_dict_element(config, children_iter, last_child))
+        except StopIteration:
+            break
+    # lbrace, rbrace, lpar, and rpar will be attached as-needed by the atom grammar
+    return WithLeadingWhitespace(Dict(tuple(elements)), children[0].whitespace_before)
+
+
+def _convert_dict_comp(config, children: typing.Sequence[typing.Any]) -> typing.Any:
+    key, colon_token, value, comp_for = children
+    return WithLeadingWhitespace(
+        DictComp(
+            key.value,
+            value.value,
+            comp_for,
+            # lbrace, rbrace, lpar, and rpar will be attached as-needed by the atom grammar
+            whitespace_before_colon=parse_parenthesizable_whitespace(
+                config, colon_token.whitespace_before
+            ),
+            whitespace_after_colon=parse_parenthesizable_whitespace(
+                config, colon_token.whitespace_after
+            ),
+        ),
+        key.whitespace_before,
+    )
 
 
 def _convert_set(

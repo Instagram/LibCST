@@ -2329,7 +2329,7 @@ class StarredElement(BaseElement, _BaseParenthesizedNode):
 
 @add_slots
 @dataclass(frozen=True)
-class StarredDictElement(BaseDictElement, _BaseParenthesizedNode):
+class StarredDictElement(BaseDictElement):
     """
     A starred ``**value`` element that expands to represent multiple values in a literal
     :class:`.Dict`.
@@ -2337,19 +2337,9 @@ class StarredDictElement(BaseDictElement, _BaseParenthesizedNode):
     If you're using a literal :class:`.List`, :class:`.Tuple`, or :class:`.Set`,
     see :class:`.StarredElement` instead.
 
-    If this node owns parenthesis, those parenthesis wrap the leading asterisks, but not
-    the trailing comma. For example::
-
-        StarredDictElement(
-            cst.Name("el"),
-            comma=cst.Comma(),
-            lpar=[cst.LeftParen()],
-            rpar=[cst.RightParen()],
-        )
-
-    will generate::
-
-        (**el),
+    Unlike :class:`.StarredElement`, this node does not own left or right parenthesis,
+    but the ``value`` field may still contain parenthesis. This is due to some
+    asymmetry in Python's grammar.
     """
 
     value: BaseExpression
@@ -2357,22 +2347,15 @@ class StarredDictElement(BaseDictElement, _BaseParenthesizedNode):
     #: A trailing comma. By default, we'll only insert a comma if one is required.
     comma: Union[Comma, MaybeSentinel] = MaybeSentinel.DEFAULT
 
-    #: Parenthesis at the beginning of the node, before the leading asterisk.
-    lpar: Sequence[LeftParen] = ()
-    #: Parentheses after the value, but before a comma (if there is one).
-    rpar: Sequence[RightParen] = ()
-
     #: Whitespace between the leading asterisks and the value expression.
     whitespace_before_value: BaseParenthesizableWhitespace = SimpleWhitespace("")
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "StarredDictElement":
         return StarredDictElement(
-            lpar=visit_sequence("lpar", self.lpar, visitor),
             whitespace_before_value=visit_required(
                 "whitespace_before_value", self.whitespace_before_value, visitor
             ),
             value=visit_required("value", self.value, visitor),
-            rpar=visit_sequence("rpar", self.rpar, visitor),
             comma=visit_sentinel("comma", self.comma, visitor),
         )
 
@@ -2382,7 +2365,7 @@ class StarredDictElement(BaseDictElement, _BaseParenthesizedNode):
         default_comma: bool = False,
         default_comma_whitespace: bool = False,
     ) -> None:
-        with self._parenthesize(state):
+        with state.record_syntactic_position(self):
             state.add_token("**")
             self.whitespace_before_value._codegen(state)
             self.value._codegen(state)

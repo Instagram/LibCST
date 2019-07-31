@@ -7,7 +7,7 @@
 from typing import Any
 
 import libcst as cst
-from libcst import CodeRange
+from libcst import CodeRange, parse_expression
 from libcst._nodes.tests.base import CSTNodeTest
 from libcst.testing.utils import data_provider
 
@@ -19,17 +19,20 @@ class DictTest(CSTNodeTest):
             {
                 "node": cst.Dict([]),
                 "code": "{}",
+                "parser": parse_expression,
                 "expected_position": CodeRange.create((1, 0), (1, 2)),
             },
             # one-element dict, sentinel comma value
             {
                 "node": cst.Dict([cst.DictElement(cst.Name("k"), cst.Name("v"))]),
                 "code": "{k: v}",
+                "parser": parse_expression,
                 "expected_position": CodeRange.create((1, 0), (1, 6)),
             },
             {
                 "node": cst.Dict([cst.StarredDictElement(cst.Name("expanded"))]),
                 "code": "{**expanded}",
+                "parser": parse_expression,
                 "expected_position": CodeRange.create((1, 0), (1, 12)),
             },
             # two-element dict, sentinel comma value
@@ -41,6 +44,7 @@ class DictTest(CSTNodeTest):
                     ]
                 ),
                 "code": "{k1: v1, k2: v2}",
+                "parser": None,
                 "expected_position": CodeRange.create((1, 0), (1, 16)),
             },
             # custom whitespace between brackets
@@ -55,6 +59,7 @@ class DictTest(CSTNodeTest):
                     ),
                 ),
                 "code": "{\tk: v\t\t}",
+                "parser": parse_expression,
                 "expected_position": CodeRange.create((1, 0), (1, 9)),
             },
             # with parenthesis
@@ -65,6 +70,7 @@ class DictTest(CSTNodeTest):
                     rpar=[cst.RightParen()],
                 ),
                 "code": "({k: v})",
+                "parser": parse_expression,
                 "expected_position": CodeRange.create((1, 1), (1, 7)),
             },
             # starred element
@@ -76,6 +82,7 @@ class DictTest(CSTNodeTest):
                     ]
                 ),
                 "code": "{**one, **two}",
+                "parser": None,
                 "expected_position": CodeRange.create((1, 0), (1, 14)),
             },
             # custom comma on DictElement
@@ -84,6 +91,7 @@ class DictTest(CSTNodeTest):
                     [cst.DictElement(cst.Name("k"), cst.Name("v"), comma=cst.Comma())]
                 ),
                 "code": "{k: v,}",
+                "parser": parse_expression,
                 "expected_position": CodeRange.create((1, 0), (1, 7)),
             },
             # custom comma on StarredDictElement
@@ -92,6 +100,7 @@ class DictTest(CSTNodeTest):
                     [cst.StarredDictElement(cst.Name("expanded"), comma=cst.Comma())]
                 ),
                 "code": "{**expanded,}",
+                "parser": parse_expression,
                 "expected_position": CodeRange.create((1, 0), (1, 13)),
             },
             # custom whitespace on DictElement
@@ -107,22 +116,8 @@ class DictTest(CSTNodeTest):
                     ]
                 ),
                 "code": "{k\t:\t\tv}",
+                "parser": parse_expression,
                 "expected_position": CodeRange.create((1, 0), (1, 8)),
-            },
-            # custom parenthesis on StarredDictElement
-            {
-                "node": cst.Dict(
-                    [
-                        cst.StarredDictElement(
-                            cst.Name("abc"),
-                            lpar=[cst.LeftParen()],
-                            rpar=[cst.RightParen()],
-                            comma=cst.Comma(),
-                        )
-                    ]
-                ),
-                "code": "{(**abc),}",
-                "expected_position": CodeRange.create((1, 0), (1, 10)),
             },
             # custom whitespace on StarredDictElement
             {
@@ -134,13 +129,12 @@ class DictTest(CSTNodeTest):
                         cst.StarredDictElement(
                             cst.Name("expanded"),
                             whitespace_before_value=cst.SimpleWhitespace("  "),
-                            lpar=[cst.LeftParen()],
-                            rpar=[cst.RightParen()],
                         ),
                     ]
                 ),
-                "code": "{k: v,(**  expanded)}",
-                "expected_position": CodeRange.create((1, 0), (1, 21)),
+                "code": "{k: v,**  expanded}",
+                "parser": parse_expression,
+                "expected_position": CodeRange.create((1, 0), (1, 19)),
             },
             # missing spaces around dict is always okay
             {
@@ -158,6 +152,7 @@ class DictTest(CSTNodeTest):
                         whitespace_after_in=cst.SimpleWhitespace(""),
                     ),
                 ),
+                "parser": parse_expression,
                 "code": "(a for b in{k: v}if c)",
             },
         ]
@@ -171,18 +166,7 @@ class DictTest(CSTNodeTest):
             {
                 "get_node": lambda: cst.Dict([], lpar=[cst.LeftParen()]),
                 "expected_re": "left paren without right paren",
-            },
-            # unbalanced StarredDictElement
-            {
-                "get_node": lambda: cst.Dict(
-                    [
-                        cst.StarredDictElement(
-                            cst.Name("unbalanced"), lpar=[cst.LeftParen()]
-                        )
-                    ]
-                ),
-                "expected_re": "left paren without right paren",
-            },
+            }
         ]
     )
     def test_invalid(self, **kwargs: Any) -> None:

@@ -7,7 +7,7 @@
 from typing import Any
 
 import libcst as cst
-from libcst import CodeRange
+from libcst import CodeRange, parse_expression
 from libcst._nodes.tests.base import CSTNodeTest
 from libcst.testing.utils import data_provider
 
@@ -23,6 +23,7 @@ class DictCompTest(CSTNodeTest):
                     cst.CompFor(target=cst.Name("a"), iter=cst.Name("b")),
                 ),
                 "code": "{k: v for a in b}",
+                "parser": parse_expression,
                 "expected_position": CodeRange.create((1, 0), (1, 17)),
             },
             # custom whitespace around colon
@@ -35,6 +36,7 @@ class DictCompTest(CSTNodeTest):
                     whitespace_after_colon=cst.SimpleWhitespace("\t\t"),
                 ),
                 "code": "{k\t:\t\tv for a in b}",
+                "parser": parse_expression,
                 "expected_position": CodeRange.create((1, 0), (1, 19)),
             },
             # custom whitespace inside braces
@@ -51,6 +53,7 @@ class DictCompTest(CSTNodeTest):
                     ),
                 ),
                 "code": "{\tk: v for a in b\t\t}",
+                "parser": parse_expression,
                 "expected_position": CodeRange.create((1, 0), (1, 20)),
             },
             # parenthesis
@@ -63,6 +66,7 @@ class DictCompTest(CSTNodeTest):
                     rpar=[cst.RightParen()],
                 ),
                 "code": "({k: v for a in b})",
+                "parser": parse_expression,
                 "expected_position": CodeRange.create((1, 1), (1, 18)),
             },
             # missing spaces around DictComp is always okay
@@ -87,6 +91,7 @@ class DictCompTest(CSTNodeTest):
                     ),
                 ),
                 "code": "{a: b for c in{d: e for f in g}if h}",
+                "parser": parse_expression,
                 "expected_position": CodeRange.create((1, 0), (1, 36)),
             },
             # no whitespace before `for` clause
@@ -101,6 +106,7 @@ class DictCompTest(CSTNodeTest):
                     ),
                 ),
                 "code": "{k: (v)for a in b}",
+                "parser": parse_expression,
                 "expected_position": CodeRange.create((1, 0), (1, 18)),
             },
         ]
