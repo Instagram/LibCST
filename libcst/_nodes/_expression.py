@@ -61,6 +61,7 @@ class LeftSquareBracket(CSTNode):
     the whitespace to the left of it since this is owned by the parent node.
     """
 
+    #: Any space that appears directly after this left square bracket.
     whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace("")
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "LeftSquareBracket":
@@ -83,6 +84,7 @@ class RightSquareBracket(CSTNode):
     the whitespace to the right of it since this is owned by the parent node.
     """
 
+    #: Any space that appears directly before this right square bracket.
     whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace("")
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "RightSquareBracket":
@@ -105,6 +107,7 @@ class LeftCurlyBrace(CSTNode):
     the left of it since this is owned by the parent node.
     """
 
+    #: Any space that appears directly after this left curly brace.
     whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace("")
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "LeftCurlyBrace":
@@ -127,6 +130,7 @@ class RightCurlyBrace(CSTNode):
     the right of it since this is owned by the parent node.
     """
 
+    #: Any space that appears directly before this right curly brace.
     whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace("")
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "RightCurlyBrace":
@@ -149,6 +153,7 @@ class LeftParen(CSTNode):
     the whitespace to the left of it since this is owned by the parent node.
     """
 
+    #: Any space that appears directly after this left parenthesis.
     whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace("")
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "LeftParen":
@@ -171,6 +176,7 @@ class RightParen(CSTNode):
     the whitespace to the right of it since this is owned by the parent node.
     """
 
+    #: Any space that appears directly after this left parenthesis.
     whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace("")
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "RightParen":
@@ -189,9 +195,10 @@ class RightParen(CSTNode):
 @dataclass(frozen=True)
 class Asynchronous(CSTNode):
     """
-    Used by asynchronous function definitions, as well as `async for` and `async with`.
+    Used by asynchronous function definitions, as well as ``async for`` and ``async with``.
     """
 
+    #: Any space that appears directly after this async word.
     whitespace_after: SimpleWhitespace = SimpleWhitespace(" ")
 
     def _validate(self) -> None:
@@ -477,7 +484,7 @@ class _BasePrefixedString(BaseString, ABC):
 
     def _safe_to_use_with_word_operator(self, position: ExpressionPosition) -> bool:
         """
-        `"a"in"abc` is okay, but if you add a prefix, (e.g. `b"a"inb"abc"`), the string
+        ``"a"in"abc`` is okay, but if you add a prefix, (e.g. ``b"a"inb"abc"``), the string
         is no longer valid on the RHS of the word operator, because it's not clear where
         the keyword ends and the prefix begins, unless it's parenthesized.
         """
@@ -804,7 +811,7 @@ class ComparisonTarget(CSTNode):
 @dataclass(frozen=True)
 class Comparison(BaseExpression):
     """
-    Any comparison such as "x < y < z"
+    Any comparison such as ``x < y < z``.
     """
 
     #: The left hand side of the comparison operation
@@ -872,7 +879,7 @@ class Comparison(BaseExpression):
 @dataclass(frozen=True)
 class UnaryOperation(BaseExpression):
     """
-    Any generic unary expression, such as "not x" or "-x".
+    Any generic unary expression, such as ``not x`` or ``-x``.
     """
 
     #: The unary operator applied to the expression
@@ -918,7 +925,7 @@ class UnaryOperation(BaseExpression):
 @dataclass(frozen=True)
 class BinaryOperation(BaseExpression):
     """
-    Any binary operation such as "x << y" or "y + z".
+    Any binary operation such as ``x << y`` or ``y + z``.
     """
 
     #: The left hand side of the operation
@@ -956,7 +963,7 @@ class BinaryOperation(BaseExpression):
 @dataclass(frozen=True)
 class BooleanOperation(BaseExpression):
     """
-    Any boolean operation such as "x or y" or "z and w"
+    Any boolean operation such as ``x or y`` or ``z and w``
     """
 
     #: The left hand side of the operation
@@ -1012,10 +1019,10 @@ class BooleanOperation(BaseExpression):
 @dataclass(frozen=True)
 class Attribute(BaseAssignTargetExpression, BaseDelTargetExpression):
     """
-    An attribute reference, such as "x.y". Note that in the case of
-    "x.y.z", the outer attribute will have an attr of "z" and the
-    value will be another Attribute referencing the "y" attribute on
-    "x".
+    An attribute reference, such as ``x.y``. Note that in the case of
+    ``x.y.z``, the outer attribute will have an attr of ``z`` and the
+    value will be another Attribute referencing the ``y`` attribute on
+    ``x``.
     """
 
     #: Expression which, when evaluated, will have 'attr' as an attribute
@@ -1070,7 +1077,7 @@ class Index(CSTNode):
 @dataclass(frozen=True)
 class Slice(CSTNode):
     """
-    Any slice operation in a subscript, such as "1:", "2:3:4", etc. Note
+    Any slice operation in a subscript, such as ``1:``, ``2:3:4``, etc. Note
     that the grammar does NOT allow parenthesis around a slice so they
     are not supported here.
     """
@@ -1121,9 +1128,9 @@ class Slice(CSTNode):
 @dataclass(frozen=True)
 class ExtSlice(CSTNode):
     """
-    A list of slices, such as "1:2, 3". Not used in the stdlib but still
+    A list of slices, such as ``1:2, 3``. Not used in the stdlib but still
     valid. This also does not allow for wrapping parenthesis.
-    "x".
+    ``x``.
     """
 
     #: A slice or index that is part of the extslice.
@@ -1153,7 +1160,7 @@ class ExtSlice(CSTNode):
 @dataclass(frozen=True)
 class Subscript(BaseAssignTargetExpression, BaseDelTargetExpression):
     """
-    A subscript reference such as "x[2]".
+    A subscript reference such as ``x[2]``.
     """
 
     #: Expression which, when evaluated, will be subscripted.
@@ -1174,7 +1181,7 @@ class Subscript(BaseAssignTargetExpression, BaseDelTargetExpression):
     #: Sequence of close parenthesis for precedence dictation.
     rpar: Sequence[RightParen] = ()
 
-    #: Whitespace
+    #: Whitespace.
     whitespace_after_value: BaseParenthesizableWhitespace = SimpleWhitespace("")
 
     def _validate(self) -> None:
@@ -1651,19 +1658,19 @@ class Arg(CSTNode):
     the form of "keyword=expression" for named arguments.
     """
 
-    #: The argument expression itself
+    #: The argument expression itself.
     value: BaseExpression
 
-    #: Optional keyword for the argument
+    #: Optional keyword for the argument.
     keyword: Optional[Name] = None
 
     #: The equals sign used to denote assignment if there is a keyword.
     equal: Union[AssignEqual, MaybeSentinel] = MaybeSentinel.DEFAULT
 
-    #: Any trailing comma
+    #: Any trailing comma.
     comma: Union[Comma, MaybeSentinel] = MaybeSentinel.DEFAULT
 
-    #: Optional star appearing before name for * and ** expansion
+    #: Optional star appearing before name for * and ** expansion.
     star: Literal["", "*", "**"] = ""
 
     # Whitespace
@@ -1723,7 +1730,7 @@ class _BaseExpressionWithArgs(BaseExpression, ABC):
     in typing. So, we have common validation functions here.
     """
 
-    #: Sequence of arguments that will be passed to the function call
+    #: Sequence of arguments that will be passed to the function call.
     args: Sequence[Arg] = ()
 
     def _check_kwargs_or_keywords(
@@ -1821,7 +1828,7 @@ class _BaseExpressionWithArgs(BaseExpression, ABC):
 @add_slots
 @dataclass(frozen=True)
 class Call(_BaseExpressionWithArgs):
-    #: The expression resulting in a callable that we are to call
+    #: The expression resulting in a callable that we are to call.
     func: Union[BaseAtom, Attribute, Subscript, "Call"]
 
     #: The arguments to pass to the resulting callable
@@ -1876,7 +1883,7 @@ class Call(_BaseExpressionWithArgs):
 @add_slots
 @dataclass(frozen=True)
 class Await(BaseExpression):
-    #: The actual expression we need to await on
+    #: The actual expression we need to await on.
     expression: BaseExpression
 
     #: Sequence of open parenthesis for precedence dictation.
@@ -2014,7 +2021,7 @@ class From(CSTNode):
     A 'from x' stanza in a Yield or Raise.
     """
 
-    # Expression that we are yielding/raising from.
+    #: Expression that we are yielding/raising from.
     item: BaseExpression
 
     whitespace_before_from: Union[
@@ -2458,10 +2465,10 @@ class BaseList(BaseAtom, ABC):
     evaluated.
     """
 
-    #: Open bracket surrounding the list
+    #: Open bracket surrounding the list.
     lbracket: LeftSquareBracket = LeftSquareBracket()
 
-    #: Close bracket surrounding the list
+    #: Close bracket surrounding the list.
     rbracket: RightSquareBracket = RightSquareBracket()
 
     #: Sequence of open parenthesis for precedence dictation.
@@ -2518,10 +2525,10 @@ class _BaseSetOrDict(BaseAtom, ABC):
     shouldn't be exported.
     """
 
-    #: Open brace surrounding the list
+    #: Open brace surrounding the list.
     lbrace: LeftCurlyBrace = LeftCurlyBrace()
 
-    #: Close brace surrounding the list
+    #: Close brace surrounding the list.
     rbrace: RightCurlyBrace = RightCurlyBrace()
 
     #: Sequence of open parenthesis for precedence dictation.

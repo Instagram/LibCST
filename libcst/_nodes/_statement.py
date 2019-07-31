@@ -75,9 +75,9 @@ class BaseSmallStatement(CSTNode, ABC):
     SimpleStatementSuite.
     """
 
-    # This is optional for the last SmallStatement in a SimpleStatementLine or
-    # SimpleStatementSuite, but all other SmallStatements inside a simple statement must
-    # contain a semicolon to disambiguate multiple small statements on the same line.
+    #: This is optional for the last SmallStatement in a SimpleStatementLine or
+    #: SimpleStatementSuite, but all other SmallStatements inside a simple statement must
+    #: contain a semicolon to disambiguate multiple small statements on the same line.
     semicolon: Union[Semicolon, MaybeSentinel] = MaybeSentinel.DEFAULT
 
     @abstractmethod
@@ -97,7 +97,7 @@ class Del(BaseSmallStatement):
     target: BaseDelTargetExpression
     whitespace_after_del: SimpleWhitespace = SimpleWhitespace(" ")
 
-    # Optional semicolon when this is used in a statement line
+    #: Optional semicolon when this is used in a statement line.
     semicolon: Union[Semicolon, MaybeSentinel] = MaybeSentinel.DEFAULT
 
     def _validate(self) -> None:
@@ -138,7 +138,7 @@ class Del(BaseSmallStatement):
 @dataclass(frozen=True)
 class Pass(BaseSmallStatement):
 
-    # Optional semicolon when this is used in a statement line
+    #: Optional semicolon when this is used in a statement line.
     semicolon: Union[Semicolon, MaybeSentinel] = MaybeSentinel.DEFAULT
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Pass":
@@ -162,7 +162,7 @@ class Pass(BaseSmallStatement):
 @dataclass(frozen=True)
 class Break(BaseSmallStatement):
 
-    # Optional semicolon when this is used in a statement line
+    #: Optional semicolon when this is used in a statement line.
     semicolon: Union[Semicolon, MaybeSentinel] = MaybeSentinel.DEFAULT
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Break":
@@ -186,7 +186,7 @@ class Break(BaseSmallStatement):
 @dataclass(frozen=True)
 class Continue(BaseSmallStatement):
 
-    # Optional semicolon when this is used in a statement line
+    #: Optional semicolon when this is used in a statement line.
     semicolon: Union[Semicolon, MaybeSentinel] = MaybeSentinel.DEFAULT
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Continue":
@@ -215,7 +215,7 @@ class Return(BaseSmallStatement):
         SimpleWhitespace, MaybeSentinel
     ] = MaybeSentinel.DEFAULT
 
-    # Optional semicolon when this is used in a statement line
+    #: Optional semicolon when this is used in a statement line.
     semicolon: Union[Semicolon, MaybeSentinel] = MaybeSentinel.DEFAULT
 
     def _validate(self) -> None:
@@ -270,10 +270,10 @@ class Expr(BaseSmallStatement):
     An expression used as a statement, where the result is unused and unassigned.
     """
 
-    # The expression itself
+    #: The expression itself.
     value: BaseExpression
 
-    # Optional semicolon when this is used in a statement line
+    #: Optional semicolon when this is used in a statement line.
     semicolon: Union[Semicolon, MaybeSentinel] = MaybeSentinel.DEFAULT
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Expr":
@@ -306,7 +306,7 @@ class _BaseSimpleStatement(CSTNode, ABC):
     """
 
     body: Sequence[BaseSmallStatement]
-    # a NEWLINE token is actually part of simple_stmt's grammar
+    #: a NEWLINE token is actually part of simple_stmt's grammar.
     trailing_whitespace: TrailingWhitespace
 
     def _validate(self) -> None:
@@ -608,10 +608,10 @@ class IndentedBlock(BaseSuite):
 @dataclass(frozen=True)
 class AsName(CSTNode):
     """
-    An `as name` clause inside an `ExceptHandler`, `ImportAlias` or `WithItem` node.
+    An ``as name`` clause inside an :class:`ExceptHandler`, :class:`ImportAlias` or :class:`WithItem` node.
     """
 
-    # Identifier that the parent node will be aliased to.
+    #: Identifier that the parent node will be aliased to.
     name: Name  # TODO: This should be Union[Name, Tuple, List] once we support those
 
     # Whitespace nodes
@@ -648,17 +648,17 @@ class AsName(CSTNode):
 @dataclass(frozen=True)
 class ExceptHandler(CSTNode):
     """
-    An `except` clause that appears optionally after a `Try` statement.
+    An ``except`` clause that appears optionally after a :class:`Try` statement.
     """
 
-    # The body of the except
+    #: The body of the except.
     body: BaseSuite
 
-    # The type of exception this catches. Can be a tuple in some cases,
-    # or none for an empty exception.
+    #: The type of exception this catches. Can be a tuple in some cases,
+    #: or none for an empty exception.
     type: Optional[BaseExpression] = None
 
-    # The name that a caught exception is assigned to
+    #: The name that a caught exception is assigned to
     name: Optional[AsName] = None
 
     # Whitespace nodes
@@ -715,7 +715,7 @@ class ExceptHandler(CSTNode):
 @dataclass(frozen=True)
 class Finally(CSTNode):
     """
-    A `finally` clause that appears optionally after a `Try` statement.
+    A ``finally`` clause that appears optionally after a :class:`Try` statement.
     """
 
     body: BaseSuite
@@ -747,19 +747,19 @@ class Finally(CSTNode):
 @dataclass(frozen=True)
 class Try(BaseCompoundStatement):
     """
-    A `try` statement.
+    A ``try`` statement.
     """
 
-    # The suite that is wrapped with a try statement.
+    #: The suite that is wrapped with a try statement.
     body: BaseSuite
 
-    # A list of zero or more exception handlers.
+    #: A list of zero or more exception handlers.
     handlers: Sequence[ExceptHandler] = ()
 
-    # An optional else case.
+    #: An optional else case.
     orelse: Optional[Else] = None
 
-    # An optional finally case.
+    #: An optional finally case.
     finalbody: Optional[Finally] = None
 
     # Whitespace
@@ -814,21 +814,22 @@ class Try(BaseCompoundStatement):
                 finalbody._codegen(state)
 
 
+@add_slots
 @dataclass(frozen=True)
 class ImportAlias(CSTNode):
     """
-    An import, with an optional AsName.
+    An import, with an optional :class:`AsName`.
     """
 
-    # Name or Attribute node representing the module
+    #: Name or Attribute node representing the module.
     name: Union[Attribute, Name]
 
-    # Alias if it exists
+    #: Alias if it exists.
     asname: Optional[AsName] = None
 
-    # This is optional for the last ImportAlias in a Import or ImportFrom, but all
-    # other ImportAliases inside an import must contain a comma to disambiguate
-    # multiple small statements on the same line.
+    #: This is optional for the last ImportAlias in a Import or ImportFrom, but all
+    #: other ImportAliases inside an import must contain a comma to disambiguate
+    #: multiple small statements on the same line.
     comma: Union[Comma, MaybeSentinel] = MaybeSentinel.DEFAULT
 
     def _validate(self) -> None:
@@ -858,19 +859,20 @@ class ImportAlias(CSTNode):
             comma._codegen(state)
 
 
+@add_slots
 @dataclass(frozen=True)
 class Import(BaseSmallStatement):
     """
-    An `import` statement.
+    An ``import`` statement.
     """
 
-    # One or more names that are being imported
+    #: One or more names that are being imported.
     names: Sequence[ImportAlias]
 
-    # Optional semicolon when this is used in a statement line
+    #: Optional semicolon when this is used in a statement line.
     semicolon: Union[Semicolon, MaybeSentinel] = MaybeSentinel.DEFAULT
 
-    # Whitespace
+    #: Whitespace.
     whitespace_after_import: SimpleWhitespace = SimpleWhitespace(" ")
 
     def _validate(self) -> None:
@@ -912,28 +914,29 @@ class Import(BaseSmallStatement):
             semicolon._codegen(state)
 
 
+@add_slots
 @dataclass(frozen=True)
 class ImportFrom(BaseSmallStatement):
     """
-    A `from x import y` statement.
+    A ``from x import y`` statement.
     """
 
-    # Name or Attribute node representing the module
+    #: Name or Attribute node representing the module.
     module: Optional[Union[Attribute, Name]]
 
-    # One or more names that are being imported from the module
+    #: One or more names that are being imported from the module.
     names: Union[Sequence[ImportAlias], ImportStar]
 
-    # Sequence of Dot nodes indicating relative import.
+    #: Sequence of Dot nodes indicating relative import.
     relative: Sequence[Dot] = ()
 
-    # Optional open parenthesis for multi-line import continuation.
+    #: Optional open parenthesis for multi-line import continuation.
     lpar: Optional[LeftParen] = None
 
-    # Optional open parenthesis for multi-line import continuation.
+    #: Optional open parenthesis for multi-line import continuation.
     rpar: Optional[RightParen] = None
 
-    # Optional semicolon when this is used in a statement line
+    #: Optional semicolon when this is used in a statement line.
     semicolon: Union[Semicolon, MaybeSentinel] = MaybeSentinel.DEFAULT
 
     # Whitespace nodes owned by ImportFrom.
@@ -1040,13 +1043,14 @@ class ImportFrom(BaseSmallStatement):
             semicolon._codegen(state)
 
 
+@add_slots
 @dataclass(frozen=True)
 class AssignTarget(CSTNode):
     """
     A target for an assignment. Owns the equals.
     """
 
-    # The target being assigned to.
+    #: The target being assigned to.
     target: BaseAssignTargetExpression
 
     # Whitespace
@@ -1073,19 +1077,20 @@ class AssignTarget(CSTNode):
         self.whitespace_after_equal._codegen(state)
 
 
+@add_slots
 @dataclass(frozen=True)
 class Assign(BaseSmallStatement):
     """
     An assignment statement.
     """
 
-    # One or more targets that are being assigned to.
+    #: One or more targets that are being assigned to.
     targets: Sequence[AssignTarget]
 
-    # The expression being assigned to the targets.
+    #: The expression being assigned to the targets.
     value: BaseExpression
 
-    # Optional semicolon when this is used in a statement line
+    #: Optional semicolon when this is used in a statement line.
     semicolon: Union[Semicolon, MaybeSentinel] = MaybeSentinel.DEFAULT
 
     def _validate(self) -> None:
@@ -1117,25 +1122,26 @@ class Assign(BaseSmallStatement):
             semicolon._codegen(state)
 
 
+@add_slots
 @dataclass(frozen=True)
 class AnnAssign(BaseSmallStatement):
     """
     An assignment statement.
     """
 
-    # One or more targets that are being assigned to.
+    #: One or more targets that are being assigned to.
     target: BaseExpression
 
-    # The annotation for the target.
+    #: The annotation for the target.
     annotation: Annotation
 
-    # The optional expression being assigned to the target.
+    #: The optional expression being assigned to the target.
     value: Optional[BaseExpression] = None
 
-    # The equals sign used to denote assignment if there is a value.
+    #: The equals sign used to denote assignment if there is a value.
     equal: Union[AssignEqual, MaybeSentinel] = MaybeSentinel.DEFAULT
 
-    # Optional semicolon when this is used in a statement line
+    #: Optional semicolon when this is used in a statement line.
     semicolon: Union[Semicolon, MaybeSentinel] = MaybeSentinel.DEFAULT
 
     def _validate(self) -> None:
@@ -1181,22 +1187,23 @@ class AnnAssign(BaseSmallStatement):
             semicolon._codegen(state)
 
 
+@add_slots
 @dataclass(frozen=True)
 class AugAssign(BaseSmallStatement):
     """
     An augmented assignment statement.
     """
 
-    # Target that is being assigned to
+    #: Target that is being assigned to.
     target: BaseExpression
 
-    # The augmented assignment operation being performed
+    #: The augmented assignment operation being performed.
     operator: BaseAugOp
 
-    # The being assigned to the target.
+    #: The being assigned to the target.
     value: BaseExpression
 
-    # Optional semicolon when this is used in a statement line
+    #: Optional semicolon when this is used in a statement line.
     semicolon: Union[Semicolon, MaybeSentinel] = MaybeSentinel.DEFAULT
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "AugAssign":
@@ -1230,19 +1237,19 @@ class Decorator(CSTNode):
     A single decorator that decorates a FunctionDef or a ClassDef.
     """
 
-    # The decorator that will return a new function wrapping the parent
-    # of this decorator.
+    #: The decorator that will return a new function wrapping the parent
+    #: of this decorator.
     decorator: Union[Name, Attribute, Call]
 
-    # Line comments and empty lines before this decorator. The parent FunctionDef
-    # or ClassDef node owns leading lines before the comments of the first
-    # decorator so that if the first decorator is removed, spacing is preserved.
+    #: Line comments and empty lines before this decorator. The parent FunctionDef
+    #: or ClassDef node owns leading lines before the comments of the first
+    #: decorator so that if the first decorator is removed, spacing is preserved.
     leading_lines: Sequence[EmptyLine] = ()
 
-    # Whitespace between various tokens making up the decorator
+    #: Whitespace between various tokens making up the decorator.
     whitespace_after_at: SimpleWhitespace = SimpleWhitespace("")
 
-    # Whitespace following the decorator before the next line
+    #: Whitespace following the decorator before the next line.
     trailing_whitespace: TrailingWhitespace = TrailingWhitespace()
 
     def _validate(self) -> None:
@@ -1289,33 +1296,33 @@ class FunctionDef(BaseCompoundStatement):
     A function definition.
     """
 
-    # The function name.
+    #: The function name.
     name: Name
 
-    # The function parameters. Present even if there are no params.
+    #: The function parameters. Present even if there are no params.
     params: Parameters
 
-    # The function body.
+    #: The function body.
     body: BaseSuite
 
-    # List of decorators applied to this function.
+    #: List of decorators applied to this function.
     decorators: Sequence[Decorator] = ()
 
-    # An optional return type annotation
+    #: An optional return type annotation.
     returns: Optional[Annotation] = None
 
-    # Optional async modifier.
+    #: Optional async modifier.
     asynchronous: Optional[Asynchronous] = None
 
-    # Leading empty lines and comments before the first decorator. We
-    # assume any comments before the first decorator are owned by the
-    # function definition itself. If there are no decorators, this will
-    # still contain all of the empty lines and comments before the
-    # function definition.
+    #: Leading empty lines and comments before the first decorator. We
+    #: assume any comments before the first decorator are owned by the
+    #: function definition itself. If there are no decorators, this will
+    #: still contain all of the empty lines and comments before the
+    #: function definition.
     leading_lines: Sequence[EmptyLine] = ()
 
-    # Empty lines and comments between the final decorator and the
-    # FunctionDef node. In the case of no decorators, this will be empty.
+    #: Empty lines and comments between the final decorator and the
+    #: FunctionDef node. In the case of no decorators, this will be empty.
     lines_after_decorators: Sequence[EmptyLine] = ()
 
     # Whitespace between various tokens making up the functiondef
@@ -1400,36 +1407,36 @@ class ClassDef(BaseCompoundStatement):
     A class definition.
     """
 
-    # The class name.
+    #: The class name.
     name: Name
 
-    # The class body.
+    #: The class body.
     body: BaseSuite
 
-    # The base classes this class inherits from
+    #: The base classes this class inherits from
     bases: Sequence[Arg] = ()
 
-    # Any keywords, such as "metaclass"
+    #: Any keywords, such as "metaclass"
     keywords: Sequence[Arg] = ()
 
-    # List of decorators applied to this function.
+    #: List of decorators applied to this function.
     decorators: Sequence[Decorator] = ()
 
-    # Optional open parenthesis used when there are bases or keywords.
+    #: Optional open parenthesis used when there are bases or keywords.
     lpar: Union[LeftParen, MaybeSentinel] = MaybeSentinel.DEFAULT
 
-    # Optional close parenthesis used when there are bases or keywords.
+    #: Optional close parenthesis used when there are bases or keywords.
     rpar: Union[RightParen, MaybeSentinel] = MaybeSentinel.DEFAULT
 
-    # Leading empty lines and comments before the first decorator. We
-    # assume any comments before the first decorator are owned by the
-    # class definition itself. If there are no decorators, this will
-    # still contain all of the empty lines and comments before the
-    # class definition.
+    #: Leading empty lines and comments before the first decorator. We
+    #: assume any comments before the first decorator are owned by the
+    #: class definition itself. If there are no decorators, this will
+    #: still contain all of the empty lines and comments before the
+    #: class definition.
     leading_lines: Sequence[EmptyLine] = ()
 
-    # Empty lines and comments between the final decorator and the
-    # ClassDef node. In the case of no decorators, this will be empty.
+    #: Empty lines and comments between the final decorator and the
+    #: ClassDef node. In the case of no decorators, this will be empty.
     lines_after_decorators: Sequence[EmptyLine] = ()
 
     # Whitespace between various tokens making up the functiondef
@@ -1527,20 +1534,21 @@ class ClassDef(BaseCompoundStatement):
             self.body._codegen(state)
 
 
+@add_slots
 @dataclass(frozen=True)
 class WithItem(CSTNode):
     """
     A single context manager in a with block, with an optional variable name.
     """
 
-    # Expression that evaluates to a context manager.
+    #: Expression that evaluates to a context manager.
     item: BaseExpression
 
-    # Variable to assign the context manager to.
+    #: Variable to assign the context manager to.
     asname: Optional[AsName] = None
 
-    # This is forbidden for the last WithItem in a With, but all other WithItems
-    # inside a with block must contain a comma to separate them.
+    #: This is forbidden for the last WithItem in a With, but all other WithItems
+    #: inside a with block must contain a comma to separate them.
     comma: Union[Comma, MaybeSentinel] = MaybeSentinel.DEFAULT
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "WithItem":
@@ -1568,16 +1576,16 @@ class WithItem(CSTNode):
 @dataclass(frozen=True)
 class With(BaseCompoundStatement):
     """
-    A `with` statement.
+    A ``with`` statement.
     """
 
-    # A list of one or more WithItems.
+    #: A list of one or more WithItems.
     items: Sequence[WithItem]
 
-    # The suite that is wrapped with this statement.
+    #: The suite that is wrapped with this statement.
     body: BaseSuite
 
-    # Optional async modifier.
+    #: Optional async modifier.
     asynchronous: Optional[Asynchronous] = None
 
     # Whitespace
@@ -1636,22 +1644,22 @@ class With(BaseCompoundStatement):
 @dataclass(frozen=True)
 class For(BaseCompoundStatement):
     """
-    A `for` statement.
+    A ``for`` statement.
     """
 
-    # The target of the iterator in the for statement.
+    #: The target of the iterator in the for statement.
     target: BaseAssignTargetExpression
 
-    # The iterable expression we will loop over.
+    #: The iterable expression we will loop over.
     iter: BaseExpression
 
-    # The suite that is wrapped with this statement.
+    #: The suite that is wrapped with this statement.
     body: BaseSuite
 
-    # An optional else case.
+    #: An optional else case.
     orelse: Optional[Else] = None
 
-    # Optional async modifier.
+    #: Optional async modifier.
     asynchronous: Optional[Asynchronous] = None
 
     # Whitespace
@@ -1737,16 +1745,16 @@ class For(BaseCompoundStatement):
 @dataclass(frozen=True)
 class While(BaseCompoundStatement):
     """
-    A `while` statement.
+    A ``while`` statement.
     """
 
-    # The test we will loop against.
+    #: The test we will loop against.
     test: BaseExpression
 
-    # The suite that is wrapped with this statement.
+    #: The suite that is wrapped with this statement.
     body: BaseSuite
 
-    # An optional else case.
+    #: An optional else case.
     orelse: Optional[Else] = None
 
     # Whitespace
@@ -1806,7 +1814,7 @@ class Raise(BaseSmallStatement):
         SimpleWhitespace, MaybeSentinel
     ] = MaybeSentinel.DEFAULT
 
-    # Optional semicolon when this is used in a statement line
+    #: Optional semicolon when this is used in a statement line.
     semicolon: Union[Semicolon, MaybeSentinel] = MaybeSentinel.DEFAULT
 
     def _validate(self) -> None:
@@ -1882,22 +1890,22 @@ class Raise(BaseSmallStatement):
 @dataclass(frozen=True)
 class Assert(BaseSmallStatement):
     """
-    An assert statement such as "assert x > 5" or "assert x > 5, 'Uh oh!'"
+    An assert statement such as ``assert x > 5`` or ``assert x > 5, 'Uh oh!'``
     """
 
-    # The test we are going to assert on.
+    #: The test we are going to assert on.
     test: BaseExpression
 
-    # The optional message to display if the assert fails.
+    #: The optional message to display if the assert fails.
     msg: Optional[BaseExpression] = None
 
-    # A comma separating test and message, if there is a message.
+    #: A comma separating test and message, if there is a message.
     comma: Union[Comma, MaybeSentinel] = MaybeSentinel.DEFAULT
 
-    # Whitespace nodes.
+    #: Whitespace nodes.
     whitespace_after_assert: SimpleWhitespace = SimpleWhitespace(" ")
 
-    # Optional semicolon when this is used in a statement line.
+    #: Optional semicolon when this is used in a statement line.
     semicolon: Union[Semicolon, MaybeSentinel] = MaybeSentinel.DEFAULT
 
     def _validate(self) -> None:
@@ -1949,17 +1957,18 @@ class Assert(BaseSmallStatement):
             semicolon._codegen(state)
 
 
+@add_slots
 @dataclass(frozen=True)
 class NameItem(CSTNode):
     """
     A single identifier name inside a Global or Nonlocal statement.
     """
 
-    # Identifier name.
+    #: Identifier name.
     name: Name
 
-    # This is forbidden for the last NameItem in a Global/Nonlocal, but all other
-    # NameItems inside a with block must contain a comma to separate them.
+    #: This is forbidden for the last NameItem in a Global/Nonlocal, but all other
+    #: NameItems inside a with block must contain a comma to separate them.
     comma: Union[Comma, MaybeSentinel] = MaybeSentinel.DEFAULT
 
     def _validate(self) -> None:
@@ -1988,16 +1997,16 @@ class NameItem(CSTNode):
 @dataclass(frozen=True)
 class Global(BaseSmallStatement):
     """
-    A `global` statement.
+    A ``global`` statement.
     """
 
-    # A list of one or more NameItems.
+    #: A list of one or more NameItems.
     names: Sequence[NameItem]
 
-    # Whitespace
+    #: Whitespace.
     whitespace_after_global: SimpleWhitespace = SimpleWhitespace(" ")
 
-    # Optional semicolon when this is used in a statement line.
+    #: Optional semicolon when this is used in a statement line.
     semicolon: Union[Semicolon, MaybeSentinel] = MaybeSentinel.DEFAULT
 
     def _validate(self) -> None:
@@ -2048,13 +2057,13 @@ class Nonlocal(BaseSmallStatement):
     A `nonlocal` statement.
     """
 
-    # A list of one or more NameItems.
+    #: A list of one or more NameItems.
     names: Sequence[NameItem]
 
-    # Whitespace
+    #: Whitespace.
     whitespace_after_nonlocal: SimpleWhitespace = SimpleWhitespace(" ")
 
-    # Optional semicolon when this is used in a statement line.
+    #: Optional semicolon when this is used in a statement line.
     semicolon: Union[Semicolon, MaybeSentinel] = MaybeSentinel.DEFAULT
 
     def _validate(self) -> None:
