@@ -92,48 +92,71 @@ Nodes that represent various expressions.
 Statements
 ----------
 
-Nodes that represent top-level statements.
+Nodes that represent top-level statements and groups of statements.
 
+Simple Statements
+^^^^^^^^^^^^^^^^^
+
+Statements which at most have expressions as child attributes.
+
+.. autoclass:: libcst.BaseSmallStatement
 .. autoclass:: libcst.AnnAssign
-.. autoclass:: libcst.AsName
 .. autoclass:: libcst.Assert
 .. autoclass:: libcst.Assign
-.. autoclass:: libcst.AssignTarget
 .. autoclass:: libcst.AugAssign
 .. autoclass:: libcst.Break
-.. autoclass:: libcst.ClassDef
 .. autoclass:: libcst.Continue
-.. autoclass:: libcst.Decorator
 .. autoclass:: libcst.Del
-.. autoclass:: libcst.Else
-.. autoclass:: libcst.ExceptHandler
 .. autoclass:: libcst.Expr
-.. autoclass:: libcst.Finally
-.. autoclass:: libcst.For
-.. autoclass:: libcst.FunctionDef
 .. autoclass:: libcst.Global
-.. autoclass:: libcst.If
 .. autoclass:: libcst.Import
-.. autoclass:: libcst.ImportAlias
 .. autoclass:: libcst.ImportFrom
-.. autoclass:: libcst.IndentedBlock
-.. autoclass:: libcst.NameItem
 .. autoclass:: libcst.Nonlocal
 .. autoclass:: libcst.Pass
 .. autoclass:: libcst.Raise
 .. autoclass:: libcst.Return
-.. autoclass:: libcst.SimpleStatementLine
-.. autoclass:: libcst.SimpleStatementSuite
+
+
+Compound Statements
+^^^^^^^^^^^^^^^^^^^
+
+Statements that have one or more statement blocks as a child attribute.
+
+.. autoclass:: libcst.BaseCompoundStatement
+.. autoclass:: libcst.ClassDef
+.. autoclass:: libcst.For
+.. autoclass:: libcst.FunctionDef
+.. autoclass:: libcst.If
 .. autoclass:: libcst.Try
 .. autoclass:: libcst.While
 .. autoclass:: libcst.With
+
+Helper Nodes
+^^^^^^^^^^^^
+
+Nodes that are used by various statements to represent some syntax, but
+are not statements on their own and cannot be used outside of the statements
+they blong with.
+
+.. autoclass:: libcst.AsName
+.. autoclass:: libcst.AssignTarget
+.. autoclass:: libcst.Decorator
+.. autoclass:: libcst.Else
+.. autoclass:: libcst.ExceptHandler
+.. autoclass:: libcst.Finally
+.. autoclass:: libcst.ImportAlias
+.. autoclass:: libcst.NameItem
 .. autoclass:: libcst.WithItem
 
-Additionally, various classes are defined purely for typing and isinstance checks.
+Statement Blocks
+^^^^^^^^^^^^^^^^
 
-.. autoclass:: libcst.BaseCompoundStatement
-.. autoclass:: libcst.BaseSmallStatement
+Nodes that represent some group of statements.
+
 .. autoclass:: libcst.BaseSuite
+.. autoclass:: libcst.SimpleStatementLine
+.. autoclass:: libcst.SimpleStatementSuite
+.. autoclass:: libcst.IndentedBlock
 
 Operators
 ---------
