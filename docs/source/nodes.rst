@@ -10,15 +10,21 @@ syntax tree <https://greentreesnakes.readthedocs.io/en/latest/nodes.html>`_.
 CSTNode
 -------
 
+The base node type which all other nodes derrive from.
+
 .. autoclass:: libcst.CSTNode
 
 Module
 ------
 
+A node that represents an entire python module.
+
 .. autoclass:: libcst.Module
 
 Expressions
 -----------
+
+Nodes that represent various expressions.
 
 .. autoclass:: libcst.Annotation
 .. autoclass:: libcst.Arg
@@ -87,6 +93,8 @@ Expressions
 Statements
 ----------
 
+Nodes that represent top-level statements.
+
 .. autoclass:: libcst.AnnAssign
 .. autoclass:: libcst.AsName
 .. autoclass:: libcst.Assert
@@ -128,62 +136,131 @@ Statements
 Operators
 ---------
 
-.. autoclass:: libcst.Add
-.. autoclass:: libcst.AddAssign
-.. autoclass:: libcst.And
+Nodes that are used to signify an operation to be performed on a variable
+or value.
+
+Unary Operators
+^^^^^^^^^^^^^^^
+
+Nodes that are used with :class:`~libcst.UnaryOperation` to perform some unary
+operation.
+
+.. class:: libcst.BitInvert
+.. class:: libcst.Minus
+.. class:: libcst.Not
+.. autoclass:: libcst.Plus
+
+In addition, :class:`~libcst.BaseUnaryOp` is defined purely for typing and instance
+checks.
+
+.. class:: libcst.BaseUnaryOp
+
+Boolean Operators
+^^^^^^^^^^^^^^^^^
+
+Nodes that are used with :class:`~libcst.BooleanOperation` to perform some boolean
+operation.
+
+.. class:: libcst.And
+.. autoclass:: libcst.Or
+
+In addition, :class:`~libcst.BaseBooleanOp` is defined purely for typing and instance
+checks.
+
+.. class:: libcst.BaseBooleanOp
+
+Binary Operators
+^^^^^^^^^^^^^^^^
+
+Nodes that are used with :class:`~libcst.BinaryOperation` to perform some binary
+operation.
+
+.. class:: libcst.Add
+.. class:: libcst.BitAnd
+.. class:: libcst.BitOr
+.. class:: libcst.BitXor
+.. class:: libcst.Divide
+.. class:: libcst.FloorDivide
+.. class:: libcst.LeftShift
+.. class:: libcst.MatrixMultiply
+.. class:: libcst.Modulo
+.. class:: libcst.Multiply
+.. class:: libcst.Power
+.. class:: libcst.RightShift
+.. autoclass:: libcst.Subtract
+
+In addition, :class:`~libcst.BaseBinaryOp` is defined purely for typing and instance
+checks.
+
+.. class:: libcst.BaseBinaryOp
+
+Comparison Operators
+^^^^^^^^^^^^^^^^^^^^
+
+Nodes that are used with :class:`~libcst.Comparison` to perform some comparison
+operation.
+
+.. class:: libcst.Equal
+.. class:: libcst.GreaterThan
+.. class:: libcst.GreaterThanEqual
+.. class:: libcst.In
+.. class:: libcst.Is
+.. class:: libcst.LessThan
+.. autoclass:: libcst.LessThanEqual
+
+.. autoclass:: libcst.NotEqual
+
+.. class:: libcst.IsNot
+.. autoclass:: libcst.NotIn
+
+In addition, :class:`~libcst.BaseCompOp` is defined purely for typing and instance
+checks.
+
+.. class:: libcst.BaseCompOp
+
+Augmented Assignment Operators
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Nodes that are used with :class:`~libcst.AugAssign` to perform some agumented
+assignment.
+
+.. class:: libcst.AddAssign
+.. class:: libcst.BitAndAssign
+.. class:: libcst.BitOrAssign
+.. class:: libcst.BitXorAssign
+.. class:: libcst.DivideAssign
+.. class:: libcst.FloorDivideAssign
+.. class:: libcst.LeftShiftAssign
+.. class:: libcst.MatrixMultiplyAssign
+.. class:: libcst.ModuloAssign
+.. class:: libcst.MultiplyAssign
+.. class:: libcst.PowerAssign
+.. class:: libcst.RightShiftAssign
+.. autoclass:: libcst.SubtractAssign
+
+In addition, :class:`~libcst.BaseAugOp` is defined purely for typing and instance
+checks.
+
+.. class:: libcst.BaseAugOp
+
+Miscellaneous
+-------------
+
+Miscelaneous nodes that are purely syntactic trivia. While python requires these nodes
+in order to parse a module, statement or expression they do not carry any meaning on
+their own.
+
 .. autoclass:: libcst.AssignEqual
-.. autoclass:: libcst.BaseAugOp
-.. autoclass:: libcst.BaseBinaryOp
-.. autoclass:: libcst.BaseBooleanOp
-.. autoclass:: libcst.BaseCompOp
-.. autoclass:: libcst.BaseUnaryOp
-.. autoclass:: libcst.BitAnd
-.. autoclass:: libcst.BitAndAssign
-.. autoclass:: libcst.BitInvert
-.. autoclass:: libcst.BitOr
-.. autoclass:: libcst.BitOrAssign
-.. autoclass:: libcst.BitXor
-.. autoclass:: libcst.BitXorAssign
 .. autoclass:: libcst.Colon
 .. autoclass:: libcst.Comma
-.. autoclass:: libcst.Divide
-.. autoclass:: libcst.DivideAssign
 .. autoclass:: libcst.Dot
-.. autoclass:: libcst.Equal
-.. autoclass:: libcst.FloorDivide
-.. autoclass:: libcst.FloorDivideAssign
-.. autoclass:: libcst.GreaterThan
-.. autoclass:: libcst.GreaterThanEqual
 .. autoclass:: libcst.ImportStar
-.. autoclass:: libcst.In
-.. autoclass:: libcst.Is
-.. autoclass:: libcst.IsNot
-.. autoclass:: libcst.LeftShift
-.. autoclass:: libcst.LeftShiftAssign
-.. autoclass:: libcst.LessThan
-.. autoclass:: libcst.LessThanEqual
-.. autoclass:: libcst.MatrixMultiply
-.. autoclass:: libcst.MatrixMultiplyAssign
-.. autoclass:: libcst.Minus
-.. autoclass:: libcst.Modulo
-.. autoclass:: libcst.ModuloAssign
-.. autoclass:: libcst.Multiply
-.. autoclass:: libcst.MultiplyAssign
-.. autoclass:: libcst.Not
-.. autoclass:: libcst.NotEqual
-.. autoclass:: libcst.NotIn
-.. autoclass:: libcst.Or
-.. autoclass:: libcst.Plus
-.. autoclass:: libcst.Power
-.. autoclass:: libcst.PowerAssign
-.. autoclass:: libcst.RightShift
-.. autoclass:: libcst.RightShiftAssign
 .. autoclass:: libcst.Semicolon
-.. autoclass:: libcst.Subtract
-.. autoclass:: libcst.SubtractAssign
 
 Whitespace
 ----------
+
+Nodes that encapsulate pure whitespace.
 
 .. autoclass:: libcst.Comment
 .. autoclass:: libcst.EmptyLine
