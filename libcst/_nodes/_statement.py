@@ -23,9 +23,11 @@ from libcst._nodes._expression import (
     ExpressionPosition,
     From,
     LeftParen,
+    List,
     Name,
     Parameters,
     RightParen,
+    Tuple,
 )
 from libcst._nodes._internal import (
     CodegenState,
@@ -93,13 +95,18 @@ class BaseSmallStatement(CSTNode, ABC):
 @dataclass(frozen=True)
 class Del(BaseSmallStatement):
     """
-    Represents a `del` statement. `del` is always followed by a target.
+    Represents a ``del`` statement. ``del`` is always followed by a target.
     """
 
+    #: The target expression will be deleted. This can be a name, a tuple,
+    #: an item of a list, an item of a dictionary, or an attribute.
     target: BaseDelTargetExpression
+
+    #: The whitespace after the ``del`` keyword.
     whitespace_after_del: SimpleWhitespace = SimpleWhitespace(" ")
 
-    #: Optional semicolon when this is used in a statement line.
+    #: Optional semicolon when this is used in a statement line. This semicolon
+    #: owns the whitespace on both sides of it when it is used.
     semicolon: Union[Semicolon, MaybeSentinel] = MaybeSentinel.DEFAULT
 
     def _validate(self) -> None:
@@ -139,8 +146,12 @@ class Del(BaseSmallStatement):
 @add_slots
 @dataclass(frozen=True)
 class Pass(BaseSmallStatement):
+    """
+    Represents a ``pass`` statement.
+    """
 
-    #: Optional semicolon when this is used in a statement line.
+    #: Optional semicolon when this is used in a statement line. This semicolon
+    #: owns the whitespace on both sides of it when it is used.
     semicolon: Union[Semicolon, MaybeSentinel] = MaybeSentinel.DEFAULT
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Pass":
@@ -163,8 +174,13 @@ class Pass(BaseSmallStatement):
 @add_slots
 @dataclass(frozen=True)
 class Break(BaseSmallStatement):
+    """
+    Represents a ``break`` statement, which is used to break out of a :class:`For`
+    or :class:`While` loop early.
+    """
 
-    #: Optional semicolon when this is used in a statement line.
+    #: Optional semicolon when this is used in a statement line. This semicolon
+    #: owns the whitespace on both sides of it when it is used.
     semicolon: Union[Semicolon, MaybeSentinel] = MaybeSentinel.DEFAULT
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Break":
@@ -187,8 +203,13 @@ class Break(BaseSmallStatement):
 @add_slots
 @dataclass(frozen=True)
 class Continue(BaseSmallStatement):
+    """
+    Represents a ``continue`` statement, which is used to skip to the next iteration
+    in a :class:`For` or :class:`While` loop.
+    """
 
-    #: Optional semicolon when this is used in a statement line.
+    #: Optional semicolon when this is used in a statement line. This semicolon
+    #: owns the whitespace on both sides of it when it is used.
     semicolon: Union[Semicolon, MaybeSentinel] = MaybeSentinel.DEFAULT
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Continue":
@@ -211,13 +232,21 @@ class Continue(BaseSmallStatement):
 @add_slots
 @dataclass(frozen=True)
 class Return(BaseSmallStatement):
+    """
+    Represents a ``return`` or a ``return x`` statement.
+    """
+
+    #: The optional expression that will be evaluated and returned.
     value: Optional[BaseExpression] = None
 
+    #: Optional whitespace after the ``return`` keyword before the optional
+    #: value expression.
     whitespace_after_return: Union[
         SimpleWhitespace, MaybeSentinel
     ] = MaybeSentinel.DEFAULT
 
-    #: Optional semicolon when this is used in a statement line.
+    #: Optional semicolon when this is used in a statement line. This semicolon
+    #: owns the whitespace on both sides of it when it is used.
     semicolon: Union[Semicolon, MaybeSentinel] = MaybeSentinel.DEFAULT
 
     def _validate(self) -> None:
@@ -270,12 +299,16 @@ class Return(BaseSmallStatement):
 class Expr(BaseSmallStatement):
     """
     An expression used as a statement, where the result is unused and unassigned.
+    The most common place you will find this is in function calls where the return
+    value is unneeded.
     """
 
-    #: The expression itself.
+    #: The expression itself. Python will evaluate the expression but not assign
+    #: the result anywhere.
     value: BaseExpression
 
-    #: Optional semicolon when this is used in a statement line.
+    #: Optional semicolon when this is used in a statement line. This semicolon
+    #: owns the whitespace on both sides of it when it is used.
     semicolon: Union[Semicolon, MaybeSentinel] = MaybeSentinel.DEFAULT
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Expr":
@@ -302,13 +335,19 @@ class _BaseSimpleStatement(CSTNode, ABC):
     """
     A simple statement is a series of small statements joined together by semicolons.
 
-      simple_stmt: small_stmt (';' small_stmt)* [';'] NEWLINE
+        simple_stmt: small_stmt (';' small_stmt)* [';'] NEWLINE
 
     Whitespace between each small statement is owned by the small statements themselves.
+    It can be found on the required semicolon that will be attached to each non-terminal
+    small statement.
     """
 
+    #: Sequence of small statements. All but the last statement are required to have
+    #: a semicolon.
     body: Sequence[BaseSmallStatement]
-    #: a NEWLINE token is actually part of simple_stmt's grammar.
+
+    #: Any trailing comment and the final ``NEWLINE``, which is part of small statement's
+    #: grammar.
     trailing_whitespace: TrailingWhitespace
 
     def _validate(self) -> None:
@@ -345,13 +384,19 @@ class SimpleStatementLine(_BaseSimpleStatement):
     A simple statement that's part of an IndentedBlock or Module. A simple statement is
     a series of small statements joined together by semicolons.
 
-    This isn't differentiated from a SimpleStatementSuite in the grammar, but because a
-    SimpleStatementLine can own additional whitespace that a SimpleStatementSuite
-    doesn't have, we're differentiating it in the CST.
+    This isn't differentiated from a :class:`SimpleStatementSuite` in the grammar, but
+    because a :class:`SimpleStatementLine` can own additional whitespace that a
+    :class:`SimpleStatementSuite` doesn't have, we're differentiating it in the CST.
     """
 
+    #: Sequence of small statements. All but the last statement are required to have
+    #: a semicolon.
     body: Sequence[BaseSmallStatement]
+
+    #: Sequence of empty lines appearing before this simple statement line.
     leading_lines: Sequence[EmptyLine] = ()
+
+    #: Any optional trailing comment and the final ``NEWLINE`` at the end of the line.
     trailing_whitespace: TrailingWhitespace = TrailingWhitespace()
 
     def _visit_and_replace_children(
@@ -385,14 +430,23 @@ class SimpleStatementSuite(_BaseSimpleStatement, BaseSuite):
     statements joined together by semicolons. A suite is the thing that follows the
     colon in a compound statement.
 
-      if test:<leading_whitespace><body><trailing_whitespace>
+    .. code-block::
 
-    This isn't differentiated from a SimpleStatementLine in the grammar, but because the
-    two classes need to track different whitespace, we're differentiating it in the CST.
+        if test:<leading_whitespace><body><trailing_whitespace>
+
+    This isn't differentiated from a :class:`SimpleStatementLine` in the grammar, but
+    because the two classes need to track different whitespace, we're differentiating
+    it in the CST.
     """
 
+    #: Sequence of small statements. All but the last statement are required to have
+    #: a semicolon.
     body: Sequence[BaseSmallStatement]
+
+    #: The whitespace between the colon in the parent statement and the body.
     leading_whitespace: SimpleWhitespace = SimpleWhitespace(" ")
+
+    #: Any optional trailing comment and the final ``NEWLINE`` at the end of the line.
     trailing_whitespace: TrailingWhitespace = TrailingWhitespace()
 
     def _visit_and_replace_children(
@@ -417,15 +471,21 @@ class SimpleStatementSuite(_BaseSimpleStatement, BaseSuite):
 @dataclass(frozen=True)
 class Else(CSTNode):
     """
-    An `else` clause that appears optionally after an `If`, `While`, `Try`, or `For`
-    statement.
+    An ``else`` clause that appears optionally after an :class:`If`, :class:`While`,
+    :class:`Try`, or :class:`For` statement.
 
-    This node does not match `elif` clauses in `If` statements. It also does not match
-    the required `else` clause in an `if` expression (`a = if b else c`).
+    This node does not match ``elif`` clauses in :class:`If` statements. It also
+    does not match the required ``else`` clause in an :class:`IfExp` expression
+    (``a = if b else c``).
     """
 
+    #: The body of else clause.
     body: BaseSuite
+
+    #: Sequence of empty lines appearing before this compound statement line.
     leading_lines: Sequence[EmptyLine] = ()
+
+    #: The whitespace appearing after the ``else`` keyword but before the colon.
     whitespace_before_colon: SimpleWhitespace = SimpleWhitespace("")
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Else":
@@ -473,23 +533,30 @@ class BaseCompoundStatement(CSTNode, ABC):
 @dataclass(frozen=True)
 class If(BaseCompoundStatement):
     """
-    An `if` statement. `test` holds a single test expression.
+    An ``if`` statement. ``test`` holds a single test expression.
 
-    `elif` clauses don’t have a special representation in the AST, but rather appear as
-    extra `If` nodes within the `orelse` section of the previous one.
+    ``elif`` clauses don’t have a special representation in the AST, but rather appear as
+    extra :class:`If` nodes within the ``orelse`` section of the previous one.
     """
 
+    #: The expression that, when evaluated, should give us a truthy/falsey value.
     test: BaseExpression  # TODO: should be a test_nocond
+
+    #: The body of this compound statement.
     body: BaseSuite
-    # A value of orelse with the type of:
-    # - If signifies an elif block.
-    # - Else signifies an else block.
-    # - None signifies no else or elif block.
+
+    #: An optional ``elif`` or ``else`` clause. :class:`If` signifies an ``elif`` block.
+    #: :class:`Else` signifies an ``else`` block. ``None`` signifies no ``else`` or
+    #:``elif`` block.
     orelse: Union["If", Else, None] = None
 
-    # Whitespace:
+    #: Sequence of empty lines appearing before this compound statement line.
     leading_lines: Sequence[EmptyLine] = ()
+
+    #: The whitespace appearing after the ``if`` keyword but before the test expression.
     whitespace_before_test: SimpleWhitespace = SimpleWhitespace(" ")
+
+    #: The whitespace appearing after the test expression but before the colon.
     whitespace_after_test: SimpleWhitespace = SimpleWhitespace("")
 
     # TODO: _validate
@@ -533,34 +600,41 @@ class If(BaseCompoundStatement):
 @dataclass(frozen=True)
 class IndentedBlock(BaseSuite):
     """
-    Represents a block of statements beginning with an INDENT token and ending in a
-    DEDENT token. Used as the body of compound statements, such as an if statement's
+    Represents a block of statements beginning with an ``INDENT`` token and ending in a
+    ``DEDENT`` token. Used as the body of compound statements, such as an if statement's
     body.
 
-    A common alternative to an IndentedBlock is a SimpleStatement, which can also be
-    used as a BaseSuite, meaning that it can be used as the body of many compound
-    statements.
+    A common alternative to an :class:`IndentedBlock` is a :class:`SimpleStatementSuite`,
+    which can also be used as a :class:`BaseSuite`, meaning that it can be used as the
+    body of many compound statements.
+
+    An :class:`IndentedBlock` always occurs after a colon in a
+    :class:`BaseCompoundStatement`, so it owns the trailing whitespace for the compound
+    statement's clause.
+
+    .. code-block::
+
+        if test: # IndentedBlock's header
+            body
     """
 
+    #: Sequence of statements belonging to this indented block.
     body: Sequence[Union[SimpleStatementLine, BaseCompoundStatement]]
 
-    # An IndentedBlock always occurs after a colon in a BaseCompoundStatement, so it
-    # owns the trailing whitespace for the compound statement's clause.
-    #
-    #   if test: # IndentedBlock's header
-    #       body
+    #: Any optional trailing comment and the final ``NEWLINE`` at the end of the line.
     header: TrailingWhitespace = TrailingWhitespace()
 
-    # A str represents a specific indentation. A None value uses the modules's default
-    # indentation.
-    #
-    # This is because indentation is allowed to be inconsistent across a file, just not
-    # ambiguously.
+    #: A string represents a specific indentation. A ``None`` value uses the modules's
+    #: default indentation. This is included because indentation is allowed to be
+    #: inconsistent across a file, just not ambiguously.
     indent: Optional[str] = None
 
-    # There may be some trailing comments or lines after the dedent. Statements own
-    # preceeding and same-line trailing comments, but not trailing lines, so it falls on
-    # IndentedBlock to own it.
+    #: Any trailing comments or lines after the dedent that are owned by this indented
+    #: block. Statements own preceeding and same-line trailing comments, but not
+    #: trailing lines, so it falls on :class:`IndentedBlock` to own it. In the case
+    #: that a statement follows an :class:`IndentedBlock`, that statement will own the
+    #: comments and lines that are at the same indent as the statement, and this
+    #: :class:`IndentedBlock` will own the comments and lines that are indented further.
     footer: Sequence[EmptyLine] = ()
 
     def _validate(self) -> None:
@@ -616,14 +690,17 @@ class IndentedBlock(BaseSuite):
 @dataclass(frozen=True)
 class AsName(CSTNode):
     """
-    An ``as name`` clause inside an :class:`ExceptHandler`, :class:`ImportAlias` or :class:`WithItem` node.
+    An ``as name`` clause inside an :class:`ExceptHandler`, :class:`ImportAlias` or
+    :class:`WithItem` node.
     """
 
     #: Identifier that the parent node will be aliased to.
-    name: Name  # TODO: This should be Union[Name, Tuple, List] once we support those
+    name: Union[Name, Tuple, List]
 
-    # Whitespace nodes
+    #: Whitespace between the parent node and the ``as`` keyword.
     whitespace_before_as: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+
+    #: Whitespace between the ``as`` keyword and the name.
     whitespace_after_as: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
 
     def _validate(self) -> None:
@@ -663,15 +740,20 @@ class ExceptHandler(CSTNode):
     body: BaseSuite
 
     #: The type of exception this catches. Can be a tuple in some cases,
-    #: or none for an empty exception.
+    #: or ``None`` if the code is catching all exceptions.
     type: Optional[BaseExpression] = None
 
-    #: The name that a caught exception is assigned to
+    #: The optional name that a caught exception is assigned to.
     name: Optional[AsName] = None
 
-    # Whitespace nodes
+    #: Sequence of empty lines appearing before this compound statement line.
     leading_lines: Sequence[EmptyLine] = ()
+
+    #: The whitespace between the ``except`` keyword and the type attribute.
     whitespace_after_except: SimpleWhitespace = SimpleWhitespace(" ")
+
+    #: The whitespace after any type or name node (whichever comes last) and
+    #: the colon.
     whitespace_before_colon: SimpleWhitespace = SimpleWhitespace("")
 
     def _validate(self) -> None:
@@ -726,8 +808,14 @@ class Finally(CSTNode):
     A ``finally`` clause that appears optionally after a :class:`Try` statement.
     """
 
+    #: The body of the except.
     body: BaseSuite
+
+    #: Sequence of empty lines appearing before this compound statement line.
     leading_lines: Sequence[EmptyLine] = ()
+
+    #: The whitespace that appears after the ``finally`` keyword but before
+    #: the colon.
     whitespace_before_colon: SimpleWhitespace = SimpleWhitespace("")
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Finally":
@@ -770,8 +858,11 @@ class Try(BaseCompoundStatement):
     #: An optional finally case.
     finalbody: Optional[Finally] = None
 
-    # Whitespace
+    #: Sequence of empty lines appearing before this compound statement line.
     leading_lines: Sequence[EmptyLine] = ()
+
+    #: The whitespace that appears after the ``try`` keyword but before
+    #: the colon.
     whitespace_before_colon: SimpleWhitespace = SimpleWhitespace("")
 
     def _validate(self) -> None:
@@ -826,18 +917,20 @@ class Try(BaseCompoundStatement):
 @dataclass(frozen=True)
 class ImportAlias(CSTNode):
     """
-    An import, with an optional :class:`AsName`.
+    An import, with an optional :class:`AsName`. Used in both :class:`Import` and
+    :class:`ImportFrom` to specify a single import out of another module.
     """
 
-    #: Name or Attribute node representing the module.
+    #: Name or Attribute node representing the object we are importing.
     name: Union[Attribute, Name]
 
-    #: Alias if it exists.
+    #: Local alias we will import the above object as.
     asname: Optional[AsName] = None
 
-    #: This is optional for the last ImportAlias in a Import or ImportFrom, but all
-    #: other ImportAliases inside an import must contain a comma to disambiguate
-    #: multiple small statements on the same line.
+    #: Any trailing comma that appears after this import. This is optional for the
+    #: last :class:`ImportAlias` in a :class:`Import` or :class:`ImportFrom`, but all
+    #: other import aliases inside an import must contain a comma to disambiguate
+    #: multiple imports.
     comma: Union[Comma, MaybeSentinel] = MaybeSentinel.DEFAULT
 
     def _validate(self) -> None:
@@ -874,13 +967,15 @@ class Import(BaseSmallStatement):
     An ``import`` statement.
     """
 
-    #: One or more names that are being imported.
+    #: One or more names that are being imported, with optional local aliases.
     names: Sequence[ImportAlias]
 
-    #: Optional semicolon when this is used in a statement line.
+    #: Optional semicolon when this is used in a statement line. This semicolon
+    #: owns the whitespace on both sides of it when it is used.
     semicolon: Union[Semicolon, MaybeSentinel] = MaybeSentinel.DEFAULT
 
-    #: Whitespace.
+    #: The whitespace that appears after the ``import`` keyword but before
+    #: the first import alias.
     whitespace_after_import: SimpleWhitespace = SimpleWhitespace(" ")
 
     def _validate(self) -> None:
@@ -929,27 +1024,37 @@ class ImportFrom(BaseSmallStatement):
     A ``from x import y`` statement.
     """
 
-    #: Name or Attribute node representing the module.
+    #: Name or Attribute node representing the module we're importing from.
+    #: This is optional as :class:`ImportFrom` allows purely relative imports.
     module: Optional[Union[Attribute, Name]]
 
-    #: One or more names that are being imported from the module.
+    #: One or more names that are being imported from the specified module,
+    #: with optional local aliases.
     names: Union[Sequence[ImportAlias], ImportStar]
 
-    #: Sequence of Dot nodes indicating relative import.
+    #: Sequence of :class:`Dot` nodes indicating relative import level.
     relative: Sequence[Dot] = ()
 
     #: Optional open parenthesis for multi-line import continuation.
     lpar: Optional[LeftParen] = None
 
-    #: Optional open parenthesis for multi-line import continuation.
+    #: Optional close parenthesis for multi-line import continuation.
     rpar: Optional[RightParen] = None
 
-    #: Optional semicolon when this is used in a statement line.
+    #: Optional semicolon when this is used in a statement line. This semicolon
+    #: owns the whitespace on both sides of it when it is used.
     semicolon: Union[Semicolon, MaybeSentinel] = MaybeSentinel.DEFAULT
 
-    # Whitespace nodes owned by ImportFrom.
+    #: The whitespace that appears after the ``from`` keyword but before
+    #: the module and any relative import dots.
     whitespace_after_from: SimpleWhitespace = SimpleWhitespace(" ")
+
+    #: The whitespace that appears after the module but before the
+    #: ``import`` keyword.
     whitespace_before_import: SimpleWhitespace = SimpleWhitespace(" ")
+
+    #: The whitespace that appears after the ``import`` keyword but
+    #: before the first import name or optional left paren.
     whitespace_after_import: SimpleWhitespace = SimpleWhitespace(" ")
 
     def _validate_module(self) -> None:
@@ -1055,14 +1160,16 @@ class ImportFrom(BaseSmallStatement):
 @dataclass(frozen=True)
 class AssignTarget(CSTNode):
     """
-    A target for an assignment. Owns the equals.
+    A target for an :class:`Assign`. Owns the equals sign and the whitespace around it.
     """
 
-    #: The target being assigned to.
+    #: The target expression being assigned to.
     target: BaseAssignTargetExpression
 
-    # Whitespace
+    #: The whitespace appearing before the equals sign.
     whitespace_before_equal: SimpleWhitespace = SimpleWhitespace(" ")
+
+    #: The whitespace appearing after the equals sign.
     whitespace_after_equal: SimpleWhitespace = SimpleWhitespace(" ")
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "AssignTarget":
@@ -1089,7 +1196,9 @@ class AssignTarget(CSTNode):
 @dataclass(frozen=True)
 class Assign(BaseSmallStatement):
     """
-    An assignment statement.
+    An assignment statement such as ``x = y`` or ``x = y = z``. Unlike
+    :class:`AnnAssign`, this does not allow type annotations but does
+    allow for multiple targets.
     """
 
     #: One or more targets that are being assigned to.
@@ -1098,7 +1207,8 @@ class Assign(BaseSmallStatement):
     #: The expression being assigned to the targets.
     value: BaseExpression
 
-    #: Optional semicolon when this is used in a statement line.
+    #: Optional semicolon when this is used in a statement line. This semicolon
+    #: owns the whitespace on both sides of it when it is used.
     semicolon: Union[Semicolon, MaybeSentinel] = MaybeSentinel.DEFAULT
 
     def _validate(self) -> None:
@@ -1134,10 +1244,14 @@ class Assign(BaseSmallStatement):
 @dataclass(frozen=True)
 class AnnAssign(BaseSmallStatement):
     """
-    An assignment statement.
+    An assignment statement such as ``x: int = 5`` or ``x: int``. This only
+    allows for one assignment target unlike :class:`Assign` but it includes
+    a variable annotation. Also unlike :class:`Assign`, the assignment target
+    is optional, as it is possible to annotate an expression without assigning
+    to it.
     """
 
-    #: One or more targets that are being assigned to.
+    #: The target that is being annotated and possibly assigned to.
     target: BaseExpression
 
     #: The annotation for the target.
@@ -1149,7 +1263,8 @@ class AnnAssign(BaseSmallStatement):
     #: The equals sign used to denote assignment if there is a value.
     equal: Union[AssignEqual, MaybeSentinel] = MaybeSentinel.DEFAULT
 
-    #: Optional semicolon when this is used in a statement line.
+    #: Optional semicolon when this is used in a statement line. This semicolon
+    #: owns the whitespace on both sides of it when it is used.
     semicolon: Union[Semicolon, MaybeSentinel] = MaybeSentinel.DEFAULT
 
     def _validate(self) -> None:
@@ -1199,19 +1314,20 @@ class AnnAssign(BaseSmallStatement):
 @dataclass(frozen=True)
 class AugAssign(BaseSmallStatement):
     """
-    An augmented assignment statement.
+    An augmented assignment statement, such as ``x += 5``.
     """
 
-    #: Target that is being assigned to.
+    #: Target that is being operated on and assigned to.
     target: BaseExpression
 
     #: The augmented assignment operation being performed.
     operator: BaseAugOp
 
-    #: The being assigned to the target.
+    #: The value used with the above operator to calculate the new assignment.
     value: BaseExpression
 
-    #: Optional semicolon when this is used in a statement line.
+    #: Optional semicolon when this is used in a statement line. This semicolon
+    #: owns the whitespace on both sides of it when it is used.
     semicolon: Union[Semicolon, MaybeSentinel] = MaybeSentinel.DEFAULT
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "AugAssign":
@@ -1242,22 +1358,22 @@ class AugAssign(BaseSmallStatement):
 @dataclass(frozen=True)
 class Decorator(CSTNode):
     """
-    A single decorator that decorates a FunctionDef or a ClassDef.
+    A single decorator that decorates a :class:`FunctionDef` or a :class:`ClassDef`.
     """
 
     #: The decorator that will return a new function wrapping the parent
     #: of this decorator.
     decorator: Union[Name, Attribute, Call]
 
-    #: Line comments and empty lines before this decorator. The parent FunctionDef
-    #: or ClassDef node owns leading lines before the comments of the first
-    #: decorator so that if the first decorator is removed, spacing is preserved.
+    #: Line comments and empty lines before this decorator. The parent
+    #: :class:`FunctionDef` or :class:`ClassDef` node owns leading lines before
+    #: the first decorator so that if the first decorator is removed, spacing is preserved.
     leading_lines: Sequence[EmptyLine] = ()
 
-    #: Whitespace between various tokens making up the decorator.
+    #: Whitespace after the ``@`` and before the decorator expression itself.
     whitespace_after_at: SimpleWhitespace = SimpleWhitespace("")
 
-    #: Whitespace following the decorator before the next line.
+    #: Optional trailing comment and newline following the decorator before the next line.
     trailing_whitespace: TrailingWhitespace = TrailingWhitespace()
 
     def _validate(self) -> None:
@@ -1313,13 +1429,15 @@ class FunctionDef(BaseCompoundStatement):
     #: The function body.
     body: BaseSuite
 
-    #: List of decorators applied to this function.
+    #: Sequence of decorators applied to this function. Decorators are listed in
+    #: order that they appear in source (top to bottom) as apposed to the order
+    #: that they are applied to the function at runtime.
     decorators: Sequence[Decorator] = ()
 
-    #: An optional return type annotation.
+    #: An optional return annotation, if the function is annotated.
     returns: Optional[Annotation] = None
 
-    #: Optional async modifier.
+    #: Optional async modifier, if this is an async function.
     asynchronous: Optional[Asynchronous] = None
 
     #: Leading empty lines and comments before the first decorator. We
@@ -1330,13 +1448,22 @@ class FunctionDef(BaseCompoundStatement):
     leading_lines: Sequence[EmptyLine] = ()
 
     #: Empty lines and comments between the final decorator and the
-    #: FunctionDef node. In the case of no decorators, this will be empty.
+    #: :class:`FunctionDef` node. In the case of no decorators, this will be empty.
     lines_after_decorators: Sequence[EmptyLine] = ()
 
-    # Whitespace between various tokens making up the functiondef
+    #: Whitespace after the ``def`` keyword and before the function name.
     whitespace_after_def: SimpleWhitespace = SimpleWhitespace(" ")
+
+    #: Whitespace after the function name and before the opening parenthesis for
+    #: the parameters.
     whitespace_after_name: SimpleWhitespace = SimpleWhitespace("")
+
+    #: Whitespace after the opening parenthesis for the parameters but before
+    #: the first param itself.
     whitespace_before_params: SimpleWhitespace = SimpleWhitespace("")
+
+    #: Whitespace after the closing parenthesis or return annotation and before
+    #: the colon.
     whitespace_before_colon: SimpleWhitespace = SimpleWhitespace("")
 
     def _validate(self) -> None:
@@ -1421,13 +1548,13 @@ class ClassDef(BaseCompoundStatement):
     #: The class body.
     body: BaseSuite
 
-    #: The base classes this class inherits from
+    #: Sequence of base classes this class inherits from.
     bases: Sequence[Arg] = ()
 
-    #: Any keywords, such as "metaclass"
+    #: Sequence of keywords, such as "metaclass".
     keywords: Sequence[Arg] = ()
 
-    #: List of decorators applied to this function.
+    #: Sequence of decorators applied to this class.
     decorators: Sequence[Decorator] = ()
 
     #: Optional open parenthesis used when there are bases or keywords.
@@ -1444,12 +1571,18 @@ class ClassDef(BaseCompoundStatement):
     leading_lines: Sequence[EmptyLine] = ()
 
     #: Empty lines and comments between the final decorator and the
-    #: ClassDef node. In the case of no decorators, this will be empty.
+    #: :class:`ClassDef` node. In the case of no decorators, this will be empty.
     lines_after_decorators: Sequence[EmptyLine] = ()
 
-    # Whitespace between various tokens making up the functiondef
+    #: Whitespace after the ``class`` keyword and before the class name.
     whitespace_after_class: SimpleWhitespace = SimpleWhitespace(" ")
+
+    #: Whitespace after the class name and before the opening parenthesis for
+    #: the bases and keywords.
     whitespace_after_name: SimpleWhitespace = SimpleWhitespace("")
+
+    #: Whitespace after the closing parenthesis or class name and before
+    #: the colon.
     whitespace_before_colon: SimpleWhitespace = SimpleWhitespace("")
 
     def _validate_whitespace(self) -> None:
@@ -1546,17 +1679,18 @@ class ClassDef(BaseCompoundStatement):
 @dataclass(frozen=True)
 class WithItem(CSTNode):
     """
-    A single context manager in a with block, with an optional variable name.
+    A single context manager in a :class:`With` block, with an optional variable name.
     """
 
     #: Expression that evaluates to a context manager.
     item: BaseExpression
 
-    #: Variable to assign the context manager to.
+    #: Variable to assign the context manager to, if it is needed in the
+    #: :class:`With` body.
     asname: Optional[AsName] = None
 
-    #: This is forbidden for the last WithItem in a With, but all other WithItems
-    #: inside a with block must contain a comma to separate them.
+    #: This is forbidden for the last :class:`WithItem` in a :class:`With`, but all
+    #: other items inside a with block must contain a comma to separate them.
     comma: Union[Comma, MaybeSentinel] = MaybeSentinel.DEFAULT
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "WithItem":
@@ -1587,18 +1721,22 @@ class With(BaseCompoundStatement):
     A ``with`` statement.
     """
 
-    #: A list of one or more WithItems.
+    #: A sequence of one or more items that evaluate to context managers.
     items: Sequence[WithItem]
 
     #: The suite that is wrapped with this statement.
     body: BaseSuite
 
-    #: Optional async modifier.
+    #: Optional async modifier if this is an ``async with`` statement.
     asynchronous: Optional[Asynchronous] = None
 
-    # Whitespace
+    #: Sequence of empty lines appearing before this with statement.
     leading_lines: Sequence[EmptyLine] = ()
+
+    #: Whitespace after the ``with`` keyword and before the first item.
     whitespace_after_with: SimpleWhitespace = SimpleWhitespace(" ")
+
+    #: Whitespace after the last item and before the colon.
     whitespace_before_colon: SimpleWhitespace = SimpleWhitespace("")
 
     def _validate(self) -> None:
@@ -1652,7 +1790,7 @@ class With(BaseCompoundStatement):
 @dataclass(frozen=True)
 class For(BaseCompoundStatement):
     """
-    A ``for`` statement.
+    A ``for target in iter`` statement.
     """
 
     #: The target of the iterator in the for statement.
@@ -1664,17 +1802,26 @@ class For(BaseCompoundStatement):
     #: The suite that is wrapped with this statement.
     body: BaseSuite
 
-    #: An optional else case.
+    #: An optional else case which will be executed if there is no
+    #: :class:`Break` statement encountered while looping.
     orelse: Optional[Else] = None
 
-    #: Optional async modifier.
+    #: Optional async modifier, if this is an `async for` statement.
     asynchronous: Optional[Asynchronous] = None
 
-    # Whitespace
+    #: Sequence of empty lines appearing before this for statement.
     leading_lines: Sequence[EmptyLine] = ()
+
+    #: Whitespace after the ``for`` keyword and before the target.
     whitespace_after_for: SimpleWhitespace = SimpleWhitespace(" ")
+
+    #: Whitespace after the target and before the ``in`` keyword.
     whitespace_before_in: SimpleWhitespace = SimpleWhitespace(" ")
+
+    #: Whitespace after the ``in`` keyword and before the iter.
     whitespace_after_in: SimpleWhitespace = SimpleWhitespace(" ")
+
+    #: Whitespace after the iter and before the colon.
     whitespace_before_colon: SimpleWhitespace = SimpleWhitespace("")
 
     def _validate(self) -> None:
@@ -1762,12 +1909,17 @@ class While(BaseCompoundStatement):
     #: The suite that is wrapped with this statement.
     body: BaseSuite
 
-    #: An optional else case.
+    #: An optional else case which will be executed if there is no
+    #: :class:`Break` statement encountered while looping.
     orelse: Optional[Else] = None
 
-    # Whitespace
+    #: Sequence of empty lines appearing before this while statement.
     leading_lines: Sequence[EmptyLine] = ()
+
+    #: Whitespace after the ``while`` keyword and before the test.
     whitespace_after_while: SimpleWhitespace = SimpleWhitespace(" ")
+
+    #: Whitespace after the test and before the colon.
     whitespace_before_colon: SimpleWhitespace = SimpleWhitespace("")
 
     def _validate(self) -> None:
@@ -1814,15 +1966,24 @@ class While(BaseCompoundStatement):
 @add_slots
 @dataclass(frozen=True)
 class Raise(BaseSmallStatement):
+    """
+    A ``raise exc`` or ``raise exc from cause`` statement.
+    """
+
+    #: The exception that we should raise.
     exc: Optional[BaseExpression] = None
 
+    #: Optionally, a ``from cause`` clause to allow us to raise an exception
+    #: out of another exception's context.
     cause: Optional[From] = None
 
+    #: Any whitespace appearing between the ``raise`` keyword and the exception.
     whitespace_after_raise: Union[
         SimpleWhitespace, MaybeSentinel
     ] = MaybeSentinel.DEFAULT
 
-    #: Optional semicolon when this is used in a statement line.
+    #: Optional semicolon when this is used in a statement line. This semicolon
+    #: owns the whitespace on both sides of it when it is used.
     semicolon: Union[Semicolon, MaybeSentinel] = MaybeSentinel.DEFAULT
 
     def _validate(self) -> None:
@@ -1904,16 +2065,17 @@ class Assert(BaseSmallStatement):
     #: The test we are going to assert on.
     test: BaseExpression
 
-    #: The optional message to display if the assert fails.
+    #: The optional message to display if the test evaluates to a falsey value.
     msg: Optional[BaseExpression] = None
 
     #: A comma separating test and message, if there is a message.
     comma: Union[Comma, MaybeSentinel] = MaybeSentinel.DEFAULT
 
-    #: Whitespace nodes.
+    #: Whitespace appearing after the ``assert`` keyword and before the test.
     whitespace_after_assert: SimpleWhitespace = SimpleWhitespace(" ")
 
-    #: Optional semicolon when this is used in a statement line.
+    #: Optional semicolon when this is used in a statement line. This semicolon
+    #: owns the whitespace on both sides of it when it is used.
     semicolon: Union[Semicolon, MaybeSentinel] = MaybeSentinel.DEFAULT
 
     def _validate(self) -> None:
@@ -1969,14 +2131,18 @@ class Assert(BaseSmallStatement):
 @dataclass(frozen=True)
 class NameItem(CSTNode):
     """
-    A single identifier name inside a Global or Nonlocal statement.
+    A single identifier name inside a :class:`Global` or :class:`Nonlocal` statement.
+
+    This exists because a list of names in a ``global`` or ``nonlocal`` statement need
+    to be separated by a comma, which ends up owned by the :class:`NameItem` node.
     """
 
     #: Identifier name.
     name: Name
 
-    #: This is forbidden for the last NameItem in a Global/Nonlocal, but all other
-    #: NameItems inside a with block must contain a comma to separate them.
+    #: This is forbidden for the last :class:`NameItem` in a
+    #: :class:`Global`/:class:`Nonlocal`, but all other tems inside a ``global`` or
+    #: ``nonlocal`` statement must contain a comma to separate them.
     comma: Union[Comma, MaybeSentinel] = MaybeSentinel.DEFAULT
 
     def _validate(self) -> None:
@@ -2008,13 +2174,14 @@ class Global(BaseSmallStatement):
     A ``global`` statement.
     """
 
-    #: A list of one or more NameItems.
+    #: A list of one or more names.
     names: Sequence[NameItem]
 
-    #: Whitespace.
+    #: Whitespace appearing after the ``global`` keyword and before the first name.
     whitespace_after_global: SimpleWhitespace = SimpleWhitespace(" ")
 
-    #: Optional semicolon when this is used in a statement line.
+    #: Optional semicolon when this is used in a statement line. This semicolon
+    #: owns the whitespace on both sides of it when it is used.
     semicolon: Union[Semicolon, MaybeSentinel] = MaybeSentinel.DEFAULT
 
     def _validate(self) -> None:
@@ -2062,16 +2229,17 @@ class Global(BaseSmallStatement):
 @dataclass(frozen=True)
 class Nonlocal(BaseSmallStatement):
     """
-    A `nonlocal` statement.
+    A ``nonlocal`` statement.
     """
 
-    #: A list of one or more NameItems.
+    #: A list of one or more names.
     names: Sequence[NameItem]
 
-    #: Whitespace.
+    #: Whitespace appearing after the ``global`` keyword and before the first name.
     whitespace_after_nonlocal: SimpleWhitespace = SimpleWhitespace(" ")
 
-    #: Optional semicolon when this is used in a statement line.
+    #: Optional semicolon when this is used in a statement line. This semicolon
+    #: owns the whitespace on both sides of it when it is used.
     semicolon: Union[Semicolon, MaybeSentinel] = MaybeSentinel.DEFAULT
 
     def _validate(self) -> None:
