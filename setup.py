@@ -29,6 +29,6 @@ setuptools.setup(
         "typing_inspect",
     ],
     extras_require={
-        "dev": ["black", "flake8", "isort", "pyre-check", "Sphinx"],
+        "dev": ["black", "flake8", "isort", "pyre-check", "Sphinx", "sphinx-rtd-theme"],
     }
 )

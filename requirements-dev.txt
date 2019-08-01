@@ -1,5 +1,6 @@
 black==19.3b0
 flake8==3.7.8
+git+https://github.com/jimmylai/sphinx.git@slots_type_annotation
 isort==4.3.20
 pyre-check==0.0.27
-git+https://github.com/jimmylai/sphinx.git@slots_type_annotation
+sphinx-rtd-theme==0.4.3
