@@ -2,15 +2,15 @@
 Why LibCST?
 ===========
 
-Python's ast module already provides a syntax tree. Why do we need another?
-===========================================================================
+**Python's ast module already provides a syntax tree. Why do we need another?**
 
 .. include:: ../../README.rst
     :start-after: why-libcst-intro-start
     :end-before: why-libcst-intro-end
 
 Abstract Syntax Trees (AST)
----------------------------
+===========================
+
 Let's look at Python's AST for the following code snippet:
 
 .. code-block:: python
@@ -80,7 +80,7 @@ Abstract Syntax Trees are good for tools like compilers and type checkers where 
 
 
 Concrete Syntax Trees (CST)
----------------------------
+===========================
 
 A popular CST library for Python is `lib2to3 <https://github.com/python/cpython/tree/master/Lib/lib2to3>`_, which powers tools like `2to3 <https://docs.python.org/3/library/2to3.html>`_ and `Black <https://github.com/ambv/black>`_. Let's look at the syntax tree it generates for the same piece of code:
 
@@ -184,7 +184,7 @@ A popular CST library for Python is `lib2to3 <https://github.com/python/cpython/
 This tree is lossless. It retains enough information to reprint the exact input code by storing whitespace information in `prefix` properties. This makes it a "Concrete" Syntax Tree, or CST.
 
 LibCST
-------
+======
 
 .. include:: ../../README.rst
     :start-after: why-libcst-example-start
