@@ -24,7 +24,12 @@ A node that represents an entire python module.
 Expressions
 -----------
 
-Nodes that represent various expressions.
+An expression is anything that represents a value (e.g. it could be returned
+from a function). All expressions subclass from :class:`~libcst.BaseExpression`.
+
+Expression can be parsed with :func:`~libcst.parse_expression` or as part of a
+statement or module using :func:`~libcst.parse_statement` or
+:func:`~libcst.parse_module`.
 
 .. autoclass:: libcst.BaseExpression
 
@@ -36,6 +41,11 @@ Names and Object Attributes
 
 Operations and Comparisons
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Operation and Comparison nodes combine one or more expressions with an
+operator_.
+
+.. _operator: Operators_
 
 .. autoclass:: libcst.UnaryOperation
 .. autoclass:: libcst.BinaryOperation
@@ -158,7 +168,14 @@ Parenthesis, Brackets, and Braces
 Statements
 ----------
 
-Nodes that represent top-level statements and groups of statements.
+Statements represent a "line of code" or a control structure with other lines of
+code, such as an :class:`~libcst.If` block.
+
+All statements subclass from :class:`~libcst.BaseSmallStatement` or
+:class:`~libcst.BaseCompoundStatement`.
+
+Statements can be parsed with :func:`~libcst.parse_statement` or as part of a
+module using :func:`~libcst.parse_module`.
 
 Simple Statements
 ^^^^^^^^^^^^^^^^^

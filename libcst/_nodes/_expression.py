@@ -195,10 +195,11 @@ class RightParen(CSTNode):
 @dataclass(frozen=True)
 class Asynchronous(CSTNode):
     """
-    Used by asynchronous function definitions, as well as ``async for`` and ``async with``.
+    Used by asynchronous function definitions, as well as ``async for`` and
+    ``async with``.
     """
 
-    #: Any space that appears directly after this async word.
+    #: Any space that appears directly after this async keyword.
     whitespace_after: SimpleWhitespace = SimpleWhitespace(" ")
 
     def _validate(self) -> None:
@@ -226,10 +227,8 @@ class _BaseParenthesizedNode(CSTNode, ABC):
     this to get that functionality.
     """
 
-    # Sequence of open parenthesis for precedence dictation.
     lpar: Sequence[LeftParen] = ()
-
-    # Sequence of close parenthesis for precedence dictation.
+    # Sequence of parenthesis for precedence dictation.
     rpar: Sequence[RightParen] = ()
 
     def _validate(self) -> None:
@@ -256,6 +255,10 @@ class ExpressionPosition(Enum):
 
 
 class BaseExpression(_BaseParenthesizedNode, ABC):
+    """
+    An base class for all expressions. :class:`BaseExpression` contains no fields.
+    """
+
     def _safe_to_use_with_word_operator(self, position: ExpressionPosition) -> bool:
         """
         Returns true if this expression is safe to be use with a word operator
@@ -271,13 +274,19 @@ class BaseExpression(_BaseParenthesizedNode, ABC):
 
 class BaseAssignTargetExpression(BaseExpression, ABC):
     """
-    An expression that's valid on the left side of an assign statement.
+    An expression that's valid on the left side of an assignment. That assignment may
+    be part an :class:`Assign` node, or it may be part of a number of other control
+    structures that perform an assignment, such as a :class:`For` loop.
 
     Python's grammar defines all expression as valid in this position, but the AST
     compiler further restricts the allowed types, which is what this type attempts to
     express.
 
-    See also: https://github.com/python/cpython/blob/v3.8.0a4/Python/ast.c#L1120
+    This is similar to a :class:`BaseDelTargetExpression`, but it also includes
+    :class:`StarredElement` as a valid node.
+
+    The set of valid nodes are defined as part of `CPython's AST context computation
+    <https://github.com/python/cpython/blob/v3.8.0a4/Python/ast.c#L1120>`_.
     """
 
     pass
@@ -285,16 +294,19 @@ class BaseAssignTargetExpression(BaseExpression, ABC):
 
 class BaseDelTargetExpression(BaseExpression, ABC):
     """
-    An expression that's valid on the right side of a 'del' statement.
+    An expression that's valid on the right side of a :class:`Del` statement.
 
     Python's grammar defines all expression as valid in this position, but the AST
     compiler further restricts the allowed types, which is what this type attempts to
     express.
 
-    This is similar to a BaseAssignTargetExpression, but excludes `Starred`.
+    This is similar to a :class:`BaseAssignTargetExpression`, but it excludes
+    :class:`StarredElement`.
 
-    See also: https://github.com/python/cpython/blob/v3.8.0a4/Python/ast.c#L1120
-    and: https://github.com/python/cpython/blob/v3.8.0a4/Python/compile.c#L4854
+    The set of valid nodes are defined as part of `CPython's AST context computation
+    <https://github.com/python/cpython/blob/v3.8.0a4/Python/ast.c#L1120>`_ and as part
+    of `CPython's bytecode compiler
+    <https://github.com/python/cpython/blob/v3.8.0a4/Python/compile.c#L4854>`_.
     """
 
     pass
@@ -303,13 +315,20 @@ class BaseDelTargetExpression(BaseExpression, ABC):
 @add_slots
 @dataclass(frozen=True)
 class Name(BaseAssignTargetExpression, BaseDelTargetExpression):
-    #: The actual identifier string
+    """
+    A simple variable name. Names are typically used in the context of a variable
+    access, an assignment, or a deletion.
+
+    Dotted variable names (``a.b.c``) are represented with :class:`Attribute` nodes,
+    and subscripted variable names (``a[b]``) are represented with :class:`Subscript`
+    nodes.
+    """
+
+    #: The variable's name (or "identifier") as a string.
     value: str
 
-    #: Sequence of open parenthesis for precedence dictation.
     lpar: Sequence[LeftParen] = ()
-
-    #: Sequence of close parenthesis for precedence dictation.
+    #: Sequence of parenthesis for precedence dictation.
     rpar: Sequence[RightParen] = ()
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Name":
@@ -335,13 +354,16 @@ class Name(BaseAssignTargetExpression, BaseDelTargetExpression):
 @dataclass(frozen=True)
 class Ellipses(BaseExpression):
     """
-    An ellipses "..."
+    An ellipsis ``...``. When used as an expression, it evaluates to the
+    `Ellipsis constant`_. Ellipsis are often used as placeholders in code or in
+    conjunction with :class:`ExtSlice`.
+
+    .. _Ellipsis constant: https://docs.python.org/3/library/constants.html#Ellipsis
     """
 
-    #: Sequence of open parenthesis for precedence dictation.
     lpar: Sequence[LeftParen] = ()
 
-    #: Sequence of close parenthesis for precedence dictation.
+    #: Sequence of parenthesis for precedence dictation.
     rpar: Sequence[RightParen] = ()
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Ellipses":
@@ -357,8 +379,8 @@ class Ellipses(BaseExpression):
 
 class BaseNumber(BaseExpression, ABC):
     """
-    A type that can be used anywhere that you need to explicitly take any
-    number type.
+    A type such as :class:`Integer`, :class:`Float`, or :class:`Imaginary` that can be
+    used anywhere that you need to explicitly take any number type.
     """
 
     def _safe_to_use_with_word_operator(self, position: ExpressionPosition) -> bool:
@@ -375,12 +397,11 @@ class BaseNumber(BaseExpression, ABC):
 @add_slots
 @dataclass(frozen=True)
 class Integer(BaseNumber):
+    #: A string representation of the integer, such as ``"100000"`` or ``100_000``.
     value: str
 
-    #: Sequence of open parenthesis for precedence dictation.
     lpar: Sequence[LeftParen] = ()
-
-    #: Sequence of close parenthesis for precedence dictation.
+    #: Sequence of parenthesis for precedence dictation.
     rpar: Sequence[RightParen] = ()
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Integer":
@@ -403,12 +424,12 @@ class Integer(BaseNumber):
 @add_slots
 @dataclass(frozen=True)
 class Float(BaseNumber):
+    #: A string representation of the floating point number, such as ``"0.05"``,
+    #: ``".050"``, or ``"5e-2"``.
     value: str
 
-    #: Sequence of open parenthesis for precedence dictation.
     lpar: Sequence[LeftParen] = ()
-
-    #: Sequence of close parenthesis for precedence dictation.
+    #: Sequence of parenthesis for precedence dictation.
     rpar: Sequence[RightParen] = ()
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Float":
@@ -431,12 +452,11 @@ class Float(BaseNumber):
 @add_slots
 @dataclass(frozen=True)
 class Imaginary(BaseNumber):
+    #: A string representation of the imaginary (complex) number, such as ``"2j"``.
     value: str
 
-    #: Sequence of open parenthesis for precedence dictation.
     lpar: Sequence[LeftParen] = ()
-
-    #: Sequence of close parenthesis for precedence dictation.
+    #: Sequence of parenthesis for precedence dictation.
     rpar: Sequence[RightParen] = ()
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Imaginary":
@@ -458,8 +478,8 @@ class Imaginary(BaseNumber):
 
 class BaseString(BaseExpression, ABC):
     """
-    A type that can be used anywhere that you need to explicitly take any
-    string.
+    A type that can be used anywhere that you need to take any string. This includes
+    :class:`SimpleString`, :class:`ConcatenatedString`, and :class:`FormattedString`.
     """
 
     pass
@@ -491,10 +511,8 @@ class _BasePrefixedString(BaseString, ABC):
 class SimpleString(_BasePrefixedString):
     value: str
 
-    #: Sequence of open parenthesis for precidence dictation.
     lpar: Sequence[LeftParen] = ()
-
-    #: Sequence of close parenthesis for precidence dictation.
+    #: Sequence of parenthesis for precidence dictation.
     rpar: Sequence[RightParen] = ()
 
     def _validate(self) -> None:
@@ -642,10 +660,8 @@ class FormattedString(_BasePrefixedString):
     #: String end indicator
     end: str = '"'
 
-    #: Sequence of open parenthesis for precidence dictation.
     lpar: Sequence[LeftParen] = ()
-
-    #: Sequence of close parenthesis for precidence dictation.
+    #: Sequence of parenthesis for precidence dictation.
     rpar: Sequence[RightParen] = ()
 
     def _validate(self) -> None:
@@ -699,10 +715,8 @@ class ConcatenatedString(BaseString):
     #: String on the right of the concatenation.
     right: Union[SimpleString, FormattedString, "ConcatenatedString"]
 
-    #: Sequence of open parenthesis for precidence dictation.
     lpar: Sequence[LeftParen] = ()
-
-    #: Sequence of close parenthesis for precidence dictation.
+    #: Sequence of parenthesis for precidence dictation.
     rpar: Sequence[RightParen] = ()
 
     #: Whitespace between strings.
@@ -761,10 +775,11 @@ class ConcatenatedString(BaseString):
 @dataclass(frozen=True)
 class ComparisonTarget(CSTNode):
     """
-    A target for a comparison. Owns the comparison operator itself.
+    A target for a :class:`Comparison`. Owns the comparison operator and the value to
+    the right of the operator.
     """
 
-    #: The actual comparison operator
+    #: A comparison operator such as ``<``, ``>=``, ``==``, ``is``, or ``in``.
     operator: BaseCompOp
 
     #: The right hand side of the comparison operation
@@ -798,19 +813,43 @@ class ComparisonTarget(CSTNode):
 @dataclass(frozen=True)
 class Comparison(BaseExpression):
     """
-    Any comparison such as ``x < y < z``.
+    A comparison between multiple values such as ``x < y``, ``x < y < z``, or
+    ``x in [y, z]``. These comparisions typically result in boolean values.
+
+    Unlike :class:`BinaryOperation` and :class:`BooleanOperation`, comparisons are not
+    restricted to a left and right child. Instead they can contain an arbitrary number
+    of :class:`ComparisonTarget` children.
+
+    ``x < y < z`` is not equivalent to ``(x < y) < z`` or ``x < (y < z)``. Instead,
+    it's roughly equivalent to ``x < y and y < z``.
+
+    For more details, see `Python's documentation on comparisons
+    <https://docs.python.org/3/reference/expressions.html#comparisons>`_.
+
+    ::
+
+        # x < y < z
+
+        Comparison(
+            Name("x"),
+            [
+                ComparisonTarget(LessThan(), Name("y")),
+                ComparisonTarget(LessThan(), Name("z")),
+            ],
+        )
     """
 
-    #: The left hand side of the comparison operation
+    #: The first value in the full sequence of values to compare. This value will be
+    #: compared against the first value in ``comparisions``.
     left: BaseExpression
 
-    #: The actual comparison operator
+    #: Pairs of :class:`BaseCompOp` operators and expression values to compare. These
+    #: come after ``left``. Each value is compared against the value before and after
+    #: itself in the sequence.
     comparisons: Sequence[ComparisonTarget]
 
-    #: Sequence of open parenthesis for precedence dictation.
     lpar: Sequence[LeftParen] = ()
-
-    #: Sequence of close parenthesis for precedence dictation.
+    #: Sequence of parenthesis for precedence dictation.
     rpar: Sequence[RightParen] = ()
 
     def _safe_to_use_with_word_operator(self, position: ExpressionPosition) -> bool:
@@ -866,19 +905,20 @@ class Comparison(BaseExpression):
 @dataclass(frozen=True)
 class UnaryOperation(BaseExpression):
     """
-    Any generic unary expression, such as ``not x`` or ``-x``.
+    Any generic unary expression, such as ``not x`` or ``-x``. :class:`UnaryOperation`
+    nodes apply a :class:`BaseUnaryOp` to an expression.
     """
 
-    #: The unary operator applied to the expression
+    #: The unary operator that applies some operation (e.g. negation) to the
+    #: ``expression``.
     operator: BaseUnaryOp
 
-    #: The actual expression or atom
+    #: The expression that should be transformed (e.g. negated) by the operator to
+    #: create a new value.
     expression: BaseExpression
 
-    #: Sequence of open parenthesis for precedence dictation.
     lpar: Sequence[LeftParen] = ()
-
-    #: Sequence of close parenthesis for precedence dictation.
+    #: Sequence of parenthesis for precedence dictation.
     rpar: Sequence[RightParen] = ()
 
     def _validate(self) -> None:
@@ -912,22 +952,30 @@ class UnaryOperation(BaseExpression):
 @dataclass(frozen=True)
 class BinaryOperation(BaseExpression):
     """
-    Any binary operation such as ``x << y`` or ``y + z``.
+    An operation that combines two expression such as ``x << y`` or ``y + z``.
+    :class:`BinaryOperation` nodes apply a :class:`BaseBinaryOp` to an expression.
+
+    Binary operations do not include operations performed with :class:`BaseBooleanOp`
+    nodes, such as ``and`` or ``or``. Instead, those operations are provided by
+    :class:`BooleanOperation`.
+
+    It also does not include support for comparision operators performed with
+    :class:`BaseCompOp`, such as ``<``, ``>=``, ``==``, ``is``, or ``in``. Instead,
+    those operations are provided by :class:`Comparison`.
     """
 
-    #: The left hand side of the operation
+    #: The left hand side of the operation.
     left: BaseExpression
 
-    #: The actual operator
+    #: The actual operator such as ``<<`` or ``+`` that combines the ``left`` and
+    #: ``right`` expressions.
     operator: BaseBinaryOp
 
-    #: The right hand side of the operation
+    #: The right hand side of the operation.
     right: BaseExpression
 
-    #: Sequence of open parenthesis for precedence dictation.
     lpar: Sequence[LeftParen] = ()
-
-    #: Sequence of close parenthesis for precedence dictation.
+    #: Sequence of parenthesis for precedence dictation.
     rpar: Sequence[RightParen] = ()
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "BinaryOperation":
@@ -950,22 +998,30 @@ class BinaryOperation(BaseExpression):
 @dataclass(frozen=True)
 class BooleanOperation(BaseExpression):
     """
-    Any boolean operation such as ``x or y`` or ``z and w``
+    An operation that combines two booleans such as ``x or y`` or ``z and w``
+    :class:`BooleanOperation` nodes apply a :class:`BaseBooleanOp` to an expression.
+
+    Boolean operations do not include operations performed with :class:`BaseBinaryOp`
+    nodes, such as ``+`` or ``<<``. Instead, those operations are provided by
+    :class:`BinaryOperation`.
+
+    It also does not include support for comparision operators performed with
+    :class:`BaseCompOp`, such as ``<``, ``>=``, ``==``, ``is``, or ``in``. Instead,
+    those operations are provided by :class:`Comparison`.
     """
 
-    #: The left hand side of the operation
+    #: The left hand side of the operation.
     left: BaseExpression
 
-    #: The actual operator
+    #: The actual operator such as ``and`` or ``or`` that combines the ``left`` and
+    #: ``right`` expressions.
     operator: BaseBooleanOp
 
-    #: The right hand side of the operation
+    #: The right hand side of the operation.
     right: BaseExpression
 
-    #: Sequence of open parenthesis for precedence dictation.
     lpar: Sequence[LeftParen] = ()
-
-    #: Sequence of close parenthesis for precedence dictation.
+    #: Sequence of parenthesis for precedence dictation.
     rpar: Sequence[RightParen] = ()
 
     def _validate(self) -> None:
@@ -1003,28 +1059,38 @@ class BooleanOperation(BaseExpression):
             self.right._codegen(state)
 
 
+@add_slots
 @dataclass(frozen=True)
 class Attribute(BaseAssignTargetExpression, BaseDelTargetExpression):
     """
-    An attribute reference, such as ``x.y``. Note that in the case of
-    ``x.y.z``, the outer attribute will have an attr of ``z`` and the
-    value will be another Attribute referencing the ``y`` attribute on
-    ``x``.
+    An attribute reference, such as ``x.y``.
+
+    Note that in the case of ``x.y.z``, the outer attribute will have an attr of ``z``
+    and the value will be another :class:`Attribute` referencing the ``y`` attribute on
+    ``x``::
+
+        Attribute(
+            value=Attribute(
+                value=Name("x")
+                attr=Name("y")
+            ),
+            attr=Name("z"),
+        )
     """
 
-    #: Expression which, when evaluated, will have 'attr' as an attribute
+    #: An expression which, when evaluated, will produce an object with ``attr`` as an
+    #: attribute.
     value: BaseExpression
 
-    #: Name of the attribute being accessed.
+    #: The name of the attribute being accessed on the ``value`` object.
     attr: Name
 
-    #: Separating dot, with any whitespace it owns.
+    #: A separating dot. If there's whitespace between the ``value`` and ``attr``, this
+    #: dot owns it.
     dot: Dot = Dot()
 
-    #: Sequence of open parenthesis for precedence dictation.
     lpar: Sequence[LeftParen] = ()
-
-    #: Sequence of close parenthesis for precedence dictation.
+    #: Sequence of parenthesis for precedence dictation.
     rpar: Sequence[RightParen] = ()
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Attribute":
@@ -1162,10 +1228,9 @@ class Subscript(BaseAssignTargetExpression, BaseDelTargetExpression):
     #: Close bracket surrounding the slice
     rbracket: RightSquareBracket = RightSquareBracket()
 
-    #: Sequence of open parenthesis for precedence dictation.
     lpar: Sequence[LeftParen] = ()
 
-    #: Sequence of close parenthesis for precedence dictation.
+    #: Sequence of parenthesis for precedence dictation.
     rpar: Sequence[RightParen] = ()
 
     whitespace_after_value: BaseParenthesizableWhitespace = SimpleWhitespace("")
@@ -1214,13 +1279,27 @@ class Subscript(BaseAssignTargetExpression, BaseDelTargetExpression):
 @dataclass(frozen=True)
 class Annotation(CSTNode):
     """
-    An annotation.
+    An annotation for a function (`PEP 3107`_) or on a variable (`PEP 526`_). Typically
+    these are used in the context of type hints (`PEP 484`_), such as::
+
+        # a variable with a type
+        good_ideas: List[str] = []
+
+        # a function with type annotations
+        def concat(substrings: Sequence[str]) -> str:
+            ...
+
+    .. _PEP 3107: https://www.python.org/dev/peps/pep-3107/
+    .. _PEP 526: https://www.python.org/dev/peps/pep-0526/
+    .. _PEP 484: https://www.python.org/dev/peps/pep-0484/
     """
 
-    #: The annotation itself.
+    #: The annotation's value itself. This is the part of the annotation after the
+    #: colon or arrow ``indicator`` field.
     annotation: Union[Name, Attribute, BaseString, Subscript]
 
-    #: The indicator token before the annotation.
+    #: The colon (``:``) or arrow (``->``) before the type name. The sentinel value
+    #: defaults to the correct token based on it's location in the tree.
     indicator: Union[
         str, AnnotationIndicatorSentinel
     ] = AnnotationIndicatorSentinel.DEFAULT
@@ -1282,8 +1361,12 @@ class Annotation(CSTNode):
 @dataclass(frozen=True)
 class ParamStar(CSTNode):
     """
-    A sentinel indicator on a Parameter list to denote that the following params
-    are kwonly args.
+    A sentinel indicator on a :class:`Parameter` list to denote that the subsequent
+    params are keyword-only args.
+
+    This syntax is described in `PEP 3102`_.
+
+    .. _PEP 3102: https://www.python.org/dev/peps/pep-3102/#specification
     """
 
     # Comma that comes after the star.
@@ -1301,29 +1384,36 @@ class ParamStar(CSTNode):
 @dataclass(frozen=True)
 class Param(CSTNode):
     """
-    A single parameter in a Parameter list. May contain a type annotation and
-    in some cases a default.
+    A positional or keyword argument in a :class:`Parameter` list. May contain an
+    :class:`Annotation` and, in some cases, a ``default``.
     """
 
-    #: The parameter name itself
+    #: The parameter name itself.
     name: Name
 
-    #: Any optional annotation
+    #: Any optional :class:`Annotation`. These annotations are usually used as type
+    #: hints.
     annotation: Optional[Annotation] = None
 
     #: The equals sign used to denote assignment if there is a default.
     equal: Union[AssignEqual, MaybeSentinel] = MaybeSentinel.DEFAULT
 
-    #: Any optional default
+    #: Any optional default value, used when the argument is not supplied.
     default: Optional[BaseExpression] = None
 
-    #: Any trailing comma
+    #: A trailing comma. If one is not provided, :class:`MaybeSentinel` will be
+    #: replaced with a comma only if a comma is required.
     comma: Union[Comma, MaybeSentinel] = MaybeSentinel.DEFAULT
 
-    #: Optional star appearing before name for star_arg and star_kwarg
+    #: Zero, one, or two asterisks appearing before name for :class:`Param`'s
+    #: ``star_arg`` and ``star_kwarg``.
     star: Union[str, MaybeSentinel] = MaybeSentinel.DEFAULT
 
+    #: The whitespace before ``name``. It will appear after ``star`` when a star
+    #: exists.
     whitespace_after_star: BaseParenthesizableWhitespace = SimpleWhitespace("")
+
+    #: The whitespace after this entire node.
     whitespace_after_param: BaseParenthesizableWhitespace = SimpleWhitespace("")
 
     def _validate(self) -> None:
@@ -1552,21 +1642,39 @@ class Parameters(CSTNode):
 @add_slots
 @dataclass(frozen=True)
 class Lambda(BaseExpression):
-    #: The parameters to the lambda
+    """
+    A lambda expression that creates an anonymous function.
+
+    ::
+
+        Lambda(
+            params=Parameters([Param(Name("arg"))]),
+            body=Ellipses(),
+        )
+
+    Represents the following code::
+
+        lambda arg: ...
+
+    Named functions statements are provided by :class:`FunctionDef`.
+    """
+
+    #: The arguments to the lambda. This is similar to the arguments on a
+    #: :class:`FunctionDef`, however lambda arguments are not allowed to have an
+    #: :class:`Annotation`.
     params: Parameters
 
-    #: The body of the lambda
+    #: The value that the lambda computes and returns when called.
     body: BaseExpression
 
-    #: The colon separating the parameters from the body
+    #: The colon separating the parameters from the body.
     colon: Colon = Colon(whitespace_after=SimpleWhitespace(" "))
 
-    #: Sequence of open parenthesis for precedence dictation.
     lpar: Sequence[LeftParen] = ()
-
-    #: Sequence of close parenthesis for precedence dictation.
+    #: Sequence of parenthesis for precedence dictation.
     rpar: Sequence[RightParen] = ()
 
+    #: Whitespace after the lambda keyword, but before any argument or the colon.
     whitespace_after_lambda: Union[
         BaseParenthesizableWhitespace, MaybeSentinel
     ] = MaybeSentinel.DEFAULT
@@ -1637,11 +1745,14 @@ class Lambda(BaseExpression):
 @dataclass(frozen=True)
 class Arg(CSTNode):
     """
-    A single argument to a Call. It may be a ``*`` or a ``**`` expansion, or it may be in
-    the form of ``keyword=expression`` for named arguments.
+    A single argument to a :class:`Call`.
+
+    This supports named keyword arguments in the form of ``keyword=value`` and variable
+    argument expansion using ``*args`` or ``**kwargs`` syntax.
     """
 
-    #: The argument expression itself.
+    #: The argument expression itself, not including a preceding keyword, or any of
+    #: the surrounding the value, like a comma or asterisks.
     value: BaseExpression
 
     #: Optional keyword for the argument.
@@ -1653,10 +1764,15 @@ class Arg(CSTNode):
     #: Any trailing comma.
     comma: Union[Comma, MaybeSentinel] = MaybeSentinel.DEFAULT
 
-    #: Optional star appearing before name for * and ** expansion.
+    #: A string with zero, one, or two asterisks appearing before the name. These are
+    #: expanded into variable number of positional or keyword arguments.
     star: Literal["", "*", "**"] = ""
 
+    #: Whitespace after the ``star`` (if it exists), but before the ``keyword`` or
+    #: ``value`` (if no keyword is provided).
     whitespace_after_star: BaseParenthesizableWhitespace = SimpleWhitespace("")
+    #: Whitespace after this entire node. The :class:`Comma` node (if it exists) may
+    #: also store some trailing whitespace.
     whitespace_after_arg: BaseParenthesizableWhitespace = SimpleWhitespace("")
 
     def _validate(self) -> None:
@@ -1810,19 +1926,33 @@ class _BaseExpressionWithArgs(BaseExpression, ABC):
 @add_slots
 @dataclass(frozen=True)
 class Call(_BaseExpressionWithArgs):
-    #: The expression resulting in a callable that we are to call.
+    """
+    An expression representing a function call, such as ``do_math(1, 2)`` or
+    ``picture.post_on_instagram()``.
+
+    Function calls consist of a function name and a sequence of arguments wrapped in
+    :class:`Arg` nodes.
+    """
+
+    #: The expression resulting in a callable that we are to call. Often a :class:`Name`
+    #: or :class:`Attribute`.
     func: Union[BaseExpression]
 
-    #: The arguments to pass to the resulting callable
-    args: Sequence[Arg] = ()  #: TODO This can also be a single Generator.
+    #: The arguments to pass to the resulting callable. These may be a mix of
+    #: positional arguments, keyword arguments, or "starred" arguments.
+    args: Sequence[Arg] = ()
 
-    #: Sequence of open parenthesis for precedence dictation.
     lpar: Sequence[LeftParen] = ()
-
-    #: Sequence of close parenthesis for precedence dictation.
+    #: Sequence of parenthesis for precedence dictation. These are not the parenthesis
+    #: before and after the list of ``args``, but rather arguments around the entire
+    #: call expression, such as ``(( do_math(1, 2) ))``.
     rpar: Sequence[RightParen] = ()
 
+    #: Whitespace after the ``func`` name, but before the opening parenthesis.
     whitespace_after_func: BaseParenthesizableWhitespace = SimpleWhitespace("")
+    #: Whitespace after the opening parenthesis but before the first argument (if there
+    #: are any). Whitespace after the last argument but before the closing parenthesis
+    #: is owned by the last :class:`Arg` if it exists.
     whitespace_before_args: BaseParenthesizableWhitespace = SimpleWhitespace("")
 
     def _safe_to_use_with_word_operator(self, position: ExpressionPosition) -> bool:
@@ -1864,15 +1994,21 @@ class Call(_BaseExpressionWithArgs):
 @add_slots
 @dataclass(frozen=True)
 class Await(BaseExpression):
-    #: The actual expression we need to await on.
+    """
+    An await expression. Await expressions are only valid inside the body of an
+    asynchronous :class:`FunctionDef` or (as of Python 3.7) inside of an asynchronous
+    :class:`GeneratorExp` nodes.
+    """
+
+    #: The actual expression we need to wait for.
     expression: BaseExpression
 
-    #: Sequence of open parenthesis for precedence dictation.
     lpar: Sequence[LeftParen] = ()
-
-    #: Sequence of close parenthesis for precedence dictation.
+    #: Sequence of parenthesis for precedence dictation.
     rpar: Sequence[RightParen] = ()
 
+    #: Whitespace that appears after the ``async`` keyword, but before the inner
+    #: ``expression``.
     whitespace_after_await: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
 
     def _validate(self) -> None:
@@ -1903,27 +2039,34 @@ class Await(BaseExpression):
 @dataclass(frozen=True)
 class IfExp(BaseExpression):
     """
-    An if expression similar to "body if test else orelse".
+    An if expression of the form ``body if test else orelse``.
+
+    If statements are provided by :class:`If` and :class:`Else` nodes.
     """
 
     #: The test to perform.
     test: BaseExpression
 
-    #: The expression to evaluate if the test is true.
+    #: The expression to evaluate when the test is true.
     body: BaseExpression
 
-    #: The expression to evaluate if the test is false.
+    #: The expression to evaluate when the test is false.
     orelse: BaseExpression
 
-    #: Sequence of open parenthesis for precedence dictation.
     lpar: Sequence[LeftParen] = ()
-
-    #: Sequence of close parenthesis for precedence dictation.
+    #: Sequence of parenthesis for precedence dictation.
     rpar: Sequence[RightParen] = ()
 
+    #: Whitespace after the ``body`` expression, but before the ``if`` keyword.
     whitespace_before_if: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+
+    #: Whitespace after the ``if`` keyword, but before the ``test`` clause.
     whitespace_after_if: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+
+    #: Whitespace after the ``test`` expression, but before the ``else`` keyword.
     whitespace_before_else: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+
+    #: Whitespace after the ``else`` keyword, but before the ``orelse`` expression.
     whitespace_after_else: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
 
     def _validate(self) -> None:
@@ -1997,15 +2140,18 @@ class IfExp(BaseExpression):
 @dataclass(frozen=True)
 class From(CSTNode):
     """
-    A 'from x' stanza in a Yield or Raise.
+    A ``from x`` stanza in a :class:`Yield` or :class:`Raise`.
     """
 
-    #: Expression that we are yielding/raising from.
+    #: The expression that we are yielding/raising from.
     item: BaseExpression
 
+    #: The whitespace at the very start of this node.
     whitespace_before_from: Union[
         BaseParenthesizableWhitespace, MaybeSentinel
     ] = MaybeSentinel.DEFAULT
+
+    #: The whitespace after the ``from`` keyword, but before the ``item``.
     whitespace_after_from: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
 
     def _validate(self) -> None:
@@ -2046,18 +2192,22 @@ class From(CSTNode):
 @dataclass(frozen=True)
 class Yield(BaseExpression):
     """
-    A yield expression similar to "yield x" or "yield from fun()"
+    A yield expression similar to ``yield x`` or ``yield from fun()``.
+
+    To learn more about the ways that yield can be used in generators, refer to
+    `Python's language reference
+    <https://docs.python.org/3/reference/expressions.html#yieldexpr>`_.
     """
 
-    #: The test to perform.
+    #: The value yielded from the generator, in the case of a :class:`From` clause, a
+    #: sub-generator to iterate over.
     value: Optional[Union[BaseExpression, From]] = None
 
-    #: Sequence of open parenthesis for precedence dictation.
     lpar: Sequence[LeftParen] = ()
-
-    #: Sequence of close parenthesis for precedence dictation.
+    #: Sequence of parenthesis for precedence dictation.
     rpar: Sequence[RightParen] = ()
 
+    #: Whitespace after the ``yield`` keyword, but before the ``value``.
     whitespace_after_yield: Union[
         BaseParenthesizableWhitespace, MaybeSentinel
     ] = MaybeSentinel.DEFAULT
@@ -2355,10 +2505,8 @@ class StarredDictElement(BaseDictElement):
 class Tuple(BaseAssignTargetExpression, BaseDelTargetExpression):
     elements: Sequence[BaseElement]
 
-    #: Sequence of open parenthesis for precedence dictation.
     lpar: Sequence[LeftParen] = (LeftParen(),)
-
-    #: Sequence of close parenthesis for precedence dictation.
+    #: Sequence of parenthesis for precedence dictation.
     rpar: Sequence[RightParen] = (RightParen(),)
 
     def _safe_to_use_with_word_operator(self, position: ExpressionPosition) -> bool:
@@ -2432,10 +2580,8 @@ class BaseList(BaseExpression, ABC):
     #: Close bracket surrounding the list.
     rbracket: RightSquareBracket = RightSquareBracket()
 
-    #: Sequence of open parenthesis for precedence dictation.
     lpar: Sequence[LeftParen] = ()
-
-    #: Sequence of close parenthesis for precedence dictation.
+    #: Sequence of parenthesis for precedence dictation.
     rpar: Sequence[RightParen] = ()
 
     def _safe_to_use_with_word_operator(self, position: ExpressionPosition) -> bool:
@@ -2492,10 +2638,8 @@ class _BaseSetOrDict(BaseExpression, ABC):
     #: Close brace surrounding the list.
     rbrace: RightCurlyBrace = RightCurlyBrace()
 
-    #: Sequence of open parenthesis for precedence dictation.
     lpar: Sequence[LeftParen] = ()
-
-    #: Sequence of close parenthesis for precedence dictation.
+    #: Sequence of parenthesis for precedence dictation.
     rpar: Sequence[RightParen] = ()
 
     def _safe_to_use_with_word_operator(self, position: ExpressionPosition) -> bool:
