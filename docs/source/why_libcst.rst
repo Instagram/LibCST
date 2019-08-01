@@ -11,9 +11,7 @@ Why LibCST?
 Abstract Syntax Trees (AST)
 ===========================
 
-Let's look at Python's AST for the following code snippet:
-
-.. code-block:: python
+Let's look at Python's AST for the following code snippet::
 
     fn(1, 2)  # calls fn
 
@@ -73,7 +71,7 @@ This syntax tree does a great job of preserving the semantics of the original co
 However, given only the AST, it wouldn't be possible to reprint the original source code. `Like a JPEG <https://www.youtube.com/watch?v=j5nZhf8SjXw>`_, the Abstract Syntax Tree is lossy.
 
 - The comment we left at the line is gone.
-- There's a newline at the end of the file, but the AST doesn't tell us that. It also doesn't tell us if it's `\\n`, `\\r`, or `\\r\\n`.
+- There's a newline at the end of the file, but the AST doesn't tell us that. It also doesn't tell us if it's ``\n``, ``\r``, or ``\r\n``.
 - We've lost some information about the whitespace between the first and second argument.
 
 Abstract Syntax Trees are good for tools like compilers and type checkers where the semantics of code is important, but the exact syntax isn't.
@@ -82,9 +80,7 @@ Abstract Syntax Trees are good for tools like compilers and type checkers where 
 Concrete Syntax Trees (CST)
 ===========================
 
-A popular CST library for Python is `lib2to3 <https://github.com/python/cpython/tree/master/Lib/lib2to3>`_, which powers tools like `2to3 <https://docs.python.org/3/library/2to3.html>`_ and `Black <https://github.com/ambv/black>`_. Let's look at the syntax tree it generates for the same piece of code:
-
-.. code-block:: python
+A popular CST library for Python is `lib2to3 <https://github.com/python/cpython/tree/master/Lib/lib2to3>`_, which powers tools like `2to3 <https://docs.python.org/3/library/2to3.html>`_ and `Black <https://github.com/ambv/black>`_. Let's look at the syntax tree it generates for the same piece of code::
 
     fn(1, 2)  # calls fn
 
