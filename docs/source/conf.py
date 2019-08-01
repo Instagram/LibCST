@@ -213,4 +213,4 @@ def strip_class_signature_docstring(app, what, name, obj, options, lines):
 def setup(app):
     app.connect('autodoc-process-signature', strip_class_signature)
     app.connect('autodoc-process-docstring', strip_class_signature_docstring)
-    app.add_stylesheet('custom.css')
+    app.add_css_file('custom.css')
