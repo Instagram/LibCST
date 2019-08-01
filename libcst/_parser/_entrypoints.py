@@ -55,6 +55,17 @@ def parse_module(
     source: Union[str, bytes],  # the only entrypoint that accepts bytes
     config: PartialParserConfig = _DEFAULT_PARTIAL_PARSER_CONFIG,
 ) -> Module:
+    """
+    Accepts an entire python module, including all leading and trailing whitespace.
+
+    If source is ``bytes``, the encoding will be inferred and preserved. If
+    the source is a ``string``, we will default to assuming UTF-8 if the module
+    is rendered back out as bytes. It is recommended that when calling
+    :func:`~libcst.parse_module` with a string you access the serialized code
+    using :class:`~libcst.Module`'s code attribute, and when calling it with
+    bytes you access the serialized code using :class:`~libcst.Module`'s bytes
+    attribute.
+    """
     result = _parse("file_input", source, config, detect_trailing_newline=True)
     assert isinstance(result, Module)
     return result
@@ -69,7 +80,7 @@ def parse_statement(
 
     Leading comments and trailing comments (on the same line) are accepted, but
     whitespace (or anything else) after the statement's trailing newline is not valid
-    (there's nowhere to store it).
+    (there's nowhere to store it on the statement node).
     """
     # use detect_trailing_newline to insert a newline
     result = _parse("stmt_input", source, config, detect_trailing_newline=True)
@@ -80,6 +91,10 @@ def parse_statement(
 def parse_expression(
     source: str, config: PartialParserConfig = _DEFAULT_PARTIAL_PARSER_CONFIG
 ) -> BaseExpression:
+    """
+    Accepts an expression on a single line. Leading and trailing whitespace is not
+    valid (there's nowhere to store it on the expression node).
+    """
     result = _parse("expression_input", source, config, detect_trailing_newline=False)
     assert isinstance(result, BaseExpression)
     return result
