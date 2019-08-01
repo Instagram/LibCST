@@ -2618,40 +2618,32 @@ class CompFor(CSTNode):
     Nested loops in comprehensions are difficult to get right, but they can be thought
     of as a flat representation of nested clauses.
 
-    ```
-    elt for a in b for c in d if e
-    ```
+    ``elt for a in b for c in d if e`` can be thought of as::
 
-    can be thought of as
+        for a in b:
+            for c in d:
+                if e:
+                    yield elt
 
-    ```
-    for a in b:
-        for c in d:
-            if e:
-                yield elt
-    ```
+    And that would form the following CST::
 
-    And that would form the following CST:
-
-    ```
-    ListComp(
-        elt=Name("elt"),
-        for_in=CompFor(
-            target=Name("a"),
-            iter=Name("b"),
-            ifs=[],
-            inner_comp_for=CompFor(
-                target=Name("c"),
-                iter=Name("d"),
-                ifs=[
-                    CompIf(
-                        test=Name("e"),
-                    ),
-                ],
+        ListComp(
+            elt=Name("elt"),
+            for_in=CompFor(
+                target=Name("a"),
+                iter=Name("b"),
+                ifs=[],
+                inner_comp_for=CompFor(
+                    target=Name("c"),
+                    iter=Name("d"),
+                    ifs=[
+                        CompIf(
+                            test=Name("e"),
+                        ),
+                    ],
+                ),
             ),
-        ),
-    )
-    ```
+        )
     """
 
     target: BaseAssignTargetExpression
