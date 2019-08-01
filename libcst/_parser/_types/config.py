@@ -8,9 +8,9 @@
 import abc
 import codecs
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, fields
 from enum import Enum
-from typing import Pattern, Sequence, Union
+from typing import List, Pattern, Sequence, Union
 
 from parso.utils import PythonVersionInfo, parse_version_string
 
@@ -56,7 +56,11 @@ class AutoConfig(Enum):
 
     token: int = 0
 
+    def __repr__(self) -> str:
+        return str(self)
 
+
+@add_slots
 @dataclass(frozen=True)
 class PartialParserConfig:
     """
@@ -117,3 +121,17 @@ class PartialParserConfig:
         indent = self.default_indent
         if not isinstance(indent, AutoConfig) and _INDENT_RE.fullmatch(indent) is None:
             raise ValueError(f"Got an invalid value for default_indent: {repr(indent)}")
+
+    def __repr__(self) -> str:
+        init_keys: List[str] = []
+
+        for f in fields(self):
+            # We don't display the parsed_python_version attribute because it contains
+            # the same value as python_version, only parsed.
+            if f.name == "parsed_python_version":
+                continue
+            value = getattr(self, f.name)
+            if not isinstance(value, AutoConfig):
+                init_keys.append(f"{f.name}={value!r}")
+
+        return f"{self.__class__.__name__}({', '.join(init_keys)})"

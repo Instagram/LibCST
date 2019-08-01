@@ -39,3 +39,4 @@ BinaryOperation(
 .. autofunction:: libcst.parse_module
 .. autofunction:: libcst.parse_expression
 .. autofunction:: libcst.parse_statement
+.. autoclass:: libcst.PartialParserConfig
