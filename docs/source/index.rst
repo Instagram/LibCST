@@ -16,6 +16,7 @@ LibCST
    :caption: Contents:
 
    why_libcst
+   motivation
    parser
    nodes
    visitors
