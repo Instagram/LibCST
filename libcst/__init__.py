@@ -179,6 +179,7 @@ from libcst._nodes._whitespace import (
     TrailingWhitespace,
 )
 from libcst._parser._entrypoints import parse_expression, parse_module, parse_statement
+from libcst._parser._types.config import PartialParserConfig
 from libcst._removal_sentinel import RemovalSentinel
 from libcst._visitors import CSTNodeT, CSTTransformer, CSTVisitor, CSTVisitorT
 
@@ -195,6 +196,7 @@ __all__ = [
     "MaybeSentinel",
     "MetadataException",
     "ParserSyntaxError",
+    "PartialParserConfig",
     "RemovalSentinel",
     "ensure_type",
     "visit_batched",

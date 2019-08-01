@@ -87,7 +87,12 @@ class PartialParserConfig:
             self,
             "parsed_python_version",
             parse_version_string(
-                None  # parso will derive the version from `sys.version_info`
+                # TODO: We currently hardcode support for Py3.7 both in our grammar productions and in
+                # our tokenizer config. If we want to support multiple versions, we will need to switch
+                # on version-pinned grammar productions and also fix Parso's tokenizer to allow for
+                # 3.6 and below handling of ASYNC/AWAIT. This should be changed back to None once we
+                # support multiple versions, so that parso can derive the version from `sys.version_info`
+                "3.7"
                 if isinstance(raw_python_version, AutoConfig)
                 else raw_python_version
             ),
