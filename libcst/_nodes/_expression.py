@@ -2112,7 +2112,7 @@ class Yield(BaseExpression):
 
 class _BaseElementImpl(CSTNode, ABC):
     """
-    An internal base class for :class:`.Element` and :class:`DictElement`.
+    An internal base class for :class:`Element` and :class:`DictElement`.
     """
 
     # pyre-fixme[13]: Attribute `value` is never initialized.
@@ -2165,10 +2165,10 @@ class BaseDictElement(_BaseElementImpl, ABC):
 @dataclass(frozen=True)
 class Element(BaseElement):
     """
-    A simple value in a literal :class:`.List`, :class:`.Tuple`, or :class:`.Set`.
-    These a literal collection may also contain a :class:`.StarredElement`.
+    A simple value in a literal :class:`List`, :class:`Tuple`, or :class:`Set`.
+    These a literal collection may also contain a :class:`StarredElement`.
 
-    If you're using a literal :class:`.Dict`, see :class:`.DictElement` instead.
+    If you're using a literal :class:`Dict`, see :class:`DictElement` instead.
     """
 
     value: BaseExpression
@@ -2198,11 +2198,11 @@ class Element(BaseElement):
 class DictElement(BaseDictElement):
     """
     A simple ``key: value`` pair that represents a single entry in a literal
-    :class:`.Dict`. :class:`.Dict` nodes may also contain a
-    :class:`.StarredDictElement`.
+    :class:`Dict`. :class:`Dict` nodes may also contain a
+    :class:`StarredDictElement`.
 
-    If you're using a literal :class:`.List`, :class:`.Tuple`, or :class:`.Set`,
-    see :class:`.Element` instead.
+    If you're using a literal :class:`List`, :class:`Tuple`, or :class:`Set`,
+    see :class:`Element` instead.
     """
 
     key: BaseExpression
@@ -2249,9 +2249,9 @@ class DictElement(BaseDictElement):
 class StarredElement(BaseElement, _BaseParenthesizedNode):
     """
     A starred ``*value`` element that expands to represent multiple values in a literal
-    :class:`.List`, :class:`.Tuple`, or :class:`.Set`.
+    :class:`List`, :class:`Tuple`, or :class:`Set`.
 
-    If you're using a literal :class:`.Dict`, see :class:`.StarredDictElement` instead.
+    If you're using a literal :class:`Dict`, see :class:`StarredDictElement` instead.
 
     If this node owns parenthesis, those parenthesis wrap the leading asterisk, but not
     the trailing comma. For example::
@@ -2310,12 +2310,12 @@ class StarredElement(BaseElement, _BaseParenthesizedNode):
 class StarredDictElement(BaseDictElement):
     """
     A starred ``**value`` element that expands to represent multiple values in a literal
-    :class:`.Dict`.
+    :class:`Dict`.
 
-    If you're using a literal :class:`.List`, :class:`.Tuple`, or :class:`.Set`,
-    see :class:`.StarredElement` instead.
+    If you're using a literal :class:`List`, :class:`Tuple`, or :class:`Set`,
+    see :class:`StarredElement` instead.
 
-    Unlike :class:`.StarredElement`, this node does not own left or right parenthesis,
+    Unlike :class:`StarredElement`, this node does not own left or right parenthesis,
     but the ``value`` field may still contain parenthesis. This is due to some
     asymmetry in Python's grammar.
     """
@@ -2479,7 +2479,7 @@ class List(BaseList, BaseAssignTargetExpression, BaseDelTargetExpression):
 
 class _BaseSetOrDict(BaseExpression, ABC):
     """
-    An abstract base class for :class:`.BaseSet` and :class:`.BaseDict`.
+    An abstract base class for :class:`BaseSet` and :class:`BaseDict`.
 
     Literal sets and dicts are syntactically similar (hence this shared base class), but
     are semantically different. This base class is an implementation detail and
@@ -2511,7 +2511,7 @@ class _BaseSetOrDict(BaseExpression, ABC):
 
 class BaseSet(_BaseSetOrDict, ABC):
     """
-    An abstract base class for :class:`.Set` and :class:`.SetComp`.
+    An abstract base class for :class:`Set` and :class:`SetComp`.
     """
 
 
@@ -2555,7 +2555,7 @@ class Set(BaseSet):
 
 class BaseDict(_BaseSetOrDict, ABC):
     """
-    An abstract base class for :class:`.Dict` and :class:`.DictComp`.
+    An abstract base class for :class:`Dict` and :class:`DictComp`.
     """
 
 
@@ -2563,11 +2563,11 @@ class BaseDict(_BaseSetOrDict, ABC):
 @dataclass(frozen=True)
 class Dict(BaseDict):
     """
-    A dictionary. Key-value pairs are stored in ``elements`` using :class:`.DictElement`
+    A dictionary. Key-value pairs are stored in ``elements`` using :class:`DictElement`
     nodes.
 
     It's possible to expand one dictionary into another, as in ``{k: v, **expanded}``.
-    Expanded elements are stored as :class:`.StarredDictElement` nodes.
+    Expanded elements are stored as :class:`StarredDictElement` nodes.
 
     ::
 
@@ -2799,7 +2799,7 @@ class BaseSimpleComp(BaseComp, ABC):
     elt: BaseAssignTargetExpression
 
     #: The ``for ... in ... if ...`` clause that lexically comes after ``elt``. This may
-    #: be a nested structure for nested comprehensions. See :class:`.CompFor` for
+    #: be a nested structure for nested comprehensions. See :class:`CompFor` for
     #: details.
     # pyre-fixme[13]: Attribute `for_in` is never initialized.
     for_in: CompFor
@@ -2920,7 +2920,7 @@ class DictComp(BaseDict, BaseComp):
 
     #: The ``for ... in ... if ...`` clause that lexically comes after ``key`` and
     #: ``value``. This may be a nested structure for nested comprehensions. See
-    #: :class:`.CompFor` for details.
+    #: :class:`CompFor` for details.
     for_in: CompFor
 
     lbrace: LeftCurlyBrace = LeftCurlyBrace()

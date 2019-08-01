@@ -2,12 +2,13 @@ Parsing
 =======
 
 The parser functions accept source code and an optional configuration object,
-and will generate :class:`libcst.CSTNode` objects.
+and will generate :class:`~libcst.CSTNode` objects.
 
-:func:`.parse_module` is the most useful function here, since it accepts the
-entire contents of a file and returns a new tree, but :func:`.parse_expression`
-and :func:`.parse_statement` are useful when inserting new nodes into the tree,
-because they're easier to use than the equivalent node constructors.
+:func:`~libcst.parse_module` is the most useful function here, since it accepts
+the entire contents of a file and returns a new tree, but
+:func:`~libcst.parse_expression` and :func:`~libcst.parse_statement` are useful
+when inserting new nodes into the tree, because they're easier to use than the
+equivalent node constructors.
 
 >>> import libcst as cst
 >>> cst.parse_expression("1 + 2")
