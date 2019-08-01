@@ -20,11 +20,9 @@ class _BaseOneTokenOp(CSTNode, ABC):
     Any node that has a static value and needs to own whitespace on both sides.
     """
 
-    #: Any space that appears directly before this operator.
     # pyre-fixme[13]: Uninitialized attribute
     whitespace_before: BaseParenthesizableWhitespace
 
-    #: Any space that appears directly after this operator.
     # pyre-fixme[13]: Uninitialized attribute
     whitespace_after: BaseParenthesizableWhitespace
 
@@ -55,15 +53,12 @@ class _BaseTwoTokenOp(CSTNode, ABC):
     in beteween them.
     """
 
-    #: Any space that appears directly before this operator.
     # pyre-fixme[13]: Uninitialized attribute
     whitespace_before: BaseParenthesizableWhitespace
 
-    #: Any space that appears directly between the two tokens.
     # pyre-fixme[13]: Uninitialized attribute
     whitespace_between: BaseParenthesizableWhitespace
 
-    #: Any space that appears directly after this operator.
     # pyre-fixme[13]: Uninitialized attribute
     whitespace_after: BaseParenthesizableWhitespace
 

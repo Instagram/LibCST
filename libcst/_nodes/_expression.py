@@ -584,7 +584,6 @@ class FormattedStringExpression(BaseFormattedStringContent):
     #: An optional format specifier
     format_spec: Optional[Sequence[BaseFormattedStringContent]] = None
 
-    # Whitespace
     whitespace_before_expression: BaseParenthesizableWhitespace = SimpleWhitespace("")
     whitespace_after_expression: BaseParenthesizableWhitespace = SimpleWhitespace("")
 
@@ -1169,7 +1168,6 @@ class Subscript(BaseAssignTargetExpression, BaseDelTargetExpression):
     #: Sequence of close parenthesis for precedence dictation.
     rpar: Sequence[RightParen] = ()
 
-    #: Whitespace.
     whitespace_after_value: BaseParenthesizableWhitespace = SimpleWhitespace("")
 
     def _validate(self) -> None:
@@ -1227,7 +1225,6 @@ class Annotation(CSTNode):
         str, AnnotationIndicatorSentinel
     ] = AnnotationIndicatorSentinel.DEFAULT
 
-    # Whitespace
     whitespace_before_indicator: Union[
         BaseParenthesizableWhitespace, MaybeSentinel
     ] = MaybeSentinel.DEFAULT
@@ -1326,7 +1323,6 @@ class Param(CSTNode):
     #: Optional star appearing before name for star_arg and star_kwarg
     star: Union[str, MaybeSentinel] = MaybeSentinel.DEFAULT
 
-    # Whitespace
     whitespace_after_star: BaseParenthesizableWhitespace = SimpleWhitespace("")
     whitespace_after_param: BaseParenthesizableWhitespace = SimpleWhitespace("")
 
@@ -1571,7 +1567,6 @@ class Lambda(BaseExpression):
     #: Sequence of close parenthesis for precedence dictation.
     rpar: Sequence[RightParen] = ()
 
-    # Whitespace
     whitespace_after_lambda: Union[
         BaseParenthesizableWhitespace, MaybeSentinel
     ] = MaybeSentinel.DEFAULT
@@ -1642,8 +1637,8 @@ class Lambda(BaseExpression):
 @dataclass(frozen=True)
 class Arg(CSTNode):
     """
-    A single argument to a Call. It may be a * or a ** expansion, or it may be in
-    the form of "keyword=expression" for named arguments.
+    A single argument to a Call. It may be a ``*`` or a ``**`` expansion, or it may be in
+    the form of ``keyword=expression`` for named arguments.
     """
 
     #: The argument expression itself.
@@ -1661,7 +1656,6 @@ class Arg(CSTNode):
     #: Optional star appearing before name for * and ** expansion.
     star: Literal["", "*", "**"] = ""
 
-    # Whitespace
     whitespace_after_star: BaseParenthesizableWhitespace = SimpleWhitespace("")
     whitespace_after_arg: BaseParenthesizableWhitespace = SimpleWhitespace("")
 
@@ -1828,7 +1822,6 @@ class Call(_BaseExpressionWithArgs):
     #: Sequence of close parenthesis for precedence dictation.
     rpar: Sequence[RightParen] = ()
 
-    # Whitespace nodes
     whitespace_after_func: BaseParenthesizableWhitespace = SimpleWhitespace("")
     whitespace_before_args: BaseParenthesizableWhitespace = SimpleWhitespace("")
 
@@ -1880,7 +1873,6 @@ class Await(BaseExpression):
     #: Sequence of close parenthesis for precedence dictation.
     rpar: Sequence[RightParen] = ()
 
-    #: Whitespace nodes
     whitespace_after_await: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
 
     def _validate(self) -> None:
@@ -1929,7 +1921,6 @@ class IfExp(BaseExpression):
     #: Sequence of close parenthesis for precedence dictation.
     rpar: Sequence[RightParen] = ()
 
-    # Whitespace nodes
     whitespace_before_if: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
     whitespace_after_if: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
     whitespace_before_else: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
@@ -2067,7 +2058,6 @@ class Yield(BaseExpression):
     #: Sequence of close parenthesis for precedence dictation.
     rpar: Sequence[RightParen] = ()
 
-    # Whitespace nodes
     whitespace_after_yield: Union[
         BaseParenthesizableWhitespace, MaybeSentinel
     ] = MaybeSentinel.DEFAULT
