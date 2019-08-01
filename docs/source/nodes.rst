@@ -10,7 +10,7 @@ syntax tree <https://greentreesnakes.readthedocs.io/en/latest/nodes.html>`_.
 CSTNode
 -------
 
-The base node type which all other nodes derrive from.
+The base node type which all other nodes derive from.
 
 .. autoclass:: libcst.CSTNode
 
@@ -26,68 +26,134 @@ Expressions
 
 Nodes that represent various expressions.
 
-.. autoclass:: libcst.Annotation
-.. autoclass:: libcst.Arg
-.. autoclass:: libcst.Asynchronous
-.. autoclass:: libcst.Attribute
-.. autoclass:: libcst.Await
-.. autoclass:: libcst.BaseComp
-.. autoclass:: libcst.BaseDict
-.. autoclass:: libcst.BaseDictElement
-.. autoclass:: libcst.BaseElement
 .. autoclass:: libcst.BaseExpression
-.. autoclass:: libcst.BaseFormattedStringContent
-.. autoclass:: libcst.BaseList
-.. autoclass:: libcst.BaseNumber
-.. autoclass:: libcst.BaseSet
-.. autoclass:: libcst.BaseString
+
+Names and Object Attributes
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: libcst.Name
+.. autoclass:: libcst.Attribute
+
+Operations and Comparisons
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: libcst.UnaryOperation
 .. autoclass:: libcst.BinaryOperation
 .. autoclass:: libcst.BooleanOperation
-.. autoclass:: libcst.Call
 .. autoclass:: libcst.Comparison
 .. autoclass:: libcst.ComparisonTarget
+
+Control Flow
+^^^^^^^^^^^^
+
+.. autoclass:: libcst.Asynchronous
+.. autoclass:: libcst.Await
+.. autoclass:: libcst.Yield
+.. autoclass:: libcst.From
+.. autoclass:: libcst.IfExp
+
+Lambdas and Function Calls
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: libcst.Lambda
+.. autoclass:: libcst.Call
+.. autoclass:: libcst.Arg
+
+Literal Values
+^^^^^^^^^^^^^^
+
+.. autoclass:: libcst.Ellipses
+
+Numbers
+'''''''
+
+.. autoclass:: libcst.BaseNumber
+.. autoclass:: libcst.Integer
+.. autoclass:: libcst.Float
+.. autoclass:: libcst.Imaginary
+
+Strings
+'''''''
+
+.. autoclass:: libcst.BaseString
+.. autoclass:: libcst.SimpleString
+.. autoclass:: libcst.ConcatenatedString
+
+Formatted Strings (f-strings)
+'''''''''''''''''''''''''''''
+
+.. autoclass:: libcst.FormattedString
+.. autoclass:: libcst.BaseFormattedStringContent
+.. autoclass:: libcst.FormattedStringText
+.. autoclass:: libcst.FormattedStringExpression
+
+Collections
+^^^^^^^^^^^
+
+Simple Collections
+''''''''''''''''''
+
+.. autoclass:: libcst.Tuple
+
+.. autoclass:: libcst.BaseList
+.. autoclass:: libcst.List
+
+.. autoclass:: libcst.BaseSet
+.. autoclass:: libcst.Set
+
+Simple Collection Elements
+''''''''''''''''''''''''''
+
+.. autoclass:: libcst.BaseElement
+.. autoclass:: libcst.Element
+.. autoclass:: libcst.StarredElement
+
+Dictionaries
+''''''''''''
+
+.. autoclass:: libcst.BaseDict
+.. autoclass:: libcst.Dict
+
+Dictionary Elements
+'''''''''''''''''''
+
+.. autoclass:: libcst.BaseDictElement
+.. autoclass:: libcst.DictElement
+.. autoclass:: libcst.StarredDictElement
+
+Comprehensions
+^^^^^^^^^^^^^^
+
+.. autoclass:: libcst.BaseComp
+
+.. autoclass:: libcst.GeneratorExp
+.. autoclass:: libcst.ListComp
+.. autoclass:: libcst.SetComp
+.. autoclass:: libcst.DictComp
+
 .. autoclass:: libcst.CompFor
 .. autoclass:: libcst.CompIf
-.. autoclass:: libcst.ConcatenatedString
-.. autoclass:: libcst.Dict
-.. autoclass:: libcst.DictComp
-.. autoclass:: libcst.DictElement
-.. autoclass:: libcst.Element
-.. autoclass:: libcst.Ellipses
-.. autoclass:: libcst.ExtSlice
-.. autoclass:: libcst.Float
-.. autoclass:: libcst.FormattedString
-.. autoclass:: libcst.FormattedStringExpression
-.. autoclass:: libcst.FormattedStringText
-.. autoclass:: libcst.From
-.. autoclass:: libcst.GeneratorExp
-.. autoclass:: libcst.IfExp
-.. autoclass:: libcst.Imaginary
-.. autoclass:: libcst.Index
-.. autoclass:: libcst.Integer
-.. autoclass:: libcst.Lambda
-.. autoclass:: libcst.LeftCurlyBrace
-.. autoclass:: libcst.LeftParen
-.. autoclass:: libcst.LeftSquareBracket
-.. autoclass:: libcst.List
-.. autoclass:: libcst.ListComp
-.. autoclass:: libcst.Name
-.. autoclass:: libcst.Param
-.. autoclass:: libcst.Parameters
-.. autoclass:: libcst.ParamStar
-.. autoclass:: libcst.RightCurlyBrace
-.. autoclass:: libcst.RightParen
-.. autoclass:: libcst.RightSquareBracket
-.. autoclass:: libcst.Set
-.. autoclass:: libcst.SetComp
-.. autoclass:: libcst.SimpleString
-.. autoclass:: libcst.Slice
-.. autoclass:: libcst.StarredDictElement
-.. autoclass:: libcst.StarredElement
+
+Subscripts and Slices
+^^^^^^^^^^^^^^^^^^^^^
+
 .. autoclass:: libcst.Subscript
-.. autoclass:: libcst.Tuple
-.. autoclass:: libcst.UnaryOperation
-.. autoclass:: libcst.Yield
+.. autoclass:: libcst.Index
+.. autoclass:: libcst.Slice
+.. autoclass:: libcst.ExtSlice
+
+
+Parenthesis, Brackets, and Braces
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: libcst.LeftParen
+.. autoclass:: libcst.RightParen
+
+.. autoclass:: libcst.LeftSquareBracket
+.. autoclass:: libcst.RightSquareBracket
+
+.. autoclass:: libcst.LeftCurlyBrace
+.. autoclass:: libcst.RightCurlyBrace
 
 Statements
 ----------
@@ -136,16 +202,29 @@ Helper Nodes
 
 Nodes that are used by various statements to represent some syntax, but
 are not statements on their own and cannot be used outside of the statements
-they blong with.
+they belong with.
+
+.. Annotation is in the expression module for import-order reasons, it's
+   most-often used a a helper for statements (e.g. functions)
+.. autoclass:: libcst.Annotation
 
 .. autoclass:: libcst.AsName
 .. autoclass:: libcst.AssignTarget
+.. autoclass:: libcst.BaseAssignTargetExpression
+.. autoclass:: libcst.BaseDelTargetExpression
 .. autoclass:: libcst.Decorator
 .. autoclass:: libcst.Else
 .. autoclass:: libcst.ExceptHandler
 .. autoclass:: libcst.Finally
 .. autoclass:: libcst.ImportAlias
 .. autoclass:: libcst.NameItem
+
+.. Params are in the expression module for import-order reasons, but it makes
+   sense to group these closer to FunctionDef than with Lambda.
+.. autoclass:: libcst.Parameters
+.. autoclass:: libcst.Param
+.. autoclass:: libcst.ParamStar
+
 .. autoclass:: libcst.WithItem
 
 Statement Blocks
