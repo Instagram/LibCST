@@ -139,32 +139,36 @@ class ModuleTest(CSTNodeTest):
     )
     def test_module_position(self, *, code: str, expected: CodeRange) -> None:
         module = parse_module(code)
-        module.code
+        provider = SyntacticPositionProvider()
+        module.code_for_node(module, provider)
 
+        self.assertEqual(provider._computed[module], expected)
+
+        # TODO: remove this
         self.assertEqual(module._metadata[SyntacticPositionProvider], expected)
 
     def cmp_position(
-        self, node: cst.CSTNode, start: Tuple[int, int], end: Tuple[int, int]
+        self, actual: CodeRange, start: Tuple[int, int], end: Tuple[int, int]
     ) -> None:
-        self.assertEqual(
-            node._metadata[SyntacticPositionProvider], CodeRange.create(start, end)
-        )
+        self.assertEqual(actual, CodeRange.create(start, end))
 
     def test_function_position(self) -> None:
         module = parse_module("def foo():\n    pass")
-        module.code
+        provider = SyntacticPositionProvider()
+        module.code_for_node(module, provider)
 
         fn = cast(cst.FunctionDef, module.body[0])
         stmt = cast(cst.SimpleStatementLine, fn.body.body[0])
         pass_stmt = cast(cst.Pass, stmt.body[0])
-        self.cmp_position(stmt, (2, 4), (2, 8))
-        self.cmp_position(pass_stmt, (2, 4), (2, 8))
+        self.cmp_position(provider._computed[stmt], (2, 4), (2, 8))
+        self.cmp_position(provider._computed[pass_stmt], (2, 4), (2, 8))
 
     def test_nested_indent_position(self) -> None:
         module = parse_module(
             "if True:\n    if False:\n        x = 1\nelse:\n    return"
         )
-        module.code
+        provider = SyntacticPositionProvider()
+        module.code_for_node(module, provider)
 
         outer_if = cast(cst.If, module.body[0])
         inner_if = cast(cst.If, outer_if.body.body[0])
@@ -173,20 +177,21 @@ class ModuleTest(CSTNodeTest):
         outer_else = cast(cst.Else, outer_if.orelse)
         return_stmt = cast(cst.SimpleStatementLine, outer_else.body.body[0]).body[0]
 
-        self.cmp_position(outer_if, (1, 0), (5, 10))
-        self.cmp_position(inner_if, (2, 4), (3, 13))
-        self.cmp_position(assign, (3, 8), (3, 13))
-        self.cmp_position(outer_else, (4, 0), (5, 10))
-        self.cmp_position(return_stmt, (5, 4), (5, 10))
+        self.cmp_position(provider._computed[outer_if], (1, 0), (5, 10))
+        self.cmp_position(provider._computed[inner_if], (2, 4), (3, 13))
+        self.cmp_position(provider._computed[assign], (3, 8), (3, 13))
+        self.cmp_position(provider._computed[outer_else], (4, 0), (5, 10))
+        self.cmp_position(provider._computed[return_stmt], (5, 4), (5, 10))
 
     def test_multiline_string_position(self) -> None:
         module = parse_module('"abc"\\\n"def"')
-        module.code
+        provider = SyntacticPositionProvider()
+        module.code_for_node(module, provider)
 
         stmt = cast(cst.SimpleStatementLine, module.body[0])
         expr = cast(cst.Expr, stmt.body[0])
         string = expr.value
 
-        self.cmp_position(stmt, (1, 0), (2, 5))
-        self.cmp_position(expr, (1, 0), (2, 5))
-        self.cmp_position(string, (1, 0), (2, 5))
+        self.cmp_position(provider._computed[stmt], (1, 0), (2, 5))
+        self.cmp_position(provider._computed[expr], (1, 0), (2, 5))
+        self.cmp_position(provider._computed[string], (1, 0), (2, 5))

@@ -27,11 +27,11 @@ class BasicPositionProvider(BaseMetadataProvider[CodeRange]):
         Override default generate behavior as position information is
         calculated through codegen instead of a standard visitor.
         """
-        module.code_for_node(module, provider=self.__class__)
+        module.code_for_node(module, provider=self)
         return module
 
     def _gen_impl(self, module: _ModuleT) -> None:
-        module.code_for_node(module, provider=self.__class__)
+        module.code_for_node(module, provider=self)
 
 
 class SyntacticPositionProvider(BasicPositionProvider):
