@@ -29,7 +29,7 @@ from libcst._nodes._expression import (
     DictComp,
     DictElement,
     Element,
-    Ellipses,
+    Ellipsis,
     ExtSlice,
     Float,
     FormattedString,
@@ -942,7 +942,7 @@ def convert_atom_ellipses(
     config: ParserConfig, children: typing.Sequence[typing.Any]
 ) -> typing.Any:
     (token,) = children
-    return WithLeadingWhitespace(Ellipses(), token.whitespace_before)
+    return WithLeadingWhitespace(Ellipsis(), token.whitespace_before)
 
 
 @with_production("atom_string", "(STRING | fstring) [atom_string]")

@@ -84,7 +84,7 @@ class SimpleStatementTest(CSTNodeTest):
                 "parser": parse_statement,
             },
             {
-                "node": cst.SimpleStatementLine((cst.Expr(cst.Ellipses()),)),
+                "node": cst.SimpleStatementLine((cst.Expr(cst.Ellipsis()),)),
                 "code": "...\n",
                 "parser": parse_statement,
             },
@@ -189,7 +189,7 @@ class SimpleStatementTest(CSTNodeTest):
                 "node": cst.SimpleStatementLine(
                     (
                         cst.Expr(
-                            cst.Ellipses(
+                            cst.Ellipsis(
                                 lpar=(cst.LeftParen(),), rpar=(cst.RightParen(),)
                             )
                         ),
@@ -203,7 +203,7 @@ class SimpleStatementTest(CSTNodeTest):
                 "node": cst.SimpleStatementLine(
                     (
                         cst.Expr(
-                            cst.Ellipses(
+                            cst.Ellipsis(
                                 lpar=(
                                     cst.LeftParen(
                                         whitespace_after=cst.SimpleWhitespace(" ")
@@ -225,7 +225,7 @@ class SimpleStatementTest(CSTNodeTest):
                 "node": cst.SimpleStatementLine(
                     (
                         cst.Expr(
-                            cst.Ellipses(
+                            cst.Ellipsis(
                                 lpar=(
                                     cst.LeftParen(
                                         whitespace_after=cst.SimpleWhitespace(" ")
@@ -261,7 +261,7 @@ class SimpleStatementTest(CSTNodeTest):
                 "node": cst.SimpleStatementLine(
                     (
                         cst.Expr(
-                            cst.Ellipses(
+                            cst.Ellipsis(
                                 lpar=(
                                     cst.LeftParen(
                                         whitespace_after=cst.ParenthesizedWhitespace(

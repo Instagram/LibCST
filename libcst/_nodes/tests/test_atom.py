@@ -237,14 +237,14 @@ class AtomTest(CSTNodeTest):
             },
             # Simple elipses
             {
-                "node": cst.Ellipses(),
+                "node": cst.Ellipsis(),
                 "code": "...",
                 "parser": parse_expression,
                 "expected_position": None,
             },
             # Parenthesized elipses
             {
-                "node": cst.Ellipses(lpar=(cst.LeftParen(),), rpar=(cst.RightParen(),)),
+                "node": cst.Ellipsis(lpar=(cst.LeftParen(),), rpar=(cst.RightParen(),)),
                 "code": "(...)",
                 "parser": parse_expression,
                 "expected_position": CodeRange.create((1, 1), (1, 4)),
@@ -640,11 +640,11 @@ class AtomTest(CSTNodeTest):
                 "expected_re": "right paren without left paren",
             },
             {
-                "get_node": lambda: cst.Ellipses(lpar=(cst.LeftParen(),)),
+                "get_node": lambda: cst.Ellipsis(lpar=(cst.LeftParen(),)),
                 "expected_re": "left paren without right paren",
             },
             {
-                "get_node": lambda: cst.Ellipses(rpar=(cst.RightParen(),)),
+                "get_node": lambda: cst.Ellipsis(rpar=(cst.RightParen(),)),
                 "expected_re": "right paren without left paren",
             },
             {

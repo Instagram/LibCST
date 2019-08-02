@@ -72,7 +72,7 @@ Lambdas and Function Calls
 Literal Values
 ^^^^^^^^^^^^^^
 
-.. autoclass:: libcst.Ellipses
+.. autoclass:: libcst.Ellipsis
 
 Numbers
 '''''''

@@ -352,7 +352,7 @@ class Name(BaseAssignTargetExpression, BaseDelTargetExpression):
 
 @add_slots
 @dataclass(frozen=True)
-class Ellipses(BaseExpression):
+class Ellipsis(BaseExpression):
     """
     An ellipsis ``...``. When used as an expression, it evaluates to the
     `Ellipsis constant`_. Ellipsis are often used as placeholders in code or in
@@ -366,8 +366,8 @@ class Ellipses(BaseExpression):
     #: Sequence of parenthesis for precedence dictation.
     rpar: Sequence[RightParen] = ()
 
-    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Ellipses":
-        return Ellipses(
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Ellipsis":
+        return Ellipsis(
             lpar=visit_sequence("lpar", self.lpar, visitor),
             rpar=visit_sequence("rpar", self.rpar, visitor),
         )
@@ -1649,7 +1649,7 @@ class Lambda(BaseExpression):
 
         Lambda(
             params=Parameters([Param(Name("arg"))]),
-            body=Ellipses(),
+            body=Ellipsis(),
         )
 
     Represents the following code::
