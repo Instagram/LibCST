@@ -4,11 +4,12 @@
 # LICENSE file in the root directory of this source tree.
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Optional, Sequence, Type, TypeVar, Union, cast
+from typing import TYPE_CHECKING, Optional, Sequence, TypeVar, Union, cast
 
 from libcst._add_slots import add_slots
 from libcst._nodes._base import CSTNode
 from libcst._nodes._internal import (
+    BasicCodegenState,
     CodegenState,
     SyntacticCodegenState,
     visit_body_sequence,
@@ -25,11 +26,11 @@ if TYPE_CHECKING:
     from libcst.metadata.position_provider import (  # noqa: F401
         BasicPositionProvider,
         SyntacticPositionProvider,
+        PositionProvider,
     )
 
 
 _ModuleSelfT = TypeVar("_ModuleSelfT", bound="Module")
-_ProviderT = Union[Type["BasicPositionProvider"], Type["SyntacticPositionProvider"]]
 
 # type alias needed for scope overlap in type definition
 builtin_bytes = bytes
@@ -137,7 +138,7 @@ class Module(CSTNode):
         return self.code.encode(self.encoding)
 
     def code_for_node(
-        self, node: CSTNode, provider: Optional[_ProviderT] = None
+        self, node: CSTNode, provider: Optional["PositionProvider"] = None
     ) -> str:
         """
         Generates the code for the given node in the context of this module. This is a
@@ -151,13 +152,23 @@ class Module(CSTNode):
 
         from libcst.metadata.position_provider import SyntacticPositionProvider
 
-        if provider is None or provider is SyntacticPositionProvider:
+        if provider is None:
+            state = CodegenState(
+                default_indent=self.default_indent,
+                default_newline=self.default_newline,
+                provider=provider,
+            )
+        elif isinstance(provider, SyntacticPositionProvider):
             state = SyntacticCodegenState(
-                default_indent=self.default_indent, default_newline=self.default_newline
+                default_indent=self.default_indent,
+                default_newline=self.default_newline,
+                provider=provider,
             )
         else:
-            state = CodegenState(
-                default_indent=self.default_indent, default_newline=self.default_newline
+            state = BasicCodegenState(
+                default_indent=self.default_indent,
+                default_newline=self.default_newline,
+                provider=provider,
             )
 
         node._codegen(state)

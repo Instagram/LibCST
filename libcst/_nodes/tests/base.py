@@ -93,8 +93,14 @@ class CSTNodeTest(UnitTest):
         Verifies that the given node's `_codegen` method is correct.
         """
         module = cst.Module([])
-        self.assertEqual(module.code_for_node(node), expected)
-        if expected_position is not None:
+        provider = None if expected_position is None else SyntacticPositionProvider()
+
+        self.assertEqual(module.code_for_node(node, provider=provider), expected)
+
+        if provider is not None:
+            self.assertEqual(provider._computed[node], expected_position)
+
+            # TODO: remove this
             self.assertEqual(
                 node._metadata[SyntacticPositionProvider], expected_position
             )
