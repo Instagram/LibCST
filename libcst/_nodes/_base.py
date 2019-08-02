@@ -319,7 +319,7 @@ class CSTNode(ABC):
     def deep_clone(self: _CSTNodeSelfT) -> _CSTNodeSelfT:
         return cast(_CSTNodeSelfT, self._visit_impl(_NOOPVisitor()))
 
-    def deep_equals(self: _CSTNodeSelfT, other: _CSTNodeSelfT) -> bool:
+    def deep_equals(self, other: "CSTNode") -> bool:
         """
         Recursively inspects the entire tree under `self` and `other` to determine if
         the two trees are equal by value.
