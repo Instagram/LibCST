@@ -4,7 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Optional, Sequence, Type, TypeVar, Union
+from typing import TYPE_CHECKING, Optional, Sequence, Type, TypeVar, Union, cast
 
 from libcst._add_slots import add_slots
 from libcst._nodes._base import CSTNode
@@ -79,22 +79,28 @@ class Module(CSTNode):
             has_trailing_newline=self.has_trailing_newline,
         )
 
-    def visit(self: _ModuleSelfT, visitor: CSTVisitorT) -> _ModuleSelfT:
+    def visit(
+        self: _ModuleSelfT, visitor: CSTVisitorT, use_compatible: bool = True
+    ) -> _ModuleSelfT:
         """
         Returns the result of running a visitor over this module.
 
         :class:`Module` overrides the default visitor entry point to resolve metadata
         dependencies declared by 'visitor'.
         """
+        # TODO: remove compatibility hack
+        if use_compatible:
+            from libcst.metadata.wrapper import MetadataWrapper
 
-        from libcst.metadata._resolver import _MetadataRunner
+            wrapper = MetadataWrapper(self)
+            result = wrapper.visit(visitor)
+        else:
+            result = CSTNode.visit(self, visitor)
 
-        module = _MetadataRunner.resolve(self, visitor)
-        result = CSTNode._visit_impl(module, visitor)
         if isinstance(result, RemovalSentinel):
             return self.with_changes(body=(), header=(), footer=())
         else:  # is a Module
-            return result
+            return cast(_ModuleSelfT, result)
 
     def _codegen_impl(self, state: CodegenState) -> None:
         for h in self.header:

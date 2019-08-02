@@ -4,73 +4,57 @@
 # LICENSE file in the root directory of this source tree.
 
 # pyre-strict
-from typing import MutableSet, Type
+from typing import TYPE_CHECKING, Collection, MutableSet
 
 from libcst._exceptions import MetadataException
-from libcst._nodes._module import _ModuleSelfT as _ModuleT
-from libcst._visitors import CSTVisitorT
 from libcst.metadata.base_provider import (
-    BaseMetadataProvider,
     BatchableMetadataProvider,
-    _run_batchable,
+    ProviderT,
+    _gen_batchable,
 )
 
 
-ProviderT = Type[BaseMetadataProvider[object]]
+if TYPE_CHECKING:
+    from libcst.metadata.wrapper import MetadataWrapper  # noqa: F401
 
 
-class _MetadataRunner:
-    def __init__(self) -> None:
-        self.providers: MutableSet[ProviderT] = set()
-        self.satisfied: MutableSet[ProviderT] = set()
+def _gather_providers(
+    providers: Collection[ProviderT], gathered: MutableSet[ProviderT]
+) -> MutableSet[ProviderT]:
+    for P in providers:
+        if P not in gathered:
+            gathered.add(P)
+            _gather_providers(P.METADATA_DEPENDENCIES, gathered)
+    return gathered
 
-    def gather_providers(self, root: ProviderT) -> None:
-        if root not in self.providers:
-            self.providers.add(root)
-            for dep in root.METADATA_DEPENDENCIES:
-                self.gather_providers(dep)
 
-    # TODO: decouple this from visit_Module. require users to first
-    # resolve a module + MetadataInterface and then
-    @staticmethod
-    def resolve(module: _ModuleT, visitor: CSTVisitorT) -> _ModuleT:
-        """
-        Returns a copy of the module that contains all metadata dependencies
-        declared by the visitor.
-        """
+def _resolve_impl(wrapper: "MetadataWrapper", providers: Collection[ProviderT]) -> None:
+    """
+    Returns a copy of the module that contains all metadata dependencies
+    declared by the visitor.
+    """
+    providers = set(providers) - set(wrapper._metadata.keys())
+    remaining = _gather_providers(providers, set())
 
-        if len(visitor.INHERITED_METADATA_DEPENDENCIES) == 0:
-            return module
+    completed = set()
+    while len(remaining) > 0:
+        batchable = set()
 
-        # We need to deep clone to ensure that there are no duplicate nodes
-        # TODO: this is disabled to not break lint and will no longer
-        # be necessary when we refactor the metadata API
-        # module = module.deep_clone()
+        for P in remaining:
+            if set(P.METADATA_DEPENDENCIES).issubset(completed):
+                if issubclass(P, BatchableMetadataProvider):
+                    batchable.add(P)
+                else:
+                    wrapper._metadata[P] = P()._gen(wrapper)
+                    completed.add(P)
 
-        runner = _MetadataRunner()
-        for dep in visitor.INHERITED_METADATA_DEPENDENCIES:
-            runner.gather_providers(dep)
+        metadata_batch = _gen_batchable(wrapper, [p() for p in batchable])
+        wrapper._metadata.update(metadata_batch)
+        completed |= batchable
 
-        while len(runner.providers) > 0:
-            completed = set()
-            batchable = set()
+        if len(completed) == 0 and len(batchable) == 0:
+            # remaining must be non-empty at this point
+            names = ", ".join([P.__name__ for P in remaining])
+            raise MetadataException(f"Detected circular dependencies in {names}")
 
-            for P in runner.providers:
-                if set(P.METADATA_DEPENDENCIES).issubset(runner.satisfied):
-                    if issubclass(P, BatchableMetadataProvider):
-                        batchable.add(P)
-                    else:
-                        module = P()._run(module)
-                        completed.add(P)
-
-            module = _run_batchable(module, [p() for p in batchable])
-
-            runner.providers -= completed | batchable
-            runner.satisfied |= completed | batchable
-
-            if len(completed) == 0 and len(batchable) == 0:
-                # runner.providers must be non-empty at this point
-                names = ", ".join([P.__name__ for P in runner.providers])
-                raise MetadataException(f"Detected circular dependencies in {names}")
-
-        return module
+        remaining -= completed

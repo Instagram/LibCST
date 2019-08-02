@@ -4,9 +4,14 @@
 # LICENSE file in the root directory of this source tree.
 
 # pyre-strict
-from libcst import CodeRange
+from typing import Union
+
+from libcst._nodes._internal import CodeRange
 from libcst._nodes._module import _ModuleSelfT as _ModuleT
 from libcst.metadata.base_provider import BaseMetadataProvider
+
+
+PositionProvider = Union["BasicPositionProvider", "SyntacticPositionProvider"]
 
 
 class BasicPositionProvider(BaseMetadataProvider[CodeRange]):
@@ -16,6 +21,7 @@ class BasicPositionProvider(BaseMetadataProvider[CodeRange]):
     owned by that node.
     """
 
+    # TODO: remove this
     def _run(self, module: _ModuleT) -> _ModuleT:
         """
         Override default generate behavior as position information is
@@ -23,6 +29,9 @@ class BasicPositionProvider(BaseMetadataProvider[CodeRange]):
         """
         module.code_for_node(module, provider=self.__class__)
         return module
+
+    def _gen_impl(self, module: _ModuleT) -> None:
+        module.code_for_node(module, provider=self.__class__)
 
 
 class SyntacticPositionProvider(BasicPositionProvider):

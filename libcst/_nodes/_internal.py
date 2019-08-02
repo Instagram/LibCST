@@ -170,7 +170,7 @@ def visit_required(
     Given a node, visits the node using `visitor`. If removal is attempted by the
     visitor, an exception is raised.
     """
-    result = node._visit_impl(visitor)
+    result = node.visit(visitor)
     if isinstance(result, RemovalSentinel):
         raise TypeError(
             f"We got a RemovalSentinel while visiting a {type(node).__name__}. This "
@@ -188,7 +188,7 @@ def visit_optional(
     """
     if node is None:
         return None
-    result = node._visit_impl(visitor)
+    result = node.visit(visitor)
     return None if isinstance(result, RemovalSentinel) else result
 
 
@@ -201,7 +201,7 @@ def visit_sentinel(
     """
     if isinstance(node, MaybeSentinel):
         return MaybeSentinel.DEFAULT
-    result = node._visit_impl(visitor)
+    result = node.visit(visitor)
     return MaybeSentinel.DEFAULT if isinstance(result, RemovalSentinel) else result
 
 
@@ -213,7 +213,7 @@ def visit_iterable(
     children with any `RemovalSentinel` values removed.
     """
     for child in children:
-        new_child = child._visit_impl(visitor)
+        new_child = child.visit(visitor)
         if not isinstance(new_child, RemovalSentinel):
             yield new_child
 
@@ -237,7 +237,7 @@ def visit_body_iterable(
     """
 
     for child in children:
-        new_child = child._visit_impl(visitor)
+        new_child = child.visit(visitor)
 
         # Don't yield a child if we removed it.
         if isinstance(new_child, RemovalSentinel):

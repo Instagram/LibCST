@@ -17,7 +17,7 @@ from libcst.metadata.base_provider import (
 from libcst.testing.utils import UnitTest
 
 
-class MetadataRunnerTest(UnitTest):
+class MetadataProviderTest(UnitTest):
     def test_visitor_provider(self) -> None:
         """
         Tests that visitor providers are resolved correctly.
@@ -221,11 +221,11 @@ class MetadataRunnerTest(UnitTest):
                 mock.visited_c()
                 test_runner.assertEqual(self.get_metadata(ProviderA, node), 1)
 
-        class VisitorA(CSTTransformer):
+        class Visitor(CSTTransformer):
             METADATA_DEPENDENCIES = (ProviderC,)
 
         module = parse_module("pass")
-        module.visit(VisitorA())
+        module.visit(Visitor())
 
         # Check each visitor is called once
         mock.visited_a.assert_called_once()
@@ -343,21 +343,3 @@ class MetadataRunnerTest(UnitTest):
             MetadataException, "Detected circular dependencies in ProviderA"
         ):
             cst.Module([]).visit(BadVisitor())
-
-    def test_invalid_entry_point(self) -> None:
-        """
-        Tests that visitors that declare metadata can only be called by a
-        module.
-        """
-
-        class ProviderA(VisitorMetadataProvider[bool]):
-            pass
-
-        class AVisitor(CSTTransformer):
-            METADATA_DEPENDENCIES = (ProviderA,)
-
-        with self.assertRaisesRegex(
-            MetadataException,
-            "AVisitor declares metadata dependencies and should only be called from the module level",
-        ):
-            cst.Pass().visit(AVisitor())

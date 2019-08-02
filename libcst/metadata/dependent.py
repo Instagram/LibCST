@@ -6,13 +6,27 @@
 # pyre-strict
 import inspect
 from abc import ABC
-from typing import TYPE_CHECKING, ClassVar, Collection, Type, TypeVar
+from contextlib import contextmanager
+from typing import (
+    TYPE_CHECKING,
+    ClassVar,
+    Collection,
+    Iterator,
+    Mapping,
+    Type,
+    TypeVar,
+    cast,
+)
 
 
 if TYPE_CHECKING:
     # Circular dependency for typing reasons only
     from libcst._nodes._base import CSTNode  # noqa: F401
-    from libcst.metadata.base_provider import BaseMetadataProvider  # noqa: F401
+    from libcst.metadata.base_provider import (  # noqa: F401
+        BaseMetadataProvider,
+        ProviderT,
+    )
+    from libcst.metadata.wrapper import MetadataWrapper  # noqa: F401
 
 
 _T = TypeVar("_T")
@@ -20,7 +34,7 @@ _T = TypeVar("_T")
 _UNDEFINED_DEFAULT = object()
 
 
-class _MetadataInterface(ABC):
+class _MetadataDependent(ABC):
     """
     Base class for all types that declare required metadata dependencies.
 
@@ -29,32 +43,38 @@ class _MetadataInterface(ABC):
     directly visit a node of type other than Module.
     """
 
-    METADATA_DEPENDENCIES: ClassVar[
-        Collection[Type["BaseMetadataProvider[object]"]]
-    ] = ()
+    # pyre-ignore[4]: Attribute `metadata` of class
+    # `libcst.metadata.dependent._MetadataDependent` must have a type that
+    # does not contain `Any`.
+    metadata: Mapping["ProviderT", Mapping["CSTNode", object]]
 
-    @property
-    def INHERITED_METADATA_DEPENDENCIES(
-        self
-    ) -> Collection[Type["BaseMetadataProvider[object]"]]:
+    METADATA_DEPENDENCIES: ClassVar[Collection["ProviderT"]] = ()
+
+    def __init__(self) -> None:
+        self.metadata = {}
+
+    @classmethod
+    def get_inherited_dependencies(cls) -> Collection["ProviderT"]:
         """
         Compute and cache all metadata dependencies from mro chain.
         """
         try:
             # pyre-fixme[16]: use a hidden attribute to cache the property
-            # TODO: can simplify this function by using functools.cached_property
-            # when it becomes available in Python 3.8
-            dependencies = self.INHERITED_METADATA_DEPENDENCIES_CACHE
+            return cls._INHERITED_METADATA_DEPENDENCIES_CACHE
         except AttributeError:
-            dependencies_mut = set()
-            for c in inspect.getmro(type(self)):
-                if issubclass(c, _MetadataInterface):
-                    dependencies_mut.update(c.METADATA_DEPENDENCIES)
-            self.INHERITED_METADATA_DEPENDENCIES_CACHE = frozenset(dependencies_mut)
+            dependencies = set()
+            for c in inspect.getmro(cls):
+                if issubclass(c, _MetadataDependent):
+                    dependencies.update(c.METADATA_DEPENDENCIES)
+            cls._INHERITED_METADATA_DEPENDENCIES_CACHE = frozenset(dependencies)
             # pyre-fixme[16]: use a hidden attribute to cache the property
-            dependencies = self.INHERITED_METADATA_DEPENDENCIES_CACHE
+            return cls._INHERITED_METADATA_DEPENDENCIES_CACHE
 
-        return dependencies
+    @contextmanager
+    def resolve(self, wrapper: "MetadataWrapper") -> Iterator[None]:
+        self.metadata = wrapper.resolve_many(self.get_inherited_dependencies())
+        yield
+        self.metadata = {}
 
     def get_metadata(
         self,
@@ -67,15 +87,12 @@ class _MetadataInterface(ABC):
         this vistor. Metadata is accessible if [key] is the same as [cls] or
         if [key] is in METADATA_DEPENDENCIES.
         """
-        if key not in self.INHERITED_METADATA_DEPENDENCIES and key is not type(self):
+        if key not in self.get_inherited_dependencies():
             raise KeyError(
                 f"{key.__name__} is not declared as a dependency from {type(self).__name__}"
             )
 
-        try:
-            return node._metadata[key]
-        except KeyError as err:
-            if default is not _UNDEFINED_DEFAULT:
-                return default
-            else:
-                raise err
+        if default is not _UNDEFINED_DEFAULT:
+            return cast(_T, self.metadata[key].get(node, default))
+        else:
+            return cast(_T, self.metadata[key][node])

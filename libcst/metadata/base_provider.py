@@ -4,30 +4,48 @@
 # LICENSE file in the root directory of this source tree.
 
 # pyre-strict
-from typing import Generic, Iterable, TypeVar, cast
-
-import libcst as cst
-from libcst._batched_visitor import (
-    BatchableCSTVisitor,
-    _BatchedCSTVisitor,
-    _get_visitor_methods,
+from types import MappingProxyType
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Generic,
+    Iterable,
+    Mapping,
+    MutableMapping,
+    Type,
+    TypeVar,
 )
+
+from libcst._batched_visitor import BatchableCSTVisitor
 from libcst._exceptions import MetadataException
-from libcst._nodes._module import _ModuleSelfT as _ModuleT
 from libcst._visitors import CSTVisitor
-from libcst.metadata._interface import _MetadataInterface
+from libcst.metadata.dependent import _UNDEFINED_DEFAULT, _MetadataDependent
 
 
-_T_co = TypeVar("_T_co", covariant=True)
+if TYPE_CHECKING:
+    from libcst._nodes._base import CSTNode
+    from libcst._nodes._module import Module, _ModuleSelfT as _ModuleT
+    from libcst.metadata.wrapper import MetadataWrapper
+
+
+ProviderT = Type["BaseMetadataProvider[Any]"]
+_T = TypeVar("_T")
 
 
 # We can't use an ABCMeta here, because of metaclass conflicts
-class BaseMetadataProvider(_MetadataInterface, Generic[_T_co]):
+class BaseMetadataProvider(_MetadataDependent, Generic[_T]):
     """
     Abstract base class for all metadata providers.
     """
 
-    def _run(self, module: _ModuleT) -> _ModuleT:
+    _computed: MutableMapping["CSTNode", _T]
+
+    def __init__(self) -> None:
+        super().__init__()
+        self._computed = {}
+
+    # TODO: remove this
+    def _run(self, module: "_ModuleT") -> "_ModuleT":
         """
         Returns the given module with metadata from this provider.
 
@@ -38,49 +56,100 @@ class BaseMetadataProvider(_MetadataInterface, Generic[_T_co]):
         """
         ...
 
-    @classmethod
-    # pyre-ignore[35]: Parameter type cannot be covariant. Pyre can't
-    # detect that this method is not mutating the Provider class.
-    def set_metadata(cls, node: cst.CSTNode, value: _T_co) -> None:
+    def _gen(self, wrapper: "MetadataWrapper") -> Mapping["CSTNode", _T]:
         """
-        Stores given metadata from this provider on the given node.
+        Returns the given module with metadata from this provider.
+
+        This is a hook for metadata resolver and should not be called directly.
         """
-        node._metadata[cls] = value
+        self._computed = {}
+        # Resolve metadata dependencies for this provider
+        with self.resolve(wrapper):
+            self._gen_impl(wrapper.module)
+
+        # Copy into a mapping proxy to ensure immutability
+        return MappingProxyType(dict(self._computed))
+
+    def _gen_impl(self, module: "Module") -> None:
+        """
+        Override this method to compute metadata using set_metadata.
+        """
+        ...
+
+    def set_metadata(self, node: "CSTNode", value: _T) -> None:
+        """
+        Maps the given node to a metadata value.
+        """
+        node._metadata[type(self)] = value  # TODO: remove this
+        self._computed[node] = value
+
+    def get_metadata(
+        self,
+        key: Type["BaseMetadataProvider[_T]"],
+        node: "CSTNode",
+        default: _T = _UNDEFINED_DEFAULT,
+    ) -> _T:
+        """
+        Override to query from self._computed in addition to self.metadata.
+        """
+        if key is type(self):
+            if default is not _UNDEFINED_DEFAULT:
+                return self._computed.get(node, default)
+            else:
+                return self._computed[node]
+
+        return super().get_metadata(key, node, default)
 
 
-class VisitorMetadataProvider(CSTVisitor, BaseMetadataProvider[_T_co]):
+class VisitorMetadataProvider(CSTVisitor, BaseMetadataProvider[_T]):
     """
     Extend this to compute metadata with a non-batchable visitor.
     """
 
-    def _run(self, module: _ModuleT) -> _ModuleT:
+    # TODO: remove this
+    def _run(self, module: "_ModuleT") -> "_ModuleT":
         """
         Returns the given module with metadata from this provider.
         """
-        # Cast is safe as metadata providers should never mutate the tree
-        return cast(_ModuleT, module._visit_impl(self))
+        return module.visit(self, use_compatible=False)
+
+    def _gen_impl(self, module: "_ModuleT") -> None:
+        module.visit(self, use_compatible=False)
 
 
-class BatchableMetadataProvider(BatchableCSTVisitor, BaseMetadataProvider[_T_co]):
+class BatchableMetadataProvider(BatchableCSTVisitor, BaseMetadataProvider[_T]):
     """
     Extend this to compute metadata with a batchable visitor.
     """
 
-    def _run(self, module: _ModuleT) -> _ModuleT:
+    # TODO: remove this
+    def _run(self, module: "_ModuleT") -> "_ModuleT":
         """
         Batchable providers are resolved using [_run_batchable].
         """
         raise MetadataException("BatchableMetadataProvider cannot be called directly.")
 
+    def _gen_impl(self, module: "Module") -> None:
+        """
+        Batchables providers are run through _run_batchable] so no
+        implementation should be provided in _gen_impl.
+        """
+        pass
 
-def _run_batchable(
-    module: _ModuleT, providers: Iterable[BatchableMetadataProvider[object]]
-) -> _ModuleT:
+
+def _gen_batchable(
+    wrapper: "MetadataWrapper",
+    # pyre-fixme[2]: Parameter `providers` must have a type that does not contain `Any`
+    providers: Iterable[BatchableMetadataProvider[Any]],
+) -> Mapping[ProviderT, Mapping["CSTNode", object]]:
     """
     Returns the given module with metadata from the given batchable providers.
-    """
 
-    visitor_methods = _get_visitor_methods(providers)
-    batched_visitor = _BatchedCSTVisitor(visitor_methods)
-    # Cast is safe as metadata providers should never mutate the tree
-    return cast(_ModuleT, module._visit_impl(batched_visitor))
+    Does not compute dependencies declared by providers.
+    """
+    # Resolve metadata dependencies and do batched visit
+    wrapper.visit_batched(providers)
+
+    # Make immutable metadata mapping
+    # pyre-ignore[7]
+    return {type(p): MappingProxyType(dict(p._computed)) for p in providers}
