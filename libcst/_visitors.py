@@ -22,14 +22,22 @@ CSTNodeT = TypeVar("CSTNodeT", bound="CSTNode")
 class CSTTransformer(_MetadataInterface):
     """
     The low-level base visitor class for traversing a CST and creating an
-    updated copy of the original CST.
+    updated copy of the original CST. This should be used in conjunction with
+    the :func:`~libcst.CSTNode.visit` method on a :class:`~libcst.CSTNode` to
+    visit each element in a tree starting with that node, and possibly returning
+    a new node in its place.
+
+    When visiting nodes using a :class:`CSTTransformer`, the return value of
+    :func:`~libcst.CSTNode.visit` will be a new tree with any changes made in
+    :func:`~libcst.CSTTransformer.on_leave` calls reflected in its children.
     """
 
     def on_visit(self, node: "CSTNode") -> bool:
         """
         Called every time a node is visited, before we've visited its children.
 
-        Returns `True` if children should be visited, and returns `False` otherwise.
+        Returns ``True`` if children should be visited, and returns ``False``
+        otherwise.
         """
         visit_func = getattr(self, f"visit_{type(node).__name__}", None)
         if visit_func is not None:
@@ -43,10 +51,19 @@ class CSTTransformer(_MetadataInterface):
         self, original_node: CSTNodeT, updated_node: CSTNodeT
     ) -> Union[CSTNodeT, RemovalSentinel]:
         """
-        Called every time we leave a node, after we've visited its children.
+        Called every time we leave a node, after we've visited its children. If
+        the :func:`~libcst.CSTTransformer.on_visit` function for this node returns
+        ``False``, this function will not be called on that node.
 
-        A RemovalSentinel indicates that the node should be removed from its parent.
-        This is not always possible, and may raise an exception.
+        ``original_node`` is guaranteed to be the same node as is passed to
+        :func:`~libcst.CSTTransformer.on_visit`, so it is safe to do state-based
+        checks using the ``is`` operator. Modifications should always be performed
+        on the ``updated_node`` so as to not overwrite changes made by child
+        visits.
+
+        Returning a :class:`~libcst.RemovalSentinel` indicates that the node
+        should be removed from its parent. This is not always possible, and
+        may raise an exception if this node is required.
         """
         leave_func = getattr(self, f"leave_{type(original_node).__name__}", None)
         if leave_func is not None:
@@ -57,14 +74,22 @@ class CSTTransformer(_MetadataInterface):
 
 class CSTVisitor(_MetadataInterface):
     """
-    The low-level base visitor class for traversing a CST.
+    The low-level base visitor class for traversing a CST. This should be used in
+    conjunction with the :func:`~libcst.CSTNode.visit` method on a
+    :class:`~libcst.CSTNode` to visit each element in a tree starting with that
+    node. Unlike :class:`CSTTransformer`, instances of this class cannot modify
+    the tree.
+
+    When visiting nodes using a :class:`CSTVisitor`, the return value of
+    :func:`~libcst.CSTNode.visit` will equal the passed in tree.
     """
 
     def on_visit(self, node: "CSTNode") -> bool:
         """
         Called every time a node is visited, before we've visited its children.
 
-        Returns `True` if children should be visited, and returns `False` otherwise.
+        Returns ``True`` if children should be visited, and returns ``False``
+        otherwise.
         """
         visit_func = getattr(self, f"visit_{type(node).__name__}", None)
         if visit_func is not None:
@@ -76,7 +101,9 @@ class CSTVisitor(_MetadataInterface):
 
     def on_leave(self, original_node: CSTNodeT) -> None:
         """
-        Called every time we leave a node, after we've visited its children.
+        Called every time we leave a node, after we've visited its children. If
+        the :func:`~libcst.CSTVisitor.on_visit` function for this node returns
+        ``False``, this function will not be called on that node.
         """
         leave_func = getattr(self, f"leave_{type(original_node).__name__}", None)
         if leave_func is not None:
