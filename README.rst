@@ -9,9 +9,9 @@
 
 .. intro-start
 
-LibCST is a Concrete Syntax Tree (CST) parser and serializer library for Python Code.
-It parses Python 3.6 or Python 3.7 source code as a CST tree and keeps all formatting
-detail (comments, whitespaces, parentheses, etc). It's useful for building automated
+LibCST is a Concrete Syntax Tree (CST) parser and serializer library for Python.
+It parses Python 3.6 or Python 3.7 source code as a CST tree that keeps all formatting
+details (comments, whitespaces, parentheses, etc). It's useful for building automated
 refactoring (codemod) applications, code formatters, linters, etc.
 
 .. intro-end
