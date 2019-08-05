@@ -8,120 +8,50 @@
 
 .. intro-start
 
-LibCST is a Concrete Syntax Tree (CST) parser and serializer library for Python Code. It parses Python 3.7 source code as a CST tree and keeps all formatting detail (comments, whitespaces, parentheses, etc). It's useful for building Code Modifier (codemod) applications, code formatters, etc.
+LibCST is a Concrete Syntax Tree (CST) parser and serializer library for Python Code.
+It parses Python 3.6 or Python 3.7 source code as a CST tree and keeps all formatting
+detail (comments, whitespaces, parentheses, etc). It's useful for building automated
+refactoring (codemod) applications, code formatters, linters, etc.
 
 .. intro-end
 
 .. why-libcst-intro-start
-LibCST creates a compromise between an Abstract Syntax Tree (AST) and a traditional Concrete Syntax Tree (CST). By carefully reorganizing and naming node types and fields, we've created a lossless CST that looks and feels like an AST. 
+LibCST creates a compromise between an Abstract Syntax Tree (AST) and a traditional
+Concrete Syntax Tree (CST). By carefully reorganizing and naming node types and
+fields, we've created a lossless CST that looks and feels like an AST.
 
 .. why-libcst-intro-end
 
 
 .. why-libcst-example-start
 
-.. code-block:: python
+::
 
-    fn(1, 2)  # calls fn
+    1 + 2
 
-.. code-block:: python
+::
 
-    Module(
-        body=[
-            SimpleStatementLine(
-                body=[
-                    Expr(
-                        value=Call(
-                            func=Name(
-                                value='fn',
-                                lpar=[],
-                                rpar=[],
-                            ),
-                            args=[
-                                Arg(
-                                    value=Number(
-                                        number=Integer(
-                                            value='1',
-                                            lpar=[],
-                                            rpar=[],
-                                        ),
-                                        operator=None,
-                                        lpar=[],
-                                        rpar=[],
-                                    ),
-                                    keyword=None,
-                                    equal=None,
-                                    comma=Comma(
-                                        whitespace_before=SimpleWhitespace(
-                                            value='',
-                                        ),
-                                        whitespace_after=SimpleWhitespace(
-                                            value=' ',
-                                        ),
-                                    ),
-                                    star='',
-                                    whitespace_after_star=SimpleWhitespace(
-                                        value='',
-                                    ),
-                                    whitespace_after_arg=SimpleWhitespace(
-                                        value='',
-                                    ),
-                                ),
-                                Arg(
-                                    value=Number(
-                                        number=Integer(
-                                            value='2',
-                                            lpar=[],
-                                            rpar=[],
-                                        ),
-                                        operator=None,
-                                        lpar=[],
-                                        rpar=[],
-                                    ),
-                                    keyword=None,
-                                    equal=None,
-                                    comma=None,
-                                    star='',
-                                    whitespace_after_star=SimpleWhitespace(
-                                        value='',
-                                    ),
-                                    whitespace_after_arg=SimpleWhitespace(
-                                        value='',
-                                    ),
-                                ),
-                            ],
-                            lpar=[],
-                            rpar=[],
-                            whitespace_after_func=SimpleWhitespace(
-                                value='',
-                            ),
-                            whitespace_before_args=SimpleWhitespace(
-                                value='',
-                            ),
-                        ),
-                        semicolon=None,
-                    ),
-                ],
-                leading_lines=[],
-                trailing_whitespace=TrailingWhitespace(
-                    whitespace=SimpleWhitespace(
-                        value='  ',
-                    ),
-                    comment=Comment(
-                        value='# calls fn',
-                    ),
-                    newline=Newline(
-                        value=None,
-                    ),
-                ),
+    BinaryOperation(
+        left=Integer(
+            value='1',
+            lpar=[],
+            rpar=[],
+        ),
+        operator=Add(
+            whitespace_before=SimpleWhitespace(
+                value=' ',
             ),
-        ],
-        header=[],
-        footer=[],
-        encoding='utf-8',
-        default_indent='    ',
-        default_newline='\n',
-        has_trailing_newline=True,
+            whitespace_after=SimpleWhitespace(
+                value=' ',
+            ),
+        ),
+        right=Integer(
+            value='2',
+            lpar=[],
+            rpar=[],
+        ),
+        lpar=[],
+        rpar=[],
     )
 
 .. why-libcst-example-end
@@ -134,9 +64,31 @@ Examining a sample tree
 
 To examine the tree that is parsed from a particular file, do the following:
 
-.. code-block:: shell
+::
 
     python -m libcst.tool print <some_py_file.py>
+
+Alternatively you can import LibCST into a Python REPL and use the included parser
+and pretty printing functions:
+
+>>> import libcst as cst
+>>> from libcst.tool import dump
+>>> print(dump(cst.parse_expression("(1 + 2)")))
+BinaryOperation(
+  left=Integer(
+    value='1',
+  ),
+  operator=Add(),
+  right=Integer(
+    value='2',
+  ),
+  lpar=[
+    LeftParen(),
+  ],
+  rpar=[
+    RightParen(),
+  ],
+)
 
 Development
 -----------
@@ -154,20 +106,32 @@ Start by setting up and activating a virtualenv:
     # If you're done with the virtualenv, you can leave it by running:
     deactivate
 
-We use isort and black to format code. To format changes to be conformant, run
-the following in the root:
+We use `isort <https://github.com/timothycrosley/isort>`+_ and `black <https://github.com/psf/black>`_
+to format code. To format changes to be conformant, run the following in the root:
 
 .. code-block:: shell
 
     isort -q -y && black libcst/
 
-To run all tests, do the following in the root:
+To run all tests, you'll need to install `tox <https://tox.readthedocs.io/en/latest/>`_
+and do the following in the root:
 
 .. code-block:: shell
 
     tox -e py37
 
-To verify types for the library, do the following in the root:
+You can also run individual tests by using unittest and specifying a module like
+this:
+
+.. code-block:: shell
+
+    python -m unitttest libcst.tests.test_batched_visitor
+
+See the `unittest documentation <https://docs.python.org/3/library/unittest.html>`_
+for more examples of how to run tests.
+
+We use `Pyre <https://github.com/facebook/pyre-check>`_ for type-checking. To
+verify types for the library, do the following in the root:
 
 .. code-block:: shell
 
@@ -183,4 +147,3 @@ License
 =======
 
 LibCST is MIT licensed, as found in the LICENSE file.
-
