@@ -156,7 +156,7 @@ def _node_repr_recursive(  # noqa: C901
         return [repr(node)]
 
 
-def _node_repr(
+def dump(
     node: CSTNode,
     *,
     indent: str = _DEFAULT_INDENT,
@@ -167,6 +167,7 @@ def _node_repr(
     return "".join(
         _node_repr_recursive(
             node,
+            indent=indent,
             show_whitespace=show_whitespace,
             show_defaults=show_defaults,
             show_syntax=show_syntax,
@@ -174,7 +175,7 @@ def _node_repr(
     )
 
 
-def print_tree(args: argparse.Namespace) -> int:
+def _print_tree_impl(args: argparse.Namespace) -> int:
     infile = args.infile
 
     # Grab input file
@@ -186,7 +187,7 @@ def print_tree(args: argparse.Namespace) -> int:
 
     tree = parse_module(code)
     print(
-        _node_repr(
+        dump(
             tree,
             show_whitespace=args.show_whitespace,
             show_defaults=args.show_defaults,
@@ -203,7 +204,7 @@ def main(cli_args: List[str]) -> int:
     print_parser = subparsers.add_parser(
         "print", help="Print LibCST tree for a python file."
     )
-    print_parser.set_defaults(func=print_tree)
+    print_parser.set_defaults(func=_print_tree_impl)
     print_parser.add_argument(
         "infile",
         metavar="INFILE",

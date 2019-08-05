@@ -8,7 +8,7 @@ from textwrap import dedent
 
 from libcst import parse_module
 from libcst.testing.utils import UnitTest
-from libcst.tool import _node_repr
+from libcst.tool import dump
 
 
 class PrettyPrintNodesTest(UnitTest):
@@ -169,7 +169,7 @@ class PrettyPrintNodesTest(UnitTest):
         # python indent.
         self.assertEqual(
             dedent(module[1:])[:-1],
-            _node_repr(
+            dump(
                 parse_module("def foo(a: str) -> None:\n    pass ; pass\n    return\n"),
                 show_whitespace=True,
                 show_defaults=True,
@@ -259,7 +259,7 @@ class PrettyPrintNodesTest(UnitTest):
         # python indent.
         self.assertEqual(
             dedent(module[1:])[:-1],
-            _node_repr(
+            dump(
                 parse_module("def foo(a: str) -> None:\n    pass ; pass\n    return\n"),
                 show_whitespace=False,
                 show_defaults=True,
@@ -340,7 +340,7 @@ class PrettyPrintNodesTest(UnitTest):
         # python indent.
         self.assertEqual(
             dedent(module[1:])[:-1],
-            _node_repr(
+            dump(
                 parse_module("def foo(a: str) -> None:\n    pass ; pass\n    return\n"),
                 show_whitespace=True,
                 show_defaults=False,
@@ -404,7 +404,7 @@ class PrettyPrintNodesTest(UnitTest):
         # python indent.
         self.assertEqual(
             dedent(module[1:])[:-1],
-            _node_repr(
+            dump(
                 parse_module("def foo(a: str) -> None:\n    pass ; pass\n    return\n"),
                 show_whitespace=False,
                 show_defaults=False,
@@ -549,7 +549,7 @@ class PrettyPrintNodesTest(UnitTest):
         # python indent.
         self.assertEqual(
             dedent(module[1:])[:-1],
-            _node_repr(
+            dump(
                 parse_module("def foo(a: str) -> None:\n    pass ; pass\n    return\n"),
                 show_whitespace=True,
                 show_defaults=True,
@@ -626,7 +626,7 @@ class PrettyPrintNodesTest(UnitTest):
         # python indent.
         self.assertEqual(
             dedent(module[1:])[:-1],
-            _node_repr(
+            dump(
                 parse_module("def foo(a: str) -> None:\n    pass ; pass\n    return\n"),
                 show_whitespace=False,
                 show_defaults=True,
@@ -696,7 +696,7 @@ class PrettyPrintNodesTest(UnitTest):
         # python indent.
         self.assertEqual(
             dedent(module[1:])[:-1],
-            _node_repr(
+            dump(
                 parse_module("def foo(a: str) -> None:\n    pass ; pass\n    return\n"),
                 show_whitespace=True,
                 show_defaults=False,
@@ -756,7 +756,7 @@ class PrettyPrintNodesTest(UnitTest):
         # python indent.
         self.assertEqual(
             dedent(module[1:])[:-1],
-            _node_repr(
+            dump(
                 parse_module("def foo(a: str) -> None:\n    pass ; pass\n    return\n"),
                 show_whitespace=False,
                 show_defaults=False,
