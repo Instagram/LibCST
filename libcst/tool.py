@@ -25,9 +25,9 @@ def _node_repr_recursive(  # noqa: C901
     node: object,
     *,
     indent: str = _DEFAULT_INDENT,
-    show_whitespace: bool = False,
     show_defaults: bool = False,
     show_syntax: bool = False,
+    show_whitespace: bool = False,
 ) -> List[str]:
     if isinstance(node, CSTNode):
         # This is a CSTNode, we must pretty-print it.
@@ -160,17 +160,32 @@ def dump(
     node: CSTNode,
     *,
     indent: str = _DEFAULT_INDENT,
-    show_whitespace: bool = False,
     show_defaults: bool = False,
     show_syntax: bool = False,
+    show_whitespace: bool = False,
 ) -> str:
+    """
+    Returns a string representation of the node that contains minimal differences
+    from the default contruction of the node while also hiding whitespace and
+    syntax fields.
+
+    Setting ``show_default`` to ``True`` will add fields regardless if their
+    value is different from the default value.
+
+    Setting ``show_whitespace`` will add whitespace fields and setting
+    ``show_syntax`` will add syntax fields while respecting the value of
+    ``show_default``.
+
+    When all keyword args are set to true, the output of this function is
+    indentical to the __repr__ method of the node.
+    """
     return "".join(
         _node_repr_recursive(
             node,
             indent=indent,
-            show_whitespace=show_whitespace,
             show_defaults=show_defaults,
             show_syntax=show_syntax,
+            show_whitespace=show_whitespace,
         )
     )
 
@@ -189,9 +204,9 @@ def _print_tree_impl(args: argparse.Namespace) -> int:
     print(
         dump(
             tree,
-            show_whitespace=args.show_whitespace,
             show_defaults=args.show_defaults,
             show_syntax=args.show_syntax,
+            show_whitespace=args.show_whitespace,
         )
     )
     return 0
