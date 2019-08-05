@@ -23,9 +23,6 @@ fields, we've created a lossless CST that looks and feels like an AST.
 
 .. why-libcst-intro-end
 
-
-.. why-libcst-example-start
-
 ::
 
     1 + 2
@@ -54,8 +51,6 @@ fields, we've created a lossless CST that looks and feels like an AST.
         lpar=[],
         rpar=[],
     )
-
-.. why-libcst-example-end
 
 Getting Started
 ===============
