@@ -7,3 +7,4 @@
 __pycache__/
 .tox/
 docs/build/
+docs/source/.ipynb_checkpoints/

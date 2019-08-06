@@ -2,7 +2,6 @@
    :width: 600 px
    :alt: LibCST
 
-
 .. image:: https://circleci.com/gh/Instagram/LibCST/tree/master.svg?style=svg&circle-token=f89ff46c689cf53116308db295a492d687bf5732
    :target: https://circleci.com/gh/Instagram/LibCST/tree/master
    :alt: CircleCI

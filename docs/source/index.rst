@@ -17,6 +17,7 @@ LibCST
 
    why_libcst
    motivation
+   usage
    parser
    nodes
    visitors

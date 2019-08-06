@@ -10,7 +10,7 @@ import setuptools
 
 
 this_directory = path.abspath(path.dirname(__file__))
-with open(path.join(this_directory, 'README.rst'), encoding='utf-8') as f:
+with open(path.join(this_directory, "README.rst"), encoding="utf-8") as f:
     long_description = f.read()
 
 setuptools.setup(
@@ -29,6 +29,15 @@ setuptools.setup(
         "typing_inspect",
     ],
     extras_require={
-        "dev": ["black", "flake8", "isort", "pyre-check", "Sphinx", "sphinx-rtd-theme"],
-    }
+        "dev": [
+            "black",
+            "isort",
+            "flake8",
+            "jupyter",
+            "nbsphinx",
+            "pyre-check",
+            "Sphinx",
+            "sphinx-rtd-theme",
+        ]
+    },
 )
