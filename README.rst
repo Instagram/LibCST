@@ -12,11 +12,12 @@ A Concrete Syntax Tree (CST) parser and serializer library for Python
 
 LibCST parses Python 3.6 or Python 3.7 source code as a CST tree that keeps all formatting
 details (comments, whitespaces, parentheses, etc). It's useful for building automated
-refactoring (codemod) applications, code formatters, linters, etc.
+refactoring (codemod) applications and linters.
 
 .. intro-end
 
 .. why-libcst-intro-start
+
 LibCST creates a compromise between an Abstract Syntax Tree (AST) and a traditional
 Concrete Syntax Tree (CST). By carefully reorganizing and naming node types and
 fields, we've created a lossless CST that looks and feels like an AST.
@@ -86,6 +87,17 @@ BinaryOperation(
   ],
 )
 
+Installation
+------------
+
+LibCST can be easily installed using most common Python packaging tools. We
+recommend installing the latest stable release from `PyPI <https://pypi.org/project/libcst/>`_
+with pip:
+
+.. code-block:: shell
+
+    pip install libcst
+
 Development
 -----------
 
@@ -102,7 +114,7 @@ Start by setting up and activating a virtualenv:
     # If you're done with the virtualenv, you can leave it by running:
     deactivate
 
-We use `isort <https://github.com/timothycrosley/isort>`+_ and `black <https://github.com/psf/black>`_
+We use `isort <https://isort.readthedocs.io/en/stable/>`_ and `black <https://black.readthedocs.io/en/stable/>`_
 to format code. To format changes to be conformant, run the following in the root:
 
 .. code-block:: shell
