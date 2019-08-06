@@ -5,7 +5,6 @@
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field, fields, replace
-from enum import Enum, auto
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -385,13 +384,3 @@ class BaseValueToken(BaseLeaf, ABC):
 
     def _codegen_impl(self, state: CodegenState) -> None:
         state.add_token(self.value)
-
-
-class AnnotationIndicatorSentinel(Enum):
-    """
-    An AnnotationIndicatorSentinel indicates that the underlying codegen should choose
-    the correct annotation indicator (":" or "->") based on where the annotation is
-    used.
-    """
-
-    DEFAULT = auto()

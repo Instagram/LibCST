@@ -1268,11 +1268,6 @@ class AnnAssign(BaseSmallStatement):
     semicolon: Union[Semicolon, MaybeSentinel] = MaybeSentinel.DEFAULT
 
     def _validate(self) -> None:
-        if (
-            isinstance(self.annotation.indicator, str)
-            and self.annotation.indicator != ":"
-        ):
-            raise CSTValidationError("An Annotation must be denoted with a ':'.")
         if self.value is None and isinstance(self.equal, AssignEqual):
             raise CSTValidationError(
                 "Must have a value when specifying an AssignEqual."
@@ -1473,12 +1468,6 @@ class FunctionDef(BaseCompoundStatement):
             raise CSTValidationError(
                 "There must be at least one space between 'def' and name."
             )
-        if (
-            self.returns is not None
-            and isinstance(self.returns.indicator, str)
-            and self.returns.indicator != "->"
-        ):
-            raise CSTValidationError("A return Annotation must be denoted with a '->'.")
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "FunctionDef":
         return FunctionDef(
