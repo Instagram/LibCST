@@ -10,9 +10,9 @@ A Concrete Syntax Tree (CST) parser and serializer library for Python
 
 .. intro-start
 
-LibCST parses Python 3.6 or Python 3.7 source code as a CST tree that keeps all formatting
-details (comments, whitespaces, parentheses, etc). It's useful for building automated
-refactoring (codemod) applications and linters.
+LibCST parses Python 3.7 source code as a CST tree that keeps all formatting
+details (comments, whitespaces, parentheses, etc). It's useful for building 
+automated refactoring (codemod) applications and linters.
 
 .. intro-end
 
@@ -90,9 +90,9 @@ BinaryOperation(
 Installation
 ------------
 
-LibCST can be easily installed using most common Python packaging tools. We
-recommend installing the latest stable release from `PyPI <https://pypi.org/project/libcst/>`_
-with pip:
+LibCST requires Python 3.6+ and can be easily installed using most common Python
+packaging tools. We recommend installing the latest stable release from 
+`PyPI <https://pypi.org/project/libcst/>`_ with pip:
 
 .. code-block:: shell
 
