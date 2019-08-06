@@ -393,6 +393,13 @@ class BaseNumber(BaseExpression, ABC):
 @dataclass(frozen=True)
 class Integer(BaseNumber):
     #: A string representation of the integer, such as ``"100000"`` or ``100_000``.
+    #:
+    #: To convert this string representation to an ``int`` pass this ``value`` into
+    #: |int|_ or :func:`ast.literal_eval`.
+    #:
+    #: .. intersphinx doesn't pick up on the `int` builtin.
+    #: .. |int| replace:: :func:`int`
+    #: .. _int: https://docs.python.org/3.7/library/functions.html#int
     value: str
 
     lpar: Sequence[LeftParen] = ()
@@ -421,6 +428,13 @@ class Integer(BaseNumber):
 class Float(BaseNumber):
     #: A string representation of the floating point number, such as ``"0.05"``,
     #: ``".050"``, or ``"5e-2"``.
+    #:
+    #: To convert this string representation to a ``float`` pass this ``value`` into
+    #: |float|_ or :func:`ast.literal_eval`.
+    #:
+    #: .. intersphinx doesn't pick up on the `float` builtin.
+    #: .. |float| replace:: :func:`float`
+    #: .. _float: https://docs.python.org/3.7/library/functions.html#float
     value: str
 
     lpar: Sequence[LeftParen] = ()
@@ -448,6 +462,13 @@ class Float(BaseNumber):
 @dataclass(frozen=True)
 class Imaginary(BaseNumber):
     #: A string representation of the imaginary (complex) number, such as ``"2j"``.
+    #:
+    #: To convert this string representation to a ``complex`` pass this ``value`` into
+    #: |complex|_ or :func:`ast.literal_eval`.
+    #:
+    #: .. intersphinx doesn't pick up on the `complex` builtin.
+    #: .. |complex| replace:: :func:`complex`
+    #: .. _complex: https://docs.python.org/3.7/library/functions.html#complex
     value: str
 
     lpar: Sequence[LeftParen] = ()
@@ -504,6 +525,15 @@ class _BasePrefixedString(BaseString, ABC):
 @add_slots
 @dataclass(frozen=True)
 class SimpleString(_BasePrefixedString):
+    """
+    Any sort of literal string expression that is not a :class:`FormattedString`
+    (f-string), including triple-quoted multi-line strings.
+    """
+
+    #: The texual representation of the string, including quotes, prefix characters, and
+    #: any escape characters present in the original source code , such as
+    #: ``r"my string\n"``. To remove the quotes and interpret any escape characters,
+    #: pass this ``value`` into :func:`ast.literal_eval`.
     value: str
 
     lpar: Sequence[LeftParen] = ()
@@ -564,7 +594,9 @@ class SimpleString(_BasePrefixedString):
 
 class BaseFormattedStringContent(CSTNode, ABC):
     """
-    A type that can be used anywhere that you need to take any part of a f-string.
+    The base type for :class:`FormattedStringText` and
+    :class:`FormattedStringExpression`. A :class:`FormattedString` is composed of a
+    sequence of :class:`BaseFormattedStringContent` parts.
     """
 
     pass
@@ -573,7 +605,18 @@ class BaseFormattedStringContent(CSTNode, ABC):
 @add_slots
 @dataclass(frozen=True)
 class FormattedStringText(BaseFormattedStringContent):
-    #: The raw string value.
+    """
+    Part of a :class:`FormattedString` that is not inside curly braces (``{`` or ``}``).
+    For example, in::
+
+        f"ab{cd}ef"
+
+    ``ab`` and ``ef`` are :class:`FormattedStringText` nodes, but ``{cd}`` is a
+    :class:`FormattedStringExpression`.
+    """
+
+    #: The raw string value, including any escape characters present in the source
+    #: code, not including any enclosing quotes.
     value: str
 
     def _visit_and_replace_children(
@@ -588,16 +631,37 @@ class FormattedStringText(BaseFormattedStringContent):
 @add_slots
 @dataclass(frozen=True)
 class FormattedStringExpression(BaseFormattedStringContent):
-    #: The expression we will render when printing the string
+    """
+    Part of a :class:`FormattedString` that is inside curly braces (``{`` or ``}``),
+    including the surrounding curly braces. For example, in::
+
+        f"ab{cd}ef"
+
+    ``{cd}`` is a :class:`FormattedStringExpression`, but ``ab`` and ``ef`` are
+    :class:`FormattedStringText` nodes.
+
+    An f-string expression may contain ``conversion`` and ``format_spec`` suffixes that
+    control how the expression is converted to a string. See `Python's language
+    reference
+    <https://docs.python.org/3/reference/lexical_analysis.html#formatted-string-literals>`__
+    for details.
+    """
+
+    #: The expression we will evaluate and render when generating the string.
     expression: BaseExpression
 
-    #: An optional conversion specifier
+    #: An optional conversion specifier, such as ``!s``, ``!r`` or ``!a``.
     conversion: Optional[str] = None
 
-    #: An optional format specifier
+    #: An optional format specifier following the `format specification mini-language
+    #: <https://docs.python.org/3/library/string.html#formatspec>`_.
     format_spec: Optional[Sequence[BaseFormattedStringContent]] = None
 
+    #: Whitespace after the opening curly brace (``{``), but before the ``expression``.
     whitespace_before_expression: BaseParenthesizableWhitespace = SimpleWhitespace("")
+
+    #: Whitespace after the ``expression``, ``conversion``, and ``format_spec``, but
+    #: before the closing curly brace (``}``).
     whitespace_after_expression: BaseParenthesizableWhitespace = SimpleWhitespace("")
 
     def _validate(self) -> None:
@@ -646,13 +710,59 @@ class FormattedStringExpression(BaseFormattedStringContent):
 @add_slots
 @dataclass(frozen=True)
 class FormattedString(_BasePrefixedString):
-    #: Sequence of formatted string parts
+    """
+    An "f-string". These formatted strings are string literals prefixed by the letter
+    "f". An f-string may contain interpolated expressions inside curly braces (``{`` and
+    ``}``).
+
+    F-strings are defined in `PEP 498`_ and documented in `Python's language
+    reference
+    <https://docs.python.org/3/reference/lexical_analysis.html#formatted-string-literals>`__.
+
+    >>> import libcst as cst
+    >>> cst.parse_expression('f"ab{cd}ef"')
+    FormattedString(
+        parts=[
+            FormattedStringText(
+                value='ab',
+            ),
+            FormattedStringExpression(
+                expression=Name(
+                    value='cd',
+                    lpar=[],
+                    rpar=[],
+                ),
+                conversion=None,
+                format_spec=None,
+                whitespace_before_expression=SimpleWhitespace(
+                    value='',
+                ),
+                whitespace_after_expression=SimpleWhitespace(
+                    value='',
+                ),
+            ),
+            FormattedStringText(
+                value='ef',
+            ),
+        ],
+        start='f"',
+        end='"',
+        lpar=[],
+        rpar=[],
+    )
+
+    .. _PEP 498: https://www.python.org/dev/peps/pep-0498/#specification
+    """
+
+    #: A formatted string is composed as a series of :class:`FormattedStringText` and
+    #: :class:`FormattedStringExpression` parts.
     parts: Sequence[BaseFormattedStringContent]
 
-    #: String start indicator
+    #: The string prefix and the leading quote, such as ``f"``, ``F'``, ``fr"``, or
+    #: ``f"""``.
     start: str = 'f"'
 
-    #: String end indicator
+    #: The trailing quote. This must match the type of quote used in ``start``.
     end: str = '"'
 
     lpar: Sequence[LeftParen] = ()
@@ -704,6 +814,17 @@ class FormattedString(_BasePrefixedString):
 @add_slots
 @dataclass(frozen=True)
 class ConcatenatedString(BaseString):
+    """
+    Represents an implicitly concatenated string, such as::
+
+        "abc" "def" == "abcdef"
+
+    .. warning::
+       This is different from two strings joined in a :class:`BinaryOperation` with an
+       :class:`Add` operator, and is `sometimes viewed as an antifeature of Python
+       <https://lwn.net/Articles/551426/>`_.
+    """
+
     #: String on the left of the concatenation.
     left: Union[SimpleString, FormattedString]
 
@@ -714,7 +835,7 @@ class ConcatenatedString(BaseString):
     #: Sequence of parenthesis for precidence dictation.
     rpar: Sequence[RightParen] = ()
 
-    #: Whitespace between strings.
+    #: Whitespace between the ``left`` and ``right`` substrings.
     whitespace_between: BaseParenthesizableWhitespace = SimpleWhitespace("")
 
     def _safe_to_use_with_word_operator(self, position: ExpressionPosition) -> bool:
@@ -777,7 +898,7 @@ class ComparisonTarget(CSTNode):
     #: A comparison operator such as ``<``, ``>=``, ``==``, ``is``, or ``in``.
     operator: BaseCompOp
 
-    #: The right hand side of the comparison operation
+    #: The right hand side of the comparison operation.
     comparator: BaseExpression
 
     def _validate(self) -> None:
@@ -1108,7 +1229,8 @@ class Attribute(BaseAssignTargetExpression, BaseDelTargetExpression):
 @dataclass(frozen=True)
 class Index(CSTNode):
     """
-    Any index as passed to a subscript.
+    Any index as passed to a :class:`Subscript`. In ``x[2]``, this would be the ``2``
+    value.
     """
 
     #: The index value itself.
@@ -1125,9 +1247,10 @@ class Index(CSTNode):
 @dataclass(frozen=True)
 class Slice(CSTNode):
     """
-    Any slice operation in a subscript, such as ``1:``, ``2:3:4``, etc. Note
-    that the grammar does NOT allow parenthesis around a slice so they
-    are not supported here.
+    Any slice operation in a :class:`Subscript`, such as ``1:``, ``2:3:4``, etc.
+
+    Note that the grammar does NOT allow parenthesis around a slice so they are not
+    supported here.
     """
 
     #: The lower bound in the slice, if present
@@ -1176,15 +1299,17 @@ class Slice(CSTNode):
 @dataclass(frozen=True)
 class ExtSlice(CSTNode):
     """
-    A list of slices, such as ``1:2, 3``. Not used in the stdlib but still
-    valid. This also does not allow for wrapping parenthesis.
-    ``x``.
+    Part of a sequence of slices in a :class:`Subscript`, such as ``1:2, 3``. This is
+    not used in Python's standard library, but it is used in some third-party
+    libraries. For example, `NumPy uses it to select values and ranges from
+    multi-dimensional arrays
+    <https://docs.scipy.org/doc/numpy-1.10.1/user/basics.indexing.html>`_.
     """
 
     #: A slice or index that is part of the extslice.
     slice: Union[Index, Slice]
 
-    #: Separating comma, with any whitespace it owns.
+    #: A separating comma, with any whitespace it owns.
     comma: Union[Comma, MaybeSentinel] = MaybeSentinel.DEFAULT
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "ExtSlice":
@@ -1208,26 +1333,27 @@ class ExtSlice(CSTNode):
 @dataclass(frozen=True)
 class Subscript(BaseAssignTargetExpression, BaseDelTargetExpression):
     """
-    A subscript reference such as ``x[2]``.
+    A indexed subscript reference (:class:`Index`) such as ``x[2]``, a :class:`Slice`
+    such as ``x[1:-1]``, or an extended slice (:class:`ExtSlice`) such as ``x[1:2, 3]``.
     """
 
-    #: Expression which, when evaluated, will be subscripted.
+    #: The left-hand expression which, when evaluated, will be subscripted, such as
+    #: ``x`` in ``x[2]``.
     value: BaseExpression
 
-    #: Subscript to take on the value.
+    #: The :class:`Index`, :class:`Slice`, or :class:`ExtSlice` to extract from the
+    #: ``value``.
     slice: Union[Index, Slice, Sequence[ExtSlice]]
 
-    #: Open bracket surrounding the slice
     lbracket: LeftSquareBracket = LeftSquareBracket()
-
-    #: Close bracket surrounding the slice
+    #: Brackets after the ``value`` surrounding the ``slice``.
     rbracket: RightSquareBracket = RightSquareBracket()
 
     lpar: Sequence[LeftParen] = ()
-
     #: Sequence of parenthesis for precedence dictation.
     rpar: Sequence[RightParen] = ()
 
+    #: Whitespace after the ``value``, but before the ``lbracket``.
     whitespace_after_value: BaseParenthesizableWhitespace = SimpleWhitespace("")
 
     def _validate(self) -> None:
@@ -2169,7 +2295,7 @@ class Yield(BaseExpression):
 
     To learn more about the ways that yield can be used in generators, refer to
     `Python's language reference
-    <https://docs.python.org/3/reference/expressions.html#yieldexpr>`_.
+    <https://docs.python.org/3/reference/expressions.html#yieldexpr>`__.
     """
 
     #: The value yielded from the generator, in the case of a :class:`From` clause, a
@@ -2476,6 +2602,24 @@ class StarredDictElement(BaseDictElement):
 @add_slots
 @dataclass(frozen=True)
 class Tuple(BaseAssignTargetExpression, BaseDelTargetExpression):
+    """
+    An immutable literal tuple. Tuples are often (but not always) parenthesized.
+
+    ::
+
+        Tuple([
+            Element(Integer("1")),
+            Element(Integer("2")),
+            StarredElement(Name("others")),
+        ])
+
+    generates the following code::
+
+        (1, 2, *others)
+    """
+
+    #: A sequence containing all the :class:`Element` and :class:`StarredElement` nodes
+    #: in the tuple.
     elements: Sequence[BaseElement]
 
     lpar: Sequence[LeftParen] = (LeftParen(),)
@@ -2543,14 +2687,12 @@ class Tuple(BaseAssignTargetExpression, BaseDelTargetExpression):
 
 class BaseList(BaseExpression, ABC):
     """
-    A Base class for List and ListComp, which both result in a list object when
-    evaluated.
+    A base class for :class:`List` and :class:`ListComp`, which both result in a list
+    object when evaluated.
     """
 
-    #: Open bracket surrounding the list.
     lbracket: LeftSquareBracket = LeftSquareBracket()
-
-    #: Close bracket surrounding the list.
+    #: Brackets surrounding the list.
     rbracket: RightSquareBracket = RightSquareBracket()
 
     lpar: Sequence[LeftParen] = ()
@@ -2570,10 +2712,34 @@ class BaseList(BaseExpression, ABC):
 @add_slots
 @dataclass(frozen=True)
 class List(BaseList, BaseAssignTargetExpression, BaseDelTargetExpression):
+    """
+    A mutable literal list.
+
+    ::
+
+        List([
+            Element(Integer("1")),
+            Element(Integer("2")),
+            StarredElement(Name("others")),
+        ])
+
+    generates the following code::
+
+        [1, 2, *others]
+
+    List comprehensions are represented with a :class:`ListComp` node.
+    """
+
+    #: A sequence containing all the :class:`Element` and :class:`StarredElement` nodes
+    #: in the list.
     elements: Sequence[BaseElement]
+
     lbracket: LeftSquareBracket = LeftSquareBracket()
+    #: Brackets surrounding the list.
     rbracket: RightSquareBracket = RightSquareBracket()
+
     lpar: Sequence[LeftParen] = ()
+    #: Sequence of parenthesis for precedence dictation.
     rpar: Sequence[RightParen] = ()
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "List":
@@ -2605,10 +2771,8 @@ class _BaseSetOrDict(BaseExpression, ABC):
     shouldn't be exported.
     """
 
-    #: Open brace surrounding the list.
     lbrace: LeftCurlyBrace = LeftCurlyBrace()
-
-    #: Close brace surrounding the list.
+    #: Braces surrounding the set or dict.
     rbrace: RightCurlyBrace = RightCurlyBrace()
 
     lpar: Sequence[LeftParen] = ()
@@ -2628,17 +2792,42 @@ class _BaseSetOrDict(BaseExpression, ABC):
 
 class BaseSet(_BaseSetOrDict, ABC):
     """
-    An abstract base class for :class:`Set` and :class:`SetComp`.
+    An abstract base class for :class:`Set` and :class:`SetComp`, which both result in
+    a set object when evaluated.
     """
 
 
 @add_slots
 @dataclass(frozen=True)
 class Set(BaseSet):
+    """
+    A mutable literal set.
+
+    ::
+
+        Set([
+            Element(Integer("1")),
+            Element(Integer("2")),
+            StarredElement(Name("others")),
+        ])
+
+    generates the following code::
+
+        {1, 2, *others}
+
+    Set comprehensions are represented with a :class:`SetComp` node.
+    """
+
+    #: A sequence containing all the :class:`Element` and :class:`StarredElement` nodes
+    #: in the set.
     elements: Sequence[BaseElement]
+
     lbrace: LeftCurlyBrace = LeftCurlyBrace()
+    #: Braces surrounding the set.
     rbrace: RightCurlyBrace = RightCurlyBrace()
+
     lpar: Sequence[LeftParen] = ()
+    #: Sequence of parenthesis for precedence dictation.
     rpar: Sequence[RightParen] = ()
 
     def _validate(self) -> None:
@@ -2672,7 +2861,8 @@ class Set(BaseSet):
 
 class BaseDict(_BaseSetOrDict, ABC):
     """
-    An abstract base class for :class:`Dict` and :class:`DictComp`.
+    An abstract base class for :class:`Dict` and :class:`DictComp`, which both result in
+    a dict object when evaluated.
     """
 
 
@@ -2680,8 +2870,8 @@ class BaseDict(_BaseSetOrDict, ABC):
 @dataclass(frozen=True)
 class Dict(BaseDict):
     """
-    A dictionary. Key-value pairs are stored in ``elements`` using :class:`DictElement`
-    nodes.
+    A literal dictionary. Key-value pairs are stored in ``elements`` using
+    :class:`DictElement` nodes.
 
     It's possible to expand one dictionary into another, as in ``{k: v, **expanded}``.
     Expanded elements are stored as :class:`StarredDictElement` nodes.
@@ -2729,8 +2919,8 @@ class Dict(BaseDict):
 @dataclass(frozen=True)
 class CompFor(CSTNode):
     """
-    One `for` clause in a `BaseComprehension`, or a nested hierarchy of `for`
-    clauses.
+    One ``for`` clause in a :class:`BaseComprehension`, or a nested hierarchy of
+    ``for`` clauses.
 
     Nested loops in comprehensions are difficult to get right, but they can be thought
     of as a flat representation of nested clauses.
@@ -2761,19 +2951,50 @@ class CompFor(CSTNode):
                 ),
             ),
         )
+
+    Normal ``for`` statements are provided by :class:`For`.
     """
 
+    #: The target to assign a value to in each iteration of the loop. This is different
+    #: from :attr:`GeneratorExp.elt`, :attr:`ListComp.elt`, :attr:`SetComp.elt`, and
+    #: ``key`` and ``value`` in :class:`DictComp`, because it doesn't directly effect
+    #: the value of resulting generator, list, set, or dict.
     target: BaseAssignTargetExpression
+
+    #: The value to iterate over. Every value in ``iter`` is stored in ``target``.
     iter: BaseExpression
+
+    #: Zero or more conditional clauses that control this loop. If any of these tests
+    #: fail, the ``target`` item is skipped.
+    #:
+    #: ::
+    #:
+    #:     if a if b if c
+    #:
+    #: has similar semantics to::
+    #:
+    #:     if a and b and c
     ifs: Sequence["CompIf"] = ()
+
+    #: Another :class:`CompFor` node used to form nested loops. Nested comprehensions
+    #: can be useful, but they tend to be difficult to read and write. As a result they
+    #: are uncommon.
     inner_for_in: Optional["CompFor"] = None
 
-    # Optional async modifier.
+    #: An optional async modifier that appears before the ``for`` keyword.
     asynchronous: Optional[Asynchronous] = None
 
+    #: Whitespace that appears at the beginning of this node, before the ``for`` and
+    #: ``async`` keywords.
     whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+
+    #: Whitespace appearing after the ``for`` keyword, but before the ``target``.
     whitespace_after_for: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+
+    #: Whitespace appearing after the ``target``, but before the ``in`` keyword.
     whitespace_before_in: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+
+    #: Whitespace appearing after the ``in`` keyword, but before the ``iter``.
     whitespace_after_in: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
 
     def _validate(self) -> None:
@@ -2869,8 +3090,20 @@ class CompFor(CSTNode):
 @add_slots
 @dataclass(frozen=True)
 class CompIf(CSTNode):
+    """
+    A conditional clause in a :class:`CompFor`, used as part of a generator or
+    comprehension expression.
+
+    If the ``test`` fails, the current element in the :class:`CompFor` will be skipped.
+    """
+
+    #: An expression to evaluate. When interpreted, Python will coerce it to a boolean.
     test: BaseExpression
+
+    #: Whitespace before the ``if`` keyword.
     whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+
+    #: Whitespace after the ``if`` keyword, but before the ``test`` expression.
     whitespace_before_test: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
 
     def _validate(self) -> None:
@@ -2899,14 +3132,20 @@ class CompIf(CSTNode):
 
 
 class BaseComp(BaseExpression, ABC):
+    """
+    A base class for all comprehension and generator expressions, including
+    :class:`GeneratorExp`, :class:`ListComp`, :class:`SetComp`, and :class:`DictComp`.
+    """
+
     # pyre-fixme[13]: Attribute `for_in` is never initialized.
     for_in: CompFor
 
 
 class BaseSimpleComp(BaseComp, ABC):
     """
-    The base class for `ListComp`, `SetComp`, and `Generator`. `DictComp` is not a
-    `BaseSimpleComp`, because it uses `key` and `value`.
+    The base class for :class:`ListComp`, :class:`SetComp`, and :class:`Generator`.
+    :class:`DictComp` is not a :class:`BaseSimpleComp`, because it uses ``key`` and
+    ``value``.
     """
 
     #: The expression evaluated during each iteration of the comprehension. This
@@ -2938,9 +3177,26 @@ class BaseSimpleComp(BaseComp, ABC):
 @add_slots
 @dataclass(frozen=True)
 class GeneratorExp(BaseSimpleComp):
+    """
+    A generator expression. ``elt`` represents the value yielded for each item in
+    :attr:`CompFor.iter`.
+
+    All ``for ... in ...`` and ``if ...`` clauses are stored as a recursive
+    :class:`CompFor` data structure inside ``for_in``.
+    """
+
+    #: The expression evaluated and yielded during each iteration of the generator.
     elt: BaseAssignTargetExpression
+
+    #: The ``for ... in ... if ...`` clause that comes after ``elt``. This may be a
+    #: nested structure for nested comprehensions. See :class:`CompFor` for details.
     for_in: CompFor
+
     lpar: Sequence[LeftParen] = (LeftParen(),)
+    #: Sequence of parentheses for precedence dictation. Generator expressions must
+    #: always be parenthesized. However, if a generator expression is the only argument
+    #: inside a function call, the enclosing :class:`Call` node may own the parentheses
+    #: instead.
     rpar: Sequence[RightParen] = (RightParen(),)
 
     def _safe_to_use_with_word_operator(self, position: ExpressionPosition) -> bool:
@@ -2972,11 +3228,27 @@ class GeneratorExp(BaseSimpleComp):
 @add_slots
 @dataclass(frozen=True)
 class ListComp(BaseList, BaseSimpleComp):
+    """
+    A list comprehension. ``elt`` represents the value stored for each item in
+    :attr:`CompFor.iter`.
+
+    All ``for ... in ...`` and ``if ...`` clauses are stored as a recursive
+    :class:`CompFor` data structure inside ``for_in``.
+    """
+
+    #: The expression evaluated and stored during each iteration of the comprehension.
     elt: BaseAssignTargetExpression
+
+    #: The ``for ... in ... if ...`` clause that comes after ``elt``. This may be a
+    #: nested structure for nested comprehensions. See :class:`CompFor` for details.
     for_in: CompFor
+
     lbracket: LeftSquareBracket = LeftSquareBracket()
+    #: Brackets surrounding the list comprehension.
     rbracket: RightSquareBracket = RightSquareBracket()
+
     lpar: Sequence[LeftParen] = ()
+    #: Sequence of parenthesis for precedence dictation.
     rpar: Sequence[RightParen] = ()
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "ListComp":
@@ -2998,11 +3270,27 @@ class ListComp(BaseList, BaseSimpleComp):
 @add_slots
 @dataclass(frozen=True)
 class SetComp(BaseSet, BaseSimpleComp):
+    """
+    A set comprehension. ``elt`` represents the value stored for each item in
+    :attr:`CompFor.iter`.
+
+    All ``for ... in ...`` and ``if ...`` clauses are stored as a recursive
+    :class:`CompFor` data structure inside ``for_in``.
+    """
+
+    #: The expression evaluated and stored during each iteration of the comprehension.
     elt: BaseAssignTargetExpression
+
+    #: The ``for ... in ... if ...`` clause that comes after ``elt``. This may be a
+    #: nested structure for nested comprehensions. See :class:`CompFor` for details.
     for_in: CompFor
+
     lbrace: LeftCurlyBrace = LeftCurlyBrace()
+    #: Braces surrounding the set comprehension.
     rbrace: RightCurlyBrace = RightCurlyBrace()
+
     lpar: Sequence[LeftParen] = ()
+    #: Sequence of parenthesis for precedence dictation.
     rpar: Sequence[RightParen] = ()
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "SetComp":
@@ -3032,7 +3320,10 @@ class DictComp(BaseDict, BaseComp):
     :class:`CompFor` data structure inside ``for_in``.
     """
 
+    #: The key inserted into the dictionary during each iteration of the comprehension.
     key: BaseAssignTargetExpression
+    #: The value associated with the ``key`` inserted into the dictionary during each
+    #: iteration of the comprehension.
     value: BaseAssignTargetExpression
 
     #: The ``for ... in ... if ...`` clause that lexically comes after ``key`` and
@@ -3041,8 +3332,11 @@ class DictComp(BaseDict, BaseComp):
     for_in: CompFor
 
     lbrace: LeftCurlyBrace = LeftCurlyBrace()
+    #: Braces surrounding the dict comprehension.
     rbrace: RightCurlyBrace = RightCurlyBrace()
+
     lpar: Sequence[LeftParen] = ()
+    #: Sequence of parenthesis for precedence dictation.
     rpar: Sequence[RightParen] = ()
 
     #: Whitespace after the key, but before the colon in ``key : value``.

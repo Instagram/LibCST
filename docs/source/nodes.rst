@@ -135,6 +135,7 @@ Comprehensions
 ^^^^^^^^^^^^^^
 
 .. autoclass:: libcst.BaseComp
+.. autoclass:: libcst.BaseSimpleComp
 
 .. autoclass:: libcst.GeneratorExp
 .. autoclass:: libcst.ListComp

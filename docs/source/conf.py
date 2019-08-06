@@ -46,9 +46,10 @@ release = ''
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.autosummary',
-    'sphinx.ext.todo',
     'sphinx.ext.githubpages',
     'sphinx.ext.graphviz',
+    'sphinx.ext.intersphinx',
+    'sphinx.ext.todo',
     'sphinx_rtd_theme',
     'nbsphinx',
     'sphinx.ext.mathjax',
@@ -192,6 +193,8 @@ autodoc_default_options = {
     "members": True,
     "undoc-members": True,
 }
+
+intersphinx_mapping = {'python': ('https://docs.python.org/3', None)}
 
 # -- Options for todo extension ----------------------------------------------
 
