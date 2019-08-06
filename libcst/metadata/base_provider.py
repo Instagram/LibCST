@@ -14,12 +14,17 @@ from typing import (
     MutableMapping,
     Type,
     TypeVar,
+    cast,
 )
 
 from libcst._batched_visitor import BatchableCSTVisitor
 from libcst._exceptions import MetadataException
 from libcst._visitors import CSTVisitor
-from libcst.metadata.dependent import _UNDEFINED_DEFAULT, _MetadataDependent
+from libcst.metadata.dependent import (
+    _T as _MetadataT,
+    _UNDEFINED_DEFAULT,
+    _MetadataDependent,
+)
 
 
 if TYPE_CHECKING:
@@ -62,6 +67,7 @@ class BaseMetadataProvider(_MetadataDependent, Generic[_T]):
 
         This is a hook for metadata resolver and should not be called directly.
         """
+
         self._computed = {}
         # Resolve metadata dependencies for this provider
         with self.resolve(wrapper):
@@ -85,18 +91,18 @@ class BaseMetadataProvider(_MetadataDependent, Generic[_T]):
 
     def get_metadata(
         self,
-        key: Type["BaseMetadataProvider[_T]"],
+        key: Type["BaseMetadataProvider[_MetadataT]"],
         node: "CSTNode",
-        default: _T = _UNDEFINED_DEFAULT,
-    ) -> _T:
+        default: _MetadataT = _UNDEFINED_DEFAULT,
+    ) -> _MetadataT:
         """
         Override to query from self._computed in addition to self.metadata.
         """
         if key is type(self):
             if default is not _UNDEFINED_DEFAULT:
-                return self._computed.get(node, default)
+                return cast(_MetadataT, self._computed.get(node, default))
             else:
-                return self._computed[node]
+                return cast(_MetadataT, self._computed[node])
 
         return super().get_metadata(key, node, default)
 

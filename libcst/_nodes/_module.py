@@ -96,7 +96,7 @@ class Module(CSTNode):
             wrapper = MetadataWrapper(self)
             result = wrapper.visit(visitor)
         else:
-            result = CSTNode.visit(self, visitor)
+            result = super(Module, self).visit(visitor)
 
         if isinstance(result, RemovalSentinel):
             return self.with_changes(body=(), header=(), footer=())
