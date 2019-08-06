@@ -763,7 +763,7 @@ class FormattedString(_BasePrefixedString):
     start: str = 'f"'
 
     #: The trailing quote. This must match the type of quote used in ``start``.
-    end: str = '"'
+    end: Literal['"', "'", '"""', "'''"] = '"'
 
     lpar: Sequence[LeftParen] = ()
     #: Sequence of parenthesis for precidence dictation.
