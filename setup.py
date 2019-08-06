@@ -15,10 +15,12 @@ with open(path.join(this_directory, "README.rst"), encoding="utf-8") as f:
 
 setuptools.setup(
     name="libcst",
-    description="A concrete syntax tree with AST-like properties for Python 3.7.",
+    description="A concrete syntax tree with AST-like properties for Python 3.7 programs.",
     long_description=long_description,
-    long_description_content_type="text/markdown",
-    version="0.1.dev0",
+    long_description_content_type="text/x-rst",
+    version="0.1",
+    url="https://github.com/Instagram/LibCST",
+    license="MIT",
     packages=setuptools.find_packages(),
     test_suite="libcst",
     python_requires=">=3.6",
@@ -40,4 +42,10 @@ setuptools.setup(
             "sphinx-rtd-theme",
         ]
     },
+    classifiers=[
+        "License :: OSI Approved :: MIT License",
+        "Topic :: Software Development :: Libraries",
+        "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.7",
+    ],
 )

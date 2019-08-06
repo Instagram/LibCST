@@ -1,0 +1,1 @@
+include README.rst LICENSE CODE_OF_CONDUCT.md CONTRIBUTING.md requirements.txt docs/source/*.rst

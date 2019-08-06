@@ -21,12 +21,7 @@ from typing_extensions import Literal
 
 from libcst._add_slots import add_slots
 from libcst._maybe_sentinel import MaybeSentinel
-from libcst._nodes._base import (
-    AnnotationIndicatorSentinel,
-    CSTCodegenError,
-    CSTNode,
-    CSTValidationError,
-)
+from libcst._nodes._base import CSTCodegenError, CSTNode, CSTValidationError
 from libcst._nodes._internal import (
     CodegenState,
     visit_optional,
@@ -1295,32 +1290,19 @@ class Annotation(CSTNode):
     """
 
     #: The annotation's value itself. This is the part of the annotation after the
-    #: colon or arrow ``indicator`` field.
+    #: colon or arrow.
     annotation: Union[Name, Attribute, BaseString, Subscript]
-
-    #: The colon (``:``) or arrow (``->``) before the type name. The sentinel value
-    #: defaults to the correct token based on it's location in the tree.
-    indicator: Union[
-        str, AnnotationIndicatorSentinel
-    ] = AnnotationIndicatorSentinel.DEFAULT
 
     whitespace_before_indicator: Union[
         BaseParenthesizableWhitespace, MaybeSentinel
     ] = MaybeSentinel.DEFAULT
     whitespace_after_indicator: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
 
-    def _validate(self) -> None:
-        if isinstance(self.indicator, str) and self.indicator not in [":", "->"]:
-            raise CSTValidationError(
-                "An Annotation indicator must be one of ':', '->'."
-            )
-
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Annotation":
         return Annotation(
             whitespace_before_indicator=visit_sentinel(
                 "whitespace_before_indicator", self.whitespace_before_indicator, visitor
             ),
-            indicator=self.indicator,
             whitespace_after_indicator=visit_required(
                 "whitespace_after_indicator", self.whitespace_after_indicator, visitor
             ),
@@ -1331,26 +1313,23 @@ class Annotation(CSTNode):
         self, state: CodegenState, default_indicator: Optional[str] = None
     ) -> None:
         # First, figure out the indicator which tells us default whitespace.
-        indicator = self.indicator
-        if isinstance(indicator, AnnotationIndicatorSentinel):
-            if default_indicator is None:
-                raise CSTCodegenError(
-                    "Must specify a concrete default_indicator if default used on indicator."
-                )
-            indicator = default_indicator
+        if default_indicator is None:
+            raise CSTCodegenError(
+                "Must specify a concrete default_indicator if default used on indicator."
+            )
 
         # Now, output the whitespace
         whitespace_before_indicator = self.whitespace_before_indicator
         if isinstance(whitespace_before_indicator, BaseParenthesizableWhitespace):
             whitespace_before_indicator._codegen(state)
         elif isinstance(whitespace_before_indicator, MaybeSentinel):
-            if indicator == "->":
+            if default_indicator == "->":
                 state.add_token(" ")
         else:
             raise Exception("Logic error!")
 
         # Now, output the indicator and the rest of the annotation
-        state.add_token(indicator)
+        state.add_token(default_indicator)
         self.whitespace_after_indicator._codegen(state)
 
         with state.record_syntactic_position(self):
@@ -1423,12 +1402,6 @@ class Param(CSTNode):
             )
         if isinstance(self.star, str) and self.star not in ("", "*", "**"):
             raise CSTValidationError("Must specify either '', '*' or '**' for star.")
-        if (
-            self.annotation is not None
-            and isinstance(self.annotation.indicator, str)
-            and self.annotation.indicator != ":"
-        ):
-            raise CSTValidationError("A param Annotation must be denoted with a ':'.")
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Param":
         return Param(

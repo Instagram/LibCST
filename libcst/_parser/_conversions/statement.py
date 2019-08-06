@@ -279,7 +279,6 @@ def convert_annassign(config: ParserConfig, children: Sequence[Any]) -> Any:
             whitespace_before_indicator=parse_simple_whitespace(
                 config, colon.whitespace_before
             ),
-            indicator=colon.string,
             whitespace_after_indicator=parse_simple_whitespace(
                 config, colon.whitespace_after
             ),
@@ -1128,7 +1127,6 @@ def convert_funcdef_annotation(config: ParserConfig, children: Sequence[Any]) ->
         whitespace_before_indicator=parse_parenthesizable_whitespace(
             config, arrow.whitespace_before
         ),
-        indicator="->",
         whitespace_after_indicator=parse_parenthesizable_whitespace(
             config, arrow.whitespace_after
         ),

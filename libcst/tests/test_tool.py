@@ -36,7 +36,6 @@ class PrettyPrintNodesTest(UnitTest):
                             lpar=[],
                             rpar=[],
                           ),
-                          indicator=':',
                           whitespace_before_indicator=SimpleWhitespace(
                             value='',
                           ),
@@ -131,7 +130,6 @@ class PrettyPrintNodesTest(UnitTest):
                       lpar=[],
                       rpar=[],
                     ),
-                    indicator='->',
                     whitespace_before_indicator=SimpleWhitespace(
                       value=' ',
                     ),
@@ -201,7 +199,6 @@ class PrettyPrintNodesTest(UnitTest):
                             lpar=[],
                             rpar=[],
                           ),
-                          indicator=':',
                         ),
                         equal=MaybeSentinel.DEFAULT,
                         default=None,
@@ -243,7 +240,6 @@ class PrettyPrintNodesTest(UnitTest):
                       lpar=[],
                       rpar=[],
                     ),
-                    indicator='->',
                   ),
                   asynchronous=None,
                 ),
@@ -285,7 +281,6 @@ class PrettyPrintNodesTest(UnitTest):
                           annotation=Name(
                             value='str',
                           ),
-                          indicator=':',
                           whitespace_before_indicator=SimpleWhitespace(
                             value='',
                           ),
@@ -326,7 +321,6 @@ class PrettyPrintNodesTest(UnitTest):
                     annotation=Name(
                       value='None',
                     ),
-                    indicator='->',
                     whitespace_before_indicator=SimpleWhitespace(
                       value=' ',
                     ),
@@ -366,7 +360,6 @@ class PrettyPrintNodesTest(UnitTest):
                           annotation=Name(
                             value='str',
                           ),
-                          indicator=':',
                         ),
                         star='',
                       ),
@@ -393,7 +386,6 @@ class PrettyPrintNodesTest(UnitTest):
                     annotation=Name(
                       value='None',
                     ),
-                    indicator='->',
                   ),
                 ),
               ],

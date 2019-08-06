@@ -515,16 +515,6 @@ class FunctionDefCreationTest(CSTNodeTest):
                 "code": "@ bar (  )\n",
                 "expected_position": CodeRange.create((1, 0), (1, 10)),
             },
-            {
-                "node": cst.Annotation(
-                    indicator=":",
-                    whitespace_before_indicator=cst.SimpleWhitespace("  "),
-                    whitespace_after_indicator=cst.SimpleWhitespace("  "),
-                    annotation=cst.Name("str"),
-                ),
-                "code": "  :  str",
-                "expected_position": CodeRange.create((1, 5), (1, 8)),
-            },
             # Parameters
             {
                 "node": cst.Parameters(
@@ -719,31 +709,6 @@ class FunctionDefCreationTest(CSTNodeTest):
                 ),
                 "Cannot have parens around decorator in a Decorator",
             ),
-            # Validate annotations
-            (
-                lambda: cst.FunctionDef(
-                    cst.Name("foo"),
-                    cst.Parameters(),
-                    cst.SimpleStatementSuite((cst.Pass(),)),
-                    returns=cst.Annotation(cst.Name("str"), indicator=":"),
-                ),
-                "return Annotation must be denoted with a '->'",
-            ),
-            (
-                lambda: cst.FunctionDef(
-                    cst.Name("foo"),
-                    cst.Parameters(
-                        params=(
-                            cst.Param(
-                                cst.Name("baz"),
-                                cst.Annotation(cst.Name("int"), indicator="->"),
-                            ),
-                        )
-                    ),
-                    cst.SimpleStatementSuite((cst.Pass(),)),
-                ),
-                "param Annotation must be denoted with a ':'",
-            ),
         )
     )
     def test_invalid(
@@ -772,7 +737,6 @@ class FunctionDefParserTest(CSTNodeTest):
                     cst.SimpleStatementSuite((cst.Pass(),)),
                     returns=cst.Annotation(
                         cst.Name("str"),
-                        indicator="->",
                         whitespace_before_indicator=cst.SimpleWhitespace(" "),
                     ),
                 ),
@@ -797,7 +761,6 @@ class FunctionDefParserTest(CSTNodeTest):
                     asynchronous=cst.Asynchronous(),
                     returns=cst.Annotation(
                         cst.Name("int"),
-                        indicator="->",
                         whitespace_before_indicator=cst.SimpleWhitespace(" "),
                     ),
                 ),
@@ -833,7 +796,6 @@ class FunctionDefParserTest(CSTNodeTest):
                                 cst.Name("bar"),
                                 cst.Annotation(
                                     cst.Name("str"),
-                                    indicator=":",
                                     whitespace_before_indicator=cst.SimpleWhitespace(
                                         ""
                                     ),
@@ -847,7 +809,6 @@ class FunctionDefParserTest(CSTNodeTest):
                                 cst.Name("baz"),
                                 cst.Annotation(
                                     cst.Name("int"),
-                                    indicator=":",
                                     whitespace_before_indicator=cst.SimpleWhitespace(
                                         ""
                                     ),
@@ -897,7 +858,6 @@ class FunctionDefParserTest(CSTNodeTest):
                                 cst.Name("bar"),
                                 cst.Annotation(
                                     cst.Name("str"),
-                                    indicator=":",
                                     whitespace_before_indicator=cst.SimpleWhitespace(
                                         ""
                                     ),
@@ -913,7 +873,6 @@ class FunctionDefParserTest(CSTNodeTest):
                                 cst.Name("baz"),
                                 cst.Annotation(
                                     cst.Name("int"),
-                                    indicator=":",
                                     whitespace_before_indicator=cst.SimpleWhitespace(
                                         ""
                                     ),
@@ -938,7 +897,6 @@ class FunctionDefParserTest(CSTNodeTest):
                                 cst.Name("bar"),
                                 cst.Annotation(
                                     cst.Name("str"),
-                                    indicator=":",
                                     whitespace_before_indicator=cst.SimpleWhitespace(
                                         ""
                                     ),
@@ -955,7 +913,6 @@ class FunctionDefParserTest(CSTNodeTest):
                                 cst.Name("baz"),
                                 cst.Annotation(
                                     cst.Name("int"),
-                                    indicator=":",
                                     whitespace_before_indicator=cst.SimpleWhitespace(
                                         ""
                                     ),
@@ -1004,7 +961,6 @@ class FunctionDefParserTest(CSTNodeTest):
                                 cst.Name("bar"),
                                 cst.Annotation(
                                     cst.Name("str"),
-                                    indicator=":",
                                     whitespace_before_indicator=cst.SimpleWhitespace(
                                         ""
                                     ),
@@ -1020,7 +976,6 @@ class FunctionDefParserTest(CSTNodeTest):
                                 cst.Name("baz"),
                                 cst.Annotation(
                                     cst.Name("int"),
-                                    indicator=":",
                                     whitespace_before_indicator=cst.SimpleWhitespace(
                                         ""
                                     ),
@@ -1035,7 +990,6 @@ class FunctionDefParserTest(CSTNodeTest):
                                 cst.Name("biz"),
                                 cst.Annotation(
                                     cst.Name("str"),
-                                    indicator=":",
                                     whitespace_before_indicator=cst.SimpleWhitespace(
                                         ""
                                     ),
@@ -1081,7 +1035,6 @@ class FunctionDefParserTest(CSTNodeTest):
                                 cst.Name("bar"),
                                 cst.Annotation(
                                     cst.Name("str"),
-                                    indicator=":",
                                     whitespace_before_indicator=cst.SimpleWhitespace(
                                         ""
                                     ),
@@ -1097,7 +1050,6 @@ class FunctionDefParserTest(CSTNodeTest):
                                 cst.Name("baz"),
                                 cst.Annotation(
                                     cst.Name("int"),
-                                    indicator=":",
                                     whitespace_before_indicator=cst.SimpleWhitespace(
                                         ""
                                     ),
@@ -1112,7 +1064,6 @@ class FunctionDefParserTest(CSTNodeTest):
                                 cst.Name("biz"),
                                 cst.Annotation(
                                     cst.Name("str"),
-                                    indicator=":",
                                     whitespace_before_indicator=cst.SimpleWhitespace(
                                         ""
                                     ),
@@ -1160,7 +1111,6 @@ class FunctionDefParserTest(CSTNodeTest):
                                 cst.Name("bar"),
                                 cst.Annotation(
                                     cst.Name("str"),
-                                    indicator=":",
                                     whitespace_before_indicator=cst.SimpleWhitespace(
                                         ""
                                     ),
@@ -1176,7 +1126,6 @@ class FunctionDefParserTest(CSTNodeTest):
                                 cst.Name("baz"),
                                 cst.Annotation(
                                     cst.Name("int"),
-                                    indicator=":",
                                     whitespace_before_indicator=cst.SimpleWhitespace(
                                         ""
                                     ),
@@ -1191,7 +1140,6 @@ class FunctionDefParserTest(CSTNodeTest):
                                 cst.Name("biz"),
                                 cst.Annotation(
                                     cst.Name("str"),
-                                    indicator=":",
                                     whitespace_before_indicator=cst.SimpleWhitespace(
                                         ""
                                     ),
@@ -1259,7 +1207,6 @@ class FunctionDefParserTest(CSTNodeTest):
                                 cst.Name("bar"),
                                 cst.Annotation(
                                     cst.Name("str"),
-                                    indicator=":",
                                     whitespace_before_indicator=cst.SimpleWhitespace(
                                         ""
                                     ),
@@ -1275,7 +1222,6 @@ class FunctionDefParserTest(CSTNodeTest):
                                 cst.Name("baz"),
                                 cst.Annotation(
                                     cst.Name("int"),
-                                    indicator=":",
                                     whitespace_before_indicator=cst.SimpleWhitespace(
                                         ""
                                     ),
@@ -1290,7 +1236,6 @@ class FunctionDefParserTest(CSTNodeTest):
                                 cst.Name("biz"),
                                 cst.Annotation(
                                     cst.Name("str"),
-                                    indicator=":",
                                     whitespace_before_indicator=cst.SimpleWhitespace(
                                         ""
                                     ),
@@ -1327,7 +1272,6 @@ class FunctionDefParserTest(CSTNodeTest):
                             cst.Name("params"),
                             cst.Annotation(
                                 cst.Name("str"),
-                                indicator=":",
                                 whitespace_before_indicator=cst.SimpleWhitespace(""),
                             ),
                             default=None,
@@ -1339,7 +1283,6 @@ class FunctionDefParserTest(CSTNodeTest):
                                 cst.Name("bar"),
                                 cst.Annotation(
                                     cst.Name("str"),
-                                    indicator=":",
                                     whitespace_before_indicator=cst.SimpleWhitespace(
                                         ""
                                     ),
@@ -1355,7 +1298,6 @@ class FunctionDefParserTest(CSTNodeTest):
                                 cst.Name("baz"),
                                 cst.Annotation(
                                     cst.Name("int"),
-                                    indicator=":",
                                     whitespace_before_indicator=cst.SimpleWhitespace(
                                         ""
                                     ),
@@ -1370,7 +1312,6 @@ class FunctionDefParserTest(CSTNodeTest):
                                 cst.Name("biz"),
                                 cst.Annotation(
                                     cst.Name("str"),
-                                    indicator=":",
                                     whitespace_before_indicator=cst.SimpleWhitespace(
                                         ""
                                     ),
@@ -1436,7 +1377,6 @@ class FunctionDefParserTest(CSTNodeTest):
                             cst.Name("params"),
                             cst.Annotation(
                                 cst.Name("str"),
-                                indicator=":",
                                 whitespace_before_indicator=cst.SimpleWhitespace(""),
                             ),
                             default=None,
@@ -1448,7 +1388,6 @@ class FunctionDefParserTest(CSTNodeTest):
                                 cst.Name("bar"),
                                 cst.Annotation(
                                     cst.Name("str"),
-                                    indicator=":",
                                     whitespace_before_indicator=cst.SimpleWhitespace(
                                         ""
                                     ),
@@ -1464,7 +1403,6 @@ class FunctionDefParserTest(CSTNodeTest):
                                 cst.Name("baz"),
                                 cst.Annotation(
                                     cst.Name("int"),
-                                    indicator=":",
                                     whitespace_before_indicator=cst.SimpleWhitespace(
                                         ""
                                     ),
@@ -1479,7 +1417,6 @@ class FunctionDefParserTest(CSTNodeTest):
                                 cst.Name("biz"),
                                 cst.Annotation(
                                     cst.Name("str"),
-                                    indicator=":",
                                     whitespace_before_indicator=cst.SimpleWhitespace(
                                         ""
                                     ),
@@ -1542,7 +1479,6 @@ class FunctionDefParserTest(CSTNodeTest):
                             cst.Name("params"),
                             cst.Annotation(
                                 cst.Name("str"),
-                                indicator=":",
                                 whitespace_before_indicator=cst.SimpleWhitespace(""),
                             ),
                             default=None,
@@ -1553,7 +1489,6 @@ class FunctionDefParserTest(CSTNodeTest):
                             cst.Name("kwparams"),
                             cst.Annotation(
                                 cst.Name("int"),
-                                indicator=":",
                                 whitespace_before_indicator=cst.SimpleWhitespace(""),
                             ),
                             default=None,
@@ -1667,7 +1602,6 @@ class FunctionDefParserTest(CSTNodeTest):
                         whitespace_before_indicator=cst.SimpleWhitespace("  "),
                         whitespace_after_indicator=cst.SimpleWhitespace("  "),
                         annotation=cst.Name("str"),
-                        indicator="->",
                     ),
                     whitespace_before_colon=cst.SimpleWhitespace(" "),
                     body=cst.SimpleStatementSuite((cst.Pass(),)),
