@@ -841,12 +841,6 @@ class AtomTest(CSTNodeTest):
             },
             {
                 "get_node": (
-                    lambda: cst.FormattedString(start="f'''", parts=(), end="''")
-                ),
-                "expected_re": "must have matching enclosing quotes",
-            },
-            {
-                "get_node": (
                     lambda: cst.ConcatenatedString(
                         cst.SimpleString(
                             '"ab"', lpar=(cst.LeftParen(),), rpar=(cst.RightParen(),)
