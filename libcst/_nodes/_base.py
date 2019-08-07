@@ -122,7 +122,7 @@ class CSTNode(ABC):
         values at runtime. Raises a TypeError is a mismatch is found.
 
         Only validates the current node, not any of it's children. For a recursive
-        version, see `validate_types_deep`.
+        version, see :func:`validate_types_deep`.
 
         If you're using a static type checker (highly recommended), this is useless.
         However, if your code doesn't use a static type checker, or if you're unable to
@@ -130,8 +130,8 @@ class CSTNode(ABC):
         validate your tree.
 
         Some (non-typing) validation is done unconditionally during the construction of
-        a node. That validation does not overlap with the work that `validate_types`
-        does.
+        a node. That validation does not overlap with the work that
+        :func:`validate_types_deep` does.
         """
         for f in fields(self):
             # TODO: remove this
@@ -148,7 +148,7 @@ class CSTNode(ABC):
 
     def validate_types_deep(self) -> None:
         """
-        Like `validate_types_shallow`, but recursively validates the whole tree.
+        Like :func:`validate_types_shallow`, but recursively validates the whole tree.
         """
         self.validate_types_shallow()
         for ch in self.children:
@@ -281,16 +281,16 @@ class CSTNode(ABC):
         Creates a new object of the same type, replacing fields with values from the
         supplied keyword arguments.
 
-        For example, to update the test of an if conditional, you could do:
+        For example, to update the test of an if conditional, you could do::
 
             def leave_If(self, old_node: cst.If) -> cst.If:
                 new_node = old_node.with_changes(test=new_conditional)
                 return new_node
 
-        `new_node` will have the same `body`, `orelse`, and whitespace fields as
-        `old_node`, but with the updated `test` field.
+        ``new_node`` will have the same ``body``, ``orelse``, and whitespace fields as
+        ``old_node``, but with the updated ``test`` field.
 
-        The accepted arguments match the arguments given to `__init__`, however there
+        The accepted arguments match the arguments given to ``__init__``, however there
         are no required or positional arguments.
 
         TODO: This API is untyped. There's probably no sane way to type it using pyre's
@@ -300,12 +300,27 @@ class CSTNode(ABC):
         return replace(self, **changes)
 
     def deep_clone(self: _CSTNodeSelfT) -> _CSTNodeSelfT:
+        """
+        Recursively clone the entire tree. The created tree is a new tree has the same
+        representation but different identity.
+
+        >>> tree = cst.parse_expression("1+2")
+
+        >>> tree.deep_clone() == tree
+        False
+
+        >>> tree == tree
+        True
+
+        >>> tree.deep_equals(tree.deep_clone())
+        True
+        """
         return cast(_CSTNodeSelfT, self.visit(_NOOPVisitor(), use_compatible=False))
 
     def deep_equals(self, other: "CSTNode") -> bool:
         """
-        Recursively inspects the entire tree under `self` and `other` to determine if
-        the two trees are equal by value.
+        Recursively inspects the entire tree under ``self`` and ``other`` to determine if
+        the two trees are equal by representation instead of identity (``==``).
         """
         from libcst._nodes._deep_equals import deep_equals as deep_equals_impl
 
