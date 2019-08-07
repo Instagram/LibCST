@@ -9,3 +9,4 @@ __pycache__/
 docs/build/
 dist/
 docs/source/.ipynb_checkpoints/
+build/
