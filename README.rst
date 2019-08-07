@@ -4,7 +4,13 @@
 
 A Concrete Syntax Tree (CST) parser and serializer library for Python
 
-.. image:: https://circleci.com/gh/Instagram/LibCST/tree/master.svg?style=svg&circle-token=f89ff46c689cf53116308db295a492d687bf5732
+|readthedocs-badge| |circleci-badge|
+
+.. |readthedocs-badge| image:: https://readthedocs.org/projects/pip/badge/?version=latest&style=flat
+   :target: https://libcst.readthedocs.io/en/latest/
+   :alt: Documentation
+
+.. |circleci-badge| image:: https://circleci.com/gh/Instagram/LibCST/tree/master.svg?style=shield&circle-token=f89ff46c689cf53116308db295a492d687bf5732
    :target: https://circleci.com/gh/Instagram/LibCST/tree/master
    :alt: CircleCI
 
@@ -23,6 +29,12 @@ Concrete Syntax Tree (CST). By carefully reorganizing and naming node types and
 fields, we've created a lossless CST that looks and feels like an AST.
 
 .. why-libcst-intro-end
+
+You can learn more about `the value that LibCST provides 
+<https://libcst.readthedocs.io/en/latest/why_libcst.html>`__ and `our 
+motivations for the project 
+<https://libcst.readthedocs.io/en/latest/motivation.html>`__
+in `our documentation <https://libcst.readthedocs.io/en/latest/index.html>`__.
 
 ::
 
@@ -86,6 +98,9 @@ BinaryOperation(
     RightParen(),
   ],
 )
+
+For a more detailed usage example, `see our documentation 
+<https://libcst.readthedocs.io/en/latest/usage.html>`__.
 
 Installation
 ------------
