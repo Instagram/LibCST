@@ -304,15 +304,16 @@ class CSTNode(ABC):
         Recursively clone the entire tree. The created tree is a new tree has the same
         representation but different identity.
 
-        ::
+        >>> tree = cst.parse_expression("1+2")
 
-            In [1]: tree = cst.parse_expression("1+2")
+        >>> tree.deep_clone() == tree
+        False
 
-            In [2]: tree.deep_clone() == tree
-            Out[2]: False
+        >>> tree == tree
+        True
 
-            In [3]: tree.deep_equals(tree.deep_clone())
-            Out[3]: True
+        >>> tree.deep_equals(tree.deep_clone())
+        True
         """
         return cast(_CSTNodeSelfT, self.visit(_NOOPVisitor(), use_compatible=False))
 
