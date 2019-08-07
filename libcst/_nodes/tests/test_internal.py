@@ -8,7 +8,7 @@ from typing import Tuple
 
 import libcst as cst
 from libcst._nodes._internal import (
-    CodegenState,
+    BasicCodegenState,
     CodePosition,
     CodeRange,
     SyntacticCodegenState,
@@ -20,38 +20,38 @@ from libcst.metadata.position_provider import (
 from libcst.testing.utils import UnitTest
 
 
-def position(state: CodegenState) -> Tuple[int, int]:
+def position(state: BasicCodegenState) -> Tuple[int, int]:
     return state.line, state.column
 
 
 class InternalTest(UnitTest):
     def test_codegen_initial_position(self) -> None:
-        state = CodegenState(" " * 4, "\n")
+        state = BasicCodegenState(" " * 4, "\n", BasicPositionProvider())
         self.assertEqual(position(state), (1, 0))
 
     def test_codegen_add_token(self) -> None:
-        state = CodegenState(" " * 4, "\n")
+        state = BasicCodegenState(" " * 4, "\n", BasicPositionProvider())
         state.add_token("1234")
         self.assertEqual(position(state), (1, 4))
 
     def test_codegen_add_tokens(self) -> None:
-        state = CodegenState(" " * 4, "\n")
+        state = BasicCodegenState(" " * 4, "\n", BasicPositionProvider())
         state.add_token("1234\n1234")
         self.assertEqual(position(state), (2, 4))
 
     def test_codegen_add_newline(self) -> None:
-        state = CodegenState(" " * 4, "\n")
+        state = BasicCodegenState(" " * 4, "\n", BasicPositionProvider())
         state.add_token("\n")
         self.assertEqual(position(state), (2, 0))
 
     def test_codegen_add_indent_tokens(self) -> None:
-        state = CodegenState(" " * 4, "\n")
+        state = BasicCodegenState(" " * 4, "\n", BasicPositionProvider())
         state.increase_indent(state.default_indent)
         state.add_indent_tokens()
         self.assertEqual(position(state), (1, 4))
 
     def test_codegen_decrease_indent(self) -> None:
-        state = CodegenState(" " * 4, "\n")
+        state = BasicCodegenState(" " * 4, "\n", BasicPositionProvider())
         state.increase_indent(state.default_indent)
         state.increase_indent(state.default_indent)
         state.increase_indent(state.default_indent)
@@ -65,7 +65,7 @@ class InternalTest(UnitTest):
 
         # simulate codegen behavior for the dummy node
         # generates the code " pass "
-        state = CodegenState(" " * 4, "\n")
+        state = BasicCodegenState(" " * 4, "\n", BasicPositionProvider())
         start = CodePosition(state.line, state.column)
         state.add_token(" ")
         with state.record_syntactic_position(node):
@@ -74,18 +74,23 @@ class InternalTest(UnitTest):
         end = CodePosition(state.line, state.column)
         state.record_position(node, CodeRange(start, end))
 
-        # check syntactic whitespace is correctly recorded
+        # check whitespace is correctly recorded
+        self.assertEqual(
+            state.provider._computed[node], CodeRange.create((1, 0), (1, 6))
+        )
+
+        # TODO: remove this
         self.assertEqual(
             node._metadata[BasicPositionProvider], CodeRange.create((1, 0), (1, 6))
         )
 
-    def test_semantic_position(self) -> None:
+    def test_syntactic_position(self) -> None:
         # create a dummy node
         node = cst.Pass()
 
         # simulate codegen behavior for the dummy node
         # generates the code " pass "
-        state = SyntacticCodegenState(" " * 4, "\n")
+        state = SyntacticCodegenState(" " * 4, "\n", SyntacticPositionProvider())
         start = CodePosition(state.line, state.column)
         state.add_token(" ")
         with state.record_syntactic_position(node):
@@ -94,7 +99,12 @@ class InternalTest(UnitTest):
         end = CodePosition(state.line, state.column)
         state.record_position(node, CodeRange(start, end))
 
-        # check semantic whitespace is correctly recorded (ignoring whitespace)
+        # check syntactic position ignores whitespace
+        self.assertEqual(
+            state.provider._computed[node], CodeRange.create((1, 1), (1, 5))
+        )
+
+        # TODO: remove this
         self.assertEqual(
             node._metadata[SyntacticPositionProvider], CodeRange.create((1, 1), (1, 5))
         )

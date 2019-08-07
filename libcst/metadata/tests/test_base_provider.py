@@ -11,8 +11,9 @@ from libcst import parse_module
 from libcst.metadata.base_provider import (
     BatchableMetadataProvider,
     VisitorMetadataProvider,
-    _run_batchable,
+    _gen_batchable,
 )
+from libcst.metadata.wrapper import MetadataWrapper
 from libcst.testing.utils import UnitTest
 
 
@@ -27,16 +28,23 @@ class BaseMetadataProviderTest(UnitTest):
                 self.set_metadata(node, 1)
                 return True
 
-        module = parse_module("pass; return")
+        wrapper = MetadataWrapper(parse_module("pass; return"))
+        module = wrapper.module
         pass_ = cast(cst.SimpleStatementLine, module.body[0]).body[0]
         return_ = cast(cst.SimpleStatementLine, module.body[0]).body[1]
 
         provider = SimpleProvider()
-        provider._run(module)
+        metadata = provider._gen(wrapper)
 
+        # Check access on provider
         self.assertEqual(provider.get_metadata(SimpleProvider, module), 1)
         self.assertEqual(provider.get_metadata(SimpleProvider, pass_), 1)
         self.assertEqual(provider.get_metadata(SimpleProvider, return_), 1)
+
+        # Check returned mapping
+        self.assertEqual(metadata[module], 1)
+        self.assertEqual(metadata[pass_], 1)
+        self.assertEqual(metadata[return_], 1)
 
     def test_batchable_provider(self) -> None:
         class SimpleProvider(BatchableMetadataProvider[int]):
@@ -50,14 +58,21 @@ class BaseMetadataProviderTest(UnitTest):
             def visit_Return(self, node: cst.Return) -> None:
                 self.set_metadata(node, 2)
 
-        module = parse_module("pass; return; pass")
-        provider = SimpleProvider()
-
-        module = _run_batchable(module, [provider])
+        wrapper = MetadataWrapper(parse_module("pass; return; pass"))
+        module = wrapper.module
         pass_ = cast(cst.SimpleStatementLine, module.body[0]).body[0]
         return_ = cast(cst.SimpleStatementLine, module.body[0]).body[1]
         pass_2 = cast(cst.SimpleStatementLine, module.body[0]).body[2]
 
+        provider = SimpleProvider()
+        metadata = _gen_batchable(wrapper, [provider])
+
+        # Check access on provider
         self.assertEqual(provider.get_metadata(SimpleProvider, pass_), 1)
         self.assertEqual(provider.get_metadata(SimpleProvider, return_), 2)
         self.assertEqual(provider.get_metadata(SimpleProvider, pass_2), 1)
+
+        # Check returned mapping
+        self.assertEqual(metadata[SimpleProvider][pass_], 1)
+        self.assertEqual(metadata[SimpleProvider][return_], 2)
+        self.assertEqual(metadata[SimpleProvider][pass_2], 1)

@@ -17,7 +17,6 @@ from typing import (
     Pattern,
     Sequence,
     Tuple,
-    Type,
     TypeVar,
     Union,
 )
@@ -34,11 +33,11 @@ if TYPE_CHECKING:
     from libcst.metadata.position_provider import (  # noqa: F401
         BasicPositionProvider,
         SyntacticPositionProvider,
+        PositionProvider,
     )
 
 
 _CSTNodeT = TypeVar("_CSTNodeT", bound="CSTNode")
-_ProviderT = Union[Type["BasicPositionProvider"], Type["SyntacticPositionProvider"]]
 _CodePositionT = Union[Tuple[int, int], "CodePosition"]
 
 
@@ -63,14 +62,13 @@ class CodeRange:
         return CodeRange(CodePosition(start[0], start[1]), CodePosition(end[0], end[1]))
 
 
-@add_slots
 @dataclass(frozen=False)
 class CodegenState:
     # These are derived from a Module
     default_indent: str
     default_newline: str
 
-    provider: _ProviderT = field(init=False)
+    provider: Optional["PositionProvider"]
 
     indent_tokens: List[str] = field(default_factory=list)
     tokens: List[str] = field(default_factory=list)
@@ -78,16 +76,39 @@ class CodegenState:
     line: int = 1  # one-indexed
     column: int = 0  # zero-indexed
 
-    def __post_init__(self) -> None:
-        from libcst.metadata.position_provider import BasicPositionProvider
-
-        self.provider = BasicPositionProvider
-
     def increase_indent(self, value: str) -> None:
         self.indent_tokens.append(value)
 
     def decrease_indent(self) -> None:
         self.indent_tokens.pop()
+
+    def add_indent_tokens(self) -> None:
+        self.tokens.extend(self.indent_tokens)
+
+    def add_token(self, value: str) -> None:
+        self.tokens.append(value)
+
+    def record_position(self, node: _CSTNodeT, position: CodeRange) -> None:
+        pass
+
+    @contextmanager
+    def record_syntactic_position(
+        self,
+        node: _CSTNodeT,
+        *,
+        start_node: Optional[_CSTNodeT] = None,
+        end_node: Optional[_CSTNodeT] = None,
+    ) -> Iterator[None]:
+        yield
+
+
+@dataclass(frozen=False)
+class BasicCodegenState(CodegenState):
+    """
+    Pass to codegen to record the basic position of nodes.
+    """
+
+    provider: "PositionProvider"
 
     def add_indent_tokens(self) -> None:
         self.tokens.extend(self.indent_tokens)
@@ -114,29 +135,18 @@ class CodegenState:
     def record_position(self, node: _CSTNodeT, position: CodeRange) -> None:
         # Don't overwrite existing position information
         # (i.e. semantic position has already been recorded)
-        if self.provider not in node._metadata:
-            node._metadata[self.provider] = position
+        if node not in self.provider._computed:
+            self.provider._computed[node] = position
 
-    @contextmanager
-    def record_syntactic_position(
-        self,
-        node: _CSTNodeT,
-        *,
-        start_node: Optional[_CSTNodeT] = None,
-        end_node: Optional[_CSTNodeT] = None,
-    ) -> Iterator[None]:
-        yield
+        # TODO: remove this
+        if type(self.provider) not in node._metadata:
+            node._metadata[type(self.provider)] = position
 
 
-class SyntacticCodegenState(CodegenState):
+class SyntacticCodegenState(BasicCodegenState):
     """
     Pass to codegen to record the syntatic position of nodes.
     """
-
-    def __post_init__(self) -> None:
-        from libcst.metadata.position_provider import SyntacticPositionProvider
-
-        self.provider = SyntacticPositionProvider
 
     @contextmanager
     def record_syntactic_position(
@@ -154,13 +164,20 @@ class SyntacticCodegenState(CodegenState):
 
             # Override with positions hoisted from child nodes if provided
             start = (
-                start_node._metadata[self.provider].start
+                start_node._metadata[type(self.provider)].start
                 if start_node is not None
                 else start
             )
-            end = end_node._metadata[self.provider].end if end_node is not None else end
+            end = (
+                end_node._metadata[type(self.provider)].end
+                if end_node is not None
+                else end
+            )
 
-            node._metadata[self.provider] = CodeRange(start, end)
+            self.provider._computed[node] = CodeRange(start, end)
+
+            # TODO: remove this
+            node._metadata[type(self.provider)] = CodeRange(start, end)
 
 
 def visit_required(
@@ -170,7 +187,7 @@ def visit_required(
     Given a node, visits the node using `visitor`. If removal is attempted by the
     visitor, an exception is raised.
     """
-    result = node._visit_impl(visitor)
+    result = node.visit(visitor)
     if isinstance(result, RemovalSentinel):
         raise TypeError(
             f"We got a RemovalSentinel while visiting a {type(node).__name__}. This "
@@ -188,7 +205,7 @@ def visit_optional(
     """
     if node is None:
         return None
-    result = node._visit_impl(visitor)
+    result = node.visit(visitor)
     return None if isinstance(result, RemovalSentinel) else result
 
 
@@ -201,7 +218,7 @@ def visit_sentinel(
     """
     if isinstance(node, MaybeSentinel):
         return MaybeSentinel.DEFAULT
-    result = node._visit_impl(visitor)
+    result = node.visit(visitor)
     return MaybeSentinel.DEFAULT if isinstance(result, RemovalSentinel) else result
 
 
@@ -213,7 +230,7 @@ def visit_iterable(
     children with any `RemovalSentinel` values removed.
     """
     for child in children:
-        new_child = child._visit_impl(visitor)
+        new_child = child.visit(visitor)
         if not isinstance(new_child, RemovalSentinel):
             yield new_child
 
@@ -237,7 +254,7 @@ def visit_body_iterable(
     """
 
     for child in children:
-        new_child = child._visit_impl(visitor)
+        new_child = child.visit(visitor)
 
         # Don't yield a child if we removed it.
         if isinstance(new_child, RemovalSentinel):

@@ -204,7 +204,6 @@ def convert_fpdef(config: ParserConfig, children: Sequence[Any]) -> Any:
             whitespace_before_indicator=parse_parenthesizable_whitespace(
                 config, colon.whitespace_before
             ),
-            indicator=":",
             whitespace_after_indicator=parse_parenthesizable_whitespace(
                 config, colon.whitespace_after
             ),

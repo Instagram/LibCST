@@ -5,7 +5,6 @@
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field, fields, replace
-from enum import Enum, auto
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -18,7 +17,6 @@ from typing import (
     cast,
 )
 
-from libcst._exceptions import MetadataException
 from libcst._nodes._internal import CodegenState, CodePosition, CodeRange
 from libcst._removal_sentinel import RemovalSentinel
 from libcst._type_enforce import is_value_of_type
@@ -77,6 +75,7 @@ def _indent(value: str) -> str:
 
 @dataclass(frozen=True)
 class CSTNode(ABC):
+    # TODO: remove this field once lint is ported
     _metadata: MutableMapping[Type["BaseMetaDataProvider[_T]"], _T] = field(
         default_factory=dict, init=False, repr=False, compare=False
     )
@@ -131,10 +130,11 @@ class CSTNode(ABC):
         validate your tree.
 
         Some (non-typing) validation is done unconditionally during the construction of
-        a node. That validation does not overlap with the work that `validate_types`
-        does.
+        a node. That validation does not overlap with the work that
+        :func:`validate_types_deep` does.
         """
         for f in fields(self):
+            # TODO: remove this
             if f.name == "_metadata":  # skip typechecking metadata field
                 continue
 
@@ -148,7 +148,7 @@ class CSTNode(ABC):
 
     def validate_types_deep(self) -> None:
         """
-        Like ``validate_types_shallow``, but recursively validates the whole tree.
+        Like :func:`validate_types_shallow`, but recursively validates the whole tree.
         """
         self.validate_types_shallow()
         for ch in self.children:
@@ -180,26 +180,9 @@ class CSTNode(ABC):
         self._visit_and_replace_children(visitor)
         return visitor.children
 
+    # TODO: remove compatibility hack
     def visit(
-        self: _CSTNodeSelfT, visitor: CSTVisitorT
-    ) -> Union[_CSTNodeSelfT, RemovalSentinel]:
-        """
-        Public hook to visit the current node and all transitive children using
-        the given visitor.
-        """
-
-        # Only modules can be visited a visitor that declare metadata dependencies.
-        # Module overrides this method to resolve metadata dependencies.
-        if len(visitor.METADATA_DEPENDENCIES) > 0:
-            raise MetadataException(
-                f"{type(visitor).__name__} declares metadata dependencies "
-                + "and should only be called from the module level"
-            )
-
-        return self._visit_impl(visitor)
-
-    def _visit_impl(
-        self: _CSTNodeSelfT, visitor: CSTVisitorT
+        self: _CSTNodeSelfT, visitor: CSTVisitorT, use_compatible: bool = True
     ) -> Union[_CSTNodeSelfT, RemovalSentinel]:
         """
         Visits the current node, its children, and all transitive children using
@@ -331,7 +314,7 @@ class CSTNode(ABC):
             In [3]: tree.deep_equals(tree.deep_clone())
             Out[3]: True
         """
-        return cast(_CSTNodeSelfT, self._visit_impl(_NOOPVisitor()))
+        return cast(_CSTNodeSelfT, self.visit(_NOOPVisitor(), use_compatible=False))
 
     def deep_equals(self, other: "CSTNode") -> bool:
         """
@@ -399,13 +382,3 @@ class BaseValueToken(BaseLeaf, ABC):
 
     def _codegen_impl(self, state: CodegenState) -> None:
         state.add_token(self.value)
-
-
-class AnnotationIndicatorSentinel(Enum):
-    """
-    An AnnotationIndicatorSentinel indicates that the underlying codegen should choose
-    the correct annotation indicator (":" or "->") based on where the annotation is
-    used.
-    """
-
-    DEFAULT = auto()

@@ -7,7 +7,7 @@
 from typing import TYPE_CHECKING, TypeVar, Union
 
 from libcst._removal_sentinel import RemovalSentinel
-from libcst.metadata._interface import _MetadataInterface
+from libcst.metadata.dependent import _MetadataDependent
 
 
 if TYPE_CHECKING:
@@ -19,7 +19,7 @@ CSTVisitorT = Union["CSTTransformer", "CSTVisitor"]
 CSTNodeT = TypeVar("CSTNodeT", bound="CSTNode")
 
 
-class CSTTransformer(_MetadataInterface):
+class CSTTransformer(_MetadataDependent):
     """
     The low-level base visitor class for traversing a CST and creating an
     updated copy of the original CST. This should be used in conjunction with
@@ -72,7 +72,7 @@ class CSTTransformer(_MetadataInterface):
         return updated_node
 
 
-class CSTVisitor(_MetadataInterface):
+class CSTVisitor(_MetadataDependent):
     """
     The low-level base visitor class for traversing a CST. This should be used in
     conjunction with the :func:`~libcst.CSTNode.visit` method on a
@@ -99,7 +99,7 @@ class CSTVisitor(_MetadataInterface):
         # Don't visit children IFF the visit function returned False.
         return False if retval is False else True
 
-    def on_leave(self, original_node: CSTNodeT) -> None:
+    def on_leave(self, original_node: "CSTNode") -> None:
         """
         Called every time we leave a node, after we've visited its children. If
         the :func:`~libcst.CSTVisitor.on_visit` function for this node returns

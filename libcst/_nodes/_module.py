@@ -4,11 +4,12 @@
 # LICENSE file in the root directory of this source tree.
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Optional, Sequence, Type, TypeVar, Union
+from typing import TYPE_CHECKING, Optional, Sequence, TypeVar, Union, cast
 
 from libcst._add_slots import add_slots
 from libcst._nodes._base import CSTNode
 from libcst._nodes._internal import (
+    BasicCodegenState,
     CodegenState,
     SyntacticCodegenState,
     visit_body_sequence,
@@ -25,11 +26,11 @@ if TYPE_CHECKING:
     from libcst.metadata.position_provider import (  # noqa: F401
         BasicPositionProvider,
         SyntacticPositionProvider,
+        PositionProvider,
     )
 
 
 _ModuleSelfT = TypeVar("_ModuleSelfT", bound="Module")
-_ProviderT = Union[Type["BasicPositionProvider"], Type["SyntacticPositionProvider"]]
 
 # type alias needed for scope overlap in type definition
 builtin_bytes = bytes
@@ -79,22 +80,28 @@ class Module(CSTNode):
             has_trailing_newline=self.has_trailing_newline,
         )
 
-    def visit(self: _ModuleSelfT, visitor: CSTVisitorT) -> _ModuleSelfT:
+    def visit(
+        self: _ModuleSelfT, visitor: CSTVisitorT, use_compatible: bool = True
+    ) -> _ModuleSelfT:
         """
         Returns the result of running a visitor over this module.
 
         :class:`Module` overrides the default visitor entry point to resolve metadata
         dependencies declared by 'visitor'.
         """
+        # TODO: remove compatibility hack
+        if use_compatible:
+            from libcst.metadata.wrapper import MetadataWrapper
 
-        from libcst.metadata.runner import _MetadataRunner
+            wrapper = MetadataWrapper(self)
+            result = wrapper.visit(visitor)
+        else:
+            result = super(Module, self).visit(visitor)
 
-        module = _MetadataRunner.resolve(self, visitor)
-        result = CSTNode._visit_impl(module, visitor)
         if isinstance(result, RemovalSentinel):
             return self.with_changes(body=(), header=(), footer=())
         else:  # is a Module
-            return result
+            return cast(_ModuleSelfT, result)
 
     def _codegen_impl(self, state: CodegenState) -> None:
         for h in self.header:
@@ -131,7 +138,7 @@ class Module(CSTNode):
         return self.code.encode(self.encoding)
 
     def code_for_node(
-        self, node: CSTNode, provider: Optional[_ProviderT] = None
+        self, node: CSTNode, provider: Optional["PositionProvider"] = None
     ) -> str:
         """
         Generates the code for the given node in the context of this module. This is a
@@ -145,13 +152,23 @@ class Module(CSTNode):
 
         from libcst.metadata.position_provider import SyntacticPositionProvider
 
-        if provider is None or provider is SyntacticPositionProvider:
+        if provider is None:
+            state = CodegenState(
+                default_indent=self.default_indent,
+                default_newline=self.default_newline,
+                provider=provider,
+            )
+        elif isinstance(provider, SyntacticPositionProvider):
             state = SyntacticCodegenState(
-                default_indent=self.default_indent, default_newline=self.default_newline
+                default_indent=self.default_indent,
+                default_newline=self.default_newline,
+                provider=provider,
             )
         else:
-            state = CodegenState(
-                default_indent=self.default_indent, default_newline=self.default_newline
+            state = BasicCodegenState(
+                default_indent=self.default_indent,
+                default_newline=self.default_newline,
+                provider=provider,
             )
 
         node._codegen(state)

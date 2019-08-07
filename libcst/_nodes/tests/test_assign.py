@@ -162,7 +162,6 @@ class AnnAssignTest(CSTNodeTest):
                             target=cst.Name("foo"),
                             annotation=cst.Annotation(
                                 annotation=cst.Name("str"),
-                                indicator=":",
                                 whitespace_before_indicator=cst.SimpleWhitespace(""),
                             ),
                             equal=cst.AssignEqual(),
@@ -182,7 +181,6 @@ class AnnAssignTest(CSTNodeTest):
                             target=cst.Name("foo"),
                             annotation=cst.Annotation(
                                 annotation=cst.Name("str"),
-                                indicator=":",
                                 whitespace_before_indicator=cst.SimpleWhitespace(""),
                             ),
                             value=None,
@@ -203,7 +201,6 @@ class AnnAssignTest(CSTNodeTest):
                                 annotation=cst.Subscript(
                                     cst.Name("Optional"), cst.Index(cst.Name("str"))
                                 ),
-                                indicator=":",
                                 whitespace_before_indicator=cst.SimpleWhitespace(""),
                             ),
                             equal=cst.AssignEqual(),
@@ -246,7 +243,6 @@ class AnnAssignTest(CSTNodeTest):
                                     cst.Name("Optional"), cst.Index(cst.Name("str"))
                                 ),
                                 whitespace_before_indicator=cst.SimpleWhitespace(" "),
-                                indicator=":",
                                 whitespace_after_indicator=cst.SimpleWhitespace("  "),
                             ),
                             equal=cst.AssignEqual(
@@ -278,14 +274,6 @@ class AnnAssignTest(CSTNodeTest):
                     )
                 ),
                 "expected_re": "Must have a value when specifying an AssignEqual.",
-            },
-            {
-                "get_node": lambda: cst.AnnAssign(
-                    target=cst.Name("foo"),
-                    annotation=cst.Annotation(cst.Name("str"), "->"),
-                    value=cst.Integer("5"),
-                ),
-                "expected_re": "must be denoted with a ':'",
             },
         )
     )
