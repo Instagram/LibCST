@@ -1291,7 +1291,7 @@ class Annotation(CSTNode):
 
     #: The annotation's value itself. This is the part of the annotation after the
     #: colon or arrow.
-    annotation: Union[Name, Attribute, BaseString, Subscript]
+    annotation: Union[BaseExpression]
 
     whitespace_before_indicator: Union[
         BaseParenthesizableWhitespace, MaybeSentinel
