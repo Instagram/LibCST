@@ -10,7 +10,7 @@ python:
    install:
       - requirements: requirements.txt
       - requirements: requirements-dev.txt
-      - method: setuptools
+      - method: pip
         path: .
    system_packages: true
 
