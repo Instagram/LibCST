@@ -5,7 +5,6 @@
 
 # pyre-strict
 import inspect
-from abc import ABC
 from contextlib import contextmanager
 from typing import (
     TYPE_CHECKING,
@@ -34,7 +33,9 @@ _T = TypeVar("_T")
 _UNDEFINED_DEFAULT = object()
 
 
-class _MetadataDependent(ABC):
+# TODO: this class should be an ABC but we're waiting on Pyre to fix a bug to
+# add this functionality back
+class _MetadataDependent:
     """
     Base class for all types that declare required metadata dependencies.
 
