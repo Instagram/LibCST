@@ -134,7 +134,7 @@ to format code. To format changes to be conformant, run the following in the roo
 
 .. code-block:: shell
 
-    isort -q -y && black libcst/
+    tox -e autofix
 
 To run all tests, you'll need to install `tox <https://tox.readthedocs.io/en/latest/>`_
 and do the following in the root:
