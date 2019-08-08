@@ -61,9 +61,9 @@ class CSTTransformer(_MetadataDependent):
         on the ``updated_node`` so as to not overwrite changes made by child
         visits.
 
-        Returning a :class:`~libcst.RemovalSentinel` indicates that the node
-        should be removed from its parent. This is not always possible, and
-        may raise an exception if this node is required.
+        Returning :attr:`RemovalSentinel.REMOVE` indicates that the node should be
+        removed from its parent. This is not always possible, and may raise an
+        exception if this node is required.
         """
         leave_func = getattr(self, f"leave_{type(original_node).__name__}", None)
         if leave_func is not None:

@@ -391,3 +391,8 @@ Nodes that encapsulate pure whitespace.
 .. autoclass:: libcst.SimpleWhitespace
 .. autoclass:: libcst.TrailingWhitespace
 .. autoclass:: libcst.BaseParenthesizableWhitespace
+
+Maybe Sentinel
+--------------
+
+.. autoclass:: libcst.MaybeSentinel
