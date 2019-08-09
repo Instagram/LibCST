@@ -83,7 +83,7 @@ class MetadataWrapper:
         This basically hoists existing behavior out of Module.visit.
         """
         with visitor.resolve(self):
-            return self.module.visit(visitor, use_compatible=False)
+            return self.module.visit(visitor)
 
     def visit_batched(
         self,
@@ -96,6 +96,4 @@ class MetadataWrapper:
             for v in visitors:
                 stack.enter_context(v.resolve(self))
 
-            return visit_batched(
-                self.module, visitors, before_visit, after_leave, use_compatible=False
-            )
+            return visit_batched(self.module, visitors, before_visit, after_leave)

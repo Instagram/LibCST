@@ -144,9 +144,6 @@ class ModuleTest(CSTNodeTest):
 
         self.assertEqual(provider._computed[module], expected)
 
-        # TODO: remove this
-        self.assertEqual(module._metadata[SyntacticPositionProvider], expected)
-
     def cmp_position(
         self, actual: CodeRange, start: Tuple[int, int], end: Tuple[int, int]
     ) -> None:
