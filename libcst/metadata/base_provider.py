@@ -42,6 +42,7 @@ class BaseMetadataProvider(_MetadataDependent, Generic[_T]):
     Abstract base class for all metadata providers.
     """
 
+    # Cache of metadata computed by this provider
     _computed: MutableMapping["CSTNode", _T]
 
     def __init__(self) -> None:
@@ -50,7 +51,7 @@ class BaseMetadataProvider(_MetadataDependent, Generic[_T]):
 
     def _gen(self, wrapper: "MetadataWrapper") -> Mapping["CSTNode", _T]:
         """
-        Returns the given module with metadata from this provider.
+        Returns metadata mapping for this provider on wrapper.
 
         This is a hook for metadata resolver and should not be called directly.
         """
@@ -71,7 +72,7 @@ class BaseMetadataProvider(_MetadataDependent, Generic[_T]):
 
     def set_metadata(self, node: "CSTNode", value: _T) -> None:
         """
-        Maps the given node to a metadata value.
+        Map a given node to a metadata value.
         """
         self._computed[node] = value
 
@@ -109,7 +110,7 @@ class BatchableMetadataProvider(BatchableCSTVisitor, BaseMetadataProvider[_T]):
 
     def _gen_impl(self, module: "Module") -> None:
         """
-        Batchables providers are run through _run_batchable] so no
+        Batchables providers are resolved through _gen_batchable] so no
         implementation should be provided in _gen_impl.
         """
         pass
@@ -121,11 +122,9 @@ def _gen_batchable(
     providers: Iterable[BatchableMetadataProvider[Any]],
 ) -> Mapping[ProviderT, Mapping["CSTNode", object]]:
     """
-    Returns the given module with metadata from the given batchable providers.
-
-    Does not compute dependencies declared by providers.
+    Returns map of metadata mappings from the given batchable providers on 
+    wrapper.
     """
-    # Resolve metadata dependencies and do batched visit
     wrapper.visit_batched(providers)
 
     # Make immutable metadata mapping

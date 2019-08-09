@@ -21,6 +21,9 @@ if TYPE_CHECKING:
 def _gather_providers(
     providers: Collection[ProviderT], gathered: MutableSet[ProviderT]
 ) -> MutableSet[ProviderT]:
+    """
+    Recursively gathers all the given providers and their dependencies.
+    """
     for P in providers:
         if P not in gathered:
             gathered.add(P)
@@ -30,8 +33,8 @@ def _gather_providers(
 
 def _resolve_impl(wrapper: "MetadataWrapper", providers: Collection[ProviderT]) -> None:
     """
-    Returns a copy of the module that contains all metadata dependencies
-    declared by the visitor.
+    Updates the _metadata map on wrapper with metadata from the given providers
+    as well as their dependencies.
     """
     providers = set(providers) - set(wrapper._metadata.keys())
     remaining = _gather_providers(providers, set())

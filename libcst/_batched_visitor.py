@@ -53,7 +53,7 @@ class BatchableCSTVisitor(CSTTypedVisitorFunctions, _MetadataDependent):
 
         # TODO: verify all visitor methods reference valid node classes.
         # for name, __ in methods:
-        #     pass
+        #     ...
 
         return dict(methods)
 
@@ -71,7 +71,10 @@ def visit_batched(
     execute before visit_* and after leave_* methods are executed by the
     batched visitor.
     """
-    batched_visitor = make_batched(visitors, before_visit, after_leave)
+    visitor_methods = _get_visitor_methods(visitors)
+    batched_visitor = _BatchedCSTVisitor(
+        visitor_methods, before_visit=before_visit, after_leave=after_leave
+    )
     return cast(CSTNodeT, node.visit(batched_visitor))
 
 
@@ -93,24 +96,6 @@ def _get_visitor_dependencies(
         dependencies.update(visitor.METADATA_DEPENDENCIES)
 
     return dependencies
-
-
-def make_batched(
-    visitors: Iterable[BatchableCSTVisitor],
-    before_visit: Optional[VisitorMethod] = None,
-    after_leave: Optional[VisitorMethod] = None,
-) -> "_BatchedCSTVisitor":
-    """
-    Make a batched visitor out of [visitors].
-
-    [before_visit] and [after_leave] are provided as optional hooks to
-    execute before visit_* and after leave_* methods are executed by the
-    batched visitor.
-    """
-    visitor_methods = _get_visitor_methods(visitors)
-    return _BatchedCSTVisitor(
-        visitor_methods, before_visit=before_visit, after_leave=after_leave
-    )
 
 
 class _BatchedCSTVisitor(CSTVisitor):

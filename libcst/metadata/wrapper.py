@@ -53,7 +53,8 @@ class MetadataWrapper:
         self, provider: Type["BaseMetadataProvider[_T]"]
     ) -> Mapping["CSTNode", _T]:
         """
-        Returns a copy of a node-metadata map.
+        Resolves all the given metadata provider on the wrapped module and
+        returns a copy of the metadata mapping.
         """
         if provider in self._metadata:
             metadata = self._metadata[provider]
@@ -67,8 +68,10 @@ class MetadataWrapper:
         self, providers: Collection["ProviderT"]
     ) -> Mapping["ProviderT", Mapping["CSTNode", object]]:
         """
-        Returns a copy of the internal map of provider to
-        node-metadata maps.
+        Resolves all the given metadata providers on the wrapped module and
+        returns a copy of the map of metadata mappings.
+
+        The returned map containing only metadata from the given providers.
         """
         _resolve_impl(self, providers)
 
@@ -79,8 +82,6 @@ class MetadataWrapper:
         """
         Convenience function for visitors to resolve metadata before
         performing a visit pass.
-
-        This basically hoists existing behavior out of Module.visit.
         """
         with visitor.resolve(self):
             return self.module.visit(visitor)
@@ -91,6 +92,10 @@ class MetadataWrapper:
         before_visit: Optional[VisitorMethod] = None,
         after_leave: Optional[VisitorMethod] = None,
     ) -> "CSTNode":
+        """
+        Convenience function for visitors to resolve metadata before
+        performing a batched visit pass.
+        """
         with ExitStack() as stack:
             # Resolve dependencies of visitors
             for v in visitors:
