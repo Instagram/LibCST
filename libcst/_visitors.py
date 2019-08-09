@@ -53,7 +53,7 @@ class CSTTransformer(_MetadataDependent):
         """
         Called every time we leave a node, after we've visited its children. If
         the :func:`~libcst.CSTTransformer.on_visit` function for this node returns
-        ``False``, this function will not be called on that node.
+        ``False``, this function will still be called on that node.
 
         ``original_node`` is guaranteed to be the same node as is passed to
         :func:`~libcst.CSTTransformer.on_visit`, so it is safe to do state-based
@@ -103,7 +103,7 @@ class CSTVisitor(_MetadataDependent):
         """
         Called every time we leave a node, after we've visited its children. If
         the :func:`~libcst.CSTVisitor.on_visit` function for this node returns
-        ``False``, this function will not be called on that node.
+        ``False``, this function will still be called on that node.
         """
         leave_func = getattr(self, f"leave_{type(original_node).__name__}", None)
         if leave_func is not None:
