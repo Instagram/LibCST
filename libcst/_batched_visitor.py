@@ -63,7 +63,6 @@ def visit_batched(
     visitors: Iterable[BatchableCSTVisitor],
     before_visit: Optional[VisitorMethod] = None,
     after_leave: Optional[VisitorMethod] = None,
-    use_compatible: bool = True,  # TODO: remove this
 ) -> CSTNodeT:
     """
     Returns the result of running all visitors [visitors] over [node].
@@ -72,32 +71,8 @@ def visit_batched(
     execute before visit_* and after leave_* methods are executed by the
     batched visitor.
     """
-    # TODO: remove compatiblity hack
-    if use_compatible:
-        from libcst._nodes._module import Module
-
-        if isinstance(node, Module):
-            from contextlib import ExitStack
-            from libcst.metadata.wrapper import MetadataWrapper
-
-            wrapper = MetadataWrapper(node)
-            with ExitStack() as stack:
-                # Resolve dependencies of visitors
-                for v in visitors:
-                    stack.enter_context(v.resolve(wrapper))
-
-                batched_visitor = make_batched(visitors, before_visit, after_leave)
-                return cast(
-                    CSTNodeT,
-                    wrapper.module.visit(batched_visitor, use_compatible=False),
-                )
-
-        batched_visitor = make_batched(visitors, before_visit, after_leave)
-        return cast(CSTNodeT, node.visit(batched_visitor))
-    # end compatible
-
     batched_visitor = make_batched(visitors, before_visit, after_leave)
-    return cast(CSTNodeT, node.visit(batched_visitor, use_compatible=False))
+    return cast(CSTNodeT, node.visit(batched_visitor))
 
 
 def _get_visitor_methods(

@@ -18,7 +18,6 @@ from typing import (
 )
 
 from libcst._batched_visitor import BatchableCSTVisitor
-from libcst._exceptions import MetadataException
 from libcst._visitors import CSTVisitor
 from libcst.metadata.dependent import (
     _T as _MetadataT,
@@ -49,18 +48,6 @@ class BaseMetadataProvider(_MetadataDependent, Generic[_T]):
         super().__init__()
         self._computed = {}
 
-    # TODO: remove this
-    def _run(self, module: "_ModuleT") -> "_ModuleT":
-        """
-        Returns the given module with metadata from this provider.
-
-        This is a hook for metadata runner and should not be called directly.
-        Any implementation of this method should not handle any dependencies
-        declared by this provider and should not have any side effects besides
-        setting metadata computed by this provider.
-        """
-        ...
-
     def _gen(self, wrapper: "MetadataWrapper") -> Mapping["CSTNode", _T]:
         """
         Returns the given module with metadata from this provider.
@@ -86,7 +73,6 @@ class BaseMetadataProvider(_MetadataDependent, Generic[_T]):
         """
         Maps the given node to a metadata value.
         """
-        node._metadata[type(self)] = value  # TODO: remove this
         self._computed[node] = value
 
     def get_metadata(
@@ -112,28 +98,14 @@ class VisitorMetadataProvider(CSTVisitor, BaseMetadataProvider[_T]):
     Extend this to compute metadata with a non-batchable visitor.
     """
 
-    # TODO: remove this
-    def _run(self, module: "_ModuleT") -> "_ModuleT":
-        """
-        Returns the given module with metadata from this provider.
-        """
-        return module.visit(self, use_compatible=False)
-
     def _gen_impl(self, module: "_ModuleT") -> None:
-        module.visit(self, use_compatible=False)
+        module.visit(self)
 
 
 class BatchableMetadataProvider(BatchableCSTVisitor, BaseMetadataProvider[_T]):
     """
     Extend this to compute metadata with a batchable visitor.
     """
-
-    # TODO: remove this
-    def _run(self, module: "_ModuleT") -> "_ModuleT":
-        """
-        Batchable providers are resolved using [_run_batchable].
-        """
-        raise MetadataException("BatchableMetadataProvider cannot be called directly.")
 
     def _gen_impl(self, module: "Module") -> None:
         """

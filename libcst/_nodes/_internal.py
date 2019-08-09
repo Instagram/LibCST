@@ -138,10 +138,6 @@ class BasicCodegenState(CodegenState):
         if node not in self.provider._computed:
             self.provider._computed[node] = position
 
-        # TODO: remove this
-        if type(self.provider) not in node._metadata:
-            node._metadata[type(self.provider)] = position
-
 
 class SyntacticCodegenState(BasicCodegenState):
     """
@@ -164,20 +160,13 @@ class SyntacticCodegenState(BasicCodegenState):
 
             # Override with positions hoisted from child nodes if provided
             start = (
-                start_node._metadata[type(self.provider)].start
+                self.provider._computed[start_node].start
                 if start_node is not None
                 else start
             )
-            end = (
-                end_node._metadata[type(self.provider)].end
-                if end_node is not None
-                else end
-            )
+            end = self.provider._computed[end_node].end if end_node is not None else end
 
             self.provider._computed[node] = CodeRange(start, end)
-
-            # TODO: remove this
-            node._metadata[type(self.provider)] = CodeRange(start, end)
 
 
 def visit_required(

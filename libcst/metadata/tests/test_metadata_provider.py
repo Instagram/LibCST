@@ -14,6 +14,7 @@ from libcst.metadata.base_provider import (
     BatchableMetadataProvider,
     VisitorMetadataProvider,
 )
+from libcst.metadata.wrapper import MetadataWrapper
 from libcst.testing.utils import UnitTest
 
 
@@ -56,7 +57,7 @@ class MetadataProviderTest(UnitTest):
                 test.assertEqual(self.get_metadata(DependentProvider, node), 2)
 
         module = parse_module("pass")
-        module.visit(DependentVisitor())
+        MetadataWrapper(module).visit(DependentVisitor())
 
     def test_batched_provider(self) -> None:
         """
@@ -89,7 +90,7 @@ class MetadataProviderTest(UnitTest):
                 test.assertEqual(self.get_metadata(BatchedProviderB, node), "a")
 
         module = parse_module("pass")
-        module.visit(DependentVisitor())
+        MetadataWrapper(module).visit(DependentVisitor())
 
         # Check that each batchable visitor is only called once
         mock.visited_a.assert_called_once()
@@ -166,7 +167,7 @@ class MetadataProviderTest(UnitTest):
                 test.assertEqual(self.get_metadata(DependentProvider, node), 5)
 
         module = parse_module("pass")
-        module.visit(DependentVisitor())
+        MetadataWrapper(module).visit(DependentVisitor())
 
         # Check each visitor is called once
         mock.visited_simple.assert_called_once()
@@ -195,7 +196,7 @@ class MetadataProviderTest(UnitTest):
                 test_runner.assertEqual(self.get_metadata(SimpleProvider, node), 1)
 
         module = parse_module("pass")
-        module.visit(VisitorB())
+        MetadataWrapper(module).visit(VisitorB())
 
         # Check each visitor is called once
         mock.visited_simple.assert_called_once()
@@ -225,7 +226,7 @@ class MetadataProviderTest(UnitTest):
             METADATA_DEPENDENCIES = (ProviderC,)
 
         module = parse_module("pass")
-        module.visit(Visitor())
+        MetadataWrapper(module).visit(Visitor())
 
         # Check each visitor is called once
         mock.visited_a.assert_called_once()
@@ -256,7 +257,7 @@ class MetadataProviderTest(UnitTest):
             METADATA_DEPENDENCIES = (ProviderC,)
 
         module = parse_module("pass")
-        module.visit(VisitorA())
+        MetadataWrapper(module).visit(VisitorA())
 
         # Check each visitor is called once
         mock.visited_a.assert_called_once()
@@ -324,7 +325,7 @@ class MetadataProviderTest(UnitTest):
         with self.assertRaisesRegex(
             KeyError, "ProviderB is not declared as a dependency from AVisitor"
         ):
-            cst.Module([]).visit(AVisitor())
+            MetadataWrapper(cst.Module([])).visit(AVisitor())
 
     def test_circular_dependency(self) -> None:
         """
@@ -342,4 +343,4 @@ class MetadataProviderTest(UnitTest):
         with self.assertRaisesRegex(
             MetadataException, "Detected circular dependencies in ProviderA"
         ):
-            cst.Module([]).visit(BadVisitor())
+            MetadataWrapper(cst.Module([])).visit(BadVisitor())

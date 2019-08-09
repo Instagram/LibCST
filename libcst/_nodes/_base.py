@@ -4,7 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field, fields, replace
+from dataclasses import dataclass, fields, replace
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -75,11 +75,6 @@ def _indent(value: str) -> str:
 
 @dataclass(frozen=True)
 class CSTNode(ABC):
-    # TODO: remove this field once lint is ported
-    _metadata: MutableMapping[Type["BaseMetaDataProvider[_T]"], _T] = field(
-        default_factory=dict, init=False, repr=False, compare=False
-    )
-
     def __post_init__(self) -> None:
         # PERF: It might make more sense to move validation work into the visitor, which
         # would allow us to avoid validating the tree when parsing a file.
@@ -134,10 +129,6 @@ class CSTNode(ABC):
         :func:`validate_types_deep` does.
         """
         for f in fields(self):
-            # TODO: remove this
-            if f.name == "_metadata":  # skip typechecking metadata field
-                continue
-
             value = getattr(self, f.name)
             if not is_value_of_type(value, f.type):
                 raise TypeError(
@@ -180,9 +171,8 @@ class CSTNode(ABC):
         self._visit_and_replace_children(visitor)
         return visitor.children
 
-    # TODO: remove compatibility hack
     def visit(
-        self: _CSTNodeSelfT, visitor: CSTVisitorT, use_compatible: bool = True
+        self: _CSTNodeSelfT, visitor: CSTVisitorT
     ) -> Union[_CSTNodeSelfT, RemovalSentinel]:
         """
         Visits the current node, its children, and all transitive children using
@@ -315,7 +305,7 @@ class CSTNode(ABC):
         >>> tree.deep_equals(tree.deep_clone())
         True
         """
-        return cast(_CSTNodeSelfT, self.visit(_NOOPVisitor(), use_compatible=False))
+        return cast(_CSTNodeSelfT, self.visit(_NOOPVisitor()))
 
     def deep_equals(self, other: "CSTNode") -> bool:
         """

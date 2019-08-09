@@ -80,24 +80,14 @@ class Module(CSTNode):
             has_trailing_newline=self.has_trailing_newline,
         )
 
-    def visit(
-        self: _ModuleSelfT, visitor: CSTVisitorT, use_compatible: bool = True
-    ) -> _ModuleSelfT:
+    def visit(self: _ModuleSelfT, visitor: CSTVisitorT) -> _ModuleSelfT:
         """
         Returns the result of running a visitor over this module.
 
         :class:`Module` overrides the default visitor entry point to resolve metadata
         dependencies declared by 'visitor'.
         """
-        # TODO: remove compatibility hack
-        if use_compatible:
-            from libcst.metadata.wrapper import MetadataWrapper
-
-            wrapper = MetadataWrapper(self)
-            result = wrapper.visit(visitor)
-        else:
-            result = super(Module, self).visit(visitor)
-
+        result = super(Module, self).visit(visitor)
         if isinstance(result, RemovalSentinel):
             return self.with_changes(body=(), header=(), footer=())
         else:  # is a Module

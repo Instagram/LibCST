@@ -100,11 +100,6 @@ class CSTNodeTest(UnitTest):
         if provider is not None:
             self.assertEqual(provider._computed[node], expected_position)
 
-            # TODO: remove this
-            self.assertEqual(
-                node._metadata[SyntacticPositionProvider], expected_position
-            )
-
     def __assert_children_match_codegen(self, node: cst.CSTNode) -> None:
         children = node.children
         codegen_children = self.__derive_children_from_codegen(node)

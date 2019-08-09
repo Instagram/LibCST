@@ -79,11 +79,6 @@ class InternalTest(UnitTest):
             state.provider._computed[node], CodeRange.create((1, 0), (1, 6))
         )
 
-        # TODO: remove this
-        self.assertEqual(
-            node._metadata[BasicPositionProvider], CodeRange.create((1, 0), (1, 6))
-        )
-
     def test_syntactic_position(self) -> None:
         # create a dummy node
         node = cst.Pass()
@@ -102,9 +97,4 @@ class InternalTest(UnitTest):
         # check syntactic position ignores whitespace
         self.assertEqual(
             state.provider._computed[node], CodeRange.create((1, 1), (1, 5))
-        )
-
-        # TODO: remove this
-        self.assertEqual(
-            node._metadata[SyntacticPositionProvider], CodeRange.create((1, 1), (1, 5))
         )
