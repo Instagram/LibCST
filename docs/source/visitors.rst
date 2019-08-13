@@ -43,3 +43,14 @@ An example Python REPL using the above visitor is as follows::
     >>> _ = demo.visit(FooingAround())
     'abc'
     '123'
+
+
+Batched Visitors
+----------------
+
+A batchable visitor classs is provided to facilitate performing operations that
+can be performed in parallel in a single traversal over a CST. An example of this
+is :ref:`metadata computation<libcst-metadata>`.
+
+.. autoclass:: libcst.BatchableCSTVisitor
+.. autofunction:: libcst.visit_batched

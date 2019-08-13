@@ -22,7 +22,7 @@ from libcst._visitors import CSTVisitor
 from libcst.metadata.dependent import (
     _T as _MetadataT,
     _UNDEFINED_DEFAULT,
-    _MetadataDependent,
+    MetadataDependent,
 )
 
 
@@ -37,13 +37,13 @@ _T = TypeVar("_T")
 
 
 # We can't use an ABCMeta here, because of metaclass conflicts
-class BaseMetadataProvider(_MetadataDependent, Generic[_T]):
+class BaseMetadataProvider(MetadataDependent, Generic[_T]):
     """
     The low-level base class for all metadata providers. This class should be
     extended for metadata providers that are not visitor-based.
     """
 
-    # Cache of metadata computed by this provider
+    #: Cache of metadata computed by this provider
     _computed: MutableMapping["CSTNode", _T]
 
     def __init__(self) -> None:
@@ -85,8 +85,8 @@ class BaseMetadataProvider(_MetadataDependent, Generic[_T]):
         default: _MetadataT = _UNDEFINED_DEFAULT,
     ) -> _MetadataT:
         """
-        The same method as :func:`~libcst._MetadataDependent` except metadata
-        is accessed from ``self._computed`` in addition to ``self.metadata``.
+        The same method as :func:`~libcst.MetadataDependent.get_metadata` except
+        metadata is accessed from ``self._computed`` in addition to ``self.metadata``.
         """
         if key is type(self):
             if default is not _UNDEFINED_DEFAULT:
