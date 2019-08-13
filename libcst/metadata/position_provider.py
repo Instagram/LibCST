@@ -17,8 +17,7 @@ PositionProvider = Union["BasicPositionProvider", "SyntacticPositionProvider"]
 class BasicPositionProvider(BaseMetadataProvider[CodeRange]):
     """
     Generates basic line and column metadata. Basic position is defined by the
-    start and ending bounds of a node including all whitespace
-    owned by that node.
+    start and ending bounds of a node including all whitespace owned by that node.
     """
 
     def _gen_impl(self, module: _ModuleT) -> None:
@@ -27,7 +26,7 @@ class BasicPositionProvider(BaseMetadataProvider[CodeRange]):
 
 class SyntacticPositionProvider(BasicPositionProvider):
     """
-    Generates Syntactic line and column metadata. Syntactic position is defined
+    Generates syntactic line and column metadata. Syntactic position is defined
     by the start and ending bounds of a node ignoring most instances of leading
     and trailing whitespace when it is not syntactically significant.
     """

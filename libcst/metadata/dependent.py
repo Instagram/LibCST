@@ -37,11 +37,8 @@ _UNDEFINED_DEFAULT = object()
 # add this functionality back
 class _MetadataDependent:
     """
-    Base class for all types that declare required metadata dependencies.
-
-    By default, metadata dependencies are computed upon visiting a Module node.
-    An exception will be raised if a visitor that declares metadata is used to
-    directly visit a node of type other than Module.
+    The low-level base class for all types that declare required metadata
+    dependencies.
     """
 
     # pyre-ignore[4]: Attribute `metadata` of class
@@ -57,7 +54,8 @@ class _MetadataDependent:
     @classmethod
     def get_inherited_dependencies(cls) -> Collection["ProviderT"]:
         """
-        Compute and cache all metadata dependencies from mro chain.
+        Returns all metadata dependencies from the each class in the mro chain
+        of a subclass of this class.
         """
         try:
             # pyre-fixme[16]: use a hidden attribute to cache the property
@@ -73,6 +71,14 @@ class _MetadataDependent:
 
     @contextmanager
     def resolve(self, wrapper: "MetadataWrapper") -> Iterator[None]:
+        """
+        Context manager that resolves all metadata dependencies declared by
+        this instance of this class on ``wrapper`` and caches it for use with
+        :func:`~libcst._MetadataDependent.get_metadata`.
+
+        Upon exiting this context manager, the metadata cache on the instance is
+        cleared.
+        """
         self.metadata = wrapper.resolve_many(self.get_inherited_dependencies())
         yield
         self.metadata = {}
@@ -84,9 +90,9 @@ class _MetadataDependent:
         default: _T = _UNDEFINED_DEFAULT,
     ) -> _T:
         """
-        Gets metadata provided by the [key] provider if it is accessible from
-        this vistor. Metadata is accessible if [key] is the same as [cls] or
-        if [key] is in METADATA_DEPENDENCIES.
+        Returns the metadata provided by the ``key`` if it is accessible from
+        this vistor. Metadata is accessible if ``key`` is the same as ``type(self)``
+        or if ``key`` is in ``self.METADATA_DEPENDENCIES``.
         """
         if key not in self.get_inherited_dependencies():
             raise KeyError(

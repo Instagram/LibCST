@@ -37,24 +37,27 @@ _T = TypeVar("_T")
 
 @dataclass(frozen=True)
 class MetadataWrapper:
+    """
+    A wrapper around a :class:`~libcst.Module` that stores associated metadata
+    for that module. When a :class:`MetadataWrapper` is constructed over
+    a module, the wrapper will store a deep copy of the original module.
+    """
+
     module: "Module"
     _metadata: MutableMapping["ProviderT", Mapping["CSTNode", object]] = field(
         init=False, default_factory=dict
     )
 
     def __post_init__(self) -> None:
-        # Ensure that module is safe to use by copying
-        # module is never mutated after this point which allows a
-        # ModuleMetadata instance to be reuse as all metadata
-        # computation should be deterministic
+        # Ensure that module is safe to use by copying the module to remove
+        # any duplicate nodes.
         object.__setattr__(self, "module", self.module.deep_clone())
 
     def resolve(
         self, provider: Type["BaseMetadataProvider[_T]"]
     ) -> Mapping["CSTNode", _T]:
         """
-        Resolves all the given metadata provider on the wrapped module and
-        returns a copy of the metadata mapping.
+        Returns a copy of the metadata mapping computed by ``provider``.
         """
         if provider in self._metadata:
             metadata = self._metadata[provider]
@@ -68,10 +71,11 @@ class MetadataWrapper:
         self, providers: Collection["ProviderT"]
     ) -> Mapping["ProviderT", Mapping["CSTNode", object]]:
         """
-        Resolves all the given metadata providers on the wrapped module and
-        returns a copy of the map of metadata mappings.
+        Returns a copy of the map of metadata mapping computed by each provider
+        in ``providers``.
 
-        The returned map containing only metadata from the given providers.
+        The returned map does not contain any metadata from undeclared metadata
+        dependencies that ``providers`` has.
         """
         _resolve_impl(self, providers)
 
@@ -80,8 +84,8 @@ class MetadataWrapper:
 
     def visit(self, visitor: "CSTVisitorT") -> "Module":
         """
-        Convenience function for visitors to resolve metadata before
-        performing a visit pass.
+        Convenience method to resolve metadata before performing a traversal over
+        ``self.module`` with ``visitor``. See :func:`~libcst.CSTNode.visit`.
         """
         with visitor.resolve(self):
             return self.module.visit(visitor)
@@ -93,8 +97,8 @@ class MetadataWrapper:
         after_leave: Optional[VisitorMethod] = None,
     ) -> "CSTNode":
         """
-        Convenience function for visitors to resolve metadata before
-        performing a batched visit pass.
+        Convenience method to resolve metadata before performing a traversal over
+        ``self.module`` with ``visitors``. See :func:`~libcst.visit_batched`.
         """
         with ExitStack() as stack:
             # Resolve dependencies of visitors
