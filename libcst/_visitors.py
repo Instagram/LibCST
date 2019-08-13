@@ -7,7 +7,7 @@
 from typing import TYPE_CHECKING, TypeVar, Union
 
 from libcst._removal_sentinel import RemovalSentinel
-from libcst.metadata.dependent import _MetadataDependent
+from libcst.metadata.dependent import MetadataDependent
 
 
 if TYPE_CHECKING:
@@ -19,7 +19,7 @@ CSTVisitorT = Union["CSTTransformer", "CSTVisitor"]
 CSTNodeT = TypeVar("CSTNodeT", bound="CSTNode")
 
 
-class CSTTransformer(_MetadataDependent):
+class CSTTransformer(MetadataDependent):
     """
     The low-level base visitor class for traversing a CST and creating an
     updated copy of the original CST. This should be used in conjunction with
@@ -72,7 +72,7 @@ class CSTTransformer(_MetadataDependent):
         return updated_node
 
 
-class CSTVisitor(_MetadataDependent):
+class CSTVisitor(MetadataDependent):
     """
     The low-level base visitor class for traversing a CST. This should be used in
     conjunction with the :func:`~libcst.CSTNode.visit` method on a

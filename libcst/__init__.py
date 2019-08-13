@@ -190,7 +190,7 @@ from libcst.metadata.base_provider import (
     BatchableMetadataProvider,
     VisitorMetadataProvider,
 )
-from libcst.metadata.dependent import _MetadataDependent
+from libcst.metadata.dependent import MetadataDependent
 from libcst.metadata.position_provider import (
     BasicPositionProvider,
     SyntacticPositionProvider,
@@ -384,7 +384,7 @@ __all__ = [
     "BaseMetadataProvider",
     "BatchableMetadataProvider",
     "VisitorMetadataProvider",
-    "_MetadataDependent",
+    "MetadataDependent",
     "BasicPositionProvider",
     "SyntacticPositionProvider",
     "MetadataWrapper",

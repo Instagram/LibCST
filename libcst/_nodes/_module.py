@@ -136,8 +136,9 @@ class Module(CSTNode):
         indentation and newline formats.
 
         By default, this also generates syntactic line and column metadata for each
-        node. Passing BasicPositionProvider will generate basic line and column
-        metadata instead.
+        node. Passing :class:`~libcst.BasicPositionProvider` will generate basic
+        line and column metadata instead. See :ref:`Metadata<libcst-metadata>`
+        for more information.
         """
 
         from libcst.metadata.position_provider import SyntacticPositionProvider

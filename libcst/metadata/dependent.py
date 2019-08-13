@@ -35,17 +35,19 @@ _UNDEFINED_DEFAULT = object()
 
 # TODO: this class should be an ABC but we're waiting on Pyre to fix a bug to
 # add this functionality back
-class _MetadataDependent:
+class MetadataDependent:
     """
-    The low-level base class for all types that declare required metadata
-    dependencies.
+    The low-level base class for all classes that declare required metadata
+    dependencies. :class:`~libcst.CSTVisitor` and :class:`~libcst.CSTTransformer`
+    extend this class.
     """
 
     # pyre-ignore[4]: Attribute `metadata` of class
-    # `libcst.metadata.dependent._MetadataDependent` must have a type that
+    # `libcst.metadata.dependent.MetadataDependent` must have a type that
     # does not contain `Any`.
     metadata: Mapping["ProviderT", Mapping["CSTNode", object]]
 
+    #: The set of metadata depedencies declared by this class.
     METADATA_DEPENDENCIES: ClassVar[Collection["ProviderT"]] = ()
 
     def __init__(self) -> None:
@@ -63,7 +65,7 @@ class _MetadataDependent:
         except AttributeError:
             dependencies = set()
             for c in inspect.getmro(cls):
-                if issubclass(c, _MetadataDependent):
+                if issubclass(c, MetadataDependent):
                     dependencies.update(c.METADATA_DEPENDENCIES)
             cls._INHERITED_METADATA_DEPENDENCIES_CACHE = frozenset(dependencies)
             # pyre-fixme[16]: use a hidden attribute to cache the property
@@ -74,7 +76,7 @@ class _MetadataDependent:
         """
         Context manager that resolves all metadata dependencies declared by
         this instance of this class on ``wrapper`` and caches it for use with
-        :func:`~libcst._MetadataDependent.get_metadata`.
+        :func:`~libcst.MetadataDependent.get_metadata`.
 
         Upon exiting this context manager, the metadata cache on the instance is
         cleared.

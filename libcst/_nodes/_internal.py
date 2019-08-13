@@ -19,6 +19,7 @@ from typing import (
     Tuple,
     TypeVar,
     Union,
+    overload,
 )
 
 from libcst._add_slots import add_slots
@@ -56,6 +57,22 @@ class CodePosition:
 class CodeRange:
     start: CodePosition
     end: CodePosition
+
+    @overload
+    def __init__(self, start: CodePosition, end: CodePosition) -> None:
+        ...
+
+    @overload
+    def __init__(self, start: Tuple[int, int], end: Tuple[int, int]) -> None:
+        ...
+
+    def __init__(self, start: _CodePositionT, end: _CodePositionT) -> None:
+        if isinstance(start, CodePosition):
+            object.__setattr__(self, "start", start)
+            object.__setattr__(self, "end", end)
+        else:
+            object.__setattr__(self, "start", CodePosition(start[0], start[1]))
+            object.__setattr__(self, "end", CodePosition(end[0], end[1]))
 
     @classmethod
     def create(cls, start: Tuple[int, int], end: Tuple[int, int]) -> "CodeRange":

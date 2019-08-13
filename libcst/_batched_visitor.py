@@ -18,7 +18,7 @@ from typing import (
 
 from libcst._typed_visitor_base import CSTTypedVisitorFunctions
 from libcst._visitors import CSTNodeT, CSTVisitor
-from libcst.metadata.dependent import _MetadataDependent
+from libcst.metadata.dependent import MetadataDependent
 
 
 if TYPE_CHECKING:
@@ -30,12 +30,13 @@ VisitorMethod = Callable[["CSTNode"], None]
 _VisitorMethodCollection = Mapping[str, List[VisitorMethod]]
 
 
-class BatchableCSTVisitor(CSTTypedVisitorFunctions, _MetadataDependent):
+class BatchableCSTVisitor(CSTTypedVisitorFunctions, MetadataDependent):
     """
     The low-level base visitor class for traversing a CST as part of a batched
     set of traversals. This should be used in conjunction with the
-    :func:`~libcst.visit_batched` method or the
-    :func:`~libcst.MetadataWrapper.visit_batched` method to visit a tree.
+    :func:`~libcst.visit_batched` function or the
+    :func:`~libcst.MetadataWrapper.visit_batched` method from
+    :class:`~libcst.MetadataWrapper` to visit a tree.
     Instances of this class cannot modify the tree.
     """
 
@@ -75,8 +76,9 @@ def visit_batched(
     methods from each visitor in ``visitor`` are executed by the batched visitor.
 
     This function does not handle metadata dependency resolution for ``visitors``.
-    See :func:`~libcst.MetadataWrapper.visit_batched` for batched traversal with
-    metadata dependency resolution.
+    See :func:`~libcst.MetadataWrapper.visit_batched` from 
+    :class:`~libcst.MetadataWrapper` for batched traversal with metadata dependency
+    resolution.
     """
     visitor_methods = _get_visitor_methods(batchable_visitors)
     batched_visitor = _BatchedCSTVisitor(
