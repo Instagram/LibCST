@@ -29,10 +29,10 @@ class _BaseOneTokenOp(CSTNode, ABC):
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "_BaseOneTokenOp":
         return self.__class__(
             whitespace_before=visit_required(
-                "whitespace_before", self.whitespace_before, visitor
+                self, "whitespace_before", self.whitespace_before, visitor
             ),
             whitespace_after=visit_required(
-                "whitespace_after", self.whitespace_after, visitor
+                self, "whitespace_after", self.whitespace_after, visitor
             ),
         )
 
@@ -69,13 +69,13 @@ class _BaseTwoTokenOp(CSTNode, ABC):
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "_BaseTwoTokenOp":
         return self.__class__(
             whitespace_before=visit_required(
-                "whitespace_before", self.whitespace_before, visitor
+                self, "whitespace_before", self.whitespace_before, visitor
             ),
             whitespace_between=visit_required(
-                "whitespace_between", self.whitespace_between, visitor
+                self, "whitespace_between", self.whitespace_between, visitor
             ),
             whitespace_after=visit_required(
-                "whitespace_after", self.whitespace_after, visitor
+                self, "whitespace_after", self.whitespace_after, visitor
             ),
         )
 
@@ -104,7 +104,7 @@ class BaseUnaryOp(CSTNode, ABC):
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "BaseUnaryOp":
         return self.__class__(
             whitespace_after=visit_required(
-                "whitespace_after", self.whitespace_after, visitor
+                self, "whitespace_after", self.whitespace_after, visitor
             )
         )
 
@@ -696,11 +696,11 @@ class NotEqual(BaseCompOp):
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "BaseCompOp":
         return self.__class__(
             whitespace_before=visit_required(
-                "whitespace_before", self.whitespace_before, visitor
+                self, "whitespace_before", self.whitespace_before, visitor
             ),
             value=self.value,
             whitespace_after=visit_required(
-                "whitespace_after", self.whitespace_after, visitor
+                self, "whitespace_after", self.whitespace_after, visitor
             ),
         )
 

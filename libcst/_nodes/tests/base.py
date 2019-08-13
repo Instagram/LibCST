@@ -231,5 +231,5 @@ class DummyIndentedBlock(cst.CSTNode):
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "DummyIndentedBlock":
         return DummyIndentedBlock(
-            value=self.value, child=visit_required("child", self.child, visitor)
+            value=self.value, child=visit_required(self, "child", self.child, visitor)
         )
