@@ -34,7 +34,7 @@ class FunctionDefCreationTest(CSTNodeTest):
                     returns=cst.Annotation(cst.Name("str")),
                 ),
                 "code": "def foo() -> str: pass\n",
-                "expected_position": CodeRange.create((1, 0), (1, 22)),
+                "expected_position": CodeRange((1, 0), (1, 22)),
             },
             # Async function definition.
             {
@@ -56,7 +56,7 @@ class FunctionDefCreationTest(CSTNodeTest):
                     returns=cst.Annotation(cst.Name("int")),
                 ),
                 "code": "async def foo() -> int: pass\n",
-                "expected_position": CodeRange.create((1, 0), (1, 28)),
+                "expected_position": CodeRange((1, 0), (1, 28)),
             },
             # Test basic positional params
             {
@@ -419,7 +419,7 @@ class FunctionDefCreationTest(CSTNodeTest):
                     ),
                 ),
                 "code": "@bar('123')\n@baz('456')\ndef foo(): pass\n",
-                "expected_position": CodeRange.create((3, 0), (3, 15)),
+                "expected_position": CodeRange((3, 0), (3, 15)),
             },
             # Test indentation
             {
@@ -446,7 +446,7 @@ class FunctionDefCreationTest(CSTNodeTest):
                     ),
                 ),
                 "code": "    @bar\n    def foo():\n        pass\n",
-                "expected_position": CodeRange.create((2, 4), (3, 12)),
+                "expected_position": CodeRange((2, 4), (3, 12)),
             },
             # Leading lines
             {
@@ -459,7 +459,7 @@ class FunctionDefCreationTest(CSTNodeTest):
                     ),
                 ),
                 "code": "# leading comment\ndef foo(): pass\n",
-                "expected_position": CodeRange.create((2, 0), (2, 15)),
+                "expected_position": CodeRange((2, 0), (2, 15)),
             },
             # Inner whitespace
             {
@@ -500,7 +500,7 @@ class FunctionDefCreationTest(CSTNodeTest):
                     body=cst.SimpleStatementSuite((cst.Pass(),)),
                 ),
                 "code": "\n# What an amazing decorator\n@ bar (  )\n# What a great function\nasync  def  foo  (  )  ->  str : pass\n",
-                "expected_position": CodeRange.create((5, 0), (5, 37)),
+                "expected_position": CodeRange((5, 0), (5, 37)),
             },
             # Decorators and annotations
             {
@@ -513,7 +513,7 @@ class FunctionDefCreationTest(CSTNodeTest):
                     ),
                 ),
                 "code": "@ bar (  )\n",
-                "expected_position": CodeRange.create((1, 0), (1, 10)),
+                "expected_position": CodeRange((1, 0), (1, 10)),
             },
             # Parameters
             {
@@ -544,12 +544,12 @@ class FunctionDefCreationTest(CSTNodeTest):
                     ),
                 ),
                 "code": 'first, second, third = 1.0, fourth = 1.5, *params: str, bar: str = "one", baz: int, biz: str = "two"',
-                "expected_position": CodeRange.create((1, 0), (1, 100)),
+                "expected_position": CodeRange((1, 0), (1, 100)),
             },
             {
                 "node": cst.Param(cst.Name("third"), star="", default=cst.Float("1.0")),
                 "code": "third = 1.0",
-                "expected_position": CodeRange.create((1, 0), (1, 5)),
+                "expected_position": CodeRange((1, 0), (1, 5)),
             },
             {
                 "node": cst.Param(
@@ -558,7 +558,7 @@ class FunctionDefCreationTest(CSTNodeTest):
                     whitespace_after_star=cst.SimpleWhitespace(" "),
                 ),
                 "code": "* third",
-                "expected_position": CodeRange.create((1, 0), (1, 7)),
+                "expected_position": CodeRange((1, 0), (1, 7)),
             },
         )
     )

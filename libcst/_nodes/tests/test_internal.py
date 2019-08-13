@@ -75,9 +75,7 @@ class InternalTest(UnitTest):
         state.record_position(node, CodeRange(start, end))
 
         # check whitespace is correctly recorded
-        self.assertEqual(
-            state.provider._computed[node], CodeRange.create((1, 0), (1, 6))
-        )
+        self.assertEqual(state.provider._computed[node], CodeRange((1, 0), (1, 6)))
 
     def test_syntactic_position(self) -> None:
         # create a dummy node
@@ -95,6 +93,4 @@ class InternalTest(UnitTest):
         state.record_position(node, CodeRange(start, end))
 
         # check syntactic position ignores whitespace
-        self.assertEqual(
-            state.provider._computed[node], CodeRange.create((1, 1), (1, 5))
-        )
+        self.assertEqual(state.provider._computed[node], CodeRange((1, 1), (1, 5)))

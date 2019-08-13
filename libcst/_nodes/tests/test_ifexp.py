@@ -50,7 +50,7 @@ class IfExpTest(CSTNodeTest):
                     ),
                 ),
                 "(foo)if(bar)else(baz)",
-                CodeRange.create((1, 0), (1, 21)),
+                CodeRange((1, 0), (1, 21)),
             ),
             # Make sure that spacing works
             (
@@ -66,7 +66,7 @@ class IfExpTest(CSTNodeTest):
                     rpar=(cst.RightParen(whitespace_before=cst.SimpleWhitespace(" ")),),
                 ),
                 "( foo  if  bar  else  baz )",
-                CodeRange.create((1, 2), (1, 25)),
+                CodeRange((1, 2), (1, 25)),
             ),
         )
     )

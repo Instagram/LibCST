@@ -38,7 +38,7 @@ class YieldConstructionTest(CSTNodeTest):
                     whitespace_after_yield=cst.SimpleWhitespace(""),
                 ),
                 "yield(a)",
-                CodeRange.create((1, 0), (1, 8)),
+                CodeRange((1, 0), (1, 8)),
             ),
             (
                 cst.Yield(
@@ -74,7 +74,7 @@ class YieldConstructionTest(CSTNodeTest):
                     rpar=(cst.RightParen(whitespace_before=cst.SimpleWhitespace(" ")),),
                 ),
                 "( yield  from  bla() )",
-                CodeRange.create((1, 2), (1, 20)),
+                CodeRange((1, 2), (1, 20)),
             ),
             # From expression position tests
             (
@@ -82,7 +82,7 @@ class YieldConstructionTest(CSTNodeTest):
                     cst.Integer("5"), whitespace_after_from=cst.SimpleWhitespace(" ")
                 ),
                 "from 5",
-                CodeRange.create((1, 0), (1, 6)),
+                CodeRange((1, 0), (1, 6)),
             ),
         )
     )

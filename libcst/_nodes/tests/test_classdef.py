@@ -22,7 +22,7 @@ class ClassDefCreationTest(CSTNodeTest):
                     cst.Name("Foo"), cst.SimpleStatementSuite((cst.Pass(),))
                 ),
                 "code": "class Foo: pass\n",
-                "expected_position": CodeRange.create((1, 0), (1, 15)),
+                "expected_position": CodeRange((1, 0), (1, 15)),
             },
             {
                 "node": cst.ClassDef(
@@ -64,7 +64,7 @@ class ClassDefCreationTest(CSTNodeTest):
                     ),
                 ),
                 "code": "class Foo(metaclass = Bar): pass\n",
-                "expected_position": CodeRange.create((1, 0), (1, 32)),
+                "expected_position": CodeRange((1, 0), (1, 32)),
             },
             # Iterator expansion render test
             {
@@ -293,7 +293,7 @@ class ClassDefParserTest(CSTNodeTest):
                     rpar=cst.RightParen(),
                 ),
                 "code": "@foo\nclass Foo(): pass\n",
-                "expected_position": CodeRange.create((2, 0), (2, 17)),
+                "expected_position": CodeRange((2, 0), (2, 17)),
             },
             {
                 "node": cst.ClassDef(
@@ -329,7 +329,7 @@ class ClassDefParserTest(CSTNodeTest):
                     rpar=cst.RightParen(),
                 ),
                 "code": "\n# leading comment 1\n@foo\n# leading comment 2\n@bar\n# leading comment 3\n@baz\n# class comment\nclass Foo(): pass\n",
-                "expected_position": CodeRange.create((9, 0), (9, 17)),
+                "expected_position": CodeRange((9, 0), (9, 17)),
             },
         )
     )

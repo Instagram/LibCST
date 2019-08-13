@@ -438,7 +438,7 @@ class CallTest(CSTNodeTest):
                 ),
                 "code": "( foo ( pos1 ,  *  list1, kw1=1, ** dict1 ) )",
                 "parser": parse_expression,
-                "expected_position": CodeRange.create((1, 2), (1, 43)),
+                "expected_position": CodeRange((1, 2), (1, 43)),
             },
             # Test args
             {
@@ -451,7 +451,7 @@ class CallTest(CSTNodeTest):
                 ),
                 "code": "*  list1, ",
                 "parser": None,
-                "expected_position": CodeRange.create((1, 0), (1, 8)),
+                "expected_position": CodeRange((1, 0), (1, 8)),
             },
         )
     )

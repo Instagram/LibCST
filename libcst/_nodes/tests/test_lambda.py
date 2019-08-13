@@ -139,7 +139,7 @@ class LambdaCreationTest(CSTNodeTest):
                     cst.Integer("5"),
                 ),
                 'lambda first, second, third = 1.0, fourth = 1.5, *, bar = "one", baz, biz = "two": 5',
-                CodeRange.create((1, 0), (1, 84)),
+                CodeRange((1, 0), (1, 84)),
             ),
             # Test star_arg
             (
@@ -225,7 +225,7 @@ class LambdaCreationTest(CSTNodeTest):
                     rpar=(cst.RightParen(whitespace_before=cst.SimpleWhitespace(" ")),),
                 ),
                 "( lambda  : 5 )",
-                CodeRange.create((1, 2), (1, 13)),
+                CodeRange((1, 2), (1, 13)),
             ),
         )
     )

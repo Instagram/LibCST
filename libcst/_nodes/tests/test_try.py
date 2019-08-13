@@ -29,7 +29,7 @@ class TryTest(CSTNodeTest):
                 ),
                 "code": "try: pass\nexcept: pass\n",
                 "parser": parse_statement,
-                "expected_position": CodeRange.create((1, 0), (2, 12)),
+                "expected_position": CodeRange((1, 0), (2, 12)),
             },
             # Try/except with a class
             {
@@ -59,7 +59,7 @@ class TryTest(CSTNodeTest):
                 ),
                 "code": "try: pass\nexcept Exception as exc: pass\n",
                 "parser": parse_statement,
-                "expected_position": CodeRange.create((1, 0), (2, 29)),
+                "expected_position": CodeRange((1, 0), (2, 29)),
             },
             # Try/except with multiple clauses
             {
@@ -87,7 +87,7 @@ class TryTest(CSTNodeTest):
                 + "except KeyError as e: pass\n"
                 + "except: pass\n",
                 "parser": parse_statement,
-                "expected_position": CodeRange.create((1, 0), (4, 12)),
+                "expected_position": CodeRange((1, 0), (4, 12)),
             },
             # Simple try/finally block
             {
@@ -97,7 +97,7 @@ class TryTest(CSTNodeTest):
                 ),
                 "code": "try: pass\nfinally: pass\n",
                 "parser": parse_statement,
-                "expected_position": CodeRange.create((1, 0), (2, 13)),
+                "expected_position": CodeRange((1, 0), (2, 13)),
             },
             # Simple try/except/finally block
             {
@@ -113,7 +113,7 @@ class TryTest(CSTNodeTest):
                 ),
                 "code": "try: pass\nexcept: pass\nfinally: pass\n",
                 "parser": parse_statement,
-                "expected_position": CodeRange.create((1, 0), (3, 13)),
+                "expected_position": CodeRange((1, 0), (3, 13)),
             },
             # Simple try/except/else block
             {
@@ -129,7 +129,7 @@ class TryTest(CSTNodeTest):
                 ),
                 "code": "try: pass\nexcept: pass\nelse: pass\n",
                 "parser": parse_statement,
-                "expected_position": CodeRange.create((1, 0), (3, 10)),
+                "expected_position": CodeRange((1, 0), (3, 10)),
             },
             # Simple try/except/else block/finally
             {
@@ -146,7 +146,7 @@ class TryTest(CSTNodeTest):
                 ),
                 "code": "try: pass\nexcept: pass\nelse: pass\nfinally: pass\n",
                 "parser": parse_statement,
-                "expected_position": CodeRange.create((1, 0), (4, 13)),
+                "expected_position": CodeRange((1, 0), (4, 13)),
             },
             # Verify whitespace in various locations
             {
@@ -181,7 +181,7 @@ class TryTest(CSTNodeTest):
                 ),
                 "code": "# 1\ntry : pass\n# 2\nexcept  TypeError  as  e : pass\n# 3\nelse : pass\n# 4\nfinally : pass\n",
                 "parser": parse_statement,
-                "expected_position": CodeRange.create((2, 0), (8, 14)),
+                "expected_position": CodeRange((2, 0), (8, 14)),
             },
             # Please don't write code like this
             {
@@ -213,7 +213,7 @@ class TryTest(CSTNodeTest):
                 + "else: pass\n"
                 + "finally: pass\n",
                 "parser": parse_statement,
-                "expected_position": CodeRange.create((1, 0), (6, 13)),
+                "expected_position": CodeRange((1, 0), (6, 13)),
             },
             # Verify indentation
             {

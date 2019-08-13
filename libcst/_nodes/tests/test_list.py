@@ -39,7 +39,7 @@ class ListTest(CSTNodeTest):
                 ),
                 "code": "[\tsingle_element    ]",
                 "parser": parse_expression,
-                "expected_position": CodeRange.create((1, 0), (1, 21)),
+                "expected_position": CodeRange((1, 0), (1, 21)),
             },
             # two-element list, sentinel comma value
             {
@@ -58,7 +58,7 @@ class ListTest(CSTNodeTest):
                 ),
                 "code": "([one])",
                 "parser": None,
-                "expected_position": CodeRange.create((1, 1), (1, 6)),
+                "expected_position": CodeRange((1, 1), (1, 6)),
             },
             # starred element
             {
@@ -70,7 +70,7 @@ class ListTest(CSTNodeTest):
                 ),
                 "code": "[*one, *two]",
                 "parser": None,
-                "expected_position": CodeRange.create((1, 0), (1, 12)),
+                "expected_position": CodeRange((1, 0), (1, 12)),
             },
             # missing spaces around list, always okay
             {

@@ -118,22 +118,16 @@ class ModuleTest(CSTNodeTest):
 
     @data_provider(
         {
-            "empty": {"code": "", "expected": CodeRange.create((1, 0), (1, 0))},
-            "empty_with_newline": {
-                "code": "\n",
-                "expected": CodeRange.create((1, 0), (2, 0)),
-            },
+            "empty": {"code": "", "expected": CodeRange((1, 0), (1, 0))},
+            "empty_with_newline": {"code": "\n", "expected": CodeRange((1, 0), (2, 0))},
             "empty_program_with_comments": {
                 "code": "# 2345",
-                "expected": CodeRange.create((1, 0), (2, 0)),
+                "expected": CodeRange((1, 0), (2, 0)),
             },
-            "simple_pass": {
-                "code": "pass\n",
-                "expected": CodeRange.create((1, 0), (2, 0)),
-            },
+            "simple_pass": {"code": "pass\n", "expected": CodeRange((1, 0), (2, 0))},
             "simple_pass_with_header_footer": {
                 "code": "# header\npass # trailing\n# footer\n",
-                "expected": CodeRange.create((1, 0), (4, 0)),
+                "expected": CodeRange((1, 0), (4, 0)),
             },
         }
     )
@@ -147,7 +141,7 @@ class ModuleTest(CSTNodeTest):
     def cmp_position(
         self, actual: CodeRange, start: Tuple[int, int], end: Tuple[int, int]
     ) -> None:
-        self.assertEqual(actual, CodeRange.create(start, end))
+        self.assertEqual(actual, CodeRange(start, end))
 
     def test_function_position(self) -> None:
         module = parse_module("def foo():\n    pass")

@@ -48,14 +48,18 @@ NEWLINE_RE: Pattern[str] = re.compile(r"\r\n?|\n")
 @add_slots
 @dataclass(frozen=True)
 class CodePosition:
+    #: Line numbers are 1-indexed.
     line: int
+    #: Column numbers are 0-indexed.
     column: int
 
 
 @add_slots
 @dataclass(frozen=True)
 class CodeRange:
+    #: Starting position of a node.
     start: CodePosition
+    #: Ending position of a node.
     end: CodePosition
 
     @overload
@@ -73,10 +77,6 @@ class CodeRange:
         else:
             object.__setattr__(self, "start", CodePosition(start[0], start[1]))
             object.__setattr__(self, "end", CodePosition(end[0], end[1]))
-
-    @classmethod
-    def create(cls, start: Tuple[int, int], end: Tuple[int, int]) -> "CodeRange":
-        return CodeRange(CodePosition(start[0], start[1]), CodePosition(end[0], end[1]))
 
 
 @dataclass(frozen=False)

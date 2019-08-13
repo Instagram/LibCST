@@ -153,7 +153,7 @@ class ComparisonTest(CSTNodeTest):
                     ),
                 ),
                 "baz == (foo not in bar)",
-                CodeRange.create((1, 0), (1, 23)),
+                CodeRange((1, 0), (1, 23)),
             ),
             (
                 cst.Comparison(
@@ -168,7 +168,7 @@ class ComparisonTest(CSTNodeTest):
                     ),
                 ),
                 "a > b > c",
-                CodeRange.create((1, 0), (1, 9)),
+                CodeRange((1, 0), (1, 9)),
             ),
             # Is safe to use with word operators if it's leading/trailing children are
             (

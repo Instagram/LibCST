@@ -40,7 +40,8 @@ class MetadataWrapper:
     """
     A wrapper around a :class:`~libcst.Module` that stores associated metadata
     for that module. When a :class:`MetadataWrapper` is constructed over
-    a module, the wrapper will store a deep copy of the original module.
+    a module, the wrapper will store a deep copy of the original module. This
+    means ``MetadataWrapper(module).module == module`` is ``False``.
     """
 
     module: "Module"
@@ -85,7 +86,7 @@ class MetadataWrapper:
     def visit(self, visitor: "CSTVisitorT") -> "Module":
         """
         Convenience method to resolve metadata before performing a traversal over
-        ``self.module`` with ``visitor``. See :func:`~libcst.CSTNode.visit`.
+        ``self.module`` with ``visitor``. See :func:`~libcst.Module.visit`.
         """
         with visitor.resolve(self):
             return self.module.visit(visitor)

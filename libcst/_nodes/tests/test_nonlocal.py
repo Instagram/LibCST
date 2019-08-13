@@ -28,7 +28,7 @@ class NonlocalConstructionTest(CSTNodeTest):
                     (cst.NameItem(cst.Name("a")), cst.NameItem(cst.Name("b")))
                 ),
                 "code": "nonlocal a, b",
-                "expected_position": CodeRange.create((1, 0), (1, 13)),
+                "expected_position": CodeRange((1, 0), (1, 13)),
             },
             # Whitespace rendering test
             {
@@ -46,7 +46,7 @@ class NonlocalConstructionTest(CSTNodeTest):
                     whitespace_after_nonlocal=cst.SimpleWhitespace("  "),
                 ),
                 "code": "nonlocal  a  ,  b",
-                "expected_position": CodeRange.create((1, 0), (1, 17)),
+                "expected_position": CodeRange((1, 0), (1, 17)),
             },
         )
     )

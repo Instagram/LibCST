@@ -18,12 +18,12 @@ class ReturnCreateTest(CSTNodeTest):
             {
                 "node": cst.SimpleStatementLine([cst.Return()]),
                 "code": "return\n",
-                "expected_position": CodeRange.create((1, 0), (1, 6)),
+                "expected_position": CodeRange((1, 0), (1, 6)),
             },
             {
                 "node": cst.SimpleStatementLine([cst.Return(cst.Name("abc"))]),
                 "code": "return abc\n",
-                "expected_position": CodeRange.create((1, 0), (1, 10)),
+                "expected_position": CodeRange((1, 0), (1, 10)),
             },
         )
     )

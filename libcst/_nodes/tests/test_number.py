@@ -22,7 +22,7 @@ class NumberTest(CSTNodeTest):
                 cst.UnaryOperation(operator=cst.Minus(), expression=cst.Integer("5")),
                 "-5",
                 parse_expression,
-                CodeRange.create((1, 0), (1, 2)),
+                CodeRange((1, 0), (1, 2)),
             ),
             # In parenthesis
             (
@@ -34,7 +34,7 @@ class NumberTest(CSTNodeTest):
                 ),
                 "(-5)",
                 parse_expression,
-                CodeRange.create((1, 1), (1, 3)),
+                CodeRange((1, 1), (1, 3)),
             ),
             (
                 cst.UnaryOperation(
@@ -47,7 +47,7 @@ class NumberTest(CSTNodeTest):
                 ),
                 "(-(5))",
                 parse_expression,
-                CodeRange.create((1, 1), (1, 5)),
+                CodeRange((1, 1), (1, 5)),
             ),
             (
                 cst.UnaryOperation(
@@ -58,7 +58,7 @@ class NumberTest(CSTNodeTest):
                 ),
                 "--5",
                 parse_expression,
-                CodeRange.create((1, 0), (1, 3)),
+                CodeRange((1, 0), (1, 3)),
             ),
             # multiple nested parenthesis
             (
@@ -69,7 +69,7 @@ class NumberTest(CSTNodeTest):
                 ),
                 "((5))",
                 parse_expression,
-                CodeRange.create((1, 2), (1, 3)),
+                CodeRange((1, 2), (1, 3)),
             ),
             (
                 cst.UnaryOperation(
@@ -84,7 +84,7 @@ class NumberTest(CSTNodeTest):
                 ),
                 "(+((5)))",
                 parse_expression,
-                CodeRange.create((1, 1), (1, 7)),
+                CodeRange((1, 1), (1, 7)),
             ),
         )
     )

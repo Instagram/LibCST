@@ -73,7 +73,7 @@ class ForTest(CSTNodeTest):
                 ),
                 "code": "    for target in iter():\n        pass\n",
                 "parser": None,
-                "expected_position": CodeRange.create((1, 4), (2, 12)),
+                "expected_position": CodeRange((1, 4), (2, 12)),
             },
             # leading_lines
             {
@@ -93,7 +93,7 @@ class ForTest(CSTNodeTest):
                 ),
                 "code": "# leading comment\nfor target in iter():\n    pass\n# else comment\nelse:\n    pass\n",
                 "parser": None,
-                "expected_position": CodeRange.create((2, 0), (6, 8)),
+                "expected_position": CodeRange((2, 0), (6, 8)),
             },
             # Weird spacing rules
             {
@@ -113,7 +113,7 @@ class ForTest(CSTNodeTest):
                 ),
                 "code": "for(target)in(iter()): pass\n",
                 "parser": parse_statement,
-                "expected_position": CodeRange.create((1, 0), (1, 27)),
+                "expected_position": CodeRange((1, 0), (1, 27)),
             },
             # Whitespace
             {
@@ -128,7 +128,7 @@ class ForTest(CSTNodeTest):
                 ),
                 "code": "for  target  in  iter()  : pass\n",
                 "parser": parse_statement,
-                "expected_position": CodeRange.create((1, 0), (1, 31)),
+                "expected_position": CodeRange((1, 0), (1, 31)),
             },
         )
     )
