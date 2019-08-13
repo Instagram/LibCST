@@ -134,5 +134,6 @@ for node in sorted(nodebases.keys(), key=lambda node: node.__name__):
     )
     generated_code.append("        return updated_node")
 
-# Output the code
-print("\n".join(generated_code))
+if __name__ == "__main__":
+    # Output the code
+    print("\n".join(generated_code))
