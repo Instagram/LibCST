@@ -16,7 +16,7 @@ from typing import (
     cast,
 )
 
-from libcst._typed_visitor_base import CSTTypedVisitorFunctions
+from libcst._typed_visitor import CSTTypedVisitorFunctions
 from libcst._visitors import CSTNodeT, CSTVisitor
 from libcst.metadata.dependent import MetadataDependent
 

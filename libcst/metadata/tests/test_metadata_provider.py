@@ -46,10 +46,10 @@ class MetadataProviderTest(UnitTest):
             # Declare both providers so the visitor has acesss to both types of metadata
             METADATA_DEPENDENCIES = (DependentProvider, SimpleProvider)
 
-            def visit_Module(self, module: cst.Module) -> None:
+            def visit_Module(self, node: cst.Module) -> None:
                 # Check metadata is set
-                test.assertEqual(self.get_metadata(SimpleProvider, module), 1)
-                test.assertEqual(self.get_metadata(DependentProvider, module), 2)
+                test.assertEqual(self.get_metadata(SimpleProvider, node), 1)
+                test.assertEqual(self.get_metadata(DependentProvider, node), 2)
 
             def visit_Pass(self, node: cst.Pass) -> None:
                 # Check metadata is set
@@ -153,11 +153,11 @@ class MetadataProviderTest(UnitTest):
                 DependentProvider,
             )
 
-            def visit_Module(self, module: cst.Module) -> None:
+            def visit_Module(self, node: cst.Module) -> None:
                 # Dependent visitor set metadata on all nodes but for module it
                 # defaulted to 0 because BatchedProviderA/B only set metadata on
                 # pass nodes
-                test.assertEqual(self.get_metadata(DependentProvider, module), 0)
+                test.assertEqual(self.get_metadata(DependentProvider, node), 0)
 
             def visit_Pass(self, node: cst.Pass) -> None:
                 # Check metadata is set
