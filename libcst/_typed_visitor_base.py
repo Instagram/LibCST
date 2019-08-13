@@ -4,15 +4,18 @@
 # LICENSE file in the root directory of this source tree.
 
 # pyre-strict
-from typing import Any, Callable, TypeVar, cast
+from typing import TYPE_CHECKING, Any, Callable, TypeVar, cast
 
+
+if TYPE_CHECKING:
+    from libcst._typed_visitor import CSTTypedBaseFunctions  # noqa: F401
 
 T = TypeVar("T")
 
 
 def mark_no_op(
-    f: Callable[["CSTTypedVisitorFunctions", T], None]
-) -> Callable[["CSTTypedVisitorFunctions", T], None]:
+    f: Callable[["CSTTypedBaseFunctions", T], None]
+) -> Callable[["CSTTypedBaseFunctions", T], None]:
     """
     Annotates stubs with a field to indicate they should not be collected
     by BatchableCSTVisitor.get_visitors() to reduce function call
@@ -21,8 +24,3 @@ def mark_no_op(
 
     cast(Any, f)._is_no_op = True
     return f
-
-
-class CSTTypedVisitorFunctions:
-    # TODO: generate stubs for visit/leave functions with codegen
-    pass
