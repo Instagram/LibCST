@@ -23,7 +23,7 @@ class IfTest(CSTNodeTest):
                 ),
                 "code": "if conditional: pass\n",
                 "parser": parse_statement,
-                "expected_position": CodeRange.create((1, 0), (1, 20)),
+                "expected_position": CodeRange((1, 0), (1, 20)),
             },
             # else clause
             {
@@ -34,7 +34,7 @@ class IfTest(CSTNodeTest):
                 ),
                 "code": "if conditional: pass\nelse: pass\n",
                 "parser": parse_statement,
-                "expected_position": CodeRange.create((1, 0), (2, 10)),
+                "expected_position": CodeRange((1, 0), (2, 10)),
             },
             # elif clause
             {
@@ -49,7 +49,7 @@ class IfTest(CSTNodeTest):
                 ),
                 "code": "if conditional: pass\nelif other_conditional: pass\nelse: pass\n",
                 "parser": parse_statement,
-                "expected_position": CodeRange.create((1, 0), (3, 10)),
+                "expected_position": CodeRange((1, 0), (3, 10)),
             },
             # indentation
             {
@@ -63,7 +63,7 @@ class IfTest(CSTNodeTest):
                 ),
                 "code": "    if conditional: pass\n    else: pass\n",
                 "parser": None,
-                "expected_position": CodeRange.create((1, 4), (2, 14)),
+                "expected_position": CodeRange((1, 4), (2, 14)),
             },
             # with an indented body
             {
@@ -76,7 +76,7 @@ class IfTest(CSTNodeTest):
                 ),
                 "code": "    if conditional:\n        pass\n",
                 "parser": None,
-                "expected_position": CodeRange.create((1, 4), (2, 12)),
+                "expected_position": CodeRange((1, 4), (2, 12)),
             },
             # leading_lines
             {
@@ -89,7 +89,7 @@ class IfTest(CSTNodeTest):
                 ),
                 "code": "# leading comment\nif conditional: pass\n",
                 "parser": parse_statement,
-                "expected_position": CodeRange.create((2, 0), (2, 20)),
+                "expected_position": CodeRange((2, 0), (2, 20)),
             },
             # whitespace before/after test and else
             {
@@ -105,7 +105,7 @@ class IfTest(CSTNodeTest):
                 ),
                 "code": "if   conditional  : pass\nelse : pass\n",
                 "parser": parse_statement,
-                "expected_position": CodeRange.create((1, 0), (2, 11)),
+                "expected_position": CodeRange((1, 0), (2, 11)),
             },
             # empty lines between if/elif/else clauses, not captured by the suite.
             {
@@ -124,7 +124,7 @@ class IfTest(CSTNodeTest):
                 ),
                 "code": "if test_a: pass\n\nelif test_b: pass\n\nelse: pass\n",
                 "parser": parse_statement,
-                "expected_position": CodeRange.create((1, 0), (5, 10)),
+                "expected_position": CodeRange((1, 0), (5, 10)),
             },
         )
     )

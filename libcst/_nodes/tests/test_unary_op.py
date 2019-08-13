@@ -29,7 +29,7 @@ class UnaryOperationTest(CSTNodeTest):
                     rpar=(cst.RightParen(),),
                 ),
                 "(not foo)",
-                CodeRange.create((1, 1), (1, 8)),
+                CodeRange((1, 1), (1, 8)),
             ),
             (
                 cst.UnaryOperation(
@@ -39,7 +39,7 @@ class UnaryOperationTest(CSTNodeTest):
                     ),
                 ),
                 "not(foo)",
-                CodeRange.create((1, 0), (1, 8)),
+                CodeRange((1, 0), (1, 8)),
             ),
             # Make sure that spacing works
             (
@@ -50,7 +50,7 @@ class UnaryOperationTest(CSTNodeTest):
                     rpar=(cst.RightParen(whitespace_before=cst.SimpleWhitespace(" ")),),
                 ),
                 "( not  foo )",
-                CodeRange.create((1, 2), (1, 10)),
+                CodeRange((1, 2), (1, 10)),
             ),
         )
     )

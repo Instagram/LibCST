@@ -88,7 +88,7 @@ class TupleTest(CSTNodeTest):
                 ),
                 "code": "(*one,*two,)",
                 "parser": parse_expression,
-                "expected_position": CodeRange.create((1, 1), (1, 11)),
+                "expected_position": CodeRange((1, 1), (1, 11)),
             },
             # custom parenthesis on StarredElement
             {
@@ -104,7 +104,7 @@ class TupleTest(CSTNodeTest):
                 ),
                 "code": "((*abc),)",
                 "parser": parse_expression,
-                "expected_position": CodeRange.create((1, 1), (1, 8)),
+                "expected_position": CodeRange((1, 1), (1, 8)),
             },
             # custom whitespace on StarredElement
             {
@@ -123,7 +123,7 @@ class TupleTest(CSTNodeTest):
                 ),
                 "code": "one,(*  two)",
                 "parser": parse_expression,
-                "expected_position": CodeRange.create((1, 0), (1, 12)),
+                "expected_position": CodeRange((1, 0), (1, 12)),
             },
             # missing spaces around tuple, okay with parenthesis
             {

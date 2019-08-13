@@ -19,7 +19,7 @@ class DelTest(CSTNodeTest):
                 "node": cst.SimpleStatementLine([cst.Del(cst.Name("abc"))]),
                 "code": "del abc\n",
                 "parser": parse_statement,
-                "expected_position": CodeRange.create((1, 0), (1, 7)),
+                "expected_position": CodeRange((1, 0), (1, 7)),
             },
             {
                 "node": cst.SimpleStatementLine(
@@ -32,7 +32,7 @@ class DelTest(CSTNodeTest):
                 ),
                 "code": "del   abc\n",
                 "parser": parse_statement,
-                "expected_position": CodeRange.create((1, 0), (1, 9)),
+                "expected_position": CodeRange((1, 0), (1, 9)),
             },
             {
                 "node": cst.SimpleStatementLine(
@@ -47,7 +47,7 @@ class DelTest(CSTNodeTest):
                 ),
                 "code": "del(abc)\n",
                 "parser": parse_statement,
-                "expected_position": CodeRange.create((1, 0), (1, 8)),
+                "expected_position": CodeRange((1, 0), (1, 8)),
             },
             {
                 "node": cst.SimpleStatementLine(
@@ -55,7 +55,7 @@ class DelTest(CSTNodeTest):
                 ),
                 "code": "del abc;\n",
                 "parser": parse_statement,
-                "expected_position": CodeRange.create((1, 0), (1, 7)),
+                "expected_position": CodeRange((1, 0), (1, 7)),
             },
         )
     )

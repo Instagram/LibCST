@@ -23,7 +23,7 @@ class RaiseConstructionTest(CSTNodeTest):
             {
                 "node": cst.Raise(cst.Call(cst.Name("Exception"))),
                 "code": "raise Exception()",
-                "expected_position": CodeRange.create((1, 0), (1, 17)),
+                "expected_position": CodeRange((1, 0), (1, 17)),
             },
             # Raise exception from cause
             {
@@ -50,7 +50,7 @@ class RaiseConstructionTest(CSTNodeTest):
                     whitespace_after_raise=cst.SimpleWhitespace(""),
                 ),
                 "code": "raise(Exception())from(cause)",
-                "expected_position": CodeRange.create((1, 0), (1, 29)),
+                "expected_position": CodeRange((1, 0), (1, 29)),
             },
             {
                 "node": cst.Raise(
@@ -61,7 +61,7 @@ class RaiseConstructionTest(CSTNodeTest):
                     ),
                 ),
                 "code": "raise Exception()from cause",
-                "expected_position": CodeRange.create((1, 0), (1, 27)),
+                "expected_position": CodeRange((1, 0), (1, 27)),
             },
             # Whitespace rendering test
             {
@@ -75,7 +75,7 @@ class RaiseConstructionTest(CSTNodeTest):
                     whitespace_after_raise=cst.SimpleWhitespace("  "),
                 ),
                 "code": "raise  Exception()  from  cause",
-                "expected_position": CodeRange.create((1, 0), (1, 31)),
+                "expected_position": CodeRange((1, 0), (1, 31)),
             },
         )
     )

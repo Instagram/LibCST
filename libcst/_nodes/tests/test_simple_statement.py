@@ -57,7 +57,7 @@ class SimpleStatementTest(CSTNodeTest):
                 ),
                 "code": "pass;continue;break\n",
                 "parser": parse_statement,
-                "expected_position": CodeRange.create((1, 0), (1, 19)),
+                "expected_position": CodeRange((1, 0), (1, 19)),
             },
             # a multi-element SimpleStatementLine, inferred semicolons
             {
@@ -117,7 +117,7 @@ class SimpleStatementTest(CSTNodeTest):
                 ),
                 "code": "(5)\n",
                 "parser": parse_statement,
-                "expected_position": CodeRange.create((1, 0), (1, 3)),
+                "expected_position": CodeRange((1, 0), (1, 3)),
             },
             {
                 "node": cst.SimpleStatementLine(
@@ -182,7 +182,7 @@ class SimpleStatementTest(CSTNodeTest):
                 ),
                 "code": '"abc" "def" "ghi"\n',
                 "parser": parse_statement,
-                "expected_position": CodeRange.create((1, 0), (1, 17)),
+                "expected_position": CodeRange((1, 0), (1, 17)),
             },
             # Test parenthesis rules
             {
@@ -254,7 +254,7 @@ class SimpleStatementTest(CSTNodeTest):
                 ),
                 "code": "( (  (   ...   )  ) )\n",
                 "parser": parse_statement,
-                "expected_position": CodeRange.create((1, 0), (1, 21)),
+                "expected_position": CodeRange((1, 0), (1, 21)),
             },
             # Test parenthesis rules with expressions
             {
@@ -294,7 +294,7 @@ class SimpleStatementTest(CSTNodeTest):
                 ),
                 "code": "(\n# Wow, a comment!\n    ...\n)\n",
                 "parser": parse_statement,
-                "expected_position": CodeRange.create((1, 0), (4, 1)),
+                "expected_position": CodeRange((1, 0), (4, 1)),
             },
             # test trailing whitespace
             {
@@ -307,7 +307,7 @@ class SimpleStatementTest(CSTNodeTest):
                 ),
                 "code": "pass  # trailing comment\n",
                 "parser": parse_statement,
-                "expected_position": CodeRange.create((1, 0), (1, 4)),
+                "expected_position": CodeRange((1, 0), (1, 4)),
             },
             # test leading comment
             {
@@ -317,7 +317,7 @@ class SimpleStatementTest(CSTNodeTest):
                 ),
                 "code": "# comment\npass\n",
                 "parser": parse_statement,
-                "expected_position": CodeRange.create((2, 0), (2, 4)),
+                "expected_position": CodeRange((2, 0), (2, 4)),
             },
             # test indentation
             {
@@ -331,20 +331,20 @@ class SimpleStatementTest(CSTNodeTest):
                     ),
                 ),
                 "code": "    # comment\n    pass\n",
-                "expected_position": CodeRange.create((2, 4), (2, 8)),
+                "expected_position": CodeRange((2, 4), (2, 8)),
             },
             # test suite variant
             {
                 "node": cst.SimpleStatementSuite((cst.Pass(),)),
                 "code": " pass\n",
-                "expected_position": CodeRange.create((1, 1), (1, 5)),
+                "expected_position": CodeRange((1, 1), (1, 5)),
             },
             {
                 "node": cst.SimpleStatementSuite(
                     (cst.Pass(),), leading_whitespace=cst.SimpleWhitespace("")
                 ),
                 "code": "pass\n",
-                "expected_position": CodeRange.create((1, 0), (1, 4)),
+                "expected_position": CodeRange((1, 0), (1, 4)),
             },
         )
     )

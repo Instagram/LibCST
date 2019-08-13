@@ -55,7 +55,7 @@ class ImportCreateTest(CSTNodeTest):
                     )
                 ),
                 "code": "import foo.bar, foo.baz",
-                "expected_position": CodeRange.create((1, 0), (1, 23)),
+                "expected_position": CodeRange((1, 0), (1, 23)),
             },
             # Import with an alias
             {
@@ -141,7 +141,7 @@ class ImportCreateTest(CSTNodeTest):
                     whitespace_after_import=cst.SimpleWhitespace("  "),
                 ),
                 "code": "import  foo . bar  as  baz ,  unittest  as  ut",
-                "expected_position": CodeRange.create((1, 0), (1, 46)),
+                "expected_position": CodeRange((1, 0), (1, 46)),
             },
         )
     )
@@ -389,13 +389,13 @@ class ImportFromCreateTest(CSTNodeTest):
                     ),
                 ),
                 "code": "from foo import bar,baz,",
-                "expected_position": CodeRange.create((1, 0), (1, 23)),
+                "expected_position": CodeRange((1, 0), (1, 23)),
             },
             # Star import statement
             {
                 "node": cst.ImportFrom(module=cst.Name("foo"), names=cst.ImportStar()),
                 "code": "from foo import *",
-                "expected_position": CodeRange.create((1, 0), (1, 17)),
+                "expected_position": CodeRange((1, 0), (1, 17)),
             },
             # Simple relative import statement
             {
@@ -436,7 +436,7 @@ class ImportFromCreateTest(CSTNodeTest):
                     rpar=cst.RightParen(),
                 ),
                 "code": "from foo import (bar as baz)",
-                "expected_position": CodeRange.create((1, 0), (1, 28)),
+                "expected_position": CodeRange((1, 0), (1, 28)),
             },
             # Verify whitespace works everywhere.
             {
@@ -481,7 +481,7 @@ class ImportFromCreateTest(CSTNodeTest):
                     whitespace_after_import=cst.SimpleWhitespace("  "),
                 ),
                 "code": "from   .  . foo  import  ( bar  as  baz ,  unittest  as  ut )",
-                "expected_position": CodeRange.create((1, 0), (1, 61)),
+                "expected_position": CodeRange((1, 0), (1, 61)),
             },
         )
     )

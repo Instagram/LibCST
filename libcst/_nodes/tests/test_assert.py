@@ -42,7 +42,7 @@ class AssertConstructionTest(CSTNodeTest):
                 ),
                 "code": "assert(True)",
                 "parser": None,
-                "expected_position": CodeRange.create((1, 0), (1, 12)),
+                "expected_position": CodeRange((1, 0), (1, 12)),
             },
             # Whitespace rendering test
             {
@@ -57,7 +57,7 @@ class AssertConstructionTest(CSTNodeTest):
                 ),
                 "code": 'assert  True  ,  "Value should be true"',
                 "parser": None,
-                "expected_position": CodeRange.create((1, 0), (1, 39)),
+                "expected_position": CodeRange((1, 0), (1, 39)),
             },
         )
     )

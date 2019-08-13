@@ -31,7 +31,7 @@ class AtomTest(CSTNodeTest):
                 ),
                 "code": "(test)",
                 "parser": parse_expression,
-                "expected_position": CodeRange.create((1, 1), (1, 5)),
+                "expected_position": CodeRange((1, 1), (1, 5)),
             },
             # Decimal integers
             {
@@ -104,7 +104,7 @@ class AtomTest(CSTNodeTest):
                 ),
                 "code": "(123)",
                 "parser": parse_expression,
-                "expected_position": CodeRange.create((1, 1), (1, 4)),
+                "expected_position": CodeRange((1, 1), (1, 4)),
             },
             # Non-exponent floats
             {
@@ -199,7 +199,7 @@ class AtomTest(CSTNodeTest):
                 ),
                 "code": "(123.4)",
                 "parser": parse_expression,
-                "expected_position": CodeRange.create((1, 1), (1, 6)),
+                "expected_position": CodeRange((1, 1), (1, 6)),
             },
             # Imaginary numbers
             {
@@ -233,7 +233,7 @@ class AtomTest(CSTNodeTest):
                 ),
                 "code": "(123.4j)",
                 "parser": parse_expression,
-                "expected_position": CodeRange.create((1, 1), (1, 7)),
+                "expected_position": CodeRange((1, 1), (1, 7)),
             },
             # Simple elipses
             {
@@ -247,7 +247,7 @@ class AtomTest(CSTNodeTest):
                 "node": cst.Ellipsis(lpar=(cst.LeftParen(),), rpar=(cst.RightParen(),)),
                 "code": "(...)",
                 "parser": parse_expression,
-                "expected_position": CodeRange.create((1, 1), (1, 4)),
+                "expected_position": CodeRange((1, 1), (1, 4)),
             },
             # Simple strings
             {
@@ -301,7 +301,7 @@ class AtomTest(CSTNodeTest):
                 ),
                 "code": '(rb"test")',
                 "parser": parse_expression,
-                "expected_position": CodeRange.create((1, 1), (1, 9)),
+                "expected_position": CodeRange((1, 1), (1, 9)),
             },
             # Test that _safe_to_use_with_word_operator allows no space around quotes
             {
@@ -537,7 +537,7 @@ class AtomTest(CSTNodeTest):
                 ),
                 "code": '(f"")',
                 "parser": parse_expression,
-                "expected_position": CodeRange.create((1, 1), (1, 4)),
+                "expected_position": CodeRange((1, 1), (1, 4)),
             },
             # Concatenated strings
             {
@@ -601,7 +601,7 @@ class AtomTest(CSTNodeTest):
                 ),
                 "code": '( "ab" "c" )',
                 "parser": parse_expression,
-                "expected_position": CodeRange.create((1, 2), (1, 10)),
+                "expected_position": CodeRange((1, 2), (1, 10)),
             },
         )
     )
@@ -619,7 +619,7 @@ class AtomTest(CSTNodeTest):
                 ),
                 "code": "{today:%B %d, %Y}",
                 "parser": None,
-                "expected_position": CodeRange.create((1, 0), (1, 17)),
+                "expected_position": CodeRange((1, 0), (1, 17)),
             },
         )
     )

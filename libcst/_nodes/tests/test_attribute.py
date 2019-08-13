@@ -20,7 +20,7 @@ class AttributeTest(CSTNodeTest):
                 "node": cst.Attribute(cst.Name("foo"), cst.Name("bar")),
                 "code": "foo.bar",
                 "parser": parse_expression,
-                "expected_position": CodeRange.create((1, 0), (1, 7)),
+                "expected_position": CodeRange((1, 0), (1, 7)),
             },
             # Parenthesized attribute access
             {
@@ -32,7 +32,7 @@ class AttributeTest(CSTNodeTest):
                 ),
                 "code": "(foo.bar)",
                 "parser": parse_expression,
-                "expected_position": CodeRange.create((1, 1), (1, 8)),
+                "expected_position": CodeRange((1, 1), (1, 8)),
             },
             # Make sure that spacing works
             {
@@ -48,7 +48,7 @@ class AttributeTest(CSTNodeTest):
                 ),
                 "code": "( foo . bar )",
                 "parser": parse_expression,
-                "expected_position": CodeRange.create((1, 2), (1, 11)),
+                "expected_position": CodeRange((1, 2), (1, 11)),
             },
         )
     )

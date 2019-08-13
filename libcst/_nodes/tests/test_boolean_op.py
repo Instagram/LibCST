@@ -61,7 +61,7 @@ class BooleanOperationTest(CSTNodeTest):
                 ),
                 "code": "(foo)or(bar)",
                 "parser": parse_expression,
-                "expected_position": CodeRange.create((1, 0), (1, 12)),
+                "expected_position": CodeRange((1, 0), (1, 12)),
             },
             # Make sure that spacing works
             {

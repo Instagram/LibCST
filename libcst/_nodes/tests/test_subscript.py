@@ -50,7 +50,7 @@ class SubscriptTest(CSTNodeTest):
                 ),
                 "foo[1:2:3, 5]",
                 False,
-                CodeRange.create((1, 0), (1, 13)),
+                CodeRange((1, 0), (1, 13)),
             ),
             # Test parsing of subscript with slice/extslice.
             (
@@ -127,7 +127,7 @@ class SubscriptTest(CSTNodeTest):
                 ),
                 "foo[::3]",
                 False,
-                CodeRange.create((1, 0), (1, 8)),
+                CodeRange((1, 0), (1, 8)),
             ),
             # Some more wild slice parsings
             (
@@ -305,15 +305,15 @@ class SubscriptTest(CSTNodeTest):
                 ),
                 "( foo [ 1 : 2 : 3 ,  5 ] )",
                 True,
-                CodeRange.create((1, 2), (1, 24)),
+                CodeRange((1, 2), (1, 24)),
             ),
             # Test Index, Slice, ExtSlice
-            (cst.Index(cst.Integer("5")), "5", False, CodeRange.create((1, 0), (1, 1))),
+            (cst.Index(cst.Integer("5")), "5", False, CodeRange((1, 0), (1, 1))),
             (
                 cst.Slice(lower=None, upper=None, second_colon=cst.Colon(), step=None),
                 "::",
                 False,
-                CodeRange.create((1, 0), (1, 2)),
+                CodeRange((1, 0), (1, 2)),
             ),
             (
                 cst.ExtSlice(
@@ -337,7 +337,7 @@ class SubscriptTest(CSTNodeTest):
                 ),
                 "1 : 2 : 3 ,  ",
                 False,
-                CodeRange.create((1, 0), (1, 9)),
+                CodeRange((1, 0), (1, 9)),
             ),
         )
     )

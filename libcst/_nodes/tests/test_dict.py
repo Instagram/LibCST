@@ -20,20 +20,20 @@ class DictTest(CSTNodeTest):
                 "node": cst.Dict([]),
                 "code": "{}",
                 "parser": parse_expression,
-                "expected_position": CodeRange.create((1, 0), (1, 2)),
+                "expected_position": CodeRange((1, 0), (1, 2)),
             },
             # one-element dict, sentinel comma value
             {
                 "node": cst.Dict([cst.DictElement(cst.Name("k"), cst.Name("v"))]),
                 "code": "{k: v}",
                 "parser": parse_expression,
-                "expected_position": CodeRange.create((1, 0), (1, 6)),
+                "expected_position": CodeRange((1, 0), (1, 6)),
             },
             {
                 "node": cst.Dict([cst.StarredDictElement(cst.Name("expanded"))]),
                 "code": "{**expanded}",
                 "parser": parse_expression,
-                "expected_position": CodeRange.create((1, 0), (1, 12)),
+                "expected_position": CodeRange((1, 0), (1, 12)),
             },
             # two-element dict, sentinel comma value
             {
@@ -45,7 +45,7 @@ class DictTest(CSTNodeTest):
                 ),
                 "code": "{k1: v1, k2: v2}",
                 "parser": None,
-                "expected_position": CodeRange.create((1, 0), (1, 16)),
+                "expected_position": CodeRange((1, 0), (1, 16)),
             },
             # custom whitespace between brackets
             {
@@ -60,7 +60,7 @@ class DictTest(CSTNodeTest):
                 ),
                 "code": "{\tk: v\t\t}",
                 "parser": parse_expression,
-                "expected_position": CodeRange.create((1, 0), (1, 9)),
+                "expected_position": CodeRange((1, 0), (1, 9)),
             },
             # with parenthesis
             {
@@ -71,7 +71,7 @@ class DictTest(CSTNodeTest):
                 ),
                 "code": "({k: v})",
                 "parser": parse_expression,
-                "expected_position": CodeRange.create((1, 1), (1, 7)),
+                "expected_position": CodeRange((1, 1), (1, 7)),
             },
             # starred element
             {
@@ -83,7 +83,7 @@ class DictTest(CSTNodeTest):
                 ),
                 "code": "{**one, **two}",
                 "parser": None,
-                "expected_position": CodeRange.create((1, 0), (1, 14)),
+                "expected_position": CodeRange((1, 0), (1, 14)),
             },
             # custom comma on DictElement
             {
@@ -92,7 +92,7 @@ class DictTest(CSTNodeTest):
                 ),
                 "code": "{k: v,}",
                 "parser": parse_expression,
-                "expected_position": CodeRange.create((1, 0), (1, 7)),
+                "expected_position": CodeRange((1, 0), (1, 7)),
             },
             # custom comma on StarredDictElement
             {
@@ -101,7 +101,7 @@ class DictTest(CSTNodeTest):
                 ),
                 "code": "{**expanded,}",
                 "parser": parse_expression,
-                "expected_position": CodeRange.create((1, 0), (1, 13)),
+                "expected_position": CodeRange((1, 0), (1, 13)),
             },
             # custom whitespace on DictElement
             {
@@ -117,7 +117,7 @@ class DictTest(CSTNodeTest):
                 ),
                 "code": "{k\t:\t\tv}",
                 "parser": parse_expression,
-                "expected_position": CodeRange.create((1, 0), (1, 8)),
+                "expected_position": CodeRange((1, 0), (1, 8)),
             },
             # custom whitespace on StarredDictElement
             {
@@ -134,7 +134,7 @@ class DictTest(CSTNodeTest):
                 ),
                 "code": "{k: v,**  expanded}",
                 "parser": parse_expression,
-                "expected_position": CodeRange.create((1, 0), (1, 19)),
+                "expected_position": CodeRange((1, 0), (1, 19)),
             },
             # missing spaces around dict is always okay
             {

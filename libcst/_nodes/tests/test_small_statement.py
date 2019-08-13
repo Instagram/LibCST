@@ -26,7 +26,7 @@ class SmallStatementTest(CSTNodeTest):
                     )
                 ),
                 "code": "pass  ;    ",
-                "expected_position": CodeRange.create((1, 0), (1, 4)),
+                "expected_position": CodeRange((1, 0), (1, 4)),
             },
             {"node": cst.Continue(), "code": "continue"},
             {"node": cst.Continue(semicolon=cst.Semicolon()), "code": "continue;"},
@@ -38,7 +38,7 @@ class SmallStatementTest(CSTNodeTest):
                     )
                 ),
                 "code": "continue  ;    ",
-                "expected_position": CodeRange.create((1, 0), (1, 8)),
+                "expected_position": CodeRange((1, 0), (1, 8)),
             },
             {"node": cst.Break(), "code": "break"},
             {"node": cst.Break(semicolon=cst.Semicolon()), "code": "break;"},
@@ -50,7 +50,7 @@ class SmallStatementTest(CSTNodeTest):
                     )
                 ),
                 "code": "break  ;    ",
-                "expected_position": CodeRange.create((1, 0), (1, 5)),
+                "expected_position": CodeRange((1, 0), (1, 5)),
             },
             {
                 "node": cst.Expr(
@@ -74,7 +74,7 @@ class SmallStatementTest(CSTNodeTest):
                     ),
                 ),
                 "code": "x + y  ;    ",
-                "expected_position": CodeRange.create((1, 0), (1, 5)),
+                "expected_position": CodeRange((1, 0), (1, 5)),
             },
         )
     )

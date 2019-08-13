@@ -39,7 +39,7 @@ class AwaitTest(CSTNodeTest):
                 ),
                 "code": "( await  test )",
                 "parser": parse_expression,
-                "expected_position": CodeRange.create((1, 2), (1, 13)),
+                "expected_position": CodeRange((1, 2), (1, 13)),
             },
         )
     )

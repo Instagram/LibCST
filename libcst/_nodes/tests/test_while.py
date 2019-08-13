@@ -45,7 +45,7 @@ class WhileTest(CSTNodeTest):
                 ),
                 "code": "    while iter(): pass\n",
                 "parser": None,
-                "expected_position": CodeRange.create((1, 4), (1, 22)),
+                "expected_position": CodeRange((1, 4), (1, 22)),
             },
             # while an indented body
             {
@@ -58,7 +58,7 @@ class WhileTest(CSTNodeTest):
                 ),
                 "code": "    while iter():\n        pass\n",
                 "parser": None,
-                "expected_position": CodeRange.create((1, 4), (2, 12)),
+                "expected_position": CodeRange((1, 4), (2, 12)),
             },
             # leading_lines
             {
@@ -71,7 +71,7 @@ class WhileTest(CSTNodeTest):
                 ),
                 "code": "# leading comment\nwhile iter():\n    pass\n",
                 "parser": parse_statement,
-                "expected_position": CodeRange.create((2, 0), (3, 8)),
+                "expected_position": CodeRange((2, 0), (3, 8)),
             },
             {
                 "node": cst.While(
@@ -89,7 +89,7 @@ class WhileTest(CSTNodeTest):
                 ),
                 "code": "# leading comment\nwhile iter():\n    pass\n# else comment\nelse:\n    pass\n",
                 "parser": None,
-                "expected_position": CodeRange.create((2, 0), (6, 8)),
+                "expected_position": CodeRange((2, 0), (6, 8)),
             },
             # Weird spacing rules
             {
@@ -104,7 +104,7 @@ class WhileTest(CSTNodeTest):
                 ),
                 "code": "while(iter()): pass\n",
                 "parser": parse_statement,
-                "expected_position": CodeRange.create((1, 0), (1, 19)),
+                "expected_position": CodeRange((1, 0), (1, 19)),
             },
             # Whitespace
             {
@@ -116,7 +116,7 @@ class WhileTest(CSTNodeTest):
                 ),
                 "code": "while  iter()  : pass\n",
                 "parser": parse_statement,
-                "expected_position": CodeRange.create((1, 0), (1, 21)),
+                "expected_position": CodeRange((1, 0), (1, 21)),
             },
         )
     )

@@ -18,7 +18,7 @@ class ElseTest(CSTNodeTest):
             {
                 "node": cst.Else(cst.SimpleStatementSuite((cst.Pass(),))),
                 "code": "else: pass\n",
-                "expected_position": CodeRange.create((1, 0), (1, 10)),
+                "expected_position": CodeRange((1, 0), (1, 10)),
             },
             {
                 "node": cst.Else(
@@ -26,7 +26,7 @@ class ElseTest(CSTNodeTest):
                     whitespace_before_colon=cst.SimpleWhitespace("  "),
                 ),
                 "code": "else  : pass\n",
-                "expected_position": CodeRange.create((1, 0), (1, 12)),
+                "expected_position": CodeRange((1, 0), (1, 12)),
             },
         )
     )

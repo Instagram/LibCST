@@ -24,7 +24,7 @@ class DictCompTest(CSTNodeTest):
                 ),
                 "code": "{k: v for a in b}",
                 "parser": parse_expression,
-                "expected_position": CodeRange.create((1, 0), (1, 17)),
+                "expected_position": CodeRange((1, 0), (1, 17)),
             },
             # custom whitespace around colon
             {
@@ -37,7 +37,7 @@ class DictCompTest(CSTNodeTest):
                 ),
                 "code": "{k\t:\t\tv for a in b}",
                 "parser": parse_expression,
-                "expected_position": CodeRange.create((1, 0), (1, 19)),
+                "expected_position": CodeRange((1, 0), (1, 19)),
             },
             # custom whitespace inside braces
             {
@@ -54,7 +54,7 @@ class DictCompTest(CSTNodeTest):
                 ),
                 "code": "{\tk: v for a in b\t\t}",
                 "parser": parse_expression,
-                "expected_position": CodeRange.create((1, 0), (1, 20)),
+                "expected_position": CodeRange((1, 0), (1, 20)),
             },
             # parenthesis
             {
@@ -67,7 +67,7 @@ class DictCompTest(CSTNodeTest):
                 ),
                 "code": "({k: v for a in b})",
                 "parser": parse_expression,
-                "expected_position": CodeRange.create((1, 1), (1, 18)),
+                "expected_position": CodeRange((1, 1), (1, 18)),
             },
             # missing spaces around DictComp is always okay
             {
@@ -92,7 +92,7 @@ class DictCompTest(CSTNodeTest):
                 ),
                 "code": "{a: b for c in{d: e for f in g}if h}",
                 "parser": parse_expression,
-                "expected_position": CodeRange.create((1, 0), (1, 36)),
+                "expected_position": CodeRange((1, 0), (1, 36)),
             },
             # no whitespace before `for` clause
             {
@@ -107,7 +107,7 @@ class DictCompTest(CSTNodeTest):
                 ),
                 "code": "{k: (v)for a in b}",
                 "parser": parse_expression,
-                "expected_position": CodeRange.create((1, 0), (1, 18)),
+                "expected_position": CodeRange((1, 0), (1, 18)),
             },
         ]
     )

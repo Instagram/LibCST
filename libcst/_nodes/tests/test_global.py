@@ -42,7 +42,7 @@ class GlobalConstructionTest(CSTNodeTest):
                     whitespace_after_global=cst.SimpleWhitespace("  "),
                 ),
                 "code": "global  a  ,  b",
-                "expected_position": CodeRange.create((1, 0), (1, 15)),
+                "expected_position": CodeRange((1, 0), (1, 15)),
             },
         )
     )
