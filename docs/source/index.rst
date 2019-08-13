@@ -21,6 +21,7 @@ LibCST
    parser
    nodes
    visitors
+   metadata
 
 
 Indices and tables

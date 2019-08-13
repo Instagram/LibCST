@@ -185,6 +185,17 @@ from libcst._parser._entrypoints import parse_expression, parse_module, parse_st
 from libcst._parser._types.config import PartialParserConfig
 from libcst._removal_sentinel import RemovalSentinel
 from libcst._visitors import CSTNodeT, CSTTransformer, CSTVisitor, CSTVisitorT
+from libcst.metadata.base_provider import (
+    BaseMetadataProvider,
+    BatchableMetadataProvider,
+    VisitorMetadataProvider,
+)
+from libcst.metadata.dependent import _MetadataDependent
+from libcst.metadata.position_provider import (
+    BasicPositionProvider,
+    SyntacticPositionProvider,
+)
+from libcst.metadata.wrapper import MetadataWrapper
 
 
 __all__ = [
@@ -370,4 +381,11 @@ __all__ = [
     "ParenthesizedWhitespace",
     "SimpleWhitespace",
     "TrailingWhitespace",
+    "BaseMetadataProvider",
+    "BatchableMetadataProvider",
+    "VisitorMetadataProvider",
+    "_MetadataDependent",
+    "BasicPositionProvider",
+    "SyntacticPositionProvider",
+    "MetadataWrapper",
 ]

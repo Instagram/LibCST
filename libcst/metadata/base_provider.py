@@ -39,7 +39,8 @@ _T = TypeVar("_T")
 # We can't use an ABCMeta here, because of metaclass conflicts
 class BaseMetadataProvider(_MetadataDependent, Generic[_T]):
     """
-    Abstract base class for all metadata providers.
+    The low-level base class for all metadata providers. This class should be
+    extended for metadata providers that are not visitor-based.
     """
 
     # Cache of metadata computed by this provider
@@ -51,9 +52,10 @@ class BaseMetadataProvider(_MetadataDependent, Generic[_T]):
 
     def _gen(self, wrapper: "MetadataWrapper") -> Mapping["CSTNode", _T]:
         """
-        Returns metadata mapping for this provider on wrapper.
+        Resolves and returns metadata mapping for the module in ``wrapper``.
 
-        This is a hook for metadata resolver and should not be called directly.
+        This method is used by the metadata resolver and should not be called
+        directly.
         """
 
         self._computed = {}
@@ -66,13 +68,13 @@ class BaseMetadataProvider(_MetadataDependent, Generic[_T]):
 
     def _gen_impl(self, module: "Module") -> None:
         """
-        Override this method to compute metadata using set_metadata.
+        Override this method with a metadata computation implementation.
         """
         ...
 
     def set_metadata(self, node: "CSTNode", value: _T) -> None:
         """
-        Map a given node to a metadata value.
+        Record a metadata value ``value`` for ``node``.
         """
         self._computed[node] = value
 
@@ -83,7 +85,8 @@ class BaseMetadataProvider(_MetadataDependent, Generic[_T]):
         default: _MetadataT = _UNDEFINED_DEFAULT,
     ) -> _MetadataT:
         """
-        Override to query from self._computed in addition to self.metadata.
+        The same method as :func:`~libcst._MetadataDependent` except metadata
+        is accessed from ``self._computed`` in addition to ``self.metadata``.
         """
         if key is type(self):
             if default is not _UNDEFINED_DEFAULT:
@@ -96,7 +99,8 @@ class BaseMetadataProvider(_MetadataDependent, Generic[_T]):
 
 class VisitorMetadataProvider(CSTVisitor, BaseMetadataProvider[_T]):
     """
-    Extend this to compute metadata with a non-batchable visitor.
+    The low-level base class for all non-batchable visitor-based metadata
+    providers.
     """
 
     def _gen_impl(self, module: "_ModuleT") -> None:
@@ -105,7 +109,7 @@ class VisitorMetadataProvider(CSTVisitor, BaseMetadataProvider[_T]):
 
 class BatchableMetadataProvider(BatchableCSTVisitor, BaseMetadataProvider[_T]):
     """
-    Extend this to compute metadata with a batchable visitor.
+    The low-level base class for all batchable visitor-based metadata providers.
     """
 
     def _gen_impl(self, module: "Module") -> None:
@@ -122,8 +126,7 @@ def _gen_batchable(
     providers: Iterable[BatchableMetadataProvider[Any]],
 ) -> Mapping[ProviderT, Mapping["CSTNode", object]]:
     """
-    Returns map of metadata mappings from the given batchable providers on 
-    wrapper.
+    Returns map of metadata mappings from resolving ``providers`` on ``wrapper``.
     """
     wrapper.visit_batched(providers)
 
