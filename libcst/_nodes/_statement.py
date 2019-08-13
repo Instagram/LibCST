@@ -126,11 +126,11 @@ class Del(BaseSmallStatement):
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Del":
         return Del(
-            target=visit_required("target", self.target, visitor),
+            target=visit_required(self, "target", self.target, visitor),
             whitespace_after_del=visit_required(
-                "whitespace_after_del", self.whitespace_after_del, visitor
+                self, "whitespace_after_del", self.whitespace_after_del, visitor
             ),
-            semicolon=visit_sentinel("semicolon", self.semicolon, visitor),
+            semicolon=visit_sentinel(self, "semicolon", self.semicolon, visitor),
         )
 
     def _codegen_impl(
@@ -161,7 +161,9 @@ class Pass(BaseSmallStatement):
     semicolon: Union[Semicolon, MaybeSentinel] = MaybeSentinel.DEFAULT
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Pass":
-        return Pass(semicolon=visit_sentinel("semicolon", self.semicolon, visitor))
+        return Pass(
+            semicolon=visit_sentinel(self, "semicolon", self.semicolon, visitor)
+        )
 
     def _codegen_impl(
         self, state: CodegenState, default_semicolon: bool = False
@@ -190,7 +192,9 @@ class Break(BaseSmallStatement):
     semicolon: Union[Semicolon, MaybeSentinel] = MaybeSentinel.DEFAULT
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Break":
-        return Break(semicolon=visit_sentinel("semicolon", self.semicolon, visitor))
+        return Break(
+            semicolon=visit_sentinel(self, "semicolon", self.semicolon, visitor)
+        )
 
     def _codegen_impl(
         self, state: CodegenState, default_semicolon: bool = False
@@ -219,7 +223,9 @@ class Continue(BaseSmallStatement):
     semicolon: Union[Semicolon, MaybeSentinel] = MaybeSentinel.DEFAULT
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Continue":
-        return Continue(semicolon=visit_sentinel("semicolon", self.semicolon, visitor))
+        return Continue(
+            semicolon=visit_sentinel(self, "semicolon", self.semicolon, visitor)
+        )
 
     def _codegen_impl(
         self, state: CodegenState, default_semicolon: bool = False
@@ -271,10 +277,10 @@ class Return(BaseSmallStatement):
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Return":
         return Return(
             whitespace_after_return=visit_sentinel(
-                "whitespace_after_return", self.whitespace_after_return, visitor
+                self, "whitespace_after_return", self.whitespace_after_return, visitor
             ),
-            value=visit_optional("value", self.value, visitor),
-            semicolon=visit_sentinel("semicolon", self.semicolon, visitor),
+            value=visit_optional(self, "value", self.value, visitor),
+            semicolon=visit_sentinel(self, "semicolon", self.semicolon, visitor),
         )
 
     def _codegen_impl(
@@ -319,8 +325,8 @@ class Expr(BaseSmallStatement):
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Expr":
         return Expr(
-            value=visit_required("value", self.value, visitor),
-            semicolon=visit_sentinel("semicolon", self.semicolon, visitor),
+            value=visit_required(self, "value", self.value, visitor),
+            semicolon=visit_sentinel(self, "semicolon", self.semicolon, visitor),
         )
 
     def _codegen_impl(
@@ -409,10 +415,12 @@ class SimpleStatementLine(_BaseSimpleStatement, BaseStatement):
         self, visitor: CSTVisitorT
     ) -> "SimpleStatementLine":
         return SimpleStatementLine(
-            leading_lines=visit_sequence("leading_lines", self.leading_lines, visitor),
-            body=visit_sequence("body", self.body, visitor),
+            leading_lines=visit_sequence(
+                self, "leading_lines", self.leading_lines, visitor
+            ),
+            body=visit_sequence(self, "body", self.body, visitor),
             trailing_whitespace=visit_required(
-                "trailing_whitespace", self.trailing_whitespace, visitor
+                self, "trailing_whitespace", self.trailing_whitespace, visitor
             ),
         )
 
@@ -460,11 +468,11 @@ class SimpleStatementSuite(_BaseSimpleStatement, BaseSuite):
     ) -> "SimpleStatementSuite":
         return SimpleStatementSuite(
             leading_whitespace=visit_required(
-                "leading_whitespace", self.leading_whitespace, visitor
+                self, "leading_whitespace", self.leading_whitespace, visitor
             ),
-            body=visit_sequence("body", self.body, visitor),
+            body=visit_sequence(self, "body", self.body, visitor),
             trailing_whitespace=visit_required(
-                "trailing_whitespace", self.trailing_whitespace, visitor
+                self, "trailing_whitespace", self.trailing_whitespace, visitor
             ),
         )
 
@@ -496,11 +504,13 @@ class Else(CSTNode):
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Else":
         return Else(
-            leading_lines=visit_sequence("leading_lines", self.leading_lines, visitor),
-            whitespace_before_colon=visit_required(
-                "whitespace_before_colon", self.whitespace_before_colon, visitor
+            leading_lines=visit_sequence(
+                self, "leading_lines", self.leading_lines, visitor
             ),
-            body=visit_required("body", self.body, visitor),
+            whitespace_before_colon=visit_required(
+                self, "whitespace_before_colon", self.whitespace_before_colon, visitor
+            ),
+            body=visit_required(self, "body", self.body, visitor),
         )
 
     def _codegen_impl(self, state: CodegenState) -> None:
@@ -569,16 +579,18 @@ class If(BaseCompoundStatement):
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "If":
         return If(
-            leading_lines=visit_sequence("leading_lines", self.leading_lines, visitor),
+            leading_lines=visit_sequence(
+                self, "leading_lines", self.leading_lines, visitor
+            ),
             whitespace_before_test=visit_required(
-                "whitespace_before_test", self.whitespace_before_test, visitor
+                self, "whitespace_before_test", self.whitespace_before_test, visitor
             ),
-            test=visit_required("test", self.test, visitor),
+            test=visit_required(self, "test", self.test, visitor),
             whitespace_after_test=visit_required(
-                "whitespace_after_test", self.whitespace_after_test, visitor
+                self, "whitespace_after_test", self.whitespace_after_test, visitor
             ),
-            body=visit_required("body", self.body, visitor),
-            orelse=visit_optional("orelse", self.orelse, visitor),
+            body=visit_required(self, "body", self.body, visitor),
+            orelse=visit_optional(self, "orelse", self.orelse, visitor),
         )
 
     def _codegen_impl(self, state: CodegenState, is_elif: bool = False) -> None:
@@ -657,10 +669,10 @@ class IndentedBlock(BaseSuite):
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "IndentedBlock":
         return IndentedBlock(
-            header=visit_required("header", self.header, visitor),
+            header=visit_required(self, "header", self.header, visitor),
             indent=self.indent,
-            body=visit_body_sequence("body", self.body, visitor),
-            footer=visit_sequence("footer", self.footer, visitor),
+            body=visit_body_sequence(self, "body", self.body, visitor),
+            footer=visit_sequence(self, "footer", self.footer, visitor),
         )
 
     def _codegen_impl(self, state: CodegenState) -> None:
@@ -720,11 +732,11 @@ class AsName(CSTNode):
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "AsName":
         return AsName(
             whitespace_before_as=visit_required(
-                "whitespace_before_as", self.whitespace_before_as, visitor
+                self, "whitespace_before_as", self.whitespace_before_as, visitor
             ),
-            name=visit_required("name", self.name, visitor),
+            name=visit_required(self, "name", self.name, visitor),
             whitespace_after_as=visit_required(
-                "whitespace_after_as", self.whitespace_after_as, visitor
+                self, "whitespace_after_as", self.whitespace_after_as, visitor
             ),
         )
 
@@ -776,16 +788,18 @@ class ExceptHandler(CSTNode):
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "ExceptHandler":
         return ExceptHandler(
-            leading_lines=visit_sequence("leading_lines", self.leading_lines, visitor),
+            leading_lines=visit_sequence(
+                self, "leading_lines", self.leading_lines, visitor
+            ),
             whitespace_after_except=visit_required(
-                "whitespace_after_except", self.whitespace_after_except, visitor
+                self, "whitespace_after_except", self.whitespace_after_except, visitor
             ),
-            type=visit_optional("type", self.type, visitor),
-            name=visit_optional("name", self.name, visitor),
+            type=visit_optional(self, "type", self.type, visitor),
+            name=visit_optional(self, "name", self.name, visitor),
             whitespace_before_colon=visit_required(
-                "whitespace_before_colon", self.whitespace_before_colon, visitor
+                self, "whitespace_before_colon", self.whitespace_before_colon, visitor
             ),
-            body=visit_required("body", self.body, visitor),
+            body=visit_required(self, "body", self.body, visitor),
         )
 
     def _codegen_impl(self, state: CodegenState) -> None:
@@ -826,11 +840,13 @@ class Finally(CSTNode):
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Finally":
         return Finally(
-            leading_lines=visit_sequence("leading_lines", self.leading_lines, visitor),
-            whitespace_before_colon=visit_required(
-                "whitespace_before_colon", self.whitespace_before_colon, visitor
+            leading_lines=visit_sequence(
+                self, "leading_lines", self.leading_lines, visitor
             ),
-            body=visit_required("body", self.body, visitor),
+            whitespace_before_colon=visit_required(
+                self, "whitespace_before_colon", self.whitespace_before_colon, visitor
+            ),
+            body=visit_required(self, "body", self.body, visitor),
         )
 
     def _codegen_impl(self, state: CodegenState) -> None:
@@ -884,14 +900,16 @@ class Try(BaseCompoundStatement):
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Try":
         return Try(
-            leading_lines=visit_sequence("leading_lines", self.leading_lines, visitor),
-            whitespace_before_colon=visit_required(
-                "whitespace_before_colon", self.whitespace_before_colon, visitor
+            leading_lines=visit_sequence(
+                self, "leading_lines", self.leading_lines, visitor
             ),
-            body=visit_required("body", self.body, visitor),
-            handlers=visit_sequence("handlers", self.handlers, visitor),
-            orelse=visit_optional("orelse", self.orelse, visitor),
-            finalbody=visit_optional("finalbody", self.finalbody, visitor),
+            whitespace_before_colon=visit_required(
+                self, "whitespace_before_colon", self.whitespace_before_colon, visitor
+            ),
+            body=visit_required(self, "body", self.body, visitor),
+            handlers=visit_sequence(self, "handlers", self.handlers, visitor),
+            orelse=visit_optional(self, "orelse", self.orelse, visitor),
+            finalbody=visit_optional(self, "finalbody", self.finalbody, visitor),
         )
 
     def _codegen_impl(self, state: CodegenState) -> None:
@@ -947,9 +965,9 @@ class ImportAlias(CSTNode):
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "ImportAlias":
         return ImportAlias(
-            name=visit_required("name", self.name, visitor),
-            asname=visit_optional("asname", self.asname, visitor),
-            comma=visit_sentinel("comma", self.comma, visitor),
+            name=visit_required(self, "name", self.name, visitor),
+            asname=visit_optional(self, "asname", self.asname, visitor),
+            comma=visit_sentinel(self, "comma", self.comma, visitor),
         )
 
     def _codegen_impl(self, state: CodegenState, default_comma: bool = False) -> None:
@@ -999,10 +1017,10 @@ class Import(BaseSmallStatement):
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Import":
         return Import(
             whitespace_after_import=visit_required(
-                "whitespace_after_import", self.whitespace_after_import, visitor
+                self, "whitespace_after_import", self.whitespace_after_import, visitor
             ),
-            names=visit_sequence("names", self.names, visitor),
-            semicolon=visit_sentinel("semicolon", self.semicolon, visitor),
+            names=visit_sequence(self, "names", self.names, visitor),
+            semicolon=visit_sentinel(self, "semicolon", self.semicolon, visitor),
         )
 
     def _codegen_impl(
@@ -1105,24 +1123,24 @@ class ImportFrom(BaseSmallStatement):
         names = self.names
         return ImportFrom(
             whitespace_after_from=visit_required(
-                "whitespace_after_from", self.whitespace_after_from, visitor
+                self, "whitespace_after_from", self.whitespace_after_from, visitor
             ),
-            relative=visit_sequence("relative", self.relative, visitor),
-            module=visit_optional("module", self.module, visitor),
+            relative=visit_sequence(self, "relative", self.relative, visitor),
+            module=visit_optional(self, "module", self.module, visitor),
             whitespace_before_import=visit_required(
-                "whitespace_before_import", self.whitespace_before_import, visitor
+                self, "whitespace_before_import", self.whitespace_before_import, visitor
             ),
             whitespace_after_import=visit_required(
-                "whitespace_after_import", self.whitespace_after_import, visitor
+                self, "whitespace_after_import", self.whitespace_after_import, visitor
             ),
-            lpar=visit_optional("lpar", self.lpar, visitor),
+            lpar=visit_optional(self, "lpar", self.lpar, visitor),
             names=(
-                visit_required("names", names, visitor)
+                visit_required(self, "names", names, visitor)
                 if isinstance(names, ImportStar)
-                else visit_sequence("names", names, visitor)
+                else visit_sequence(self, "names", names, visitor)
             ),
-            rpar=visit_optional("rpar", self.rpar, visitor),
-            semicolon=visit_sentinel("semicolon", self.semicolon, visitor),
+            rpar=visit_optional(self, "rpar", self.rpar, visitor),
+            semicolon=visit_sentinel(self, "semicolon", self.semicolon, visitor),
         )
 
     def _codegen_impl(
@@ -1180,12 +1198,12 @@ class AssignTarget(CSTNode):
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "AssignTarget":
         return AssignTarget(
-            target=visit_required("target", self.target, visitor),
+            target=visit_required(self, "target", self.target, visitor),
             whitespace_before_equal=visit_required(
-                "whitespace_before_equal", self.whitespace_before_equal, visitor
+                self, "whitespace_before_equal", self.whitespace_before_equal, visitor
             ),
             whitespace_after_equal=visit_required(
-                "whitespace_after_equal", self.whitespace_after_equal, visitor
+                self, "whitespace_after_equal", self.whitespace_after_equal, visitor
             ),
         )
 
@@ -1225,9 +1243,9 @@ class Assign(BaseSmallStatement):
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Assign":
         return Assign(
-            targets=visit_sequence("targets", self.targets, visitor),
-            value=visit_required("value", self.value, visitor),
-            semicolon=visit_sentinel("semicolon", self.semicolon, visitor),
+            targets=visit_sequence(self, "targets", self.targets, visitor),
+            value=visit_required(self, "value", self.value, visitor),
+            semicolon=visit_sentinel(self, "semicolon", self.semicolon, visitor),
         )
 
     def _codegen_impl(
@@ -1281,11 +1299,11 @@ class AnnAssign(BaseSmallStatement):
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "AnnAssign":
         return AnnAssign(
-            target=visit_required("target", self.target, visitor),
-            annotation=visit_required("annotation", self.annotation, visitor),
-            equal=visit_sentinel("equal", self.equal, visitor),
-            value=visit_optional("value", self.value, visitor),
-            semicolon=visit_sentinel("semicolon", self.semicolon, visitor),
+            target=visit_required(self, "target", self.target, visitor),
+            annotation=visit_required(self, "annotation", self.annotation, visitor),
+            equal=visit_sentinel(self, "equal", self.equal, visitor),
+            value=visit_optional(self, "value", self.value, visitor),
+            semicolon=visit_sentinel(self, "semicolon", self.semicolon, visitor),
         )
 
     def _codegen_impl(
@@ -1333,10 +1351,10 @@ class AugAssign(BaseSmallStatement):
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "AugAssign":
         return AugAssign(
-            target=visit_required("target", self.target, visitor),
-            operator=visit_required("operator", self.operator, visitor),
-            value=visit_required("value", self.value, visitor),
-            semicolon=visit_sentinel("semicolon", self.semicolon, visitor),
+            target=visit_required(self, "target", self.target, visitor),
+            operator=visit_required(self, "operator", self.operator, visitor),
+            value=visit_required(self, "value", self.value, visitor),
+            semicolon=visit_sentinel(self, "semicolon", self.semicolon, visitor),
         )
 
     def _codegen_impl(
@@ -1391,13 +1409,15 @@ class Decorator(CSTNode):
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Decorator":
         return Decorator(
-            leading_lines=visit_sequence("leading_lines", self.leading_lines, visitor),
-            whitespace_after_at=visit_required(
-                "whitespace_after_at", self.whitespace_after_at, visitor
+            leading_lines=visit_sequence(
+                self, "leading_lines", self.leading_lines, visitor
             ),
-            decorator=visit_required("decorator", self.decorator, visitor),
+            whitespace_after_at=visit_required(
+                self, "whitespace_after_at", self.whitespace_after_at, visitor
+            ),
+            decorator=visit_required(self, "decorator", self.decorator, visitor),
             trailing_whitespace=visit_required(
-                "trailing_whitespace", self.trailing_whitespace, visitor
+                self, "trailing_whitespace", self.trailing_whitespace, visitor
             ),
         )
 
@@ -1477,28 +1497,32 @@ class FunctionDef(BaseCompoundStatement):
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "FunctionDef":
         return FunctionDef(
-            leading_lines=visit_sequence("leading_lines", self.leading_lines, visitor),
-            decorators=visit_sequence("decorators", self.decorators, visitor),
+            leading_lines=visit_sequence(
+                self, "leading_lines", self.leading_lines, visitor
+            ),
+            decorators=visit_sequence(self, "decorators", self.decorators, visitor),
             lines_after_decorators=visit_sequence(
-                "lines_after_decorators", self.lines_after_decorators, visitor
+                self, "lines_after_decorators", self.lines_after_decorators, visitor
             ),
-            asynchronous=visit_optional("asynchronous", self.asynchronous, visitor),
+            asynchronous=visit_optional(
+                self, "asynchronous", self.asynchronous, visitor
+            ),
             whitespace_after_def=visit_required(
-                "whitespace_after_def", self.whitespace_after_def, visitor
+                self, "whitespace_after_def", self.whitespace_after_def, visitor
             ),
-            name=visit_required("name", self.name, visitor),
+            name=visit_required(self, "name", self.name, visitor),
             whitespace_after_name=visit_required(
-                "whitespace_after_name", self.whitespace_after_name, visitor
+                self, "whitespace_after_name", self.whitespace_after_name, visitor
             ),
             whitespace_before_params=visit_required(
-                "whitespace_before_params", self.whitespace_before_params, visitor
+                self, "whitespace_before_params", self.whitespace_before_params, visitor
             ),
-            params=visit_required("params", self.params, visitor),
-            returns=visit_optional("returns", self.returns, visitor),
+            params=visit_required(self, "params", self.params, visitor),
+            returns=visit_optional(self, "returns", self.returns, visitor),
             whitespace_before_colon=visit_required(
-                "whitespace_before_colon", self.whitespace_before_colon, visitor
+                self, "whitespace_before_colon", self.whitespace_before_colon, visitor
             ),
-            body=visit_required("body", self.body, visitor),
+            body=visit_required(self, "body", self.body, visitor),
         )
 
     def _codegen_impl(self, state: CodegenState) -> None:
@@ -1613,26 +1637,28 @@ class ClassDef(BaseCompoundStatement):
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "ClassDef":
         return ClassDef(
-            leading_lines=visit_sequence("leading_lines", self.leading_lines, visitor),
-            decorators=visit_sequence("decorators", self.decorators, visitor),
+            leading_lines=visit_sequence(
+                self, "leading_lines", self.leading_lines, visitor
+            ),
+            decorators=visit_sequence(self, "decorators", self.decorators, visitor),
             lines_after_decorators=visit_sequence(
-                "lines_after_decorators", self.lines_after_decorators, visitor
+                self, "lines_after_decorators", self.lines_after_decorators, visitor
             ),
             whitespace_after_class=visit_required(
-                "whitespace_after_class", self.whitespace_after_class, visitor
+                self, "whitespace_after_class", self.whitespace_after_class, visitor
             ),
-            name=visit_required("name", self.name, visitor),
+            name=visit_required(self, "name", self.name, visitor),
             whitespace_after_name=visit_required(
-                "whitespace_after_name", self.whitespace_after_name, visitor
+                self, "whitespace_after_name", self.whitespace_after_name, visitor
             ),
-            lpar=visit_sentinel("lpar", self.lpar, visitor),
-            bases=visit_sequence("bases", self.bases, visitor),
-            keywords=visit_sequence("keywords", self.keywords, visitor),
-            rpar=visit_sentinel("rpar", self.rpar, visitor),
+            lpar=visit_sentinel(self, "lpar", self.lpar, visitor),
+            bases=visit_sequence(self, "bases", self.bases, visitor),
+            keywords=visit_sequence(self, "keywords", self.keywords, visitor),
+            rpar=visit_sentinel(self, "rpar", self.rpar, visitor),
             whitespace_before_colon=visit_required(
-                "whitespace_before_colon", self.whitespace_before_colon, visitor
+                self, "whitespace_before_colon", self.whitespace_before_colon, visitor
             ),
-            body=visit_required("body", self.body, visitor),
+            body=visit_required(self, "body", self.body, visitor),
         )
 
     def _codegen_impl(self, state: CodegenState) -> None:  # noqa: C901
@@ -1690,9 +1716,9 @@ class WithItem(CSTNode):
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "WithItem":
         return WithItem(
-            item=visit_required("item", self.item, visitor),
-            asname=visit_optional("asname", self.asname, visitor),
-            comma=visit_sentinel("comma", self.comma, visitor),
+            item=visit_required(self, "item", self.item, visitor),
+            asname=visit_optional(self, "asname", self.asname, visitor),
+            comma=visit_sentinel(self, "comma", self.comma, visitor),
         )
 
     def _codegen_impl(self, state: CodegenState, default_comma: bool = False) -> None:
@@ -1750,16 +1776,20 @@ class With(BaseCompoundStatement):
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "With":
         return With(
-            leading_lines=visit_sequence("leading_lines", self.leading_lines, visitor),
-            asynchronous=visit_optional("asynchronous", self.asynchronous, visitor),
+            leading_lines=visit_sequence(
+                self, "leading_lines", self.leading_lines, visitor
+            ),
+            asynchronous=visit_optional(
+                self, "asynchronous", self.asynchronous, visitor
+            ),
             whitespace_after_with=visit_required(
-                "whitespace_after_with", self.whitespace_after_with, visitor
+                self, "whitespace_after_with", self.whitespace_after_with, visitor
             ),
-            items=visit_sequence("items", self.items, visitor),
+            items=visit_sequence(self, "items", self.items, visitor),
             whitespace_before_colon=visit_required(
-                "whitespace_before_colon", self.whitespace_before_colon, visitor
+                self, "whitespace_before_colon", self.whitespace_before_colon, visitor
             ),
-            body=visit_required("body", self.body, visitor),
+            body=visit_required(self, "body", self.body, visitor),
         )
 
     def _codegen_impl(self, state: CodegenState) -> None:
@@ -1846,24 +1876,28 @@ class For(BaseCompoundStatement):
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "For":
         return For(
-            leading_lines=visit_sequence("leading_lines", self.leading_lines, visitor),
-            asynchronous=visit_optional("asynchronous", self.asynchronous, visitor),
-            whitespace_after_for=visit_required(
-                "whitespace_after_for", self.whitespace_after_for, visitor
+            leading_lines=visit_sequence(
+                self, "leading_lines", self.leading_lines, visitor
             ),
-            target=visit_required("target", self.target, visitor),
+            asynchronous=visit_optional(
+                self, "asynchronous", self.asynchronous, visitor
+            ),
+            whitespace_after_for=visit_required(
+                self, "whitespace_after_for", self.whitespace_after_for, visitor
+            ),
+            target=visit_required(self, "target", self.target, visitor),
             whitespace_before_in=visit_required(
-                "whitespace_before_in", self.whitespace_before_in, visitor
+                self, "whitespace_before_in", self.whitespace_before_in, visitor
             ),
             whitespace_after_in=visit_required(
-                "whitespace_after_in", self.whitespace_after_in, visitor
+                self, "whitespace_after_in", self.whitespace_after_in, visitor
             ),
-            iter=visit_required("iter", self.iter, visitor),
+            iter=visit_required(self, "iter", self.iter, visitor),
             whitespace_before_colon=visit_required(
-                "whitespace_before_colon", self.whitespace_before_colon, visitor
+                self, "whitespace_before_colon", self.whitespace_before_colon, visitor
             ),
-            body=visit_required("body", self.body, visitor),
-            orelse=visit_optional("orelse", self.orelse, visitor),
+            body=visit_required(self, "body", self.body, visitor),
+            orelse=visit_optional(self, "orelse", self.orelse, visitor),
         )
 
     def _codegen_impl(self, state: CodegenState) -> None:
@@ -1928,16 +1962,18 @@ class While(BaseCompoundStatement):
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "While":
         return While(
-            leading_lines=visit_sequence("leading_lines", self.leading_lines, visitor),
+            leading_lines=visit_sequence(
+                self, "leading_lines", self.leading_lines, visitor
+            ),
             whitespace_after_while=visit_required(
-                "whitespace_after_while", self.whitespace_after_while, visitor
+                self, "whitespace_after_while", self.whitespace_after_while, visitor
             ),
-            test=visit_required("test", self.test, visitor),
+            test=visit_required(self, "test", self.test, visitor),
             whitespace_before_colon=visit_required(
-                "whitespace_before_colon", self.whitespace_before_colon, visitor
+                self, "whitespace_before_colon", self.whitespace_before_colon, visitor
             ),
-            body=visit_required("body", self.body, visitor),
-            orelse=visit_optional("orelse", self.orelse, visitor),
+            body=visit_required(self, "body", self.body, visitor),
+            orelse=visit_optional(self, "orelse", self.orelse, visitor),
         )
 
     def _codegen_impl(self, state: CodegenState) -> None:
@@ -2017,11 +2053,11 @@ class Raise(BaseSmallStatement):
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Raise":
         return Raise(
             whitespace_after_raise=visit_sentinel(
-                "whitespace_after_raise", self.whitespace_after_raise, visitor
+                self, "whitespace_after_raise", self.whitespace_after_raise, visitor
             ),
-            exc=visit_optional("exc", self.exc, visitor),
-            cause=visit_optional("cause", self.cause, visitor),
-            semicolon=visit_sentinel("semicolon", self.semicolon, visitor),
+            exc=visit_optional(self, "exc", self.exc, visitor),
+            cause=visit_optional(self, "cause", self.cause, visitor),
+            semicolon=visit_sentinel(self, "semicolon", self.semicolon, visitor),
         )
 
     def _codegen_impl(
@@ -2088,12 +2124,12 @@ class Assert(BaseSmallStatement):
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Assert":
         return Assert(
             whitespace_after_assert=visit_required(
-                "whitespace_after_assert", self.whitespace_after_assert, visitor
+                self, "whitespace_after_assert", self.whitespace_after_assert, visitor
             ),
-            test=visit_required("test", self.test, visitor),
-            comma=visit_sentinel("comma", self.comma, visitor),
-            msg=visit_optional("msg", self.msg, visitor),
-            semicolon=visit_sentinel("semicolon", self.semicolon, visitor),
+            test=visit_required(self, "test", self.test, visitor),
+            comma=visit_sentinel(self, "comma", self.comma, visitor),
+            msg=visit_optional(self, "msg", self.msg, visitor),
+            semicolon=visit_sentinel(self, "semicolon", self.semicolon, visitor),
         )
 
     def _codegen_impl(
@@ -2147,8 +2183,8 @@ class NameItem(CSTNode):
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "NameItem":
         return NameItem(
-            name=visit_required("name", self.name, visitor),
-            comma=visit_sentinel("comma", self.comma, visitor),
+            name=visit_required(self, "name", self.name, visitor),
+            comma=visit_sentinel(self, "comma", self.comma, visitor),
         )
 
     def _codegen_impl(self, state: CodegenState, default_comma: bool = False) -> None:
@@ -2196,10 +2232,10 @@ class Global(BaseSmallStatement):
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Global":
         return Global(
             whitespace_after_global=visit_required(
-                "whitespace_after_global", self.whitespace_after_global, visitor
+                self, "whitespace_after_global", self.whitespace_after_global, visitor
             ),
-            names=visit_sequence("names", self.names, visitor),
-            semicolon=visit_sentinel("semicolon", self.semicolon, visitor),
+            names=visit_sequence(self, "names", self.names, visitor),
+            semicolon=visit_sentinel(self, "semicolon", self.semicolon, visitor),
         )
 
     def _codegen_impl(
@@ -2254,10 +2290,13 @@ class Nonlocal(BaseSmallStatement):
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Nonlocal":
         return Nonlocal(
             whitespace_after_nonlocal=visit_required(
-                "whitespace_after_nonlocal", self.whitespace_after_nonlocal, visitor
+                self,
+                "whitespace_after_nonlocal",
+                self.whitespace_after_nonlocal,
+                visitor,
             ),
-            names=visit_sequence("names", self.names, visitor),
-            semicolon=visit_sentinel("semicolon", self.semicolon, visitor),
+            names=visit_sequence(self, "names", self.names, visitor),
+            semicolon=visit_sentinel(self, "semicolon", self.semicolon, visitor),
         )
 
     def _codegen_impl(

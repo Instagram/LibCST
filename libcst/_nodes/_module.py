@@ -77,9 +77,9 @@ class Module(CSTNode):
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Module":
         return Module(
-            header=visit_sequence("header", self.header, visitor),
-            body=visit_body_sequence("body", self.body, visitor),
-            footer=visit_sequence("footer", self.footer, visitor),
+            header=visit_sequence(self, "header", self.header, visitor),
+            body=visit_body_sequence(self, "body", self.body, visitor),
+            footer=visit_sequence(self, "footer", self.footer, visitor),
             encoding=self.encoding,
             default_indent=self.default_indent,
             default_newline=self.default_newline,

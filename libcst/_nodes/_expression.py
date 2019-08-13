@@ -62,7 +62,7 @@ class LeftSquareBracket(CSTNode):
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "LeftSquareBracket":
         return LeftSquareBracket(
             whitespace_after=visit_required(
-                "whitespace_after", self.whitespace_after, visitor
+                self, "whitespace_after", self.whitespace_after, visitor
             )
         )
 
@@ -85,7 +85,7 @@ class RightSquareBracket(CSTNode):
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "RightSquareBracket":
         return RightSquareBracket(
             whitespace_before=visit_required(
-                "whitespace_before", self.whitespace_before, visitor
+                self, "whitespace_before", self.whitespace_before, visitor
             )
         )
 
@@ -108,7 +108,7 @@ class LeftCurlyBrace(CSTNode):
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "LeftCurlyBrace":
         return LeftCurlyBrace(
             whitespace_after=visit_required(
-                "whitespace_after", self.whitespace_after, visitor
+                self, "whitespace_after", self.whitespace_after, visitor
             )
         )
 
@@ -131,7 +131,7 @@ class RightCurlyBrace(CSTNode):
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "RightCurlyBrace":
         return RightCurlyBrace(
             whitespace_before=visit_required(
-                "whitespace_before", self.whitespace_before, visitor
+                self, "whitespace_before", self.whitespace_before, visitor
             )
         )
 
@@ -154,7 +154,7 @@ class LeftParen(CSTNode):
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "LeftParen":
         return LeftParen(
             whitespace_after=visit_required(
-                "whitespace_after", self.whitespace_after, visitor
+                self, "whitespace_after", self.whitespace_after, visitor
             )
         )
 
@@ -177,7 +177,7 @@ class RightParen(CSTNode):
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "RightParen":
         return RightParen(
             whitespace_before=visit_required(
-                "whitespace_before", self.whitespace_before, visitor
+                self, "whitespace_before", self.whitespace_before, visitor
             )
         )
 
@@ -204,7 +204,7 @@ class Asynchronous(CSTNode):
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Asynchronous":
         return Asynchronous(
             whitespace_after=visit_required(
-                "whitespace_after", self.whitespace_after, visitor
+                self, "whitespace_after", self.whitespace_after, visitor
             )
         )
 
@@ -340,9 +340,9 @@ class Name(BaseAssignTargetExpression, BaseDelTargetExpression):
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Name":
         return Name(
-            lpar=visit_sequence("lpar", self.lpar, visitor),
+            lpar=visit_sequence(self, "lpar", self.lpar, visitor),
             value=self.value,
-            rpar=visit_sequence("rpar", self.rpar, visitor),
+            rpar=visit_sequence(self, "rpar", self.rpar, visitor),
         )
 
     def _validate(self) -> None:
@@ -375,8 +375,8 @@ class Ellipsis(BaseExpression):
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Ellipsis":
         return Ellipsis(
-            lpar=visit_sequence("lpar", self.lpar, visitor),
-            rpar=visit_sequence("rpar", self.rpar, visitor),
+            lpar=visit_sequence(self, "lpar", self.lpar, visitor),
+            rpar=visit_sequence(self, "rpar", self.rpar, visitor),
         )
 
     def _safe_to_use_with_word_operator(self, position: ExpressionPosition) -> bool:
@@ -423,9 +423,9 @@ class Integer(BaseNumber):
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Integer":
         return Integer(
-            lpar=visit_sequence("lpar", self.lpar, visitor),
+            lpar=visit_sequence(self, "lpar", self.lpar, visitor),
             value=self.value,
-            rpar=visit_sequence("rpar", self.rpar, visitor),
+            rpar=visit_sequence(self, "rpar", self.rpar, visitor),
         )
 
     def _validate(self) -> None:
@@ -458,9 +458,9 @@ class Float(BaseNumber):
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Float":
         return Float(
-            lpar=visit_sequence("lpar", self.lpar, visitor),
+            lpar=visit_sequence(self, "lpar", self.lpar, visitor),
             value=self.value,
-            rpar=visit_sequence("rpar", self.rpar, visitor),
+            rpar=visit_sequence(self, "rpar", self.rpar, visitor),
         )
 
     def _validate(self) -> None:
@@ -492,9 +492,9 @@ class Imaginary(BaseNumber):
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Imaginary":
         return Imaginary(
-            lpar=visit_sequence("lpar", self.lpar, visitor),
+            lpar=visit_sequence(self, "lpar", self.lpar, visitor),
             value=self.value,
-            rpar=visit_sequence("rpar", self.rpar, visitor),
+            rpar=visit_sequence(self, "rpar", self.rpar, visitor),
         )
 
     def _validate(self) -> None:
@@ -597,9 +597,9 @@ class SimpleString(_BasePrefixedString):
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "SimpleString":
         return SimpleString(
-            lpar=visit_sequence("lpar", self.lpar, visitor),
+            lpar=visit_sequence(self, "lpar", self.lpar, visitor),
             value=self.value,
-            rpar=visit_sequence("rpar", self.rpar, visitor),
+            rpar=visit_sequence(self, "rpar", self.rpar, visitor),
         )
 
     def _codegen_impl(self, state: CodegenState) -> None:
@@ -689,17 +689,21 @@ class FormattedStringExpression(BaseFormattedStringContent):
         format_spec = self.format_spec
         return FormattedStringExpression(
             whitespace_before_expression=visit_required(
+                self,
                 "whitespace_before_expression",
                 self.whitespace_before_expression,
                 visitor,
             ),
-            expression=visit_required("expression", self.expression, visitor),
+            expression=visit_required(self, "expression", self.expression, visitor),
             whitespace_after_expression=visit_required(
-                "whitespace_after_expression", self.whitespace_after_expression, visitor
+                self,
+                "whitespace_after_expression",
+                self.whitespace_after_expression,
+                visitor,
             ),
             conversion=self.conversion,
             format_spec=(
-                visit_sequence("format_spec", format_spec, visitor)
+                visit_sequence(self, "format_spec", format_spec, visitor)
                 if format_spec is not None
                 else None
             ),
@@ -811,11 +815,11 @@ class FormattedString(_BasePrefixedString):
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "FormattedString":
         return FormattedString(
-            lpar=visit_sequence("lpar", self.lpar, visitor),
+            lpar=visit_sequence(self, "lpar", self.lpar, visitor),
             start=self.start,
-            parts=visit_sequence("parts", self.parts, visitor),
+            parts=visit_sequence(self, "parts", self.parts, visitor),
             end=self.end,
-            rpar=visit_sequence("rpar", self.rpar, visitor),
+            rpar=visit_sequence(self, "rpar", self.rpar, visitor),
         )
 
     def _codegen_impl(self, state: CodegenState) -> None:
@@ -885,13 +889,13 @@ class ConcatenatedString(BaseString):
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "ConcatenatedString":
         return ConcatenatedString(
-            lpar=visit_sequence("lpar", self.lpar, visitor),
-            left=visit_required("left", self.left, visitor),
+            lpar=visit_sequence(self, "lpar", self.lpar, visitor),
+            left=visit_required(self, "left", self.left, visitor),
             whitespace_between=visit_required(
-                "whitespace_between", self.whitespace_between, visitor
+                self, "whitespace_between", self.whitespace_between, visitor
             ),
-            right=visit_required("right", self.right, visitor),
-            rpar=visit_sequence("rpar", self.rpar, visitor),
+            right=visit_required(self, "right", self.right, visitor),
+            rpar=visit_sequence(self, "rpar", self.rpar, visitor),
         )
 
     def _codegen_impl(self, state: CodegenState) -> None:
@@ -930,8 +934,8 @@ class ComparisonTarget(CSTNode):
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "ComparisonTarget":
         return ComparisonTarget(
-            operator=visit_required("operator", self.operator, visitor),
-            comparator=visit_required("comparator", self.comparator, visitor),
+            operator=visit_required(self, "operator", self.operator, visitor),
+            comparator=visit_required(self, "comparator", self.comparator, visitor),
         )
 
     def _codegen_impl(self, state: CodegenState) -> None:
@@ -1015,10 +1019,10 @@ class Comparison(BaseExpression):
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Comparison":
         return Comparison(
-            lpar=visit_sequence("lpar", self.lpar, visitor),
-            left=visit_required("left", self.left, visitor),
-            comparisons=visit_sequence("comparisons", self.comparisons, visitor),
-            rpar=visit_sequence("rpar", self.rpar, visitor),
+            lpar=visit_sequence(self, "lpar", self.lpar, visitor),
+            left=visit_required(self, "left", self.left, visitor),
+            comparisons=visit_sequence(self, "comparisons", self.comparisons, visitor),
+            rpar=visit_sequence(self, "rpar", self.rpar, visitor),
         )
 
     def _codegen_impl(self, state: CodegenState) -> None:
@@ -1063,10 +1067,10 @@ class UnaryOperation(BaseExpression):
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "UnaryOperation":
         return UnaryOperation(
-            lpar=visit_sequence("lpar", self.lpar, visitor),
-            operator=visit_required("operator", self.operator, visitor),
-            expression=visit_required("expression", self.expression, visitor),
-            rpar=visit_sequence("rpar", self.rpar, visitor),
+            lpar=visit_sequence(self, "lpar", self.lpar, visitor),
+            operator=visit_required(self, "operator", self.operator, visitor),
+            expression=visit_required(self, "expression", self.expression, visitor),
+            rpar=visit_sequence(self, "rpar", self.rpar, visitor),
         )
 
     def _safe_to_use_with_word_operator(self, position: ExpressionPosition) -> bool:
@@ -1122,11 +1126,11 @@ class BinaryOperation(BaseExpression):
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "BinaryOperation":
         return BinaryOperation(
-            lpar=visit_sequence("lpar", self.lpar, visitor),
-            left=visit_required("left", self.left, visitor),
-            operator=visit_required("operator", self.operator, visitor),
-            right=visit_required("right", self.right, visitor),
-            rpar=visit_sequence("rpar", self.rpar, visitor),
+            lpar=visit_sequence(self, "lpar", self.lpar, visitor),
+            left=visit_required(self, "left", self.left, visitor),
+            operator=visit_required(self, "operator", self.operator, visitor),
+            right=visit_required(self, "right", self.right, visitor),
+            rpar=visit_sequence(self, "rpar", self.rpar, visitor),
         )
 
     def _safe_to_use_with_word_operator(self, position: ExpressionPosition) -> bool:
@@ -1194,11 +1198,11 @@ class BooleanOperation(BaseExpression):
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "BooleanOperation":
         return BooleanOperation(
-            lpar=visit_sequence("lpar", self.lpar, visitor),
-            left=visit_required("left", self.left, visitor),
-            operator=visit_required("operator", self.operator, visitor),
-            right=visit_required("right", self.right, visitor),
-            rpar=visit_sequence("rpar", self.rpar, visitor),
+            lpar=visit_sequence(self, "lpar", self.lpar, visitor),
+            left=visit_required(self, "left", self.left, visitor),
+            operator=visit_required(self, "operator", self.operator, visitor),
+            right=visit_required(self, "right", self.right, visitor),
+            rpar=visit_sequence(self, "rpar", self.rpar, visitor),
         )
 
     def _safe_to_use_with_word_operator(self, position: ExpressionPosition) -> bool:
@@ -1251,11 +1255,11 @@ class Attribute(BaseAssignTargetExpression, BaseDelTargetExpression):
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Attribute":
         return Attribute(
-            lpar=visit_sequence("lpar", self.lpar, visitor),
-            value=visit_required("value", self.value, visitor),
-            dot=visit_required("dot", self.dot, visitor),
-            attr=visit_required("attr", self.attr, visitor),
-            rpar=visit_sequence("rpar", self.rpar, visitor),
+            lpar=visit_sequence(self, "lpar", self.lpar, visitor),
+            value=visit_required(self, "value", self.value, visitor),
+            dot=visit_required(self, "dot", self.dot, visitor),
+            attr=visit_required(self, "attr", self.attr, visitor),
+            rpar=visit_sequence(self, "rpar", self.rpar, visitor),
         )
 
     def _safe_to_use_with_word_operator(self, position: ExpressionPosition) -> bool:
@@ -1284,7 +1288,7 @@ class Index(CSTNode):
     value: BaseExpression
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Index":
-        return Index(value=visit_required("value", self.value, visitor))
+        return Index(value=visit_required(self, "value", self.value, visitor))
 
     def _codegen_impl(self, state: CodegenState) -> None:
         self.value._codegen(state)
@@ -1317,11 +1321,13 @@ class Slice(CSTNode):
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Slice":
         return Slice(
-            lower=visit_optional("lower", self.lower, visitor),
-            first_colon=visit_required("first_colon", self.first_colon, visitor),
-            upper=visit_optional("upper", self.upper, visitor),
-            second_colon=visit_sentinel("second_colon", self.second_colon, visitor),
-            step=visit_optional("step", self.step, visitor),
+            lower=visit_optional(self, "lower", self.lower, visitor),
+            first_colon=visit_required(self, "first_colon", self.first_colon, visitor),
+            upper=visit_optional(self, "upper", self.upper, visitor),
+            second_colon=visit_sentinel(
+                self, "second_colon", self.second_colon, visitor
+            ),
+            step=visit_optional(self, "step", self.step, visitor),
         )
 
     def _codegen_impl(self, state: CodegenState) -> None:
@@ -1361,8 +1367,8 @@ class ExtSlice(CSTNode):
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "ExtSlice":
         return ExtSlice(
-            slice=visit_required("slice", self.slice, visitor),
-            comma=visit_sentinel("comma", self.comma, visitor),
+            slice=visit_required(self, "slice", self.slice, visitor),
+            comma=visit_sentinel(self, "comma", self.comma, visitor),
         )
 
     def _codegen_impl(self, state: CodegenState, default_comma: bool = False) -> None:
@@ -1413,17 +1419,17 @@ class Subscript(BaseAssignTargetExpression, BaseDelTargetExpression):
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Subscript":
         slice = self.slice
         return Subscript(
-            lpar=visit_sequence("lpar", self.lpar, visitor),
-            value=visit_required("value", self.value, visitor),
+            lpar=visit_sequence(self, "lpar", self.lpar, visitor),
+            value=visit_required(self, "value", self.value, visitor),
             whitespace_after_value=visit_required(
-                "whitespace_after_value", self.whitespace_after_value, visitor
+                self, "whitespace_after_value", self.whitespace_after_value, visitor
             ),
-            lbracket=visit_required("lbracket", self.lbracket, visitor),
-            slice=visit_required("slice", slice, visitor)
+            lbracket=visit_required(self, "lbracket", self.lbracket, visitor),
+            slice=visit_required(self, "slice", slice, visitor)
             if isinstance(slice, (Index, Slice))
-            else visit_sequence("slice", slice, visitor),
-            rbracket=visit_required("rbracket", self.rbracket, visitor),
-            rpar=visit_sequence("rpar", self.rpar, visitor),
+            else visit_sequence(self, "slice", slice, visitor),
+            rbracket=visit_required(self, "rbracket", self.rbracket, visitor),
+            rpar=visit_sequence(self, "rpar", self.rpar, visitor),
         )
 
     def _safe_to_use_with_word_operator(self, position: ExpressionPosition) -> bool:
@@ -1483,12 +1489,18 @@ class Annotation(CSTNode):
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Annotation":
         return Annotation(
             whitespace_before_indicator=visit_sentinel(
-                "whitespace_before_indicator", self.whitespace_before_indicator, visitor
+                self,
+                "whitespace_before_indicator",
+                self.whitespace_before_indicator,
+                visitor,
             ),
             whitespace_after_indicator=visit_required(
-                "whitespace_after_indicator", self.whitespace_after_indicator, visitor
+                self,
+                "whitespace_after_indicator",
+                self.whitespace_after_indicator,
+                visitor,
             ),
-            annotation=visit_required("annotation", self.annotation, visitor),
+            annotation=visit_required(self, "annotation", self.annotation, visitor),
         )
 
     def _codegen_impl(
@@ -1534,7 +1546,7 @@ class ParamStar(CSTNode):
     comma: Comma = Comma(whitespace_after=SimpleWhitespace(" "))
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "ParamStar":
-        return ParamStar(comma=visit_required("comma", self.comma, visitor))
+        return ParamStar(comma=visit_required(self, "comma", self.comma, visitor))
 
     def _codegen_impl(self, state: CodegenState) -> None:
         state.add_token("*")
@@ -1589,15 +1601,15 @@ class Param(CSTNode):
         return Param(
             star=self.star,
             whitespace_after_star=visit_required(
-                "whitespace_after_star", self.whitespace_after_star, visitor
+                self, "whitespace_after_star", self.whitespace_after_star, visitor
             ),
-            name=visit_required("name", self.name, visitor),
-            annotation=visit_optional("annotation", self.annotation, visitor),
-            equal=visit_sentinel("equal", self.equal, visitor),
-            default=visit_optional("default", self.default, visitor),
-            comma=visit_sentinel("comma", self.comma, visitor),
+            name=visit_required(self, "name", self.name, visitor),
+            annotation=visit_optional(self, "annotation", self.annotation, visitor),
+            equal=visit_sentinel(self, "equal", self.equal, visitor),
+            default=visit_optional(self, "default", self.default, visitor),
+            comma=visit_sentinel(self, "comma", self.comma, visitor),
             whitespace_after_param=visit_required(
-                "whitespace_after_param", self.whitespace_after_param, visitor
+                self, "whitespace_after_param", self.whitespace_after_param, visitor
             ),
         )
 
@@ -1730,13 +1742,15 @@ class Parameters(CSTNode):
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Parameters":
         return Parameters(
-            params=visit_sequence("params", self.params, visitor),
+            params=visit_sequence(self, "params", self.params, visitor),
             default_params=visit_sequence(
-                "default_params", self.default_params, visitor
+                self, "default_params", self.default_params, visitor
             ),
-            star_arg=visit_sentinel("star_arg", self.star_arg, visitor),
-            kwonly_params=visit_sequence("kwonly_params", self.kwonly_params, visitor),
-            star_kwarg=visit_optional("star_kwarg", self.star_kwarg, visitor),
+            star_arg=visit_sentinel(self, "star_arg", self.star_arg, visitor),
+            kwonly_params=visit_sequence(
+                self, "kwonly_params", self.kwonly_params, visitor
+            ),
+            star_kwarg=visit_optional(self, "star_kwarg", self.star_kwarg, visitor),
         )
 
     def _codegen_impl(self, state: CodegenState) -> None:
@@ -1865,14 +1879,14 @@ class Lambda(BaseExpression):
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Lambda":
         return Lambda(
-            lpar=visit_sequence("lpar", self.lpar, visitor),
+            lpar=visit_sequence(self, "lpar", self.lpar, visitor),
             whitespace_after_lambda=visit_sentinel(
-                "whitespace_after_lambda", self.whitespace_after_lambda, visitor
+                self, "whitespace_after_lambda", self.whitespace_after_lambda, visitor
             ),
-            params=visit_required("params", self.params, visitor),
-            colon=visit_required("colon", self.colon, visitor),
-            body=visit_required("body", self.body, visitor),
-            rpar=visit_sequence("rpar", self.rpar, visitor),
+            params=visit_required(self, "params", self.params, visitor),
+            colon=visit_required(self, "colon", self.colon, visitor),
+            body=visit_required(self, "body", self.body, visitor),
+            rpar=visit_sequence(self, "rpar", self.rpar, visitor),
         )
 
     def _codegen_impl(self, state: CodegenState) -> None:
@@ -1944,14 +1958,14 @@ class Arg(CSTNode):
         return Arg(
             star=self.star,
             whitespace_after_star=visit_required(
-                "whitespace_after_star", self.whitespace_after_star, visitor
+                self, "whitespace_after_star", self.whitespace_after_star, visitor
             ),
-            keyword=visit_optional("keyword", self.keyword, visitor),
-            equal=visit_sentinel("equal", self.equal, visitor),
-            value=visit_required("value", self.value, visitor),
-            comma=visit_sentinel("comma", self.comma, visitor),
+            keyword=visit_optional(self, "keyword", self.keyword, visitor),
+            equal=visit_sentinel(self, "equal", self.equal, visitor),
+            value=visit_required(self, "value", self.value, visitor),
+            comma=visit_sentinel(self, "comma", self.comma, visitor),
             whitespace_after_arg=visit_required(
-                "whitespace_after_arg", self.whitespace_after_arg, visitor
+                self, "whitespace_after_arg", self.whitespace_after_arg, visitor
             ),
         )
 
@@ -2126,16 +2140,16 @@ class Call(_BaseExpressionWithArgs):
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Call":
         return Call(
-            lpar=visit_sequence("lpar", self.lpar, visitor),
-            func=visit_required("func", self.func, visitor),
+            lpar=visit_sequence(self, "lpar", self.lpar, visitor),
+            func=visit_required(self, "func", self.func, visitor),
             whitespace_after_func=visit_required(
-                "whitespace_after_func", self.whitespace_after_func, visitor
+                self, "whitespace_after_func", self.whitespace_after_func, visitor
             ),
             whitespace_before_args=visit_required(
-                "whitespace_before_args", self.whitespace_before_args, visitor
+                self, "whitespace_before_args", self.whitespace_before_args, visitor
             ),
-            args=visit_sequence("args", self.args, visitor),
-            rpar=visit_sequence("rpar", self.rpar, visitor),
+            args=visit_sequence(self, "args", self.args, visitor),
+            rpar=visit_sequence(self, "rpar", self.rpar, visitor),
         )
 
     def _codegen_impl(self, state: CodegenState) -> None:
@@ -2179,12 +2193,12 @@ class Await(BaseExpression):
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Await":
         return Await(
-            lpar=visit_sequence("lpar", self.lpar, visitor),
+            lpar=visit_sequence(self, "lpar", self.lpar, visitor),
             whitespace_after_await=visit_required(
-                "whitespace_after_await", self.whitespace_after_await, visitor
+                self, "whitespace_after_await", self.whitespace_after_await, visitor
             ),
-            expression=visit_required("expression", self.expression, visitor),
-            rpar=visit_sequence("rpar", self.rpar, visitor),
+            expression=visit_required(self, "expression", self.expression, visitor),
+            rpar=visit_sequence(self, "rpar", self.rpar, visitor),
         )
 
     def _codegen_impl(self, state: CodegenState) -> None:
@@ -2263,23 +2277,23 @@ class IfExp(BaseExpression):
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "IfExp":
         return IfExp(
-            lpar=visit_sequence("lpar", self.lpar, visitor),
-            body=visit_required("body", self.body, visitor),
+            lpar=visit_sequence(self, "lpar", self.lpar, visitor),
+            body=visit_required(self, "body", self.body, visitor),
             whitespace_before_if=visit_required(
-                "whitespace_before_if", self.whitespace_before_if, visitor
+                self, "whitespace_before_if", self.whitespace_before_if, visitor
             ),
             whitespace_after_if=visit_required(
-                "whitespace_after_if", self.whitespace_after_if, visitor
+                self, "whitespace_after_if", self.whitespace_after_if, visitor
             ),
-            test=visit_required("test", self.test, visitor),
+            test=visit_required(self, "test", self.test, visitor),
             whitespace_before_else=visit_required(
-                "whitespace_before_else", self.whitespace_before_else, visitor
+                self, "whitespace_before_else", self.whitespace_before_else, visitor
             ),
             whitespace_after_else=visit_required(
-                "whitespace_after_else", self.whitespace_after_else, visitor
+                self, "whitespace_after_else", self.whitespace_after_else, visitor
             ),
-            orelse=visit_required("orelse", self.orelse, visitor),
-            rpar=visit_sequence("rpar", self.rpar, visitor),
+            orelse=visit_required(self, "orelse", self.orelse, visitor),
+            rpar=visit_sequence(self, "rpar", self.rpar, visitor),
         )
 
     def _codegen_impl(self, state: CodegenState) -> None:
@@ -2326,12 +2340,12 @@ class From(CSTNode):
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "From":
         return From(
             whitespace_before_from=visit_sentinel(
-                "whitespace_before_from", self.whitespace_before_from, visitor
+                self, "whitespace_before_from", self.whitespace_before_from, visitor
             ),
             whitespace_after_from=visit_required(
-                "whitespace_after_from", self.whitespace_after_from, visitor
+                self, "whitespace_after_from", self.whitespace_after_from, visitor
             ),
-            item=visit_required("item", self.item, visitor),
+            item=visit_required(self, "item", self.item, visitor),
         )
 
     def _codegen_impl(self, state: CodegenState, default_space: str = "") -> None:
@@ -2394,12 +2408,12 @@ class Yield(BaseExpression):
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Yield":
         return Yield(
-            lpar=visit_sequence("lpar", self.lpar, visitor),
+            lpar=visit_sequence(self, "lpar", self.lpar, visitor),
             whitespace_after_yield=visit_sentinel(
-                "whitespace_after_yield", self.whitespace_after_yield, visitor
+                self, "whitespace_after_yield", self.whitespace_after_yield, visitor
             ),
-            value=visit_optional("value", self.value, visitor),
-            rpar=visit_sequence("rpar", self.rpar, visitor),
+            value=visit_optional(self, "value", self.value, visitor),
+            rpar=visit_sequence(self, "rpar", self.rpar, visitor),
         )
 
     def _codegen_impl(self, state: CodegenState) -> None:
@@ -2487,8 +2501,8 @@ class Element(BaseElement):
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Element":
         return Element(
-            value=visit_required("value", self.value, visitor),
-            comma=visit_sentinel("comma", self.comma, visitor),
+            value=visit_required(self, "value", self.value, visitor),
+            comma=visit_sentinel(self, "comma", self.comma, visitor),
         )
 
     def _codegen_impl(
@@ -2527,15 +2541,15 @@ class DictElement(BaseDictElement):
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "DictElement":
         return DictElement(
-            key=visit_required("key", self.key, visitor),
+            key=visit_required(self, "key", self.key, visitor),
             whitespace_before_colon=visit_required(
-                "whitespace_before_colon", self.whitespace_before_colon, visitor
+                self, "whitespace_before_colon", self.whitespace_before_colon, visitor
             ),
             whitespace_after_colon=visit_required(
-                "whitespace_after_colon", self.whitespace_after_colon, visitor
+                self, "whitespace_after_colon", self.whitespace_after_colon, visitor
             ),
-            value=visit_required("value", self.value, visitor),
-            comma=visit_sentinel("comma", self.comma, visitor),
+            value=visit_required(self, "value", self.value, visitor),
+            comma=visit_sentinel(self, "comma", self.comma, visitor),
         )
 
     def _codegen_impl(
@@ -2592,13 +2606,13 @@ class StarredElement(BaseElement, _BaseParenthesizedNode):
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "StarredElement":
         return StarredElement(
-            lpar=visit_sequence("lpar", self.lpar, visitor),
+            lpar=visit_sequence(self, "lpar", self.lpar, visitor),
             whitespace_before_value=visit_required(
-                "whitespace_before_value", self.whitespace_before_value, visitor
+                self, "whitespace_before_value", self.whitespace_before_value, visitor
             ),
-            value=visit_required("value", self.value, visitor),
-            rpar=visit_sequence("rpar", self.rpar, visitor),
-            comma=visit_sentinel("comma", self.comma, visitor),
+            value=visit_required(self, "value", self.value, visitor),
+            rpar=visit_sequence(self, "rpar", self.rpar, visitor),
+            comma=visit_sentinel(self, "comma", self.comma, visitor),
         )
 
     def _codegen_impl(
@@ -2640,10 +2654,10 @@ class StarredDictElement(BaseDictElement):
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "StarredDictElement":
         return StarredDictElement(
             whitespace_before_value=visit_required(
-                "whitespace_before_value", self.whitespace_before_value, visitor
+                self, "whitespace_before_value", self.whitespace_before_value, visitor
             ),
-            value=visit_required("value", self.value, visitor),
-            comma=visit_sentinel("comma", self.comma, visitor),
+            value=visit_required(self, "value", self.value, visitor),
+            comma=visit_sentinel(self, "comma", self.comma, visitor),
         )
 
     def _codegen_impl(
@@ -2724,9 +2738,9 @@ class Tuple(BaseAssignTargetExpression, BaseDelTargetExpression):
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Tuple":
         return Tuple(
-            lpar=visit_sequence("lpar", self.lpar, visitor),
-            elements=visit_sequence("elements", self.elements, visitor),
-            rpar=visit_sequence("rpar", self.rpar, visitor),
+            lpar=visit_sequence(self, "lpar", self.lpar, visitor),
+            elements=visit_sequence(self, "elements", self.elements, visitor),
+            rpar=visit_sequence(self, "rpar", self.rpar, visitor),
         )
 
     def _codegen_impl(self, state: CodegenState) -> None:
@@ -2804,11 +2818,11 @@ class List(BaseList, BaseAssignTargetExpression, BaseDelTargetExpression):
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "List":
         return List(
-            lpar=visit_sequence("lpar", self.lpar, visitor),
-            lbracket=visit_required("lbracket", self.lbracket, visitor),
-            elements=visit_sequence("elements", self.elements, visitor),
-            rbracket=visit_required("rbracket", self.rbracket, visitor),
-            rpar=visit_sequence("rpar", self.rpar, visitor),
+            lpar=visit_sequence(self, "lpar", self.lpar, visitor),
+            lbracket=visit_required(self, "lbracket", self.lbracket, visitor),
+            elements=visit_sequence(self, "elements", self.elements, visitor),
+            rbracket=visit_required(self, "rbracket", self.rbracket, visitor),
+            rpar=visit_sequence(self, "rpar", self.rpar, visitor),
         )
 
     def _codegen_impl(self, state: CodegenState) -> None:
@@ -2901,11 +2915,11 @@ class Set(BaseSet):
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Set":
         return Set(
-            lpar=visit_sequence("lpar", self.lpar, visitor),
-            lbrace=visit_required("lbrace", self.lbrace, visitor),
-            elements=visit_sequence("elements", self.elements, visitor),
-            rbrace=visit_required("rbrace", self.rbrace, visitor),
-            rpar=visit_sequence("rpar", self.rpar, visitor),
+            lpar=visit_sequence(self, "lpar", self.lpar, visitor),
+            lbrace=visit_required(self, "lbrace", self.lbrace, visitor),
+            elements=visit_sequence(self, "elements", self.elements, visitor),
+            rbrace=visit_required(self, "rbrace", self.rbrace, visitor),
+            rpar=visit_sequence(self, "rpar", self.rpar, visitor),
         )
 
     def _codegen_impl(self, state: CodegenState) -> None:
@@ -2957,11 +2971,11 @@ class Dict(BaseDict):
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Dict":
         return Dict(
-            lpar=visit_sequence("lpar", self.lpar, visitor),
-            lbrace=visit_required("lbrace", self.lbrace, visitor),
-            elements=visit_sequence("elements", self.elements, visitor),
-            rbrace=visit_required("rbrace", self.rbrace, visitor),
-            rpar=visit_sequence("rpar", self.rpar, visitor),
+            lpar=visit_sequence(self, "lpar", self.lpar, visitor),
+            lbrace=visit_required(self, "lbrace", self.lbrace, visitor),
+            elements=visit_sequence(self, "elements", self.elements, visitor),
+            rbrace=visit_required(self, "rbrace", self.rbrace, visitor),
+            rpar=visit_sequence(self, "rpar", self.rpar, visitor),
         )
 
     def _codegen_impl(self, state: CodegenState) -> None:
@@ -3109,22 +3123,26 @@ class CompFor(CSTNode):
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "CompFor":
         return CompFor(
             whitespace_before=visit_required(
-                "whitespace_before", self.whitespace_before, visitor
+                self, "whitespace_before", self.whitespace_before, visitor
             ),
-            asynchronous=visit_optional("asynchronous", self.asynchronous, visitor),
+            asynchronous=visit_optional(
+                self, "asynchronous", self.asynchronous, visitor
+            ),
             whitespace_after_for=visit_required(
-                "whitespace_after_for", self.whitespace_after_for, visitor
+                self, "whitespace_after_for", self.whitespace_after_for, visitor
             ),
-            target=visit_required("target", self.target, visitor),
+            target=visit_required(self, "target", self.target, visitor),
             whitespace_before_in=visit_required(
-                "whitespace_before_in", self.whitespace_before_in, visitor
+                self, "whitespace_before_in", self.whitespace_before_in, visitor
             ),
             whitespace_after_in=visit_required(
-                "whitespace_after_in", self.whitespace_after_in, visitor
+                self, "whitespace_after_in", self.whitespace_after_in, visitor
             ),
-            iter=visit_required("iter", self.iter, visitor),
-            ifs=visit_sequence("ifs", self.ifs, visitor),
-            inner_for_in=visit_optional("inner_for_in", self.inner_for_in, visitor),
+            iter=visit_required(self, "iter", self.iter, visitor),
+            ifs=visit_sequence(self, "ifs", self.ifs, visitor),
+            inner_for_in=visit_optional(
+                self, "inner_for_in", self.inner_for_in, visitor
+            ),
         )
 
     def _codegen_impl(self, state: CodegenState) -> None:
@@ -3176,12 +3194,12 @@ class CompIf(CSTNode):
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "CompIf":
         return CompIf(
             whitespace_before=visit_required(
-                "whitespace_before", self.whitespace_before, visitor
+                self, "whitespace_before", self.whitespace_before, visitor
             ),
             whitespace_before_test=visit_required(
-                "whitespace_before_test", self.whitespace_before_test, visitor
+                self, "whitespace_before_test", self.whitespace_before_test, visitor
             ),
-            test=visit_required("test", self.test, visitor),
+            test=visit_required(self, "test", self.test, visitor),
         )
 
     def _codegen_impl(self, state: CodegenState) -> None:
@@ -3273,10 +3291,10 @@ class GeneratorExp(BaseSimpleComp):
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "GeneratorExp":
         return GeneratorExp(
-            lpar=visit_sequence("lpar", self.lpar, visitor),
-            elt=visit_required("elt", self.elt, visitor),
-            for_in=visit_required("for_in", self.for_in, visitor),
-            rpar=visit_sequence("rpar", self.rpar, visitor),
+            lpar=visit_sequence(self, "lpar", self.lpar, visitor),
+            elt=visit_required(self, "elt", self.elt, visitor),
+            for_in=visit_required(self, "for_in", self.for_in, visitor),
+            rpar=visit_sequence(self, "rpar", self.rpar, visitor),
         )
 
     def _codegen_impl(self, state: CodegenState) -> None:
@@ -3313,12 +3331,12 @@ class ListComp(BaseList, BaseSimpleComp):
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "ListComp":
         return ListComp(
-            lpar=visit_sequence("lpar", self.lpar, visitor),
-            lbracket=visit_required("lbracket", self.lbracket, visitor),
-            elt=visit_required("elt", self.elt, visitor),
-            for_in=visit_required("for_in", self.for_in, visitor),
-            rbracket=visit_required("rbracket", self.rbracket, visitor),
-            rpar=visit_sequence("rpar", self.rpar, visitor),
+            lpar=visit_sequence(self, "lpar", self.lpar, visitor),
+            lbracket=visit_required(self, "lbracket", self.lbracket, visitor),
+            elt=visit_required(self, "elt", self.elt, visitor),
+            for_in=visit_required(self, "for_in", self.for_in, visitor),
+            rbracket=visit_required(self, "rbracket", self.rbracket, visitor),
+            rpar=visit_sequence(self, "rpar", self.rpar, visitor),
         )
 
     def _codegen_impl(self, state: CodegenState) -> None:
@@ -3355,12 +3373,12 @@ class SetComp(BaseSet, BaseSimpleComp):
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "SetComp":
         return SetComp(
-            lpar=visit_sequence("lpar", self.lpar, visitor),
-            lbrace=visit_required("lbrace", self.lbrace, visitor),
-            elt=visit_required("elt", self.elt, visitor),
-            for_in=visit_required("for_in", self.for_in, visitor),
-            rbrace=visit_required("rbrace", self.rbrace, visitor),
-            rpar=visit_sequence("rpar", self.rpar, visitor),
+            lpar=visit_sequence(self, "lpar", self.lpar, visitor),
+            lbrace=visit_required(self, "lbrace", self.lbrace, visitor),
+            elt=visit_required(self, "elt", self.elt, visitor),
+            for_in=visit_required(self, "for_in", self.for_in, visitor),
+            rbrace=visit_required(self, "rbrace", self.rbrace, visitor),
+            rpar=visit_sequence(self, "rpar", self.rpar, visitor),
         )
 
     def _codegen_impl(self, state: CodegenState) -> None:
@@ -3419,19 +3437,19 @@ class DictComp(BaseDict, BaseComp):
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "DictComp":
         return DictComp(
-            lpar=visit_sequence("lpar", self.lpar, visitor),
-            lbrace=visit_required("lbrace", self.lbrace, visitor),
-            key=visit_required("key", self.key, visitor),
+            lpar=visit_sequence(self, "lpar", self.lpar, visitor),
+            lbrace=visit_required(self, "lbrace", self.lbrace, visitor),
+            key=visit_required(self, "key", self.key, visitor),
             whitespace_before_colon=visit_required(
-                "whitespace_before_colon", self.whitespace_before_colon, visitor
+                self, "whitespace_before_colon", self.whitespace_before_colon, visitor
             ),
             whitespace_after_colon=visit_required(
-                "whitespace_after_colon", self.whitespace_after_colon, visitor
+                self, "whitespace_after_colon", self.whitespace_after_colon, visitor
             ),
-            value=visit_required("value", self.value, visitor),
-            for_in=visit_required("for_in", self.for_in, visitor),
-            rbrace=visit_required("rbrace", self.rbrace, visitor),
-            rpar=visit_sequence("rpar", self.rpar, visitor),
+            value=visit_required(self, "value", self.value, visitor),
+            for_in=visit_required(self, "for_in", self.for_in, visitor),
+            rbrace=visit_required(self, "rbrace", self.rbrace, visitor),
+            rpar=visit_sequence(self, "rpar", self.rpar, visitor),
         )
 
     def _codegen_impl(self, state: CodegenState) -> None:

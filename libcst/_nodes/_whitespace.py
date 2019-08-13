@@ -182,9 +182,9 @@ class TrailingWhitespace(CSTNode):
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "TrailingWhitespace":
         return TrailingWhitespace(
-            whitespace=visit_required("whitespace", self.whitespace, visitor),
-            comment=visit_optional("comment", self.comment, visitor),
-            newline=visit_required("newline", self.newline, visitor),
+            whitespace=visit_required(self, "whitespace", self.whitespace, visitor),
+            comment=visit_optional(self, "comment", self.comment, visitor),
+            newline=visit_required(self, "newline", self.newline, visitor),
         )
 
     def _codegen_impl(self, state: CodegenState) -> None:
@@ -220,9 +220,9 @@ class EmptyLine(CSTNode):
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "EmptyLine":
         return EmptyLine(
             indent=self.indent,
-            whitespace=visit_required("whitespace", self.whitespace, visitor),
-            comment=visit_optional("comment", self.comment, visitor),
-            newline=visit_required("newline", self.newline, visitor),
+            whitespace=visit_required(self, "whitespace", self.whitespace, visitor),
+            comment=visit_optional(self, "comment", self.comment, visitor),
+            newline=visit_required(self, "newline", self.newline, visitor),
         )
 
     def _codegen_impl(self, state: CodegenState) -> None:
@@ -266,10 +266,10 @@ class ParenthesizedWhitespace(BaseParenthesizableWhitespace):
         self, visitor: CSTVisitorT
     ) -> "ParenthesizedWhitespace":
         return ParenthesizedWhitespace(
-            first_line=visit_required("first_line", self.first_line, visitor),
-            empty_lines=visit_sequence("empty_lines", self.empty_lines, visitor),
+            first_line=visit_required(self, "first_line", self.first_line, visitor),
+            empty_lines=visit_sequence(self, "empty_lines", self.empty_lines, visitor),
             indent=self.indent,
-            last_line=visit_required("last_line", self.last_line, visitor),
+            last_line=visit_required(self, "last_line", self.last_line, visitor),
         )
 
     def _codegen_impl(self, state: CodegenState) -> None:

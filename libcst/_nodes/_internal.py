@@ -192,7 +192,7 @@ class SyntacticCodegenState(BasicCodegenState):
 
 
 def visit_required(
-    fieldname: str, node: _CSTNodeT, visitor: "CSTVisitorT"
+    parent: "CSTNode", fieldname: str, node: _CSTNodeT, visitor: "CSTVisitorT"
 ) -> _CSTNodeT:
     """
     Given a node, visits the node using `visitor`. If removal is attempted by the
@@ -208,7 +208,7 @@ def visit_required(
 
 
 def visit_optional(
-    fieldname: str, node: Optional[_CSTNodeT], visitor: "CSTVisitorT"
+    parent: "CSTNode", fieldname: str, node: Optional[_CSTNodeT], visitor: "CSTVisitorT"
 ) -> Optional[_CSTNodeT]:
     """
     Given an optional node, visits the node if it exists with `visitor`. If the node is
@@ -221,7 +221,10 @@ def visit_optional(
 
 
 def visit_sentinel(
-    fieldname: str, node: Union[_CSTNodeT, MaybeSentinel], visitor: "CSTVisitorT"
+    parent: "CSTNode",
+    fieldname: str,
+    node: Union[_CSTNodeT, MaybeSentinel],
+    visitor: "CSTVisitorT",
 ) -> Union[_CSTNodeT, MaybeSentinel]:
     """
     Given a node that can be a real value or a sentinel value, visits the node if it
@@ -234,7 +237,10 @@ def visit_sentinel(
 
 
 def visit_iterable(
-    fieldname: str, children: Iterable[_CSTNodeT], visitor: "CSTVisitorT"
+    parent: "CSTNode",
+    fieldname: str,
+    children: Iterable[_CSTNodeT],
+    visitor: "CSTVisitorT",
 ) -> Iterable[_CSTNodeT]:
     """
     Given an iterable of children, visits each child with `visitor`, and yields the new
@@ -247,17 +253,23 @@ def visit_iterable(
 
 
 def visit_sequence(
-    fieldname: str, children: Sequence[_CSTNodeT], visitor: "CSTVisitorT"
+    parent: "CSTNode",
+    fieldname: str,
+    children: Sequence[_CSTNodeT],
+    visitor: "CSTVisitorT",
 ) -> Sequence[_CSTNodeT]:
     """
     A convenience wrapper for `visit_iterable` that returns a sequence instead of an
     iterable.
     """
-    return tuple(visit_iterable(fieldname, children, visitor))
+    return tuple(visit_iterable(parent, fieldname, children, visitor))
 
 
 def visit_body_iterable(
-    fieldname: str, children: Sequence[_CSTNodeT], visitor: "CSTVisitorT"
+    parent: "CSTNode",
+    fieldname: str,
+    children: Sequence[_CSTNodeT],
+    visitor: "CSTVisitorT",
 ) -> Iterable[_CSTNodeT]:
     """
     Similar to visit_iterable above, but capable of discarding empty SimpleStatementLine
@@ -283,10 +295,13 @@ def visit_body_iterable(
 
 
 def visit_body_sequence(
-    fieldname: str, children: Sequence[_CSTNodeT], visitor: "CSTVisitorT"
+    parent: "CSTNode",
+    fieldname: str,
+    children: Sequence[_CSTNodeT],
+    visitor: "CSTVisitorT",
 ) -> Sequence[_CSTNodeT]:
     """
     A convenience wrapper for `visit_body_iterable` that returns a sequence
     instead of an iterable.
     """
-    return tuple(visit_body_iterable(fieldname, children, visitor))
+    return tuple(visit_body_iterable(parent, fieldname, children, visitor))
