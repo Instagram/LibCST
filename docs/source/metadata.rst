@@ -4,8 +4,8 @@ Metadata
 ========
 
 LibCST ships with a metadata interface that defines a standardized way to
-associate nodes in a CST with arbitrary metadata. The metadata interface is
-designed to be declarative and type safe.
+associate nodes in a CST with arbitrary metadata while maintaining the immutability
+of the tree. The metadata interface is designed to be declarative and type safe.
 
 Accessing Metadata
 ------------------
@@ -45,24 +45,3 @@ interface will return a :class:`~libcst.CodeRange` object.
     :members:
 .. autoclass:: libcst.CodePosition
     :members:
-
-Usage
------
-
-Here's an example of a visitor that prints out the starting position of every
-:class:`~libcst.Name` node.
-
-.. code-block:: python
-
-    import libcst as cst
-
-    class NamePrinter(cst.CSTVisitor):
-        METADATA_DEPENDENCIES = (cst.SyntacticPositionProvider,)
-
-        def visit_Name(self, node: cst.Name) -> None:
-            pos = self.get_metadata(cst.SyntacticPositionProvider, node).start
-            print(f"{node.value} found at line {pos.line}, column {pos.column}")
-
-    module = cst.parse_module("x = 1")
-    wrapper = cst.MetadataWrapper(module)
-    wrapper.visit(NamePrinter())  # should print "x found at line 1, column 0"
