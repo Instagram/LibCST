@@ -181,6 +181,21 @@ for node in sorted(nodebases.keys(), key=lambda node: node.__name__):
         f'    def visit_{name}(self, node: "{name}") -> Optional[bool]:'
     )
     generated_code.append("        pass")
+    for field in fields(node) or []:
+        if field.name == "_metadata":
+            continue
+        generated_code.append("")
+        generated_code.append("    @mark_no_op")
+        generated_code.append(
+            f'    def visit_{name}_{field.name}(self, node: "{name}") -> None:'
+        )
+        generated_code.append("        pass")
+        generated_code.append("")
+        generated_code.append("    @mark_no_op")
+        generated_code.append(
+            f'    def leave_{name}_{field.name}(self, node: "{name}") -> None:'
+        )
+        generated_code.append("        pass")
 
 # Generate the visitor leave_ methods
 generated_code.append("")
