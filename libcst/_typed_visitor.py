@@ -184,7 +184,39 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_Add_whitespace_before(self, node: "Add") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Add_whitespace_before(self, node: "Add") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Add_whitespace_after(self, node: "Add") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Add_whitespace_after(self, node: "Add") -> None:
+        pass
+
+    @mark_no_op
     def visit_AddAssign(self, node: "AddAssign") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_AddAssign_whitespace_before(self, node: "AddAssign") -> None:
+        pass
+
+    @mark_no_op
+    def leave_AddAssign_whitespace_before(self, node: "AddAssign") -> None:
+        pass
+
+    @mark_no_op
+    def visit_AddAssign_whitespace_after(self, node: "AddAssign") -> None:
+        pass
+
+    @mark_no_op
+    def leave_AddAssign_whitespace_after(self, node: "AddAssign") -> None:
         pass
 
     @mark_no_op
@@ -192,7 +224,63 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_And_whitespace_before(self, node: "And") -> None:
+        pass
+
+    @mark_no_op
+    def leave_And_whitespace_before(self, node: "And") -> None:
+        pass
+
+    @mark_no_op
+    def visit_And_whitespace_after(self, node: "And") -> None:
+        pass
+
+    @mark_no_op
+    def leave_And_whitespace_after(self, node: "And") -> None:
+        pass
+
+    @mark_no_op
     def visit_AnnAssign(self, node: "AnnAssign") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_AnnAssign_target(self, node: "AnnAssign") -> None:
+        pass
+
+    @mark_no_op
+    def leave_AnnAssign_target(self, node: "AnnAssign") -> None:
+        pass
+
+    @mark_no_op
+    def visit_AnnAssign_annotation(self, node: "AnnAssign") -> None:
+        pass
+
+    @mark_no_op
+    def leave_AnnAssign_annotation(self, node: "AnnAssign") -> None:
+        pass
+
+    @mark_no_op
+    def visit_AnnAssign_value(self, node: "AnnAssign") -> None:
+        pass
+
+    @mark_no_op
+    def leave_AnnAssign_value(self, node: "AnnAssign") -> None:
+        pass
+
+    @mark_no_op
+    def visit_AnnAssign_equal(self, node: "AnnAssign") -> None:
+        pass
+
+    @mark_no_op
+    def leave_AnnAssign_equal(self, node: "AnnAssign") -> None:
+        pass
+
+    @mark_no_op
+    def visit_AnnAssign_semicolon(self, node: "AnnAssign") -> None:
+        pass
+
+    @mark_no_op
+    def leave_AnnAssign_semicolon(self, node: "AnnAssign") -> None:
         pass
 
     @mark_no_op
@@ -200,7 +288,87 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_Annotation_annotation(self, node: "Annotation") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Annotation_annotation(self, node: "Annotation") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Annotation_whitespace_before_indicator(self, node: "Annotation") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Annotation_whitespace_before_indicator(self, node: "Annotation") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Annotation_whitespace_after_indicator(self, node: "Annotation") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Annotation_whitespace_after_indicator(self, node: "Annotation") -> None:
+        pass
+
+    @mark_no_op
     def visit_Arg(self, node: "Arg") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_Arg_value(self, node: "Arg") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Arg_value(self, node: "Arg") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Arg_keyword(self, node: "Arg") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Arg_keyword(self, node: "Arg") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Arg_equal(self, node: "Arg") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Arg_equal(self, node: "Arg") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Arg_comma(self, node: "Arg") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Arg_comma(self, node: "Arg") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Arg_star(self, node: "Arg") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Arg_star(self, node: "Arg") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Arg_whitespace_after_star(self, node: "Arg") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Arg_whitespace_after_star(self, node: "Arg") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Arg_whitespace_after_arg(self, node: "Arg") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Arg_whitespace_after_arg(self, node: "Arg") -> None:
         pass
 
     @mark_no_op
@@ -208,7 +376,71 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_AsName_name(self, node: "AsName") -> None:
+        pass
+
+    @mark_no_op
+    def leave_AsName_name(self, node: "AsName") -> None:
+        pass
+
+    @mark_no_op
+    def visit_AsName_whitespace_before_as(self, node: "AsName") -> None:
+        pass
+
+    @mark_no_op
+    def leave_AsName_whitespace_before_as(self, node: "AsName") -> None:
+        pass
+
+    @mark_no_op
+    def visit_AsName_whitespace_after_as(self, node: "AsName") -> None:
+        pass
+
+    @mark_no_op
+    def leave_AsName_whitespace_after_as(self, node: "AsName") -> None:
+        pass
+
+    @mark_no_op
     def visit_Assert(self, node: "Assert") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_Assert_test(self, node: "Assert") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Assert_test(self, node: "Assert") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Assert_msg(self, node: "Assert") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Assert_msg(self, node: "Assert") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Assert_comma(self, node: "Assert") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Assert_comma(self, node: "Assert") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Assert_whitespace_after_assert(self, node: "Assert") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Assert_whitespace_after_assert(self, node: "Assert") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Assert_semicolon(self, node: "Assert") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Assert_semicolon(self, node: "Assert") -> None:
         pass
 
     @mark_no_op
@@ -216,7 +448,47 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_Assign_targets(self, node: "Assign") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Assign_targets(self, node: "Assign") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Assign_value(self, node: "Assign") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Assign_value(self, node: "Assign") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Assign_semicolon(self, node: "Assign") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Assign_semicolon(self, node: "Assign") -> None:
+        pass
+
+    @mark_no_op
     def visit_AssignEqual(self, node: "AssignEqual") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_AssignEqual_whitespace_before(self, node: "AssignEqual") -> None:
+        pass
+
+    @mark_no_op
+    def leave_AssignEqual_whitespace_before(self, node: "AssignEqual") -> None:
+        pass
+
+    @mark_no_op
+    def visit_AssignEqual_whitespace_after(self, node: "AssignEqual") -> None:
+        pass
+
+    @mark_no_op
+    def leave_AssignEqual_whitespace_after(self, node: "AssignEqual") -> None:
         pass
 
     @mark_no_op
@@ -224,7 +496,39 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_AssignTarget_target(self, node: "AssignTarget") -> None:
+        pass
+
+    @mark_no_op
+    def leave_AssignTarget_target(self, node: "AssignTarget") -> None:
+        pass
+
+    @mark_no_op
+    def visit_AssignTarget_whitespace_before_equal(self, node: "AssignTarget") -> None:
+        pass
+
+    @mark_no_op
+    def leave_AssignTarget_whitespace_before_equal(self, node: "AssignTarget") -> None:
+        pass
+
+    @mark_no_op
+    def visit_AssignTarget_whitespace_after_equal(self, node: "AssignTarget") -> None:
+        pass
+
+    @mark_no_op
+    def leave_AssignTarget_whitespace_after_equal(self, node: "AssignTarget") -> None:
+        pass
+
+    @mark_no_op
     def visit_Asynchronous(self, node: "Asynchronous") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_Asynchronous_whitespace_after(self, node: "Asynchronous") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Asynchronous_whitespace_after(self, node: "Asynchronous") -> None:
         pass
 
     @mark_no_op
@@ -232,7 +536,79 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_Attribute_value(self, node: "Attribute") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Attribute_value(self, node: "Attribute") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Attribute_attr(self, node: "Attribute") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Attribute_attr(self, node: "Attribute") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Attribute_dot(self, node: "Attribute") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Attribute_dot(self, node: "Attribute") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Attribute_lpar(self, node: "Attribute") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Attribute_lpar(self, node: "Attribute") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Attribute_rpar(self, node: "Attribute") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Attribute_rpar(self, node: "Attribute") -> None:
+        pass
+
+    @mark_no_op
     def visit_AugAssign(self, node: "AugAssign") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_AugAssign_target(self, node: "AugAssign") -> None:
+        pass
+
+    @mark_no_op
+    def leave_AugAssign_target(self, node: "AugAssign") -> None:
+        pass
+
+    @mark_no_op
+    def visit_AugAssign_operator(self, node: "AugAssign") -> None:
+        pass
+
+    @mark_no_op
+    def leave_AugAssign_operator(self, node: "AugAssign") -> None:
+        pass
+
+    @mark_no_op
+    def visit_AugAssign_value(self, node: "AugAssign") -> None:
+        pass
+
+    @mark_no_op
+    def leave_AugAssign_value(self, node: "AugAssign") -> None:
+        pass
+
+    @mark_no_op
+    def visit_AugAssign_semicolon(self, node: "AugAssign") -> None:
+        pass
+
+    @mark_no_op
+    def leave_AugAssign_semicolon(self, node: "AugAssign") -> None:
         pass
 
     @mark_no_op
@@ -240,7 +616,79 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_Await_expression(self, node: "Await") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Await_expression(self, node: "Await") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Await_lpar(self, node: "Await") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Await_lpar(self, node: "Await") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Await_rpar(self, node: "Await") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Await_rpar(self, node: "Await") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Await_whitespace_after_await(self, node: "Await") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Await_whitespace_after_await(self, node: "Await") -> None:
+        pass
+
+    @mark_no_op
     def visit_BinaryOperation(self, node: "BinaryOperation") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_BinaryOperation_left(self, node: "BinaryOperation") -> None:
+        pass
+
+    @mark_no_op
+    def leave_BinaryOperation_left(self, node: "BinaryOperation") -> None:
+        pass
+
+    @mark_no_op
+    def visit_BinaryOperation_operator(self, node: "BinaryOperation") -> None:
+        pass
+
+    @mark_no_op
+    def leave_BinaryOperation_operator(self, node: "BinaryOperation") -> None:
+        pass
+
+    @mark_no_op
+    def visit_BinaryOperation_right(self, node: "BinaryOperation") -> None:
+        pass
+
+    @mark_no_op
+    def leave_BinaryOperation_right(self, node: "BinaryOperation") -> None:
+        pass
+
+    @mark_no_op
+    def visit_BinaryOperation_lpar(self, node: "BinaryOperation") -> None:
+        pass
+
+    @mark_no_op
+    def leave_BinaryOperation_lpar(self, node: "BinaryOperation") -> None:
+        pass
+
+    @mark_no_op
+    def visit_BinaryOperation_rpar(self, node: "BinaryOperation") -> None:
+        pass
+
+    @mark_no_op
+    def leave_BinaryOperation_rpar(self, node: "BinaryOperation") -> None:
         pass
 
     @mark_no_op
@@ -248,7 +696,39 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_BitAnd_whitespace_before(self, node: "BitAnd") -> None:
+        pass
+
+    @mark_no_op
+    def leave_BitAnd_whitespace_before(self, node: "BitAnd") -> None:
+        pass
+
+    @mark_no_op
+    def visit_BitAnd_whitespace_after(self, node: "BitAnd") -> None:
+        pass
+
+    @mark_no_op
+    def leave_BitAnd_whitespace_after(self, node: "BitAnd") -> None:
+        pass
+
+    @mark_no_op
     def visit_BitAndAssign(self, node: "BitAndAssign") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_BitAndAssign_whitespace_before(self, node: "BitAndAssign") -> None:
+        pass
+
+    @mark_no_op
+    def leave_BitAndAssign_whitespace_before(self, node: "BitAndAssign") -> None:
+        pass
+
+    @mark_no_op
+    def visit_BitAndAssign_whitespace_after(self, node: "BitAndAssign") -> None:
+        pass
+
+    @mark_no_op
+    def leave_BitAndAssign_whitespace_after(self, node: "BitAndAssign") -> None:
         pass
 
     @mark_no_op
@@ -256,7 +736,31 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_BitInvert_whitespace_after(self, node: "BitInvert") -> None:
+        pass
+
+    @mark_no_op
+    def leave_BitInvert_whitespace_after(self, node: "BitInvert") -> None:
+        pass
+
+    @mark_no_op
     def visit_BitOr(self, node: "BitOr") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_BitOr_whitespace_before(self, node: "BitOr") -> None:
+        pass
+
+    @mark_no_op
+    def leave_BitOr_whitespace_before(self, node: "BitOr") -> None:
+        pass
+
+    @mark_no_op
+    def visit_BitOr_whitespace_after(self, node: "BitOr") -> None:
+        pass
+
+    @mark_no_op
+    def leave_BitOr_whitespace_after(self, node: "BitOr") -> None:
         pass
 
     @mark_no_op
@@ -264,7 +768,39 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_BitOrAssign_whitespace_before(self, node: "BitOrAssign") -> None:
+        pass
+
+    @mark_no_op
+    def leave_BitOrAssign_whitespace_before(self, node: "BitOrAssign") -> None:
+        pass
+
+    @mark_no_op
+    def visit_BitOrAssign_whitespace_after(self, node: "BitOrAssign") -> None:
+        pass
+
+    @mark_no_op
+    def leave_BitOrAssign_whitespace_after(self, node: "BitOrAssign") -> None:
+        pass
+
+    @mark_no_op
     def visit_BitXor(self, node: "BitXor") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_BitXor_whitespace_before(self, node: "BitXor") -> None:
+        pass
+
+    @mark_no_op
+    def leave_BitXor_whitespace_before(self, node: "BitXor") -> None:
+        pass
+
+    @mark_no_op
+    def visit_BitXor_whitespace_after(self, node: "BitXor") -> None:
+        pass
+
+    @mark_no_op
+    def leave_BitXor_whitespace_after(self, node: "BitXor") -> None:
         pass
 
     @mark_no_op
@@ -272,7 +808,63 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_BitXorAssign_whitespace_before(self, node: "BitXorAssign") -> None:
+        pass
+
+    @mark_no_op
+    def leave_BitXorAssign_whitespace_before(self, node: "BitXorAssign") -> None:
+        pass
+
+    @mark_no_op
+    def visit_BitXorAssign_whitespace_after(self, node: "BitXorAssign") -> None:
+        pass
+
+    @mark_no_op
+    def leave_BitXorAssign_whitespace_after(self, node: "BitXorAssign") -> None:
+        pass
+
+    @mark_no_op
     def visit_BooleanOperation(self, node: "BooleanOperation") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_BooleanOperation_left(self, node: "BooleanOperation") -> None:
+        pass
+
+    @mark_no_op
+    def leave_BooleanOperation_left(self, node: "BooleanOperation") -> None:
+        pass
+
+    @mark_no_op
+    def visit_BooleanOperation_operator(self, node: "BooleanOperation") -> None:
+        pass
+
+    @mark_no_op
+    def leave_BooleanOperation_operator(self, node: "BooleanOperation") -> None:
+        pass
+
+    @mark_no_op
+    def visit_BooleanOperation_right(self, node: "BooleanOperation") -> None:
+        pass
+
+    @mark_no_op
+    def leave_BooleanOperation_right(self, node: "BooleanOperation") -> None:
+        pass
+
+    @mark_no_op
+    def visit_BooleanOperation_lpar(self, node: "BooleanOperation") -> None:
+        pass
+
+    @mark_no_op
+    def leave_BooleanOperation_lpar(self, node: "BooleanOperation") -> None:
+        pass
+
+    @mark_no_op
+    def visit_BooleanOperation_rpar(self, node: "BooleanOperation") -> None:
+        pass
+
+    @mark_no_op
+    def leave_BooleanOperation_rpar(self, node: "BooleanOperation") -> None:
         pass
 
     @mark_no_op
@@ -280,7 +872,63 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_Break_semicolon(self, node: "Break") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Break_semicolon(self, node: "Break") -> None:
+        pass
+
+    @mark_no_op
     def visit_Call(self, node: "Call") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_Call_func(self, node: "Call") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Call_func(self, node: "Call") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Call_args(self, node: "Call") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Call_args(self, node: "Call") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Call_lpar(self, node: "Call") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Call_lpar(self, node: "Call") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Call_rpar(self, node: "Call") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Call_rpar(self, node: "Call") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Call_whitespace_after_func(self, node: "Call") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Call_whitespace_after_func(self, node: "Call") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Call_whitespace_before_args(self, node: "Call") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Call_whitespace_before_args(self, node: "Call") -> None:
         pass
 
     @mark_no_op
@@ -288,7 +936,119 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_ClassDef_name(self, node: "ClassDef") -> None:
+        pass
+
+    @mark_no_op
+    def leave_ClassDef_name(self, node: "ClassDef") -> None:
+        pass
+
+    @mark_no_op
+    def visit_ClassDef_body(self, node: "ClassDef") -> None:
+        pass
+
+    @mark_no_op
+    def leave_ClassDef_body(self, node: "ClassDef") -> None:
+        pass
+
+    @mark_no_op
+    def visit_ClassDef_bases(self, node: "ClassDef") -> None:
+        pass
+
+    @mark_no_op
+    def leave_ClassDef_bases(self, node: "ClassDef") -> None:
+        pass
+
+    @mark_no_op
+    def visit_ClassDef_keywords(self, node: "ClassDef") -> None:
+        pass
+
+    @mark_no_op
+    def leave_ClassDef_keywords(self, node: "ClassDef") -> None:
+        pass
+
+    @mark_no_op
+    def visit_ClassDef_decorators(self, node: "ClassDef") -> None:
+        pass
+
+    @mark_no_op
+    def leave_ClassDef_decorators(self, node: "ClassDef") -> None:
+        pass
+
+    @mark_no_op
+    def visit_ClassDef_lpar(self, node: "ClassDef") -> None:
+        pass
+
+    @mark_no_op
+    def leave_ClassDef_lpar(self, node: "ClassDef") -> None:
+        pass
+
+    @mark_no_op
+    def visit_ClassDef_rpar(self, node: "ClassDef") -> None:
+        pass
+
+    @mark_no_op
+    def leave_ClassDef_rpar(self, node: "ClassDef") -> None:
+        pass
+
+    @mark_no_op
+    def visit_ClassDef_leading_lines(self, node: "ClassDef") -> None:
+        pass
+
+    @mark_no_op
+    def leave_ClassDef_leading_lines(self, node: "ClassDef") -> None:
+        pass
+
+    @mark_no_op
+    def visit_ClassDef_lines_after_decorators(self, node: "ClassDef") -> None:
+        pass
+
+    @mark_no_op
+    def leave_ClassDef_lines_after_decorators(self, node: "ClassDef") -> None:
+        pass
+
+    @mark_no_op
+    def visit_ClassDef_whitespace_after_class(self, node: "ClassDef") -> None:
+        pass
+
+    @mark_no_op
+    def leave_ClassDef_whitespace_after_class(self, node: "ClassDef") -> None:
+        pass
+
+    @mark_no_op
+    def visit_ClassDef_whitespace_after_name(self, node: "ClassDef") -> None:
+        pass
+
+    @mark_no_op
+    def leave_ClassDef_whitespace_after_name(self, node: "ClassDef") -> None:
+        pass
+
+    @mark_no_op
+    def visit_ClassDef_whitespace_before_colon(self, node: "ClassDef") -> None:
+        pass
+
+    @mark_no_op
+    def leave_ClassDef_whitespace_before_colon(self, node: "ClassDef") -> None:
+        pass
+
+    @mark_no_op
     def visit_Colon(self, node: "Colon") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_Colon_whitespace_before(self, node: "Colon") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Colon_whitespace_before(self, node: "Colon") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Colon_whitespace_after(self, node: "Colon") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Colon_whitespace_after(self, node: "Colon") -> None:
         pass
 
     @mark_no_op
@@ -296,7 +1056,31 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_Comma_whitespace_before(self, node: "Comma") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Comma_whitespace_before(self, node: "Comma") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Comma_whitespace_after(self, node: "Comma") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Comma_whitespace_after(self, node: "Comma") -> None:
+        pass
+
+    @mark_no_op
     def visit_Comment(self, node: "Comment") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_Comment_value(self, node: "Comment") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Comment_value(self, node: "Comment") -> None:
         pass
 
     @mark_no_op
@@ -304,7 +1088,103 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_CompFor_target(self, node: "CompFor") -> None:
+        pass
+
+    @mark_no_op
+    def leave_CompFor_target(self, node: "CompFor") -> None:
+        pass
+
+    @mark_no_op
+    def visit_CompFor_iter(self, node: "CompFor") -> None:
+        pass
+
+    @mark_no_op
+    def leave_CompFor_iter(self, node: "CompFor") -> None:
+        pass
+
+    @mark_no_op
+    def visit_CompFor_ifs(self, node: "CompFor") -> None:
+        pass
+
+    @mark_no_op
+    def leave_CompFor_ifs(self, node: "CompFor") -> None:
+        pass
+
+    @mark_no_op
+    def visit_CompFor_inner_for_in(self, node: "CompFor") -> None:
+        pass
+
+    @mark_no_op
+    def leave_CompFor_inner_for_in(self, node: "CompFor") -> None:
+        pass
+
+    @mark_no_op
+    def visit_CompFor_asynchronous(self, node: "CompFor") -> None:
+        pass
+
+    @mark_no_op
+    def leave_CompFor_asynchronous(self, node: "CompFor") -> None:
+        pass
+
+    @mark_no_op
+    def visit_CompFor_whitespace_before(self, node: "CompFor") -> None:
+        pass
+
+    @mark_no_op
+    def leave_CompFor_whitespace_before(self, node: "CompFor") -> None:
+        pass
+
+    @mark_no_op
+    def visit_CompFor_whitespace_after_for(self, node: "CompFor") -> None:
+        pass
+
+    @mark_no_op
+    def leave_CompFor_whitespace_after_for(self, node: "CompFor") -> None:
+        pass
+
+    @mark_no_op
+    def visit_CompFor_whitespace_before_in(self, node: "CompFor") -> None:
+        pass
+
+    @mark_no_op
+    def leave_CompFor_whitespace_before_in(self, node: "CompFor") -> None:
+        pass
+
+    @mark_no_op
+    def visit_CompFor_whitespace_after_in(self, node: "CompFor") -> None:
+        pass
+
+    @mark_no_op
+    def leave_CompFor_whitespace_after_in(self, node: "CompFor") -> None:
+        pass
+
+    @mark_no_op
     def visit_CompIf(self, node: "CompIf") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_CompIf_test(self, node: "CompIf") -> None:
+        pass
+
+    @mark_no_op
+    def leave_CompIf_test(self, node: "CompIf") -> None:
+        pass
+
+    @mark_no_op
+    def visit_CompIf_whitespace_before(self, node: "CompIf") -> None:
+        pass
+
+    @mark_no_op
+    def leave_CompIf_whitespace_before(self, node: "CompIf") -> None:
+        pass
+
+    @mark_no_op
+    def visit_CompIf_whitespace_before_test(self, node: "CompIf") -> None:
+        pass
+
+    @mark_no_op
+    def leave_CompIf_whitespace_before_test(self, node: "CompIf") -> None:
         pass
 
     @mark_no_op
@@ -312,7 +1192,55 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_Comparison_left(self, node: "Comparison") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Comparison_left(self, node: "Comparison") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Comparison_comparisons(self, node: "Comparison") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Comparison_comparisons(self, node: "Comparison") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Comparison_lpar(self, node: "Comparison") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Comparison_lpar(self, node: "Comparison") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Comparison_rpar(self, node: "Comparison") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Comparison_rpar(self, node: "Comparison") -> None:
+        pass
+
+    @mark_no_op
     def visit_ComparisonTarget(self, node: "ComparisonTarget") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_ComparisonTarget_operator(self, node: "ComparisonTarget") -> None:
+        pass
+
+    @mark_no_op
+    def leave_ComparisonTarget_operator(self, node: "ComparisonTarget") -> None:
+        pass
+
+    @mark_no_op
+    def visit_ComparisonTarget_comparator(self, node: "ComparisonTarget") -> None:
+        pass
+
+    @mark_no_op
+    def leave_ComparisonTarget_comparator(self, node: "ComparisonTarget") -> None:
         pass
 
     @mark_no_op
@@ -320,7 +1248,59 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_ConcatenatedString_left(self, node: "ConcatenatedString") -> None:
+        pass
+
+    @mark_no_op
+    def leave_ConcatenatedString_left(self, node: "ConcatenatedString") -> None:
+        pass
+
+    @mark_no_op
+    def visit_ConcatenatedString_right(self, node: "ConcatenatedString") -> None:
+        pass
+
+    @mark_no_op
+    def leave_ConcatenatedString_right(self, node: "ConcatenatedString") -> None:
+        pass
+
+    @mark_no_op
+    def visit_ConcatenatedString_lpar(self, node: "ConcatenatedString") -> None:
+        pass
+
+    @mark_no_op
+    def leave_ConcatenatedString_lpar(self, node: "ConcatenatedString") -> None:
+        pass
+
+    @mark_no_op
+    def visit_ConcatenatedString_rpar(self, node: "ConcatenatedString") -> None:
+        pass
+
+    @mark_no_op
+    def leave_ConcatenatedString_rpar(self, node: "ConcatenatedString") -> None:
+        pass
+
+    @mark_no_op
+    def visit_ConcatenatedString_whitespace_between(
+        self, node: "ConcatenatedString"
+    ) -> None:
+        pass
+
+    @mark_no_op
+    def leave_ConcatenatedString_whitespace_between(
+        self, node: "ConcatenatedString"
+    ) -> None:
+        pass
+
+    @mark_no_op
     def visit_Continue(self, node: "Continue") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_Continue_semicolon(self, node: "Continue") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Continue_semicolon(self, node: "Continue") -> None:
         pass
 
     @mark_no_op
@@ -328,7 +1308,63 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_Decorator_decorator(self, node: "Decorator") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Decorator_decorator(self, node: "Decorator") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Decorator_leading_lines(self, node: "Decorator") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Decorator_leading_lines(self, node: "Decorator") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Decorator_whitespace_after_at(self, node: "Decorator") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Decorator_whitespace_after_at(self, node: "Decorator") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Decorator_trailing_whitespace(self, node: "Decorator") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Decorator_trailing_whitespace(self, node: "Decorator") -> None:
+        pass
+
+    @mark_no_op
     def visit_Del(self, node: "Del") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_Del_target(self, node: "Del") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Del_target(self, node: "Del") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Del_whitespace_after_del(self, node: "Del") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Del_whitespace_after_del(self, node: "Del") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Del_semicolon(self, node: "Del") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Del_semicolon(self, node: "Del") -> None:
         pass
 
     @mark_no_op
@@ -336,7 +1372,119 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_Dict_elements(self, node: "Dict") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Dict_elements(self, node: "Dict") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Dict_lbrace(self, node: "Dict") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Dict_lbrace(self, node: "Dict") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Dict_rbrace(self, node: "Dict") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Dict_rbrace(self, node: "Dict") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Dict_lpar(self, node: "Dict") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Dict_lpar(self, node: "Dict") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Dict_rpar(self, node: "Dict") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Dict_rpar(self, node: "Dict") -> None:
+        pass
+
+    @mark_no_op
     def visit_DictComp(self, node: "DictComp") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_DictComp_key(self, node: "DictComp") -> None:
+        pass
+
+    @mark_no_op
+    def leave_DictComp_key(self, node: "DictComp") -> None:
+        pass
+
+    @mark_no_op
+    def visit_DictComp_value(self, node: "DictComp") -> None:
+        pass
+
+    @mark_no_op
+    def leave_DictComp_value(self, node: "DictComp") -> None:
+        pass
+
+    @mark_no_op
+    def visit_DictComp_for_in(self, node: "DictComp") -> None:
+        pass
+
+    @mark_no_op
+    def leave_DictComp_for_in(self, node: "DictComp") -> None:
+        pass
+
+    @mark_no_op
+    def visit_DictComp_lbrace(self, node: "DictComp") -> None:
+        pass
+
+    @mark_no_op
+    def leave_DictComp_lbrace(self, node: "DictComp") -> None:
+        pass
+
+    @mark_no_op
+    def visit_DictComp_rbrace(self, node: "DictComp") -> None:
+        pass
+
+    @mark_no_op
+    def leave_DictComp_rbrace(self, node: "DictComp") -> None:
+        pass
+
+    @mark_no_op
+    def visit_DictComp_lpar(self, node: "DictComp") -> None:
+        pass
+
+    @mark_no_op
+    def leave_DictComp_lpar(self, node: "DictComp") -> None:
+        pass
+
+    @mark_no_op
+    def visit_DictComp_rpar(self, node: "DictComp") -> None:
+        pass
+
+    @mark_no_op
+    def leave_DictComp_rpar(self, node: "DictComp") -> None:
+        pass
+
+    @mark_no_op
+    def visit_DictComp_whitespace_before_colon(self, node: "DictComp") -> None:
+        pass
+
+    @mark_no_op
+    def leave_DictComp_whitespace_before_colon(self, node: "DictComp") -> None:
+        pass
+
+    @mark_no_op
+    def visit_DictComp_whitespace_after_colon(self, node: "DictComp") -> None:
+        pass
+
+    @mark_no_op
+    def leave_DictComp_whitespace_after_colon(self, node: "DictComp") -> None:
         pass
 
     @mark_no_op
@@ -344,7 +1492,63 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_DictElement_key(self, node: "DictElement") -> None:
+        pass
+
+    @mark_no_op
+    def leave_DictElement_key(self, node: "DictElement") -> None:
+        pass
+
+    @mark_no_op
+    def visit_DictElement_value(self, node: "DictElement") -> None:
+        pass
+
+    @mark_no_op
+    def leave_DictElement_value(self, node: "DictElement") -> None:
+        pass
+
+    @mark_no_op
+    def visit_DictElement_comma(self, node: "DictElement") -> None:
+        pass
+
+    @mark_no_op
+    def leave_DictElement_comma(self, node: "DictElement") -> None:
+        pass
+
+    @mark_no_op
+    def visit_DictElement_whitespace_before_colon(self, node: "DictElement") -> None:
+        pass
+
+    @mark_no_op
+    def leave_DictElement_whitespace_before_colon(self, node: "DictElement") -> None:
+        pass
+
+    @mark_no_op
+    def visit_DictElement_whitespace_after_colon(self, node: "DictElement") -> None:
+        pass
+
+    @mark_no_op
+    def leave_DictElement_whitespace_after_colon(self, node: "DictElement") -> None:
+        pass
+
+    @mark_no_op
     def visit_Divide(self, node: "Divide") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_Divide_whitespace_before(self, node: "Divide") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Divide_whitespace_before(self, node: "Divide") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Divide_whitespace_after(self, node: "Divide") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Divide_whitespace_after(self, node: "Divide") -> None:
         pass
 
     @mark_no_op
@@ -352,7 +1556,39 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_DivideAssign_whitespace_before(self, node: "DivideAssign") -> None:
+        pass
+
+    @mark_no_op
+    def leave_DivideAssign_whitespace_before(self, node: "DivideAssign") -> None:
+        pass
+
+    @mark_no_op
+    def visit_DivideAssign_whitespace_after(self, node: "DivideAssign") -> None:
+        pass
+
+    @mark_no_op
+    def leave_DivideAssign_whitespace_after(self, node: "DivideAssign") -> None:
+        pass
+
+    @mark_no_op
     def visit_Dot(self, node: "Dot") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_Dot_whitespace_before(self, node: "Dot") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Dot_whitespace_before(self, node: "Dot") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Dot_whitespace_after(self, node: "Dot") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Dot_whitespace_after(self, node: "Dot") -> None:
         pass
 
     @mark_no_op
@@ -360,7 +1596,39 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_Element_value(self, node: "Element") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Element_value(self, node: "Element") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Element_comma(self, node: "Element") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Element_comma(self, node: "Element") -> None:
+        pass
+
+    @mark_no_op
     def visit_Ellipsis(self, node: "Ellipsis") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_Ellipsis_lpar(self, node: "Ellipsis") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Ellipsis_lpar(self, node: "Ellipsis") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Ellipsis_rpar(self, node: "Ellipsis") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Ellipsis_rpar(self, node: "Ellipsis") -> None:
         pass
 
     @mark_no_op
@@ -368,7 +1636,63 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_Else_body(self, node: "Else") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Else_body(self, node: "Else") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Else_leading_lines(self, node: "Else") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Else_leading_lines(self, node: "Else") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Else_whitespace_before_colon(self, node: "Else") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Else_whitespace_before_colon(self, node: "Else") -> None:
+        pass
+
+    @mark_no_op
     def visit_EmptyLine(self, node: "EmptyLine") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_EmptyLine_indent(self, node: "EmptyLine") -> None:
+        pass
+
+    @mark_no_op
+    def leave_EmptyLine_indent(self, node: "EmptyLine") -> None:
+        pass
+
+    @mark_no_op
+    def visit_EmptyLine_whitespace(self, node: "EmptyLine") -> None:
+        pass
+
+    @mark_no_op
+    def leave_EmptyLine_whitespace(self, node: "EmptyLine") -> None:
+        pass
+
+    @mark_no_op
+    def visit_EmptyLine_comment(self, node: "EmptyLine") -> None:
+        pass
+
+    @mark_no_op
+    def leave_EmptyLine_comment(self, node: "EmptyLine") -> None:
+        pass
+
+    @mark_no_op
+    def visit_EmptyLine_newline(self, node: "EmptyLine") -> None:
+        pass
+
+    @mark_no_op
+    def leave_EmptyLine_newline(self, node: "EmptyLine") -> None:
         pass
 
     @mark_no_op
@@ -376,7 +1700,79 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_Equal_whitespace_before(self, node: "Equal") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Equal_whitespace_before(self, node: "Equal") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Equal_whitespace_after(self, node: "Equal") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Equal_whitespace_after(self, node: "Equal") -> None:
+        pass
+
+    @mark_no_op
     def visit_ExceptHandler(self, node: "ExceptHandler") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_ExceptHandler_body(self, node: "ExceptHandler") -> None:
+        pass
+
+    @mark_no_op
+    def leave_ExceptHandler_body(self, node: "ExceptHandler") -> None:
+        pass
+
+    @mark_no_op
+    def visit_ExceptHandler_type(self, node: "ExceptHandler") -> None:
+        pass
+
+    @mark_no_op
+    def leave_ExceptHandler_type(self, node: "ExceptHandler") -> None:
+        pass
+
+    @mark_no_op
+    def visit_ExceptHandler_name(self, node: "ExceptHandler") -> None:
+        pass
+
+    @mark_no_op
+    def leave_ExceptHandler_name(self, node: "ExceptHandler") -> None:
+        pass
+
+    @mark_no_op
+    def visit_ExceptHandler_leading_lines(self, node: "ExceptHandler") -> None:
+        pass
+
+    @mark_no_op
+    def leave_ExceptHandler_leading_lines(self, node: "ExceptHandler") -> None:
+        pass
+
+    @mark_no_op
+    def visit_ExceptHandler_whitespace_after_except(
+        self, node: "ExceptHandler"
+    ) -> None:
+        pass
+
+    @mark_no_op
+    def leave_ExceptHandler_whitespace_after_except(
+        self, node: "ExceptHandler"
+    ) -> None:
+        pass
+
+    @mark_no_op
+    def visit_ExceptHandler_whitespace_before_colon(
+        self, node: "ExceptHandler"
+    ) -> None:
+        pass
+
+    @mark_no_op
+    def leave_ExceptHandler_whitespace_before_colon(
+        self, node: "ExceptHandler"
+    ) -> None:
         pass
 
     @mark_no_op
@@ -384,7 +1780,39 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_Expr_value(self, node: "Expr") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Expr_value(self, node: "Expr") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Expr_semicolon(self, node: "Expr") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Expr_semicolon(self, node: "Expr") -> None:
+        pass
+
+    @mark_no_op
     def visit_ExtSlice(self, node: "ExtSlice") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_ExtSlice_slice(self, node: "ExtSlice") -> None:
+        pass
+
+    @mark_no_op
+    def leave_ExtSlice_slice(self, node: "ExtSlice") -> None:
+        pass
+
+    @mark_no_op
+    def visit_ExtSlice_comma(self, node: "ExtSlice") -> None:
+        pass
+
+    @mark_no_op
+    def leave_ExtSlice_comma(self, node: "ExtSlice") -> None:
         pass
 
     @mark_no_op
@@ -392,7 +1820,55 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_Finally_body(self, node: "Finally") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Finally_body(self, node: "Finally") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Finally_leading_lines(self, node: "Finally") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Finally_leading_lines(self, node: "Finally") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Finally_whitespace_before_colon(self, node: "Finally") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Finally_whitespace_before_colon(self, node: "Finally") -> None:
+        pass
+
+    @mark_no_op
     def visit_Float(self, node: "Float") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_Float_value(self, node: "Float") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Float_value(self, node: "Float") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Float_lpar(self, node: "Float") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Float_lpar(self, node: "Float") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Float_rpar(self, node: "Float") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Float_rpar(self, node: "Float") -> None:
         pass
 
     @mark_no_op
@@ -400,7 +1876,47 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_FloorDivide_whitespace_before(self, node: "FloorDivide") -> None:
+        pass
+
+    @mark_no_op
+    def leave_FloorDivide_whitespace_before(self, node: "FloorDivide") -> None:
+        pass
+
+    @mark_no_op
+    def visit_FloorDivide_whitespace_after(self, node: "FloorDivide") -> None:
+        pass
+
+    @mark_no_op
+    def leave_FloorDivide_whitespace_after(self, node: "FloorDivide") -> None:
+        pass
+
+    @mark_no_op
     def visit_FloorDivideAssign(self, node: "FloorDivideAssign") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_FloorDivideAssign_whitespace_before(
+        self, node: "FloorDivideAssign"
+    ) -> None:
+        pass
+
+    @mark_no_op
+    def leave_FloorDivideAssign_whitespace_before(
+        self, node: "FloorDivideAssign"
+    ) -> None:
+        pass
+
+    @mark_no_op
+    def visit_FloorDivideAssign_whitespace_after(
+        self, node: "FloorDivideAssign"
+    ) -> None:
+        pass
+
+    @mark_no_op
+    def leave_FloorDivideAssign_whitespace_after(
+        self, node: "FloorDivideAssign"
+    ) -> None:
         pass
 
     @mark_no_op
@@ -408,7 +1924,127 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_For_target(self, node: "For") -> None:
+        pass
+
+    @mark_no_op
+    def leave_For_target(self, node: "For") -> None:
+        pass
+
+    @mark_no_op
+    def visit_For_iter(self, node: "For") -> None:
+        pass
+
+    @mark_no_op
+    def leave_For_iter(self, node: "For") -> None:
+        pass
+
+    @mark_no_op
+    def visit_For_body(self, node: "For") -> None:
+        pass
+
+    @mark_no_op
+    def leave_For_body(self, node: "For") -> None:
+        pass
+
+    @mark_no_op
+    def visit_For_orelse(self, node: "For") -> None:
+        pass
+
+    @mark_no_op
+    def leave_For_orelse(self, node: "For") -> None:
+        pass
+
+    @mark_no_op
+    def visit_For_asynchronous(self, node: "For") -> None:
+        pass
+
+    @mark_no_op
+    def leave_For_asynchronous(self, node: "For") -> None:
+        pass
+
+    @mark_no_op
+    def visit_For_leading_lines(self, node: "For") -> None:
+        pass
+
+    @mark_no_op
+    def leave_For_leading_lines(self, node: "For") -> None:
+        pass
+
+    @mark_no_op
+    def visit_For_whitespace_after_for(self, node: "For") -> None:
+        pass
+
+    @mark_no_op
+    def leave_For_whitespace_after_for(self, node: "For") -> None:
+        pass
+
+    @mark_no_op
+    def visit_For_whitespace_before_in(self, node: "For") -> None:
+        pass
+
+    @mark_no_op
+    def leave_For_whitespace_before_in(self, node: "For") -> None:
+        pass
+
+    @mark_no_op
+    def visit_For_whitespace_after_in(self, node: "For") -> None:
+        pass
+
+    @mark_no_op
+    def leave_For_whitespace_after_in(self, node: "For") -> None:
+        pass
+
+    @mark_no_op
+    def visit_For_whitespace_before_colon(self, node: "For") -> None:
+        pass
+
+    @mark_no_op
+    def leave_For_whitespace_before_colon(self, node: "For") -> None:
+        pass
+
+    @mark_no_op
     def visit_FormattedString(self, node: "FormattedString") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_FormattedString_parts(self, node: "FormattedString") -> None:
+        pass
+
+    @mark_no_op
+    def leave_FormattedString_parts(self, node: "FormattedString") -> None:
+        pass
+
+    @mark_no_op
+    def visit_FormattedString_start(self, node: "FormattedString") -> None:
+        pass
+
+    @mark_no_op
+    def leave_FormattedString_start(self, node: "FormattedString") -> None:
+        pass
+
+    @mark_no_op
+    def visit_FormattedString_end(self, node: "FormattedString") -> None:
+        pass
+
+    @mark_no_op
+    def leave_FormattedString_end(self, node: "FormattedString") -> None:
+        pass
+
+    @mark_no_op
+    def visit_FormattedString_lpar(self, node: "FormattedString") -> None:
+        pass
+
+    @mark_no_op
+    def leave_FormattedString_lpar(self, node: "FormattedString") -> None:
+        pass
+
+    @mark_no_op
+    def visit_FormattedString_rpar(self, node: "FormattedString") -> None:
+        pass
+
+    @mark_no_op
+    def leave_FormattedString_rpar(self, node: "FormattedString") -> None:
         pass
 
     @mark_no_op
@@ -418,7 +2054,75 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_FormattedStringExpression_expression(
+        self, node: "FormattedStringExpression"
+    ) -> None:
+        pass
+
+    @mark_no_op
+    def leave_FormattedStringExpression_expression(
+        self, node: "FormattedStringExpression"
+    ) -> None:
+        pass
+
+    @mark_no_op
+    def visit_FormattedStringExpression_conversion(
+        self, node: "FormattedStringExpression"
+    ) -> None:
+        pass
+
+    @mark_no_op
+    def leave_FormattedStringExpression_conversion(
+        self, node: "FormattedStringExpression"
+    ) -> None:
+        pass
+
+    @mark_no_op
+    def visit_FormattedStringExpression_format_spec(
+        self, node: "FormattedStringExpression"
+    ) -> None:
+        pass
+
+    @mark_no_op
+    def leave_FormattedStringExpression_format_spec(
+        self, node: "FormattedStringExpression"
+    ) -> None:
+        pass
+
+    @mark_no_op
+    def visit_FormattedStringExpression_whitespace_before_expression(
+        self, node: "FormattedStringExpression"
+    ) -> None:
+        pass
+
+    @mark_no_op
+    def leave_FormattedStringExpression_whitespace_before_expression(
+        self, node: "FormattedStringExpression"
+    ) -> None:
+        pass
+
+    @mark_no_op
+    def visit_FormattedStringExpression_whitespace_after_expression(
+        self, node: "FormattedStringExpression"
+    ) -> None:
+        pass
+
+    @mark_no_op
+    def leave_FormattedStringExpression_whitespace_after_expression(
+        self, node: "FormattedStringExpression"
+    ) -> None:
+        pass
+
+    @mark_no_op
     def visit_FormattedStringText(self, node: "FormattedStringText") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_FormattedStringText_value(self, node: "FormattedStringText") -> None:
+        pass
+
+    @mark_no_op
+    def leave_FormattedStringText_value(self, node: "FormattedStringText") -> None:
         pass
 
     @mark_no_op
@@ -426,7 +2130,127 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_From_item(self, node: "From") -> None:
+        pass
+
+    @mark_no_op
+    def leave_From_item(self, node: "From") -> None:
+        pass
+
+    @mark_no_op
+    def visit_From_whitespace_before_from(self, node: "From") -> None:
+        pass
+
+    @mark_no_op
+    def leave_From_whitespace_before_from(self, node: "From") -> None:
+        pass
+
+    @mark_no_op
+    def visit_From_whitespace_after_from(self, node: "From") -> None:
+        pass
+
+    @mark_no_op
+    def leave_From_whitespace_after_from(self, node: "From") -> None:
+        pass
+
+    @mark_no_op
     def visit_FunctionDef(self, node: "FunctionDef") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_FunctionDef_name(self, node: "FunctionDef") -> None:
+        pass
+
+    @mark_no_op
+    def leave_FunctionDef_name(self, node: "FunctionDef") -> None:
+        pass
+
+    @mark_no_op
+    def visit_FunctionDef_params(self, node: "FunctionDef") -> None:
+        pass
+
+    @mark_no_op
+    def leave_FunctionDef_params(self, node: "FunctionDef") -> None:
+        pass
+
+    @mark_no_op
+    def visit_FunctionDef_body(self, node: "FunctionDef") -> None:
+        pass
+
+    @mark_no_op
+    def leave_FunctionDef_body(self, node: "FunctionDef") -> None:
+        pass
+
+    @mark_no_op
+    def visit_FunctionDef_decorators(self, node: "FunctionDef") -> None:
+        pass
+
+    @mark_no_op
+    def leave_FunctionDef_decorators(self, node: "FunctionDef") -> None:
+        pass
+
+    @mark_no_op
+    def visit_FunctionDef_returns(self, node: "FunctionDef") -> None:
+        pass
+
+    @mark_no_op
+    def leave_FunctionDef_returns(self, node: "FunctionDef") -> None:
+        pass
+
+    @mark_no_op
+    def visit_FunctionDef_asynchronous(self, node: "FunctionDef") -> None:
+        pass
+
+    @mark_no_op
+    def leave_FunctionDef_asynchronous(self, node: "FunctionDef") -> None:
+        pass
+
+    @mark_no_op
+    def visit_FunctionDef_leading_lines(self, node: "FunctionDef") -> None:
+        pass
+
+    @mark_no_op
+    def leave_FunctionDef_leading_lines(self, node: "FunctionDef") -> None:
+        pass
+
+    @mark_no_op
+    def visit_FunctionDef_lines_after_decorators(self, node: "FunctionDef") -> None:
+        pass
+
+    @mark_no_op
+    def leave_FunctionDef_lines_after_decorators(self, node: "FunctionDef") -> None:
+        pass
+
+    @mark_no_op
+    def visit_FunctionDef_whitespace_after_def(self, node: "FunctionDef") -> None:
+        pass
+
+    @mark_no_op
+    def leave_FunctionDef_whitespace_after_def(self, node: "FunctionDef") -> None:
+        pass
+
+    @mark_no_op
+    def visit_FunctionDef_whitespace_after_name(self, node: "FunctionDef") -> None:
+        pass
+
+    @mark_no_op
+    def leave_FunctionDef_whitespace_after_name(self, node: "FunctionDef") -> None:
+        pass
+
+    @mark_no_op
+    def visit_FunctionDef_whitespace_before_params(self, node: "FunctionDef") -> None:
+        pass
+
+    @mark_no_op
+    def leave_FunctionDef_whitespace_before_params(self, node: "FunctionDef") -> None:
+        pass
+
+    @mark_no_op
+    def visit_FunctionDef_whitespace_before_colon(self, node: "FunctionDef") -> None:
+        pass
+
+    @mark_no_op
+    def leave_FunctionDef_whitespace_before_colon(self, node: "FunctionDef") -> None:
         pass
 
     @mark_no_op
@@ -434,7 +2258,63 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_GeneratorExp_elt(self, node: "GeneratorExp") -> None:
+        pass
+
+    @mark_no_op
+    def leave_GeneratorExp_elt(self, node: "GeneratorExp") -> None:
+        pass
+
+    @mark_no_op
+    def visit_GeneratorExp_for_in(self, node: "GeneratorExp") -> None:
+        pass
+
+    @mark_no_op
+    def leave_GeneratorExp_for_in(self, node: "GeneratorExp") -> None:
+        pass
+
+    @mark_no_op
+    def visit_GeneratorExp_lpar(self, node: "GeneratorExp") -> None:
+        pass
+
+    @mark_no_op
+    def leave_GeneratorExp_lpar(self, node: "GeneratorExp") -> None:
+        pass
+
+    @mark_no_op
+    def visit_GeneratorExp_rpar(self, node: "GeneratorExp") -> None:
+        pass
+
+    @mark_no_op
+    def leave_GeneratorExp_rpar(self, node: "GeneratorExp") -> None:
+        pass
+
+    @mark_no_op
     def visit_Global(self, node: "Global") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_Global_names(self, node: "Global") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Global_names(self, node: "Global") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Global_whitespace_after_global(self, node: "Global") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Global_whitespace_after_global(self, node: "Global") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Global_semicolon(self, node: "Global") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Global_semicolon(self, node: "Global") -> None:
         pass
 
     @mark_no_op
@@ -442,7 +2322,43 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_GreaterThan_whitespace_before(self, node: "GreaterThan") -> None:
+        pass
+
+    @mark_no_op
+    def leave_GreaterThan_whitespace_before(self, node: "GreaterThan") -> None:
+        pass
+
+    @mark_no_op
+    def visit_GreaterThan_whitespace_after(self, node: "GreaterThan") -> None:
+        pass
+
+    @mark_no_op
+    def leave_GreaterThan_whitespace_after(self, node: "GreaterThan") -> None:
+        pass
+
+    @mark_no_op
     def visit_GreaterThanEqual(self, node: "GreaterThanEqual") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_GreaterThanEqual_whitespace_before(
+        self, node: "GreaterThanEqual"
+    ) -> None:
+        pass
+
+    @mark_no_op
+    def leave_GreaterThanEqual_whitespace_before(
+        self, node: "GreaterThanEqual"
+    ) -> None:
+        pass
+
+    @mark_no_op
+    def visit_GreaterThanEqual_whitespace_after(self, node: "GreaterThanEqual") -> None:
+        pass
+
+    @mark_no_op
+    def leave_GreaterThanEqual_whitespace_after(self, node: "GreaterThanEqual") -> None:
         pass
 
     @mark_no_op
@@ -450,7 +2366,127 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_If_test(self, node: "If") -> None:
+        pass
+
+    @mark_no_op
+    def leave_If_test(self, node: "If") -> None:
+        pass
+
+    @mark_no_op
+    def visit_If_body(self, node: "If") -> None:
+        pass
+
+    @mark_no_op
+    def leave_If_body(self, node: "If") -> None:
+        pass
+
+    @mark_no_op
+    def visit_If_orelse(self, node: "If") -> None:
+        pass
+
+    @mark_no_op
+    def leave_If_orelse(self, node: "If") -> None:
+        pass
+
+    @mark_no_op
+    def visit_If_leading_lines(self, node: "If") -> None:
+        pass
+
+    @mark_no_op
+    def leave_If_leading_lines(self, node: "If") -> None:
+        pass
+
+    @mark_no_op
+    def visit_If_whitespace_before_test(self, node: "If") -> None:
+        pass
+
+    @mark_no_op
+    def leave_If_whitespace_before_test(self, node: "If") -> None:
+        pass
+
+    @mark_no_op
+    def visit_If_whitespace_after_test(self, node: "If") -> None:
+        pass
+
+    @mark_no_op
+    def leave_If_whitespace_after_test(self, node: "If") -> None:
+        pass
+
+    @mark_no_op
     def visit_IfExp(self, node: "IfExp") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_IfExp_test(self, node: "IfExp") -> None:
+        pass
+
+    @mark_no_op
+    def leave_IfExp_test(self, node: "IfExp") -> None:
+        pass
+
+    @mark_no_op
+    def visit_IfExp_body(self, node: "IfExp") -> None:
+        pass
+
+    @mark_no_op
+    def leave_IfExp_body(self, node: "IfExp") -> None:
+        pass
+
+    @mark_no_op
+    def visit_IfExp_orelse(self, node: "IfExp") -> None:
+        pass
+
+    @mark_no_op
+    def leave_IfExp_orelse(self, node: "IfExp") -> None:
+        pass
+
+    @mark_no_op
+    def visit_IfExp_lpar(self, node: "IfExp") -> None:
+        pass
+
+    @mark_no_op
+    def leave_IfExp_lpar(self, node: "IfExp") -> None:
+        pass
+
+    @mark_no_op
+    def visit_IfExp_rpar(self, node: "IfExp") -> None:
+        pass
+
+    @mark_no_op
+    def leave_IfExp_rpar(self, node: "IfExp") -> None:
+        pass
+
+    @mark_no_op
+    def visit_IfExp_whitespace_before_if(self, node: "IfExp") -> None:
+        pass
+
+    @mark_no_op
+    def leave_IfExp_whitespace_before_if(self, node: "IfExp") -> None:
+        pass
+
+    @mark_no_op
+    def visit_IfExp_whitespace_after_if(self, node: "IfExp") -> None:
+        pass
+
+    @mark_no_op
+    def leave_IfExp_whitespace_after_if(self, node: "IfExp") -> None:
+        pass
+
+    @mark_no_op
+    def visit_IfExp_whitespace_before_else(self, node: "IfExp") -> None:
+        pass
+
+    @mark_no_op
+    def leave_IfExp_whitespace_before_else(self, node: "IfExp") -> None:
+        pass
+
+    @mark_no_op
+    def visit_IfExp_whitespace_after_else(self, node: "IfExp") -> None:
+        pass
+
+    @mark_no_op
+    def leave_IfExp_whitespace_after_else(self, node: "IfExp") -> None:
         pass
 
     @mark_no_op
@@ -458,7 +2494,55 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_Imaginary_value(self, node: "Imaginary") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Imaginary_value(self, node: "Imaginary") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Imaginary_lpar(self, node: "Imaginary") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Imaginary_lpar(self, node: "Imaginary") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Imaginary_rpar(self, node: "Imaginary") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Imaginary_rpar(self, node: "Imaginary") -> None:
+        pass
+
+    @mark_no_op
     def visit_Import(self, node: "Import") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_Import_names(self, node: "Import") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Import_names(self, node: "Import") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Import_semicolon(self, node: "Import") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Import_semicolon(self, node: "Import") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Import_whitespace_after_import(self, node: "Import") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Import_whitespace_after_import(self, node: "Import") -> None:
         pass
 
     @mark_no_op
@@ -466,7 +2550,103 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_ImportAlias_name(self, node: "ImportAlias") -> None:
+        pass
+
+    @mark_no_op
+    def leave_ImportAlias_name(self, node: "ImportAlias") -> None:
+        pass
+
+    @mark_no_op
+    def visit_ImportAlias_asname(self, node: "ImportAlias") -> None:
+        pass
+
+    @mark_no_op
+    def leave_ImportAlias_asname(self, node: "ImportAlias") -> None:
+        pass
+
+    @mark_no_op
+    def visit_ImportAlias_comma(self, node: "ImportAlias") -> None:
+        pass
+
+    @mark_no_op
+    def leave_ImportAlias_comma(self, node: "ImportAlias") -> None:
+        pass
+
+    @mark_no_op
     def visit_ImportFrom(self, node: "ImportFrom") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_ImportFrom_module(self, node: "ImportFrom") -> None:
+        pass
+
+    @mark_no_op
+    def leave_ImportFrom_module(self, node: "ImportFrom") -> None:
+        pass
+
+    @mark_no_op
+    def visit_ImportFrom_names(self, node: "ImportFrom") -> None:
+        pass
+
+    @mark_no_op
+    def leave_ImportFrom_names(self, node: "ImportFrom") -> None:
+        pass
+
+    @mark_no_op
+    def visit_ImportFrom_relative(self, node: "ImportFrom") -> None:
+        pass
+
+    @mark_no_op
+    def leave_ImportFrom_relative(self, node: "ImportFrom") -> None:
+        pass
+
+    @mark_no_op
+    def visit_ImportFrom_lpar(self, node: "ImportFrom") -> None:
+        pass
+
+    @mark_no_op
+    def leave_ImportFrom_lpar(self, node: "ImportFrom") -> None:
+        pass
+
+    @mark_no_op
+    def visit_ImportFrom_rpar(self, node: "ImportFrom") -> None:
+        pass
+
+    @mark_no_op
+    def leave_ImportFrom_rpar(self, node: "ImportFrom") -> None:
+        pass
+
+    @mark_no_op
+    def visit_ImportFrom_semicolon(self, node: "ImportFrom") -> None:
+        pass
+
+    @mark_no_op
+    def leave_ImportFrom_semicolon(self, node: "ImportFrom") -> None:
+        pass
+
+    @mark_no_op
+    def visit_ImportFrom_whitespace_after_from(self, node: "ImportFrom") -> None:
+        pass
+
+    @mark_no_op
+    def leave_ImportFrom_whitespace_after_from(self, node: "ImportFrom") -> None:
+        pass
+
+    @mark_no_op
+    def visit_ImportFrom_whitespace_before_import(self, node: "ImportFrom") -> None:
+        pass
+
+    @mark_no_op
+    def leave_ImportFrom_whitespace_before_import(self, node: "ImportFrom") -> None:
+        pass
+
+    @mark_no_op
+    def visit_ImportFrom_whitespace_after_import(self, node: "ImportFrom") -> None:
+        pass
+
+    @mark_no_op
+    def leave_ImportFrom_whitespace_after_import(self, node: "ImportFrom") -> None:
         pass
 
     @mark_no_op
@@ -478,7 +2658,55 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_In_whitespace_before(self, node: "In") -> None:
+        pass
+
+    @mark_no_op
+    def leave_In_whitespace_before(self, node: "In") -> None:
+        pass
+
+    @mark_no_op
+    def visit_In_whitespace_after(self, node: "In") -> None:
+        pass
+
+    @mark_no_op
+    def leave_In_whitespace_after(self, node: "In") -> None:
+        pass
+
+    @mark_no_op
     def visit_IndentedBlock(self, node: "IndentedBlock") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_IndentedBlock_body(self, node: "IndentedBlock") -> None:
+        pass
+
+    @mark_no_op
+    def leave_IndentedBlock_body(self, node: "IndentedBlock") -> None:
+        pass
+
+    @mark_no_op
+    def visit_IndentedBlock_header(self, node: "IndentedBlock") -> None:
+        pass
+
+    @mark_no_op
+    def leave_IndentedBlock_header(self, node: "IndentedBlock") -> None:
+        pass
+
+    @mark_no_op
+    def visit_IndentedBlock_indent(self, node: "IndentedBlock") -> None:
+        pass
+
+    @mark_no_op
+    def leave_IndentedBlock_indent(self, node: "IndentedBlock") -> None:
+        pass
+
+    @mark_no_op
+    def visit_IndentedBlock_footer(self, node: "IndentedBlock") -> None:
+        pass
+
+    @mark_no_op
+    def leave_IndentedBlock_footer(self, node: "IndentedBlock") -> None:
         pass
 
     @mark_no_op
@@ -486,7 +2714,39 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_Index_value(self, node: "Index") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Index_value(self, node: "Index") -> None:
+        pass
+
+    @mark_no_op
     def visit_Integer(self, node: "Integer") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_Integer_value(self, node: "Integer") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Integer_value(self, node: "Integer") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Integer_lpar(self, node: "Integer") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Integer_lpar(self, node: "Integer") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Integer_rpar(self, node: "Integer") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Integer_rpar(self, node: "Integer") -> None:
         pass
 
     @mark_no_op
@@ -494,7 +2754,47 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_Is_whitespace_before(self, node: "Is") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Is_whitespace_before(self, node: "Is") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Is_whitespace_after(self, node: "Is") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Is_whitespace_after(self, node: "Is") -> None:
+        pass
+
+    @mark_no_op
     def visit_IsNot(self, node: "IsNot") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_IsNot_whitespace_before(self, node: "IsNot") -> None:
+        pass
+
+    @mark_no_op
+    def leave_IsNot_whitespace_before(self, node: "IsNot") -> None:
+        pass
+
+    @mark_no_op
+    def visit_IsNot_whitespace_between(self, node: "IsNot") -> None:
+        pass
+
+    @mark_no_op
+    def leave_IsNot_whitespace_between(self, node: "IsNot") -> None:
+        pass
+
+    @mark_no_op
+    def visit_IsNot_whitespace_after(self, node: "IsNot") -> None:
+        pass
+
+    @mark_no_op
+    def leave_IsNot_whitespace_after(self, node: "IsNot") -> None:
         pass
 
     @mark_no_op
@@ -502,7 +2802,63 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_Lambda_params(self, node: "Lambda") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Lambda_params(self, node: "Lambda") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Lambda_body(self, node: "Lambda") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Lambda_body(self, node: "Lambda") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Lambda_colon(self, node: "Lambda") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Lambda_colon(self, node: "Lambda") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Lambda_lpar(self, node: "Lambda") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Lambda_lpar(self, node: "Lambda") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Lambda_rpar(self, node: "Lambda") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Lambda_rpar(self, node: "Lambda") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Lambda_whitespace_after_lambda(self, node: "Lambda") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Lambda_whitespace_after_lambda(self, node: "Lambda") -> None:
+        pass
+
+    @mark_no_op
     def visit_LeftCurlyBrace(self, node: "LeftCurlyBrace") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_LeftCurlyBrace_whitespace_after(self, node: "LeftCurlyBrace") -> None:
+        pass
+
+    @mark_no_op
+    def leave_LeftCurlyBrace_whitespace_after(self, node: "LeftCurlyBrace") -> None:
         pass
 
     @mark_no_op
@@ -510,7 +2866,31 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_LeftParen_whitespace_after(self, node: "LeftParen") -> None:
+        pass
+
+    @mark_no_op
+    def leave_LeftParen_whitespace_after(self, node: "LeftParen") -> None:
+        pass
+
+    @mark_no_op
     def visit_LeftShift(self, node: "LeftShift") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_LeftShift_whitespace_before(self, node: "LeftShift") -> None:
+        pass
+
+    @mark_no_op
+    def leave_LeftShift_whitespace_before(self, node: "LeftShift") -> None:
+        pass
+
+    @mark_no_op
+    def visit_LeftShift_whitespace_after(self, node: "LeftShift") -> None:
+        pass
+
+    @mark_no_op
+    def leave_LeftShift_whitespace_after(self, node: "LeftShift") -> None:
         pass
 
     @mark_no_op
@@ -518,7 +2898,35 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_LeftShiftAssign_whitespace_before(self, node: "LeftShiftAssign") -> None:
+        pass
+
+    @mark_no_op
+    def leave_LeftShiftAssign_whitespace_before(self, node: "LeftShiftAssign") -> None:
+        pass
+
+    @mark_no_op
+    def visit_LeftShiftAssign_whitespace_after(self, node: "LeftShiftAssign") -> None:
+        pass
+
+    @mark_no_op
+    def leave_LeftShiftAssign_whitespace_after(self, node: "LeftShiftAssign") -> None:
+        pass
+
+    @mark_no_op
     def visit_LeftSquareBracket(self, node: "LeftSquareBracket") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_LeftSquareBracket_whitespace_after(
+        self, node: "LeftSquareBracket"
+    ) -> None:
+        pass
+
+    @mark_no_op
+    def leave_LeftSquareBracket_whitespace_after(
+        self, node: "LeftSquareBracket"
+    ) -> None:
         pass
 
     @mark_no_op
@@ -526,7 +2934,39 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_LessThan_whitespace_before(self, node: "LessThan") -> None:
+        pass
+
+    @mark_no_op
+    def leave_LessThan_whitespace_before(self, node: "LessThan") -> None:
+        pass
+
+    @mark_no_op
+    def visit_LessThan_whitespace_after(self, node: "LessThan") -> None:
+        pass
+
+    @mark_no_op
+    def leave_LessThan_whitespace_after(self, node: "LessThan") -> None:
+        pass
+
+    @mark_no_op
     def visit_LessThanEqual(self, node: "LessThanEqual") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_LessThanEqual_whitespace_before(self, node: "LessThanEqual") -> None:
+        pass
+
+    @mark_no_op
+    def leave_LessThanEqual_whitespace_before(self, node: "LessThanEqual") -> None:
+        pass
+
+    @mark_no_op
+    def visit_LessThanEqual_whitespace_after(self, node: "LessThanEqual") -> None:
+        pass
+
+    @mark_no_op
+    def leave_LessThanEqual_whitespace_after(self, node: "LessThanEqual") -> None:
         pass
 
     @mark_no_op
@@ -534,11 +2974,115 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_List_elements(self, node: "List") -> None:
+        pass
+
+    @mark_no_op
+    def leave_List_elements(self, node: "List") -> None:
+        pass
+
+    @mark_no_op
+    def visit_List_lbracket(self, node: "List") -> None:
+        pass
+
+    @mark_no_op
+    def leave_List_lbracket(self, node: "List") -> None:
+        pass
+
+    @mark_no_op
+    def visit_List_rbracket(self, node: "List") -> None:
+        pass
+
+    @mark_no_op
+    def leave_List_rbracket(self, node: "List") -> None:
+        pass
+
+    @mark_no_op
+    def visit_List_lpar(self, node: "List") -> None:
+        pass
+
+    @mark_no_op
+    def leave_List_lpar(self, node: "List") -> None:
+        pass
+
+    @mark_no_op
+    def visit_List_rpar(self, node: "List") -> None:
+        pass
+
+    @mark_no_op
+    def leave_List_rpar(self, node: "List") -> None:
+        pass
+
+    @mark_no_op
     def visit_ListComp(self, node: "ListComp") -> Optional[bool]:
         pass
 
     @mark_no_op
+    def visit_ListComp_elt(self, node: "ListComp") -> None:
+        pass
+
+    @mark_no_op
+    def leave_ListComp_elt(self, node: "ListComp") -> None:
+        pass
+
+    @mark_no_op
+    def visit_ListComp_for_in(self, node: "ListComp") -> None:
+        pass
+
+    @mark_no_op
+    def leave_ListComp_for_in(self, node: "ListComp") -> None:
+        pass
+
+    @mark_no_op
+    def visit_ListComp_lbracket(self, node: "ListComp") -> None:
+        pass
+
+    @mark_no_op
+    def leave_ListComp_lbracket(self, node: "ListComp") -> None:
+        pass
+
+    @mark_no_op
+    def visit_ListComp_rbracket(self, node: "ListComp") -> None:
+        pass
+
+    @mark_no_op
+    def leave_ListComp_rbracket(self, node: "ListComp") -> None:
+        pass
+
+    @mark_no_op
+    def visit_ListComp_lpar(self, node: "ListComp") -> None:
+        pass
+
+    @mark_no_op
+    def leave_ListComp_lpar(self, node: "ListComp") -> None:
+        pass
+
+    @mark_no_op
+    def visit_ListComp_rpar(self, node: "ListComp") -> None:
+        pass
+
+    @mark_no_op
+    def leave_ListComp_rpar(self, node: "ListComp") -> None:
+        pass
+
+    @mark_no_op
     def visit_MatrixMultiply(self, node: "MatrixMultiply") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_MatrixMultiply_whitespace_before(self, node: "MatrixMultiply") -> None:
+        pass
+
+    @mark_no_op
+    def leave_MatrixMultiply_whitespace_before(self, node: "MatrixMultiply") -> None:
+        pass
+
+    @mark_no_op
+    def visit_MatrixMultiply_whitespace_after(self, node: "MatrixMultiply") -> None:
+        pass
+
+    @mark_no_op
+    def leave_MatrixMultiply_whitespace_after(self, node: "MatrixMultiply") -> None:
         pass
 
     @mark_no_op
@@ -548,7 +3092,39 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_MatrixMultiplyAssign_whitespace_before(
+        self, node: "MatrixMultiplyAssign"
+    ) -> None:
+        pass
+
+    @mark_no_op
+    def leave_MatrixMultiplyAssign_whitespace_before(
+        self, node: "MatrixMultiplyAssign"
+    ) -> None:
+        pass
+
+    @mark_no_op
+    def visit_MatrixMultiplyAssign_whitespace_after(
+        self, node: "MatrixMultiplyAssign"
+    ) -> None:
+        pass
+
+    @mark_no_op
+    def leave_MatrixMultiplyAssign_whitespace_after(
+        self, node: "MatrixMultiplyAssign"
+    ) -> None:
+        pass
+
+    @mark_no_op
     def visit_Minus(self, node: "Minus") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_Minus_whitespace_after(self, node: "Minus") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Minus_whitespace_after(self, node: "Minus") -> None:
         pass
 
     @mark_no_op
@@ -556,7 +3132,79 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_Module_body(self, node: "Module") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Module_body(self, node: "Module") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Module_header(self, node: "Module") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Module_header(self, node: "Module") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Module_footer(self, node: "Module") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Module_footer(self, node: "Module") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Module_encoding(self, node: "Module") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Module_encoding(self, node: "Module") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Module_default_indent(self, node: "Module") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Module_default_indent(self, node: "Module") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Module_default_newline(self, node: "Module") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Module_default_newline(self, node: "Module") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Module_has_trailing_newline(self, node: "Module") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Module_has_trailing_newline(self, node: "Module") -> None:
+        pass
+
+    @mark_no_op
     def visit_Modulo(self, node: "Modulo") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_Modulo_whitespace_before(self, node: "Modulo") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Modulo_whitespace_before(self, node: "Modulo") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Modulo_whitespace_after(self, node: "Modulo") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Modulo_whitespace_after(self, node: "Modulo") -> None:
         pass
 
     @mark_no_op
@@ -564,7 +3212,39 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_ModuloAssign_whitespace_before(self, node: "ModuloAssign") -> None:
+        pass
+
+    @mark_no_op
+    def leave_ModuloAssign_whitespace_before(self, node: "ModuloAssign") -> None:
+        pass
+
+    @mark_no_op
+    def visit_ModuloAssign_whitespace_after(self, node: "ModuloAssign") -> None:
+        pass
+
+    @mark_no_op
+    def leave_ModuloAssign_whitespace_after(self, node: "ModuloAssign") -> None:
+        pass
+
+    @mark_no_op
     def visit_Multiply(self, node: "Multiply") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_Multiply_whitespace_before(self, node: "Multiply") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Multiply_whitespace_before(self, node: "Multiply") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Multiply_whitespace_after(self, node: "Multiply") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Multiply_whitespace_after(self, node: "Multiply") -> None:
         pass
 
     @mark_no_op
@@ -572,7 +3252,47 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_MultiplyAssign_whitespace_before(self, node: "MultiplyAssign") -> None:
+        pass
+
+    @mark_no_op
+    def leave_MultiplyAssign_whitespace_before(self, node: "MultiplyAssign") -> None:
+        pass
+
+    @mark_no_op
+    def visit_MultiplyAssign_whitespace_after(self, node: "MultiplyAssign") -> None:
+        pass
+
+    @mark_no_op
+    def leave_MultiplyAssign_whitespace_after(self, node: "MultiplyAssign") -> None:
+        pass
+
+    @mark_no_op
     def visit_Name(self, node: "Name") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_Name_value(self, node: "Name") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Name_value(self, node: "Name") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Name_lpar(self, node: "Name") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Name_lpar(self, node: "Name") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Name_rpar(self, node: "Name") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Name_rpar(self, node: "Name") -> None:
         pass
 
     @mark_no_op
@@ -580,7 +3300,31 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_NameItem_name(self, node: "NameItem") -> None:
+        pass
+
+    @mark_no_op
+    def leave_NameItem_name(self, node: "NameItem") -> None:
+        pass
+
+    @mark_no_op
+    def visit_NameItem_comma(self, node: "NameItem") -> None:
+        pass
+
+    @mark_no_op
+    def leave_NameItem_comma(self, node: "NameItem") -> None:
+        pass
+
+    @mark_no_op
     def visit_Newline(self, node: "Newline") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_Newline_value(self, node: "Newline") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Newline_value(self, node: "Newline") -> None:
         pass
 
     @mark_no_op
@@ -588,7 +3332,39 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_Nonlocal_names(self, node: "Nonlocal") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Nonlocal_names(self, node: "Nonlocal") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Nonlocal_whitespace_after_nonlocal(self, node: "Nonlocal") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Nonlocal_whitespace_after_nonlocal(self, node: "Nonlocal") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Nonlocal_semicolon(self, node: "Nonlocal") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Nonlocal_semicolon(self, node: "Nonlocal") -> None:
+        pass
+
+    @mark_no_op
     def visit_Not(self, node: "Not") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_Not_whitespace_after(self, node: "Not") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Not_whitespace_after(self, node: "Not") -> None:
         pass
 
     @mark_no_op
@@ -596,7 +3372,55 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_NotEqual_value(self, node: "NotEqual") -> None:
+        pass
+
+    @mark_no_op
+    def leave_NotEqual_value(self, node: "NotEqual") -> None:
+        pass
+
+    @mark_no_op
+    def visit_NotEqual_whitespace_before(self, node: "NotEqual") -> None:
+        pass
+
+    @mark_no_op
+    def leave_NotEqual_whitespace_before(self, node: "NotEqual") -> None:
+        pass
+
+    @mark_no_op
+    def visit_NotEqual_whitespace_after(self, node: "NotEqual") -> None:
+        pass
+
+    @mark_no_op
+    def leave_NotEqual_whitespace_after(self, node: "NotEqual") -> None:
+        pass
+
+    @mark_no_op
     def visit_NotIn(self, node: "NotIn") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_NotIn_whitespace_before(self, node: "NotIn") -> None:
+        pass
+
+    @mark_no_op
+    def leave_NotIn_whitespace_before(self, node: "NotIn") -> None:
+        pass
+
+    @mark_no_op
+    def visit_NotIn_whitespace_between(self, node: "NotIn") -> None:
+        pass
+
+    @mark_no_op
+    def leave_NotIn_whitespace_between(self, node: "NotIn") -> None:
+        pass
+
+    @mark_no_op
+    def visit_NotIn_whitespace_after(self, node: "NotIn") -> None:
+        pass
+
+    @mark_no_op
+    def leave_NotIn_whitespace_after(self, node: "NotIn") -> None:
         pass
 
     @mark_no_op
@@ -604,7 +3428,87 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_Or_whitespace_before(self, node: "Or") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Or_whitespace_before(self, node: "Or") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Or_whitespace_after(self, node: "Or") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Or_whitespace_after(self, node: "Or") -> None:
+        pass
+
+    @mark_no_op
     def visit_Param(self, node: "Param") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_Param_name(self, node: "Param") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Param_name(self, node: "Param") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Param_annotation(self, node: "Param") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Param_annotation(self, node: "Param") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Param_equal(self, node: "Param") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Param_equal(self, node: "Param") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Param_default(self, node: "Param") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Param_default(self, node: "Param") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Param_comma(self, node: "Param") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Param_comma(self, node: "Param") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Param_star(self, node: "Param") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Param_star(self, node: "Param") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Param_whitespace_after_star(self, node: "Param") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Param_whitespace_after_star(self, node: "Param") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Param_whitespace_after_param(self, node: "Param") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Param_whitespace_after_param(self, node: "Param") -> None:
         pass
 
     @mark_no_op
@@ -612,7 +3516,55 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_ParamStar_comma(self, node: "ParamStar") -> None:
+        pass
+
+    @mark_no_op
+    def leave_ParamStar_comma(self, node: "ParamStar") -> None:
+        pass
+
+    @mark_no_op
     def visit_Parameters(self, node: "Parameters") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_Parameters_params(self, node: "Parameters") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Parameters_params(self, node: "Parameters") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Parameters_default_params(self, node: "Parameters") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Parameters_default_params(self, node: "Parameters") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Parameters_star_arg(self, node: "Parameters") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Parameters_star_arg(self, node: "Parameters") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Parameters_kwonly_params(self, node: "Parameters") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Parameters_kwonly_params(self, node: "Parameters") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Parameters_star_kwarg(self, node: "Parameters") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Parameters_star_kwarg(self, node: "Parameters") -> None:
         pass
 
     @mark_no_op
@@ -622,7 +3574,63 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_ParenthesizedWhitespace_first_line(
+        self, node: "ParenthesizedWhitespace"
+    ) -> None:
+        pass
+
+    @mark_no_op
+    def leave_ParenthesizedWhitespace_first_line(
+        self, node: "ParenthesizedWhitespace"
+    ) -> None:
+        pass
+
+    @mark_no_op
+    def visit_ParenthesizedWhitespace_empty_lines(
+        self, node: "ParenthesizedWhitespace"
+    ) -> None:
+        pass
+
+    @mark_no_op
+    def leave_ParenthesizedWhitespace_empty_lines(
+        self, node: "ParenthesizedWhitespace"
+    ) -> None:
+        pass
+
+    @mark_no_op
+    def visit_ParenthesizedWhitespace_indent(
+        self, node: "ParenthesizedWhitespace"
+    ) -> None:
+        pass
+
+    @mark_no_op
+    def leave_ParenthesizedWhitespace_indent(
+        self, node: "ParenthesizedWhitespace"
+    ) -> None:
+        pass
+
+    @mark_no_op
+    def visit_ParenthesizedWhitespace_last_line(
+        self, node: "ParenthesizedWhitespace"
+    ) -> None:
+        pass
+
+    @mark_no_op
+    def leave_ParenthesizedWhitespace_last_line(
+        self, node: "ParenthesizedWhitespace"
+    ) -> None:
+        pass
+
+    @mark_no_op
     def visit_Pass(self, node: "Pass") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_Pass_semicolon(self, node: "Pass") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Pass_semicolon(self, node: "Pass") -> None:
         pass
 
     @mark_no_op
@@ -630,7 +3638,31 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_Plus_whitespace_after(self, node: "Plus") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Plus_whitespace_after(self, node: "Plus") -> None:
+        pass
+
+    @mark_no_op
     def visit_Power(self, node: "Power") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_Power_whitespace_before(self, node: "Power") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Power_whitespace_before(self, node: "Power") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Power_whitespace_after(self, node: "Power") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Power_whitespace_after(self, node: "Power") -> None:
         pass
 
     @mark_no_op
@@ -638,7 +3670,55 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_PowerAssign_whitespace_before(self, node: "PowerAssign") -> None:
+        pass
+
+    @mark_no_op
+    def leave_PowerAssign_whitespace_before(self, node: "PowerAssign") -> None:
+        pass
+
+    @mark_no_op
+    def visit_PowerAssign_whitespace_after(self, node: "PowerAssign") -> None:
+        pass
+
+    @mark_no_op
+    def leave_PowerAssign_whitespace_after(self, node: "PowerAssign") -> None:
+        pass
+
+    @mark_no_op
     def visit_Raise(self, node: "Raise") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_Raise_exc(self, node: "Raise") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Raise_exc(self, node: "Raise") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Raise_cause(self, node: "Raise") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Raise_cause(self, node: "Raise") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Raise_whitespace_after_raise(self, node: "Raise") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Raise_whitespace_after_raise(self, node: "Raise") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Raise_semicolon(self, node: "Raise") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Raise_semicolon(self, node: "Raise") -> None:
         pass
 
     @mark_no_op
@@ -646,7 +3726,39 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_Return_value(self, node: "Return") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Return_value(self, node: "Return") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Return_whitespace_after_return(self, node: "Return") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Return_whitespace_after_return(self, node: "Return") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Return_semicolon(self, node: "Return") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Return_semicolon(self, node: "Return") -> None:
+        pass
+
+    @mark_no_op
     def visit_RightCurlyBrace(self, node: "RightCurlyBrace") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_RightCurlyBrace_whitespace_before(self, node: "RightCurlyBrace") -> None:
+        pass
+
+    @mark_no_op
+    def leave_RightCurlyBrace_whitespace_before(self, node: "RightCurlyBrace") -> None:
         pass
 
     @mark_no_op
@@ -654,7 +3766,31 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_RightParen_whitespace_before(self, node: "RightParen") -> None:
+        pass
+
+    @mark_no_op
+    def leave_RightParen_whitespace_before(self, node: "RightParen") -> None:
+        pass
+
+    @mark_no_op
     def visit_RightShift(self, node: "RightShift") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_RightShift_whitespace_before(self, node: "RightShift") -> None:
+        pass
+
+    @mark_no_op
+    def leave_RightShift_whitespace_before(self, node: "RightShift") -> None:
+        pass
+
+    @mark_no_op
+    def visit_RightShift_whitespace_after(self, node: "RightShift") -> None:
+        pass
+
+    @mark_no_op
+    def leave_RightShift_whitespace_after(self, node: "RightShift") -> None:
         pass
 
     @mark_no_op
@@ -662,7 +3798,39 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_RightShiftAssign_whitespace_before(
+        self, node: "RightShiftAssign"
+    ) -> None:
+        pass
+
+    @mark_no_op
+    def leave_RightShiftAssign_whitespace_before(
+        self, node: "RightShiftAssign"
+    ) -> None:
+        pass
+
+    @mark_no_op
+    def visit_RightShiftAssign_whitespace_after(self, node: "RightShiftAssign") -> None:
+        pass
+
+    @mark_no_op
+    def leave_RightShiftAssign_whitespace_after(self, node: "RightShiftAssign") -> None:
+        pass
+
+    @mark_no_op
     def visit_RightSquareBracket(self, node: "RightSquareBracket") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_RightSquareBracket_whitespace_before(
+        self, node: "RightSquareBracket"
+    ) -> None:
+        pass
+
+    @mark_no_op
+    def leave_RightSquareBracket_whitespace_before(
+        self, node: "RightSquareBracket"
+    ) -> None:
         pass
 
     @mark_no_op
@@ -670,7 +3838,63 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_Semicolon_whitespace_before(self, node: "Semicolon") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Semicolon_whitespace_before(self, node: "Semicolon") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Semicolon_whitespace_after(self, node: "Semicolon") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Semicolon_whitespace_after(self, node: "Semicolon") -> None:
+        pass
+
+    @mark_no_op
     def visit_Set(self, node: "Set") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_Set_elements(self, node: "Set") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Set_elements(self, node: "Set") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Set_lbrace(self, node: "Set") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Set_lbrace(self, node: "Set") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Set_rbrace(self, node: "Set") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Set_rbrace(self, node: "Set") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Set_lpar(self, node: "Set") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Set_lpar(self, node: "Set") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Set_rpar(self, node: "Set") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Set_rpar(self, node: "Set") -> None:
         pass
 
     @mark_no_op
@@ -678,7 +3902,87 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_SetComp_elt(self, node: "SetComp") -> None:
+        pass
+
+    @mark_no_op
+    def leave_SetComp_elt(self, node: "SetComp") -> None:
+        pass
+
+    @mark_no_op
+    def visit_SetComp_for_in(self, node: "SetComp") -> None:
+        pass
+
+    @mark_no_op
+    def leave_SetComp_for_in(self, node: "SetComp") -> None:
+        pass
+
+    @mark_no_op
+    def visit_SetComp_lbrace(self, node: "SetComp") -> None:
+        pass
+
+    @mark_no_op
+    def leave_SetComp_lbrace(self, node: "SetComp") -> None:
+        pass
+
+    @mark_no_op
+    def visit_SetComp_rbrace(self, node: "SetComp") -> None:
+        pass
+
+    @mark_no_op
+    def leave_SetComp_rbrace(self, node: "SetComp") -> None:
+        pass
+
+    @mark_no_op
+    def visit_SetComp_lpar(self, node: "SetComp") -> None:
+        pass
+
+    @mark_no_op
+    def leave_SetComp_lpar(self, node: "SetComp") -> None:
+        pass
+
+    @mark_no_op
+    def visit_SetComp_rpar(self, node: "SetComp") -> None:
+        pass
+
+    @mark_no_op
+    def leave_SetComp_rpar(self, node: "SetComp") -> None:
+        pass
+
+    @mark_no_op
     def visit_SimpleStatementLine(self, node: "SimpleStatementLine") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_SimpleStatementLine_body(self, node: "SimpleStatementLine") -> None:
+        pass
+
+    @mark_no_op
+    def leave_SimpleStatementLine_body(self, node: "SimpleStatementLine") -> None:
+        pass
+
+    @mark_no_op
+    def visit_SimpleStatementLine_leading_lines(
+        self, node: "SimpleStatementLine"
+    ) -> None:
+        pass
+
+    @mark_no_op
+    def leave_SimpleStatementLine_leading_lines(
+        self, node: "SimpleStatementLine"
+    ) -> None:
+        pass
+
+    @mark_no_op
+    def visit_SimpleStatementLine_trailing_whitespace(
+        self, node: "SimpleStatementLine"
+    ) -> None:
+        pass
+
+    @mark_no_op
+    def leave_SimpleStatementLine_trailing_whitespace(
+        self, node: "SimpleStatementLine"
+    ) -> None:
         pass
 
     @mark_no_op
@@ -688,7 +3992,63 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_SimpleStatementSuite_body(self, node: "SimpleStatementSuite") -> None:
+        pass
+
+    @mark_no_op
+    def leave_SimpleStatementSuite_body(self, node: "SimpleStatementSuite") -> None:
+        pass
+
+    @mark_no_op
+    def visit_SimpleStatementSuite_leading_whitespace(
+        self, node: "SimpleStatementSuite"
+    ) -> None:
+        pass
+
+    @mark_no_op
+    def leave_SimpleStatementSuite_leading_whitespace(
+        self, node: "SimpleStatementSuite"
+    ) -> None:
+        pass
+
+    @mark_no_op
+    def visit_SimpleStatementSuite_trailing_whitespace(
+        self, node: "SimpleStatementSuite"
+    ) -> None:
+        pass
+
+    @mark_no_op
+    def leave_SimpleStatementSuite_trailing_whitespace(
+        self, node: "SimpleStatementSuite"
+    ) -> None:
+        pass
+
+    @mark_no_op
     def visit_SimpleString(self, node: "SimpleString") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_SimpleString_value(self, node: "SimpleString") -> None:
+        pass
+
+    @mark_no_op
+    def leave_SimpleString_value(self, node: "SimpleString") -> None:
+        pass
+
+    @mark_no_op
+    def visit_SimpleString_lpar(self, node: "SimpleString") -> None:
+        pass
+
+    @mark_no_op
+    def leave_SimpleString_lpar(self, node: "SimpleString") -> None:
+        pass
+
+    @mark_no_op
+    def visit_SimpleString_rpar(self, node: "SimpleString") -> None:
+        pass
+
+    @mark_no_op
+    def leave_SimpleString_rpar(self, node: "SimpleString") -> None:
         pass
 
     @mark_no_op
@@ -696,7 +4056,55 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_SimpleWhitespace_value(self, node: "SimpleWhitespace") -> None:
+        pass
+
+    @mark_no_op
+    def leave_SimpleWhitespace_value(self, node: "SimpleWhitespace") -> None:
+        pass
+
+    @mark_no_op
     def visit_Slice(self, node: "Slice") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_Slice_lower(self, node: "Slice") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Slice_lower(self, node: "Slice") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Slice_upper(self, node: "Slice") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Slice_upper(self, node: "Slice") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Slice_step(self, node: "Slice") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Slice_step(self, node: "Slice") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Slice_first_colon(self, node: "Slice") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Slice_first_colon(self, node: "Slice") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Slice_second_colon(self, node: "Slice") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Slice_second_colon(self, node: "Slice") -> None:
         pass
 
     @mark_no_op
@@ -704,7 +4112,79 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_StarredDictElement_value(self, node: "StarredDictElement") -> None:
+        pass
+
+    @mark_no_op
+    def leave_StarredDictElement_value(self, node: "StarredDictElement") -> None:
+        pass
+
+    @mark_no_op
+    def visit_StarredDictElement_comma(self, node: "StarredDictElement") -> None:
+        pass
+
+    @mark_no_op
+    def leave_StarredDictElement_comma(self, node: "StarredDictElement") -> None:
+        pass
+
+    @mark_no_op
+    def visit_StarredDictElement_whitespace_before_value(
+        self, node: "StarredDictElement"
+    ) -> None:
+        pass
+
+    @mark_no_op
+    def leave_StarredDictElement_whitespace_before_value(
+        self, node: "StarredDictElement"
+    ) -> None:
+        pass
+
+    @mark_no_op
     def visit_StarredElement(self, node: "StarredElement") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_StarredElement_value(self, node: "StarredElement") -> None:
+        pass
+
+    @mark_no_op
+    def leave_StarredElement_value(self, node: "StarredElement") -> None:
+        pass
+
+    @mark_no_op
+    def visit_StarredElement_comma(self, node: "StarredElement") -> None:
+        pass
+
+    @mark_no_op
+    def leave_StarredElement_comma(self, node: "StarredElement") -> None:
+        pass
+
+    @mark_no_op
+    def visit_StarredElement_lpar(self, node: "StarredElement") -> None:
+        pass
+
+    @mark_no_op
+    def leave_StarredElement_lpar(self, node: "StarredElement") -> None:
+        pass
+
+    @mark_no_op
+    def visit_StarredElement_rpar(self, node: "StarredElement") -> None:
+        pass
+
+    @mark_no_op
+    def leave_StarredElement_rpar(self, node: "StarredElement") -> None:
+        pass
+
+    @mark_no_op
+    def visit_StarredElement_whitespace_before_value(
+        self, node: "StarredElement"
+    ) -> None:
+        pass
+
+    @mark_no_op
+    def leave_StarredElement_whitespace_before_value(
+        self, node: "StarredElement"
+    ) -> None:
         pass
 
     @mark_no_op
@@ -712,7 +4192,79 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_Subscript_value(self, node: "Subscript") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Subscript_value(self, node: "Subscript") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Subscript_slice(self, node: "Subscript") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Subscript_slice(self, node: "Subscript") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Subscript_lbracket(self, node: "Subscript") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Subscript_lbracket(self, node: "Subscript") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Subscript_rbracket(self, node: "Subscript") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Subscript_rbracket(self, node: "Subscript") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Subscript_lpar(self, node: "Subscript") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Subscript_lpar(self, node: "Subscript") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Subscript_rpar(self, node: "Subscript") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Subscript_rpar(self, node: "Subscript") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Subscript_whitespace_after_value(self, node: "Subscript") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Subscript_whitespace_after_value(self, node: "Subscript") -> None:
+        pass
+
+    @mark_no_op
     def visit_Subtract(self, node: "Subtract") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_Subtract_whitespace_before(self, node: "Subtract") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Subtract_whitespace_before(self, node: "Subtract") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Subtract_whitespace_after(self, node: "Subtract") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Subtract_whitespace_after(self, node: "Subtract") -> None:
         pass
 
     @mark_no_op
@@ -720,7 +4272,47 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_SubtractAssign_whitespace_before(self, node: "SubtractAssign") -> None:
+        pass
+
+    @mark_no_op
+    def leave_SubtractAssign_whitespace_before(self, node: "SubtractAssign") -> None:
+        pass
+
+    @mark_no_op
+    def visit_SubtractAssign_whitespace_after(self, node: "SubtractAssign") -> None:
+        pass
+
+    @mark_no_op
+    def leave_SubtractAssign_whitespace_after(self, node: "SubtractAssign") -> None:
+        pass
+
+    @mark_no_op
     def visit_TrailingWhitespace(self, node: "TrailingWhitespace") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_TrailingWhitespace_whitespace(self, node: "TrailingWhitespace") -> None:
+        pass
+
+    @mark_no_op
+    def leave_TrailingWhitespace_whitespace(self, node: "TrailingWhitespace") -> None:
+        pass
+
+    @mark_no_op
+    def visit_TrailingWhitespace_comment(self, node: "TrailingWhitespace") -> None:
+        pass
+
+    @mark_no_op
+    def leave_TrailingWhitespace_comment(self, node: "TrailingWhitespace") -> None:
+        pass
+
+    @mark_no_op
+    def visit_TrailingWhitespace_newline(self, node: "TrailingWhitespace") -> None:
+        pass
+
+    @mark_no_op
+    def leave_TrailingWhitespace_newline(self, node: "TrailingWhitespace") -> None:
         pass
 
     @mark_no_op
@@ -728,7 +4320,79 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_Try_body(self, node: "Try") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Try_body(self, node: "Try") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Try_handlers(self, node: "Try") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Try_handlers(self, node: "Try") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Try_orelse(self, node: "Try") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Try_orelse(self, node: "Try") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Try_finalbody(self, node: "Try") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Try_finalbody(self, node: "Try") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Try_leading_lines(self, node: "Try") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Try_leading_lines(self, node: "Try") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Try_whitespace_before_colon(self, node: "Try") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Try_whitespace_before_colon(self, node: "Try") -> None:
+        pass
+
+    @mark_no_op
     def visit_Tuple(self, node: "Tuple") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_Tuple_elements(self, node: "Tuple") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Tuple_elements(self, node: "Tuple") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Tuple_lpar(self, node: "Tuple") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Tuple_lpar(self, node: "Tuple") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Tuple_rpar(self, node: "Tuple") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Tuple_rpar(self, node: "Tuple") -> None:
         pass
 
     @mark_no_op
@@ -736,7 +4400,87 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_UnaryOperation_operator(self, node: "UnaryOperation") -> None:
+        pass
+
+    @mark_no_op
+    def leave_UnaryOperation_operator(self, node: "UnaryOperation") -> None:
+        pass
+
+    @mark_no_op
+    def visit_UnaryOperation_expression(self, node: "UnaryOperation") -> None:
+        pass
+
+    @mark_no_op
+    def leave_UnaryOperation_expression(self, node: "UnaryOperation") -> None:
+        pass
+
+    @mark_no_op
+    def visit_UnaryOperation_lpar(self, node: "UnaryOperation") -> None:
+        pass
+
+    @mark_no_op
+    def leave_UnaryOperation_lpar(self, node: "UnaryOperation") -> None:
+        pass
+
+    @mark_no_op
+    def visit_UnaryOperation_rpar(self, node: "UnaryOperation") -> None:
+        pass
+
+    @mark_no_op
+    def leave_UnaryOperation_rpar(self, node: "UnaryOperation") -> None:
+        pass
+
+    @mark_no_op
     def visit_While(self, node: "While") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_While_test(self, node: "While") -> None:
+        pass
+
+    @mark_no_op
+    def leave_While_test(self, node: "While") -> None:
+        pass
+
+    @mark_no_op
+    def visit_While_body(self, node: "While") -> None:
+        pass
+
+    @mark_no_op
+    def leave_While_body(self, node: "While") -> None:
+        pass
+
+    @mark_no_op
+    def visit_While_orelse(self, node: "While") -> None:
+        pass
+
+    @mark_no_op
+    def leave_While_orelse(self, node: "While") -> None:
+        pass
+
+    @mark_no_op
+    def visit_While_leading_lines(self, node: "While") -> None:
+        pass
+
+    @mark_no_op
+    def leave_While_leading_lines(self, node: "While") -> None:
+        pass
+
+    @mark_no_op
+    def visit_While_whitespace_after_while(self, node: "While") -> None:
+        pass
+
+    @mark_no_op
+    def leave_While_whitespace_after_while(self, node: "While") -> None:
+        pass
+
+    @mark_no_op
+    def visit_While_whitespace_before_colon(self, node: "While") -> None:
+        pass
+
+    @mark_no_op
+    def leave_While_whitespace_before_colon(self, node: "While") -> None:
         pass
 
     @mark_no_op
@@ -744,11 +4488,115 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_With_items(self, node: "With") -> None:
+        pass
+
+    @mark_no_op
+    def leave_With_items(self, node: "With") -> None:
+        pass
+
+    @mark_no_op
+    def visit_With_body(self, node: "With") -> None:
+        pass
+
+    @mark_no_op
+    def leave_With_body(self, node: "With") -> None:
+        pass
+
+    @mark_no_op
+    def visit_With_asynchronous(self, node: "With") -> None:
+        pass
+
+    @mark_no_op
+    def leave_With_asynchronous(self, node: "With") -> None:
+        pass
+
+    @mark_no_op
+    def visit_With_leading_lines(self, node: "With") -> None:
+        pass
+
+    @mark_no_op
+    def leave_With_leading_lines(self, node: "With") -> None:
+        pass
+
+    @mark_no_op
+    def visit_With_whitespace_after_with(self, node: "With") -> None:
+        pass
+
+    @mark_no_op
+    def leave_With_whitespace_after_with(self, node: "With") -> None:
+        pass
+
+    @mark_no_op
+    def visit_With_whitespace_before_colon(self, node: "With") -> None:
+        pass
+
+    @mark_no_op
+    def leave_With_whitespace_before_colon(self, node: "With") -> None:
+        pass
+
+    @mark_no_op
     def visit_WithItem(self, node: "WithItem") -> Optional[bool]:
         pass
 
     @mark_no_op
+    def visit_WithItem_item(self, node: "WithItem") -> None:
+        pass
+
+    @mark_no_op
+    def leave_WithItem_item(self, node: "WithItem") -> None:
+        pass
+
+    @mark_no_op
+    def visit_WithItem_asname(self, node: "WithItem") -> None:
+        pass
+
+    @mark_no_op
+    def leave_WithItem_asname(self, node: "WithItem") -> None:
+        pass
+
+    @mark_no_op
+    def visit_WithItem_comma(self, node: "WithItem") -> None:
+        pass
+
+    @mark_no_op
+    def leave_WithItem_comma(self, node: "WithItem") -> None:
+        pass
+
+    @mark_no_op
     def visit_Yield(self, node: "Yield") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_Yield_value(self, node: "Yield") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Yield_value(self, node: "Yield") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Yield_lpar(self, node: "Yield") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Yield_lpar(self, node: "Yield") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Yield_rpar(self, node: "Yield") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Yield_rpar(self, node: "Yield") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Yield_whitespace_after_yield(self, node: "Yield") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Yield_whitespace_after_yield(self, node: "Yield") -> None:
         pass
 
 
