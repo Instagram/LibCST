@@ -19,8 +19,8 @@ from typing import (
     Tuple,
     TypeVar,
     Union,
-    overload,
     cast,
+    overload,
 )
 
 from libcst._add_slots import add_slots
