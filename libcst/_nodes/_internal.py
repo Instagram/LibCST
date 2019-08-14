@@ -20,6 +20,7 @@ from typing import (
     TypeVar,
     Union,
     overload,
+    cast,
 )
 
 from libcst._add_slots import add_slots
@@ -57,8 +58,10 @@ class CodePosition:
 @add_slots
 @dataclass(frozen=True)
 class CodeRange:
+    # pyre-ignore[13]: Uninitialized attribute
     #: Starting position of a node.
     start: CodePosition
+    # pyre-ignore[13]: Uninitialized attribute
     #: Ending position of a node.
     end: CodePosition
 
@@ -71,12 +74,14 @@ class CodeRange:
         ...
 
     def __init__(self, start: _CodePositionT, end: _CodePositionT) -> None:
-        if isinstance(start, CodePosition):
-            object.__setattr__(self, "start", start)
-            object.__setattr__(self, "end", end)
-        else:
+        if isinstance(start, tuple) and isinstance(end, tuple):
             object.__setattr__(self, "start", CodePosition(start[0], start[1]))
             object.__setattr__(self, "end", CodePosition(end[0], end[1]))
+        else:
+            start = cast(CodePosition, start)
+            end = cast(CodePosition, end)
+            object.__setattr__(self, "start", start)
+            object.__setattr__(self, "end", end)
 
 
 @dataclass(frozen=False)
