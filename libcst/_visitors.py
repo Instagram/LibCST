@@ -72,6 +72,30 @@ class CSTTransformer(CSTTypedTransformerFunctions, MetadataDependent):
 
         return updated_node
 
+    def on_visit_attribute(self, node: "CSTNode", attribute: str) -> None:
+        """
+        Called before a node's attribute is visited and after we have called
+        :func:`~libcst.CSTTransformer.on_visit` on the node.
+        """
+        visit_func = getattr(self, f"visit_{type(node).__name__}_{attribute}", None)
+        if visit_func is not None:
+            visit_func(node)
+
+    def on_leave_attribute(self, original_node: "CSTNode", attribute: str) -> None:
+        """
+        Called after a node's attribute is visited and before we have called
+        :func:`~libcst.CSTTransformer.on_leave` on the node.
+
+        Unlike :func:`~libcst.CSTTransformer.on_leave`, this function does
+        not allow modifications to the tree and is provided solely for state
+        management.
+        """
+        leave_func = getattr(
+            self, f"leave_{type(original_node).__name__}_{attribute}", None
+        )
+        if leave_func is not None:
+            leave_func(original_node)
+
 
 class CSTVisitor(CSTTypedVisitorFunctions, MetadataDependent):
     """
@@ -107,5 +131,25 @@ class CSTVisitor(CSTTypedVisitorFunctions, MetadataDependent):
         ``False``, this function will still be called on that node.
         """
         leave_func = getattr(self, f"leave_{type(original_node).__name__}", None)
+        if leave_func is not None:
+            leave_func(original_node)
+
+    def on_visit_attribute(self, node: "CSTNode", attribute: str) -> None:
+        """
+        Called before a node's attribute is visited and after we have called
+        :func:`~libcst.CSTVisitor.on_visit` on the node.
+        """
+        visit_func = getattr(self, f"visit_{type(node).__name__}_{attribute}", None)
+        if visit_func is not None:
+            visit_func(node)
+
+    def on_leave_attribute(self, original_node: "CSTNode", attribute: str) -> None:
+        """
+        Called after a node's attribute is visited and before we have called
+        :func:`~libcst.CSTVisitor.on_leave` on the node.
+        """
+        leave_func = getattr(
+            self, f"leave_{type(original_node).__name__}_{attribute}", None
+        )
         if leave_func is not None:
             leave_func(original_node)
