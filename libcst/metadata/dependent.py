@@ -45,6 +45,9 @@ class MetadataDependent:
     # pyre-ignore[4]: Attribute `metadata` of class
     # `libcst.metadata.dependent.MetadataDependent` must have a type that
     # does not contain `Any`.
+    #: A cached copy of metadata computed by :func:`~libcst.MetadataDependent.resolve`.
+    #: Prefer using :func:`~libcst.MetadataDependent.get_metadata` over accessing
+    #: this attribute directly.
     metadata: Mapping["ProviderT", Mapping["CSTNode", object]]
 
     #: The set of metadata depedencies declared by this class.
@@ -56,8 +59,10 @@ class MetadataDependent:
     @classmethod
     def get_inherited_dependencies(cls) -> Collection["ProviderT"]:
         """
-        Returns all metadata dependencies from the each class in the mro chain
-        of a subclass of this class.
+        Returns all metadata dependencies declared by classes in the MRO of ``cls``
+        that subclass this class.
+
+        Recursively searches the MRO of the subclass for metadata dependencies.
         """
         try:
             # pyre-fixme[16]: use a hidden attribute to cache the property
@@ -75,10 +80,11 @@ class MetadataDependent:
     def resolve(self, wrapper: "MetadataWrapper") -> Iterator[None]:
         """
         Context manager that resolves all metadata dependencies declared by
-        this instance of this class on ``wrapper`` and caches it for use with
+        ``self`` (using :func:`~libcst.MetadataDependent.get_inherited_dependencies`)
+        on ``wrapper`` and caches it on ``self`` for use with
         :func:`~libcst.MetadataDependent.get_metadata`.
 
-        Upon exiting this context manager, the metadata cache on the instance is
+        Upon exiting this context manager, the metadata cache on ``self`` is
         cleared.
         """
         self.metadata = wrapper.resolve_many(self.get_inherited_dependencies())
@@ -93,8 +99,8 @@ class MetadataDependent:
     ) -> _T:
         """
         Returns the metadata provided by the ``key`` if it is accessible from
-        this vistor. Metadata is accessible if ``key`` is the same as ``type(self)``
-        or if ``key`` is in ``self.METADATA_DEPENDENCIES``.
+        this vistor. Metadata is accessible in a subclass of this class if ``key``
+        is declared as a dependency by any class in the MRO of this class.
         """
         if key not in self.get_inherited_dependencies():
             raise KeyError(

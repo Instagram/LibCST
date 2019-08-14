@@ -87,6 +87,7 @@ class BaseMetadataProvider(MetadataDependent, Generic[_T]):
         """
         The same method as :func:`~libcst.MetadataDependent.get_metadata` except
         metadata is accessed from ``self._computed`` in addition to ``self.metadata``.
+        See :func:`~libcst.MetadataDependent.get_metadata`.
         """
         if key is type(self):
             if default is not _UNDEFINED_DEFAULT:
@@ -100,7 +101,7 @@ class BaseMetadataProvider(MetadataDependent, Generic[_T]):
 class VisitorMetadataProvider(CSTVisitor, BaseMetadataProvider[_T]):
     """
     The low-level base class for all non-batchable visitor-based metadata
-    providers.
+    providers. Inherits from :class:`~libcst.CSTVisitor`.
     """
 
     def _gen_impl(self, module: "_ModuleT") -> None:
@@ -110,6 +111,7 @@ class VisitorMetadataProvider(CSTVisitor, BaseMetadataProvider[_T]):
 class BatchableMetadataProvider(BatchableCSTVisitor, BaseMetadataProvider[_T]):
     """
     The low-level base class for all batchable visitor-based metadata providers.
+    Inherits from :class:`~libcst.BatchableCSTVisitor`.
     """
 
     def _gen_impl(self, module: "Module") -> None:

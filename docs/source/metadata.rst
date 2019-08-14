@@ -16,7 +16,6 @@ resolve methods is used. Alternatively, you can use one of the visit methods in
 the wrapper when working with visitors.
 
 .. autoclass:: libcst.MetadataDependent
-
 .. autoclass:: libcst.MetadataWrapper
 
 Providing Metadata
@@ -36,12 +35,11 @@ Position Metadata
 Position (line and column numbers) metadata are accessible through the metadata
 interface by declaring the one of the following providers as a dependency. For
 most cases, :class:`~libcst.SytacticPositionProvider` is what you probably want.
+Accessing position metadata through the :class:`~libcst.MetadataDepedent`
+interface will return a :class:`~libcst.CodeRange` object.
 
 .. autoclass:: libcst.BasicPositionProvider
 .. autoclass:: libcst.SyntacticPositionProvider
-
-Accessing position metadata through the :class:`~libcst.MetadataDepedent`
-interface will return a :class:`~libcst.CodeRange` object.
 
 .. autoclass:: libcst.CodeRange
     :members:
