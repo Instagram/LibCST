@@ -198,12 +198,14 @@ def visit_required(
     Given a node, visits the node using `visitor`. If removal is attempted by the
     visitor, an exception is raised.
     """
+    visitor.on_visit_attribute(parent, fieldname)
     result = node.visit(visitor)
     if isinstance(result, RemovalSentinel):
         raise TypeError(
             f"We got a RemovalSentinel while visiting a {type(node).__name__}. This "
             + "node's parent does not allow it to be removed."
         )
+    visitor.on_leave_attribute(parent, fieldname)
     return result
 
 
@@ -215,8 +217,12 @@ def visit_optional(
     removed, returns None.
     """
     if node is None:
+        visitor.on_visit_attribute(parent, fieldname)
+        visitor.on_leave_attribute(parent, fieldname)
         return None
+    visitor.on_visit_attribute(parent, fieldname)
     result = node.visit(visitor)
+    visitor.on_leave_attribute(parent, fieldname)
     return None if isinstance(result, RemovalSentinel) else result
 
 
@@ -231,8 +237,12 @@ def visit_sentinel(
     is real with `visitor`. If the node is removed, returns MaybeSentinel.
     """
     if isinstance(node, MaybeSentinel):
+        visitor.on_visit_attribute(parent, fieldname)
+        visitor.on_leave_attribute(parent, fieldname)
         return MaybeSentinel.DEFAULT
+    visitor.on_visit_attribute(parent, fieldname)
     result = node.visit(visitor)
+    visitor.on_leave_attribute(parent, fieldname)
     return MaybeSentinel.DEFAULT if isinstance(result, RemovalSentinel) else result
 
 
@@ -246,10 +256,12 @@ def visit_iterable(
     Given an iterable of children, visits each child with `visitor`, and yields the new
     children with any `RemovalSentinel` values removed.
     """
+    visitor.on_visit_attribute(parent, fieldname)
     for child in children:
         new_child = child.visit(visitor)
         if not isinstance(new_child, RemovalSentinel):
             yield new_child
+    visitor.on_leave_attribute(parent, fieldname)
 
 
 def visit_sequence(
@@ -276,6 +288,7 @@ def visit_body_iterable(
     nodes in order to preserve correct pass insertion behavior.
     """
 
+    visitor.on_visit_attribute(parent, fieldname)
     for child in children:
         new_child = child.visit(visitor)
 
@@ -292,6 +305,7 @@ def visit_body_iterable(
 
         # Safe to yield child in this case.
         yield new_child
+    visitor.on_leave_attribute(parent, fieldname)
 
 
 def visit_body_sequence(
