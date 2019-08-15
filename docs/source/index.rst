@@ -17,7 +17,8 @@ LibCST
 
    why_libcst
    motivation
-   usage
+   tutorial
+   Metadata Tutorial <metadata_tutorial>
    parser
    nodes
    visitors

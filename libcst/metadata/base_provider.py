@@ -41,6 +41,9 @@ class BaseMetadataProvider(MetadataDependent, Generic[_T]):
     """
     The low-level base class for all metadata providers. This class should be
     extended for metadata providers that are not visitor-based.
+
+    This class is generic. A subclass of ``BaseMetadataProvider[T]`` will
+    provider metadata of type ``T``.
     """
 
     #: Cache of metadata computed by this provider
@@ -102,6 +105,9 @@ class VisitorMetadataProvider(CSTVisitor, BaseMetadataProvider[_T]):
     """
     The low-level base class for all non-batchable visitor-based metadata
     providers. Inherits from :class:`~libcst.CSTVisitor`.
+
+    This class is generic. A subclass of ``VisitorMetadataProvider[T]`` will
+    provider metadata of type ``T``.
     """
 
     def _gen_impl(self, module: "_ModuleT") -> None:
@@ -112,6 +118,9 @@ class BatchableMetadataProvider(BatchableCSTVisitor, BaseMetadataProvider[_T]):
     """
     The low-level base class for all batchable visitor-based metadata providers.
     Inherits from :class:`~libcst.BatchableCSTVisitor`.
+
+    This class is generic. A subclass of ``BatchableMetadataProvider[T]`` will
+    provider metadata of type ``T``.
     """
 
     def _gen_impl(self, module: "Module") -> None:
