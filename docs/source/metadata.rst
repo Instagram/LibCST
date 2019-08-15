@@ -6,14 +6,29 @@ Metadata
 LibCST ships with a metadata interface that defines a standardized way to
 associate nodes in a CST with arbitrary metadata while maintaining the immutability
 of the tree. The metadata interface is designed to be declarative and type safe.
+Here's a quick example of using the metadata interface to get line and column
+numbers of nodes:
+
+.. code-block:: python
+
+    class NamePrinter(cst.CSTVisitor):
+        METADATA_DEPENDENCIES = (cst.SyntacticPositionProvider,)
+
+        def visit_Name(self, node: cst.Name) -> None:
+            pos = self.get_metadata(cst.SyntacticPositionProvider, node).start
+            print(f"{node.value} found at line {pos.line}, column {pos.column}")
+
+    wrapper = cst.MetadataWrapper(cst.parse_module("x = 1"))
+    result = wrapper.visit(NamePrinter())  # should print "x found at line 1, column 0"
 
 Accessing Metadata
 ------------------
 
 Metadata providers are declared as dependencies by a :class:`~libcst.MetadataDependent`
-or any of its subclasses and will be computed automatically whenever one of the
-resolve methods is used. Alternatively, you can use one of the visit methods in
-the wrapper when working with visitors.
+or any of its subclasses and will be computed automatically whenever visited
+by a :class:`~libcst.MetadataWrapper`. Alternatively, you can use 
+:func:`~libcst.MetadataWrapper.resolve` or :func:`~libcst.MetadataWrapper.resolve_many`
+in the wrapper to generate and access metadata directly.
 
 .. autoclass:: libcst.MetadataDependent
 .. autoclass:: libcst.MetadataWrapper
@@ -34,7 +49,7 @@ Position Metadata
 
 Position (line and column numbers) metadata are accessible through the metadata
 interface by declaring the one of the following providers as a dependency. For
-most cases, :class:`~libcst.SytacticPositionProvider` is what you probably want.
+most cases, :class:`~libcst.SyntacticPositionProvider` is what you probably want.
 Accessing position metadata through the :class:`~libcst.MetadataDepedent`
 interface will return a :class:`~libcst.CodeRange` object.
 
@@ -42,6 +57,4 @@ interface will return a :class:`~libcst.CodeRange` object.
 .. autoclass:: libcst.SyntacticPositionProvider
 
 .. autoclass:: libcst.CodeRange
-    :members:
 .. autoclass:: libcst.CodePosition
-    :members:
