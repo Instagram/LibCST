@@ -117,6 +117,8 @@ class VisitorMetadataProvider(CSTVisitor, BaseMetadataProvider[_T]):
 class BatchableMetadataProvider(BatchableCSTVisitor, BaseMetadataProvider[_T]):
     """
     The low-level base class for all batchable visitor-based metadata providers.
+    Batchable providers should be preferred when possible as they are more
+    efficient to run compared to non-batchable visitor-based providers.
     Inherits from :class:`~libcst.BatchableCSTVisitor`.
 
     This class is generic. A subclass of ``BatchableMetadataProvider[T]`` will
