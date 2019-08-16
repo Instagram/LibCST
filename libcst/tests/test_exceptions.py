@@ -4,6 +4,8 @@
 # LICENSE file in the root directory of this source tree.
 
 # pyre-strict
+
+import pickle
 from textwrap import dedent
 
 from libcst._exceptions import ParserSyntaxError
@@ -55,3 +57,17 @@ class ExceptionsTest(UnitTest):
         self, err: ParserSyntaxError, expected: str
     ) -> None:
         self.assertEqual(str(err), expected)
+
+    def test_pickle(self) -> None:
+        """
+        It's common to use LibCST with multiprocessing to process files in parallel.
+        Multiprocessing uses pickle by default, so we should make sure our errors can be
+        pickled/unpickled.
+        """
+        orig_exception = ParserSyntaxError(
+            "some message", lines=["abcd"], raw_line=1, raw_column=0
+        )
+        pickled_blob = pickle.dumps(orig_exception)
+        new_exception = pickle.loads(pickled_blob)
+        self.assertEqual(repr(orig_exception), repr(new_exception))
+        self.assertEqual(str(orig_exception), str(new_exception))
