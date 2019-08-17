@@ -169,16 +169,27 @@ def _convert_token(  # noqa: C901: too complex
         #
         # Parso's tokenizer tracks this internally, but doesn't expose it, so we have to
         # duplicate that logic here.
+
         pof_stack = state.parenthesis_or_fstring_stack
-        if ct_type is _FSTRING_START:
-            pof_stack.append(_FSTRING_STACK_ENTRY)
-        elif ct_type is _FSTRING_END:
-            pof_stack.pop()
-        elif ct_type is _OP:
-            if ct_string in "([{":
-                pof_stack.append(_PARENTHESIS_STACK_ENTRY)
-            elif ct_string in ")]}":
+        try:
+            if ct_type is _FSTRING_START:
+                pof_stack.append(_FSTRING_STACK_ENTRY)
+            elif ct_type is _FSTRING_END:
                 pof_stack.pop()
+            elif ct_type is _OP:
+                if ct_string in "([{":
+                    pof_stack.append(_PARENTHESIS_STACK_ENTRY)
+                elif ct_string in ")]}":
+                    pof_stack.pop()
+        except IndexError:
+            # pof_stack may be empty by the time we need to read from it due to
+            # mismatched braces.
+            raise ParserSyntaxError(
+                "Encountered a closing brace without a matching opening brace.",
+                lines=state.lines,
+                raw_line=ct_start_pos[0],
+                raw_column=ct_start_pos[1],
+            )
         is_parenthesized = (
             len(pof_stack) > 0 and pof_stack[-1] == _PARENTHESIS_STACK_ENTRY
         )
