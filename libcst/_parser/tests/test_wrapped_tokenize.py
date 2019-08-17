@@ -230,12 +230,12 @@ class WrappedTokenizeTest(UnitTest):
             self.assertIs(a.whitespace_after, b.whitespace_before)
 
     def test_errortoken(self) -> None:
-        with self.assertRaisesRegex(ParserSyntaxError, "invalid token"):
+        with self.assertRaisesRegex(ParserSyntaxError, "not a valid token"):
             # use tuple() to read everything
             # The copyright symbol isn't a valid token
             tuple(tokenize("\u00a9", _PY38))
 
     def test_error_dedent(self) -> None:
-        with self.assertRaisesRegex(ParserSyntaxError, "inconsistent indentation"):
+        with self.assertRaisesRegex(ParserSyntaxError, "Inconsistent indentation"):
             # create some inconsistent indents to generate an ERROR_DEDENT token
             tuple(tokenize("    a\n  b", _PY38))
