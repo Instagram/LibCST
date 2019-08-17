@@ -8,53 +8,74 @@
 import pickle
 from textwrap import dedent
 
-from libcst._exceptions import ParserSyntaxError
+import libcst as cst
 from libcst.testing.utils import UnitTest, data_provider
 
 
 class ExceptionsTest(UnitTest):
     @data_provider(
-        [
-            (
-                ParserSyntaxError(
-                    message="some message",
-                    encountered=None,  # EOF
-                    expected=None,  # EOF
-                    pos=(1, 0),
-                    lines=["abcd"],
+        {
+            "simple": (
+                cst.ParserSyntaxError(
+                    "some message", lines=["abcd"], raw_line=1, raw_column=0
                 ),
                 dedent(
                     """
-                    Syntax Error: some message @ 1:1.
-                    Encountered end of file (EOF), but expected end of file (EOF).
+                    Syntax Error @ 1:1.
+                    some message
 
                     abcd
                     ^
                     """
                 ).strip(),
             ),
-            (
-                ParserSyntaxError(
-                    message="some message",
-                    encountered="encountered_value",
-                    expected=["expected_value"],
-                    pos=(1, 2),
-                    lines=["\tabcd\r\n"],
+            "tab_expansion": (
+                cst.ParserSyntaxError(
+                    "some message", lines=["\tabcd\r\n"], raw_line=1, raw_column=2
                 ),
                 dedent(
                     """
-                    Syntax Error: some message @ 1:10.
-                    Encountered 'encountered_value', but expected one of ['expected_value'].
+                    Syntax Error @ 1:10.
+                    some message
 
                             abcd
                              ^
                     """
                 ).strip(),
             ),
-        ]
+            "shows_last_line_with_text": (
+                cst.ParserSyntaxError(
+                    "some message",
+                    lines=["abcd\n", "efgh\n", "\n", "\n", "\n", "\n", "\n"],
+                    raw_line=5,
+                    raw_column=0,
+                ),
+                dedent(
+                    """
+                    Syntax Error @ 5:1.
+                    some message
+
+                    efgh
+                        ^
+                    """
+                ).strip(),
+            ),
+            "empty_file": (
+                cst.ParserSyntaxError(
+                    "some message", lines=[""], raw_line=1, raw_column=0
+                ),
+                dedent(
+                    """
+                    Syntax Error @ 1:1.
+                    some message
+                    """
+                    # There's no code snippet here because the input file was empty.
+                ).strip(),
+            ),
+        }
     )
     def test_parser_syntax_error_str(
-        self, err: ParserSyntaxError, expected: str
+        self, err: cst.ParserSyntaxError, expected: str
     ) -> None:
         self.assertEqual(str(err), expected)
 
@@ -64,7 +85,7 @@ class ExceptionsTest(UnitTest):
         Multiprocessing uses pickle by default, so we should make sure our errors can be
         pickled/unpickled.
         """
-        orig_exception = ParserSyntaxError(
+        orig_exception = cst.ParserSyntaxError(
             "some message", lines=["abcd"], raw_line=1, raw_column=0
         )
         pickled_blob = pickle.dumps(orig_exception)

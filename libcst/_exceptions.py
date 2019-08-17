@@ -29,20 +29,38 @@ def get_expected_str(
     encountered: Union[Token, EOFSentinel],
     expected: Union[Iterable[Union[TokenType, ReservedString]], EOFSentinel],
 ) -> str:
-    if isinstance(encountered, EOFSentinel):
+    if (
+        isinstance(encountered, EOFSentinel)
+        or encountered.type is PythonTokenTypes.ENDMARKER
+    ):
         encountered_str = _EOF_STR
+    elif encountered.type is PythonTokenTypes.INDENT:
+        encountered_str = _INDENT_STR
+    elif encountered.type is PythonTokenTypes.DEDENT:
+        encountered_str = _DEDENT_STR
     else:
         encountered_str = repr(encountered.string)
 
     if isinstance(expected, EOFSentinel):
-        expected_names = _EOF_STR
+        expected_names = [_EOF_STR]
     else:
-        expected_str = repr([
-            el.name if isinstance(el, TokenType) else el.value
-            for el in expected
-        ])
+        expected_names = sorted(
+            [
+                repr(el.name) if isinstance(el, TokenType) else repr(el.value)
+                for el in expected
+            ]
+        )
 
-    return f"Encountered {encountered_str}, but expected {expected_str}."
+    if len(expected_names) > 10:
+        # There's too many possibilities, so it's probably not useful to list them.
+        # Instead, let's just abbreviate the message.
+        return f"Unexpectedly encountered {encountered_str}."
+    else:
+        if len(expected_names) == 1:
+            expected_str = expected_names[0]
+        else:
+            expected_str = f"{', '.join(expected_names[:-1])}, or {expected_names[-1]}"
+        return f"Encountered {encountered_str}, but expected {expected_str}."
 
 
 # pyre-fixme[2]: 'Any' type isn't pyre-strict.
@@ -134,23 +152,36 @@ class ParserSyntaxError(Exception):
         )
 
     @property
-    def context(self) -> str:
+    def context(self) -> Optional[str]:
         """
-        A formatted string containing the line of code with the syntax error along with
-        a caret indicating the exact column where the error occured.
+        A formatted string containing the line of code with the syntax error (or a
+        non-empty line above it) along with a caret indicating the exact column where
+        the error occurred.
+
+        Return ``None`` if there's no relevant non-empty line to show. (e.g. the file
+        consists of only blank lines)
         """
         displayed_line = self.editor_line
         displayed_column = self.editor_column
+        # we want to avoid displaying a blank line for context. If we're on a blank line
+        # find the nearest line above us that isn't blank.
+        while displayed_line >= 1 and not len(self._lines[displayed_line - 1].strip()):
+            displayed_line -= 1
+            displayed_column = len(self._lines[displayed_line - 1])
 
-        formatted_source_line = expand_tabs(self._lines[displayed_line - 1]).rstrip(
-            _NEWLINE_CHARS
-        )
-        # fmt: off
-        return (
-            f"{formatted_source_line}\n"
-            + f"{' ' * (displayed_column - 1)}^"
-        )
-        # fmt: on
+        # only show context if we managed to find a non-empty line
+        if len(self._lines[displayed_line - 1].strip()):
+            formatted_source_line = expand_tabs(self._lines[displayed_line - 1]).rstrip(
+                _NEWLINE_CHARS
+            )
+            # fmt: off
+            return (
+                f"{formatted_source_line}\n"
+                + f"{' ' * (displayed_column - 1)}^"
+            )
+            # fmt: on
+        else:
+            return None
 
     @property
     def raw_line(self) -> int:
