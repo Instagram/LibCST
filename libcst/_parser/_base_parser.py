@@ -30,7 +30,7 @@ from typing import Generic, Iterable, List, Sequence, TypeVar, Union
 from parso.pgen2.generator import DFAState, Grammar, ReservedString
 from parso.python.token import TokenType
 
-from libcst._exceptions import ParserSyntaxError
+from libcst._exceptions import EOFSentinel, ParserSyntaxError, get_expected_str
 from libcst._parser._types.token import Token
 
 
@@ -111,13 +111,14 @@ class BaseParser(Generic[_TokenT, _TokenTypeT, _NodeT]):
         while True:
             tos = self.stack[-1]
             if not tos.dfa.is_final:
-                # We never broke out -- EOF is too soon -- Unfinished statement.
+                expected_str = get_expected_str(
+                    EOFSentinel.EOF, tos.dfa.transitions.keys()
+                )
                 raise ParserSyntaxError(
-                    message="incomplete input",
-                    encountered=None,
-                    expected=list(tos.dfa.arcs.keys()),
-                    pos=(len(self.lines), len(self.lines[-1])),
+                    f"Incomplete input. {expected_str}",
                     lines=self.lines,
+                    raw_line=len(self.lines),
+                    raw_column=len(self.lines[-1]),
                 )
 
             if len(self.stack) > 1:
@@ -152,31 +153,47 @@ class BaseParser(Generic[_TokenT, _TokenTypeT, _NodeT]):
                 if stack[-1].dfa.is_final:
                     try:
                         self._pop()
-                    except Exception:
+                    except ParserSyntaxError as ex:
+                        ex._raw_line = token.start_pos[0]
+                        ex._raw_column = token.start_pos[1]
+                        raise
+                    except Exception as ex:
                         # convert_nonterminal may fail, try to recover enough to at
                         # least tell us where in the file it failed.
                         raise ParserSyntaxError(
-                            message="internal error",
-                            encountered="",  # TODO: encountered/expected are nonsense
-                            expected=[],
-                            pos=token.start_pos,
+                            f"Internal error: {ex}",
                             lines=self.lines,
+                            raw_line=token.start_pos[0],
+                            raw_column=token.start_pos[1],
                         )
                 else:
+                    # We never broke out -- EOF is too soon -- Unfinished statement.
+                    #
+                    # BUG: The `expected_str` may not be complete because we already
+                    # popped the other possibilities off the stack at this point, but
+                    # it still seems useful to list some of the possibilities that we
+                    # could've expected.
+                    expected_str = get_expected_str(
+                        token, stack[-1].dfa.transitions.keys()
+                    )
                     raise ParserSyntaxError(
-                        message="incomplete input",
-                        encountered=token.string,
-                        expected=list(stack[-1].dfa.arcs.keys()),
-                        pos=token.start_pos,
+                        f"Incomplete input. {expected_str}",
                         lines=self.lines,
+                        raw_line=token.start_pos[0],
+                        raw_column=token.start_pos[1],
                     )
             except IndexError:
+                # I don't think this will ever happen with Python's grammar, because if
+                # there are any extra tokens at the end of the input, we'll instead
+                # complain that we expected ENDMARKER.
+                #
+                # However, let's leave it just in case.
+                expected_str = get_expected_str(token, EOFSentinel.EOF)
                 raise ParserSyntaxError(
-                    message="too much input",
-                    encountered=token.string,
-                    expected=None,  # EOF
-                    pos=token.start_pos,
+                    f"Too much input. {expected_str}",
                     lines=self.lines,
+                    raw_line=token.start_pos[0],
+                    raw_column=token.start_pos[1],
                 )
 
         # Logically, `plan` is always defined, but pyre can't reasonably determine that.

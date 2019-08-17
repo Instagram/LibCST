@@ -113,19 +113,17 @@ def _convert_token(  # noqa: C901: too complex
     ct_start_pos = curr_token.start_pos
     if ct_type is _ERRORTOKEN:
         raise ParserSyntaxError(
-            message="invalid token",
-            encountered=ct_string,
-            expected=["TOKEN"],
-            pos=curr_token.start_pos,
+            f"{ct_string!r} is not a valid token.",
             lines=state.lines,
+            raw_line=ct_start_pos[0],
+            raw_column=ct_start_pos[1],
         )
     if ct_type is _ERROR_DEDENT:
         raise ParserSyntaxError(
-            message="inconsistent indentation",
-            encountered=next_token.string if next_token is not None else None,
-            expected=["DEDENT"],
-            pos=curr_token.start_pos,
+            "Inconsistent indentation. Expected a dedent.",
             lines=state.lines,
+            raw_line=ct_start_pos[0],
+            raw_column=ct_start_pos[1],
         )
 
     # Compute relative indent changes for indent/dedent nodes
