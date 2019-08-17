@@ -53,9 +53,21 @@ def _parser_syntax_error_unpickle(kwargs: Any) -> "ParserSyntaxError":
 @final
 class ParserSyntaxError(Exception):
     """
-    Contains error information about the parser tree.
+    Contains an error encountered while trying to parse a piece of source code. This
+    exception shouldn't be constructed directly by the user, but instead may be raised
+    by calls to :func:`parse_module`, :func:`parse_expression`, or
+    :func:`parse_statement`.
+
+    This does not inherit from :class:`SyntaxError` because Python's may raise a
+    :class:`SyntaxError` for any number of reasons, potentially leading to unintended
+    behavior.
     """
 
+    #: A human-readable explanation of the syntax error without information about where
+    #: the error occurred.
+    #:
+    #: For a human-readable explanation of the error alongside information about where
+    #: it occurred, use :meth:`__str__` (via ``str(ex)``) instead.
     message: str
 
     # An internal value used to compute `editor_column` and to pretty-print where the
@@ -98,7 +110,14 @@ class ParserSyntaxError(Exception):
 
     def __str__(self) -> str:
         """
-        A human-readable error message of where the syntax error is in their code.
+        A multi-line human-readable error message of where the syntax error is in their
+        code. For example::
+
+            Syntax Error @ 2:1.
+            Incomplete input. Encountered end of file (EOF), but expected 'except', or 'finally'.
+
+            try: pass
+                     ^
         """
         context = self.context
         return (
@@ -116,6 +135,10 @@ class ParserSyntaxError(Exception):
 
     @property
     def context(self) -> str:
+        """
+        A formatted string containing the line of code with the syntax error along with
+        a caret indicating the exact column where the error occured.
+        """
         displayed_line = self.editor_line
         displayed_column = self.editor_column
 
@@ -131,6 +154,9 @@ class ParserSyntaxError(Exception):
 
     @property
     def raw_line(self) -> int:
+        """
+        The one-indexed line where the error occured.
+        """
         # Internally we might initialize _raw_line to -1 when we don't know the line
         # number yet. This should never be exposed to the user, because we should
         # backfill this before the user can access it.
@@ -139,6 +165,10 @@ class ParserSyntaxError(Exception):
 
     @property
     def raw_column(self) -> int:
+        """
+        The zero-indexed column as a number of characters from the start of the line
+        where the error occured.
+        """
         # Internally we might initialize _raw_line to -1 when we don't know the line
         # number yet.
         assert self._raw_column >= 0, "ParserSyntaxError was not fully initialized"
@@ -147,14 +177,24 @@ class ParserSyntaxError(Exception):
     @property
     def editor_line(self) -> int:
         """
-        The one-indexed line in the user's editor.
+        The expected one-indexed line in the user's editor. This is the same as
+        :attr:`raw_line`.
         """
         return self.raw_line  # raw_line is already one-indexed.
 
     @property
     def editor_column(self) -> int:
         """
-        The one-indexed column in the user's editor, assuming tabs expand to 1-8 spaces.
+        The expected one-indexed column that's likely to match the behavior of the
+        user's editor, assuming tabs expand to 1-8 spaces. This is the column number
+        shown when the syntax error is printed out with `str`.
+
+        This assumes single-width characters. However, because python doesn't ship with
+        a wcwidth function, it's hard to handle this properly without a third-party
+        dependency.
+
+        For a raw zero-indexed character offset without tab expansion, see
+        :attr:`raw_column`.
         """
         prefix_str = self._lines[self.raw_line - 1][: self.raw_column]
         tab_adjusted_column = len(expand_tabs(prefix_str))

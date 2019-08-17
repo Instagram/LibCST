@@ -40,3 +40,10 @@ BinaryOperation(
 .. autofunction:: libcst.parse_expression
 .. autofunction:: libcst.parse_statement
 .. autoclass:: libcst.PartialParserConfig
+
+Syntax Errors
+-------------
+
+.. autoclass:: libcst.ParserSyntaxError
+   :members: message, raw_line, raw_column, editor_line, editor_column
+   :special-members: __str__
