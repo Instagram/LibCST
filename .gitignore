@@ -10,3 +10,4 @@ docs/build/
 dist/
 docs/source/.ipynb_checkpoints/
 build/
+.coverage

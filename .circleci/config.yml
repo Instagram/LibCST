@@ -81,6 +81,8 @@ jobs:
     steps:
       - tox:
           env: "py37"
+      - tox:
+          env: "coverage"
 
   test-36:
     docker:
@@ -88,3 +90,4 @@ jobs:
     steps:
       - tox:
           env: "py36"
+

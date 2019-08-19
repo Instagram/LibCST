@@ -33,6 +33,8 @@ setuptools.setup(
     extras_require={
         "dev": [
             "black",
+            "codecov",
+            "coverage",
             "isort",
             "flake8",
             "jupyter",
