@@ -14,9 +14,8 @@ class TestConfig(UnitTest):
     @data_provider(
         {
             "empty": (lambda: PartialParserConfig(),),
-            "python_version_a": (lambda: PartialParserConfig(python_version="3"),),
-            "python_version_b": (lambda: PartialParserConfig(python_version="3.2"),),
-            "python_version_c": (lambda: PartialParserConfig(python_version="3.2.1"),),
+            "python_version_a": (lambda: PartialParserConfig(python_version="3.7"),),
+            "python_version_b": (lambda: PartialParserConfig(python_version="3.7.1"),),
             "encoding": (lambda: PartialParserConfig(encoding="latin-1"),),
             "default_indent": (lambda: PartialParserConfig(default_indent="\t    "),),
             "default_newline": (lambda: PartialParserConfig(default_newline="\r\n"),),
@@ -29,14 +28,30 @@ class TestConfig(UnitTest):
 
     @data_provider(
         {
-            "python_version": (lambda: PartialParserConfig(python_version="3.2.1.0"),),
-            "encoding": (lambda: PartialParserConfig(encoding="utf-42"),),
-            "default_indent": (lambda: PartialParserConfig(default_indent="badinput"),),
-            "default_newline": (lambda: PartialParserConfig(default_newline="\n\r"),),
+            "python_version": (
+                lambda: PartialParserConfig(python_version="3.7.1.0"),
+                "The given version is not in the right format",
+            ),
+            "python_version_unsupported": (
+                lambda: PartialParserConfig(python_version="3.6"),
+                "LibCST can only parse code using Python 3.7's grammar.",
+            ),
+            "encoding": (
+                lambda: PartialParserConfig(encoding="utf-42"),
+                "not a supported encoding",
+            ),
+            "default_indent": (
+                lambda: PartialParserConfig(default_indent="badinput"),
+                "invalid value for default_indent",
+            ),
+            "default_newline": (
+                lambda: PartialParserConfig(default_newline="\n\r"),
+                "invalid value for default_newline",
+            ),
         }
     )
     def test_invalid_partial_parser_config(
-        self, factory: Callable[[], PartialParserConfig]
+        self, factory: Callable[[], PartialParserConfig], expected_re: str
     ) -> None:
-        with self.assertRaises(ValueError):
+        with self.assertRaisesRegex(ValueError, expected_re):
             factory()

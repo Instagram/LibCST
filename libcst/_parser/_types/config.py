@@ -87,20 +87,26 @@ class PartialParserConfig:
         # We use object.__setattr__ because the dataclass is frozen. See:
         # https://docs.python.org/3/library/dataclasses.html#frozen-instances
         # This should be safe behavior inside of `__post_init__`.
-        object.__setattr__(
-            self,
-            "parsed_python_version",
-            parse_version_string(
-                # TODO: We currently hardcode support for Py3.7 both in our grammar productions and in
-                # our tokenizer config. If we want to support multiple versions, we will need to switch
-                # on version-pinned grammar productions and also fix Parso's tokenizer to allow for
-                # 3.6 and below handling of ASYNC/AWAIT. This should be changed back to None once we
-                # support multiple versions, so that parso can derive the version from `sys.version_info`
-                "3.7"
-                if isinstance(raw_python_version, AutoConfig)
-                else raw_python_version
-            ),
+        parsed_python_version = parse_version_string(
+            # TODO: We currently hardcode support for Py3.7 both in our grammar productions and in
+            # our tokenizer config. If we want to support multiple versions, we will need to switch
+            # on version-pinned grammar productions and also fix Parso's tokenizer to allow for
+            # 3.6 and below handling of ASYNC/AWAIT. This should be changed back to None once we
+            # support multiple versions, so that parso can derive the version from `sys.version_info`
+            "3.7"
+            if isinstance(raw_python_version, AutoConfig)
+            else raw_python_version
         )
+
+        # Once we add support for more versions of Python, we can change this to detect
+        # the supported version range.
+        if parsed_python_version != PythonVersionInfo(3, 7):
+            raise ValueError(
+                "LibCST can only parse code using Python 3.7's grammar. More versions "
+                + "may be supported by future releases."
+            )
+
+        object.__setattr__(self, "parsed_python_version", parsed_python_version)
 
         encoding = self.encoding
         if not isinstance(encoding, AutoConfig):
