@@ -26,9 +26,9 @@ setuptools.setup(
     python_requires=">=3.6",
     install_requires=[
         "dataclasses; python_version < '3.7'",
-        "parso",
-        "typing_extensions",
-        "typing_inspect",
+        "parso >= 0.3.0",
+        "typing_extensions >= 3.7.2",
+        "typing_inspect >= 0.3.1",
     ],
     extras_require={
         "dev": [
