@@ -57,13 +57,19 @@ class Module(CSTNode):
     #: Any trailing whitespace/comments found after the last statement.
     footer: Sequence[EmptyLine] = ()
 
-    #: The inferred file encoding.
+    #: The file's encoding format. When parsing a ``bytes`` object, this value may be
+    #: inferred from the contents of the parsed source code. When parsing a ``str``,
+    #: this value defaults to ``"utf-8"``.
+    #:
+    #: This value affects how :attr:`bytes` encodes the source code.
     encoding: str = "utf-8"
 
-    #: The inferred indentation of the file, expressed as a series of tabs or spaces.
+    #: The indentation of the file, expressed as a series of tabs and/or spaces. This
+    #: value is inferred from the contents of the parsed source code by default.
     default_indent: str = " " * 4
 
-    #: The inferred newline of the file, expressed as either ``\n`` or ``\r\n``.
+    #: The newline of the file, expressed as ``\n``, ``\r\n``, or ``\r``. This value is
+    #: inferred from the contents of the parsed source code by default.
     default_newline: str = "\n"
 
     #: Whether the module has a trailing newline or not.

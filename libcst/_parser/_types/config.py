@@ -63,21 +63,47 @@ class AutoConfig(Enum):
 @add_slots
 @dataclass(frozen=True)
 class PartialParserConfig:
-    """
+    r"""
     An optional object that can be supplied to the parser entrypoints (e.g.
-    `parse_module`) to configure the parser.
+    :func:`parse_module`) to configure the parser.
 
     Unspecified fields will be inferred from the input source code or from the execution
-    environment (the current Python version).
+    environment.
+
+    >>> import libcst as cst
+    >>> tree = cst.parse_module("abc")
+    >>> tree.bytes
+    b'abc'
+    >>> # override the default utf-8 encoding
+    ... tree = cst.parse_module("abc", cst.PartialParserConfig(encoding="utf-32"))
+    >>> tree.bytes
+    b'\xff\xfe\x00\x00a\x00\x00\x00b\x00\x00\x00c\x00\x00\x00'
     """
 
-    # `python_version` only configures the tokenization/lexer right now. The grammar
-    # isn't currently versioned.
+    #: The version of Python that the input source code is expected to be syntactically
+    #: compatible with. This may be different from the Python interpreter being used to
+    #: run LibCST. For example, you can parse code as 3.7 with a CPython 3.6
+    #: interpreter.
+    #:
+    #: Currently, only Python 3.7 syntax is supported.
     python_version: Union[str, AutoConfig] = AutoConfig.token
-    # parsed_python_version is derived from python_version in __post_init__
+
+    #: A named tuple with the ``major`` and ``minor`` Python version numbers. This is
+    #: derived from :attr:`python_version` and should not be supplied to the
+    #: :class:`PartialParserConfig` constructor.
     parsed_python_version: PythonVersionInfo = field(init=False)
+
+    #: The file's encoding format. When parsing a ``bytes`` object, this value may be
+    #: inferred from the contents of the parsed source code. When parsing a ``str``,
+    #: this value defaults to ``"utf-8"``.
     encoding: Union[str, AutoConfig] = AutoConfig.token
+
+    #: The indentation of the file, expressed as a series of tabs and/or spaces. This
+    #: value is inferred from the contents of the parsed source code by default.
     default_indent: Union[str, AutoConfig] = AutoConfig.token
+
+    #: The newline of the file, expressed as ``\n``, ``\r\n``, or ``\r``. This value is
+    #: inferred from the contents of the parsed source code by default.
     default_newline: Union[str, AutoConfig] = AutoConfig.token
 
     def __post_init__(self) -> None:
