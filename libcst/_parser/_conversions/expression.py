@@ -11,6 +11,7 @@ from tokenize import (
     Intnumber as INTNUMBER_RE,
 )
 
+from libcst._exceptions import ParserSyntaxError
 from libcst._maybe_sentinel import MaybeSentinel
 from libcst._nodes._expression import (
     Arg,
@@ -400,7 +401,7 @@ def convert_comp_op(
                 ),
             )
         else:
-            # TODO: Make this a ParserSyntaxError
+            # this should be unreachable
             raise Exception(f"Unexpected token '{op.string}'!")
     else:
         # A two-token comparison
@@ -431,7 +432,7 @@ def convert_comp_op(
                 ),
             )
         else:
-            # TODO: Make this a ParserSyntaxError
+            # this should be unreachable
             raise Exception(f"Unexpected token '{leftcomp.string} {rightcomp.string}'!")
 
 
@@ -1247,8 +1248,10 @@ def _convert_dict(
         possible_comp_for = None if len(children) < 4 else children[3]
     if isinstance(possible_comp_for, CompFor):
         if is_first_starred:
-            # TODO: Make this a ParserSyntaxError
-            raise Exception("dict unpacking cannot be used in dict comprehension")
+            raise ParserSyntaxError(
+                "dict unpacking cannot be used in dict comprehension",
+                lines=config.lines,
+            )
         return _convert_dict_comp(config, children)
 
     children_iter = iter(children)

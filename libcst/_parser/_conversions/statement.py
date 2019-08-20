@@ -5,6 +5,7 @@
 
 from typing import Any, Dict, List, Optional, Sequence, Tuple, Type
 
+from libcst._exceptions import ParserSyntaxError
 from libcst._maybe_sentinel import MaybeSentinel
 from libcst._nodes._expression import (
     Annotation,
@@ -1173,8 +1174,9 @@ def convert_classdef(config: ParserConfig, children: Sequence[Any]) -> Any:
             if current_arg is keywords and (
                 arg.star == "*" or (arg.star == "" and arg.keyword is None)
             ):
-                # TODO: Need a real syntax error here
-                raise Exception("Syntax error!")
+                raise ParserSyntaxError(
+                    "Positional argument follows keyword argument.", lines=config.lines
+                )
             current_arg.append(arg)
 
         return ClassDef(
