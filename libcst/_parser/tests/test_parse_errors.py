@@ -96,10 +96,70 @@ class ParseErrorsTest(UnitTest):
                 dedent(
                     """
                     Syntax Error @ 1:19.
-                    Internal error: dict unpacking cannot be used in dict comprehension
+                    dict unpacking cannot be used in dict comprehension
 
                     {**el for el in []}
                                       ^
+                    """
+                ).strip(),
+            ),
+            "convert_nonterminal__arglist_non_default_after_default": (
+                lambda: cst.parse_statement("def fn(first=None, second): ..."),
+                dedent(
+                    """
+                    Syntax Error @ 1:26.
+                    Cannot have a non-default argument following a default argument.
+
+                    def fn(first=None, second): ...
+                                             ^
+                    """
+                ).strip(),
+            ),
+            "convert_nonterminal__arglist_trailing_param_star_without_comma": (
+                lambda: cst.parse_statement("def fn(abc, *): ..."),
+                dedent(
+                    """
+                    Syntax Error @ 1:14.
+                    Named (keyword) arguments must follow a bare *.
+
+                    def fn(abc, *): ...
+                                 ^
+                    """
+                ).strip(),
+            ),
+            "convert_nonterminal__arglist_trailing_param_star_with_comma": (
+                lambda: cst.parse_statement("def fn(abc, *,): ..."),
+                dedent(
+                    """
+                    Syntax Error @ 1:15.
+                    Named (keyword) arguments must follow a bare *.
+
+                    def fn(abc, *,): ...
+                                  ^
+                    """
+                ).strip(),
+            ),
+            "convert_nonterminal__class_arg_positional_after_keyword": (
+                lambda: cst.parse_statement("class Cls(first=None, second): ..."),
+                dedent(
+                    """
+                    Syntax Error @ 2:1.
+                    Positional argument follows keyword argument.
+
+                    class Cls(first=None, second): ...
+                                                      ^
+                    """
+                ).strip(),
+            ),
+            "convert_nonterminal__class_arg_positional_expansion_after_keyword": (
+                lambda: cst.parse_statement("class Cls(first=None, *second): ..."),
+                dedent(
+                    """
+                    Syntax Error @ 2:1.
+                    Positional argument follows keyword argument.
+
+                    class Cls(first=None, *second): ...
+                                                       ^
                     """
                 ).strip(),
             ),

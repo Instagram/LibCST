@@ -5,6 +5,7 @@
 
 from typing import Any, List, Optional, Sequence, Union
 
+from libcst._exceptions import ParserSyntaxError
 from libcst._maybe_sentinel import MaybeSentinel
 from libcst._nodes._expression import Annotation, Name, Param, Parameters, ParamStar
 from libcst._nodes._op import AssignEqual, Comma
@@ -50,8 +51,13 @@ def convert_argslist(config: ParserConfig, children: Sequence[Any]) -> Any:
                 star_arg = param
                 current_param = kwonly_params
             else:
-                # TODO: We need to inform the user of an invalid syntax here
-                raise Exception("Syntax error!")
+                # Example code:
+                #     def fn(*abc, *): ...
+                # This should be unreachable, the grammar already disallows it.
+                raise Exception(
+                    "Cannot have multiple star ('*') markers in a single argument "
+                    + "list."
+                )
         elif isinstance(param.star, str) and param.star == "" and param.default is None:
             # Can only add this if we're in the params or kwonly_params section
             if current_param is params:
@@ -59,8 +65,13 @@ def convert_argslist(config: ParserConfig, children: Sequence[Any]) -> Any:
             elif current_param is kwonly_params:
                 kwonly_params.append(param)
             else:
-                # TODO: We need to inform the user of an invalid syntax here
-                raise Exception("Syntax error!")
+                # Example code:
+                #     def fn(first=None, second): ...
+                # This code is reachable, so we should use a ParserSyntaxError.
+                raise ParserSyntaxError(
+                    "Cannot have a non-default argument following a default argument.",
+                    lines=config.lines,
+                )
         elif (
             isinstance(param.star, str)
             and param.star == ""
@@ -74,8 +85,10 @@ def convert_argslist(config: ParserConfig, children: Sequence[Any]) -> Any:
             elif current_param is kwonly_params:
                 kwonly_params.append(param)
             else:
-                # TODO: We need to inform the user of an invalid syntax here
-                raise Exception("Syntax error!")
+                # Example code:
+                #     def fn(**kwargs, trailing=None)
+                # This should be unreachable, the grammar already disallows it.
+                raise Exception("Cannot have any arguments after a kwargs expansion.")
         elif (
             isinstance(param.star, str) and param.star == "*" and param.default is None
         ):
@@ -85,8 +98,13 @@ def convert_argslist(config: ParserConfig, children: Sequence[Any]) -> Any:
                 star_arg = param
                 current_param = kwonly_params
             else:
-                # TODO: We need to inform the user of an invalid syntax here
-                raise Exception("Syntax error!")
+                # Example code:
+                #     def fn(*first, *second): ...
+                # This should be unreachable, the grammar already disallows it.
+                raise Exception(
+                    "Expected a keyword argument but found a starred positional "
+                    + "argument expansion."
+                )
         elif (
             isinstance(param.star, str) and param.star == "**" and param.default is None
         ):
@@ -96,11 +114,16 @@ def convert_argslist(config: ParserConfig, children: Sequence[Any]) -> Any:
                 star_kwarg = param
                 current_param = None
             else:
-                # TODO: We need to inform the user of an invalid syntax here
-                raise Exception("Syntax error!")
+                # Example code:
+                #     def fn(**first, **second)
+                # This should be unreachable, the grammar already disallows it.
+                raise Exception(
+                    "Multiple starred keyword argument expansions are not allowed in a "
+                    + "single argument list"
+                )
         else:
-            # TODO: We need to inform the user of an invalid syntax here
-            raise Exception("Syntax error!")
+            # The state machine should never end up here.
+            raise Exception("Logic error!")
 
         return current_param
 
@@ -112,8 +135,18 @@ def convert_argslist(config: ParserConfig, children: Sequence[Any]) -> Any:
     for parameter, comma in grouper(children, 2):
         if comma is None:
             if isinstance(parameter, ParamStarPartial):
-                # TODO: We need to inform the user of an invalid syntax here
-                raise Exception("Syntax error!")
+                # Example:
+                #     def fn(abc, *): ...
+                #
+                # There's also the case where we have bare * with a trailing comma.
+                # That's handled later.
+                #
+                # It's not valid to construct a ParamStar object without a comma, so we
+                # need to catch the non-comma case separately.
+                raise ParserSyntaxError(
+                    "Named (keyword) arguments must follow a bare *.",
+                    lines=config.lines,
+                )
             else:
                 current = add_param(current, parameter)
         else:
@@ -129,6 +162,19 @@ def convert_argslist(config: ParserConfig, children: Sequence[Any]) -> Any:
                 current = add_param(current, ParamStar(comma=comma))
             else:
                 current = add_param(current, parameter.with_changes(comma=comma))
+
+    if isinstance(star_arg, ParamStar) and len(kwonly_params) == 0:
+        # Example:
+        #     def fn(abc, *,): ...
+        #
+        # This will raise a validation error, but we want to make sure to raise a syntax
+        # error instead.
+        #
+        # The case where there's no trailing comma is already handled by this point, so
+        # this conditional is only for the case where we have a trailing comma.
+        raise ParserSyntaxError(
+            "Named (keyword) arguments must follow a bare *.", lines=config.lines
+        )
 
     return Parameters(
         params=tuple(params),
