@@ -35,6 +35,7 @@ setuptools.setup(
             "black",
             "codecov",
             "coverage",
+            "hypothesmith >= 0.0.3",
             "isort",
             "flake8",
             "jupyter",
