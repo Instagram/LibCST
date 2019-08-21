@@ -5,7 +5,7 @@
 
 from typing import Any, List, Optional, Sequence, Union
 
-from libcst._exceptions import ParserSyntaxError
+from libcst._exceptions import PartialParserSyntaxError
 from libcst._maybe_sentinel import MaybeSentinel
 from libcst._nodes._expression import Annotation, Name, Param, Parameters, ParamStar
 from libcst._nodes._op import AssignEqual, Comma
@@ -67,10 +67,9 @@ def convert_argslist(config: ParserConfig, children: Sequence[Any]) -> Any:
             else:
                 # Example code:
                 #     def fn(first=None, second): ...
-                # This code is reachable, so we should use a ParserSyntaxError.
-                raise ParserSyntaxError(
-                    "Cannot have a non-default argument following a default argument.",
-                    lines=config.lines,
+                # This code is reachable, so we should use a PartialParserSyntaxError.
+                raise PartialParserSyntaxError(
+                    "Cannot have a non-default argument following a default argument."
                 )
         elif (
             isinstance(param.star, str)
@@ -143,9 +142,8 @@ def convert_argslist(config: ParserConfig, children: Sequence[Any]) -> Any:
                 #
                 # It's not valid to construct a ParamStar object without a comma, so we
                 # need to catch the non-comma case separately.
-                raise ParserSyntaxError(
-                    "Named (keyword) arguments must follow a bare *.",
-                    lines=config.lines,
+                raise PartialParserSyntaxError(
+                    "Named (keyword) arguments must follow a bare *."
                 )
             else:
                 current = add_param(current, parameter)
@@ -172,8 +170,8 @@ def convert_argslist(config: ParserConfig, children: Sequence[Any]) -> Any:
         #
         # The case where there's no trailing comma is already handled by this point, so
         # this conditional is only for the case where we have a trailing comma.
-        raise ParserSyntaxError(
-            "Named (keyword) arguments must follow a bare *.", lines=config.lines
+        raise PartialParserSyntaxError(
+            "Named (keyword) arguments must follow a bare *."
         )
 
     return Parameters(

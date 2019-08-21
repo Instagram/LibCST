@@ -69,6 +69,25 @@ def _parser_syntax_error_unpickle(kwargs: Any) -> "ParserSyntaxError":
 
 
 @final
+class PartialParserSyntaxError(Exception):
+    """
+    An internal exception that represents a partially-constructed
+    :class:`ParserSyntaxError`. It's raised by our internal parser conversion functions,
+    which don't always know the current line and column information.
+
+    This partial object only contains a message, with the expectation that the line and
+    column information will be filled in by :class:`libcst._base_parser.BaseParser`.
+
+    This should never be visible to the end-user.
+    """
+
+    message: str
+
+    def __init__(self, message: str) -> None:
+        self.message = message
+
+
+@final
 class ParserSyntaxError(Exception):
     """
     Contains an error encountered while trying to parse a piece of source code. This
@@ -92,24 +111,21 @@ class ParserSyntaxError(Exception):
     # syntax error occurred in the code.
     _lines: Sequence[str]
 
-    # These are internal values for the public raw_line/raw_column properties. They may
-    # get backfilled later.
-    _raw_line: int
-    _raw_column: int
+    #: The one-indexed line where the error occured.
+    raw_line: int
+
+    #: The zero-indexed column as a number of characters from the start of the line
+    #: where the error occured.
+    raw_column: int
 
     def __init__(
-        self,
-        message: str,
-        *,
-        lines: Sequence[str],
-        raw_line: int = -1,
-        raw_column: int = -1,
+        self, message: str, *, lines: Sequence[str], raw_line: int, raw_column: int
     ) -> None:
         super(ParserSyntaxError, self).__init__(message)
         self.message = message
         self._lines = lines
-        self._raw_line = raw_line
-        self._raw_column = raw_column
+        self.raw_line = raw_line
+        self.raw_column = raw_column
 
     def __reduce__(
         self
@@ -120,8 +136,8 @@ class ParserSyntaxError(Exception):
                 {
                     "message": self.message,
                     "lines": self._lines,
-                    "raw_line": self._raw_line,
-                    "raw_column": self._raw_column,
+                    "raw_line": self.raw_line,
+                    "raw_column": self.raw_column,
                 },
             ),
         )
@@ -147,8 +163,8 @@ class ParserSyntaxError(Exception):
     def __repr__(self) -> str:
         return (
             f"ParserSyntaxError("
-            + f"{self.message!r}, lines=[...], raw_line={self._raw_line!r}, "
-            + f"raw_column={self._raw_column!r})"
+            + f"{self.message!r}, lines=[...], raw_line={self.raw_line!r}, "
+            + f"raw_column={self.raw_column!r})"
         )
 
     @property
@@ -182,28 +198,6 @@ class ParserSyntaxError(Exception):
             # fmt: on
         else:
             return None
-
-    @property
-    def raw_line(self) -> int:
-        """
-        The one-indexed line where the error occured.
-        """
-        # Internally we might initialize _raw_line to -1 when we don't know the line
-        # number yet. This should never be exposed to the user, because we should
-        # backfill this before the user can access it.
-        assert self._raw_line >= 1, "ParserSyntaxError was not fully initialized"
-        return self._raw_line
-
-    @property
-    def raw_column(self) -> int:
-        """
-        The zero-indexed column as a number of characters from the start of the line
-        where the error occured.
-        """
-        # Internally we might initialize _raw_line to -1 when we don't know the line
-        # number yet.
-        assert self._raw_column >= 0, "ParserSyntaxError was not fully initialized"
-        return self._raw_column
 
     @property
     def editor_line(self) -> int:
