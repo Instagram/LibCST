@@ -30,7 +30,12 @@ from typing import Generic, Iterable, List, Sequence, TypeVar, Union
 from parso.pgen2.generator import DFAState, Grammar, ReservedString
 from parso.python.token import TokenType
 
-from libcst._exceptions import EOFSentinel, ParserSyntaxError, get_expected_str
+from libcst._exceptions import (
+    EOFSentinel,
+    ParserSyntaxError,
+    PartialParserSyntaxError,
+    get_expected_str,
+)
 from libcst._parser._types.token import Token
 
 
@@ -153,13 +158,19 @@ class BaseParser(Generic[_TokenT, _TokenTypeT, _NodeT]):
                 if stack[-1].dfa.is_final:
                     try:
                         self._pop()
-                    except ParserSyntaxError as ex:
-                        ex._raw_line = token.start_pos[0]
-                        ex._raw_column = token.start_pos[1]
-                        raise
+                    except PartialParserSyntaxError as ex:
+                        # Upconvert the PartialParserSyntaxError to a ParserSyntaxError
+                        # by backfilling the line/column information.
+                        raise ParserSyntaxError(
+                            ex.message,
+                            lines=self.lines,
+                            raw_line=token.start_pos[0],
+                            raw_column=token.start_pos[1],
+                        )
                     except Exception as ex:
-                        # convert_nonterminal may fail, try to recover enough to at
-                        # least tell us where in the file it failed.
+                        # convert_nonterminal may fail due to a bug in our code. Try to
+                        # recover enough to at least tell us where in the file it
+                        # failed.
                         raise ParserSyntaxError(
                             f"Internal error: {ex}",
                             lines=self.lines,

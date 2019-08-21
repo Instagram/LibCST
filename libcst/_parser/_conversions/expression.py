@@ -11,7 +11,7 @@ from tokenize import (
     Intnumber as INTNUMBER_RE,
 )
 
-from libcst._exceptions import ParserSyntaxError
+from libcst._exceptions import PartialParserSyntaxError
 from libcst._maybe_sentinel import MaybeSentinel
 from libcst._nodes._expression import (
     Arg,
@@ -1248,9 +1248,8 @@ def _convert_dict(
         possible_comp_for = None if len(children) < 4 else children[3]
     if isinstance(possible_comp_for, CompFor):
         if is_first_starred:
-            raise ParserSyntaxError(
-                "dict unpacking cannot be used in dict comprehension",
-                lines=config.lines,
+            raise PartialParserSyntaxError(
+                "dict unpacking cannot be used in dict comprehension"
             )
         return _convert_dict_comp(config, children)
 
