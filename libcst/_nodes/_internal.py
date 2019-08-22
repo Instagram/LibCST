@@ -59,10 +59,10 @@ class CodePosition:
 @dataclass(frozen=True)
 class CodeRange:
     # pyre-ignore[13]: Uninitialized attribute
-    #: Starting position of a node.
+    #: Starting position of a node (inclusive).
     start: CodePosition
     # pyre-ignore[13]: Uninitialized attribute
-    #: Ending position of a node.
+    #: Ending position of a node (exclusive).
     end: CodePosition
 
     @overload
