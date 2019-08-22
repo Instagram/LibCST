@@ -266,6 +266,18 @@ class BaseExpression(_BaseParenthesizedNode, ABC):
 
         return len(self.lpar) > 0 and len(self.rpar) > 0
 
+    def _check_left_right_word_concatenation_safety(
+        self,
+        position: ExpressionPosition,
+        left: "BaseExpression",
+        right: "BaseExpression",
+    ) -> bool:
+        if position == ExpressionPosition.RIGHT:
+            return left._safe_to_use_with_word_operator(ExpressionPosition.RIGHT)
+        if position == ExpressionPosition.LEFT:
+            return right._safe_to_use_with_word_operator(ExpressionPosition.LEFT)
+        return False
+
 
 class BaseAssignTargetExpression(BaseExpression, ABC):
     """
@@ -366,6 +378,9 @@ class Ellipsis(BaseExpression):
             lpar=visit_sequence("lpar", self.lpar, visitor),
             rpar=visit_sequence("rpar", self.rpar, visitor),
         )
+
+    def _safe_to_use_with_word_operator(self, position: ExpressionPosition) -> bool:
+        return True
 
     def _codegen_impl(self, state: CodegenState) -> None:
         with self._parenthesize(state):
@@ -842,10 +857,9 @@ class ConcatenatedString(BaseString):
         if super(ConcatenatedString, self)._safe_to_use_with_word_operator(position):
             # if we have parenthesis, we're safe.
             return True
-        elif position == ExpressionPosition.LEFT:
-            return self.right._safe_to_use_with_word_operator(position)
-        else:  # position == ExpressionPosition.RIGHT
-            return self.left._safe_to_use_with_word_operator(position)
+        return self._check_left_right_word_concatenation_safety(
+            position, self.left, self.right
+        )
 
     def _validate(self) -> None:
         super(ConcatenatedString, self)._validate()
@@ -972,12 +986,9 @@ class Comparison(BaseExpression):
         if super(Comparison, self)._safe_to_use_with_word_operator(position):
             # we have parenthesis
             return True
-        if position == ExpressionPosition.LEFT:
-            return self.comparisons[-1].comparator._safe_to_use_with_word_operator(
-                ExpressionPosition.LEFT
-            )
-        else:  # position == ExpressionPosition.RIGHT:
-            return self.left._safe_to_use_with_word_operator(ExpressionPosition.RIGHT)
+        return self._check_left_right_word_concatenation_safety(
+            position, self.left, self.comparisons[-1].comparator
+        )
 
     def _validate(self) -> None:
         # Perform any validation on base type
@@ -1058,6 +1069,21 @@ class UnaryOperation(BaseExpression):
             rpar=visit_sequence("rpar", self.rpar, visitor),
         )
 
+    def _safe_to_use_with_word_operator(self, position: ExpressionPosition) -> bool:
+        """
+        As long as we aren't comprised of the Not unary operator, we are safe to use
+        without space.
+        """
+        if super(UnaryOperation, self)._safe_to_use_with_word_operator(position):
+            return True
+        if position == ExpressionPosition.RIGHT:
+            return not isinstance(self.operator, Not)
+        if position == ExpressionPosition.LEFT:
+            return self.expression._safe_to_use_with_word_operator(
+                ExpressionPosition.LEFT
+            )
+        return False
+
     def _codegen_impl(self, state: CodegenState) -> None:
         with self._parenthesize(state):
             self.operator._codegen(state)
@@ -1101,6 +1127,13 @@ class BinaryOperation(BaseExpression):
             operator=visit_required("operator", self.operator, visitor),
             right=visit_required("right", self.right, visitor),
             rpar=visit_sequence("rpar", self.rpar, visitor),
+        )
+
+    def _safe_to_use_with_word_operator(self, position: ExpressionPosition) -> bool:
+        if super(BinaryOperation, self)._safe_to_use_with_word_operator(position):
+            return True
+        return self._check_left_right_word_concatenation_safety(
+            position, self.left, self.right
         )
 
     def _codegen_impl(self, state: CodegenState) -> None:
@@ -1168,6 +1201,13 @@ class BooleanOperation(BaseExpression):
             rpar=visit_sequence("rpar", self.rpar, visitor),
         )
 
+    def _safe_to_use_with_word_operator(self, position: ExpressionPosition) -> bool:
+        if super(BooleanOperation, self)._safe_to_use_with_word_operator(position):
+            return True
+        return self._check_left_right_word_concatenation_safety(
+            position, self.left, self.right
+        )
+
     def _codegen_impl(self, state: CodegenState) -> None:
         with self._parenthesize(state):
             self.left._codegen(state)
@@ -1216,6 +1256,13 @@ class Attribute(BaseAssignTargetExpression, BaseDelTargetExpression):
             dot=visit_required("dot", self.dot, visitor),
             attr=visit_required("attr", self.attr, visitor),
             rpar=visit_sequence("rpar", self.rpar, visitor),
+        )
+
+    def _safe_to_use_with_word_operator(self, position: ExpressionPosition) -> bool:
+        if super(Attribute, self)._safe_to_use_with_word_operator(position):
+            return True
+        return self._check_left_right_word_concatenation_safety(
+            position, self.value, self.attr
         )
 
     def _codegen_impl(self, state: CodegenState) -> None:
@@ -1378,6 +1425,15 @@ class Subscript(BaseAssignTargetExpression, BaseDelTargetExpression):
             rbracket=visit_required("rbracket", self.rbracket, visitor),
             rpar=visit_sequence("rpar", self.rpar, visitor),
         )
+
+    def _safe_to_use_with_word_operator(self, position: ExpressionPosition) -> bool:
+        if position == ExpressionPosition.LEFT:
+            return True
+        if super(Subscript, self)._safe_to_use_with_word_operator(position):
+            return True
+        if position == ExpressionPosition.RIGHT:
+            return self.value._safe_to_use_with_word_operator(ExpressionPosition.RIGHT)
+        return False
 
     def _codegen_impl(self, state: CodegenState) -> None:
         with self._parenthesize(state):
@@ -2062,7 +2118,11 @@ class Call(_BaseExpressionWithArgs):
         """
         if position == ExpressionPosition.LEFT:
             return True
-        return super(Call, self)._safe_to_use_with_word_operator(position)
+        if super(Call, self)._safe_to_use_with_word_operator(position):
+            return True
+        if position == ExpressionPosition.RIGHT:
+            return self.func._safe_to_use_with_word_operator(ExpressionPosition.RIGHT)
+        return False
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Call":
         return Call(
