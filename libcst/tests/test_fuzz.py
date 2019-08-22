@@ -11,6 +11,7 @@ For Hypothesis documentation, see https://hypothesis.readthedocs.io/
 For my Python code generator, see https://pypi.org/project/hypothesmith/
 """
 
+import os
 import unittest
 from datetime import timedelta
 
@@ -44,6 +45,9 @@ hypothesis.settings.register_profile(
 class FuzzTest(unittest.TestCase):
     """Fuzz-tests based on Hypothesis and Hypothesmith."""
 
+    @unittest.skipUnless(
+        bool(os.environ.get("HYPOTHESIS", False)), "Hypothesis not requested"
+    )
     @hypothesis.given(source_code=from_grammar(start="file_input"))
     def test_parsing_compilable_module_strings(self, source_code: str) -> None:
         """The `from_grammar()` strategy generates strings from Python's grammar.
@@ -67,6 +71,9 @@ class FuzzTest(unittest.TestCase):
         tree = libcst.parse_module(source_code)
         self.assertEqual(source_code, tree.code)
 
+    @unittest.skipUnless(
+        bool(os.environ.get("HYPOTHESIS", False)), "Hypothesis not requested"
+    )
     @hypothesis.given(source_code=from_grammar(start="eval_input").map(str.strip))
     def test_parsing_compilable_expression_strings(self, source_code: str) -> None:
         """Much like statements, but for expressions this time.
@@ -82,7 +89,9 @@ class FuzzTest(unittest.TestCase):
         else:
             self.assertEqual(source_code, libcst.Module([]).code_for_node(tree))
 
-    @unittest.skip("It's surprisingly tricky to round-trip statements")
+    @unittest.skipUnless(
+        bool(os.environ.get("HYPOTHESIS", False)), "Hypothesis not requested"
+    )
     @hypothesis.given(
         source_code=from_grammar(start="single_input").map(
             lambda s: s.replace("\n", "") + "\n"
