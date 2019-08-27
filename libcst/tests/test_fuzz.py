@@ -16,9 +16,8 @@ import unittest
 from datetime import timedelta
 
 import hypothesis
-from hypothesmith import from_grammar
-
 import libcst
+from hypothesmith import from_grammar
 
 
 # If in doubt, you should use these "unit test" settings.  They tune the timeouts
