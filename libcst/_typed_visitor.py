@@ -1328,349 +1328,347 @@ class CSTTypedTransformerFunctions(CSTTypedBaseFunctions):
     @mark_no_op
     def leave_Add(
         self, original_node: "Add", updated_node: "Add"
-    ) -> Union["BaseBinaryOp", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseBinaryOp"]:
         return updated_node
 
     @mark_no_op
     def leave_AddAssign(
         self, original_node: "AddAssign", updated_node: "AddAssign"
-    ) -> Union["BaseAugOp", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseAugOp"]:
         return updated_node
 
     @mark_no_op
     def leave_And(
         self, original_node: "And", updated_node: "And"
-    ) -> Union["BaseBooleanOp", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseBooleanOp"]:
         return updated_node
 
     @mark_no_op
     def leave_AnnAssign(
         self, original_node: "AnnAssign", updated_node: "AnnAssign"
-    ) -> Union["BaseSmallStatement", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseSmallStatement", RemovalSentinel]:
         return updated_node
 
     @mark_no_op
     def leave_Annotation(
         self, original_node: "Annotation", updated_node: "Annotation"
-    ) -> Union["Annotation", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["Annotation"]:
         return updated_node
 
     @mark_no_op
     def leave_Arg(
         self, original_node: "Arg", updated_node: "Arg"
-    ) -> Union["Arg", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["Arg", RemovalSentinel]:
         return updated_node
 
     @mark_no_op
     def leave_AsName(
         self, original_node: "AsName", updated_node: "AsName"
-    ) -> Union["AsName", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["AsName"]:
         return updated_node
 
     @mark_no_op
     def leave_Assert(
         self, original_node: "Assert", updated_node: "Assert"
-    ) -> Union["BaseSmallStatement", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseSmallStatement", RemovalSentinel]:
         return updated_node
 
     @mark_no_op
     def leave_Assign(
         self, original_node: "Assign", updated_node: "Assign"
-    ) -> Union["BaseSmallStatement", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseSmallStatement", RemovalSentinel]:
         return updated_node
 
     @mark_no_op
     def leave_AssignEqual(
         self, original_node: "AssignEqual", updated_node: "AssignEqual"
-    ) -> Union["AssignEqual", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["AssignEqual", MaybeSentinel]:
         return updated_node
 
     @mark_no_op
     def leave_AssignTarget(
         self, original_node: "AssignTarget", updated_node: "AssignTarget"
-    ) -> Union["AssignTarget", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["AssignTarget", RemovalSentinel]:
         return updated_node
 
     @mark_no_op
     def leave_Asynchronous(
         self, original_node: "Asynchronous", updated_node: "Asynchronous"
-    ) -> Union["Asynchronous", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["Asynchronous"]:
         return updated_node
 
     @mark_no_op
     def leave_Attribute(
         self, original_node: "Attribute", updated_node: "Attribute"
-    ) -> Union["BaseExpression", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseExpression"]:
         return updated_node
 
     @mark_no_op
     def leave_AugAssign(
         self, original_node: "AugAssign", updated_node: "AugAssign"
-    ) -> Union["BaseSmallStatement", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseSmallStatement", RemovalSentinel]:
         return updated_node
 
     @mark_no_op
     def leave_Await(
         self, original_node: "Await", updated_node: "Await"
-    ) -> Union["BaseExpression", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseExpression"]:
         return updated_node
 
     @mark_no_op
     def leave_BinaryOperation(
         self, original_node: "BinaryOperation", updated_node: "BinaryOperation"
-    ) -> Union["BaseExpression", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseExpression"]:
         return updated_node
 
     @mark_no_op
     def leave_BitAnd(
         self, original_node: "BitAnd", updated_node: "BitAnd"
-    ) -> Union["BaseBinaryOp", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseBinaryOp"]:
         return updated_node
 
     @mark_no_op
     def leave_BitAndAssign(
         self, original_node: "BitAndAssign", updated_node: "BitAndAssign"
-    ) -> Union["BaseAugOp", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseAugOp"]:
         return updated_node
 
     @mark_no_op
     def leave_BitInvert(
         self, original_node: "BitInvert", updated_node: "BitInvert"
-    ) -> Union["BaseUnaryOp", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseUnaryOp"]:
         return updated_node
 
     @mark_no_op
     def leave_BitOr(
         self, original_node: "BitOr", updated_node: "BitOr"
-    ) -> Union["BaseBinaryOp", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseBinaryOp"]:
         return updated_node
 
     @mark_no_op
     def leave_BitOrAssign(
         self, original_node: "BitOrAssign", updated_node: "BitOrAssign"
-    ) -> Union["BaseAugOp", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseAugOp"]:
         return updated_node
 
     @mark_no_op
     def leave_BitXor(
         self, original_node: "BitXor", updated_node: "BitXor"
-    ) -> Union["BaseBinaryOp", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseBinaryOp"]:
         return updated_node
 
     @mark_no_op
     def leave_BitXorAssign(
         self, original_node: "BitXorAssign", updated_node: "BitXorAssign"
-    ) -> Union["BaseAugOp", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseAugOp"]:
         return updated_node
 
     @mark_no_op
     def leave_BooleanOperation(
         self, original_node: "BooleanOperation", updated_node: "BooleanOperation"
-    ) -> Union["BaseExpression", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseExpression"]:
         return updated_node
 
     @mark_no_op
     def leave_Break(
         self, original_node: "Break", updated_node: "Break"
-    ) -> Union["BaseSmallStatement", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseSmallStatement", RemovalSentinel]:
         return updated_node
 
     @mark_no_op
     def leave_Call(
         self, original_node: "Call", updated_node: "Call"
-    ) -> Union["BaseExpression", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseExpression"]:
         return updated_node
 
     @mark_no_op
     def leave_ClassDef(
         self, original_node: "ClassDef", updated_node: "ClassDef"
-    ) -> Union["BaseStatement", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseStatement", RemovalSentinel]:
         return updated_node
 
     @mark_no_op
     def leave_Colon(
         self, original_node: "Colon", updated_node: "Colon"
-    ) -> Union["Colon", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["Colon", MaybeSentinel]:
         return updated_node
 
     @mark_no_op
     def leave_Comma(
         self, original_node: "Comma", updated_node: "Comma"
-    ) -> Union["Comma", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["Comma", MaybeSentinel]:
         return updated_node
 
     @mark_no_op
     def leave_Comment(
         self, original_node: "Comment", updated_node: "Comment"
-    ) -> Union["Comment", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["Comment"]:
         return updated_node
 
     @mark_no_op
     def leave_CompFor(
         self, original_node: "CompFor", updated_node: "CompFor"
-    ) -> Union["CompFor", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["CompFor"]:
         return updated_node
 
     @mark_no_op
     def leave_CompIf(
         self, original_node: "CompIf", updated_node: "CompIf"
-    ) -> Union["CompIf", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["CompIf"]:
         return updated_node
 
     @mark_no_op
     def leave_Comparison(
         self, original_node: "Comparison", updated_node: "Comparison"
-    ) -> Union["BaseExpression", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseExpression"]:
         return updated_node
 
     @mark_no_op
     def leave_ComparisonTarget(
         self, original_node: "ComparisonTarget", updated_node: "ComparisonTarget"
-    ) -> Union["ComparisonTarget", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["ComparisonTarget", RemovalSentinel]:
         return updated_node
 
     @mark_no_op
     def leave_ConcatenatedString(
         self, original_node: "ConcatenatedString", updated_node: "ConcatenatedString"
-    ) -> Union["BaseExpression", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseExpression"]:
         return updated_node
 
     @mark_no_op
     def leave_Continue(
         self, original_node: "Continue", updated_node: "Continue"
-    ) -> Union["BaseSmallStatement", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseSmallStatement", RemovalSentinel]:
         return updated_node
 
     @mark_no_op
     def leave_Decorator(
         self, original_node: "Decorator", updated_node: "Decorator"
-    ) -> Union["Decorator", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["Decorator", RemovalSentinel]:
         return updated_node
 
     @mark_no_op
     def leave_Del(
         self, original_node: "Del", updated_node: "Del"
-    ) -> Union["BaseSmallStatement", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseSmallStatement", RemovalSentinel]:
         return updated_node
 
     @mark_no_op
     def leave_Dict(
         self, original_node: "Dict", updated_node: "Dict"
-    ) -> Union["BaseExpression", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseExpression"]:
         return updated_node
 
     @mark_no_op
     def leave_DictComp(
         self, original_node: "DictComp", updated_node: "DictComp"
-    ) -> Union["BaseExpression", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseExpression"]:
         return updated_node
 
     @mark_no_op
     def leave_DictElement(
         self, original_node: "DictElement", updated_node: "DictElement"
-    ) -> Union["BaseDictElement", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseDictElement", RemovalSentinel]:
         return updated_node
 
     @mark_no_op
     def leave_Divide(
         self, original_node: "Divide", updated_node: "Divide"
-    ) -> Union["BaseBinaryOp", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseBinaryOp"]:
         return updated_node
 
     @mark_no_op
     def leave_DivideAssign(
         self, original_node: "DivideAssign", updated_node: "DivideAssign"
-    ) -> Union["BaseAugOp", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseAugOp"]:
         return updated_node
 
     @mark_no_op
     def leave_Dot(
         self, original_node: "Dot", updated_node: "Dot"
-    ) -> Union["Dot", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["Dot", RemovalSentinel]:
         return updated_node
 
     @mark_no_op
     def leave_Element(
         self, original_node: "Element", updated_node: "Element"
-    ) -> Union["BaseElement", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseElement", RemovalSentinel]:
         return updated_node
 
     @mark_no_op
     def leave_Ellipsis(
         self, original_node: "Ellipsis", updated_node: "Ellipsis"
-    ) -> Union["BaseExpression", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseExpression"]:
         return updated_node
 
     @mark_no_op
-    def leave_Else(
-        self, original_node: "Else", updated_node: "Else"
-    ) -> Union["Else", MaybeSentinel, RemovalSentinel]:
+    def leave_Else(self, original_node: "Else", updated_node: "Else") -> Union["Else"]:
         return updated_node
 
     @mark_no_op
     def leave_EmptyLine(
         self, original_node: "EmptyLine", updated_node: "EmptyLine"
-    ) -> Union["EmptyLine", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["EmptyLine", RemovalSentinel]:
         return updated_node
 
     @mark_no_op
     def leave_Equal(
         self, original_node: "Equal", updated_node: "Equal"
-    ) -> Union["BaseCompOp", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseCompOp"]:
         return updated_node
 
     @mark_no_op
     def leave_ExceptHandler(
         self, original_node: "ExceptHandler", updated_node: "ExceptHandler"
-    ) -> Union["ExceptHandler", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["ExceptHandler", RemovalSentinel]:
         return updated_node
 
     @mark_no_op
     def leave_Expr(
         self, original_node: "Expr", updated_node: "Expr"
-    ) -> Union["BaseSmallStatement", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseSmallStatement", RemovalSentinel]:
         return updated_node
 
     @mark_no_op
     def leave_ExtSlice(
         self, original_node: "ExtSlice", updated_node: "ExtSlice"
-    ) -> Union["ExtSlice", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["ExtSlice", RemovalSentinel]:
         return updated_node
 
     @mark_no_op
     def leave_Finally(
         self, original_node: "Finally", updated_node: "Finally"
-    ) -> Union["Finally", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["Finally"]:
         return updated_node
 
     @mark_no_op
     def leave_Float(
         self, original_node: "Float", updated_node: "Float"
-    ) -> Union["BaseExpression", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseExpression"]:
         return updated_node
 
     @mark_no_op
     def leave_FloorDivide(
         self, original_node: "FloorDivide", updated_node: "FloorDivide"
-    ) -> Union["BaseBinaryOp", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseBinaryOp"]:
         return updated_node
 
     @mark_no_op
     def leave_FloorDivideAssign(
         self, original_node: "FloorDivideAssign", updated_node: "FloorDivideAssign"
-    ) -> Union["BaseAugOp", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseAugOp"]:
         return updated_node
 
     @mark_no_op
     def leave_For(
         self, original_node: "For", updated_node: "For"
-    ) -> Union["BaseStatement", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseStatement", RemovalSentinel]:
         return updated_node
 
     @mark_no_op
     def leave_FormattedString(
         self, original_node: "FormattedString", updated_node: "FormattedString"
-    ) -> Union["BaseExpression", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseExpression"]:
         return updated_node
 
     @mark_no_op
@@ -1678,139 +1676,133 @@ class CSTTypedTransformerFunctions(CSTTypedBaseFunctions):
         self,
         original_node: "FormattedStringExpression",
         updated_node: "FormattedStringExpression",
-    ) -> Union["BaseFormattedStringContent", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseFormattedStringContent", RemovalSentinel]:
         return updated_node
 
     @mark_no_op
     def leave_FormattedStringText(
         self, original_node: "FormattedStringText", updated_node: "FormattedStringText"
-    ) -> Union["BaseFormattedStringContent", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseFormattedStringContent", RemovalSentinel]:
         return updated_node
 
     @mark_no_op
-    def leave_From(
-        self, original_node: "From", updated_node: "From"
-    ) -> Union["From", MaybeSentinel, RemovalSentinel]:
+    def leave_From(self, original_node: "From", updated_node: "From") -> Union["From"]:
         return updated_node
 
     @mark_no_op
     def leave_FunctionDef(
         self, original_node: "FunctionDef", updated_node: "FunctionDef"
-    ) -> Union["BaseStatement", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseStatement", RemovalSentinel]:
         return updated_node
 
     @mark_no_op
     def leave_GeneratorExp(
         self, original_node: "GeneratorExp", updated_node: "GeneratorExp"
-    ) -> Union["BaseExpression", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseExpression"]:
         return updated_node
 
     @mark_no_op
     def leave_Global(
         self, original_node: "Global", updated_node: "Global"
-    ) -> Union["BaseSmallStatement", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseSmallStatement", RemovalSentinel]:
         return updated_node
 
     @mark_no_op
     def leave_GreaterThan(
         self, original_node: "GreaterThan", updated_node: "GreaterThan"
-    ) -> Union["BaseCompOp", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseCompOp"]:
         return updated_node
 
     @mark_no_op
     def leave_GreaterThanEqual(
         self, original_node: "GreaterThanEqual", updated_node: "GreaterThanEqual"
-    ) -> Union["BaseCompOp", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseCompOp"]:
         return updated_node
 
     @mark_no_op
     def leave_If(
         self, original_node: "If", updated_node: "If"
-    ) -> Union["BaseStatement", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseStatement", RemovalSentinel]:
         return updated_node
 
     @mark_no_op
     def leave_IfExp(
         self, original_node: "IfExp", updated_node: "IfExp"
-    ) -> Union["BaseExpression", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseExpression"]:
         return updated_node
 
     @mark_no_op
     def leave_Imaginary(
         self, original_node: "Imaginary", updated_node: "Imaginary"
-    ) -> Union["BaseExpression", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseExpression"]:
         return updated_node
 
     @mark_no_op
     def leave_Import(
         self, original_node: "Import", updated_node: "Import"
-    ) -> Union["BaseSmallStatement", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseSmallStatement", RemovalSentinel]:
         return updated_node
 
     @mark_no_op
     def leave_ImportAlias(
         self, original_node: "ImportAlias", updated_node: "ImportAlias"
-    ) -> Union["ImportAlias", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["ImportAlias", RemovalSentinel]:
         return updated_node
 
     @mark_no_op
     def leave_ImportFrom(
         self, original_node: "ImportFrom", updated_node: "ImportFrom"
-    ) -> Union["BaseSmallStatement", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseSmallStatement", RemovalSentinel]:
         return updated_node
 
     @mark_no_op
     def leave_ImportStar(
         self, original_node: "ImportStar", updated_node: "ImportStar"
-    ) -> Union["ImportStar", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["ImportStar"]:
         return updated_node
 
     @mark_no_op
-    def leave_In(
-        self, original_node: "In", updated_node: "In"
-    ) -> Union["BaseCompOp", MaybeSentinel, RemovalSentinel]:
+    def leave_In(self, original_node: "In", updated_node: "In") -> Union["BaseCompOp"]:
         return updated_node
 
     @mark_no_op
     def leave_IndentedBlock(
         self, original_node: "IndentedBlock", updated_node: "IndentedBlock"
-    ) -> Union["BaseSuite", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseSuite"]:
         return updated_node
 
     @mark_no_op
     def leave_Index(
         self, original_node: "Index", updated_node: "Index"
-    ) -> Union["Index", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["Index"]:
         return updated_node
 
     @mark_no_op
     def leave_Integer(
         self, original_node: "Integer", updated_node: "Integer"
-    ) -> Union["BaseExpression", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseExpression"]:
         return updated_node
 
     @mark_no_op
-    def leave_Is(
-        self, original_node: "Is", updated_node: "Is"
-    ) -> Union["BaseCompOp", MaybeSentinel, RemovalSentinel]:
+    def leave_Is(self, original_node: "Is", updated_node: "Is") -> Union["BaseCompOp"]:
         return updated_node
 
     @mark_no_op
     def leave_IsNot(
         self, original_node: "IsNot", updated_node: "IsNot"
-    ) -> Union["BaseCompOp", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseCompOp"]:
         return updated_node
 
     @mark_no_op
     def leave_Lambda(
         self, original_node: "Lambda", updated_node: "Lambda"
-    ) -> Union["BaseExpression", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseExpression"]:
         return updated_node
 
     @mark_no_op
     def leave_LeftCurlyBrace(
         self, original_node: "LeftCurlyBrace", updated_node: "LeftCurlyBrace"
-    ) -> Union["LeftCurlyBrace", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["LeftCurlyBrace"]:
         return updated_node
 
     @mark_no_op
@@ -1822,49 +1814,49 @@ class CSTTypedTransformerFunctions(CSTTypedBaseFunctions):
     @mark_no_op
     def leave_LeftShift(
         self, original_node: "LeftShift", updated_node: "LeftShift"
-    ) -> Union["BaseBinaryOp", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseBinaryOp"]:
         return updated_node
 
     @mark_no_op
     def leave_LeftShiftAssign(
         self, original_node: "LeftShiftAssign", updated_node: "LeftShiftAssign"
-    ) -> Union["BaseAugOp", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseAugOp"]:
         return updated_node
 
     @mark_no_op
     def leave_LeftSquareBracket(
         self, original_node: "LeftSquareBracket", updated_node: "LeftSquareBracket"
-    ) -> Union["LeftSquareBracket", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["LeftSquareBracket"]:
         return updated_node
 
     @mark_no_op
     def leave_LessThan(
         self, original_node: "LessThan", updated_node: "LessThan"
-    ) -> Union["BaseCompOp", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseCompOp"]:
         return updated_node
 
     @mark_no_op
     def leave_LessThanEqual(
         self, original_node: "LessThanEqual", updated_node: "LessThanEqual"
-    ) -> Union["BaseCompOp", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseCompOp"]:
         return updated_node
 
     @mark_no_op
     def leave_List(
         self, original_node: "List", updated_node: "List"
-    ) -> Union["BaseExpression", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseExpression"]:
         return updated_node
 
     @mark_no_op
     def leave_ListComp(
         self, original_node: "ListComp", updated_node: "ListComp"
-    ) -> Union["BaseExpression", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseExpression"]:
         return updated_node
 
     @mark_no_op
     def leave_MatrixMultiply(
         self, original_node: "MatrixMultiply", updated_node: "MatrixMultiply"
-    ) -> Union["BaseBinaryOp", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseBinaryOp"]:
         return updated_node
 
     @mark_no_op
@@ -1872,91 +1864,91 @@ class CSTTypedTransformerFunctions(CSTTypedBaseFunctions):
         self,
         original_node: "MatrixMultiplyAssign",
         updated_node: "MatrixMultiplyAssign",
-    ) -> Union["BaseAugOp", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseAugOp"]:
         return updated_node
 
     @mark_no_op
     def leave_Minus(
         self, original_node: "Minus", updated_node: "Minus"
-    ) -> Union["BaseUnaryOp", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseUnaryOp"]:
         return updated_node
 
     @mark_no_op
     def leave_Module(
         self, original_node: "Module", updated_node: "Module"
-    ) -> Union["Module", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["Module"]:
         return updated_node
 
     @mark_no_op
     def leave_Modulo(
         self, original_node: "Modulo", updated_node: "Modulo"
-    ) -> Union["BaseBinaryOp", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseBinaryOp"]:
         return updated_node
 
     @mark_no_op
     def leave_ModuloAssign(
         self, original_node: "ModuloAssign", updated_node: "ModuloAssign"
-    ) -> Union["BaseAugOp", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseAugOp"]:
         return updated_node
 
     @mark_no_op
     def leave_Multiply(
         self, original_node: "Multiply", updated_node: "Multiply"
-    ) -> Union["BaseBinaryOp", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseBinaryOp"]:
         return updated_node
 
     @mark_no_op
     def leave_MultiplyAssign(
         self, original_node: "MultiplyAssign", updated_node: "MultiplyAssign"
-    ) -> Union["BaseAugOp", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseAugOp"]:
         return updated_node
 
     @mark_no_op
     def leave_Name(
         self, original_node: "Name", updated_node: "Name"
-    ) -> Union["BaseExpression", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseExpression"]:
         return updated_node
 
     @mark_no_op
     def leave_NameItem(
         self, original_node: "NameItem", updated_node: "NameItem"
-    ) -> Union["NameItem", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["NameItem", RemovalSentinel]:
         return updated_node
 
     @mark_no_op
     def leave_Newline(
         self, original_node: "Newline", updated_node: "Newline"
-    ) -> Union["Newline", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["Newline"]:
         return updated_node
 
     @mark_no_op
     def leave_Nonlocal(
         self, original_node: "Nonlocal", updated_node: "Nonlocal"
-    ) -> Union["BaseSmallStatement", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseSmallStatement", RemovalSentinel]:
         return updated_node
 
     @mark_no_op
     def leave_Not(
         self, original_node: "Not", updated_node: "Not"
-    ) -> Union["BaseUnaryOp", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseUnaryOp"]:
         return updated_node
 
     @mark_no_op
     def leave_NotEqual(
         self, original_node: "NotEqual", updated_node: "NotEqual"
-    ) -> Union["BaseCompOp", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseCompOp"]:
         return updated_node
 
     @mark_no_op
     def leave_NotIn(
         self, original_node: "NotIn", updated_node: "NotIn"
-    ) -> Union["BaseCompOp", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseCompOp"]:
         return updated_node
 
     @mark_no_op
     def leave_Or(
         self, original_node: "Or", updated_node: "Or"
-    ) -> Union["BaseBooleanOp", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseBooleanOp"]:
         return updated_node
 
     @mark_no_op
@@ -1968,13 +1960,13 @@ class CSTTypedTransformerFunctions(CSTTypedBaseFunctions):
     @mark_no_op
     def leave_ParamStar(
         self, original_node: "ParamStar", updated_node: "ParamStar"
-    ) -> Union["ParamStar", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["ParamStar", MaybeSentinel]:
         return updated_node
 
     @mark_no_op
     def leave_Parameters(
         self, original_node: "Parameters", updated_node: "Parameters"
-    ) -> Union["Parameters", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["Parameters"]:
         return updated_node
 
     @mark_no_op
@@ -1982,49 +1974,49 @@ class CSTTypedTransformerFunctions(CSTTypedBaseFunctions):
         self,
         original_node: "ParenthesizedWhitespace",
         updated_node: "ParenthesizedWhitespace",
-    ) -> Union["BaseParenthesizableWhitespace", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseParenthesizableWhitespace", MaybeSentinel]:
         return updated_node
 
     @mark_no_op
     def leave_Pass(
         self, original_node: "Pass", updated_node: "Pass"
-    ) -> Union["BaseSmallStatement", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseSmallStatement", RemovalSentinel]:
         return updated_node
 
     @mark_no_op
     def leave_Plus(
         self, original_node: "Plus", updated_node: "Plus"
-    ) -> Union["BaseUnaryOp", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseUnaryOp"]:
         return updated_node
 
     @mark_no_op
     def leave_Power(
         self, original_node: "Power", updated_node: "Power"
-    ) -> Union["BaseBinaryOp", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseBinaryOp"]:
         return updated_node
 
     @mark_no_op
     def leave_PowerAssign(
         self, original_node: "PowerAssign", updated_node: "PowerAssign"
-    ) -> Union["BaseAugOp", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseAugOp"]:
         return updated_node
 
     @mark_no_op
     def leave_Raise(
         self, original_node: "Raise", updated_node: "Raise"
-    ) -> Union["BaseSmallStatement", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseSmallStatement", RemovalSentinel]:
         return updated_node
 
     @mark_no_op
     def leave_Return(
         self, original_node: "Return", updated_node: "Return"
-    ) -> Union["BaseSmallStatement", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseSmallStatement", RemovalSentinel]:
         return updated_node
 
     @mark_no_op
     def leave_RightCurlyBrace(
         self, original_node: "RightCurlyBrace", updated_node: "RightCurlyBrace"
-    ) -> Union["RightCurlyBrace", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["RightCurlyBrace"]:
         return updated_node
 
     @mark_no_op
@@ -2036,43 +2028,43 @@ class CSTTypedTransformerFunctions(CSTTypedBaseFunctions):
     @mark_no_op
     def leave_RightShift(
         self, original_node: "RightShift", updated_node: "RightShift"
-    ) -> Union["BaseBinaryOp", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseBinaryOp"]:
         return updated_node
 
     @mark_no_op
     def leave_RightShiftAssign(
         self, original_node: "RightShiftAssign", updated_node: "RightShiftAssign"
-    ) -> Union["BaseAugOp", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseAugOp"]:
         return updated_node
 
     @mark_no_op
     def leave_RightSquareBracket(
         self, original_node: "RightSquareBracket", updated_node: "RightSquareBracket"
-    ) -> Union["RightSquareBracket", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["RightSquareBracket"]:
         return updated_node
 
     @mark_no_op
     def leave_Semicolon(
         self, original_node: "Semicolon", updated_node: "Semicolon"
-    ) -> Union["Semicolon", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["Semicolon", MaybeSentinel]:
         return updated_node
 
     @mark_no_op
     def leave_Set(
         self, original_node: "Set", updated_node: "Set"
-    ) -> Union["BaseExpression", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseExpression"]:
         return updated_node
 
     @mark_no_op
     def leave_SetComp(
         self, original_node: "SetComp", updated_node: "SetComp"
-    ) -> Union["BaseExpression", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseExpression"]:
         return updated_node
 
     @mark_no_op
     def leave_SimpleStatementLine(
         self, original_node: "SimpleStatementLine", updated_node: "SimpleStatementLine"
-    ) -> Union["BaseStatement", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseStatement", RemovalSentinel]:
         return updated_node
 
     @mark_no_op
@@ -2080,101 +2072,101 @@ class CSTTypedTransformerFunctions(CSTTypedBaseFunctions):
         self,
         original_node: "SimpleStatementSuite",
         updated_node: "SimpleStatementSuite",
-    ) -> Union["BaseSuite", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseSuite"]:
         return updated_node
 
     @mark_no_op
     def leave_SimpleString(
         self, original_node: "SimpleString", updated_node: "SimpleString"
-    ) -> Union["BaseExpression", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseExpression"]:
         return updated_node
 
     @mark_no_op
     def leave_SimpleWhitespace(
         self, original_node: "SimpleWhitespace", updated_node: "SimpleWhitespace"
-    ) -> Union["BaseParenthesizableWhitespace", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseParenthesizableWhitespace", MaybeSentinel]:
         return updated_node
 
     @mark_no_op
     def leave_Slice(
         self, original_node: "Slice", updated_node: "Slice"
-    ) -> Union["Slice", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["Slice"]:
         return updated_node
 
     @mark_no_op
     def leave_StarredDictElement(
         self, original_node: "StarredDictElement", updated_node: "StarredDictElement"
-    ) -> Union["BaseDictElement", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseDictElement", RemovalSentinel]:
         return updated_node
 
     @mark_no_op
     def leave_StarredElement(
         self, original_node: "StarredElement", updated_node: "StarredElement"
-    ) -> Union["BaseElement", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseElement", RemovalSentinel]:
         return updated_node
 
     @mark_no_op
     def leave_Subscript(
         self, original_node: "Subscript", updated_node: "Subscript"
-    ) -> Union["BaseExpression", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseExpression"]:
         return updated_node
 
     @mark_no_op
     def leave_Subtract(
         self, original_node: "Subtract", updated_node: "Subtract"
-    ) -> Union["BaseBinaryOp", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseBinaryOp"]:
         return updated_node
 
     @mark_no_op
     def leave_SubtractAssign(
         self, original_node: "SubtractAssign", updated_node: "SubtractAssign"
-    ) -> Union["BaseAugOp", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseAugOp"]:
         return updated_node
 
     @mark_no_op
     def leave_TrailingWhitespace(
         self, original_node: "TrailingWhitespace", updated_node: "TrailingWhitespace"
-    ) -> Union["TrailingWhitespace", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["TrailingWhitespace"]:
         return updated_node
 
     @mark_no_op
     def leave_Try(
         self, original_node: "Try", updated_node: "Try"
-    ) -> Union["BaseStatement", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseStatement", RemovalSentinel]:
         return updated_node
 
     @mark_no_op
     def leave_Tuple(
         self, original_node: "Tuple", updated_node: "Tuple"
-    ) -> Union["BaseExpression", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseExpression"]:
         return updated_node
 
     @mark_no_op
     def leave_UnaryOperation(
         self, original_node: "UnaryOperation", updated_node: "UnaryOperation"
-    ) -> Union["BaseExpression", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseExpression"]:
         return updated_node
 
     @mark_no_op
     def leave_While(
         self, original_node: "While", updated_node: "While"
-    ) -> Union["BaseStatement", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseStatement", RemovalSentinel]:
         return updated_node
 
     @mark_no_op
     def leave_With(
         self, original_node: "With", updated_node: "With"
-    ) -> Union["BaseStatement", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseStatement", RemovalSentinel]:
         return updated_node
 
     @mark_no_op
     def leave_WithItem(
         self, original_node: "WithItem", updated_node: "WithItem"
-    ) -> Union["WithItem", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["WithItem", RemovalSentinel]:
         return updated_node
 
     @mark_no_op
     def leave_Yield(
         self, original_node: "Yield", updated_node: "Yield"
-    ) -> Union["BaseExpression", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseExpression"]:
         return updated_node

@@ -6,7 +6,9 @@
 # pyre-strict
 import inspect
 from collections import defaultdict
-from typing import Dict, Generator, List, Mapping, Sequence, Set, Type
+from collections.abc import Sequence as ABCSequence
+from dataclasses import dataclass, fields, replace
+from typing import Dict, Generator, List, Mapping, Sequence, Set, Type, Union
 
 import libcst as cst
 
@@ -52,6 +54,83 @@ nodebases: Dict[Type[cst.CSTNode], Type[cst.CSTNode]] = {}
 for node in all_libcst_nodes:
     # Find the most generic version of this node that isn't CSTNode.
     nodebases[node] = _get_most_generic_base_for_node(node)
+
+
+@dataclass(frozen=True)
+class Usage:
+    maybe: bool = False
+    optional: bool = False
+    sequence: bool = False
+
+
+nodeuses: Dict[Type[cst.CSTNode], Usage] = {node: Usage() for node in all_libcst_nodes}
+
+
+def _is_maybe(typeobj: object) -> bool:
+    try:
+        # pyre-ignore We wrap this in a TypeError check so this is safe
+        return issubclass(typeobj, cst.MaybeSentinel)
+    except TypeError:
+        return False
+
+
+def _get_origin(typeobj: object) -> object:
+    try:
+        # pyre-ignore We wrap this in a AttributeError check so this is safe
+        return typeobj.__origin__
+    except AttributeError:
+        # Don't care, not a union or sequence
+        return None
+
+
+def _get_args(typeobj: object) -> List[object]:
+    try:
+        # pyre-ignore We wrap this in a AttributeError check so this is safe
+        return typeobj.__args__
+    except AttributeError:
+        # Don't care, not a union or sequence
+        return []
+
+
+def _is_sequence(typeobj: object) -> bool:
+    origin = _get_origin(typeobj)
+    # pyre-ignore Pyre doesn't know about collections.abc.Sequence
+    return origin is Sequence or origin is ABCSequence
+
+
+def _is_union(typeobj: object) -> bool:
+    return _get_origin(typeobj) is Union
+
+
+def _calc_node_usage(typeobj: object) -> None:
+    if _is_union(typeobj):
+        has_maybe = any(_is_maybe(n) for n in _get_args(typeobj))
+        has_none = any(isinstance(n, type(None)) for n in _get_args(typeobj))
+
+        for node in _get_args(typeobj):
+            if node in all_libcst_nodes:
+                nodeuses[node] = replace(
+                    nodeuses[node],
+                    maybe=nodeuses[node].maybe or has_maybe,
+                    optional=nodeuses[node].optional or has_none,
+                )
+            else:
+                _calc_node_usage(node)
+
+    if _is_sequence(typeobj):
+        for node in _get_args(typeobj):
+            if node in all_libcst_nodes:
+                nodeuses[node] = replace(nodeuses[node], sequence=True)
+            else:
+                _calc_node_usage(node)
+
+
+for node in all_libcst_nodes:
+    for field in fields(node) or []:
+        if field.name == "_metadata":
+            continue
+
+        _calc_node_usage(field.type)
 
 
 imports: Mapping[str, Set[str]] = defaultdict(set)
@@ -129,8 +208,20 @@ for node in sorted(nodebases.keys(), key=lambda node: node.__name__):
         continue
     generated_code.append("")
     generated_code.append("    @mark_no_op")
+    valid_return_types: List[str] = [f'"{nodebases[node].__name__}"']
+    node_uses = nodeuses[node]
+    base_uses = nodeuses[nodebases[node]]
+    if node_uses.maybe or base_uses.maybe:
+        valid_return_types.append("MaybeSentinel")
+    if (
+        node_uses.optional
+        or node_uses.sequence
+        or base_uses.optional
+        or base_uses.sequence
+    ):
+        valid_return_types.append("RemovalSentinel")
     generated_code.append(
-        f'    def leave_{name}(self, original_node: "{name}", updated_node: "{name}") -> Union["{nodebases[node].__name__}", MaybeSentinel, RemovalSentinel]:'
+        f'    def leave_{name}(self, original_node: "{name}", updated_node: "{name}") -> Union[{", ".join(valid_return_types)}]:'
     )
     generated_code.append("        return updated_node")
 
