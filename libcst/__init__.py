@@ -191,6 +191,10 @@ from libcst.metadata.base_provider import (
     VisitorMetadataProvider,
 )
 from libcst.metadata.dependent import MetadataDependent
+from libcst.metadata.expression_context_provider import (
+    ExpressionContext,
+    ExpressionContextProvider,
+)
 from libcst.metadata.position_provider import (
     BasicPositionProvider,
     SyntacticPositionProvider,
@@ -388,4 +392,6 @@ __all__ = [
     "BasicPositionProvider",
     "SyntacticPositionProvider",
     "MetadataWrapper",
+    "ExpressionContext",
+    "ExpressionContextProvider",
 ]

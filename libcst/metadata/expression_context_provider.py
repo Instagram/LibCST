@@ -13,8 +13,40 @@ from libcst.metadata.base_provider import BatchableMetadataProvider
 
 
 class ExpressionContext(Enum):
+    #: Load the value of a variable reference.
+    #:
+    #: >>> libcst.MetadataWrapper(libcst.parse_module("a")).resolve(libcst.ExpressionContextProvider)
+    #: mappingproxy({Name(
+    #:                   value='a',
+    #:                   lpar=[],
+    #:                   rpar=[],
+    #:               ): <ExpressionContext.LOAD: 1>})
     LOAD = auto()
+
+    #: Store a value to a variable reference by :class:`~libcst.Assign` (``=``),
+    #: :class:`~libcst.AugAssign` (e.g. ``+=``, ``-=``, etc), or
+    #: :class:`~libcst.AnnAssign`.
+    #:
+    #: >>> libcst.MetadataWrapper(libcst.parse_module("a = b")).resolve(libcst.ExpressionContextProvider)
+    #: mappingproxy({Name(
+    #:               value='a',
+    #:               lpar=[],
+    #:               rpar=[],
+    #:           ): <ExpressionContext.STORE: 2>, Name(
+    #:               value='b',
+    #:               lpar=[],
+    #:               rpar=[],
+    #:           ): <ExpressionContext.LOAD: 1>})
     STORE = auto()
+
+    #: Delete value of a variable reference by ``del``.
+    #:
+    #: >>> libcst.MetadataWrapper(libcst.parse_module("del a")).resolve(libcst.ExpressionContextProvider)
+    #: mappingproxy({Name(
+    #:                   value='a',
+    #:                   lpar=[],
+    #:                   rpar=[],
+    #:               ): < ExpressionContext.DEL: 3 >})
     DEL = auto()
 
 
@@ -22,7 +54,6 @@ NODE_TYPES_HAVE_CONTEXT = {
     cst.Attribute,
     cst.Subscript,
     cst.StarredElement,
-    cst.StarredDictElement,
     cst.Name,
     cst.List,
     cst.Tuple,
@@ -30,12 +61,37 @@ NODE_TYPES_HAVE_CONTEXT = {
 
 
 class ExpressionContextProvider(BatchableMetadataProvider[Optional[ExpressionContext]]):
+    """
+    Generate :class:`ExpressionContext` metadata for the following node types:
+    :class:`~libcst.Attribute`, :class:`~libcst.Subscript`,
+    :class:`~libcst.StarredElement` , :class:`~libcst.Name`, :class:`~libcst.List`,
+    :class:`~libcst.Tuple`. The provided context mimics the `expr_context
+    <https://docs.python.org/3/library/ast.html>`__ in ast.
+
+    Three context types :attr:`ExpressionContext.STORE`,
+    :attr:`ExpressionContext.LOAD` and :attr:`ExpressionContext.DEL` are provided.
+    """
+
     def __init__(self) -> None:
         super().__init__()
 
+    def _check_type_and_set_metadata(
+        self, node: cst.CSTNode, context: Optional[ExpressionContext]
+    ) -> None:
+        if context is not None and any(
+            isinstance(node, node_type) for node_type in NODE_TYPES_HAVE_CONTEXT
+        ):
+            self.set_metadata(node, context)
+
     def visit_Assign(self, node: cst.Assign) -> None:
         for target in node.targets:
-            self.set_metadata(target.target, ExpressionContext.STORE)
+            self._check_type_and_set_metadata(target.target, ExpressionContext.STORE)
+
+    def visit_AnnAssign(self, node: cst.AnnAssign) -> None:
+        self._check_type_and_set_metadata(node.target, ExpressionContext.STORE)
+
+    def visit_AugAssign(self, node: cst.AugAssign) -> None:
+        self._check_type_and_set_metadata(node.target, ExpressionContext.STORE)
 
     def visit_Del(self, node: cst.Del) -> None:
         self.set_metadata(node.target, ExpressionContext.DEL)
@@ -46,12 +102,11 @@ class ExpressionContextProvider(BatchableMetadataProvider[Optional[ExpressionCon
 
     def leave_Attribute(self, node: cst.Attribute) -> None:
         self._set_metadata_as_load_if_not_set(node)
-        self.set_metadata(node.attr, self.get_metadata(ExpressionContextProvider, node))
+        self._check_type_and_set_metadata(
+            node.attr, self.get_metadata(ExpressionContextProvider, node)
+        )
 
     def leave_Subscript(self, node: cst.Subscript) -> None:
-        self._set_metadata_as_load_if_not_set(node)
-
-    def leave_StarredDictElement(self, node: cst.StarredDictElement) -> None:
         self._set_metadata_as_load_if_not_set(node)
 
     def leave_StarredElement(self, node: cst.StarredElement) -> None:
@@ -62,14 +117,14 @@ class ExpressionContextProvider(BatchableMetadataProvider[Optional[ExpressionCon
 
     def leave_List(self, node: cst.List) -> None:
         self._set_metadata_as_load_if_not_set(node)
+        for element in node.elements:
+            self._check_type_and_set_metadata(
+                element.value, self.get_metadata(ExpressionContextProvider, node)
+            )
 
     def leave_Tuple(self, node: cst.Tuple) -> None:
         self._set_metadata_as_load_if_not_set(node)
         for element in node.elements:
-            if any(
-                isinstance(element.value, node_type)
-                for node_type in NODE_TYPES_HAVE_CONTEXT
-            ):
-                self.set_metadata(
-                    element.value, self.get_metadata(ExpressionContextProvider, node)
-                )
+            self._check_type_and_set_metadata(
+                element.value, self.get_metadata(ExpressionContextProvider, node)
+            )

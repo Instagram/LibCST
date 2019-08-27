@@ -12,6 +12,7 @@ workflows:
       - pyre
       - test-37
       - test-36
+      - test-coverage
 
 commands:
   tox:
@@ -76,6 +77,13 @@ jobs:
             - '/tmp/libcst-env/'
 
   test-37:
+    docker:
+      - image: circleci/python:3.7
+    steps:
+      - tox:
+          env: "py37"
+
+  test-coverage:
     docker:
       - image: circleci/python:3.7
     steps:

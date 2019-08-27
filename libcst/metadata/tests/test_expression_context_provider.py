@@ -5,7 +5,7 @@
 
 # pyre-strict
 
-from typing import Dict, Tuple
+from typing import Dict, Tuple, cast
 
 import libcst as cst
 from libcst import parse_module
@@ -29,8 +29,8 @@ class DependentVisitor(CSTTransformer):
         attribute_to_context: Dict[str, ExpressionContext] = {},
         subscript_to_context: Dict[str, ExpressionContext] = {},
         starred_element_to_context: Dict[str, ExpressionContext] = {},
-        tuple_to_context: Dict[Tuple[str], ExpressionContext] = {},
-        starred_dict_to_context: Dict[str, ExpressionContext] = {},
+        tuple_to_context: Dict[Tuple[str, ...], ExpressionContext] = {},
+        list_to_context: Dict[Tuple[str, ...], ExpressionContext] = {},
     ) -> None:
         self.test = test
         self.name_to_context = name_to_context
@@ -38,7 +38,7 @@ class DependentVisitor(CSTTransformer):
         self.subscript_to_context = subscript_to_context
         self.starred_element_to_context = starred_element_to_context
         self.tuple_to_context = tuple_to_context
-        self.starred_dict_to_context = starred_dict_to_context
+        self.list_to_context = list_to_context
 
     def visit_Name(self, node: cst.Name) -> None:
         self.test.assertEqual(
@@ -55,26 +55,38 @@ class DependentVisitor(CSTTransformer):
     def visit_Subscript(self, node: cst.Subscript) -> None:
         self.test.assertEqual(
             self.get_metadata(ExpressionContextProvider, node),
-            self.subscript_to_context[node.value.value],
+            # to test it easier, assuming we only use a Name as Subscript value
+            self.subscript_to_context[cast(cst.Name, node.value).value],
         )
 
     def visit_StarredElement(self, node: cst.StarredElement) -> None:
         self.test.assertEqual(
             self.get_metadata(ExpressionContextProvider, node),
-            self.starred_element_to_context[node.value.value],
+            # to test it easier, assuming we only use a Name as StarredElement value
+            self.starred_element_to_context[cast(cst.Name, node.value).value],
         )
 
     def visit_Tuple(self, node: cst.Tuple) -> None:
         self.test.assertEqual(
             self.get_metadata(ExpressionContextProvider, node),
-            self.tuple_to_context[tuple(e.value.value for e in node.elements)],
+            # to test it easier, assuming we only use Name as Tuple elements
+            self.tuple_to_context[
+                tuple(cast(cst.Name, e.value).value for e in node.elements)
+            ],
         )
 
-    def visit_StarredDictElement(self, node: cst.StarredDictElement) -> None:
+    def visit_List(self, node: cst.List) -> None:
         self.test.assertEqual(
             self.get_metadata(ExpressionContextProvider, node),
-            self.starred_dict_to_context[node.value.value],
+            # to test it easier, assuming we only use Name as List elements
+            self.list_to_context[
+                tuple(cast(cst.Name, e.value).value for e in node.elements)
+            ],
         )
+
+    def visit_Call(self, node: cst.Call) -> None:
+        with self.test.assertRaises(KeyError):
+            self.get_metadata(ExpressionContextProvider, node)
 
 
 class ExpressionContextProviderTest(UnitTest):
@@ -132,6 +144,31 @@ class ExpressionContextProviderTest(UnitTest):
             )
         )
 
+    def test_augassign(self) -> None:
+        wrapper = MetadataWrapper(parse_module("a += b"))
+        wrapper.visit(
+            DependentVisitor(
+                test=self,
+                name_to_context={
+                    "a": ExpressionContext.STORE,
+                    "b": ExpressionContext.LOAD,
+                },
+            )
+        )
+
+    def test_annassign(self) -> None:
+        wrapper = MetadataWrapper(parse_module("a: str = b"))
+        wrapper.visit(
+            DependentVisitor(
+                test=self,
+                name_to_context={
+                    "a": ExpressionContext.STORE,
+                    "b": ExpressionContext.LOAD,
+                    "str": ExpressionContext.LOAD,
+                },
+            )
+        )
+
     def test_starred_element_with_assign(self) -> None:
         wrapper = MetadataWrapper(parse_module("*a = b"))
         wrapper.visit(
@@ -177,12 +214,24 @@ class ExpressionContextProviderTest(UnitTest):
             )
         )
 
-    def test_starred_dict(self) -> None:
-        wrapper = MetadataWrapper(parse_module("{**a}"))
+    def test_list_with_assing(self) -> None:
+        wrapper = MetadataWrapper(parse_module("[a] = [b]"))
         wrapper.visit(
             DependentVisitor(
                 test=self,
-                name_to_context={"a": ExpressionContext.LOAD},
-                starred_dict_to_context={"a": ExpressionContext.LOAD},
+                name_to_context={
+                    "a": ExpressionContext.STORE,
+                    "b": ExpressionContext.LOAD,
+                },
+                list_to_context={
+                    ("a",): ExpressionContext.STORE,
+                    ("b",): ExpressionContext.LOAD,
+                },
             )
+        )
+
+    def test_invalid_type_for_context(self) -> None:
+        wrapper = MetadataWrapper(parse_module("a()"))
+        wrapper.visit(
+            DependentVisitor(test=self, name_to_context={"a": ExpressionContext.LOAD})
         )
