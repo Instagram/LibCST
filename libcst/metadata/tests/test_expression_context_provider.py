@@ -201,6 +201,19 @@ class ExpressionContextProviderTest(UnitTest):
             )
         )
 
+    def test_del_with_tuple(self) -> None:
+        wrapper = MetadataWrapper(parse_module("del a, b"))
+        wrapper.visit(
+            DependentVisitor(
+                test=self,
+                name_to_context={
+                    "a": ExpressionContext.DEL,
+                    "b": ExpressionContext.DEL,
+                },
+                tuple_to_context={("a", "b"): ExpressionContext.DEL},
+            )
+        )
+
     def test_tuple_with_assign(self) -> None:
         wrapper = MetadataWrapper(parse_module("a, = b"))
         wrapper.visit(

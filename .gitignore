@@ -12,4 +12,3 @@ docs/source/.ipynb_checkpoints/
 build/
 .coverage
 .hypothesis/
-.idea/

@@ -50,14 +50,14 @@ class ExpressionContext(Enum):
     DEL = auto()
 
 
-NODE_TYPES_HAVE_CONTEXT = {
+NODE_TYPES_HAVE_CONTEXT = (
     cst.Attribute,
     cst.Subscript,
     cst.StarredElement,
     cst.Name,
     cst.List,
     cst.Tuple,
-}
+)
 
 
 class ExpressionContextProvider(BatchableMetadataProvider[Optional[ExpressionContext]]):
@@ -78,9 +78,7 @@ class ExpressionContextProvider(BatchableMetadataProvider[Optional[ExpressionCon
     def _check_type_and_set_metadata(
         self, node: cst.CSTNode, context: Optional[ExpressionContext]
     ) -> None:
-        if context is not None and any(
-            isinstance(node, node_type) for node_type in NODE_TYPES_HAVE_CONTEXT
-        ):
+        if context is not None and isinstance(node, NODE_TYPES_HAVE_CONTEXT):
             self.set_metadata(node, context)
 
     def visit_Assign(self, node: cst.Assign) -> None:
