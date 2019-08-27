@@ -76,8 +76,8 @@ if TYPE_CHECKING:
         Assign,
         AssignTarget,
         AugAssign,
-        BaseCompoundStatement,
         BaseSmallStatement,
+        BaseStatement,
         BaseSuite,
         Break,
         ClassDef,
@@ -1484,7 +1484,7 @@ class CSTTypedTransformerFunctions(CSTTypedBaseFunctions):
     @mark_no_op
     def leave_ClassDef(
         self, original_node: "ClassDef", updated_node: "ClassDef"
-    ) -> Union["BaseCompoundStatement", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseStatement", MaybeSentinel, RemovalSentinel]:
         return updated_node
 
     @mark_no_op
@@ -1664,7 +1664,7 @@ class CSTTypedTransformerFunctions(CSTTypedBaseFunctions):
     @mark_no_op
     def leave_For(
         self, original_node: "For", updated_node: "For"
-    ) -> Union["BaseCompoundStatement", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseStatement", MaybeSentinel, RemovalSentinel]:
         return updated_node
 
     @mark_no_op
@@ -1696,7 +1696,7 @@ class CSTTypedTransformerFunctions(CSTTypedBaseFunctions):
     @mark_no_op
     def leave_FunctionDef(
         self, original_node: "FunctionDef", updated_node: "FunctionDef"
-    ) -> Union["BaseCompoundStatement", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseStatement", MaybeSentinel, RemovalSentinel]:
         return updated_node
 
     @mark_no_op
@@ -1726,7 +1726,7 @@ class CSTTypedTransformerFunctions(CSTTypedBaseFunctions):
     @mark_no_op
     def leave_If(
         self, original_node: "If", updated_node: "If"
-    ) -> Union["BaseCompoundStatement", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseStatement", MaybeSentinel, RemovalSentinel]:
         return updated_node
 
     @mark_no_op
@@ -2072,7 +2072,7 @@ class CSTTypedTransformerFunctions(CSTTypedBaseFunctions):
     @mark_no_op
     def leave_SimpleStatementLine(
         self, original_node: "SimpleStatementLine", updated_node: "SimpleStatementLine"
-    ) -> Union["SimpleStatementLine", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseStatement", MaybeSentinel, RemovalSentinel]:
         return updated_node
 
     @mark_no_op
@@ -2140,7 +2140,7 @@ class CSTTypedTransformerFunctions(CSTTypedBaseFunctions):
     @mark_no_op
     def leave_Try(
         self, original_node: "Try", updated_node: "Try"
-    ) -> Union["BaseCompoundStatement", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseStatement", MaybeSentinel, RemovalSentinel]:
         return updated_node
 
     @mark_no_op
@@ -2158,13 +2158,13 @@ class CSTTypedTransformerFunctions(CSTTypedBaseFunctions):
     @mark_no_op
     def leave_While(
         self, original_node: "While", updated_node: "While"
-    ) -> Union["BaseCompoundStatement", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseStatement", MaybeSentinel, RemovalSentinel]:
         return updated_node
 
     @mark_no_op
     def leave_With(
         self, original_node: "With", updated_node: "With"
-    ) -> Union["BaseCompoundStatement", MaybeSentinel, RemovalSentinel]:
+    ) -> Union["BaseStatement", MaybeSentinel, RemovalSentinel]:
         return updated_node
 
     @mark_no_op

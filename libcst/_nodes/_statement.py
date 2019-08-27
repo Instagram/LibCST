@@ -63,10 +63,16 @@ class BaseSuite(CSTNode, ABC):
         -- https://docs.python.org/3/reference/compound_stmts.html
     """
 
-    body: Union[
-        Sequence[Union["SimpleStatementLine", "BaseCompoundStatement"]],
-        Sequence["BaseSmallStatement"],
-    ]
+    body: Union[Sequence["BaseStatement"], Sequence["BaseSmallStatement"]]
+
+
+class BaseStatement(CSTNode, ABC):
+    """
+    A class that exists to allow for typing to specify that any statement is allowed
+    in a particular location.
+    """
+
+    pass
 
 
 class BaseSmallStatement(CSTNode, ABC):
@@ -379,7 +385,7 @@ class _BaseSimpleStatement(CSTNode, ABC):
 
 @add_slots
 @dataclass(frozen=True)
-class SimpleStatementLine(_BaseSimpleStatement):
+class SimpleStatementLine(_BaseSimpleStatement, BaseStatement):
     """
     A simple statement that's part of an IndentedBlock or Module. A simple statement is
     a series of small statements joined together by semicolons.
@@ -509,7 +515,7 @@ class Else(CSTNode):
             self.body._codegen(state)
 
 
-class BaseCompoundStatement(CSTNode, ABC):
+class BaseCompoundStatement(BaseStatement, ABC):
     """
     Encapsulates a compound statement, like ``if True: pass`` or ``while True: pass``.
     This exists to simplify type definitions and isinstance checks.
@@ -619,7 +625,7 @@ class IndentedBlock(BaseSuite):
     """
 
     #: Sequence of statements belonging to this indented block.
-    body: Sequence[Union[SimpleStatementLine, BaseCompoundStatement]]
+    body: Sequence[BaseStatement]
 
     #: Any optional trailing comment and the final ``NEWLINE`` at the end of the line.
     header: TrailingWhitespace = TrailingWhitespace()
