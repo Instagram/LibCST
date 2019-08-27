@@ -6,9 +6,9 @@
 # pyre-strict
 import os
 import os.path
-import subprocess
 
 import libcst.codegen.gen_visitor_functions as visitor_codegen
+from libcst.codegen.generate import format_file
 from libcst.testing.utils import UnitTest
 
 
@@ -25,11 +25,12 @@ class TestCodegenClean(UnitTest):
         )
         with open(new_file, "w") as fp:
             fp.write(new_code)
-        with open(os.devnull, "w") as devnull:
-            subprocess.check_call(
-                ["isort", "-y", "-q", new_file], stdout=devnull, stderr=devnull
-            )
-            subprocess.check_call(["black", new_file], stdout=devnull, stderr=devnull)
+        try:
+            format_file(new_file)
+        except Exception:
+            # We failed to format, but this is probably due to invalid code that
+            # black doesn't like. This test will still fail and report to run codegen.
+            pass
         with open(new_file, "r") as fp:
             new_code = fp.read()
         os.remove(new_file)
@@ -43,5 +44,5 @@ class TestCodegenClean(UnitTest):
 
         # Now that we've done simple codegen, verify that it matches.
         self.assertTrue(
-            old_code == new_code, "libcst._typed_visitor needs to new codegen!"
+            old_code == new_code, "libcst._typed_visitor needs new codegen!"
         )
