@@ -32,9 +32,13 @@ def _parse(
     config: PartialParserConfig,
     *,
     detect_trailing_newline: bool,
+    detect_default_newline: bool,
 ) -> CSTNode:
     detection_result = detect_config(
-        source, partial=config, detect_trailing_newline=detect_trailing_newline
+        source,
+        partial=config,
+        detect_trailing_newline=detect_trailing_newline,
+        detect_default_newline=detect_default_newline,
     )
     validate_grammar()
     grammar = get_grammar()
@@ -66,7 +70,13 @@ def parse_module(
     bytes you access the serialized code using :class:`~libcst.Module`'s bytes
     attribute.
     """
-    result = _parse("file_input", source, config, detect_trailing_newline=True)
+    result = _parse(
+        "file_input",
+        source,
+        config,
+        detect_trailing_newline=True,
+        detect_default_newline=True,
+    )
     assert isinstance(result, Module)
     return result
 
@@ -83,7 +93,13 @@ def parse_statement(
     (there's nowhere to store it on the statement node).
     """
     # use detect_trailing_newline to insert a newline
-    result = _parse("stmt_input", source, config, detect_trailing_newline=True)
+    result = _parse(
+        "stmt_input",
+        source,
+        config,
+        detect_trailing_newline=True,
+        detect_default_newline=False,
+    )
     assert isinstance(result, (SimpleStatementLine, BaseCompoundStatement))
     return result
 
@@ -95,6 +111,12 @@ def parse_expression(
     Accepts an expression on a single line. Leading and trailing whitespace is not
     valid (there's nowhere to store it on the expression node).
     """
-    result = _parse("expression_input", source, config, detect_trailing_newline=False)
+    result = _parse(
+        "expression_input",
+        source,
+        config,
+        detect_trailing_newline=False,
+        detect_default_newline=False,
+    )
     assert isinstance(result, BaseExpression)
     return result

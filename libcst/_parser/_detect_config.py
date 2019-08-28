@@ -74,6 +74,7 @@ def detect_config(
     *,
     partial: PartialParserConfig,
     detect_trailing_newline: bool,
+    detect_default_newline: bool,
 ) -> ConfigDetectionResult:
     """
     Computes a ParserConfig given the current source code to be parsed and a partial
@@ -93,7 +94,11 @@ def detect_config(
 
     partial_default_newline = partial.default_newline
     default_newline = (
-        _detect_default_newline(source_str)
+        (
+            _detect_default_newline(source_str)
+            if detect_default_newline
+            else _FALLBACK_DEFAULT_NEWLINE
+        )
         if isinstance(partial_default_newline, AutoConfig)
         else partial_default_newline
     )
