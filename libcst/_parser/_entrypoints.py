@@ -63,10 +63,10 @@ def parse_module(
     Accepts an entire python module, including all leading and trailing whitespace.
 
     If source is ``bytes``, the encoding will be inferred and preserved. If
-    the source is a ``string``, we will default to assuming UTF-8 if the module
-    is rendered back out as bytes. It is recommended that when calling
-    :func:`~libcst.parse_module` with a string you access the serialized code
-    using :class:`~libcst.Module`'s code attribute, and when calling it with
+    the source is a ``string``, we will default to assuming UTF-8 encoding if the
+    module is rendered back out to source as bytes. It is recommended that when
+    calling :func:`~libcst.parse_module` with a string you access the serialized
+    code using :class:`~libcst.Module`'s code attribute, and when calling it with
     bytes you access the serialized code using :class:`~libcst.Module`'s bytes
     attribute.
     """
@@ -86,11 +86,17 @@ def parse_statement(
 ) -> Union[SimpleStatementLine, BaseCompoundStatement]:
     """
     Accepts a statement followed by a trailing newline. If a trailing newline is not
-    provided, one will be added.
+    provided, one will be added. :func:`parse_statement` is provided mainly as a
+    convenience function to generate semi-complex trees from code snippetes. If you
+    need to represent a statement exactly, including all leading/trailing comments,
+    you should instead use :func:`parse_module`.
 
     Leading comments and trailing comments (on the same line) are accepted, but
     whitespace (or anything else) after the statement's trailing newline is not valid
-    (there's nowhere to store it on the statement node).
+    (there's nowhere to store it on the statement node). Note that since there is
+    nowhere to store leading and trailing comments/empty lines, code rendered out
+    from a parsed statement using ``cst.Module([]).code_for_node(statement)`` will
+    not include leading/trailing comments.
     """
     # use detect_trailing_newline to insert a newline
     result = _parse(
@@ -110,6 +116,10 @@ def parse_expression(
     """
     Accepts an expression on a single line. Leading and trailing whitespace is not
     valid (there's nowhere to store it on the expression node).
+    :func:`parse_expression` is provided mainly as a convenience function to generate
+    semi-complex trees from code snippets. If you need to represent an expression
+    exactly, including all leading/trailing comments, you should instead use
+    :func:`parse_module`.
     """
     result = _parse(
         "expression_input",
