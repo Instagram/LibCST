@@ -153,9 +153,13 @@ def _parse_empty_line(
     speculative_state = State(
         state.line, state.column, state.absolute_indent, state.is_parenthesized
     )
-    indent = _parse_indent(
-        config, speculative_state, override_absolute_indent=override_absolute_indent
-    )
+    try:
+        indent = _parse_indent(
+            config, speculative_state, override_absolute_indent=override_absolute_indent
+        )
+    except Exception:
+        # We aren't on a new line, speculative parsing failed
+        return None
     whitespace = parse_simple_whitespace(config, speculative_state)
     comment = _parse_comment(config, speculative_state)
     newline = _parse_newline(config, speculative_state)
