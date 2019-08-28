@@ -13,6 +13,9 @@ from libcst.metadata.base_provider import BatchableMetadataProvider
 
 
 class ExpressionContext(Enum):
+    """Used in :class:`ExpressionContextProvider` to represent context of a variable
+    reference. """
+
     #: Load the value of a variable reference.
     #:
     #: >>> libcst.MetadataWrapper(libcst.parse_module("a")).resolve(libcst.ExpressionContextProvider)
