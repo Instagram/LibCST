@@ -11,6 +11,7 @@ For Hypothesis documentation, see https://hypothesis.readthedocs.io/
 For my Python code generator, see https://pypi.org/project/hypothesmith/
 """
 
+import ast
 import os
 import unittest
 from datetime import timedelta
@@ -26,8 +27,11 @@ import libcst
 hypothesis.settings.register_profile(
     name="settings-for-unit-tests",
     print_blob=True,
-    deadline=timedelta(seconds=10),
-    suppress_health_check=[hypothesis.HealthCheck.too_slow],
+    deadline=timedelta(seconds=60),
+    suppress_health_check=[
+        hypothesis.HealthCheck.too_slow,
+        hypothesis.HealthCheck.filter_too_much,
+    ],
 )
 hypothesis.settings.load_profile("settings-for-unit-tests")
 # When the test settings stop finding new bugs, you can run `python test_fuzz.py`
@@ -37,7 +41,7 @@ hypothesis.settings.load_profile("settings-for-unit-tests")
 hypothesis.settings.register_profile(
     name="settings-for-fuzzing",
     parent=hypothesis.settings.get_profile("settings-for-unit-tests"),
-    max_examples=100_000,
+    max_examples=1_000_000,
     phases=(hypothesis.Phase.generate, hypothesis.Phase.shrink),
 )
 
@@ -82,12 +86,10 @@ class FuzzTest(unittest.TestCase):
         and the libCST parse function, but codegen is as for statements.
         """
         self.reject_invalid_code(source_code, mode="eval")
-        try:
-            tree = libcst.parse_expression(source_code)
-        except Exception:
-            hypothesis.reject()
-        else:
-            self.assertEqual(source_code, libcst.Module([]).code_for_node(tree))
+        tree = libcst.parse_expression(source_code)
+        self.verify_identical_asts(
+            source_code, libcst.Module([]).code_for_node(tree), mode="eval"
+        )
 
     @unittest.skipUnless(
         bool(os.environ.get("HYPOTHESIS", False)), "Hypothesis not requested"
@@ -104,12 +106,19 @@ class FuzzTest(unittest.TestCase):
         the libCST parse function, and the codegen method.
         """
         self.reject_invalid_code(source_code, mode="single")
-        try:
-            tree = libcst.parse_statement(source_code)
-        except Exception:
-            hypothesis.reject()
-        else:
-            self.assertEqual(source_code, libcst.Module([]).code_for_node(tree))
+        tree = libcst.parse_statement(source_code)
+        self.verify_identical_asts(
+            source_code, libcst.Module([]).code_for_node(tree), mode="single"
+        )
+
+    def verify_identical_asts(
+        self, original_code: str, rendered_code: str, mode: str
+    ) -> None:
+        assert mode in {"eval", "exec", "single"}
+        self.assertEqual(
+            ast.dump(ast.parse(original_code, mode=mode)),
+            ast.dump(ast.parse(rendered_code, mode=mode)),
+        )
 
     @staticmethod
     def reject_invalid_code(source_code: str, mode: str) -> None:
@@ -123,9 +132,9 @@ class FuzzTest(unittest.TestCase):
             compile(source_code, "<string>", mode)
         except Exception:
             # We're going to check here that libCST also rejects this string.
-            # If so it's a test failure; if not we reject this input so Hypothesis
-            # spends as little time as possible exploring invalid code.
-            # (usually I'd use a custom mutator, but this is free so...)
+            # If libCST parses it's a test failure; if not we reject this input
+            # so Hypothesis spends as little time as possible exploring invalid
+            # code. (usually I'd use a custom mutator, but this is free so...)
             parser = dict(
                 eval=libcst.parse_expression,
                 exec=libcst.parse_module,
