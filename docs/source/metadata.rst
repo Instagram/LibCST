@@ -1,7 +1,12 @@
 .. _libcst-metadata:
 
+========
 Metadata
 ========
+
+-------------
+Metadata APIs
+-------------
 
 LibCST ships with a metadata interface that defines a standardized way to
 associate nodes in a CST with arbitrary metadata while maintaining the immutability
@@ -57,6 +62,10 @@ your provider does not use the visitor pattern for computing metadata for a tree
 .. autoclass:: libcst.VisitorMetadataProvider
 
 .. _libcst-metadata-position:
+
+------------------
+Metadata Providers
+------------------
 
 Position Metadata
 -----------------
