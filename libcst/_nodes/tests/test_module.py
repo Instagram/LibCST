@@ -7,7 +7,7 @@
 from typing import Tuple, cast
 
 import libcst as cst
-from libcst import CodeRange, parse_module
+from libcst import CodeRange, parse_module, parse_statement
 from libcst._nodes.tests.base import CSTNodeTest
 from libcst.metadata.position_provider import SyntacticPositionProvider
 from libcst.testing.utils import data_provider
@@ -186,3 +186,24 @@ class ModuleTest(CSTNodeTest):
         self.cmp_position(provider._computed[stmt], (1, 0), (2, 5))
         self.cmp_position(provider._computed[expr], (1, 0), (2, 5))
         self.cmp_position(provider._computed[string], (1, 0), (2, 5))
+
+    def test_module_config_for_parsing(self) -> None:
+        module = parse_module("pass\r")
+        statement = parse_statement(
+            "if True:\r    pass", config=module.config_for_parsing
+        )
+        self.assertEqual(
+            statement,
+            cst.If(
+                test=cst.Name(value="True"),
+                body=cst.IndentedBlock(
+                    body=[cst.SimpleStatementLine(body=[cst.Pass()])],
+                    header=cst.TrailingWhitespace(
+                        newline=cst.Newline(
+                            # This would be "\r" if we didn't pass the module config forward.
+                            value=None
+                        )
+                    ),
+                ),
+            ),
+        )
