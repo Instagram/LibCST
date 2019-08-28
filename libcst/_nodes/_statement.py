@@ -1107,11 +1107,17 @@ class ImportFrom(BaseSmallStatement):
                 )
 
     def _validate_whitespace(self) -> None:
-        if self.whitespace_after_from.empty:
+        if self.whitespace_after_from.empty and not self.relative:
             raise CSTValidationError("Must have at least one space after from.")
-        if self.whitespace_before_import.empty:
+        if self.whitespace_before_import.empty and not (
+            self.relative and self.module is None
+        ):
             raise CSTValidationError("Must have at least one space before import.")
-        if self.whitespace_after_import.empty and self.lpar is None:
+        if (
+            self.whitespace_after_import.empty
+            and self.lpar is None
+            and not isinstance(self.names, ImportStar)
+        ):
             raise CSTValidationError("Must have at least one space after import.")
 
     def _validate(self) -> None:
