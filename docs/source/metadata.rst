@@ -73,3 +73,11 @@ interface will return a :class:`~libcst.CodeRange` object. See
 
 .. autoclass:: libcst.CodeRange
 .. autoclass:: libcst.CodePosition
+
+
+Expression Context Metadata
+---------------------------
+.. autoclass:: libcst.ExpressionContextProvider
+   :no-undoc-members:
+
+.. autoclass:: libcst.ExpressionContext
