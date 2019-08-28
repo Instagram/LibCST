@@ -18,6 +18,7 @@ class TestDetectConfig(UnitTest):
                 "source": b"",
                 "partial": PartialParserConfig(),
                 "detect_trailing_newline": True,
+                "detect_default_newline": True,
                 "expected_config": ParserConfig(
                     lines=["\n", ""],
                     encoding="utf-8",
@@ -30,8 +31,22 @@ class TestDetectConfig(UnitTest):
                 "source": b"",
                 "partial": PartialParserConfig(),
                 "detect_trailing_newline": False,
+                "detect_default_newline": True,
                 "expected_config": ParserConfig(
                     lines=[""],  # the trailing newline isn't inserted
+                    encoding="utf-8",
+                    default_indent="    ",
+                    default_newline="\n",
+                    has_trailing_newline=False,
+                ),
+            },
+            "detect_default_newline_disabled": {
+                "source": b"pass\r",
+                "partial": PartialParserConfig(),
+                "detect_trailing_newline": False,
+                "detect_default_newline": False,
+                "expected_config": ParserConfig(
+                    lines=["pass\r", ""],  # the trailing newline isn't inserted
                     encoding="utf-8",
                     default_indent="    ",
                     default_newline="\n",
@@ -42,6 +57,7 @@ class TestDetectConfig(UnitTest):
                 "source": b"first_line\r\n\nsomething\n",
                 "partial": PartialParserConfig(),
                 "detect_trailing_newline": True,
+                "detect_default_newline": True,
                 "expected_config": ParserConfig(
                     lines=["first_line\r\n", "\n", "something\n", ""],
                     encoding="utf-8",
@@ -54,6 +70,7 @@ class TestDetectConfig(UnitTest):
                 "source": b"first_line\r\nsecond_line\r\n",
                 "partial": PartialParserConfig(default_newline="\n"),
                 "detect_trailing_newline": True,
+                "detect_default_newline": True,
                 "expected_config": ParserConfig(
                     lines=["first_line\r\n", "second_line\r\n", ""],
                     encoding="utf-8",
@@ -66,6 +83,7 @@ class TestDetectConfig(UnitTest):
                 "source": b"if test:\n\t  something\n",
                 "partial": PartialParserConfig(),
                 "detect_trailing_newline": True,
+                "detect_default_newline": True,
                 "expected_config": ParserConfig(
                     lines=["if test:\n", "\t  something\n", ""],
                     encoding="utf-8",
@@ -78,6 +96,7 @@ class TestDetectConfig(UnitTest):
                 "source": b"if test:\n\t  something\n",
                 "partial": PartialParserConfig(default_indent="      "),
                 "detect_trailing_newline": True,
+                "detect_default_newline": True,
                 "expected_config": ParserConfig(
                     lines=["if test:\n", "\t  something\n", ""],
                     encoding="utf-8",
@@ -90,6 +109,7 @@ class TestDetectConfig(UnitTest):
                 "source": b"#!/usr/bin/python3\n# -*- coding: latin-1 -*-\npass\n",
                 "partial": PartialParserConfig(),
                 "detect_trailing_newline": True,
+                "detect_default_newline": True,
                 "expected_config": ParserConfig(
                     lines=[
                         "#!/usr/bin/python3\n",
@@ -107,6 +127,7 @@ class TestDetectConfig(UnitTest):
                 "source": b"#!/usr/bin/python3\n# -*- coding: latin-1 -*-\npass\n",
                 "partial": PartialParserConfig(encoding="us-ascii"),
                 "detect_trailing_newline": True,
+                "detect_default_newline": True,
                 "expected_config": ParserConfig(
                     lines=[
                         "#!/usr/bin/python3\n",
@@ -124,6 +145,7 @@ class TestDetectConfig(UnitTest):
                 "source": "#!/usr/bin/python3\n# -*- coding: latin-1 -*-\npass\n",
                 "partial": PartialParserConfig(),
                 "detect_trailing_newline": True,
+                "detect_default_newline": True,
                 "expected_config": ParserConfig(
                     lines=[
                         "#!/usr/bin/python3\n",
@@ -141,6 +163,7 @@ class TestDetectConfig(UnitTest):
                 "source": b"\xff\xfet\x00e\x00s\x00t\x00",
                 "partial": PartialParserConfig(encoding="utf-16"),
                 "detect_trailing_newline": True,
+                "detect_default_newline": True,
                 "expected_config": ParserConfig(
                     lines=["test\n", ""],
                     encoding="utf-16",
@@ -157,11 +180,15 @@ class TestDetectConfig(UnitTest):
         source: Union[str, bytes],
         partial: PartialParserConfig,
         detect_trailing_newline: bool,
+        detect_default_newline: bool,
         expected_config: ParserConfig,
     ) -> None:
         self.assertEqual(
             detect_config(
-                source, partial=partial, detect_trailing_newline=detect_trailing_newline
+                source,
+                partial=partial,
+                detect_trailing_newline=detect_trailing_newline,
+                detect_default_newline=detect_default_newline,
             ).config,
             expected_config,
         )
