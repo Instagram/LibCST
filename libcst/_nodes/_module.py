@@ -29,6 +29,9 @@ if TYPE_CHECKING:
         PositionProvider,
     )
 
+    # This is circular, so import the type only in type checking
+    from libcst._parser._types.config import PartialParserConfig
+
 
 _ModuleSelfT = TypeVar("_ModuleSelfT", bound="Module")
 
@@ -171,3 +174,25 @@ class Module(CSTNode):
         node._codegen(state)
 
         return "".join(state.tokens)
+
+    @property
+    def config_for_parsing(self) -> "PartialParserConfig":
+        """
+        Generates a parser config appropriate for passing to a :func:`parse_expression`
+        or :func:`parse_statement` call. This is useful when using either parser
+        function to generate code from a string template. By using a generated parser
+        config instead of the default, you can guarantee that trees generated from
+        both statement and expression strings have the same inferred defaults for things
+        like newlines, indents and similar::
+
+            module = cst.parse_module("pass\\n")
+            expression = cst.parse_expression("1 + 2", config=module.config_for_parsing)
+        """
+
+        from libcst._parser._types.config import PartialParserConfig
+
+        return PartialParserConfig(
+            encoding=self.encoding,
+            default_indent=self.default_indent,
+            default_newline=self.default_newline,
+        )
