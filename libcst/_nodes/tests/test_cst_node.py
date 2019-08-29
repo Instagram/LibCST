@@ -5,15 +5,15 @@
 
 # pyre-strict
 from textwrap import dedent
-from typing import TypeVar, Union
+from typing import Union
 
 import libcst as cst
 from libcst._removal_sentinel import RemovalSentinel
+from libcst._types import CSTNodeT
 from libcst._visitors import CSTTransformer
 from libcst.testing.utils import UnitTest, data_provider, none_throws
 
 
-_CSTNodeT = TypeVar("_CSTNodeT", bound="cst.CSTNode")
 _EMPTY_SIMPLE_WHITESPACE = cst.SimpleWhitespace("")
 
 
@@ -38,8 +38,8 @@ class _TestVisitor(CSTTransformer):
         return True
 
     def on_leave(
-        self, original_node: _CSTNodeT, updated_node: _CSTNodeT
-    ) -> Union[_CSTNodeT, RemovalSentinel]:
+        self, original_node: CSTNodeT, updated_node: CSTNodeT
+    ) -> Union[CSTNodeT, RemovalSentinel]:
         self.test.assertTrue(original_node.deep_equals(updated_node))
         # Don't allow type checkers to accidentally refine our return type.
         return_node = updated_node

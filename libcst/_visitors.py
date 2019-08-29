@@ -4,10 +4,11 @@
 # LICENSE file in the root directory of this source tree.
 
 # pyre-strict
-from typing import TYPE_CHECKING, TypeVar, Union
+from typing import TYPE_CHECKING, Union
 
 from libcst._removal_sentinel import RemovalSentinel
 from libcst._typed_visitor import CSTTypedTransformerFunctions, CSTTypedVisitorFunctions
+from libcst._types import CSTNodeT
 from libcst.metadata.dependent import MetadataDependent
 
 
@@ -17,7 +18,6 @@ if TYPE_CHECKING:
 
 
 CSTVisitorT = Union["CSTTransformer", "CSTVisitor"]
-CSTNodeT = TypeVar("CSTNodeT", bound="CSTNode")
 
 
 class CSTTransformer(CSTTypedTransformerFunctions, MetadataDependent):
