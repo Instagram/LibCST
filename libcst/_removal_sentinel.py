@@ -20,7 +20,8 @@ class RemovalSentinel(Enum):
 
     The parent node should make a best-effort to remove the child, but may raise an
     exception when removing the child doesn't make sense, or could change the semantics
-    in an unexpected way. E.g. a function with no name doesn't make sense.
+    in an unexpected way. For example, a function definition with no name doesn't make
+    sense, but removing one of the arguments is valid.
 
     In we can't automatically remove the child, the developer should instead remove the
     child by constructing a new parent in the parent's :meth:`~CSTTransformer.on_leave`
