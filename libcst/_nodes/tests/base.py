@@ -7,17 +7,15 @@
 import dataclasses
 from contextlib import ExitStack
 from dataclasses import dataclass
-from typing import Any, Callable, Iterable, List, Optional, Sequence, Type, TypeVar
+from typing import Any, Callable, Iterable, List, Optional, Sequence, Type
 from unittest.mock import patch
 
 import libcst as cst
 from libcst._nodes._internal import CodegenState, CodeRange, visit_required
+from libcst._types import CSTNodeT
 from libcst._visitors import CSTTransformer, CSTVisitorT
 from libcst.metadata.position_provider import SyntacticPositionProvider
 from libcst.testing.utils import UnitTest
-
-
-_CSTNodeT = TypeVar("_CSTNodeT", bound="cst.CSTNode")
 
 
 @dataclass(frozen=True)
@@ -56,9 +54,9 @@ class CSTNodeTest(UnitTest):
 
     def validate_node(
         self,
-        node: _CSTNodeT,
+        node: CSTNodeT,
         code: str,
-        parser: Optional[Callable[[str], _CSTNodeT]] = None,
+        parser: Optional[Callable[[str], CSTNodeT]] = None,
         expected_position: Optional[CodeRange] = None,
     ) -> None:
         node.validate_types_deep()
@@ -141,7 +139,7 @@ class CSTNodeTest(UnitTest):
         def _get_codegen_override(
             target: _CSTCodegenPatchTarget
         ) -> Callable[..., None]:
-            def _codegen_impl(self: _CSTNodeT, *args: Any, **kwargs: Any) -> None:
+            def _codegen_impl(self: CSTNodeT, *args: Any, **kwargs: Any) -> None:
                 should_pop = False
                 # Don't stick duplicates in the stack. This is needed so that we don't
                 # track calls to `super()._codegen()`.

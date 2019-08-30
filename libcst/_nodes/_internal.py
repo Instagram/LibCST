@@ -17,7 +17,6 @@ from typing import (
     Pattern,
     Sequence,
     Tuple,
-    TypeVar,
     Union,
     cast,
     overload,
@@ -26,6 +25,7 @@ from typing import (
 from libcst._add_slots import add_slots
 from libcst._maybe_sentinel import MaybeSentinel
 from libcst._removal_sentinel import RemovalSentinel
+from libcst._types import CSTNodeT
 
 
 if TYPE_CHECKING:
@@ -39,7 +39,6 @@ if TYPE_CHECKING:
     )
 
 
-_CSTNodeT = TypeVar("_CSTNodeT", bound="CSTNode")
 _CodePositionT = Union[Tuple[int, int], "CodePosition"]
 
 
@@ -110,16 +109,16 @@ class CodegenState:
     def add_token(self, value: str) -> None:
         self.tokens.append(value)
 
-    def record_position(self, node: _CSTNodeT, position: CodeRange) -> None:
+    def record_position(self, node: CSTNodeT, position: CodeRange) -> None:
         pass
 
     @contextmanager
     def record_syntactic_position(
         self,
-        node: _CSTNodeT,
+        node: CSTNodeT,
         *,
-        start_node: Optional[_CSTNodeT] = None,
-        end_node: Optional[_CSTNodeT] = None,
+        start_node: Optional[CSTNodeT] = None,
+        end_node: Optional[CSTNodeT] = None,
     ) -> Iterator[None]:
         yield
 
@@ -154,7 +153,7 @@ class BasicCodegenState(CodegenState):
             # newline resets column back to 0, but a trailing token may shift column
             self.column = len(segments[-1])
 
-    def record_position(self, node: _CSTNodeT, position: CodeRange) -> None:
+    def record_position(self, node: CSTNodeT, position: CodeRange) -> None:
         # Don't overwrite existing position information
         # (i.e. semantic position has already been recorded)
         if node not in self.provider._computed:
@@ -169,10 +168,10 @@ class SyntacticCodegenState(BasicCodegenState):
     @contextmanager
     def record_syntactic_position(
         self,
-        node: _CSTNodeT,
+        node: CSTNodeT,
         *,
-        start_node: Optional[_CSTNodeT] = None,
-        end_node: Optional[_CSTNodeT] = None,
+        start_node: Optional[CSTNodeT] = None,
+        end_node: Optional[CSTNodeT] = None,
     ) -> Iterator[None]:
         start = CodePosition(self.line, self.column)
         try:
@@ -192,8 +191,8 @@ class SyntacticCodegenState(BasicCodegenState):
 
 
 def visit_required(
-    parent: "CSTNode", fieldname: str, node: _CSTNodeT, visitor: "CSTVisitorT"
-) -> _CSTNodeT:
+    parent: "CSTNode", fieldname: str, node: CSTNodeT, visitor: "CSTVisitorT"
+) -> CSTNodeT:
     """
     Given a node, visits the node using `visitor`. If removal is attempted by the
     visitor, an exception is raised.
@@ -210,8 +209,8 @@ def visit_required(
 
 
 def visit_optional(
-    parent: "CSTNode", fieldname: str, node: Optional[_CSTNodeT], visitor: "CSTVisitorT"
-) -> Optional[_CSTNodeT]:
+    parent: "CSTNode", fieldname: str, node: Optional[CSTNodeT], visitor: "CSTVisitorT"
+) -> Optional[CSTNodeT]:
     """
     Given an optional node, visits the node if it exists with `visitor`. If the node is
     removed, returns None.
@@ -229,9 +228,9 @@ def visit_optional(
 def visit_sentinel(
     parent: "CSTNode",
     fieldname: str,
-    node: Union[_CSTNodeT, MaybeSentinel],
+    node: Union[CSTNodeT, MaybeSentinel],
     visitor: "CSTVisitorT",
-) -> Union[_CSTNodeT, MaybeSentinel]:
+) -> Union[CSTNodeT, MaybeSentinel]:
     """
     Given a node that can be a real value or a sentinel value, visits the node if it
     is real with `visitor`. If the node is removed, returns MaybeSentinel.
@@ -249,9 +248,9 @@ def visit_sentinel(
 def visit_iterable(
     parent: "CSTNode",
     fieldname: str,
-    children: Iterable[_CSTNodeT],
+    children: Iterable[CSTNodeT],
     visitor: "CSTVisitorT",
-) -> Iterable[_CSTNodeT]:
+) -> Iterable[CSTNodeT]:
     """
     Given an iterable of children, visits each child with `visitor`, and yields the new
     children with any `RemovalSentinel` values removed.
@@ -267,9 +266,9 @@ def visit_iterable(
 def visit_sequence(
     parent: "CSTNode",
     fieldname: str,
-    children: Sequence[_CSTNodeT],
+    children: Sequence[CSTNodeT],
     visitor: "CSTVisitorT",
-) -> Sequence[_CSTNodeT]:
+) -> Sequence[CSTNodeT]:
     """
     A convenience wrapper for `visit_iterable` that returns a sequence instead of an
     iterable.
@@ -280,9 +279,9 @@ def visit_sequence(
 def visit_body_iterable(
     parent: "CSTNode",
     fieldname: str,
-    children: Sequence[_CSTNodeT],
+    children: Sequence[CSTNodeT],
     visitor: "CSTVisitorT",
-) -> Iterable[_CSTNodeT]:
+) -> Iterable[CSTNodeT]:
     """
     Similar to visit_iterable above, but capable of discarding empty SimpleStatementLine
     nodes in order to preserve correct pass insertion behavior.
@@ -311,9 +310,9 @@ def visit_body_iterable(
 def visit_body_sequence(
     parent: "CSTNode",
     fieldname: str,
-    children: Sequence[_CSTNodeT],
+    children: Sequence[CSTNodeT],
     visitor: "CSTVisitorT",
-) -> Sequence[_CSTNodeT]:
+) -> Sequence[CSTNodeT]:
     """
     A convenience wrapper for `visit_body_iterable` that returns a sequence
     instead of an iterable.

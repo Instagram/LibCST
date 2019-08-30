@@ -10,7 +10,7 @@ parser. A parser entrypoint should take the source code and some configuration
 information
 """
 
-from typing import TypeVar, Union
+from typing import Union
 
 from libcst._nodes._base import CSTNode
 from libcst._nodes._expression import BaseExpression
@@ -22,7 +22,6 @@ from libcst._parser._python_parser import PythonCSTParser
 from libcst._parser._types.config import PartialParserConfig
 
 
-_CSTNodeT = TypeVar("_CSTNodeT", bound=CSTNode)
 _DEFAULT_PARTIAL_PARSER_CONFIG: PartialParserConfig = PartialParserConfig()
 
 

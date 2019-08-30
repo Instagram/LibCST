@@ -4,23 +4,21 @@
 # LICENSE file in the root directory of this source tree.
 
 # pyre-strict
-from typing import Type, TypeVar, Union
+from typing import Type, Union
 
 import libcst as cst
 from libcst import parse_module
 from libcst._nodes.tests.base import CSTNodeTest
 from libcst._removal_sentinel import RemovalSentinel
+from libcst._types import CSTNodeT
 from libcst._visitors import CSTTransformer
 from libcst.testing.utils import data_provider
 
 
-_CSTNodeT = TypeVar("_CSTNodeT", bound=cst.CSTNode)
-
-
 class IfStatementRemovalVisitor(CSTTransformer):
     def on_leave(
-        self, original_node: _CSTNodeT, updated_node: _CSTNodeT
-    ) -> Union[_CSTNodeT, RemovalSentinel]:
+        self, original_node: CSTNodeT, updated_node: CSTNodeT
+    ) -> Union[CSTNodeT, RemovalSentinel]:
         if isinstance(updated_node, cst.If):
             return RemovalSentinel.REMOVE
         else:
@@ -29,8 +27,8 @@ class IfStatementRemovalVisitor(CSTTransformer):
 
 class ContinueStatementRemovalVisitor(CSTTransformer):
     def on_leave(
-        self, original_node: _CSTNodeT, updated_node: _CSTNodeT
-    ) -> Union[_CSTNodeT, RemovalSentinel]:
+        self, original_node: CSTNodeT, updated_node: CSTNodeT
+    ) -> Union[CSTNodeT, RemovalSentinel]:
         if isinstance(updated_node, cst.Continue):
             return RemovalSentinel.REMOVE
         else:
@@ -39,8 +37,8 @@ class ContinueStatementRemovalVisitor(CSTTransformer):
 
 class SpecificImportRemovalVisitor(CSTTransformer):
     def on_leave(
-        self, original_node: _CSTNodeT, updated_node: _CSTNodeT
-    ) -> Union[cst.Import, cst.ImportFrom, _CSTNodeT, RemovalSentinel]:
+        self, original_node: CSTNodeT, updated_node: CSTNodeT
+    ) -> Union[cst.Import, cst.ImportFrom, CSTNodeT, RemovalSentinel]:
         if isinstance(updated_node, cst.Import):
             for alias in updated_node.names:
                 if isinstance(alias.name, cst.Name) and alias.name.value == "b":
