@@ -11,8 +11,8 @@ Visit and Leave Helper Functions
 While it is possible to subclass from :class:`~libcst.CSTVisitor` or :class:`~libcst.CSTTransformer`
 and override the ``on_visit``/``on_leave``/``on_visit_attribute``/``on_leave_attribute`` functions
 directly, it is not recommended. The default implementation for both visitors will look up any
-``visit_<Type[CSTNode]>``, ``leave_<Type[CSTNode]>``, ``visit_<Type[CSTNode>]_<attribute>`` and
-``leave__<Type[CSTNode>]_<attribute>`` method on the visitor subclass and call them directly.
+``visit_<Type[CSTNode]>``, ``leave_<Type[CSTNode]>``, ``visit_<Type[CSTNode]>_<attribute>`` and
+``leave__<Type[CSTNode]>_<attribute>`` method on the visitor subclass and call them directly.
 If such a function exists for the node in question, the visitor base class will call the relevant
 function, respecting the above outlined semantics. If the function does not exist, the visitor base
 class will assume that you do not care about that node and visit its children for you without
