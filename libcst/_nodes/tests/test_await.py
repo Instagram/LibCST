@@ -7,7 +7,7 @@
 from typing import Any
 
 import libcst as cst
-from libcst import CodeRange, parse_expression
+from libcst import CodeRange, PartialParserConfig, parse_expression, parse_statement
 from libcst._nodes.tests.base import CSTNodeTest
 from libcst.testing.utils import data_provider
 
@@ -16,17 +16,20 @@ class AwaitTest(CSTNodeTest):
     @data_provider(
         (
             # Some simple calls
-            # pyre-fixme[6]: Incompatible parameter type
             {
                 "node": cst.Await(cst.Name("test")),
                 "code": "await test",
-                "parser": parse_expression,
+                "parser": lambda code: parse_expression(
+                    code, config=PartialParserConfig(python_version="3.7")
+                ),
                 "expected_position": None,
             },
             {
                 "node": cst.Await(cst.Call(cst.Name("test"))),
                 "code": "await test()",
-                "parser": parse_expression,
+                "parser": lambda code: parse_expression(
+                    code, config=PartialParserConfig(python_version="3.7")
+                ),
                 "expected_position": None,
             },
             # Whitespace
@@ -38,12 +41,105 @@ class AwaitTest(CSTNodeTest):
                     rpar=(cst.RightParen(whitespace_before=cst.SimpleWhitespace(" ")),),
                 ),
                 "code": "( await  test )",
-                "parser": parse_expression,
+                "parser": lambda code: parse_expression(
+                    code, config=PartialParserConfig(python_version="3.7")
+                ),
                 "expected_position": CodeRange((1, 2), (1, 13)),
             },
         )
     )
-    def test_valid(self, **kwargs: Any) -> None:
+    def test_valid_py37(self, **kwargs: Any) -> None:
+        # We don't have sentinel nodes for atoms, so we know that 100% of atoms
+        # can be parsed identically to their creation.
+        self.validate_node(**kwargs)
+
+    @data_provider(
+        (
+            # Some simple calls
+            {
+                "node": cst.FunctionDef(
+                    cst.Name("foo"),
+                    cst.Parameters(),
+                    cst.IndentedBlock(
+                        (
+                            cst.SimpleStatementLine(
+                                (cst.Expr(cst.Await(cst.Name("test"))),)
+                            ),
+                        )
+                    ),
+                    asynchronous=cst.Asynchronous(),
+                ),
+                "code": "async def foo():\n    await test\n",
+                "parser": lambda code: parse_statement(
+                    code, config=PartialParserConfig(python_version="3.6")
+                ),
+                "expected_position": None,
+            },
+            {
+                "node": cst.FunctionDef(
+                    cst.Name("foo"),
+                    cst.Parameters(),
+                    cst.IndentedBlock(
+                        (
+                            cst.SimpleStatementLine(
+                                (cst.Expr(cst.Await(cst.Call(cst.Name("test")))),)
+                            ),
+                        )
+                    ),
+                    asynchronous=cst.Asynchronous(),
+                ),
+                "code": "async def foo():\n    await test()\n",
+                "parser": lambda code: parse_statement(
+                    code, config=PartialParserConfig(python_version="3.6")
+                ),
+                "expected_position": None,
+            },
+            # Whitespace
+            {
+                "node": cst.FunctionDef(
+                    cst.Name("foo"),
+                    cst.Parameters(),
+                    cst.IndentedBlock(
+                        (
+                            cst.SimpleStatementLine(
+                                (
+                                    cst.Expr(
+                                        cst.Await(
+                                            cst.Name("test"),
+                                            whitespace_after_await=cst.SimpleWhitespace(
+                                                "  "
+                                            ),
+                                            lpar=(
+                                                cst.LeftParen(
+                                                    whitespace_after=cst.SimpleWhitespace(
+                                                        " "
+                                                    )
+                                                ),
+                                            ),
+                                            rpar=(
+                                                cst.RightParen(
+                                                    whitespace_before=cst.SimpleWhitespace(
+                                                        " "
+                                                    )
+                                                ),
+                                            ),
+                                        )
+                                    ),
+                                )
+                            ),
+                        )
+                    ),
+                    asynchronous=cst.Asynchronous(),
+                ),
+                "code": "async def foo():\n    ( await  test )\n",
+                "parser": lambda code: parse_statement(
+                    code, config=PartialParserConfig(python_version="3.6")
+                ),
+                "expected_position": None,
+            },
+        )
+    )
+    def test_valid_py36(self, **kwargs: Any) -> None:
         # We don't have sentinel nodes for atoms, so we know that 100% of atoms
         # can be parsed identically to their creation.
         self.validate_node(**kwargs)

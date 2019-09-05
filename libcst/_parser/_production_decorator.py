@@ -4,7 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 # pyre-strict
-from typing import Callable, Iterable, TypeVar
+from typing import Callable, Iterable, Optional, TypeVar
 
 from libcst._parser._types.conversions import NonterminalConversion
 from libcst._parser._types.production import Production
@@ -18,7 +18,7 @@ _NonterminalConversionT = TypeVar(
 # We could version our grammar at a later point by adding a version metadata kwarg to
 # this decorator.
 def with_production(
-    production_name: str, children: str
+    production_name: str, children: str, *, version: Optional[str] = None
 ) -> Callable[[_NonterminalConversionT], _NonterminalConversionT]:
     """
     Attaches a bit of grammar to a conversion function. The parser extracts all of these
@@ -38,7 +38,7 @@ def with_production(
                 + f"'{fn_name}'."
             )
         # pyre-fixme[16]: Pyre doesn't know about this magic field we added
-        fn.productions.append(Production(production_name, children))
+        fn.productions.append(Production(production_name, children, version))
         return fn
 
     return inner

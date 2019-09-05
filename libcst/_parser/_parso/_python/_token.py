@@ -39,6 +39,8 @@ class PythonTokenTypes:
     INDENT: TokenType = TokenType("INDENT")
     DEDENT: TokenType = TokenType("DEDENT")
     ERROR_DEDENT: TokenType = TokenType("ERROR_DEDENT")
+    ASYNC: TokenType = TokenType("ASYNC")
+    AWAIT: TokenType = TokenType("AWAIT")
     FSTRING_STRING: TokenType = TokenType("FSTRING_STRING")
     FSTRING_START: TokenType = TokenType("FSTRING_START")
     FSTRING_END: TokenType = TokenType("FSTRING_END")

@@ -7,7 +7,7 @@
 from typing import Any
 
 import libcst as cst
-from libcst import CodeRange, parse_statement
+from libcst import CodeRange, PartialParserConfig, parse_statement
 from libcst._nodes.tests.base import CSTNodeTest, DummyIndentedBlock
 from libcst.testing.utils import data_provider
 
@@ -16,7 +16,6 @@ class ForTest(CSTNodeTest):
     @data_provider(
         (
             # Simple for block
-            # pyre-fixme[6]: Incompatible parameter type
             {
                 "node": cst.For(
                     cst.Name("target"),
@@ -35,7 +34,31 @@ class ForTest(CSTNodeTest):
                     asynchronous=cst.Asynchronous(),
                 ),
                 "code": "async for target in iter(): pass\n",
-                "parser": parse_statement,
+                "parser": lambda code: parse_statement(
+                    code, config=PartialParserConfig(python_version="3.7")
+                ),
+            },
+            # Python 3.6 async for block
+            {
+                "node": cst.FunctionDef(
+                    cst.Name("foo"),
+                    cst.Parameters(),
+                    cst.IndentedBlock(
+                        (
+                            cst.For(
+                                cst.Name("target"),
+                                cst.Call(cst.Name("iter")),
+                                cst.SimpleStatementSuite((cst.Pass(),)),
+                                asynchronous=cst.Asynchronous(),
+                            ),
+                        )
+                    ),
+                    asynchronous=cst.Asynchronous(),
+                ),
+                "code": "async def foo():\n    async for target in iter(): pass\n",
+                "parser": lambda code: parse_statement(
+                    code, config=PartialParserConfig(python_version="3.6")
+                ),
             },
             # For block with else
             {

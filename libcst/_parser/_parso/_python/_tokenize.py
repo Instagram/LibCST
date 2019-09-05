@@ -14,6 +14,7 @@
 # - Removed main section
 # - Applied type stubs directly
 # - Removed Python 2 shims
+# - Added support for Python 3.6 ASYNC/AWAIT hacks
 #
 # -*- coding: utf-8 -*-
 # This tokenizer has been copied from the ``tokenize.py`` standard library
@@ -31,7 +32,8 @@ import re
 import sys
 from codecs import BOM_UTF8
 from collections import namedtuple
-from typing import Dict, Generator, Iterable, Set, Tuple
+from dataclasses import dataclass
+from typing import Dict, Generator, Iterable, Optional, Pattern, Set, Tuple
 
 from libcst._parser._parso._python._token import PythonTokenTypes
 from libcst._parser._parso._utils import PythonVersionInfo, split_lines
@@ -39,6 +41,7 @@ from libcst._parser._parso._utils import PythonVersionInfo, split_lines
 
 # Maximum code point of Unicode 6.0: 0x10ffff (1,114,111)
 MAX_UNICODE = "\U0010ffff"
+BOM_UTF8_STRING = BOM_UTF8.decode("utf-8")
 
 STRING = PythonTokenTypes.STRING
 NAME = PythonTokenTypes.NAME
@@ -47,6 +50,8 @@ OP = PythonTokenTypes.OP
 NEWLINE = PythonTokenTypes.NEWLINE
 INDENT = PythonTokenTypes.INDENT
 DEDENT = PythonTokenTypes.DEDENT
+ASYNC = PythonTokenTypes.ASYNC
+AWAIT = PythonTokenTypes.AWAIT
 ENDMARKER = PythonTokenTypes.ENDMARKER
 ERRORTOKEN = PythonTokenTypes.ERRORTOKEN
 ERROR_DEDENT = PythonTokenTypes.ERROR_DEDENT
@@ -54,18 +59,22 @@ FSTRING_START = PythonTokenTypes.FSTRING_START
 FSTRING_STRING = PythonTokenTypes.FSTRING_STRING
 FSTRING_END = PythonTokenTypes.FSTRING_END
 
-TokenCollection = namedtuple(
-    "TokenCollection",
-    "pseudo_token single_quoted triple_quoted endpats whitespace "
-    "fstring_pattern_map always_break_tokens",
-)
 
-BOM_UTF8_STRING = BOM_UTF8.decode("utf-8")
+@dataclass(frozen=True)
+class TokenCollection:
+    pseudo_token: Pattern
+    single_quoted: Set[str]
+    triple_quoted: Set[str]
+    endpats: Dict[str, Pattern]
+    whitespace: Pattern
+    fstring_pattern_map: Dict[str, str]
+    always_break_tokens: Set[str]
+
 
 _token_collection_cache: Dict[PythonVersionInfo, TokenCollection] = {}
 
 
-def group(*choices, **kwargs):
+def group(*choices: str, **kwargs: object) -> str:
     capture = kwargs.pop("capture", False)  # Python 2, arrghhhhh :(
     assert not kwargs
 
@@ -75,7 +84,7 @@ def group(*choices, **kwargs):
     return start + "|".join(choices) + ")"
 
 
-def maybe(*choices):
+def maybe(*choices: str) -> str:
     return group(*choices) + "?"
 
 
@@ -120,7 +129,7 @@ def _all_string_prefixes(
     return result
 
 
-def _compile(expr):
+def _compile(expr: str) -> Pattern:
     return re.compile(expr, re.UNICODE)
 
 
@@ -146,7 +155,6 @@ def _create_token_collection(  # noqa: C901
     # Note: we use unicode matching for names ("\w") but ascii matching for
     # number literals.
     Whitespace = r"[ \f\t]*"
-    whitespace = _compile(Whitespace)
     Comment = r"#[^\r\n]*"
     # Python 2 is pretty much not working properly anymore, we just ignore
     # parsing unicode properly, which is fine, I guess.
@@ -275,27 +283,26 @@ def _create_token_collection(  # noqa: C901
         for quote in all_quotes:
             fstring_pattern_map[t + quote] = quote
 
-    ALWAYS_BREAK_TOKENS = (
-        ";",
-        "import",
-        "class",
-        "def",
-        "try",
-        "except",
-        "finally",
-        "while",
-        "with",
-        "return",
-    )
     pseudo_token_compiled = _compile(PseudoToken)
     return TokenCollection(
         pseudo_token_compiled,
         single_quoted,
         triple_quoted,
         endpats,
-        whitespace,
+        _compile(Whitespace),
         fstring_pattern_map,
-        ALWAYS_BREAK_TOKENS,
+        {
+            ";",
+            "import",
+            "class",
+            "def",
+            "try",
+            "except",
+            "finally",
+            "while",
+            "with",
+            "return",
+        },
     )
 
 
@@ -411,6 +418,396 @@ def tokenize_lines(  # noqa: C901
     version_info: PythonVersionInfo,
     start_pos: Tuple[int, int] = (1, 0),
 ) -> Generator[PythonToken, None, None]:
+    token_collection = _get_token_collection(version_info)
+    if version_info >= PythonVersionInfo(3, 7):
+        return _tokenize_lines_py37_or_above(
+            lines, version_info, token_collection, start_pos=start_pos
+        )
+    else:
+        return _tokenize_lines_py36_or_below(
+            lines, version_info, token_collection, start_pos=start_pos
+        )
+
+
+def _tokenize_lines_py36_or_below(  # noqa: C901
+    lines: Iterable[str],
+    version_info: PythonVersionInfo,
+    token_collection: TokenCollection,
+    start_pos: Tuple[int, int] = (1, 0),
+) -> Generator[PythonToken, None, None]:
+    """
+    A heavily modified Python standard library tokenizer.
+
+    Additionally to the default information, yields also the prefix of each
+    token. This idea comes from lib2to3. The prefix contains all information
+    that is irrelevant for the parser like newlines in parentheses or comments.
+    """
+
+    paren_level = 0  # count parentheses
+    indents = [0]
+    max = 0
+    numchars = "0123456789"
+    contstr = ""
+    contline = None
+    # We start with a newline. This makes indent at the first position
+    # possible. It's not valid Python, but still better than an INDENT in the
+    # second line (and not in the first). This makes quite a few things in
+    # Jedi's fast parser possible.
+    new_line = True
+    prefix = ""  # Should never be required, but here for safety
+    endprog = None  # Should not be required, but here for lint
+    contstr_start: Optional[Tuple[int, int]] = None
+    additional_prefix = ""
+    first = True
+    lnum = start_pos[0] - 1
+    fstring_stack = []
+    # stash and async_* are used for async/await parsing
+    stashed: Optional[PythonToken] = None
+    async_def: bool = False
+    async_def_indent: int = 0
+    async_def_newline: bool = False
+
+    def dedent_if_necessary(start):
+        nonlocal stashed
+        nonlocal async_def
+        nonlocal async_def_indent
+        nonlocal async_def_newline
+
+        while start < indents[-1]:
+            if start > indents[-2]:
+                yield PythonToken(ERROR_DEDENT, "", (lnum, 0), "")
+                break
+            if stashed is not None:
+                yield stashed
+                stashed = None
+            if async_def and async_def_newline and async_def_indent >= indents[-1]:
+                # We exited an 'async def' block, so stop tracking for indents
+                async_def = False
+                async_def_newline = False
+                async_def_indent = 0
+            yield PythonToken(DEDENT, "", spos, "")
+            indents.pop()
+
+    for line in lines:  # loop over lines in stream
+        lnum += 1
+        pos = 0
+        max = len(line)
+        if first:
+            if line.startswith(BOM_UTF8_STRING):
+                additional_prefix = BOM_UTF8_STRING
+                line = line[1:]
+                max = len(line)
+
+            # Fake that the part before was already parsed.
+            line = "^" * start_pos[1] + line
+            pos = start_pos[1]
+            max += start_pos[1]
+
+            first = False
+
+        if contstr:  # continued string
+            if endprog is None:
+                raise Exception("Logic error!")
+            endmatch = endprog.match(line)
+            if endmatch:
+                pos = endmatch.end(0)
+                if contstr_start is None:
+                    raise Exception("Logic error!")
+                if stashed is not None:
+                    raise Exception("Logic error!")
+                yield PythonToken(STRING, contstr + line[:pos], contstr_start, prefix)
+                contstr = ""
+                contline = None
+            else:
+                contstr = contstr + line
+                contline = contline + line
+                continue
+
+        while pos < max:
+            if fstring_stack:
+                tos = fstring_stack[-1]
+                if not tos.is_in_expr():
+                    string, pos = _find_fstring_string(
+                        token_collection.endpats, fstring_stack, line, lnum, pos
+                    )
+                    if string:
+                        if stashed is not None:
+                            raise Exception("Logic error!")
+                        yield PythonToken(
+                            FSTRING_STRING,
+                            string,
+                            tos.last_string_start_pos,
+                            # Never has a prefix because it can start anywhere and
+                            # include whitespace.
+                            prefix="",
+                        )
+                        tos.previous_lines = ""
+                        continue
+                    if pos == max:
+                        break
+
+                rest = line[pos:]
+                fstring_end_token, additional_prefix, quote_length = _close_fstring_if_necessary(
+                    fstring_stack, rest, (lnum, pos), additional_prefix
+                )
+                pos += quote_length
+                if fstring_end_token is not None:
+                    if stashed is not None:
+                        raise Exception("Logic error!")
+                    yield fstring_end_token
+                    continue
+
+            pseudomatch = token_collection.pseudo_token.match(line, pos)
+            if not pseudomatch:  # scan for tokens
+                match = token_collection.whitespace.match(line, pos)
+                if pos == 0:
+                    yield from dedent_if_necessary(match.end())
+                pos = match.end()
+                new_line = False
+                yield PythonToken(
+                    ERRORTOKEN,
+                    line[pos],
+                    (lnum, pos),
+                    additional_prefix + match.group(0),
+                )
+                additional_prefix = ""
+                pos += 1
+                continue
+
+            prefix = additional_prefix + pseudomatch.group(1)
+            additional_prefix = ""
+            start, pos = pseudomatch.span(2)
+            spos = (lnum, start)
+            token = pseudomatch.group(2)
+            if token == "":
+                assert prefix
+                additional_prefix = prefix
+                # This means that we have a line with whitespace/comments at
+                # the end, which just results in an endmarker.
+                break
+            initial = token[0]
+
+            if new_line and initial not in "\r\n\\#":
+                new_line = False
+                if paren_level == 0 and not fstring_stack:
+                    i = 0
+                    indent_start = start
+                    while line[i] == "\f":
+                        i += 1
+                        # TODO don't we need to change spos as well?
+                        indent_start -= 1
+                    if indent_start > indents[-1]:
+                        if stashed is not None:
+                            yield stashed
+                            stashed = None
+                        yield PythonToken(INDENT, "", spos, "")
+                        indents.append(indent_start)
+                    yield from dedent_if_necessary(indent_start)
+
+            if initial in numchars or (  # ordinary number
+                initial == "." and token != "." and token != "..."
+            ):
+                if stashed is not None:
+                    yield stashed
+                    stashed = None
+                yield PythonToken(NUMBER, token, spos, prefix)
+            elif pseudomatch.group(3) is not None:  # ordinary name
+                if token in token_collection.always_break_tokens:
+                    fstring_stack[:] = []
+                    paren_level = 0
+                    # We only want to dedent if the token is on a new line.
+                    if re.match(r"[ \f\t]*$", line[:start]):
+                        while True:
+                            indent = indents.pop()
+                            if indent > start:
+                                if (
+                                    async_def
+                                    and async_def_newline
+                                    and async_def_indent >= indent
+                                ):
+                                    # We dedented outside of an 'async def' block.
+                                    async_def = False
+                                    async_def_newline = False
+                                    async_def_indent = 0
+                                if stashed is not None:
+                                    yield stashed
+                                    stashed = None
+                                yield PythonToken(DEDENT, "", spos, "")
+                            else:
+                                indents.append(indent)
+                                break
+                if str.isidentifier(token):
+                    should_yield_identifier = True
+                    if token in ("async", "await") and async_def:
+                        # We're inside an 'async def' block, all async/await are
+                        # tokens.
+                        if token == "async":
+                            yield PythonToken(ASYNC, token, spos, prefix)
+                        else:
+                            yield PythonToken(AWAIT, token, spos, prefix)
+                        should_yield_identifier = False
+
+                    # We are possibly starting an 'async def' section
+                    elif token == "async" and not stashed:
+                        stashed = PythonToken(NAME, token, spos, prefix)
+                        should_yield_identifier = False
+
+                    # We actually are starting an 'async def' section
+                    elif (
+                        token == "def"
+                        and stashed is not None
+                        and stashed[0] is NAME
+                        and stashed[1] == "async"
+                    ):
+                        async_def = True
+                        async_def_indent = indents[-1]
+                        yield PythonToken(ASYNC, stashed[1], stashed[2], stashed[3])
+                        stashed = None
+
+                    # We are either not stashed, or we output an ASYNC token above.
+                    elif stashed:
+                        yield stashed
+                        stashed = None
+
+                    # If we didn't bail early due to possibly recognizing an 'async def',
+                    # then we should yield this token as normal.
+                    if should_yield_identifier:
+                        yield PythonToken(NAME, token, spos, prefix)
+                else:
+                    yield from _split_illegal_unicode_name(token, spos, prefix)
+            elif initial in "\r\n":
+                if any(not f.allow_multiline() for f in fstring_stack):
+                    # Would use fstring_stack.clear, but that's not available
+                    # in Python 2.
+                    fstring_stack[:] = []
+
+                if not new_line and paren_level == 0 and not fstring_stack:
+                    if async_def:
+                        async_def_newline = True
+                    if stashed:
+                        yield stashed
+                        stashed = None
+                    yield PythonToken(NEWLINE, token, spos, prefix)
+                else:
+                    additional_prefix = prefix + token
+                new_line = True
+            elif initial == "#":  # Comments
+                assert not token.endswith("\n")
+                additional_prefix = prefix + token
+            elif token in token_collection.triple_quoted:
+                endprog = token_collection.endpats[token]
+                endmatch = endprog.match(line, pos)
+                if endmatch:  # all on one line
+                    pos = endmatch.end(0)
+                    token = line[start:pos]
+                    if stashed is not None:
+                        yield stashed
+                        stashed = None
+                    yield PythonToken(STRING, token, spos, prefix)
+                else:
+                    contstr_start = (lnum, start)  # multiple lines
+                    contstr = line[start:]
+                    contline = line
+                    break
+
+            # Check up to the first 3 chars of the token to see if
+            #  they're in the single_quoted set. If so, they start
+            #  a string.
+            # We're using the first 3, because we're looking for
+            #  "rb'" (for example) at the start of the token. If
+            #  we switch to longer prefixes, this needs to be
+            #  adjusted.
+            # Note that initial == token[:1].
+            # Also note that single quote checking must come after
+            #  triple quote checking (above).
+            elif (
+                initial in token_collection.single_quoted
+                or token[:2] in token_collection.single_quoted
+                or token[:3] in token_collection.single_quoted
+            ):
+                if token[-1] in "\r\n":  # continued string
+                    # This means that a single quoted string ends with a
+                    # backslash and is continued.
+                    contstr_start = lnum, start
+                    endprog = (
+                        token_collection.endpats.get(initial)
+                        or token_collection.endpats.get(token[1])
+                        or token_collection.endpats.get(token[2])
+                    )
+                    contstr = line[start:]
+                    contline = line
+                    break
+                else:  # ordinary string
+                    if stashed is not None:
+                        yield stashed
+                        stashed = None
+                    yield PythonToken(STRING, token, spos, prefix)
+            elif (
+                token in token_collection.fstring_pattern_map
+            ):  # The start of an fstring.
+                fstring_stack.append(
+                    FStringNode(token_collection.fstring_pattern_map[token])
+                )
+                if stashed is not None:
+                    yield stashed
+                    stashed = None
+                yield PythonToken(FSTRING_START, token, spos, prefix)
+            elif initial == "\\" and line[start:] in (
+                "\\\n",
+                "\\\r\n",
+                "\\\r",
+            ):  # continued stmt
+                additional_prefix += prefix + line[start:]
+                break
+            else:
+                if token in "([{":
+                    if fstring_stack:
+                        fstring_stack[-1].open_parentheses(token)
+                    else:
+                        paren_level += 1
+                elif token in ")]}":
+                    if fstring_stack:
+                        fstring_stack[-1].close_parentheses(token)
+                    else:
+                        if paren_level:
+                            paren_level -= 1
+                elif (
+                    token == ":"
+                    and fstring_stack
+                    and fstring_stack[-1].parentheses_count
+                    - fstring_stack[-1].format_spec_count
+                    == 1
+                ):
+                    fstring_stack[-1].format_spec_count += 1
+
+                if stashed is not None:
+                    yield stashed
+                    stashed = None
+                yield PythonToken(OP, token, spos, prefix)
+
+    if contstr:
+        yield PythonToken(ERRORTOKEN, contstr, contstr_start, prefix)
+        if contstr.endswith("\n") or contstr.endswith("\r"):
+            new_line = True
+
+    if stashed is not None:
+        yield stashed
+        stashed = None
+
+    end_pos = lnum, max
+    # As the last position we just take the maximally possible position. We
+    # remove -1 for the last new line.
+    for indent in indents[1:]:
+        yield PythonToken(DEDENT, "", end_pos, "")
+    yield PythonToken(ENDMARKER, "", end_pos, additional_prefix)
+
+
+def _tokenize_lines_py37_or_above(  # noqa: C901
+    lines: Iterable[str],
+    version_info: PythonVersionInfo,
+    token_collection: TokenCollection,
+    start_pos: Tuple[int, int] = (1, 0),
+) -> Generator[PythonToken, None, None]:
     """
     A heavily modified Python standard library tokenizer.
 
@@ -427,9 +824,6 @@ def tokenize_lines(  # noqa: C901
             yield PythonToken(DEDENT, "", spos, "")
             indents.pop()
 
-    pseudo_token, single_quoted, triple_quoted, endpats, whitespace, fstring_pattern_map, always_break_tokens, = _get_token_collection(
-        version_info
-    )
     paren_level = 0  # count parentheses
     indents = [0]
     max = 0
@@ -442,6 +836,8 @@ def tokenize_lines(  # noqa: C901
     # Jedi's fast parser possible.
     new_line = True
     prefix = ""  # Should never be required, but here for safety
+    endprog = None  # Should not be required, but here for lint
+    contstr_start: Optional[Tuple[int, int]] = None
     additional_prefix = ""
     first = True
     lnum = start_pos[0] - 1
@@ -464,12 +860,14 @@ def tokenize_lines(  # noqa: C901
             first = False
 
         if contstr:  # continued string
-            endmatch = endprog.match(line)  # noqa: F821
+            if endprog is None:
+                raise Exception("Logic error!")
+            endmatch = endprog.match(line)
             if endmatch:
                 pos = endmatch.end(0)
-                yield PythonToken(
-                    STRING, contstr + line[:pos], contstr_start, prefix  # noqa: F821
-                )
+                if contstr_start is None:
+                    raise Exception("Logic error!")
+                yield PythonToken(STRING, contstr + line[:pos], contstr_start, prefix)
                 contstr = ""
                 contline = None
             else:
@@ -482,7 +880,7 @@ def tokenize_lines(  # noqa: C901
                 tos = fstring_stack[-1]
                 if not tos.is_in_expr():
                     string, pos = _find_fstring_string(
-                        endpats, fstring_stack, line, lnum, pos
+                        token_collection.endpats, fstring_stack, line, lnum, pos
                     )
                     if string:
                         yield PythonToken(
@@ -507,9 +905,9 @@ def tokenize_lines(  # noqa: C901
                     yield fstring_end_token
                     continue
 
-            pseudomatch = pseudo_token.match(line, pos)
+            pseudomatch = token_collection.pseudo_token.match(line, pos)
             if not pseudomatch:  # scan for tokens
-                match = whitespace.match(line, pos)
+                match = token_collection.whitespace.match(line, pos)
                 if pos == 0:
                     for t in dedent_if_necessary(match.end()):
                         yield t
@@ -558,7 +956,7 @@ def tokenize_lines(  # noqa: C901
             ):
                 yield PythonToken(NUMBER, token, spos, prefix)
             elif pseudomatch.group(3) is not None:  # ordinary name
-                if token in always_break_tokens:
+                if token in token_collection.always_break_tokens:
                     fstring_stack[:] = []
                     paren_level = 0
                     # We only want to dedent if the token is on a new line.
@@ -589,8 +987,8 @@ def tokenize_lines(  # noqa: C901
             elif initial == "#":  # Comments
                 assert not token.endswith("\n")
                 additional_prefix = prefix + token
-            elif token in triple_quoted:
-                endprog = endpats[token]
+            elif token in token_collection.triple_quoted:
+                endprog = token_collection.endpats[token]
                 endmatch = endprog.match(line, pos)
                 if endmatch:  # all on one line
                     pos = endmatch.end(0)
@@ -613,26 +1011,30 @@ def tokenize_lines(  # noqa: C901
             # Also note that single quote checking must come after
             #  triple quote checking (above).
             elif (
-                initial in single_quoted
-                or token[:2] in single_quoted
-                or token[:3] in single_quoted
+                initial in token_collection.single_quoted
+                or token[:2] in token_collection.single_quoted
+                or token[:3] in token_collection.single_quoted
             ):
                 if token[-1] in "\r\n":  # continued string
                     # This means that a single quoted string ends with a
                     # backslash and is continued.
                     contstr_start = lnum, start
                     endprog = (
-                        endpats.get(initial)
-                        or endpats.get(token[1])
-                        or endpats.get(token[2])
+                        token_collection.endpats.get(initial)
+                        or token_collection.endpats.get(token[1])
+                        or token_collection.endpats.get(token[2])
                     )
                     contstr = line[start:]
                     contline = line
                     break
                 else:  # ordinary string
                     yield PythonToken(STRING, token, spos, prefix)
-            elif token in fstring_pattern_map:  # The start of an fstring.
-                fstring_stack.append(FStringNode(fstring_pattern_map[token]))
+            elif (
+                token in token_collection.fstring_pattern_map
+            ):  # The start of an fstring.
+                fstring_stack.append(
+                    FStringNode(token_collection.fstring_pattern_map[token])
+                )
                 yield PythonToken(FSTRING_START, token, spos, prefix)
             elif initial == "\\" and line[start:] in (
                 "\\\n",
@@ -677,7 +1079,9 @@ def tokenize_lines(  # noqa: C901
     yield PythonToken(ENDMARKER, "", end_pos, additional_prefix)
 
 
-def _split_illegal_unicode_name(token, start_pos, prefix):
+def _split_illegal_unicode_name(
+    token: str, start_pos: Tuple[int, int], prefix: str
+) -> Generator[PythonToken, None, None]:
     def create_token():
         return PythonToken(ERRORTOKEN if is_illegal else NAME, found, pos, prefix)
 

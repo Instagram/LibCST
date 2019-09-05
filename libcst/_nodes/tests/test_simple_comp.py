@@ -7,7 +7,7 @@
 from typing import Any, Callable
 
 import libcst as cst
-from libcst import CodeRange, parse_expression
+from libcst import CodeRange, PartialParserConfig, parse_expression, parse_statement
 from libcst._nodes.tests.base import CSTNodeTest
 from libcst.testing.utils import data_provider
 
@@ -52,7 +52,39 @@ class SimpleCompTest(CSTNodeTest):
                     ),
                 ),
                 "code": "(a async for b in c)",
-                "parser": parse_expression,
+                "parser": lambda code: parse_expression(
+                    code, config=PartialParserConfig(python_version="3.7")
+                ),
+            },
+            # Python 3.6 async GeneratorExp
+            {
+                "node": cst.FunctionDef(
+                    cst.Name("foo"),
+                    cst.Parameters(),
+                    cst.IndentedBlock(
+                        (
+                            cst.SimpleStatementLine(
+                                (
+                                    cst.Expr(
+                                        cst.GeneratorExp(
+                                            cst.Name("a"),
+                                            cst.CompFor(
+                                                target=cst.Name("b"),
+                                                iter=cst.Name("c"),
+                                                asynchronous=cst.Asynchronous(),
+                                            ),
+                                        )
+                                    ),
+                                )
+                            ),
+                        )
+                    ),
+                    asynchronous=cst.Asynchronous(),
+                ),
+                "code": "async def foo():\n    (a async for b in c)\n",
+                "parser": lambda code: parse_statement(
+                    code, config=PartialParserConfig(python_version="3.6")
+                ),
             },
             # a generator doesn't have to own it's own parenthesis
             {
