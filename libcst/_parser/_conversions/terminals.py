@@ -72,3 +72,11 @@ def convert_FSTRING_END(config: ParserConfig, token: Token) -> Any:
 
 def convert_FSTRING_STRING(config: ParserConfig, token: Token) -> Any:
     return token
+
+
+def convert_ASYNC(config: ParserConfig, token: Token) -> Any:
+    return token
+
+
+def convert_AWAIT(config: ParserConfig, token: Token) -> Any:
+    return token

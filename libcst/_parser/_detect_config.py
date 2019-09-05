@@ -139,6 +139,7 @@ def detect_config(
             default_indent=default_indent,
             default_newline=default_newline,
             has_trailing_newline=has_trailing_newline,
+            version=python_version,
         ),
         tokens=tokens,
     )
