@@ -75,9 +75,6 @@ class ExpressionContextProvider(BatchableMetadataProvider[Optional[ExpressionCon
     :attr:`ExpressionContext.LOAD` and :attr:`ExpressionContext.DEL` are provided.
     """
 
-    def __init__(self) -> None:
-        super().__init__()
-
     def _check_type_and_set_metadata(
         self, node: cst.CSTNode, context: Optional[ExpressionContext]
     ) -> None:
