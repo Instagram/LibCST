@@ -22,6 +22,7 @@ setuptools.setup(
     url="https://github.com/Instagram/LibCST",
     license="MIT",
     packages=setuptools.find_packages(),
+    package_data={"libcst": ["py.typed"]},
     test_suite="libcst",
     python_requires=">=3.6",
     install_requires=[
@@ -51,4 +52,5 @@ setuptools.setup(
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
     ],
+    zip_safe=False,  # for mypy compatibility https://mypy.readthedocs.io/en/latest/installed_packages.html
 )
