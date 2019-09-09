@@ -9,7 +9,7 @@ from typing import Dict, Tuple, cast
 
 import libcst as cst
 from libcst import parse_module
-from libcst._visitors import CSTTransformer
+from libcst._visitors import CSTVisitor
 from libcst.metadata.expression_context_provider import (
     ExpressionContext,
     ExpressionContextProvider,
@@ -18,7 +18,7 @@ from libcst.metadata.wrapper import MetadataWrapper
 from libcst.testing.utils import UnitTest
 
 
-class DependentVisitor(CSTTransformer):
+class DependentVisitor(CSTVisitor):
     METADATA_DEPENDENCIES = (ExpressionContextProvider,)
 
     def __init__(
