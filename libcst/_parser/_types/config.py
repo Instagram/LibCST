@@ -12,10 +12,9 @@ from dataclasses import dataclass, field, fields
 from enum import Enum
 from typing import List, Pattern, Sequence, Union
 
-from parso.utils import PythonVersionInfo, parse_version_string
-
 from libcst._add_slots import add_slots
 from libcst._nodes._whitespace import NEWLINE_RE
+from libcst._parser._parso._utils import PythonVersionInfo, parse_version_string
 
 
 _INDENT_RE: Pattern[str] = re.compile(r"[ \t]+")
