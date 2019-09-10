@@ -248,7 +248,28 @@ class ScopeProviderTest(UnitTest):
         pass
 
     def test_global_scope_overwrites(self) -> None:
-        pass
+        m, scopes = get_scope_metadata_provider(
+            """
+            class Cls:
+                def f():
+                    global var
+                    var = ...
+            """
+        )
+        scope_of_module = scopes[m]
+        self.assertIsInstance(scope_of_module, GlobalScope)
+        self.assertTrue("var" in scope_of_module)
+
+        cls = ensure_type(m.body[0], cst.ClassDef)
+        scope_of_cls = scopes[cls.body.body[0]]
+        self.assertIsInstance(scope_of_cls, ClassScope)
+        self.assertTrue("var" in scope_of_cls)
+
+        f = ensure_type(cls.body.body[0], cst.FunctionDef)
+        scope_of_f = scopes[f.body.body[0]]
+        self.assertIsInstance(scope_of_f, FunctionScope)
+        self.assertTrue("var" in scope_of_f)
+        self.assertEqual(scope_of_f["var"], scope_of_module["var"])
 
     def test_nonlocal_scope_overwrites(self) -> None:
         pass

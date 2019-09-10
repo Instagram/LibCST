@@ -88,6 +88,9 @@ class Scope(abc.ABC):
     def __getitem__(self, name: str) -> Tuple[BaseAssignment, ...]:
         ...
 
+    def record_global_overwrite(self, name: str) -> None:
+        ...
+
 
 class GlobalScope(Scope):
     def __init__(self) -> None:
@@ -102,6 +105,9 @@ class GlobalScope(Scope):
                 self._assignments[name].append(BuiltinAssignmemt(name, self))
         return tuple(self._assignments[name])
 
+    def record_global_overwrite(self, name: str) -> None:
+        pass
+
 
 class LocalScope(Scope, abc.ABC):
     _scope_overwrites: Dict[str, Scope]
@@ -110,10 +116,10 @@ class LocalScope(Scope, abc.ABC):
         super().__init__(parent)
         self._scope_overwrites = {}
 
-    def record_nonlocal(self, name: str) -> None:
+    def record_nonlocal_overwrite(self, name: str) -> None:
         self._scope_overwrites[name] = self.parent
 
-    def record_global(self, name: str) -> None:
+    def record_global_overwrite(self, name: str) -> None:
         self._scope_overwrites[name] = self.globals
 
     def record_assignment(self, name: str, node: cst.CSTNode) -> None:
@@ -282,6 +288,11 @@ class ScopeVisitor(cst.CSTVisitor):
         with self._new_scope(ClassScope):
             for statement in node.body.body:
                 statement.visit(self)
+        return False
+
+    def visit_Global(self, node: cst.Global) -> Optional[bool]:
+        for name_item in node.names:
+            self.scope.record_global_overwrite(name_item.name.value)
         return False
 
     def infer_accesses(self) -> None:
