@@ -26,7 +26,7 @@ class Access:
     scope: "Scope"
 
 
-class BaseAssignment:
+class BaseAssignment(abc.ABC):
     name: str
     scope: "Scope"
     __accesses: List[Access]
@@ -71,10 +71,7 @@ class Scope(abc.ABC):
     def record_assignment(self, name: str, node: cst.CSTNode) -> None:
         self._assignments[name].append(Assignment(name=name, scope=self, node=node))
 
-    def _contains_in_parent_scope(self, name: str) -> bool:
-        return name in self.parent
-
-    def _get_from_parent(self, name: str) -> Tuple[BaseAssignment, ...]:
+    def _getitem_from_self_or_parent(self, name: str) -> Tuple[BaseAssignment, ...]:
         """Overridden by ClassScope to hide it's assignments from child scopes."""
         return self[name]
 
@@ -85,9 +82,11 @@ class Scope(abc.ABC):
     def __contains__(self, name: str) -> bool:
         return len(self[name]) > 0
 
+    @abc.abstractmethod
     def __getitem__(self, name: str) -> Tuple[BaseAssignment, ...]:
         ...
 
+    @abc.abstractmethod
     def record_global_overwrite(self, name: str) -> None:
         ...
 
@@ -130,11 +129,11 @@ class LocalScope(Scope, abc.ABC):
 
     def __getitem__(self, name: str) -> Tuple[BaseAssignment, ...]:
         if name in self._scope_overwrites:
-            return self._scope_overwrites[name]._get_from_parent(name)
+            return self._scope_overwrites[name]._getitem_from_self_or_parent(name)
         if name in self._assignments:
             return tuple(self._assignments[name])
         else:
-            return self.parent._get_from_parent(name)
+            return self.parent._getitem_from_self_or_parent(name)
 
 
 class FunctionScope(LocalScope):
@@ -159,12 +158,12 @@ class ClassScope(LocalScope):
         """
         self.parent._record_assignment_as_parent(name, node)
 
-    def _get_from_parent(self, name: str) -> Tuple[BaseAssignment, ...]:
+    def _getitem_from_self_or_parent(self, name: str) -> Tuple[BaseAssignment, ...]:
         """
         Class variables are only accessible using ClassName.attribute, cls.attribute, or
         self.attribute in child scopes. They cannot be accessed with their bare names.
         """
-        return self.parent._get_from_parent(name)
+        return self.parent._getitem_from_self_or_parent(name)
 
 
 class ComprehensionScope(LocalScope):
