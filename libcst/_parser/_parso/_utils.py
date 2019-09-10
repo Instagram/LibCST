@@ -131,17 +131,6 @@ def python_bytes_to_unicode(
     return source.decode(actual_encoding, errors)
 
 
-def version_info() -> Version:
-    """
-    Returns a namedtuple of parso's version, similar to Python's
-    ``sys.version_info``.
-    """
-    from parso import __version__
-
-    tupl = re.findall(r"[a-z]+|\d+", __version__)
-    return Version(*[x if i == 3 else int(x) for i, x in enumerate(tupl)])
-
-
 @dataclass(frozen=True)
 class PythonVersionInfo:
     major: int
