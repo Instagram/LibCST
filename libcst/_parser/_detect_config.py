@@ -11,9 +11,8 @@ from io import BytesIO
 from tokenize import detect_encoding as py_tokenize_detect_encoding
 from typing import Iterable, Iterator, Union
 
-from parso.python.token import PythonTokenTypes, TokenType
-
 from libcst._nodes._whitespace import NEWLINE_RE
+from libcst._parser._parso._python._token import PythonTokenTypes, TokenType
 from libcst._parser._parso._utils import split_lines
 from libcst._parser._types.config import AutoConfig, ParserConfig, PartialParserConfig
 from libcst._parser._types.token import Token

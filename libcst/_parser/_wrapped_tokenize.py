@@ -25,14 +25,13 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Generator, List, Optional, Sequence
 
-from parso.python.token import PythonTokenTypes, TokenType
-from parso.python.tokenize import (
+from libcst._add_slots import add_slots
+from libcst._exceptions import ParserSyntaxError
+from libcst._parser._parso._python._token import PythonTokenTypes, TokenType
+from libcst._parser._parso._python._tokenize import (
     Token as OrigToken,
     tokenize_lines as orig_tokenize_lines,
 )
-
-from libcst._add_slots import add_slots
-from libcst._exceptions import ParserSyntaxError
 from libcst._parser._parso._utils import PythonVersionInfo, split_lines
 from libcst._parser._types.token import Token
 from libcst._parser._types.whitespace_state import WhitespaceState
@@ -90,7 +89,6 @@ def tokenize_lines(
     lines: Sequence[str], version_info: PythonVersionInfo
 ) -> Generator[Token, None, None]:
     state = _TokenizeState(lines)
-    # pyre-ignore Temporarily ignoring version_info problem until tokenize is brought into LibCST.
     orig_tokens_iter = iter(orig_tokenize_lines(lines, version_info))
 
     # Iterate over the tokens and pass them to _convert_token, providing a one-token
