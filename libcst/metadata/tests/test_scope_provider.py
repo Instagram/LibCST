@@ -407,3 +407,39 @@ class ScopeProviderTest(UnitTest):
         self.assertEqual(cast(Assignment, scope_of_f["y"][0]).node, y)
         self.assertEqual(cast(Assignment, scope_of_f["z"][0]).node, z)
         self.assertEqual(cast(Assignment, scope_of_f["kwarg"][0]).node, kwarg)
+
+    def test_except_handler(self) -> None:
+        m, scopes = get_scope_metadata_provider(
+            """
+            try:
+                ...
+            except Exception as ex:
+                ...
+            """
+        )
+        scope_of_module = scopes[m]
+        self.assertIsInstance(scope_of_module, GlobalScope)
+        self.assertTrue("ex" in scope_of_module)
+        self.assertEqual(
+            cast(Assignment, scope_of_module["ex"][0]).node,
+            ensure_type(
+                ensure_type(m.body[0], cst.Try).handlers[0].name, cst.AsName
+            ).name,
+        )
+
+    def test_with_asname(self) -> None:
+        m, scopes = get_scope_metadata_provider(
+            """
+            with open(file_name) as f:
+                ...
+            """
+        )
+        scope_of_module = scopes[m]
+        self.assertIsInstance(scope_of_module, GlobalScope)
+        self.assertTrue("f" in scope_of_module)
+        self.assertEqual(
+            cast(Assignment, scope_of_module["f"][0]).node,
+            ensure_type(
+                ensure_type(m.body[0], cst.With).items[0].asname, cst.AsName
+            ).name,
+        )

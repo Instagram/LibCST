@@ -248,3 +248,29 @@ class ExpressionContextProviderTest(UnitTest):
         wrapper.visit(
             DependentVisitor(test=self, name_to_context={"a": ExpressionContext.LOAD})
         )
+
+    def test_with_as(self) -> None:
+        wrapper = MetadataWrapper(parse_module("with a() as b:\n    pass"))
+        wrapper.visit(
+            DependentVisitor(
+                test=self,
+                name_to_context={
+                    "a": ExpressionContext.LOAD,
+                    "b": ExpressionContext.STORE,
+                },
+            )
+        )
+
+    def test_except_as(self) -> None:
+        wrapper = MetadataWrapper(
+            parse_module("try:    ...\nexcept Exception as ex:\n    pass")
+        )
+        wrapper.visit(
+            DependentVisitor(
+                test=self,
+                name_to_context={
+                    "Exception": ExpressionContext.LOAD,
+                    "ex": ExpressionContext.STORE,
+                },
+            )
+        )
