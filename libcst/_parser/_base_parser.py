@@ -27,14 +27,13 @@
 from dataclasses import dataclass, field
 from typing import Generic, Iterable, List, Sequence, TypeVar, Union
 
-from parso.pgen2.generator import DFAState, Grammar, ReservedString
-
 from libcst._exceptions import (
     EOFSentinel,
     ParserSyntaxError,
     PartialParserSyntaxError,
     get_expected_str,
 )
+from libcst._parser._parso._pgen2._generator import DFAState, Grammar, ReservedString
 from libcst._parser._parso._python._token import TokenType
 from libcst._parser._types.token import Token
 

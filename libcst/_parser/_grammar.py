@@ -8,8 +8,6 @@ import re
 from functools import lru_cache
 from typing import Iterator, Mapping, Tuple
 
-from parso.pgen2.generator import Grammar, generate_grammar
-
 from libcst._parser._conversions.expression import (
     convert_arg_assign_comp_for,
     convert_arglist,
@@ -131,6 +129,7 @@ from libcst._parser._conversions.terminals import (
     convert_OP,
     convert_STRING,
 )
+from libcst._parser._parso._pgen2._generator import Grammar, generate_grammar
 from libcst._parser._parso._python._token import PythonTokenTypes, TokenType
 from libcst._parser._production_decorator import get_productions
 from libcst._parser._types.conversions import NonterminalConversion, TerminalConversion
