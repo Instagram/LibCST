@@ -54,7 +54,7 @@ class Assignment(BaseAssignment):
 
 
 class BuiltinAssignmemt(BaseAssignment):
-    node: None = None
+    pass
 
 
 class Scope(abc.ABC):
