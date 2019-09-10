@@ -28,7 +28,6 @@ from dataclasses import dataclass, field
 from typing import Generic, Iterable, List, Sequence, TypeVar, Union
 
 from parso.pgen2.generator import DFAState, Grammar, ReservedString
-from parso.python.token import TokenType
 
 from libcst._exceptions import (
     EOFSentinel,
@@ -36,6 +35,7 @@ from libcst._exceptions import (
     PartialParserSyntaxError,
     get_expected_str,
 )
+from libcst._parser._parso._python._token import TokenType
 from libcst._parser._types.token import Token
 
 

@@ -6,6 +6,7 @@
 # - Use dataclasses instead of namedtuple
 # - Apply type hints directly to files
 # - Make PythonVersionInfo directly usable in hashmaps
+# - Unroll total ordering because Pyre doesn't understand it
 
 # pyre-strict
 
@@ -13,8 +14,7 @@ import re
 import sys
 from ast import literal_eval
 from dataclasses import dataclass
-from functools import total_ordering
-from typing import Iterable, Optional, Sequence, Tuple, Union
+from typing import Optional, Sequence, Tuple, Union
 
 
 # The following is a list in Python that are line breaks in str.splitlines, but
@@ -142,7 +142,6 @@ def version_info() -> Version:
     return Version(*[x if i == 3 else int(x) for i, x in enumerate(tupl)])
 
 
-@total_ordering
 @dataclass(frozen=True)
 class PythonVersionInfo:
     major: int
@@ -156,6 +155,20 @@ class PythonVersionInfo:
 
         return (self.major, self.minor) > (other.major, other.minor)
 
+    def __ge__(self, other: Union["PythonVersionInfo", Tuple[int, int]]) -> bool:
+        return self.__gt__(other) or self.__eq__(other)
+
+    def __lt__(self, other: Union["PythonVersionInfo", Tuple[int, int]]) -> bool:
+        if isinstance(other, tuple):
+            if len(other) != 2:
+                raise ValueError("Can only compare to tuples of length 2.")
+            return (self.major, self.minor) < other
+
+        return (self.major, self.minor) < (other.major, other.minor)
+
+    def __le__(self, other: Union["PythonVersionInfo", Tuple[int, int]]) -> bool:
+        return self.__lt__(other) or self.__eq__(other)
+
     def __eq__(self, other: Union["PythonVersionInfo", Tuple[int, int]]) -> bool:
         if isinstance(other, tuple):
             if len(other) != 2:
@@ -166,10 +179,6 @@ class PythonVersionInfo:
 
     def __ne__(self, other: Union["PythonVersionInfo", Tuple[int, int]]) -> bool:
         return not self.__eq__(other)
-
-    # TODO: Remove this once parso is fully forked internally.
-    def __iter__(self) -> Iterable[int]:
-        return iter((self.major, self.minor))
 
     def __hash__(self) -> int:
         return hash((self.major, self.minor))

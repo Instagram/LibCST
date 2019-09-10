@@ -8,9 +8,8 @@
 from dataclasses import dataclass
 from typing import Optional, Tuple
 
-from parso.python.token import TokenType
-
 from libcst._add_slots import add_slots
+from libcst._parser._parso._python._token import TokenType
 from libcst._parser._types.whitespace_state import WhitespaceState
 
 
