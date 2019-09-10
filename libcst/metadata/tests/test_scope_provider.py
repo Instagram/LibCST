@@ -409,6 +409,12 @@ class ScopeProviderTest(UnitTest):
         self.assertEqual(cast(Assignment, scope_of_f["kwarg"][0]).node, kwarg)
 
     def test_except_handler(self) -> None:
+        """
+        The ``except as`` is a special case. The asname is only available in the excep body
+        block and it'll be removed when existing the block.
+        See https://docs.python.org/3.4/reference/compound_stmts.html#except
+        We don't create a new block for except body because we don't handle del in our Scope Analysis.
+        """
         m, scopes = get_scope_metadata_provider(
             """
             try:
