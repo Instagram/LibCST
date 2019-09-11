@@ -90,6 +90,10 @@ class Scope(abc.ABC):
     def record_global_overwrite(self, name: str) -> None:
         ...
 
+    @abc.abstractmethod
+    def record_nonlocal_overwrite(self, name: str) -> None:
+        ...
+
 
 class GlobalScope(Scope):
     def __init__(self) -> None:
@@ -107,6 +111,9 @@ class GlobalScope(Scope):
     def record_global_overwrite(self, name: str) -> None:
         pass
 
+    def record_nonlocal_overwrite(self, name: str) -> None:
+        raise NotImplementedError("nonlocal declaration not allowed at module level")
+
 
 class LocalScope(Scope, abc.ABC):
     _scope_overwrites: Dict[str, Scope]
@@ -115,11 +122,11 @@ class LocalScope(Scope, abc.ABC):
         super().__init__(parent)
         self._scope_overwrites = {}
 
-    def record_nonlocal_overwrite(self, name: str) -> None:
-        self._scope_overwrites[name] = self.parent
-
     def record_global_overwrite(self, name: str) -> None:
         self._scope_overwrites[name] = self.globals
+
+    def record_nonlocal_overwrite(self, name: str) -> None:
+        self._scope_overwrites[name] = self.parent
 
     def record_assignment(self, name: str, node: cst.CSTNode) -> None:
         if name in self._scope_overwrites:
@@ -292,6 +299,11 @@ class ScopeVisitor(cst.CSTVisitor):
     def visit_Global(self, node: cst.Global) -> Optional[bool]:
         for name_item in node.names:
             self.scope.record_global_overwrite(name_item.name.value)
+        return False
+
+    def visit_Nonlocal(self, node: cst.Nonlocal) -> Optional[bool]:
+        for name_item in node.names:
+            self.scope.record_nonlocal_overwrite(name_item.name.value)
         return False
 
     def infer_accesses(self) -> None:
