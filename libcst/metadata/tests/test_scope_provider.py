@@ -272,7 +272,55 @@ class ScopeProviderTest(UnitTest):
         self.assertEqual(scope_of_f["var"], scope_of_module["var"])
 
     def test_nonlocal_scope_overwrites(self) -> None:
-        pass
+        m, scopes = get_scope_metadata_provider(
+            """
+            def outer_f():
+                var = ...
+                class Cls:
+                    var = ...
+                    def inner_f():
+                        nonlocal var
+                        var = ...
+            """
+        )
+        scope_of_module = scopes[m]
+        self.assertIsInstance(scope_of_module, GlobalScope)
+        self.assertTrue("var" not in scope_of_module)
+
+        outer_f = ensure_type(m.body[0], cst.FunctionDef)
+        outer_f_body_var_assign = ensure_type(
+            ensure_type(outer_f.body.body[0], cst.SimpleStatementLine).body[0],
+            cst.Assign,
+        )
+        scope_of_outer_f = scopes[outer_f_body_var_assign]
+        self.assertIsInstance(scope_of_outer_f, FunctionScope)
+        self.assertTrue("var" in scope_of_outer_f)
+        self.assertEqual(len(scope_of_outer_f["var"]), 2)
+
+        cls = ensure_type(outer_f.body.body[1], cst.ClassDef)
+        scope_of_cls = scopes[cls.body.body[0]]
+        self.assertIsInstance(scope_of_cls, ClassScope)
+        self.assertTrue("var" in scope_of_cls)
+
+        inner_f = ensure_type(cls.body.body[1], cst.FunctionDef)
+        inner_f_body_var_assign = ensure_type(
+            ensure_type(inner_f.body.body[1], cst.SimpleStatementLine).body[0],
+            cst.Assign,
+        )
+        scope_of_inner_f = scopes[inner_f_body_var_assign]
+        self.assertIsInstance(scope_of_inner_f, FunctionScope)
+        self.assertTrue("var" in scope_of_inner_f)
+        self.assertEqual(len(scope_of_inner_f["var"]), 2)
+        self.assertEqual(
+            {
+                cast(Assignment, assignment).node
+                for assignment in scope_of_outer_f["var"]
+            },
+            {
+                outer_f_body_var_assign.targets[0].target,
+                inner_f_body_var_assign.targets[0].target,
+            },
+        )
 
     def test_local_scope_shadowing_with_functions(self) -> None:
         m, scopes = get_scope_metadata_provider(
