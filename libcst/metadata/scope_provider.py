@@ -179,12 +179,6 @@ class ComprehensionScope(LocalScope):
 
         [i for i in range(10)]
 
-    the variable `i` shouldn't leak outside the generator. This wasn't always true in
-    py2, but it is in py3.
-
-    Guido explains some of the scoping rules here:
-    http://python-history.blogspot.com/2010/06/from-list-comprehensions-to-generator.html
-
     TODO: Assignment expressions (Python 3.8) will complicate ComprehensionScopes,
     and will require us to handle such assignments as non-local.
     https://www.python.org/dev/peps/pep-0572/#scope-of-the-target
@@ -304,6 +298,37 @@ class ScopeVisitor(cst.CSTVisitor):
     def visit_Nonlocal(self, node: cst.Nonlocal) -> Optional[bool]:
         for name_item in node.names:
             self.scope.record_nonlocal_overwrite(name_item.name.value)
+        return False
+
+    def visit_ListComp(self, node: cst.ListComp) -> Optional[bool]:
+        return self._visit_comp_alike(node)
+
+    def visit_SetComp(self, node: cst.SetComp) -> Optional[bool]:
+        return self._visit_comp_alike(node)
+
+    def visit_DictComp(self, node: cst.DictComp) -> Optional[bool]:
+        return self._visit_comp_alike(node)
+
+    def visit_GeneratorExp(self, node: cst.GeneratorExp) -> Optional[bool]:
+        return self._visit_comp_alike(node)
+
+    def _visit_comp_alike(
+        self, node: Union[cst.ListComp, cst.SetComp, cst.DictComp, cst.GeneratorExp]
+    ) -> bool:
+        """Cheat sheet: `[elt for target in iter if ifs]`"""
+        for_in = node.for_in
+        for_in.iter.visit(self)
+        with self._new_scope(ComprehensionScope):
+            for_in.target.visit(self)
+            for condition in for_in.ifs:
+                condition.visit(self)
+            if for_in.inner_for_in:
+                for_in.visit(self)
+            if isinstance(node, cst.DictComp):
+                node.key.visit(self)
+                node.value.visit(self)
+            else:
+                node.elt.visit(self)
         return False
 
     def infer_accesses(self) -> None:

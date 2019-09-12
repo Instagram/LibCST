@@ -94,6 +94,9 @@ class ExpressionContextProvider(BatchableMetadataProvider[Optional[ExpressionCon
     def visit_AsName(self, node: cst.AsName) -> Optional[bool]:
         self._check_type_and_set_metadata(node.name, ExpressionContext.STORE)
 
+    def visit_CompFor(self, node: cst.CompFor) -> Optional[bool]:
+        self._check_type_and_set_metadata(node.target, ExpressionContext.STORE)
+
     def visit_Del(self, node: cst.Del) -> None:
         self.set_metadata(node.target, ExpressionContext.DEL)
 
