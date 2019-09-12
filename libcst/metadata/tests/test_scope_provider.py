@@ -13,6 +13,7 @@ from libcst import ensure_type
 from libcst.metadata.scope_provider import (
     Assignment,
     ClassScope,
+    ComprehensionScope,
     FunctionScope,
     GlobalScope,
     Scope,
@@ -242,7 +243,78 @@ class ScopeProviderTest(UnitTest):
         self.assertTrue("cls_attr" not in scope_of_func)
 
     def test_comprehension_scope(self) -> None:
-        pass
+        m, scopes = get_scope_metadata_provider(
+            """
+            iterator = None
+            condition = None
+            [elt for target in iterator if condition]
+            {elt for target in iterator if condition}
+            {elt: target for target in iterator if condition}
+            (elt for target in iterator if condition)
+            """
+        )
+        scope_of_module = scopes[m]
+        self.assertIsInstance(scope_of_module, GlobalScope)
+
+        list_comp = ensure_type(
+            ensure_type(
+                ensure_type(m.body[2], cst.SimpleStatementLine).body[0], cst.Expr
+            ).value,
+            cst.ListComp,
+        )
+        scope_of_list_comp = scopes[list_comp.elt]
+        self.assertIsInstance(scope_of_list_comp, ComprehensionScope)
+
+        set_comp = ensure_type(
+            ensure_type(
+                ensure_type(m.body[3], cst.SimpleStatementLine).body[0], cst.Expr
+            ).value,
+            cst.SetComp,
+        )
+        scope_of_set_comp = scopes[set_comp.elt]
+        self.assertIsInstance(scope_of_set_comp, ComprehensionScope)
+
+        dict_comp = ensure_type(
+            ensure_type(
+                ensure_type(m.body[4], cst.SimpleStatementLine).body[0], cst.Expr
+            ).value,
+            cst.DictComp,
+        )
+        scope_of_dict_comp = scopes[dict_comp.key]
+        self.assertIsInstance(scope_of_dict_comp, ComprehensionScope)
+
+        generator_expr = ensure_type(
+            ensure_type(
+                ensure_type(m.body[5], cst.SimpleStatementLine).body[0], cst.Expr
+            ).value,
+            cst.GeneratorExp,
+        )
+        scope_of_generator_expr = scopes[generator_expr.elt]
+        self.assertIsInstance(scope_of_generator_expr, ComprehensionScope)
+
+        self.assertTrue("iterator" in scope_of_module)
+        self.assertTrue("iterator" in scope_of_list_comp)
+        self.assertTrue("iterator" in scope_of_set_comp)
+        self.assertTrue("iterator" in scope_of_dict_comp)
+        self.assertTrue("iterator" in scope_of_generator_expr)
+
+        self.assertTrue("condition" in scope_of_module)
+        self.assertTrue("condition" in scope_of_list_comp)
+        self.assertTrue("condition" in scope_of_set_comp)
+        self.assertTrue("condition" in scope_of_dict_comp)
+        self.assertTrue("condition" in scope_of_generator_expr)
+
+        self.assertTrue("elt" not in scope_of_module)
+        self.assertTrue("elt" not in scope_of_list_comp)
+        self.assertTrue("elt" not in scope_of_set_comp)
+        self.assertTrue("elt" not in scope_of_dict_comp)
+        self.assertTrue("elt" not in scope_of_generator_expr)
+
+        self.assertTrue("target" not in scope_of_module)
+        self.assertTrue("target" in scope_of_list_comp)
+        self.assertTrue("target" in scope_of_set_comp)
+        self.assertTrue("target" in scope_of_dict_comp)
+        self.assertTrue("target" in scope_of_generator_expr)
 
     def test_nested_comprehension_scope(self) -> None:
         pass
