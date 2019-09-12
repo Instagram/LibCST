@@ -1,3 +1,11 @@
+# Copyright 2004-2005 Elemental Security, Inc. All Rights Reserved.
+# Licensed to PSF under a Contributor Agreement.
+#
+# Modifications:
+# Copyright David Halter and Contributors
+# Modifications are dual-licensed: MIT and PSF.
+# 99% of the code is different from pgen2, now.
+#
 # A fork of `parso.python.tokenize`.
 # https://github.com/davidhalter/parso/blob/master/parso/python/tokenize.py
 #
@@ -6,7 +14,7 @@
 # - Removed main section
 # - Applied type stubs directly
 # - Removed Python 2 shims
-
+#
 # -*- coding: utf-8 -*-
 # This tokenizer has been copied from the ``tokenize.py`` standard library
 # tokenizer. The reason was simple: The standard library tokenizer fails
