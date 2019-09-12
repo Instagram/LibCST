@@ -2993,7 +2993,7 @@ class Dict(BaseDict):
 @dataclass(frozen=True)
 class CompFor(CSTNode):
     """
-    One ``for`` clause in a :class:`BaseComprehension`, or a nested hierarchy of
+    One ``for`` clause in a :class:`BaseComp`, or a nested hierarchy of
     ``for`` clauses.
 
     Nested loops in comprehensions are difficult to get right, but they can be thought
@@ -3221,7 +3221,7 @@ class BaseComp(BaseExpression, ABC):
 
 class BaseSimpleComp(BaseComp, ABC):
     """
-    The base class for :class:`ListComp`, :class:`SetComp`, and :class:`Generator`.
+    The base class for :class:`ListComp`, :class:`SetComp`, and :class:`GeneratorExp`.
     :class:`DictComp` is not a :class:`BaseSimpleComp`, because it uses ``key`` and
     ``value``.
     """
