@@ -13,6 +13,7 @@
 # - Convert base test to Unittet
 # - Remove grammar-specific tests
 from libcst._parser._parso._python._tokenize import tokenize
+from libcst._parser._parso._utils import parse_version_string
 from libcst.testing.utils import UnitTest, data_provider
 
 
@@ -43,5 +44,5 @@ class ParsoTokenizeTest(UnitTest):
         )
     )
     def test_tokenize_start_pos(self, code, positions):
-        tokens = list(tokenize(code, version_info=(3, 6)))
+        tokens = list(tokenize(code, version_info=parse_version_string("3.6")))
         assert positions == [p.start_pos for p in tokens]
