@@ -317,7 +317,34 @@ class ScopeProviderTest(UnitTest):
         self.assertTrue("target" in scope_of_generator_expr)
 
     def test_nested_comprehension_scope(self) -> None:
-        pass
+        m, scopes = get_scope_metadata_provider(
+            """
+            [y for x in iterator for y in x]
+            """
+        )
+        scope_of_module = scopes[m]
+        self.assertIsInstance(scope_of_module, GlobalScope)
+
+        list_comp = ensure_type(
+            ensure_type(
+                ensure_type(m.body[0], cst.SimpleStatementLine).body[0], cst.Expr
+            ).value,
+            cst.ListComp,
+        )
+        scope_of_list_comp = scopes[list_comp.elt]
+        self.assertIsInstance(scope_of_list_comp, ComprehensionScope)
+
+        self.assertIs(scopes[list_comp], scope_of_module)
+        self.assertIs(scopes[list_comp.elt], scope_of_list_comp)
+
+        self.assertIs(scopes[list_comp.for_in], scope_of_module)
+        self.assertIs(scopes[list_comp.for_in.iter], scope_of_module)
+        self.assertIs(scopes[list_comp.for_in.target], scope_of_list_comp)
+
+        inner_for_in = ensure_type(list_comp.for_in.inner_for_in, cst.CompFor)
+        self.assertIs(scopes[inner_for_in], scope_of_list_comp)
+        self.assertIs(scopes[inner_for_in.iter], scope_of_list_comp)
+        self.assertIs(scopes[inner_for_in.target], scope_of_list_comp)
 
     def test_global_scope_overwrites(self) -> None:
         m, scopes = get_scope_metadata_provider(
