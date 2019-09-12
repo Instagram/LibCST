@@ -315,15 +315,49 @@ class ScopeVisitor(cst.CSTVisitor):
     def _visit_comp_alike(
         self, node: Union[cst.ListComp, cst.SetComp, cst.DictComp, cst.GeneratorExp]
     ) -> bool:
-        """Cheat sheet: `[elt for target in iter if ifs]`"""
+        """
+        Cheat sheet: `[elt for target in iter if ifs]`
+
+        Terminology:
+            target: The variable or pattern we're storing each element of the iter in.
+            iter: The thing we're iterating over.
+            ifs: A list of conditions provided
+            elt: The value that will be computed and "yielded" each time the loop
+                iterates. For most comprehensions, this is just the `node.elt`, but
+                DictComp has `key` and `value`, which behave like `node.elt` would.
+
+
+        Nested Comprehension: ``[a for b in c for a in b]`` is a "nested" ListComp.
+        The outer iterator is in ``node.for_in`` and the inner iterator is in
+        ``node.for_in.inner_for_in``.
+
+
+        The first comprehension object's iter in generators is evaluated
+        outside of the ComprehensionScope. Every other comprehension's iter is
+        evaluated inside the ComprehensionScope. Even though that doesn't seem very sane,
+        but that appears to be how it works.
+
+            non_flat = [ [1,2,3], [4,5,6], [7,8]
+            flat = [y for x in non_flat for y in x]  # this works fine
+
+            # This will give a "NameError: name 'x' is not defined":
+            flat = [y for x in x for y in x]
+            # x isn't defined, because the first iter is evaluted outside the scope.
+
+            # This will give an UnboundLocalError, indicating that the second
+            # comprehension's iter value is evaluated inside the scope as its elt.
+            # UnboundLocalError: local variable 'y' referenced before assignment
+            flat = [y for x in non_flat for y in y]
+        """
         for_in = node.for_in
         for_in.iter.visit(self)
+        self.provider.set_metadata(for_in, self.scope)
         with self._new_scope(ComprehensionScope):
             for_in.target.visit(self)
             for condition in for_in.ifs:
                 condition.visit(self)
             if for_in.inner_for_in:
-                for_in.visit(self)
+                for_in.inner_for_in.visit(self)
             if isinstance(node, cst.DictComp):
                 node.key.visit(self)
                 node.value.visit(self)
