@@ -1,3 +1,11 @@
+# Copyright 2004-2005 Elemental Security, Inc. All Rights Reserved.
+# Licensed to PSF under a Contributor Agreement.
+#
+# Modifications:
+# Copyright David Halter and Contributors
+# Modifications are dual-licensed: MIT and PSF.
+# 99% of the code is different from pgen2, now.
+#
 # A fork of Parso's tokenize test
 # https://github.com/davidhalter/parso/blob/master/test/test_tokenize.py
 #
