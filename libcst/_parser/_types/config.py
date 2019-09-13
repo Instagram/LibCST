@@ -85,7 +85,7 @@ class PartialParserConfig:
     #: run LibCST. For example, you can parse code as 3.7 with a CPython 3.6
     #: interpreter.
     #:
-    #: Currently, only Python 3.6 and 3.7 syntax is supported.
+    #: Currently, only Python 3.5, 3.6 and 3.7 syntax is supported.
     python_version: Union[str, AutoConfig] = AutoConfig.token
 
     #: A named tuple with the ``major`` and ``minor`` Python version numbers. This is
@@ -120,13 +120,14 @@ class PartialParserConfig:
         # Once we add support for more versions of Python, we can change this to detect
         # the supported version range.
         if parsed_python_version not in (
+            PythonVersionInfo(3, 5),
             PythonVersionInfo(3, 6),
             PythonVersionInfo(3, 7),
         ):
             raise ValueError(
                 "LibCST can only parse code using one of the following versions of "
-                + "Python's grammar: 3.6, 3.7. More versions may be supported by future "
-                + "releases."
+                + "Python's grammar: 3.5, 3.6, 3.7. More versions may be supported "
+                + "by future releases."
             )
 
         object.__setattr__(self, "parsed_python_version", parsed_python_version)

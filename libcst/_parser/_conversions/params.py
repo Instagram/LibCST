@@ -23,6 +23,16 @@ from libcst._parser._whitespace_parser import parse_parenthesizable_whitespace
         + "[',' [tfpdef_star (',' tfpdef_assign)* [',' [tfpdef_starstar [',']]] | tfpdef_starstar [',']]]"
         + "| tfpdef_star (',' tfpdef_assign)* [',' [tfpdef_starstar [',']]] | tfpdef_starstar [','])"
     ),
+    version=">=3.6",
+)
+@with_production(  # noqa: C901: too complex
+    "typedargslist",
+    (
+        "(tfpdef_assign (',' tfpdef_assign)* "
+        + "[',' [tfpdef_star (',' tfpdef_assign)* [',' tfpdef_starstar] | tfpdef_starstar]]"
+        + "| tfpdef_star (',' tfpdef_assign)* [',' tfpdef_starstar] | tfpdef_starstar)"
+    ),
+    version="<=3.5",
 )
 @with_production(
     "varargslist",
@@ -31,6 +41,16 @@ from libcst._parser._whitespace_parser import parse_parenthesizable_whitespace
         + "[',' [vfpdef_star (',' vfpdef_assign)* [',' [vfpdef_starstar [',']]] | vfpdef_starstar [',']]]"
         + "| vfpdef_star (',' vfpdef_assign)* [',' [vfpdef_starstar [',']]] | vfpdef_starstar [','])"
     ),
+    version=">=3.6",
+)
+@with_production(
+    "varargslist",
+    (
+        "(vfpdef_assign (',' vfpdef_assign)* "
+        + "[',' [vfpdef_star (',' vfpdef_assign)* [',' vfpdef_starstar] | vfpdef_starstar]]"
+        + "| vfpdef_star (',' vfpdef_assign)* [',' vfpdef_starstar] | vfpdef_starstar)"
+    ),
+    version="<=3.5",
 )
 def convert_argslist(config: ParserConfig, children: Sequence[Any]) -> Any:
     params: List[Param] = []
