@@ -231,6 +231,17 @@ class ScopeVisitor(cst.CSTVisitor):
                         )
 
                 self.scope.record_assignment(name_value, node)
+
+        # visit remaining attributes
+        if isinstance(node, cst.Import):
+            remaining_attrs = [node.semicolon, node.whitespace_after_import]
+        else:
+            remaining_attrs = [node.semicolon, node.whitespace_after_import]
+
+        for attr in remaining_attrs:
+            if isinstance(attr, cst.CSTNode):
+                attr.visit(self)
+
         return False
 
     def visit_Import(self, node: cst.Import) -> Optional[bool]:
@@ -248,28 +259,66 @@ class ScopeVisitor(cst.CSTVisitor):
 
     def visit_FunctionDef(self, node: cst.FunctionDef) -> Optional[bool]:
         self.scope.record_assignment(node.name.value, node)
+        self.provider.set_metadata(node.name, self.scope)
+
         with self._new_scope(FunctionScope):
             node.params.visit(self)
             node.body.visit(self)
+
+            # visit remaining attributes
+            for attr in [
+                node.asynchronous,
+                node.leading_lines,
+                node.lines_after_decorators,
+                node.whitespace_after_def,
+                node.whitespace_after_name,
+                node.whitespace_before_params,
+                node.whitespace_before_colon,
+            ]:
+                if isinstance(attr, cst.CSTNode):
+                    attr.visit(self)
 
         for decorator in node.decorators:
             decorator.visit(self)
         if node.returns:
             node.returns.visit(self)
+
         return False
 
     def visit_Lambda(self, node: cst.Lambda) -> Optional[bool]:
         with self._new_scope(FunctionScope):
             node.params.visit(self)
             node.body.visit(self)
+
+            # visit remaining attributes
+            for attr in [
+                node.colon,
+                node.lpar,
+                node.rpar,
+                node.whitespace_after_lambda,
+            ]:
+                if isinstance(attr, cst.CSTNode):
+                    attr.visit(self)
         return False
 
     def visit_Param(self, node: cst.Param) -> Optional[bool]:
         self.scope.record_assignment(node.name.value, node)
+        self.provider.set_metadata(node.name, self.scope)
         with self._switch_scope(self.scope.parent):
             for field in [node.default, node.annotation]:
                 if field:
                     field.visit(self)
+
+        # visit remaining attributes
+        for attr in [
+            node.equal,
+            node.comma,
+            node.star,
+            node.whitespace_after_star,
+            node.whitespace_after_param,
+        ]:
+            if isinstance(attr, cst.CSTNode):
+                attr.visit(self)
         return False
 
     def visit_Arg_keyword(self, node: cst.Arg) -> None:
@@ -288,16 +337,39 @@ class ScopeVisitor(cst.CSTVisitor):
         with self._new_scope(ClassScope):
             for statement in node.body.body:
                 statement.visit(self)
+
+            # visit remaining attributes
+            for attr in [
+                node.lpar,
+                node.rpar,
+                node.leading_lines,
+                node.lines_after_decorators,
+                node.whitespace_after_class,
+                node.whitespace_after_name,
+                node.whitespace_before_colon,
+            ]:
+                if isinstance(attr, cst.CSTNode):
+                    attr.visit(self)
         return False
 
     def visit_Global(self, node: cst.Global) -> Optional[bool]:
         for name_item in node.names:
             self.scope.record_global_overwrite(name_item.name.value)
+
+        # visit remaining attributes
+        for attr in [node.whitespace_after_global, node.semicolon]:
+            if isinstance(attr, cst.CSTNode):
+                attr.visit(self)
         return False
 
     def visit_Nonlocal(self, node: cst.Nonlocal) -> Optional[bool]:
         for name_item in node.names:
             self.scope.record_nonlocal_overwrite(name_item.name.value)
+
+        # visit remaining attributes
+        for attr in [node.whitespace_after_nonlocal, node.semicolon]:
+            if isinstance(attr, cst.CSTNode):
+                attr.visit(self)
         return False
 
     def visit_ListComp(self, node: cst.ListComp) -> Optional[bool]:
@@ -363,6 +435,26 @@ class ScopeVisitor(cst.CSTVisitor):
                 node.value.visit(self)
             else:
                 node.elt.visit(self)
+
+            if isinstance(node, cst.ListComp):
+                remaining_attrs = [node.lbracket, node.rbracket, node.lpar, node.rpar]
+            elif isinstance(node, cst.SetComp):
+                remaining_attrs = [node.lbrace, node.rbrace, node.lpar, node.rpar]
+            elif isinstance(node, cst.DictComp):
+                remaining_attrs = [
+                    node.lbrace,
+                    node.rbrace,
+                    node.lpar,
+                    node.rpar,
+                    node.whitespace_before_colon,
+                    node.whitespace_after_colon,
+                ]
+            else:  # cst.GeneratorExp
+                remaining_attrs = [node.lpar, node.rpar]
+
+            for attr in remaining_attrs:
+                if isinstance(attr, cst.CSTNode):
+                    attr.visit(self)
         return False
 
     def infer_accesses(self) -> None:
@@ -372,8 +464,6 @@ class ScopeVisitor(cst.CSTVisitor):
         self.__deferred_accesses = []
 
     def on_leave(self, original_node: cst.CSTNode) -> None:
-        # will this always been called? What if the node wasn't visited? This should be tested.
-        # ideas: a metadata provider for parent node.
         self.provider.set_metadata(original_node, self.scope)
         super().on_leave(original_node)
 
