@@ -207,7 +207,14 @@ def convert_small_stmt(config: ParserConfig, children: Sequence[Any]) -> Any:
     return small_stmt_body
 
 
-@with_production("expr_stmt", "testlist_star_expr (annassign | augassign | assign* )")
+@with_production(
+    "expr_stmt",
+    "testlist_star_expr (annassign | augassign | assign* )",
+    version=">=3.6",
+)
+@with_production(
+    "expr_stmt", "testlist_star_expr (augassign | assign* )", version="<=3.5"
+)
 @with_production("yield_stmt", "yield_expr")
 def convert_expr_stmt(config: ParserConfig, children: Sequence[Any]) -> Any:
     if len(children) == 1:
@@ -255,7 +262,7 @@ def convert_expr_stmt(config: ParserConfig, children: Sequence[Any]) -> Any:
     )
 
 
-@with_production("annassign", "':' test ['=' test]")
+@with_production("annassign", "':' test ['=' test]", version=">=3.6")
 def convert_annassign(config: ParserConfig, children: Sequence[Any]) -> Any:
     if len(children) == 2:
         # Variable annotation only

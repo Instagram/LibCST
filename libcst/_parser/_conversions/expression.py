@@ -1403,7 +1403,8 @@ def convert_sync_comp_for(
 
 
 @with_production("comp_for", "['async'] sync_comp_for", version=">=3.7")
-@with_production("comp_for", "[ASYNC] sync_comp_for", version="<=3.6")
+@with_production("comp_for", "[ASYNC] sync_comp_for", version="==3.6")
+@with_production("comp_for", "sync_comp_for", version="<=3.5")
 def convert_comp_for(
     config: ParserConfig, children: typing.Sequence[typing.Any]
 ) -> typing.Any:
