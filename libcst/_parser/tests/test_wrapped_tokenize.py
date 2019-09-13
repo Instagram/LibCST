@@ -5,10 +5,9 @@
 
 from typing import Sequence
 
-from parso.python.token import PythonTokenTypes
-from parso.utils import parse_version_string
-
 from libcst._exceptions import ParserSyntaxError
+from libcst._parser._parso._python._token import PythonTokenTypes
+from libcst._parser._parso._utils import parse_version_string
 from libcst._parser._types.whitespace_state import WhitespaceState
 from libcst._parser._wrapped_tokenize import Token, tokenize
 from libcst.testing.utils import UnitTest, data_provider

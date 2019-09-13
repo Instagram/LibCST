@@ -5,14 +5,13 @@
 
 from typing import Any, Iterable, Mapping, Sequence
 
-from parso.pgen2.generator import Grammar
-from parso.python.token import TokenType
-
 from libcst._parser._base_parser import BaseParser
 from libcst._parser._grammar import (
     get_nonterminal_conversions,
     get_terminal_conversions,
 )
+from libcst._parser._parso._pgen2._generator import Grammar
+from libcst._parser._parso._python._token import TokenType
 from libcst._parser._types.config import ParserConfig
 from libcst._parser._types.conversions import NonterminalConversion, TerminalConversion
 from libcst._parser._types.token import Token

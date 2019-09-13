@@ -25,15 +25,14 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Generator, List, Optional, Sequence
 
-from parso.python.token import PythonTokenTypes, TokenType
-from parso.python.tokenize import (
+from libcst._add_slots import add_slots
+from libcst._exceptions import ParserSyntaxError
+from libcst._parser._parso._python._token import PythonTokenTypes, TokenType
+from libcst._parser._parso._python._tokenize import (
     Token as OrigToken,
     tokenize_lines as orig_tokenize_lines,
 )
-from parso.utils import PythonVersionInfo, split_lines
-
-from libcst._add_slots import add_slots
-from libcst._exceptions import ParserSyntaxError
+from libcst._parser._parso._utils import PythonVersionInfo, split_lines
 from libcst._parser._types.token import Token
 from libcst._parser._types.whitespace_state import WhitespaceState
 
