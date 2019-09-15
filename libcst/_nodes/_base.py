@@ -338,8 +338,7 @@ class CSTNode(ABC):
         if len(fields(self)) == 0:
             return f"{type(self).__name__}()"
 
-        lines = []
-        lines.append(f"{type(self).__name__}(")
+        lines = [f"{type(self).__name__}("]
         for f in fields(self):
             key = f.name
             if key[0] != "_":
