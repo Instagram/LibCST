@@ -35,7 +35,7 @@ class BaseParenthesizableWhitespace(CSTNode, ABC):
     expression between two tokens. This is the most common type of whitespace.
 
     The list of allowed characters in a whitespace depends on whether it is found
-    inside a parentesized expression or not. This class allows nodes which can be
+    inside a parenthesized expression or not. This class allows nodes which can be
     found inside or outside a ``()``, ``[]`` or ``{}`` section to accept either
     whitespace form.
 

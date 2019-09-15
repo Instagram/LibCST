@@ -50,7 +50,7 @@ class MetadataDependent:
     #: this attribute directly.
     metadata: Mapping["ProviderT", Mapping["CSTNode", object]]
 
-    #: The set of metadata depedencies declared by this class.
+    #: The set of metadata dependencies declared by this class.
     METADATA_DEPENDENCIES: ClassVar[Collection["ProviderT"]] = ()
 
     def __init__(self) -> None:
