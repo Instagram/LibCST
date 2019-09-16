@@ -94,13 +94,15 @@ Expression Context Metadata
 Scope Metadata
 --------------
 .. autoclass:: libcst.ScopeProvider
+   :no-undoc-members:
 
 .. autoclass:: libcst.BaseAssignment
    :no-undoc-members:
 
+.. autoclass:: libcst.Access
 .. autoclass:: libcst.Assignment
 .. autoclass:: libcst.BuiltinAssignmemt
-.. autoclass:: libcst.Access
+
 
 .. autoclass:: libcst.Scope
    :no-undoc-members:

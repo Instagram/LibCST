@@ -25,7 +25,7 @@ from libcst.metadata.expression_context_provider import (
 @dataclass(frozen=True)
 class Access:
     """
-    Access records an access of an assignment.
+     An Access records an access of an assignment.
     """
 
     #: The name node of the access. A name is an access when the expression context is
@@ -137,7 +137,7 @@ class Scope(abc.ABC):
 
 class GlobalScope(Scope):
     """
-    GlobalScope is the scope of module. All module level assignments are recorded in GlobalScope.
+     A GlobalScope is the scope of module. All module level assignments are recorded in GlobalScope.
     """
 
     def __init__(self) -> None:
@@ -196,6 +196,10 @@ class FunctionScope(LocalScope):
 
 
 class ClassScope(LocalScope):
+    """
+    When a class is defined, it creates a ClassScope.
+    """
+
     def _record_assignment_as_parent(self, name: str, node: cst.CSTNode) -> None:
         """
         Forward the assignment to parent.
@@ -227,11 +231,12 @@ class ComprehensionScope(LocalScope):
 
         [i for i in range(10)]
 
-    TODO: Assignment expressions (Python 3.8) will complicate ComprehensionScopes,
-    and will require us to handle such assignments as non-local.
-    https://www.python.org/dev/peps/pep-0572/#scope-of-the-target
+    The variable ``i`` is only viewable within the ComprehensionScope.
     """
 
+    # TODO: Assignment expressions (Python 3.8) will complicate ComprehensionScopes,
+    # and will require us to handle such assignments as non-local.
+    # https://www.python.org/dev/peps/pep-0572/#scope-of-the-target
     pass
 
 
@@ -517,6 +522,14 @@ class ScopeVisitor(cst.CSTVisitor):
 
 
 class ScopeProvider(BatchableMetadataProvider[Optional[Scope]]):
+    """
+     ScopeProvider traversed the entire module and create the scope inheritance
+    structure. It provides the scope of name assignment and accesses. It's useful for
+    more advanced static analysis. E.g. given a :class:`~libcst.FunctionDef`
+    node, we can check the type of its Scope to figure out whether it's a class method
+    (:class:`ClassScope`) or a regular function (:class:`GlobalScope`).
+    """
+
     METADATA_DEPENDENCIES = (ExpressionContextProvider,)
 
     def __init__(self) -> None:
