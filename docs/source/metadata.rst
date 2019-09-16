@@ -90,3 +90,24 @@ Expression Context Metadata
    :no-undoc-members:
 
 .. autoclass:: libcst.ExpressionContext
+
+Scope Metadata
+--------------
+.. autoclass:: libcst.ScopeProvider
+
+.. autoclass:: libcst.BaseAssignment
+   :no-undoc-members:
+
+.. autoclass:: libcst.Assignment
+.. autoclass:: libcst.BuiltinAssignmemt
+.. autoclass:: libcst.Access
+
+.. autoclass:: libcst.Scope
+   :no-undoc-members:
+
+.. autoclass:: libcst.GlobalScope
+   :no-undoc-members:
+
+.. autoclass:: libcst.FunctionScope
+.. autoclass:: libcst.ClassScope
+.. autoclass:: libcst.ComprehensionScope

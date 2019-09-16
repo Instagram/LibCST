@@ -200,6 +200,18 @@ from libcst.metadata.position_provider import (
     BasicPositionProvider,
     SyntacticPositionProvider,
 )
+from libcst.metadata.scope_provider import (
+    Access,
+    Assignment,
+    BaseAssignment,
+    BuiltinAssignmemt,
+    ClassScope,
+    ComprehensionScope,
+    FunctionScope,
+    GlobalScope,
+    Scope,
+    ScopeProvider,
+)
 from libcst.metadata.wrapper import MetadataWrapper
 
 
@@ -396,4 +408,14 @@ __all__ = [
     "MetadataWrapper",
     "ExpressionContext",
     "ExpressionContextProvider",
+    "BaseAssignment",
+    "Assignment",
+    "BuiltinAssignmemt",
+    "Access",
+    "Scope",
+    "GlobalScope",
+    "FunctionScope",
+    "ClassScope",
+    "ComprehensionScope",
+    "ScopeProvider",
 ]
