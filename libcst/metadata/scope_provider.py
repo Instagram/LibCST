@@ -13,6 +13,7 @@ from dataclasses import dataclass
 from typing import Dict, Iterator, List, MutableMapping, Optional, Tuple, Type, Union
 
 import libcst as cst
+from libcst._add_slots import add_slots
 from libcst.metadata.base_provider import BatchableMetadataProvider
 from libcst.metadata.expression_context_provider import (
     ExpressionContext,
@@ -20,14 +21,28 @@ from libcst.metadata.expression_context_provider import (
 )
 
 
+@add_slots
 @dataclass(frozen=True)
 class Access:
+    """
+    Access records an access of an assignment.
+    """
+
+    #: The name node of the access. A name is an access when the expression context is
+    #: :attr:`ExpressionContext.LOAD`.
     node: cst.Name
+
+    #: The scope of the access. Note that a access could be in a child scope of its assignment.
     scope: "Scope"
 
 
 class BaseAssignment(abc.ABC):
+    """Abstract base class of :class:`Assignment` and :class:`BuitinAssignment`."""
+
+    #: The name of assignment.
     name: str
+
+    #: The scope associates to assignment.
     scope: "Scope"
     __accesses: List[Access]
 
@@ -41,11 +56,16 @@ class BaseAssignment(abc.ABC):
 
     @property
     def accesses(self) -> Tuple[Access, ...]:
+        """Return all accesses of the assignment."""
         # we don't want to publicly expose the mutable version of this
         return tuple(self.__accesses)
 
 
 class Assignment(BaseAssignment):
+    """An assignment records the name, CSTNode and its accesses."""
+
+    #: The node of assignment, it could be a :class:`~libcst.Import`, :class:`ImportFrom`,
+    #: :class:`~libcst.Name`, :class:`~libcst.FunctionDef`, or :class:`~libcst.ClassDef`.
     node: cst.CSTNode
 
     def __init__(self, name: str, scope: "Scope", node: cst.CSTNode) -> None:
@@ -54,11 +74,31 @@ class Assignment(BaseAssignment):
 
 
 class BuiltinAssignmemt(BaseAssignment):
+    """
+    A BuiltinAssignment represents an value provide by Python as a builtin, including
+    `functions <https://docs.python.org/3/library/functions.html>`_,
+    `constants <https://docs.python.org/3/library/constants.html>`_, and
+    `types <https://docs.python.org/3/library/stdtypes.html>`_.
+    """
+
     pass
 
 
 class Scope(abc.ABC):
+    """
+    Base class of all scope classes. Scope object stores assignments from imports,
+    variable assignments, function definition or class definition.
+    A scope has a parent scope which represents the inheritance relationship. That means
+    an assignment in parent scope is viewable to the child scope and the child scope may
+    overwrites the assignment by using the same name.
+    Use ``name in scope`` to check whether a name is viewable in the scope.
+    Use ``scope[name]`` to retrieve all viewable assignments in the scope.
+    """
+
+    #: Parent scope. Note the parent scope of a GlobalScope is itself.
     parent: "Scope"
+
+    #: Refers to the GlobalScope.
     globals: "GlobalScope"
     _assignments: MutableMapping[str, List[BaseAssignment]]
 
@@ -96,6 +136,10 @@ class Scope(abc.ABC):
 
 
 class GlobalScope(Scope):
+    """
+    GlobalScope is the scope of module. All module level assignments are recorded in GlobalScope.
+    """
+
     def __init__(self) -> None:
         self.globals: Scope = self  # must be defined before Scope.__init__ is called
         super().__init__(parent=self)
@@ -144,6 +188,10 @@ class LocalScope(Scope, abc.ABC):
 
 
 class FunctionScope(LocalScope):
+    """
+    When a function is defined, it creates a FunctionScope.
+    """
+
     pass
 
 
