@@ -8,6 +8,7 @@ from libcst._batched_visitor import BatchableCSTVisitor, visit_batched
 from libcst._exceptions import MetadataException, ParserSyntaxError
 from libcst._helpers import ensure_type
 from libcst._maybe_sentinel import MaybeSentinel
+from libcst._metadata_dependent import MetadataDependent
 from libcst._nodes._base import CSTNode, CSTValidationError
 from libcst._nodes._expression import (
     Annotation,
@@ -190,27 +191,6 @@ from libcst.metadata.base_provider import (
     BaseMetadataProvider,
     BatchableMetadataProvider,
     VisitorMetadataProvider,
-)
-from libcst.metadata.dependent import MetadataDependent
-from libcst.metadata.expression_context_provider import (
-    ExpressionContext,
-    ExpressionContextProvider,
-)
-from libcst.metadata.position_provider import (
-    BasicPositionProvider,
-    SyntacticPositionProvider,
-)
-from libcst.metadata.scope_provider import (
-    Access,
-    Assignment,
-    BaseAssignment,
-    BuiltinAssignmemt,
-    ClassScope,
-    ComprehensionScope,
-    FunctionScope,
-    GlobalScope,
-    Scope,
-    ScopeProvider,
 )
 from libcst.metadata.wrapper import MetadataWrapper
 
@@ -403,19 +383,5 @@ __all__ = [
     "BatchableMetadataProvider",
     "VisitorMetadataProvider",
     "MetadataDependent",
-    "BasicPositionProvider",
-    "SyntacticPositionProvider",
     "MetadataWrapper",
-    "ExpressionContext",
-    "ExpressionContextProvider",
-    "BaseAssignment",
-    "Assignment",
-    "BuiltinAssignmemt",
-    "Access",
-    "Scope",
-    "GlobalScope",
-    "FunctionScope",
-    "ClassScope",
-    "ComprehensionScope",
-    "ScopeProvider",
 ]

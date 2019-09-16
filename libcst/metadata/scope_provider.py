@@ -73,7 +73,7 @@ class Assignment(BaseAssignment):
         super().__init__(name, scope)
 
 
-class BuiltinAssignmemt(BaseAssignment):
+class BuiltinAssignment(BaseAssignment):
     """
     A BuiltinAssignment represents an value provide by Python as a builtin, including
     `functions <https://docs.python.org/3/library/functions.html>`_,
@@ -137,7 +137,7 @@ class Scope(abc.ABC):
 
 class GlobalScope(Scope):
     """
-     A GlobalScope is the scope of module. All module level assignments are recorded in GlobalScope.
+    A GlobalScope is the scope of module. All module level assignments are recorded in GlobalScope.
     """
 
     def __init__(self) -> None:
@@ -147,9 +147,9 @@ class GlobalScope(Scope):
     def __getitem__(self, name: str) -> Tuple[BaseAssignment, ...]:
         if hasattr(builtins, name):
             if not any(
-                isinstance(i, BuiltinAssignmemt) for i in self._assignments[name]
+                isinstance(i, BuiltinAssignment) for i in self._assignments[name]
             ):
-                self._assignments[name].append(BuiltinAssignmemt(name, self))
+                self._assignments[name].append(BuiltinAssignment(name, self))
         return tuple(self._assignments[name])
 
     def record_global_overwrite(self, name: str) -> None:

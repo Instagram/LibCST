@@ -67,6 +67,7 @@ your provider does not use the visitor pattern for computing metadata for a tree
 Metadata Providers
 ------------------
 
+
 Position Metadata
 -----------------
 
