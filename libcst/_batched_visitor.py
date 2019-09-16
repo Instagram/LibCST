@@ -16,15 +16,13 @@ from typing import (
     cast,
 )
 
+from libcst._metadata_dependent import MetadataDependent
 from libcst._typed_visitor import CSTTypedVisitorFunctions
 from libcst._visitors import CSTNodeT, CSTVisitor
-from libcst.metadata.dependent import MetadataDependent
 
 
 if TYPE_CHECKING:
     from libcst._nodes._base import CSTNode  # noqa: F401
-    from libcst.metadata.base_provider import ProviderT  # noqa: F401
-
 
 VisitorMethod = Callable[["CSTNode"], None]
 _VisitorMethodCollection = Mapping[str, List[VisitorMethod]]
@@ -76,7 +74,7 @@ def visit_batched(
     methods from each visitor in ``visitor`` are executed by the batched visitor.
 
     This function does not handle metadata dependency resolution for ``visitors``.
-    See :func:`~libcst.MetadataWrapper.visit_batched` from 
+    See :func:`~libcst.MetadataWrapper.visit_batched` from
     :class:`~libcst.MetadataWrapper` for batched traversal with metadata dependency
     resolution.
     """

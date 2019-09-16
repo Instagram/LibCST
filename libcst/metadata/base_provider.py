@@ -18,12 +18,12 @@ from typing import (
 )
 
 from libcst._batched_visitor import BatchableCSTVisitor
-from libcst._visitors import CSTVisitor
-from libcst.metadata.dependent import (
+from libcst._metadata_dependent import (
     _T as _MetadataT,
     _UNDEFINED_DEFAULT,
     MetadataDependent,
 )
+from libcst._visitors import CSTVisitor
 
 
 if TYPE_CHECKING:
