@@ -25,7 +25,7 @@ from libcst.metadata.expression_context_provider import (
 @dataclass(frozen=True)
 class Access:
     """
-     An Access records an access of an assignment.
+    An Access records an access of an assignment.
     """
 
     #: The name node of the access. A name is an access when the expression context is
@@ -523,10 +523,10 @@ class ScopeVisitor(cst.CSTVisitor):
 
 class ScopeProvider(BatchableMetadataProvider[Optional[Scope]]):
     """
-     ScopeProvider traversed the entire module and create the scope inheritance
-    structure. It provides the scope of name assignment and accesses. It's useful for
+     ScopeProvider traverses the entire module and creates the scope inheritance
+    structure. It provides the scope of name assignment and accesses. It is useful for
     more advanced static analysis. E.g. given a :class:`~libcst.FunctionDef`
-    node, we can check the type of its Scope to figure out whether it's a class method
+    node, we can check the type of its Scope to figure out whether it is a class method
     (:class:`ClassScope`) or a regular function (:class:`GlobalScope`).
     """
 
