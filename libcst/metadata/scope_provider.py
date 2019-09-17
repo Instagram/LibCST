@@ -64,7 +64,7 @@ class BaseAssignment(abc.ABC):
 class Assignment(BaseAssignment):
     """An assignment records the name, CSTNode and its accesses."""
 
-    #: The node of assignment, it could be a :class:`~libcst.Import`, :class:`ImportFrom`,
+    #: The node of assignment, it could be a :class:`~libcst.Import`, :class:`~libcst.ImportFrom`,
     #: :class:`~libcst.Name`, :class:`~libcst.FunctionDef`, or :class:`~libcst.ClassDef`.
     node: cst.CSTNode
 

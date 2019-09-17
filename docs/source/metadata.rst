@@ -66,6 +66,10 @@ your provider does not use the visitor pattern for computing metadata for a tree
 ------------------
 Metadata Providers
 ------------------
+:class:`~libcst.metadata.BasicPositionProvider`, :class:`~libcst.metadata.SyntacticPositionProvider`,
+:class:`~libcst.metadata.ExpressionContextProvider` and :class:`~libcst.metadata.ScopeProvider`
+are currently provided. Each metadata provider may has its own custom data structure. Read the following
+document for more detail.
 
 Position Metadata
 -----------------
@@ -111,14 +115,14 @@ conditional statements, loops, or try…except, don't create their own scope. E.
             ]
     Cls().fn()
 
-The scopes of each name assignments and class/function definitinos are visualized:
+The scopes of each name assignments and class/function definitions are visualized:
 
 .. image:: _static/img/python_scopes.svg
    :alt: LibCST
 
-There were four different type of scope in Python: :class:`libcst.metadata.GlobalScope`,
-:class:`libcst.metadata.ClassScope`, :class:`libcst.metadata.FunctionScope` and
-:class:`libcst.metadata.ComprehensionScope`.
+There were four different type of scope in Python: :class:`~libcst.metadata.GlobalScope`,
+:class:`~libcst.metadata.ClassScope`, :class:`~libcst.metadata.FunctionScope` and
+:class:`~libcst.metadata.ComprehensionScope`.
 
 .. autoclass:: libcst.metadata.ScopeProvider
    :no-undoc-members:
