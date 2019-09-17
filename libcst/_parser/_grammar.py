@@ -6,7 +6,7 @@
 # pyre-strict
 import re
 from functools import lru_cache
-from typing import Iterator, Mapping, Tuple
+from typing import Iterator, Mapping, Optional, Tuple
 
 from libcst._parser._conversions.expression import (
     convert_arg_assign_comp_for,
@@ -117,6 +117,8 @@ from libcst._parser._conversions.statement import (
     convert_with_stmt,
 )
 from libcst._parser._conversions.terminals import (
+    convert_ASYNC,
+    convert_AWAIT,
     convert_DEDENT,
     convert_ENDMARKER,
     convert_FSTRING_END,
@@ -131,6 +133,7 @@ from libcst._parser._conversions.terminals import (
 )
 from libcst._parser._parso._pgen2._generator import Grammar, generate_grammar
 from libcst._parser._parso._python._token import PythonTokenTypes, TokenType
+from libcst._parser._parso._utils import PythonVersionInfo, parse_version_string
 from libcst._parser._production_decorator import get_productions
 from libcst._parser._types.conversions import NonterminalConversion, TerminalConversion
 from libcst._parser._types.production import Production
@@ -149,6 +152,8 @@ _TERMINAL_CONVERSIONS_SEQUENCE: Tuple[TerminalConversion, ...] = (
     convert_FSTRING_START,
     convert_FSTRING_END,
     convert_FSTRING_STRING,
+    convert_ASYNC,
+    convert_AWAIT,
 )
 
 # Try to match the order of https://docs.python.org/3/reference/grammar.html
@@ -258,7 +263,7 @@ _NONTERMINAL_CONVERSIONS_SEQUENCE: Tuple[NonterminalConversion, ...] = (
 )
 
 
-def get_grammar_str() -> str:
+def get_grammar_str(version: PythonVersionInfo) -> str:
     """
     Returns an BNF-like grammar text that `parso.pgen2.generator.generate_grammar` can
     handle.
@@ -267,7 +272,7 @@ def get_grammar_str() -> str:
     debugging the grammar.
     """
     lines = []
-    for p in get_nonterminal_productions():
+    for p in get_nonterminal_productions(version):
         lines.append(str(p))
     return "\n".join(lines) + "\n"
 
@@ -276,8 +281,8 @@ def get_grammar_str() -> str:
 # of how we're defining our grammar, efficient cache invalidation is harder, though not
 # impossible.
 @lru_cache()
-def get_grammar() -> "Grammar[TokenType]":
-    return generate_grammar(get_grammar_str(), PythonTokenTypes)
+def get_grammar(version: PythonVersionInfo) -> "Grammar[TokenType]":
+    return generate_grammar(get_grammar_str(version), PythonTokenTypes)
 
 
 @lru_cache()
@@ -309,14 +314,57 @@ def validate_grammar() -> None:
                 )
 
 
-def get_nonterminal_productions() -> Iterator[Production]:
+def _get_version_comparison(version: str) -> Tuple[str, PythonVersionInfo]:
+    if version[:2] in (">=", "<=", "==", "!="):
+        return (version[:2], parse_version_string(version[2:].strip()))
+    if version[:1] in (">", "<"):
+        return (version[:1], parse_version_string(version[1:].strip()))
+    raise Exception(f"Invalid version comparison specifier '{version}'")
+
+
+def _compare_versions(
+    requested_version: PythonVersionInfo,
+    actual_version: PythonVersionInfo,
+    comparison: str,
+) -> bool:
+    if comparison == ">=":
+        return actual_version >= requested_version
+    if comparison == "<=":
+        return actual_version <= requested_version
+    if comparison == "==":
+        return actual_version == requested_version
+    if comparison == "!=":
+        return actual_version != requested_version
+    if comparison == ">":
+        return actual_version > requested_version
+    if comparison == "<":
+        return actual_version < requested_version
+    raise Exception(f"Invalid version comparison specifier '{comparison}'")
+
+
+def _should_include(
+    requested_version: Optional[str], actual_version: PythonVersionInfo
+) -> bool:
+    if requested_version is None:
+        return True
+    for version in requested_version.split(","):
+        comparison, parsed_version = _get_version_comparison(version.strip())
+        if not _compare_versions(parsed_version, actual_version, comparison):
+            return False
+    return True
+
+
+def get_nonterminal_productions(version: PythonVersionInfo) -> Iterator[Production]:
     for conversion in _NONTERMINAL_CONVERSIONS_SEQUENCE:
-        # TODO: Filter out productions used by other python versions here
-        yield from get_productions(conversion)
+        for production in get_productions(conversion):
+            if _should_include(production.version, version):
+                yield production
 
 
 @lru_cache()
-def get_nonterminal_conversions() -> Mapping[str, NonterminalConversion]:
+def get_nonterminal_conversions(
+    version: PythonVersionInfo
+) -> Mapping[str, NonterminalConversion]:
     """
     Returns a mapping from nonterminal production name to the conversion function that
     should be called by the parser.
@@ -324,7 +372,8 @@ def get_nonterminal_conversions() -> Mapping[str, NonterminalConversion]:
     conversions = {}
     for fn in _NONTERMINAL_CONVERSIONS_SEQUENCE:
         for fn_production in get_productions(fn):
-            # TODO: Filter out productions used by other python versions here
+            if not _should_include(fn_production.version, version):
+                continue
             if fn_production.name in conversions:
                 raise Exception(
                     f"Found duplicate '{fn_production.name}' production in grammar"

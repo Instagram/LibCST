@@ -207,7 +207,14 @@ def convert_small_stmt(config: ParserConfig, children: Sequence[Any]) -> Any:
     return small_stmt_body
 
 
-@with_production("expr_stmt", "testlist_star_expr (annassign | augassign | assign* )")
+@with_production(
+    "expr_stmt",
+    "testlist_star_expr (annassign | augassign | assign* )",
+    version=">=3.6",
+)
+@with_production(
+    "expr_stmt", "testlist_star_expr (augassign | assign* )", version="<=3.5"
+)
 @with_production("yield_stmt", "yield_expr")
 def convert_expr_stmt(config: ParserConfig, children: Sequence[Any]) -> Any:
     if len(children) == 1:
@@ -255,7 +262,7 @@ def convert_expr_stmt(config: ParserConfig, children: Sequence[Any]) -> Any:
     )
 
 
-@with_production("annassign", "':' test ['=' test]")
+@with_production("annassign", "':' test ['=' test]", version=">=3.6")
 def convert_annassign(config: ParserConfig, children: Sequence[Any]) -> Any:
     if len(children) == 2:
         # Variable annotation only
@@ -1019,7 +1026,8 @@ def _extract_async(
     return (parse_empty_lines(config, whitespace_before), asyncnode, stmt.value)
 
 
-@with_production("asyncable_funcdef", "['async'] funcdef")
+@with_production("asyncable_funcdef", "['async'] funcdef", version=">=3.7")
+@with_production("asyncable_funcdef", "[ASYNC] funcdef", version="<=3.6")
 def convert_asyncable_funcdef(config: ParserConfig, children: Sequence[Any]) -> Any:
     leading_lines, asyncnode, funcdef = _extract_async(config, children)
 
@@ -1274,7 +1282,12 @@ def convert_decorated(config: ParserConfig, children: Sequence[Any]) -> Any:
     )
 
 
-@with_production("asyncable_stmt", "['async'] (funcdef | with_stmt | for_stmt)")
+@with_production(
+    "asyncable_stmt", "['async'] (funcdef | with_stmt | for_stmt)", version=">=3.7"
+)
+@with_production(
+    "asyncable_stmt", "[ASYNC] (funcdef | with_stmt | for_stmt)", version="<=3.6"
+)
 def convert_asyncable_stmt(config: ParserConfig, children: Sequence[Any]) -> Any:
     leading_lines, asyncnode, stmtnode = _extract_async(config, children)
     if isinstance(stmtnode, FunctionDef):

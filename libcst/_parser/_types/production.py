@@ -6,12 +6,14 @@
 # pyre-strict
 
 from dataclasses import dataclass
+from typing import Optional
 
 
 @dataclass(frozen=True)
 class Production:
     name: str
     children: str
+    version: Optional[str]
 
     def __str__(self) -> str:
         return f"{self.name}: {self.children}"

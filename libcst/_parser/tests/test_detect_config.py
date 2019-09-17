@@ -7,6 +7,7 @@
 from typing import Union
 
 from libcst._parser._detect_config import detect_config
+from libcst._parser._parso._utils import PythonVersionInfo
 from libcst._parser._types.config import ParserConfig, PartialParserConfig
 from libcst.testing.utils import UnitTest, data_provider
 
@@ -16,7 +17,7 @@ class TestDetectConfig(UnitTest):
         {
             "empty_input": {
                 "source": b"",
-                "partial": PartialParserConfig(),
+                "partial": PartialParserConfig(python_version="3.7"),
                 "detect_trailing_newline": True,
                 "detect_default_newline": True,
                 "expected_config": ParserConfig(
@@ -25,11 +26,12 @@ class TestDetectConfig(UnitTest):
                     default_indent="    ",
                     default_newline="\n",
                     has_trailing_newline=False,
+                    version=PythonVersionInfo(3, 7),
                 ),
             },
             "detect_trailing_newline_disabled": {
                 "source": b"",
-                "partial": PartialParserConfig(),
+                "partial": PartialParserConfig(python_version="3.7"),
                 "detect_trailing_newline": False,
                 "detect_default_newline": True,
                 "expected_config": ParserConfig(
@@ -38,11 +40,12 @@ class TestDetectConfig(UnitTest):
                     default_indent="    ",
                     default_newline="\n",
                     has_trailing_newline=False,
+                    version=PythonVersionInfo(3, 7),
                 ),
             },
             "detect_default_newline_disabled": {
                 "source": b"pass\r",
-                "partial": PartialParserConfig(),
+                "partial": PartialParserConfig(python_version="3.7"),
                 "detect_trailing_newline": False,
                 "detect_default_newline": False,
                 "expected_config": ParserConfig(
@@ -51,11 +54,12 @@ class TestDetectConfig(UnitTest):
                     default_indent="    ",
                     default_newline="\n",
                     has_trailing_newline=False,
+                    version=PythonVersionInfo(3, 7),
                 ),
             },
             "newline_inferred": {
                 "source": b"first_line\r\n\nsomething\n",
-                "partial": PartialParserConfig(),
+                "partial": PartialParserConfig(python_version="3.7"),
                 "detect_trailing_newline": True,
                 "detect_default_newline": True,
                 "expected_config": ParserConfig(
@@ -64,11 +68,14 @@ class TestDetectConfig(UnitTest):
                     default_indent="    ",
                     default_newline="\r\n",
                     has_trailing_newline=True,
+                    version=PythonVersionInfo(3, 7),
                 ),
             },
             "newline_partial_given": {
                 "source": b"first_line\r\nsecond_line\r\n",
-                "partial": PartialParserConfig(default_newline="\n"),
+                "partial": PartialParserConfig(
+                    default_newline="\n", python_version="3.7"
+                ),
                 "detect_trailing_newline": True,
                 "detect_default_newline": True,
                 "expected_config": ParserConfig(
@@ -77,11 +84,12 @@ class TestDetectConfig(UnitTest):
                     default_indent="    ",
                     default_newline="\n",  # The given partial disables inference
                     has_trailing_newline=True,
+                    version=PythonVersionInfo(3, 7),
                 ),
             },
             "indent_inferred": {
                 "source": b"if test:\n\t  something\n",
-                "partial": PartialParserConfig(),
+                "partial": PartialParserConfig(python_version="3.7"),
                 "detect_trailing_newline": True,
                 "detect_default_newline": True,
                 "expected_config": ParserConfig(
@@ -90,11 +98,14 @@ class TestDetectConfig(UnitTest):
                     default_indent="\t  ",
                     default_newline="\n",
                     has_trailing_newline=True,
+                    version=PythonVersionInfo(3, 7),
                 ),
             },
             "indent_partial_given": {
                 "source": b"if test:\n\t  something\n",
-                "partial": PartialParserConfig(default_indent="      "),
+                "partial": PartialParserConfig(
+                    default_indent="      ", python_version="3.7"
+                ),
                 "detect_trailing_newline": True,
                 "detect_default_newline": True,
                 "expected_config": ParserConfig(
@@ -103,11 +114,12 @@ class TestDetectConfig(UnitTest):
                     default_indent="      ",
                     default_newline="\n",
                     has_trailing_newline=True,
+                    version=PythonVersionInfo(3, 7),
                 ),
             },
             "encoding_inferred": {
                 "source": b"#!/usr/bin/python3\n# -*- coding: latin-1 -*-\npass\n",
-                "partial": PartialParserConfig(),
+                "partial": PartialParserConfig(python_version="3.7"),
                 "detect_trailing_newline": True,
                 "detect_default_newline": True,
                 "expected_config": ParserConfig(
@@ -121,11 +133,14 @@ class TestDetectConfig(UnitTest):
                     default_indent="    ",
                     default_newline="\n",
                     has_trailing_newline=True,
+                    version=PythonVersionInfo(3, 7),
                 ),
             },
             "encoding_partial_given": {
                 "source": b"#!/usr/bin/python3\n# -*- coding: latin-1 -*-\npass\n",
-                "partial": PartialParserConfig(encoding="us-ascii"),
+                "partial": PartialParserConfig(
+                    encoding="us-ascii", python_version="3.7"
+                ),
                 "detect_trailing_newline": True,
                 "detect_default_newline": True,
                 "expected_config": ParserConfig(
@@ -139,11 +154,12 @@ class TestDetectConfig(UnitTest):
                     default_indent="    ",
                     default_newline="\n",
                     has_trailing_newline=True,
+                    version=PythonVersionInfo(3, 7),
                 ),
             },
             "encoding_str_not_bytes_disables_inference": {
                 "source": "#!/usr/bin/python3\n# -*- coding: latin-1 -*-\npass\n",
-                "partial": PartialParserConfig(),
+                "partial": PartialParserConfig(python_version="3.7"),
                 "detect_trailing_newline": True,
                 "detect_default_newline": True,
                 "expected_config": ParserConfig(
@@ -157,11 +173,12 @@ class TestDetectConfig(UnitTest):
                     default_indent="    ",
                     default_newline="\n",
                     has_trailing_newline=True,
+                    version=PythonVersionInfo(3, 7),
                 ),
             },
             "encoding_non_ascii_compatible_utf_16_with_bom": {
                 "source": b"\xff\xfet\x00e\x00s\x00t\x00",
-                "partial": PartialParserConfig(encoding="utf-16"),
+                "partial": PartialParserConfig(encoding="utf-16", python_version="3.7"),
                 "detect_trailing_newline": True,
                 "detect_default_newline": True,
                 "expected_config": ParserConfig(
@@ -170,6 +187,7 @@ class TestDetectConfig(UnitTest):
                     default_indent="    ",
                     default_newline="\n",
                     has_trailing_newline=False,
+                    version=PythonVersionInfo(3, 7),
                 ),
             },
         }

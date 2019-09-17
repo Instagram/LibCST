@@ -33,8 +33,8 @@ class TestConfig(UnitTest):
                 "The given version is not in the right format",
             ),
             "python_version_unsupported": (
-                lambda: PartialParserConfig(python_version="3.6"),
-                "LibCST can only parse code using Python 3.7's grammar.",
+                lambda: PartialParserConfig(python_version="3.8"),
+                "LibCST can only parse code using one of the following versions of Python's grammar",
             ),
             "encoding": (
                 lambda: PartialParserConfig(encoding="utf-42"),
