@@ -68,8 +68,7 @@ Metadata Providers
 ------------------
 :class:`~libcst.metadata.BasicPositionProvider`, :class:`~libcst.metadata.SyntacticPositionProvider`,
 :class:`~libcst.metadata.ExpressionContextProvider` and :class:`~libcst.metadata.ScopeProvider`
-are currently provided. Each metadata provider may has its own custom data structure. Read the following
-document for more detail.
+are currently provided. Each metadata provider may has its own custom data structure.
 
 Position Metadata
 -----------------
@@ -98,26 +97,14 @@ Expression Context Metadata
 Scope Metadata
 --------------
 Scope is the block of naming binding. The bind name is not available
-after existing the bind block. Pyhon is
+after existing the bind block. Python is
 `function-scoped <https://en.wikipedia.org/wiki/Scope_(computer_science)#Function_scope>`_.
 New scopes are created for classes and functions, but not other block constructs like
-conditional statements, loops, or try…except, don't create their own scope. E.g.::
+conditional statements, loops, or try…except, don't create their own scope.
+In this example, the scopes of each name assignments and class/function definitions are
+visualized:
 
-    ITERATIONS = 10
-    class Cls:
-        class_attribute = 20
-
-        def fn():
-            for i in range(ITERATIONS):
-                ...
-            return [
-                i for i in range(10)
-            ]
-    Cls().fn()
-
-The scopes of each name assignments and class/function definitions are visualized:
-
-.. image:: _static/img/python_scopes.svg
+.. image:: _static/img/python_scopes.png
    :alt: LibCST
 
 There were four different type of scope in Python: :class:`~libcst.metadata.GlobalScope`,
