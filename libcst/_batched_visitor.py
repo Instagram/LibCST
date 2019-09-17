@@ -22,7 +22,7 @@ from libcst._visitors import CSTNodeT, CSTVisitor
 
 
 if TYPE_CHECKING:
-    from libcst._nodes._base import CSTNode  # noqa: F401
+    from libcst._nodes.base import CSTNode  # noqa: F401
 
 VisitorMethod = Callable[["CSTNode"], None]
 _VisitorMethodCollection = Mapping[str, List[VisitorMethod]]

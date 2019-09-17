@@ -15,7 +15,7 @@ import sys
 from typing import List, Sequence
 
 from libcst import CSTNode, IndentedBlock, Module, parse_module
-from libcst._nodes._deep_equals import deep_equals
+from libcst._nodes.deep_equals import deep_equals
 
 
 _DEFAULT_INDENT: str = "  "

@@ -6,8 +6,8 @@
 # pyre-strict
 from typing import Union
 
-from libcst._nodes._internal import CodeRange
-from libcst._nodes._module import _ModuleSelfT as _ModuleT
+from libcst._nodes.internal import CodeRange
+from libcst._nodes.module import _ModuleSelfT as _ModuleT
 from libcst.metadata.base_provider import BaseMetadataProvider
 
 

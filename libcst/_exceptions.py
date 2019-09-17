@@ -9,9 +9,9 @@ from typing import Any, Callable, Iterable, Optional, Sequence, Tuple, Union
 
 from typing_extensions import final
 
-from libcst._parser._parso._pgen2._generator import ReservedString
-from libcst._parser._parso._python._token import PythonTokenTypes, TokenType
-from libcst._parser._types.token import Token
+from libcst._parser.parso.pgen2.generator import ReservedString
+from libcst._parser.parso.python.token import PythonTokenTypes, TokenType
+from libcst._parser.types.token import Token
 from libcst._tabs import expand_tabs
 
 

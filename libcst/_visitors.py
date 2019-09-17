@@ -14,7 +14,7 @@ from libcst._types import CSTNodeT
 
 if TYPE_CHECKING:
     # Circular dependency for typing reasons only
-    from libcst._nodes._base import CSTNode  # noqa: F401
+    from libcst._nodes.base import CSTNode  # noqa: F401
 
 
 CSTVisitorT = Union["CSTTransformer", "CSTVisitor"]
