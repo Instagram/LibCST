@@ -67,7 +67,6 @@ your provider does not use the visitor pattern for computing metadata for a tree
 Metadata Providers
 ------------------
 
-
 Position Metadata
 -----------------
 
@@ -78,8 +77,8 @@ Accessing position metadata through the :class:`~libcst.MetadataDepedent`
 interface will return a :class:`~libcst.CodeRange` object. See
 :ref:`the above example<libcst-metadata-position-example>`.
 
-.. autoclass:: libcst.BasicPositionProvider
-.. autoclass:: libcst.SyntacticPositionProvider
+.. autoclass:: libcst.metadata.BasicPositionProvider
+.. autoclass:: libcst.metadata.SyntacticPositionProvider
 
 .. autoclass:: libcst.CodeRange
 .. autoclass:: libcst.CodePosition
@@ -87,30 +86,57 @@ interface will return a :class:`~libcst.CodeRange` object. See
 
 Expression Context Metadata
 ---------------------------
-.. autoclass:: libcst.ExpressionContextProvider
+.. autoclass:: libcst.metadata.ExpressionContextProvider
    :no-undoc-members:
 
-.. autoclass:: libcst.ExpressionContext
+.. autoclass:: libcst.metadata.ExpressionContext
 
 Scope Metadata
 --------------
-.. autoclass:: libcst.ScopeProvider
+Scope is the block of naming binding. The bind name is not available
+after existing the bind block. Pyhon is
+`function-scoped <https://en.wikipedia.org/wiki/Scope_(computer_science)#Function_scope>`_.
+New scopes are created for classes and functions, but not other block constructs like
+conditional statements, loops, or try…except, don't create their own scope. E.g.::
+
+    ITERATIONS = 10
+    class Cls:
+        class_attribute = 20
+
+        def fn():
+            for i in range(ITERATIONS):
+                ...
+            return [
+                i for i in range(10)
+            ]
+    Cls().fn()
+
+The scopes of each name assignments and class/function definitinos are visualized:
+
+.. image:: _static/img/python_scopes.svg
+   :alt: LibCST
+
+There were four different type of scope in Python: :class:`libcst.metadata.GlobalScope`,
+:class:`libcst.metadata.ClassScope`, :class:`libcst.metadata.FunctionScope` and
+:class:`libcst.metadata.ComprehensionScope`.
+
+.. autoclass:: libcst.metadata.ScopeProvider
    :no-undoc-members:
 
-.. autoclass:: libcst.BaseAssignment
+.. autoclass:: libcst.metadata.BaseAssignment
    :no-undoc-members:
 
-.. autoclass:: libcst.Access
-.. autoclass:: libcst.Assignment
-.. autoclass:: libcst.BuiltinAssignmemt
+.. autoclass:: libcst.metadata.Access
+.. autoclass:: libcst.metadata.Assignment
+.. autoclass:: libcst.metadata.BuiltinAssignment
 
 
-.. autoclass:: libcst.Scope
+.. autoclass:: libcst.metadata.Scope
    :no-undoc-members:
 
-.. autoclass:: libcst.GlobalScope
+.. autoclass:: libcst.metadata.GlobalScope
    :no-undoc-members:
 
-.. autoclass:: libcst.FunctionScope
-.. autoclass:: libcst.ClassScope
-.. autoclass:: libcst.ComprehensionScope
+.. autoclass:: libcst.metadata.FunctionScope
+.. autoclass:: libcst.metadata.ClassScope
+.. autoclass:: libcst.metadata.ComprehensionScope
