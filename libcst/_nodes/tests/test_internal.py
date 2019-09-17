@@ -7,7 +7,7 @@
 from typing import Tuple
 
 import libcst as cst
-from libcst._nodes._internal import (
+from libcst._nodes.internal import (
     BasicCodegenState,
     CodePosition,
     CodeRange,

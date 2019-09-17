@@ -11,7 +11,7 @@ from typing import Any, Callable, Iterable, List, Optional, Sequence, Type
 from unittest.mock import patch
 
 import libcst as cst
-from libcst._nodes._internal import CodegenState, CodeRange, visit_required
+from libcst._nodes.internal import CodegenState, CodeRange, visit_required
 from libcst._types import CSTNodeT
 from libcst._visitors import CSTTransformer, CSTVisitorT
 from libcst.metadata.position_provider import SyntacticPositionProvider

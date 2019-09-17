@@ -3,8 +3,8 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from libcst._parser._grammar import _should_include
-from libcst._parser._parso._utils import PythonVersionInfo
+from libcst._parser.grammar import _should_include
+from libcst._parser.parso.utils import PythonVersionInfo
 from libcst.testing.utils import UnitTest, data_provider
 
 

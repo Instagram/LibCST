@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, TypeVar
 
 
 if TYPE_CHECKING:
-    from libcst._nodes._base import CSTNode  # noqa: F401
+    from libcst._nodes.base import CSTNode  # noqa: F401
 
 
 CSTNodeT = TypeVar("CSTNodeT", bound="CSTNode")

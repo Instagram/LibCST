@@ -6,10 +6,10 @@
 from typing import Sequence
 
 from libcst._exceptions import ParserSyntaxError
-from libcst._parser._parso._python._token import PythonTokenTypes
-from libcst._parser._parso._utils import PythonVersionInfo, parse_version_string
-from libcst._parser._types.whitespace_state import WhitespaceState
-from libcst._parser._wrapped_tokenize import Token, tokenize
+from libcst._parser.parso.python.token import PythonTokenTypes
+from libcst._parser.parso.utils import PythonVersionInfo, parse_version_string
+from libcst._parser.types.whitespace_state import WhitespaceState
+from libcst._parser.wrapped_tokenize import Token, tokenize
 from libcst.testing.utils import UnitTest, data_provider
 
 

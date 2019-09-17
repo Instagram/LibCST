@@ -23,8 +23,8 @@ from libcst.metadata._resolver import _resolve_impl
 
 
 if TYPE_CHECKING:
-    from libcst._nodes._base import CSTNode  # noqa: F401
-    from libcst._nodes._module import Module  # noqa: F401
+    from libcst._nodes.base import CSTNode  # noqa: F401
+    from libcst._nodes.module import Module  # noqa: F401
     from libcst.metadata.base_provider import (  # noqa: F401
         BaseMetadataProvider,
         ProviderT,

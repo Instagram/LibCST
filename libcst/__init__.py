@@ -9,8 +9,8 @@ from libcst._exceptions import MetadataException, ParserSyntaxError
 from libcst._helpers import ensure_type
 from libcst._maybe_sentinel import MaybeSentinel
 from libcst._metadata_dependent import MetadataDependent
-from libcst._nodes._base import CSTNode, CSTValidationError
-from libcst._nodes._expression import (
+from libcst._nodes.base import CSTNode, CSTValidationError
+from libcst._nodes.expression import (
     Annotation,
     Arg,
     Asynchronous,
@@ -77,9 +77,9 @@ from libcst._nodes._expression import (
     UnaryOperation,
     Yield,
 )
-from libcst._nodes._internal import CodePosition, CodeRange
-from libcst._nodes._module import Module
-from libcst._nodes._op import (
+from libcst._nodes.internal import CodePosition, CodeRange
+from libcst._nodes.module import Module
+from libcst._nodes.op import (
     Add,
     AddAssign,
     And,
@@ -134,7 +134,7 @@ from libcst._nodes._op import (
     Subtract,
     SubtractAssign,
 )
-from libcst._nodes._statement import (
+from libcst._nodes.statement import (
     AnnAssign,
     AsName,
     Assert,
@@ -174,7 +174,7 @@ from libcst._nodes._statement import (
     With,
     WithItem,
 )
-from libcst._nodes._whitespace import (
+from libcst._nodes.whitespace import (
     BaseParenthesizableWhitespace,
     Comment,
     EmptyLine,
@@ -183,8 +183,8 @@ from libcst._nodes._whitespace import (
     SimpleWhitespace,
     TrailingWhitespace,
 )
-from libcst._parser._entrypoints import parse_expression, parse_module, parse_statement
-from libcst._parser._types.config import PartialParserConfig
+from libcst._parser.entrypoints import parse_expression, parse_module, parse_statement
+from libcst._parser.types.config import PartialParserConfig
 from libcst._removal_sentinel import RemovalSentinel
 from libcst._visitors import CSTNodeT, CSTTransformer, CSTVisitor, CSTVisitorT
 from libcst.metadata.base_provider import (

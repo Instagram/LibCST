@@ -20,7 +20,7 @@ from typing import (
 
 if TYPE_CHECKING:
     # Circular dependency for typing reasons only
-    from libcst._nodes._base import CSTNode  # noqa: F401
+    from libcst._nodes.base import CSTNode  # noqa: F401
     from libcst.metadata.base_provider import (  # noqa: F401
         BaseMetadataProvider,
         ProviderT,

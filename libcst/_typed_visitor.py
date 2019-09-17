@@ -14,7 +14,7 @@ from libcst._typed_visitor_base import mark_no_op
 
 
 if TYPE_CHECKING:
-    from libcst._nodes._op import (  # noqa: F401
+    from libcst._nodes.op import (  # noqa: F401
         Add,
         AddAssign,
         And,
@@ -69,7 +69,7 @@ if TYPE_CHECKING:
         Subtract,
         SubtractAssign,
     )
-    from libcst._nodes._statement import (  # noqa: F401
+    from libcst._nodes.statement import (  # noqa: F401
         AnnAssign,
         AsName,
         Assert,
@@ -108,7 +108,7 @@ if TYPE_CHECKING:
         With,
         WithItem,
     )
-    from libcst._nodes._expression import (  # noqa: F401
+    from libcst._nodes.expression import (  # noqa: F401
         Annotation,
         Arg,
         Asynchronous,
@@ -166,7 +166,7 @@ if TYPE_CHECKING:
         UnaryOperation,
         Yield,
     )
-    from libcst._nodes._whitespace import (  # noqa: F401
+    from libcst._nodes.whitespace import (  # noqa: F401
         BaseParenthesizableWhitespace,
         Comment,
         EmptyLine,
@@ -175,7 +175,7 @@ if TYPE_CHECKING:
         SimpleWhitespace,
         TrailingWhitespace,
     )
-    from libcst._nodes._module import Module  # noqa: F401
+    from libcst._nodes.module import Module  # noqa: F401
 
 
 class CSTTypedBaseFunctions:

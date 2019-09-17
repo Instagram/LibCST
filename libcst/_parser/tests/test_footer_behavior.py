@@ -8,7 +8,7 @@ from textwrap import dedent
 
 import libcst as cst
 from libcst import parse_module
-from libcst._nodes._deep_equals import deep_equals
+from libcst._nodes.deep_equals import deep_equals
 from libcst.testing.utils import UnitTest, data_provider
 
 
