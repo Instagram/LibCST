@@ -15,10 +15,10 @@ with open(path.join(this_directory, "README.rst"), encoding="utf-8") as f:
 
 setuptools.setup(
     name="libcst",
-    description="A concrete syntax tree with AST-like properties for Python 3.7 programs.",
+    description="A concrete syntax tree with AST-like properties for Python 3.5, 3.6 and 3.7 programs.",
     long_description=long_description,
     long_description_content_type="text/x-rst",
-    version="0.1.2",
+    version="0.1.3",
     url="https://github.com/Instagram/LibCST",
     license="MIT",
     packages=setuptools.find_packages(),

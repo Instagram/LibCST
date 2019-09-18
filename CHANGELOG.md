@@ -1,3 +1,15 @@
+# 0.1.3 - 2019-09-18
+
+## Added
+
+ - Added preliminary support for parsing Python 3.5 and Python 3.6 source.
+ - Added scope analysis metadata provider.
+ - Added mypy type support for built package.
+
+## Fixed
+
+ - Several typos in documentation are fixed.
+
 # 0.1.2 - 2019-08-29
 
 ## Added
