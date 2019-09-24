@@ -16,7 +16,6 @@ class WhileTest(CSTNodeTest):
     @data_provider(
         (
             # Simple while block
-            # pyre-fixme[6]: Incompatible parameter type
             {
                 "node": cst.While(
                     cst.Call(cst.Name("iter")), cst.SimpleStatementSuite((cst.Pass(),))

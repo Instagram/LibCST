@@ -309,6 +309,7 @@ def convert_augassign(config: ParserConfig, children: Sequence[Any]) -> Any:
     if op.string not in AUGOP_TOKEN_LUT:
         raise Exception(f"Unexpected token '{op.string}'!")
     return AugAssignPartial(
+        # pyre-ignore Pyre seems to think that the value of this LUT is CSTNode
         operator=AUGOP_TOKEN_LUT[op.string](
             whitespace_before=parse_simple_whitespace(config, op.whitespace_before),
             whitespace_after=parse_simple_whitespace(config, op.whitespace_after),

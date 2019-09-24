@@ -18,7 +18,6 @@ class AssertConstructionTest(CSTNodeTest):
     @data_provider(
         (
             # Simple assert
-            # pyre-fixme[6]: Incompatible parameter type
             {
                 "node": cst.Assert(cst.Name("True")),
                 "code": "assert True",

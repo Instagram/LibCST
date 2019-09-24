@@ -17,7 +17,6 @@ class AtomTest(CSTNodeTest):
     @data_provider(
         (
             # Simple identifier
-            # pyre-fixme[6]: Incompatible parameter type
             {
                 "node": cst.Name("test"),
                 "code": "test",
@@ -630,7 +629,6 @@ class AtomTest(CSTNodeTest):
     @data_provider(
         (
             # Expression wrapping parenthesis rules
-            # pyre-fixme[6]: Incompatible parameter type
             {
                 "get_node": (lambda: cst.Name("foo", lpar=(cst.LeftParen(),))),
                 "expected_re": "left paren without right paren",

@@ -16,7 +16,6 @@ class BinaryOperationTest(CSTNodeTest):
     @data_provider(
         (
             # Simple binary operations
-            # pyre-fixme[6]: Incompatible parameter type
             {
                 "node": cst.BinaryOperation(
                     cst.Name("foo"), cst.Add(), cst.Float("5.5")

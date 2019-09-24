@@ -16,7 +16,6 @@ class AssignTest(CSTNodeTest):
     @data_provider(
         (
             # Simple assignment creation case.
-            # pyre-fixme[6]: Incompatible parameter type
             {
                 "node": cst.Assign(
                     (cst.AssignTarget(cst.Name("foo")),), cst.Integer("5")
@@ -125,7 +124,6 @@ class AnnAssignTest(CSTNodeTest):
     @data_provider(
         (
             # Simple assignment creation case.
-            # pyre-fixme[6]: Incompatible parameter type
             {
                 "node": cst.AnnAssign(
                     cst.Name("foo"), cst.Annotation(cst.Name("str")), cst.Integer("5")
@@ -285,7 +283,6 @@ class AugAssignTest(CSTNodeTest):
     @data_provider(
         (
             # Simple assignment constructor case.
-            # pyre-fixme[6]: Incompatible parameter type
             {
                 "node": cst.AugAssign(
                     cst.Name("foo"), cst.AddAssign(), cst.Integer("5")

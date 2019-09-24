@@ -16,7 +16,6 @@ class BooleanOperationTest(CSTNodeTest):
     @data_provider(
         (
             # Simple boolean operations
-            # pyre-fixme[6]: Incompatible parameter type
             {
                 "node": cst.BooleanOperation(
                     cst.Name("foo"), cst.And(), cst.Name("bar")

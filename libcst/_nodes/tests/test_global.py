@@ -17,7 +17,6 @@ class GlobalConstructionTest(CSTNodeTest):
     @data_provider(
         (
             # Single global statement
-            # pyre-fixme[6]: Incompatible parameter type
             {"node": cst.Global((cst.NameItem(cst.Name("a")),)), "code": "global a"},
             # Multiple entries in global statement
             {

@@ -16,7 +16,6 @@ class SimpleStatementTest(CSTNodeTest):
     @data_provider(
         (
             # a single-element SimpleStatementLine
-            # pyre-fixme[6]: Incompatible parameter type
             {
                 "node": cst.SimpleStatementLine((cst.Pass(),)),
                 "code": "pass\n",

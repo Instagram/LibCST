@@ -20,13 +20,12 @@ class _BaseOneTokenOp(CSTNode, ABC):
     Any node that has a static value and needs to own whitespace on both sides.
     """
 
-    # pyre-fixme[13]: Uninitialized attribute
     whitespace_before: BaseParenthesizableWhitespace
 
-    # pyre-fixme[13]: Uninitialized attribute
     whitespace_after: BaseParenthesizableWhitespace
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "_BaseOneTokenOp":
+        # pyre-ignore Pyre thinks that self.__class__ is CSTNode, not _BaseOneTokenOp
         return self.__class__(
             whitespace_before=visit_required(
                 self, "whitespace_before", self.whitespace_before, visitor
@@ -53,13 +52,10 @@ class _BaseTwoTokenOp(CSTNode, ABC):
     in beteween them.
     """
 
-    # pyre-fixme[13]: Uninitialized attribute
     whitespace_before: BaseParenthesizableWhitespace
 
-    # pyre-fixme[13]: Uninitialized attribute
     whitespace_between: BaseParenthesizableWhitespace
 
-    # pyre-fixme[13]: Uninitialized attribute
     whitespace_after: BaseParenthesizableWhitespace
 
     def _validate(self) -> None:
@@ -67,6 +63,7 @@ class _BaseTwoTokenOp(CSTNode, ABC):
             raise CSTValidationError("Must have at least one space between not and in.")
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "_BaseTwoTokenOp":
+        # pyre-ignore Pyre thinks that self.__class__ is CSTNode, not _BaseTwoTokenOp
         return self.__class__(
             whitespace_before=visit_required(
                 self, "whitespace_before", self.whitespace_before, visitor
@@ -98,10 +95,10 @@ class BaseUnaryOp(CSTNode, ABC):
     """
 
     #: Any space that appears directly after this operator.
-    # pyre-fixme[13]: Uninitialized attribute
     whitespace_after: BaseParenthesizableWhitespace
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "BaseUnaryOp":
+        # pyre-ignore Pyre thinks that self.__class__ is CSTNode, not BaseUnaryOp
         return self.__class__(
             whitespace_after=visit_required(
                 self, "whitespace_after", self.whitespace_after, visitor

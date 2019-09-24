@@ -4,7 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 # pyre-strict
-from typing import Callable, Iterable, Optional, TypeVar
+from typing import Callable, Optional, Sequence, TypeVar
 
 from libcst._parser.types.conversions import NonterminalConversion
 from libcst._parser.types.production import Production
@@ -44,5 +44,5 @@ def with_production(
     return inner
 
 
-def get_productions(fn: NonterminalConversion) -> Iterable[Production]:
+def get_productions(fn: NonterminalConversion) -> Sequence[Production]:
     return fn.productions

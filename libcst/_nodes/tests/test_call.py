@@ -16,7 +16,6 @@ class CallTest(CSTNodeTest):
     @data_provider(
         (
             # Simple call
-            # pyre-fixme[6]: Incompatible parameter type
             {
                 "node": cst.Call(cst.Name("foo")),
                 "code": "foo()",

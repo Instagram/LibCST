@@ -59,6 +59,8 @@ class GrammarParser:
                 self._gettoken()
 
             # rule: NAME ':' rhs NEWLINE
+            # pyre-ignore Pyre is unhappy with the fact that we haven't put
+            # _current_rule_name in the constructor.
             self._current_rule_name = self._expect(PythonTokenTypes.NAME)
             self._expect(PythonTokenTypes.OP, ":")
 

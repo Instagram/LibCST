@@ -127,13 +127,15 @@ class Newline(BaseLeaf):
     value: Optional[str] = None
 
     def _validate(self) -> None:
-        if self.value and NEWLINE_RE.fullmatch(self.value) is None:
+        value = self.value
+        if value and NEWLINE_RE.fullmatch(value) is None:
             raise CSTValidationError(
-                f"Got an invalid value for newline node: {repr(self.value)}"
+                f"Got an invalid value for newline node: {repr(value)}"
             )
 
     def _codegen_impl(self, state: CodegenState) -> None:
-        state.add_token(state.default_newline if self.value is None else self.value)
+        value = self.value
+        state.add_token(state.default_newline if value is None else value)
 
 
 @add_slots
@@ -189,8 +191,9 @@ class TrailingWhitespace(CSTNode):
 
     def _codegen_impl(self, state: CodegenState) -> None:
         self.whitespace._codegen(state)
-        if self.comment is not None:
-            self.comment._codegen(state)
+        comment = self.comment
+        if comment is not None:
+            comment._codegen(state)
         self.newline._codegen(state)
 
 
@@ -229,8 +232,9 @@ class EmptyLine(CSTNode):
         if self.indent:
             state.add_indent_tokens()
         self.whitespace._codegen(state)
-        if self.comment is not None:
-            self.comment._codegen(state)
+        comment = self.comment
+        if comment is not None:
+            comment._codegen(state)
         self.newline._codegen(state)
 
 

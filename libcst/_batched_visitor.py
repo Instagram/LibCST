@@ -124,8 +124,9 @@ class _BatchedCSTVisitor(CSTVisitor):
         """
         Call appropriate visit methods on node before visiting children.
         """
-        if self.before_visit is not None:
-            self.before_visit(node)
+        before_visit = self.before_visit
+        if before_visit is not None:
+            before_visit(node)
         type_name = type(node).__name__
         for v in self.visitor_methods.get(f"visit_{type_name}", []):
             v(node)
@@ -138,5 +139,6 @@ class _BatchedCSTVisitor(CSTVisitor):
         type_name = type(original_node).__name__
         for v in self.visitor_methods.get(f"leave_{type_name}", []):
             v(original_node)
-        if self.after_leave is not None:
-            self.after_leave(original_node)
+        after_leave = self.after_leave
+        if after_leave is not None:
+            after_leave(original_node)
