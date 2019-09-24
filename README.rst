@@ -183,3 +183,10 @@ License
 =======
 
 LibCST is MIT licensed, as found in the LICENSE file.
+
+Acknowledgements
+================
+
+- Guido van Rossum for creating the parser generator pgen2 (originally used in lib2to3 and forked into parso).
+- David Halter for parso which provides the parser and tokenizer that LibCST sits on top of.
+- Zac Hatfield-Dodds for hypothesis integration which continues to help us find bugs.
