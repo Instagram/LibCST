@@ -17,7 +17,6 @@ class NonlocalConstructionTest(CSTNodeTest):
     @data_provider(
         (
             # Single nonlocal statement
-            # pyre-fixme[6]: Incompatible parameter type
             {
                 "node": cst.Nonlocal((cst.NameItem(cst.Name("a")),)),
                 "code": "nonlocal a",

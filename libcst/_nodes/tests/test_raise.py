@@ -17,7 +17,6 @@ class RaiseConstructionTest(CSTNodeTest):
     @data_provider(
         (
             # Simple raise
-            # pyre-fixme[6]: Incompatible parameter type
             {"node": cst.Raise(), "code": "raise"},
             # Raise exception
             {

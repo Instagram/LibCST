@@ -775,9 +775,10 @@ class ExceptHandler(CSTNode):
     whitespace_before_colon: SimpleWhitespace = SimpleWhitespace("")
 
     def _validate(self) -> None:
-        if self.type is None and self.name is not None:
+        name = self.name
+        if self.type is None and name is not None:
             raise CSTValidationError("Cannot have a name for an empty type.")
-        if self.name is not None and not isinstance(self.name.name, Name):
+        if name is not None and not isinstance(name.name, Name):
             raise CSTValidationError(
                 "Must use a Name node for AsName name inside ExceptHandler."
             )
@@ -958,7 +959,8 @@ class ImportAlias(CSTNode):
     comma: Union[Comma, MaybeSentinel] = MaybeSentinel.DEFAULT
 
     def _validate(self) -> None:
-        if self.asname is not None and not isinstance(self.asname.name, Name):
+        asname = self.asname
+        if asname is not None and not isinstance(asname.name, Name):
             raise CSTValidationError(
                 "Must use a Name node for AsName name inside ImportAlias."
             )
@@ -1088,19 +1090,20 @@ class ImportFrom(BaseSmallStatement):
             )
 
     def _validate_names(self) -> None:
-        if isinstance(self.names, Sequence):
-            if len(self.names) == 0:
+        names = self.names
+        if isinstance(names, Sequence):
+            if len(names) == 0:
                 raise CSTValidationError(
                     "An ImportFrom must have at least one ImportAlias"
                 )
-            for name in self.names[:-1]:
+            for name in names[:-1]:
                 if name.comma is None:
                     raise CSTValidationError("Non-final ImportAliases require a comma")
             if self.lpar is not None and self.rpar is None:
                 raise CSTValidationError("Cannot have left paren without right paren.")
             if self.lpar is None and self.rpar is not None:
                 raise CSTValidationError("Cannot have right paren without left paren.")
-        if isinstance(self.names, ImportStar):
+        if isinstance(names, ImportStar):
             if self.lpar is not None or self.rpar is not None:
                 raise CSTValidationError(
                     "An ImportFrom using ImportStar cannot have parens"
@@ -1152,7 +1155,8 @@ class ImportFrom(BaseSmallStatement):
     def _codegen_impl(
         self, state: CodegenState, default_semicolon: bool = False
     ) -> None:
-        end_node = self.names[-1] if isinstance(self.names, Sequence) else self.names
+        names = self.names
+        end_node = names[-1] if isinstance(names, Sequence) else names
         end_node = end_node if self.rpar is None else self.rpar
         with state.record_syntactic_position(self, end_node=end_node):
             state.add_token("from")
@@ -1168,12 +1172,12 @@ class ImportFrom(BaseSmallStatement):
             lpar = self.lpar
             if lpar is not None:
                 lpar._codegen(state)
-            if isinstance(self.names, Sequence):
-                lastname = len(self.names) - 1
-                for i, name in enumerate(self.names):
+            if isinstance(names, Sequence):
+                lastname = len(names) - 1
+                for i, name in enumerate(names):
                     name._codegen(state, default_comma=(i != lastname))
-            if isinstance(self.names, ImportStar):
-                self.names._codegen(state)
+            if isinstance(names, ImportStar):
+                names._codegen(state)
             rpar = self.rpar
             if rpar is not None:
                 rpar._codegen(state)
@@ -1402,12 +1406,13 @@ class Decorator(CSTNode):
     trailing_whitespace: TrailingWhitespace = TrailingWhitespace()
 
     def _validate(self) -> None:
-        if len(self.decorator.lpar) > 0 or len(self.decorator.rpar) > 0:
+        decorator = self.decorator
+        if len(decorator.lpar) > 0 or len(decorator.rpar) > 0:
             raise CSTValidationError(
                 "Cannot have parens around decorator in a Decorator."
             )
-        if isinstance(self.decorator, Call) and not isinstance(
-            self.decorator.func, (Name, Attribute)
+        if isinstance(decorator, Call) and not isinstance(
+            decorator.func, (Name, Attribute)
         ):
             raise CSTValidationError(
                 "Decorator call function must be Name or Attribute node."
@@ -2046,11 +2051,12 @@ class Raise(BaseSmallStatement):
         # Validate spacing between "exc" and "from"
         cause = self.cause
         if exc is not None and cause is not None:
-            whitespace_before_from = self.cause.whitespace_before_from
+            whitespace_before_from = cause.whitespace_before_from
             has_no_gap = (
                 not isinstance(whitespace_before_from, MaybeSentinel)
                 and whitespace_before_from.empty
             )
+            # pyre-ignore Pyre thinks exc is Optional
             if has_no_gap and not exc._safe_to_use_with_word_operator(
                 ExpressionPosition.LEFT
             ):

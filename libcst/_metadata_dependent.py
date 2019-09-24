@@ -72,8 +72,8 @@ class MetadataDependent:
             for c in inspect.getmro(cls):
                 if issubclass(c, MetadataDependent):
                     dependencies.update(c.METADATA_DEPENDENCIES)
-            cls._INHERITED_METADATA_DEPENDENCIES_CACHE = frozenset(dependencies)
             # pyre-fixme[16]: use a hidden attribute to cache the property
+            cls._INHERITED_METADATA_DEPENDENCIES_CACHE = frozenset(dependencies)
             return cls._INHERITED_METADATA_DEPENDENCIES_CACHE
 
     @contextmanager

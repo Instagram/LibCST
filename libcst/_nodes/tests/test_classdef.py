@@ -16,7 +16,6 @@ class ClassDefCreationTest(CSTNodeTest):
     @data_provider(
         (
             # Simple classdef
-            # pyre-fixme[6]: Incompatible parameter type
             {
                 "node": cst.ClassDef(
                     cst.Name("Foo"), cst.SimpleStatementSuite((cst.Pass(),))
@@ -153,7 +152,6 @@ class ClassDefParserTest(CSTNodeTest):
     @data_provider(
         (
             # Simple classdef
-            # pyre-fixme[6]: Incompatible parameter type
             {
                 "node": cst.ClassDef(
                     cst.Name("Foo"), cst.SimpleStatementSuite((cst.Pass(),))

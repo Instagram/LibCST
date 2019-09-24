@@ -314,6 +314,7 @@ def convert_boolop(
             raise Exception(f"Unexpected token '{op.string}'!")
         leftexpr = BooleanOperation(
             left=leftexpr,
+            # pyre-ignore Pyre thinks that the type of the LUT is CSTNode.
             operator=BOOLOP_TOKEN_LUT[op.string](
                 whitespace_before=parse_parenthesizable_whitespace(
                     config, op.whitespace_before
@@ -381,6 +382,7 @@ def convert_comp_op(
         (op,) = children
         if op.string in COMPOP_TOKEN_LUT:
             # A regular comparison containing one token
+            # pyre-ignore Pyre thinks that the type of the LUT is CSTNode.
             return COMPOP_TOKEN_LUT[op.string](
                 whitespace_before=parse_parenthesizable_whitespace(
                     config, op.whitespace_before
@@ -477,6 +479,7 @@ def convert_binop(
             raise Exception(f"Unexpected token '{op.string}'!")
         leftexpr = BinaryOperation(
             left=leftexpr,
+            # pyre-ignore Pyre thinks that the type of the LUT is CSTNode.
             operator=BINOP_TOKEN_LUT[op.string](
                 whitespace_before=parse_parenthesizable_whitespace(
                     config, op.whitespace_before

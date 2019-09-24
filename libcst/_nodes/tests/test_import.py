@@ -17,7 +17,6 @@ class ImportCreateTest(CSTNodeTest):
     @data_provider(
         (
             # Simple import statement
-            # pyre-fixme[6]: Incompatible parameter type
             {
                 "node": cst.Import(names=(cst.ImportAlias(cst.Name("foo")),)),
                 "code": "import foo",
@@ -349,7 +348,6 @@ class ImportFromCreateTest(CSTNodeTest):
     @data_provider(
         (
             # Simple from import statement
-            # pyre-fixme[6]: Incompatible parameter type
             {
                 "node": cst.ImportFrom(
                     module=cst.Name("foo"), names=(cst.ImportAlias(cst.Name("bar")),)

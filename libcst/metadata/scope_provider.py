@@ -73,6 +73,8 @@ class Assignment(BaseAssignment):
         super().__init__(name, scope)
 
 
+# pyre-ignore Pyre doesn't think that the attributes in the base class are initialized
+# even though we don't override the constructor.
 class BuiltinAssignment(BaseAssignment):
     """
     A BuiltinAssignment represents an value provide by Python as a builtin, including
@@ -187,6 +189,8 @@ class LocalScope(Scope, abc.ABC):
             return self.parent._getitem_from_self_or_parent(name)
 
 
+# pyre-ignore Pyre doesn't think that the attributes in the base class are initialized
+# even though we don't override the constructor.
 class FunctionScope(LocalScope):
     """
     When a function is defined, it creates a FunctionScope.
@@ -195,6 +199,8 @@ class FunctionScope(LocalScope):
     pass
 
 
+# pyre-ignore Pyre doesn't think that the attributes in the base class are initialized
+# even though we don't override the constructor.
 class ClassScope(LocalScope):
     """
     When a class is defined, it creates a ClassScope.
@@ -225,6 +231,8 @@ class ClassScope(LocalScope):
         return self.parent._getitem_from_self_or_parent(name)
 
 
+# pyre-ignore Pyre doesn't think that the attributes in the base class are initialized
+# even though we don't override the constructor.
 class ComprehensionScope(LocalScope):
     """
     Comprehensions and generator expressions create their own scope. For example, in
@@ -269,8 +277,9 @@ class ScopeVisitor(cst.CSTVisitor):
         if not isinstance(names, cst.ImportStar):
             # make sure node.names is Sequence[ImportAlias]
             for name in names:
-                if name.asname is not None:
-                    name_value = cst.ensure_type(name.asname.name, cst.Name).value
+                asname = name.asname
+                if asname is not None:
+                    name_value = cst.ensure_type(asname.name, cst.Name).value
                 else:
                     name_node = name.name
                     while isinstance(name_node, cst.Attribute):
@@ -333,8 +342,9 @@ class ScopeVisitor(cst.CSTVisitor):
 
         for decorator in node.decorators:
             decorator.visit(self)
-        if node.returns:
-            node.returns.visit(self)
+        returns = node.returns
+        if returns:
+            returns.visit(self)
 
         return False
 
@@ -375,8 +385,9 @@ class ScopeVisitor(cst.CSTVisitor):
         return False
 
     def visit_Arg_keyword(self, node: cst.Arg) -> None:
-        if node.keyword is not None:
-            self.scope.record_assignment(node.keyword.value, node)
+        keyword = node.keyword
+        if keyword is not None:
+            self.scope.record_assignment(keyword.value, node)
 
     def visit_ClassDef(self, node: cst.ClassDef) -> Optional[bool]:
         self.scope.record_assignment(node.name.value, node)
@@ -481,8 +492,9 @@ class ScopeVisitor(cst.CSTVisitor):
             for_in.target.visit(self)
             for condition in for_in.ifs:
                 condition.visit(self)
-            if for_in.inner_for_in:
-                for_in.inner_for_in.visit(self)
+            inner_for_in = for_in.inner_for_in
+            if inner_for_in:
+                inner_for_in.visit(self)
             if isinstance(node, cst.DictComp):
                 node.key.visit(self)
                 node.value.visit(self)

@@ -26,9 +26,7 @@ class BaseWhitespaceParserConfig(abc.ABC):
     makes calling the whitespace parser in tests with a mocked configuration easier.
     """
 
-    # pyre-fixme[13]: Uninitialized attribute
     lines: Sequence[str]
-    # pyre-fixme[13]: Uninitialized attribute
     default_newline: str
 
 

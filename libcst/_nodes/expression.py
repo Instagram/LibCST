@@ -876,12 +876,13 @@ class ConcatenatedString(BaseString):
 
         # Cannot concatenate str and bytes
         leftbytes = "b" in self.left._get_prefix()
-        if isinstance(self.right, ConcatenatedString):
-            rightbytes = "b" in self.right.left._get_prefix()
-        elif isinstance(self.right, SimpleString):
-            rightbytes = "b" in self.right._get_prefix()
-        elif isinstance(self.right, FormattedString):
-            rightbytes = "b" in self.right._get_prefix()
+        right = self.right
+        if isinstance(right, ConcatenatedString):
+            rightbytes = "b" in right.left._get_prefix()
+        elif isinstance(right, SimpleString):
+            rightbytes = "b" in right._get_prefix()
+        elif isinstance(right, FormattedString):
+            rightbytes = "b" in right._get_prefix()
         else:
             raise Exception("Logic error!")
         if leftbytes != rightbytes:
@@ -921,9 +922,10 @@ class ComparisonTarget(CSTNode):
 
     def _validate(self) -> None:
         # Validate operator spacing rules
+        operator = self.operator
         if (
-            isinstance(self.operator, (In, NotIn, Is, IsNot))
-            and self.operator.whitespace_after.empty
+            isinstance(operator, (In, NotIn, Is, IsNot))
+            and operator.whitespace_after.empty
             and not self.comparator._safe_to_use_with_word_operator(
                 ExpressionPosition.RIGHT
             )
@@ -1411,9 +1413,10 @@ class Subscript(BaseAssignTargetExpression, BaseDelTargetExpression):
 
     def _validate(self) -> None:
         super(Subscript, self)._validate()
-        if isinstance(self.slice, Sequence):
+        slc = self.slice
+        if isinstance(slc, Sequence):
             # Validate valid commas
-            if len(self.slice) < 1:
+            if len(slc) < 1:
                 raise CSTValidationError("Cannot have empty ExtSlice.")
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Subscript":
@@ -1446,11 +1449,12 @@ class Subscript(BaseAssignTargetExpression, BaseDelTargetExpression):
             self.value._codegen(state)
             self.whitespace_after_value._codegen(state)
             self.lbracket._codegen(state)
-            if isinstance(self.slice, (Index, Slice)):
-                self.slice._codegen(state)
-            elif isinstance(self.slice, Sequence):
-                lastslice = len(self.slice) - 1
-                for i, slice in enumerate(self.slice):
+            slc = self.slice
+            if isinstance(slc, (Index, Slice)):
+                slc._codegen(state)
+            elif isinstance(slc, Sequence):
+                lastslice = len(slc) - 1
+                for i, slice in enumerate(slc):
                     slice._codegen(state, default_comma=(i != lastslice))
             else:
                 # We can make pyre happy this way!
@@ -1679,6 +1683,7 @@ class Parameters(CSTNode):
         if len(vals) == 0:
             return
         for val in vals:
+            # pyre-ignore Pyre seems to think val.star.__eq__ is not callable
             if isinstance(val.star, str) and val.star != "":
                 raise CSTValidationError(
                     f"Expecting a star prefix of '' for {section} Param."
@@ -1701,9 +1706,11 @@ class Parameters(CSTNode):
                 raise CSTValidationError(
                     "Must have defaults for default_params. Place non-defaults in params."
                 )
-        if isinstance(self.star_arg, Param) and self.star_arg.default is not None:
+        star_arg = self.star_arg
+        if isinstance(star_arg, Param) and star_arg.default is not None:
             raise CSTValidationError("Cannot have default for star_arg.")
-        if self.star_kwarg is not None and self.star_kwarg.default is not None:
+        star_kwarg = self.star_kwarg
+        if star_kwarg is not None and star_kwarg.default is not None:
             raise CSTValidationError("Cannot have default for star_kwarg.")
 
     def _validate_stars(self) -> None:
@@ -1715,6 +1722,7 @@ class Parameters(CSTNode):
         if (
             isinstance(star_arg, Param)
             and isinstance(star_arg.star, str)
+            # pyre-ignore Pyre seems to think star_kwarg.star.__eq__ is not callable
             and star_arg.star != "*"
         ):
             raise CSTValidationError(
@@ -1726,6 +1734,7 @@ class Parameters(CSTNode):
         if (
             star_kwarg is not None
             and isinstance(star_kwarg.star, str)
+            # pyre-ignore Pyre seems to think star_kwarg.star.__eq__ is not callable
             and star_kwarg.star != "**"
         ):
             raise CSTValidationError(
@@ -1857,10 +1866,12 @@ class Lambda(BaseExpression):
             *self.params.default_params,
             *self.params.kwonly_params,
         ]
-        if isinstance(self.params.star_arg, Param):
-            all_params.append(self.params.star_arg)
-        if self.params.star_kwarg is not None:
-            all_params.append(self.params.star_kwarg)
+        star_arg = self.params.star_arg
+        if isinstance(star_arg, Param):
+            all_params.append(star_arg)
+        star_kwarg = self.params.star_kwarg
+        if star_kwarg is not None:
+            all_params.append(star_kwarg)
         # Check for nonzero parameters because several checks care
         # about this.
         if len(all_params) > 0:
@@ -1869,9 +1880,10 @@ class Lambda(BaseExpression):
                     raise CSTValidationError(
                         "Lambda params cannot have type annotations."
                     )
+            whitespace_after_lambda = self.whitespace_after_lambda
             if (
-                isinstance(self.whitespace_after_lambda, BaseParenthesizableWhitespace)
-                and self.whitespace_after_lambda.empty
+                isinstance(whitespace_after_lambda, BaseParenthesizableWhitespace)
+                and whitespace_after_lambda.empty
             ):
                 raise CSTValidationError(
                     "Must have at least one space after lambda when specifying params"
@@ -2087,8 +2099,6 @@ class _BaseExpressionWithArgs(BaseExpression, ABC):
         # expansion state, or dictionary expansion state).
         validator = self._check_positional
         for arg in self.args:
-            # pyre-fixme[29]: `Union[Callable[[Arg], Callable[..., Any]],
-            #  Callable[..., Any]]` is not a function.
             validator = validator(arg) or validator
 
 
@@ -2389,19 +2399,19 @@ class Yield(BaseExpression):
         # Paren rules and such
         super(Yield, self)._validate()
         # Our own rules
+        whitespace_after_yield = self.whitespace_after_yield
         if (
-            isinstance(self.whitespace_after_yield, BaseParenthesizableWhitespace)
-            and self.whitespace_after_yield.empty
+            isinstance(whitespace_after_yield, BaseParenthesizableWhitespace)
+            and whitespace_after_yield.empty
         ):
-            if isinstance(self.value, From):
+            value = self.value
+            if isinstance(value, From):
                 raise CSTValidationError(
                     "Must have at least one space after 'yield' keyword."
                 )
             if isinstance(
-                self.value, BaseExpression
-            ) and not self.value._safe_to_use_with_word_operator(
-                ExpressionPosition.RIGHT
-            ):
+                value, BaseExpression
+            ) and not value._safe_to_use_with_word_operator(ExpressionPosition.RIGHT):
                 raise CSTValidationError(
                     "Must have at least one space after 'yield' keyword."
                 )
@@ -2438,7 +2448,6 @@ class _BaseElementImpl(CSTNode, ABC):
     An internal base class for :class:`Element` and :class:`DictElement`.
     """
 
-    # pyre-fixme[13]: Attribute `value` is never initialized.
     value: BaseExpression
     comma: Union[Comma, MaybeSentinel] = MaybeSentinel.DEFAULT
 
@@ -3215,7 +3224,6 @@ class BaseComp(BaseExpression, ABC):
     :class:`GeneratorExp`, :class:`ListComp`, :class:`SetComp`, and :class:`DictComp`.
     """
 
-    # pyre-fixme[13]: Attribute `for_in` is never initialized.
     for_in: CompFor
 
 
@@ -3229,13 +3237,11 @@ class BaseSimpleComp(BaseComp, ABC):
     #: The expression evaluated during each iteration of the comprehension. This
     #: lexically comes before the ``for_in`` clause, but it is semantically the
     #: inner-most element, evaluated inside the ``for_in`` clause.
-    # pyre-fixme[13]: Attribute `elt` is never initialized.
     elt: BaseAssignTargetExpression
 
     #: The ``for ... in ... if ...`` clause that lexically comes after ``elt``. This may
     #: be a nested structure for nested comprehensions. See :class:`CompFor` for
     #: details.
-    # pyre-fixme[13]: Attribute `for_in` is never initialized.
     for_in: CompFor
 
     def _validate(self) -> None:

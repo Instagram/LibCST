@@ -15,7 +15,6 @@ from libcst.testing.utils import data_provider
 class SmallStatementTest(CSTNodeTest):
     @data_provider(
         (
-            # pyre-fixme[6]: Incompatible parameter type
             {"node": cst.Pass(), "code": "pass"},
             {"node": cst.Pass(semicolon=cst.Semicolon()), "code": "pass;"},
             {

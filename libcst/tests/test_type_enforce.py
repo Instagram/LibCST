@@ -81,7 +81,7 @@ class TypeEnforcementTest(UnitTest):
             (123, Union[Optional[str], Optional[int]]),
             # Iterables are supported and must match the type covariantly
             ([123], List[int]),
-            ([123], Iterable[int]),
+            ([123], Iterable[int]),  # pyre-ignore This is a type specification
             ([123], Iterable),
             ((123,), Iterable[int]),
             ([123], Sequence[int]),
@@ -182,6 +182,7 @@ class TypeEnforcementTest(UnitTest):
             #   List[ -> means its invariant
             #     MyExampleClass -> has a subclass
             # does not allow List[List[MyExampleChildClass]]
+            # pyre-ignore This is a type specification
             ([[MyExampleChildClass()]], Iterable[List[MyExampleClass]]),
             # Iterables allow subclassing, but sets are not lists and vice versa.
             ([123], Set[int]),
@@ -194,4 +195,5 @@ class TypeEnforcementTest(UnitTest):
 
     def test_not_implemented(self) -> None:
         with self.assertRaises(NotImplementedError):
+            # pyre-ignore Pyre doesn't like the params to AsyncGenerator
             is_value_of_type("something", AsyncGenerator[None, None])

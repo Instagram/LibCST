@@ -16,7 +16,6 @@ class TryTest(CSTNodeTest):
     @data_provider(
         (
             # Simple try/except block
-            # pyre-fixme[6]: Incompatible parameter type
             {
                 "node": cst.Try(
                     cst.SimpleStatementSuite((cst.Pass(),)),
@@ -288,7 +287,6 @@ class TryTest(CSTNodeTest):
 
     @data_provider(
         (
-            # pyre-fixme[6]: Incompatible parameter type
             {
                 "get_node": lambda: cst.AsName(cst.Name("")),
                 "expected_re": "empty name identifier",

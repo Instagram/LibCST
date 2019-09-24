@@ -48,7 +48,6 @@ def parse_simple_whitespace(
         # continuation character
         state.line += 1
         state.column = 0
-        # pyre-fixme[16]: Optional type has no attribute `group`.
         ws_line = SIMPLE_WHITESPACE_RE.match(lines[state.line - 1], state.column).group(
             0
         )

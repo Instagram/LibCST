@@ -41,13 +41,12 @@ class SpecificImportRemovalVisitor(CSTTransformer):
     ) -> Union[cst.Import, cst.ImportFrom, CSTNodeT, RemovalSentinel]:
         if isinstance(updated_node, cst.Import):
             for alias in updated_node.names:
-                if isinstance(alias.name, cst.Name) and alias.name.value == "b":
+                name = alias.name
+                if isinstance(name, cst.Name) and name.value == "b":
                     return RemovalSentinel.REMOVE
         elif isinstance(updated_node, cst.ImportFrom):
-            if (
-                isinstance(updated_node.module, cst.Name)
-                and updated_node.module.value == "e"
-            ):
+            module = updated_node.module
+            if isinstance(module, cst.Name) and module.value == "e":
                 return RemovalSentinel.REMOVE
         return updated_node
 

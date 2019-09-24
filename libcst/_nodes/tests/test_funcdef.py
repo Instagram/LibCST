@@ -16,7 +16,6 @@ class FunctionDefCreationTest(CSTNodeTest):
     @data_provider(
         (
             # Simple function definition without any arguments or return
-            # pyre-fixme[6]: Incompatible parameter type
             {
                 "node": cst.FunctionDef(
                     cst.Name("foo"),

@@ -160,11 +160,6 @@ class CSTNodeTest(UnitTest):
         with ExitStack() as patch_stack:
             for t in patch_targets:
                 patch_stack.enter_context(
-                    # pyre-ignore Incompatible parameter type [6]: Expected
-                    # pyre-ignore `typing.ContextManager[Variable[contextlib._T]]`
-                    # pyre-ignore for 1st anonymous parameter to call
-                    # pyre-ignore `contextlib.ExitStack.enter_context` but got
-                    # pyre-ignore `unittest.mock._patch`.
                     patch(f"libcst.{t.name}._codegen", _get_codegen_override(t))
                 )
             # Execute `node._codegen()`

@@ -16,7 +16,6 @@ class IfTest(CSTNodeTest):
     @data_provider(
         (
             # Simple if without elif or else
-            # pyre-fixme[6]: Incompatible parameter type
             {
                 "node": cst.If(
                     cst.Name("conditional"), cst.SimpleStatementSuite((cst.Pass(),))
