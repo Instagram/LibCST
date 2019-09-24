@@ -4,7 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, fields, replace
+from dataclasses import dataclass, field, fields, replace
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -346,6 +346,17 @@ class CSTNode(ABC):
                 lines.append(_indent(f"{key}={_pretty_repr(value)},"))
         lines.append(")")
         return "\n".join(lines)
+
+    @classmethod
+    def field(cls, *args: object, **kwargs: object) -> Any:
+        """
+        A helper that allows us to easily use CSTNodes in dataclass constructor
+        defaults without accidentally aliasing nodes by identity across multiple
+        instances.
+        """
+        # pyre-ignore Pyre is complaining about CSTNode not being instantiable,
+        # but we're only going to call this from concrete subclasses.
+        return field(default_factory=lambda: cls(*args, **kwargs))
 
 
 class BaseLeaf(CSTNode, ABC):

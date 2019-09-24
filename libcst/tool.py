@@ -59,8 +59,16 @@ def _node_repr_recursive(  # noqa: C901
             fields = [f for f in fields if not _is_whitespace(f)]
         # Filter values which aren't changed from their defaults
         if not show_defaults:
+
+            def _get_default(fld: "dataclasses.Field[object]") -> object:
+                if fld.default_factory is not dataclasses.MISSING:
+                    return fld.default_factory()
+                return fld.default
+
             fields = [
-                f for f in fields if not deep_equals(getattr(node, f.name), f.default)
+                f
+                for f in fields
+                if not deep_equals(getattr(node, f.name), _get_default(f))
             ]
         # Filter out values which aren't interesting if needed
         if not show_syntax:
