@@ -109,7 +109,7 @@ class Del(BaseSmallStatement):
     target: BaseDelTargetExpression
 
     #: The whitespace after the ``del`` keyword.
-    whitespace_after_del: SimpleWhitespace = SimpleWhitespace(" ")
+    whitespace_after_del: SimpleWhitespace = SimpleWhitespace.field(" ")
 
     #: Optional semicolon when this is used in a statement line. This semicolon
     #: owns the whitespace on both sides of it when it is used.
@@ -409,7 +409,7 @@ class SimpleStatementLine(_BaseSimpleStatement, BaseStatement):
     leading_lines: Sequence[EmptyLine] = ()
 
     #: Any optional trailing comment and the final ``NEWLINE`` at the end of the line.
-    trailing_whitespace: TrailingWhitespace = TrailingWhitespace()
+    trailing_whitespace: TrailingWhitespace = TrailingWhitespace.field()
 
     def _visit_and_replace_children(
         self, visitor: CSTVisitorT
@@ -458,10 +458,10 @@ class SimpleStatementSuite(_BaseSimpleStatement, BaseSuite):
     body: Sequence[BaseSmallStatement]
 
     #: The whitespace between the colon in the parent statement and the body.
-    leading_whitespace: SimpleWhitespace = SimpleWhitespace(" ")
+    leading_whitespace: SimpleWhitespace = SimpleWhitespace.field(" ")
 
     #: Any optional trailing comment and the final ``NEWLINE`` at the end of the line.
-    trailing_whitespace: TrailingWhitespace = TrailingWhitespace()
+    trailing_whitespace: TrailingWhitespace = TrailingWhitespace.field()
 
     def _visit_and_replace_children(
         self, visitor: CSTVisitorT
@@ -500,7 +500,7 @@ class Else(CSTNode):
     leading_lines: Sequence[EmptyLine] = ()
 
     #: The whitespace appearing after the ``else`` keyword but before the colon.
-    whitespace_before_colon: SimpleWhitespace = SimpleWhitespace("")
+    whitespace_before_colon: SimpleWhitespace = SimpleWhitespace.field("")
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Else":
         return Else(
@@ -570,10 +570,10 @@ class If(BaseCompoundStatement):
     leading_lines: Sequence[EmptyLine] = ()
 
     #: The whitespace appearing after the ``if`` keyword but before the test expression.
-    whitespace_before_test: SimpleWhitespace = SimpleWhitespace(" ")
+    whitespace_before_test: SimpleWhitespace = SimpleWhitespace.field(" ")
 
     #: The whitespace appearing after the test expression but before the colon.
-    whitespace_after_test: SimpleWhitespace = SimpleWhitespace("")
+    whitespace_after_test: SimpleWhitespace = SimpleWhitespace.field("")
 
     # TODO: _validate
 
@@ -640,7 +640,7 @@ class IndentedBlock(BaseSuite):
     body: Sequence[BaseStatement]
 
     #: Any optional trailing comment and the final ``NEWLINE`` at the end of the line.
-    header: TrailingWhitespace = TrailingWhitespace()
+    header: TrailingWhitespace = TrailingWhitespace.field()
 
     #: A string represents a specific indentation. A ``None`` value uses the modules's
     #: default indentation. This is included because indentation is allowed to be
@@ -716,10 +716,10 @@ class AsName(CSTNode):
     name: Union[Name, Tuple, List]
 
     #: Whitespace between the parent node and the ``as`` keyword.
-    whitespace_before_as: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_before_as: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     #: Whitespace between the ``as`` keyword and the name.
-    whitespace_after_as: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_after_as: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     def _validate(self) -> None:
         if self.whitespace_after_as.empty:
@@ -768,11 +768,11 @@ class ExceptHandler(CSTNode):
     leading_lines: Sequence[EmptyLine] = ()
 
     #: The whitespace between the ``except`` keyword and the type attribute.
-    whitespace_after_except: SimpleWhitespace = SimpleWhitespace(" ")
+    whitespace_after_except: SimpleWhitespace = SimpleWhitespace.field(" ")
 
     #: The whitespace after any type or name node (whichever comes last) and
     #: the colon.
-    whitespace_before_colon: SimpleWhitespace = SimpleWhitespace("")
+    whitespace_before_colon: SimpleWhitespace = SimpleWhitespace.field("")
 
     def _validate(self) -> None:
         name = self.name
@@ -837,7 +837,7 @@ class Finally(CSTNode):
 
     #: The whitespace that appears after the ``finally`` keyword but before
     #: the colon.
-    whitespace_before_colon: SimpleWhitespace = SimpleWhitespace("")
+    whitespace_before_colon: SimpleWhitespace = SimpleWhitespace.field("")
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Finally":
         return Finally(
@@ -886,7 +886,7 @@ class Try(BaseCompoundStatement):
 
     #: The whitespace that appears after the ``try`` keyword but before
     #: the colon.
-    whitespace_before_colon: SimpleWhitespace = SimpleWhitespace("")
+    whitespace_before_colon: SimpleWhitespace = SimpleWhitespace.field("")
 
     def _validate(self) -> None:
         if len(self.handlers) == 0 and self.finalbody is None:
@@ -1002,7 +1002,7 @@ class Import(BaseSmallStatement):
 
     #: The whitespace that appears after the ``import`` keyword but before
     #: the first import alias.
-    whitespace_after_import: SimpleWhitespace = SimpleWhitespace(" ")
+    whitespace_after_import: SimpleWhitespace = SimpleWhitespace.field(" ")
 
     def _validate(self) -> None:
         if len(self.names) == 0:
@@ -1073,15 +1073,15 @@ class ImportFrom(BaseSmallStatement):
 
     #: The whitespace that appears after the ``from`` keyword but before
     #: the module and any relative import dots.
-    whitespace_after_from: SimpleWhitespace = SimpleWhitespace(" ")
+    whitespace_after_from: SimpleWhitespace = SimpleWhitespace.field(" ")
 
     #: The whitespace that appears after the module but before the
     #: ``import`` keyword.
-    whitespace_before_import: SimpleWhitespace = SimpleWhitespace(" ")
+    whitespace_before_import: SimpleWhitespace = SimpleWhitespace.field(" ")
 
     #: The whitespace that appears after the ``import`` keyword but
     #: before the first import name or optional left paren.
-    whitespace_after_import: SimpleWhitespace = SimpleWhitespace(" ")
+    whitespace_after_import: SimpleWhitespace = SimpleWhitespace.field(" ")
 
     def _validate_module(self) -> None:
         if self.module is None and len(self.relative) == 0:
@@ -1201,10 +1201,10 @@ class AssignTarget(CSTNode):
     target: BaseAssignTargetExpression
 
     #: The whitespace appearing before the equals sign.
-    whitespace_before_equal: SimpleWhitespace = SimpleWhitespace(" ")
+    whitespace_before_equal: SimpleWhitespace = SimpleWhitespace.field(" ")
 
     #: The whitespace appearing after the equals sign.
-    whitespace_after_equal: SimpleWhitespace = SimpleWhitespace(" ")
+    whitespace_after_equal: SimpleWhitespace = SimpleWhitespace.field(" ")
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "AssignTarget":
         return AssignTarget(
@@ -1400,10 +1400,10 @@ class Decorator(CSTNode):
     leading_lines: Sequence[EmptyLine] = ()
 
     #: Whitespace after the ``@`` and before the decorator expression itself.
-    whitespace_after_at: SimpleWhitespace = SimpleWhitespace("")
+    whitespace_after_at: SimpleWhitespace = SimpleWhitespace.field("")
 
     #: Optional trailing comment and newline following the decorator before the next line.
-    trailing_whitespace: TrailingWhitespace = TrailingWhitespace()
+    trailing_whitespace: TrailingWhitespace = TrailingWhitespace.field()
 
     def _validate(self) -> None:
         decorator = self.decorator
@@ -1484,19 +1484,19 @@ class FunctionDef(BaseCompoundStatement):
     lines_after_decorators: Sequence[EmptyLine] = ()
 
     #: Whitespace after the ``def`` keyword and before the function name.
-    whitespace_after_def: SimpleWhitespace = SimpleWhitespace(" ")
+    whitespace_after_def: SimpleWhitespace = SimpleWhitespace.field(" ")
 
     #: Whitespace after the function name and before the opening parenthesis for
     #: the parameters.
-    whitespace_after_name: SimpleWhitespace = SimpleWhitespace("")
+    whitespace_after_name: SimpleWhitespace = SimpleWhitespace.field("")
 
     #: Whitespace after the opening parenthesis for the parameters but before
     #: the first param itself.
-    whitespace_before_params: SimpleWhitespace = SimpleWhitespace("")
+    whitespace_before_params: SimpleWhitespace = SimpleWhitespace.field("")
 
     #: Whitespace after the closing parenthesis or return annotation and before
     #: the colon.
-    whitespace_before_colon: SimpleWhitespace = SimpleWhitespace("")
+    whitespace_before_colon: SimpleWhitespace = SimpleWhitespace.field("")
 
     def _validate(self) -> None:
         if len(self.name.lpar) > 0 or len(self.name.rpar) > 0:
@@ -1605,15 +1605,15 @@ class ClassDef(BaseCompoundStatement):
     lines_after_decorators: Sequence[EmptyLine] = ()
 
     #: Whitespace after the ``class`` keyword and before the class name.
-    whitespace_after_class: SimpleWhitespace = SimpleWhitespace(" ")
+    whitespace_after_class: SimpleWhitespace = SimpleWhitespace.field(" ")
 
     #: Whitespace after the class name and before the opening parenthesis for
     #: the bases and keywords.
-    whitespace_after_name: SimpleWhitespace = SimpleWhitespace("")
+    whitespace_after_name: SimpleWhitespace = SimpleWhitespace.field("")
 
     #: Whitespace after the closing parenthesis or class name and before
     #: the colon.
-    whitespace_before_colon: SimpleWhitespace = SimpleWhitespace("")
+    whitespace_before_colon: SimpleWhitespace = SimpleWhitespace.field("")
 
     def _validate_whitespace(self) -> None:
         if self.whitespace_after_class.empty:
@@ -1766,10 +1766,10 @@ class With(BaseCompoundStatement):
     leading_lines: Sequence[EmptyLine] = ()
 
     #: Whitespace after the ``with`` keyword and before the first item.
-    whitespace_after_with: SimpleWhitespace = SimpleWhitespace(" ")
+    whitespace_after_with: SimpleWhitespace = SimpleWhitespace.field(" ")
 
     #: Whitespace after the last item and before the colon.
-    whitespace_before_colon: SimpleWhitespace = SimpleWhitespace("")
+    whitespace_before_colon: SimpleWhitespace = SimpleWhitespace.field("")
 
     def _validate(self) -> None:
         if len(self.items) == 0:
@@ -1849,16 +1849,16 @@ class For(BaseCompoundStatement):
     leading_lines: Sequence[EmptyLine] = ()
 
     #: Whitespace after the ``for`` keyword and before the target.
-    whitespace_after_for: SimpleWhitespace = SimpleWhitespace(" ")
+    whitespace_after_for: SimpleWhitespace = SimpleWhitespace.field(" ")
 
     #: Whitespace after the target and before the ``in`` keyword.
-    whitespace_before_in: SimpleWhitespace = SimpleWhitespace(" ")
+    whitespace_before_in: SimpleWhitespace = SimpleWhitespace.field(" ")
 
     #: Whitespace after the ``in`` keyword and before the iter.
-    whitespace_after_in: SimpleWhitespace = SimpleWhitespace(" ")
+    whitespace_after_in: SimpleWhitespace = SimpleWhitespace.field(" ")
 
     #: Whitespace after the iter and before the colon.
-    whitespace_before_colon: SimpleWhitespace = SimpleWhitespace("")
+    whitespace_before_colon: SimpleWhitespace = SimpleWhitespace.field("")
 
     def _validate(self) -> None:
         if (
@@ -1957,10 +1957,10 @@ class While(BaseCompoundStatement):
     leading_lines: Sequence[EmptyLine] = ()
 
     #: Whitespace after the ``while`` keyword and before the test.
-    whitespace_after_while: SimpleWhitespace = SimpleWhitespace(" ")
+    whitespace_after_while: SimpleWhitespace = SimpleWhitespace.field(" ")
 
     #: Whitespace after the test and before the colon.
-    whitespace_before_colon: SimpleWhitespace = SimpleWhitespace("")
+    whitespace_before_colon: SimpleWhitespace = SimpleWhitespace.field("")
 
     def _validate(self) -> None:
         if (
@@ -2115,7 +2115,7 @@ class Assert(BaseSmallStatement):
     comma: Union[Comma, MaybeSentinel] = MaybeSentinel.DEFAULT
 
     #: Whitespace appearing after the ``assert`` keyword and before the test.
-    whitespace_after_assert: SimpleWhitespace = SimpleWhitespace(" ")
+    whitespace_after_assert: SimpleWhitespace = SimpleWhitespace.field(" ")
 
     #: Optional semicolon when this is used in a statement line. This semicolon
     #: owns the whitespace on both sides of it when it is used.
@@ -2221,7 +2221,7 @@ class Global(BaseSmallStatement):
     names: Sequence[NameItem]
 
     #: Whitespace appearing after the ``global`` keyword and before the first name.
-    whitespace_after_global: SimpleWhitespace = SimpleWhitespace(" ")
+    whitespace_after_global: SimpleWhitespace = SimpleWhitespace.field(" ")
 
     #: Optional semicolon when this is used in a statement line. This semicolon
     #: owns the whitespace on both sides of it when it is used.
@@ -2279,7 +2279,7 @@ class Nonlocal(BaseSmallStatement):
     names: Sequence[NameItem]
 
     #: Whitespace appearing after the ``global`` keyword and before the first name.
-    whitespace_after_nonlocal: SimpleWhitespace = SimpleWhitespace(" ")
+    whitespace_after_nonlocal: SimpleWhitespace = SimpleWhitespace.field(" ")
 
     #: Optional semicolon when this is used in a statement line. This semicolon
     #: owns the whitespace on both sides of it when it is used.

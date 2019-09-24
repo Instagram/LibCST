@@ -8,7 +8,7 @@
 import re
 from abc import ABC, abstractmethod
 from contextlib import contextmanager
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum, auto
 from tokenize import (
     Floatnumber as FLOATNUMBER_RE,
@@ -57,7 +57,7 @@ class LeftSquareBracket(CSTNode):
     """
 
     #: Any space that appears directly after this left square bracket.
-    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace("")
+    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace.field("")
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "LeftSquareBracket":
         return LeftSquareBracket(
@@ -80,7 +80,7 @@ class RightSquareBracket(CSTNode):
     """
 
     #: Any space that appears directly before this right square bracket.
-    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace("")
+    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace.field("")
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "RightSquareBracket":
         return RightSquareBracket(
@@ -103,7 +103,7 @@ class LeftCurlyBrace(CSTNode):
     """
 
     #: Any space that appears directly after this left curly brace.
-    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace("")
+    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace.field("")
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "LeftCurlyBrace":
         return LeftCurlyBrace(
@@ -126,7 +126,7 @@ class RightCurlyBrace(CSTNode):
     """
 
     #: Any space that appears directly before this right curly brace.
-    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace("")
+    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace.field("")
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "RightCurlyBrace":
         return RightCurlyBrace(
@@ -149,7 +149,7 @@ class LeftParen(CSTNode):
     """
 
     #: Any space that appears directly after this left parenthesis.
-    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace("")
+    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace.field("")
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "LeftParen":
         return LeftParen(
@@ -172,7 +172,7 @@ class RightParen(CSTNode):
     """
 
     #: Any space that appears directly after this left parenthesis.
-    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace("")
+    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace.field("")
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "RightParen":
         return RightParen(
@@ -195,7 +195,7 @@ class Asynchronous(CSTNode):
     """
 
     #: Any space that appears directly after this async keyword.
-    whitespace_after: SimpleWhitespace = SimpleWhitespace(" ")
+    whitespace_after: SimpleWhitespace = SimpleWhitespace.field(" ")
 
     def _validate(self) -> None:
         if len(self.whitespace_after.value) < 1:
@@ -673,11 +673,15 @@ class FormattedStringExpression(BaseFormattedStringContent):
     format_spec: Optional[Sequence[BaseFormattedStringContent]] = None
 
     #: Whitespace after the opening curly brace (``{``), but before the ``expression``.
-    whitespace_before_expression: BaseParenthesizableWhitespace = SimpleWhitespace("")
+    whitespace_before_expression: BaseParenthesizableWhitespace = SimpleWhitespace.field(
+        ""
+    )
 
     #: Whitespace after the ``expression``, ``conversion``, and ``format_spec``, but
     #: before the closing curly brace (``}``).
-    whitespace_after_expression: BaseParenthesizableWhitespace = SimpleWhitespace("")
+    whitespace_after_expression: BaseParenthesizableWhitespace = SimpleWhitespace.field(
+        ""
+    )
 
     def _validate(self) -> None:
         if self.conversion is not None and self.conversion not in ("s", "r", "a"):
@@ -855,7 +859,7 @@ class ConcatenatedString(BaseString):
     rpar: Sequence[RightParen] = ()
 
     #: Whitespace between the ``left`` and ``right`` substrings.
-    whitespace_between: BaseParenthesizableWhitespace = SimpleWhitespace("")
+    whitespace_between: BaseParenthesizableWhitespace = SimpleWhitespace.field("")
 
     def _safe_to_use_with_word_operator(self, position: ExpressionPosition) -> bool:
         if super(ConcatenatedString, self)._safe_to_use_with_word_operator(position):
@@ -1316,7 +1320,7 @@ class Slice(CSTNode):
     step: Optional[BaseExpression] = None
 
     #: The first slice operator
-    first_colon: Colon = Colon()
+    first_colon: Colon = Colon.field()
 
     #: The second slice operator, usually omitted
     second_colon: Union[Colon, MaybeSentinel] = MaybeSentinel.DEFAULT
@@ -1400,16 +1404,16 @@ class Subscript(BaseAssignTargetExpression, BaseDelTargetExpression):
     #: ``value``.
     slice: Union[Index, Slice, Sequence[ExtSlice]]
 
-    lbracket: LeftSquareBracket = LeftSquareBracket()
+    lbracket: LeftSquareBracket = LeftSquareBracket.field()
     #: Brackets after the ``value`` surrounding the ``slice``.
-    rbracket: RightSquareBracket = RightSquareBracket()
+    rbracket: RightSquareBracket = RightSquareBracket.field()
 
     lpar: Sequence[LeftParen] = ()
     #: Sequence of parenthesis for precedence dictation.
     rpar: Sequence[RightParen] = ()
 
     #: Whitespace after the ``value``, but before the ``lbracket``.
-    whitespace_after_value: BaseParenthesizableWhitespace = SimpleWhitespace("")
+    whitespace_after_value: BaseParenthesizableWhitespace = SimpleWhitespace.field("")
 
     def _validate(self) -> None:
         super(Subscript, self)._validate()
@@ -1488,7 +1492,9 @@ class Annotation(CSTNode):
     whitespace_before_indicator: Union[
         BaseParenthesizableWhitespace, MaybeSentinel
     ] = MaybeSentinel.DEFAULT
-    whitespace_after_indicator: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_after_indicator: BaseParenthesizableWhitespace = SimpleWhitespace.field(
+        " "
+    )
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Annotation":
         return Annotation(
@@ -1547,7 +1553,7 @@ class ParamStar(CSTNode):
     """
 
     # Comma that comes after the star.
-    comma: Comma = Comma(whitespace_after=SimpleWhitespace(" "))
+    comma: Comma = Comma.field(whitespace_after=SimpleWhitespace(" "))
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "ParamStar":
         return ParamStar(comma=visit_required(self, "comma", self.comma, visitor))
@@ -1588,10 +1594,10 @@ class Param(CSTNode):
 
     #: The whitespace before ``name``. It will appear after ``star`` when a star
     #: exists.
-    whitespace_after_star: BaseParenthesizableWhitespace = SimpleWhitespace("")
+    whitespace_after_star: BaseParenthesizableWhitespace = SimpleWhitespace.field("")
 
     #: The whitespace after this entire node.
-    whitespace_after_param: BaseParenthesizableWhitespace = SimpleWhitespace("")
+    whitespace_after_param: BaseParenthesizableWhitespace = SimpleWhitespace.field("")
 
     def _validate(self) -> None:
         if self.default is None and isinstance(self.equal, AssignEqual):
@@ -1846,7 +1852,7 @@ class Lambda(BaseExpression):
     body: BaseExpression
 
     #: The colon separating the parameters from the body.
-    colon: Colon = Colon(whitespace_after=SimpleWhitespace(" "))
+    colon: Colon = Colon.field(whitespace_after=SimpleWhitespace(" "))
 
     lpar: Sequence[LeftParen] = ()
     #: Sequence of parenthesis for precedence dictation.
@@ -1951,10 +1957,10 @@ class Arg(CSTNode):
 
     #: Whitespace after the ``star`` (if it exists), but before the ``keyword`` or
     #: ``value`` (if no keyword is provided).
-    whitespace_after_star: BaseParenthesizableWhitespace = SimpleWhitespace("")
+    whitespace_after_star: BaseParenthesizableWhitespace = SimpleWhitespace.field("")
     #: Whitespace after this entire node. The :class:`Comma` node (if it exists) may
     #: also store some trailing whitespace.
-    whitespace_after_arg: BaseParenthesizableWhitespace = SimpleWhitespace("")
+    whitespace_after_arg: BaseParenthesizableWhitespace = SimpleWhitespace.field("")
 
     def _validate(self) -> None:
         if self.keyword is None and isinstance(self.equal, AssignEqual):
@@ -2128,11 +2134,11 @@ class Call(_BaseExpressionWithArgs):
     rpar: Sequence[RightParen] = ()
 
     #: Whitespace after the ``func`` name, but before the opening parenthesis.
-    whitespace_after_func: BaseParenthesizableWhitespace = SimpleWhitespace("")
+    whitespace_after_func: BaseParenthesizableWhitespace = SimpleWhitespace.field("")
     #: Whitespace after the opening parenthesis but before the first argument (if there
     #: are any). Whitespace after the last argument but before the closing parenthesis
     #: is owned by the last :class:`Arg` if it exists.
-    whitespace_before_args: BaseParenthesizableWhitespace = SimpleWhitespace("")
+    whitespace_before_args: BaseParenthesizableWhitespace = SimpleWhitespace.field("")
 
     def _safe_to_use_with_word_operator(self, position: ExpressionPosition) -> bool:
         """
@@ -2192,7 +2198,7 @@ class Await(BaseExpression):
 
     #: Whitespace that appears after the ``async`` keyword, but before the inner
     #: ``expression``.
-    whitespace_after_await: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_after_await: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     def _validate(self) -> None:
         # Validate any super-class stuff, whatever it may be.
@@ -2241,16 +2247,16 @@ class IfExp(BaseExpression):
     rpar: Sequence[RightParen] = ()
 
     #: Whitespace after the ``body`` expression, but before the ``if`` keyword.
-    whitespace_before_if: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_before_if: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     #: Whitespace after the ``if`` keyword, but before the ``test`` clause.
-    whitespace_after_if: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_after_if: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     #: Whitespace after the ``test`` expression, but before the ``else`` keyword.
-    whitespace_before_else: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_before_else: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     #: Whitespace after the ``else`` keyword, but before the ``orelse`` expression.
-    whitespace_after_else: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_after_else: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     def _validate(self) -> None:
         # Paren validation and such
@@ -2335,7 +2341,7 @@ class From(CSTNode):
     ] = MaybeSentinel.DEFAULT
 
     #: The whitespace after the ``from`` keyword, but before the ``item``.
-    whitespace_after_from: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_after_from: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     def _validate(self) -> None:
         if (
@@ -2544,9 +2550,9 @@ class DictElement(BaseDictElement):
     comma: Union[Comma, MaybeSentinel] = MaybeSentinel.DEFAULT
 
     #: Whitespace after the key, but before the colon in ``key : value``.
-    whitespace_before_colon: BaseParenthesizableWhitespace = SimpleWhitespace("")
+    whitespace_before_colon: BaseParenthesizableWhitespace = SimpleWhitespace.field("")
     #: Whitespace after the colon, but before the value in ``key : value``.
-    whitespace_after_colon: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_after_colon: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "DictElement":
         return DictElement(
@@ -2611,7 +2617,7 @@ class StarredElement(BaseElement, _BaseParenthesizedNode):
     rpar: Sequence[RightParen] = ()
 
     #: Whitespace between the leading asterisk and the value expression.
-    whitespace_before_value: BaseParenthesizableWhitespace = SimpleWhitespace("")
+    whitespace_before_value: BaseParenthesizableWhitespace = SimpleWhitespace.field("")
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "StarredElement":
         return StarredElement(
@@ -2658,7 +2664,7 @@ class StarredDictElement(BaseDictElement):
     comma: Union[Comma, MaybeSentinel] = MaybeSentinel.DEFAULT
 
     #: Whitespace between the leading asterisks and the value expression.
-    whitespace_before_value: BaseParenthesizableWhitespace = SimpleWhitespace("")
+    whitespace_before_value: BaseParenthesizableWhitespace = SimpleWhitespace.field("")
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "StarredDictElement":
         return StarredDictElement(
@@ -2705,9 +2711,9 @@ class Tuple(BaseAssignTargetExpression, BaseDelTargetExpression):
     #: in the tuple.
     elements: Sequence[BaseElement]
 
-    lpar: Sequence[LeftParen] = (LeftParen(),)
+    lpar: Sequence[LeftParen] = field(default_factory=lambda: (LeftParen(),))
     #: Sequence of parenthesis for precedence dictation.
-    rpar: Sequence[RightParen] = (RightParen(),)
+    rpar: Sequence[RightParen] = field(default_factory=lambda: (RightParen(),))
 
     def _safe_to_use_with_word_operator(self, position: ExpressionPosition) -> bool:
         if super(Tuple, self)._safe_to_use_with_word_operator(position):
@@ -2774,9 +2780,9 @@ class BaseList(BaseExpression, ABC):
     object when evaluated.
     """
 
-    lbracket: LeftSquareBracket = LeftSquareBracket()
+    lbracket: LeftSquareBracket = LeftSquareBracket.field()
     #: Brackets surrounding the list.
-    rbracket: RightSquareBracket = RightSquareBracket()
+    rbracket: RightSquareBracket = RightSquareBracket.field()
 
     lpar: Sequence[LeftParen] = ()
     #: Sequence of parenthesis for precedence dictation.
@@ -2817,9 +2823,9 @@ class List(BaseList, BaseAssignTargetExpression, BaseDelTargetExpression):
     #: in the list.
     elements: Sequence[BaseElement]
 
-    lbracket: LeftSquareBracket = LeftSquareBracket()
+    lbracket: LeftSquareBracket = LeftSquareBracket.field()
     #: Brackets surrounding the list.
-    rbracket: RightSquareBracket = RightSquareBracket()
+    rbracket: RightSquareBracket = RightSquareBracket.field()
 
     lpar: Sequence[LeftParen] = ()
     #: Sequence of parenthesis for precedence dictation.
@@ -2854,9 +2860,9 @@ class _BaseSetOrDict(BaseExpression, ABC):
     shouldn't be exported.
     """
 
-    lbrace: LeftCurlyBrace = LeftCurlyBrace()
+    lbrace: LeftCurlyBrace = LeftCurlyBrace.field()
     #: Braces surrounding the set or dict.
-    rbrace: RightCurlyBrace = RightCurlyBrace()
+    rbrace: RightCurlyBrace = RightCurlyBrace.field()
 
     lpar: Sequence[LeftParen] = ()
     #: Sequence of parenthesis for precedence dictation.
@@ -2905,9 +2911,9 @@ class Set(BaseSet):
     #: in the set.
     elements: Sequence[BaseElement]
 
-    lbrace: LeftCurlyBrace = LeftCurlyBrace()
+    lbrace: LeftCurlyBrace = LeftCurlyBrace.field()
     #: Braces surrounding the set.
-    rbrace: RightCurlyBrace = RightCurlyBrace()
+    rbrace: RightCurlyBrace = RightCurlyBrace.field()
 
     lpar: Sequence[LeftParen] = ()
     #: Sequence of parenthesis for precedence dictation.
@@ -2973,8 +2979,8 @@ class Dict(BaseDict):
     """
 
     elements: Sequence[BaseDictElement]
-    lbrace: LeftCurlyBrace = LeftCurlyBrace()
-    rbrace: RightCurlyBrace = RightCurlyBrace()
+    lbrace: LeftCurlyBrace = LeftCurlyBrace.field()
+    rbrace: RightCurlyBrace = RightCurlyBrace.field()
     lpar: Sequence[LeftParen] = ()
     rpar: Sequence[RightParen] = ()
 
@@ -3069,16 +3075,16 @@ class CompFor(CSTNode):
 
     #: Whitespace that appears at the beginning of this node, before the ``for`` and
     #: ``async`` keywords.
-    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     #: Whitespace appearing after the ``for`` keyword, but before the ``target``.
-    whitespace_after_for: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_after_for: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     #: Whitespace appearing after the ``target``, but before the ``in`` keyword.
-    whitespace_before_in: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_before_in: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     #: Whitespace appearing after the ``in`` keyword, but before the ``iter``.
-    whitespace_after_in: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_after_in: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     def _validate(self) -> None:
         if (
@@ -3188,10 +3194,10 @@ class CompIf(CSTNode):
     test: BaseExpression
 
     #: Whitespace before the ``if`` keyword.
-    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     #: Whitespace after the ``if`` keyword, but before the ``test`` expression.
-    whitespace_before_test: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_before_test: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     def _validate(self) -> None:
         if (
@@ -3276,12 +3282,12 @@ class GeneratorExp(BaseSimpleComp):
     #: nested structure for nested comprehensions. See :class:`CompFor` for details.
     for_in: CompFor
 
-    lpar: Sequence[LeftParen] = (LeftParen(),)
+    lpar: Sequence[LeftParen] = field(default_factory=lambda: (LeftParen(),))
     #: Sequence of parentheses for precedence dictation. Generator expressions must
     #: always be parenthesized. However, if a generator expression is the only argument
     #: inside a function call, the enclosing :class:`Call` node may own the parentheses
     #: instead.
-    rpar: Sequence[RightParen] = (RightParen(),)
+    rpar: Sequence[RightParen] = field(default_factory=lambda: (RightParen(),))
 
     def _safe_to_use_with_word_operator(self, position: ExpressionPosition) -> bool:
         # Generators are always parenthesized
@@ -3327,9 +3333,9 @@ class ListComp(BaseList, BaseSimpleComp):
     #: nested structure for nested comprehensions. See :class:`CompFor` for details.
     for_in: CompFor
 
-    lbracket: LeftSquareBracket = LeftSquareBracket()
+    lbracket: LeftSquareBracket = LeftSquareBracket.field()
     #: Brackets surrounding the list comprehension.
-    rbracket: RightSquareBracket = RightSquareBracket()
+    rbracket: RightSquareBracket = RightSquareBracket.field()
 
     lpar: Sequence[LeftParen] = ()
     #: Sequence of parenthesis for precedence dictation.
@@ -3369,9 +3375,9 @@ class SetComp(BaseSet, BaseSimpleComp):
     #: nested structure for nested comprehensions. See :class:`CompFor` for details.
     for_in: CompFor
 
-    lbrace: LeftCurlyBrace = LeftCurlyBrace()
+    lbrace: LeftCurlyBrace = LeftCurlyBrace.field()
     #: Braces surrounding the set comprehension.
-    rbrace: RightCurlyBrace = RightCurlyBrace()
+    rbrace: RightCurlyBrace = RightCurlyBrace.field()
 
     lpar: Sequence[LeftParen] = ()
     #: Sequence of parenthesis for precedence dictation.
@@ -3415,18 +3421,18 @@ class DictComp(BaseDict, BaseComp):
     #: :class:`CompFor` for details.
     for_in: CompFor
 
-    lbrace: LeftCurlyBrace = LeftCurlyBrace()
+    lbrace: LeftCurlyBrace = LeftCurlyBrace.field()
     #: Braces surrounding the dict comprehension.
-    rbrace: RightCurlyBrace = RightCurlyBrace()
+    rbrace: RightCurlyBrace = RightCurlyBrace.field()
 
     lpar: Sequence[LeftParen] = ()
     #: Sequence of parenthesis for precedence dictation.
     rpar: Sequence[RightParen] = ()
 
     #: Whitespace after the key, but before the colon in ``key : value``.
-    whitespace_before_colon: BaseParenthesizableWhitespace = SimpleWhitespace("")
+    whitespace_before_colon: BaseParenthesizableWhitespace = SimpleWhitespace.field("")
     #: Whitespace after the colon, but before the value in ``key : value``.
-    whitespace_after_colon: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_after_colon: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     def _validate(self) -> None:
         super(DictComp, self)._validate()

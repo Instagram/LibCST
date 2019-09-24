@@ -174,13 +174,13 @@ class TrailingWhitespace(CSTNode):
     """
 
     #: Any simple whitespace before any comment or newline.
-    whitespace: SimpleWhitespace = SimpleWhitespace("")
+    whitespace: SimpleWhitespace = SimpleWhitespace.field("")
 
     #: An optional comment appearing after any simple whitespace.
     comment: Optional[Comment] = None
 
     #: The newline character that terminates this trailing whitespace.
-    newline: Newline = Newline()
+    newline: Newline = Newline.field()
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "TrailingWhitespace":
         return TrailingWhitespace(
@@ -212,13 +212,13 @@ class EmptyLine(CSTNode):
     indent: bool = True
 
     #: Extra whitespace after the indent, but before the comment.
-    whitespace: SimpleWhitespace = SimpleWhitespace("")
+    whitespace: SimpleWhitespace = SimpleWhitespace.field("")
 
     #: An optional comment appearing after the indent and extra whitespace.
     comment: Optional[Comment] = None
 
     #: The newline character that terminates this empty line.
-    newline: Newline = Newline()
+    newline: Newline = Newline.field()
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "EmptyLine":
         return EmptyLine(
@@ -255,7 +255,7 @@ class ParenthesizedWhitespace(BaseParenthesizableWhitespace):
 
     #: The whitespace that comes after the previous node, up to and including
     #: the end-of-line comment and newline.
-    first_line: TrailingWhitespace = TrailingWhitespace()
+    first_line: TrailingWhitespace = TrailingWhitespace.field()
 
     #: Any lines after the first that contain only indentation and/or comments.
     empty_lines: Sequence[EmptyLine] = ()
@@ -264,7 +264,7 @@ class ParenthesizedWhitespace(BaseParenthesizableWhitespace):
     indent: bool = False
 
     #: Extra whitespace after the indent, but before the next node.
-    last_line: SimpleWhitespace = SimpleWhitespace("")
+    last_line: SimpleWhitespace = SimpleWhitespace.field("")
 
     def _visit_and_replace_children(
         self, visitor: CSTVisitorT

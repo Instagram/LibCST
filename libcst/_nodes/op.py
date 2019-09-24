@@ -152,10 +152,10 @@ class Semicolon(_BaseOneTokenOp):
     """
 
     #: Any space that appears directly before this semicolon.
-    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace("")
+    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace.field("")
 
     #: Any space that appears directly after this semicolon.
-    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace("")
+    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace.field("")
 
     def _get_token(self) -> str:
         return ";"
@@ -170,10 +170,10 @@ class Colon(_BaseOneTokenOp):
     """
 
     #: Any space that appears directly before this colon.
-    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace("")
+    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace.field("")
 
     #: Any space that appears directly after this colon.
-    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace("")
+    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace.field("")
 
     def _get_token(self) -> str:
         return ":"
@@ -194,10 +194,10 @@ class Comma(_BaseOneTokenOp):
     """
 
     #: Any space that appears directly before this comma.
-    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace("")
+    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace.field("")
 
     #: Any space that appears directly after this comma.
-    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace("")
+    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace.field("")
 
     def _get_token(self) -> str:
         return ","
@@ -211,10 +211,10 @@ class Dot(_BaseOneTokenOp):
     """
 
     #: Any space that appears directly before this dot.
-    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace("")
+    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace.field("")
 
     #: Any space that appears directly after this dot.
-    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace("")
+    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace.field("")
 
     def _get_token(self) -> str:
         return "."
@@ -242,10 +242,10 @@ class AssignEqual(_BaseOneTokenOp):
     """
 
     #: Any space that appears directly before this equal sign.
-    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     #: Any space that appears directly after this equal sign.
-    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     def _get_token(self) -> str:
         return "="
@@ -260,7 +260,7 @@ class Plus(BaseUnaryOp):
     """
 
     #: Any space that appears directly after this operator.
-    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace("")
+    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace.field("")
 
     def _get_token(self) -> str:
         return "+"
@@ -275,7 +275,7 @@ class Minus(BaseUnaryOp):
     """
 
     #: Any space that appears directly after this operator.
-    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace("")
+    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace.field("")
 
     def _get_token(self) -> str:
         return "-"
@@ -290,7 +290,7 @@ class BitInvert(BaseUnaryOp):
     """
 
     #: Any space that appears directly after this operator.
-    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace("")
+    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace.field("")
 
     def _get_token(self) -> str:
         return "~"
@@ -305,7 +305,7 @@ class Not(BaseUnaryOp):
     """
 
     #: Any space that appears directly after this operator.
-    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     def _get_token(self) -> str:
         return "not"
@@ -320,10 +320,10 @@ class And(BaseBooleanOp):
     """
 
     #: Any space that appears directly before this operator.
-    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     #: Any space that appears directly after this operator.
-    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     def _get_token(self) -> str:
         return "and"
@@ -338,10 +338,10 @@ class Or(BaseBooleanOp):
     """
 
     #: Any space that appears directly before this operator.
-    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     #: Any space that appears directly after this operator.
-    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     def _get_token(self) -> str:
         return "or"
@@ -356,10 +356,10 @@ class Add(BaseBinaryOp, _BaseOneTokenOp):
     """
 
     #: Any space that appears directly before this operator.
-    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     #: Any space that appears directly after this operator.
-    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     def _get_token(self) -> str:
         return "+"
@@ -374,10 +374,10 @@ class Subtract(BaseBinaryOp, _BaseOneTokenOp):
     """
 
     #: Any space that appears directly before this operator.
-    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     #: Any space that appears directly after this operator.
-    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     def _get_token(self) -> str:
         return "-"
@@ -392,10 +392,10 @@ class Multiply(BaseBinaryOp, _BaseOneTokenOp):
     """
 
     #: Any space that appears directly before this operator.
-    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     #: Any space that appears directly after this operator.
-    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     def _get_token(self) -> str:
         return "*"
@@ -410,10 +410,10 @@ class Divide(BaseBinaryOp, _BaseOneTokenOp):
     """
 
     #: Any space that appears directly before this operator.
-    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     #: Any space that appears directly after this operator.
-    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     def _get_token(self) -> str:
         return "/"
@@ -428,10 +428,10 @@ class FloorDivide(BaseBinaryOp, _BaseOneTokenOp):
     """
 
     #: Any space that appears directly before this operator.
-    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     #: Any space that appears directly after this operator.
-    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     def _get_token(self) -> str:
         return "//"
@@ -446,10 +446,10 @@ class Modulo(BaseBinaryOp, _BaseOneTokenOp):
     """
 
     #: Any space that appears directly before this operator.
-    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     #: Any space that appears directly after this operator.
-    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     def _get_token(self) -> str:
         return "%"
@@ -464,10 +464,10 @@ class Power(BaseBinaryOp, _BaseOneTokenOp):
     """
 
     #: Any space that appears directly before this operator.
-    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     #: Any space that appears directly after this operator.
-    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     def _get_token(self) -> str:
         return "**"
@@ -482,10 +482,10 @@ class LeftShift(BaseBinaryOp, _BaseOneTokenOp):
     """
 
     #: Any space that appears directly before this operator.
-    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     #: Any space that appears directly after this operator.
-    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     def _get_token(self) -> str:
         return "<<"
@@ -500,10 +500,10 @@ class RightShift(BaseBinaryOp, _BaseOneTokenOp):
     """
 
     #: Any space that appears directly before this operator.
-    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     #: Any space that appears directly after this operator.
-    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     def _get_token(self) -> str:
         return ">>"
@@ -518,10 +518,10 @@ class BitOr(BaseBinaryOp, _BaseOneTokenOp):
     """
 
     #: Any space that appears directly before this operator.
-    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     #: Any space that appears directly after this operator.
-    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     def _get_token(self) -> str:
         return "|"
@@ -536,10 +536,10 @@ class BitAnd(BaseBinaryOp, _BaseOneTokenOp):
     """
 
     #: Any space that appears directly before this operator.
-    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     #: Any space that appears directly after this operator.
-    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     def _get_token(self) -> str:
         return "&"
@@ -554,10 +554,10 @@ class BitXor(BaseBinaryOp, _BaseOneTokenOp):
     """
 
     #: Any space that appears directly before this operator.
-    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     #: Any space that appears directly after this operator.
-    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     def _get_token(self) -> str:
         return "^"
@@ -572,10 +572,10 @@ class MatrixMultiply(BaseBinaryOp, _BaseOneTokenOp):
     """
 
     #: Any space that appears directly before this operator.
-    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     #: Any space that appears directly after this operator.
-    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     def _get_token(self) -> str:
         return "@"
@@ -589,10 +589,10 @@ class LessThan(BaseCompOp, _BaseOneTokenOp):
     """
 
     #: Any space that appears directly before this operator.
-    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     #: Any space that appears directly after this operator.
-    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     def _get_token(self) -> str:
         return "<"
@@ -606,10 +606,10 @@ class GreaterThan(BaseCompOp, _BaseOneTokenOp):
     """
 
     #: Any space that appears directly before this operator.
-    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     #: Any space that appears directly after this operator.
-    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     def _get_token(self) -> str:
         return ">"
@@ -623,10 +623,10 @@ class Equal(BaseCompOp, _BaseOneTokenOp):
     """
 
     #: Any space that appears directly before this operator.
-    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     #: Any space that appears directly after this operator.
-    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     def _get_token(self) -> str:
         return "=="
@@ -640,10 +640,10 @@ class LessThanEqual(BaseCompOp, _BaseOneTokenOp):
     """
 
     #: Any space that appears directly before this operator.
-    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     #: Any space that appears directly after this operator.
-    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     def _get_token(self) -> str:
         return "<="
@@ -657,10 +657,10 @@ class GreaterThanEqual(BaseCompOp, _BaseOneTokenOp):
     """
 
     #: Any space that appears directly before this operator.
-    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     #: Any space that appears directly after this operator.
-    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     def _get_token(self) -> str:
         return ">="
@@ -681,10 +681,10 @@ class NotEqual(BaseCompOp):
     value: str = "!="
 
     #: Any space that appears directly before this operator.
-    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     #: Any space that appears directly after this operator.
-    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     def _validate(self) -> None:
         if self.value not in ["!=", "<>"]:
@@ -715,10 +715,10 @@ class In(BaseCompOp, _BaseOneTokenOp):
     """
 
     #: Any space that appears directly before this operator.
-    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     #: Any space that appears directly after this operator.
-    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     def _get_token(self) -> str:
         return "in"
@@ -735,13 +735,13 @@ class NotIn(BaseCompOp, _BaseTwoTokenOp):
     """
 
     #: Any space that appears directly before this operator.
-    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     #: Any space that appears between the ``not`` and ``in`` tokens.
-    whitespace_between: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_between: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     #: Any space that appears directly after this operator.
-    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     def _get_tokens(self) -> Tuple[str, str]:
         return ("not", "in")
@@ -755,10 +755,10 @@ class Is(BaseCompOp, _BaseOneTokenOp):
     """
 
     #: Any space that appears directly before this operator.
-    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     #: Any space that appears directly after this operator.
-    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     def _get_token(self) -> str:
         return "is"
@@ -775,13 +775,13 @@ class IsNot(BaseCompOp, _BaseTwoTokenOp):
     """
 
     #: Any space that appears directly before this operator.
-    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     #: Any space that appears between the ``is`` and ``not`` tokens.
-    whitespace_between: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_between: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     #: Any space that appears directly after this operator.
-    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     def _get_tokens(self) -> Tuple[str, str]:
         return ("is", "not")
@@ -796,10 +796,10 @@ class AddAssign(BaseAugOp, _BaseOneTokenOp):
     """
 
     #: Any space that appears directly before this operator.
-    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     #: Any space that appears directly after this operator.
-    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     def _get_token(self) -> str:
         return "+="
@@ -814,10 +814,10 @@ class SubtractAssign(BaseAugOp, _BaseOneTokenOp):
     """
 
     #: Any space that appears directly before this operator.
-    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     #: Any space that appears directly after this operator.
-    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     def _get_token(self) -> str:
         return "-="
@@ -832,10 +832,10 @@ class MultiplyAssign(BaseAugOp, _BaseOneTokenOp):
     """
 
     #: Any space that appears directly before this operator.
-    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     #: Any space that appears directly after this operator.
-    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     def _get_token(self) -> str:
         return "*="
@@ -850,10 +850,10 @@ class MatrixMultiplyAssign(BaseAugOp, _BaseOneTokenOp):
     """
 
     #: Any space that appears directly before this operator.
-    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     #: Any space that appears directly after this operator.
-    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     def _get_token(self) -> str:
         return "@="
@@ -868,10 +868,10 @@ class DivideAssign(BaseAugOp, _BaseOneTokenOp):
     """
 
     #: Any space that appears directly before this operator.
-    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     #: Any space that appears directly after this operator.
-    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     def _get_token(self) -> str:
         return "/="
@@ -886,10 +886,10 @@ class ModuloAssign(BaseAugOp, _BaseOneTokenOp):
     """
 
     #: Any space that appears directly before this operator.
-    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     #: Any space that appears directly after this operator.
-    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     def _get_token(self) -> str:
         return "%="
@@ -904,10 +904,10 @@ class BitAndAssign(BaseAugOp, _BaseOneTokenOp):
     """
 
     #: Any space that appears directly before this operator.
-    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     #: Any space that appears directly after this operator.
-    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     def _get_token(self) -> str:
         return "&="
@@ -922,10 +922,10 @@ class BitOrAssign(BaseAugOp, _BaseOneTokenOp):
     """
 
     #: Any space that appears directly before this operator.
-    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     #: Any space that appears directly after this operator.
-    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     def _get_token(self) -> str:
         return "|="
@@ -940,10 +940,10 @@ class BitXorAssign(BaseAugOp, _BaseOneTokenOp):
     """
 
     #: Any space that appears directly before this operator.
-    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     #: Any space that appears directly after this operator.
-    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     def _get_token(self) -> str:
         return "^="
@@ -958,10 +958,10 @@ class LeftShiftAssign(BaseAugOp, _BaseOneTokenOp):
     """
 
     #: Any space that appears directly before this operator.
-    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     #: Any space that appears directly after this operator.
-    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     def _get_token(self) -> str:
         return "<<="
@@ -976,10 +976,10 @@ class RightShiftAssign(BaseAugOp, _BaseOneTokenOp):
     """
 
     #: Any space that appears directly before this operator.
-    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     #: Any space that appears directly after this operator.
-    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     def _get_token(self) -> str:
         return ">>="
@@ -994,10 +994,10 @@ class PowerAssign(BaseAugOp, _BaseOneTokenOp):
     """
 
     #: Any space that appears directly before this operator.
-    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     #: Any space that appears directly after this operator.
-    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     def _get_token(self) -> str:
         return "**="
@@ -1012,10 +1012,10 @@ class FloorDivideAssign(BaseAugOp, _BaseOneTokenOp):
     """
 
     #: Any space that appears directly before this operator.
-    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_before: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     #: Any space that appears directly after this operator.
-    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace(" ")
+    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     def _get_token(self) -> str:
         return "//="
