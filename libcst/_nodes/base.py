@@ -4,10 +4,12 @@
 # LICENSE file in the root directory of this source tree.
 
 from abc import ABC, abstractmethod
+from copy import deepcopy
 from dataclasses import dataclass, field, fields, replace
 from typing import (
     TYPE_CHECKING,
     Any,
+    Dict,
     List,
     MutableMapping,
     Sequence,
@@ -305,7 +307,23 @@ class CSTNode(ABC):
         >>> tree.deep_equals(tree.deep_clone())
         True
         """
-        return cast(_CSTNodeSelfT, self.visit(_NOOPVisitor()))
+        cloned_fields: Dict[str, object] = {}
+        for field in fields(self):
+            key = field.name
+            if key[0] == "_":
+                continue
+            val = getattr(self, key)
+
+            # We can't use isinstance(val, CSTNode) here due to poor performance
+            # of isinstance checks against ABC direct subclasses. What we're trying
+            # to do here is recursively call this functionality on subclasses, but
+            # if the attribute isn't a CSTNode, fall back to copy.deepcopy.
+            try:
+                cloned_fields[key] = val.deep_clone()
+            except AttributeError:
+                cloned_fields[key] = deepcopy(val)
+
+        return type(self)(**cloned_fields)
 
     def deep_equals(self, other: "CSTNode") -> bool:
         """
