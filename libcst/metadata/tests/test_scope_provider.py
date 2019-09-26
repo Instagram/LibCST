@@ -596,3 +596,20 @@ class ScopeProviderTest(UnitTest):
                 ensure_type(m.body[0], cst.With).items[0].asname, cst.AsName
             ).name,
         )
+
+    def test_get_fully_qualified_names_for(self) -> None:
+        m, scopes = get_scope_metadata_provider(
+            """
+            from a.b import c
+            def f():
+                c()
+            """
+        )
+        f = ensure_type(m.body[1], cst.FunctionDef)
+        c_call = ensure_type(
+            ensure_type(f.body.body[0], cst.SimpleStatementLine).body[0], cst.Expr
+        ).value
+        print(ensure_type(f.body.body[0], cst.SimpleStatementLine).body[0])
+        scope_of_f = scopes[c_call]
+        self.assertIsInstance(scope_of_f, FunctionScope)
+        self.assertEqual(scope_of_f.get_fully_qualified_names_for(c_call), {"a.b.c"})

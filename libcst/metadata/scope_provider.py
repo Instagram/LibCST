@@ -10,7 +10,17 @@ import builtins
 from collections import defaultdict
 from contextlib import contextmanager
 from dataclasses import dataclass
-from typing import Dict, Iterator, List, MutableMapping, Optional, Tuple, Type, Union
+from typing import (
+    Collection,
+    Dict,
+    Iterator,
+    List,
+    MutableMapping,
+    Optional,
+    Tuple,
+    Type,
+    Union,
+)
 
 import libcst as cst
 from libcst._add_slots import add_slots
@@ -86,6 +96,21 @@ class BuiltinAssignment(BaseAssignment):
     pass
 
 
+def _get_full_name_for(node: cst.CSTNode) -> Optional[str]:
+    if isinstance(node, cst.Name):
+        return node.value
+    elif isinstance(node, cst.Attribute):
+        return f"{_get_full_name_for(node.value)}.{node.attr.value}"
+    elif isinstance(node, cst.Call):
+        return _get_full_name_for(node.func)
+    elif isinstance(node, cst.Subscript):
+        return _get_full_name_for(node.value)
+    elif isinstance(node, cst.SimpleString):
+        # In the case of SimpleString of type hints.
+        return node.value
+    return None
+
+
 class Scope(abc.ABC):
     """
     Base class of all scope classes. Scope object stores assignments from imports,
@@ -135,6 +160,41 @@ class Scope(abc.ABC):
     @abc.abstractmethod
     def record_nonlocal_overwrite(self, name: str) -> None:
         ...
+
+    def get_fully_qualified_names_for(  # noqa: C901
+        self, node: cst.CSTNode
+    ) -> Collection[str]:
+        results = set()
+        full_name = _get_full_name_for(node)
+        if full_name is None:
+            return results
+        parts = full_name.split(".")
+        for assignment in self[parts[0]]:
+            if isinstance(assignment, Assignment):
+                assignment_node = assignment.node
+
+                if isinstance(assignment_node, cst.Import) or isinstance(
+                    assignment_node, cst.ImportFrom
+                ):
+                    module = ""
+                    if isinstance(assignment_node, cst.ImportFrom):
+                        module_attr = assignment_node.module
+                        if module_attr:
+                            module = _get_full_name_for(module_attr)
+                    import_names = assignment_node.names
+                    if not isinstance(import_names, cst.ImportStar):
+                        for name in import_names:
+                            real_name = _get_full_name_for(name.name)
+                            as_name = name.asname or real_name
+                            if as_name == parts[0]:
+                                if module:
+                                    real_name = f"{module}.{real_name}"
+                                if real_name:
+                                    results.add(".".join([real_name, *parts[1:]]))
+            elif isinstance(assignment, BuiltinAssignment):
+                results.add(f"builtins.{assignment.name}")
+            # TODO: add support to other type of assignment
+        return results
 
 
 class GlobalScope(Scope):
