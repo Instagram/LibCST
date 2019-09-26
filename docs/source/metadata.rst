@@ -67,7 +67,8 @@ your provider does not use the visitor pattern for computing metadata for a tree
 Metadata Providers
 ------------------
 :class:`~libcst.metadata.BasicPositionProvider`, :class:`~libcst.metadata.SyntacticPositionProvider`,
-:class:`~libcst.metadata.ExpressionContextProvider` and :class:`~libcst.metadata.ScopeProvider`
+:class:`~libcst.metadata.ExpressionContextProvider`, :class:`~libcst.metadata.ScopeProvider` and
+:class:`~libcst.metadata.ParentNodeProvider`
 are currently provided. Each metadata provider may has its own custom data structure.
 
 Position Metadata
@@ -131,3 +132,13 @@ There were four different type of scope in Python: :class:`~libcst.metadata.Glob
 .. autoclass:: libcst.metadata.FunctionScope
 .. autoclass:: libcst.metadata.ClassScope
 .. autoclass:: libcst.metadata.ComprehensionScope
+
+Parent Node Metadata
+--------------------
+A :class:`~libcst.CSTNode` only has attributes link to its child nodes and thus only top-down
+tree traversal is doable. Sometimes user may want to access the parent :class:`~libcst.CSTNode`
+for more information or traverse in buttom-up manner.
+We provide :class:`~libcst.metadata.ParentNodeProvider` for those use cases.
+
+.. autoclass:: libcst.metadata.ParentNodeProvider
+   :no-undoc-members:
