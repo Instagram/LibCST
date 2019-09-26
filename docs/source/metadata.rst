@@ -137,7 +137,7 @@ Parent Node Metadata
 --------------------
 A :class:`~libcst.CSTNode` only has attributes link to its child nodes and thus only top-down
 tree traversal is doable. Sometimes user may want to access the parent :class:`~libcst.CSTNode`
-for more information or traverse in buttom-up manner.
+for more information or traverse in bottom-up manner.
 We provide :class:`~libcst.metadata.ParentNodeProvider` for those use cases.
 
 .. autoclass:: libcst.metadata.ParentNodeProvider

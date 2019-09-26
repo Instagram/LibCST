@@ -39,6 +39,26 @@ class ParentNodeProviderTest(UnitTest):
                     fn3(foo)
                 """,
             ),
+            (
+                """
+                global_var = None
+                @cls_attr
+                class Cls(cls_attr, kwarg=cls_attr):
+                    cls_attr = 5
+                    def f():
+                        pass
+                """,
+            ),
+            (
+                """
+                iterator = None
+                condition = None
+                [elt for target in iterator if condition]
+                {elt for target in iterator if condition}
+                {elt: target for target in iterator if condition}
+                (elt for target in iterator if condition)
+                """,
+            ),
         )
     )
     def test_parent_node_provier(self, code: str) -> None:
