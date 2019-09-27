@@ -603,14 +603,18 @@ class ScopeProviderTest(UnitTest):
         m, scopes = get_scope_metadata_provider(
             """
             from a.b import c
-            def f() -> "c":
-                c()
-                d = {}
-                d['key'] = 0
-            f()
+            class Cls:
+                def f(self) -> "c":
+                    c()
+                    d = {}
+                    d['key'] = 0
+            def g():
+                pass
+            g()
             """
         )
-        f = ensure_type(m.body[1], cst.FunctionDef)
+        cls = ensure_type(m.body[1], cst.ClassDef)
+        f = ensure_type(cls.body.body[0], cst.FunctionDef)
         scope_of_module = scopes[m]
         self.assertEqual(
             scope_of_module.get_qualified_names_for(
@@ -633,13 +637,13 @@ class ScopeProviderTest(UnitTest):
             {QualifiedName("a.b.c", QualifiedNameSource.IMPORT)},
         )
 
-        f_call = ensure_type(
-            ensure_type(m.body[2], cst.SimpleStatementLine).body[0], cst.Expr
+        g_call = ensure_type(
+            ensure_type(m.body[3], cst.SimpleStatementLine).body[0], cst.Expr
         ).value
         self.assertIsInstance(scope_of_module, GlobalScope)
         self.assertEqual(
-            scope_of_module.get_qualified_names_for(f_call),
-            {QualifiedName("f", QualifiedNameSource.LOCAL)},
+            scope_of_module.get_qualified_names_for(g_call),
+            {QualifiedName("g", QualifiedNameSource.LOCAL)},
         )
         d_name = (
             ensure_type(
@@ -650,7 +654,7 @@ class ScopeProviderTest(UnitTest):
         )
         self.assertEqual(
             scope_of_f.get_qualified_names_for(d_name),
-            {QualifiedName("f.d", QualifiedNameSource.LOCAL)},
+            {QualifiedName("Cls.f.d", QualifiedNameSource.LOCAL)},
         )
         d_subscript = (
             ensure_type(
@@ -661,7 +665,7 @@ class ScopeProviderTest(UnitTest):
         )
         self.assertEqual(
             scope_of_f.get_qualified_names_for(d_subscript),
-            {QualifiedName("f.d", QualifiedNameSource.LOCAL)},
+            {QualifiedName("Cls.f.d", QualifiedNameSource.LOCAL)},
         )
 
         for builtin in ["map", "int", "dict"]:
