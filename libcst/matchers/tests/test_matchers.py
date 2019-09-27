@@ -10,7 +10,7 @@ from libcst.matchers import matches
 from libcst.testing.utils import UnitTest
 
 
-class CMFMatcherTest(UnitTest):
+class MatchersMatcherTest(UnitTest):
 
     ONCALL_SHORTNAME = "instagram_server_framework"
 

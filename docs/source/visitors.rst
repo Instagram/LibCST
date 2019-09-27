@@ -1,3 +1,5 @@
+.. _libcst-visitors:
+
 Visitors
 ========
 
@@ -47,6 +49,8 @@ An example Python REPL using the above visitor is as follows::
     >>> _ = demo.visit(FooingAround())
     'abc'
     '123'
+
+.. _libcst-visitor-traversal:
 
 Traversal Order
 ---------------

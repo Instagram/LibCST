@@ -1,3 +1,5 @@
+.. _libcst-nodes:
+
 Nodes
 =====
 
