@@ -101,6 +101,7 @@ class BuiltinAssignment(BaseAssignment):
 
 class QualifiedNameSource(Enum):
     IMPORT = auto()
+    BUILTIN = auto()
     LOCAL = auto()
 
 
@@ -130,14 +131,14 @@ class _QualifiedNameUtil:
 
     @staticmethod
     def find_qualified_name_for_import_alike(
-        assignment_node: Union[cst.Import, cst.ImportFrom],
-        name_parts: List[str],
-        results: Set[QualifiedName],
-    ) -> None:
+        assignment_node: Union[cst.Import, cst.ImportFrom], name_parts: List[str]
+    ) -> Set[QualifiedName]:
         module = ""
+        results = set()
         if isinstance(assignment_node, cst.ImportFrom):
             module_attr = assignment_node.module
             if module_attr:
+                # TODO: for relative import, keep the relative Dot in the qualified name
                 module = _QualifiedNameUtil.get_full_name_for(module_attr)
         import_names = assignment_node.names
         if not isinstance(import_names, cst.ImportStar):
@@ -154,11 +155,12 @@ class _QualifiedNameUtil:
                                 QualifiedNameSource.IMPORT,
                             )
                         )
+        return results
 
     @staticmethod
     def find_qualified_name_for_non_import(
-        assignment: Assignment, name_parts: List[str], results: Set[QualifiedName]
-    ) -> None:
+        assignment: Assignment, name_parts: List[str]
+    ) -> Set[QualifiedName]:
         scope = assignment.scope
         name_prefixes = []
         while scope:
@@ -170,11 +172,12 @@ class _QualifiedNameUtil:
                 raise Exception(f"Unexpected Scope: {scope}")
             scope = scope.parent
 
-        results.add(
+        return {
             QualifiedName(
-                ".".join([*name_prefixes[::-1], *name_parts]), QualifiedNameSource.LOCAL
+                ".".join([*reversed(name_prefixes), *name_parts]),
+                QualifiedNameSource.LOCAL,
             )
-        )
+        }
 
 
 class Scope(abc.ABC):
@@ -229,11 +232,11 @@ class Scope(abc.ABC):
 
     def get_qualified_names_for(self, node: cst.CSTNode) -> Collection[QualifiedName]:
         """ Get all QualifiedName given a CSTNode.
-        The source of a qualified name can be either :attr:`QualifiedNameSource.IMPORT`
-        or :attr:`QualifiedNameSource.LOCAL`.
+        The source of a qualified name can be either :attr:`QualifiedNameSource.IMPORT`,
+        :attr:`QualifiedNameSource.BUILTIN` or :attr:`QualifiedNameSource.LOCAL`.
         Given the following example, ``c`` has qualified name ``a.b.c`` with source ``IMPORT``,
         ``f`` has qualified name ``Cls.f`` with source ``LOCAL``, and the builtin ``int`` is
-        has qualified name ``builtins.int`` with source ``IMPORT``::
+        has qualified name ``builtins.int`` with source ``BUILTIN``::
 
             from a.b import c
             class Cls:
@@ -252,17 +255,17 @@ class Scope(abc.ABC):
                 if isinstance(assignment_node, cst.Import) or isinstance(
                     assignment_node, cst.ImportFrom
                 ):
-                    _QualifiedNameUtil.find_qualified_name_for_import_alike(
-                        assignment_node, parts, results
+                    results |= _QualifiedNameUtil.find_qualified_name_for_import_alike(
+                        assignment_node, parts
                     )
                 else:
-                    _QualifiedNameUtil.find_qualified_name_for_non_import(
-                        assignment, parts, results
+                    results |= _QualifiedNameUtil.find_qualified_name_for_non_import(
+                        assignment, parts
                     )
             elif isinstance(assignment, BuiltinAssignment):
                 results.add(
                     QualifiedName(
-                        f"builtins.{assignment.name}", QualifiedNameSource.IMPORT
+                        f"builtins.{assignment.name}", QualifiedNameSource.BUILTIN
                     )
                 )
         return results

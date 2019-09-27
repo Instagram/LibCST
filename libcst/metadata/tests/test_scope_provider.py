@@ -599,7 +599,7 @@ class ScopeProviderTest(UnitTest):
             ).name,
         )
 
-    def test_get_fully_qualified_names_for(self) -> None:
+    def test_get_qualified_names_for(self) -> None:
         m, scopes = get_scope_metadata_provider(
             """
             from a.b import c
@@ -671,7 +671,7 @@ class ScopeProviderTest(UnitTest):
         for builtin in ["map", "int", "dict"]:
             self.assertEqual(
                 scope_of_f.get_qualified_names_for(cst.Name(value=builtin)),
-                {QualifiedName(f"builtins.{builtin}", QualifiedNameSource.IMPORT)},
+                {QualifiedName(f"builtins.{builtin}", QualifiedNameSource.BUILTIN)},
                 f"Test builtin: {builtin}.",
             )
 
