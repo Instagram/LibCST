@@ -7,6 +7,7 @@
 
 import abc
 import builtins
+from ast import literal_eval
 from collections import defaultdict
 from contextlib import contextmanager
 from dataclasses import dataclass
@@ -115,7 +116,7 @@ class _QualifiedNameUtil:
             return _QualifiedNameUtil.get_full_name_for(node.value)
         elif isinstance(node, cst.SimpleString):
             # In the case of SimpleString of type hints.
-            return node.value
+            return literal_eval(node.value)
         return None
 
     @staticmethod

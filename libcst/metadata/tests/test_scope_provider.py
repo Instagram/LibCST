@@ -602,13 +602,20 @@ class ScopeProviderTest(UnitTest):
         m, scopes = get_scope_metadata_provider(
             """
             from a.b import c
-            def f():
+            def f() -> "c":
                 c()
-                d = 1
+                d = {}
+                d['key'] = 0
             f()
             """
         )
         f = ensure_type(m.body[1], cst.FunctionDef)
+        scope_of_module = scopes[m]
+        self.assertEqual(
+            scope_of_module.get_fully_qualified_names_for(ensure_type(f.returns, cst.Annotation).annotation),
+            {"a.b.c"},
+        )
+
         c_call = ensure_type(
             ensure_type(f.body.body[0], cst.SimpleStatementLine).body[0], cst.Expr
         ).value
@@ -620,7 +627,6 @@ class ScopeProviderTest(UnitTest):
         f_call = ensure_type(
             ensure_type(m.body[2], cst.SimpleStatementLine).body[0], cst.Expr
         ).value
-        scope_of_module = scopes[m]
         self.assertIsInstance(scope_of_module, GlobalScope)
         self.assertEqual(
             scope_of_module.get_fully_qualified_names_for(f_call),
@@ -635,6 +641,17 @@ class ScopeProviderTest(UnitTest):
         )
         self.assertEqual(
             scope_of_f.get_fully_qualified_names_for(d_name),
+            {f"{CURRENT_MODULE_PREFIX}.f.d"},
+        )
+        d_subscript = (
+            ensure_type(
+                ensure_type(f.body.body[2], cst.SimpleStatementLine).body[0], cst.Assign
+            )
+            .targets[0]
+            .target
+        )
+        self.assertEqual(
+            scope_of_f.get_fully_qualified_names_for(d_subscript),
             {f"{CURRENT_MODULE_PREFIX}.f.d"},
         )
 
