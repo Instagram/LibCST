@@ -11,6 +11,7 @@ from typing import Mapping, Tuple, cast
 import libcst as cst
 from libcst import ensure_type
 from libcst.metadata.scope_provider import (
+    CURRENT_MODULE_PREFIX,
     Assignment,
     ClassScope,
     ComprehensionScope,
@@ -603,13 +604,43 @@ class ScopeProviderTest(UnitTest):
             from a.b import c
             def f():
                 c()
+                d = 1
+            f()
             """
         )
         f = ensure_type(m.body[1], cst.FunctionDef)
         c_call = ensure_type(
             ensure_type(f.body.body[0], cst.SimpleStatementLine).body[0], cst.Expr
         ).value
-        print(ensure_type(f.body.body[0], cst.SimpleStatementLine).body[0])
         scope_of_f = scopes[c_call]
         self.assertIsInstance(scope_of_f, FunctionScope)
         self.assertEqual(scope_of_f.get_fully_qualified_names_for(c_call), {"a.b.c"})
+        self.assertEqual(scope_of_f.get_fully_qualified_names_for(c_call), {"a.b.c"})
+
+        f_call = ensure_type(
+            ensure_type(m.body[2], cst.SimpleStatementLine).body[0], cst.Expr
+        ).value
+        scope_of_module = scopes[m]
+        self.assertIsInstance(scope_of_module, GlobalScope)
+        self.assertEqual(
+            scope_of_module.get_fully_qualified_names_for(f_call),
+            {f"{CURRENT_MODULE_PREFIX}.f"},
+        )
+        d_name = (
+            ensure_type(
+                ensure_type(f.body.body[1], cst.SimpleStatementLine).body[0], cst.Assign
+            )
+            .targets[0]
+            .target
+        )
+        self.assertEqual(
+            scope_of_f.get_fully_qualified_names_for(d_name),
+            {f"{CURRENT_MODULE_PREFIX}.f.d"},
+        )
+
+        for builtin in ["map", "int", "dict"]:
+            self.assertEqual(
+                scope_of_f.get_fully_qualified_names_for(cst.Name(value=builtin)),
+                {f"builtins.{builtin}"},
+                f"test builtin: {builtin}",
+            )
