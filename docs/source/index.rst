@@ -23,6 +23,7 @@ LibCST
    nodes
    visitors
    metadata
+   matchers
 
 
 Indices and tables

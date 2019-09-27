@@ -9,7 +9,6 @@ import re
 from dataclasses import fields
 from enum import Enum, auto  # noqa: IG29: We don't want to depend on distillery
 from typing import (
-    AnyStr,
     Callable,
     Generic,
     List,
@@ -30,7 +29,9 @@ class DoNotCareSentinel(Enum):
     """
     A sentinel that is used in matcher classes to indicate that a caller
     does not care what this value is. We recommend that you do not use this
-    directly, and instead use the :func:`DoNotCare` helper.
+    directly, and instead use the :func:`DoNotCare` helper. You do not
+    need to use this for concrete matcher attributes since :func:`DoNotCare`
+    is already the default.
     """
 
     DEFAULT = auto()
@@ -47,9 +48,11 @@ _OtherNodeT = TypeVar("_OtherNodeT")
 
 class BaseMatcherNode:
     """
-    Base class that all generated matchers subclass from. :class:`OneOf` and
+    Base class that all concrete matchers subclass from. :class:`OneOf` and
     :class:`AllOf` also subclass from this in order to allow them to be used in
-    any place that a generated matcher is allowed.
+    any place that a concrete matcher is allowed. This means that, for example,
+    you can call :func:`matches` with a concrete matcher, or a :class:`OneOf` with
+    several concrete matchers as options.
     """
 
     def __or__(
@@ -77,18 +80,45 @@ class BaseMatcherNode:
 def DoNotCare() -> DoNotCareSentinel:
     """
     Used when you want to match exactly one node, but you do not care what node it is.
-    Useful inside sequences such as function def and argument matchers. You do not
-    need to use this for attributes since :func:`DoNotCare` is already the default.
+    Useful inside sequences such as a :class:`libcst.matchers.Call`'s args attribte.
+    You do not need to use this for concrete matcher attributes since :func:`DoNotCare`
+    is already the default.
+
+    For example, the following matcher would match against any function calls with
+    three arguments, regardless of the arguments themselves and regardless of the
+    function name that we were calling::
+
+        m.Call(args=(m.DoNotCare(), m.DoNotCare(), m.DoNotCare()))
     """
     return DoNotCareSentinel.DEFAULT
 
 
 class OneOf(Generic[_MatcherT], BaseMatcherNode):
     """
-    Matcher node that matches any one of its options. Useful when you want to match
+    Matcher that matches any one of its options. Useful when you want to match
     against one of several options for a single node. You can also construct a
-    :class:`OneOf` matcher by using Python's or operator (``|``) with generated
+    :class:`OneOf` matcher by using Python's bitwise or operator with concrete
     matcher classes.
+
+    For example, you could match against ``True``/``False`` like::
+
+        m.OneOf(m.Name("True"), m.Name("False"))
+
+    Or you could use the shorthand, like::
+
+        m.Name("True") | m.Name("False")
+
+    Note that a :class:`OneOf` matcher can be used anywhere you are defining
+    a matcher attribute. So, an alternate form to the first example looks like::
+
+        m.Name(m.OneOf("True", "False"))
+
+    A downside to the alternate form is that you can no longer use Python's
+    bitwise or operator to construct the :class:`OneOf` since it is not defined
+    for strings. However, the upside is that it is more concise. We do not
+    recommend any one form over the other, and leave it up to you to decide what
+    is best for your use case.
+
     """
 
     def __init__(self, *options: Union[_MatcherT, "OneOf[_MatcherT]"]) -> None:
@@ -123,10 +153,40 @@ class OneOf(Generic[_MatcherT], BaseMatcherNode):
 
 class AllOf(Generic[_MatcherT], BaseMatcherNode):
     """
-    Matcher node that matches all of its options. Useful when you want to match
-    against a concrete matcher and a :class:`MatchIfTrue` at the same time. You
-    can also construct a :class:`AllOf` matcher by using Python's and operator
-    (``&``) with generated matcher classes.
+    Matcher that matches all of its options. Useful when you want to match
+    against a concrete matcher and a :class:`MatchIfTrue` at the same time. Also
+    useful when you want to match against a concrete matcher and a
+    :func:`DoesNotMatch` at the same time. You can also construct a
+    :class:`AllOf` matcher by using Python's bitwise and operator with concrete
+    matcher classes.
+
+    For example, you could match against ``True`` in a roundabout way like::
+
+        m.AllOf(m.Name(), m.Name("True"))
+
+    Or you could use the shorthand, like::
+
+        m.Name() & m.Name("True")
+
+    Similar to :class:`OneOf`, this can be used in place of any concrete matcher.
+
+    Real-world cases where :class:`AllOf` is useful are hard to come by but they
+    are still provided for the limited edge cases in which they make sense. In
+    the example above, we are redundantly matching against any LibCST
+    :class:`~libcst.Name` node as well as LibCST :class:`~libcst.Name` nodes that
+    have the ``value`` of ``True``. We could drop the first option entirely and
+    get the same result. Often, if you are using a :class:`AllOf`,
+    you can refactor your code to be simpler.
+
+    For example, the following matches any function call to ``foo``, and
+    any function call which takes zero arguments::
+
+        m.AllOf(m.Call(func=m.Name("foo")), m.Call(args=()))
+
+    This could be refactored into the following equivalent concrete matcher::
+
+        m.Call(func=m.Name("foo"), args=())
+
     """
 
     def __init__(self, *options: Union[_MatcherT, "AllOf[_MatcherT]"]) -> None:
@@ -161,9 +221,22 @@ class AllOf(Generic[_MatcherT], BaseMatcherNode):
 
 class InverseOf(Generic[_MatcherT]):
     """
-    Matcher node that inverts the match of its child. You can also construct a
-    :class:`InverseOf` matcher by using Python's bitwise invert operator
-    (``~``) with generated matcher classes.
+    Matcher that inverts the match result of its child. You can also construct a
+    :class:`InverseOf` matcher by using Python's bitwise invert operator with concrete
+    matcher classes or any special matcher.
+
+    Note that you should refrain from constructing a :class:`InverseOf` directly, and
+    should instead use the :func:`DoesNotMatch` helper function.
+
+    For example, the following matches against any identifier that isn't
+    ``True``/``False``::
+
+        m.DoesNotMatch(m.OneOf(m.Name("True"), m.Name("False")))
+
+    Or you could use the shorthand, like:
+
+        ~(m.Name("True") | m.Name("False"))
+
     """
 
     def __init__(self, matcher: _MatcherT) -> None:
@@ -194,7 +267,21 @@ class InverseOf(Generic[_MatcherT]):
 
 class MatchIfTrue(Generic[_CallableT]):
     """
-    Matcher node that matches if its child callable returns ``True``.
+    Matcher that matches if its child callable returns ``True``. The child callable
+    should take one argument which is the attribute on the LibCST node we are
+    trying to match against. This is useful if you want to do complex logic to
+    determine if an attribute should match or not. One example of this is the
+    :func:`MatchRegex` matcher build on top of :class:`MatchIfTrue` which takes a
+    regular expression and matches any string attribute where a regex match is found.
+
+    For example, to match on any identifier spelled with the letter ``e``::
+
+        m.Name(value=m.MatchIfTrue(lambda value: "e" in value))
+
+    This can be used in place of any concrete matcher as long as it is not the
+    root matcher. Calling :func:`matches` directly on a :class:`MatchIfTrue` is
+    redundant since you can just call the child callable directly with the node
+    you are passing to :func:`matches`.
     """
 
     def __init__(self, func: _CallableT) -> None:
@@ -229,14 +316,21 @@ class MatchIfTrue(Generic[_CallableT]):
         return f"MatchIfTrue({repr(self.func)})"
 
 
-def MatchRegex(
-    regex: Union[str, Pattern[AnyStr]]
-) -> MatchIfTrue[Callable[[str], bool]]:
+def MatchRegex(regex: Union[str, Pattern[str]]) -> MatchIfTrue[Callable[[str], bool]]:
     """
-    Used as a convenience wrwapper to :class:`MatchIfTrue` which allows for
-    matching against a regex. This should be used against attributes which
-    are strings, to allow matching regular expressions. An example would be
-    ``m.Name(m.MatchRegex(r'[A-Za-z]+'))``.
+    Used as a convenience wrapper to :class:`MatchIfTrue` which allows for
+    matching a string attribute against a regex. ``regex`` can be any regular
+    expression string or a compiled ``Pattern``. This uses Python's re module
+    under the hood and is compatible with syntax documented on
+    `docs.python.org <https://docs.python.org/3/library/re.html>`_.
+
+    For example, to match against any identifier that is at least one character
+    long and only contains alphabetical characters::
+
+        m.Name(value=m.MatchRegex(r'[A-Za-z]+'))
+
+    This can be used in place of any string literal when constructing a concrete
+    matcher.
     """
 
     def _match_func(value: object) -> bool:
@@ -260,10 +354,30 @@ class _BaseWildcardNode:
 
 class AtLeastN(Generic[_MatcherT], _BaseWildcardNode):
     """
-    Matcher node that matches N or more of a particular node in a sequence.
-    When specifying a matcher, each of the nodes that :class:`AtLeastN` matches
-    must match that matcher. When not specifying a matcher, this acts like a
-    :func:`DoNotCare` that consumes N or more nodes.
+    Matcher that matches ``n`` or more of a particular matcher in a sequence.
+    :class:`AtLeastN` defaults to matching against the :func:`DoNotCare` matcher,
+    so if you do not specify a concrete matcher as a child, :class:`AtLeastN`
+    will match only by count.
+
+    For example, this will match all function calls with at least 3 arguments::
+
+        m.Call(args=(m.AtLeastN(n=3),))
+
+    This will match all function calls with 3 or more integer arguments::
+
+        m.Call(args=(m.AtLeastN(n=3, matcher=m.Arg(m.Integer())),))
+
+    You can combine sequence matchers with concrete matchers and special matchers
+    and it will behave as you expect. For example, this will match all function
+    calls that have 2 or more integer arguments, followed by any arbitrary
+    argument::
+
+        m.Call(args=(m.AtLeastN(n=2, matcher=m.Arg(m.Integer())), m.DoNotCare()))
+
+    And finally, this will match all function calls that have at least 5
+    arguments, the final one being an integer::
+
+        m.Call(args=(m.AtLeastN(n=4), m.Arg(m.Integer())))
     """
 
     def __init__(
@@ -297,18 +411,49 @@ def ZeroOrMore(
     matcher: Union[_MatcherT, DoNotCareSentinel] = DoNotCareSentinel.DEFAULT
 ) -> AtLeastN[Union[_MatcherT, DoNotCareSentinel]]:
     """
-    Used as a convenience wrapper to :class:`AtLeastN```(n=0)``. Use this when you
-    want to consume any number of nodes in a sequence.
+    Used as a convenience wrapper to :class:`AtLeastN` when ``n`` is equal to ``0``.
+    Use this when you want to match against any number of nodes in a sequence.
+
+    For example, this will match any function call with zero or more arguments, as
+    long as all of the arguments are integers::
+
+        m.Call(args=(m.ZeroOrMore(m.Arg(m.Integer())),))
+
+    This will match any function call where the first argument is an integer and
+    it doesn't matter what the rest of the arguments are::
+
+        m.Call(args=(m.Arg(m.Integer()), m.ZeroOrMore()))
+
     """
     return cast(AtLeastN[Union[_MatcherT, DoNotCareSentinel]], AtLeastN(matcher, n=0))
 
 
 class AtMostN(Generic[_MatcherT], _BaseWildcardNode):
     """
-    Matcher node that must matches N or less of a particular type in a sequence.
-    When specifying a matcher, each of the nodes must match that matcher. When
-    not specifying a matcher, this acts like a :func:`DoNotCare` that consumes at
-    most N nodes.
+    Matcher that matches ``n`` or less of a particular matcher in a sequence.
+    :class:`AtMostN` defaults to matching against the :func:`DoNotCare` matcher,
+    so if you do not specify a concrete matcher as a child, :class:`AtMostN` will
+    match only by count.
+
+    For example, this will match all function calls with 3 or fewer arguments::
+
+        m.Call(args=(m.AtMostN(n=3),))
+
+    This will match all function calls with 0, 1 or 2 string arguments::
+
+        m.Call(args=(m.AtMostN(n=2, matcher=m.Arg(m.SimpleString())),))
+
+    You can combine sequence matchers with concrete matchers and special matchers
+    and it will behave as you expect. For example, this will match all function
+    calls that have 0, 1 or 2 string arguments, followed by an arbitrary
+    argument::
+
+        m.Call(args=(m.AtMostN(n=2, matcher=m.Arg(m.SimpleString())), m.DoNotCare()))
+
+    And finally, this will match all function calls that have at least 2
+    arguments, the final one being a string::
+
+        m.Call(args=(m.AtMostN(n=2), m.Arg(m.SimpleString())))
     """
 
     def __init__(
@@ -342,16 +487,41 @@ def ZeroOrOne(
     matcher: Union[_MatcherT, DoNotCareSentinel] = DoNotCareSentinel.DEFAULT
 ) -> AtMostN[Union[_MatcherT, DoNotCareSentinel]]:
     """
-    Used as a convenience wrapper to :class:`AtMostN```(n=1)``. This is effectively a
-    maybe clause.
+    Used as a convenience wrapper to :class:`AtMostN` when ``n`` is equal to ``1``.
+    This is effectively a maybe clause.
+
+    For example, this will match any function call with zero or one integer
+    argument::
+
+        m.Call(args=(m.ZeroOrOne(m.Arg(m.Integer())),))
+
+    This will match any function call that has two or three arguments, and
+    the first and last arguments are strings::
+
+        m.Call(args=(m.Arg(m.SimpleString()), m.ZeroOrOne(), m.Arg(m.SimpleString())))
+
     """
     return cast(AtMostN[Union[_MatcherT, DoNotCareSentinel]], AtMostN(matcher, n=1))
 
 
 def DoesNotMatch(obj: _OtherNodeT) -> _OtherNodeT:
     """
-    Used as a way of specifying that the containing matcher's logic should be
-    inverted.
+    Matcher helper that inverts the match result of its child. You can also invert a
+    matcher by using Python's bitwise invert operator on concrete matchers or any
+    special matcher.
+
+    For example, the following matches against any identifier that isn't
+    ``True``/``False``::
+
+        m.DoesNotMatch(m.OneOf(m.Name("True"), m.Name("False")))
+
+    Or you could use the shorthand, like::
+
+        ~(m.Name("True") | m.Name("False"))
+
+    This can be used in place of any concrete matcher as long as it is not the
+    root matcher. Calling :func:`matches` directly on a :func:`DoesNotMatch` is
+    redundant since you can invert the return of :func:`matches` using a bitwise not.
     """
 
     # This type is a complete, dirty lie, but there's no way to recursively apply
@@ -370,7 +540,7 @@ def DoesNotMatch(obj: _OtherNodeT) -> _OtherNodeT:
     # instance, and given that inverting MatchIfTrue is still MatchIfTrue,
     # and inverting an inverted value returns us the original, its clear that
     # there are no operations we can possibly do that bring us outside of the
-    # types specified in the generated matchers as long as we lie that DoesNotMatch
+    # types specified in the concrete matchers as long as we lie that DoesNotMatch
     # returns the value passed in.
     if isinstance(obj, (BaseMatcherNode, MatchIfTrue, InverseOf)):
         # We can use the overridden __invert__ in this case. Pyre doesn't think
@@ -615,16 +785,16 @@ def matches(
 ) -> bool:
     """
     Given an arbitrary node from a LibCST tree, and an arbitrary matcher, returns
-    ``True`` if the node matches the shape defined in the matcher. Note that the node
+    ``True`` if the node matches the shape defined by the matcher. Note that the node
     can also be a :class:`~libcst.RemovalSentinel` or a :class:`~libcst.MaybeSentinel`
     in order to use matches directly on transform results and node attributes. In these
     cases, :func:`matches` will always return ``False``.
 
-    The matcher can be any concrete match class that subclasses from
-    :class:BaseMatcherNode, or a :class:`OneOf`/:class:`AllOf` combination node. It
-    cannot be a :class:`MatchIfTrue` matcher since this is redundant. It cannot be a
-    :class:`AtLeastN` or :class:`AtMostN` matcher because these types are wildcards
-    which can only be used inside sequences.
+    The matcher can be any concrete matcher that subclasses from :class:`BaseMatcherNode`,
+    or a :class:`OneOf`/:class:`AllOf` special matcher. It cannot be a
+    :class:`MatchIfTrue` or :func:`DoesNotMatch` matcher since this is redundant. It
+    cannot be a :class:`AtLeastN` or :class:`AtMostN` matcher because these types are
+    wildcards which can only be used inside sequences.
     """
     if isinstance(node, RemovalSentinel):
         # We can't possibly match on a removal sentinel, so it doesn't match.

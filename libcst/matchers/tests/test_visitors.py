@@ -18,7 +18,7 @@ from libcst.matchers import (
 from libcst.testing.utils import UnitTest
 
 
-class CMFVisitLeaveDecoratorTypingTest(UnitTest):
+class MatchersVisitLeaveDecoratorTypingTest(UnitTest):
 
     ONCALL_SHORTNAME = "instagram_server_framework"
 

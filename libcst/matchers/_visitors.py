@@ -288,7 +288,7 @@ def _gather_constructed_visit_funcs(
 
 # pyre-ignore: There is no reasonable way to type this, so ignore the Any type. This
 # is because the leave_* methods have a different signature depending on whether they
-# are in a CMFTransformVisitor or a CMFCollectVisitor.
+# are in a MatcherDecoratableTransformer or a MatcherDecoratableVisitor.
 def _gather_constructed_leave_funcs(
     obj: object
 ) -> Dict[BaseMatcherNode, Sequence[Callable[..., Any]]]:
@@ -388,10 +388,10 @@ def _visit_constructed_funcs(
 
 class MatcherDecoratableTransformer(CSTTransformer):
     """
-    This class provides all of the features of a :class:`CSTTransformer`, and additionally
-    supports various decorators to control when methods get called when traversing a
-    tree. Use this instead of a :class:`CSTTransformer` if you wish to do more powerful
-    decorator-based visiting.
+    This class provides all of the features of a :class:`libcst.CSTTransformer`, and
+    additionally supports various decorators to control when methods get called when
+    traversing a tree. Use this instead of a :class:`libcst.CSTTransformer` if you
+    wish to do more powerful decorator-based visiting.
     """
 
     def __init__(self) -> None:
@@ -509,10 +509,10 @@ class MatcherDecoratableTransformer(CSTTransformer):
 
 class MatcherDecoratableVisitor(CSTVisitor):
     """
-    This class provides all of the features of a :class:`CSTVisitor`, and additionally
-    supports various decorators to control when methods get called when traversing a
-    tree. Use this instead of a :class:`CSTVisitor` if you wish to do more powerful
-    decorator-based visiting.
+    This class provides all of the features of a :class:`libcst.CSTVisitor`, and
+    additionally supports various decorators to control when methods get called
+    when traversing a tree. Use this instead of a :class:`libcst.CSTVisitor` if
+    you wish to do more powerful decorator-based visiting.
     """
 
     def __init__(self) -> None:

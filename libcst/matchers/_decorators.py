@@ -22,12 +22,12 @@ def call_if_inside(
     matcher: BaseMatcherNode
 ) -> Callable[[_CSTVisitFuncT], _CSTVisitFuncT]:
     """
-    A decorator for visit and leave methods inside a :class:`CMFTransformVisitor`
-    or a :class:`CMFCollectVisitor`. A method that is decorated with this decorator
+    A decorator for visit and leave methods inside a :class:`MatcherDecoratableTransformer`
+    or a :class:`MatcherDecoratableVisitor`. A method that is decorated with this decorator
     will only be called if it or one of its parents matches the supplied matcher.
     Use this to selectively gate visit and leave methods to be called only when
     inside of another relevant node. Note that this works for both node and attribute
-    methods.
+    methods, so you can decorate a ``visit_<Node>`` or a ``visit_<Node>_<Attr>`` method.
     """
 
     def inner(original: _CSTVisitFuncT) -> _CSTVisitFuncT:
@@ -47,12 +47,13 @@ def call_if_not_inside(
     matcher: BaseMatcherNode
 ) -> Callable[[_CSTVisitFuncT], _CSTVisitFuncT]:
     """
-    A decorator for visit and leave methods inside a :class:`CMFTransformVisitor`
-    or a :class:`CMFCollectVisitor`. A method that is decorated with this decorator
+    A decorator for visit and leave methods inside a :class:`MatcherDecoratableTransformer`
+    or a :class:`MatcherDecoratableVisitor`. A method that is decorated with this decorator
     will only be called if it or one of its parents does not match the supplied
     matcher. Use this to selectively gate visit and leave methods to be called only
     when outside of another relevant node. Note that this works for both node and
-    attribute methods.
+    attribute methods, so you can decorate a ``visit_<Node>`` or a ``visit_<Node>_<Attr>``
+    method.
     """
 
     def inner(original: _CSTVisitFuncT) -> _CSTVisitFuncT:
@@ -74,14 +75,15 @@ def visit(matcher: BaseMatcherNode) -> Callable[[_CSTVisitFuncT], _CSTVisitFuncT
     or a :class:`MatcherDecoratableVisitor` visitor to be called when visiting a node
     that matches the provided matcher. Note that you can use this in combination with
     :func:`call_if_inside` and :func:`call_if_not_inside` decorators. Unlike explicit
-    visit_* and leave_* methods, functions decorated with this decorator cannot stop
-    child traversal by returning ``False``.
+    ``visit_<Node>`` and ``leave_<Node>`` methods, functions decorated with this
+    decorator cannot stop child traversal by returning ``False``. Decorated visit
+    functions should always have a return annotation of ``None``.
 
     There is no restriction on the number of visit decorators allowed on a method.
     There is also no restriction on the number of methods that may be decorated
     with the same matcher. When multiple visit decorators are found on the same
     method, they act as a simple or, and the method will be called when any one
-    of the contained matches is True.
+    of the contained matches is ``True``.
     """
 
     def inner(original: _CSTVisitFuncT) -> _CSTVisitFuncT:
@@ -108,7 +110,7 @@ def leave(matcher: BaseMatcherNode) -> Callable[[_CSTVisitFuncT], _CSTVisitFuncT
     There is also no restriction on the number of methods that may be decorated
     with the same matcher. When multiple leave decorators are found on the same
     method, they act as a simple or, and the method will be called when any one
-    of the contained matches is True.
+    of the contained matches is ``True``.
     """
 
     def inner(original: _CSTVisitFuncT) -> _CSTVisitFuncT:

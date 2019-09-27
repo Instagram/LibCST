@@ -25,7 +25,7 @@ def fixture(code: str) -> cst.Module:
     return cst.parse_module(dedent(code))
 
 
-class CMFGatingDecoratorsTest(UnitTest):
+class MatchersGatingDecoratorsTest(UnitTest):
 
     ONCALL_SHORTNAME = "instagram_server_framework"
 
@@ -378,7 +378,7 @@ class CMFGatingDecoratorsTest(UnitTest):
         self.assertEqual(visitor.str_visits, ['"foo"', '"bar"', '"foobar"'])
 
 
-class CMFVisitLeaveDecoratorsTest(UnitTest):
+class MatchersVisitLeaveDecoratorsTest(UnitTest):
 
     ONCALL_SHORTNAME = "instagram_server_framework"
 
