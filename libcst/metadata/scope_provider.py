@@ -228,6 +228,18 @@ class Scope(abc.ABC):
         ...
 
     def get_qualified_names_for(self, node: cst.CSTNode) -> Collection[QualifiedName]:
+        """ Get all QualifiedName given a CSTNode.
+        The source of a qualified name can be either :attr:`QualifiedNameSource.IMPORT`
+        or :attr:`QualifiedNameSource.LOCAL`.
+        Given the following example, ``c`` has qualified name ``a.b.c`` with source ``IMPORT``,
+        ``f`` has qualified name ``Cls.f`` with source ``LOCAL``, and the builtin ``int`` is
+        has qualified name ``builtins.int`` with source ``IMPORT``::
+
+            from a.b import c
+            class Cls:
+                def f(self) -> "c":
+                    c()
+        """
         results = set()
         full_name = _QualifiedNameUtil.get_full_name_for(node)
         if full_name is None:

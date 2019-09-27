@@ -23,6 +23,8 @@ from libcst.metadata.scope_provider import (
     ComprehensionScope,
     FunctionScope,
     GlobalScope,
+    QualifiedName,
+    QualifiedNameSource,
     Scope,
     ScopeProvider,
 )
@@ -44,4 +46,6 @@ __all__ = [
     "ComprehensionScope",
     "ScopeProvider",
     "ParentNodeProvider",
+    "QualifiedName",
+    "QualifiedNameSource",
 ]

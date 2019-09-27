@@ -133,6 +133,19 @@ There were four different type of scope in Python: :class:`~libcst.metadata.Glob
 .. autoclass:: libcst.metadata.ClassScope
 .. autoclass:: libcst.metadata.ComprehensionScope
 
+Qualified Name Metadata
+-----------------------
+Qualified name provides an unambiguous name to locate the definition of variable and it's
+introduced for class and function in `PEP-3155 <https://www.python.org/dev/peps/pep-3155/>`_.
+QualifiedNameProvider provides possible :class:`~libcst.metadata.QualifiedName` given a
+:class:`~libcst.CSTNode`.
+We didn't call it `fully qualified name <https://en.wikipedia.org/wiki/Fully_qualified_name>`_
+because the name refers to the current module which doesn't consider the hierarchy of
+code repository.
+
+.. autoclass:: libcst.metadata.QualifiedNameSource
+.. autoclass:: libcst.metadata.QualifiedName
+
 Parent Node Metadata
 --------------------
 A :class:`~libcst.CSTNode` only has attributes link to its child nodes and thus only top-down
