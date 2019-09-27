@@ -185,6 +185,7 @@ Future
 - Extension to Matchers API which incorporates metadata on nodes.
 - Addition to Matchers API which allows for operations such as extract/find/replaceall, similar to the RE module.
 - Additional layer providing command-line frontend for executing refactors.
+- More metadata providers from deep static analysis including variable fully qualified name, variable type annotation, etc.
 
 License
 =======
