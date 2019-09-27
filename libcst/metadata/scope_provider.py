@@ -359,14 +359,10 @@ class ScopeVisitor(cst.CSTVisitor):
 
     @contextmanager
     def _new_scope(
-        self, kind: Type[Scope], name: Optional[str] = None
+        self, kind: Type[LocalScope], name: Optional[str] = None
     ) -> Iterator[None]:
         parent_scope = self.scope
-        if issubclass(kind, LocalScope):
-            # pyre-ignore: pyre cannot understand issubclass and complained the extra name arg
-            self.scope = kind(parent_scope, name)
-        else:
-            self.scope = kind(parent_scope)
+        self.scope = kind(parent_scope, name)
         try:
             yield
         finally:

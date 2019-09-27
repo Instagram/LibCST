@@ -642,5 +642,11 @@ class ScopeProviderTest(UnitTest):
             self.assertEqual(
                 scope_of_f.get_fully_qualified_names_for(cst.Name(value=builtin)),
                 {f"builtins.{builtin}"},
-                f"test builtin: {builtin}",
+                f"Test builtin: {builtin}.",
             )
+
+        self.assertEqual(
+            scope_of_module.get_fully_qualified_names_for(cst.Name(value="d")),
+            set(),
+            "Test variable d in global scope.",
+        )
