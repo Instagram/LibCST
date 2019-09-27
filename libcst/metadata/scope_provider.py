@@ -17,6 +17,7 @@ from typing import (
     List,
     MutableMapping,
     Optional,
+    Set,
     Tuple,
     Type,
     Union,
@@ -96,19 +97,67 @@ class BuiltinAssignment(BaseAssignment):
     pass
 
 
-def _get_full_name_for(node: cst.CSTNode) -> Optional[str]:
-    if isinstance(node, cst.Name):
-        return node.value
-    elif isinstance(node, cst.Attribute):
-        return f"{_get_full_name_for(node.value)}.{node.attr.value}"
-    elif isinstance(node, cst.Call):
-        return _get_full_name_for(node.func)
-    elif isinstance(node, cst.Subscript):
-        return _get_full_name_for(node.value)
-    elif isinstance(node, cst.SimpleString):
-        # In the case of SimpleString of type hints.
-        return node.value
-    return None
+CURRENT_MODULE_PREFIX = "__current_module__"
+
+
+class _QualifiedNameUtil:
+    @staticmethod
+    def get_full_name_for(node: cst.CSTNode) -> Optional[str]:
+        if isinstance(node, cst.Name):
+            return node.value
+        elif isinstance(node, cst.Attribute):
+            return (
+                f"{_QualifiedNameUtil.get_full_name_for(node.value)}.{node.attr.value}"
+            )
+        elif isinstance(node, cst.Call):
+            return _QualifiedNameUtil.get_full_name_for(node.func)
+        elif isinstance(node, cst.Subscript):
+            return _QualifiedNameUtil.get_full_name_for(node.value)
+        elif isinstance(node, cst.SimpleString):
+            # In the case of SimpleString of type hints.
+            return node.value
+        return None
+
+    @staticmethod
+    def find_qualified_name_for_import_alike(
+        assignment_node: Union[cst.Import, cst.ImportFrom],
+        name_parts: List[str],
+        results: Set[str],
+    ) -> None:
+        module = ""
+        if isinstance(assignment_node, cst.ImportFrom):
+            module_attr = assignment_node.module
+            if module_attr:
+                module = _QualifiedNameUtil.get_full_name_for(module_attr)
+        import_names = assignment_node.names
+        if not isinstance(import_names, cst.ImportStar):
+            for name in import_names:
+                real_name = _QualifiedNameUtil.get_full_name_for(name.name)
+                as_name = name.asname or real_name
+                if as_name == name_parts[0]:
+                    if module:
+                        real_name = f"{module}.{real_name}"
+                    if real_name:
+                        results.add(".".join([real_name, *name_parts[1:]]))
+
+    @staticmethod
+    def find_qualified_name_for_non_import(
+        assignment: Assignment, name_parts: List[str], results: Set[str]
+    ) -> None:
+        scope = assignment.scope
+        name_prefixes = []
+        while scope:
+            if isinstance(scope, ClassScope) or isinstance(scope, FunctionScope):
+                name_prefixes.append(scope.name)
+            elif isinstance(scope, GlobalScope):
+                break
+            else:
+                raise Exception(f"Unexpected Scope: {scope}")
+            scope = scope.parent
+
+        results.add(
+            ".".join([CURRENT_MODULE_PREFIX, *name_prefixes[::-1], *name_parts])
+        )
 
 
 class Scope(abc.ABC):
@@ -161,11 +210,9 @@ class Scope(abc.ABC):
     def record_nonlocal_overwrite(self, name: str) -> None:
         ...
 
-    def get_fully_qualified_names_for(  # noqa: C901
-        self, node: cst.CSTNode
-    ) -> Collection[str]:
+    def get_fully_qualified_names_for(self, node: cst.CSTNode) -> Collection[str]:
         results = set()
-        full_name = _get_full_name_for(node)
+        full_name = _QualifiedNameUtil.get_full_name_for(node)
         if full_name is None:
             return results
         parts = full_name.split(".")
@@ -176,21 +223,13 @@ class Scope(abc.ABC):
                 if isinstance(assignment_node, cst.Import) or isinstance(
                     assignment_node, cst.ImportFrom
                 ):
-                    module = ""
-                    if isinstance(assignment_node, cst.ImportFrom):
-                        module_attr = assignment_node.module
-                        if module_attr:
-                            module = _get_full_name_for(module_attr)
-                    import_names = assignment_node.names
-                    if not isinstance(import_names, cst.ImportStar):
-                        for name in import_names:
-                            real_name = _get_full_name_for(name.name)
-                            as_name = name.asname or real_name
-                            if as_name == parts[0]:
-                                if module:
-                                    real_name = f"{module}.{real_name}"
-                                if real_name:
-                                    results.add(".".join([real_name, *parts[1:]]))
+                    _QualifiedNameUtil.find_qualified_name_for_import_alike(
+                        assignment_node, parts, results
+                    )
+                else:
+                    _QualifiedNameUtil.find_qualified_name_for_non_import(
+                        assignment, parts, results
+                    )
             elif isinstance(assignment, BuiltinAssignment):
                 results.add(f"builtins.{assignment.name}")
             # TODO: add support to other type of assignment
@@ -224,8 +263,12 @@ class GlobalScope(Scope):
 class LocalScope(Scope, abc.ABC):
     _scope_overwrites: Dict[str, Scope]
 
-    def __init__(self, parent: Scope) -> None:
+    #: Name of function. Used as qualified name.
+    name: Optional[str]
+
+    def __init__(self, parent: Scope, name: Optional[str] = None) -> None:
         super().__init__(parent)
+        self.name = name
         self._scope_overwrites = {}
 
     def record_global_overwrite(self, name: str) -> None:
@@ -315,9 +358,15 @@ class ScopeVisitor(cst.CSTVisitor):
         self.__deferred_accesses: List[Access] = []
 
     @contextmanager
-    def _new_scope(self, kind: Type[Scope]) -> Iterator[None]:
+    def _new_scope(
+        self, kind: Type[Scope], name: Optional[str] = None
+    ) -> Iterator[None]:
         parent_scope = self.scope
-        self.scope = kind(parent_scope)
+        if issubclass(kind, LocalScope):
+            # pyre-ignore: pyre cannot understand issubclass and complained the extra name arg
+            self.scope = kind(parent_scope, name)
+        else:
+            self.scope = kind(parent_scope)
         try:
             yield
         finally:
@@ -383,7 +432,9 @@ class ScopeVisitor(cst.CSTVisitor):
         self.scope.record_assignment(node.name.value, node)
         self.provider.set_metadata(node.name, self.scope)
 
-        with self._new_scope(FunctionScope):
+        with self._new_scope(
+            FunctionScope, _QualifiedNameUtil.get_full_name_for(node.name)
+        ):
             node.params.visit(self)
             node.body.visit(self)
 
@@ -458,7 +509,9 @@ class ScopeVisitor(cst.CSTVisitor):
         for keyword in node.keywords:
             keyword.visit(self)
 
-        with self._new_scope(ClassScope):
+        with self._new_scope(
+            ClassScope, _QualifiedNameUtil.get_full_name_for(node.name)
+        ):
             for statement in node.body.body:
                 statement.visit(self)
 
