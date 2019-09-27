@@ -179,6 +179,13 @@ To generate documents, do the following in the root:
 
     tox -e docs
 
+Future
+======
+
+- Extension to Matchers API which incorporates metadata on nodes.
+- Addition to Matchers API which allows for operations such as extract/find/replaceall, similar to the RE module.
+- Additional layer providing command-line frontend for executing refactors.
+
 License
 =======
 
