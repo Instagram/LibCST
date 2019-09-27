@@ -11,12 +11,13 @@ from typing import Mapping, Tuple, cast
 import libcst as cst
 from libcst import ensure_type
 from libcst.metadata.scope_provider import (
-    CURRENT_MODULE_PREFIX,
     Assignment,
     ClassScope,
     ComprehensionScope,
     FunctionScope,
     GlobalScope,
+    QualifiedName,
+    QualifiedNameSource,
     Scope,
     ScopeProvider,
 )
@@ -612,8 +613,10 @@ class ScopeProviderTest(UnitTest):
         f = ensure_type(m.body[1], cst.FunctionDef)
         scope_of_module = scopes[m]
         self.assertEqual(
-            scope_of_module.get_fully_qualified_names_for(ensure_type(f.returns, cst.Annotation).annotation),
-            {"a.b.c"},
+            scope_of_module.get_qualified_names_for(
+                ensure_type(f.returns, cst.Annotation).annotation
+            ),
+            {QualifiedName("a.b.c", QualifiedNameSource.IMPORT)},
         )
 
         c_call = ensure_type(
@@ -621,16 +624,22 @@ class ScopeProviderTest(UnitTest):
         ).value
         scope_of_f = scopes[c_call]
         self.assertIsInstance(scope_of_f, FunctionScope)
-        self.assertEqual(scope_of_f.get_fully_qualified_names_for(c_call), {"a.b.c"})
-        self.assertEqual(scope_of_f.get_fully_qualified_names_for(c_call), {"a.b.c"})
+        self.assertEqual(
+            scope_of_f.get_qualified_names_for(c_call),
+            {QualifiedName("a.b.c", QualifiedNameSource.IMPORT)},
+        )
+        self.assertEqual(
+            scope_of_f.get_qualified_names_for(c_call),
+            {QualifiedName("a.b.c", QualifiedNameSource.IMPORT)},
+        )
 
         f_call = ensure_type(
             ensure_type(m.body[2], cst.SimpleStatementLine).body[0], cst.Expr
         ).value
         self.assertIsInstance(scope_of_module, GlobalScope)
         self.assertEqual(
-            scope_of_module.get_fully_qualified_names_for(f_call),
-            {f"{CURRENT_MODULE_PREFIX}.f"},
+            scope_of_module.get_qualified_names_for(f_call),
+            {QualifiedName("f", QualifiedNameSource.LOCAL)},
         )
         d_name = (
             ensure_type(
@@ -640,8 +649,8 @@ class ScopeProviderTest(UnitTest):
             .target
         )
         self.assertEqual(
-            scope_of_f.get_fully_qualified_names_for(d_name),
-            {f"{CURRENT_MODULE_PREFIX}.f.d"},
+            scope_of_f.get_qualified_names_for(d_name),
+            {QualifiedName("f.d", QualifiedNameSource.LOCAL)},
         )
         d_subscript = (
             ensure_type(
@@ -651,19 +660,19 @@ class ScopeProviderTest(UnitTest):
             .target
         )
         self.assertEqual(
-            scope_of_f.get_fully_qualified_names_for(d_subscript),
-            {f"{CURRENT_MODULE_PREFIX}.f.d"},
+            scope_of_f.get_qualified_names_for(d_subscript),
+            {QualifiedName("f.d", QualifiedNameSource.LOCAL)},
         )
 
         for builtin in ["map", "int", "dict"]:
             self.assertEqual(
-                scope_of_f.get_fully_qualified_names_for(cst.Name(value=builtin)),
-                {f"builtins.{builtin}"},
+                scope_of_f.get_qualified_names_for(cst.Name(value=builtin)),
+                {QualifiedName(f"builtins.{builtin}", QualifiedNameSource.IMPORT)},
                 f"Test builtin: {builtin}.",
             )
 
         self.assertEqual(
-            scope_of_module.get_fully_qualified_names_for(cst.Name(value="d")),
+            scope_of_module.get_qualified_names_for(cst.Name(value="d")),
             set(),
             "Test variable d in global scope.",
         )

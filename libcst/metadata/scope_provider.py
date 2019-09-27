@@ -11,6 +11,7 @@ from ast import literal_eval
 from collections import defaultdict
 from contextlib import contextmanager
 from dataclasses import dataclass
+from enum import Enum, auto
 from typing import (
     Collection,
     Dict,
@@ -98,7 +99,15 @@ class BuiltinAssignment(BaseAssignment):
     pass
 
 
-CURRENT_MODULE_PREFIX = "__current_module__"
+class QualifiedNameSource(Enum):
+    IMPORT = auto()
+    LOCAL = auto()
+
+
+@dataclass(frozen=True)
+class QualifiedName:
+    name: str
+    source: QualifiedNameSource
 
 
 class _QualifiedNameUtil:
@@ -123,7 +132,7 @@ class _QualifiedNameUtil:
     def find_qualified_name_for_import_alike(
         assignment_node: Union[cst.Import, cst.ImportFrom],
         name_parts: List[str],
-        results: Set[str],
+        results: Set[QualifiedName],
     ) -> None:
         module = ""
         if isinstance(assignment_node, cst.ImportFrom):
@@ -139,11 +148,16 @@ class _QualifiedNameUtil:
                     if module:
                         real_name = f"{module}.{real_name}"
                     if real_name:
-                        results.add(".".join([real_name, *name_parts[1:]]))
+                        results.add(
+                            QualifiedName(
+                                ".".join([real_name, *name_parts[1:]]),
+                                QualifiedNameSource.IMPORT,
+                            )
+                        )
 
     @staticmethod
     def find_qualified_name_for_non_import(
-        assignment: Assignment, name_parts: List[str], results: Set[str]
+        assignment: Assignment, name_parts: List[str], results: Set[QualifiedName]
     ) -> None:
         scope = assignment.scope
         name_prefixes = []
@@ -157,7 +171,9 @@ class _QualifiedNameUtil:
             scope = scope.parent
 
         results.add(
-            ".".join([CURRENT_MODULE_PREFIX, *name_prefixes[::-1], *name_parts])
+            QualifiedName(
+                ".".join([*name_prefixes[::-1], *name_parts]), QualifiedNameSource.LOCAL
+            )
         )
 
 
@@ -211,7 +227,7 @@ class Scope(abc.ABC):
     def record_nonlocal_overwrite(self, name: str) -> None:
         ...
 
-    def get_fully_qualified_names_for(self, node: cst.CSTNode) -> Collection[str]:
+    def get_qualified_names_for(self, node: cst.CSTNode) -> Collection[QualifiedName]:
         results = set()
         full_name = _QualifiedNameUtil.get_full_name_for(node)
         if full_name is None:
@@ -232,8 +248,11 @@ class Scope(abc.ABC):
                         assignment, parts, results
                     )
             elif isinstance(assignment, BuiltinAssignment):
-                results.add(f"builtins.{assignment.name}")
-            # TODO: add support to other type of assignment
+                results.add(
+                    QualifiedName(
+                        f"builtins.{assignment.name}", QualifiedNameSource.IMPORT
+                    )
+                )
         return results
 
 
