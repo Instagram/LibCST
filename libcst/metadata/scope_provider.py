@@ -673,9 +673,6 @@ class ScopeProvider(BatchableMetadataProvider[Optional[Scope]]):
 
     METADATA_DEPENDENCIES = (ExpressionContextProvider,)
 
-    def __init__(self) -> None:
-        super().__init__()
-
     def visit_Module(self, node: cst.Module) -> Optional[bool]:
         visitor = ScopeVisitor(self)
         node.visit(visitor)

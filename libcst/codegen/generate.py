@@ -80,18 +80,43 @@ def codegen_visitors() -> None:
         raise
 
 
+def codegen_matchers() -> None:
+    # Given that matchers isn't in the default import chain, we don't have to
+    # worry about generating invalid code that then prevents us from generating
+    # again.
+    import libcst.codegen.gen_matcher_classes as matcher_codegen
+
+    base = os.path.abspath(
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "../")
+    )
+    matchers_file = os.path.join(base, "matchers/__init__.py")
+    new_code = "\n".join(matcher_codegen.generated_code)
+    with open(matchers_file, "w") as fp:
+        fp.write(new_code)
+        fp.close()
+
+    # If it worked, lets format the file
+    format_file(matchers_file)
+
+    # Inform the user
+    print(f"Successfully generated a new {matchers_file} file.")
+
+
 def main(cli_args: List[str]) -> int:
     # Parse out arguments, run codegen
     parser = argparse.ArgumentParser(description="Generate code for libcst.")
     parser.add_argument(
         "system",
         metavar="SYSTEM",
-        help='System to generate code for. Valid values include: "visitors"',
+        help='System to generate code for. Valid values include: "visitors", "matchers"',
         type=str,
     )
     args = parser.parse_args(cli_args)
     if args.system == "visitors":
         codegen_visitors()
+        return 0
+    elif args.system == "matchers":
+        codegen_matchers()
         return 0
     else:
         print(f'Invalid system "{args.system}".')

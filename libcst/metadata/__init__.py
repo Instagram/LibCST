@@ -9,6 +9,7 @@ from libcst.metadata.expression_context_provider import (
     ExpressionContext,
     ExpressionContextProvider,
 )
+from libcst.metadata.parent_node_provider import ParentNodeProvider
 from libcst.metadata.position_provider import (
     BasicPositionProvider,
     SyntacticPositionProvider,
@@ -42,4 +43,5 @@ __all__ = [
     "ClassScope",
     "ComprehensionScope",
     "ScopeProvider",
+    "ParentNodeProvider",
 ]

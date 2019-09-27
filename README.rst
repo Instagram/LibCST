@@ -179,7 +179,22 @@ To generate documents, do the following in the root:
 
     tox -e docs
 
+Future
+======
+
+- Extension to Matchers API which incorporates metadata on nodes.
+- Addition to Matchers API which allows for operations such as extract/find/replaceall, similar to the RE module.
+- Additional layer providing command-line frontend for executing refactors.
+- More metadata providers from deep static analysis including variable fully qualified name, variable type annotation, etc.
+
 License
 =======
 
 LibCST is MIT licensed, as found in the LICENSE file.
+
+Acknowledgements
+================
+
+- Guido van Rossum for creating the parser generator pgen2 (originally used in lib2to3 and forked into parso).
+- David Halter for parso which provides the parser and tokenizer that LibCST sits on top of.
+- Zac Hatfield-Dodds for hypothesis integration which continues to help us find bugs.
