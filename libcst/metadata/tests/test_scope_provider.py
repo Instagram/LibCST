@@ -620,7 +620,8 @@ class ScopeProviderTest(UnitTest):
             scope_of_module.get_qualified_names_for(
                 ensure_type(f.returns, cst.Annotation).annotation
             ),
-            {QualifiedName("a.b.c", QualifiedNameSource.IMPORT)},
+            set(),
+            "Get qualified name given a SimpleString type annotation is not supported",
         )
 
         c_call = ensure_type(
@@ -654,7 +655,7 @@ class ScopeProviderTest(UnitTest):
         )
         self.assertEqual(
             scope_of_f.get_qualified_names_for(d_name),
-            {QualifiedName("Cls.f.d", QualifiedNameSource.LOCAL)},
+            {QualifiedName("Cls.f.<locals>.d", QualifiedNameSource.LOCAL)},
         )
         d_subscript = (
             ensure_type(
@@ -665,7 +666,7 @@ class ScopeProviderTest(UnitTest):
         )
         self.assertEqual(
             scope_of_f.get_qualified_names_for(d_subscript),
-            {QualifiedName("Cls.f.d", QualifiedNameSource.LOCAL)},
+            {QualifiedName("Cls.f.<locals>.d", QualifiedNameSource.LOCAL)},
         )
 
         for builtin in ["map", "int", "dict"]:
@@ -679,4 +680,68 @@ class ScopeProviderTest(UnitTest):
             scope_of_module.get_qualified_names_for(cst.Name(value="d")),
             set(),
             "Test variable d in global scope.",
+        )
+
+    def test_get_qualified_names_for_nested_cases(self) -> None:
+        m, scopes = get_scope_metadata_provider(
+            """
+            class A:
+                def f1(self):
+                    def f2():
+                        pass
+                    f2()
+
+                def f3(self):
+                    class B():
+                        ...
+                    B()
+            def f4():
+                def f5():
+                    class C:
+                        pass
+                    C()
+                f5()
+            """
+        )
+        cls_a = ensure_type(m.body[0], cst.ClassDef)
+        func_f1 = ensure_type(cls_a.body.body[0], cst.FunctionDef)
+        scope_of_cls_a = scopes[func_f1]
+        self.assertIsInstance(scope_of_cls_a, ClassScope)
+        self.assertEqual(
+            scope_of_cls_a.get_qualified_names_for(func_f1),
+            {QualifiedName("A.f1", QualifiedNameSource.LOCAL)},
+        )
+        func_f2_call = ensure_type(
+            ensure_type(func_f1.body.body[1], cst.SimpleStatementLine).body[0], cst.Expr
+        ).value
+        scope_of_f1 = scopes[func_f2_call]
+        self.assertIsInstance(scope_of_f1, FunctionScope)
+        self.assertEqual(
+            scope_of_f1.get_qualified_names_for(func_f2_call),
+            {QualifiedName("A.f1.<locals>.f2", QualifiedNameSource.LOCAL)},
+        )
+        func_f3 = ensure_type(cls_a.body.body[1], cst.FunctionDef)
+        call_b = ensure_type(
+            ensure_type(func_f3.body.body[1], cst.SimpleStatementLine).body[0], cst.Expr
+        ).value
+        scope_of_f3 = scopes[call_b]
+        self.assertIsInstance(scope_of_f3, FunctionScope)
+        self.assertEqual(
+            scope_of_f3.get_qualified_names_for(call_b),
+            {QualifiedName("A.f3.<locals>.B", QualifiedNameSource.LOCAL)},
+        )
+        func_f4 = ensure_type(m.body[1], cst.FunctionDef)
+        func_f5 = ensure_type(func_f4.body.body[0], cst.FunctionDef)
+        scope_of_f4 = scopes[func_f5]
+        self.assertIsInstance(scope_of_f4, FunctionScope)
+        self.assertEqual(
+            scope_of_f4.get_qualified_names_for(func_f5),
+            {QualifiedName("f4.<locals>.f5", QualifiedNameSource.LOCAL)},
+        )
+        cls_c = func_f5.body.body[0]
+        scope_of_f5 = scopes[cls_c]
+        self.assertIsInstance(scope_of_f5, FunctionScope)
+        self.assertEqual(
+            scope_of_f5.get_qualified_names_for(cls_c),
+            {QualifiedName("f4.<locals>.f5.<locals>.C", QualifiedNameSource.LOCAL)},
         )

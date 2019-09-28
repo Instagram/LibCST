@@ -7,7 +7,6 @@
 
 import abc
 import builtins
-from ast import literal_eval
 from collections import defaultdict
 from contextlib import contextmanager
 from dataclasses import dataclass
@@ -124,9 +123,8 @@ class _QualifiedNameUtil:
             return _QualifiedNameUtil.get_full_name_for(node.func)
         elif isinstance(node, cst.Subscript):
             return _QualifiedNameUtil.get_full_name_for(node.value)
-        elif isinstance(node, cst.SimpleString):
-            # In the case of SimpleString of type hints.
-            return literal_eval(node.value)
+        elif isinstance(node, cst.FunctionDef) or isinstance(node, cst.ClassDef):
+            return _QualifiedNameUtil.get_full_name_for(node.name)
         return None
 
     @staticmethod
@@ -164,8 +162,10 @@ class _QualifiedNameUtil:
         scope = assignment.scope
         name_prefixes = []
         while scope:
-            if isinstance(scope, ClassScope) or isinstance(scope, FunctionScope):
+            if isinstance(scope, ClassScope):
                 name_prefixes.append(scope.name)
+            elif isinstance(scope, FunctionScope):
+                name_prefixes.append(f"{scope.name}.<locals>")
             elif isinstance(scope, GlobalScope):
                 break
             else:
@@ -231,17 +231,30 @@ class Scope(abc.ABC):
         ...
 
     def get_qualified_names_for(self, node: cst.CSTNode) -> Collection[QualifiedName]:
-        """ Get all QualifiedName given a CSTNode.
+        """ Get all :class:`~libcst.metadata.QualifiedName` in current scope given a
+        :class:`~libcst.CSTNode`.
         The source of a qualified name can be either :attr:`QualifiedNameSource.IMPORT`,
         :attr:`QualifiedNameSource.BUILTIN` or :attr:`QualifiedNameSource.LOCAL`.
         Given the following example, ``c`` has qualified name ``a.b.c`` with source ``IMPORT``,
-        ``f`` has qualified name ``Cls.f`` with source ``LOCAL``, and the builtin ``int`` is
-        has qualified name ``builtins.int`` with source ``BUILTIN``::
+        ``f`` has qualified name ``Cls.f`` with source ``LOCAL``, ``a`` has qualified name
+        ``Cls.f.<locals>.a`` and the builtin ``int`` has qualified name ``builtins.int`` with
+        source ``BUILTIN``::
 
             from a.b import c
             class Cls:
                 def f(self) -> "c":
                     c()
+                    a = int("1")
+
+        We extends `PEP-3155 <https://www.python.org/dev/peps/pep-3155/>`_
+        (defines ``__qualname__`` for class and function only; function namespace is followed
+        by a ``<locals>``) to provide qualified name for all :class:`~libcst.CSTNode`
+        recorded by :class:`~libcst.metadata.Assignment` and :class:`~libcst.metadata.Access`.
+        An imported name may be used for type annotation with :class:`~libcst.SimpleString` and
+        currently resolving the qualified given :class:`~libcst.SimpleString` is not supported
+        considering it could be a complex type annotation in the string which is hard to
+        resolve, e.g.
+        ``List[Union[int, str]]``.
         """
         results = set()
         full_name = _QualifiedNameUtil.get_full_name_for(node)
