@@ -693,7 +693,7 @@ class ScopeVisitor(cst.CSTVisitor):
 
 class ScopeProvider(BatchableMetadataProvider[Optional[Scope]]):
     """
-     ScopeProvider traverses the entire module and creates the scope inheritance
+    :class:`ScopeProvider` traverses the entire module and creates the scope inheritance
     structure. It provides the scope of name assignment and accesses. It is useful for
     more advanced static analysis. E.g. given a :class:`~libcst.FunctionDef`
     node, we can check the type of its Scope to figure out whether it is a class method
