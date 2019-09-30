@@ -28,6 +28,7 @@ from libcst.metadata.scope_provider import (
     FunctionScope,
     GlobalScope,
     QualifiedName,
+    QualifiedNameProvider,
     QualifiedNameSource,
     Scope,
     ScopeProvider,
@@ -56,4 +57,5 @@ __all__ = [
     "MetadataWrapper",
     "BatchableMetadataProvider",
     "VisitorMetadataProvider",
+    "QualifiedNameProvider",
 ]
