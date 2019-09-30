@@ -10,11 +10,11 @@ from typing import Dict, Tuple, cast
 import libcst as cst
 from libcst import parse_module
 from libcst._visitors import CSTVisitor
-from libcst.metadata.expression_context_provider import (
+from libcst.metadata import (
     ExpressionContext,
     ExpressionContextProvider,
+    MetadataWrapper,
 )
-from libcst.metadata.wrapper import MetadataWrapper
 from libcst.testing.utils import UnitTest
 
 

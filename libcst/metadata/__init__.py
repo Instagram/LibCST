@@ -5,6 +5,10 @@
 
 # pyre-strict
 
+from libcst.metadata.base_provider import (
+    BatchableMetadataProvider,
+    VisitorMetadataProvider,
+)
 from libcst.metadata.expression_context_provider import (
     ExpressionContext,
     ExpressionContextProvider,
@@ -28,6 +32,7 @@ from libcst.metadata.scope_provider import (
     Scope,
     ScopeProvider,
 )
+from libcst.metadata.wrapper import MetadataWrapper
 
 
 __all__ = [
@@ -48,4 +53,7 @@ __all__ = [
     "ParentNodeProvider",
     "QualifiedName",
     "QualifiedNameSource",
+    "MetadataWrapper",
+    "BatchableMetadataProvider",
+    "VisitorMetadataProvider",
 ]

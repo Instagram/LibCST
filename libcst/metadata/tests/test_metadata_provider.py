@@ -10,11 +10,11 @@ import libcst as cst
 from libcst import parse_module
 from libcst._exceptions import MetadataException
 from libcst._visitors import CSTTransformer
-from libcst.metadata.base_provider import (
+from libcst.metadata import (
     BatchableMetadataProvider,
+    MetadataWrapper,
     VisitorMetadataProvider,
 )
-from libcst.metadata.wrapper import MetadataWrapper
 from libcst.testing.utils import UnitTest
 
 
