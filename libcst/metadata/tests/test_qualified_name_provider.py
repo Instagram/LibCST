@@ -1,0 +1,150 @@
+# Copyright (c) Facebook, Inc. and its affiliates.
+#
+# This source code is licensed under the MIT license found in the
+# LICENSE file in the root directory of this source tree.
+
+# pyre-strict
+
+from textwrap import dedent
+from typing import Collection, Mapping, Tuple, cast
+
+import libcst as cst
+from libcst import ensure_type
+from libcst.metadata import (
+    MetadataWrapper,
+    QualifiedName,
+    QualifiedNameProvider,
+    QualifiedNameSource,
+)
+from libcst.testing.utils import UnitTest
+
+
+def get_qualified_name_metadata_provider(
+    module_str: str
+) -> Tuple[cst.Module, Mapping[cst.CSTNode, Collection[QualifiedName]]]:
+    wrapper = MetadataWrapper(cst.parse_module(dedent(module_str)))
+    return (
+        wrapper.module,
+        cast(
+            Mapping[cst.CSTNode, Collection[QualifiedName]],
+            wrapper.resolve(QualifiedNameProvider),
+        ),  # we're sure every node has an associated scope
+    )
+
+
+class ScopeProviderTest(UnitTest):
+    def test_simple_qualified_names(self) -> None:
+        m, names = get_qualified_name_metadata_provider(
+            """
+            from a.b import c
+            class Cls:
+                def f(self) -> "c":
+                    c()
+                    d = {}
+                    d['key'] = 0
+            def g():
+                pass
+            g()
+            """
+        )
+        cls = ensure_type(m.body[1], cst.ClassDef)
+        f = ensure_type(cls.body.body[0], cst.FunctionDef)
+        self.assertEqual(
+            names[ensure_type(f.returns, cst.Annotation).annotation], set()
+        )
+
+        c_call = ensure_type(
+            ensure_type(f.body.body[0], cst.SimpleStatementLine).body[0], cst.Expr
+        ).value
+        self.assertEqual(
+            names[c_call], {QualifiedName("a.b.c", QualifiedNameSource.IMPORT)}
+        )
+        self.assertEqual(
+            names[c_call], {QualifiedName("a.b.c", QualifiedNameSource.IMPORT)}
+        )
+
+        g_call = ensure_type(
+            ensure_type(m.body[3], cst.SimpleStatementLine).body[0], cst.Expr
+        ).value
+        self.assertEqual(names[g_call], {QualifiedName("g", QualifiedNameSource.LOCAL)})
+        d_name = (
+            ensure_type(
+                ensure_type(f.body.body[1], cst.SimpleStatementLine).body[0], cst.Assign
+            )
+            .targets[0]
+            .target
+        )
+        self.assertEqual(
+            names[d_name],
+            {QualifiedName("Cls.f.<locals>.d", QualifiedNameSource.LOCAL)},
+        )
+        d_subscript = (
+            ensure_type(
+                ensure_type(f.body.body[2], cst.SimpleStatementLine).body[0], cst.Assign
+            )
+            .targets[0]
+            .target
+        )
+        self.assertEqual(
+            names[d_subscript],
+            {QualifiedName("Cls.f.<locals>.d", QualifiedNameSource.LOCAL)},
+        )
+
+    def test_nested_qualified_names(self) -> None:
+        m, names = get_qualified_name_metadata_provider(
+            """
+            class A:
+                def f1(self):
+                    def f2():
+                        pass
+                    f2()
+
+                def f3(self):
+                    class B():
+                        ...
+                    B()
+            def f4():
+                def f5():
+                    class C:
+                        pass
+                    C()
+                f5()
+            """
+        )
+
+        cls_a = ensure_type(m.body[0], cst.ClassDef)
+        self.assertEqual(names[cls_a], {QualifiedName("A", QualifiedNameSource.LOCAL)})
+        func_f1 = ensure_type(cls_a.body.body[0], cst.FunctionDef)
+        self.assertEqual(
+            names[func_f1], {QualifiedName("A.f1", QualifiedNameSource.LOCAL)}
+        )
+        func_f2_call = ensure_type(
+            ensure_type(func_f1.body.body[1], cst.SimpleStatementLine).body[0], cst.Expr
+        ).value
+        self.assertEqual(
+            names[func_f2_call],
+            {QualifiedName("A.f1.<locals>.f2", QualifiedNameSource.LOCAL)},
+        )
+        func_f3 = ensure_type(cls_a.body.body[1], cst.FunctionDef)
+        self.assertEqual(
+            names[func_f3], {QualifiedName("A.f3", QualifiedNameSource.LOCAL)}
+        )
+        call_b = ensure_type(
+            ensure_type(func_f3.body.body[1], cst.SimpleStatementLine).body[0], cst.Expr
+        ).value
+        self.assertEqual(
+            names[call_b], {QualifiedName("A.f3.<locals>.B", QualifiedNameSource.LOCAL)}
+        )
+        func_f4 = ensure_type(m.body[1], cst.FunctionDef)
+        self.assertEqual(
+            names[func_f4], {QualifiedName("f4", QualifiedNameSource.LOCAL)}
+        )
+        func_f5 = ensure_type(func_f4.body.body[0], cst.FunctionDef)
+        self.assertEqual(
+            names[func_f5], {QualifiedName("f4.<locals>.f5", QualifiedNameSource.LOCAL)}
+        )
+        cls_c = func_f5.body.body[0]
+        self.assertEqual(
+            names[cls_c],
+            {QualifiedName("f4.<locals>.f5.<locals>.C", QualifiedNameSource.LOCAL)},
+        )

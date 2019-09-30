@@ -705,3 +705,31 @@ class ScopeProvider(BatchableMetadataProvider[Optional[Scope]]):
         visitor = ScopeVisitor(self)
         node.visit(visitor)
         visitor.infer_accesses()
+
+
+class QualifiedNameVisitor(cst.CSTVisitor):
+    def __init__(self, provider: "QualifiedNameProvider") -> None:
+        self.provider: QualifiedNameProvider = provider
+
+    def on_visit(self, node: cst.CSTNode) -> bool:
+        scope = self.provider.get_metadata(ScopeProvider, node, None)
+        if scope:
+            self.provider.set_metadata(node, scope.get_qualified_names_for(node))
+        else:
+            self.provider.set_metadata(node, {})
+        super().on_visit(node)
+        return True
+
+
+class QualifiedNameProvider(
+    BatchableMetadataProvider[Optional[Collection[QualifiedName]]]
+):
+    """
+
+    """
+
+    METADATA_DEPENDENCIES = (ScopeProvider,)
+
+    def visit_Module(self, node: cst.Module) -> Optional[bool]:
+        visitor = QualifiedNameVisitor(self)
+        node.visit(visitor)
