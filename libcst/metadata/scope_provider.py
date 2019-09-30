@@ -123,7 +123,7 @@ class _QualifiedNameUtil:
             return _QualifiedNameUtil.get_full_name_for(node.func)
         elif isinstance(node, cst.Subscript):
             return _QualifiedNameUtil.get_full_name_for(node.value)
-        elif isinstance(node, cst.FunctionDef) or isinstance(node, cst.ClassDef):
+        elif isinstance(node, (cst.FunctionDef, cst.ClassDef)):
             return _QualifiedNameUtil.get_full_name_for(node.name)
         return None
 
@@ -264,10 +264,7 @@ class Scope(abc.ABC):
         for assignment in self[parts[0]]:
             if isinstance(assignment, Assignment):
                 assignment_node = assignment.node
-
-                if isinstance(assignment_node, cst.Import) or isinstance(
-                    assignment_node, cst.ImportFrom
-                ):
+                if isinstance(assignment_node, (cst.Import, cst.ImportFrom)):
                     results |= _QualifiedNameUtil.find_qualified_name_for_import_alike(
                         assignment_node, parts
                     )
