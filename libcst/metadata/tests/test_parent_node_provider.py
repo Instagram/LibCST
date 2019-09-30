@@ -8,8 +8,7 @@
 from textwrap import dedent
 
 import libcst as cst
-from libcst.metadata.parent_node_provider import ParentNodeProvider
-from libcst.metadata.wrapper import MetadataWrapper
+from libcst.metadata import MetadataWrapper, ParentNodeProvider
 from libcst.testing.utils import UnitTest, data_provider
 
 

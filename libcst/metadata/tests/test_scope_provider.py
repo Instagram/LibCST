@@ -10,6 +10,7 @@ from typing import Mapping, Tuple, cast
 
 import libcst as cst
 from libcst import ensure_type
+from libcst.metadata import MetadataWrapper
 from libcst.metadata.scope_provider import (
     Assignment,
     ClassScope,
@@ -21,7 +22,6 @@ from libcst.metadata.scope_provider import (
     Scope,
     ScopeProvider,
 )
-from libcst.metadata.wrapper import MetadataWrapper
 from libcst.testing.utils import UnitTest, data_provider
 
 

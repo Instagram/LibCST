@@ -8,8 +8,7 @@ import libcst as cst
 from libcst import CodeRange, parse_module
 from libcst._batched_visitor import BatchableCSTVisitor
 from libcst._visitors import CSTTransformer
-from libcst.metadata.position_provider import SyntacticPositionProvider
-from libcst.metadata.wrapper import MetadataWrapper
+from libcst.metadata import MetadataWrapper, SyntacticPositionProvider
 from libcst.testing.utils import UnitTest
 
 

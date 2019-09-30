@@ -8,12 +8,12 @@ from typing import cast
 
 import libcst as cst
 from libcst import parse_module
-from libcst.metadata.base_provider import (
+from libcst.metadata import (
     BatchableMetadataProvider,
+    MetadataWrapper,
     VisitorMetadataProvider,
-    _gen_batchable,
 )
-from libcst.metadata.wrapper import MetadataWrapper
+from libcst.metadata.base_provider import _gen_batchable
 from libcst.testing.utils import UnitTest
 
 
