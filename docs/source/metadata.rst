@@ -67,13 +67,12 @@ your provider does not use the visitor pattern for computing metadata for a tree
 Metadata Providers
 ------------------
 :class:`~libcst.metadata.BasicPositionProvider`, :class:`~libcst.metadata.SyntacticPositionProvider`,
-:class:`~libcst.metadata.ExpressionContextProvider`, :class:`~libcst.metadata.ScopeProvider` and
-:class:`~libcst.metadata.ParentNodeProvider`
+:class:`~libcst.metadata.ExpressionContextProvider`, :class:`~libcst.metadata.ScopeProvider`,
+:class:`~libcst.metadata.QualifiedNameProvider` and :class:`~libcst.metadata.ParentNodeProvider`
 are currently provided. Each metadata provider may has its own custom data structure.
 
 Position Metadata
 -----------------
-
 Position (line and column numbers) metadata are accessible through the metadata
 interface by declaring the one of the following providers as a dependency. For
 most cases, :class:`~libcst.SyntacticPositionProvider` is what you probably want.
@@ -146,6 +145,8 @@ code repository.
 
 .. autoclass:: libcst.metadata.QualifiedNameSource
 .. autoclass:: libcst.metadata.QualifiedName
+.. autoclass:: libcst.metadata.QualifiedNameProvider
+   :no-undoc-members:
 
 Parent Node Metadata
 --------------------
