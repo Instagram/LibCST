@@ -244,9 +244,6 @@ def _gather_matchers(obj: object) -> Set[BaseMatcherNode]:
     visit_matchers: Set[BaseMatcherNode] = set()
 
     for func in dir(obj):
-        if not func.startswith("visit_") and not func.startswith("leave_"):
-            continue
-
         try:
             for matcher in getattr(getattr(obj, func), VISIT_POSITIVE_MATCHER_ATTR, []):
                 visit_matchers.add(cast(BaseMatcherNode, matcher))
