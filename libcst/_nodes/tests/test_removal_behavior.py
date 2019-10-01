@@ -20,7 +20,7 @@ class IfStatementRemovalVisitor(CSTTransformer):
         self, original_node: CSTNodeT, updated_node: CSTNodeT
     ) -> Union[CSTNodeT, RemovalSentinel]:
         if isinstance(updated_node, cst.If):
-            return RemovalSentinel.REMOVE
+            return updated_node.remove()
         else:
             return updated_node
 
@@ -30,7 +30,7 @@ class ContinueStatementRemovalVisitor(CSTTransformer):
         self, original_node: CSTNodeT, updated_node: CSTNodeT
     ) -> Union[CSTNodeT, RemovalSentinel]:
         if isinstance(updated_node, cst.Continue):
-            return RemovalSentinel.REMOVE
+            return updated_node.remove()
         else:
             return updated_node
 
@@ -43,11 +43,11 @@ class SpecificImportRemovalVisitor(CSTTransformer):
             for alias in updated_node.names:
                 name = alias.name
                 if isinstance(name, cst.Name) and name.value == "b":
-                    return RemovalSentinel.REMOVE
+                    return updated_node.remove()
         elif isinstance(updated_node, cst.ImportFrom):
             module = updated_node.module
             if isinstance(module, cst.Name) and module.value == "e":
-                return RemovalSentinel.REMOVE
+                return updated_node.remove()
         return updated_node
 
 
