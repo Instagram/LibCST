@@ -19,6 +19,7 @@ LibCST
    motivation
    tutorial
    Metadata Tutorial <metadata_tutorial>
+   Matchers Tutorial <matchers_tutorial>
    parser
    nodes
    visitors
