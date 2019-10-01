@@ -31,6 +31,8 @@ when LibCST calls visitor functions.
 
 .. autofunction:: libcst.matchers.matches
 
+.. _libcst-matcher-decorators:
+
 Decorators
 ^^^^^^^^^^
 
