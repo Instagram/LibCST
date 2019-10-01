@@ -65,7 +65,7 @@ class CSTTransformer(CSTTypedTransformerFunctions, MetadataDependent):
         Returning :attr:`RemovalSentinel.REMOVE` indicates that the node should be
         removed from its parent. This is not always possible, and may raise an
         exception if this node is required. As a convenience, you can use
-        ``updated_node.remove()`` as an alias to :attr:`RemovalSentinel.REMOVE`.
+        :func:`RemoveFromParent` as an alias to :attr:`RemovalSentinel.REMOVE`.
         """
         leave_func = getattr(self, f"leave_{type(original_node).__name__}", None)
         if leave_func is not None:

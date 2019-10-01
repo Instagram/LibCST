@@ -55,7 +55,9 @@ class _ChildrenCollectionVisitor(CSTVisitor):
 
 
 class _ChildrenReplacementTransformer(CSTTransformer):
-    def __init__(self, old_node: "CSTNode", new_node: "CSTNode") -> None:
+    def __init__(
+        self, old_node: "CSTNode", new_node: Union["CSTNode", RemovalSentinel]
+    ) -> None:
         self.old_node = old_node
         self.new_node = new_node
 
@@ -64,7 +66,9 @@ class _ChildrenReplacementTransformer(CSTTransformer):
         # recurse down it, that would be a waste of time.
         return node is not self.old_node
 
-    def on_leave(self, original_node: "CSTNode", updated_node: "CSTNode") -> "CSTNode":
+    def on_leave(
+        self, original_node: "CSTNode", updated_node: "CSTNode"
+    ) -> Union["CSTNode", RemovalSentinel]:
         if original_node is self.old_node:
             return self.new_node
         return updated_node
@@ -308,18 +312,6 @@ class CSTNode(ABC):
         """
         return replace(self, **changes)
 
-    def remove(self) -> RemovalSentinel:
-        """
-        A convenience method for requesting that this node be removed by its parent.
-        Use this in place of returning :class:`RemovalSentinel` directly.
-
-        For example, to remove all arguments unconditionally::
-
-            def leave_Arg(self, original_node: cst.Arg, updated_node: cst.Arg) -> Union[cst.Arg, cst.RemovalSentinel]:
-                return updated_node.remove()
-        """
-        return RemovalSentinel.REMOVE
-
     def deep_clone(self: _CSTNodeSelfT) -> _CSTNodeSelfT:
         """
         Recursively clone the entire tree. The created tree is a new tree has the same
@@ -378,6 +370,18 @@ class CSTNode(ABC):
             # The above transform never returns RemovalSentinel, so this isn't possible
             raise Exception("Logic error, cannot get a RemovalSentinel here!")
         return new_tree
+
+    def deep_remove(
+        self: _CSTNodeSelfT, old_node: "CSTNode"
+    ) -> Union[_CSTNodeSelfT, RemovalSentinel]:
+        """
+        Recursively removes any instance of ``old_node`` by identity. Note that if you
+        have previously modified the tree in a way that ``old_node`` appears more than
+        once as a deep child, all instances will be removed.
+        """
+        return self.visit(
+            _ChildrenReplacementTransformer(old_node, RemovalSentinel.REMOVE)
+        )
 
     def __eq__(self: _CSTNodeSelfT, other: _CSTNodeSelfT) -> bool:
         """

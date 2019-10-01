@@ -185,7 +185,7 @@ from libcst._nodes.whitespace import (
 )
 from libcst._parser.entrypoints import parse_expression, parse_module, parse_statement
 from libcst._parser.types.config import PartialParserConfig
-from libcst._removal_sentinel import RemovalSentinel
+from libcst._removal_sentinel import RemovalSentinel, RemoveFromParent
 from libcst._visitors import CSTNodeT, CSTTransformer, CSTVisitor, CSTVisitorT
 from libcst.metadata.base_provider import (
     BaseMetadataProvider,
@@ -208,6 +208,7 @@ __all__ = [
     "MetadataException",
     "ParserSyntaxError",
     "PartialParserConfig",
+    "RemoveFromParent",
     "RemovalSentinel",
     "ensure_type",
     "visit_batched",
