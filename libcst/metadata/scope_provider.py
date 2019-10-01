@@ -142,7 +142,11 @@ class _QualifiedNameUtil:
         if not isinstance(import_names, cst.ImportStar):
             for name in import_names:
                 real_name = _QualifiedNameUtil.get_full_name_for(name.name)
-                as_name = name.asname or real_name
+                as_name = real_name
+                if name and name.asname:
+                    name_asname = name.asname
+                    if name_asname:
+                        as_name = cst.ensure_type(name_asname.name, cst.Name).value
                 if as_name == name_parts[0]:
                     if module:
                         real_name = f"{module}.{real_name}"
@@ -722,7 +726,34 @@ class QualifiedNameProvider(
     BatchableMetadataProvider[Optional[Collection[QualifiedName]]]
 ):
     """
+    Compute possible qualified names of a variable CSTNode
+    (extends `PEP-3155 <https://www.python.org/dev/peps/pep-3155/>`_).
+    It uses the
+    :func:`~libcst.metadata.Scope.get_qualified_names_for` underlying to get qualified names.
+    Multiple qualified names may be returned, such as when we have conditional imports or an
+    import shadows another. E.g., the provider finds ``a.b``, ``d.e`` and
+    ``f.g`` as possible qualified names of ``c``::
 
+        >>> wrapper = MetadataWrapper(
+        >>>     cst.parse_module(dedent(
+        >>>     '''
+        >>>         if something:
+        >>>             from a import b as c
+        >>>         elif otherthing:
+        >>>             from d import e as c
+        >>>         else:
+        >>>             from f import g as c
+        >>>         c()
+        >>>     '''
+        >>>     ))
+        >>> )
+        >>> call = wrapper.module.body[1].body[0].value
+        >>> wrapper.resolve(QualifiedNameProvider)[call],
+        {
+            QualifiedName(name="a.b", source=QualifiedNameSource.IMPORT),
+            QualifiedName(name="d.e", source=QualifiedNameSource.IMPORT),
+            QualifiedName(name="f.g", source=QualifiedNameSource.IMPORT),
+        }
     """
 
     METADATA_DEPENDENCIES = (ScopeProvider,)

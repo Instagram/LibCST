@@ -148,3 +148,24 @@ class ScopeProviderTest(UnitTest):
             names[cls_c],
             {QualifiedName("f4.<locals>.f5.<locals>.C", QualifiedNameSource.LOCAL)},
         )
+
+    def test_multiple_assignments(self) -> None:
+        m, names = get_qualified_name_metadata_provider(
+            """
+                if 1:
+                    from a import b as c
+                elif 2:
+                    from d import e as c
+                c()
+            """
+        )
+        call = ensure_type(
+            ensure_type(m.body[1], cst.SimpleStatementLine).body[0], cst.Expr
+        ).value
+        self.assertEqual(
+            names[call],
+            {
+                QualifiedName(name="a.b", source=QualifiedNameSource.IMPORT),
+                QualifiedName(name="d.e", source=QualifiedNameSource.IMPORT),
+            },
+        )

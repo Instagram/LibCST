@@ -745,3 +745,26 @@ class ScopeProviderTest(UnitTest):
             scope_of_f5.get_qualified_names_for(cls_c),
             {QualifiedName("f4.<locals>.f5.<locals>.C", QualifiedNameSource.LOCAL)},
         )
+
+    def test_multiple_assignments(self) -> None:
+        m, scopes = get_scope_metadata_provider(
+            """
+                if 1:
+                    from a import b as c
+                elif 2:
+                    from d import e as c
+                c()
+            """
+        )
+        call = ensure_type(
+            ensure_type(m.body[1], cst.SimpleStatementLine).body[0], cst.Expr
+        ).value
+        scope = scopes[call]
+        self.assertIsInstance(scope, GlobalScope)
+        self.assertEqual(
+            scope.get_qualified_names_for(call),
+            {
+                QualifiedName(name="a.b", source=QualifiedNameSource.IMPORT),
+                QualifiedName(name="d.e", source=QualifiedNameSource.IMPORT),
+            },
+        )
