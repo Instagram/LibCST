@@ -16,7 +16,8 @@ class RemovalSentinel(Enum):
     """
     A :attr:`RemovalSentinel.REMOVE` value should be returned by a
     :meth:`CSTTransformer.on_leave` method when we want to remove that child from its
-    parent.
+    parent. As a convenience, this can be constructed given a CSTNode by calling
+    ``node.remove()``.
 
     The parent node should make a best-effort to remove the child, but may raise an
     exception when removing the child doesn't make sense, or could change the semantics

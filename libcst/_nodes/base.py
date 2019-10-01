@@ -275,12 +275,12 @@ class CSTNode(ABC):
 
         For example, to update the test of an if conditional, you could do::
 
-            def leave_If(self, old_node: cst.If) -> cst.If:
-                new_node = old_node.with_changes(test=new_conditional)
+            def leave_If(self, original_node: cst.If, updated_node: cst.If) -> cst.If:
+                new_node = updated_node.with_changes(test=new_conditional)
                 return new_node
 
         ``new_node`` will have the same ``body``, ``orelse``, and whitespace fields as
-        ``old_node``, but with the updated ``test`` field.
+        ``updated_node``, but with the updated ``test`` field.
 
         The accepted arguments match the arguments given to ``__init__``, however there
         are no required or positional arguments.
@@ -290,6 +290,18 @@ class CSTNode(ABC):
         similar API in the future.
         """
         return replace(self, **changes)
+
+    def remove(self) -> RemovalSentinel:
+        """
+        A convenience method for requesting that this node be removed by its parent.
+        Use this in place of returning :class:`RemovalSentinel` directly.
+
+        For example, to remove all arguments unconditionally::
+
+            def leave_Arg(self, original_node: cst.Arg, updated_node: cst.Arg) -> Union[cst.Arg, cst.RemovalSentinel]:
+                return updated_node.remove()
+        """
+        return RemovalSentinel.REMOVE
 
     def deep_clone(self: _CSTNodeSelfT) -> _CSTNodeSelfT:
         """
