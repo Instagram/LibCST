@@ -75,3 +75,27 @@ class DeepReplaceTest(UnitTest):
             ),
         )
         self.assertEqual(new_module.code, dedent(new_code))
+
+    def test_deep_remove_complex(self) -> None:
+        old_code = """
+            def a():
+                def b():
+                    def c():
+                        print("Hello, world!")
+        """
+        new_code = """
+            def a():
+                def b():
+                    pass
+        """
+
+        module = cst.parse_module(dedent(old_code))
+        outer_fun = cst.ensure_type(module.body[0], cst.FunctionDef)
+        middle_fun = cst.ensure_type(
+            cst.ensure_type(outer_fun.body, cst.IndentedBlock).body[0], cst.FunctionDef
+        )
+        inner_fun = cst.ensure_type(
+            cst.ensure_type(middle_fun.body, cst.IndentedBlock).body[0], cst.FunctionDef
+        )
+        new_module = cst.ensure_type(module.deep_remove(inner_fun), cst.Module)
+        self.assertEqual(new_module.code, dedent(new_code))
