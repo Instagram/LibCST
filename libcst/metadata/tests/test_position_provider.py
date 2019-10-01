@@ -25,8 +25,10 @@ class PositionProviderTest(UnitTest):
             METADATA_DEPENDENCIES = (SyntacticPositionProvider,)
 
             def visit_Pass(self, node: cst.Pass) -> None:
-                range = self.get_metadata(SyntacticPositionProvider, node)
-                test.assertEqual(range, CodeRange((1, 0), (1, 4)))
+                test.assertEqual(
+                    self.get_metadata(SyntacticPositionProvider, node),
+                    CodeRange((1, 0), (1, 4)),
+                )
 
         wrapper = MetadataWrapper(parse_module("pass"))
         wrapper.visit(DependentVisitor())
@@ -38,8 +40,10 @@ class PositionProviderTest(UnitTest):
             METADATA_DEPENDENCIES = (SyntacticPositionProvider,)
 
             def visit_Pass(self, node: cst.Pass) -> None:
-                range = self.get_metadata(SyntacticPositionProvider, node)
-                test.assertEqual(range, CodeRange((1, 0), (1, 4)))
+                test.assertEqual(
+                    self.get_metadata(SyntacticPositionProvider, node),
+                    CodeRange((1, 0), (1, 4)),
+                )
 
         wrapper = MetadataWrapper(parse_module("pass"))
         wrapper.visit_batched([ABatchable()])

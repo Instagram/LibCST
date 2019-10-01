@@ -268,10 +268,7 @@ class Scope(abc.ABC):
         for assignment in self[parts[0]]:
             if isinstance(assignment, Assignment):
                 assignment_node = assignment.node
-
-                if isinstance(assignment_node, cst.Import) or isinstance(
-                    assignment_node, cst.ImportFrom
-                ):
+                if isinstance(assignment_node, (cst.Import, cst.ImportFrom)):
                     results |= _QualifiedNameUtil.find_qualified_name_for_import_alike(
                         assignment_node, parts
                     )
