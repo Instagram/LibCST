@@ -7,6 +7,7 @@
 
 from libcst.metadata.base_provider import (
     BatchableMetadataProvider,
+    ProviderT,
     VisitorMetadataProvider,
 )
 from libcst.metadata.expression_context_provider import (
@@ -58,4 +59,5 @@ __all__ = [
     "BatchableMetadataProvider",
     "VisitorMetadataProvider",
     "QualifiedNameProvider",
+    "ProviderT",
 ]
