@@ -730,6 +730,15 @@ class ScopeProviderTest(UnitTest):
             scope_of_f3.get_qualified_names_for(call_b),
             {QualifiedName("A.f3.<locals>.B", QualifiedNameSource.LOCAL)},
         )
+        cls_b = func_f3.body.body[0]
+        self.assertEqual(
+            {
+                cast(Assignment, assignment).node
+                for assignment in scope_of_f3.get_assignments_for(call_b)
+            },
+            {cls_b},
+        )
+
         func_f4 = ensure_type(m.body[1], cst.FunctionDef)
         func_f5 = ensure_type(func_f4.body.body[0], cst.FunctionDef)
         scope_of_f4 = scopes[func_f5]
@@ -757,8 +766,11 @@ class ScopeProviderTest(UnitTest):
             """
         )
         call = ensure_type(
-            ensure_type(m.body[1], cst.SimpleStatementLine).body[0], cst.Expr
-        ).value
+            ensure_type(
+                ensure_type(m.body[1], cst.SimpleStatementLine).body[0], cst.Expr
+            ).value,
+            cst.Call,
+        )
         scope = scopes[call]
         self.assertIsInstance(scope, GlobalScope)
         self.assertEqual(
@@ -768,3 +780,23 @@ class ScopeProviderTest(UnitTest):
                 QualifiedName(name="d.e", source=QualifiedNameSource.IMPORT),
             },
         )
+
+        assignments = scope.get_assignments_for(call)
+        self.assertEqual(len(assignments), 2)
+        if_stmt = ensure_type(m.body[0], cst.If)
+        import_b = ensure_type(if_stmt.body.body[0], cst.SimpleStatementLine).body[0]
+        import_e = ensure_type(
+            ensure_type(if_stmt.orelse, cst.If).body.body[0], cst.SimpleStatementLine
+        ).body[0]
+        self.assertEqual(
+            {cast(Assignment, assignment).node for assignment in assignments},
+            {import_b, import_e},
+        )
+        self.assertEqual(
+            [
+                access.node
+                for assignment in assignments
+                for access in cast(Assignment, assignment).accesses
+            ],
+            [call.func, call.func],
+        )  # each assignment has single access of Call.func (a Name)

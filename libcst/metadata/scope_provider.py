@@ -257,8 +257,7 @@ class Scope(abc.ABC):
         An imported name may be used for type annotation with :class:`~libcst.SimpleString` and
         currently resolving the qualified given :class:`~libcst.SimpleString` is not supported
         considering it could be a complex type annotation in the string which is hard to
-        resolve, e.g.
-        ``List[Union[int, str]]``.
+        resolve, e.g. ``List[Union[int, str]]``.
         """
         results = set()
         full_name = _QualifiedNameUtil.get_full_name_for(node)
@@ -283,6 +282,14 @@ class Scope(abc.ABC):
                     )
                 )
         return results
+
+    def get_assignments_for(self, node: cst.CSTNode) -> Collection[BaseAssignment]:
+        """ Get all assignments in current scope given a :class:`~libcst.CSTNode`. """
+        full_name = _QualifiedNameUtil.get_full_name_for(node)
+        if full_name is None:
+            return set()
+        parts = full_name.split(".")
+        return self[parts[0]]
 
 
 class GlobalScope(Scope):
