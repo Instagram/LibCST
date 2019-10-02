@@ -13,13 +13,25 @@ LibCST
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :caption: Introduction:
 
    why_libcst
    motivation
-   tutorial
-   Metadata Tutorial <metadata_tutorial>
-   Matchers Tutorial <matchers_tutorial>
+
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Tutorial:
+
+   Parsing and Visitors <tutorial>
+   Metadata <metadata_tutorial>
+   Matchers <matchers_tutorial>
+
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Reference:
+
    parser
    nodes
    visitors
