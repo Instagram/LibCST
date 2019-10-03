@@ -96,7 +96,7 @@ class CleanseFullTypeNames(cst.CSTTransformer):
             if isinstance(val, cst.Name):
                 if "Sentinel" in val.value:
                     # We don't support maybes in matchers.
-                    return updated_node.remove()
+                    return cst.RemoveFromParent()
         # Simple trick to kill trailing commas
         return updated_node.with_changes(comma=cst.MaybeSentinel.DEFAULT)
 
@@ -121,7 +121,7 @@ class RemoveDoNotCareFromGeneric(cst.CSTTransformer):
             if isinstance(val, cst.Name):
                 if val.value == "DoNotCareSentinel":
                     # We don't support maybes in matchers.
-                    return updated_node.remove()
+                    return cst.RemoveFromParent()
         return updated_node
 
     def leave_Subscript(

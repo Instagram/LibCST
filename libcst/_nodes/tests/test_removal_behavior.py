@@ -7,9 +7,8 @@
 from typing import Type, Union
 
 import libcst as cst
-from libcst import parse_module
+from libcst import RemovalSentinel, parse_module
 from libcst._nodes.tests.base import CSTNodeTest
-from libcst._removal_sentinel import RemovalSentinel
 from libcst._types import CSTNodeT
 from libcst._visitors import CSTTransformer
 from libcst.testing.utils import data_provider
@@ -20,7 +19,7 @@ class IfStatementRemovalVisitor(CSTTransformer):
         self, original_node: CSTNodeT, updated_node: CSTNodeT
     ) -> Union[CSTNodeT, RemovalSentinel]:
         if isinstance(updated_node, cst.If):
-            return updated_node.remove()
+            return cst.RemoveFromParent()
         else:
             return updated_node
 
@@ -30,7 +29,7 @@ class ContinueStatementRemovalVisitor(CSTTransformer):
         self, original_node: CSTNodeT, updated_node: CSTNodeT
     ) -> Union[CSTNodeT, RemovalSentinel]:
         if isinstance(updated_node, cst.Continue):
-            return updated_node.remove()
+            return cst.RemoveFromParent()
         else:
             return updated_node
 
@@ -43,11 +42,11 @@ class SpecificImportRemovalVisitor(CSTTransformer):
             for alias in updated_node.names:
                 name = alias.name
                 if isinstance(name, cst.Name) and name.value == "b":
-                    return updated_node.remove()
+                    return cst.RemoveFromParent()
         elif isinstance(updated_node, cst.ImportFrom):
             module = updated_node.module
             if isinstance(module, cst.Name) and module.value == "e":
-                return updated_node.remove()
+                return cst.RemoveFromParent()
         return updated_node
 
 

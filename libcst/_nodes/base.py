@@ -22,6 +22,7 @@ from typing import (
 from libcst._nodes.internal import CodegenState, CodePosition, CodeRange
 from libcst._removal_sentinel import RemovalSentinel
 from libcst._type_enforce import is_value_of_type
+from libcst._types import CSTNodeT
 from libcst._visitors import CSTTransformer, CSTVisitor, CSTVisitorT
 
 
@@ -51,6 +52,26 @@ class _ChildrenCollectionVisitor(CSTVisitor):
     def on_visit(self, node: "CSTNode") -> bool:
         self.children.append(node)
         return False  # Don't include transitive children
+
+
+class _ChildrenReplacementTransformer(CSTTransformer):
+    def __init__(
+        self, old_node: "CSTNode", new_node: Union["CSTNode", RemovalSentinel]
+    ) -> None:
+        self.old_node = old_node
+        self.new_node = new_node
+
+    def on_visit(self, node: "CSTNode") -> bool:
+        # If the node is one we are about to replace, we shouldn't
+        # recurse down it, that would be a waste of time.
+        return node is not self.old_node
+
+    def on_leave(
+        self, original_node: "CSTNode", updated_node: "CSTNode"
+    ) -> Union["CSTNode", RemovalSentinel]:
+        if original_node is self.old_node:
+            return self.new_node
+        return updated_node
 
 
 class _NOOPVisitor(CSTTransformer):
@@ -291,18 +312,6 @@ class CSTNode(ABC):
         """
         return replace(self, **changes)
 
-    def remove(self) -> RemovalSentinel:
-        """
-        A convenience method for requesting that this node be removed by its parent.
-        Use this in place of returning :class:`RemovalSentinel` directly.
-
-        For example, to remove all arguments unconditionally::
-
-            def leave_Arg(self, original_node: cst.Arg, updated_node: cst.Arg) -> Union[cst.Arg, cst.RemovalSentinel]:
-                return updated_node.remove()
-        """
-        return RemovalSentinel.REMOVE
-
     def deep_clone(self: _CSTNodeSelfT) -> _CSTNodeSelfT:
         """
         Recursively clone the entire tree. The created tree is a new tree has the same
@@ -345,6 +354,34 @@ class CSTNode(ABC):
         from libcst._nodes.deep_equals import deep_equals as deep_equals_impl
 
         return deep_equals_impl(self, other)
+
+    def deep_replace(
+        self: _CSTNodeSelfT, old_node: "CSTNode", new_node: CSTNodeT
+    ) -> Union[_CSTNodeSelfT, CSTNodeT]:
+        """
+        Recursively replaces any instance of ``old_node`` with ``new_node`` by identity.
+        Use this to avoid nested ``with_changes`` blocks when you are replacing one of
+        a node's deep children with a new node. Note that if you have previously
+        modified the tree in a way that ``old_node`` appears more than once as a deep
+        child, all instances will be replaced.
+        """
+        new_tree = self.visit(_ChildrenReplacementTransformer(old_node, new_node))
+        if isinstance(new_tree, RemovalSentinel):
+            # The above transform never returns RemovalSentinel, so this isn't possible
+            raise Exception("Logic error, cannot get a RemovalSentinel here!")
+        return new_tree
+
+    def deep_remove(
+        self: _CSTNodeSelfT, old_node: "CSTNode"
+    ) -> Union[_CSTNodeSelfT, RemovalSentinel]:
+        """
+        Recursively removes any instance of ``old_node`` by identity. Note that if you
+        have previously modified the tree in a way that ``old_node`` appears more than
+        once as a deep child, all instances will be removed.
+        """
+        return self.visit(
+            _ChildrenReplacementTransformer(old_node, RemovalSentinel.REMOVE)
+        )
 
     def __eq__(self: _CSTNodeSelfT, other: _CSTNodeSelfT) -> bool:
         """
