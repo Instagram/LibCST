@@ -14,6 +14,7 @@ from enum import Enum, auto
 from typing import (
     Collection,
     Dict,
+    Generator,
     Iterator,
     List,
     MutableMapping,
@@ -220,11 +221,19 @@ class Scope(abc.ABC):
         self.record_assignment(name, node)
 
     def __contains__(self, name: str) -> bool:
+        """ Check if the name str exist in current scope by ``name in scope``. """
         return len(self[name]) > 0
 
     @abc.abstractmethod
     def __getitem__(self, name: str) -> Tuple[BaseAssignment, ...]:
+        """ Get assignments given a name str by ``scope[name]``. """
         ...
+
+    def __iter__(self) -> Generator[BaseAssignment, None, None]:
+        """ Get all assignments in current scope by iterating through scope object. """
+        for _, assignments in self._assignments.items():
+            for assignment in assignments:
+                yield assignment
 
     @abc.abstractmethod
     def record_global_overwrite(self, name: str) -> None:

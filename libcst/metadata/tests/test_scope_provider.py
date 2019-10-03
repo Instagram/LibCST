@@ -800,3 +800,5 @@ class ScopeProviderTest(UnitTest):
             ],
             [call.func, call.func],
         )  # each assignment has single access of Call.func (a Name)
+
+        self.assertEqual(len(list(scope)), 2)

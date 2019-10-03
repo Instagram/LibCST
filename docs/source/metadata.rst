@@ -124,6 +124,7 @@ There were four different type of scope in Python: :class:`~libcst.metadata.Glob
 
 .. autoclass:: libcst.metadata.Scope
    :no-undoc-members:
+   :special-members: __contains__, __getitem__, __iter__
 
 .. autoclass:: libcst.metadata.GlobalScope
    :no-undoc-members:
