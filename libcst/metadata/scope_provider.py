@@ -85,7 +85,6 @@ class Assignment(BaseAssignment):
         super().__init__(name, scope)
 
 
-# pyre-ignore Pyre doesn't think that the attributes in the base class are initialized
 # even though we don't override the constructor.
 class BuiltinAssignment(BaseAssignment):
     """
@@ -341,7 +340,6 @@ class LocalScope(Scope, abc.ABC):
             return self.parent._getitem_from_self_or_parent(name)
 
 
-# pyre-ignore Pyre doesn't think that the attributes in the base class are initialized
 # even though we don't override the constructor.
 class FunctionScope(LocalScope):
     """
@@ -351,7 +349,6 @@ class FunctionScope(LocalScope):
     pass
 
 
-# pyre-ignore Pyre doesn't think that the attributes in the base class are initialized
 # even though we don't override the constructor.
 class ClassScope(LocalScope):
     """
@@ -383,7 +380,6 @@ class ClassScope(LocalScope):
         return self.parent._getitem_from_self_or_parent(name)
 
 
-# pyre-ignore Pyre doesn't think that the attributes in the base class are initialized
 # even though we don't override the constructor.
 class ComprehensionScope(LocalScope):
     """

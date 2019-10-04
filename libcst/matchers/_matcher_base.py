@@ -313,6 +313,7 @@ class MatchIfTrue(Generic[_CallableT]):
         return MatchIfTrue(cast(_CallableT, lambda val: not self.func(val)))
 
     def __repr__(self) -> str:
+        # pyre-ignore Pyre doesn't believe that functions have a repr.
         return f"MatchIfTrue({repr(self.func)})"
 
 

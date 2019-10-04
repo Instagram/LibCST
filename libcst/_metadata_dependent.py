@@ -2,9 +2,10 @@
 #
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
-
+#
 # pyre-strict
 import inspect
+from abc import ABC
 from contextlib import contextmanager
 from typing import (
     TYPE_CHECKING,
@@ -33,9 +34,7 @@ _T = TypeVar("_T")
 _UNDEFINED_DEFAULT = object()
 
 
-# TODO: this class should be an ABC but we're waiting on Pyre to fix a bug to
-# add this functionality back
-class MetadataDependent:
+class MetadataDependent(ABC):
     """
     The low-level base class for all classes that declare required metadata
     dependencies. :class:`~libcst.CSTVisitor` and :class:`~libcst.CSTTransformer`
