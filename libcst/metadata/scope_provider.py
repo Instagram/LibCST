@@ -7,6 +7,7 @@
 
 import abc
 import builtins
+import warnings
 from collections import defaultdict
 from contextlib import contextmanager
 from dataclasses import dataclass
@@ -14,30 +15,26 @@ from enum import Enum, auto
 from typing import (
     Collection,
     Dict,
+    Generator,
     Iterator,
     List,
+    Mapping,
     MutableMapping,
     Optional,
     Set,
     Tuple,
     Type,
     Union,
-    Mapping,
-    Generator,
 )
 
 import libcst as cst
-from libcst._add_slots import add_slots
 from libcst.metadata.base_provider import BatchableMetadataProvider
 from libcst.metadata.expression_context_provider import (
     ExpressionContext,
     ExpressionContextProvider,
 )
-import warnings
 
 
-@add_slots
-@dataclass(frozen=True)
 class Access:
     """
     An Access records an access of an assignment.
@@ -49,6 +46,21 @@ class Access:
 
     #: The scope of the access. Note that a access could be in a child scope of its assignment.
     scope: "Scope"
+
+    __assignments: Set["BaseAssignment"]
+
+    def __init__(self, node: cst.Name, scope: "Scope") -> None:
+        self.node = node
+        self.scope = scope
+        self.__assignments = set()
+
+    def __hash__(self) -> int:
+        return id(self)
+
+    @property
+    def referents(self) -> Collection["BaseAssignment"]:
+        """Return all assignments of the access."""
+        return self.__assignments
 
 
 class BaseAssignment(abc.ABC):
@@ -73,7 +85,7 @@ class BaseAssignment(abc.ABC):
     def references(self) -> Collection[Access]:
         """Return all accesses of the assignment."""
         # we don't want to publicly expose the mutable version of this
-        return set(self.__accesses)
+        return self.__accesses
 
     @property
     def accesses(self) -> Tuple[Access, ...]:
@@ -84,6 +96,9 @@ class BaseAssignment(abc.ABC):
             DeprecationWarning,
         )
         return tuple(self.__accesses)
+
+    def __hash__(self) -> int:
+        return id(self)
 
 
 class Assignment(BaseAssignment):
@@ -96,9 +111,6 @@ class Assignment(BaseAssignment):
     def __init__(self, name: str, scope: "Scope", node: cst.CSTNode) -> None:
         self.node = node
         super().__init__(name, scope)
-
-    def __hash__(self) -> int:
-        return id(self)
 
 
 # even though we don't override the constructor.
@@ -272,16 +284,18 @@ class Scope(abc.ABC):
 
     #: Refers to the GlobalScope.
     globals: "GlobalScope"
-    _assignments: MutableMapping[str, List[BaseAssignment]]
+    _assignments: MutableMapping[str, Set[BaseAssignment]]
+    _accesses: MutableMapping[str, Set[Access]]
 
     def __init__(self, parent: "Scope") -> None:
         super().__init__()
         self.parent = parent
         self.globals = parent.globals
-        self._assignments = defaultdict(list)
+        self._assignments = defaultdict(set)
+        self._accesses = defaultdict(set)
 
     def record_assignment(self, name: str, node: cst.CSTNode) -> None:
-        self._assignments[name].append(Assignment(name=name, scope=self, node=node))
+        self._assignments[name].add(Assignment(name=name, scope=self, node=node))
 
     def _getitem_from_self_or_parent(self, name: str) -> Tuple[BaseAssignment, ...]:
         """Overridden by ClassScope to hide it's assignments from child scopes."""
@@ -297,6 +311,9 @@ class Scope(abc.ABC):
     @abc.abstractmethod
     def __getitem__(self, name: str) -> Tuple[BaseAssignment, ...]:
         ...
+
+    def __hash__(self) -> int:
+        return id(self)
 
     @abc.abstractmethod
     def record_global_overwrite(self, name: str) -> None:
@@ -356,6 +373,14 @@ class Scope(abc.ABC):
                 )
         return results
 
+    @property
+    def assignments(self) -> Assignments:
+        return Assignments(self._assignments)
+
+    @property
+    def accesses(self) -> Accesses:
+        return Accesses(self._accesses)
+
 
 class GlobalScope(Scope):
     """
@@ -371,7 +396,7 @@ class GlobalScope(Scope):
             if not any(
                 isinstance(i, BuiltinAssignment) for i in self._assignments[name]
             ):
-                self._assignments[name].append(BuiltinAssignment(name, self))
+                self._assignments[name].add(BuiltinAssignment(name, self))
         return tuple(self._assignments[name])
 
     def record_global_overwrite(self, name: str) -> None:
