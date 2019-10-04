@@ -62,6 +62,9 @@ class Access:
         """Return all assignments of the access."""
         return self.__assignments
 
+    def record_assignment(self, assignment: "BaseAssignment") -> None:
+        self.__assignments.add(assignment)
+
 
 class BaseAssignment(abc.ABC):
     """Abstract base class of :class:`Assignment` and :class:`BuitinAssignment`."""
@@ -296,6 +299,9 @@ class Scope(abc.ABC):
 
     def record_assignment(self, name: str, node: cst.CSTNode) -> None:
         self._assignments[name].add(Assignment(name=name, scope=self, node=node))
+
+    def record_access(self, name: str, access: Access) -> None:
+        self._accesses[name].add(access)
 
     def _getitem_from_self_or_parent(self, name: str) -> Tuple[BaseAssignment, ...]:
         """Overridden by ClassScope to hide it's assignments from child scopes."""
@@ -565,7 +571,9 @@ class ScopeVisitor(cst.CSTVisitor):
         if context == ExpressionContext.STORE:
             self.scope.record_assignment(node.value, node)
         elif context == ExpressionContext.LOAD:
-            self.__deferred_accesses.append(Access(node, self.scope))
+            access = Access(node, self.scope)
+            self.__deferred_accesses.append(access)
+            self.scope.record_access(node.value, access)
 
     def visit_FunctionDef(self, node: cst.FunctionDef) -> Optional[bool]:
         self.scope.record_assignment(node.name.value, node)
@@ -774,6 +782,7 @@ class ScopeVisitor(cst.CSTVisitor):
         for access in self.__deferred_accesses:
             for assignment in access.scope[access.node.value]:
                 assignment.record_access(access)
+                access.record_assignment(assignment)
         self.__deferred_accesses = []
 
     def on_leave(self, original_node: cst.CSTNode) -> None:
