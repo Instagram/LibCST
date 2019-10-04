@@ -67,21 +67,24 @@ class ScopeProviderTest(UnitTest):
         global_foo_assignments = scope_of_module["foo"]
         self.assertEqual(len(global_foo_assignments), 1)
         foo_assignment = global_foo_assignments[0]
-        self.assertEqual(len(foo_assignment.accesses), 2)
+        self.assertEqual(len(foo_assignment.references), 2)
         fn1_call_arg = ensure_type(
             ensure_type(
                 ensure_type(m.body[1], cst.SimpleStatementLine).body[0], cst.Expr
             ).value,
             cst.Call,
         ).args[0]
-        self.assertEqual(foo_assignment.accesses[0].node, fn1_call_arg.value)
+
         fn2_call_arg = ensure_type(
             ensure_type(
                 ensure_type(m.body[2], cst.SimpleStatementLine).body[0], cst.Expr
             ).value,
             cst.Call,
         ).args[0]
-        self.assertEqual(foo_assignment.accesses[1].node, fn2_call_arg.value)
+        self.assertEqual(
+            {access.node for access in foo_assignment.references},
+            {fn1_call_arg.value, fn2_call_arg.value},
+        )
         func_body = ensure_type(m.body[3], cst.FunctionDef).body
         func_foo_statement = func_body.body[0]
         scope_of_func_statement = scopes[func_foo_statement]
@@ -89,7 +92,7 @@ class ScopeProviderTest(UnitTest):
         func_foo_assignments = scope_of_func_statement["foo"]
         self.assertEqual(len(func_foo_assignments), 1)
         foo_assignment = func_foo_assignments[0]
-        self.assertEqual(len(foo_assignment.accesses), 1)
+        self.assertEqual(len(foo_assignment.references), 1)
         fn3_call_arg = ensure_type(
             ensure_type(
                 ensure_type(func_body.body[1], cst.SimpleStatementLine).body[0],
@@ -97,7 +100,9 @@ class ScopeProviderTest(UnitTest):
             ).value,
             cst.Call,
         ).args[0]
-        self.assertEqual(foo_assignment.accesses[0].node, fn3_call_arg.value)
+        self.assertEqual(
+            {access.node for access in foo_assignment.references}, {fn3_call_arg.value}
+        )
 
         wrapper = MetadataWrapper(cst.parse_module("from a import b\n"))
         wrapper.visit(DependentVisitor())
