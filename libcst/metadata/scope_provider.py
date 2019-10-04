@@ -33,6 +33,7 @@ from libcst.metadata.expression_context_provider import (
     ExpressionContext,
     ExpressionContextProvider,
 )
+import warnings
 
 
 @add_slots
@@ -74,6 +75,16 @@ class BaseAssignment(abc.ABC):
         # we don't want to publicly expose the mutable version of this
         return set(self.__accesses)
 
+    @property
+    def accesses(self) -> Tuple[Access, ...]:
+        """Return all accesses of the assignment."""
+        # we don't want to publicly expose the mutable version of this
+        warnings.warn(
+            "This will be removed soon. Please use `.references` instead!",
+            DeprecationWarning,
+        )
+        return tuple(self.__accesses)
+
 
 class Assignment(BaseAssignment):
     """An assignment records the name, CSTNode and its accesses."""
@@ -85,6 +96,9 @@ class Assignment(BaseAssignment):
     def __init__(self, name: str, scope: "Scope", node: cst.CSTNode) -> None:
         self.node = node
         super().__init__(name, scope)
+
+    def __hash__(self) -> int:
+        return id(self)
 
 
 # even though we don't override the constructor.
