@@ -6,7 +6,7 @@
 # pyre-strict
 
 from enum import Enum, auto
-from typing import Optional
+from typing import Optional, Sequence
 
 import libcst as cst
 from libcst.metadata.base_provider import BatchableMetadataProvider
@@ -53,82 +53,114 @@ class ExpressionContext(Enum):
     DEL = auto()
 
 
-NODE_TYPES_HAVE_CONTEXT = (
-    cst.Attribute,
-    cst.Subscript,
-    cst.StarredElement,
-    cst.Name,
-    cst.List,
-    cst.Tuple,
-)
+class ExpressionContextVisitor(cst.CSTVisitor):
+    def __init__(
+        self, provider: "ExpressionContextProvider", context: ExpressionContext
+    ) -> None:
+        self.provider = provider
+        self.context = context
+
+    def visit_Assign(self, node: cst.Assign) -> bool:
+        for target in node.targets:
+            target.visit(
+                ExpressionContextVisitor(self.provider, ExpressionContext.STORE)
+            )
+        node.value.visit(self)
+        return False
+
+    def visit_AnnAssign(self, node: cst.AnnAssign) -> bool:
+        node.target.visit(
+            ExpressionContextVisitor(self.provider, ExpressionContext.STORE)
+        )
+        node.annotation.visit(self)
+        value = node.value
+        if value:
+            value.visit(self)
+        return False
+
+    def visit_AugAssign(self, node: cst.AugAssign) -> bool:
+        node.target.visit(
+            ExpressionContextVisitor(self.provider, ExpressionContext.STORE)
+        )
+        node.value.visit(self)
+        return False
+
+    def visit_Name(self, node: cst.Name) -> bool:
+        self.provider.set_metadata(node, self.context)
+        return False
+
+    def visit_AsName(self, node: cst.AsName) -> Optional[bool]:
+        node.name.visit(
+            ExpressionContextVisitor(self.provider, ExpressionContext.STORE)
+        )
+        return False
+
+    def visit_CompFor(self, node: cst.CompFor) -> bool:
+        node.target.visit(
+            ExpressionContextVisitor(self.provider, ExpressionContext.STORE)
+        )
+        node.iter.visit(self)
+        for i in node.ifs:
+            i.visit(self)
+        inner_for_in = node.inner_for_in
+        if inner_for_in:
+            inner_for_in.visit(self)
+        return False
+
+    def visit_Del(self, node: cst.Del) -> bool:
+        node.target.visit(
+            ExpressionContextVisitor(self.provider, ExpressionContext.DEL)
+        )
+        return False
+
+    def visit_Attribute(self, node: cst.Attribute) -> bool:
+        self.provider.set_metadata(node, self.context)
+        node.value.visit(
+            ExpressionContextVisitor(self.provider, ExpressionContext.LOAD)
+        )
+        # don't visit attr (Name), so attr has no context
+        return False
+
+    def visit_Subscript(self, node: cst.Subscript) -> bool:
+        self.provider.set_metadata(node, self.context)
+        node.value.visit(self)
+        slice = node.slice
+        if isinstance(slice, Sequence):
+            for sli in slice:
+                sli.visit(
+                    ExpressionContextVisitor(self.provider, ExpressionContext.LOAD)
+                )
+        else:
+            slice.visit(ExpressionContextVisitor(self.provider, ExpressionContext.LOAD))
+        return False
+
+    def visit_Tuple(self, node: cst.Tuple) -> Optional[bool]:
+        self.provider.set_metadata(node, self.context)
+
+    def visit_List(self, node: cst.List) -> Optional[bool]:
+        self.provider.set_metadata(node, self.context)
+
+    def visit_StarredElement(self, node: cst.StarredElement) -> Optional[bool]:
+        self.provider.set_metadata(node, self.context)
 
 
 class ExpressionContextProvider(BatchableMetadataProvider[Optional[ExpressionContext]]):
     """
-    Generate :class:`ExpressionContext` metadata for the following node types:
+    Provides :class:`ExpressionContext` metadata (mimics the `expr_context
+    <https://docs.python.org/3/library/ast.html>`__ in ast) for the
+    following node types:
     :class:`~libcst.Attribute`, :class:`~libcst.Subscript`,
-    :class:`~libcst.StarredElement` , :class:`~libcst.Name`, :class:`~libcst.List`,
-    :class:`~libcst.Tuple`. The provided context mimics the `expr_context
-    <https://docs.python.org/3/library/ast.html>`__ in ast.
+    :class:`~libcst.StarredElement` , :class:`~libcst.List`,
+    :class:`~libcst.Tuple` and :class:`~libcst.Name`.
+    Not that a :class:`~libcst.Name` may not always has context because of the differences between
+    ast and LibCST. E.g. :attr:`~libcst.Attribute.attr` is a :class:`~libcst.Name` in LibCST
+    but a str in ast. To honor ast implementation, we don't assignment context to
+    :attr:`~libcst.Attribute.attr`.
+
 
     Three context types :attr:`ExpressionContext.STORE`,
     :attr:`ExpressionContext.LOAD` and :attr:`ExpressionContext.DEL` are provided.
     """
 
-    def _check_type_and_set_metadata(
-        self, node: cst.CSTNode, context: Optional[ExpressionContext]
-    ) -> None:
-        if context is not None and isinstance(node, NODE_TYPES_HAVE_CONTEXT):
-            self.set_metadata(node, context)
-
-    def visit_Assign(self, node: cst.Assign) -> None:
-        for target in node.targets:
-            self._check_type_and_set_metadata(target.target, ExpressionContext.STORE)
-
-    def visit_AnnAssign(self, node: cst.AnnAssign) -> None:
-        self._check_type_and_set_metadata(node.target, ExpressionContext.STORE)
-
-    def visit_AugAssign(self, node: cst.AugAssign) -> None:
-        self._check_type_and_set_metadata(node.target, ExpressionContext.STORE)
-
-    def visit_AsName(self, node: cst.AsName) -> Optional[bool]:
-        self._check_type_and_set_metadata(node.name, ExpressionContext.STORE)
-
-    def visit_CompFor(self, node: cst.CompFor) -> Optional[bool]:
-        self._check_type_and_set_metadata(node.target, ExpressionContext.STORE)
-
-    def visit_Del(self, node: cst.Del) -> None:
-        self.set_metadata(node.target, ExpressionContext.DEL)
-
-    def _set_metadata_as_load_if_not_set(self, node: cst.CSTNode) -> None:
-        if self.get_metadata(ExpressionContextProvider, node, None) is None:
-            self.set_metadata(node, ExpressionContext.LOAD)
-
-    def leave_Attribute(self, node: cst.Attribute) -> None:
-        self._set_metadata_as_load_if_not_set(node)
-        self._check_type_and_set_metadata(
-            node.attr, self.get_metadata(ExpressionContextProvider, node)
-        )
-
-    def leave_Subscript(self, node: cst.Subscript) -> None:
-        self._set_metadata_as_load_if_not_set(node)
-
-    def leave_StarredElement(self, node: cst.StarredElement) -> None:
-        self._set_metadata_as_load_if_not_set(node)
-
-    def leave_Name(self, node: cst.Name) -> None:
-        self._set_metadata_as_load_if_not_set(node)
-
-    def leave_List(self, node: cst.List) -> None:
-        self._set_metadata_as_load_if_not_set(node)
-        for element in node.elements:
-            self._check_type_and_set_metadata(
-                element.value, self.get_metadata(ExpressionContextProvider, node)
-            )
-
-    def leave_Tuple(self, node: cst.Tuple) -> None:
-        self._set_metadata_as_load_if_not_set(node)
-        for element in node.elements:
-            self._check_type_and_set_metadata(
-                element.value, self.get_metadata(ExpressionContextProvider, node)
-            )
+    def visit_Module(self, node: cst.Module) -> Optional[bool]:
+        node.visit(ExpressionContextVisitor(self, ExpressionContext.LOAD))
