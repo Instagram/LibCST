@@ -30,14 +30,14 @@ def with_production(
     def inner(fn: _NonterminalConversionT) -> _NonterminalConversionT:
         if not hasattr(fn, "productions"):
             fn.productions = []
-        # pyre-fixme[16]: `Callable[[ParserConfig, Sequence[Any]], Any]` has no attri...
+        # pyre-ignore: Pyre doesn't think that fn has a __name__ attribute
         fn_name = fn.__name__
         if not fn_name.startswith("convert_"):
             raise Exception(
                 "A function with a production must be named 'convert_X', not "
                 + f"'{fn_name}'."
             )
-        # pyre-fixme[16]: Pyre doesn't know about this magic field we added
+        # pyre-ignore: Pyre doesn't know about this magic field we added
         fn.productions.append(Production(production_name, children, version))
         return fn
 
@@ -45,4 +45,5 @@ def with_production(
 
 
 def get_productions(fn: NonterminalConversion) -> Sequence[Production]:
+    # pyre-ignore Pyre doesn't know about this magic field we added
     return fn.productions

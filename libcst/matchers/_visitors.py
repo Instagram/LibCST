@@ -46,6 +46,7 @@ class MatchDecoratorMismatch(Exception):
     # pyre-ignore We don't care about the type of func, just that its callable.
     def __init__(self, func: Callable[..., Any], message: str) -> None:
         super().__init__(
+            # pyre-ignore Pyre doesn't believe functions have __qualname__
             f"Invalid function signature for {func.__qualname__}: {message}"
         )
 
