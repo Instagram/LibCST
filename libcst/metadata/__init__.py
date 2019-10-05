@@ -21,7 +21,9 @@ from libcst.metadata.position_provider import (
 )
 from libcst.metadata.scope_provider import (
     Access,
+    Accesses,
     Assignment,
+    Assignments,
     BaseAssignment,
     BuiltinAssignment,
     ClassScope,
@@ -33,8 +35,6 @@ from libcst.metadata.scope_provider import (
     QualifiedNameSource,
     Scope,
     ScopeProvider,
-    Assignments,
-    Accesses,
 )
 from libcst.metadata.wrapper import MetadataWrapper
 
