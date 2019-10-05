@@ -15,7 +15,6 @@ from enum import Enum, auto
 from typing import (
     Collection,
     Dict,
-    Generator,
     Iterator,
     List,
     Mapping,
@@ -137,7 +136,7 @@ class Assignments:
     def __init__(self, assignments: Mapping[str, Collection[BaseAssignment]]) -> None:
         self._assignments = assignments
 
-    def __iter__(self) -> Generator[BaseAssignment, None, None]:
+    def __iter__(self) -> Iterator[BaseAssignment]:
         """Iterate through all assignments by ``for i in scope.assignments``."""
         for assignments in self._assignments.values():
             for assignment in assignments:
@@ -159,7 +158,7 @@ class Accesses:
     def __init__(self, accesses: Mapping[str, Collection[Access]]) -> None:
         self._accesses = accesses
 
-    def __iter__(self) -> Generator[Access, None, None]:
+    def __iter__(self) -> Iterator[Access]:
         """Iterate through all accesses by ``for i in scope.accesses``."""
         for accesses in self._accesses.values():
             for access in accesses:
@@ -189,9 +188,11 @@ class QualifiedName:
 
 class _NameUtil:
     @staticmethod
-    def get_full_name_for(node: cst.CSTNode) -> Optional[str]:
+    def get_full_name_for(node: Union[str, cst.CSTNode]) -> Optional[str]:
         if isinstance(node, cst.Name):
             return node.value
+        elif isinstance(node, str):
+            return node
         elif isinstance(node, cst.Attribute):
             return f"{_NameUtil.get_full_name_for(node.value)}.{node.attr.value}"
         elif isinstance(node, cst.Call):
@@ -332,7 +333,9 @@ class Scope(abc.ABC):
     def record_nonlocal_overwrite(self, name: str) -> None:
         ...
 
-    def get_qualified_names_for(self, node: cst.CSTNode) -> Collection[QualifiedName]:
+    def get_qualified_names_for(
+        self, node: Union[str, cst.CSTNode]
+    ) -> Collection[QualifiedName]:
         """ Get all :class:`~libcst.metadata.QualifiedName` in current scope given a
         :class:`~libcst.CSTNode`.
         The source of a qualified name can be either :attr:`QualifiedNameSource.IMPORT`,

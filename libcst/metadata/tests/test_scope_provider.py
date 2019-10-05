@@ -773,6 +773,13 @@ class ScopeProviderTest(UnitTest):
                 QualifiedName(name="d.e", source=QualifiedNameSource.IMPORT),
             },
         )
+        self.assertEqual(
+            scope.get_qualified_names_for("c"),
+            {
+                QualifiedName(name="a.b", source=QualifiedNameSource.IMPORT),
+                QualifiedName(name="d.e", source=QualifiedNameSource.IMPORT),
+            },
+        )
 
     def test_assignemnts_and_accesses(self) -> None:
         m, scopes = get_scope_metadata_provider(
