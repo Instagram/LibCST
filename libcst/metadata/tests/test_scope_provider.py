@@ -773,3 +773,90 @@ class ScopeProviderTest(UnitTest):
                 QualifiedName(name="d.e", source=QualifiedNameSource.IMPORT),
             },
         )
+
+    def test_assignemnts_and_accesses(self) -> None:
+        m, scopes = get_scope_metadata_provider(
+            """
+                a = 1
+                def f():
+                    a = 2
+                    a, b
+                    def g():
+                        b = a
+                a
+            """
+        )
+        a_outer_assign = (
+            ensure_type(
+                ensure_type(m.body[0], cst.SimpleStatementLine).body[0], cst.Assign
+            )
+            .targets[0]
+            .target
+        )
+        a_outer_access = ensure_type(
+            ensure_type(m.body[2], cst.SimpleStatementLine).body[0], cst.Expr
+        ).value
+        scope_of_module = scopes[a_outer_assign]
+        a_outer_assignments = scope_of_module.assignments[a_outer_access]
+        self.assertEqual(len(a_outer_assignments), 1)
+        self.assertEqual(
+            cast(Assignment, list(a_outer_assignments)[0]).node, a_outer_assign
+        )
+
+        a_outer_assesses = scope_of_module.accesses[a_outer_assign]
+        self.assertEqual(len(a_outer_assesses), 1)
+        self.assertEqual(list(a_outer_assesses)[0].node, a_outer_access)
+
+        self.assertTrue(a_outer_assign in scope_of_module.accesses)
+        self.assertTrue(a_outer_assign in scope_of_module.assignments)
+        self.assertTrue(a_outer_access in scope_of_module.accesses)
+        self.assertTrue(a_outer_access in scope_of_module.assignments)
+
+        f = ensure_type(m.body[1], cst.FunctionDef)
+        a_inner_assign = (
+            ensure_type(
+                ensure_type(
+                    ensure_type(f.body, cst.IndentedBlock).body[0],
+                    cst.SimpleStatementLine,
+                ).body[0],
+                cst.Assign,
+            )
+            .targets[0]
+            .target
+        )
+        scope_of_f = scopes[a_inner_assign]
+        a_inner_assignments = scope_of_f.assignments["a"]
+        self.assertEqual(len(a_inner_assignments), 1)
+        self.assertEqual(
+            cast(Assignment, list(a_inner_assignments)[0]).node, a_inner_assign
+        )
+        tup = ensure_type(
+            ensure_type(
+                ensure_type(
+                    ensure_type(f.body, cst.IndentedBlock).body[1],
+                    cst.SimpleStatementLine,
+                ).body[0],
+                cst.Expr,
+            ).value,
+            cst.Tuple,
+        )
+        a_inner_access = tup.elements[0].value
+        b_inner_access = tup.elements[1].value
+        all_inner_accesses = [i for i in scope_of_f.accesses]
+        self.assertEqual(len(all_inner_accesses), 2)
+        self.assertEqual(
+            {i.node for i in all_inner_accesses}, {a_inner_access, b_inner_access}
+        )
+
+        g = ensure_type(ensure_type(f.body, cst.IndentedBlock).body[2], cst.FunctionDef)
+        inner_most_assign = ensure_type(
+            ensure_type(g.body.body[0], cst.SimpleStatementLine).body[0], cst.Assign
+        )
+        b_inner_most_assign = inner_most_assign.targets[0].target
+        a_inner_most_access = inner_most_assign.value
+        scope_of_g = scopes[b_inner_most_assign]
+        self.assertEqual({i.node for i in scope_of_g.accesses}, {a_inner_most_access})
+        self.assertEqual(
+            {cast(Assignment, i).node for i in scope_of_g.assignments},
+            {b_inner_most_assign},
+        )
