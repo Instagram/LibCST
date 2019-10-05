@@ -802,10 +802,21 @@ class ScopeProviderTest(UnitTest):
         self.assertEqual(
             cast(Assignment, list(a_outer_assignments)[0]).node, a_outer_assign
         )
+        self.assertEqual(
+            {i.node for i in list(a_outer_assignments)[0].accesses}, {a_outer_access}
+        )
+        self.assertEqual(
+            {i.node for i in list(a_outer_assignments)[0].references}, {a_outer_access}
+        )
 
         a_outer_assesses = scope_of_module.accesses[a_outer_assign]
         self.assertEqual(len(a_outer_assesses), 1)
         self.assertEqual(list(a_outer_assesses)[0].node, a_outer_access)
+
+        self.assertEqual(
+            {cast(Assignment, i).node for i in list(a_outer_assesses)[0].referents},
+            {a_outer_assign},
+        )
 
         self.assertTrue(a_outer_assign in scope_of_module.accesses)
         self.assertTrue(a_outer_assign in scope_of_module.assignments)
@@ -860,3 +871,5 @@ class ScopeProviderTest(UnitTest):
             {cast(Assignment, i).node for i in scope_of_g.assignments},
             {b_inner_most_assign},
         )
+
+        self.assertEqual(len(set(scopes.values())), 3)
