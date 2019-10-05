@@ -33,6 +33,8 @@ from libcst.metadata.scope_provider import (
     QualifiedNameSource,
     Scope,
     ScopeProvider,
+    Assignments,
+    Accesses,
 )
 from libcst.metadata.wrapper import MetadataWrapper
 
@@ -60,4 +62,6 @@ __all__ = [
     "VisitorMetadataProvider",
     "QualifiedNameProvider",
     "ProviderT",
+    "Assignments",
+    "Accesses",
 ]

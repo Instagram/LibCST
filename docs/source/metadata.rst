@@ -121,7 +121,6 @@ There were four different type of scope in Python: :class:`~libcst.metadata.Glob
 .. autoclass:: libcst.metadata.Assignment
 .. autoclass:: libcst.metadata.BuiltinAssignment
 
-
 .. autoclass:: libcst.metadata.Scope
    :no-undoc-members:
 
@@ -131,6 +130,12 @@ There were four different type of scope in Python: :class:`~libcst.metadata.Glob
 .. autoclass:: libcst.metadata.FunctionScope
 .. autoclass:: libcst.metadata.ClassScope
 .. autoclass:: libcst.metadata.ComprehensionScope
+
+.. autoclass:: libcst.metadata.Assignments
+   :special-members: __contains__, __getitem__, __iter__
+
+.. autoclass:: libcst.metadata.Accesses
+   :special-members: __contains__, __getitem__, __iter__
 
 Qualified Name Metadata
 -----------------------

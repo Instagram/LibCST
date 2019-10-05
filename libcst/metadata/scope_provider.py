@@ -92,7 +92,10 @@ class BaseAssignment(abc.ABC):
 
     @property
     def accesses(self) -> Tuple[Access, ...]:
-        """Return all accesses of the assignment."""
+        """Return all accesses of the assignment.
+        Deprecated: This will be removed soon. Please use
+        :attr:`~libcst.metadata.BaseAssignment.references` instead!
+        """
         # we don't want to publicly expose the mutable version of this
         warnings.warn(
             "This will be removed soon. Please use `.references` instead!",
@@ -381,10 +384,12 @@ class Scope(abc.ABC):
 
     @property
     def assignments(self) -> Assignments:
+        """Return an :class:`~libcst.metadata.Assignments` contains all assignmens in current scope."""
         return Assignments(self._assignments)
 
     @property
     def accesses(self) -> Accesses:
+        """Return an :class:`~libcst.metadata.Accesses` contains all accesses in current scope."""
         return Accesses(self._accesses)
 
 
