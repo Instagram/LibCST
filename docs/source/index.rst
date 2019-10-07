@@ -25,6 +25,7 @@ LibCST
 
    Parsing and Visitors <tutorial>
    Metadata <metadata_tutorial>
+   Scope Analysis <scope_tutorial>
    Matchers <matchers_tutorial>
 
 
