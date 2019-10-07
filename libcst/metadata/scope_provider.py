@@ -282,8 +282,16 @@ class Scope(abc.ABC):
     A scope has a parent scope which represents the inheritance relationship. That means
     an assignment in parent scope is viewable to the child scope and the child scope may
     overwrites the assignment by using the same name.
+
     Use ``name in scope`` to check whether a name is viewable in the scope.
     Use ``scope[name]`` to retrieve all viewable assignments in the scope.
+
+    .. warning::
+       This scope analysis module only analyzes local variable names and it doesn't handle
+       attribute names; for example, given a.b.c = 1, local variable name ``a`` is recorded
+       as an assignment instead of ``c`` or ``a.b.c``. To analyze the assignment/access of
+       arbitrary object attributes, we leave the the job to type inference metadata provider
+       coming in the future.
     """
 
     #: Parent scope. Note the parent scope of a GlobalScope is itself.
