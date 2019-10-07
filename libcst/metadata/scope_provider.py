@@ -316,10 +316,12 @@ class Scope(abc.ABC):
         self.record_assignment(name, node)
 
     def __contains__(self, name: str) -> bool:
+        """ Check if the name str exist in current scope by ``name in scope``. """
         return len(self[name]) > 0
 
     @abc.abstractmethod
     def __getitem__(self, name: str) -> Tuple[BaseAssignment, ...]:
+        """ Get assignments given a name str by ``scope[name]``. """
         ...
 
     def __hash__(self) -> int:
@@ -358,8 +360,7 @@ class Scope(abc.ABC):
         An imported name may be used for type annotation with :class:`~libcst.SimpleString` and
         currently resolving the qualified given :class:`~libcst.SimpleString` is not supported
         considering it could be a complex type annotation in the string which is hard to
-        resolve, e.g.
-        ``List[Union[int, str]]``.
+        resolve, e.g. ``List[Union[int, str]]``.
         """
         results = set()
         full_name = _NameUtil.get_full_name_for(node)
