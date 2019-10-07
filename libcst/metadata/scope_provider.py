@@ -38,7 +38,7 @@ class Access:
     """
     An Access records an access of an assignment.
 
-    .. warning::
+    .. note::
        This scope analysis only analyze access via a :class:`~libcst.Name` or  a :class:`~libcst.Name`
        node embedded in other node like :class:`~libcst.Call` or :class:`~libcst.Attribute`.
        It doesn't support type anontation using :class:`~libcst.SimpleString` literal for forward
@@ -102,8 +102,10 @@ class BaseAssignment(abc.ABC):
     @property
     def accesses(self) -> Tuple[Access, ...]:
         """Return all accesses of the assignment.
-        Deprecated: This will be removed soon. Please use
-        :attr:`~libcst.metadata.BaseAssignment.references` instead!
+
+        .. warning::
+           Deprecated: This will be removed soon. Please use
+           :attr:`~libcst.metadata.BaseAssignment.references` instead!
         """
         # we don't want to publicly expose the mutable version of this
         warnings.warn(
@@ -296,7 +298,7 @@ class Scope(abc.ABC):
     Use ``name in scope`` to check whether a name is viewable in the scope.
     Use ``scope[name]`` to retrieve all viewable assignments in the scope.
 
-    .. warning::
+    .. note::
        This scope analysis module only analyzes local variable names and it doesn't handle
        attribute names; for example, given a.b.c = 1, local variable name ``a`` is recorded
        as an assignment instead of ``c`` or ``a.b.c``. To analyze the assignment/access of
