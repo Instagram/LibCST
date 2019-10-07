@@ -37,6 +37,16 @@ from libcst.metadata.expression_context_provider import (
 class Access:
     """
     An Access records an access of an assignment.
+
+    .. warning::
+       This scope analysis only analyze access via a :class:`~libcst.Name` or  a :class:`~libcst.Name`
+       node embedded in other node like :class:`~libcst.Call` or :class:`~libcst.Attribute`.
+       It doesn't support type anontation using :class:`~libcst.SimpleString` literal for forward
+       reference. E.g. in this example, the ``"Tree"`` isn't parsed as as an access::
+
+           class Tree:
+               def __new__(cls) -> "Tree":
+                   ...
     """
 
     #: The name node of the access. A name is an access when the expression context is
@@ -584,7 +594,8 @@ class ScopeVisitor(cst.CSTVisitor):
         return self._visit_import_alike(node)
 
     def visit_Name(self, node: cst.Name) -> Optional[bool]:
-        context = self.provider.get_metadata(ExpressionContextProvider, node)
+        # not all Name have ExpressionContext
+        context = self.provider.get_metadata(ExpressionContextProvider, node, None)
         if context == ExpressionContext.STORE:
             self.scope.record_assignment(node.value, node)
         elif context == ExpressionContext.LOAD:
