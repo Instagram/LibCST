@@ -17,6 +17,13 @@ import subprocess
 import sys
 from typing import List
 
+import libcst as cst
+from libcst import ensure_type, parse_module
+from libcst.codegen.transforms import (
+    DoubleQuoteForwardRefsTransformer,
+    SimplifyUnionsTransformer,
+)
+
 
 def format_file(fname: str) -> None:
     with open(os.devnull, "w") as devnull:
@@ -24,6 +31,18 @@ def format_file(fname: str) -> None:
             ["isort", "-y", "-q", fname], stdout=devnull, stderr=devnull
         )
         subprocess.check_call(["black", fname], stdout=devnull, stderr=devnull)
+
+
+def clean_generated_code(code: str) -> str:
+    """
+    Generalized sanity clean-up for all codegen so we can fix issues such as
+    Union[SingleType]. The transforms found here are strictly for form and
+    do not affect functionality.
+    """
+    module = parse_module(code)
+    module = ensure_type(module.visit(SimplifyUnionsTransformer()), cst.Module)
+    module = ensure_type(module.visit(DoubleQuoteForwardRefsTransformer()), cst.Module)
+    return module.code
 
 
 def codegen_visitors() -> None:
@@ -43,7 +62,7 @@ def codegen_visitors() -> None:
         # We import now, because this script does work on import.
         import libcst.codegen.gen_visitor_functions as visitor_codegen
 
-        new_code = "\n".join(visitor_codegen.generated_code)
+        new_code = clean_generated_code("\n".join(visitor_codegen.generated_code))
         with open(visitors_file, "w") as fp:
             fp.write(new_code)
             fp.close()
@@ -90,7 +109,7 @@ def codegen_matchers() -> None:
         os.path.join(os.path.dirname(os.path.abspath(__file__)), "../")
     )
     matchers_file = os.path.join(base, "matchers/__init__.py")
-    new_code = "\n".join(matcher_codegen.generated_code)
+    new_code = clean_generated_code("\n".join(matcher_codegen.generated_code))
     with open(matchers_file, "w") as fp:
         fp.write(new_code)
         fp.close()

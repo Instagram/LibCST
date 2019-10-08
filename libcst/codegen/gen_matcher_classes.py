@@ -105,16 +105,6 @@ class CleanseFullTypeNames(cst.CSTTransformer):
         return updated_node.with_changes(comma=cst.MaybeSentinel.DEFAULT)
 
 
-class DoubleQuoteStrings(cst.CSTTransformer):
-    def leave_SimpleString(
-        self, original_node: cst.SimpleString, updated_node: cst.SimpleString
-    ) -> cst.SimpleString:
-        # For prettiness, convert all single-quoted forward refs to double-quoted.
-        if updated_node.value.startswith("'") and updated_node.value.endswith("'"):
-            return updated_node.with_changes(value=f'"{updated_node.value[1:-1]}"')
-        return updated_node
-
-
 class RemoveDoNotCareFromGeneric(cst.CSTTransformer):
     def leave_ExtSlice(
         self, original_node: cst.ExtSlice, updated_node: cst.ExtSlice
@@ -126,17 +116,6 @@ class RemoveDoNotCareFromGeneric(cst.CSTTransformer):
                 if val.value == "DoNotCareSentinel":
                     # We don't support maybes in matchers.
                     return cst.RemoveFromParent()
-        return updated_node
-
-    def leave_Subscript(
-        self, original_node: cst.Subscript, updated_node: cst.Subscript
-    ) -> cst.BaseExpression:
-        if updated_node.value.deep_equals(cst.Name("Union")):
-            slc = updated_node.slice
-            if isinstance(slc, (cst.Index, cst.Slice)):
-                raise Exception("Unexpected Index/Slice in Union!")
-            if len(slc) == 1:
-                return ensure_type(slc[0].slice, cst.Index).value
         return updated_node
 
 
@@ -404,8 +383,6 @@ def _get_clean_type(typeobj: object) -> str:
         clean_type = ensure_type(
             clean_type.visit(AddDoNotCareToSequences()), cst.CSTNode
         )
-        # Now, double-quote any types we parsed and repr'd, for consistency.
-        clean_type = ensure_type(clean_type.visit(DoubleQuoteStrings()), cst.CSTNode)
         # Now, insert OneOf/AllOf and MatchIfTrue into unions so we can typecheck their usage.
         # This allows us to put OneOf[SomeType] or MatchIfTrue[cst.SomeType] into any
         # spot that we would have originally allowed a SomeType.
