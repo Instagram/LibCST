@@ -9,7 +9,7 @@ import os.path
 
 import libcst.codegen.gen_matcher_classes as matcher_codegen
 import libcst.codegen.gen_visitor_functions as visitor_codegen
-from libcst.codegen.generate import format_file
+from libcst.codegen.generate import clean_generated_code, format_file
 from libcst.testing.utils import UnitTest
 
 
@@ -20,7 +20,7 @@ class TestCodegenClean(UnitTest):
         changed file. If this test fails, please run 'tox -e codegen' to
         generate new files.
         """
-        new_code = "\n".join(visitor_codegen.generated_code)
+        new_code = clean_generated_code("\n".join(visitor_codegen.generated_code))
         new_file = os.path.join(
             os.path.dirname(os.path.abspath(__file__)), "visitor_codegen.py.deleteme"
         )
@@ -54,7 +54,7 @@ class TestCodegenClean(UnitTest):
         changed file. If this test fails, please run 'tox -e codegen' to
         generate new files.
         """
-        new_code = "\n".join(matcher_codegen.generated_code)
+        new_code = clean_generated_code("\n".join(matcher_codegen.generated_code))
         new_file = os.path.join(
             os.path.dirname(os.path.abspath(__file__)), "matcher_codegen.py.deleteme"
         )

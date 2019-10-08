@@ -5174,21 +5174,17 @@ class CSTTypedTransformerFunctions(CSTTypedBaseFunctions):
     pass
 
     @mark_no_op
-    def leave_Add(
-        self, original_node: "Add", updated_node: "Add"
-    ) -> Union["BaseBinaryOp"]:
+    def leave_Add(self, original_node: "Add", updated_node: "Add") -> "BaseBinaryOp":
         return updated_node
 
     @mark_no_op
     def leave_AddAssign(
         self, original_node: "AddAssign", updated_node: "AddAssign"
-    ) -> Union["BaseAugOp"]:
+    ) -> "BaseAugOp":
         return updated_node
 
     @mark_no_op
-    def leave_And(
-        self, original_node: "And", updated_node: "And"
-    ) -> Union["BaseBooleanOp"]:
+    def leave_And(self, original_node: "And", updated_node: "And") -> "BaseBooleanOp":
         return updated_node
 
     @mark_no_op
@@ -5200,7 +5196,7 @@ class CSTTypedTransformerFunctions(CSTTypedBaseFunctions):
     @mark_no_op
     def leave_Annotation(
         self, original_node: "Annotation", updated_node: "Annotation"
-    ) -> Union["Annotation"]:
+    ) -> "Annotation":
         return updated_node
 
     @mark_no_op
@@ -5210,9 +5206,7 @@ class CSTTypedTransformerFunctions(CSTTypedBaseFunctions):
         return updated_node
 
     @mark_no_op
-    def leave_AsName(
-        self, original_node: "AsName", updated_node: "AsName"
-    ) -> Union["AsName"]:
+    def leave_AsName(self, original_node: "AsName", updated_node: "AsName") -> "AsName":
         return updated_node
 
     @mark_no_op
@@ -5242,13 +5236,13 @@ class CSTTypedTransformerFunctions(CSTTypedBaseFunctions):
     @mark_no_op
     def leave_Asynchronous(
         self, original_node: "Asynchronous", updated_node: "Asynchronous"
-    ) -> Union["Asynchronous"]:
+    ) -> "Asynchronous":
         return updated_node
 
     @mark_no_op
     def leave_Attribute(
         self, original_node: "Attribute", updated_node: "Attribute"
-    ) -> Union["BaseExpression"]:
+    ) -> "BaseExpression":
         return updated_node
 
     @mark_no_op
@@ -5260,61 +5254,61 @@ class CSTTypedTransformerFunctions(CSTTypedBaseFunctions):
     @mark_no_op
     def leave_Await(
         self, original_node: "Await", updated_node: "Await"
-    ) -> Union["BaseExpression"]:
+    ) -> "BaseExpression":
         return updated_node
 
     @mark_no_op
     def leave_BinaryOperation(
         self, original_node: "BinaryOperation", updated_node: "BinaryOperation"
-    ) -> Union["BaseExpression"]:
+    ) -> "BaseExpression":
         return updated_node
 
     @mark_no_op
     def leave_BitAnd(
         self, original_node: "BitAnd", updated_node: "BitAnd"
-    ) -> Union["BaseBinaryOp"]:
+    ) -> "BaseBinaryOp":
         return updated_node
 
     @mark_no_op
     def leave_BitAndAssign(
         self, original_node: "BitAndAssign", updated_node: "BitAndAssign"
-    ) -> Union["BaseAugOp"]:
+    ) -> "BaseAugOp":
         return updated_node
 
     @mark_no_op
     def leave_BitInvert(
         self, original_node: "BitInvert", updated_node: "BitInvert"
-    ) -> Union["BaseUnaryOp"]:
+    ) -> "BaseUnaryOp":
         return updated_node
 
     @mark_no_op
     def leave_BitOr(
         self, original_node: "BitOr", updated_node: "BitOr"
-    ) -> Union["BaseBinaryOp"]:
+    ) -> "BaseBinaryOp":
         return updated_node
 
     @mark_no_op
     def leave_BitOrAssign(
         self, original_node: "BitOrAssign", updated_node: "BitOrAssign"
-    ) -> Union["BaseAugOp"]:
+    ) -> "BaseAugOp":
         return updated_node
 
     @mark_no_op
     def leave_BitXor(
         self, original_node: "BitXor", updated_node: "BitXor"
-    ) -> Union["BaseBinaryOp"]:
+    ) -> "BaseBinaryOp":
         return updated_node
 
     @mark_no_op
     def leave_BitXorAssign(
         self, original_node: "BitXorAssign", updated_node: "BitXorAssign"
-    ) -> Union["BaseAugOp"]:
+    ) -> "BaseAugOp":
         return updated_node
 
     @mark_no_op
     def leave_BooleanOperation(
         self, original_node: "BooleanOperation", updated_node: "BooleanOperation"
-    ) -> Union["BaseExpression"]:
+    ) -> "BaseExpression":
         return updated_node
 
     @mark_no_op
@@ -5326,7 +5320,7 @@ class CSTTypedTransformerFunctions(CSTTypedBaseFunctions):
     @mark_no_op
     def leave_Call(
         self, original_node: "Call", updated_node: "Call"
-    ) -> Union["BaseExpression"]:
+    ) -> "BaseExpression":
         return updated_node
 
     @mark_no_op
@@ -5350,25 +5344,23 @@ class CSTTypedTransformerFunctions(CSTTypedBaseFunctions):
     @mark_no_op
     def leave_Comment(
         self, original_node: "Comment", updated_node: "Comment"
-    ) -> Union["Comment"]:
+    ) -> "Comment":
         return updated_node
 
     @mark_no_op
     def leave_CompFor(
         self, original_node: "CompFor", updated_node: "CompFor"
-    ) -> Union["CompFor"]:
+    ) -> "CompFor":
         return updated_node
 
     @mark_no_op
-    def leave_CompIf(
-        self, original_node: "CompIf", updated_node: "CompIf"
-    ) -> Union["CompIf"]:
+    def leave_CompIf(self, original_node: "CompIf", updated_node: "CompIf") -> "CompIf":
         return updated_node
 
     @mark_no_op
     def leave_Comparison(
         self, original_node: "Comparison", updated_node: "Comparison"
-    ) -> Union["BaseExpression"]:
+    ) -> "BaseExpression":
         return updated_node
 
     @mark_no_op
@@ -5380,7 +5372,7 @@ class CSTTypedTransformerFunctions(CSTTypedBaseFunctions):
     @mark_no_op
     def leave_ConcatenatedString(
         self, original_node: "ConcatenatedString", updated_node: "ConcatenatedString"
-    ) -> Union["BaseExpression"]:
+    ) -> "BaseExpression":
         return updated_node
 
     @mark_no_op
@@ -5404,13 +5396,13 @@ class CSTTypedTransformerFunctions(CSTTypedBaseFunctions):
     @mark_no_op
     def leave_Dict(
         self, original_node: "Dict", updated_node: "Dict"
-    ) -> Union["BaseExpression"]:
+    ) -> "BaseExpression":
         return updated_node
 
     @mark_no_op
     def leave_DictComp(
         self, original_node: "DictComp", updated_node: "DictComp"
-    ) -> Union["BaseExpression"]:
+    ) -> "BaseExpression":
         return updated_node
 
     @mark_no_op
@@ -5422,13 +5414,13 @@ class CSTTypedTransformerFunctions(CSTTypedBaseFunctions):
     @mark_no_op
     def leave_Divide(
         self, original_node: "Divide", updated_node: "Divide"
-    ) -> Union["BaseBinaryOp"]:
+    ) -> "BaseBinaryOp":
         return updated_node
 
     @mark_no_op
     def leave_DivideAssign(
         self, original_node: "DivideAssign", updated_node: "DivideAssign"
-    ) -> Union["BaseAugOp"]:
+    ) -> "BaseAugOp":
         return updated_node
 
     @mark_no_op
@@ -5446,11 +5438,11 @@ class CSTTypedTransformerFunctions(CSTTypedBaseFunctions):
     @mark_no_op
     def leave_Ellipsis(
         self, original_node: "Ellipsis", updated_node: "Ellipsis"
-    ) -> Union["BaseExpression"]:
+    ) -> "BaseExpression":
         return updated_node
 
     @mark_no_op
-    def leave_Else(self, original_node: "Else", updated_node: "Else") -> Union["Else"]:
+    def leave_Else(self, original_node: "Else", updated_node: "Else") -> "Else":
         return updated_node
 
     @mark_no_op
@@ -5462,7 +5454,7 @@ class CSTTypedTransformerFunctions(CSTTypedBaseFunctions):
     @mark_no_op
     def leave_Equal(
         self, original_node: "Equal", updated_node: "Equal"
-    ) -> Union["BaseCompOp"]:
+    ) -> "BaseCompOp":
         return updated_node
 
     @mark_no_op
@@ -5486,25 +5478,25 @@ class CSTTypedTransformerFunctions(CSTTypedBaseFunctions):
     @mark_no_op
     def leave_Finally(
         self, original_node: "Finally", updated_node: "Finally"
-    ) -> Union["Finally"]:
+    ) -> "Finally":
         return updated_node
 
     @mark_no_op
     def leave_Float(
         self, original_node: "Float", updated_node: "Float"
-    ) -> Union["BaseExpression"]:
+    ) -> "BaseExpression":
         return updated_node
 
     @mark_no_op
     def leave_FloorDivide(
         self, original_node: "FloorDivide", updated_node: "FloorDivide"
-    ) -> Union["BaseBinaryOp"]:
+    ) -> "BaseBinaryOp":
         return updated_node
 
     @mark_no_op
     def leave_FloorDivideAssign(
         self, original_node: "FloorDivideAssign", updated_node: "FloorDivideAssign"
-    ) -> Union["BaseAugOp"]:
+    ) -> "BaseAugOp":
         return updated_node
 
     @mark_no_op
@@ -5516,7 +5508,7 @@ class CSTTypedTransformerFunctions(CSTTypedBaseFunctions):
     @mark_no_op
     def leave_FormattedString(
         self, original_node: "FormattedString", updated_node: "FormattedString"
-    ) -> Union["BaseExpression"]:
+    ) -> "BaseExpression":
         return updated_node
 
     @mark_no_op
@@ -5534,7 +5526,7 @@ class CSTTypedTransformerFunctions(CSTTypedBaseFunctions):
         return updated_node
 
     @mark_no_op
-    def leave_From(self, original_node: "From", updated_node: "From") -> Union["From"]:
+    def leave_From(self, original_node: "From", updated_node: "From") -> "From":
         return updated_node
 
     @mark_no_op
@@ -5546,7 +5538,7 @@ class CSTTypedTransformerFunctions(CSTTypedBaseFunctions):
     @mark_no_op
     def leave_GeneratorExp(
         self, original_node: "GeneratorExp", updated_node: "GeneratorExp"
-    ) -> Union["BaseExpression"]:
+    ) -> "BaseExpression":
         return updated_node
 
     @mark_no_op
@@ -5558,13 +5550,13 @@ class CSTTypedTransformerFunctions(CSTTypedBaseFunctions):
     @mark_no_op
     def leave_GreaterThan(
         self, original_node: "GreaterThan", updated_node: "GreaterThan"
-    ) -> Union["BaseCompOp"]:
+    ) -> "BaseCompOp":
         return updated_node
 
     @mark_no_op
     def leave_GreaterThanEqual(
         self, original_node: "GreaterThanEqual", updated_node: "GreaterThanEqual"
-    ) -> Union["BaseCompOp"]:
+    ) -> "BaseCompOp":
         return updated_node
 
     @mark_no_op
@@ -5576,13 +5568,13 @@ class CSTTypedTransformerFunctions(CSTTypedBaseFunctions):
     @mark_no_op
     def leave_IfExp(
         self, original_node: "IfExp", updated_node: "IfExp"
-    ) -> Union["BaseExpression"]:
+    ) -> "BaseExpression":
         return updated_node
 
     @mark_no_op
     def leave_Imaginary(
         self, original_node: "Imaginary", updated_node: "Imaginary"
-    ) -> Union["BaseExpression"]:
+    ) -> "BaseExpression":
         return updated_node
 
     @mark_no_op
@@ -5606,51 +5598,49 @@ class CSTTypedTransformerFunctions(CSTTypedBaseFunctions):
     @mark_no_op
     def leave_ImportStar(
         self, original_node: "ImportStar", updated_node: "ImportStar"
-    ) -> Union["ImportStar"]:
+    ) -> "ImportStar":
         return updated_node
 
     @mark_no_op
-    def leave_In(self, original_node: "In", updated_node: "In") -> Union["BaseCompOp"]:
+    def leave_In(self, original_node: "In", updated_node: "In") -> "BaseCompOp":
         return updated_node
 
     @mark_no_op
     def leave_IndentedBlock(
         self, original_node: "IndentedBlock", updated_node: "IndentedBlock"
-    ) -> Union["BaseSuite"]:
+    ) -> "BaseSuite":
         return updated_node
 
     @mark_no_op
-    def leave_Index(
-        self, original_node: "Index", updated_node: "Index"
-    ) -> Union["Index"]:
+    def leave_Index(self, original_node: "Index", updated_node: "Index") -> "Index":
         return updated_node
 
     @mark_no_op
     def leave_Integer(
         self, original_node: "Integer", updated_node: "Integer"
-    ) -> Union["BaseExpression"]:
+    ) -> "BaseExpression":
         return updated_node
 
     @mark_no_op
-    def leave_Is(self, original_node: "Is", updated_node: "Is") -> Union["BaseCompOp"]:
+    def leave_Is(self, original_node: "Is", updated_node: "Is") -> "BaseCompOp":
         return updated_node
 
     @mark_no_op
     def leave_IsNot(
         self, original_node: "IsNot", updated_node: "IsNot"
-    ) -> Union["BaseCompOp"]:
+    ) -> "BaseCompOp":
         return updated_node
 
     @mark_no_op
     def leave_Lambda(
         self, original_node: "Lambda", updated_node: "Lambda"
-    ) -> Union["BaseExpression"]:
+    ) -> "BaseExpression":
         return updated_node
 
     @mark_no_op
     def leave_LeftCurlyBrace(
         self, original_node: "LeftCurlyBrace", updated_node: "LeftCurlyBrace"
-    ) -> Union["LeftCurlyBrace"]:
+    ) -> "LeftCurlyBrace":
         return updated_node
 
     @mark_no_op
@@ -5662,49 +5652,49 @@ class CSTTypedTransformerFunctions(CSTTypedBaseFunctions):
     @mark_no_op
     def leave_LeftShift(
         self, original_node: "LeftShift", updated_node: "LeftShift"
-    ) -> Union["BaseBinaryOp"]:
+    ) -> "BaseBinaryOp":
         return updated_node
 
     @mark_no_op
     def leave_LeftShiftAssign(
         self, original_node: "LeftShiftAssign", updated_node: "LeftShiftAssign"
-    ) -> Union["BaseAugOp"]:
+    ) -> "BaseAugOp":
         return updated_node
 
     @mark_no_op
     def leave_LeftSquareBracket(
         self, original_node: "LeftSquareBracket", updated_node: "LeftSquareBracket"
-    ) -> Union["LeftSquareBracket"]:
+    ) -> "LeftSquareBracket":
         return updated_node
 
     @mark_no_op
     def leave_LessThan(
         self, original_node: "LessThan", updated_node: "LessThan"
-    ) -> Union["BaseCompOp"]:
+    ) -> "BaseCompOp":
         return updated_node
 
     @mark_no_op
     def leave_LessThanEqual(
         self, original_node: "LessThanEqual", updated_node: "LessThanEqual"
-    ) -> Union["BaseCompOp"]:
+    ) -> "BaseCompOp":
         return updated_node
 
     @mark_no_op
     def leave_List(
         self, original_node: "List", updated_node: "List"
-    ) -> Union["BaseExpression"]:
+    ) -> "BaseExpression":
         return updated_node
 
     @mark_no_op
     def leave_ListComp(
         self, original_node: "ListComp", updated_node: "ListComp"
-    ) -> Union["BaseExpression"]:
+    ) -> "BaseExpression":
         return updated_node
 
     @mark_no_op
     def leave_MatrixMultiply(
         self, original_node: "MatrixMultiply", updated_node: "MatrixMultiply"
-    ) -> Union["BaseBinaryOp"]:
+    ) -> "BaseBinaryOp":
         return updated_node
 
     @mark_no_op
@@ -5712,49 +5702,47 @@ class CSTTypedTransformerFunctions(CSTTypedBaseFunctions):
         self,
         original_node: "MatrixMultiplyAssign",
         updated_node: "MatrixMultiplyAssign",
-    ) -> Union["BaseAugOp"]:
+    ) -> "BaseAugOp":
         return updated_node
 
     @mark_no_op
     def leave_Minus(
         self, original_node: "Minus", updated_node: "Minus"
-    ) -> Union["BaseUnaryOp"]:
+    ) -> "BaseUnaryOp":
         return updated_node
 
     @mark_no_op
-    def leave_Module(
-        self, original_node: "Module", updated_node: "Module"
-    ) -> Union["Module"]:
+    def leave_Module(self, original_node: "Module", updated_node: "Module") -> "Module":
         return updated_node
 
     @mark_no_op
     def leave_Modulo(
         self, original_node: "Modulo", updated_node: "Modulo"
-    ) -> Union["BaseBinaryOp"]:
+    ) -> "BaseBinaryOp":
         return updated_node
 
     @mark_no_op
     def leave_ModuloAssign(
         self, original_node: "ModuloAssign", updated_node: "ModuloAssign"
-    ) -> Union["BaseAugOp"]:
+    ) -> "BaseAugOp":
         return updated_node
 
     @mark_no_op
     def leave_Multiply(
         self, original_node: "Multiply", updated_node: "Multiply"
-    ) -> Union["BaseBinaryOp"]:
+    ) -> "BaseBinaryOp":
         return updated_node
 
     @mark_no_op
     def leave_MultiplyAssign(
         self, original_node: "MultiplyAssign", updated_node: "MultiplyAssign"
-    ) -> Union["BaseAugOp"]:
+    ) -> "BaseAugOp":
         return updated_node
 
     @mark_no_op
     def leave_Name(
         self, original_node: "Name", updated_node: "Name"
-    ) -> Union["BaseExpression"]:
+    ) -> "BaseExpression":
         return updated_node
 
     @mark_no_op
@@ -5766,7 +5754,7 @@ class CSTTypedTransformerFunctions(CSTTypedBaseFunctions):
     @mark_no_op
     def leave_Newline(
         self, original_node: "Newline", updated_node: "Newline"
-    ) -> Union["Newline"]:
+    ) -> "Newline":
         return updated_node
 
     @mark_no_op
@@ -5776,27 +5764,23 @@ class CSTTypedTransformerFunctions(CSTTypedBaseFunctions):
         return updated_node
 
     @mark_no_op
-    def leave_Not(
-        self, original_node: "Not", updated_node: "Not"
-    ) -> Union["BaseUnaryOp"]:
+    def leave_Not(self, original_node: "Not", updated_node: "Not") -> "BaseUnaryOp":
         return updated_node
 
     @mark_no_op
     def leave_NotEqual(
         self, original_node: "NotEqual", updated_node: "NotEqual"
-    ) -> Union["BaseCompOp"]:
+    ) -> "BaseCompOp":
         return updated_node
 
     @mark_no_op
     def leave_NotIn(
         self, original_node: "NotIn", updated_node: "NotIn"
-    ) -> Union["BaseCompOp"]:
+    ) -> "BaseCompOp":
         return updated_node
 
     @mark_no_op
-    def leave_Or(
-        self, original_node: "Or", updated_node: "Or"
-    ) -> Union["BaseBooleanOp"]:
+    def leave_Or(self, original_node: "Or", updated_node: "Or") -> "BaseBooleanOp":
         return updated_node
 
     @mark_no_op
@@ -5814,7 +5798,7 @@ class CSTTypedTransformerFunctions(CSTTypedBaseFunctions):
     @mark_no_op
     def leave_Parameters(
         self, original_node: "Parameters", updated_node: "Parameters"
-    ) -> Union["Parameters"]:
+    ) -> "Parameters":
         return updated_node
 
     @mark_no_op
@@ -5832,21 +5816,19 @@ class CSTTypedTransformerFunctions(CSTTypedBaseFunctions):
         return updated_node
 
     @mark_no_op
-    def leave_Plus(
-        self, original_node: "Plus", updated_node: "Plus"
-    ) -> Union["BaseUnaryOp"]:
+    def leave_Plus(self, original_node: "Plus", updated_node: "Plus") -> "BaseUnaryOp":
         return updated_node
 
     @mark_no_op
     def leave_Power(
         self, original_node: "Power", updated_node: "Power"
-    ) -> Union["BaseBinaryOp"]:
+    ) -> "BaseBinaryOp":
         return updated_node
 
     @mark_no_op
     def leave_PowerAssign(
         self, original_node: "PowerAssign", updated_node: "PowerAssign"
-    ) -> Union["BaseAugOp"]:
+    ) -> "BaseAugOp":
         return updated_node
 
     @mark_no_op
@@ -5864,7 +5846,7 @@ class CSTTypedTransformerFunctions(CSTTypedBaseFunctions):
     @mark_no_op
     def leave_RightCurlyBrace(
         self, original_node: "RightCurlyBrace", updated_node: "RightCurlyBrace"
-    ) -> Union["RightCurlyBrace"]:
+    ) -> "RightCurlyBrace":
         return updated_node
 
     @mark_no_op
@@ -5876,19 +5858,19 @@ class CSTTypedTransformerFunctions(CSTTypedBaseFunctions):
     @mark_no_op
     def leave_RightShift(
         self, original_node: "RightShift", updated_node: "RightShift"
-    ) -> Union["BaseBinaryOp"]:
+    ) -> "BaseBinaryOp":
         return updated_node
 
     @mark_no_op
     def leave_RightShiftAssign(
         self, original_node: "RightShiftAssign", updated_node: "RightShiftAssign"
-    ) -> Union["BaseAugOp"]:
+    ) -> "BaseAugOp":
         return updated_node
 
     @mark_no_op
     def leave_RightSquareBracket(
         self, original_node: "RightSquareBracket", updated_node: "RightSquareBracket"
-    ) -> Union["RightSquareBracket"]:
+    ) -> "RightSquareBracket":
         return updated_node
 
     @mark_no_op
@@ -5898,15 +5880,13 @@ class CSTTypedTransformerFunctions(CSTTypedBaseFunctions):
         return updated_node
 
     @mark_no_op
-    def leave_Set(
-        self, original_node: "Set", updated_node: "Set"
-    ) -> Union["BaseExpression"]:
+    def leave_Set(self, original_node: "Set", updated_node: "Set") -> "BaseExpression":
         return updated_node
 
     @mark_no_op
     def leave_SetComp(
         self, original_node: "SetComp", updated_node: "SetComp"
-    ) -> Union["BaseExpression"]:
+    ) -> "BaseExpression":
         return updated_node
 
     @mark_no_op
@@ -5920,13 +5900,13 @@ class CSTTypedTransformerFunctions(CSTTypedBaseFunctions):
         self,
         original_node: "SimpleStatementSuite",
         updated_node: "SimpleStatementSuite",
-    ) -> Union["BaseSuite"]:
+    ) -> "BaseSuite":
         return updated_node
 
     @mark_no_op
     def leave_SimpleString(
         self, original_node: "SimpleString", updated_node: "SimpleString"
-    ) -> Union["BaseExpression"]:
+    ) -> "BaseExpression":
         return updated_node
 
     @mark_no_op
@@ -5936,9 +5916,7 @@ class CSTTypedTransformerFunctions(CSTTypedBaseFunctions):
         return updated_node
 
     @mark_no_op
-    def leave_Slice(
-        self, original_node: "Slice", updated_node: "Slice"
-    ) -> Union["Slice"]:
+    def leave_Slice(self, original_node: "Slice", updated_node: "Slice") -> "Slice":
         return updated_node
 
     @mark_no_op
@@ -5956,25 +5934,25 @@ class CSTTypedTransformerFunctions(CSTTypedBaseFunctions):
     @mark_no_op
     def leave_Subscript(
         self, original_node: "Subscript", updated_node: "Subscript"
-    ) -> Union["BaseExpression"]:
+    ) -> "BaseExpression":
         return updated_node
 
     @mark_no_op
     def leave_Subtract(
         self, original_node: "Subtract", updated_node: "Subtract"
-    ) -> Union["BaseBinaryOp"]:
+    ) -> "BaseBinaryOp":
         return updated_node
 
     @mark_no_op
     def leave_SubtractAssign(
         self, original_node: "SubtractAssign", updated_node: "SubtractAssign"
-    ) -> Union["BaseAugOp"]:
+    ) -> "BaseAugOp":
         return updated_node
 
     @mark_no_op
     def leave_TrailingWhitespace(
         self, original_node: "TrailingWhitespace", updated_node: "TrailingWhitespace"
-    ) -> Union["TrailingWhitespace"]:
+    ) -> "TrailingWhitespace":
         return updated_node
 
     @mark_no_op
@@ -5986,13 +5964,13 @@ class CSTTypedTransformerFunctions(CSTTypedBaseFunctions):
     @mark_no_op
     def leave_Tuple(
         self, original_node: "Tuple", updated_node: "Tuple"
-    ) -> Union["BaseExpression"]:
+    ) -> "BaseExpression":
         return updated_node
 
     @mark_no_op
     def leave_UnaryOperation(
         self, original_node: "UnaryOperation", updated_node: "UnaryOperation"
-    ) -> Union["BaseExpression"]:
+    ) -> "BaseExpression":
         return updated_node
 
     @mark_no_op
@@ -6016,5 +5994,5 @@ class CSTTypedTransformerFunctions(CSTTypedBaseFunctions):
     @mark_no_op
     def leave_Yield(
         self, original_node: "Yield", updated_node: "Yield"
-    ) -> Union["BaseExpression"]:
+    ) -> "BaseExpression":
         return updated_node
