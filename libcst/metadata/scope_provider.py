@@ -39,10 +39,10 @@ class Access:
     An Access records an access of an assignment.
 
     .. note::
-       This scope analysis only analyze access via a :class:`~libcst.Name` or  a :class:`~libcst.Name`
+       This scope analysis only analyzes access via a :class:`~libcst.Name` or  a :class:`~libcst.Name`
        node embedded in other node like :class:`~libcst.Call` or :class:`~libcst.Attribute`.
-       It doesn't support type anontation using :class:`~libcst.SimpleString` literal for forward
-       reference. E.g. in this example, the ``"Tree"`` isn't parsed as as an access::
+       It doesn't support type annontation using :class:`~libcst.SimpleString` literal for forward
+       references. E.g. in this example, the ``"Tree"`` isn't parsed as as an access::
 
            class Tree:
                def __new__(cls) -> "Tree":
@@ -300,9 +300,9 @@ class Scope(abc.ABC):
 
     .. note::
        This scope analysis module only analyzes local variable names and it doesn't handle
-       attribute names; for example, given a.b.c = 1, local variable name ``a`` is recorded
+       attribute names; for example, given ``a.b.c = 1``, local variable name ``a`` is recorded
        as an assignment instead of ``c`` or ``a.b.c``. To analyze the assignment/access of
-       arbitrary object attributes, we leave the the job to type inference metadata provider
+       arbitrary object attributes, we leave the job to type inference metadata provider
        coming in the future.
     """
 

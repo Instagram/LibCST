@@ -94,6 +94,8 @@ Expression Context Metadata
 
 .. autoclass:: libcst.metadata.ExpressionContext
 
+.. _libcst-scope-metadata:
+
 Scope Metadata
 --------------
 Scope is the block of naming binding. The bind name is not available
