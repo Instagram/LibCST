@@ -334,12 +334,16 @@ def _gather_constructed_leave_funcs(
 
 
 def _visit_matchers(
-    matchers: Dict[BaseMatcherNode, Optional[cst.CSTNode]], node: cst.CSTNode
+    matchers: Dict[BaseMatcherNode, Optional[cst.CSTNode]],
+    node: cst.CSTNode,
+    metadata_resolver: cst.MetadataDependent,
 ) -> Dict[BaseMatcherNode, Optional[cst.CSTNode]]:
     new_matchers: Dict[BaseMatcherNode, Optional[cst.CSTNode]] = {}
     for matcher, existing_node in matchers.items():
         # We don't care about visiting matchers that are already true.
-        if existing_node is None and matches(node, matcher):
+        if existing_node is None and matches(
+            node, matcher, metadata_resolver=metadata_resolver
+        ):
             # This node matches! Remember which node it was so we can
             # cancel it later.
             new_matchers[matcher] = node
@@ -397,9 +401,10 @@ def _visit_constructed_funcs(
     visit_funcs: Dict[BaseMatcherNode, Sequence[Callable[[cst.CSTNode], None]]],
     all_matchers: Dict[BaseMatcherNode, Optional[cst.CSTNode]],
     node: cst.CSTNode,
+    metadata_resolver: cst.MetadataDependent,
 ) -> None:
     for matcher, visit_funcs in visit_funcs.items():
-        if matches(node, matcher):
+        if matches(node, matcher, metadata_resolver=metadata_resolver):
             for visit_func in visit_funcs:
                 if _should_allow_visit(all_matchers, visit_func):
                     visit_func(node)
@@ -455,10 +460,10 @@ class MatcherDecoratableTransformer(CSTTransformer):
 
     def on_visit(self, node: cst.CSTNode) -> bool:
         # First, evaluate any matchers that we have which we are not inside already.
-        self._matchers = _visit_matchers(self._matchers, node)
+        self._matchers = _visit_matchers(self._matchers, node, self)
 
         # Now, call any visitors that were hooked using a visit decorator.
-        _visit_constructed_funcs(self._extra_visit_funcs, self._matchers, node)
+        _visit_constructed_funcs(self._extra_visit_funcs, self._matchers, node, self)
 
         # Now, evaluate whether this current function has any matchers it requires.
         if not _should_allow_visit(
@@ -485,7 +490,7 @@ class MatcherDecoratableTransformer(CSTTransformer):
 
         # Now, call any visitors that were hooked using a leave decorator.
         for matcher, leave_funcs in reversed(list(self._extra_leave_funcs.items())):
-            if not matches(original_node, matcher):
+            if not self.matches(original_node, matcher):
                 continue
             for leave_func in leave_funcs:
                 if _should_allow_visit(self._matchers, leave_func) and isinstance(
@@ -521,6 +526,20 @@ class MatcherDecoratableTransformer(CSTTransformer):
             # Either the visit_func doesn't exist, we have no matchers, or we passed all
             # matchers. In either case, just call the superclass behavior.
             CSTVisitor.on_leave_attribute(self, original_node, attribute)
+
+    def matches(
+        self,
+        node: Union[cst.MaybeSentinel, cst.RemovalSentinel, cst.CSTNode],
+        matcher: BaseMatcherNode,
+    ) -> bool:
+        """
+        A convenience method to call :func:`~libcst.matchers.matches` without requiring
+        an explicit parameter for metadata. Since our instance is an instance of
+        :class:`libcst.MetadataDependent`, we work as a metadata resolver. Please see
+        documentation for :func:`~libcst.matchers.matches` as it is identical to this
+        function.
+        """
+        return matches(node, matcher, metadata_resolver=self)
 
     def _transform_module_impl(self, tree: cst.Module) -> cst.Module:
         return tree.visit(self)
@@ -571,10 +590,10 @@ class MatcherDecoratableVisitor(CSTVisitor):
 
     def on_visit(self, node: cst.CSTNode) -> bool:
         # First, evaluate any matchers that we have which we are not inside already.
-        self._matchers = _visit_matchers(self._matchers, node)
+        self._matchers = _visit_matchers(self._matchers, node, self)
 
         # Now, call any visitors that were hooked using a visit decorator.
-        _visit_constructed_funcs(self._extra_visit_funcs, self._matchers, node)
+        _visit_constructed_funcs(self._extra_visit_funcs, self._matchers, node, self)
 
         # Now, evaluate whether this current function has a decorator on it.
         if not _should_allow_visit(
@@ -597,7 +616,7 @@ class MatcherDecoratableVisitor(CSTVisitor):
 
         # Now, call any visitors that were hooked using a leave decorator.
         for matcher, leave_funcs in reversed(list(self._extra_leave_funcs.items())):
-            if not matches(original_node, matcher):
+            if not self.matches(original_node, matcher):
                 continue
             for leave_func in leave_funcs:
                 if _should_allow_visit(self._matchers, leave_func):
@@ -625,3 +644,17 @@ class MatcherDecoratableVisitor(CSTVisitor):
             # Either the visit_func doesn't exist, we have no matchers, or we passed all
             # matchers. In either case, just call the superclass behavior.
             CSTVisitor.on_leave_attribute(self, original_node, attribute)
+
+    def matches(
+        self,
+        node: Union[cst.MaybeSentinel, cst.RemovalSentinel, cst.CSTNode],
+        matcher: BaseMatcherNode,
+    ) -> bool:
+        """
+        A convenience method to call :func:`~libcst.matchers.matches` without requiring
+        an explicit parameter for metadata. Since our instance is an instance of
+        :class:`libcst.MetadataDependent`, we work as a metadata resolver. Please see
+        documentation for :func:`~libcst.matchers.matches` as it is identical to this
+        function.
+        """
+        return matches(node, matcher, metadata_resolver=self)
