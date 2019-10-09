@@ -27,6 +27,7 @@ from typing import (
 )
 
 import libcst as cst
+from libcst._add_slots import add_slots
 from libcst.metadata.base_provider import BatchableMetadataProvider
 from libcst.metadata.expression_context_provider import (
     ExpressionContext,
@@ -192,9 +193,14 @@ class QualifiedNameSource(Enum):
     LOCAL = auto()
 
 
+@add_slots
 @dataclass(frozen=True)
 class QualifiedName:
+    #: Qualified name, e.g. ``a.b.c`` or ``fn.<locals>.var``.
     name: str
+
+    #: Source of the name, either :attr:`QualifiedNameSource.IMPORT`, :attr:`QualifiedNameSource.BUILTIN`
+    #: or :attr:`QualifiedNameSource.LOCAL`.
     source: QualifiedNameSource
 
 
