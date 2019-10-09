@@ -5,7 +5,7 @@
 
 # pyre-strict
 from textwrap import dedent
-from typing import Tuple
+from typing import Sequence, Set, Tuple
 
 import libcst as cst
 import libcst.matchers as m
@@ -199,3 +199,170 @@ class MatchersMetadataTest(UnitTest):
         )
         node, wrapper = self._make_fixture("a + b")
         self.assertTrue(matches(node, matcher, metadata_resolver=wrapper))
+
+
+class MatchersVisitorMetadataTest(UnitTest):
+    def _make_fixture(self, code: str) -> cst.MetadataWrapper:
+        return cst.MetadataWrapper(cst.parse_module(dedent(code)))
+
+    def test_matches_on_visitors(self) -> None:
+        # Set up a simple visitor that has a metadata dependency, try to use it in matchers.
+        class TestVisitor(m.MatcherDecoratableVisitor):
+            METADATA_DEPENDENCIES: Sequence[meta.ProviderT] = (
+                meta.ExpressionContextProvider,
+            )
+
+            def __init__(self) -> None:
+                super().__init__()
+                self.match_names: Set[str] = set()
+
+            def visit_Name(self, node: cst.Name) -> None:
+                # Only match name nodes that are being assigned to.
+                if self.matches(
+                    node,
+                    m.Name(
+                        metadata=m.MatchMetadata(
+                            meta.ExpressionContextProvider, meta.ExpressionContext.STORE
+                        )
+                    ),
+                ):
+                    self.match_names.add(node.value)
+
+        module = self._make_fixture(
+            """
+            a = 1 + 2
+            b = 3 + 4 + d + e
+            def foo() -> str:
+                c = "baz"
+                return c
+            def bar() -> int:
+                return b
+            del foo
+            del bar
+        """
+        )
+        visitor = TestVisitor()
+        module.visit(visitor)
+
+        self.assertEqual(visitor.match_names, {"a", "b", "c"})
+
+    def test_matches_on_transformers(self) -> None:
+        # Set up a simple visitor that has a metadata dependency, try to use it in matchers.
+        class TestTransformer(m.MatcherDecoratableTransformer):
+            METADATA_DEPENDENCIES: Sequence[meta.ProviderT] = (
+                meta.ExpressionContextProvider,
+            )
+
+            def __init__(self) -> None:
+                super().__init__()
+                self.match_names: Set[str] = set()
+
+            def visit_Name(self, node: cst.Name) -> None:
+                # Only match name nodes that are being assigned to.
+                if self.matches(
+                    node,
+                    m.Name(
+                        metadata=m.MatchMetadata(
+                            meta.ExpressionContextProvider, meta.ExpressionContext.STORE
+                        )
+                    ),
+                ):
+                    self.match_names.add(node.value)
+
+        module = self._make_fixture(
+            """
+            a = 1 + 2
+            b = 3 + 4 + d + e
+            def foo() -> str:
+                c = "baz"
+                return c
+            def bar() -> int:
+                return b
+            del foo
+            del bar
+        """
+        )
+        visitor = TestTransformer()
+        module.visit(visitor)
+
+        self.assertEqual(visitor.match_names, {"a", "b", "c"})
+
+    def test_matches_decorator_on_visitors(self) -> None:
+        # Set up a simple visitor that has a metadata dependency, try to use it in matchers.
+        class TestVisitor(m.MatcherDecoratableVisitor):
+            METADATA_DEPENDENCIES: Sequence[meta.ProviderT] = (
+                meta.ExpressionContextProvider,
+            )
+
+            def __init__(self) -> None:
+                super().__init__()
+                self.match_names: Set[str] = set()
+
+            @m.visit(
+                m.Name(
+                    metadata=m.MatchMetadata(
+                        meta.ExpressionContextProvider, meta.ExpressionContext.STORE
+                    )
+                )
+            )
+            def _visit_assignments(self, node: cst.Name) -> None:
+                # Only match name nodes that are being assigned to.
+                self.match_names.add(node.value)
+
+        module = self._make_fixture(
+            """
+            a = 1 + 2
+            b = 3 + 4 + d + e
+            def foo() -> str:
+                c = "baz"
+                return c
+            def bar() -> int:
+                return b
+            del foo
+            del bar
+        """
+        )
+        visitor = TestVisitor()
+        module.visit(visitor)
+
+        self.assertEqual(visitor.match_names, {"a", "b", "c"})
+
+    def test_matches_decorator_on_transformers(self) -> None:
+        # Set up a simple visitor that has a metadata dependency, try to use it in matchers.
+        class TestTransformer(m.MatcherDecoratableTransformer):
+            METADATA_DEPENDENCIES: Sequence[meta.ProviderT] = (
+                meta.ExpressionContextProvider,
+            )
+
+            def __init__(self) -> None:
+                super().__init__()
+                self.match_names: Set[str] = set()
+
+            @m.visit(
+                m.Name(
+                    metadata=m.MatchMetadata(
+                        meta.ExpressionContextProvider, meta.ExpressionContext.STORE
+                    )
+                )
+            )
+            def _visit_assignments(self, node: cst.Name) -> None:
+                # Only match name nodes that are being assigned to.
+                self.match_names.add(node.value)
+
+        module = self._make_fixture(
+            """
+            a = 1 + 2
+            b = 3 + 4 + d + e
+            def foo() -> str:
+                c = "baz"
+                return c
+            def bar() -> int:
+                return b
+            del foo
+            del bar
+        """
+        )
+        visitor = TestTransformer()
+        module.visit(visitor)
+
+        self.assertEqual(visitor.match_names, {"a", "b", "c"})
