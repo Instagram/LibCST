@@ -32,12 +32,14 @@ if TYPE_CHECKING:
     from libcst.metadata.wrapper import MetadataWrapper
 
 
-ProviderT = Type["BaseMetadataProvider[Any]"]
-_T = TypeVar("_T")
+ProviderT = Type["BaseMetadataProvider[object]"]
+# BaseMetadataProvider[int] would be a subtype of BaseMetadataProvider[object], so the
+# typevar is covariant.
+_ProvidedMetadataT = TypeVar("_ProvidedMetadataT", covariant=True)
 
 
 # We can't use an ABCMeta here, because of metaclass conflicts
-class BaseMetadataProvider(MetadataDependent, Generic[_T]):
+class BaseMetadataProvider(MetadataDependent, Generic[_ProvidedMetadataT]):
     """
     The low-level base class for all metadata providers. This class should be
     extended for metadata providers that are not visitor-based.
@@ -47,13 +49,18 @@ class BaseMetadataProvider(MetadataDependent, Generic[_T]):
     """
 
     #: Cache of metadata computed by this provider
-    _computed: MutableMapping["CSTNode", _T]
+    #
+    # N.B. This has some typing variance problems. See `set_metadata` for an
+    # explanation.
+    _computed: MutableMapping["CSTNode", _ProvidedMetadataT]
 
     def __init__(self) -> None:
         super().__init__()
         self._computed = {}
 
-    def _gen(self, wrapper: "MetadataWrapper") -> Mapping["CSTNode", _T]:
+    def _gen(
+        self, wrapper: "MetadataWrapper"
+    ) -> Mapping["CSTNode", _ProvidedMetadataT]:
         """
         Resolves and returns metadata mapping for the module in ``wrapper``.
 
@@ -75,7 +82,11 @@ class BaseMetadataProvider(MetadataDependent, Generic[_T]):
         """
         ...
 
-    def set_metadata(self, node: "CSTNode", value: _T) -> None:
+    # pyre-ignore[46]: The covariant `value` isn't type-safe because we write it to
+    # pyre: `self._computed`, however we assume that only one subclass in the MRO chain
+    # pyre: will ever call `set_metadata`, so it's okay for our purposes. There's no
+    # pyre: sane way to redesign this API so that it doesn't have this problem.
+    def set_metadata(self, node: "CSTNode", value: _ProvidedMetadataT) -> None:
         """
         Record a metadata value ``value`` for ``node``.
         """
@@ -101,7 +112,7 @@ class BaseMetadataProvider(MetadataDependent, Generic[_T]):
         return super().get_metadata(key, node, default)
 
 
-class VisitorMetadataProvider(CSTVisitor, BaseMetadataProvider[_T]):
+class VisitorMetadataProvider(CSTVisitor, BaseMetadataProvider[_ProvidedMetadataT]):
     """
     The low-level base class for all non-batchable visitor-based metadata
     providers. Inherits from :class:`~libcst.CSTVisitor`.
@@ -114,7 +125,9 @@ class VisitorMetadataProvider(CSTVisitor, BaseMetadataProvider[_T]):
         module.visit(self)
 
 
-class BatchableMetadataProvider(BatchableCSTVisitor, BaseMetadataProvider[_T]):
+class BatchableMetadataProvider(
+    BatchableCSTVisitor, BaseMetadataProvider[_ProvidedMetadataT]
+):
     """
     The low-level base class for all batchable visitor-based metadata providers.
     Batchable providers should be preferred when possible as they are more

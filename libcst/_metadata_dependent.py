@@ -41,9 +41,6 @@ class MetadataDependent(ABC):
     extend this class.
     """
 
-    # pyre-ignore[4]: Attribute `metadata` of class
-    # `libcst.metadata.dependent.MetadataDependent` must have a type that
-    # does not contain `Any`.
     #: A cached copy of metadata computed by :func:`~libcst.MetadataDependent.resolve`.
     #: Prefer using :func:`~libcst.MetadataDependent.get_metadata` over accessing
     #: this attribute directly.
