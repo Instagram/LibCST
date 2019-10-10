@@ -7,7 +7,7 @@
 import collections.abc
 import re
 from dataclasses import fields
-from enum import Enum, auto  # noqa: IG29: We don't want to depend on distillery
+from enum import Enum, auto
 from typing import (
     Callable,
     Generic,
