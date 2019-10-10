@@ -133,7 +133,16 @@ class OneOf(Generic[_MatcherT], BaseMatcherNode):
 
         if len(actual_options) < 2:
             raise Exception("Must provide at least two options to OneOf!")
-        self.options: Sequence[_MatcherT] = actual_options
+        self._options: Sequence[_MatcherT] = tuple(actual_options)
+
+    @property
+    def options(self) -> Sequence[_MatcherT]:
+        """
+        The normalized list of options that we can choose from to satisfy a
+        :class:`OneOf` matcher. If any of these matchers are true, the
+        :class:`OneOf` matcher will also be considered a match.
+        """
+        return self._options
 
     def __or__(self, other: _OtherNodeT) -> "OneOf[Union[_MatcherT, _OtherNodeT]]":
         # Without a cast, pyre thinks that the below OneOf is type OneOf[object]
@@ -145,10 +154,10 @@ class OneOf(Generic[_MatcherT], BaseMatcherNode):
 
     def __invert__(self) -> "AllOf[_MatcherT]":
         # Invert using De Morgan's Law so we don't have to complicate types.
-        return cast(AllOf[_MatcherT], AllOf(*[DoesNotMatch(m) for m in self.options]))
+        return cast(AllOf[_MatcherT], AllOf(*[DoesNotMatch(m) for m in self._options]))
 
     def __repr__(self) -> str:
-        return f"OneOf({', '.join([repr(o) for o in self.options])})"
+        return f"OneOf({', '.join([repr(o) for o in self._options])})"
 
 
 class AllOf(Generic[_MatcherT], BaseMatcherNode):
@@ -201,7 +210,16 @@ class AllOf(Generic[_MatcherT], BaseMatcherNode):
 
         if len(actual_options) < 2:
             raise Exception("Must provide at least two options to AllOf!")
-        self.options: Sequence[_MatcherT] = actual_options
+        self._options: Sequence[_MatcherT] = tuple(actual_options)
+
+    @property
+    def options(self) -> Sequence[_MatcherT]:
+        """
+        The normalized list of options that we can choose from to satisfy a
+        :class:`AllOf` matcher. If all of these matchers are true, the
+        :class:`AllOf` matcher will also be considered a match.
+        """
+        return self._options
 
     def __or__(self, other: _OtherNodeT) -> NoReturn:
         raise Exception("Cannot use AllOf and OneOf in combination!")
@@ -213,10 +231,10 @@ class AllOf(Generic[_MatcherT], BaseMatcherNode):
 
     def __invert__(self) -> "OneOf[_MatcherT]":
         # Invert using De Morgan's Law so we don't have to complicate types.
-        return cast(OneOf[_MatcherT], OneOf(*[DoesNotMatch(m) for m in self.options]))
+        return cast(OneOf[_MatcherT], OneOf(*[DoesNotMatch(m) for m in self._options]))
 
     def __repr__(self) -> str:
-        return f"AllOf({', '.join([repr(o) for o in self.options])})"
+        return f"AllOf({', '.join([repr(o) for o in self._options])})"
 
 
 class InverseOf(Generic[_MatcherT]):
@@ -240,7 +258,15 @@ class InverseOf(Generic[_MatcherT]):
     """
 
     def __init__(self, matcher: _MatcherT) -> None:
-        self.matcher = matcher
+        self._matcher: _MatcherT = matcher
+
+    @property
+    def matcher(self) -> _MatcherT:
+        """
+        The matcher that we will evaluate and invert. If this matcher is true, then
+        :class:`InverseOf` will be considered not a match, and vice-versa.
+        """
+        return self._matcher
 
     def __or__(self, other: _OtherNodeT) -> "OneOf[Union[_MatcherT, _OtherNodeT]]":
         # Without a cast, pyre thinks that the below OneOf is type OneOf[object]
@@ -256,13 +282,13 @@ class InverseOf(Generic[_MatcherT]):
         # We lie about types to make InverseOf appear transparent. So, its conceivable
         # that somebody might try to dereference an attribute on the _MatcherT wrapped
         # node and become surprised that it doesn't work.
-        return getattr(self.matcher, key)
+        return getattr(self._matcher, key)
 
     def __invert__(self) -> _MatcherT:
-        return self.matcher
+        return self._matcher
 
     def __repr__(self) -> str:
-        return f"DoesNotMatch({repr(self.matcher)})"
+        return f"DoesNotMatch({repr(self._matcher)})"
 
 
 class MatchIfTrue(Generic[_CallableT]):
@@ -287,7 +313,16 @@ class MatchIfTrue(Generic[_CallableT]):
     def __init__(self, func: _CallableT) -> None:
         # Without a cast, pyre thinks that self.func is not a function, even though
         # it recognizes that it is a _CallableT bound to Callable.
-        self.func: Callable[..., bool] = cast(Callable[..., bool], func)
+        self._func: Callable[..., bool] = cast(Callable[..., bool], func)
+
+    @property
+    def func(self) -> Callable[..., bool]:
+        """
+        The function that we will call with a LibCST node in order to determine
+        if we match. If the function returns ``True`` then we consider ourselves
+        to be a match.
+        """
+        return self._func
 
     def __or__(
         self, other: _OtherNodeT
@@ -310,11 +345,11 @@ class MatchIfTrue(Generic[_CallableT]):
     def __invert__(self) -> "MatchIfTrue[_CallableT]":
         # Construct a wrapped version of MatchIfTrue for typing simplicity.
         # Without the cast, pyre doesn't seem to think the lambda is valid.
-        return MatchIfTrue(cast(_CallableT, lambda val: not self.func(val)))
+        return MatchIfTrue(cast(_CallableT, lambda val: not self._func(val)))
 
     def __repr__(self) -> str:
         # pyre-ignore Pyre doesn't believe that functions have a repr.
-        return f"MatchIfTrue({repr(self.func)})"
+        return f"MatchIfTrue({repr(self._func)})"
 
 
 def MatchRegex(regex: Union[str, Pattern[str]]) -> MatchIfTrue[Callable[[str], bool]]:
@@ -389,8 +424,25 @@ class AtLeastN(Generic[_MatcherT], _BaseWildcardNode):
     ) -> None:
         if n < 0:
             raise Exception(f"{self.__class__.__name__} n attribute must be positive")
-        self.n: int = n
-        self.matcher: Union[_MatcherT, DoNotCareSentinel] = matcher
+        self._n: int = n
+        self._matcher: Union[_MatcherT, DoNotCareSentinel] = matcher
+
+    @property
+    def n(self) -> int:
+        """
+        The number of nodes in a row that must match :attr:`AtLeastN.matcher` for
+        this matcher to be considered a match. If there are less than ``n`` matches,
+        this matcher will not be considered a match. If there are equal to or more
+        than ``n`` matches, this matcher will be considered a match.
+        """
+        return self._n
+
+    @property
+    def matcher(self) -> Union[_MatcherT, DoNotCareSentinel]:
+        """
+        The matcher which each node in a sequence needs to match.
+        """
+        return self._matcher
 
     def __or__(self, other: object) -> NoReturn:
         raise Exception(f"AtLeastN cannot be used in a OneOf matcher")
@@ -402,10 +454,10 @@ class AtLeastN(Generic[_MatcherT], _BaseWildcardNode):
         raise Exception("Cannot invert an AtLeastN matcher!")
 
     def __repr__(self) -> str:
-        if self.n == 0:
-            return f"ZeroOrMore({repr(self.matcher)})"
+        if self._n == 0:
+            return f"ZeroOrMore({repr(self._matcher)})"
         else:
-            return f"AtLeastN({repr(self.matcher)}, n={self.n})"
+            return f"AtLeastN({repr(self._matcher)}, n={self._n})"
 
 
 def ZeroOrMore(
@@ -465,8 +517,26 @@ class AtMostN(Generic[_MatcherT], _BaseWildcardNode):
     ) -> None:
         if n < 0:
             raise Exception(f"{self.__class__.__name__} n attribute must be positive")
-        self.n: int = n
-        self.matcher: Union[_MatcherT, DoNotCareSentinel] = matcher
+        self._n: int = n
+        self._matcher: Union[_MatcherT, DoNotCareSentinel] = matcher
+
+    @property
+    def n(self) -> int:
+        """
+        The number of nodes in a row that must match :attr:`AtLeastN.matcher` for
+        this matcher to be considered a match. If there are less than or equal to
+        ``n`` matches, then this matcher will be considered a match. Any more than
+        ``n`` matches in a row and this matcher will stop matching and be considered
+        not a match.
+        """
+        return self._n
+
+    @property
+    def matcher(self) -> Union[_MatcherT, DoNotCareSentinel]:
+        """
+        The matcher which each node in a sequence needs to match.
+        """
+        return self._matcher
 
     def __or__(self, other: object) -> NoReturn:
         raise Exception(f"AtMostN cannot be used in a OneOf matcher")
@@ -478,10 +548,10 @@ class AtMostN(Generic[_MatcherT], _BaseWildcardNode):
         raise Exception("Cannot invert an AtMostN matcher!")
 
     def __repr__(self) -> str:
-        if self.n == 1:
-            return f"ZeroOrOne({repr(self.matcher)})"
+        if self._n == 1:
+            return f"ZeroOrOne({repr(self._matcher)})"
         else:
-            return f"AtMostN({repr(self.matcher)}, n={self.n})"
+            return f"AtMostN({repr(self._matcher)}, n={self._n})"
 
 
 def ZeroOrOne(
