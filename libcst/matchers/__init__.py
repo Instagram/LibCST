@@ -132,7 +132,7 @@ class BaseUnaryOp(ABC):
     pass
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class Add(BaseBinaryOp, BaseMatcherNode):
     whitespace_before: Union[
         "BaseParenthesizableWhitespace",
@@ -170,7 +170,7 @@ class Add(BaseBinaryOp, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class AddAssign(BaseAugOp, BaseMatcherNode):
     whitespace_before: Union[
         "BaseParenthesizableWhitespace",
@@ -208,7 +208,7 @@ class AddAssign(BaseAugOp, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class And(BaseBooleanOp, BaseMatcherNode):
     whitespace_before: Union[
         "BaseParenthesizableWhitespace",
@@ -246,7 +246,7 @@ class And(BaseBooleanOp, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class AnnAssign(BaseSmallStatement, BaseMatcherNode):
     target: Union[
         "BaseExpression",
@@ -302,7 +302,7 @@ class AnnAssign(BaseSmallStatement, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class Annotation(BaseMatcherNode):
     annotation: Union[
         "BaseExpression",
@@ -351,7 +351,7 @@ class Annotation(BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class Arg(BaseMatcherNode):
     value: Union[
         "BaseExpression",
@@ -443,7 +443,7 @@ class Arg(BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class AsName(BaseMatcherNode):
     name: Union[
         "Name",
@@ -504,7 +504,7 @@ class AsName(BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class Assert(BaseSmallStatement, BaseMatcherNode):
     test: Union[
         "BaseExpression",
@@ -568,7 +568,7 @@ class Assert(BaseSmallStatement, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class Assign(BaseSmallStatement, BaseMatcherNode):
     targets: Union[
         Sequence[
@@ -767,7 +767,7 @@ class Assign(BaseSmallStatement, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class AssignEqual(BaseMatcherNode):
     whitespace_before: Union[
         "BaseParenthesizableWhitespace",
@@ -805,7 +805,7 @@ class AssignEqual(BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class AssignTarget(BaseMatcherNode):
     target: Union[
         "BaseAssignTargetExpression",
@@ -856,7 +856,7 @@ class AssignTarget(BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class Asynchronous(BaseMatcherNode):
     whitespace_after: Union[
         "SimpleWhitespace",
@@ -875,7 +875,7 @@ class Asynchronous(BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class Attribute(
     BaseAssignTargetExpression, BaseDelTargetExpression, BaseExpression, BaseMatcherNode
 ):
@@ -1248,7 +1248,7 @@ class Attribute(
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class AugAssign(BaseSmallStatement, BaseMatcherNode):
     target: Union[
         "BaseExpression",
@@ -1288,7 +1288,7 @@ class AugAssign(BaseSmallStatement, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class Await(BaseExpression, BaseMatcherNode):
     expression: Union[
         "BaseExpression",
@@ -1662,7 +1662,7 @@ class Await(BaseExpression, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class BinaryOperation(BaseExpression, BaseMatcherNode):
     left: Union[
         "BaseExpression",
@@ -2037,7 +2037,7 @@ class BinaryOperation(BaseExpression, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class BitAnd(BaseBinaryOp, BaseMatcherNode):
     whitespace_before: Union[
         "BaseParenthesizableWhitespace",
@@ -2075,7 +2075,7 @@ class BitAnd(BaseBinaryOp, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class BitAndAssign(BaseAugOp, BaseMatcherNode):
     whitespace_before: Union[
         "BaseParenthesizableWhitespace",
@@ -2113,7 +2113,7 @@ class BitAndAssign(BaseAugOp, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class BitInvert(BaseUnaryOp, BaseMatcherNode):
     whitespace_after: Union[
         "BaseParenthesizableWhitespace",
@@ -2134,7 +2134,7 @@ class BitInvert(BaseUnaryOp, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class BitOr(BaseBinaryOp, BaseMatcherNode):
     whitespace_before: Union[
         "BaseParenthesizableWhitespace",
@@ -2172,7 +2172,7 @@ class BitOr(BaseBinaryOp, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class BitOrAssign(BaseAugOp, BaseMatcherNode):
     whitespace_before: Union[
         "BaseParenthesizableWhitespace",
@@ -2210,7 +2210,7 @@ class BitOrAssign(BaseAugOp, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class BitXor(BaseBinaryOp, BaseMatcherNode):
     whitespace_before: Union[
         "BaseParenthesizableWhitespace",
@@ -2248,7 +2248,7 @@ class BitXor(BaseBinaryOp, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class BitXorAssign(BaseAugOp, BaseMatcherNode):
     whitespace_before: Union[
         "BaseParenthesizableWhitespace",
@@ -2286,7 +2286,7 @@ class BitXorAssign(BaseAugOp, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class BooleanOperation(BaseExpression, BaseMatcherNode):
     left: Union[
         "BaseExpression",
@@ -2661,7 +2661,7 @@ class BooleanOperation(BaseExpression, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class Break(BaseSmallStatement, BaseMatcherNode):
     semicolon: Union[
         "Semicolon",
@@ -2672,7 +2672,7 @@ class Break(BaseSmallStatement, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class Call(BaseExpression, BaseMatcherNode):
     func: Union[
         "BaseExpression",
@@ -3168,7 +3168,7 @@ class Call(BaseExpression, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class ClassDef(BaseCompoundStatement, BaseStatement, BaseMatcherNode):
     name: Union[
         "Name",
@@ -3962,7 +3962,7 @@ class ClassDef(BaseCompoundStatement, BaseStatement, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class Colon(BaseMatcherNode):
     whitespace_before: Union[
         "BaseParenthesizableWhitespace",
@@ -4000,7 +4000,7 @@ class Colon(BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class Comma(BaseMatcherNode):
     whitespace_before: Union[
         "BaseParenthesizableWhitespace",
@@ -4038,7 +4038,7 @@ class Comma(BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class Comment(BaseMatcherNode):
     value: Union[
         str,
@@ -4049,7 +4049,7 @@ class Comment(BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class CompFor(BaseMatcherNode):
     target: Union[
         "BaseAssignTargetExpression",
@@ -4330,7 +4330,7 @@ class CompFor(BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class CompIf(BaseMatcherNode):
     test: Union[
         "BaseExpression",
@@ -4379,7 +4379,7 @@ class CompIf(BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class Comparison(BaseExpression, BaseMatcherNode):
     left: Union[
         "BaseExpression",
@@ -4931,7 +4931,7 @@ class Comparison(BaseExpression, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class ComparisonTarget(BaseMatcherNode):
     operator: Union[
         "BaseCompOp",
@@ -4953,7 +4953,7 @@ class ComparisonTarget(BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class ConcatenatedString(BaseExpression, BaseString, BaseMatcherNode):
     left: Union[
         "SimpleString",
@@ -5390,7 +5390,7 @@ class ConcatenatedString(BaseExpression, BaseString, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class Continue(BaseSmallStatement, BaseMatcherNode):
     semicolon: Union[
         "Semicolon",
@@ -5401,7 +5401,7 @@ class Continue(BaseSmallStatement, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class Decorator(BaseMatcherNode):
     decorator: Union[
         "Name",
@@ -5629,7 +5629,7 @@ class Decorator(BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class Del(BaseSmallStatement, BaseMatcherNode):
     target: Union[
         "BaseDelTargetExpression",
@@ -5672,7 +5672,7 @@ class Del(BaseSmallStatement, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class Dict(BaseDict, BaseExpression, BaseMatcherNode):
     elements: Union[
         Sequence[
@@ -6235,7 +6235,7 @@ class Dict(BaseDict, BaseExpression, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class DictComp(BaseComp, BaseDict, BaseExpression, BaseMatcherNode):
     key: Union[
         "BaseAssignTargetExpression",
@@ -6678,7 +6678,7 @@ class DictComp(BaseComp, BaseDict, BaseExpression, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class DictElement(BaseDictElement, BaseMatcherNode):
     key: Union[
         "BaseExpression",
@@ -6745,7 +6745,7 @@ class DictElement(BaseDictElement, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class Divide(BaseBinaryOp, BaseMatcherNode):
     whitespace_before: Union[
         "BaseParenthesizableWhitespace",
@@ -6783,7 +6783,7 @@ class Divide(BaseBinaryOp, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class DivideAssign(BaseAugOp, BaseMatcherNode):
     whitespace_before: Union[
         "BaseParenthesizableWhitespace",
@@ -6821,7 +6821,7 @@ class DivideAssign(BaseAugOp, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class Dot(BaseMatcherNode):
     whitespace_before: Union[
         "BaseParenthesizableWhitespace",
@@ -6859,7 +6859,7 @@ class Dot(BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class Element(BaseElement, BaseMatcherNode):
     value: Union[
         "BaseExpression",
@@ -6881,7 +6881,7 @@ class Element(BaseElement, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class Ellipsis(BaseExpression, BaseMatcherNode):
     lpar: Union[
         Sequence[
@@ -7227,7 +7227,7 @@ class Ellipsis(BaseExpression, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class Else(BaseMatcherNode):
     body: Union[
         "BaseSuite",
@@ -7422,7 +7422,7 @@ class Else(BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class EmptyLine(BaseMatcherNode):
     indent: Union[
         bool,
@@ -7471,7 +7471,7 @@ class EmptyLine(BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class Equal(BaseCompOp, BaseMatcherNode):
     whitespace_before: Union[
         "BaseParenthesizableWhitespace",
@@ -7509,7 +7509,7 @@ class Equal(BaseCompOp, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class ExceptHandler(BaseMatcherNode):
     body: Union[
         "BaseSuite",
@@ -7755,7 +7755,7 @@ class ExceptHandler(BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class Expr(BaseSmallStatement, BaseMatcherNode):
     value: Union[
         "BaseExpression",
@@ -7777,7 +7777,7 @@ class Expr(BaseSmallStatement, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class ExtSlice(BaseMatcherNode):
     slice: Union[
         "Index",
@@ -7808,7 +7808,7 @@ class ExtSlice(BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class Finally(BaseMatcherNode):
     body: Union[
         "BaseSuite",
@@ -8003,7 +8003,7 @@ class Finally(BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class Float(BaseExpression, BaseNumber, BaseMatcherNode):
     value: Union[
         str,
@@ -8356,7 +8356,7 @@ class Float(BaseExpression, BaseNumber, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class FloorDivide(BaseBinaryOp, BaseMatcherNode):
     whitespace_before: Union[
         "BaseParenthesizableWhitespace",
@@ -8394,7 +8394,7 @@ class FloorDivide(BaseBinaryOp, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class FloorDivideAssign(BaseAugOp, BaseMatcherNode):
     whitespace_before: Union[
         "BaseParenthesizableWhitespace",
@@ -8432,7 +8432,7 @@ class FloorDivideAssign(BaseAugOp, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class For(BaseCompoundStatement, BaseStatement, BaseMatcherNode):
     target: Union[
         "BaseAssignTargetExpression",
@@ -8732,7 +8732,7 @@ class For(BaseCompoundStatement, BaseStatement, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class FormattedString(BaseExpression, BaseString, BaseMatcherNode):
     parts: Union[
         Sequence[
@@ -9337,7 +9337,7 @@ class FormattedString(BaseExpression, BaseString, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class FormattedStringExpression(BaseFormattedStringContent, BaseMatcherNode):
     expression: Union[
         "BaseExpression",
@@ -9642,7 +9642,7 @@ class FormattedStringExpression(BaseFormattedStringContent, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class FormattedStringText(BaseFormattedStringContent, BaseMatcherNode):
     value: Union[
         str,
@@ -9653,7 +9653,7 @@ class FormattedStringText(BaseFormattedStringContent, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class From(BaseMatcherNode):
     item: Union[
         "BaseExpression",
@@ -9702,7 +9702,7 @@ class From(BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class FunctionDef(BaseCompoundStatement, BaseStatement, BaseMatcherNode):
     name: Union[
         "Name",
@@ -10334,7 +10334,7 @@ class FunctionDef(BaseCompoundStatement, BaseStatement, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class GeneratorExp(BaseComp, BaseExpression, BaseSimpleComp, BaseMatcherNode):
     elt: Union[
         "BaseAssignTargetExpression",
@@ -10704,7 +10704,7 @@ class GeneratorExp(BaseComp, BaseExpression, BaseSimpleComp, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class Global(BaseSmallStatement, BaseMatcherNode):
     names: Union[
         Sequence[
@@ -10891,7 +10891,7 @@ class Global(BaseSmallStatement, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class GreaterThan(BaseCompOp, BaseMatcherNode):
     whitespace_before: Union[
         "BaseParenthesizableWhitespace",
@@ -10929,7 +10929,7 @@ class GreaterThan(BaseCompOp, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class GreaterThanEqual(BaseCompOp, BaseMatcherNode):
     whitespace_before: Union[
         "BaseParenthesizableWhitespace",
@@ -10967,7 +10967,7 @@ class GreaterThanEqual(BaseCompOp, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class If(BaseCompoundStatement, BaseStatement, BaseMatcherNode):
     test: Union[
         "BaseExpression",
@@ -11211,7 +11211,7 @@ class If(BaseCompoundStatement, BaseStatement, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class IfExp(BaseExpression, BaseMatcherNode):
     test: Union[
         "BaseExpression",
@@ -11658,7 +11658,7 @@ class IfExp(BaseExpression, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class Imaginary(BaseExpression, BaseNumber, BaseMatcherNode):
     value: Union[
         str,
@@ -12011,7 +12011,7 @@ class Imaginary(BaseExpression, BaseNumber, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class Import(BaseSmallStatement, BaseMatcherNode):
     names: Union[
         Sequence[
@@ -12210,7 +12210,7 @@ class Import(BaseSmallStatement, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class ImportAlias(BaseMatcherNode):
     name: Union[
         "Attribute",
@@ -12257,7 +12257,7 @@ class ImportAlias(BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class ImportFrom(BaseSmallStatement, BaseMatcherNode):
     module: Union[
         "Attribute",
@@ -12661,12 +12661,12 @@ class ImportFrom(BaseSmallStatement, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class ImportStar(BaseMatcherNode):
     pass
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class In(BaseCompOp, BaseMatcherNode):
     whitespace_before: Union[
         "BaseParenthesizableWhitespace",
@@ -12704,7 +12704,7 @@ class In(BaseCompOp, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class IndentedBlock(BaseSuite, BaseMatcherNode):
     body: Union[
         Sequence[
@@ -13097,7 +13097,7 @@ class IndentedBlock(BaseSuite, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class Index(BaseMatcherNode):
     value: Union[
         "BaseExpression",
@@ -13112,7 +13112,7 @@ class Index(BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class Integer(BaseExpression, BaseNumber, BaseMatcherNode):
     value: Union[
         str,
@@ -13465,7 +13465,7 @@ class Integer(BaseExpression, BaseNumber, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class Is(BaseCompOp, BaseMatcherNode):
     whitespace_before: Union[
         "BaseParenthesizableWhitespace",
@@ -13503,7 +13503,7 @@ class Is(BaseCompOp, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class IsNot(BaseCompOp, BaseMatcherNode):
     whitespace_before: Union[
         "BaseParenthesizableWhitespace",
@@ -13558,7 +13558,7 @@ class IsNot(BaseCompOp, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class Lambda(BaseExpression, BaseMatcherNode):
     params: Union[
         "Parameters",
@@ -13946,7 +13946,7 @@ class Lambda(BaseExpression, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class LeftCurlyBrace(BaseMatcherNode):
     whitespace_after: Union[
         "BaseParenthesizableWhitespace",
@@ -13967,7 +13967,7 @@ class LeftCurlyBrace(BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class LeftParen(BaseMatcherNode):
     whitespace_after: Union[
         "BaseParenthesizableWhitespace",
@@ -13988,7 +13988,7 @@ class LeftParen(BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class LeftShift(BaseBinaryOp, BaseMatcherNode):
     whitespace_before: Union[
         "BaseParenthesizableWhitespace",
@@ -14026,7 +14026,7 @@ class LeftShift(BaseBinaryOp, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class LeftShiftAssign(BaseAugOp, BaseMatcherNode):
     whitespace_before: Union[
         "BaseParenthesizableWhitespace",
@@ -14064,7 +14064,7 @@ class LeftShiftAssign(BaseAugOp, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class LeftSquareBracket(BaseMatcherNode):
     whitespace_after: Union[
         "BaseParenthesizableWhitespace",
@@ -14085,7 +14085,7 @@ class LeftSquareBracket(BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class LessThan(BaseCompOp, BaseMatcherNode):
     whitespace_before: Union[
         "BaseParenthesizableWhitespace",
@@ -14123,7 +14123,7 @@ class LessThan(BaseCompOp, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class LessThanEqual(BaseCompOp, BaseMatcherNode):
     whitespace_before: Union[
         "BaseParenthesizableWhitespace",
@@ -14161,7 +14161,7 @@ class LessThanEqual(BaseCompOp, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class List(
     BaseAssignTargetExpression,
     BaseDelTargetExpression,
@@ -14720,7 +14720,7 @@ class List(
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class ListComp(BaseComp, BaseExpression, BaseList, BaseSimpleComp, BaseMatcherNode):
     elt: Union[
         "BaseAssignTargetExpression",
@@ -15124,7 +15124,7 @@ class ListComp(BaseComp, BaseExpression, BaseList, BaseSimpleComp, BaseMatcherNo
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class MatrixMultiply(BaseBinaryOp, BaseMatcherNode):
     whitespace_before: Union[
         "BaseParenthesizableWhitespace",
@@ -15162,7 +15162,7 @@ class MatrixMultiply(BaseBinaryOp, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class MatrixMultiplyAssign(BaseAugOp, BaseMatcherNode):
     whitespace_before: Union[
         "BaseParenthesizableWhitespace",
@@ -15200,7 +15200,7 @@ class MatrixMultiplyAssign(BaseAugOp, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class Minus(BaseUnaryOp, BaseMatcherNode):
     whitespace_after: Union[
         "BaseParenthesizableWhitespace",
@@ -15221,7 +15221,7 @@ class Minus(BaseUnaryOp, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class Module(BaseMatcherNode):
     body: Union[
         Sequence[
@@ -16089,7 +16089,7 @@ class Module(BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class Modulo(BaseBinaryOp, BaseMatcherNode):
     whitespace_before: Union[
         "BaseParenthesizableWhitespace",
@@ -16127,7 +16127,7 @@ class Modulo(BaseBinaryOp, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class ModuloAssign(BaseAugOp, BaseMatcherNode):
     whitespace_before: Union[
         "BaseParenthesizableWhitespace",
@@ -16165,7 +16165,7 @@ class ModuloAssign(BaseAugOp, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class Multiply(BaseBinaryOp, BaseMatcherNode):
     whitespace_before: Union[
         "BaseParenthesizableWhitespace",
@@ -16203,7 +16203,7 @@ class Multiply(BaseBinaryOp, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class MultiplyAssign(BaseAugOp, BaseMatcherNode):
     whitespace_before: Union[
         "BaseParenthesizableWhitespace",
@@ -16241,7 +16241,7 @@ class MultiplyAssign(BaseAugOp, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class Name(
     BaseAssignTargetExpression, BaseDelTargetExpression, BaseExpression, BaseMatcherNode
 ):
@@ -16596,7 +16596,7 @@ class Name(
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class NameItem(BaseMatcherNode):
     name: Union[
         "Name",
@@ -16614,7 +16614,7 @@ class NameItem(BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class Newline(BaseMatcherNode):
     value: Union[
         str,
@@ -16626,7 +16626,7 @@ class Newline(BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class Nonlocal(BaseSmallStatement, BaseMatcherNode):
     names: Union[
         Sequence[
@@ -16813,7 +16813,7 @@ class Nonlocal(BaseSmallStatement, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class Not(BaseUnaryOp, BaseMatcherNode):
     whitespace_after: Union[
         "BaseParenthesizableWhitespace",
@@ -16834,7 +16834,7 @@ class Not(BaseUnaryOp, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class NotEqual(BaseCompOp, BaseMatcherNode):
     value: Union[
         str,
@@ -16879,7 +16879,7 @@ class NotEqual(BaseCompOp, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class NotIn(BaseCompOp, BaseMatcherNode):
     whitespace_before: Union[
         "BaseParenthesizableWhitespace",
@@ -16934,7 +16934,7 @@ class NotIn(BaseCompOp, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class Or(BaseBooleanOp, BaseMatcherNode):
     whitespace_before: Union[
         "BaseParenthesizableWhitespace",
@@ -16972,7 +16972,7 @@ class Or(BaseBooleanOp, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class Param(BaseMatcherNode):
     name: Union[
         "Name",
@@ -17078,7 +17078,7 @@ class Param(BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class ParamStar(BaseMatcherNode):
     comma: Union[
         "Comma",
@@ -17089,7 +17089,7 @@ class ParamStar(BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class Parameters(BaseMatcherNode):
     params: Union[
         Sequence[
@@ -17512,7 +17512,7 @@ class Parameters(BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class ParenthesizedWhitespace(BaseParenthesizableWhitespace, BaseMatcherNode):
     first_line: Union[
         "TrailingWhitespace",
@@ -17724,7 +17724,7 @@ class ParenthesizedWhitespace(BaseParenthesizableWhitespace, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class Pass(BaseSmallStatement, BaseMatcherNode):
     semicolon: Union[
         "Semicolon",
@@ -17735,7 +17735,7 @@ class Pass(BaseSmallStatement, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class Plus(BaseUnaryOp, BaseMatcherNode):
     whitespace_after: Union[
         "BaseParenthesizableWhitespace",
@@ -17756,7 +17756,7 @@ class Plus(BaseUnaryOp, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class Power(BaseBinaryOp, BaseMatcherNode):
     whitespace_before: Union[
         "BaseParenthesizableWhitespace",
@@ -17794,7 +17794,7 @@ class Power(BaseBinaryOp, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class PowerAssign(BaseAugOp, BaseMatcherNode):
     whitespace_before: Union[
         "BaseParenthesizableWhitespace",
@@ -17832,7 +17832,7 @@ class PowerAssign(BaseAugOp, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class Raise(BaseSmallStatement, BaseMatcherNode):
     exc: Union[
         "BaseExpression",
@@ -17890,7 +17890,7 @@ class Raise(BaseSmallStatement, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class Return(BaseSmallStatement, BaseMatcherNode):
     value: Union[
         "BaseExpression",
@@ -17936,7 +17936,7 @@ class Return(BaseSmallStatement, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class RightCurlyBrace(BaseMatcherNode):
     whitespace_before: Union[
         "BaseParenthesizableWhitespace",
@@ -17957,7 +17957,7 @@ class RightCurlyBrace(BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class RightParen(BaseMatcherNode):
     whitespace_before: Union[
         "BaseParenthesizableWhitespace",
@@ -17978,7 +17978,7 @@ class RightParen(BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class RightShift(BaseBinaryOp, BaseMatcherNode):
     whitespace_before: Union[
         "BaseParenthesizableWhitespace",
@@ -18016,7 +18016,7 @@ class RightShift(BaseBinaryOp, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class RightShiftAssign(BaseAugOp, BaseMatcherNode):
     whitespace_before: Union[
         "BaseParenthesizableWhitespace",
@@ -18054,7 +18054,7 @@ class RightShiftAssign(BaseAugOp, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class RightSquareBracket(BaseMatcherNode):
     whitespace_before: Union[
         "BaseParenthesizableWhitespace",
@@ -18075,7 +18075,7 @@ class RightSquareBracket(BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class Semicolon(BaseMatcherNode):
     whitespace_before: Union[
         "BaseParenthesizableWhitespace",
@@ -18113,7 +18113,7 @@ class Semicolon(BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class Set(BaseExpression, BaseSet, BaseMatcherNode):
     elements: Union[
         Sequence[
@@ -18654,7 +18654,7 @@ class Set(BaseExpression, BaseSet, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class SetComp(BaseComp, BaseExpression, BaseSet, BaseSimpleComp, BaseMatcherNode):
     elt: Union[
         "BaseAssignTargetExpression",
@@ -19046,7 +19046,7 @@ class SetComp(BaseComp, BaseExpression, BaseSet, BaseSimpleComp, BaseMatcherNode
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class SimpleStatementLine(BaseStatement, BaseMatcherNode):
     body: Union[
         Sequence[
@@ -19431,7 +19431,7 @@ class SimpleStatementLine(BaseStatement, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class SimpleStatementSuite(BaseSuite, BaseMatcherNode):
     body: Union[
         Sequence[
@@ -19662,7 +19662,7 @@ class SimpleStatementSuite(BaseSuite, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class SimpleString(BaseExpression, BaseString, BaseMatcherNode):
     value: Union[
         str,
@@ -20015,7 +20015,7 @@ class SimpleString(BaseExpression, BaseString, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class SimpleWhitespace(BaseParenthesizableWhitespace, BaseMatcherNode):
     value: Union[
         str,
@@ -20026,7 +20026,7 @@ class SimpleWhitespace(BaseParenthesizableWhitespace, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class Slice(BaseMatcherNode):
     lower: Union[
         "BaseExpression",
@@ -20104,7 +20104,7 @@ class Slice(BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class StarredDictElement(BaseDictElement, BaseMatcherNode):
     value: Union[
         "BaseExpression",
@@ -20143,7 +20143,7 @@ class StarredDictElement(BaseDictElement, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class StarredElement(BaseElement, BaseMatcherNode):
     value: Union[
         "BaseExpression",
@@ -20524,7 +20524,7 @@ class StarredElement(BaseElement, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class Subscript(
     BaseAssignTargetExpression, BaseDelTargetExpression, BaseExpression, BaseMatcherNode
 ):
@@ -21111,7 +21111,7 @@ class Subscript(
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class Subtract(BaseBinaryOp, BaseMatcherNode):
     whitespace_before: Union[
         "BaseParenthesizableWhitespace",
@@ -21149,7 +21149,7 @@ class Subtract(BaseBinaryOp, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class SubtractAssign(BaseAugOp, BaseMatcherNode):
     whitespace_before: Union[
         "BaseParenthesizableWhitespace",
@@ -21187,7 +21187,7 @@ class SubtractAssign(BaseAugOp, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class TrailingWhitespace(BaseMatcherNode):
     whitespace: Union[
         "SimpleWhitespace",
@@ -21229,7 +21229,7 @@ class TrailingWhitespace(BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class Try(BaseCompoundStatement, BaseStatement, BaseMatcherNode):
     body: Union[
         "BaseSuite",
@@ -21647,7 +21647,7 @@ class Try(BaseCompoundStatement, BaseStatement, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class Tuple(
     BaseAssignTargetExpression, BaseDelTargetExpression, BaseExpression, BaseMatcherNode
 ):
@@ -22168,7 +22168,7 @@ class Tuple(
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class UnaryOperation(BaseExpression, BaseMatcherNode):
     operator: Union[
         "BaseUnaryOp",
@@ -22532,7 +22532,7 @@ class UnaryOperation(BaseExpression, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class While(BaseCompoundStatement, BaseStatement, BaseMatcherNode):
     test: Union[
         "BaseExpression",
@@ -22765,7 +22765,7 @@ class While(BaseCompoundStatement, BaseStatement, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class With(BaseCompoundStatement, BaseStatement, BaseMatcherNode):
     items: Union[
         Sequence[
@@ -23156,7 +23156,7 @@ class With(BaseCompoundStatement, BaseStatement, BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class WithItem(BaseMatcherNode):
     item: Union[
         "BaseExpression",
@@ -23194,7 +23194,7 @@ class WithItem(BaseMatcherNode):
     ] = DoNotCare()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class Yield(BaseExpression, BaseMatcherNode):
     value: Union[
         "BaseExpression",

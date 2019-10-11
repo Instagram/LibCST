@@ -511,7 +511,7 @@ for node in _get_nodes():
 
     generated_code.append("")
     generated_code.append("")
-    generated_code.append("@dataclass(frozen=True)")
+    generated_code.append("@dataclass(frozen=True, eq=False, unsafe_hash=False)")
     generated_code.append(f'class {node.name}({", ".join(classes)}):')
     all_exports.add(node.name)
 
