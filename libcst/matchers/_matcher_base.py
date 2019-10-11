@@ -88,7 +88,7 @@ def DoNotCare() -> DoNotCareSentinel:
     three arguments, regardless of the arguments themselves and regardless of the
     function name that we were calling::
 
-        m.Call(args=(m.DoNotCare(), m.DoNotCare(), m.DoNotCare()))
+        m.Call(args=[m.DoNotCare(), m.DoNotCare(), m.DoNotCare()])
     """
     return DoNotCareSentinel.DEFAULT
 
@@ -397,23 +397,23 @@ class AtLeastN(Generic[_MatcherT], _BaseWildcardNode):
 
     For example, this will match all function calls with at least 3 arguments::
 
-        m.Call(args=(m.AtLeastN(n=3),))
+        m.Call(args=[m.AtLeastN(n=3)])
 
     This will match all function calls with 3 or more integer arguments::
 
-        m.Call(args=(m.AtLeastN(n=3, matcher=m.Arg(m.Integer())),))
+        m.Call(args=[m.AtLeastN(n=3, matcher=m.Arg(m.Integer()))])
 
     You can combine sequence matchers with concrete matchers and special matchers
     and it will behave as you expect. For example, this will match all function
     calls that have 2 or more integer arguments, followed by any arbitrary
     argument::
 
-        m.Call(args=(m.AtLeastN(n=2, matcher=m.Arg(m.Integer())), m.DoNotCare()))
+        m.Call(args=[m.AtLeastN(n=2, matcher=m.Arg(m.Integer())), m.DoNotCare()])
 
     And finally, this will match all function calls that have at least 5
     arguments, the final one being an integer::
 
-        m.Call(args=(m.AtLeastN(n=4), m.Arg(m.Integer())))
+        m.Call(args=[m.AtLeastN(n=4), m.Arg(m.Integer())])
     """
 
     def __init__(
@@ -470,12 +470,12 @@ def ZeroOrMore(
     For example, this will match any function call with zero or more arguments, as
     long as all of the arguments are integers::
 
-        m.Call(args=(m.ZeroOrMore(m.Arg(m.Integer())),))
+        m.Call(args=[m.ZeroOrMore(m.Arg(m.Integer()))])
 
     This will match any function call where the first argument is an integer and
     it doesn't matter what the rest of the arguments are::
 
-        m.Call(args=(m.Arg(m.Integer()), m.ZeroOrMore()))
+        m.Call(args=[m.Arg(m.Integer()), m.ZeroOrMore()])
 
     """
     return cast(AtLeastN[Union[_MatcherT, DoNotCareSentinel]], AtLeastN(matcher, n=0))
@@ -490,23 +490,23 @@ class AtMostN(Generic[_MatcherT], _BaseWildcardNode):
 
     For example, this will match all function calls with 3 or fewer arguments::
 
-        m.Call(args=(m.AtMostN(n=3),))
+        m.Call(args=[m.AtMostN(n=3)])
 
     This will match all function calls with 0, 1 or 2 string arguments::
 
-        m.Call(args=(m.AtMostN(n=2, matcher=m.Arg(m.SimpleString())),))
+        m.Call(args=[m.AtMostN(n=2, matcher=m.Arg(m.SimpleString()))])
 
     You can combine sequence matchers with concrete matchers and special matchers
     and it will behave as you expect. For example, this will match all function
     calls that have 0, 1 or 2 string arguments, followed by an arbitrary
     argument::
 
-        m.Call(args=(m.AtMostN(n=2, matcher=m.Arg(m.SimpleString())), m.DoNotCare()))
+        m.Call(args=[m.AtMostN(n=2, matcher=m.Arg(m.SimpleString())), m.DoNotCare()])
 
     And finally, this will match all function calls that have at least 2
     arguments, the final one being a string::
 
-        m.Call(args=(m.AtMostN(n=2), m.Arg(m.SimpleString())))
+        m.Call(args=[m.AtMostN(n=2), m.Arg(m.SimpleString())])
     """
 
     def __init__(
@@ -564,12 +564,12 @@ def ZeroOrOne(
     For example, this will match any function call with zero or one integer
     argument::
 
-        m.Call(args=(m.ZeroOrOne(m.Arg(m.Integer())),))
+        m.Call(args=[m.ZeroOrOne(m.Arg(m.Integer()))])
 
     This will match any function call that has two or three arguments, and
     the first and last arguments are strings::
 
-        m.Call(args=(m.Arg(m.SimpleString()), m.ZeroOrOne(), m.Arg(m.SimpleString())))
+        m.Call(args=[m.Arg(m.SimpleString()), m.ZeroOrOne(), m.Arg(m.SimpleString())])
 
     """
     return cast(AtMostN[Union[_MatcherT, DoNotCareSentinel]], AtMostN(matcher, n=1))
