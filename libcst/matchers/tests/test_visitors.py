@@ -19,9 +19,6 @@ from libcst.testing.utils import UnitTest
 
 
 class MatchersVisitLeaveDecoratorTypingTest(UnitTest):
-
-    ONCALL_SHORTNAME = "instagram_server_framework"
-
     def test_valid_collector_simple(self) -> None:
         class TestVisitor(MatcherDecoratableVisitor):
             @visit(m.SimpleString())

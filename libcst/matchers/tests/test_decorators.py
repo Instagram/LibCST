@@ -26,9 +26,6 @@ def fixture(code: str) -> cst.Module:
 
 
 class MatchersGatingDecoratorsTest(UnitTest):
-
-    ONCALL_SHORTNAME = "instagram_server_framework"
-
     def test_call_if_inside_transform_simple(self) -> None:
         # Set up a simple visitor with a call_if_inside decorator.
         class TestVisitor(MatcherDecoratableTransformer):
@@ -379,9 +376,6 @@ class MatchersGatingDecoratorsTest(UnitTest):
 
 
 class MatchersVisitLeaveDecoratorsTest(UnitTest):
-
-    ONCALL_SHORTNAME = "instagram_server_framework"
-
     def test_visit_transform(self) -> None:
         # Set up a simple visitor with a visit and leave decorator.
         class TestVisitor(MatcherDecoratableTransformer):
