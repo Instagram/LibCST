@@ -11,9 +11,6 @@ from libcst.testing.utils import UnitTest
 
 
 class MatchersMatcherTest(UnitTest):
-
-    ONCALL_SHORTNAME = "instagram_server_framework"
-
     def test_simple_matcher_true(self) -> None:
         # Match based on identical attributes.
         self.assertTrue(matches(libcst.Name("foo"), m.Name("foo")))
