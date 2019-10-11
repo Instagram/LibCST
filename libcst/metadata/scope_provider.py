@@ -372,19 +372,23 @@ class Scope(abc.ABC):
         :attr:`QualifiedNameSource.BUILTIN` or :attr:`QualifiedNameSource.LOCAL`.
         Given the following example, ``c`` has qualified name ``a.b.c`` with source ``IMPORT``,
         ``f`` has qualified name ``Cls.f`` with source ``LOCAL``, ``a`` has qualified name
-        ``Cls.f.<locals>.a`` and the builtin ``int`` has qualified name ``builtins.int`` with
-        source ``BUILTIN``::
+        ``Cls.f.<locals>.a``, ``i`` has qualified name ``Cls.f.<locals>.<comprehension>.i``,
+        and the builtin ``int`` has qualified name ``builtins.int`` with source ``BUILTIN``::
 
             from a.b import c
             class Cls:
                 def f(self) -> "c":
                     c()
                     a = int("1")
+                    [i for i in c()]
 
         We extends `PEP-3155 <https://www.python.org/dev/peps/pep-3155/>`_
         (defines ``__qualname__`` for class and function only; function namespace is followed
         by a ``<locals>``) to provide qualified name for all :class:`~libcst.CSTNode`
         recorded by :class:`~libcst.metadata.Assignment` and :class:`~libcst.metadata.Access`.
+        The namespace of a comprehension (:class:`~libcst.ListComp`, :class:`~libcst.SetComp`,
+        :class:`~libcst.DictComp`) is represented with ``<comprehension>``.
+
         An imported name may be used for type annotation with :class:`~libcst.SimpleString` and
         currently resolving the qualified given :class:`~libcst.SimpleString` is not supported
         considering it could be a complex type annotation in the string which is hard to
@@ -891,6 +895,9 @@ class QualifiedNameProvider(
             QualifiedName(name="d.e", source=QualifiedNameSource.IMPORT),
             QualifiedName(name="f.g", source=QualifiedNameSource.IMPORT),
         }
+
+    For qualified name of a variable in a function or a comprehension, please refer
+    :func:`~libcst.metadata.Scope.get_qualified_names_for` for more detail.
     """
 
     METADATA_DEPENDENCIES = (ScopeProvider,)
