@@ -281,6 +281,8 @@ class _NameUtil:
                 name_prefixes.append(f"{scope.name}.<locals>")
             elif isinstance(scope, GlobalScope):
                 break
+            elif isinstance(scope, ComprehensionScope):
+                name_prefixes.append("<comprehension>")
             else:
                 raise Exception(f"Unexpected Scope: {scope}")
             scope = scope.parent
