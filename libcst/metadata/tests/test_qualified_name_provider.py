@@ -152,11 +152,11 @@ class ScopeProviderTest(UnitTest):
     def test_multiple_assignments(self) -> None:
         m, names = get_qualified_name_metadata_provider(
             """
-                if 1:
-                    from a import b as c
-                elif 2:
-                    from d import e as c
-                c()
+            if 1:
+                from a import b as c
+            elif 2:
+                from d import e as c
+            c()
             """
         )
         call = ensure_type(
@@ -167,5 +167,61 @@ class ScopeProviderTest(UnitTest):
             {
                 QualifiedName(name="a.b", source=QualifiedNameSource.IMPORT),
                 QualifiedName(name="d.e", source=QualifiedNameSource.IMPORT),
+            },
+        )
+
+    def test_comprehension(self) -> None:
+        m, names = get_qualified_name_metadata_provider(
+            """
+            class C:
+                def fn(self) -> None:
+                    [[k for k in i] for i in [j for j in range(10)]]
+                    # Note:
+                    # The qualified name of i is straightforward to be "C.fn.<locals>.<comprehension>.i".
+                    # ListComp j is evaluated outside of the ListComp i.
+                    # so j has qualified name "C.fn.<locals>.<comprehension>.j".
+                    # ListComp k is evaluated inside ListComp i.
+                    # so k has qualified name "C.fn.<locals>.<comprehension>.<comprehension>.k".
+            """
+        )
+        cls_def = ensure_type(m.body[0], cst.ClassDef)
+        fn_def = ensure_type(cls_def.body.body[0], cst.FunctionDef)
+        outer_comp = ensure_type(
+            ensure_type(
+                ensure_type(fn_def.body.body[0], cst.SimpleStatementLine).body[0],
+                cst.Expr,
+            ).value,
+            cst.ListComp,
+        )
+        i = outer_comp.for_in.target
+        self.assertEqual(
+            names[i],
+            {
+                QualifiedName(
+                    name="C.fn.<locals>.<comprehension>.i",
+                    source=QualifiedNameSource.LOCAL,
+                )
+            },
+        )
+        inner_comp_j = ensure_type(outer_comp.for_in.iter, cst.ListComp)
+        j = inner_comp_j.for_in.target
+        self.assertEqual(
+            names[j],
+            {
+                QualifiedName(
+                    name="C.fn.<locals>.<comprehension>.j",
+                    source=QualifiedNameSource.LOCAL,
+                )
+            },
+        )
+        inner_comp_k = ensure_type(outer_comp.elt, cst.ListComp)
+        k = inner_comp_k.for_in.target
+        self.assertEqual(
+            names[k],
+            {
+                QualifiedName(
+                    name="C.fn.<locals>.<comprehension>.<comprehension>.k",
+                    source=QualifiedNameSource.LOCAL,
+                )
             },
         )
