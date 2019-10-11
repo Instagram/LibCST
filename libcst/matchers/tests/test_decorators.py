@@ -962,3 +962,35 @@ class MatchersVisitLeaveDecoratorsTest(UnitTest):
         # We should have only visited a select number of nodes.
         self.assertEqual(visitor.visits, ['"foo"', '"bar"', '"foobar"'])
         self.assertEqual(visitor.leaves, ['"foo"', '"bar"'])
+
+    def test_init_with_unhashable_types(self) -> None:
+        # Set up a simple visitor with a call_if_inside decorator.
+        class TestVisitor(MatcherDecoratableTransformer):
+            def __init__(self) -> None:
+                super().__init__()
+                self.visits: List[str] = []
+
+            @call_if_inside(
+                m.FunctionDef(m.Name("foo"), params=m.Parameters([m.ZeroOrMore()]))
+            )
+            def visit_SimpleString(self, node: cst.SimpleString) -> None:
+                self.visits.append(node.value)
+
+        # Parse a module and verify we visited correctly.
+        module = fixture(
+            """
+            a = "foo"
+            b = "bar"
+
+            def foo() -> None:
+                return "baz"
+
+            def bar() -> None:
+                return "foobar"
+        """
+        )
+        visitor = TestVisitor()
+        module.visit(visitor)
+
+        # We should have only visited a select number of nodes.
+        self.assertEqual(visitor.visits, ['"baz"'])
