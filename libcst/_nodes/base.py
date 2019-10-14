@@ -11,6 +11,7 @@ from typing import (
     Any,
     Dict,
     List,
+    Mapping,
     MutableMapping,
     Sequence,
     Type,
@@ -54,7 +55,7 @@ class _ChildrenCollectionVisitor(CSTVisitor):
         return False  # Don't include transitive children
 
 
-class _ChildrenReplacementTransformer(CSTTransformer):
+class _ChildReplacementTransformer(CSTTransformer):
     def __init__(
         self, old_node: "CSTNode", new_node: Union["CSTNode", RemovalSentinel]
     ) -> None:
@@ -71,6 +72,22 @@ class _ChildrenReplacementTransformer(CSTTransformer):
     ) -> Union["CSTNode", RemovalSentinel]:
         if original_node is self.old_node:
             return self.new_node
+        return updated_node
+
+
+class _ChildWithChangesTransformer(CSTTransformer):
+    def __init__(self, old_node: "CSTNode", changes: Mapping[str, Any]) -> None:
+        self.old_node = old_node
+        self.changes = changes
+
+    def on_visit(self, node: "CSTNode") -> bool:
+        # If the node is one we are about to replace, we shouldn't
+        # recurse down it, that would be a waste of time.
+        return node is not self.old_node
+
+    def on_leave(self, original_node: "CSTNode", updated_node: "CSTNode") -> "CSTNode":
+        if original_node is self.old_node:
+            return updated_node.with_changes(**self.changes)
         return updated_node
 
 
@@ -365,7 +382,7 @@ class CSTNode(ABC):
         modified the tree in a way that ``old_node`` appears more than once as a deep
         child, all instances will be replaced.
         """
-        new_tree = self.visit(_ChildrenReplacementTransformer(old_node, new_node))
+        new_tree = self.visit(_ChildReplacementTransformer(old_node, new_node))
         if isinstance(new_tree, RemovalSentinel):
             # The above transform never returns RemovalSentinel, so this isn't possible
             raise Exception("Logic error, cannot get a RemovalSentinel here!")
@@ -380,8 +397,29 @@ class CSTNode(ABC):
         once as a deep child, all instances will be removed.
         """
         return self.visit(
-            _ChildrenReplacementTransformer(old_node, RemovalSentinel.REMOVE)
+            _ChildReplacementTransformer(old_node, RemovalSentinel.REMOVE)
         )
+
+    def with_deep_changes(
+        self: _CSTNodeSelfT, old_node: "CSTNode", **changes: Any
+    ) -> Union[_CSTNodeSelfT, "CSTNode"]:
+        """
+        A convenience method for applying :attr:`with_changes` to a child node. Use
+        this to avoid chains of :attr:`with_changes` or combinations of
+        :attr:`deep_replace` and :attr:`with_changes`.
+
+        The accepted arguments match the arguments given to the child node's
+        ``__init__``.
+
+        TODO: This API is untyped. There's probably no sane way to type it using pyre's
+        current feature-set, but we should still think about ways to type this or a
+        similar API in the future.
+        """
+        new_tree = self.visit(_ChildWithChangesTransformer(old_node, changes))
+        if isinstance(new_tree, RemovalSentinel):
+            # This is impossible with the above transform.
+            raise Exception("Logic error, cannot get a RemovalSentinel here!")
+        return new_tree
 
     def __eq__(self: _CSTNodeSelfT, other: _CSTNodeSelfT) -> bool:
         """
