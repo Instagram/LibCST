@@ -1,3 +1,21 @@
+# 0.2.1 - 2019-10-14
+
+## Added
+
+ - `Scope.assignments` and `Scope.accesses` APIs to access all references in a scope.
+ - Scope analysis tutorial.
+
+## Updated
+
+ - Supported `<comprehension>` in `Scope.get_qualified_names_for` and `QualifiedName`.
+ - Enforced identity equality for matchers and immutability of non-dataclass matchers.
+ - Generalize codegen cleanup steps for all codegen.
+
+## Fixed
+ - Made `BatchableMetadataProvider` typing covariant over its typevar.
+ - Fixed LICENSE header on generated matcher file.
+ - Cleanup unused internal noqa and on-call specification.
+
 # 0.2.0 - 2019-10-04
 
 ## Added
