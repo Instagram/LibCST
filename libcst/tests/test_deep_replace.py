@@ -3,6 +3,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 from textwrap import dedent
+from typing import Optional
 
 import libcst as cst
 from libcst.testing.utils import UnitTest
@@ -98,4 +99,39 @@ class DeepReplaceTest(UnitTest):
             cst.ensure_type(middle_fun.body, cst.IndentedBlock).body[0], cst.FunctionDef
         )
         new_module = cst.ensure_type(module.deep_remove(inner_fun), cst.Module)
+        self.assertEqual(new_module.code, dedent(new_code))
+
+    def test_with_deep_changes_complex(self) -> None:
+        old_code = """
+            def a():
+                def b():
+                    def c():
+                        print("Hello, world!")
+        """
+        new_code = """
+            def a():
+                def b():
+                    def c():
+                        print("Goodbye, world!")
+        """
+
+        class NodeFinder(cst.CSTVisitor):
+            # I wrote this so I wouldn't have to do a nasty multi-level
+            # tree walk, but it is also a nice example of how to implement
+            # a simple node find in the absence of official support.
+            def __init__(self) -> None:
+                super().__init__()
+                self.node: Optional[cst.CSTNode] = None
+
+            def visit_SimpleString(self, node: cst.SimpleString) -> None:
+                self.node = node
+
+        module = cst.parse_module(dedent(old_code))
+        node_finder = NodeFinder()
+        module.visit(node_finder)
+        node = node_finder.node
+        assert node is not None, "Expected to find a string node!"
+        new_module = cst.ensure_type(
+            module.with_deep_changes(node, value='"Goodbye, world!"'), cst.Module
+        )
         self.assertEqual(new_module.code, dedent(new_code))
