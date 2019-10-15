@@ -98,20 +98,29 @@ Expression Context Metadata
 
 Scope Metadata
 --------------
-Scope is the block of naming binding. The bind name is not available
-after existing the bind block. Python is
+Scopes contain and separate variables from each other. Scopes enforce that a
+local variable name bound inside of a function is not available outside of that
+function.
+
+While many programming languages are "block-scoped", Python is
 `function-scoped <https://en.wikipedia.org/wiki/Scope_(computer_science)#Function_scope>`_.
-New scopes are created for classes and functions, but not other block constructs like
-conditional statements, loops, or try…except, don't create their own scope.
-In this example, the scopes of each name assignments and class/function definitions are
-visualized:
+New scopes are created for classes, functions, and comprehensions. Other block
+constructs like conditional statements, loops, and try…except don't create their
+own scope.
+
+There are four different type of scope in Python:
+:class:`~libcst.metadata.GlobalScope`,
+:class:`~libcst.metadata.ClassScope`,
+:class:`~libcst.metadata.FunctionScope`, and
+:class:`~libcst.metadata.ComprehensionScope`.
 
 .. image:: _static/img/python_scopes.png
    :alt: LibCST
+   :width: 400
+   :align: center
 
-There were four different type of scope in Python: :class:`~libcst.metadata.GlobalScope`,
-:class:`~libcst.metadata.ClassScope`, :class:`~libcst.metadata.FunctionScope` and
-:class:`~libcst.metadata.ComprehensionScope`.
+LibCST allows you to inspect these scopes to see what local variables are
+assigned or accessed within.
 
 .. autoclass:: libcst.metadata.ScopeProvider
    :no-undoc-members:
