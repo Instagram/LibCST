@@ -121,6 +121,28 @@ def codegen_matchers() -> None:
     print(f"Successfully generated a new {matchers_file} file.")
 
 
+def codegen_return_types() -> None:
+    # Given that matchers isn't in the default import chain, we don't have to
+    # worry about generating invalid code that then prevents us from generating
+    # again.
+    import libcst.codegen.gen_type_mapping as type_codegen
+
+    base = os.path.abspath(
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "../")
+    )
+    type_mapping_file = os.path.join(base, "matchers/_return_types.py")
+    new_code = clean_generated_code("\n".join(type_codegen.generated_code))
+    with open(type_mapping_file, "w") as fp:
+        fp.write(new_code)
+        fp.close()
+
+    # If it worked, lets format the file
+    format_file(type_mapping_file)
+
+    # Inform the user
+    print(f"Successfully generated a new {type_mapping_file} file.")
+
+
 def main(cli_args: List[str]) -> int:
     # Parse out arguments, run codegen
     parser = argparse.ArgumentParser(description="Generate code for libcst.")
@@ -136,6 +158,9 @@ def main(cli_args: List[str]) -> int:
         return 0
     elif args.system == "matchers":
         codegen_matchers()
+        return 0
+    elif args.system == "return_types":
+        codegen_return_types()
         return 0
     else:
         print(f'Invalid system "{args.system}".')
