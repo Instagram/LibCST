@@ -445,3 +445,59 @@ class MatchersVisitLeaveDecoratorTypingTest(UnitTest):
             "@leave can be called with Pass but the decorated function parameter annotations do not include this type",
         ):
             TestVisitor()
+
+    def test_bad_visit_collecter_decorator(self) -> None:
+        class TestVisitor(MatcherDecoratableVisitor):
+            @visit(m.SimpleString())
+            def visit_SimpleString(self, node: cst.SimpleString) -> None:
+                pass
+
+        # Instantiating this class should raise a runtime error
+        with self.assertRaisesRegex(
+            MatchDecoratorMismatch,
+            "@visit should not decorate functions that are concrete visit or leave methods",
+        ):
+            TestVisitor()
+
+    def test_bad_leave_collecter_decorator(self) -> None:
+        class TestVisitor(MatcherDecoratableVisitor):
+            @leave(m.SimpleString())
+            def leave_SimpleString(
+                self, original_node: cst.SimpleString, updated_node: cst.SimpleString
+            ) -> None:
+                pass
+
+        # Instantiating this class should raise a runtime error
+        with self.assertRaisesRegex(
+            MatchDecoratorMismatch,
+            "@leave should not decorate functions that are concrete visit or leave methods",
+        ):
+            TestVisitor()
+
+    def test_bad_visit_transform_decorator(self) -> None:
+        class TestVisitor(MatcherDecoratableTransformer):
+            @visit(m.SimpleString())
+            def visit_SimpleString(self, node: cst.SimpleString) -> None:
+                pass
+
+        # Instantiating this class should raise a runtime error
+        with self.assertRaisesRegex(
+            MatchDecoratorMismatch,
+            "@visit should not decorate functions that are concrete visit or leave methods",
+        ):
+            TestVisitor()
+
+    def test_bad_leave_transform_decorator(self) -> None:
+        class TestVisitor(MatcherDecoratableTransformer):
+            @leave(m.SimpleString())
+            def leave_SimpleString(
+                self, original_node: cst.SimpleString, updated_node: cst.SimpleString
+            ) -> cst.SimpleString:
+                return updated_node
+
+        # Instantiating this class should raise a runtime error
+        with self.assertRaisesRegex(
+            MatchDecoratorMismatch,
+            "@leave should not decorate functions that are concrete visit or leave methods",
+        ):
+            TestVisitor()

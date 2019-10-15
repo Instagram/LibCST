@@ -40,6 +40,12 @@ from libcst.matchers._matcher_base import (
 from libcst.matchers._return_types import TYPED_FUNCTION_RETURN_MAPPING
 
 
+CONCRETE_METHODS: Set[str] = {
+    *{f"visit_{cls.__name__}" for cls in TYPED_FUNCTION_RETURN_MAPPING},
+    *{f"leave_{cls.__name__}" for cls in TYPED_FUNCTION_RETURN_MAPPING},
+}
+
+
 _CSTNodeT = TypeVar("_CSTNodeT", bound=cst.CSTNode)
 
 
@@ -249,6 +255,17 @@ def _gather_matchers(obj: object) -> Set[BaseMatcherNode]:
     return visit_matchers
 
 
+def _assert_not_concrete(
+    decorator_name: str, func: Callable[[cst.CSTNode], None]
+) -> None:
+    if func.__name__ in CONCRETE_METHODS:
+        raise MatchDecoratorMismatch(
+            func,
+            f"@{decorator_name} should not decorate functions that are concrete "
+            + "visit or leave methods.",
+        )
+
+
 def _gather_constructed_visit_funcs(
     obj: object
 ) -> Dict[BaseMatcherNode, Sequence[Callable[[cst.CSTNode], None]]]:
@@ -258,13 +275,20 @@ def _gather_constructed_visit_funcs(
 
     for funcname in dir(obj):
         try:
-            func = cast(Callable[[cst.CSTNode], None], getattr(obj, funcname))
+            possible_func = getattr(obj, funcname)
+            if not ismethod(possible_func):
+                continue
+            func = cast(Callable[[cst.CSTNode], None], possible_func)
         except Exception:
             # This could be a caculated property, and calling getattr() evaluates it.
             # We have no control over the implementation detail, so if it raises, we
             # should not crash.
             continue
-        for matcher in getattr(func, CONSTRUCTED_VISIT_MATCHER_ATTR, []):
+        matchers = getattr(func, CONSTRUCTED_VISIT_MATCHER_ATTR, [])
+        if matchers:
+            # Make sure that we aren't accidentally putting a @visit on a visit_Node.
+            _assert_not_concrete("visit", func)
+        for matcher in matchers:
             casted_matcher = cast(BaseMatcherNode, matcher)
             constructed_visitors[casted_matcher] = (
                 *constructed_visitors.get(casted_matcher, ()),
@@ -286,13 +310,20 @@ def _gather_constructed_leave_funcs(
 
     for funcname in dir(obj):
         try:
-            func = cast(Callable[[cst.CSTNode], None], getattr(obj, funcname))
+            possible_func = getattr(obj, funcname)
+            if not ismethod(possible_func):
+                continue
+            func = cast(Callable[[cst.CSTNode], None], possible_func)
         except Exception:
             # This could be a caculated property, and calling getattr() evaluates it.
             # We have no control over the implementation detail, so if it raises, we
             # should not crash.
             continue
-        for matcher in getattr(func, CONSTRUCTED_LEAVE_MATCHER_ATTR, []):
+        matchers = getattr(func, CONSTRUCTED_LEAVE_MATCHER_ATTR, [])
+        if matchers:
+            # Make sure that we aren't accidentally putting a @leave on a leave_Node.
+            _assert_not_concrete("leave", func)
+        for matcher in matchers:
             casted_matcher = cast(BaseMatcherNode, matcher)
             constructed_visitors[casted_matcher] = (
                 *constructed_visitors.get(casted_matcher, ()),
