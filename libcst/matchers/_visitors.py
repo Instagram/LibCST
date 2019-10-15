@@ -37,6 +37,7 @@ from libcst.matchers._matcher_base import (
     OneOf,
     matches,
 )
+from libcst.matchers._return_types import TYPED_FUNCTION_RETURN_MAPPING
 
 
 _CSTNodeT = TypeVar("_CSTNodeT", bound=cst.CSTNode)
@@ -58,11 +59,11 @@ def _get_possible_match_classes(matcher: BaseMatcherNode) -> List[Type[cst.CSTNo
         return [getattr(cst, matcher.__class__.__name__)]
 
 
-def _get_possible_annotated_classes(annotation: Type[object]) -> List[Type[object]]:
+def _get_possible_annotated_classes(annotation: object) -> List[Type[object]]:
     if getattr(annotation, "__origin__", None) is Union:
         return getattr(annotation, "__args__", [])
     else:
-        return [annotation]
+        return [cast(Type[object], annotation)]
 
 
 def _get_valid_leave_annotations_for_classes(
@@ -75,20 +76,9 @@ def _get_valid_leave_annotations_for_classes(
         # all possible valid return annotations. Its not really possible for us (or
         # pyre) to fully enforce return types given the presence of OneOf/AllOf matchers, so
         # we do the best we can by taking a union of all valid return annotations.
-
-        # TODO: We could possibly teach LibCST codegen to generate a mapping of class
-        # to valid leave annotations when it generates leave_<Node> methods, but for
-        # now this is functionally identical. That would get rid of the need to provide
-        # a namespace here, as well as a gross getattr on the CSTTransformer class.
-        meth = getattr(cst.CSTTransformer, f"leave_{cls.__name__}")
-        namespace: Dict[str, object] = {
-            **{x: getattr(cst, x) for x in dir(cst)},
-            "cst": cst,
-            "libcst": cst,
-        }
-        type_hints = get_type_hints(meth, namespace, namespace)
-        if "return" in type_hints:
-            retval.update(_get_possible_annotated_classes(type_hints["return"]))
+        retval.update(
+            _get_possible_annotated_classes(TYPED_FUNCTION_RETURN_MAPPING[cls])
+        )
 
     return retval
 
