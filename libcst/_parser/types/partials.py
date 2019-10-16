@@ -15,7 +15,6 @@ from libcst._nodes.expression import (
     Attribute,
     BaseExpression,
     BaseFormattedStringContent,
-    ExtSlice,
     Index,
     LeftParen,
     LeftSquareBracket,
@@ -24,6 +23,7 @@ from libcst._nodes.expression import (
     RightParen,
     RightSquareBracket,
     Slice,
+    SubscriptElement,
 )
 from libcst._nodes.op import AssignEqual, BaseAugOp, Colon, Dot
 from libcst._nodes.statement import AsName, BaseSmallStatement, Decorator, ImportAlias
@@ -81,7 +81,7 @@ class CallPartial:
 @add_slots
 @dataclass(frozen=True)
 class SubscriptPartial:
-    slice: Union[Index, Slice, Sequence[ExtSlice]]
+    slice: Union[Index, Slice, Sequence[SubscriptElement]]
     lbracket: LeftSquareBracket
     rbracket: RightSquareBracket
     whitespace_before: WhitespaceState

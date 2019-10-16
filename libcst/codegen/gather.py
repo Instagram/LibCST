@@ -43,6 +43,10 @@ def _get_nodes() -> Generator[Type[cst.CSTNode], None, None]:
             continue
         if name == "CSTNode":
             continue
+        # TODO: Remove this once we completely remove ExtSlice.
+        if name == "ExtSlice":
+            # We're deprecating this, so don't generate code with it.
+            continue
 
         node = getattr(cst, name)
         try:

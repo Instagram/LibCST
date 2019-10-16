@@ -38,14 +38,14 @@ class SubscriptTest(CSTNodeTest):
                 cst.Subscript(
                     cst.Name("foo"),
                     (
-                        cst.ExtSlice(
+                        cst.SubscriptElement(
                             cst.Slice(
                                 lower=cst.Integer("1"),
                                 upper=cst.Integer("2"),
                                 step=cst.Integer("3"),
                             )
                         ),
-                        cst.ExtSlice(cst.Index(cst.Integer("5"))),
+                        cst.SubscriptElement(cst.Index(cst.Integer("5"))),
                     ),
                 ),
                 "foo[1:2:3, 5]",
@@ -71,7 +71,7 @@ class SubscriptTest(CSTNodeTest):
                 cst.Subscript(
                     cst.Name("foo"),
                     (
-                        cst.ExtSlice(
+                        cst.SubscriptElement(
                             cst.Slice(
                                 lower=cst.Integer("1"),
                                 first_colon=cst.Colon(),
@@ -81,7 +81,7 @@ class SubscriptTest(CSTNodeTest):
                             ),
                             comma=cst.Comma(),
                         ),
-                        cst.ExtSlice(cst.Index(cst.Integer("5"))),
+                        cst.SubscriptElement(cst.Index(cst.Integer("5"))),
                     ),
                 ),
                 "foo[1:2:3,5]",
@@ -276,7 +276,7 @@ class SubscriptTest(CSTNodeTest):
                         whitespace_after=cst.SimpleWhitespace(" ")
                     ),
                     slice=(
-                        cst.ExtSlice(
+                        cst.SubscriptElement(
                             slice=cst.Slice(
                                 lower=cst.Integer("1"),
                                 first_colon=cst.Colon(
@@ -295,7 +295,7 @@ class SubscriptTest(CSTNodeTest):
                                 whitespace_after=cst.SimpleWhitespace("  "),
                             ),
                         ),
-                        cst.ExtSlice(slice=cst.Index(cst.Integer("5"))),
+                        cst.SubscriptElement(slice=cst.Index(cst.Integer("5"))),
                     ),
                     rbracket=cst.RightSquareBracket(
                         whitespace_before=cst.SimpleWhitespace(" ")
@@ -307,7 +307,7 @@ class SubscriptTest(CSTNodeTest):
                 True,
                 CodeRange((1, 2), (1, 24)),
             ),
-            # Test Index, Slice, ExtSlice
+            # Test Index, Slice, SubscriptElement
             (cst.Index(cst.Integer("5")), "5", False, CodeRange((1, 0), (1, 1))),
             (
                 cst.Slice(lower=None, upper=None, second_colon=cst.Colon(), step=None),
@@ -316,7 +316,7 @@ class SubscriptTest(CSTNodeTest):
                 CodeRange((1, 0), (1, 2)),
             ),
             (
-                cst.ExtSlice(
+                cst.SubscriptElement(
                     slice=cst.Slice(
                         lower=cst.Integer("1"),
                         first_colon=cst.Colon(
@@ -371,7 +371,7 @@ class SubscriptTest(CSTNodeTest):
                 ),
                 "right paren without left paren",
             ),
-            (lambda: cst.Subscript(cst.Name("foo"), ()), "empty ExtSlice"),
+            (lambda: cst.Subscript(cst.Name("foo"), ()), "empty SubscriptElement"),
         )
     )
     def test_invalid(

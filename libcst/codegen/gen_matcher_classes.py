@@ -47,9 +47,9 @@ class CleanseFullTypeNames(cst.CSTTransformer):
             return cst.SimpleString(repr(value))
         return updated_node
 
-    def leave_ExtSlice(
-        self, original_node: cst.ExtSlice, updated_node: cst.ExtSlice
-    ) -> Union[cst.ExtSlice, cst.RemovalSentinel]:
+    def leave_SubscriptElement(
+        self, original_node: cst.SubscriptElement, updated_node: cst.SubscriptElement
+    ) -> Union[cst.SubscriptElement, cst.RemovalSentinel]:
         slc = updated_node.slice
         if isinstance(slc, cst.Index):
             val = slc.value
@@ -62,9 +62,9 @@ class CleanseFullTypeNames(cst.CSTTransformer):
 
 
 class RemoveDoNotCareFromGeneric(cst.CSTTransformer):
-    def leave_ExtSlice(
-        self, original_node: cst.ExtSlice, updated_node: cst.ExtSlice
-    ) -> Union[cst.ExtSlice, cst.RemovalSentinel]:
+    def leave_SubscriptElement(
+        self, original_node: cst.SubscriptElement, updated_node: cst.SubscriptElement
+    ) -> Union[cst.SubscriptElement, cst.RemovalSentinel]:
         slc = updated_node.slice
         if isinstance(slc, cst.Index):
             val = slc.value
@@ -107,11 +107,11 @@ def _convert_match_nodes_to_cst_nodes(
     return ensure_type(matchtype.visit(MatcherClassToLibCSTClass()), cst.BaseExpression)
 
 
-def _get_match_if_true(oldtype: cst.BaseExpression) -> cst.ExtSlice:
+def _get_match_if_true(oldtype: cst.BaseExpression) -> cst.SubscriptElement:
     """
     Construct a MatchIfTrue type node appropriate for going into a Union.
     """
-    return cst.ExtSlice(
+    return cst.SubscriptElement(
         cst.Index(
             cst.Subscript(
                 cst.Name("MatchIfTrue"),
@@ -119,7 +119,7 @@ def _get_match_if_true(oldtype: cst.BaseExpression) -> cst.ExtSlice:
                     cst.Subscript(
                         cst.Name("Callable"),
                         slice=[
-                            cst.ExtSlice(
+                            cst.SubscriptElement(
                                 cst.Index(
                                     cst.List(
                                         [
@@ -138,7 +138,7 @@ def _get_match_if_true(oldtype: cst.BaseExpression) -> cst.ExtSlice:
                                     )
                                 )
                             ),
-                            cst.ExtSlice(cst.Index(cst.Name("bool"))),
+                            cst.SubscriptElement(cst.Index(cst.Name("bool"))),
                         ],
                     )
                 ),
@@ -191,8 +191,12 @@ class AddLogicAndLambdaMatcherToUnions(cst.CSTTransformer):
                     # inside OneOf/AllOf clauses, but then if you want to mix and match you
                     # would have to use a recursive matches() inside your lambda which
                     # is super ugly.
-                    cst.ExtSlice(cst.Index(_add_generic("OneOf", match_if_true_expr))),
-                    cst.ExtSlice(cst.Index(_add_generic("AllOf", match_if_true_expr))),
+                    cst.SubscriptElement(
+                        cst.Index(_add_generic("OneOf", match_if_true_expr))
+                    ),
+                    cst.SubscriptElement(
+                        cst.Index(_add_generic("AllOf", match_if_true_expr))
+                    ),
                     # We use original node here, because we don't want MatchIfTrue
                     # to get modifications to child Union classes. If we allow
                     # that, we get MatchIfTrue nodes whose Callable takes in
@@ -268,23 +272,29 @@ class AddWildcardsToSequenceUnions(cst.CSTTransformer):
             return updated_node.with_changes(
                 slice=[
                     *updated_node.slice,
-                    cst.ExtSlice(cst.Index(_add_generic("AtLeastN", original_node))),
-                    cst.ExtSlice(cst.Index(_add_generic("AtMostN", original_node))),
+                    cst.SubscriptElement(
+                        cst.Index(_add_generic("AtLeastN", original_node))
+                    ),
+                    cst.SubscriptElement(
+                        cst.Index(_add_generic("AtMostN", original_node))
+                    ),
                 ]
             )
         return updated_node
 
 
-def _get_do_not_care() -> cst.ExtSlice:
+def _get_do_not_care() -> cst.SubscriptElement:
     """
     Construct a DoNotCareSentinel entry appropriate for going into a Union.
     """
 
-    return cst.ExtSlice(cst.Index(cst.Name("DoNotCareSentinel")))
+    return cst.SubscriptElement(cst.Index(cst.Name("DoNotCareSentinel")))
 
 
 def _get_wrapped_union_type(
-    node: cst.BaseExpression, addition: cst.ExtSlice, *additions: cst.ExtSlice
+    node: cst.BaseExpression,
+    addition: cst.SubscriptElement,
+    *additions: cst.SubscriptElement,
 ) -> cst.Subscript:
     """
     Take two or more nodes, wrap them in a union type. Function signature is
@@ -292,7 +302,7 @@ def _get_wrapped_union_type(
     """
 
     return cst.Subscript(
-        cst.Name("Union"), [cst.ExtSlice(cst.Index(node)), addition, *additions]
+        cst.Name("Union"), [cst.SubscriptElement(cst.Index(node)), addition, *additions]
     )
 
 
@@ -455,6 +465,14 @@ for node in all_libcst_nodes:
         generated_code.append(f"    {field.name}: {field.type} = DoNotCare()")
     if not fields_printed:
         generated_code.append("    pass")
+
+
+# TODO: Remove this once we completely remove ExtSlice.
+# Allow old ExtSlice notation so that we don't break existing code
+generated_code.append("")
+generated_code.append("")
+generated_code.append("ExtSlice = SubscriptElement")
+all_exports.add("ExtSlice")
 
 
 # Make sure to add an __all__ for flake8 and compatibility with "from libcst.matchers import *"

@@ -363,7 +363,7 @@ class Ellipsis(BaseExpression):
     """
     An ellipsis ``...``. When used as an expression, it evaluates to the
     `Ellipsis constant`_. Ellipsis are often used as placeholders in code or in
-    conjunction with :class:`ExtSlice`.
+    conjunction with :class:`SubscriptElement`.
 
     .. _Ellipsis constant: https://docs.python.org/3/library/constants.html#Ellipsis
     """
@@ -1356,7 +1356,7 @@ class Slice(CSTNode):
 
 @add_slots
 @dataclass(frozen=True)
-class ExtSlice(CSTNode):
+class SubscriptElement(CSTNode):
     """
     Part of a sequence of slices in a :class:`Subscript`, such as ``1:2, 3``. This is
     not used in Python's standard library, but it is used in some third-party
@@ -1371,8 +1371,8 @@ class ExtSlice(CSTNode):
     #: A separating comma, with any whitespace it owns.
     comma: Union[Comma, MaybeSentinel] = MaybeSentinel.DEFAULT
 
-    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "ExtSlice":
-        return ExtSlice(
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "SubscriptElement":
+        return SubscriptElement(
             slice=visit_required(self, "slice", self.slice, visitor),
             comma=visit_sentinel(self, "comma", self.comma, visitor),
         )
@@ -1393,16 +1393,16 @@ class ExtSlice(CSTNode):
 class Subscript(BaseAssignTargetExpression, BaseDelTargetExpression):
     """
     A indexed subscript reference (:class:`Index`) such as ``x[2]``, a :class:`Slice`
-    such as ``x[1:-1]``, or an extended slice (:class:`ExtSlice`) such as ``x[1:2, 3]``.
+    such as ``x[1:-1]``, or an extended slice (:class:`SubscriptElement`) such as ``x[1:2, 3]``.
     """
 
     #: The left-hand expression which, when evaluated, will be subscripted, such as
     #: ``x`` in ``x[2]``.
     value: BaseExpression
 
-    #: The :class:`Index`, :class:`Slice`, or :class:`ExtSlice` to extract from the
+    #: The :class:`Index`, :class:`Slice`, or :class:`SubscriptElement` to extract from the
     #: ``value``.
-    slice: Union[Index, Slice, Sequence[ExtSlice]]
+    slice: Union[Index, Slice, Sequence[SubscriptElement]]
 
     lbracket: LeftSquareBracket = LeftSquareBracket.field()
     #: Brackets after the ``value`` surrounding the ``slice``.
@@ -1421,7 +1421,7 @@ class Subscript(BaseAssignTargetExpression, BaseDelTargetExpression):
         if isinstance(slc, Sequence):
             # Validate valid commas
             if len(slc) < 1:
-                raise CSTValidationError("Cannot have empty ExtSlice.")
+                raise CSTValidationError("Cannot have empty SubscriptElement.")
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Subscript":
         slice = self.slice
