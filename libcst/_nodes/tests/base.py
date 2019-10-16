@@ -14,7 +14,7 @@ import libcst as cst
 from libcst._nodes.internal import CodegenState, CodeRange, visit_required
 from libcst._types import CSTNodeT
 from libcst._visitors import CSTTransformer, CSTVisitorT
-from libcst.metadata.position_provider import SyntacticPositionProvider
+from libcst.metadata.position_provider import PositionProvider
 from libcst.testing.utils import UnitTest
 
 
@@ -91,7 +91,7 @@ class CSTNodeTest(UnitTest):
         Verifies that the given node's `_codegen` method is correct.
         """
         module = cst.Module([])
-        provider = None if expected_position is None else SyntacticPositionProvider()
+        provider = None if expected_position is None else PositionProvider()
 
         self.assertEqual(module.code_for_node(node, provider=provider), expected)
 

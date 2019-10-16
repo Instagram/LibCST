@@ -11,22 +11,39 @@ from libcst._nodes.module import _ModuleSelfT as _ModuleT
 from libcst.metadata.base_provider import BaseMetadataProvider
 
 
-PositionProvider = Union["BasicPositionProvider", "SyntacticPositionProvider"]
+_PositionProviderUnion = Union[
+    "WhitespaceInclusivePositionProvider", "PositionProvider"
+]
 
 
-class BasicPositionProvider(BaseMetadataProvider[CodeRange]):
+class WhitespaceInclusivePositionProvider(BaseMetadataProvider[CodeRange]):
     """
-    Generates basic line and column metadata. Basic position is defined by the
-    start and ending bounds of a node including all whitespace owned by that node.
+    Generates line and column metadata.
+
+    The start and ending bounds of the positions produced by this provider include all
+    whitespace owned by the node.
     """
 
     def _gen_impl(self, module: _ModuleT) -> None:
         module.code_for_node(module, provider=self)
 
 
-class SyntacticPositionProvider(BasicPositionProvider):
+class PositionProvider(WhitespaceInclusivePositionProvider):
     """
-    Generates syntactic line and column metadata. Syntactic position is defined
-    by the start and ending bounds of a node ignoring most instances of leading
-    and trailing whitespace when it is not syntactically significant.
+    Generates line and column metadata.
+
+    These positions are defined by the start and ending bounds of a node ignoring most
+    instances of leading and trailing whitespace when it is not syntactically
+    significant.
+
+    The positions provided by this provider should eventually match the positions used
+    by Pyre_ for equivalent nodes.
+
+    .. _Pyre: https://github.com/facebook/pyre-check
     """
+
+
+# DEPRECATED: These names are here for backwards compatibility and will be removed in
+# the future.
+BasicPositionProvider = WhitespaceInclusivePositionProvider
+SyntacticPositionProvider = PositionProvider
