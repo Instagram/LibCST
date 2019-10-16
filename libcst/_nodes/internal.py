@@ -33,9 +33,9 @@ if TYPE_CHECKING:
     from libcst._nodes.base import CSTNode  # noqa: F401
     from libcst._visitors import CSTVisitorT
     from libcst.metadata.position_provider import (  # noqa: F401
-        BasicPositionProvider,
-        SyntacticPositionProvider,
+        WhitespaceInclusivePositionProvider,
         PositionProvider,
+        _PositionProviderUnion,
     )
 
 
@@ -87,7 +87,7 @@ class CodegenState:
     default_indent: str
     default_newline: str
 
-    provider: Optional["PositionProvider"]
+    provider: Optional["_PositionProviderUnion"]
 
     indent_tokens: List[str] = field(default_factory=list)
     tokens: List[str] = field(default_factory=list)
@@ -122,12 +122,13 @@ class CodegenState:
 
 
 @dataclass(frozen=False)
-class BasicCodegenState(CodegenState):
+class WhitespaceInclusivePositionProvidingCodegenState(CodegenState):
     """
-    Pass to codegen to record the basic position of nodes.
+    Used by the codegen to handle
+    `~libcst.metadata.WhitespaceInclusivePositionProvider`.
     """
 
-    provider: "PositionProvider"
+    provider: "_PositionProviderUnion"
 
     def add_indent_tokens(self) -> None:
         self.tokens.extend(self.indent_tokens)
@@ -158,9 +159,10 @@ class BasicCodegenState(CodegenState):
             self.provider._computed[node] = position
 
 
-class SyntacticCodegenState(BasicCodegenState):
+@dataclass(frozen=False)
+class PositionProvidingCodegenState(WhitespaceInclusivePositionProvidingCodegenState):
     """
-    Pass to codegen to record the syntatic position of nodes.
+    Used by the codegen to handle `~libcst.metadata.PositionProvider`.
     """
 
     @contextmanager

@@ -17,7 +17,9 @@ from libcst.metadata.expression_context_provider import (
 from libcst.metadata.parent_node_provider import ParentNodeProvider
 from libcst.metadata.position_provider import (
     BasicPositionProvider,
+    PositionProvider,
     SyntacticPositionProvider,
+    WhitespaceInclusivePositionProvider,
 )
 from libcst.metadata.scope_provider import (
     Access,
@@ -40,8 +42,10 @@ from libcst.metadata.wrapper import MetadataWrapper
 
 
 __all__ = [
-    "BasicPositionProvider",
-    "SyntacticPositionProvider",
+    "WhitespaceInclusivePositionProvider",
+    "PositionProvider",
+    "BasicPositionProvider",  # deprecated name for backwards compatibility
+    "SyntacticPositionProvider",  # deprecated name for backwards compatibility
     "ExpressionContext",
     "ExpressionContextProvider",
     "BaseAssignment",

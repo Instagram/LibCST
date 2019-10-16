@@ -9,9 +9,9 @@ from typing import TYPE_CHECKING, Optional, Sequence, TypeVar, Union, cast
 from libcst._add_slots import add_slots
 from libcst._nodes.base import CSTNode
 from libcst._nodes.internal import (
-    BasicCodegenState,
     CodegenState,
-    SyntacticCodegenState,
+    PositionProvidingCodegenState,
+    WhitespaceInclusivePositionProvidingCodegenState,
     visit_body_sequence,
     visit_sequence,
 )
@@ -24,9 +24,9 @@ from libcst._visitors import CSTVisitorT
 if TYPE_CHECKING:
     # These are circular dependencies only used for typing purposes
     from libcst.metadata.position_provider import (  # noqa: F401
-        BasicPositionProvider,
-        SyntacticPositionProvider,
+        WhitespaceInclusivePositionProvider,
         PositionProvider,
+        _PositionProviderUnion,
     )
 
     # This is circular, so import the type only in type checking
@@ -137,20 +137,24 @@ class Module(CSTNode):
         return self.code.encode(self.encoding)
 
     def code_for_node(
-        self, node: CSTNode, provider: Optional["PositionProvider"] = None
+        self, node: CSTNode, provider: Optional["_PositionProviderUnion"] = None
     ) -> str:
         """
         Generates the code for the given node in the context of this module. This is a
         method of Module, not CSTNode, because we need to know the module's default
         indentation and newline formats.
 
-        By default, this also generates syntactic line and column metadata for each
-        node. Passing :class:`~libcst.BasicPositionProvider` will generate basic
-        line and column metadata instead. See :ref:`Metadata<libcst-metadata>`
-        for more information.
+        This can also be used with a
+        :class:`~libcst.metadata.WhitespaceInclusivePositionProvider` or
+        :class:`~libcst.metadata.PositionProvider` to compute position information, but
+        that's an implementation detail, and you should use
+        :meth:`MetadataWrapper.resolve() <libcst.metadata.MetadataWrapper.resolve>`
+        instead.
+
+        See :ref:`Metadata<libcst-metadata>` for more information.
         """
 
-        from libcst.metadata.position_provider import SyntacticPositionProvider
+        from libcst.metadata.position_provider import PositionProvider
 
         if provider is None:
             state = CodegenState(
@@ -158,14 +162,14 @@ class Module(CSTNode):
                 default_newline=self.default_newline,
                 provider=provider,
             )
-        elif isinstance(provider, SyntacticPositionProvider):
-            state = SyntacticCodegenState(
+        elif isinstance(provider, PositionProvider):
+            state = PositionProvidingCodegenState(
                 default_indent=self.default_indent,
                 default_newline=self.default_newline,
                 provider=provider,
             )
         else:
-            state = BasicCodegenState(
+            state = WhitespaceInclusivePositionProvidingCodegenState(
                 default_indent=self.default_indent,
                 default_newline=self.default_newline,
                 provider=provider,

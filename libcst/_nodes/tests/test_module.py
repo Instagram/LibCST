@@ -9,7 +9,7 @@ from typing import Tuple, cast
 import libcst as cst
 from libcst import CodeRange, parse_module, parse_statement
 from libcst._nodes.tests.base import CSTNodeTest
-from libcst.metadata.position_provider import SyntacticPositionProvider
+from libcst.metadata.position_provider import PositionProvider
 from libcst.testing.utils import data_provider
 
 
@@ -133,7 +133,7 @@ class ModuleTest(CSTNodeTest):
     )
     def test_module_position(self, *, code: str, expected: CodeRange) -> None:
         module = parse_module(code)
-        provider = SyntacticPositionProvider()
+        provider = PositionProvider()
         module.code_for_node(module, provider)
 
         self.assertEqual(provider._computed[module], expected)
@@ -145,7 +145,7 @@ class ModuleTest(CSTNodeTest):
 
     def test_function_position(self) -> None:
         module = parse_module("def foo():\n    pass")
-        provider = SyntacticPositionProvider()
+        provider = PositionProvider()
         module.code_for_node(module, provider)
 
         fn = cast(cst.FunctionDef, module.body[0])
@@ -158,7 +158,7 @@ class ModuleTest(CSTNodeTest):
         module = parse_module(
             "if True:\n    if False:\n        x = 1\nelse:\n    return"
         )
-        provider = SyntacticPositionProvider()
+        provider = PositionProvider()
         module.code_for_node(module, provider)
 
         outer_if = cast(cst.If, module.body[0])
@@ -176,7 +176,7 @@ class ModuleTest(CSTNodeTest):
 
     def test_multiline_string_position(self) -> None:
         module = parse_module('"abc"\\\n"def"')
-        provider = SyntacticPositionProvider()
+        provider = PositionProvider()
         module.code_for_node(module, provider)
 
         stmt = cast(cst.SimpleStatementLine, module.body[0])

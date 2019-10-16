@@ -8,50 +8,63 @@ from typing import Tuple
 
 import libcst as cst
 from libcst._nodes.internal import (
-    BasicCodegenState,
+    CodegenState,
     CodePosition,
     CodeRange,
-    SyntacticCodegenState,
+    PositionProvidingCodegenState,
+    WhitespaceInclusivePositionProvidingCodegenState,
 )
 from libcst.metadata.position_provider import (
-    BasicPositionProvider,
-    SyntacticPositionProvider,
+    PositionProvider,
+    WhitespaceInclusivePositionProvider,
 )
 from libcst.testing.utils import UnitTest
 
 
-def position(state: BasicCodegenState) -> Tuple[int, int]:
+def position(state: CodegenState) -> Tuple[int, int]:
     return state.line, state.column
 
 
 class InternalTest(UnitTest):
     def test_codegen_initial_position(self) -> None:
-        state = BasicCodegenState(" " * 4, "\n", BasicPositionProvider())
+        state = WhitespaceInclusivePositionProvidingCodegenState(
+            " " * 4, "\n", WhitespaceInclusivePositionProvider()
+        )
         self.assertEqual(position(state), (1, 0))
 
     def test_codegen_add_token(self) -> None:
-        state = BasicCodegenState(" " * 4, "\n", BasicPositionProvider())
+        state = WhitespaceInclusivePositionProvidingCodegenState(
+            " " * 4, "\n", WhitespaceInclusivePositionProvider()
+        )
         state.add_token("1234")
         self.assertEqual(position(state), (1, 4))
 
     def test_codegen_add_tokens(self) -> None:
-        state = BasicCodegenState(" " * 4, "\n", BasicPositionProvider())
+        state = WhitespaceInclusivePositionProvidingCodegenState(
+            " " * 4, "\n", WhitespaceInclusivePositionProvider()
+        )
         state.add_token("1234\n1234")
         self.assertEqual(position(state), (2, 4))
 
     def test_codegen_add_newline(self) -> None:
-        state = BasicCodegenState(" " * 4, "\n", BasicPositionProvider())
+        state = WhitespaceInclusivePositionProvidingCodegenState(
+            " " * 4, "\n", WhitespaceInclusivePositionProvider()
+        )
         state.add_token("\n")
         self.assertEqual(position(state), (2, 0))
 
     def test_codegen_add_indent_tokens(self) -> None:
-        state = BasicCodegenState(" " * 4, "\n", BasicPositionProvider())
+        state = WhitespaceInclusivePositionProvidingCodegenState(
+            " " * 4, "\n", WhitespaceInclusivePositionProvider()
+        )
         state.increase_indent(state.default_indent)
         state.add_indent_tokens()
         self.assertEqual(position(state), (1, 4))
 
     def test_codegen_decrease_indent(self) -> None:
-        state = BasicCodegenState(" " * 4, "\n", BasicPositionProvider())
+        state = WhitespaceInclusivePositionProvidingCodegenState(
+            " " * 4, "\n", WhitespaceInclusivePositionProvider()
+        )
         state.increase_indent(state.default_indent)
         state.increase_indent(state.default_indent)
         state.increase_indent(state.default_indent)
@@ -65,7 +78,9 @@ class InternalTest(UnitTest):
 
         # simulate codegen behavior for the dummy node
         # generates the code " pass "
-        state = BasicCodegenState(" " * 4, "\n", BasicPositionProvider())
+        state = WhitespaceInclusivePositionProvidingCodegenState(
+            " " * 4, "\n", WhitespaceInclusivePositionProvider()
+        )
         start = CodePosition(state.line, state.column)
         state.add_token(" ")
         with state.record_syntactic_position(node):
@@ -83,7 +98,7 @@ class InternalTest(UnitTest):
 
         # simulate codegen behavior for the dummy node
         # generates the code " pass "
-        state = SyntacticCodegenState(" " * 4, "\n", SyntacticPositionProvider())
+        state = PositionProvidingCodegenState(" " * 4, "\n", PositionProvider())
         start = CodePosition(state.line, state.column)
         state.add_token(" ")
         with state.record_syntactic_position(node):

@@ -12,16 +12,16 @@ LibCST ships with a metadata interface that defines a standardized way to
 associate nodes in a CST with arbitrary metadata while maintaining the immutability
 of the tree. The metadata interface is designed to be declarative and type safe.
 Here's a quick example of using the metadata interface to get line and column
-numbers of nodes through the :class:`~libcst.metadata.SyntacticPositionProvider`:
+numbers of nodes through the :class:`~libcst.metadata.PositionProvider`:
 
 .. _libcst-metadata-position-example:
 .. code-block:: python
 
     class NamePrinter(cst.CSTVisitor):
-        METADATA_DEPENDENCIES = (cst.SyntacticPositionProvider,)
+        METADATA_DEPENDENCIES = (cst.PositionProvider,)
 
         def visit_Name(self, node: cst.Name) -> None:
-            pos = self.get_metadata(cst.SyntacticPositionProvider, node).start
+            pos = self.get_metadata(cst.PositionProvider, node).start
             print(f"{node.value} found at line {pos.line}, column {pos.column}")
 
     wrapper = cst.metadata.MetadataWrapper(cst.parse_module("x = 1"))
@@ -49,13 +49,17 @@ metadata dependencies will be automatically computed when visited by a
 Providing Metadata
 ------------------
 
-Metadata is generated through provider classes that can be declared as a dependency
-by a subclass of :class:`~libcst.MetadataDependent`. These providers are then
-resolved automatically using methods provided by :class:`~libcst.metadata.MetadataWrapper`.
-In most cases, you should extend :class:`~libcst.BatchableMetadataProvider` when
-writing a provider, unless you have a particular reason to not to use a
-batchable visitor. Only extend from :class:`~libcst.BaseMetadataProvider` if
-your provider does not use the visitor pattern for computing metadata for a tree.
+Metadata is generated through provider classes that can be be passed to
+:meth:`MetadataWrapper.resolve() <libcst.metadata.MetadataWrapper.resolve>` or
+declared as a dependency of a :class:`~libcst.metadata.MetadataDependent`. These
+providers are then resolved automatically using methods provided by
+:class:`~libcst.metadata.MetadataWrapper`.
+
+In most cases, you should extend
+:class:`~libcst.metadata.BatchableMetadataProvider` when writing a provider,
+unless you have a particular reason to not to use a batchable visitor. Only
+extend from :class:`~libcst.metadata.BaseMetadataProvider` if your provider does
+not use the visitor pattern for computing metadata for a tree.
 
 .. autoclass:: libcst.BaseMetadataProvider
 .. autoclass:: libcst.metadata.BatchableMetadataProvider
@@ -66,7 +70,7 @@ your provider does not use the visitor pattern for computing metadata for a tree
 ------------------
 Metadata Providers
 ------------------
-:class:`~libcst.metadata.BasicPositionProvider`, :class:`~libcst.metadata.SyntacticPositionProvider`,
+:class:`~libcst.metadata.WhitespaceInclusivePositionProvider`, :class:`~libcst.metadata.PositionProvider`,
 :class:`~libcst.metadata.ExpressionContextProvider`, :class:`~libcst.metadata.ScopeProvider`,
 :class:`~libcst.metadata.QualifiedNameProvider` and :class:`~libcst.metadata.ParentNodeProvider`
 are currently provided. Each metadata provider may has its own custom data structure.
@@ -75,13 +79,14 @@ Position Metadata
 -----------------
 Position (line and column numbers) metadata are accessible through the metadata
 interface by declaring the one of the following providers as a dependency. For
-most cases, :class:`~libcst.SyntacticPositionProvider` is what you probably want.
-Accessing position metadata through the :class:`~libcst.MetadataDepedent`
-interface will return a :class:`~libcst.CodeRange` object. See
+most cases, :class:`~libcst.metadata.PositionProvider` is what you probably
+want.
+
+Node positions are is represented with :class:`~libcst.CodeRange` objects. See
 :ref:`the above example<libcst-metadata-position-example>`.
 
-.. autoclass:: libcst.metadata.BasicPositionProvider
-.. autoclass:: libcst.metadata.SyntacticPositionProvider
+.. autoclass:: libcst.metadata.WhitespaceInclusivePositionProvider
+.. autoclass:: libcst.metadata.PositionProvider
 
 .. autoclass:: libcst.CodeRange
 .. autoclass:: libcst.CodePosition
