@@ -10,54 +10,10 @@ from typing import Generator, List, Optional, Set, Type, Union
 
 import libcst as cst
 from libcst import ensure_type, parse_expression
+from libcst.codegen.gather import all_libcst_nodes, typeclasses
 
 
 CST_DIR: Set[str] = set(dir(cst))
-
-
-@dataclass(frozen=True)
-class Node:
-    name: str
-    obj: Type[cst.CSTNode]
-
-
-def _get_bases() -> Generator[Node, None, None]:
-    """
-    Get all base classes that are subclasses of CSTNode but not an actual
-    node itself. This allows us to keep our types sane by refering to the
-    base classes themselves.
-    """
-
-    for name in dir(cst):
-        if not name.startswith("Base"):
-            continue
-
-        yield Node(name, getattr(cst, name))
-
-
-def _get_nodes() -> Generator[Node, None, None]:
-    """
-    Grab all CSTNodes that are not a superclass. Basically, anything that a
-    person might use to generate a tree.
-    """
-
-    for name in dir(cst):
-        if name.startswith("__") and name.endswith("__"):
-            continue
-        if name.startswith("Base"):
-            continue
-        if name == "CSTNode":
-            continue
-
-        node = getattr(cst, name)
-        try:
-            if issubclass(node, cst.CSTNode):
-                yield Node(name, node)
-        except TypeError:
-            # In 3.7 and above, issubclass needs the first arg to be
-            # a class. If it isn't it won't pass the above checks
-            # anyway so we can skip.
-            pass
 
 
 class CleanseFullTypeNames(cst.CSTTransformer):
@@ -470,30 +426,31 @@ all_exports.update(
     ]
 )
 
-typeclasses: List[Node] = list(_get_bases())
 for base in typeclasses:
     generated_code.append("")
     generated_code.append("")
-    generated_code.append(f"class {base.name}(ABC):")
+    generated_code.append(f"class {base.__name__}(ABC):")
     generated_code.append("    pass")
-    all_exports.add(base.name)
+    all_exports.add(base.__name__)
 
 
-for node in _get_nodes():
+for node in all_libcst_nodes:
+    if node.__name__.startswith("Base"):
+        continue
     classes: List[str] = []
     for tc in typeclasses:
-        if issubclass(node.obj, tc.obj):
-            classes.append(tc.name)
+        if issubclass(node, tc):
+            classes.append(tc.__name__)
     classes.append("BaseMatcherNode")
 
     generated_code.append("")
     generated_code.append("")
     generated_code.append("@dataclass(frozen=True, eq=False, unsafe_hash=False)")
-    generated_code.append(f'class {node.name}({", ".join(classes)}):')
-    all_exports.add(node.name)
+    generated_code.append(f'class {node.__name__}({", ".join(classes)}):')
+    all_exports.add(node.__name__)
 
     fields_printed = False
-    for field in _get_fields(node.obj):
+    for field in _get_fields(node):
         fields_printed = True
         generated_code.append(f"    {field.name}: {field.type} = DoNotCare()")
     if not fields_printed:
