@@ -10,18 +10,22 @@ from dataclasses import fields
 from enum import Enum, auto
 from typing import (
     Callable,
+    Dict,
     Generic,
     List,
+    Mapping,
     NoReturn,
     Optional,
     Pattern,
     Sequence,
+    Type,
     TypeVar,
     Union,
     cast,
 )
 
 import libcst
+import libcst.metadata as meta
 from libcst import MaybeSentinel, RemovalSentinel
 
 
@@ -44,6 +48,10 @@ _MatcherT = TypeVar("_MatcherT", covariant=True)
 _CallableT = TypeVar("_CallableT", bound="Callable", covariant=True)
 _BaseMatcherNodeSelfT = TypeVar("_BaseMatcherNodeSelfT", bound="BaseMatcherNode")
 _OtherNodeT = TypeVar("_OtherNodeT")
+_MetadataValueT = TypeVar("_MetadataValueT")
+
+
+_METADATA_MISSING_SENTINEL = object()
 
 
 class BaseMatcherNode:
@@ -379,6 +387,68 @@ def MatchRegex(regex: Union[str, Pattern[str]]) -> MatchIfTrue[Callable[[str], b
     return MatchIfTrue(_match_func)
 
 
+class MatchMetadata:
+    """
+    Matcher that looks up the metadata on the current node using the provided
+    metadata provider and compares the value on the node against the value provided
+    to :class:`MatchMetadata`.
+
+    For example, to match against any function call which has one parameter which
+    is used in a load expression context::
+
+        m.Call(
+            args=[
+                m.Arg(
+                    m.MatchMetadata(
+                        meta.ExpressionContextProvider,
+                        meta.ExpressionContext.LOAD,
+                    )
+                )
+            ]
+        )
+
+    To match against any :class:`~libcst.Name` node for the identifier ``foo``
+    which is the target of an assignment::
+
+        m.Name(
+            value="foo",
+            metadata=m.MatchMetadata(
+                meta.ExpressionContextProvider,
+                meta.ExpressionContext.STORE,
+            )
+        )
+
+    This can be used in place of any concrete matcher as long as it is not the
+    root matcher. Calling :func:`matches` directly on a :class:`MatchMetadata` is
+    redundant since you can just check the metadata on the root node that you
+    are passing to :func:`matches`.
+    """
+
+    def __init__(
+        self,
+        key: Type[meta.BaseMetadataProvider[_MetadataValueT]],
+        value: _MetadataValueT,
+    ) -> None:
+        self.key: Type[meta.BaseMetadataProvider[_MetadataValueT]] = key
+        self.value: _MetadataValueT = value
+
+    def __or__(self, other: _OtherNodeT) -> "OneOf[Union[MatchMetadata, _OtherNodeT]]":
+        # Without the cast, pyre doesn't know this is valid
+        return cast(OneOf[Union[MatchMetadata, _OtherNodeT]], OneOf(self, other))
+
+    def __and__(self, other: _OtherNodeT) -> "AllOf[Union[MatchMetadata, _OtherNodeT]]":
+        # Without the cast, pyre doesn't know this is valid
+        return cast(AllOf[Union[MatchMetadata, _OtherNodeT]], AllOf(self, other))
+
+    def __invert__(self) -> "MatchMetadata":
+        # We intentionally lie here, for the same reason given in the documentation
+        # for DoesNotMatch.
+        return cast(MatchMetadata, InverseOf(self))
+
+    def __repr__(self) -> str:
+        return f"MatchMetadata(key={repr(self.key)}, value={repr(self.value)})"
+
+
 class _BaseWildcardNode:
     """
     A typing-only class for internal helpers in this module to be able to
@@ -613,7 +683,7 @@ def DoesNotMatch(obj: _OtherNodeT) -> _OtherNodeT:
     # there are no operations we can possibly do that bring us outside of the
     # types specified in the concrete matchers as long as we lie that DoesNotMatch
     # returns the value passed in.
-    if isinstance(obj, (BaseMatcherNode, MatchIfTrue, InverseOf)):
+    if isinstance(obj, (BaseMatcherNode, MatchIfTrue, MatchMetadata, InverseOf)):
         # We can use the overridden __invert__ in this case. Pyre doesn't think
         # we can though, and casting doesn't fix the issue.
         # pyre-ignore All three types above have overridden __invert__.
@@ -631,9 +701,11 @@ def _sequence_matches(  # noqa: C901
             BaseMatcherNode,
             _BaseWildcardNode,
             MatchIfTrue[Callable[..., bool]],
+            MatchMetadata,
             DoNotCareSentinel,
         ]
     ],
+    metadata_lookup: Callable[[meta.ProviderT, libcst.CSTNode], object],
 ) -> bool:
     if not nodes and not matchers:
         # Base case, empty lists are alwatys matches
@@ -653,48 +725,54 @@ def _sequence_matches(  # noqa: C901
     matcher = matchers[0]
     if isinstance(matcher, DoNotCareSentinel):
         # We don't care about the value for this node.
-        return _sequence_matches(nodes[1:], matchers[1:])
+        return _sequence_matches(nodes[1:], matchers[1:], metadata_lookup)
     elif isinstance(matcher, _BaseWildcardNode):
         if isinstance(matcher, AtMostN):
             if matcher.n > 0:
                 # First, assume that this does match a node (greedy).
                 # Consume one node since it matched this matcher.
-                if _attribute_matches(nodes[0], matcher.matcher) and _sequence_matches(
+                if _attribute_matches(
+                    nodes[0], matcher.matcher, metadata_lookup
+                ) and _sequence_matches(
                     nodes[1:],
                     [AtMostN(matcher.matcher, n=matcher.n - 1), *matchers[1:]],
+                    metadata_lookup,
                 ):
                     return True
             # Finally, assume that this does not match the current node.
             # Consume the matcher but not the node.
-            if _sequence_matches(nodes, matchers[1:]):
+            if _sequence_matches(nodes, matchers[1:], metadata_lookup):
                 return True
         elif isinstance(matcher, AtLeastN):
             if matcher.n > 0:
                 # Only match if we can consume one of the matches, since we still
                 # need to match N nodes.
-                if _attribute_matches(nodes[0], matcher.matcher) and _sequence_matches(
+                if _attribute_matches(
+                    nodes[0], matcher.matcher, metadata_lookup
+                ) and _sequence_matches(
                     nodes[1:],
                     [AtLeastN(matcher.matcher, n=matcher.n - 1), *matchers[1:]],
+                    metadata_lookup,
                 ):
                     return True
             else:
                 # First, assume that this does match a node (greedy).
                 # Consume one node since it matched this matcher.
-                if _attribute_matches(nodes[0], matcher.matcher) and _sequence_matches(
-                    nodes[1:], matchers
-                ):
+                if _attribute_matches(
+                    nodes[0], matcher.matcher, metadata_lookup
+                ) and _sequence_matches(nodes[1:], matchers, metadata_lookup):
                     return True
                 # Now, assume that this does not match the current node.
                 # Consume the matcher but not the node.
-                if _sequence_matches(nodes, matchers[1:]):
+                if _sequence_matches(nodes, matchers[1:], metadata_lookup):
                     return True
         else:
             # There are no other types of wildcard consumers, but we're making
             # pyre happy with that fact.
             raise Exception(f"Logic error unrecognized wildcard {type(matcher)}!")
-    elif _matches(node, matcher):
+    elif _matches(node, matcher, metadata_lookup):
         # These values match directly
-        return _sequence_matches(nodes[1:], matchers[1:])
+        return _sequence_matches(nodes[1:], matchers[1:], metadata_lookup)
 
     # Failed recursive case, no match
     return False
@@ -707,13 +785,14 @@ _AttributeMatcherT = Optional[Union[BaseMatcherNode, DoNotCareSentinel, str, boo
 def _attribute_matches(  # noqa: C901
     node: Union[_AttributeValueT, Sequence[_AttributeValueT]],
     matcher: Union[_AttributeMatcherT, Sequence[_AttributeMatcherT]],
+    metadata_lookup: Callable[[meta.ProviderT, libcst.CSTNode], object],
 ) -> bool:
     if isinstance(matcher, DoNotCareSentinel):
         # We don't care what this is, so don't penalize a non-match.
         return True
     if isinstance(matcher, InverseOf):
         # Return the opposite evaluation
-        return not _attribute_matches(node, matcher.matcher)
+        return not _attribute_matches(node, matcher.matcher, metadata_lookup)
 
     if isinstance(matcher, MatchIfTrue):
         # We should only return if the matcher function is true.
@@ -743,7 +822,7 @@ def _attribute_matches(  # noqa: C901
             for m in matcher.options:
                 if isinstance(m, collections.abc.Sequence):
                     # Should match the sequence of requested nodes
-                    if _sequence_matches(node, m):
+                    if _sequence_matches(node, m, metadata_lookup):
                         return True
                 elif isinstance(m, MatchIfTrue):
                     return matcher.func(node)
@@ -752,7 +831,7 @@ def _attribute_matches(  # noqa: C901
             for m in matcher.options:
                 if isinstance(m, collections.abc.Sequence):
                     # Should match the sequence of requested nodes
-                    if not _sequence_matches(node, m):
+                    if not _sequence_matches(node, m, metadata_lookup):
                         return False
                 elif isinstance(m, MatchIfTrue):
                     return matcher.func(node)
@@ -778,6 +857,7 @@ def _attribute_matches(  # noqa: C901
                     ],
                     matcher,
                 ),
+                metadata_lookup,
             )
 
         # We exhausted our possibilities, there's no match
@@ -789,8 +869,36 @@ def _attribute_matches(  # noqa: C901
     # types were ignored.
     return _matches(
         cast(Union[MaybeSentinel, RemovalSentinel, libcst.CSTNode], node),
-        cast(Union[BaseMatcherNode, MatchIfTrue], matcher),
+        cast(Union[BaseMatcherNode, MatchIfTrue, MatchMetadata], matcher),
+        metadata_lookup,
     )
+
+
+def _metadata_matches(
+    node: libcst.CSTNode,
+    metadata: Union[
+        MatchMetadata,
+        AllOf[MatchMetadata],
+        OneOf[MatchMetadata],
+        InverseOf[MatchMetadata],
+    ],
+    metadata_lookup: Callable[[meta.ProviderT, libcst.CSTNode], object],
+) -> bool:
+    if isinstance(metadata, OneOf):
+        return any(
+            _metadata_matches(node, metadata, metadata_lookup)
+            for metadata in metadata.options
+        )
+    elif isinstance(metadata, AllOf):
+        return all(
+            _metadata_matches(node, metadata, metadata_lookup)
+            for metadata in metadata.options
+        )
+    elif isinstance(metadata, InverseOf):
+        return not _metadata_matches(node, metadata.matcher, metadata_lookup)
+    else:
+        actual_value = metadata_lookup(metadata.key, node)
+        return actual_value == metadata.value
 
 
 def _node_matches(
@@ -798,16 +906,23 @@ def _node_matches(
     matcher: Union[
         BaseMatcherNode,
         MatchIfTrue[Callable[..., bool]],
-        InverseOf[Union[BaseMatcherNode, MatchIfTrue[Callable[..., bool]]]],
+        MatchMetadata,
+        InverseOf[
+            Union[BaseMatcherNode, MatchIfTrue[Callable[..., bool]], MatchMetadata]
+        ],
     ],
+    metadata_lookup: Callable[[meta.ProviderT, libcst.CSTNode], object],
 ) -> bool:
     # If this is a InverseOf, then invert the result.
     if isinstance(matcher, InverseOf):
-        return not _node_matches(node, matcher.matcher)
+        return not _node_matches(node, matcher.matcher, metadata_lookup)
 
     # Now, check if this is a lambda matcher.
     if isinstance(matcher, MatchIfTrue):
         return matcher.func(node)
+
+    if isinstance(matcher, MatchMetadata):
+        return _metadata_matches(node, matcher, metadata_lookup)
 
     # Now, check that the node and matcher classes are the same.
     if node.__class__.__name__ != matcher.__class__.__name__:
@@ -818,11 +933,19 @@ def _node_matches(
         if field.name == "_metadata":
             # We don't care about this field, its a dataclasses implementation detail.
             continue
-
-        desired = getattr(matcher, field.name)
-        actual = getattr(node, field.name)
-        if not _attribute_matches(actual, desired):
-            return False
+        elif field.name == "metadata":
+            # Special field we respect for matching metadata on a particular node.
+            desired = getattr(matcher, field.name)
+            if isinstance(desired, DoNotCareSentinel):
+                # We don't care about this
+                continue
+            if not _metadata_matches(node, desired, metadata_lookup):
+                return False
+        else:
+            desired = getattr(matcher, field.name)
+            actual = getattr(node, field.name)
+            if not _attribute_matches(actual, desired, metadata_lookup):
+                return False
 
     # We didn't find a non-match in the above loop, so it matches!
     return True
@@ -833,8 +956,12 @@ def _matches(
     matcher: Union[
         BaseMatcherNode,
         MatchIfTrue[Callable[..., bool]],
-        InverseOf[Union[BaseMatcherNode, MatchIfTrue[Callable[..., bool]]]],
+        MatchMetadata,
+        InverseOf[
+            Union[BaseMatcherNode, MatchIfTrue[Callable[..., bool]], MatchMetadata]
+        ],
     ],
+    metadata_lookup: Callable[[meta.ProviderT, libcst.CSTNode], object],
 ) -> bool:
     if isinstance(node, MaybeSentinel):
         # We can't possibly match on a maybe sentinel, so it only matches if
@@ -843,16 +970,56 @@ def _matches(
 
     # Now, evaluate the matcher node itself.
     if isinstance(matcher, OneOf):
-        return any(_node_matches(node, matcher) for matcher in matcher.options)
+        return any(
+            _node_matches(node, matcher, metadata_lookup) for matcher in matcher.options
+        )
     elif isinstance(matcher, AllOf):
-        return all(_node_matches(node, matcher) for matcher in matcher.options)
+        return all(
+            _node_matches(node, matcher, metadata_lookup) for matcher in matcher.options
+        )
     else:
-        return _node_matches(node, matcher)
+        return _node_matches(node, matcher, metadata_lookup)
+
+
+def _construct_metadata_fetcher_null() -> Callable[
+    [meta.ProviderT, libcst.CSTNode], object
+]:
+    def _fetch() -> object:
+        return _METADATA_MISSING_SENTINEL
+
+    return _fetch
+
+
+def _construct_metadata_fetcher_dependent(
+    dependent_class: libcst.MetadataDependent,
+) -> Callable[[meta.ProviderT, libcst.CSTNode], object]:
+    def _fetch(provider: meta.ProviderT, node: libcst.CSTNode) -> object:
+        return dependent_class.get_metadata(provider, node, _METADATA_MISSING_SENTINEL)
+
+    return _fetch
+
+
+def _construct_metadata_fetcher_wrapper(
+    wrapper: libcst.MetadataWrapper,
+) -> Callable[[meta.ProviderT, libcst.CSTNode], object]:
+    metadata: Dict[meta.ProviderT, Mapping[libcst.CSTNode, object]] = {}
+
+    def _fetch(provider: meta.ProviderT, node: libcst.CSTNode) -> object:
+        if provider not in metadata:
+            metadata[provider] = wrapper.resolve(provider)
+
+        return metadata.get(provider, {}).get(node, _METADATA_MISSING_SENTINEL)
+
+    return _fetch
 
 
 def matches(
     node: Union[MaybeSentinel, RemovalSentinel, libcst.CSTNode],
     matcher: BaseMatcherNode,
+    *,
+    metadata_resolver: Optional[
+        Union[libcst.MetadataDependent, libcst.MetadataWrapper]
+    ] = None,
 ) -> bool:
     """
     Given an arbitrary node from a LibCST tree, and an arbitrary matcher, returns
@@ -876,4 +1043,11 @@ def matches(
         # user is not using type checking, this should still behave correctly.
         return False
 
-    return _matches(node, matcher)
+    if metadata_resolver is None:
+        fetcher = _construct_metadata_fetcher_null()
+    elif isinstance(metadata_resolver, libcst.MetadataWrapper):
+        fetcher = _construct_metadata_fetcher_wrapper(metadata_resolver)
+    else:
+        fetcher = _construct_metadata_fetcher_dependent(metadata_resolver)
+
+    return _matches(node, matcher, fetcher)

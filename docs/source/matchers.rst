@@ -144,6 +144,7 @@ when calling :func:`~libcst.matchers.matches` or using decorators.
 .. autofunction:: libcst.matchers.DoesNotMatch
 .. autoclass:: libcst.matchers.MatchIfTrue
 .. autofunction:: libcst.matchers.MatchRegex
+.. autoclass:: libcst.matchers.MatchMetadata
 .. autofunction:: libcst.matchers.DoNotCare
 
 Sequence Wildcard Matchers
