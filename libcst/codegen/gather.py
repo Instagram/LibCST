@@ -13,6 +13,25 @@ from typing import Dict, Generator, List, Mapping, Sequence, Set, Type, Union
 import libcst as cst
 
 
+def _get_bases() -> Generator[Type[cst.CSTNode], None, None]:
+    """
+    Get all base classes that are subclasses of CSTNode but not an actual
+    node itself. This allows us to keep our types sane by refering to the
+    base classes themselves.
+    """
+
+    for name in dir(cst):
+        if not name.startswith("Base"):
+            continue
+
+        yield getattr(cst, name)
+
+
+typeclasses: Sequence[Type[cst.CSTNode]] = sorted(
+    list(_get_bases()), key=lambda base: base.__name__
+)
+
+
 def _get_nodes() -> Generator[Type[cst.CSTNode], None, None]:
     """
     Grab all CSTNodes that are not a superclass. Basically, anything that a
@@ -34,7 +53,9 @@ def _get_nodes() -> Generator[Type[cst.CSTNode], None, None]:
             pass
 
 
-all_libcst_nodes: Sequence[Type[cst.CSTNode]] = list(_get_nodes())
+all_libcst_nodes: Sequence[Type[cst.CSTNode]] = sorted(
+    list(_get_nodes()), key=lambda node: node.__name__
+)
 node_to_bases: Dict[Type[cst.CSTNode], List[Type[cst.CSTNode]]] = {}
 for node in all_libcst_nodes:
     # Map the base classes for this node
