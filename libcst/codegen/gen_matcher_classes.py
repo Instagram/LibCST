@@ -61,7 +61,10 @@ class CleanseFullTypeNames(cst.CSTTransformer):
         return updated_node.with_changes(comma=cst.MaybeSentinel.DEFAULT)
 
 
-class RemoveDoNotCareFromGeneric(cst.CSTTransformer):
+class RemoveTypesFromGeneric(cst.CSTTransformer):
+    def __init__(self, values: Sequence[str]) -> None:
+        self.values: Set[str] = set(values)
+
     def leave_SubscriptElement(
         self, original_node: cst.SubscriptElement, updated_node: cst.SubscriptElement
     ) -> Union[cst.SubscriptElement, cst.RemovalSentinel]:
@@ -69,18 +72,22 @@ class RemoveDoNotCareFromGeneric(cst.CSTTransformer):
         if isinstance(slc, cst.Index):
             val = slc.value
             if isinstance(val, cst.Name):
-                if val.value == "DoNotCareSentinel":
-                    # We don't support maybes in matchers.
+                if val.value in self.values:
+                    # This type matches, so out it goes
                     return cst.RemoveFromParent()
         return updated_node
 
 
-def _remove_do_not_care(oldtype: cst.BaseExpression) -> cst.BaseExpression:
+def _remove_types(
+    oldtype: cst.BaseExpression, values: Sequence[str]
+) -> cst.BaseExpression:
     """
     Given a BaseExpression from a type, return a new BaseExpression that does not
-    refer to a DoNotCareSentinel.
+    refer to any types listed in values.
     """
-    return ensure_type(oldtype.visit(RemoveDoNotCareFromGeneric()), cst.BaseExpression)
+    return ensure_type(
+        oldtype.visit(RemoveTypesFromGeneric(values)), cst.BaseExpression
+    )
 
 
 class MatcherClassToLibCSTClass(cst.CSTTransformer):
@@ -180,10 +187,12 @@ class AddLogicAndLambdaMatcherToUnions(cst.CSTTransformer):
     ) -> cst.Subscript:
         if updated_node.value.deep_equals(cst.Name("Union")):
             # Take the original node, remove do not care so we have concrete types.
-            concrete_only_expr = _remove_do_not_care(original_node)
+            concrete_only_expr = _remove_types(
+                original_node, ["DoNotCareSentinel", "MatchMetadata"]
+            )
             # Take the current subscript, add a MatchIfTrue node to it.
             match_if_true_expr = _add_match_if_true(
-                _remove_do_not_care(updated_node), concrete_only_expr
+                _remove_types(updated_node, ["DoNotCareSentinel"]), concrete_only_expr
             )
             return updated_node.with_changes(
                 slice=[
@@ -212,7 +221,7 @@ class AddLogicAndLambdaMatcherToUnions(cst.CSTTransformer):
         return updated_node
 
 
-class AddDoNotCareToSequences(cst.CSTTransformer):
+class AddDoNotCareAndMetadataToSequences(cst.CSTTransformer):
     def leave_Subscript(
         self, original_node: cst.Subscript, updated_node: cst.Subscript
     ) -> cst.Subscript:
@@ -233,7 +242,11 @@ class AddDoNotCareToSequences(cst.CSTTransformer):
                     if possibleunion.value.deep_equals(cst.Name("Union")):
                         return updated_node.with_deep_changes(
                             possibleunion,
-                            slice=[*possibleunion.slice, _get_do_not_care()],
+                            slice=[
+                                *possibleunion.slice,
+                                _get_do_not_care(),
+                                _get_match_metadata(),
+                            ],
                         )
                 # This is a sequence of some node, add DoNotCareSentinel here so that
                 # a person can add a do not care to a sequence that otherwise has
@@ -243,7 +256,9 @@ class AddDoNotCareToSequences(cst.CSTTransformer):
                         cst.SubscriptElement(
                             cst.Index(
                                 _get_wrapped_union_type(
-                                    nodeslice.value, _get_do_not_care()
+                                    nodeslice.value,
+                                    _get_do_not_care(),
+                                    _get_match_metadata(),
                                 )
                             )
                         ),
@@ -312,6 +327,14 @@ def _get_do_not_care() -> cst.SubscriptElement:
     return cst.SubscriptElement(cst.Index(cst.Name("DoNotCareSentinel")))
 
 
+def _get_match_metadata() -> cst.SubscriptElement:
+    """
+    Construct a MatchMetadata entry appropriate for going into a Union.
+    """
+
+    return cst.SubscriptElement(cst.Index(cst.Name("MatchMetadata")))
+
+
 def _get_wrapped_union_type(
     node: cst.BaseExpression,
     addition: cst.SubscriptElement,
@@ -349,7 +372,7 @@ def _get_clean_type(typeobj: object) -> str:
         if typecst.value.deep_equals(cst.Name("Union")):
             # We can modify this as-is to add our type
             clean_type = typecst.with_changes(
-                slice=[*typecst.slice, _get_do_not_care()]
+                slice=[*typecst.slice, _get_do_not_care(), _get_match_metadata()]
             )
         elif typecst.value.deep_equals(cst.Name("Literal")):
             clean_type = _get_wrapped_union_type(typecst, _get_do_not_care())
@@ -357,7 +380,9 @@ def _get_clean_type(typeobj: object) -> str:
             clean_type = _get_wrapped_union_type(typecst, _get_do_not_care())
 
     elif isinstance(typecst, (cst.Name, cst.SimpleString)):
-        clean_type = _get_wrapped_union_type(typecst, _get_do_not_care())
+        clean_type = _get_wrapped_union_type(
+            typecst, _get_do_not_care(), _get_match_metadata()
+        )
 
     # Now, clean up the outputted type and return the code it generates. If
     # for some reason we encounter a new node type, raise so we can triage.
@@ -368,7 +393,7 @@ def _get_clean_type(typeobj: object) -> str:
         # can be defined partially with explicit DoNotCare() values for some
         # slots.
         clean_type = ensure_type(
-            clean_type.visit(AddDoNotCareToSequences()), cst.CSTNode
+            clean_type.visit(AddDoNotCareAndMetadataToSequences()), cst.CSTNode
         )
         # Now, insert OneOf/AllOf and MatchIfTrue into unions so we can typecheck their usage.
         # This allows us to put OneOf[SomeType] or MatchIfTrue[cst.SomeType] into any
@@ -423,7 +448,7 @@ generated_code.append("from typing_extensions import Literal")
 generated_code.append("import libcst as cst")
 generated_code.append("")
 generated_code.append(
-    "from libcst.matchers._matcher_base import BaseMatcherNode, DoNotCareSentinel, DoNotCare, OneOf, AllOf, DoesNotMatch, MatchIfTrue, MatchRegex, ZeroOrMore, AtLeastN, ZeroOrOne, AtMostN, matches"
+    "from libcst.matchers._matcher_base import BaseMatcherNode, DoNotCareSentinel, DoNotCare, OneOf, AllOf, DoesNotMatch, MatchIfTrue, MatchRegex, MatchMetadata, ZeroOrMore, AtLeastN, ZeroOrOne, AtMostN, matches"
 )
 all_exports.update(
     [
@@ -435,6 +460,7 @@ all_exports.update(
         "DoesNotMatch",
         "MatchIfTrue",
         "MatchRegex",
+        "MatchMetadata",
         "ZeroOrMore",
         "AtLeastN",
         "ZeroOrOne",
@@ -465,6 +491,14 @@ for base in typeclasses:
     all_exports.add(base.__name__)
 
 
+# Add a generic type we can reference later
+generated_code.append(
+    "MetadataPredicate = Union[MatchMetadata, OneOf[MatchMetadata], AllOf[MatchMetadata]]"
+)
+generated_code.append("")
+generated_code.append("")
+
+
 for node in all_libcst_nodes:
     if node.__name__.startswith("Base"):
         continue
@@ -484,8 +518,11 @@ for node in all_libcst_nodes:
     for field in _get_fields(node):
         fields_printed = True
         generated_code.append(f"    {field.name}: {field.type} = DoNotCare()")
-    if not fields_printed:
-        generated_code.append("    pass")
+
+    # Add special metadata field
+    generated_code.append(
+        f"    metadata: Union[DoNotCareSentinel, MetadataPredicate] = DoNotCare()"
+    )
 
 
 # TODO: Remove this once we completely remove ExtSlice.

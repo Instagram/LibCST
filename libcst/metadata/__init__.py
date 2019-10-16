@@ -7,6 +7,7 @@
 
 from libcst._position import CodePosition, CodeRange
 from libcst.metadata.base_provider import (
+    BaseMetadataProvider,
     BatchableMetadataProvider,
     ProviderT,
     VisitorMetadataProvider,
@@ -49,6 +50,7 @@ __all__ = [
     "PositionProvider",
     "BasicPositionProvider",  # deprecated name for backwards compatibility
     "SyntacticPositionProvider",  # deprecated name for backwards compatibility
+    "BaseMetadataProvider",
     "ExpressionContext",
     "ExpressionContextProvider",
     "BaseAssignment",
