@@ -7778,37 +7778,6 @@ class Expr(BaseSmallStatement, BaseMatcherNode):
 
 
 @dataclass(frozen=True, eq=False, unsafe_hash=False)
-class ExtSlice(BaseMatcherNode):
-    slice: Union[
-        "Index",
-        "Slice",
-        DoNotCareSentinel,
-        OneOf[
-            Union[
-                "Index",
-                "Slice",
-                MatchIfTrue[Callable[[Union[cst.Index, cst.Slice]], bool]],
-            ]
-        ],
-        AllOf[
-            Union[
-                "Index",
-                "Slice",
-                MatchIfTrue[Callable[[Union[cst.Index, cst.Slice]], bool]],
-            ]
-        ],
-        MatchIfTrue[Callable[[Union[cst.Index, cst.Slice]], bool]],
-    ] = DoNotCare()
-    comma: Union[
-        "Comma",
-        DoNotCareSentinel,
-        OneOf[Union["Comma", MatchIfTrue[Callable[[cst.Comma], bool]]]],
-        AllOf[Union["Comma", MatchIfTrue[Callable[[cst.Comma], bool]]]],
-        MatchIfTrue[Callable[[cst.Comma], bool]],
-    ] = DoNotCare()
-
-
-@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class Finally(BaseMatcherNode):
     body: Union[
         "BaseSuite",
@@ -20544,43 +20513,57 @@ class Subscript(
         "Slice",
         Sequence[
             Union[
-                "ExtSlice",
+                "SubscriptElement",
                 DoNotCareSentinel,
-                OneOf[Union["ExtSlice", MatchIfTrue[Callable[[cst.ExtSlice], bool]]]],
-                AllOf[Union["ExtSlice", MatchIfTrue[Callable[[cst.ExtSlice], bool]]]],
-                MatchIfTrue[Callable[[cst.ExtSlice], bool]],
+                OneOf[
+                    Union[
+                        "SubscriptElement",
+                        MatchIfTrue[Callable[[cst.SubscriptElement], bool]],
+                    ]
+                ],
+                AllOf[
+                    Union[
+                        "SubscriptElement",
+                        MatchIfTrue[Callable[[cst.SubscriptElement], bool]],
+                    ]
+                ],
+                MatchIfTrue[Callable[[cst.SubscriptElement], bool]],
                 AtLeastN[
                     Union[
-                        "ExtSlice",
+                        "SubscriptElement",
                         DoNotCareSentinel,
                         OneOf[
                             Union[
-                                "ExtSlice", MatchIfTrue[Callable[[cst.ExtSlice], bool]]
+                                "SubscriptElement",
+                                MatchIfTrue[Callable[[cst.SubscriptElement], bool]],
                             ]
                         ],
                         AllOf[
                             Union[
-                                "ExtSlice", MatchIfTrue[Callable[[cst.ExtSlice], bool]]
+                                "SubscriptElement",
+                                MatchIfTrue[Callable[[cst.SubscriptElement], bool]],
                             ]
                         ],
-                        MatchIfTrue[Callable[[cst.ExtSlice], bool]],
+                        MatchIfTrue[Callable[[cst.SubscriptElement], bool]],
                     ]
                 ],
                 AtMostN[
                     Union[
-                        "ExtSlice",
+                        "SubscriptElement",
                         DoNotCareSentinel,
                         OneOf[
                             Union[
-                                "ExtSlice", MatchIfTrue[Callable[[cst.ExtSlice], bool]]
+                                "SubscriptElement",
+                                MatchIfTrue[Callable[[cst.SubscriptElement], bool]],
                             ]
                         ],
                         AllOf[
                             Union[
-                                "ExtSlice", MatchIfTrue[Callable[[cst.ExtSlice], bool]]
+                                "SubscriptElement",
+                                MatchIfTrue[Callable[[cst.SubscriptElement], bool]],
                             ]
                         ],
-                        MatchIfTrue[Callable[[cst.ExtSlice], bool]],
+                        MatchIfTrue[Callable[[cst.SubscriptElement], bool]],
                     ]
                 ],
             ]
@@ -20592,59 +20575,70 @@ class Subscript(
                 "Slice",
                 Sequence[
                     Union[
-                        "ExtSlice",
+                        "SubscriptElement",
                         OneOf[
                             Union[
-                                "ExtSlice", MatchIfTrue[Callable[[cst.ExtSlice], bool]]
+                                "SubscriptElement",
+                                MatchIfTrue[Callable[[cst.SubscriptElement], bool]],
                             ]
                         ],
                         AllOf[
                             Union[
-                                "ExtSlice", MatchIfTrue[Callable[[cst.ExtSlice], bool]]
+                                "SubscriptElement",
+                                MatchIfTrue[Callable[[cst.SubscriptElement], bool]],
                             ]
                         ],
-                        MatchIfTrue[Callable[[cst.ExtSlice], bool]],
+                        MatchIfTrue[Callable[[cst.SubscriptElement], bool]],
                         AtLeastN[
                             Union[
-                                "ExtSlice",
+                                "SubscriptElement",
                                 OneOf[
                                     Union[
-                                        "ExtSlice",
-                                        MatchIfTrue[Callable[[cst.ExtSlice], bool]],
+                                        "SubscriptElement",
+                                        MatchIfTrue[
+                                            Callable[[cst.SubscriptElement], bool]
+                                        ],
                                     ]
                                 ],
                                 AllOf[
                                     Union[
-                                        "ExtSlice",
-                                        MatchIfTrue[Callable[[cst.ExtSlice], bool]],
+                                        "SubscriptElement",
+                                        MatchIfTrue[
+                                            Callable[[cst.SubscriptElement], bool]
+                                        ],
                                     ]
                                 ],
-                                MatchIfTrue[Callable[[cst.ExtSlice], bool]],
+                                MatchIfTrue[Callable[[cst.SubscriptElement], bool]],
                             ]
                         ],
                         AtMostN[
                             Union[
-                                "ExtSlice",
+                                "SubscriptElement",
                                 OneOf[
                                     Union[
-                                        "ExtSlice",
-                                        MatchIfTrue[Callable[[cst.ExtSlice], bool]],
+                                        "SubscriptElement",
+                                        MatchIfTrue[
+                                            Callable[[cst.SubscriptElement], bool]
+                                        ],
                                     ]
                                 ],
                                 AllOf[
                                     Union[
-                                        "ExtSlice",
-                                        MatchIfTrue[Callable[[cst.ExtSlice], bool]],
+                                        "SubscriptElement",
+                                        MatchIfTrue[
+                                            Callable[[cst.SubscriptElement], bool]
+                                        ],
                                     ]
                                 ],
-                                MatchIfTrue[Callable[[cst.ExtSlice], bool]],
+                                MatchIfTrue[Callable[[cst.SubscriptElement], bool]],
                             ]
                         ],
                     ]
                 ],
                 MatchIfTrue[
                     Callable[
-                        [Union[cst.Index, cst.Slice, Sequence[cst.ExtSlice]]], bool
+                        [Union[cst.Index, cst.Slice, Sequence[cst.SubscriptElement]]],
+                        bool,
                     ]
                 ],
             ]
@@ -20655,65 +20649,78 @@ class Subscript(
                 "Slice",
                 Sequence[
                     Union[
-                        "ExtSlice",
+                        "SubscriptElement",
                         OneOf[
                             Union[
-                                "ExtSlice", MatchIfTrue[Callable[[cst.ExtSlice], bool]]
+                                "SubscriptElement",
+                                MatchIfTrue[Callable[[cst.SubscriptElement], bool]],
                             ]
                         ],
                         AllOf[
                             Union[
-                                "ExtSlice", MatchIfTrue[Callable[[cst.ExtSlice], bool]]
+                                "SubscriptElement",
+                                MatchIfTrue[Callable[[cst.SubscriptElement], bool]],
                             ]
                         ],
-                        MatchIfTrue[Callable[[cst.ExtSlice], bool]],
+                        MatchIfTrue[Callable[[cst.SubscriptElement], bool]],
                         AtLeastN[
                             Union[
-                                "ExtSlice",
+                                "SubscriptElement",
                                 OneOf[
                                     Union[
-                                        "ExtSlice",
-                                        MatchIfTrue[Callable[[cst.ExtSlice], bool]],
+                                        "SubscriptElement",
+                                        MatchIfTrue[
+                                            Callable[[cst.SubscriptElement], bool]
+                                        ],
                                     ]
                                 ],
                                 AllOf[
                                     Union[
-                                        "ExtSlice",
-                                        MatchIfTrue[Callable[[cst.ExtSlice], bool]],
+                                        "SubscriptElement",
+                                        MatchIfTrue[
+                                            Callable[[cst.SubscriptElement], bool]
+                                        ],
                                     ]
                                 ],
-                                MatchIfTrue[Callable[[cst.ExtSlice], bool]],
+                                MatchIfTrue[Callable[[cst.SubscriptElement], bool]],
                             ]
                         ],
                         AtMostN[
                             Union[
-                                "ExtSlice",
+                                "SubscriptElement",
                                 OneOf[
                                     Union[
-                                        "ExtSlice",
-                                        MatchIfTrue[Callable[[cst.ExtSlice], bool]],
+                                        "SubscriptElement",
+                                        MatchIfTrue[
+                                            Callable[[cst.SubscriptElement], bool]
+                                        ],
                                     ]
                                 ],
                                 AllOf[
                                     Union[
-                                        "ExtSlice",
-                                        MatchIfTrue[Callable[[cst.ExtSlice], bool]],
+                                        "SubscriptElement",
+                                        MatchIfTrue[
+                                            Callable[[cst.SubscriptElement], bool]
+                                        ],
                                     ]
                                 ],
-                                MatchIfTrue[Callable[[cst.ExtSlice], bool]],
+                                MatchIfTrue[Callable[[cst.SubscriptElement], bool]],
                             ]
                         ],
                     ]
                 ],
                 MatchIfTrue[
                     Callable[
-                        [Union[cst.Index, cst.Slice, Sequence[cst.ExtSlice]]], bool
+                        [Union[cst.Index, cst.Slice, Sequence[cst.SubscriptElement]]],
+                        bool,
                     ]
                 ],
             ]
         ],
         MatchIfTrue[
-            Callable[[Union[cst.Index, cst.Slice, Sequence[cst.ExtSlice]]], bool]
+            Callable[
+                [Union[cst.Index, cst.Slice, Sequence[cst.SubscriptElement]]], bool
+            ]
         ],
     ] = DoNotCare()
     lbracket: Union[
@@ -21108,6 +21115,37 @@ class Subscript(
             ]
         ],
         MatchIfTrue[Callable[[cst.BaseParenthesizableWhitespace], bool]],
+    ] = DoNotCare()
+
+
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
+class SubscriptElement(BaseMatcherNode):
+    slice: Union[
+        "Index",
+        "Slice",
+        DoNotCareSentinel,
+        OneOf[
+            Union[
+                "Index",
+                "Slice",
+                MatchIfTrue[Callable[[Union[cst.Index, cst.Slice]], bool]],
+            ]
+        ],
+        AllOf[
+            Union[
+                "Index",
+                "Slice",
+                MatchIfTrue[Callable[[Union[cst.Index, cst.Slice]], bool]],
+            ]
+        ],
+        MatchIfTrue[Callable[[Union[cst.Index, cst.Slice]], bool]],
+    ] = DoNotCare()
+    comma: Union[
+        "Comma",
+        DoNotCareSentinel,
+        OneOf[Union["Comma", MatchIfTrue[Callable[[cst.Comma], bool]]]],
+        AllOf[Union["Comma", MatchIfTrue[Callable[[cst.Comma], bool]]]],
+        MatchIfTrue[Callable[[cst.Comma], bool]],
     ] = DoNotCare()
 
 
@@ -23584,6 +23622,7 @@ class Yield(BaseExpression, BaseMatcherNode):
     ] = DoNotCare()
 
 
+ExtSlice = SubscriptElement
 __all__ = [
     "Add",
     "AddAssign",
@@ -23753,6 +23792,7 @@ __all__ = [
     "StarredDictElement",
     "StarredElement",
     "Subscript",
+    "SubscriptElement",
     "Subtract",
     "SubtractAssign",
     "TrailingWhitespace",

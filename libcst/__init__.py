@@ -42,7 +42,6 @@ from libcst._nodes.expression import (
     DictElement,
     Element,
     Ellipsis,
-    ExtSlice,
     Float,
     FormattedString,
     FormattedStringExpression,
@@ -73,6 +72,7 @@ from libcst._nodes.expression import (
     StarredDictElement,
     StarredElement,
     Subscript,
+    SubscriptElement,
     Tuple,
     UnaryOperation,
     Yield,
@@ -195,6 +195,11 @@ from libcst.metadata.base_provider import (
 from libcst.metadata.wrapper import MetadataWrapper
 
 
+# TODO: Remove this once we completely remove ExtSlice.
+# Provide a backwards-compatible reference to deprecated ExtSlice
+ExtSlice = SubscriptElement
+
+
 __all__ = [
     "BatchableCSTVisitor",
     "CodePosition",
@@ -279,6 +284,7 @@ __all__ = [
     "StarredDictElement",
     "StarredElement",
     "Subscript",
+    "SubscriptElement",
     "Tuple",
     "UnaryOperation",
     "Yield",

@@ -31,7 +31,6 @@ from libcst._nodes.expression import (
     DictElement,
     Element,
     Ellipsis,
-    ExtSlice,
     Float,
     FormattedString,
     FormattedStringExpression,
@@ -60,6 +59,7 @@ from libcst._nodes.expression import (
     StarredDictElement,
     StarredElement,
     Subscript,
+    SubscriptElement,
     Tuple,
     UnaryOperation,
     Yield,
@@ -694,15 +694,15 @@ def convert_subscriptlist(
     config: ParserConfig, children: typing.Sequence[typing.Any]
 ) -> typing.Any:
     if len(children) > 1:
-        # This is a list of ExtSlice, so construct as such by grouping every
+        # This is a list of SubscriptElement, so construct as such by grouping every
         # subscript with an optional comma and adding to a list.
-        extslices = []
+        elements = []
         for slice, comma in grouper(children, 2):
             if comma is None:
-                extslices.append(ExtSlice(slice=slice.value))
+                elements.append(SubscriptElement(slice=slice.value))
             else:
-                extslices.append(
-                    ExtSlice(
+                elements.append(
+                    SubscriptElement(
                         slice=slice.value,
                         comma=Comma(
                             whitespace_before=parse_parenthesizable_whitespace(
@@ -714,7 +714,7 @@ def convert_subscriptlist(
                         ),
                     )
                 )
-        return WithLeadingWhitespace(extslices, children[0].whitespace_before)
+        return WithLeadingWhitespace(elements, children[0].whitespace_before)
     else:
         # This is an Index or Slice, as parsed in the child.
         (index_or_slice,) = children
