@@ -144,7 +144,10 @@ class AnnAssignTest(CSTNodeTest):
                 "node": cst.AnnAssign(
                     cst.Name("foo"),
                     cst.Annotation(
-                        cst.Subscript(cst.Name("Optional"), cst.Index(cst.Name("str")))
+                        cst.Subscript(
+                            cst.Name("Optional"),
+                            (cst.SubscriptElement(cst.Index(cst.Name("str"))),),
+                        )
                     ),
                     cst.Integer("5"),
                 ),
@@ -197,7 +200,8 @@ class AnnAssignTest(CSTNodeTest):
                             target=cst.Name("foo"),
                             annotation=cst.Annotation(
                                 annotation=cst.Subscript(
-                                    cst.Name("Optional"), cst.Index(cst.Name("str"))
+                                    cst.Name("Optional"),
+                                    (cst.SubscriptElement(cst.Index(cst.Name("str"))),),
                                 ),
                                 whitespace_before_indicator=cst.SimpleWhitespace(""),
                             ),
@@ -216,7 +220,8 @@ class AnnAssignTest(CSTNodeTest):
                     target=cst.Name("foo"),
                     annotation=cst.Annotation(
                         annotation=cst.Subscript(
-                            cst.Name("Optional"), cst.Index(cst.Name("str"))
+                            cst.Name("Optional"),
+                            (cst.SubscriptElement(cst.Index(cst.Name("str"))),),
                         ),
                         whitespace_before_indicator=cst.SimpleWhitespace(" "),
                         whitespace_after_indicator=cst.SimpleWhitespace("  "),
@@ -238,7 +243,8 @@ class AnnAssignTest(CSTNodeTest):
                             target=cst.Name("foo"),
                             annotation=cst.Annotation(
                                 annotation=cst.Subscript(
-                                    cst.Name("Optional"), cst.Index(cst.Name("str"))
+                                    cst.Name("Optional"),
+                                    (cst.SubscriptElement(cst.Index(cst.Name("str"))),),
                                 ),
                                 whitespace_before_indicator=cst.SimpleWhitespace(" "),
                                 whitespace_after_indicator=cst.SimpleWhitespace("  "),

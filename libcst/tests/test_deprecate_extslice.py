@@ -41,6 +41,24 @@ class ExtSliceDeprecatedUseTest(UnitTest):
 
         self.assertEqual(module.code, "foo[1, 2]\n")
 
+    def test_deprecated_non_element_construction(self) -> None:
+        module = cst.Module(
+            body=[
+                cst.SimpleStatementLine(
+                    body=[
+                        cst.Expr(
+                            value=cst.Subscript(
+                                value=cst.Name(value="foo"),
+                                slice=cst.Index(value=cst.Integer(value="1")),
+                            )
+                        )
+                    ]
+                )
+            ]
+        )
+
+        self.assertEqual(module.code, "foo[1]\n")
+
     def test_deprecated_matching(self) -> None:
         class DeprecatedDecoratorTest(m.MatcherDecoratableVisitor):
             def __init__(self) -> None:

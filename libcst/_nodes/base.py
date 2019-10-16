@@ -402,7 +402,7 @@ class CSTNode(ABC):
 
     def with_deep_changes(
         self: _CSTNodeSelfT, old_node: "CSTNode", **changes: Any
-    ) -> Union[_CSTNodeSelfT, "CSTNode"]:
+    ) -> _CSTNodeSelfT:
         """
         A convenience method for applying :attr:`with_changes` to a child node. Use
         this to avoid chains of :attr:`with_changes` or combinations of

@@ -17,7 +17,10 @@ class SubscriptTest(CSTNodeTest):
         (
             # Simple subscript expression
             (
-                cst.Subscript(cst.Name("foo"), cst.Index(cst.Integer("5"))),
+                cst.Subscript(
+                    cst.Name("foo"),
+                    (cst.SubscriptElement(cst.Index(cst.Integer("5"))),),
+                ),
                 "foo[5]",
                 True,
             ),
@@ -25,10 +28,14 @@ class SubscriptTest(CSTNodeTest):
             (
                 cst.Subscript(
                     cst.Name("foo"),
-                    cst.Slice(
-                        lower=cst.Integer("1"),
-                        upper=cst.Integer("2"),
-                        step=cst.Integer("3"),
+                    (
+                        cst.SubscriptElement(
+                            cst.Slice(
+                                lower=cst.Integer("1"),
+                                upper=cst.Integer("2"),
+                                step=cst.Integer("3"),
+                            )
+                        ),
                     ),
                 ),
                 "foo[1:2:3]",
@@ -56,12 +63,16 @@ class SubscriptTest(CSTNodeTest):
             (
                 cst.Subscript(
                     cst.Name("foo"),
-                    cst.Slice(
-                        lower=cst.Integer("1"),
-                        first_colon=cst.Colon(),
-                        upper=cst.Integer("2"),
-                        second_colon=cst.Colon(),
-                        step=cst.Integer("3"),
+                    (
+                        cst.SubscriptElement(
+                            cst.Slice(
+                                lower=cst.Integer("1"),
+                                first_colon=cst.Colon(),
+                                upper=cst.Integer("2"),
+                                second_colon=cst.Colon(),
+                                step=cst.Integer("3"),
+                            )
+                        ),
                     ),
                 ),
                 "foo[1:2:3]",
@@ -91,21 +102,35 @@ class SubscriptTest(CSTNodeTest):
             (
                 cst.Subscript(
                     cst.Name("foo"),
-                    cst.Slice(lower=cst.Integer("1"), upper=cst.Integer("2")),
+                    (
+                        cst.SubscriptElement(
+                            cst.Slice(lower=cst.Integer("1"), upper=cst.Integer("2"))
+                        ),
+                    ),
                 ),
                 "foo[1:2]",
                 True,
             ),
             (
                 cst.Subscript(
-                    cst.Name("foo"), cst.Slice(lower=cst.Integer("1"), upper=None)
+                    cst.Name("foo"),
+                    (
+                        cst.SubscriptElement(
+                            cst.Slice(lower=cst.Integer("1"), upper=None)
+                        ),
+                    ),
                 ),
                 "foo[1:]",
                 True,
             ),
             (
                 cst.Subscript(
-                    cst.Name("foo"), cst.Slice(lower=None, upper=cst.Integer("2"))
+                    cst.Name("foo"),
+                    (
+                        cst.SubscriptElement(
+                            cst.Slice(lower=None, upper=cst.Integer("2"))
+                        ),
+                    ),
                 ),
                 "foo[:2]",
                 True,
@@ -113,8 +138,14 @@ class SubscriptTest(CSTNodeTest):
             (
                 cst.Subscript(
                     cst.Name("foo"),
-                    cst.Slice(
-                        lower=cst.Integer("1"), upper=None, step=cst.Integer("3")
+                    (
+                        cst.SubscriptElement(
+                            cst.Slice(
+                                lower=cst.Integer("1"),
+                                upper=None,
+                                step=cst.Integer("3"),
+                            )
+                        ),
                     ),
                 ),
                 "foo[1::3]",
@@ -123,7 +154,11 @@ class SubscriptTest(CSTNodeTest):
             (
                 cst.Subscript(
                     cst.Name("foo"),
-                    cst.Slice(lower=None, upper=None, step=cst.Integer("3")),
+                    (
+                        cst.SubscriptElement(
+                            cst.Slice(lower=None, upper=None, step=cst.Integer("3"))
+                        ),
+                    ),
                 ),
                 "foo[::3]",
                 False,
@@ -133,21 +168,35 @@ class SubscriptTest(CSTNodeTest):
             (
                 cst.Subscript(
                     cst.Name("foo"),
-                    cst.Slice(lower=cst.Integer("1"), upper=cst.Integer("2")),
+                    (
+                        cst.SubscriptElement(
+                            cst.Slice(lower=cst.Integer("1"), upper=cst.Integer("2"))
+                        ),
+                    ),
                 ),
                 "foo[1:2]",
                 True,
             ),
             (
                 cst.Subscript(
-                    cst.Name("foo"), cst.Slice(lower=cst.Integer("1"), upper=None)
+                    cst.Name("foo"),
+                    (
+                        cst.SubscriptElement(
+                            cst.Slice(lower=cst.Integer("1"), upper=None)
+                        ),
+                    ),
                 ),
                 "foo[1:]",
                 True,
             ),
             (
                 cst.Subscript(
-                    cst.Name("foo"), cst.Slice(lower=None, upper=cst.Integer("2"))
+                    cst.Name("foo"),
+                    (
+                        cst.SubscriptElement(
+                            cst.Slice(lower=None, upper=cst.Integer("2"))
+                        ),
+                    ),
                 ),
                 "foo[:2]",
                 True,
@@ -155,11 +204,15 @@ class SubscriptTest(CSTNodeTest):
             (
                 cst.Subscript(
                     cst.Name("foo"),
-                    cst.Slice(
-                        lower=cst.Integer("1"),
-                        upper=None,
-                        second_colon=cst.Colon(),
-                        step=cst.Integer("3"),
+                    (
+                        cst.SubscriptElement(
+                            cst.Slice(
+                                lower=cst.Integer("1"),
+                                upper=None,
+                                second_colon=cst.Colon(),
+                                step=cst.Integer("3"),
+                            )
+                        ),
                     ),
                 ),
                 "foo[1::3]",
@@ -168,11 +221,15 @@ class SubscriptTest(CSTNodeTest):
             (
                 cst.Subscript(
                     cst.Name("foo"),
-                    cst.Slice(
-                        lower=None,
-                        upper=None,
-                        second_colon=cst.Colon(),
-                        step=cst.Integer("3"),
+                    (
+                        cst.SubscriptElement(
+                            cst.Slice(
+                                lower=None,
+                                upper=None,
+                                second_colon=cst.Colon(),
+                                step=cst.Integer("3"),
+                            )
+                        ),
                     ),
                 ),
                 "foo[::3]",
@@ -180,15 +237,25 @@ class SubscriptTest(CSTNodeTest):
             ),
             # Valid list clone operations rendering
             (
-                cst.Subscript(cst.Name("foo"), cst.Slice(lower=None, upper=None)),
+                cst.Subscript(
+                    cst.Name("foo"),
+                    (cst.SubscriptElement(cst.Slice(lower=None, upper=None)),),
+                ),
                 "foo[:]",
                 True,
             ),
             (
                 cst.Subscript(
                     cst.Name("foo"),
-                    cst.Slice(
-                        lower=None, upper=None, second_colon=cst.Colon(), step=None
+                    (
+                        cst.SubscriptElement(
+                            cst.Slice(
+                                lower=None,
+                                upper=None,
+                                second_colon=cst.Colon(),
+                                step=None,
+                            )
+                        ),
                     ),
                 ),
                 "foo[::]",
@@ -196,15 +263,25 @@ class SubscriptTest(CSTNodeTest):
             ),
             # Valid list clone operations parsing
             (
-                cst.Subscript(cst.Name("foo"), cst.Slice(lower=None, upper=None)),
+                cst.Subscript(
+                    cst.Name("foo"),
+                    (cst.SubscriptElement(cst.Slice(lower=None, upper=None)),),
+                ),
                 "foo[:]",
                 True,
             ),
             (
                 cst.Subscript(
                     cst.Name("foo"),
-                    cst.Slice(
-                        lower=None, upper=None, second_colon=cst.Colon(), step=None
+                    (
+                        cst.SubscriptElement(
+                            cst.Slice(
+                                lower=None,
+                                upper=None,
+                                second_colon=cst.Colon(),
+                                step=None,
+                            )
+                        ),
                     ),
                 ),
                 "foo[::]",
@@ -215,7 +292,7 @@ class SubscriptTest(CSTNodeTest):
                 cst.Subscript(
                     lpar=(cst.LeftParen(),),
                     value=cst.Name("foo"),
-                    slice=cst.Index(cst.Integer("5")),
+                    slice=(cst.SubscriptElement(cst.Index(cst.Integer("5"))),),
                     rpar=(cst.RightParen(),),
                 ),
                 "(foo[5])",
@@ -229,7 +306,7 @@ class SubscriptTest(CSTNodeTest):
                     lbracket=cst.LeftSquareBracket(
                         whitespace_after=cst.SimpleWhitespace(" ")
                     ),
-                    slice=cst.Index(cst.Integer("5")),
+                    slice=(cst.SubscriptElement(cst.Index(cst.Integer("5"))),),
                     rbracket=cst.RightSquareBracket(
                         whitespace_before=cst.SimpleWhitespace(" ")
                     ),
@@ -246,18 +323,22 @@ class SubscriptTest(CSTNodeTest):
                     lbracket=cst.LeftSquareBracket(
                         whitespace_after=cst.SimpleWhitespace(" ")
                     ),
-                    slice=cst.Slice(
-                        lower=cst.Integer("1"),
-                        first_colon=cst.Colon(
-                            whitespace_before=cst.SimpleWhitespace(" "),
-                            whitespace_after=cst.SimpleWhitespace(" "),
+                    slice=(
+                        cst.SubscriptElement(
+                            cst.Slice(
+                                lower=cst.Integer("1"),
+                                first_colon=cst.Colon(
+                                    whitespace_before=cst.SimpleWhitespace(" "),
+                                    whitespace_after=cst.SimpleWhitespace(" "),
+                                ),
+                                upper=cst.Integer("2"),
+                                second_colon=cst.Colon(
+                                    whitespace_before=cst.SimpleWhitespace(" "),
+                                    whitespace_after=cst.SimpleWhitespace(" "),
+                                ),
+                                step=cst.Integer("3"),
+                            )
                         ),
-                        upper=cst.Integer("2"),
-                        second_colon=cst.Colon(
-                            whitespace_before=cst.SimpleWhitespace(" "),
-                            whitespace_after=cst.SimpleWhitespace(" "),
-                        ),
-                        step=cst.Integer("3"),
                     ),
                     rbracket=cst.RightSquareBracket(
                         whitespace_before=cst.SimpleWhitespace(" ")
@@ -358,7 +439,7 @@ class SubscriptTest(CSTNodeTest):
             (
                 lambda: cst.Subscript(
                     cst.Name("foo"),
-                    cst.Index(cst.Integer("5")),
+                    (cst.SubscriptElement(cst.Index(cst.Integer("5"))),),
                     lpar=(cst.LeftParen(),),
                 ),
                 "left paren without right paren",
@@ -366,7 +447,7 @@ class SubscriptTest(CSTNodeTest):
             (
                 lambda: cst.Subscript(
                     cst.Name("foo"),
-                    cst.Index(cst.Integer("5")),
+                    (cst.SubscriptElement(cst.Index(cst.Integer("5"))),),
                     rpar=(cst.RightParen(),),
                 ),
                 "right paren without left paren",

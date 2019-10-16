@@ -6,7 +6,7 @@
 # pyre-strict
 import ast
 from dataclasses import dataclass, fields
-from typing import Generator, List, Optional, Set, Type, Union
+from typing import Generator, List, Optional, Sequence, Set, Type, Union
 
 import libcst as cst
 from libcst import ensure_type, parse_expression
@@ -115,32 +115,36 @@ def _get_match_if_true(oldtype: cst.BaseExpression) -> cst.SubscriptElement:
         cst.Index(
             cst.Subscript(
                 cst.Name("MatchIfTrue"),
-                cst.Index(
-                    cst.Subscript(
-                        cst.Name("Callable"),
-                        slice=[
-                            cst.SubscriptElement(
-                                cst.Index(
-                                    cst.List(
-                                        [
-                                            cst.Element(
-                                                # MatchIfTrue takes in the original node type,
-                                                # and returns a boolean. So, lets convert our
-                                                # quoted classes (forward refs to other
-                                                # matchers) back to the CSTNode they refer to.
-                                                # We can do this because there's always a 1:1
-                                                # name mapping.
-                                                _convert_match_nodes_to_cst_nodes(
-                                                    oldtype
-                                                )
+                slice=(
+                    cst.SubscriptElement(
+                        cst.Index(
+                            cst.Subscript(
+                                cst.Name("Callable"),
+                                slice=(
+                                    cst.SubscriptElement(
+                                        cst.Index(
+                                            cst.List(
+                                                [
+                                                    cst.Element(
+                                                        # MatchIfTrue takes in the original node type,
+                                                        # and returns a boolean. So, lets convert our
+                                                        # quoted classes (forward refs to other
+                                                        # matchers) back to the CSTNode they refer to.
+                                                        # We can do this because there's always a 1:1
+                                                        # name mapping.
+                                                        _convert_match_nodes_to_cst_nodes(
+                                                            oldtype
+                                                        )
+                                                    )
+                                                ]
                                             )
-                                        ]
-                                    )
-                                )
-                            ),
-                            cst.SubscriptElement(cst.Index(cst.Name("bool"))),
-                        ],
-                    )
+                                        )
+                                    ),
+                                    cst.SubscriptElement(cst.Index(cst.Name("bool"))),
+                                ),
+                            )
+                        )
+                    ),
                 ),
             )
         )
@@ -167,7 +171,7 @@ def _add_match_if_true(
 
 
 def _add_generic(name: str, oldtype: cst.BaseExpression) -> cst.BaseExpression:
-    return cst.Subscript(cst.Name(name), cst.Index(oldtype))
+    return cst.Subscript(cst.Name(name), (cst.SubscriptElement(cst.Index(oldtype)),))
 
 
 class AddLogicAndLambdaMatcherToUnions(cst.CSTTransformer):
@@ -213,26 +217,36 @@ class AddDoNotCareToSequences(cst.CSTTransformer):
         self, original_node: cst.Subscript, updated_node: cst.Subscript
     ) -> cst.Subscript:
         if updated_node.value.deep_equals(cst.Name("Sequence")):
-            nodeslice = updated_node.slice
+            slc = updated_node.slice
+            # TODO: We can remove the instance check after ExtSlice is deprecated.
+            if not isinstance(slc, Sequence) or len(slc) != 1:
+                raise Exception(
+                    "Unexpected number of sequence elements inside Sequence type "
+                    + "annotation!"
+                )
+            nodeslice = slc[0].slice
             if isinstance(nodeslice, cst.Index):
                 possibleunion = nodeslice.value
                 if isinstance(possibleunion, cst.Subscript):
                     # Special case for Sequence[Union] so that we make more collapsed
                     # types.
                     if possibleunion.value.deep_equals(cst.Name("Union")):
-                        return updated_node.with_changes(
-                            slice=nodeslice.with_changes(
-                                value=possibleunion.with_changes(
-                                    slice=[*possibleunion.slice, _get_do_not_care()]
-                                )
-                            )
+                        return updated_node.with_deep_changes(
+                            possibleunion,
+                            slice=[*possibleunion.slice, _get_do_not_care()],
                         )
                 # This is a sequence of some node, add DoNotCareSentinel here so that
                 # a person can add a do not care to a sequence that otherwise has
                 # valid matcher nodes.
                 return updated_node.with_changes(
-                    slice=cst.Index(
-                        _get_wrapped_union_type(nodeslice.value, _get_do_not_care())
+                    slice=(
+                        cst.SubscriptElement(
+                            cst.Index(
+                                _get_wrapped_union_type(
+                                    nodeslice.value, _get_do_not_care()
+                                )
+                            )
+                        ),
                     )
                 )
             raise Exception("Unexpected slice type for Sequence!")
@@ -255,7 +269,14 @@ class AddWildcardsToSequenceUnions(cst.CSTTransformer):
                 # We don't want to add AtLeastN/AtMostN inside MatchIfTrue
                 # type blocks, even for sequence types.
                 return
-            nodeslice = node.slice
+            slc = node.slice
+            # TODO: We can remove the instance check after ExtSlice is deprecated.
+            if not isinstance(slc, Sequence) or len(slc) != 1:
+                raise Exception(
+                    "Unexpected number of sequence elements inside Sequence type "
+                    + "annotation!"
+                )
+            nodeslice = slc[0].slice
             if isinstance(nodeslice, cst.Index):
                 possibleunion = nodeslice.value
                 if isinstance(possibleunion, cst.Subscript):

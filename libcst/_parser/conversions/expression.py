@@ -693,32 +693,27 @@ def convert_trailer_subscriptlist(
 def convert_subscriptlist(
     config: ParserConfig, children: typing.Sequence[typing.Any]
 ) -> typing.Any:
-    if len(children) > 1:
-        # This is a list of SubscriptElement, so construct as such by grouping every
-        # subscript with an optional comma and adding to a list.
-        elements = []
-        for slice, comma in grouper(children, 2):
-            if comma is None:
-                elements.append(SubscriptElement(slice=slice.value))
-            else:
-                elements.append(
-                    SubscriptElement(
-                        slice=slice.value,
-                        comma=Comma(
-                            whitespace_before=parse_parenthesizable_whitespace(
-                                config, comma.whitespace_before
-                            ),
-                            whitespace_after=parse_parenthesizable_whitespace(
-                                config, comma.whitespace_after
-                            ),
+    # This is a list of SubscriptElement, so construct as such by grouping every
+    # subscript with an optional comma and adding to a list.
+    elements = []
+    for slice, comma in grouper(children, 2):
+        if comma is None:
+            elements.append(SubscriptElement(slice=slice.value))
+        else:
+            elements.append(
+                SubscriptElement(
+                    slice=slice.value,
+                    comma=Comma(
+                        whitespace_before=parse_parenthesizable_whitespace(
+                            config, comma.whitespace_before
                         ),
-                    )
+                        whitespace_after=parse_parenthesizable_whitespace(
+                            config, comma.whitespace_after
+                        ),
+                    ),
                 )
-        return WithLeadingWhitespace(elements, children[0].whitespace_before)
-    else:
-        # This is an Index or Slice, as parsed in the child.
-        (index_or_slice,) = children
-        return index_or_slice
+            )
+    return WithLeadingWhitespace(elements, children[0].whitespace_before)
 
 
 @with_production("subscript", "test | [test] ':' [test] [sliceop]")
