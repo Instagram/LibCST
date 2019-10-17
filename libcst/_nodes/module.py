@@ -144,10 +144,9 @@ class Module(CSTNode):
         method of Module, not CSTNode, because we need to know the module's default
         indentation and newline formats.
 
-        This can also be used with a
-        :class:`~libcst.metadata.WhitespaceInclusivePositionProvider` or
-        :class:`~libcst.metadata.PositionProvider` to compute position information, but
-        that's an implementation detail, and you should use
+        This can also be used with a :class:`~libcst.metadata.PositionProvider` or a
+        :class:`~libcst.metadata.WhitespaceInclusivePositionProvider` to compute
+        position information, but that's an implementation detail, and you should use
         :meth:`MetadataWrapper.resolve() <libcst.metadata.MetadataWrapper.resolve>`
         instead.
 

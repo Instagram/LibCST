@@ -70,9 +70,12 @@ not use the visitor pattern for computing metadata for a tree.
 ------------------
 Metadata Providers
 ------------------
-:class:`~libcst.metadata.WhitespaceInclusivePositionProvider`, :class:`~libcst.metadata.PositionProvider`,
-:class:`~libcst.metadata.ExpressionContextProvider`, :class:`~libcst.metadata.ScopeProvider`,
-:class:`~libcst.metadata.QualifiedNameProvider` and :class:`~libcst.metadata.ParentNodeProvider`
+:class:`~libcst.metadata.PositionProvider`,
+:class:`~libcst.metadata.WhitespaceInclusivePositionProvider`,
+:class:`~libcst.metadata.ExpressionContextProvider`,
+:class:`~libcst.metadata.ScopeProvider`,
+:class:`~libcst.metadata.QualifiedNameProvider`, and
+:class:`~libcst.metadata.ParentNodeProvider`
 are currently provided. Each metadata provider may has its own custom data structure.
 
 Position Metadata
@@ -85,8 +88,8 @@ want.
 Node positions are is represented with :class:`~libcst.CodeRange` objects. See
 :ref:`the above example<libcst-metadata-position-example>`.
 
-.. autoclass:: libcst.metadata.WhitespaceInclusivePositionProvider
 .. autoclass:: libcst.metadata.PositionProvider
+.. autoclass:: libcst.metadata.WhitespaceInclusivePositionProvider
 
 .. autoclass:: libcst.CodeRange
 .. autoclass:: libcst.CodePosition
