@@ -858,14 +858,12 @@ class QualifiedNameVisitor(cst.CSTVisitor):
         if scope:
             self.provider.set_metadata(node, scope.get_qualified_names_for(node))
         else:
-            self.provider.set_metadata(node, {})
+            self.provider.set_metadata(node, set())
         super().on_visit(node)
         return True
 
 
-class QualifiedNameProvider(
-    BatchableMetadataProvider[Optional[Collection[QualifiedName]]]
-):
+class QualifiedNameProvider(BatchableMetadataProvider[Collection[QualifiedName]]):
     """
     Compute possible qualified names of a variable CSTNode
     (extends `PEP-3155 <https://www.python.org/dev/peps/pep-3155/>`_).

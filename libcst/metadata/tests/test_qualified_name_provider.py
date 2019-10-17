@@ -6,7 +6,7 @@
 # pyre-strict
 
 from textwrap import dedent
-from typing import Collection, Mapping, Tuple, cast
+from typing import Collection, Mapping, Tuple
 
 import libcst as cst
 from libcst import ensure_type
@@ -23,13 +23,7 @@ def get_qualified_name_metadata_provider(
     module_str: str
 ) -> Tuple[cst.Module, Mapping[cst.CSTNode, Collection[QualifiedName]]]:
     wrapper = MetadataWrapper(cst.parse_module(dedent(module_str)))
-    return (
-        wrapper.module,
-        cast(
-            Mapping[cst.CSTNode, Collection[QualifiedName]],
-            wrapper.resolve(QualifiedNameProvider),
-        ),  # we're sure every node has an associated scope
-    )
+    return wrapper.module, wrapper.resolve(QualifiedNameProvider)
 
 
 class ScopeProviderTest(UnitTest):
