@@ -86,10 +86,21 @@ class FuzzTest(unittest.TestCase):
         and the libCST parse function, but codegen is as for statements.
         """
         self.reject_invalid_code(source_code, mode="eval")
-        tree = libcst.parse_expression(source_code)
-        self.verify_identical_asts(
-            source_code, libcst.Module([]).code_for_node(tree), mode="eval"
-        )
+        try:
+            tree = libcst.parse_expression(source_code)
+            self.verify_identical_asts(
+                source_code, libcst.Module([]).code_for_node(tree), mode="eval"
+            )
+        except libcst.ParserSyntaxError:
+            # Unlike statements, which allow us to strip trailing whitespace,
+            # expressions require no whitespace or newlines. Its much more work
+            # to attempt to detect and strip comments and whitespace at the end
+            # of expressions, so instead we will reject this input. There's a
+            # chance we could miss some stuff here, but it should be caught by
+            # statement or module fuzzers. We will still catch any instance wher
+            # expressions are parsed and rendered by LibCST in a way that changes
+            # the AST.
+            hypothesis.reject()
 
     @unittest.skipUnless(
         bool(os.environ.get("HYPOTHESIS", False)), "Hypothesis not requested"
