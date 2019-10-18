@@ -190,6 +190,62 @@ class TestDetectConfig(UnitTest):
                     version=PythonVersionInfo(3, 7),
                 ),
             },
+            "detect_trailing_newline_missing_newline": {
+                "source": b"test",
+                "partial": PartialParserConfig(python_version="3.7"),
+                "detect_trailing_newline": True,
+                "detect_default_newline": True,
+                "expected_config": ParserConfig(
+                    lines=["test\n", ""],
+                    encoding="utf-8",
+                    default_indent="    ",
+                    default_newline="\n",
+                    has_trailing_newline=False,
+                    version=PythonVersionInfo(3, 7),
+                ),
+            },
+            "detect_trailing_newline_has_newline": {
+                "source": b"test\n",
+                "partial": PartialParserConfig(python_version="3.7"),
+                "detect_trailing_newline": True,
+                "detect_default_newline": True,
+                "expected_config": ParserConfig(
+                    lines=["test\n", ""],
+                    encoding="utf-8",
+                    default_indent="    ",
+                    default_newline="\n",
+                    has_trailing_newline=True,
+                    version=PythonVersionInfo(3, 7),
+                ),
+            },
+            "detect_trailing_newline_missing_newline_after_line_continuation": {
+                "source": b"test\\\n",
+                "partial": PartialParserConfig(python_version="3.7"),
+                "detect_trailing_newline": True,
+                "detect_default_newline": True,
+                "expected_config": ParserConfig(
+                    lines=["test\\\n", "\n", ""],
+                    encoding="utf-8",
+                    default_indent="    ",
+                    default_newline="\n",
+                    has_trailing_newline=False,
+                    version=PythonVersionInfo(3, 7),
+                ),
+            },
+            "detect_trailing_newline_has_newline_after_line_continuation": {
+                "source": b"test\\\n\n",
+                "partial": PartialParserConfig(python_version="3.7"),
+                "detect_trailing_newline": True,
+                "detect_default_newline": True,
+                "expected_config": ParserConfig(
+                    lines=["test\\\n", "\n", ""],
+                    encoding="utf-8",
+                    default_indent="    ",
+                    default_newline="\n",
+                    has_trailing_newline=True,
+                    version=PythonVersionInfo(3, 7),
+                ),
+            },
         }
     )
     def test_detect_module_config(

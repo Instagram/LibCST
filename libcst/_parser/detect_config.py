@@ -6,10 +6,11 @@
 # pyre-strict
 
 import itertools
+import re
 from dataclasses import dataclass
 from io import BytesIO
 from tokenize import detect_encoding as py_tokenize_detect_encoding
-from typing import Iterable, Iterator, Union
+from typing import Iterable, Iterator, Pattern, Union
 
 from libcst._nodes.whitespace import NEWLINE_RE
 from libcst._parser.parso.python.token import PythonTokenTypes, TokenType
@@ -22,6 +23,7 @@ from libcst._parser.wrapped_tokenize import tokenize_lines
 _INDENT: TokenType = PythonTokenTypes.INDENT
 _FALLBACK_DEFAULT_NEWLINE = "\n"
 _FALLBACK_DEFAULT_INDENT = "    "
+_CONTINUATION_RE: Pattern[str] = re.compile(r"\\(\r\n?|\n)", re.UNICODE)
 
 
 @dataclass(frozen=True)
@@ -68,6 +70,16 @@ def _detect_indent(tokens: Iterable[Token]) -> str:
     return first_indent_str
 
 
+def _detect_trailing_newline(source_str: str) -> bool:
+    if len(source_str) == 0 or not NEWLINE_RE.fullmatch(source_str[-1]):
+        return False
+    # Make sure that the last newline wasn't following a continuation
+    return not (
+        _CONTINUATION_RE.fullmatch(source_str[-2:])
+        or _CONTINUATION_RE.fullmatch(source_str[-3:])
+    )
+
+
 def detect_config(
     source: Union[str, bytes],
     *,
@@ -108,8 +120,8 @@ def detect_config(
     #
     # I think parso relies on error recovery support to handle this, which we don't
     # have. lib2to3 doesn't handle this case at all AFAICT.
-    has_trailing_newline = detect_trailing_newline and bool(
-        len(source_str) != 0 and NEWLINE_RE.match(source_str[-1])
+    has_trailing_newline = detect_trailing_newline and _detect_trailing_newline(
+        source_str
     )
     if detect_trailing_newline and not has_trailing_newline:
         source_str += default_newline
