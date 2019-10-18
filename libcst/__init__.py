@@ -77,7 +77,6 @@ from libcst._nodes.expression import (
     UnaryOperation,
     Yield,
 )
-from libcst._nodes.internal import CodePosition, CodeRange
 from libcst._nodes.module import Module
 from libcst._nodes.op import (
     Add,
@@ -185,6 +184,7 @@ from libcst._nodes.whitespace import (
 )
 from libcst._parser.entrypoints import parse_expression, parse_module, parse_statement
 from libcst._parser.types.config import PartialParserConfig
+from libcst._position import CodePosition, CodeRange
 from libcst._removal_sentinel import RemovalSentinel, RemoveFromParent
 from libcst._visitors import CSTNodeT, CSTTransformer, CSTVisitor, CSTVisitorT
 from libcst.metadata.base_provider import (
@@ -202,8 +202,8 @@ ExtSlice = SubscriptElement
 
 __all__ = [
     "BatchableCSTVisitor",
-    "CodePosition",
-    "CodeRange",
+    "CodePosition",  # Deprecated export, import from libcst.metadata instead
+    "CodeRange",  # Deprecated export, import from libcst.metadata instead
     "CSTNodeT",
     "CSTTransformer",
     "CSTValidationError",

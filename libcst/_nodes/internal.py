@@ -16,14 +16,11 @@ from typing import (
     Optional,
     Pattern,
     Sequence,
-    Tuple,
     Union,
-    cast,
-    overload,
 )
 
-from libcst._add_slots import add_slots
 from libcst._maybe_sentinel import MaybeSentinel
+from libcst._position import CodePosition, CodeRange
 from libcst._removal_sentinel import RemovalSentinel
 from libcst._types import CSTNodeT
 
@@ -39,46 +36,7 @@ if TYPE_CHECKING:
     )
 
 
-_CodePositionT = Union[Tuple[int, int], "CodePosition"]
-
-
 NEWLINE_RE: Pattern[str] = re.compile(r"\r\n?|\n")
-
-
-@add_slots
-@dataclass(frozen=True)
-class CodePosition:
-    #: Line numbers are 1-indexed.
-    line: int
-    #: Column numbers are 0-indexed.
-    column: int
-
-
-@add_slots
-@dataclass(frozen=True)
-class CodeRange:
-    #: Starting position of a node (inclusive).
-    start: CodePosition
-    #: Ending position of a node (exclusive).
-    end: CodePosition
-
-    @overload
-    def __init__(self, start: CodePosition, end: CodePosition) -> None:
-        ...
-
-    @overload
-    def __init__(self, start: Tuple[int, int], end: Tuple[int, int]) -> None:
-        ...
-
-    def __init__(self, start: _CodePositionT, end: _CodePositionT) -> None:
-        if isinstance(start, tuple) and isinstance(end, tuple):
-            object.__setattr__(self, "start", CodePosition(start[0], start[1]))
-            object.__setattr__(self, "end", CodePosition(end[0], end[1]))
-        else:
-            start = cast(CodePosition, start)
-            end = cast(CodePosition, end)
-            object.__setattr__(self, "start", start)
-            object.__setattr__(self, "end", end)
 
 
 @dataclass(frozen=False)

@@ -7,9 +7,9 @@
 from typing import Tuple, cast
 
 import libcst as cst
-from libcst import CodeRange, parse_module, parse_statement
+from libcst import parse_module, parse_statement
 from libcst._nodes.tests.base import CSTNodeTest
-from libcst.metadata.position_provider import PositionProvider
+from libcst.metadata import CodeRange, PositionProvider
 from libcst.testing.utils import data_provider
 
 

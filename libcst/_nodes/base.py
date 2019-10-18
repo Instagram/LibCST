@@ -20,7 +20,8 @@ from typing import (
     cast,
 )
 
-from libcst._nodes.internal import CodegenState, CodePosition, CodeRange
+from libcst._nodes.internal import CodegenState
+from libcst._position import CodePosition, CodeRange
 from libcst._removal_sentinel import RemovalSentinel
 from libcst._type_enforce import is_value_of_type
 from libcst._types import CSTNodeT

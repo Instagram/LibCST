@@ -5,6 +5,7 @@
 
 # pyre-strict
 
+from libcst._position import CodePosition, CodeRange
 from libcst.metadata.base_provider import (
     BatchableMetadataProvider,
     ProviderT,
@@ -42,6 +43,8 @@ from libcst.metadata.wrapper import MetadataWrapper
 
 
 __all__ = [
+    "CodePosition",
+    "CodeRange",
     "WhitespaceInclusivePositionProvider",
     "PositionProvider",
     "BasicPositionProvider",  # deprecated name for backwards compatibility

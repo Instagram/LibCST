@@ -7,8 +7,9 @@
 from typing import Any
 
 import libcst as cst
-from libcst import CodeRange, parse_statement
+from libcst import parse_statement
 from libcst._nodes.tests.base import CSTNodeTest, DummyIndentedBlock
+from libcst.metadata import CodeRange
 from libcst.testing.utils import data_provider
 
 
