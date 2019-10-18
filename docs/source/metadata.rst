@@ -85,14 +85,14 @@ interface by declaring the one of the following providers as a dependency. For
 most cases, :class:`~libcst.metadata.PositionProvider` is what you probably
 want.
 
-Node positions are is represented with :class:`~libcst.CodeRange` objects. See
-:ref:`the above example<libcst-metadata-position-example>`.
+Node positions are is represented with :class:`~libcst.metadata.CodeRange`
+objects. See :ref:`the above example<libcst-metadata-position-example>`.
 
 .. autoclass:: libcst.metadata.PositionProvider
 .. autoclass:: libcst.metadata.WhitespaceInclusivePositionProvider
 
-.. autoclass:: libcst.CodeRange
-.. autoclass:: libcst.CodePosition
+.. autoclass:: libcst.metadata.CodeRange
+.. autoclass:: libcst.metadata.CodePosition
 
 
 Expression Context Metadata

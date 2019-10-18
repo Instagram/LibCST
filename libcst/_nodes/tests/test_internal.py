@@ -9,11 +9,10 @@ from typing import Tuple
 import libcst as cst
 from libcst._nodes.internal import (
     CodegenState,
-    CodePosition,
-    CodeRange,
     PositionProvidingCodegenState,
     WhitespaceInclusivePositionProvidingCodegenState,
 )
+from libcst.metadata import CodePosition, CodeRange
 from libcst.metadata.position_provider import (
     PositionProvider,
     WhitespaceInclusivePositionProvider,
@@ -72,7 +71,7 @@ class InternalTest(UnitTest):
         state.add_indent_tokens()
         self.assertEqual(position(state), (1, 8))
 
-    def test_position(self) -> None:
+    def test_whitespace_inclusive_position(self) -> None:
         # create a dummy node
         node = cst.Pass()
 
@@ -92,7 +91,7 @@ class InternalTest(UnitTest):
         # check whitespace is correctly recorded
         self.assertEqual(state.provider._computed[node], CodeRange((1, 0), (1, 6)))
 
-    def test_syntactic_position(self) -> None:
+    def test_position(self) -> None:
         # create a dummy node
         node = cst.Pass()
 

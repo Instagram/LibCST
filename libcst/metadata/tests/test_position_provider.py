@@ -5,10 +5,10 @@
 
 # pyre-strict
 import libcst as cst
-from libcst import CodeRange, parse_module
+from libcst import parse_module
 from libcst._batched_visitor import BatchableCSTVisitor
 from libcst._visitors import CSTTransformer
-from libcst.metadata import MetadataWrapper, PositionProvider
+from libcst.metadata import CodeRange, MetadataWrapper, PositionProvider
 from libcst.testing.utils import UnitTest
 
 

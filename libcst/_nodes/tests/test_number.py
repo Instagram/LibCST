@@ -7,8 +7,9 @@
 from typing import Callable, Optional
 
 import libcst as cst
-from libcst import CodeRange, parse_expression
+from libcst import parse_expression
 from libcst._nodes.tests.base import CSTNodeTest
+from libcst.metadata import CodeRange
 from libcst.testing.utils import data_provider
 
 
