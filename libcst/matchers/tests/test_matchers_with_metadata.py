@@ -200,6 +200,131 @@ class MatchersMetadataTest(UnitTest):
         node, wrapper = self._make_fixture("a + b")
         self.assertTrue(matches(node, matcher, metadata_resolver=wrapper))
 
+    def test_predicate_logic_on_attributes(self) -> None:
+        # Verify that we can or things together.
+        matcher = m.BinaryOperation(
+            left=m.Name(
+                metadata=m.OneOf(
+                    m.MatchMetadata(
+                        meta.SyntacticPositionProvider,
+                        self._make_coderange((1, 0), (1, 1)),
+                    ),
+                    m.MatchMetadata(
+                        meta.SyntacticPositionProvider,
+                        self._make_coderange((1, 0), (1, 2)),
+                    ),
+                )
+            )
+        )
+        node, wrapper = self._make_fixture("a + b")
+        self.assertTrue(matches(node, matcher, metadata_resolver=wrapper))
+        matcher = m.BinaryOperation(
+            left=m.Integer(
+                metadata=m.OneOf(
+                    m.MatchMetadata(
+                        meta.SyntacticPositionProvider,
+                        self._make_coderange((1, 0), (1, 1)),
+                    ),
+                    m.MatchMetadata(
+                        meta.SyntacticPositionProvider,
+                        self._make_coderange((1, 0), (1, 2)),
+                    ),
+                )
+            )
+        )
+        node, wrapper = self._make_fixture("12 + 3")
+        self.assertTrue(matches(node, matcher, metadata_resolver=wrapper))
+        node, wrapper = self._make_fixture("123 + 4")
+        self.assertFalse(matches(node, matcher, metadata_resolver=wrapper))
+
+        # Verify that we can and things together
+        matcher = m.BinaryOperation(
+            left=m.Name(
+                metadata=m.AllOf(
+                    m.MatchMetadata(
+                        meta.SyntacticPositionProvider,
+                        self._make_coderange((1, 0), (1, 1)),
+                    ),
+                    m.MatchMetadata(
+                        meta.ExpressionContextProvider, meta.ExpressionContext.LOAD
+                    ),
+                )
+            )
+        )
+        node, wrapper = self._make_fixture("a + b")
+        self.assertTrue(matches(node, matcher, metadata_resolver=wrapper))
+        node, wrapper = self._make_fixture("ab + cd")
+        self.assertFalse(matches(node, matcher, metadata_resolver=wrapper))
+
+        # Verify that we can not things
+        matcher = m.BinaryOperation(
+            left=m.Name(
+                metadata=m.DoesNotMatch(
+                    m.MatchMetadata(
+                        meta.ExpressionContextProvider, meta.ExpressionContext.STORE
+                    )
+                )
+            )
+        )
+        node, wrapper = self._make_fixture("a + b")
+        self.assertTrue(matches(node, matcher, metadata_resolver=wrapper))
+
+    def test_predicate_logic_operators_on_attributes(self) -> None:
+        # Verify that we can or things together.
+        matcher = m.BinaryOperation(
+            left=m.Name(
+                metadata=m.MatchMetadata(
+                    meta.SyntacticPositionProvider, self._make_coderange((1, 0), (1, 1))
+                )
+                | m.MatchMetadata(
+                    meta.SyntacticPositionProvider, self._make_coderange((1, 0), (1, 2))
+                )
+            )
+        )
+        node, wrapper = self._make_fixture("a + b")
+        self.assertTrue(matches(node, matcher, metadata_resolver=wrapper))
+        matcher = m.BinaryOperation(
+            left=m.Integer(
+                metadata=m.MatchMetadata(
+                    meta.SyntacticPositionProvider, self._make_coderange((1, 0), (1, 1))
+                )
+                | m.MatchMetadata(
+                    meta.SyntacticPositionProvider, self._make_coderange((1, 0), (1, 2))
+                )
+            )
+        )
+        node, wrapper = self._make_fixture("12 + 3")
+        self.assertTrue(matches(node, matcher, metadata_resolver=wrapper))
+        node, wrapper = self._make_fixture("123 + 4")
+        self.assertFalse(matches(node, matcher, metadata_resolver=wrapper))
+
+        # Verify that we can and things together
+        matcher = m.BinaryOperation(
+            left=m.Name(
+                metadata=m.MatchMetadata(
+                    meta.SyntacticPositionProvider, self._make_coderange((1, 0), (1, 1))
+                )
+                & m.MatchMetadata(
+                    meta.ExpressionContextProvider, meta.ExpressionContext.LOAD
+                )
+            )
+        )
+        node, wrapper = self._make_fixture("a + b")
+        self.assertTrue(matches(node, matcher, metadata_resolver=wrapper))
+        node, wrapper = self._make_fixture("ab + cd")
+        self.assertFalse(matches(node, matcher, metadata_resolver=wrapper))
+
+        # Verify that we can not things
+        matcher = m.BinaryOperation(
+            left=m.Name(
+                metadata=~m.MatchMetadata(
+                    meta.ExpressionContextProvider, meta.ExpressionContext.STORE
+                )
+            )
+        )
+        node, wrapper = self._make_fixture("a + b")
+        self.assertTrue(matches(node, matcher, metadata_resolver=wrapper))
+
 
 class MatchersVisitorMetadataTest(UnitTest):
     def _make_fixture(self, code: str) -> cst.MetadataWrapper:
