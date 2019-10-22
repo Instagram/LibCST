@@ -4,17 +4,11 @@
 # LICENSE file in the root directory of this source tree.
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Optional, Sequence, TypeVar, Union, cast
+from typing import TYPE_CHECKING, Sequence, TypeVar, Union, cast
 
 from libcst._add_slots import add_slots
 from libcst._nodes.base import CSTNode
-from libcst._nodes.internal import (
-    CodegenState,
-    PositionProvidingCodegenState,
-    WhitespaceInclusivePositionProvidingCodegenState,
-    visit_body_sequence,
-    visit_sequence,
-)
+from libcst._nodes.internal import CodegenState, visit_body_sequence, visit_sequence
 from libcst._nodes.statement import BaseCompoundStatement, SimpleStatementLine
 from libcst._nodes.whitespace import EmptyLine
 from libcst._removal_sentinel import RemovalSentinel
@@ -22,13 +16,6 @@ from libcst._visitors import CSTVisitorT
 
 
 if TYPE_CHECKING:
-    # These are circular dependencies only used for typing purposes
-    from libcst.metadata.position_provider import (  # noqa: F401
-        WhitespaceInclusivePositionProvider,
-        PositionProvider,
-        _PositionProviderUnion,
-    )
-
     # This is circular, so import the type only in type checking
     from libcst._parser.types.config import PartialParserConfig
 
@@ -136,46 +123,17 @@ class Module(CSTNode):
         """
         return self.code.encode(self.encoding)
 
-    def code_for_node(
-        self, node: CSTNode, provider: Optional["_PositionProviderUnion"] = None
-    ) -> str:
+    def code_for_node(self, node: CSTNode) -> str:
         """
         Generates the code for the given node in the context of this module. This is a
         method of Module, not CSTNode, because we need to know the module's default
         indentation and newline formats.
-
-        This can also be used with a :class:`~libcst.metadata.PositionProvider` or a
-        :class:`~libcst.metadata.WhitespaceInclusivePositionProvider` to compute
-        position information, but that's an implementation detail, and you should use
-        :meth:`MetadataWrapper.resolve() <libcst.metadata.MetadataWrapper.resolve>`
-        instead.
-
-        See :ref:`Metadata<libcst-metadata>` for more information.
         """
 
-        from libcst.metadata.position_provider import PositionProvider
-
-        if provider is None:
-            state = CodegenState(
-                default_indent=self.default_indent,
-                default_newline=self.default_newline,
-                provider=provider,
-            )
-        elif isinstance(provider, PositionProvider):
-            state = PositionProvidingCodegenState(
-                default_indent=self.default_indent,
-                default_newline=self.default_newline,
-                provider=provider,
-            )
-        else:
-            state = WhitespaceInclusivePositionProvidingCodegenState(
-                default_indent=self.default_indent,
-                default_newline=self.default_newline,
-                provider=provider,
-            )
-
+        state = CodegenState(
+            default_indent=self.default_indent, default_newline=self.default_newline
+        )
         node._codegen(state)
-
         return "".join(state.tokens)
 
     @property
