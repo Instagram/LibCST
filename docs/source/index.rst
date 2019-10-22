@@ -27,6 +27,7 @@ LibCST
    Metadata <metadata_tutorial>
    Scope Analysis <scope_tutorial>
    Matchers <matchers_tutorial>
+   Best Practices <best_practices>
 
 
 .. toctree::
