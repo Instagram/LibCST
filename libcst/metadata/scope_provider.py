@@ -349,7 +349,42 @@ class Scope(abc.ABC):
 
     @abc.abstractmethod
     def __getitem__(self, name: str) -> Tuple[BaseAssignment, ...]:
-        """ Get assignments given a name str by ``scope[name]``. """
+        """
+        Get assignments given a name str by ``scope[name]``.
+
+        .. note::
+           *Why does it return a list of assignments given a name instead of just one assignment?*
+
+           Many programming languages differentiate variable declaration and assignment.
+           Further, those programming languages often disallow duplicate declarations within
+           the same scope, and will often hoist the declaration (without its assignment) to
+           the top of the scope. These design decisions make static analysis much easier,
+           because it's possible to match a name against its single declaration for a given scope.
+
+           As an example, the following code would be valid in JavaScript::
+
+               function fn() {
+                 console.log(value);  // value is defined here, because the declaration is hoisted, but is currently 'undefined'.
+                 var value = 5;  // A function-scoped declaration.
+               }
+               fn();  // prints 'undefined'.
+
+           In contrast, Python's declaration and assignment are identical and are not hoisted::
+
+               if conditional_value:
+                   value = 5
+               elif other_conditional_value:
+                   value = 10
+               print(value)  # possibly valid, depending on conditional execution
+
+           This code may throw a ``NameError`` if both conditional values are falsy.
+           It also means that depending on the codepath taken, the original declaration
+           could come from either ``value = ...`` assignment node.
+           As a result, instead of returning a single declaration,
+           we're forced to return a collection of all of the assignments we think could have
+           defined a given name by the time a piece of code is executed.
+           For the above example, value would resolve to a tuple of both assignments.
+        """
         ...
 
     def __hash__(self) -> int:
