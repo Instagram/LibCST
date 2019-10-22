@@ -27,7 +27,7 @@ import libcst
 hypothesis.settings.register_profile(
     name="settings-for-unit-tests",
     print_blob=True,
-    deadline=timedelta(seconds=60),
+    deadline=timedelta(seconds=1800),
     suppress_health_check=[
         hypothesis.HealthCheck.too_slow,
         hypothesis.HealthCheck.filter_too_much,
@@ -41,7 +41,7 @@ hypothesis.settings.load_profile("settings-for-unit-tests")
 hypothesis.settings.register_profile(
     name="settings-for-fuzzing",
     parent=hypothesis.settings.get_profile("settings-for-unit-tests"),
-    max_examples=1_000_000,
+    max_examples=1_000_000_000,
     phases=(hypothesis.Phase.generate, hypothesis.Phase.shrink),
 )
 
