@@ -13,7 +13,6 @@ from libcst._batched_visitor import BatchableCSTVisitor
 from libcst._nodes.internal import CodegenState
 from libcst._visitors import CSTTransformer
 from libcst.metadata import (
-    CodePosition,
     CodeRange,
     MetadataWrapper,
     PositionProvider,
@@ -121,13 +120,12 @@ class PositionProvidingCodegenStateTest(UnitTest):
         state = WhitespaceInclusivePositionProvidingCodegenState(
             " " * 4, "\n", WhitespaceInclusivePositionProvider()
         )
-        start = CodePosition(state.line, state.column)
+        state.before_visit(node)
         state.add_token(" ")
         with state.record_syntactic_position(node):
             state.add_token("pass")
         state.add_token(" ")
-        end = CodePosition(state.line, state.column)
-        state.record_position(node, CodeRange(start, end))
+        state.after_leave(node)
 
         # check whitespace is correctly recorded
         self.assertEqual(state.provider._computed[node], CodeRange((1, 0), (1, 6)))
@@ -139,13 +137,12 @@ class PositionProvidingCodegenStateTest(UnitTest):
         # simulate codegen behavior for the dummy node
         # generates the code " pass "
         state = PositionProvidingCodegenState(" " * 4, "\n", PositionProvider())
-        start = CodePosition(state.line, state.column)
+        state.before_visit(node)
         state.add_token(" ")
         with state.record_syntactic_position(node):
             state.add_token("pass")
         state.add_token(" ")
-        end = CodePosition(state.line, state.column)
-        state.record_position(node, CodeRange(start, end))
+        state.after_leave(node)
 
         # check syntactic position ignores whitespace
         self.assertEqual(state.provider._computed[node], CodeRange((1, 1), (1, 5)))

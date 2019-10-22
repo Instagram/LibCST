@@ -11,7 +11,6 @@ from typing import TYPE_CHECKING, Iterable, Iterator, List, Optional, Sequence, 
 
 from libcst._add_slots import add_slots
 from libcst._maybe_sentinel import MaybeSentinel
-from libcst._position import CodeRange
 from libcst._removal_sentinel import RemovalSentinel
 from libcst._types import CSTNodeT
 
@@ -48,7 +47,10 @@ class CodegenState:
     def add_token(self, value: str) -> None:
         self.tokens.append(value)
 
-    def record_position(self, node: "CSTNode", position: CodeRange) -> None:
+    def before_visit(self, node: "CSTNode") -> None:
+        pass
+
+    def after_leave(self, node: "CSTNode") -> None:
         pass
 
     @contextmanager

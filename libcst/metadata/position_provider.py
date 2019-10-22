@@ -7,8 +7,8 @@
 
 import re
 from contextlib import contextmanager
-from dataclasses import dataclass
-from typing import Iterator, Optional, Pattern
+from dataclasses import dataclass, field
+from typing import Iterator, List, Optional, Pattern
 
 from libcst._add_slots import add_slots
 from libcst._nodes.base import CSTNode
@@ -25,6 +25,7 @@ NEWLINE_RE: Pattern[str] = re.compile(r"\r\n?|\n")
 @dataclass(frozen=False)
 class WhitespaceInclusivePositionProvidingCodegenState(CodegenState):
     provider: BaseMetadataProvider[CodeRange]
+    _stack: List[CodePosition] = field(init=False, default_factory=list)
 
     def add_indent_tokens(self) -> None:
         self.tokens.extend(self.indent_tokens)
@@ -48,11 +49,19 @@ class WhitespaceInclusivePositionProvidingCodegenState(CodegenState):
             # newline resets column back to 0, but a trailing token may shift column
             self.column = len(segments[-1])
 
-    def record_position(self, node: CSTNode, position: CodeRange) -> None:
+    def before_visit(self, node: "CSTNode") -> None:
+        self._stack.append(CodePosition(self.line, self.column))
+
+    def after_leave(self, node: "CSTNode") -> None:
+        # we must unconditionally pop the stack, else we could end up in a broken state
+        start_pos = self._stack.pop()
+
         # Don't overwrite existing position information
         # (i.e. semantic position has already been recorded)
         if node not in self.provider._computed:
-            self.provider._computed[node] = position
+            end_pos = CodePosition(self.line, self.column)
+            node_range = CodeRange(start_pos, end_pos)
+            self.provider._computed[node] = node_range
 
 
 class WhitespaceInclusivePositionProvider(BaseMetadataProvider[CodeRange]):
