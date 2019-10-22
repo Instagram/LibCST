@@ -19,7 +19,6 @@ from typing import (
 )
 
 from libcst._nodes.internal import CodegenState
-from libcst._position import CodePosition, CodeRange
 from libcst._removal_sentinel import RemovalSentinel
 from libcst._type_enforce import is_value_of_type
 from libcst._types import CSTNodeT
@@ -297,10 +296,9 @@ class CSTNode(ABC):
         ...
 
     def _codegen(self, state: CodegenState, **kwargs: Any) -> None:
-        start = CodePosition(state.line, state.column)
+        state.before_visit(self)
         self._codegen_impl(state, **kwargs)
-        end = CodePosition(state.line, state.column)
-        state.record_position(self, CodeRange(start, end))
+        state.after_leave(self)
 
     def with_changes(self: _CSTNodeSelfT, **changes: Any) -> _CSTNodeSelfT:
         """
