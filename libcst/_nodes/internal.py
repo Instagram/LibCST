@@ -5,22 +5,13 @@
 
 # pyre-strict
 
-import re
 from contextlib import contextmanager
 from dataclasses import dataclass, field
-from typing import (
-    TYPE_CHECKING,
-    Iterable,
-    Iterator,
-    List,
-    Optional,
-    Pattern,
-    Sequence,
-    Union,
-)
+from typing import TYPE_CHECKING, Iterable, Iterator, List, Optional, Sequence, Union
 
+from libcst._add_slots import add_slots
 from libcst._maybe_sentinel import MaybeSentinel
-from libcst._position import CodePosition, CodeRange
+from libcst._position import CodeRange
 from libcst._removal_sentinel import RemovalSentinel
 from libcst._types import CSTNodeT
 
@@ -29,23 +20,15 @@ if TYPE_CHECKING:
     # These are circular dependencies only used for typing purposes
     from libcst._nodes.base import CSTNode  # noqa: F401
     from libcst._visitors import CSTVisitorT
-    from libcst.metadata.position_provider import (  # noqa: F401
-        WhitespaceInclusivePositionProvider,
-        PositionProvider,
-        _PositionProviderUnion,
-    )
 
 
-NEWLINE_RE: Pattern[str] = re.compile(r"\r\n?|\n")
-
-
+@add_slots
 @dataclass(frozen=False)
 class CodegenState:
     # These are derived from a Module
     default_indent: str
     default_newline: str
-
-    provider: Optional["_PositionProviderUnion"]
+    provider: object = None  # overridden by libcst.metadata.position_provider
 
     indent_tokens: List[str] = field(default_factory=list)
     tokens: List[str] = field(default_factory=list)
@@ -65,87 +48,18 @@ class CodegenState:
     def add_token(self, value: str) -> None:
         self.tokens.append(value)
 
-    def record_position(self, node: CSTNodeT, position: CodeRange) -> None:
+    def record_position(self, node: "CSTNode", position: CodeRange) -> None:
         pass
 
     @contextmanager
     def record_syntactic_position(
         self,
-        node: CSTNodeT,
+        node: "CSTNode",
         *,
-        start_node: Optional[CSTNodeT] = None,
-        end_node: Optional[CSTNodeT] = None,
+        start_node: Optional["CSTNode"] = None,
+        end_node: Optional["CSTNode"] = None,
     ) -> Iterator[None]:
         yield
-
-
-@dataclass(frozen=False)
-class WhitespaceInclusivePositionProvidingCodegenState(CodegenState):
-    """
-    Used by the codegen to handle
-    `~libcst.metadata.WhitespaceInclusivePositionProvider`.
-    """
-
-    provider: "_PositionProviderUnion"
-
-    def add_indent_tokens(self) -> None:
-        self.tokens.extend(self.indent_tokens)
-        for token in self.indent_tokens:
-            self._update_position(token)
-
-    def add_token(self, value: str) -> None:
-        self.tokens.append(value)
-        self._update_position(value)
-
-    def _update_position(self, value: str) -> None:
-        """
-        Computes new line and column numbers from adding the token [value].
-        """
-        segments = NEWLINE_RE.split(value)
-        if len(segments) == 1:  # contains no newlines
-            # no change to self.lines
-            self.column += len(value)
-        else:
-            self.line += len(segments) - 1
-            # newline resets column back to 0, but a trailing token may shift column
-            self.column = len(segments[-1])
-
-    def record_position(self, node: CSTNodeT, position: CodeRange) -> None:
-        # Don't overwrite existing position information
-        # (i.e. semantic position has already been recorded)
-        if node not in self.provider._computed:
-            self.provider._computed[node] = position
-
-
-@dataclass(frozen=False)
-class PositionProvidingCodegenState(WhitespaceInclusivePositionProvidingCodegenState):
-    """
-    Used by the codegen to handle `~libcst.metadata.PositionProvider`.
-    """
-
-    @contextmanager
-    def record_syntactic_position(
-        self,
-        node: CSTNodeT,
-        *,
-        start_node: Optional[CSTNodeT] = None,
-        end_node: Optional[CSTNodeT] = None,
-    ) -> Iterator[None]:
-        start = CodePosition(self.line, self.column)
-        try:
-            yield
-        finally:
-            end = CodePosition(self.line, self.column)
-
-            # Override with positions hoisted from child nodes if provided
-            start = (
-                self.provider._computed[start_node].start
-                if start_node is not None
-                else start
-            )
-            end = self.provider._computed[end_node].end if end_node is not None else end
-
-            self.provider._computed[node] = CodeRange(start, end)
 
 
 def visit_required(

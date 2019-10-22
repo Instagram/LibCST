@@ -15,6 +15,7 @@ from libcst._nodes.internal import CodegenState, visit_required
 from libcst._types import CSTNodeT
 from libcst._visitors import CSTTransformer, CSTVisitorT
 from libcst.metadata import CodeRange, PositionProvider
+from libcst.metadata.position_provider import PositionProvidingCodegenState
 from libcst.testing.utils import UnitTest
 
 
@@ -91,11 +92,22 @@ class CSTNodeTest(UnitTest):
         Verifies that the given node's `_codegen` method is correct.
         """
         module = cst.Module([])
-        provider = None if expected_position is None else PositionProvider()
+        self.assertEqual(module.code_for_node(node), expected)
 
-        self.assertEqual(module.code_for_node(node, provider=provider), expected)
-
-        if provider is not None:
+        if expected_position is not None:
+            # This is using some internal APIs, because we only want to compute
+            # position for the node being tested, not a whole module.
+            #
+            # Normally, this is a nonsense operation (how can a node have a position if
+            # its not in a module?), which is why it's not supported, but it makes
+            # sense in the context of these node tests.
+            provider = PositionProvider()
+            state = PositionProvidingCodegenState(
+                default_indent=module.default_indent,
+                default_newline=module.default_newline,
+                provider=provider,
+            )
+            node._codegen(state)
             self.assertEqual(provider._computed[node], expected_position)
 
     def __assert_children_match_codegen(self, node: cst.CSTNode) -> None:

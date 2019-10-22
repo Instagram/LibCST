@@ -9,7 +9,7 @@ from typing import Tuple, cast
 import libcst as cst
 from libcst import parse_module, parse_statement
 from libcst._nodes.tests.base import CSTNodeTest
-from libcst.metadata import CodeRange, PositionProvider
+from libcst.metadata import CodeRange, MetadataWrapper, PositionProvider
 from libcst.testing.utils import data_provider
 
 
@@ -132,11 +132,10 @@ class ModuleTest(CSTNodeTest):
         }
     )
     def test_module_position(self, *, code: str, expected: CodeRange) -> None:
-        module = parse_module(code)
-        provider = PositionProvider()
-        module.code_for_node(module, provider)
+        wrapper = MetadataWrapper(parse_module(code))
+        positions = wrapper.resolve(PositionProvider)
 
-        self.assertEqual(provider._computed[module], expected)
+        self.assertEqual(positions[wrapper.module], expected)
 
     def cmp_position(
         self, actual: CodeRange, start: Tuple[int, int], end: Tuple[int, int]
@@ -144,22 +143,22 @@ class ModuleTest(CSTNodeTest):
         self.assertEqual(actual, CodeRange(start, end))
 
     def test_function_position(self) -> None:
-        module = parse_module("def foo():\n    pass")
-        provider = PositionProvider()
-        module.code_for_node(module, provider)
+        wrapper = MetadataWrapper(parse_module("def foo():\n    pass"))
+        module = wrapper.module
+        positions = wrapper.resolve(PositionProvider)
 
         fn = cast(cst.FunctionDef, module.body[0])
         stmt = cast(cst.SimpleStatementLine, fn.body.body[0])
         pass_stmt = cast(cst.Pass, stmt.body[0])
-        self.cmp_position(provider._computed[stmt], (2, 4), (2, 8))
-        self.cmp_position(provider._computed[pass_stmt], (2, 4), (2, 8))
+        self.cmp_position(positions[stmt], (2, 4), (2, 8))
+        self.cmp_position(positions[pass_stmt], (2, 4), (2, 8))
 
     def test_nested_indent_position(self) -> None:
-        module = parse_module(
-            "if True:\n    if False:\n        x = 1\nelse:\n    return"
+        wrapper = MetadataWrapper(
+            parse_module("if True:\n    if False:\n        x = 1\nelse:\n    return")
         )
-        provider = PositionProvider()
-        module.code_for_node(module, provider)
+        module = wrapper.module
+        positions = wrapper.resolve(PositionProvider)
 
         outer_if = cast(cst.If, module.body[0])
         inner_if = cast(cst.If, outer_if.body.body[0])
@@ -168,24 +167,24 @@ class ModuleTest(CSTNodeTest):
         outer_else = cast(cst.Else, outer_if.orelse)
         return_stmt = cast(cst.SimpleStatementLine, outer_else.body.body[0]).body[0]
 
-        self.cmp_position(provider._computed[outer_if], (1, 0), (5, 10))
-        self.cmp_position(provider._computed[inner_if], (2, 4), (3, 13))
-        self.cmp_position(provider._computed[assign], (3, 8), (3, 13))
-        self.cmp_position(provider._computed[outer_else], (4, 0), (5, 10))
-        self.cmp_position(provider._computed[return_stmt], (5, 4), (5, 10))
+        self.cmp_position(positions[outer_if], (1, 0), (5, 10))
+        self.cmp_position(positions[inner_if], (2, 4), (3, 13))
+        self.cmp_position(positions[assign], (3, 8), (3, 13))
+        self.cmp_position(positions[outer_else], (4, 0), (5, 10))
+        self.cmp_position(positions[return_stmt], (5, 4), (5, 10))
 
     def test_multiline_string_position(self) -> None:
-        module = parse_module('"abc"\\\n"def"')
-        provider = PositionProvider()
-        module.code_for_node(module, provider)
+        wrapper = MetadataWrapper(parse_module('"abc"\\\n"def"'))
+        module = wrapper.module
+        positions = wrapper.resolve(PositionProvider)
 
         stmt = cast(cst.SimpleStatementLine, module.body[0])
         expr = cast(cst.Expr, stmt.body[0])
         string = expr.value
 
-        self.cmp_position(provider._computed[stmt], (1, 0), (2, 5))
-        self.cmp_position(provider._computed[expr], (1, 0), (2, 5))
-        self.cmp_position(provider._computed[string], (1, 0), (2, 5))
+        self.cmp_position(positions[stmt], (1, 0), (2, 5))
+        self.cmp_position(positions[expr], (1, 0), (2, 5))
+        self.cmp_position(positions[string], (1, 0), (2, 5))
 
     def test_module_config_for_parsing(self) -> None:
         module = parse_module("pass\r")

@@ -12,9 +12,7 @@ from typing import (
     Dict,
     List,
     Mapping,
-    MutableMapping,
     Sequence,
-    Type,
     TypeVar,
     Union,
     cast,
@@ -33,8 +31,6 @@ if TYPE_CHECKING:
 
 
 _T = TypeVar("_T")
-_CSTMetadataMapping = MutableMapping[Type["BaseMetaDataProvider[_T]"], _T]
-
 _CSTNodeSelfT = TypeVar("_CSTNodeSelfT", bound="CSTNode")
 _EMPTY_SEQUENCE: Sequence["CSTNode"] = ()
 
