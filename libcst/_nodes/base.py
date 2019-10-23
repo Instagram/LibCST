@@ -110,6 +110,19 @@ def _indent(value: str) -> str:
     return "\n".join(f"    {l}" for l in value.split("\n"))
 
 
+def _clone(val: object) -> object:
+    # We can't use isinstance(val, CSTNode) here due to poor performance
+    # of isinstance checks against ABC direct subclasses. What we're trying
+    # to do here is recursively call this functionality on subclasses, but
+    # if the attribute isn't a CSTNode, fall back to copy.deepcopy.
+    try:
+        # pyre-ignore We know this might not exist, that's the point of the
+        # attribute error and try block.
+        return val.deep_clone()
+    except AttributeError:
+        return deepcopy(val)
+
+
 @dataclass(frozen=True)
 class CSTNode(ABC):
     def __post_init__(self) -> None:
@@ -349,14 +362,17 @@ class CSTNode(ABC):
                 continue
             val = getattr(self, key)
 
-            # We can't use isinstance(val, CSTNode) here due to poor performance
-            # of isinstance checks against ABC direct subclasses. What we're trying
-            # to do here is recursively call this functionality on subclasses, but
-            # if the attribute isn't a CSTNode, fall back to copy.deepcopy.
-            try:
-                cloned_fields[key] = val.deep_clone()
-            except AttributeError:
-                cloned_fields[key] = deepcopy(val)
+            # Much like the comment on _clone itself, we are allergic to instance
+            # checks against Sequence because of speed issues with ABC classes. So,
+            # instead, first handle sequence types that we do not want to iterate on
+            # and then just try to iterate and clone.
+            if isinstance(val, (str, bytes)):
+                cloned_fields[key] = _clone(val)
+            else:
+                try:
+                    cloned_fields[key] = tuple(_clone(v) for v in val)
+                except TypeError:
+                    cloned_fields[key] = _clone(val)
 
         return type(self)(**cloned_fields)
 
