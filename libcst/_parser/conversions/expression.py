@@ -48,6 +48,7 @@ from libcst._nodes.expression import (
     List,
     ListComp,
     Name,
+    NamedExpr,
     Param,
     Parameters,
     RightCurlyBrace,
@@ -164,6 +165,31 @@ def convert_expression_input(
     if isinstance(child, WithLeadingWhitespace):
         child = child.value
     return child
+
+
+@with_production("namedexpr_test", "test [':=' test]", version=">=3.8")
+def convert_namedexpr_test(
+    config: ParserConfig, children: typing.Sequence[typing.Any]
+) -> typing.Any:
+    test, *assignment = children
+    if len(assignment) == 0:
+        return test
+
+    # Convert all of the operations that have no precedence in a loop
+    (walrus, value) = assignment
+    return WithLeadingWhitespace(
+        NamedExpr(
+            target=test.value,
+            whitespace_before_walrus=parse_parenthesizable_whitespace(
+                config, walrus.whitespace_before
+            ),
+            whitespace_after_walrus=parse_parenthesizable_whitespace(
+                config, walrus.whitespace_after
+            ),
+            value=value.value,
+        ),
+        test.whitespace_before,
+    )
 
 
 @with_production("test", "or_test ['if' or_test 'else' test] | lambdef")
@@ -1045,6 +1071,12 @@ def convert_fstring_format_spec(
 @with_production(
     "testlist_comp_tuple",
     "(test|star_expr) ( comp_for | (',' (test|star_expr))* [','] )",
+    version="<=3.7",
+)
+@with_production(
+    "testlist_comp_tuple",
+    "(namedexpr_test|star_expr) ( comp_for | (',' (namedexpr_test|star_expr))* [','] )",
+    version=">=3.8",
 )
 def convert_testlist_comp_tuple(
     config: ParserConfig, children: typing.Sequence[typing.Any]
@@ -1061,6 +1093,12 @@ def convert_testlist_comp_tuple(
 @with_production(
     "testlist_comp_list",
     "(test|star_expr) ( comp_for | (',' (test|star_expr))* [','] )",
+    version="<=3.7",
+)
+@with_production(
+    "testlist_comp_list",
+    "(namedexpr_test|star_expr) ( comp_for | (',' (namedexpr_test|star_expr))* [','] )",
+    version=">=3.8",
 )
 def convert_testlist_comp_list(
     config: ParserConfig, children: typing.Sequence[typing.Any]
@@ -1327,7 +1365,14 @@ def convert_argument(
     return child
 
 
-@with_production("arg_assign_comp_for", "test [comp_for] | test '=' test")
+@with_production(
+    "arg_assign_comp_for", "test [comp_for] | test '=' test", version="<=3.7"
+)
+@with_production(
+    "arg_assign_comp_for",
+    "test [comp_for] | test ':=' test | test '=' test",
+    version=">=3.8",
+)
 def convert_arg_assign_comp_for(
     config: ParserConfig, children: typing.Sequence[typing.Any]
 ) -> typing.Any:
