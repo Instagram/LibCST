@@ -880,3 +880,28 @@ class ScopeProviderTest(UnitTest):
         )
 
         self.assertEqual(len(set(scopes.values())), 3)
+
+    def test_node_of_scopes(self) -> None:
+        m, scopes = get_scope_metadata_provider(
+            """
+                def f1():
+                    target()
+
+                class C:
+                    attr = target()
+            """
+        )
+        f1 = ensure_type(m.body[0], cst.FunctionDef)
+        target_call = ensure_type(
+            ensure_type(f1.body.body[0], cst.SimpleStatementLine).body[0], cst.Expr
+        ).value
+        f1_scope = scopes[target_call]
+        self.assertIsInstance(f1_scope, FunctionScope)
+        self.assertEqual(cast(FunctionScope, f1_scope).node, f1)
+        c = ensure_type(m.body[1], cst.ClassDef)
+        target_call_2 = ensure_type(
+            ensure_type(c.body.body[0], cst.SimpleStatementLine).body[0], cst.Assign
+        ).value
+        c_scope = scopes[target_call_2]
+        self.assertIsInstance(c_scope, ClassScope)
+        self.assertEqual(cast(ClassScope, c_scope).node, c)
