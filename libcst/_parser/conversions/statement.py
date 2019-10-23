@@ -732,7 +732,14 @@ def convert_compound_stmt(config: ParserConfig, children: Sequence[Any]) -> Any:
     return stmt
 
 
-@with_production("if_stmt", "'if' test ':' suite [if_stmt_elif|if_stmt_else]")
+@with_production(
+    "if_stmt", "'if' test ':' suite [if_stmt_elif|if_stmt_else]", version="<=3.7"
+)
+@with_production(
+    "if_stmt",
+    "'if' namedexpr_test ':' suite [if_stmt_elif|if_stmt_else]",
+    version=">=3.8",
+)
 def convert_if_stmt(config: ParserConfig, children: Sequence[Any]) -> Any:
     if_tok, test, colon_tok, suite, *tail = children
 
@@ -753,7 +760,14 @@ def convert_if_stmt(config: ParserConfig, children: Sequence[Any]) -> Any:
     )
 
 
-@with_production("if_stmt_elif", "'elif' test ':' suite [if_stmt_elif|if_stmt_else]")
+@with_production(
+    "if_stmt_elif", "'elif' test ':' suite [if_stmt_elif|if_stmt_else]", version="<=3.7"
+)
+@with_production(
+    "if_stmt_elif",
+    "'elif' namedexpr_test ':' suite [if_stmt_elif|if_stmt_else]",
+    version=">=3.8",
+)
 def convert_if_stmt_elif(config: ParserConfig, children: Sequence[Any]) -> Any:
     # this behaves exactly the same as `convert_if_stmt`, except that the leading token
     # has a different string value.
@@ -772,7 +786,12 @@ def convert_if_stmt_else(config: ParserConfig, children: Sequence[Any]) -> Any:
     )
 
 
-@with_production("while_stmt", "'while' test ':' suite ['else' ':' suite]")
+@with_production(
+    "while_stmt", "'while' test ':' suite ['else' ':' suite]", version="<=3.7"
+)
+@with_production(
+    "while_stmt", "'while' namedexpr_test ':' suite ['else' ':' suite]", version=">=3.8"
+)
 def convert_while_stmt(config: ParserConfig, children: Sequence[Any]) -> Any:
     while_token, test, while_colon_token, while_suite, *else_block = children
 

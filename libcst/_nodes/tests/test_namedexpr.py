@@ -12,6 +12,21 @@ from libcst.metadata import CodeRange
 from libcst.testing.utils import data_provider
 
 
+def _parse_expression_force_38(code: str) -> cst.BaseExpression:
+    return cst.parse_expression(
+        code, config=cst.PartialParserConfig(python_version="3.8")
+    )
+
+
+def _parse_statement_force_38(code: str) -> cst.BaseCompoundStatement:
+    statement = cst.parse_statement(
+        code, config=cst.PartialParserConfig(python_version="3.8")
+    )
+    if not isinstance(statement, cst.BaseCompoundStatement):
+        raise Exception("This function is expecting to parse compound statements only!")
+    return statement
+
+
 class NamedExprTest(CSTNodeTest):
     @data_provider(
         (
@@ -19,7 +34,7 @@ class NamedExprTest(CSTNodeTest):
             {
                 "node": cst.NamedExpr(cst.Name("x"), cst.Float("5.5")),
                 "code": "x := 5.5",
-                "parser": None,
+                "parser": None,  # Walrus operator is illegal as top-level statement
                 "expected_position": None,
             },
             # Parenthesized named expression
@@ -31,8 +46,8 @@ class NamedExprTest(CSTNodeTest):
                     rpar=(cst.RightParen(),),
                 ),
                 "code": "(foo := 5)",
-                "parser": None,
-                "expected_position": None,
+                "parser": _parse_expression_force_38,
+                "expected_position": CodeRange((1, 1), (1, 9)),
             },
             # Make sure that spacing works
             {
@@ -45,8 +60,33 @@ class NamedExprTest(CSTNodeTest):
                     rpar=(cst.RightParen(whitespace_before=cst.SimpleWhitespace(" ")),),
                 ),
                 "code": "( foo  :=  bar )",
-                "parser": None,
+                "parser": _parse_expression_force_38,
                 "expected_position": CodeRange((1, 2), (1, 14)),
+            },
+            # Make sure we can use these where allowed in if/while statements
+            {
+                "node": cst.While(
+                    test=cst.NamedExpr(
+                        target=cst.Name(value="x",),
+                        value=cst.Call(func=cst.Name(value="some_input",),),
+                    ),
+                    body=cst.SimpleStatementSuite(body=[cst.Pass(),],),
+                ),
+                "code": "while x := some_input(): pass\n",
+                "parser": _parse_statement_force_38,
+                "expected_position": None,
+            },
+            {
+                "node": cst.If(
+                    test=cst.NamedExpr(
+                        target=cst.Name(value="x",),
+                        value=cst.Call(func=cst.Name(value="some_input",),),
+                    ),
+                    body=cst.SimpleStatementSuite(body=[cst.Pass(),],),
+                ),
+                "code": "if x := some_input(): pass\n",
+                "parser": _parse_statement_force_38,
+                "expected_position": None,
             },
         )
     )
