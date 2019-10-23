@@ -148,6 +148,7 @@ if TYPE_CHECKING:
         List,
         ListComp,
         Name,
+        NamedExpr,
         Param,
         ParamStar,
         Parameters,
@@ -3298,6 +3299,58 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_NamedExpr(self, node: "NamedExpr") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_NamedExpr_target(self, node: "NamedExpr") -> None:
+        pass
+
+    @mark_no_op
+    def leave_NamedExpr_target(self, node: "NamedExpr") -> None:
+        pass
+
+    @mark_no_op
+    def visit_NamedExpr_value(self, node: "NamedExpr") -> None:
+        pass
+
+    @mark_no_op
+    def leave_NamedExpr_value(self, node: "NamedExpr") -> None:
+        pass
+
+    @mark_no_op
+    def visit_NamedExpr_lpar(self, node: "NamedExpr") -> None:
+        pass
+
+    @mark_no_op
+    def leave_NamedExpr_lpar(self, node: "NamedExpr") -> None:
+        pass
+
+    @mark_no_op
+    def visit_NamedExpr_rpar(self, node: "NamedExpr") -> None:
+        pass
+
+    @mark_no_op
+    def leave_NamedExpr_rpar(self, node: "NamedExpr") -> None:
+        pass
+
+    @mark_no_op
+    def visit_NamedExpr_whitespace_before_walrus(self, node: "NamedExpr") -> None:
+        pass
+
+    @mark_no_op
+    def leave_NamedExpr_whitespace_before_walrus(self, node: "NamedExpr") -> None:
+        pass
+
+    @mark_no_op
+    def visit_NamedExpr_whitespace_after_walrus(self, node: "NamedExpr") -> None:
+        pass
+
+    @mark_no_op
+    def leave_NamedExpr_whitespace_after_walrus(self, node: "NamedExpr") -> None:
+        pass
+
+    @mark_no_op
     def visit_Newline(self, node: "Newline") -> Optional[bool]:
         pass
 
@@ -5013,6 +5066,10 @@ class CSTTypedVisitorFunctions(CSTTypedBaseFunctions):
         pass
 
     @mark_no_op
+    def leave_NamedExpr(self, original_node: "NamedExpr") -> None:
+        pass
+
+    @mark_no_op
     def leave_Newline(self, original_node: "Newline") -> None:
         pass
 
@@ -5763,6 +5820,12 @@ class CSTTypedTransformerFunctions(CSTTypedBaseFunctions):
     def leave_NameItem(
         self, original_node: "NameItem", updated_node: "NameItem"
     ) -> Union["NameItem", RemovalSentinel]:
+        return updated_node
+
+    @mark_no_op
+    def leave_NamedExpr(
+        self, original_node: "NamedExpr", updated_node: "NamedExpr"
+    ) -> "BaseExpression":
         return updated_node
 
     @mark_no_op

@@ -20688,6 +20688,503 @@ class NameItem(BaseMatcherNode):
 
 
 @dataclass(frozen=True, eq=False, unsafe_hash=False)
+class NamedExpr(BaseExpression, BaseMatcherNode):
+    target: Union[
+        "BaseExpression",
+        DoNotCareSentinel,
+        MatchMetadata,
+        OneOf[
+            Union[
+                "BaseExpression",
+                MatchMetadata,
+                MatchIfTrue[Callable[[cst.BaseExpression], bool]],
+            ]
+        ],
+        AllOf[
+            Union[
+                "BaseExpression",
+                MatchMetadata,
+                MatchIfTrue[Callable[[cst.BaseExpression], bool]],
+            ]
+        ],
+        MatchIfTrue[Callable[[cst.BaseExpression], bool]],
+    ] = DoNotCare()
+    value: Union[
+        "BaseExpression",
+        DoNotCareSentinel,
+        MatchMetadata,
+        OneOf[
+            Union[
+                "BaseExpression",
+                MatchMetadata,
+                MatchIfTrue[Callable[[cst.BaseExpression], bool]],
+            ]
+        ],
+        AllOf[
+            Union[
+                "BaseExpression",
+                MatchMetadata,
+                MatchIfTrue[Callable[[cst.BaseExpression], bool]],
+            ]
+        ],
+        MatchIfTrue[Callable[[cst.BaseExpression], bool]],
+    ] = DoNotCare()
+    lpar: Union[
+        Sequence[
+            Union[
+                "LeftParen",
+                DoNotCareSentinel,
+                MatchMetadata,
+                OneOf[
+                    Union[
+                        "LeftParen",
+                        MatchMetadata,
+                        MatchIfTrue[Callable[[cst.LeftParen], bool]],
+                    ]
+                ],
+                AllOf[
+                    Union[
+                        "LeftParen",
+                        MatchMetadata,
+                        MatchIfTrue[Callable[[cst.LeftParen], bool]],
+                    ]
+                ],
+                MatchIfTrue[Callable[[cst.LeftParen], bool]],
+                AtLeastN[
+                    Union[
+                        "LeftParen",
+                        DoNotCareSentinel,
+                        MatchMetadata,
+                        OneOf[
+                            Union[
+                                "LeftParen",
+                                MatchMetadata,
+                                MatchIfTrue[Callable[[cst.LeftParen], bool]],
+                            ]
+                        ],
+                        AllOf[
+                            Union[
+                                "LeftParen",
+                                MatchMetadata,
+                                MatchIfTrue[Callable[[cst.LeftParen], bool]],
+                            ]
+                        ],
+                        MatchIfTrue[Callable[[cst.LeftParen], bool]],
+                    ]
+                ],
+                AtMostN[
+                    Union[
+                        "LeftParen",
+                        DoNotCareSentinel,
+                        MatchMetadata,
+                        OneOf[
+                            Union[
+                                "LeftParen",
+                                MatchMetadata,
+                                MatchIfTrue[Callable[[cst.LeftParen], bool]],
+                            ]
+                        ],
+                        AllOf[
+                            Union[
+                                "LeftParen",
+                                MatchMetadata,
+                                MatchIfTrue[Callable[[cst.LeftParen], bool]],
+                            ]
+                        ],
+                        MatchIfTrue[Callable[[cst.LeftParen], bool]],
+                    ]
+                ],
+            ]
+        ],
+        DoNotCareSentinel,
+        OneOf[
+            Union[
+                Sequence[
+                    Union[
+                        "LeftParen",
+                        MatchMetadata,
+                        OneOf[
+                            Union[
+                                "LeftParen",
+                                MatchMetadata,
+                                MatchIfTrue[Callable[[cst.LeftParen], bool]],
+                            ]
+                        ],
+                        AllOf[
+                            Union[
+                                "LeftParen",
+                                MatchMetadata,
+                                MatchIfTrue[Callable[[cst.LeftParen], bool]],
+                            ]
+                        ],
+                        MatchIfTrue[Callable[[cst.LeftParen], bool]],
+                        AtLeastN[
+                            Union[
+                                "LeftParen",
+                                MatchMetadata,
+                                OneOf[
+                                    Union[
+                                        "LeftParen",
+                                        MatchMetadata,
+                                        MatchIfTrue[Callable[[cst.LeftParen], bool]],
+                                    ]
+                                ],
+                                AllOf[
+                                    Union[
+                                        "LeftParen",
+                                        MatchMetadata,
+                                        MatchIfTrue[Callable[[cst.LeftParen], bool]],
+                                    ]
+                                ],
+                                MatchIfTrue[Callable[[cst.LeftParen], bool]],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                "LeftParen",
+                                MatchMetadata,
+                                OneOf[
+                                    Union[
+                                        "LeftParen",
+                                        MatchMetadata,
+                                        MatchIfTrue[Callable[[cst.LeftParen], bool]],
+                                    ]
+                                ],
+                                AllOf[
+                                    Union[
+                                        "LeftParen",
+                                        MatchMetadata,
+                                        MatchIfTrue[Callable[[cst.LeftParen], bool]],
+                                    ]
+                                ],
+                                MatchIfTrue[Callable[[cst.LeftParen], bool]],
+                            ]
+                        ],
+                    ]
+                ],
+                MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
+            ]
+        ],
+        AllOf[
+            Union[
+                Sequence[
+                    Union[
+                        "LeftParen",
+                        MatchMetadata,
+                        OneOf[
+                            Union[
+                                "LeftParen",
+                                MatchMetadata,
+                                MatchIfTrue[Callable[[cst.LeftParen], bool]],
+                            ]
+                        ],
+                        AllOf[
+                            Union[
+                                "LeftParen",
+                                MatchMetadata,
+                                MatchIfTrue[Callable[[cst.LeftParen], bool]],
+                            ]
+                        ],
+                        MatchIfTrue[Callable[[cst.LeftParen], bool]],
+                        AtLeastN[
+                            Union[
+                                "LeftParen",
+                                MatchMetadata,
+                                OneOf[
+                                    Union[
+                                        "LeftParen",
+                                        MatchMetadata,
+                                        MatchIfTrue[Callable[[cst.LeftParen], bool]],
+                                    ]
+                                ],
+                                AllOf[
+                                    Union[
+                                        "LeftParen",
+                                        MatchMetadata,
+                                        MatchIfTrue[Callable[[cst.LeftParen], bool]],
+                                    ]
+                                ],
+                                MatchIfTrue[Callable[[cst.LeftParen], bool]],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                "LeftParen",
+                                MatchMetadata,
+                                OneOf[
+                                    Union[
+                                        "LeftParen",
+                                        MatchMetadata,
+                                        MatchIfTrue[Callable[[cst.LeftParen], bool]],
+                                    ]
+                                ],
+                                AllOf[
+                                    Union[
+                                        "LeftParen",
+                                        MatchMetadata,
+                                        MatchIfTrue[Callable[[cst.LeftParen], bool]],
+                                    ]
+                                ],
+                                MatchIfTrue[Callable[[cst.LeftParen], bool]],
+                            ]
+                        ],
+                    ]
+                ],
+                MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
+            ]
+        ],
+        MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
+    ] = DoNotCare()
+    rpar: Union[
+        Sequence[
+            Union[
+                "RightParen",
+                DoNotCareSentinel,
+                MatchMetadata,
+                OneOf[
+                    Union[
+                        "RightParen",
+                        MatchMetadata,
+                        MatchIfTrue[Callable[[cst.RightParen], bool]],
+                    ]
+                ],
+                AllOf[
+                    Union[
+                        "RightParen",
+                        MatchMetadata,
+                        MatchIfTrue[Callable[[cst.RightParen], bool]],
+                    ]
+                ],
+                MatchIfTrue[Callable[[cst.RightParen], bool]],
+                AtLeastN[
+                    Union[
+                        "RightParen",
+                        DoNotCareSentinel,
+                        MatchMetadata,
+                        OneOf[
+                            Union[
+                                "RightParen",
+                                MatchMetadata,
+                                MatchIfTrue[Callable[[cst.RightParen], bool]],
+                            ]
+                        ],
+                        AllOf[
+                            Union[
+                                "RightParen",
+                                MatchMetadata,
+                                MatchIfTrue[Callable[[cst.RightParen], bool]],
+                            ]
+                        ],
+                        MatchIfTrue[Callable[[cst.RightParen], bool]],
+                    ]
+                ],
+                AtMostN[
+                    Union[
+                        "RightParen",
+                        DoNotCareSentinel,
+                        MatchMetadata,
+                        OneOf[
+                            Union[
+                                "RightParen",
+                                MatchMetadata,
+                                MatchIfTrue[Callable[[cst.RightParen], bool]],
+                            ]
+                        ],
+                        AllOf[
+                            Union[
+                                "RightParen",
+                                MatchMetadata,
+                                MatchIfTrue[Callable[[cst.RightParen], bool]],
+                            ]
+                        ],
+                        MatchIfTrue[Callable[[cst.RightParen], bool]],
+                    ]
+                ],
+            ]
+        ],
+        DoNotCareSentinel,
+        OneOf[
+            Union[
+                Sequence[
+                    Union[
+                        "RightParen",
+                        MatchMetadata,
+                        OneOf[
+                            Union[
+                                "RightParen",
+                                MatchMetadata,
+                                MatchIfTrue[Callable[[cst.RightParen], bool]],
+                            ]
+                        ],
+                        AllOf[
+                            Union[
+                                "RightParen",
+                                MatchMetadata,
+                                MatchIfTrue[Callable[[cst.RightParen], bool]],
+                            ]
+                        ],
+                        MatchIfTrue[Callable[[cst.RightParen], bool]],
+                        AtLeastN[
+                            Union[
+                                "RightParen",
+                                MatchMetadata,
+                                OneOf[
+                                    Union[
+                                        "RightParen",
+                                        MatchMetadata,
+                                        MatchIfTrue[Callable[[cst.RightParen], bool]],
+                                    ]
+                                ],
+                                AllOf[
+                                    Union[
+                                        "RightParen",
+                                        MatchMetadata,
+                                        MatchIfTrue[Callable[[cst.RightParen], bool]],
+                                    ]
+                                ],
+                                MatchIfTrue[Callable[[cst.RightParen], bool]],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                "RightParen",
+                                MatchMetadata,
+                                OneOf[
+                                    Union[
+                                        "RightParen",
+                                        MatchMetadata,
+                                        MatchIfTrue[Callable[[cst.RightParen], bool]],
+                                    ]
+                                ],
+                                AllOf[
+                                    Union[
+                                        "RightParen",
+                                        MatchMetadata,
+                                        MatchIfTrue[Callable[[cst.RightParen], bool]],
+                                    ]
+                                ],
+                                MatchIfTrue[Callable[[cst.RightParen], bool]],
+                            ]
+                        ],
+                    ]
+                ],
+                MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
+            ]
+        ],
+        AllOf[
+            Union[
+                Sequence[
+                    Union[
+                        "RightParen",
+                        MatchMetadata,
+                        OneOf[
+                            Union[
+                                "RightParen",
+                                MatchMetadata,
+                                MatchIfTrue[Callable[[cst.RightParen], bool]],
+                            ]
+                        ],
+                        AllOf[
+                            Union[
+                                "RightParen",
+                                MatchMetadata,
+                                MatchIfTrue[Callable[[cst.RightParen], bool]],
+                            ]
+                        ],
+                        MatchIfTrue[Callable[[cst.RightParen], bool]],
+                        AtLeastN[
+                            Union[
+                                "RightParen",
+                                MatchMetadata,
+                                OneOf[
+                                    Union[
+                                        "RightParen",
+                                        MatchMetadata,
+                                        MatchIfTrue[Callable[[cst.RightParen], bool]],
+                                    ]
+                                ],
+                                AllOf[
+                                    Union[
+                                        "RightParen",
+                                        MatchMetadata,
+                                        MatchIfTrue[Callable[[cst.RightParen], bool]],
+                                    ]
+                                ],
+                                MatchIfTrue[Callable[[cst.RightParen], bool]],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                "RightParen",
+                                MatchMetadata,
+                                OneOf[
+                                    Union[
+                                        "RightParen",
+                                        MatchMetadata,
+                                        MatchIfTrue[Callable[[cst.RightParen], bool]],
+                                    ]
+                                ],
+                                AllOf[
+                                    Union[
+                                        "RightParen",
+                                        MatchMetadata,
+                                        MatchIfTrue[Callable[[cst.RightParen], bool]],
+                                    ]
+                                ],
+                                MatchIfTrue[Callable[[cst.RightParen], bool]],
+                            ]
+                        ],
+                    ]
+                ],
+                MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
+            ]
+        ],
+        MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
+    ] = DoNotCare()
+    whitespace_before_walrus: Union[
+        "BaseParenthesizableWhitespace",
+        DoNotCareSentinel,
+        MatchMetadata,
+        OneOf[
+            Union[
+                "BaseParenthesizableWhitespace",
+                MatchMetadata,
+                MatchIfTrue[Callable[[cst.BaseParenthesizableWhitespace], bool]],
+            ]
+        ],
+        AllOf[
+            Union[
+                "BaseParenthesizableWhitespace",
+                MatchMetadata,
+                MatchIfTrue[Callable[[cst.BaseParenthesizableWhitespace], bool]],
+            ]
+        ],
+        MatchIfTrue[Callable[[cst.BaseParenthesizableWhitespace], bool]],
+    ] = DoNotCare()
+    whitespace_after_walrus: Union[
+        "BaseParenthesizableWhitespace",
+        DoNotCareSentinel,
+        MatchMetadata,
+        OneOf[
+            Union[
+                "BaseParenthesizableWhitespace",
+                MatchMetadata,
+                MatchIfTrue[Callable[[cst.BaseParenthesizableWhitespace], bool]],
+            ]
+        ],
+        AllOf[
+            Union[
+                "BaseParenthesizableWhitespace",
+                MatchMetadata,
+                MatchIfTrue[Callable[[cst.BaseParenthesizableWhitespace], bool]],
+            ]
+        ],
+        MatchIfTrue[Callable[[cst.BaseParenthesizableWhitespace], bool]],
+    ] = DoNotCare()
+    metadata: Union[DoNotCareSentinel, MetadataPredicate] = DoNotCare()
+
+
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class Newline(BaseMatcherNode):
     value: Union[
         str,
@@ -29623,6 +30120,7 @@ __all__ = [
     "MultiplyAssign",
     "Name",
     "NameItem",
+    "NamedExpr",
     "Newline",
     "Nonlocal",
     "Not",

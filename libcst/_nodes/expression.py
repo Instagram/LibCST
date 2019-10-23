@@ -3472,3 +3472,69 @@ class DictComp(BaseDict, BaseComp):
             self.whitespace_after_colon._codegen(state)
             self.value._codegen(state)
             self.for_in._codegen(state)
+
+
+@add_slots
+@dataclass(frozen=True)
+class NamedExpr(BaseExpression):
+    """
+    An expression that is also an assignment, such as ``x := y + z``. Affectionately
+    known as the walrus operator, this expression allows you to make an assignment
+    inside an expression. This greatly simplifies loops::
+
+        while line := read_some_line_or_none():
+            do_thing_with_line(line)
+    """
+
+    #: The target that is being assigned to.
+    target: BaseExpression
+
+    #: The expression being assigned to the target.
+    value: BaseExpression
+
+    #: Sequence of parenthesis for precedence dictation.
+    lpar: Sequence[LeftParen] = ()
+    #: Sequence of parenthesis for precedence dictation.
+    rpar: Sequence[RightParen] = ()
+
+    #: Whitespace after the target, but before the walrus operator.
+    whitespace_before_walrus: BaseParenthesizableWhitespace = SimpleWhitespace.field(
+        " "
+    )
+    #: Whitespace after the walrus operator, but before the value.
+    whitespace_after_walrus: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
+
+    def _validate(self) -> None:
+        super(NamedExpr, self)._validate()
+        if (
+            self.whitespace_before_walrus.empty
+            and not self.target._safe_to_use_with_word_operator(ExpressionPosition.LEFT)
+        ):
+            raise CSTValidationError("Must have at least one space after target.")
+        if (
+            self.whitespace_after_walrus.empty
+            and not self.value._safe_to_use_with_word_operator(ExpressionPosition.RIGHT)
+        ):
+            raise CSTValidationError("Must have at least one space before value.")
+
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "NamedExpr":
+        return NamedExpr(
+            lpar=visit_sequence(self, "lpar", self.lpar, visitor),
+            target=visit_required(self, "target", self.target, visitor),
+            whitespace_before_walrus=visit_required(
+                self, "whitespace_before_walrus", self.whitespace_before_walrus, visitor
+            ),
+            whitespace_after_walrus=visit_required(
+                self, "whitespace_after_walrus", self.whitespace_after_walrus, visitor
+            ),
+            value=visit_required(self, "value", self.value, visitor),
+            rpar=visit_sequence(self, "rpar", self.rpar, visitor),
+        )
+
+    def _codegen_impl(self, state: CodegenState) -> None:
+        with self._parenthesize(state):
+            self.target._codegen(state)
+            self.whitespace_before_walrus._codegen(state)
+            state.add_token(":=")
+            self.whitespace_after_walrus._codegen(state)
+            self.value._codegen(state)
