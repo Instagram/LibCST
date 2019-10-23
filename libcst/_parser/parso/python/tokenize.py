@@ -150,7 +150,7 @@ fstring_format_spec_multi_line = _compile(r"[^{}]+")
 
 
 def _create_token_collection(  # noqa: C901
-    version_info: PythonVersionInfo
+    version_info: PythonVersionInfo,
 ) -> TokenCollection:
     # Note: we use unicode matching for names ("\w") but ascii matching for
     # number literals.
@@ -547,7 +547,11 @@ def _tokenize_lines_py36_or_below(  # noqa: C901
                         break
 
                 rest = line[pos:]
-                fstring_end_token, additional_prefix, quote_length = _close_fstring_if_necessary(
+                (
+                    fstring_end_token,
+                    additional_prefix,
+                    quote_length,
+                ) = _close_fstring_if_necessary(
                     fstring_stack, rest, (lnum, pos), additional_prefix
                 )
                 pos += quote_length
@@ -897,7 +901,11 @@ def _tokenize_lines_py37_or_above(  # noqa: C901
                         break
 
                 rest = line[pos:]
-                fstring_end_token, additional_prefix, quote_length = _close_fstring_if_necessary(
+                (
+                    fstring_end_token,
+                    additional_prefix,
+                    quote_length,
+                ) = _close_fstring_if_necessary(
                     fstring_stack, rest, (lnum, pos), additional_prefix
                 )
                 pos += quote_length

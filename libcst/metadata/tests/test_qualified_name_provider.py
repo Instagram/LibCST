@@ -20,7 +20,7 @@ from libcst.testing.utils import UnitTest
 
 
 def get_qualified_name_metadata_provider(
-    module_str: str
+    module_str: str,
 ) -> Tuple[cst.Module, Mapping[cst.CSTNode, Collection[QualifiedName]]]:
     wrapper = MetadataWrapper(cst.parse_module(dedent(module_str)))
     return wrapper.module, wrapper.resolve(QualifiedNameProvider)

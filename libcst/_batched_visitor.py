@@ -86,7 +86,7 @@ def visit_batched(
 
 
 def _get_visitor_methods(
-    batchable_visitors: Iterable[BatchableCSTVisitor]
+    batchable_visitors: Iterable[BatchableCSTVisitor],
 ) -> _VisitorMethodCollection:
     """
     Gather all ``visit_<Type[CSTNode]>`` and ``leave_<Type[CSTNode]>`` methods

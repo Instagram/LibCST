@@ -19,7 +19,7 @@ CONSTRUCTED_LEAVE_MATCHER_ATTR: str = "_leave_matcher"
 
 
 def call_if_inside(
-    matcher: BaseMatcherNode
+    matcher: BaseMatcherNode,
 ) -> Callable[[_CSTVisitFuncT], _CSTVisitFuncT]:
     """
     A decorator for visit and leave methods inside a :class:`MatcherDecoratableTransformer`
@@ -44,7 +44,7 @@ def call_if_inside(
 
 
 def call_if_not_inside(
-    matcher: BaseMatcherNode
+    matcher: BaseMatcherNode,
 ) -> Callable[[_CSTVisitFuncT], _CSTVisitFuncT]:
     """
     A decorator for visit and leave methods inside a :class:`MatcherDecoratableTransformer`

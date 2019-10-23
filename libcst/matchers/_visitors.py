@@ -73,7 +73,7 @@ def _get_possible_annotated_classes(annotation: object) -> List[Type[object]]:
 
 
 def _get_valid_leave_annotations_for_classes(
-    classes: Sequence[Type[cst.CSTNode]]
+    classes: Sequence[Type[cst.CSTNode]],
 ) -> Set[Type[object]]:
     retval: Set[Type[object]] = set()
 
@@ -267,7 +267,7 @@ def _assert_not_concrete(
 
 
 def _gather_constructed_visit_funcs(
-    obj: object
+    obj: object,
 ) -> Dict[BaseMatcherNode, Sequence[Callable[[cst.CSTNode], None]]]:
     constructed_visitors: Dict[
         BaseMatcherNode, Sequence[Callable[[cst.CSTNode], None]]
@@ -302,7 +302,7 @@ def _gather_constructed_visit_funcs(
 # is because the leave_* methods have a different signature depending on whether they
 # are in a MatcherDecoratableTransformer or a MatcherDecoratableVisitor.
 def _gather_constructed_leave_funcs(
-    obj: object
+    obj: object,
 ) -> Dict[BaseMatcherNode, Sequence[Callable[..., Any]]]:
     constructed_visitors: Dict[
         BaseMatcherNode, Sequence[Callable[[cst.CSTNode], None]]

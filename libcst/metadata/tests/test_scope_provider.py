@@ -30,7 +30,7 @@ class DependentVisitor(cst.CSTVisitor):
 
 
 def get_scope_metadata_provider(
-    module_str: str
+    module_str: str,
 ) -> Tuple[cst.Module, Mapping[cst.CSTNode, Scope]]:
     wrapper = MetadataWrapper(cst.parse_module(dedent(module_str)))
     return (

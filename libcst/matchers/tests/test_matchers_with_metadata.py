@@ -192,8 +192,10 @@ class MatchersMetadataTest(UnitTest):
         # Verify that we can not things
         matcher = m.BinaryOperation(
             left=(
-                ~m.MatchMetadata(
-                    meta.ExpressionContextProvider, meta.ExpressionContext.STORE
+                ~(
+                    m.MatchMetadata(
+                        meta.ExpressionContextProvider, meta.ExpressionContext.STORE
+                    )
                 )
             )
         )
@@ -317,8 +319,10 @@ class MatchersMetadataTest(UnitTest):
         # Verify that we can not things
         matcher = m.BinaryOperation(
             left=m.Name(
-                metadata=~m.MatchMetadata(
-                    meta.ExpressionContextProvider, meta.ExpressionContext.STORE
+                metadata=~(
+                    m.MatchMetadata(
+                        meta.ExpressionContextProvider, meta.ExpressionContext.STORE
+                    )
                 )
             )
         )

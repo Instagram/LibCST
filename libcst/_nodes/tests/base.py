@@ -149,7 +149,7 @@ class CSTNodeTest(UnitTest):
         codegen_stack: List[cst.CSTNode] = []
 
         def _get_codegen_override(
-            target: _CSTCodegenPatchTarget
+            target: _CSTCodegenPatchTarget,
         ) -> Callable[..., None]:
             def _codegen_impl(self: CSTNodeT, *args: Any, **kwargs: Any) -> None:
                 should_pop = False

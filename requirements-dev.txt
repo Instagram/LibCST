@@ -1,4 +1,4 @@
-black==19.3b0
+git+https://github.com/psf/black.git@03766f5
 codecov==2.0.15
 coverage==4.5.4
 flake8==3.7.8

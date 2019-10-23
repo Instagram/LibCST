@@ -105,7 +105,7 @@ class MatcherClassToLibCSTClass(cst.CSTTransformer):
 
 
 def _convert_match_nodes_to_cst_nodes(
-    matchtype: cst.BaseExpression
+    matchtype: cst.BaseExpression,
 ) -> cst.BaseExpression:
     """
     Given a BaseExpression in a type, convert this to a new BaseExpression that refers

@@ -128,7 +128,7 @@ class ParserSyntaxError(Exception):
         self.raw_column = raw_column
 
     def __reduce__(
-        self
+        self,
     ) -> Tuple[Callable[..., "ParserSyntaxError"], Tuple[object, ...]]:
         return (
             _parser_syntax_error_unpickle,
