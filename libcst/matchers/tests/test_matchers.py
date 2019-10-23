@@ -1241,13 +1241,13 @@ class MatchersMatcherTest(UnitTest):
         self.assertTrue(
             matches(
                 cst.Call(func=cst.Name("foo"), args=(cst.Arg(cst.Name("True")),)),
-                m.Call(args=(m.Arg(value=~m.Name("None")),)),
+                m.Call(args=(m.Arg(value=~(m.Name("None"))),)),
             )
         )
         self.assertTrue(
             matches(
                 cst.Call(func=cst.Name("foo"), args=(cst.Arg(cst.Integer("1")),)),
-                m.Call(args=(~m.Arg(m.Name("None")),)),
+                m.Call(args=(~(m.Arg(m.Name("None"))),)),
             )
         )
         # Match any call that takes an argument which isn't True or False.
@@ -1260,14 +1260,14 @@ class MatchersMatcherTest(UnitTest):
         self.assertTrue(
             matches(
                 cst.Call(func=cst.Name("foo"), args=(cst.Arg(cst.Name("None")),)),
-                m.Call(args=(m.Arg(value=(~m.Name("True")) & (~m.Name("False"))),)),
+                m.Call(args=(m.Arg(value=(~(m.Name("True"))) & (~(m.Name("False")))),)),
             )
         )
         # Roundabout way to verify that or operator works with inverted nodes.
         self.assertTrue(
             matches(
                 cst.Call(func=cst.Name("foo"), args=(cst.Arg(cst.Name("False")),)),
-                m.Call(args=(m.Arg(value=(~m.Name("True")) | (~m.Name("True"))),)),
+                m.Call(args=(m.Arg(value=(~(m.Name("True"))) | (~(m.Name("True")))),)),
             )
         )
         # Roundabout way to verify that inverse operator works properly on AllOf.
@@ -1279,7 +1279,7 @@ class MatchersMatcherTest(UnitTest):
         )
         # Match any name node that doesn't match the regex for True
         self.assertTrue(
-            matches(cst.Name("False"), m.Name(value=~m.MatchRegex(r"True")))
+            matches(cst.Name("False"), m.Name(value=~(m.MatchRegex(r"True"))))
         )
 
     def test_does_not_match_false(self) -> None:
@@ -1320,7 +1320,7 @@ class MatchersMatcherTest(UnitTest):
         self.assertFalse(
             matches(
                 cst.Call(func=cst.Name("foo"), args=(cst.Arg(cst.Name("True")),)),
-                m.Call(args=(m.Arg(value=(~m.Name("True")) & (~m.Name("False"))),)),
+                m.Call(args=(m.Arg(value=(~(m.Name("True"))) & (~(m.Name("False")))),)),
             )
         )
         # Match any name node that doesn't match the regex for True
@@ -1335,13 +1335,13 @@ class MatchersMatcherTest(UnitTest):
         self.assertFalse(
             matches(
                 cst.Call(func=cst.Name("foo"), args=(cst.Arg(cst.Name("None")),)),
-                m.Call(args=(m.Arg(value=~m.Name("None")),)),
+                m.Call(args=(m.Arg(value=~(m.Name("None"))),)),
             )
         )
         self.assertFalse(
             matches(
                 cst.Call(func=cst.Name("foo"), args=(cst.Arg(cst.Integer("1")),)),
-                m.Call(args=((~m.Arg(m.Integer("1"))),)),
+                m.Call(args=((~(m.Arg(m.Integer("1")))),)),
             )
         )
         # Match any call that takes an argument which isn't True or False.
@@ -1362,12 +1362,12 @@ class MatchersMatcherTest(UnitTest):
         self.assertFalse(
             matches(
                 cst.Call(func=cst.Name("foo"), args=(cst.Arg(cst.Name("True")),)),
-                m.Call(args=(m.Arg(value=(~m.Name("True")) | (~m.Name("True"))),)),
+                m.Call(args=(m.Arg(value=(~(m.Name("True"))) | (~(m.Name("True")))),)),
             )
         )
         # Match any name node that doesn't match the regex for True
         self.assertFalse(
-            matches(cst.Name("True"), m.Name(value=~m.MatchRegex(r"True")))
+            matches(cst.Name("True"), m.Name(value=~(m.MatchRegex(r"True"))))
         )
 
     def test_inverse_inverse_is_identity(self) -> None:

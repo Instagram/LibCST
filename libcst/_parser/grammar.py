@@ -363,7 +363,7 @@ def get_nonterminal_productions(version: PythonVersionInfo) -> Iterator[Producti
 
 @lru_cache()
 def get_nonterminal_conversions(
-    version: PythonVersionInfo
+    version: PythonVersionInfo,
 ) -> Mapping[str, NonterminalConversion]:
     """
     Returns a mapping from nonterminal production name to the conversion function that

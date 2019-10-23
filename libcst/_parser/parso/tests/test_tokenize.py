@@ -325,7 +325,7 @@ class ParsoTokenizerTest(UnitTest):
 
     def test_backslash(self):
         code = "\\\n# 1 \n"
-        endmarker, = _get_token_list(code)
+        (endmarker,) = _get_token_list(code)
         assert endmarker.prefix == code
 
     @data_provider(

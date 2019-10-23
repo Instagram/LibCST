@@ -263,7 +263,9 @@ def convert_expr_stmt(config: ParserConfig, children: Sequence[Any]) -> Any:
 
 
 @with_production("annassign", "':' test ['=' test]", version=">=3.6,<3.8")
-@with_production("annassign", "':' test ['=' (yield_expr|testlist_star_expr)]", version=">=3.8")
+@with_production(
+    "annassign", "':' test ['=' (yield_expr|testlist_star_expr)]", version=">=3.8"
+)
 def convert_annassign(config: ParserConfig, children: Sequence[Any]) -> Any:
     if len(children) == 2:
         # Variable annotation only
