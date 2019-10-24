@@ -22,6 +22,7 @@
 
  - Deprecated `ExtSlice` in favor of `SubscriptElement`.
  - Deprecated parsing `Subscript` slices directly into `Index` or `Slice` nodes.
+ - Deprecated `BasicPositionProvider` and `SyntacticPositionProvider`. Replaced with new name `WhitespaceInclusivePositionProvider` and `PositionProvider`.
 
 # 0.2.1 - 2019-10-14
 
