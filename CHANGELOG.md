@@ -4,7 +4,7 @@
 
  - Added `deep_with_changes` helper method on CSTNode.
  - Added metadata support to matchers.
- - Added ability to get the defining node from a `FunctionScope` or `ClassScope`.
+ - Added ability to get the defining node from a `LocalScope` (`FunctionScope`, `ClassScope` or `ComprehensionScope`).
 
 ## Updated
 
