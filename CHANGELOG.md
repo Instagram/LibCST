@@ -1,3 +1,28 @@
+# 0.2.2 - 2019-10-24
+
+## Added
+
+ - Added `deep_with_changes` helper method on CSTNode.
+ - Added metadata support to matchers.
+ - Added ability to get the defining node from a `FunctionScope` or `ClassScope`.
+
+## Updated
+
+ - Many changes to LibCST documentation including a new best practices page and updated scope tutorial.
+ - Exported `CodePosition` and `CodeRange` from `libcst.metadata` instead of `libcst`.
+
+## Fixed
+
+ - Disallowed decorating a concrete visit or leave method with `@visit` or `@leave` decorators.
+ - Renamed position provider classes to be more self-explanatory.
+ - Fixed trailing newline detection when the last character in a file was from a continuation.
+ - Fixed `deep_clone` potentially blowing the stack with large LibCST trees.
+
+## Deprecated
+
+ - Deprecated `ExtSlice` in favor of `SubscriptElement`.
+ - Deprecated parsing `Subscript` slices directly into `Index` or `Slice` nodes.
+
 # 0.2.1 - 2019-10-14
 
 ## Added
