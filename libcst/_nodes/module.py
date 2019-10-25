@@ -102,10 +102,7 @@ class Module(CSTNode):
                 # to preserve the trailing newline.
                 state.add_token(state.default_newline)
         else:  # has_trailing_newline is false
-            if len(state.tokens) > 0:
-                # EmptyLine and all statements generate newlines, so we can be sure that
-                # the last token (if we're not an empty file) is a newline.
-                state.tokens.pop()
+            state.pop_trailing_newline()
 
     @property
     def code(self) -> str:

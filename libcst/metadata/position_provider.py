@@ -24,7 +24,16 @@ NEWLINE_RE: Pattern[str] = re.compile(r"\r\n?|\n")
 @add_slots
 @dataclass(frozen=False)
 class WhitespaceInclusivePositionProvidingCodegenState(CodegenState):
+    # These are derived from a Module
+    default_indent: str
+    default_newline: str
     provider: BaseMetadataProvider[CodeRange]
+
+    indent_tokens: List[str] = field(default_factory=list)
+    tokens: List[str] = field(default_factory=list)
+
+    line: int = 1  # one-indexed
+    column: int = 0  # zero-indexed
     _stack: List[CodePosition] = field(init=False, default_factory=list)
 
     def add_indent_tokens(self) -> None:

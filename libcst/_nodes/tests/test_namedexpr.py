@@ -67,10 +67,10 @@ class NamedExprTest(CSTNodeTest):
             {
                 "node": cst.While(
                     test=cst.NamedExpr(
-                        target=cst.Name(value="x",),
-                        value=cst.Call(func=cst.Name(value="some_input",),),
+                        target=cst.Name(value="x"),
+                        value=cst.Call(func=cst.Name(value="some_input")),
                     ),
-                    body=cst.SimpleStatementSuite(body=[cst.Pass(),],),
+                    body=cst.SimpleStatementSuite(body=[cst.Pass()]),
                 ),
                 "code": "while x := some_input(): pass\n",
                 "parser": _parse_statement_force_38,
@@ -79,10 +79,10 @@ class NamedExprTest(CSTNodeTest):
             {
                 "node": cst.If(
                     test=cst.NamedExpr(
-                        target=cst.Name(value="x",),
-                        value=cst.Call(func=cst.Name(value="some_input",),),
+                        target=cst.Name(value="x"),
+                        value=cst.Call(func=cst.Name(value="some_input")),
                     ),
-                    body=cst.SimpleStatementSuite(body=[cst.Pass(),],),
+                    body=cst.SimpleStatementSuite(body=[cst.Pass()]),
                 ),
                 "code": "if x := some_input(): pass\n",
                 "parser": _parse_statement_force_38,
@@ -98,7 +98,7 @@ class NamedExprTest(CSTNodeTest):
             {
                 "get_node": (
                     lambda: cst.NamedExpr(
-                        cst.Name("foo"), cst.Name("bar"), lpar=(cst.LeftParen(),),
+                        cst.Name("foo"), cst.Name("bar"), lpar=(cst.LeftParen(),)
                     )
                 ),
                 "expected_re": "left paren without right paren",
@@ -106,7 +106,7 @@ class NamedExprTest(CSTNodeTest):
             {
                 "get_node": (
                     lambda: cst.NamedExpr(
-                        cst.Name("foo"), cst.Name("bar"), rpar=(cst.RightParen(),),
+                        cst.Name("foo"), cst.Name("bar"), rpar=(cst.RightParen(),)
                     )
                 ),
                 "expected_re": "right paren without left paren",

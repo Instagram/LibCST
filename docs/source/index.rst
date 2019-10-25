@@ -39,6 +39,7 @@ LibCST
    visitors
    metadata
    matchers
+   experimental
 
 
 Indices and tables
