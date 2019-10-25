@@ -23,6 +23,10 @@ from libcst.metadata.position_provider import (
     SyntacticPositionProvider,
     WhitespaceInclusivePositionProvider,
 )
+from libcst.metadata.reentrant_codegen import (
+    CodegenPartial,
+    ExperimentalReentrantCodegenProvider,
+)
 from libcst.metadata.scope_provider import (
     Access,
     Accesses,
@@ -73,4 +77,7 @@ __all__ = [
     "ProviderT",
     "Assignments",
     "Accesses",
+    # Experimental APIs:
+    "ExperimentalReentrantCodegenProvider",
+    "CodegenPartial",
 ]

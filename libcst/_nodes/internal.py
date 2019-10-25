@@ -32,9 +32,6 @@ class CodegenState:
     indent_tokens: List[str] = field(default_factory=list)
     tokens: List[str] = field(default_factory=list)
 
-    line: int = 1  # one-indexed
-    column: int = 0  # zero-indexed
-
     def increase_indent(self, value: str) -> None:
         self.indent_tokens.append(value)
 
@@ -52,6 +49,16 @@ class CodegenState:
 
     def after_codegen(self, node: "CSTNode") -> None:
         pass
+
+    def pop_trailing_newline(self) -> None:
+        """
+        Called by :meth:`libcst.Module._codegen_impl` at the end of the file to remove
+        the last token (a trailing newline), assuming the file isn't empty.
+        """
+        if len(self.tokens) > 0:
+            # EmptyLine and all statements generate newlines, so we can be sure that the
+            # last token (if we're not an empty file) is a newline.
+            self.tokens.pop()
 
     @contextmanager
     def record_syntactic_position(

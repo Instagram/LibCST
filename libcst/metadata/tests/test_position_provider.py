@@ -10,7 +10,6 @@ from typing import Tuple
 import libcst as cst
 from libcst import parse_module
 from libcst._batched_visitor import BatchableCSTVisitor
-from libcst._nodes.internal import CodegenState
 from libcst._visitors import CSTTransformer
 from libcst.metadata import (
     CodeRange,
@@ -25,7 +24,9 @@ from libcst.metadata.position_provider import (
 from libcst.testing.utils import UnitTest
 
 
-def position(state: CodegenState) -> Tuple[int, int]:
+def position(
+    state: WhitespaceInclusivePositionProvidingCodegenState,
+) -> Tuple[int, int]:
     return state.line, state.column
 
 
