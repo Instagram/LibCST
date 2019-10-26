@@ -120,12 +120,12 @@ class PositionProvidingCodegenStateTest(UnitTest):
         state = WhitespaceInclusivePositionProvidingCodegenState(
             " " * 4, "\n", WhitespaceInclusivePositionProvider()
         )
-        state.before_visit(node)
+        state.before_codegen(node)
         state.add_token(" ")
         with state.record_syntactic_position(node):
             state.add_token("pass")
         state.add_token(" ")
-        state.after_leave(node)
+        state.after_codegen(node)
 
         # check whitespace is correctly recorded
         self.assertEqual(state.provider._computed[node], CodeRange((1, 0), (1, 6)))
@@ -137,12 +137,12 @@ class PositionProvidingCodegenStateTest(UnitTest):
         # simulate codegen behavior for the dummy node
         # generates the code " pass "
         state = PositionProvidingCodegenState(" " * 4, "\n", PositionProvider())
-        state.before_visit(node)
+        state.before_codegen(node)
         state.add_token(" ")
         with state.record_syntactic_position(node):
             state.add_token("pass")
         state.add_token(" ")
-        state.after_leave(node)
+        state.after_codegen(node)
 
         # check syntactic position ignores whitespace
         self.assertEqual(state.provider._computed[node], CodeRange((1, 1), (1, 5)))

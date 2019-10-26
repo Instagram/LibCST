@@ -47,10 +47,10 @@ class CodegenState:
     def add_token(self, value: str) -> None:
         self.tokens.append(value)
 
-    def before_visit(self, node: "CSTNode") -> None:
+    def before_codegen(self, node: "CSTNode") -> None:
         pass
 
-    def after_leave(self, node: "CSTNode") -> None:
+    def after_codegen(self, node: "CSTNode") -> None:
         pass
 
     @contextmanager
