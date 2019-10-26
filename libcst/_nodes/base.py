@@ -296,9 +296,9 @@ class CSTNode(ABC):
         ...
 
     def _codegen(self, state: CodegenState, **kwargs: Any) -> None:
-        state.before_visit(self)
+        state.before_codegen(self)
         self._codegen_impl(state, **kwargs)
-        state.after_leave(self)
+        state.after_codegen(self)
 
     def with_changes(self: _CSTNodeSelfT, **changes: Any) -> _CSTNodeSelfT:
         """

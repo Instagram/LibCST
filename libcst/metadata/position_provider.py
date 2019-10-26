@@ -49,10 +49,10 @@ class WhitespaceInclusivePositionProvidingCodegenState(CodegenState):
             # newline resets column back to 0, but a trailing token may shift column
             self.column = len(segments[-1])
 
-    def before_visit(self, node: "CSTNode") -> None:
+    def before_codegen(self, node: "CSTNode") -> None:
         self._stack.append(CodePosition(self.line, self.column))
 
-    def after_leave(self, node: "CSTNode") -> None:
+    def after_codegen(self, node: "CSTNode") -> None:
         # we must unconditionally pop the stack, else we could end up in a broken state
         start_pos = self._stack.pop()
 
