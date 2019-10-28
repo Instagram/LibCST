@@ -56,7 +56,7 @@ class CodegenPartial:
         """
         return self.get_original_module_code().encode(self._prev_codegen_state.encoding)
 
-    def get_original_node_code(self) -> str:
+    def get_original_statement_code(self) -> str:
         """
         Equivalent to :meth:`libcst.Module.code_for_node` on the current statement,
         except that it uses the cached result from our previous code generation pass,
@@ -64,7 +64,7 @@ class CodegenPartial:
         """
         return self._prev_codegen_state.get_code()[self.start_offset : self.end_offset]
 
-    def get_modified_node_code(self, node: BaseStatement) -> str:
+    def get_modified_statement_code(self, node: BaseStatement) -> str:
         """
         Gets the new code for ``node`` as if it were in same location as the old
         statement being replaced. This means that it inherits details like the old
@@ -86,7 +86,7 @@ class CodegenPartial:
         the supplied replacement ``node`` in its place.
         """
         original = self.get_original_module_code()
-        patch = self.get_modified_node_code(node)
+        patch = self.get_modified_statement_code(node)
         return f"{original[:self.start_offset]}{patch}{original[self.end_offset:]}"
 
     def get_modified_module_bytes(self, node: BaseStatement) -> bytes:
