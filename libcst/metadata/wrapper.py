@@ -2,10 +2,11 @@
 #
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
-
+#
 # pyre-strict
+
+import textwrap
 from contextlib import ExitStack
-from dataclasses import dataclass, field
 from typing import (
     TYPE_CHECKING,
     Collection,
@@ -35,24 +36,58 @@ if TYPE_CHECKING:
 _T = TypeVar("_T")
 
 
-@dataclass(frozen=True)
 class MetadataWrapper:
     """
     A wrapper around a :class:`~libcst.Module` that stores associated metadata
-    for that module. When a :class:`MetadataWrapper` is constructed over
-    a module, the wrapper will store a deep copy of the original module. This
-    means ``MetadataWrapper(module).module == module`` is ``False``.
+    for that module.
+
+    When a :class:`MetadataWrapper` is constructed over a module, the wrapper will
+    store a deep copy of the original module. This means
+    ``MetadataWrapper(module).module == module`` is ``False``.
+
+    This copying operation ensures that a node will never appear twice (by identity) in
+    the same tree. This allows us to uniquely look up metadata for a node based on a
+    node's identity.
     """
 
-    module: "Module"
-    _metadata: MutableMapping["ProviderT", Mapping["CSTNode", object]] = field(
-        init=False, default_factory=dict
-    )
+    __slots__ = ["__module", "_metadata"]
 
-    def __post_init__(self) -> None:
+    __module: "Module"
+    _metadata: MutableMapping["ProviderT", Mapping["CSTNode", object]]
+
+    def __init__(self, module: "Module", unsafe_skip_copy: bool = False) -> None:
+        """
+        :param module: The module to wrap. This is deeply copied by default.
+        :param unsafe_skip_copy: When true, this skips the deep cloning of the module.
+            This can provide a small performance benefit, but you should only use this
+            if you know that there are no duplicate nodes in your tree (e.g. this
+            module came from the parser).
+        """
         # Ensure that module is safe to use by copying the module to remove
         # any duplicate nodes.
-        object.__setattr__(self, "module", self.module.deep_clone())
+        if not unsafe_skip_copy:
+            module = module.deep_clone()
+        self.__module = module
+        self._metadata = {}
+
+    def __repr__(self) -> str:
+        return f"MetadataWrapper(\n{textwrap.indent(repr(self.module), ' ' * 4)},\n)"
+
+    @property
+    def module(self) -> "Module":
+        """
+        The module that's wrapped by this MetadataWrapper. By default, this is a deep
+        copy of the passed in module.
+
+        ::
+
+            mw = ModuleWrapper(module)
+            # Because `mw.module is not module`, you probably want to do visit and do
+            # your analysis on `mw.module`, not `module`.
+            mw.module.visit(DoSomeAnalysisVisitor)
+        """
+        # use a property getter to enforce that this is a read-only variable
+        return self.__module
 
     def resolve(
         self, provider: Type["BaseMetadataProvider[_T]"]

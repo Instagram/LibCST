@@ -38,6 +38,7 @@ The wrapper provides a :func:`~libcst.metadata.MetadataWrapper.resolve` function
 :func:`~libcst.metadata.MetadataWrapper.resolve_many` function to generate metadata.
 
 .. autoclass:: libcst.metadata.MetadataWrapper
+   :special-members: __init__
 
 If you're working with visitors, which extend :class:`~libcst.MetadataDependent`, 
 metadata dependencies will be automatically computed when visited by a 
