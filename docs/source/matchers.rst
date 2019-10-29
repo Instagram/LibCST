@@ -156,6 +156,15 @@ but for those that do, sequence wildcard matchers offer a great degree of
 flexibility. Unlike all other matcher types, these allow you to match against
 more than one LibCST node, much like wildcards in regular expressions do.
 
+LibCST does not implicitly match on partial sequences for you. So, when matching
+against a sequence you will need to provide a complete pattern. This often means
+using helpers such as :func:`~libcst.matchers.ZeroOrMore` as the first and last
+element of your sequence. Think of it as the difference between Python's
+`re.match <https://docs.python.org/3/library/re.html#re.match>`_ and
+`re.fullmatch <https://docs.python.org/3/library/re.html#re.fullmatch>`_ functions.
+LibCST matchers behave like the latter so that it is possible to specify sequences
+which must start with, end with or be exactly equal to some pattern.
+
 .. autoclass:: libcst.matchers.AtLeastN
 .. autofunction:: libcst.matchers.ZeroOrMore
 .. autoclass:: libcst.matchers.AtMostN

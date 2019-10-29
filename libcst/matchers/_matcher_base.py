@@ -460,10 +460,12 @@ class _BaseWildcardNode:
 
 class AtLeastN(Generic[_MatcherT], _BaseWildcardNode):
     """
-    Matcher that matches ``n`` or more of a particular matcher in a sequence.
+    Matcher that matches ``n`` or more LibCST nodes in a row in a sequence.
     :class:`AtLeastN` defaults to matching against the :func:`DoNotCare` matcher,
-    so if you do not specify a concrete matcher as a child, :class:`AtLeastN`
-    will match only by count.
+    so if you do not specify a matcher as a child, :class:`AtLeastN`
+    will match only by count. If you do specify a matcher as a child,
+    :class:`AtLeastN` will instead make sure that each LibCST node matches the
+    matcher supplied.
 
     For example, this will match all function calls with at least 3 arguments::
 
@@ -475,7 +477,7 @@ class AtLeastN(Generic[_MatcherT], _BaseWildcardNode):
 
     You can combine sequence matchers with concrete matchers and special matchers
     and it will behave as you expect. For example, this will match all function
-    calls that have 2 or more integer arguments, followed by any arbitrary
+    calls that have 2 or more integer arguments in a row, followed by any arbitrary
     argument::
 
         m.Call(args=[m.AtLeastN(n=2, matcher=m.Arg(m.Integer())), m.DoNotCare()])
@@ -547,16 +549,24 @@ def ZeroOrMore(
 
         m.Call(args=[m.Arg(m.Integer()), m.ZeroOrMore()])
 
+    You will often want to use :class:`ZeroOrMore` on both sides of a concrete
+    matcher in order to match against sequences that contain a particular node
+    in an arbitrary location. For example, the following will match any function
+    call that takes in at least one string argument anywhere::
+
+        m.Call(args=[m.ZeroOrMore(), m.Arg(m.SimpleString()), m.ZeroOrMore()])
     """
     return cast(AtLeastN[Union[_MatcherT, DoNotCareSentinel]], AtLeastN(matcher, n=0))
 
 
 class AtMostN(Generic[_MatcherT], _BaseWildcardNode):
     """
-    Matcher that matches ``n`` or less of a particular matcher in a sequence.
+    Matcher that matches ``n`` or fewer LibCST nodes in a row in a sequence.
     :class:`AtMostN` defaults to matching against the :func:`DoNotCare` matcher,
-    so if you do not specify a concrete matcher as a child, :class:`AtMostN` will
-    match only by count.
+    so if you do not specify a matcher as a child, :class:`AtMostN` will
+    match only by count. If you do specify a matcher as a child,
+    :class:`AtMostN` will instead make sure that each LibCST node matches the
+    matcher supplied.
 
     For example, this will match all function calls with 3 or fewer arguments::
 
@@ -568,7 +578,7 @@ class AtMostN(Generic[_MatcherT], _BaseWildcardNode):
 
     You can combine sequence matchers with concrete matchers and special matchers
     and it will behave as you expect. For example, this will match all function
-    calls that have 0, 1 or 2 string arguments, followed by an arbitrary
+    calls that have 0, 1 or 2 string arguments in a row, followed by an arbitrary
     argument::
 
         m.Call(args=[m.AtMostN(n=2, matcher=m.Arg(m.SimpleString())), m.DoNotCare()])
