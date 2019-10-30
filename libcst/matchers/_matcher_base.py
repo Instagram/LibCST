@@ -994,7 +994,7 @@ def _matches(
 def _construct_metadata_fetcher_null() -> Callable[
     [meta.ProviderT, libcst.CSTNode], object
 ]:
-    def _fetch() -> object:
+    def _fetch(*args: object, **kwargs: object) -> object:
         return _METADATA_MISSING_SENTINEL
 
     return _fetch
@@ -1061,3 +1061,87 @@ def matches(
         fetcher = _construct_metadata_fetcher_dependent(metadata_resolver)
 
     return _matches(node, matcher, fetcher)
+
+
+class _FindAllVisitor(libcst.CSTVisitor):
+    def __init__(
+        self,
+        matcher: Union[
+            BaseMatcherNode,
+            MatchIfTrue[Callable[..., bool]],
+            MatchMetadata,
+            InverseOf[
+                Union[BaseMatcherNode, MatchIfTrue[Callable[..., bool]], MatchMetadata]
+            ],
+        ],
+        metadata_lookup: Callable[[meta.ProviderT, libcst.CSTNode], object],
+    ) -> None:
+        self.matcher = matcher
+        self.metadata_lookup = metadata_lookup
+        self.found_nodes: List[libcst.CSTNode] = []
+
+    def on_visit(self, node: libcst.CSTNode) -> bool:
+        if _matches(node, self.matcher, self.metadata_lookup):
+            self.found_nodes.append(node)
+        return True
+
+
+def findall(
+    tree: Union[MaybeSentinel, RemovalSentinel, libcst.CSTNode, meta.MetadataWrapper],
+    matcher: Union[
+        BaseMatcherNode,
+        MatchIfTrue[Callable[..., bool]],
+        MatchMetadata,
+        InverseOf[
+            Union[BaseMatcherNode, MatchIfTrue[Callable[..., bool]], MatchMetadata]
+        ],
+    ],
+    *,
+    metadata_resolver: Optional[
+        Union[libcst.MetadataDependent, libcst.MetadataWrapper]
+    ] = None,
+) -> Sequence[libcst.CSTNode]:
+    """
+    Given an arbitrary node from a LibCST tree, and an arbitrary matcher, iterates
+    over that node and all children, returning a sequence of all child nodes that
+    match the given matcher. Note that the node can also be a
+    :class:`~libcst.RemovalSentinel` or a :class:`~libcst.MaybeSentinel`
+    in order to use findall directly on transform results and node attributes. In these
+    cases, :func:`findall` will always return an empty sequence. Note also that
+    instead of a LibCST tree, you can instead pass in a
+    :class:`~libcst.metadata.MetadataWrapper`. This mirrors the fact that you can
+    call ``visit`` on a :class:`~libcst.metadata.MetadataWrapper` in order to iterate
+    over it with a transform. If you provide a wrapper for the tree and do not set
+    the ``metadata_resolver`` parameter specifically, it will automatically be set
+    to the wrapper for you.
+
+    The matcher can be any concrete matcher that subclasses from :class:`BaseMatcherNode`,
+    or a :class:`OneOf`/:class:`AllOf` special matcher. Unlike :func:`matches`, it can
+    also be a :class:`MatchIfTrue` or :func:`DoesNotMatch` matcher, since we are
+    traversing the tree looking for matches. It cannot be a :class:`AtLeastN` or
+    :class:`AtMostN` matcher because these types are wildcards which can only be usedi
+    inside sequences.
+    """
+    if isinstance(tree, (RemovalSentinel, MaybeSentinel)):
+        # We can't possibly match on a removal sentinel, so it doesn't match.
+        return []
+    if isinstance(matcher, (AtLeastN, AtMostN)):
+        # We can't match this, since these matchers are forbidden at top level.
+        # These are not subclasses of BaseMatcherNode, but in the case that the
+        # user is not using type checking, this should still behave correctly.
+        return []
+
+    if isinstance(tree, meta.MetadataWrapper) and metadata_resolver is None:
+        # Provide a convenience for calling findall directly on a MetadataWrapper.
+        metadata_resolver = tree
+
+    if metadata_resolver is None:
+        fetcher = _construct_metadata_fetcher_null()
+    elif isinstance(metadata_resolver, libcst.MetadataWrapper):
+        fetcher = _construct_metadata_fetcher_wrapper(metadata_resolver)
+    else:
+        fetcher = _construct_metadata_fetcher_dependent(metadata_resolver)
+
+    finder = _FindAllVisitor(matcher, fetcher)
+    tree.visit(finder)
+    return finder.found_nodes
