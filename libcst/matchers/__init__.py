@@ -28,6 +28,7 @@ from libcst.matchers._matcher_base import (
     OneOf,
     ZeroOrMore,
     ZeroOrOne,
+    findall,
     matches,
 )
 from libcst.matchers._visitors import (
@@ -9268,6 +9269,7 @@ __all__ = [
     "ZeroOrOne",
     "call_if_inside",
     "call_if_not_inside",
+    "findall",
     "leave",
     "matches",
     "visit",

@@ -25,11 +25,12 @@ Matcher APIs
 Functions
 ^^^^^^^^^
 
-Matchers can be used either by calling :func:`~libcst.matchers.matches` directly,
-usually in an ``if`` statement, or by using various decorators to selectively control
-when LibCST calls visitor functions.
+Matchers can be used either by calling :func:`~libcst.matchers.matches` or
+:func:`~libcst.matchers.findall` directly, or by using various decorators to
+selectively control when LibCST calls visitor functions.
 
 .. autofunction:: libcst.matchers.matches
+.. autofunction:: libcst.matchers.findall
 
 .. _libcst-matcher-decorators:
 
