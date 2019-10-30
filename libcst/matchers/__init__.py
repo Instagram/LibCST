@@ -11364,21 +11364,21 @@ class FormattedString(BaseExpression, BaseString, BaseMatcherNode):
         MatchIfTrue[Callable[[str], bool]],
     ] = DoNotCare()
     end: Union[
-        Literal[""", "'", """ "", "'''"],
+        Literal['"', "'", '"""', "'''"],
         DoNotCareSentinel,
         OneOf[
             Union[
-                Literal[""", "'", """ "", "'''"],
-                MatchIfTrue[Callable[[Literal[""", "'", """ "", "'''"]], bool]],
+                Literal['"', "'", '"""', "'''"],
+                MatchIfTrue[Callable[[Literal['"', "'", '"""', "'''"]], bool]],
             ]
         ],
         AllOf[
             Union[
-                Literal[""", "'", """ "", "'''"],
-                MatchIfTrue[Callable[[Literal[""", "'", """ "", "'''"]], bool]],
+                Literal['"', "'", '"""', "'''"],
+                MatchIfTrue[Callable[[Literal['"', "'", '"""', "'''"]], bool]],
             ]
         ],
-        MatchIfTrue[Callable[[Literal[""", "'", """ "", "'''"]], bool]],
+        MatchIfTrue[Callable[[Literal['"', "'", '"""', "'''"]], bool]],
     ] = DoNotCare()
     lpar: Union[
         Sequence[

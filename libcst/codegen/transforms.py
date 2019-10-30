@@ -13,6 +13,8 @@
 # code to function.
 
 # pyre-strict
+import ast
+
 import libcst as cst
 import libcst.matchers as m
 
@@ -41,5 +43,12 @@ class DoubleQuoteForwardRefsTransformer(m.MatcherDecoratableTransformer):
     ) -> cst.SimpleString:
         # For prettiness, convert all single-quoted forward refs to double-quoted.
         if updated_node.value.startswith("'") and updated_node.value.endswith("'"):
-            return updated_node.with_changes(value=f'"{updated_node.value[1:-1]}"')
+            new_value = f'"{updated_node.value[1:-1]}"'
+            try:
+                if ast.literal_eval(updated_node.value) == ast.literal_eval(new_value):
+                    return updated_node.with_changes(
+                        value=f'"{updated_node.value[1:-1]}"'
+                    )
+            except SyntaxError:
+                pass
         return updated_node
