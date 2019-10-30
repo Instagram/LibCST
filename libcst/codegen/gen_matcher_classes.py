@@ -6,7 +6,7 @@
 # pyre-strict
 import ast
 from dataclasses import dataclass, fields
-from typing import Generator, List, Optional, Sequence, Set, Type, Union
+from typing import Generator, List, Optional, Sequence, Set, Tuple, Type, Union
 
 import libcst as cst
 from libcst import ensure_type, parse_expression
@@ -158,113 +158,30 @@ def _get_match_if_true(oldtype: cst.BaseExpression) -> cst.SubscriptElement:
     )
 
 
-def _add_match_if_true(
-    oldtype: cst.BaseExpression, concrete_only_expr: cst.BaseExpression
-) -> cst.BaseExpression:
-    """
-    Given a BaseExpression in a type, add MatchIfTrue to it. This either
-    wraps in a Union type, or adds to the end of an existing Union type.
-    """
-    if isinstance(oldtype, cst.Subscript) and oldtype.value.deep_equals(
-        cst.Name("Union")
-    ):
-        # Add to the end of the value
-        return oldtype.with_changes(
-            slice=[*oldtype.slice, _get_match_if_true(concrete_only_expr)]
-        )
-
-    # Just wrap in a union type
-    return _get_wrapped_union_type(oldtype, _get_match_if_true(concrete_only_expr))
-
-
 def _add_generic(name: str, oldtype: cst.BaseExpression) -> cst.BaseExpression:
     return cst.Subscript(cst.Name(name), (cst.SubscriptElement(cst.Index(oldtype)),))
 
 
-class AddLogicAndLambdaMatcherToUnions(cst.CSTTransformer):
+class AddLogicMatchersToUnions(cst.CSTTransformer):
     def leave_Subscript(
         self, original_node: cst.Subscript, updated_node: cst.Subscript
     ) -> cst.Subscript:
         if updated_node.value.deep_equals(cst.Name("Union")):
             # Take the original node, remove do not care so we have concrete types.
-            concrete_only_expr = _remove_types(
-                original_node, ["DoNotCareSentinel", "MatchMetadata"]
-            )
-            # Take the current subscript, add a MatchIfTrue node to it.
-            match_if_true_expr = _add_match_if_true(
-                _remove_types(updated_node, ["DoNotCareSentinel"]), concrete_only_expr
-            )
+            # Explicitly taking the original node because we want to discard nested
+            # changes.
+            concrete_only_expr = _remove_types(original_node, ["DoNotCareSentinel"])
             return updated_node.with_changes(
                 slice=[
                     *updated_node.slice,
-                    # Make sure that OneOf/AllOf types are widened to take all of the
-                    # original SomeTypes, and also takes a MatchIfTrue, so that
-                    # you can do something like OneOf(SomeType(), MatchIfTrue(lambda)).
-                    # We could explicitly enforce that MatchIfTrue could not be used
-                    # inside OneOf/AllOf clauses, but then if you want to mix and match you
-                    # would have to use a recursive matches() inside your lambda which
-                    # is super ugly.
                     cst.SubscriptElement(
-                        cst.Index(_add_generic("OneOf", match_if_true_expr))
+                        cst.Index(_add_generic("OneOf", concrete_only_expr))
                     ),
                     cst.SubscriptElement(
-                        cst.Index(_add_generic("AllOf", match_if_true_expr))
+                        cst.Index(_add_generic("AllOf", concrete_only_expr))
                     ),
-                    # We use original node here, because we don't want MatchIfTrue
-                    # to get modifications to child Union classes. If we allow
-                    # that, we get MatchIfTrue nodes whose Callable takes in
-                    # OneOf/AllOf and MatchIfTrue values, which is incorrect. MatchIfTrue
-                    # only takes in cst nodes, and returns a boolean.
-                    _get_match_if_true(concrete_only_expr),
                 ]
             )
-        return updated_node
-
-
-class AddDoNotCareAndMetadataToSequences(cst.CSTTransformer):
-    def leave_Subscript(
-        self, original_node: cst.Subscript, updated_node: cst.Subscript
-    ) -> cst.Subscript:
-        if updated_node.value.deep_equals(cst.Name("Sequence")):
-            slc = updated_node.slice
-            # TODO: We can remove the instance check after ExtSlice is deprecated.
-            if not isinstance(slc, Sequence) or len(slc) != 1:
-                raise Exception(
-                    "Unexpected number of sequence elements inside Sequence type "
-                    + "annotation!"
-                )
-            nodeslice = slc[0].slice
-            if isinstance(nodeslice, cst.Index):
-                possibleunion = nodeslice.value
-                if isinstance(possibleunion, cst.Subscript):
-                    # Special case for Sequence[Union] so that we make more collapsed
-                    # types.
-                    if possibleunion.value.deep_equals(cst.Name("Union")):
-                        return updated_node.with_deep_changes(
-                            possibleunion,
-                            slice=[
-                                *possibleunion.slice,
-                                _get_do_not_care(),
-                                _get_match_metadata(),
-                            ],
-                        )
-                # This is a sequence of some node, add DoNotCareSentinel here so that
-                # a person can add a do not care to a sequence that otherwise has
-                # valid matcher nodes.
-                return updated_node.with_changes(
-                    slice=(
-                        cst.SubscriptElement(
-                            cst.Index(
-                                _get_wrapped_union_type(
-                                    nodeslice.value,
-                                    _get_do_not_care(),
-                                    _get_match_metadata(),
-                                )
-                            )
-                        ),
-                    )
-                )
-            raise Exception("Unexpected slice type for Sequence!")
         return updated_node
 
 
@@ -343,6 +260,7 @@ def _get_wrapped_union_type(
     """
     Take two or more nodes, wrap them in a union type. Function signature is
     explicitly defined as taking at least one addition for type safety.
+
     """
 
     return cst.Subscript(
@@ -350,7 +268,92 @@ def _get_wrapped_union_type(
     )
 
 
-def _get_clean_type(typeobj: object) -> str:
+# List of global aliases we've already generated, so we don't redefine types
+_global_aliases: Set[str] = set()
+
+
+@dataclass(frozen=True)
+class Alias:
+    name: str
+    type: str
+
+
+@dataclass(frozen=True)
+class Field:
+    name: str
+    type: str
+    aliases: List[Alias]
+
+
+def _get_raw_name(node: cst.CSTNode) -> Optional[str]:
+    if isinstance(node, cst.Name):
+        return node.value
+    elif isinstance(node, cst.SimpleString):
+        return ast.literal_eval(node.value)
+    elif isinstance(node, cst.SubscriptElement):
+        return _get_raw_name(node.slice)
+    elif isinstance(node, cst.Index):
+        return _get_raw_name(node.value)
+    else:
+        return None
+
+
+def _get_alias_name(node: cst.CSTNode) -> Optional[str]:
+    if isinstance(node, (cst.Name, cst.SimpleString)):
+        return f"{_get_raw_name(node)}MatchType"
+    elif isinstance(node, cst.Subscript):
+        if node.value.deep_equals(cst.Name("Union")):
+            slc = node.slice
+            # TODO: This instance check can go away once we deprecate ExtSlice
+            if isinstance(slc, Sequence):
+                names = [_get_raw_name(s) for s in slc]
+                if any(n is None for n in names):
+                    return None
+                return "Or".join(n for n in names if n is not None) + "MatchType"
+
+    return None
+
+
+def _wrap_clean_type(
+    aliases: List[Alias], name: Optional[str], value: cst.Subscript
+) -> cst.BaseExpression:
+    if name is not None:
+        # We created an alias, lets use that, wrapping the alias in a do not care.
+        aliases.append(Alias(name=name, type=cst.Module(body=()).code_for_node(value)))
+        return _get_wrapped_union_type(cst.Name(name), _get_do_not_care())
+    else:
+        # Couldn't name the alias, fall back to regular node creation, add do not
+        # care to the resulting type we widened.
+        return value.with_changes(slice=[*value.slice, _get_do_not_care()])
+
+
+def _get_clean_type_from_expression(
+    aliases: List[Alias], typecst: cst.BaseExpression
+) -> cst.BaseExpression:
+    name = _get_alias_name(typecst)
+    value = _get_wrapped_union_type(
+        typecst, _get_match_metadata(), _get_match_if_true(typecst)
+    )
+    return _wrap_clean_type(aliases, name, value)
+
+
+def _get_clean_type_from_subscript(
+    aliases: List[Alias], typecst: cst.Subscript
+) -> cst.BaseExpression:
+    # We can modify this as-is to add our extra values
+    if not typecst.value.deep_equals(cst.Name("Union")):
+        # Don't handle other types like "Literal", just widen them.
+        return _get_clean_type_from_expression(aliases, typecst)
+    name = _get_alias_name(typecst)
+    value = typecst.with_changes(
+        slice=[*typecst.slice, _get_match_metadata(), _get_match_if_true(typecst)]
+    )
+    return _wrap_clean_type(aliases, name, value)
+
+
+def _get_clean_type_and_aliases(
+    typeobj: object,
+) -> Tuple[str, List[Alias]]:  # noqa: C901
     """
     Given a type object as returned by dataclasses, sanitize it and convert it
     to a type string that is appropriate for our codegen below.
@@ -365,56 +368,63 @@ def _get_clean_type(typeobj: object) -> str:
     cleanser = CleanseFullTypeNames()
     typecst = parse_expression(typestr)
     typecst = typecst.visit(cleanser)
-    clean_type: Optional[cst.CSTNode] = None
+    aliases: List[Alias] = []
 
-    # Now, convert the type to allow for DoNotCareSentinel values.
+    # Now, convert the type to allow for MatchMetadata and MatchIfTrue values. This
+    # looks like it should be recursive given the Sequence code below, but we only
+    # want to do one level of recursion if that happens, so its unrolled.
     if isinstance(typecst, cst.Subscript):
-        if typecst.value.deep_equals(cst.Name("Union")):
-            # We can modify this as-is to add our type
-            clean_type = typecst.with_changes(
-                slice=[*typecst.slice, _get_do_not_care(), _get_match_metadata()]
+        if typecst.value.deep_equals(cst.Name("Sequence")):
+            # Lets attempt to widen the sequence type and alias it.
+            slc = typecst.slice
+            # TODO: This instance check can go away once we deprecate ExtSlice
+            if not isinstance(slc, Sequence):
+                raise Exception("Logic error, expected Sequence to have children!")
+
+            if len(slc) != 1:
+                raise Exception(
+                    "Logic error, Sequence shouldn't have more than one param!"
+                )
+            inner_type = slc[0].slice
+            if not isinstance(inner_type, cst.Index):
+                raise Exception(
+                    "Logic error, expecting Index for only Sequence element!"
+                )
+            inner_type = inner_type.value
+
+            if isinstance(inner_type, cst.Subscript):
+                clean_inner_type = _get_clean_type_from_subscript(aliases, inner_type)
+            elif isinstance(inner_type, (cst.Name, cst.SimpleString)):
+                clean_inner_type = _get_clean_type_from_expression(aliases, inner_type)
+            else:
+                raise Exception("Logic error, unexpected type in Sequence!")
+
+            clean_type = _get_wrapped_union_type(
+                typecst.deep_replace(inner_type, clean_inner_type),
+                _get_do_not_care(),
+                _get_match_if_true(inner_type),
             )
-        elif typecst.value.deep_equals(cst.Name("Literal")):
-            clean_type = _get_wrapped_union_type(typecst, _get_do_not_care())
-        elif typecst.value.deep_equals(cst.Name("Sequence")):
-            clean_type = _get_wrapped_union_type(typecst, _get_do_not_care())
-
+        else:
+            # This handles "Union" by aliasing this type. It also handles "Literal"
+            # since it will fail to alias, so we will fall back to widening.
+            clean_type = _get_clean_type_from_subscript(aliases, typecst)
     elif isinstance(typecst, (cst.Name, cst.SimpleString)):
-        clean_type = _get_wrapped_union_type(
-            typecst, _get_do_not_care(), _get_match_metadata()
-        )
-
-    # Now, clean up the outputted type and return the code it generates. If
-    # for some reason we encounter a new node type, raise so we can triage.
-    if clean_type is None:
-        raise Exception(f"Don't support {typecst}")
+        clean_type = _get_clean_type_from_expression(aliases, typecst)
     else:
-        # First, add DoNotCareSentinel to all sequences, so that a sequence
-        # can be defined partially with explicit DoNotCare() values for some
-        # slots.
-        clean_type = ensure_type(
-            clean_type.visit(AddDoNotCareAndMetadataToSequences()), cst.CSTNode
-        )
-        # Now, insert OneOf/AllOf and MatchIfTrue into unions so we can typecheck their usage.
-        # This allows us to put OneOf[SomeType] or MatchIfTrue[cst.SomeType] into any
-        # spot that we would have originally allowed a SomeType.
-        clean_type = ensure_type(
-            clean_type.visit(AddLogicAndLambdaMatcherToUnions()), cst.CSTNode
-        )
-        # Now, insert AtMostN and AtLeastN into sequence unions, so we can typecheck
-        # them. This relies on the previous OneOf/AllOf insertion to ensure that all
-        # sequences we care about are Sequence[Union[<x>]].
-        clean_type = ensure_type(
-            clean_type.visit(AddWildcardsToSequenceUnions()), cst.CSTNode
-        )
-        # Finally, generate the code given a default Module so we can spit it out.
-        return cst.Module(body=()).code_for_node(clean_type)
+        raise Exception("Logic error, unexpected top level type!")
 
-
-@dataclass(frozen=True)
-class Field:
-    name: str
-    type: str
+    # Now, insert OneOf/AllOf and MatchIfTrue into unions so we can typecheck their usage.
+    # This allows us to put OneOf[SomeType] or MatchIfTrue[cst.SomeType] into any
+    # spot that we would have originally allowed a SomeType.
+    clean_type = ensure_type(clean_type.visit(AddLogicMatchersToUnions()), cst.CSTNode)
+    # Now, insert AtMostN and AtLeastN into sequence unions, so we can typecheck
+    # them. This relies on the previous OneOf/AllOf insertion to ensure that all
+    # sequences we care about are Sequence[Union[<x>]].
+    clean_type = ensure_type(
+        clean_type.visit(AddWildcardsToSequenceUnions()), cst.CSTNode
+    )
+    # Finally, generate the code given a default Module so we can spit it out.
+    return cst.Module(body=()).code_for_node(clean_type), aliases
 
 
 def _get_fields(node: Type[cst.CSTNode]) -> Generator[Field, None, None]:
@@ -426,7 +436,13 @@ def _get_fields(node: Type[cst.CSTNode]) -> Generator[Field, None, None]:
         if field.name == "_metadata":
             continue
 
-        yield Field(name=field.name, type=_get_clean_type(field.type))
+        fieldtype, aliases = _get_clean_type_and_aliases(field.type)
+        yield Field(
+            name=field.name,
+            type=fieldtype,
+            aliases=[a for a in aliases if a.name not in _global_aliases],
+        )
+        _global_aliases.update(a.name for a in aliases)
 
 
 all_exports: Set[str] = set()
@@ -491,14 +507,6 @@ for base in typeclasses:
     all_exports.add(base.__name__)
 
 
-# Add a generic type we can reference later
-generated_code.append(
-    "MetadataPredicate = Union[MatchMetadata, OneOf[MatchMetadata], AllOf[MatchMetadata]]"
-)
-generated_code.append("")
-generated_code.append("")
-
-
 for node in all_libcst_nodes:
     if node.__name__.startswith("Base"):
         continue
@@ -508,6 +516,19 @@ for node in all_libcst_nodes:
             classes.append(tc.__name__)
     classes.append("BaseMatcherNode")
 
+    has_aliases = False
+    node_fields = list(_get_fields(node))
+    for field in node_fields:
+        for alias in field.aliases:
+            # Output a separator if we're going to output any aliases
+            if not has_aliases:
+                generated_code.append("")
+                generated_code.append("")
+                has_aliases = True
+
+            # Must generate code for aliases before the class they are referenced in
+            generated_code.append(f"{alias.name} = {alias.type}")
+
     generated_code.append("")
     generated_code.append("")
     generated_code.append("@dataclass(frozen=True, eq=False, unsafe_hash=False)")
@@ -515,13 +536,13 @@ for node in all_libcst_nodes:
     all_exports.add(node.__name__)
 
     fields_printed = False
-    for field in _get_fields(node):
+    for field in node_fields:
         fields_printed = True
         generated_code.append(f"    {field.name}: {field.type} = DoNotCare()")
 
     # Add special metadata field
     generated_code.append(
-        f"    metadata: Union[DoNotCareSentinel, MetadataPredicate] = DoNotCare()"
+        f"    metadata: Union[MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]] = DoNotCare()"
     )
 
 
