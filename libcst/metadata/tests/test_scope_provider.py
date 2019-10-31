@@ -905,3 +905,36 @@ class ScopeProviderTest(UnitTest):
         c_scope = scopes[target_call_2]
         self.assertIsInstance(c_scope, ClassScope)
         self.assertEqual(cast(ClassScope, c_scope).node, c)
+
+    def test_with_statement(self) -> None:
+        m, scopes = get_scope_metadata_provider(
+            """
+                import unittest.mock
+
+                with unittest.mock.patch("something") as obj:
+                    obj.f1()
+
+                unittest.mock
+            """
+        )
+        import_ = ensure_type(m.body[0], cst.SimpleStatementLine).body[0]
+        assignments = scopes[import_]["unittest"]
+        self.assertEqual(len(assignments), 1)
+        self.assertEqual(cast(Assignment, list(assignments)[0]).node, import_)
+        with_ = ensure_type(m.body[1], cst.With)
+        fn_call = with_.items[0].item
+        self.assertEqual(
+            scopes[fn_call].get_qualified_names_for(fn_call),
+            {
+                QualifiedName(
+                    name="unittest.mock.patch", source=QualifiedNameSource.IMPORT
+                )
+            },
+        )
+        mock = ensure_type(
+            ensure_type(m.body[2], cst.SimpleStatementLine).body[0], cst.Expr
+        ).value
+        self.assertEqual(
+            scopes[fn_call].get_qualified_names_for(mock),
+            {QualifiedName(name="unittest.mock", source=QualifiedNameSource.IMPORT)},
+        )
