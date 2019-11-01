@@ -31,6 +31,7 @@ selectively control when LibCST calls visitor functions.
 
 .. autofunction:: libcst.matchers.matches
 .. autofunction:: libcst.matchers.findall
+.. autofunction:: libcst.matchers.extract
 
 .. _libcst-matcher-decorators:
 
@@ -147,6 +148,7 @@ when calling :func:`~libcst.matchers.matches` or using decorators.
 .. autofunction:: libcst.matchers.MatchRegex
 .. autoclass:: libcst.matchers.MatchMetadata
 .. autoclass:: libcst.matchers.MatchMetadataIfTrue
+.. autofunction:: libcst.matchers.SaveMatchedNode
 .. autofunction:: libcst.matchers.DoNotCare
 
 Sequence Wildcard Matchers

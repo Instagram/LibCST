@@ -82,7 +82,7 @@ class BaseMatcherNode:
         )
 
     def __invert__(self: _BaseMatcherNodeSelfT) -> "_BaseMatcherNodeSelfT":
-        return cast(_BaseMatcherNodeSelfT, InverseOf(self))
+        return cast(_BaseMatcherNodeSelfT, _InverseOf(self))
 
 
 def DoNotCare() -> DoNotCareSentinel:
@@ -239,13 +239,13 @@ class AllOf(Generic[_MatcherT], BaseMatcherNode):
         return f"AllOf({', '.join([repr(o) for o in self._options])})"
 
 
-class InverseOf(Generic[_MatcherT]):
+class _InverseOf(Generic[_MatcherT]):
     """
     Matcher that inverts the match result of its child. You can also construct a
-    :class:`InverseOf` matcher by using Python's bitwise invert operator with concrete
+    :class:`_InverseOf` matcher by using Python's bitwise invert operator with concrete
     matcher classes or any special matcher.
 
-    Note that you should refrain from constructing a :class:`InverseOf` directly, and
+    Note that you should refrain from constructing a :class:`_InverseOf` directly, and
     should instead use the :func:`DoesNotMatch` helper function.
 
     For example, the following matches against any identifier that isn't
@@ -266,7 +266,7 @@ class InverseOf(Generic[_MatcherT]):
     def matcher(self) -> _MatcherT:
         """
         The matcher that we will evaluate and invert. If this matcher is true, then
-        :class:`InverseOf` will be considered not a match, and vice-versa.
+        :class:`_InverseOf` will be considered not a match, and vice-versa.
         """
         return self._matcher
 
@@ -281,7 +281,7 @@ class InverseOf(Generic[_MatcherT]):
         return cast(AllOf[Union[_MatcherT, _OtherNodeT]], AllOf(self, other))
 
     def __getattr__(self, key: str) -> object:
-        # We lie about types to make InverseOf appear transparent. So, its conceivable
+        # We lie about types to make _InverseOf appear transparent. So, its conceivable
         # that somebody might try to dereference an attribute on the _MatcherT wrapped
         # node and become surprised that it doesn't work.
         return getattr(self._matcher, key)
@@ -291,6 +291,87 @@ class InverseOf(Generic[_MatcherT]):
 
     def __repr__(self) -> str:
         return f"DoesNotMatch({repr(self._matcher)})"
+
+
+class _ExtractMatchingNode(Generic[_MatcherT]):
+    """
+    Transparent pass-through matcher that captures the node which matches its children,
+    making it available to the caller of :func:`extract`.
+
+    Note that you should refrain from constructing a :class:`_ExtractMatchingNode`
+    directly, and should instead use the :func:`SaveMatchedNode` helper function.
+
+    For example, the following will match against any binary operation whose left
+    and right operands are not integers, saving those expressions for later inspection.
+    If used inside a :func:`extract`, the resulting dictionary will contain the
+    keys ``left_operand`` and ``right_operand``.
+
+        m.BinaryOperation(
+            left=m.SaveMatchedNode(
+                m.DoesNotMatch(m.Integer()),
+                "left_operand",
+            ),
+            right=m.SaveMatchedNode(
+                m.DoesNotMatch(m.Integer()),
+                "right_operand",
+            ),
+        )
+    """
+
+    def __init__(self, matcher: _MatcherT, name: str) -> None:
+        self._matcher: _MatcherT = matcher
+        self._name: str = name
+
+    @property
+    def matcher(self) -> _MatcherT:
+        """
+        The matcher that we will evaluate and capture matching LibCST nodes for.
+        If this matcher is true, then :class:`_ExtractMatchingNode` will be considered
+        a match and will save the node which matched.
+        """
+        return self._matcher
+
+    @property
+    def name(self) -> str:
+        """
+        The name we will call our captured LibCST node inside the resulting dictionary
+        returned by :func:`extract`.
+        """
+        return self._name
+
+    def __or__(self, other: _OtherNodeT) -> "OneOf[Union[_MatcherT, _OtherNodeT]]":
+        # Without a cast, pyre thinks that the below OneOf is type OneOf[object]
+        # even though it has the types passed into it.
+        return cast(OneOf[Union[_MatcherT, _OtherNodeT]], OneOf(self, other))
+
+    def __and__(self, other: _OtherNodeT) -> "AllOf[Union[_MatcherT, _OtherNodeT]]":
+        # This doesn't make sense. If we have multiple SaveMatchedNode captures
+        # that are captured with an and, either all of them will be assigned the
+        # same node, or none of them. It makes more sense to move the SaveMatchedNode
+        # up to wrap the AllOf.
+        raise Exception(
+            "Cannot use AllOf with SavedMatchedNode children! Instead, you should "
+            "use SaveMatchedNode(AllOf(options...))."
+        )
+
+    def __getattr__(self, key: str) -> object:
+        # We lie about types to make _ExtractMatchingNode appear transparent. So,
+        # its conceivable that somebody might try to dereference an attribute on
+        # the _MatcherT wrapped node and become surprised that it doesn't work.
+        return getattr(self._matcher, key)
+
+    def __invert__(self) -> "_MatcherT":
+        # This doesn't make sense. We don't want to capture a node only if it
+        # doesn't match, since this will never capture anything.
+        raise Exception(
+            "Cannot invert a SaveMatchedNode. Instead you should wrap SaveMatchedNode "
+            "around your inversion itself"
+        )
+
+    def __repr__(self) -> str:
+        return (
+            f"SaveMatchedNode(matcher={repr(self._matcher)}, name={repr(self._name)})"
+        )
 
 
 class MatchIfTrue(Generic[_CallableT]):
@@ -463,7 +544,7 @@ class MatchMetadata(_BaseMetadataMatcher):
     def __invert__(self) -> "MatchMetadata":
         # We intentionally lie here, for the same reason given in the documentation
         # for DoesNotMatch.
-        return cast(MatchMetadata, InverseOf(self))
+        return cast(MatchMetadata, _InverseOf(self))
 
     def __repr__(self) -> str:
         return f"MatchMetadata(key={repr(self._key)}, value={repr(self._value)})"
@@ -783,7 +864,7 @@ def DoesNotMatch(obj: _OtherNodeT) -> _OtherNodeT:
 
     # This type is a complete, dirty lie, but there's no way to recursively apply
     # a parameter to each type inside a Union that may be in a _OtherNodeT.
-    # However, given the way InverseOf works (it will unwrap itself if
+    # However, given the way _InverseOf works (it will unwrap itself if
     # inverted again), and the way we apply De Morgan's law for OneOf and AllOf,
     # this lie ends up getting us correct typing. Anywhere a node is valid, using
     # DoesNotMatch(node) is also valid.
@@ -800,15 +881,52 @@ def DoesNotMatch(obj: _OtherNodeT) -> _OtherNodeT:
     # there are no operations we can possibly do that bring us outside of the
     # types specified in the concrete matchers as long as we lie that DoesNotMatch
     # returns the value passed in.
-    if isinstance(obj, (BaseMatcherNode, MatchIfTrue, _BaseMetadataMatcher, InverseOf)):
+    if isinstance(
+        obj,
+        (
+            BaseMatcherNode,
+            MatchIfTrue,
+            _BaseMetadataMatcher,
+            _InverseOf,
+            _ExtractMatchingNode,
+        ),
+    ):
         # We can use the overridden __invert__ in this case. Pyre doesn't think
         # we can though, and casting doesn't fix the issue.
         # pyre-ignore All three types above have overridden __invert__.
         inverse = ~obj
     else:
-        # We must wrap in a InverseOf.
-        inverse = InverseOf(obj)
+        # We must wrap in a _InverseOf.
+        inverse = _InverseOf(obj)
     return cast(_OtherNodeT, inverse)
+
+
+def SaveMatchedNode(matcher: _OtherNodeT, name: str) -> _OtherNodeT:
+    """
+    Matcher helper that captures the matched node that matched against a matcher
+    class, making it available in the dictionary returned by :func:`extract`.
+
+    For example, the following will match against any binary operation whose left
+    and right operands are not integers, saving those expressions for later inspection.
+    If used inside a :func:`extract`, the resulting dictionary will contain the
+    keys ``left_operand`` and ``right_operand``::
+
+        m.BinaryOperation(
+            left=m.SaveMatchedNode(
+                m.DoesNotMatch(m.Integer()),
+                "left_operand",
+            ),
+            right=m.SaveMatchedNode(
+                m.DoesNotMatch(m.Integer()),
+                "right_operand",
+            ),
+        )
+
+    This can be used in place of any concrete matcher as long as it is not the
+    root matcher. Calling :func:`extract` directly on a :func:`SaveMatchedNode` is
+    redundant since you already have the reference to the node itself.
+    """
+    return cast(_OtherNodeT, _ExtractMatchingNode(matcher, name))
 
 
 def _sequence_matches(  # noqa: C901
@@ -823,19 +941,23 @@ def _sequence_matches(  # noqa: C901
         ]
     ],
     metadata_lookup: Callable[[meta.ProviderT, libcst.CSTNode], object],
-) -> bool:
+) -> Optional[Dict[str, Union[libcst.CSTNode, Sequence[libcst.CSTNode]]]]:
     if not nodes and not matchers:
         # Base case, empty lists are alwatys matches
-        return True
+        return {}
     if not nodes and matchers:
         # Base case, we have one or more matcher that wasn't matched
-        return all(
-            (isinstance(m, AtLeastN) and m.n == 0) or isinstance(m, AtMostN)
-            for m in matchers
+        return (
+            {}
+            if all(
+                (isinstance(m, AtLeastN) and m.n == 0) or isinstance(m, AtMostN)
+                for m in matchers
+            )
+            else None
         )
     if nodes and not matchers:
         # Base case, we have nodes left that don't match any matcher
-        return False
+        return None
 
     # Recursive case, nodes and matchers LHS matches
     node = nodes[0]
@@ -848,51 +970,83 @@ def _sequence_matches(  # noqa: C901
             if matcher.n > 0:
                 # First, assume that this does match a node (greedy).
                 # Consume one node since it matched this matcher.
-                if _attribute_matches(
+                attribute_capture = _attribute_matches(
                     nodes[0], matcher.matcher, metadata_lookup
-                ) and _sequence_matches(
-                    nodes[1:],
-                    [AtMostN(matcher.matcher, n=matcher.n - 1), *matchers[1:]],
-                    metadata_lookup,
-                ):
-                    return True
+                )
+                if attribute_capture is not None:
+                    sequence_capture = _sequence_matches(
+                        nodes[1:],
+                        [AtMostN(matcher.matcher, n=matcher.n - 1), *matchers[1:]],
+                        metadata_lookup,
+                    )
+                    if sequence_capture is not None:
+                        return {**attribute_capture, **sequence_capture}
             # Finally, assume that this does not match the current node.
             # Consume the matcher but not the node.
-            if _sequence_matches(nodes, matchers[1:], metadata_lookup):
-                return True
+            sequence_capture = _sequence_matches(nodes, matchers[1:], metadata_lookup)
+            if sequence_capture is not None:
+                return sequence_capture
         elif isinstance(matcher, AtLeastN):
             if matcher.n > 0:
                 # Only match if we can consume one of the matches, since we still
                 # need to match N nodes.
-                if _attribute_matches(
+                attribute_capture = _attribute_matches(
                     nodes[0], matcher.matcher, metadata_lookup
-                ) and _sequence_matches(
-                    nodes[1:],
-                    [AtLeastN(matcher.matcher, n=matcher.n - 1), *matchers[1:]],
-                    metadata_lookup,
-                ):
-                    return True
+                )
+                if attribute_capture is not None:
+                    sequence_capture = _sequence_matches(
+                        nodes[1:],
+                        [AtLeastN(matcher.matcher, n=matcher.n - 1), *matchers[1:]],
+                        metadata_lookup,
+                    )
+                    if sequence_capture is not None:
+                        return {**attribute_capture, **sequence_capture}
             else:
                 # First, assume that this does match a node (greedy).
                 # Consume one node since it matched this matcher.
-                if _attribute_matches(
+                attribute_capture = _attribute_matches(
                     nodes[0], matcher.matcher, metadata_lookup
-                ) and _sequence_matches(nodes[1:], matchers, metadata_lookup):
-                    return True
+                )
+                if attribute_capture is not None:
+                    sequence_capture = _sequence_matches(
+                        nodes[1:], matchers, metadata_lookup
+                    )
+                    if sequence_capture is not None:
+                        return {**attribute_capture, **sequence_capture}
                 # Now, assume that this does not match the current node.
                 # Consume the matcher but not the node.
-                if _sequence_matches(nodes, matchers[1:], metadata_lookup):
-                    return True
+                sequence_capture = _sequence_matches(
+                    nodes, matchers[1:], metadata_lookup
+                )
+                if sequence_capture is not None:
+                    return sequence_capture
         else:
             # There are no other types of wildcard consumers, but we're making
             # pyre happy with that fact.
             raise Exception(f"Logic error unrecognized wildcard {type(matcher)}!")
-    elif _matches(node, matcher, metadata_lookup):
+    elif isinstance(matcher, _ExtractMatchingNode):
+        # See if the raw matcher matches. If it does, capture the sequence we matched and store it.
+        sequence_capture = _sequence_matches(
+            nodes, [matcher.matcher, *matchers[1:]], metadata_lookup,
+        )
+        if sequence_capture is not None:
+            return {
+                # Our own match capture comes first, since we wnat to allow the same
+                # name later in the sequence to override us.
+                matcher.name: nodes,
+                **sequence_capture,
+            }
+        return None
+
+    match_capture = _matches(node, matcher, metadata_lookup)
+    if match_capture is not None:
         # These values match directly
-        return _sequence_matches(nodes[1:], matchers[1:], metadata_lookup)
+        sequence_capture = _sequence_matches(nodes[1:], matchers[1:], metadata_lookup)
+        if sequence_capture is not None:
+            return {**match_capture, **sequence_capture}
 
     # Failed recursive case, no match
-    return False
+    return None
 
 
 _AttributeValueT = Optional[Union[MaybeSentinel, libcst.CSTNode, str, bool]]
@@ -903,29 +1057,43 @@ def _attribute_matches(  # noqa: C901
     node: Union[_AttributeValueT, Sequence[_AttributeValueT]],
     matcher: Union[_AttributeMatcherT, Sequence[_AttributeMatcherT]],
     metadata_lookup: Callable[[meta.ProviderT, libcst.CSTNode], object],
-) -> bool:
+) -> Optional[Dict[str, Union[libcst.CSTNode, Sequence[libcst.CSTNode]]]]:
     if isinstance(matcher, DoNotCareSentinel):
         # We don't care what this is, so don't penalize a non-match.
-        return True
-    if isinstance(matcher, InverseOf):
+        return {}
+    if isinstance(matcher, _InverseOf):
         # Return the opposite evaluation
-        return not _attribute_matches(node, matcher.matcher, metadata_lookup)
+        return (
+            {}
+            if _attribute_matches(node, matcher.matcher, metadata_lookup) is None
+            else None
+        )
+    if isinstance(matcher, _ExtractMatchingNode):
+        attribute_capture = _attribute_matches(node, matcher.matcher, metadata_lookup)
+        if attribute_capture is not None:
+            return {
+                # Our own match capture comes last, since its higher in the tree
+                # so we want to override any child match captures by the same name.
+                **attribute_capture,
+                matcher.name: node,
+            }
+        return None
 
     if isinstance(matcher, MatchIfTrue):
         # We should only return if the matcher function is true.
-        return matcher.func(node)
+        return {} if matcher.func(node) else None
 
     if matcher is None:
         # Should exactly be None
-        return node is None
+        return {} if node is None else None
 
     if isinstance(matcher, str):
         # Should exactly match matcher text
-        return node == matcher
+        return {} if node == matcher else None
 
     if isinstance(matcher, bool):
         # Should exactly match matcher bool
-        return node is matcher
+        return {} if node is matcher else None
 
     if isinstance(node, collections.abc.Sequence):
         # Given we've generated the types for matchers based on LibCST, we know that
@@ -939,24 +1107,28 @@ def _attribute_matches(  # noqa: C901
             for m in matcher.options:
                 if isinstance(m, collections.abc.Sequence):
                     # Should match the sequence of requested nodes
-                    if _sequence_matches(node, m, metadata_lookup):
-                        return True
+                    sequence_capture = _sequence_matches(node, m, metadata_lookup)
+                    if sequence_capture is not None:
+                        return sequence_capture
                 elif isinstance(m, MatchIfTrue):
-                    return matcher.func(node)
+                    return {} if matcher.func(node) else None
         elif isinstance(matcher, AllOf):
             # We should compare against each of the sequences in the AllOf
+            all_captures = {}
             for m in matcher.options:
                 if isinstance(m, collections.abc.Sequence):
                     # Should match the sequence of requested nodes
-                    if not _sequence_matches(node, m, metadata_lookup):
-                        return False
+                    sequence_capture = _sequence_matches(node, m, metadata_lookup)
+                    if sequence_capture is None:
+                        return None
+                    all_captures = {**all_captures, **sequence_capture}
                 elif isinstance(m, MatchIfTrue):
-                    return matcher.func(node)
+                    return {} if matcher.func(node) else None
                 else:
                     # The value in the AllOf wasn't a sequence, it can't match.
-                    return False
+                    return None
             # We passed the checks above for each node, so we passed.
-            return True
+            return all_captures
         elif isinstance(matcher, collections.abc.Sequence):
             # We should assume that this matcher is a sequence to compare. Given
             # the way we generate match classes, this should be true unless the
@@ -978,7 +1150,7 @@ def _attribute_matches(  # noqa: C901
             )
 
         # We exhausted our possibilities, there's no match
-        return False
+        return None
 
     # Base case, should match node via matcher. We know the type of node is
     # correct here because we generate matchers directly off of LibCST nodes,
@@ -991,49 +1163,76 @@ def _attribute_matches(  # noqa: C901
     )
 
 
-def _metadata_matches(
+def _metadata_matches(  # noqa: C901
     node: libcst.CSTNode,
     metadata: Union[
         _BaseMetadataMatcher,
         AllOf[_BaseMetadataMatcher],
         OneOf[_BaseMetadataMatcher],
-        InverseOf[_BaseMetadataMatcher],
+        _InverseOf[_BaseMetadataMatcher],
+        _ExtractMatchingNode[_BaseMetadataMatcher],
     ],
     metadata_lookup: Callable[[meta.ProviderT, libcst.CSTNode], object],
-) -> bool:
+) -> Optional[Dict[str, Union[libcst.CSTNode, Sequence[libcst.CSTNode]]]]:
     if isinstance(metadata, OneOf):
-        return any(
-            _metadata_matches(node, metadata, metadata_lookup)
-            for metadata in metadata.options
-        )
+        for metadata in metadata.options:
+            metadata_capture = _metadata_matches(node, metadata, metadata_lookup)
+            if metadata_capture is not None:
+                return metadata_capture
+        return None
     elif isinstance(metadata, AllOf):
-        return all(
-            _metadata_matches(node, metadata, metadata_lookup)
-            for metadata in metadata.options
+        all_captures = {}
+        for metadata in metadata.options:
+            metadata_capture = _metadata_matches(node, metadata, metadata_lookup)
+            if metadata_capture is None:
+                return None
+            all_captures = {**all_captures, **metadata_capture}
+        # We passed the above checks, so we pass the matcher.
+        return all_captures
+    elif isinstance(metadata, _InverseOf):
+        return (
+            {}
+            if _metadata_matches(node, metadata.matcher, metadata_lookup) is None
+            else None
         )
-    elif isinstance(metadata, InverseOf):
-        return not _metadata_matches(node, metadata.matcher, metadata_lookup)
+    elif isinstance(metadata, _ExtractMatchingNode):
+        metadata_capture = _metadata_matches(node, metadata.matcher, metadata_lookup)
+        if metadata_capture is not None:
+            return {
+                # Our own match capture comes last, since its higher in the tree
+                # so we want to override any child match captures by the same name.
+                **metadata_capture,
+                metadata.name: node,
+            }
+        return None
     elif isinstance(metadata, MatchMetadataIfTrue):
         actual_value = metadata_lookup(metadata.key, node)
         if actual_value is _METADATA_MISSING_SENTINEL:
-            return False
-        return metadata.func(actual_value)
+            return None
+        return {} if metadata.func(actual_value) else None
     elif isinstance(metadata, MatchMetadata):
         actual_value = metadata_lookup(metadata.key, node)
         if actual_value is _METADATA_MISSING_SENTINEL:
-            return False
-        return actual_value == metadata.value
+            return None
+        return {} if actual_value == metadata.value else None
     else:
         raise Exception("Logic error!")
 
 
-def _node_matches(
+def _node_matches(  # noqa: C901
     node: libcst.CSTNode,
     matcher: Union[
         BaseMatcherNode,
         MatchIfTrue[Callable[[object], bool]],
         _BaseMetadataMatcher,
-        InverseOf[
+        _InverseOf[
+            Union[
+                BaseMatcherNode,
+                MatchIfTrue[Callable[[object], bool]],
+                _BaseMetadataMatcher,
+            ]
+        ],
+        _ExtractMatchingNode[
             Union[
                 BaseMatcherNode,
                 MatchIfTrue[Callable[[object], bool]],
@@ -1042,23 +1241,41 @@ def _node_matches(
         ],
     ],
     metadata_lookup: Callable[[meta.ProviderT, libcst.CSTNode], object],
-) -> bool:
-    # If this is a InverseOf, then invert the result.
-    if isinstance(matcher, InverseOf):
-        return not _node_matches(node, matcher.matcher, metadata_lookup)
+) -> Optional[Dict[str, Union[libcst.CSTNode, Sequence[libcst.CSTNode]]]]:
+    # If this is a _InverseOf, then invert the result.
+    if isinstance(matcher, _InverseOf):
+        return (
+            {}
+            if _node_matches(node, matcher.matcher, metadata_lookup) is None
+            else None
+        )
+
+    # If this is an _ExtractMatchingNode, grab the resulting call and pass the check
+    # forward.
+    if isinstance(matcher, _ExtractMatchingNode):
+        node_capture = _node_matches(node, matcher.matcher, metadata_lookup)
+        if node_capture is not None:
+            return {
+                # We come last here since we're further up the tree, so we want to
+                # override any identically named child match nodes.
+                **node_capture,
+                matcher.name: node,
+            }
+        return None
 
     # Now, check if this is a lambda matcher.
     if isinstance(matcher, MatchIfTrue):
-        return matcher.func(node)
+        return {} if matcher.func(node) else None
 
     if isinstance(matcher, (MatchMetadata, MatchMetadataIfTrue)):
         return _metadata_matches(node, matcher, metadata_lookup)
 
     # Now, check that the node and matcher classes are the same.
     if node.__class__.__name__ != matcher.__class__.__name__:
-        return False
+        return None
 
     # Now, check that the children match for each attribute.
+    all_captures = {}
     for field in fields(matcher):
         if field.name == "_metadata":
             # We don't care about this field, its a dataclasses implementation detail.
@@ -1069,16 +1286,20 @@ def _node_matches(
             if isinstance(desired, DoNotCareSentinel):
                 # We don't care about this
                 continue
-            if not _metadata_matches(node, desired, metadata_lookup):
-                return False
+            metadata_capture = _metadata_matches(node, desired, metadata_lookup)
+            if metadata_capture is None:
+                return None
+            all_captures = {**all_captures, **metadata_capture}
         else:
             desired = getattr(matcher, field.name)
             actual = getattr(node, field.name)
-            if not _attribute_matches(actual, desired, metadata_lookup):
-                return False
+            attribute_capture = _attribute_matches(actual, desired, metadata_lookup)
+            if attribute_capture is None:
+                return None
+            all_captures = {**all_captures, **attribute_capture}
 
     # We didn't find a non-match in the above loop, so it matches!
-    return True
+    return all_captures
 
 
 def _matches(
@@ -1087,7 +1308,14 @@ def _matches(
         BaseMatcherNode,
         MatchIfTrue[Callable[[object], bool]],
         _BaseMetadataMatcher,
-        InverseOf[
+        _InverseOf[
+            Union[
+                BaseMatcherNode,
+                MatchIfTrue[Callable[[object], bool]],
+                _BaseMetadataMatcher,
+            ]
+        ],
+        _ExtractMatchingNode[
             Union[
                 BaseMatcherNode,
                 MatchIfTrue[Callable[[object], bool]],
@@ -1096,21 +1324,27 @@ def _matches(
         ],
     ],
     metadata_lookup: Callable[[meta.ProviderT, libcst.CSTNode], object],
-) -> bool:
+) -> Optional[Dict[str, Union[libcst.CSTNode, Sequence[libcst.CSTNode]]]]:
     if isinstance(node, MaybeSentinel):
         # We can't possibly match on a maybe sentinel, so it only matches if
-        # the matcher we have is a InverseOf.
-        return isinstance(matcher, InverseOf)
+        # the matcher we have is a _InverseOf.
+        return {} if isinstance(matcher, _InverseOf) else None
 
     # Now, evaluate the matcher node itself.
     if isinstance(matcher, OneOf):
-        return any(
-            _node_matches(node, matcher, metadata_lookup) for matcher in matcher.options
-        )
+        for matcher in matcher.options:
+            node_capture = _node_matches(node, matcher, metadata_lookup)
+            if node_capture is not None:
+                return node_capture
+        return None
     elif isinstance(matcher, AllOf):
-        return all(
-            _node_matches(node, matcher, metadata_lookup) for matcher in matcher.options
-        )
+        all_captures = {}
+        for matcher in matcher.options:
+            node_capture = _node_matches(node, matcher, metadata_lookup)
+            if node_capture is None:
+                return None
+            all_captures = {**all_captures, **node_capture}
+        return all_captures
     else:
         return _node_matches(node, matcher, metadata_lookup)
 
@@ -1147,6 +1381,53 @@ def _construct_metadata_fetcher_wrapper(
     return _fetch
 
 
+def extract(
+    node: Union[MaybeSentinel, RemovalSentinel, libcst.CSTNode],
+    matcher: BaseMatcherNode,
+    *,
+    metadata_resolver: Optional[
+        Union[libcst.MetadataDependent, libcst.MetadataWrapper]
+    ] = None,
+) -> Optional[Dict[str, Union[libcst.CSTNode, Sequence[libcst.CSTNode]]]]:
+    """
+    Given an arbitrary node from a LibCST tree, and an arbitrary matcher, returns
+    a dictionary of extracted children of the tree if the node matches the shape defined
+    by the matcher. Note that the node can also be a :class:`~libcst.RemovalSentinel` or
+    a :class:`~libcst.MaybeSentinel` in order to use extract directly on transform results
+    and node attributes. In these cases, :func:`extract` will always return ``None``.
+
+    If the node matches the shape defined by the matcher, the return will be a dictionary
+    whose keys are defined by the :func:`SaveMatchedNode` name parameter, and the values
+    will be the node or sequence that was present at that location in the shape defined
+    by the matcher. In the case of multiple :func:`SaveMatchedNode` matches with the
+    same name, parent nodes will take prioirity over child nodes, and nodes later in
+    sequences will take priority over nodes earlier in sequences.
+
+    The matcher can be any concrete matcher that subclasses from :class:`BaseMatcherNode`,
+    or a :class:`OneOf`/:class:`AllOf` special matcher. It cannot be a
+    :class:`MatchIfTrue` or a :func:`DoesNotMatch` matcher since these are redundant.
+    It cannot be a :class:`AtLeastN` or :class:`AtMostN` matcher because these types are
+    wildcards which can only be used inside sequences.
+    """
+    if isinstance(node, RemovalSentinel):
+        # We can't possibly match on a removal sentinel, so it doesn't match.
+        return None
+    if isinstance(matcher, (AtLeastN, AtMostN, MatchIfTrue, _BaseMetadataMatcher)):
+        # We can't match this, since these matchers are forbidden at top level.
+        # These are not subclasses of BaseMatcherNode, but in the case that the
+        # user is not using type checking, this should still behave correctly.
+        return None
+
+    if metadata_resolver is None:
+        fetcher = _construct_metadata_fetcher_null()
+    elif isinstance(metadata_resolver, libcst.MetadataWrapper):
+        fetcher = _construct_metadata_fetcher_wrapper(metadata_resolver)
+    else:
+        fetcher = _construct_metadata_fetcher_dependent(metadata_resolver)
+
+    return _matches(node, matcher, fetcher)
+
+
 def matches(
     node: Union[MaybeSentinel, RemovalSentinel, libcst.CSTNode],
     matcher: BaseMatcherNode,
@@ -1164,27 +1445,11 @@ def matches(
 
     The matcher can be any concrete matcher that subclasses from :class:`BaseMatcherNode`,
     or a :class:`OneOf`/:class:`AllOf` special matcher. It cannot be a
-    :class:`MatchIfTrue` or :func:`DoesNotMatch` matcher since this is redundant. It
-    cannot be a :class:`AtLeastN` or :class:`AtMostN` matcher because these types are
-    wildcards which can only be used inside sequences.
+    :class:`MatchIfTrue` or a :func:`DoesNotMatch` matcher since these are redundant.
+    It cannot be a :class:`AtLeastN` or :class:`AtMostN` matcher because these types
+    are wildcards which can only be used inside sequences.
     """
-    if isinstance(node, RemovalSentinel):
-        # We can't possibly match on a removal sentinel, so it doesn't match.
-        return False
-    if isinstance(matcher, (AtLeastN, AtMostN, MatchIfTrue)):
-        # We can't match this, since these matchers are forbidden at top level.
-        # These are not subclasses of BaseMatcherNode, but in the case that the
-        # user is not using type checking, this should still behave correctly.
-        return False
-
-    if metadata_resolver is None:
-        fetcher = _construct_metadata_fetcher_null()
-    elif isinstance(metadata_resolver, libcst.MetadataWrapper):
-        fetcher = _construct_metadata_fetcher_wrapper(metadata_resolver)
-    else:
-        fetcher = _construct_metadata_fetcher_dependent(metadata_resolver)
-
-    return _matches(node, matcher, fetcher)
+    return extract(node, matcher, metadata_resolver=metadata_resolver) is not None
 
 
 class _FindAllVisitor(libcst.CSTVisitor):
@@ -1194,7 +1459,7 @@ class _FindAllVisitor(libcst.CSTVisitor):
             BaseMatcherNode,
             MatchIfTrue[Callable[[object], bool]],
             _BaseMetadataMatcher,
-            InverseOf[
+            _InverseOf[
                 Union[
                     BaseMatcherNode,
                     MatchIfTrue[Callable[[object], bool]],
@@ -1209,7 +1474,7 @@ class _FindAllVisitor(libcst.CSTVisitor):
         self.found_nodes: List[libcst.CSTNode] = []
 
     def on_visit(self, node: libcst.CSTNode) -> bool:
-        if _matches(node, self.matcher, self.metadata_lookup):
+        if _matches(node, self.matcher, self.metadata_lookup) is not None:
             self.found_nodes.append(node)
         return True
 
@@ -1220,7 +1485,7 @@ def findall(
         BaseMatcherNode,
         MatchIfTrue[Callable[[object], bool]],
         _BaseMetadataMatcher,
-        InverseOf[
+        _InverseOf[
             Union[
                 BaseMatcherNode,
                 MatchIfTrue[Callable[[object], bool]],

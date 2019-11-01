@@ -33,10 +33,11 @@ from libcst.matchers._matcher_base import (
     AtLeastN,
     AtMostN,
     BaseMatcherNode,
-    InverseOf,
     MatchIfTrue,
     MatchMetadata,
     OneOf,
+    _InverseOf,
+    extract,
     findall,
     matches,
 )
@@ -551,7 +552,7 @@ class MatcherDecoratableTransformer(CSTTransformer):
             BaseMatcherNode,
             MatchIfTrue[Callable[..., bool]],
             MatchMetadata,
-            InverseOf[
+            _InverseOf[
                 Union[BaseMatcherNode, MatchIfTrue[Callable[..., bool]], MatchMetadata]
             ],
         ],
@@ -564,6 +565,20 @@ class MatcherDecoratableTransformer(CSTTransformer):
         function.
         """
         return findall(tree, matcher, metadata_resolver=self)
+
+    def extract(
+        self,
+        node: Union[cst.MaybeSentinel, cst.RemovalSentinel, cst.CSTNode],
+        matcher: BaseMatcherNode,
+    ) -> Optional[Dict[str, Union[cst.CSTNode, Sequence[cst.CSTNode]]]]:
+        """
+        A convenience method to call :func:`~libcst.matchers.extract` without requiring
+        an explicit parameter for metadata. Since our instance is an instance of
+        :class:`libcst.MetadataDependent`, we work as a metadata resolver. Please see
+        documentation for :func:`~libcst.matchers.extract` as it is identical to this
+        function.
+        """
+        return extract(node, matcher, metadata_resolver=self)
 
     def _transform_module_impl(self, tree: cst.Module) -> cst.Module:
         return tree.visit(self)
@@ -690,7 +705,7 @@ class MatcherDecoratableVisitor(CSTVisitor):
             BaseMatcherNode,
             MatchIfTrue[Callable[..., bool]],
             MatchMetadata,
-            InverseOf[
+            _InverseOf[
                 Union[BaseMatcherNode, MatchIfTrue[Callable[..., bool]], MatchMetadata]
             ],
         ],
@@ -703,3 +718,17 @@ class MatcherDecoratableVisitor(CSTVisitor):
         function.
         """
         return findall(tree, matcher, metadata_resolver=self)
+
+    def extract(
+        self,
+        node: Union[cst.MaybeSentinel, cst.RemovalSentinel, cst.CSTNode],
+        matcher: BaseMatcherNode,
+    ) -> Optional[Dict[str, Union[cst.CSTNode, Sequence[cst.CSTNode]]]]:
+        """
+        A convenience method to call :func:`~libcst.matchers.extract` without requiring
+        an explicit parameter for metadata. Since our instance is an instance of
+        :class:`libcst.MetadataDependent`, we work as a metadata resolver. Please see
+        documentation for :func:`~libcst.matchers.extract` as it is identical to this
+        function.
+        """
+        return extract(node, matcher, metadata_resolver=self)
