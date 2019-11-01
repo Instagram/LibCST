@@ -321,10 +321,10 @@ class MatchIfTrue(Generic[_CallableT]):
     def __init__(self, func: _CallableT) -> None:
         # Without a cast, pyre thinks that self.func is not a function, even though
         # it recognizes that it is a _CallableT bound to Callable.
-        self._func: Callable[..., bool] = cast(Callable[..., bool], func)
+        self._func: Callable[[object], bool] = cast(Callable[[object], bool], func)
 
     @property
-    def func(self) -> Callable[..., bool]:
+    def func(self) -> Callable[[object], bool]:
         """
         The function that we will call with a LibCST node in order to determine
         if we match. If the function returns ``True`` then we consider ourselves
@@ -387,11 +387,20 @@ def MatchRegex(regex: Union[str, Pattern[str]]) -> MatchIfTrue[Callable[[str], b
     return MatchIfTrue(_match_func)
 
 
-class MatchMetadata:
+class _BaseMetadataMatcher:
+    """
+    Class that's only around for typing purposes.
+    """
+
+    pass
+
+
+class MatchMetadata(_BaseMetadataMatcher):
     """
     Matcher that looks up the metadata on the current node using the provided
     metadata provider and compares the value on the node against the value provided
-    to :class:`MatchMetadata`.
+    to :class:`MatchMetadata`. If the metadata value does not exist for a particular
+    node, :class:`MatchMetadata` will always be considered not a match.
 
     For example, to match against any function call which has one parameter which
     is used in a load expression context::
@@ -429,8 +438,25 @@ class MatchMetadata:
         key: Type[meta.BaseMetadataProvider[_MetadataValueT]],
         value: _MetadataValueT,
     ) -> None:
-        self.key: Type[meta.BaseMetadataProvider[_MetadataValueT]] = key
-        self.value: _MetadataValueT = value
+        self._key: Type[meta.BaseMetadataProvider[_MetadataValueT]] = key
+        self._value: _MetadataValueT = value
+
+    @property
+    def key(self) -> meta.ProviderT:
+        """
+        The metadata provider that we will use to fetch values when identifying whether
+        a node matches this matcher. We compare the value returned from the metadata
+        provider to the value provided in ``value`` when determining a match.
+        """
+        return self._key
+
+    @property
+    def value(self) -> object:
+        """
+        The value that we will compare against the return from the metadata provider
+        for each node when determining a match.
+        """
+        return self._value
 
     def __or__(self, other: _OtherNodeT) -> "OneOf[Union[MatchMetadata, _OtherNodeT]]":
         # Without the cast, pyre doesn't know this is valid
@@ -446,7 +472,93 @@ class MatchMetadata:
         return cast(MatchMetadata, InverseOf(self))
 
     def __repr__(self) -> str:
-        return f"MatchMetadata(key={repr(self.key)}, value={repr(self.value)})"
+        return f"MatchMetadata(key={repr(self._key)}, value={repr(self._value)})"
+
+
+class MatchMetadataIfTrue(_BaseMetadataMatcher):
+    """
+    Matcher that looks up the metadata on the current node using the provided
+    metadata provider and passes it to a callable which can inspect the metadata
+    further, returning ``True`` if the matcher should be considered a match.
+    If the metadata value does not exist for a particular node,
+    :class:`MatchMetadataIfTrue` will always be considered not a match.
+
+    For example, to match against any arg whose qualified name might be
+    ``typing.Dict``::
+
+        m.Call(
+            args=[
+                m.Arg(
+                    m.MatchMetadataIfTrue(
+                        meta.QualifiedNameProvider,
+                        lambda qualnames: any(n.name == "typing.Dict" for n in qualnames)
+                    )
+                )
+            ]
+        )
+
+    To match against any :class:`~libcst.Name` node for the identifier ``foo``
+    as long as that identifier is found at the beginning of an unindented line::
+
+        m.Name(
+            value="foo",
+            metadata=m.MatchMetadataIfTrue(
+                meta.SyntacticPositionProvider,
+                lambda position: position.start.column == 0,
+            )
+        )
+
+    This can be used in place of any concrete matcher as long as it is not the
+    root matcher. Calling :func:`matches` directly on a :class:`MatchMetadataIfTrue`
+    is redundant since you can just check the metadata on the root node that you
+    are passing to :func:`matches`.
+    """
+
+    def __init__(
+        self,
+        key: Type[meta.BaseMetadataProvider[_MetadataValueT]],
+        func: Callable[[_MetadataValueT], bool],
+    ) -> None:
+        self._key: Type[meta.BaseMetadataProvider[_MetadataValueT]] = key
+        self._func: Callable[[_MetadataValueT], bool] = func
+
+    @property
+    def key(self) -> meta.ProviderT:
+        """
+        The metadata provider that we will use to fetch values when identifying whether
+        a node matches this matcher. We pass the value returned from the metadata
+        provider to the callable given to us in ``func``.
+        """
+        return self._key
+
+    @property
+    def func(self) -> Callable[[object], bool]:
+        """
+        The function that we will call with a value retrieved from the metadata provider
+        provided in ``key``. If the function returns ``True`` then we consider ourselves
+        to be a match.
+        """
+        return self._func
+
+    def __or__(
+        self, other: _OtherNodeT
+    ) -> "OneOf[Union[MatchMetadataIfTrue, _OtherNodeT]]":
+        # Without the cast, pyre doesn't know this is valid
+        return cast(OneOf[Union[MatchMetadataIfTrue, _OtherNodeT]], OneOf(self, other))
+
+    def __and__(
+        self, other: _OtherNodeT
+    ) -> "AllOf[Union[MatchMetadataIfTrue, _OtherNodeT]]":
+        # Without the cast, pyre doesn't know this is valid
+        return cast(AllOf[Union[MatchMetadataIfTrue, _OtherNodeT]], AllOf(self, other))
+
+    def __invert__(self) -> "MatchMetadataIfTrue":
+        # Construct a wrapped version of MatchMetadataIfTrue for typing simplicity.
+        return MatchMetadataIfTrue(self._key, lambda val: not self._func(val))
+
+    def __repr__(self) -> str:
+        # pyre-ignore Pyre doesn't believe that functions have a repr.
+        return f"MatchMetadataIfTrue(key={repr(self._key)}, func={repr(self._func)})"
 
 
 class _BaseWildcardNode:
@@ -683,6 +795,7 @@ def DoesNotMatch(obj: _OtherNodeT) -> _OtherNodeT:
     # DoesNotMatch(node) is also valid.
     #
     # ~MatchIfTrue is still MatchIfTrue
+    # ~MatchMetadataIfTrue is still MatchMetadataIfTrue
     # ~OneOf[x] is AllOf[~x]
     # ~AllOf[x] is OneOf[~x]
     # ~~x is x
@@ -693,7 +806,7 @@ def DoesNotMatch(obj: _OtherNodeT) -> _OtherNodeT:
     # there are no operations we can possibly do that bring us outside of the
     # types specified in the concrete matchers as long as we lie that DoesNotMatch
     # returns the value passed in.
-    if isinstance(obj, (BaseMatcherNode, MatchIfTrue, MatchMetadata, InverseOf)):
+    if isinstance(obj, (BaseMatcherNode, MatchIfTrue, _BaseMetadataMatcher, InverseOf)):
         # We can use the overridden __invert__ in this case. Pyre doesn't think
         # we can though, and casting doesn't fix the issue.
         # pyre-ignore All three types above have overridden __invert__.
@@ -710,8 +823,8 @@ def _sequence_matches(  # noqa: C901
         Union[
             BaseMatcherNode,
             _BaseWildcardNode,
-            MatchIfTrue[Callable[..., bool]],
-            MatchMetadata,
+            MatchIfTrue[Callable[[object], bool]],
+            _BaseMetadataMatcher,
             DoNotCareSentinel,
         ]
     ],
@@ -861,7 +974,7 @@ def _attribute_matches(  # noqa: C901
                         Union[
                             BaseMatcherNode,
                             _BaseWildcardNode,
-                            MatchIfTrue[Callable[..., bool]],
+                            MatchIfTrue[Callable[[object], bool]],
                             DoNotCareSentinel,
                         ]
                     ],
@@ -879,7 +992,7 @@ def _attribute_matches(  # noqa: C901
     # types were ignored.
     return _matches(
         cast(Union[MaybeSentinel, RemovalSentinel, libcst.CSTNode], node),
-        cast(Union[BaseMatcherNode, MatchIfTrue, MatchMetadata], matcher),
+        cast(Union[BaseMatcherNode, MatchIfTrue, _BaseMetadataMatcher], matcher),
         metadata_lookup,
     )
 
@@ -887,10 +1000,10 @@ def _attribute_matches(  # noqa: C901
 def _metadata_matches(
     node: libcst.CSTNode,
     metadata: Union[
-        MatchMetadata,
-        AllOf[MatchMetadata],
-        OneOf[MatchMetadata],
-        InverseOf[MatchMetadata],
+        _BaseMetadataMatcher,
+        AllOf[_BaseMetadataMatcher],
+        OneOf[_BaseMetadataMatcher],
+        InverseOf[_BaseMetadataMatcher],
     ],
     metadata_lookup: Callable[[meta.ProviderT, libcst.CSTNode], object],
 ) -> bool:
@@ -906,19 +1019,32 @@ def _metadata_matches(
         )
     elif isinstance(metadata, InverseOf):
         return not _metadata_matches(node, metadata.matcher, metadata_lookup)
-    else:
+    elif isinstance(metadata, MatchMetadataIfTrue):
         actual_value = metadata_lookup(metadata.key, node)
+        if actual_value is _METADATA_MISSING_SENTINEL:
+            return False
+        return metadata.func(actual_value)
+    elif isinstance(metadata, MatchMetadata):
+        actual_value = metadata_lookup(metadata.key, node)
+        if actual_value is _METADATA_MISSING_SENTINEL:
+            return False
         return actual_value == metadata.value
+    else:
+        raise Exception("Logic error!")
 
 
 def _node_matches(
     node: libcst.CSTNode,
     matcher: Union[
         BaseMatcherNode,
-        MatchIfTrue[Callable[..., bool]],
-        MatchMetadata,
+        MatchIfTrue[Callable[[object], bool]],
+        _BaseMetadataMatcher,
         InverseOf[
-            Union[BaseMatcherNode, MatchIfTrue[Callable[..., bool]], MatchMetadata]
+            Union[
+                BaseMatcherNode,
+                MatchIfTrue[Callable[[object], bool]],
+                _BaseMetadataMatcher,
+            ]
         ],
     ],
     metadata_lookup: Callable[[meta.ProviderT, libcst.CSTNode], object],
@@ -931,7 +1057,7 @@ def _node_matches(
     if isinstance(matcher, MatchIfTrue):
         return matcher.func(node)
 
-    if isinstance(matcher, MatchMetadata):
+    if isinstance(matcher, (MatchMetadata, MatchMetadataIfTrue)):
         return _metadata_matches(node, matcher, metadata_lookup)
 
     # Now, check that the node and matcher classes are the same.
@@ -965,10 +1091,14 @@ def _matches(
     node: Union[MaybeSentinel, libcst.CSTNode],
     matcher: Union[
         BaseMatcherNode,
-        MatchIfTrue[Callable[..., bool]],
-        MatchMetadata,
+        MatchIfTrue[Callable[[object], bool]],
+        _BaseMetadataMatcher,
         InverseOf[
-            Union[BaseMatcherNode, MatchIfTrue[Callable[..., bool]], MatchMetadata]
+            Union[
+                BaseMatcherNode,
+                MatchIfTrue[Callable[[object], bool]],
+                _BaseMetadataMatcher,
+            ]
         ],
     ],
     metadata_lookup: Callable[[meta.ProviderT, libcst.CSTNode], object],
@@ -1068,10 +1198,14 @@ class _FindAllVisitor(libcst.CSTVisitor):
         self,
         matcher: Union[
             BaseMatcherNode,
-            MatchIfTrue[Callable[..., bool]],
-            MatchMetadata,
+            MatchIfTrue[Callable[[object], bool]],
+            _BaseMetadataMatcher,
             InverseOf[
-                Union[BaseMatcherNode, MatchIfTrue[Callable[..., bool]], MatchMetadata]
+                Union[
+                    BaseMatcherNode,
+                    MatchIfTrue[Callable[[object], bool]],
+                    _BaseMetadataMatcher,
+                ]
             ],
         ],
         metadata_lookup: Callable[[meta.ProviderT, libcst.CSTNode], object],
@@ -1090,10 +1224,14 @@ def findall(
     tree: Union[MaybeSentinel, RemovalSentinel, libcst.CSTNode, meta.MetadataWrapper],
     matcher: Union[
         BaseMatcherNode,
-        MatchIfTrue[Callable[..., bool]],
-        MatchMetadata,
+        MatchIfTrue[Callable[[object], bool]],
+        _BaseMetadataMatcher,
         InverseOf[
-            Union[BaseMatcherNode, MatchIfTrue[Callable[..., bool]], MatchMetadata]
+            Union[
+                BaseMatcherNode,
+                MatchIfTrue[Callable[[object], bool]],
+                _BaseMetadataMatcher,
+            ]
         ],
     ],
     *,
