@@ -329,6 +329,126 @@ class MatchersMetadataTest(UnitTest):
         node, wrapper = self._make_fixture("a + b")
         self.assertTrue(matches(node, matcher, metadata_resolver=wrapper))
 
+    def test_lambda_metadata_matcher(self) -> None:
+        # Match on qualified name provider
+        module = cst.parse_module(
+            "from typing import List\n\ndef foo() -> None: pass\n"
+        )
+        wrapper = cst.MetadataWrapper(module)
+        functiondef = cst.ensure_type(wrapper.module.body[1], cst.FunctionDef)
+
+        self.assertTrue(
+            matches(
+                functiondef,
+                m.FunctionDef(
+                    name=m.MatchMetadataIfTrue(
+                        meta.QualifiedNameProvider,
+                        lambda qualnames: any(
+                            n.name in {"foo", "bar", "baz"} for n in qualnames
+                        ),
+                    )
+                ),
+                metadata_resolver=wrapper,
+            )
+        )
+
+        self.assertFalse(
+            matches(
+                functiondef,
+                m.FunctionDef(
+                    name=m.MatchMetadataIfTrue(
+                        meta.QualifiedNameProvider,
+                        lambda qualnames: any(
+                            n.name in {"bar", "baz"} for n in qualnames
+                        ),
+                    )
+                ),
+                metadata_resolver=wrapper,
+            )
+        )
+
+    def test_lambda_metadata_matcher_with_no_metadata(self) -> None:
+        # Match on qualified name provider
+        module = cst.parse_module(
+            "from typing import List\n\ndef foo() -> None: pass\n"
+        )
+        functiondef = cst.ensure_type(module.body[1], cst.FunctionDef)
+
+        self.assertFalse(
+            matches(
+                functiondef,
+                m.FunctionDef(
+                    name=m.MatchMetadataIfTrue(
+                        meta.QualifiedNameProvider,
+                        lambda qualnames: any(
+                            n.name in {"foo", "bar", "baz"} for n in qualnames
+                        ),
+                    )
+                ),
+            )
+        )
+
+    def test_lambda_metadata_matcher_operators(self) -> None:
+        # Match on qualified name provider
+        module = cst.parse_module(
+            "from typing import List\n\ndef bar() -> None: pass\n"
+        )
+        wrapper = cst.MetadataWrapper(module)
+        functiondef = cst.ensure_type(wrapper.module.body[1], cst.FunctionDef)
+
+        self.assertTrue(
+            matches(
+                functiondef,
+                m.FunctionDef(
+                    name=m.MatchMetadataIfTrue(
+                        meta.QualifiedNameProvider,
+                        lambda qualnames: any(n.name == "foo" for n in qualnames),
+                    )
+                    | m.MatchMetadataIfTrue(
+                        meta.QualifiedNameProvider,
+                        lambda qualnames: any(n.name == "bar" for n in qualnames),
+                    )
+                ),
+                metadata_resolver=wrapper,
+            )
+        )
+
+        self.assertFalse(
+            matches(
+                functiondef,
+                m.FunctionDef(
+                    name=m.MatchMetadataIfTrue(
+                        meta.QualifiedNameProvider,
+                        lambda qualnames: any(n.name == "foo" for n in qualnames),
+                    )
+                    & m.MatchMetadataIfTrue(
+                        meta.QualifiedNameProvider,
+                        lambda qualnames: any(n.name == "bar" for n in qualnames),
+                    )
+                ),
+                metadata_resolver=wrapper,
+            )
+        )
+
+        self.assertTrue(
+            matches(
+                functiondef,
+                m.FunctionDef(
+                    name=(
+                        ~m.MatchMetadataIfTrue(
+                            meta.QualifiedNameProvider,
+                            lambda qualnames: any(n.name == "foo" for n in qualnames),
+                        )
+                    )
+                    & m.MatchMetadataIfTrue(
+                        meta.QualifiedNameProvider,
+                        lambda qualnames: any(n.name == "bar" for n in qualnames),
+                    )
+                ),
+                metadata_resolver=wrapper,
+            )
+        )
+
 
 class MatchersVisitorMetadataTest(UnitTest):
     def _make_fixture(self, code: str) -> cst.MetadataWrapper:

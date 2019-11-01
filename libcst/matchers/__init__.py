@@ -24,6 +24,7 @@ from libcst.matchers._matcher_base import (
     DoNotCareSentinel,
     MatchIfTrue,
     MatchMetadata,
+    MatchMetadataIfTrue,
     MatchRegex,
     OneOf,
     ZeroOrMore,
@@ -134,9 +135,12 @@ class BaseUnaryOp(ABC):
     pass
 
 
+MetadataMatchType = Union[MatchMetadata, MatchMetadataIfTrue]
+
+
 BaseParenthesizableWhitespaceMatchType = Union[
     "BaseParenthesizableWhitespace",
-    MatchMetadata,
+    MetadataMatchType,
     MatchIfTrue[Callable[[cst.BaseParenthesizableWhitespace], bool]],
 ]
 
@@ -156,7 +160,10 @@ class Add(BaseBinaryOp, BaseMatcherNode):
         AllOf[BaseParenthesizableWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -175,7 +182,10 @@ class AddAssign(BaseAugOp, BaseMatcherNode):
         AllOf[BaseParenthesizableWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -194,27 +204,32 @@ class And(BaseBooleanOp, BaseMatcherNode):
         AllOf[BaseParenthesizableWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
 BaseExpressionMatchType = Union[
-    "BaseExpression", MatchMetadata, MatchIfTrue[Callable[[cst.BaseExpression], bool]]
+    "BaseExpression",
+    MetadataMatchType,
+    MatchIfTrue[Callable[[cst.BaseExpression], bool]],
 ]
 AnnotationMatchType = Union[
-    "Annotation", MatchMetadata, MatchIfTrue[Callable[[cst.Annotation], bool]]
+    "Annotation", MetadataMatchType, MatchIfTrue[Callable[[cst.Annotation], bool]]
 ]
 BaseExpressionOrNoneMatchType = Union[
     "BaseExpression",
     None,
-    MatchMetadata,
+    MetadataMatchType,
     MatchIfTrue[Callable[[Union[cst.BaseExpression, None]], bool]],
 ]
 AssignEqualMatchType = Union[
-    "AssignEqual", MatchMetadata, MatchIfTrue[Callable[[cst.AssignEqual], bool]]
+    "AssignEqual", MetadataMatchType, MatchIfTrue[Callable[[cst.AssignEqual], bool]]
 ]
 SemicolonMatchType = Union[
-    "Semicolon", MatchMetadata, MatchIfTrue[Callable[[cst.Semicolon], bool]]
+    "Semicolon", MetadataMatchType, MatchIfTrue[Callable[[cst.Semicolon], bool]]
 ]
 
 
@@ -251,7 +266,10 @@ class AnnAssign(BaseSmallStatement, BaseMatcherNode):
         AllOf[SemicolonMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -276,14 +294,22 @@ class Annotation(BaseMatcherNode):
         AllOf[BaseParenthesizableWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
 NameOrNoneMatchType = Union[
-    "Name", None, MatchMetadata, MatchIfTrue[Callable[[Union[cst.Name, None]], bool]]
+    "Name",
+    None,
+    MetadataMatchType,
+    MatchIfTrue[Callable[[Union[cst.Name, None]], bool]],
 ]
-CommaMatchType = Union["Comma", MatchMetadata, MatchIfTrue[Callable[[cst.Comma], bool]]]
+CommaMatchType = Union[
+    "Comma", MetadataMatchType, MatchIfTrue[Callable[[cst.Comma], bool]]
+]
 
 
 @dataclass(frozen=True, eq=False, unsafe_hash=False)
@@ -311,20 +337,20 @@ class Arg(BaseMatcherNode):
     ] = DoNotCare()
     star: Union[
         Literal["", "*", "**"],
-        MatchMetadata,
+        MetadataMatchType,
         MatchIfTrue[Callable[[Literal["", "*", "**"]], bool]],
         DoNotCareSentinel,
         OneOf[
             Union[
                 Literal["", "*", "**"],
-                MatchMetadata,
+                MetadataMatchType,
                 MatchIfTrue[Callable[[Literal["", "*", "**"]], bool]],
             ]
         ],
         AllOf[
             Union[
                 Literal["", "*", "**"],
-                MatchMetadata,
+                MetadataMatchType,
                 MatchIfTrue[Callable[[Literal["", "*", "**"]], bool]],
             ]
         ],
@@ -342,7 +368,10 @@ class Arg(BaseMatcherNode):
         AllOf[BaseParenthesizableWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -350,7 +379,7 @@ NameOrTupleOrListMatchType = Union[
     "Name",
     "Tuple",
     "List",
-    MatchMetadata,
+    MetadataMatchType,
     MatchIfTrue[Callable[[Union[cst.Name, cst.Tuple, cst.List]], bool]],
 ]
 
@@ -376,13 +405,16 @@ class AsName(BaseMatcherNode):
         AllOf[BaseParenthesizableWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
 SimpleWhitespaceMatchType = Union[
     "SimpleWhitespace",
-    MatchMetadata,
+    MetadataMatchType,
     MatchIfTrue[Callable[[cst.SimpleWhitespace], bool]],
 ]
 
@@ -417,12 +449,15 @@ class Assert(BaseSmallStatement, BaseMatcherNode):
         AllOf[SemicolonMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
 AssignTargetMatchType = Union[
-    "AssignTarget", MatchMetadata, MatchIfTrue[Callable[[cst.AssignTarget], bool]]
+    "AssignTarget", MetadataMatchType, MatchIfTrue[Callable[[cst.AssignTarget], bool]]
 ]
 
 
@@ -493,7 +528,10 @@ class Assign(BaseSmallStatement, BaseMatcherNode):
         AllOf[SemicolonMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -512,13 +550,16 @@ class AssignEqual(BaseMatcherNode):
         AllOf[BaseParenthesizableWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
 BaseAssignTargetExpressionMatchType = Union[
     "BaseAssignTargetExpression",
-    MatchMetadata,
+    MetadataMatchType,
     MatchIfTrue[Callable[[cst.BaseAssignTargetExpression], bool]],
 ]
 
@@ -544,7 +585,10 @@ class AssignTarget(BaseMatcherNode):
         AllOf[SimpleWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -557,17 +601,22 @@ class Asynchronous(BaseMatcherNode):
         AllOf[SimpleWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
-NameMatchType = Union["Name", MatchMetadata, MatchIfTrue[Callable[[cst.Name], bool]]]
-DotMatchType = Union["Dot", MatchMetadata, MatchIfTrue[Callable[[cst.Dot], bool]]]
+NameMatchType = Union[
+    "Name", MetadataMatchType, MatchIfTrue[Callable[[cst.Name], bool]]
+]
+DotMatchType = Union["Dot", MetadataMatchType, MatchIfTrue[Callable[[cst.Dot], bool]]]
 LeftParenMatchType = Union[
-    "LeftParen", MatchMetadata, MatchIfTrue[Callable[[cst.LeftParen], bool]]
+    "LeftParen", MetadataMatchType, MatchIfTrue[Callable[[cst.LeftParen], bool]]
 ]
 RightParenMatchType = Union[
-    "RightParen", MatchMetadata, MatchIfTrue[Callable[[cst.RightParen], bool]]
+    "RightParen", MetadataMatchType, MatchIfTrue[Callable[[cst.RightParen], bool]]
 ]
 
 
@@ -692,12 +741,15 @@ class Attribute(
         ],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
 BaseAugOpMatchType = Union[
-    "BaseAugOp", MatchMetadata, MatchIfTrue[Callable[[cst.BaseAugOp], bool]]
+    "BaseAugOp", MetadataMatchType, MatchIfTrue[Callable[[cst.BaseAugOp], bool]]
 ]
 
 
@@ -728,7 +780,10 @@ class AugAssign(BaseSmallStatement, BaseMatcherNode):
         AllOf[SemicolonMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -851,12 +906,15 @@ class Await(BaseExpression, BaseMatcherNode):
         AllOf[BaseParenthesizableWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
 BaseBinaryOpMatchType = Union[
-    "BaseBinaryOp", MatchMetadata, MatchIfTrue[Callable[[cst.BaseBinaryOp], bool]]
+    "BaseBinaryOp", MetadataMatchType, MatchIfTrue[Callable[[cst.BaseBinaryOp], bool]]
 ]
 
 
@@ -985,7 +1043,10 @@ class BinaryOperation(BaseExpression, BaseMatcherNode):
         ],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -1004,7 +1065,10 @@ class BitAnd(BaseBinaryOp, BaseMatcherNode):
         AllOf[BaseParenthesizableWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -1023,7 +1087,10 @@ class BitAndAssign(BaseAugOp, BaseMatcherNode):
         AllOf[BaseParenthesizableWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -1036,7 +1103,10 @@ class BitInvert(BaseUnaryOp, BaseMatcherNode):
         AllOf[BaseParenthesizableWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -1055,7 +1125,10 @@ class BitOr(BaseBinaryOp, BaseMatcherNode):
         AllOf[BaseParenthesizableWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -1074,7 +1147,10 @@ class BitOrAssign(BaseAugOp, BaseMatcherNode):
         AllOf[BaseParenthesizableWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -1093,7 +1169,10 @@ class BitXor(BaseBinaryOp, BaseMatcherNode):
         AllOf[BaseParenthesizableWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -1112,12 +1191,15 @@ class BitXorAssign(BaseAugOp, BaseMatcherNode):
         AllOf[BaseParenthesizableWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
 BaseBooleanOpMatchType = Union[
-    "BaseBooleanOp", MatchMetadata, MatchIfTrue[Callable[[cst.BaseBooleanOp], bool]]
+    "BaseBooleanOp", MetadataMatchType, MatchIfTrue[Callable[[cst.BaseBooleanOp], bool]]
 ]
 
 
@@ -1246,7 +1328,10 @@ class BooleanOperation(BaseExpression, BaseMatcherNode):
         ],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -1259,11 +1344,14 @@ class Break(BaseSmallStatement, BaseMatcherNode):
         AllOf[SemicolonMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
-ArgMatchType = Union["Arg", MatchMetadata, MatchIfTrue[Callable[[cst.Arg], bool]]]
+ArgMatchType = Union["Arg", MetadataMatchType, MatchIfTrue[Callable[[cst.Arg], bool]]]
 
 
 @dataclass(frozen=True, eq=False, unsafe_hash=False)
@@ -1435,18 +1523,21 @@ class Call(BaseExpression, BaseMatcherNode):
         AllOf[BaseParenthesizableWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
 BaseSuiteMatchType = Union[
-    "BaseSuite", MatchMetadata, MatchIfTrue[Callable[[cst.BaseSuite], bool]]
+    "BaseSuite", MetadataMatchType, MatchIfTrue[Callable[[cst.BaseSuite], bool]]
 ]
 DecoratorMatchType = Union[
-    "Decorator", MatchMetadata, MatchIfTrue[Callable[[cst.Decorator], bool]]
+    "Decorator", MetadataMatchType, MatchIfTrue[Callable[[cst.Decorator], bool]]
 ]
 EmptyLineMatchType = Union[
-    "EmptyLine", MatchMetadata, MatchIfTrue[Callable[[cst.EmptyLine], bool]]
+    "EmptyLine", MetadataMatchType, MatchIfTrue[Callable[[cst.EmptyLine], bool]]
 ]
 
 
@@ -1736,7 +1827,10 @@ class ClassDef(BaseCompoundStatement, BaseStatement, BaseMatcherNode):
         AllOf[SimpleWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -1755,7 +1849,10 @@ class Colon(BaseMatcherNode):
         AllOf[BaseParenthesizableWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -1774,11 +1871,14 @@ class Comma(BaseMatcherNode):
         AllOf[BaseParenthesizableWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
-strMatchType = Union[str, MatchMetadata, MatchIfTrue[Callable[[str], bool]]]
+strMatchType = Union[str, MetadataMatchType, MatchIfTrue[Callable[[str], bool]]]
 
 
 @dataclass(frozen=True, eq=False, unsafe_hash=False)
@@ -1787,23 +1887,26 @@ class Comment(BaseMatcherNode):
         strMatchType, DoNotCareSentinel, OneOf[strMatchType], AllOf[strMatchType]
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
 CompIfMatchType = Union[
-    "CompIf", MatchMetadata, MatchIfTrue[Callable[[cst.CompIf], bool]]
+    "CompIf", MetadataMatchType, MatchIfTrue[Callable[[cst.CompIf], bool]]
 ]
 CompForOrNoneMatchType = Union[
     "CompFor",
     None,
-    MatchMetadata,
+    MetadataMatchType,
     MatchIfTrue[Callable[[Union[cst.CompFor, None]], bool]],
 ]
 AsynchronousOrNoneMatchType = Union[
     "Asynchronous",
     None,
-    MatchMetadata,
+    MetadataMatchType,
     MatchIfTrue[Callable[[Union[cst.Asynchronous, None]], bool]],
 ]
 
@@ -1911,7 +2014,10 @@ class CompFor(BaseMatcherNode):
         AllOf[BaseParenthesizableWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -1936,13 +2042,16 @@ class CompIf(BaseMatcherNode):
         AllOf[BaseParenthesizableWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
 ComparisonTargetMatchType = Union[
     "ComparisonTarget",
-    MatchMetadata,
+    MetadataMatchType,
     MatchIfTrue[Callable[[cst.ComparisonTarget], bool]],
 ]
 
@@ -2112,12 +2221,15 @@ class Comparison(BaseExpression, BaseMatcherNode):
         ],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
 BaseCompOpMatchType = Union[
-    "BaseCompOp", MatchMetadata, MatchIfTrue[Callable[[cst.BaseCompOp], bool]]
+    "BaseCompOp", MetadataMatchType, MatchIfTrue[Callable[[cst.BaseCompOp], bool]]
 ]
 
 
@@ -2136,21 +2248,24 @@ class ComparisonTarget(BaseMatcherNode):
         AllOf[BaseExpressionMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
 SimpleStringOrFormattedStringMatchType = Union[
     "SimpleString",
     "FormattedString",
-    MatchMetadata,
+    MetadataMatchType,
     MatchIfTrue[Callable[[Union[cst.SimpleString, cst.FormattedString]], bool]],
 ]
 SimpleStringOrFormattedStringOrConcatenatedStringMatchType = Union[
     "SimpleString",
     "FormattedString",
     "ConcatenatedString",
-    MatchMetadata,
+    MetadataMatchType,
     MatchIfTrue[
         Callable[
             [Union[cst.SimpleString, cst.FormattedString, cst.ConcatenatedString]], bool
@@ -2284,7 +2399,10 @@ class ConcatenatedString(BaseExpression, BaseString, BaseMatcherNode):
         AllOf[BaseParenthesizableWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -2297,7 +2415,10 @@ class Continue(BaseSmallStatement, BaseMatcherNode):
         AllOf[SemicolonMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -2305,12 +2426,12 @@ NameOrAttributeOrCallMatchType = Union[
     "Name",
     "Attribute",
     "Call",
-    MatchMetadata,
+    MetadataMatchType,
     MatchIfTrue[Callable[[Union[cst.Name, cst.Attribute, cst.Call]], bool]],
 ]
 TrailingWhitespaceMatchType = Union[
     "TrailingWhitespace",
-    MatchMetadata,
+    MetadataMatchType,
     MatchIfTrue[Callable[[cst.TrailingWhitespace], bool]],
 ]
 
@@ -2388,13 +2509,16 @@ class Decorator(BaseMatcherNode):
         AllOf[TrailingWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
 BaseDelTargetExpressionMatchType = Union[
     "BaseDelTargetExpression",
-    MatchMetadata,
+    MetadataMatchType,
     MatchIfTrue[Callable[[cst.BaseDelTargetExpression], bool]],
 ]
 
@@ -2420,18 +2544,27 @@ class Del(BaseSmallStatement, BaseMatcherNode):
         AllOf[SemicolonMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
 BaseDictElementMatchType = Union[
-    "BaseDictElement", MatchMetadata, MatchIfTrue[Callable[[cst.BaseDictElement], bool]]
+    "BaseDictElement",
+    MetadataMatchType,
+    MatchIfTrue[Callable[[cst.BaseDictElement], bool]],
 ]
 LeftCurlyBraceMatchType = Union[
-    "LeftCurlyBrace", MatchMetadata, MatchIfTrue[Callable[[cst.LeftCurlyBrace], bool]]
+    "LeftCurlyBrace",
+    MetadataMatchType,
+    MatchIfTrue[Callable[[cst.LeftCurlyBrace], bool]],
 ]
 RightCurlyBraceMatchType = Union[
-    "RightCurlyBrace", MatchMetadata, MatchIfTrue[Callable[[cst.RightCurlyBrace], bool]]
+    "RightCurlyBrace",
+    MetadataMatchType,
+    MatchIfTrue[Callable[[cst.RightCurlyBrace], bool]],
 ]
 
 
@@ -2606,12 +2739,15 @@ class Dict(BaseDict, BaseExpression, BaseMatcherNode):
         ],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
 CompForMatchType = Union[
-    "CompFor", MatchMetadata, MatchIfTrue[Callable[[cst.CompFor], bool]]
+    "CompFor", MetadataMatchType, MatchIfTrue[Callable[[cst.CompFor], bool]]
 ]
 
 
@@ -2764,7 +2900,10 @@ class DictComp(BaseComp, BaseDict, BaseExpression, BaseMatcherNode):
         AllOf[BaseParenthesizableWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -2798,7 +2937,10 @@ class DictElement(BaseDictElement, BaseMatcherNode):
         AllOf[BaseParenthesizableWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -2817,7 +2959,10 @@ class Divide(BaseBinaryOp, BaseMatcherNode):
         AllOf[BaseParenthesizableWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -2836,7 +2981,10 @@ class DivideAssign(BaseAugOp, BaseMatcherNode):
         AllOf[BaseParenthesizableWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -2855,7 +3003,10 @@ class Dot(BaseMatcherNode):
         AllOf[BaseParenthesizableWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -2871,7 +3022,10 @@ class Element(BaseElement, BaseMatcherNode):
         CommaMatchType, DoNotCareSentinel, OneOf[CommaMatchType], AllOf[CommaMatchType]
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -2982,7 +3136,10 @@ class Ellipsis(BaseExpression, BaseMatcherNode):
         ],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -3053,19 +3210,22 @@ class Else(BaseMatcherNode):
         AllOf[SimpleWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
-boolMatchType = Union[bool, MatchMetadata, MatchIfTrue[Callable[[bool], bool]]]
+boolMatchType = Union[bool, MetadataMatchType, MatchIfTrue[Callable[[bool], bool]]]
 CommentOrNoneMatchType = Union[
     "Comment",
     None,
-    MatchMetadata,
+    MetadataMatchType,
     MatchIfTrue[Callable[[Union[cst.Comment, None]], bool]],
 ]
 NewlineMatchType = Union[
-    "Newline", MatchMetadata, MatchIfTrue[Callable[[cst.Newline], bool]]
+    "Newline", MetadataMatchType, MatchIfTrue[Callable[[cst.Newline], bool]]
 ]
 
 
@@ -3093,7 +3253,10 @@ class EmptyLine(BaseMatcherNode):
         AllOf[NewlineMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -3112,14 +3275,17 @@ class Equal(BaseCompOp, BaseMatcherNode):
         AllOf[BaseParenthesizableWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
 AsNameOrNoneMatchType = Union[
     "AsName",
     None,
-    MatchMetadata,
+    MetadataMatchType,
     MatchIfTrue[Callable[[Union[cst.AsName, None]], bool]],
 ]
 
@@ -3209,7 +3375,10 @@ class ExceptHandler(BaseMatcherNode):
         AllOf[SimpleWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -3228,7 +3397,10 @@ class Expr(BaseSmallStatement, BaseMatcherNode):
         AllOf[SemicolonMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -3299,7 +3471,10 @@ class Finally(BaseMatcherNode):
         AllOf[SimpleWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -3413,7 +3588,10 @@ class Float(BaseExpression, BaseNumber, BaseMatcherNode):
         ],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -3432,7 +3610,10 @@ class FloorDivide(BaseBinaryOp, BaseMatcherNode):
         AllOf[BaseParenthesizableWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -3451,12 +3632,18 @@ class FloorDivideAssign(BaseAugOp, BaseMatcherNode):
         AllOf[BaseParenthesizableWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
 ElseOrNoneMatchType = Union[
-    "Else", None, MatchMetadata, MatchIfTrue[Callable[[Union[cst.Else, None]], bool]]
+    "Else",
+    None,
+    MetadataMatchType,
+    MatchIfTrue[Callable[[Union[cst.Else, None]], bool]],
 ]
 
 
@@ -3569,13 +3756,16 @@ class For(BaseCompoundStatement, BaseStatement, BaseMatcherNode):
         AllOf[SimpleWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
 BaseFormattedStringContentMatchType = Union[
     "BaseFormattedStringContent",
-    MatchMetadata,
+    MetadataMatchType,
     MatchIfTrue[Callable[[cst.BaseFormattedStringContent], bool]],
 ]
 
@@ -3639,20 +3829,20 @@ class FormattedString(BaseExpression, BaseString, BaseMatcherNode):
     ] = DoNotCare()
     end: Union[
         Literal['"', "'", '"""', "'''"],
-        MatchMetadata,
+        MetadataMatchType,
         MatchIfTrue[Callable[[Literal['"', "'", '"""', "'''"]], bool]],
         DoNotCareSentinel,
         OneOf[
             Union[
                 Literal['"', "'", '"""', "'''"],
-                MatchMetadata,
+                MetadataMatchType,
                 MatchIfTrue[Callable[[Literal['"', "'", '"""', "'''"]], bool]],
             ]
         ],
         AllOf[
             Union[
                 Literal['"', "'", '"""', "'''"],
-                MatchMetadata,
+                MetadataMatchType,
                 MatchIfTrue[Callable[[Literal['"', "'", '"""', "'''"]], bool]],
             ]
         ],
@@ -3762,12 +3952,15 @@ class FormattedString(BaseExpression, BaseString, BaseMatcherNode):
         ],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
 strOrNoneMatchType = Union[
-    str, None, MatchMetadata, MatchIfTrue[Callable[[Union[str, None]], bool]]
+    str, None, MetadataMatchType, MatchIfTrue[Callable[[Union[str, None]], bool]]
 ]
 
 
@@ -3788,7 +3981,7 @@ class FormattedStringExpression(BaseFormattedStringContent, BaseMatcherNode):
     format_spec: Union[
         Sequence["BaseFormattedStringContent"],
         None,
-        MatchMetadata,
+        MetadataMatchType,
         MatchIfTrue[
             Callable[
                 [
@@ -3807,7 +4000,7 @@ class FormattedStringExpression(BaseFormattedStringContent, BaseMatcherNode):
             Union[
                 Sequence["BaseFormattedStringContent"],
                 None,
-                MatchMetadata,
+                MetadataMatchType,
                 MatchIfTrue[
                     Callable[
                         [Union[Sequence[cst.BaseFormattedStringContent], None]], bool
@@ -3819,7 +4012,7 @@ class FormattedStringExpression(BaseFormattedStringContent, BaseMatcherNode):
             Union[
                 Sequence["BaseFormattedStringContent"],
                 None,
-                MatchMetadata,
+                MetadataMatchType,
                 MatchIfTrue[
                     Callable[
                         [Union[Sequence[cst.BaseFormattedStringContent], None]], bool
@@ -3841,7 +4034,10 @@ class FormattedStringExpression(BaseFormattedStringContent, BaseMatcherNode):
         AllOf[BaseParenthesizableWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -3851,7 +4047,10 @@ class FormattedStringText(BaseFormattedStringContent, BaseMatcherNode):
         strMatchType, DoNotCareSentinel, OneOf[strMatchType], AllOf[strMatchType]
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -3876,17 +4075,20 @@ class From(BaseMatcherNode):
         AllOf[BaseParenthesizableWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
 ParametersMatchType = Union[
-    "Parameters", MatchMetadata, MatchIfTrue[Callable[[cst.Parameters], bool]]
+    "Parameters", MetadataMatchType, MatchIfTrue[Callable[[cst.Parameters], bool]]
 ]
 AnnotationOrNoneMatchType = Union[
     "Annotation",
     None,
-    MatchMetadata,
+    MetadataMatchType,
     MatchIfTrue[Callable[[Union[cst.Annotation, None]], bool]],
 ]
 
@@ -4101,7 +4303,10 @@ class FunctionDef(BaseCompoundStatement, BaseStatement, BaseMatcherNode):
         AllOf[SimpleWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -4224,12 +4429,15 @@ class GeneratorExp(BaseComp, BaseExpression, BaseSimpleComp, BaseMatcherNode):
         ],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
 NameItemMatchType = Union[
-    "NameItem", MatchMetadata, MatchIfTrue[Callable[[cst.NameItem], bool]]
+    "NameItem", MetadataMatchType, MatchIfTrue[Callable[[cst.NameItem], bool]]
 ]
 
 
@@ -4300,7 +4508,10 @@ class Global(BaseSmallStatement, BaseMatcherNode):
         AllOf[SemicolonMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -4319,7 +4530,10 @@ class GreaterThan(BaseCompOp, BaseMatcherNode):
         AllOf[BaseParenthesizableWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -4338,7 +4552,10 @@ class GreaterThanEqual(BaseCompOp, BaseMatcherNode):
         AllOf[BaseParenthesizableWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -4346,7 +4563,7 @@ IfOrElseOrNoneMatchType = Union[
     "If",
     "Else",
     None,
-    MatchMetadata,
+    MetadataMatchType,
     MatchIfTrue[Callable[[Union[cst.If, cst.Else, None]], bool]],
 ]
 
@@ -4436,7 +4653,10 @@ class If(BaseCompoundStatement, BaseStatement, BaseMatcherNode):
         AllOf[SimpleWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -4589,7 +4809,10 @@ class IfExp(BaseExpression, BaseMatcherNode):
         AllOf[BaseParenthesizableWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -4703,12 +4926,15 @@ class Imaginary(BaseExpression, BaseNumber, BaseMatcherNode):
         ],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
 ImportAliasMatchType = Union[
-    "ImportAlias", MatchMetadata, MatchIfTrue[Callable[[cst.ImportAlias], bool]]
+    "ImportAlias", MetadataMatchType, MatchIfTrue[Callable[[cst.ImportAlias], bool]]
 ]
 
 
@@ -4779,14 +5005,17 @@ class Import(BaseSmallStatement, BaseMatcherNode):
         AllOf[SimpleWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
 AttributeOrNameMatchType = Union[
     "Attribute",
     "Name",
-    MatchMetadata,
+    MetadataMatchType,
     MatchIfTrue[Callable[[Union[cst.Attribute, cst.Name]], bool]],
 ]
 
@@ -4809,7 +5038,10 @@ class ImportAlias(BaseMatcherNode):
         CommaMatchType, DoNotCareSentinel, OneOf[CommaMatchType], AllOf[CommaMatchType]
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -4817,19 +5049,19 @@ AttributeOrNameOrNoneMatchType = Union[
     "Attribute",
     "Name",
     None,
-    MatchMetadata,
+    MetadataMatchType,
     MatchIfTrue[Callable[[Union[cst.Attribute, cst.Name, None]], bool]],
 ]
 LeftParenOrNoneMatchType = Union[
     "LeftParen",
     None,
-    MatchMetadata,
+    MetadataMatchType,
     MatchIfTrue[Callable[[Union[cst.LeftParen, None]], bool]],
 ]
 RightParenOrNoneMatchType = Union[
     "RightParen",
     None,
-    MatchMetadata,
+    MetadataMatchType,
     MatchIfTrue[Callable[[Union[cst.RightParen, None]], bool]],
 ]
 
@@ -4845,7 +5077,7 @@ class ImportFrom(BaseSmallStatement, BaseMatcherNode):
     names: Union[
         Sequence["ImportAlias"],
         "ImportStar",
-        MatchMetadata,
+        MetadataMatchType,
         MatchIfTrue[
             Callable[
                 [
@@ -4864,7 +5096,7 @@ class ImportFrom(BaseSmallStatement, BaseMatcherNode):
             Union[
                 Sequence["ImportAlias"],
                 "ImportStar",
-                MatchMetadata,
+                MetadataMatchType,
                 MatchIfTrue[
                     Callable[[Union[Sequence[cst.ImportAlias], cst.ImportStar]], bool]
                 ],
@@ -4874,7 +5106,7 @@ class ImportFrom(BaseSmallStatement, BaseMatcherNode):
             Union[
                 Sequence["ImportAlias"],
                 "ImportStar",
-                MatchMetadata,
+                MetadataMatchType,
                 MatchIfTrue[
                     Callable[[Union[Sequence[cst.ImportAlias], cst.ImportStar]], bool]
                 ],
@@ -4962,14 +5194,20 @@ class ImportFrom(BaseSmallStatement, BaseMatcherNode):
         AllOf[SimpleWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
 @dataclass(frozen=True, eq=False, unsafe_hash=False)
 class ImportStar(BaseMatcherNode):
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -4988,12 +5226,15 @@ class In(BaseCompOp, BaseMatcherNode):
         AllOf[BaseParenthesizableWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
 BaseStatementMatchType = Union[
-    "BaseStatement", MatchMetadata, MatchIfTrue[Callable[[cst.BaseStatement], bool]]
+    "BaseStatement", MetadataMatchType, MatchIfTrue[Callable[[cst.BaseStatement], bool]]
 ]
 
 
@@ -5116,7 +5357,10 @@ class IndentedBlock(BaseSuite, BaseMatcherNode):
         ],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -5129,7 +5373,10 @@ class Index(BaseMatcherNode):
         AllOf[BaseExpressionMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -5243,7 +5490,10 @@ class Integer(BaseExpression, BaseNumber, BaseMatcherNode):
         ],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -5262,7 +5512,10 @@ class Is(BaseCompOp, BaseMatcherNode):
         AllOf[BaseParenthesizableWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -5287,11 +5540,16 @@ class IsNot(BaseCompOp, BaseMatcherNode):
         AllOf[BaseParenthesizableWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
-ColonMatchType = Union["Colon", MatchMetadata, MatchIfTrue[Callable[[cst.Colon], bool]]]
+ColonMatchType = Union[
+    "Colon", MetadataMatchType, MatchIfTrue[Callable[[cst.Colon], bool]]
+]
 
 
 @dataclass(frozen=True, eq=False, unsafe_hash=False)
@@ -5422,7 +5680,10 @@ class Lambda(BaseExpression, BaseMatcherNode):
         AllOf[BaseParenthesizableWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -5435,7 +5696,10 @@ class LeftCurlyBrace(BaseMatcherNode):
         AllOf[BaseParenthesizableWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -5448,7 +5712,10 @@ class LeftParen(BaseMatcherNode):
         AllOf[BaseParenthesizableWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -5467,7 +5734,10 @@ class LeftShift(BaseBinaryOp, BaseMatcherNode):
         AllOf[BaseParenthesizableWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -5486,7 +5756,10 @@ class LeftShiftAssign(BaseAugOp, BaseMatcherNode):
         AllOf[BaseParenthesizableWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -5499,7 +5772,10 @@ class LeftSquareBracket(BaseMatcherNode):
         AllOf[BaseParenthesizableWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -5518,7 +5794,10 @@ class LessThan(BaseCompOp, BaseMatcherNode):
         AllOf[BaseParenthesizableWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -5537,21 +5816,24 @@ class LessThanEqual(BaseCompOp, BaseMatcherNode):
         AllOf[BaseParenthesizableWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
 BaseElementMatchType = Union[
-    "BaseElement", MatchMetadata, MatchIfTrue[Callable[[cst.BaseElement], bool]]
+    "BaseElement", MetadataMatchType, MatchIfTrue[Callable[[cst.BaseElement], bool]]
 ]
 LeftSquareBracketMatchType = Union[
     "LeftSquareBracket",
-    MatchMetadata,
+    MetadataMatchType,
     MatchIfTrue[Callable[[cst.LeftSquareBracket], bool]],
 ]
 RightSquareBracketMatchType = Union[
     "RightSquareBracket",
-    MatchMetadata,
+    MetadataMatchType,
     MatchIfTrue[Callable[[cst.RightSquareBracket], bool]],
 ]
 
@@ -5733,7 +6015,10 @@ class List(
         ],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -5868,7 +6153,10 @@ class ListComp(BaseComp, BaseExpression, BaseList, BaseSimpleComp, BaseMatcherNo
         ],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -5887,7 +6175,10 @@ class MatrixMultiply(BaseBinaryOp, BaseMatcherNode):
         AllOf[BaseParenthesizableWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -5906,7 +6197,10 @@ class MatrixMultiplyAssign(BaseAugOp, BaseMatcherNode):
         AllOf[BaseParenthesizableWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -5919,14 +6213,17 @@ class Minus(BaseUnaryOp, BaseMatcherNode):
         AllOf[BaseParenthesizableWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
 SimpleStatementLineOrBaseCompoundStatementMatchType = Union[
     "SimpleStatementLine",
     "BaseCompoundStatement",
-    MatchMetadata,
+    MetadataMatchType,
     MatchIfTrue[
         Callable[[Union[cst.SimpleStatementLine, cst.BaseCompoundStatement]], bool]
     ],
@@ -6130,7 +6427,10 @@ class Module(BaseMatcherNode):
         boolMatchType, DoNotCareSentinel, OneOf[boolMatchType], AllOf[boolMatchType]
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -6149,7 +6449,10 @@ class Modulo(BaseBinaryOp, BaseMatcherNode):
         AllOf[BaseParenthesizableWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -6168,7 +6471,10 @@ class ModuloAssign(BaseAugOp, BaseMatcherNode):
         AllOf[BaseParenthesizableWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -6187,7 +6493,10 @@ class Multiply(BaseBinaryOp, BaseMatcherNode):
         AllOf[BaseParenthesizableWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -6206,7 +6515,10 @@ class MultiplyAssign(BaseAugOp, BaseMatcherNode):
         AllOf[BaseParenthesizableWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -6322,7 +6634,10 @@ class Name(
         ],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -6335,7 +6650,10 @@ class NameItem(BaseMatcherNode):
         CommaMatchType, DoNotCareSentinel, OneOf[CommaMatchType], AllOf[CommaMatchType]
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -6470,7 +6788,10 @@ class NamedExpr(BaseExpression, BaseMatcherNode):
         AllOf[BaseParenthesizableWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -6483,7 +6804,10 @@ class Newline(BaseMatcherNode):
         AllOf[strOrNoneMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -6554,7 +6878,10 @@ class Nonlocal(BaseSmallStatement, BaseMatcherNode):
         AllOf[SemicolonMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -6567,7 +6894,10 @@ class Not(BaseUnaryOp, BaseMatcherNode):
         AllOf[BaseParenthesizableWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -6589,7 +6919,10 @@ class NotEqual(BaseCompOp, BaseMatcherNode):
         AllOf[BaseParenthesizableWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -6614,7 +6947,10 @@ class NotIn(BaseCompOp, BaseMatcherNode):
         AllOf[BaseParenthesizableWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -6633,7 +6969,10 @@ class Or(BaseBooleanOp, BaseMatcherNode):
         AllOf[BaseParenthesizableWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -6679,7 +7018,10 @@ class Param(BaseMatcherNode):
         AllOf[BaseParenthesizableWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -6689,19 +7031,27 @@ class ParamStar(BaseMatcherNode):
         CommaMatchType, DoNotCareSentinel, OneOf[CommaMatchType], AllOf[CommaMatchType]
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
-ParamMatchType = Union["Param", MatchMetadata, MatchIfTrue[Callable[[cst.Param], bool]]]
+ParamMatchType = Union[
+    "Param", MetadataMatchType, MatchIfTrue[Callable[[cst.Param], bool]]
+]
 ParamOrParamStarMatchType = Union[
     "Param",
     "ParamStar",
-    MatchMetadata,
+    MetadataMatchType,
     MatchIfTrue[Callable[[Union[cst.Param, cst.ParamStar]], bool]],
 ]
 ParamOrNoneMatchType = Union[
-    "Param", None, MatchMetadata, MatchIfTrue[Callable[[Union[cst.Param, None]], bool]]
+    "Param",
+    None,
+    MetadataMatchType,
+    MatchIfTrue[Callable[[Union[cst.Param, None]], bool]],
 ]
 
 
@@ -6876,7 +7226,10 @@ class Parameters(BaseMatcherNode):
         AllOf[ParamOrNoneMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -6950,7 +7303,10 @@ class ParenthesizedWhitespace(BaseParenthesizableWhitespace, BaseMatcherNode):
         AllOf[SimpleWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -6963,7 +7319,10 @@ class Pass(BaseSmallStatement, BaseMatcherNode):
         AllOf[SemicolonMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -6976,7 +7335,10 @@ class Plus(BaseUnaryOp, BaseMatcherNode):
         AllOf[BaseParenthesizableWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -6995,7 +7357,10 @@ class Power(BaseBinaryOp, BaseMatcherNode):
         AllOf[BaseParenthesizableWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -7014,12 +7379,18 @@ class PowerAssign(BaseAugOp, BaseMatcherNode):
         AllOf[BaseParenthesizableWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
 FromOrNoneMatchType = Union[
-    "From", None, MatchMetadata, MatchIfTrue[Callable[[Union[cst.From, None]], bool]]
+    "From",
+    None,
+    MetadataMatchType,
+    MatchIfTrue[Callable[[Union[cst.From, None]], bool]],
 ]
 
 
@@ -7050,7 +7421,10 @@ class Raise(BaseSmallStatement, BaseMatcherNode):
         AllOf[SemicolonMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -7075,7 +7449,10 @@ class Return(BaseSmallStatement, BaseMatcherNode):
         AllOf[SemicolonMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -7088,7 +7465,10 @@ class RightCurlyBrace(BaseMatcherNode):
         AllOf[BaseParenthesizableWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -7101,7 +7481,10 @@ class RightParen(BaseMatcherNode):
         AllOf[BaseParenthesizableWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -7120,7 +7503,10 @@ class RightShift(BaseBinaryOp, BaseMatcherNode):
         AllOf[BaseParenthesizableWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -7139,7 +7525,10 @@ class RightShiftAssign(BaseAugOp, BaseMatcherNode):
         AllOf[BaseParenthesizableWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -7152,7 +7541,10 @@ class RightSquareBracket(BaseMatcherNode):
         AllOf[BaseParenthesizableWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -7171,7 +7563,10 @@ class Semicolon(BaseMatcherNode):
         AllOf[BaseParenthesizableWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -7346,7 +7741,10 @@ class Set(BaseExpression, BaseSet, BaseMatcherNode):
         ],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -7481,13 +7879,16 @@ class SetComp(BaseComp, BaseExpression, BaseSet, BaseSimpleComp, BaseMatcherNode
         ],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
 BaseSmallStatementMatchType = Union[
     "BaseSmallStatement",
-    MatchMetadata,
+    MetadataMatchType,
     MatchIfTrue[Callable[[cst.BaseSmallStatement], bool]],
 ]
 
@@ -7605,7 +8006,10 @@ class SimpleStatementLine(BaseStatement, BaseMatcherNode):
         AllOf[TrailingWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -7676,7 +8080,10 @@ class SimpleStatementSuite(BaseSuite, BaseMatcherNode):
         AllOf[TrailingWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -7790,7 +8197,10 @@ class SimpleString(BaseExpression, BaseString, BaseMatcherNode):
         ],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -7800,7 +8210,10 @@ class SimpleWhitespace(BaseParenthesizableWhitespace, BaseMatcherNode):
         strMatchType, DoNotCareSentinel, OneOf[strMatchType], AllOf[strMatchType]
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -7831,7 +8244,10 @@ class Slice(BaseMatcherNode):
         ColonMatchType, DoNotCareSentinel, OneOf[ColonMatchType], AllOf[ColonMatchType]
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -7853,7 +8269,10 @@ class StarredDictElement(BaseDictElement, BaseMatcherNode):
         AllOf[BaseParenthesizableWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -7979,7 +8398,10 @@ class StarredElement(BaseElement, BaseMatcherNode):
         AllOf[BaseParenthesizableWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -7997,7 +8419,7 @@ class Subscript(
         "Index",
         "Slice",
         Sequence["SubscriptElement"],
-        MatchMetadata,
+        MetadataMatchType,
         MatchIfTrue[
             Callable[
                 [
@@ -8022,7 +8444,7 @@ class Subscript(
                 "Index",
                 "Slice",
                 Sequence["SubscriptElement"],
-                MatchMetadata,
+                MetadataMatchType,
                 MatchIfTrue[
                     Callable[
                         [Union[cst.Index, cst.Slice, Sequence[cst.SubscriptElement]]],
@@ -8036,7 +8458,7 @@ class Subscript(
                 "Index",
                 "Slice",
                 Sequence["SubscriptElement"],
-                MatchMetadata,
+                MetadataMatchType,
                 MatchIfTrue[
                     Callable[
                         [Union[cst.Index, cst.Slice, Sequence[cst.SubscriptElement]]],
@@ -8169,14 +8591,17 @@ class Subscript(
         AllOf[BaseParenthesizableWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
 IndexOrSliceMatchType = Union[
     "Index",
     "Slice",
-    MatchMetadata,
+    MetadataMatchType,
     MatchIfTrue[Callable[[Union[cst.Index, cst.Slice]], bool]],
 ]
 
@@ -8193,7 +8618,10 @@ class SubscriptElement(BaseMatcherNode):
         CommaMatchType, DoNotCareSentinel, OneOf[CommaMatchType], AllOf[CommaMatchType]
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -8212,7 +8640,10 @@ class Subtract(BaseBinaryOp, BaseMatcherNode):
         AllOf[BaseParenthesizableWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -8231,7 +8662,10 @@ class SubtractAssign(BaseAugOp, BaseMatcherNode):
         AllOf[BaseParenthesizableWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -8256,17 +8690,20 @@ class TrailingWhitespace(BaseMatcherNode):
         AllOf[NewlineMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
 ExceptHandlerMatchType = Union[
-    "ExceptHandler", MatchMetadata, MatchIfTrue[Callable[[cst.ExceptHandler], bool]]
+    "ExceptHandler", MetadataMatchType, MatchIfTrue[Callable[[cst.ExceptHandler], bool]]
 ]
 FinallyOrNoneMatchType = Union[
     "Finally",
     None,
-    MatchMetadata,
+    MetadataMatchType,
     MatchIfTrue[Callable[[Union[cst.Finally, None]], bool]],
 ]
 
@@ -8402,7 +8839,10 @@ class Try(BaseCompoundStatement, BaseStatement, BaseMatcherNode):
         AllOf[SimpleWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -8567,12 +9007,15 @@ class Tuple(
         ],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
 BaseUnaryOpMatchType = Union[
-    "BaseUnaryOp", MatchMetadata, MatchIfTrue[Callable[[cst.BaseUnaryOp], bool]]
+    "BaseUnaryOp", MetadataMatchType, MatchIfTrue[Callable[[cst.BaseUnaryOp], bool]]
 ]
 
 
@@ -8695,7 +9138,10 @@ class UnaryOperation(BaseExpression, BaseMatcherNode):
         ],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -8784,12 +9230,15 @@ class While(BaseCompoundStatement, BaseStatement, BaseMatcherNode):
         AllOf[SimpleWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
 WithItemMatchType = Union[
-    "WithItem", MatchMetadata, MatchIfTrue[Callable[[cst.WithItem], bool]]
+    "WithItem", MetadataMatchType, MatchIfTrue[Callable[[cst.WithItem], bool]]
 ]
 
 
@@ -8924,7 +9373,10 @@ class With(BaseCompoundStatement, BaseStatement, BaseMatcherNode):
         AllOf[SimpleWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -8946,7 +9398,10 @@ class WithItem(BaseMatcherNode):
         CommaMatchType, DoNotCareSentinel, OneOf[CommaMatchType], AllOf[CommaMatchType]
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -8954,7 +9409,7 @@ BaseExpressionOrFromOrNoneMatchType = Union[
     "BaseExpression",
     "From",
     None,
-    MatchMetadata,
+    MetadataMatchType,
     MatchIfTrue[Callable[[Union[cst.BaseExpression, cst.From, None]], bool]],
 ]
 
@@ -9078,7 +9533,10 @@ class Yield(BaseExpression, BaseMatcherNode):
         AllOf[BaseParenthesizableWhitespaceMatchType],
     ] = DoNotCare()
     metadata: Union[
-        MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
     ] = DoNotCare()
 
 
@@ -9207,6 +9665,7 @@ __all__ = [
     "MatchDecoratorMismatch",
     "MatchIfTrue",
     "MatchMetadata",
+    "MatchMetadataIfTrue",
     "MatchRegex",
     "MatcherDecoratableTransformer",
     "MatcherDecoratableVisitor",

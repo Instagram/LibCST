@@ -146,6 +146,7 @@ when calling :func:`~libcst.matchers.matches` or using decorators.
 .. autoclass:: libcst.matchers.MatchIfTrue
 .. autofunction:: libcst.matchers.MatchRegex
 .. autoclass:: libcst.matchers.MatchMetadata
+.. autoclass:: libcst.matchers.MatchMetadataIfTrue
 .. autofunction:: libcst.matchers.DoNotCare
 
 Sequence Wildcard Matchers

@@ -246,10 +246,10 @@ def _get_do_not_care() -> cst.SubscriptElement:
 
 def _get_match_metadata() -> cst.SubscriptElement:
     """
-    Construct a MatchMetadata entry appropriate for going into a Union.
+    Construct a MetadataMatchType entry appropriate for going into a Union.
     """
 
-    return cst.SubscriptElement(cst.Index(cst.Name("MatchMetadata")))
+    return cst.SubscriptElement(cst.Index(cst.Name("MetadataMatchType")))
 
 
 def _get_wrapped_union_type(
@@ -370,7 +370,7 @@ def _get_clean_type_and_aliases(
     typecst = typecst.visit(cleanser)
     aliases: List[Alias] = []
 
-    # Now, convert the type to allow for MatchMetadata and MatchIfTrue values. This
+    # Now, convert the type to allow for MetadataMatchType and MatchIfTrue values. This
     # looks like it should be recursive given the Sequence code below, but we only
     # want to do one level of recursion if that happens, so its unrolled.
     if isinstance(typecst, cst.Subscript):
@@ -464,7 +464,7 @@ generated_code.append("from typing_extensions import Literal")
 generated_code.append("import libcst as cst")
 generated_code.append("")
 generated_code.append(
-    "from libcst.matchers._matcher_base import BaseMatcherNode, DoNotCareSentinel, DoNotCare, OneOf, AllOf, DoesNotMatch, MatchIfTrue, MatchRegex, MatchMetadata, ZeroOrMore, AtLeastN, ZeroOrOne, AtMostN, findall, matches"
+    "from libcst.matchers._matcher_base import BaseMatcherNode, DoNotCareSentinel, DoNotCare, OneOf, AllOf, DoesNotMatch, MatchIfTrue, MatchRegex, MatchMetadata, MatchMetadataIfTrue, ZeroOrMore, AtLeastN, ZeroOrOne, AtMostN, findall, matches"
 )
 all_exports.update(
     [
@@ -477,6 +477,7 @@ all_exports.update(
         "MatchIfTrue",
         "MatchRegex",
         "MatchMetadata",
+        "MatchMetadataIfTrue",
         "ZeroOrMore",
         "AtLeastN",
         "ZeroOrOne",
@@ -506,6 +507,12 @@ for base in typeclasses:
     generated_code.append(f"class {base.__name__}(ABC):")
     generated_code.append("    pass")
     all_exports.add(base.__name__)
+
+
+# Add a generic MetadataMatchType to be referred to by everywhere else.
+generated_code.append("")
+generated_code.append("")
+generated_code.append("MetadataMatchType = Union[MatchMetadata, MatchMetadataIfTrue]")
 
 
 for node in all_libcst_nodes:
@@ -543,7 +550,7 @@ for node in all_libcst_nodes:
 
     # Add special metadata field
     generated_code.append(
-        f"    metadata: Union[MatchMetadata, DoNotCareSentinel, OneOf[MatchMetadata], AllOf[MatchMetadata]] = DoNotCare()"
+        f"    metadata: Union[MetadataMatchType, DoNotCareSentinel, OneOf[MetadataMatchType], AllOf[MetadataMatchType]] = DoNotCare()"
     )
 
 
