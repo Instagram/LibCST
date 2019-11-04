@@ -11,7 +11,7 @@ from typing import Optional, Sequence
 import libcst as cst
 import libcst.matchers as m
 import libcst.metadata as meta
-from libcst.matchers import findall
+from libcst.matchers import extractall, findall
 from libcst.testing.utils import UnitTest
 
 
@@ -162,3 +162,16 @@ class MatchersFindAllTest(UnitTest):
         visitor = TestTransformer()
         wrapper.visit(visitor)
         self.assertNodeSequenceEqual(visitor.results, [cst.Name("a"), cst.Name("b")])
+
+
+class MatchersExtractAllTest(UnitTest):
+    def test_extractall_simple(self) -> None:
+        expression = cst.parse_expression("a + b[c], d(e, f * g, h.i.j)")
+        matches = extractall(expression, m.Arg(m.SaveMatchedNode(~m.Name(), "expr")))
+        extracted_args = cst.ensure_type(
+            cst.ensure_type(expression, cst.Tuple).elements[1].value, cst.Call,
+        ).args
+        self.assertEqual(
+            matches,
+            [{"expr": extracted_args[1].value}, {"expr": extracted_args[2].value}],
+        )
