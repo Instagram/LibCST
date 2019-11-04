@@ -482,7 +482,7 @@ generated_code.append("from typing_extensions import Literal")
 generated_code.append("import libcst as cst")
 generated_code.append("")
 generated_code.append(
-    "from libcst.matchers._matcher_base import BaseMatcherNode, DoNotCareSentinel, DoNotCare, OneOf, AllOf, DoesNotMatch, MatchIfTrue, MatchRegex, MatchMetadata, MatchMetadataIfTrue, ZeroOrMore, AtLeastN, ZeroOrOne, AtMostN, SaveMatchedNode, extract, extractall, findall, matches"
+    "from libcst.matchers._matcher_base import BaseMatcherNode, DoNotCareSentinel, DoNotCare, OneOf, AllOf, DoesNotMatch, MatchIfTrue, MatchRegex, MatchMetadata, MatchMetadataIfTrue, ZeroOrMore, AtLeastN, ZeroOrOne, AtMostN, SaveMatchedNode, extract, extractall, findall, matches, replace"
 )
 all_exports.update(
     [
@@ -505,6 +505,7 @@ all_exports.update(
         "extractall",
         "findall",
         "matches",
+        "replace",
     ]
 )
 generated_code.append(

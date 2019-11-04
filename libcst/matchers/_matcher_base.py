@@ -5,6 +5,8 @@
 
 # pyre-strict
 import collections.abc
+import copy
+import inspect
 import re
 from dataclasses import fields
 from enum import Enum, auto
@@ -1611,3 +1613,198 @@ def extractall(
         tree, matcher, metadata_resolver=metadata_resolver
     )
     return extractions
+
+
+class _ReplaceTransformer(libcst.CSTTransformer):
+    def __init__(
+        self,
+        matcher: Union[
+            BaseMatcherNode,
+            MatchIfTrue[Callable[[object], bool]],
+            _BaseMetadataMatcher,
+            _InverseOf[
+                Union[
+                    BaseMatcherNode,
+                    MatchIfTrue[Callable[[object], bool]],
+                    _BaseMetadataMatcher,
+                ]
+            ],
+        ],
+        metadata_lookup: Callable[[meta.ProviderT, libcst.CSTNode], object],
+        replacement: Union[
+            MaybeSentinel,
+            RemovalSentinel,
+            libcst.CSTNode,
+            Callable[
+                [
+                    libcst.CSTNode,
+                    Dict[str, Union[libcst.CSTNode, Sequence[libcst.CSTNode]]],
+                ],
+                Union[MaybeSentinel, RemovalSentinel, libcst.CSTNode],
+            ],
+        ],
+    ) -> None:
+        self.matcher = matcher
+        self.metadata_lookup = metadata_lookup
+        if inspect.isfunction(replacement):
+            # pyre-ignore Pyre knows replacement is a function, but somehow drops
+            # the type hint from the init signature.
+            self.replacement: Callable[
+                [
+                    libcst.CSTNode,
+                    Dict[str, Union[libcst.CSTNode, Sequence[libcst.CSTNode]]],
+                ]
+            ] = replacement
+        elif isinstance(replacement, (MaybeSentinel, RemovalSentinel)):
+            self.replacement: Callable[
+                [
+                    libcst.CSTNode,
+                    Dict[str, Union[libcst.CSTNode, Sequence[libcst.CSTNode]]],
+                ]
+            ] = lambda node, matches: copy.deepcopy(replacement)
+        else:
+            self.replacement: Callable[
+                [
+                    libcst.CSTNode,
+                    Dict[str, Union[libcst.CSTNode, Sequence[libcst.CSTNode]]],
+                ]
+                # pyre-ignore We know this is a CSTNode.
+            ] = lambda node, matches: replacement.deep_clone()
+        # We run into a really weird problem here, where we need to run the match
+        # and extract step on the original node in order for metadata to work.
+        # However, if we do that, then using things like `deep_replace` will fail
+        # since any extracted nodes are the originals, not the updates and LibCST
+        # does replacement by identity for safety reasons. If we try to run the
+        # match and extract step on the updated node (or twice, once for the match
+        # and once for the extract), it will fail to extract if any metadata-based
+        # matchers are used. So, we try to compromise with the best of both worlds.
+        # We track all node updates, and when we send the extracted nodes to the
+        # replacement callable, we look up the original nodes and replace them with
+        # updated nodes. In the case that an update made the node no-longer exist,
+        # we act as if there was not a match (because in reality, there would not
+        # have been if we had run the matcher on the update).
+        self.node_lut: Dict[libcst.CSTNode, libcst.CSTNode] = {}
+
+    def _node_translate(
+        self, node_or_sequence: Union[libcst.CSTNode, Sequence[libcst.CSTNode]],
+    ) -> Union[libcst.CSTNode, Sequence[libcst.CSTNode]]:
+        if isinstance(node_or_sequence, Sequence):
+            return tuple(self.node_lut[node] for node in node_or_sequence)
+        else:
+            return self.node_lut[node_or_sequence]
+
+    def _extraction_translate(
+        self, extracted: Dict[str, Union[libcst.CSTNode, Sequence[libcst.CSTNode]]]
+    ) -> Dict[str, Union[libcst.CSTNode, Sequence[libcst.CSTNode]]]:
+        return {key: self._node_translate(val) for key, val in extracted.items()}
+
+    def on_leave(
+        self, original_node: libcst.CSTNode, updated_node: libcst.CSTNode
+    ) -> Union[libcst.CSTNode, MaybeSentinel, RemovalSentinel]:
+        # Track original to updated node mapping for this node.
+        self.node_lut[original_node] = updated_node
+
+        # This gets complicated. We need to do the match on the original node,
+        # but we want to do the extraction on the updated node. This is so
+        # metadata works properly in matchers. So, if we get a match, we fix
+        # up the nodes in the match and return that to the replacement lambda.
+        extracted = _matches(original_node, self.matcher, self.metadata_lookup)
+        if extracted is not None:
+            try:
+                # Attempt to do a translation from original to updated node.
+                extracted = self._extraction_translate(extracted)
+            except KeyError:
+                # One of the nodes we looked up doesn't exist anymore, this
+                # is no longer a match. This can happen if a child node was
+                # modified, making this original match not applicable anymore.
+                extracted = None
+        if extracted is not None:
+            # We're replacing this node entirely, so don't save the original
+            # updated node. We don't want this to be part of a parent match
+            # since we can't guarantee that the update matches anymore.
+            del self.node_lut[original_node]
+            return self.replacement(updated_node, extracted)
+        return updated_node
+
+
+def replace(
+    tree: Union[MaybeSentinel, RemovalSentinel, libcst.CSTNode, meta.MetadataWrapper],
+    matcher: Union[
+        BaseMatcherNode, MatchIfTrue[Callable[[object], bool]], _BaseMetadataMatcher,
+    ],
+    replacement: Union[
+        MaybeSentinel,
+        RemovalSentinel,
+        libcst.CSTNode,
+        Callable[
+            [
+                libcst.CSTNode,
+                Dict[str, Union[libcst.CSTNode, Sequence[libcst.CSTNode]]],
+            ],
+            Union[MaybeSentinel, RemovalSentinel, libcst.CSTNode],
+        ],
+    ],
+    *,
+    metadata_resolver: Optional[
+        Union[libcst.MetadataDependent, libcst.MetadataWrapper]
+    ] = None,
+) -> Union[MaybeSentinel, RemovalSentinel, libcst.CSTNode]:
+    """
+    Given an arbitrary node from a LibCST tree and an arbitrary matcher, iterates
+    over that node and all children and replaces each node that matches the supplied
+    matcher with a supplied replacement. Note that the replacement can either be a
+    valid node type, or a callable which takes the matched node and a dictionary of
+    any extracted child values and returns a valid node type. If you provide a
+    valid LibCST node type, :func:`replace` will replace every node that matches
+    the supplied matcher with the replacement node. If you provide a callable,
+    :func:`replace` will run :func:`extract` over all matched nodes and call the
+    callable with both the node that should be replaced and the dictionary returned
+    by :func:`extract`. Under all circumstances a new tree is returned.
+    :func:`extract` should be viewed as a short-cut to writing a transform which
+    also returns a new tree even when no changes are applied.
+
+    Note that the tree can also be a :class:`~libcst.RemovalSentinel` or a
+    :class:`~libcst.MaybeSentinel` in order to use replace directly on transform
+    results and node attributes. In these cases, :func:`replace` will return the
+    same :class:`~libcst.RemovalSentinel` or :class:`~libcst.MaybeSentinel`.
+    Note also that instead of a LibCST tree, you can instead pass in a
+    :class:`~libcst.metadata.MetadataWrapper`. This mirrors the fact that you can
+    call ``visit`` on a :class:`~libcst.metadata.MetadataWrapper` in order to
+    iterate over it with a transform. If you provide a wrapper for the tree and
+    do not set the ``metadata_resolver`` parameter specifically, it will
+    automatically be set to the wrapper for you.
+
+    The matcher can be any concrete matcher that subclasses from :class:`BaseMatcherNode`,
+    or a :class:`OneOf`/:class:`AllOf` special matcher. Unlike :func:`matches`, it can
+    also be a :class:`MatchIfTrue` or :func:`DoesNotMatch` matcher, since we are
+    traversing the tree looking for matches. It cannot be a :class:`AtLeastN` or
+    :class:`AtMostN` matcher because these types are wildcards which can only be usedi
+    inside sequences.
+    """
+    if isinstance(tree, (RemovalSentinel, MaybeSentinel)):
+        # We can't do any replacements on this, so return the tree exactly.
+        return copy.deepcopy(tree)
+    if isinstance(matcher, (AtLeastN, AtMostN)):
+        # We can't match this, since these matchers are forbidden at top level.
+        # These are not subclasses of BaseMatcherNode, but in the case that the
+        # user is not using type checking, this should still behave correctly.
+        if isinstance(tree, libcst.CSTNode):
+            return tree.deep_clone()
+        elif isinstance(tree, meta.MetadataWrapper):
+            return tree.module.deep_clone()
+        else:
+            raise Exception("Logic error!")
+
+    if isinstance(tree, meta.MetadataWrapper) and metadata_resolver is None:
+        # Provide a convenience for calling replace directly on a MetadataWrapper.
+        metadata_resolver = tree
+
+    if metadata_resolver is None:
+        fetcher = _construct_metadata_fetcher_null()
+    elif isinstance(metadata_resolver, libcst.MetadataWrapper):
+        fetcher = _construct_metadata_fetcher_wrapper(metadata_resolver)
+    else:
+        fetcher = _construct_metadata_fetcher_dependent(metadata_resolver)
+
+    replacer = _ReplaceTransformer(matcher, fetcher, replacement)
+    return tree.visit(replacer)

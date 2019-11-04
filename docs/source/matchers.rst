@@ -33,6 +33,7 @@ selectively control when LibCST calls visitor functions.
 .. autofunction:: libcst.matchers.findall
 .. autofunction:: libcst.matchers.extract
 .. autofunction:: libcst.matchers.extractall
+.. autofunction:: libcst.matchers.replace
 
 .. _libcst-matcher-decorators:
 
