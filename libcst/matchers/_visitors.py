@@ -42,6 +42,7 @@ from libcst.matchers._matcher_base import (
     extractall,
     findall,
     matches,
+    replace,
 )
 from libcst.matchers._return_types import TYPED_FUNCTION_RETURN_MAPPING
 
@@ -611,6 +612,34 @@ class MatcherDecoratableTransformer(CSTTransformer):
         """
         return extractall(tree, matcher, metadata_resolver=self)
 
+    def replace(
+        self,
+        tree: Union[cst.MaybeSentinel, cst.RemovalSentinel, cst.CSTNode],
+        matcher: Union[
+            BaseMatcherNode,
+            MatchIfTrue[Callable[..., bool]],
+            MatchMetadata,
+            MatchMetadataIfTrue,
+        ],
+        replacement: Union[
+            cst.MaybeSentinel,
+            cst.RemovalSentinel,
+            cst.CSTNode,
+            Callable[
+                [cst.CSTNode, Dict[str, Union[cst.CSTNode, Sequence[cst.CSTNode]]],],
+                Union[cst.MaybeSentinel, cst.RemovalSentinel, cst.CSTNode],
+            ],
+        ],
+    ) -> Union[cst.MaybeSentinel, cst.RemovalSentinel, cst.CSTNode]:
+        """
+        A convenience method to call :func:`~libcst.matchers.replace` without requiring
+        an explicit parameter for metadata. Since our instance is an instance of
+        :class:`libcst.MetadataDependent`, we work as a metadata resolver. Please see
+        documentation for :func:`~libcst.matchers.replace` as it is identical to this
+        function.
+        """
+        return replace(tree, matcher, replacement, metadata_resolver=self)
+
     def _transform_module_impl(self, tree: cst.Module) -> cst.Module:
         return tree.visit(self)
 
@@ -780,3 +809,31 @@ class MatcherDecoratableVisitor(CSTVisitor):
         function.
         """
         return extractall(tree, matcher, metadata_resolver=self)
+
+    def replace(
+        self,
+        tree: Union[cst.MaybeSentinel, cst.RemovalSentinel, cst.CSTNode],
+        matcher: Union[
+            BaseMatcherNode,
+            MatchIfTrue[Callable[..., bool]],
+            MatchMetadata,
+            MatchMetadataIfTrue,
+        ],
+        replacement: Union[
+            cst.MaybeSentinel,
+            cst.RemovalSentinel,
+            cst.CSTNode,
+            Callable[
+                [cst.CSTNode, Dict[str, Union[cst.CSTNode, Sequence[cst.CSTNode]]],],
+                Union[cst.MaybeSentinel, cst.RemovalSentinel, cst.CSTNode],
+            ],
+        ],
+    ) -> Union[cst.MaybeSentinel, cst.RemovalSentinel, cst.CSTNode]:
+        """
+        A convenience method to call :func:`~libcst.matchers.replace` without requiring
+        an explicit parameter for metadata. Since our instance is an instance of
+        :class:`libcst.MetadataDependent`, we work as a metadata resolver. Please see
+        documentation for :func:`~libcst.matchers.replace` as it is identical to this
+        function.
+        """
+        return replace(tree, matcher, replacement, metadata_resolver=self)

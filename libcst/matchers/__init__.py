@@ -34,6 +34,7 @@ from libcst.matchers._matcher_base import (
     extractall,
     findall,
     matches,
+    replace,
 )
 from libcst.matchers._visitors import (
     MatchDecoratorMismatch,
@@ -13471,5 +13472,6 @@ __all__ = [
     "findall",
     "leave",
     "matches",
+    "replace",
     "visit",
 ]
