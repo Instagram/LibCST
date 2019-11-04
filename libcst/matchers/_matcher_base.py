@@ -18,6 +18,7 @@ from typing import (
     Optional,
     Pattern,
     Sequence,
+    Tuple,
     Type,
     TypeVar,
     Union,
@@ -296,15 +297,15 @@ class _InverseOf(Generic[_MatcherT]):
 class _ExtractMatchingNode(Generic[_MatcherT]):
     """
     Transparent pass-through matcher that captures the node which matches its children,
-    making it available to the caller of :func:`extract`.
+    making it available to the caller of :func:`extract` or :func:`extractall`.
 
     Note that you should refrain from constructing a :class:`_ExtractMatchingNode`
     directly, and should instead use the :func:`SaveMatchedNode` helper function.
 
     For example, the following will match against any binary operation whose left
     and right operands are not integers, saving those expressions for later inspection.
-    If used inside a :func:`extract`, the resulting dictionary will contain the
-    keys ``left_operand`` and ``right_operand``.
+    If used inside :func:`extract` or :func:`extractall`, the resulting dictionary will
+    contain the keys ``left_operand`` and ``right_operand``.
 
         m.BinaryOperation(
             left=m.SaveMatchedNode(
@@ -335,7 +336,7 @@ class _ExtractMatchingNode(Generic[_MatcherT]):
     def name(self) -> str:
         """
         The name we will call our captured LibCST node inside the resulting dictionary
-        returned by :func:`extract`.
+        returned by :func:`extract` or :func:`extractall`.
         """
         return self._name
 
@@ -904,12 +905,13 @@ def DoesNotMatch(obj: _OtherNodeT) -> _OtherNodeT:
 def SaveMatchedNode(matcher: _OtherNodeT, name: str) -> _OtherNodeT:
     """
     Matcher helper that captures the matched node that matched against a matcher
-    class, making it available in the dictionary returned by :func:`extract`.
+    class, making it available in the dictionary returned by :func:`extract` or
+    :func:`extractall`.
 
     For example, the following will match against any binary operation whose left
     and right operands are not integers, saving those expressions for later inspection.
-    If used inside a :func:`extract`, the resulting dictionary will contain the
-    keys ``left_operand`` and ``right_operand``::
+    If used inside :func:`extract` or :func:`extractall`, the resulting dictionary
+    will contain the keys ``left_operand`` and ``right_operand``::
 
         m.BinaryOperation(
             left=m.SaveMatchedNode(
@@ -1472,19 +1474,30 @@ class _FindAllVisitor(libcst.CSTVisitor):
         self.matcher = matcher
         self.metadata_lookup = metadata_lookup
         self.found_nodes: List[libcst.CSTNode] = []
+        self.extracted_nodes: List[
+            Dict[str, Union[libcst.CSTNode, Sequence[libcst.CSTNode]]]
+        ] = []
 
     def on_visit(self, node: libcst.CSTNode) -> bool:
-        if _matches(node, self.matcher, self.metadata_lookup) is not None:
+        match = _matches(node, self.matcher, self.metadata_lookup)
+        if match is not None:
             self.found_nodes.append(node)
+            self.extracted_nodes.append(match)
         return True
 
 
-def findall(
+def _find_or_extract_all(
     tree: Union[MaybeSentinel, RemovalSentinel, libcst.CSTNode, meta.MetadataWrapper],
     matcher: Union[
         BaseMatcherNode,
         MatchIfTrue[Callable[[object], bool]],
         _BaseMetadataMatcher,
+        # The inverse clause is left off of the public functions `findall` and
+        # `extractall` because we play a dirty trick. We lie to the typechecker
+        # that `DoesNotMatch` returns identity, so the public functions don't
+        # need to be aware of inverses. If we could represent predicate logic
+        # in python types we could get away with this, but that's not the state
+        # of things right now.
         _InverseOf[
             Union[
                 BaseMatcherNode,
@@ -1497,11 +1510,49 @@ def findall(
     metadata_resolver: Optional[
         Union[libcst.MetadataDependent, libcst.MetadataWrapper]
     ] = None,
+) -> Tuple[
+    Sequence[libcst.CSTNode],
+    Sequence[Dict[str, Union[libcst.CSTNode, Sequence[libcst.CSTNode]]]],
+]:
+    if isinstance(tree, (RemovalSentinel, MaybeSentinel)):
+        # We can't possibly match on a removal sentinel, so it doesn't match.
+        return [], []
+    if isinstance(matcher, (AtLeastN, AtMostN)):
+        # We can't match this, since these matchers are forbidden at top level.
+        # These are not subclasses of BaseMatcherNode, but in the case that the
+        # user is not using type checking, this should still behave correctly.
+        return [], []
+
+    if isinstance(tree, meta.MetadataWrapper) and metadata_resolver is None:
+        # Provide a convenience for calling findall directly on a MetadataWrapper.
+        metadata_resolver = tree
+
+    if metadata_resolver is None:
+        fetcher = _construct_metadata_fetcher_null()
+    elif isinstance(metadata_resolver, libcst.MetadataWrapper):
+        fetcher = _construct_metadata_fetcher_wrapper(metadata_resolver)
+    else:
+        fetcher = _construct_metadata_fetcher_dependent(metadata_resolver)
+
+    finder = _FindAllVisitor(matcher, fetcher)
+    tree.visit(finder)
+    return finder.found_nodes, finder.extracted_nodes
+
+
+def findall(
+    tree: Union[MaybeSentinel, RemovalSentinel, libcst.CSTNode, meta.MetadataWrapper],
+    matcher: Union[
+        BaseMatcherNode, MatchIfTrue[Callable[[object], bool]], _BaseMetadataMatcher,
+    ],
+    *,
+    metadata_resolver: Optional[
+        Union[libcst.MetadataDependent, libcst.MetadataWrapper]
+    ] = None,
 ) -> Sequence[libcst.CSTNode]:
     """
-    Given an arbitrary node from a LibCST tree, and an arbitrary matcher, iterates
-    over that node and all children, returning a sequence of all child nodes that
-    match the given matcher. Note that the node can also be a
+    Given an arbitrary node from a LibCST tree and an arbitrary matcher, iterates
+    over that node and all children returning a sequence of all child nodes that
+    match the given matcher. Note that the tree can also be a
     :class:`~libcst.RemovalSentinel` or a :class:`~libcst.MaybeSentinel`
     in order to use findall directly on transform results and node attributes. In these
     cases, :func:`findall` will always return an empty sequence. Note also that
@@ -1519,26 +1570,44 @@ def findall(
     :class:`AtMostN` matcher because these types are wildcards which can only be usedi
     inside sequences.
     """
-    if isinstance(tree, (RemovalSentinel, MaybeSentinel)):
-        # We can't possibly match on a removal sentinel, so it doesn't match.
-        return []
-    if isinstance(matcher, (AtLeastN, AtMostN)):
-        # We can't match this, since these matchers are forbidden at top level.
-        # These are not subclasses of BaseMatcherNode, but in the case that the
-        # user is not using type checking, this should still behave correctly.
-        return []
+    nodes, _ = _find_or_extract_all(tree, matcher, metadata_resolver=metadata_resolver)
+    return nodes
 
-    if isinstance(tree, meta.MetadataWrapper) and metadata_resolver is None:
-        # Provide a convenience for calling findall directly on a MetadataWrapper.
-        metadata_resolver = tree
 
-    if metadata_resolver is None:
-        fetcher = _construct_metadata_fetcher_null()
-    elif isinstance(metadata_resolver, libcst.MetadataWrapper):
-        fetcher = _construct_metadata_fetcher_wrapper(metadata_resolver)
-    else:
-        fetcher = _construct_metadata_fetcher_dependent(metadata_resolver)
+def extractall(
+    tree: Union[MaybeSentinel, RemovalSentinel, libcst.CSTNode, meta.MetadataWrapper],
+    matcher: Union[
+        BaseMatcherNode, MatchIfTrue[Callable[[object], bool]], _BaseMetadataMatcher,
+    ],
+    *,
+    metadata_resolver: Optional[
+        Union[libcst.MetadataDependent, libcst.MetadataWrapper]
+    ] = None,
+) -> Sequence[Dict[str, Union[libcst.CSTNode, Sequence[libcst.CSTNode]]]]:
+    """
+    Given an arbitrary node from a LibCST tree and an arbitrary matcher, iterates
+    over that node and all children returning a sequence of dictionaries representing
+    the saved and extracted children specified by :func:`SaveMatchedNode` for each
+    match found in the tree. This is analogous to running a :func:`findall` over a
+    tree, then running :func:`extract` with the same matcher over each of the returned
+    nodes. Note that the tree can also be a :class:`~libcst.RemovalSentinel` or a
+    :class:`~libcst.MaybeSentinel` in order to use extractall directly on transform
+    results and node attributes. In these cases, :func:`extractall` will always
+    return an empty sequence. Note also that instead of a LibCST tree, you can
+    instead pass in a :class:`~libcst.metadata.MetadataWrapper`. This mirrors the
+    fact that you can call ``visit`` on a :class:`~libcst.metadata.MetadataWrapper`
+    in order to iterate over it with a transform. If you provide a wrapper for the
+    tree and do not set the ``metadata_resolver`` parameter specifically, it will
+    automatically be set to the wrapper for you.
 
-    finder = _FindAllVisitor(matcher, fetcher)
-    tree.visit(finder)
-    return finder.found_nodes
+    The matcher can be any concrete matcher that subclasses from :class:`BaseMatcherNode`,
+    or a :class:`OneOf`/:class:`AllOf` special matcher. Unlike :func:`matches`, it can
+    also be a :class:`MatchIfTrue` or :func:`DoesNotMatch` matcher, since we are
+    traversing the tree looking for matches. It cannot be a :class:`AtLeastN` or
+    :class:`AtMostN` matcher because these types are wildcards which can only be usedi
+    inside sequences.
+    """
+    _, extractions = _find_or_extract_all(
+        tree, matcher, metadata_resolver=metadata_resolver
+    )
+    return extractions
