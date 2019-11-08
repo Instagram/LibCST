@@ -107,6 +107,17 @@ class ExpressionContextVisitor(cst.CSTVisitor):
             inner_for_in.visit(self)
         return False
 
+    def visit_For(self, node: cst.For) -> bool:
+        node.target.visit(
+            ExpressionContextVisitor(self.provider, ExpressionContext.STORE)
+        )
+        node.iter.visit(self)
+        node.body.visit(self)
+        orelse = node.orelse
+        if orelse:
+            orelse.visit(self)
+        return False
+
     def visit_Del(self, node: cst.Del) -> bool:
         node.target.visit(
             ExpressionContextVisitor(self.provider, ExpressionContext.DEL)

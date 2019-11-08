@@ -348,3 +348,16 @@ class ExpressionContextProviderTest(UnitTest):
                 },
             )
         )
+
+    def test_for(self) -> None:
+        wrapper = MetadataWrapper(parse_module("for i in items:\n    j = 1"))
+        wrapper.visit(
+            DependentVisitor(
+                test=self,
+                name_to_context={
+                    "i": ExpressionContext.STORE,
+                    "items": ExpressionContext.LOAD,
+                    "j": ExpressionContext.STORE,
+                },
+            )
+        )
