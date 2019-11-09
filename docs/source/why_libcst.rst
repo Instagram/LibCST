@@ -190,7 +190,7 @@ Concrete Syntax Trees are good for operations that don't significantly change th
 LibCST
 ======
 
-LibCST takes a compromise between the two formats outlined above. Like a CST, LibCST preserves all whitespace and can be reprinted exactly. Like an AST, LibCST parses source into nodes that represent the semtantics of the code.
+LibCST takes a compromise between the two formats outlined above. Like a CST, LibCST preserves all whitespace and can be reprinted exactly. Like an AST, LibCST parses source into nodes that represent the semantics of the code.
 
 .. code-block:: python
 
