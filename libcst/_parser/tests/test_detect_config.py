@@ -4,6 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 # pyre-strict
+import dataclasses
 from typing import Union
 
 from libcst._parser.detect_config import detect_config
@@ -27,6 +28,7 @@ class TestDetectConfig(UnitTest):
                     default_newline="\n",
                     has_trailing_newline=False,
                     version=PythonVersionInfo(3, 7),
+                    future_imports=set(),
                 ),
             },
             "detect_trailing_newline_disabled": {
@@ -41,6 +43,7 @@ class TestDetectConfig(UnitTest):
                     default_newline="\n",
                     has_trailing_newline=False,
                     version=PythonVersionInfo(3, 7),
+                    future_imports=set(),
                 ),
             },
             "detect_default_newline_disabled": {
@@ -55,6 +58,7 @@ class TestDetectConfig(UnitTest):
                     default_newline="\n",
                     has_trailing_newline=False,
                     version=PythonVersionInfo(3, 7),
+                    future_imports=set(),
                 ),
             },
             "newline_inferred": {
@@ -69,6 +73,7 @@ class TestDetectConfig(UnitTest):
                     default_newline="\r\n",
                     has_trailing_newline=True,
                     version=PythonVersionInfo(3, 7),
+                    future_imports=set(),
                 ),
             },
             "newline_partial_given": {
@@ -85,6 +90,7 @@ class TestDetectConfig(UnitTest):
                     default_newline="\n",  # The given partial disables inference
                     has_trailing_newline=True,
                     version=PythonVersionInfo(3, 7),
+                    future_imports=set(),
                 ),
             },
             "indent_inferred": {
@@ -99,6 +105,7 @@ class TestDetectConfig(UnitTest):
                     default_newline="\n",
                     has_trailing_newline=True,
                     version=PythonVersionInfo(3, 7),
+                    future_imports=set(),
                 ),
             },
             "indent_partial_given": {
@@ -115,6 +122,7 @@ class TestDetectConfig(UnitTest):
                     default_newline="\n",
                     has_trailing_newline=True,
                     version=PythonVersionInfo(3, 7),
+                    future_imports=set(),
                 ),
             },
             "encoding_inferred": {
@@ -134,6 +142,7 @@ class TestDetectConfig(UnitTest):
                     default_newline="\n",
                     has_trailing_newline=True,
                     version=PythonVersionInfo(3, 7),
+                    future_imports=set(),
                 ),
             },
             "encoding_partial_given": {
@@ -155,6 +164,7 @@ class TestDetectConfig(UnitTest):
                     default_newline="\n",
                     has_trailing_newline=True,
                     version=PythonVersionInfo(3, 7),
+                    future_imports=set(),
                 ),
             },
             "encoding_str_not_bytes_disables_inference": {
@@ -174,6 +184,7 @@ class TestDetectConfig(UnitTest):
                     default_newline="\n",
                     has_trailing_newline=True,
                     version=PythonVersionInfo(3, 7),
+                    future_imports=set(),
                 ),
             },
             "encoding_non_ascii_compatible_utf_16_with_bom": {
@@ -188,6 +199,7 @@ class TestDetectConfig(UnitTest):
                     default_newline="\n",
                     has_trailing_newline=False,
                     version=PythonVersionInfo(3, 7),
+                    future_imports=set(),
                 ),
             },
             "detect_trailing_newline_missing_newline": {
@@ -202,6 +214,7 @@ class TestDetectConfig(UnitTest):
                     default_newline="\n",
                     has_trailing_newline=False,
                     version=PythonVersionInfo(3, 7),
+                    future_imports=set(),
                 ),
             },
             "detect_trailing_newline_has_newline": {
@@ -216,6 +229,7 @@ class TestDetectConfig(UnitTest):
                     default_newline="\n",
                     has_trailing_newline=True,
                     version=PythonVersionInfo(3, 7),
+                    future_imports=set(),
                 ),
             },
             "detect_trailing_newline_missing_newline_after_line_continuation": {
@@ -230,6 +244,7 @@ class TestDetectConfig(UnitTest):
                     default_newline="\n",
                     has_trailing_newline=False,
                     version=PythonVersionInfo(3, 7),
+                    future_imports=set(),
                 ),
             },
             "detect_trailing_newline_has_newline_after_line_continuation": {
@@ -244,6 +259,50 @@ class TestDetectConfig(UnitTest):
                     default_newline="\n",
                     has_trailing_newline=True,
                     version=PythonVersionInfo(3, 7),
+                    future_imports=set(),
+                ),
+            },
+            "future_imports_in_correct_position": {
+                "source": b"# C\n''' D '''\nfrom __future__ import a as b\n",
+                "partial": PartialParserConfig(python_version="3.7"),
+                "detect_trailing_newline": True,
+                "detect_default_newline": True,
+                "expected_config": ParserConfig(
+                    lines=[
+                        "# C\n",
+                        "''' D '''\n",
+                        "from __future__ import a as b\n",
+                        "",
+                    ],
+                    encoding="utf-8",
+                    default_indent="    ",
+                    default_newline="\n",
+                    has_trailing_newline=True,
+                    version=PythonVersionInfo(3, 7),
+                    future_imports={"a"},
+                ),
+            },
+            "future_imports_in_mixed_position": {
+                "source": (
+                    b"from __future__ import a, b\nimport os\n"
+                    b"from __future__ import c\n"
+                ),
+                "partial": PartialParserConfig(python_version="3.7"),
+                "detect_trailing_newline": True,
+                "detect_default_newline": True,
+                "expected_config": ParserConfig(
+                    lines=[
+                        "from __future__ import a, b\n",
+                        "import os\n",
+                        "from __future__ import c\n",
+                        "",
+                    ],
+                    encoding="utf-8",
+                    default_indent="    ",
+                    default_newline="\n",
+                    has_trailing_newline=True,
+                    version=PythonVersionInfo(3, 7),
+                    future_imports={"a", "b"},
                 ),
             },
         }
@@ -258,11 +317,13 @@ class TestDetectConfig(UnitTest):
         expected_config: ParserConfig,
     ) -> None:
         self.assertEqual(
-            detect_config(
-                source,
-                partial=partial,
-                detect_trailing_newline=detect_trailing_newline,
-                detect_default_newline=detect_default_newline,
-            ).config,
-            expected_config,
+            dataclasses.asdict(
+                detect_config(
+                    source,
+                    partial=partial,
+                    detect_trailing_newline=detect_trailing_newline,
+                    detect_default_newline=detect_default_newline,
+                ).config
+            ),
+            dataclasses.asdict(expected_config),
         )

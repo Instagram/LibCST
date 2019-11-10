@@ -10,7 +10,7 @@ import re
 from dataclasses import dataclass
 from io import BytesIO
 from tokenize import detect_encoding as py_tokenize_detect_encoding
-from typing import Iterable, Iterator, Pattern, Union
+from typing import Iterable, Iterator, Pattern, Set, Union
 
 from libcst._nodes.whitespace import NEWLINE_RE
 from libcst._parser.parso.python.token import PythonTokenTypes, TokenType
@@ -21,6 +21,10 @@ from libcst._parser.wrapped_tokenize import tokenize_lines
 
 
 _INDENT: TokenType = PythonTokenTypes.INDENT
+_NAME: TokenType = PythonTokenTypes.NAME
+_NEWLINE: TokenType = PythonTokenTypes.NEWLINE
+_STRING: TokenType = PythonTokenTypes.STRING
+
 _FALLBACK_DEFAULT_NEWLINE = "\n"
 _FALLBACK_DEFAULT_INDENT = "    "
 _CONTINUATION_RE: Pattern[str] = re.compile(r"\\(\r\n?|\n)", re.UNICODE)
@@ -78,6 +82,38 @@ def _detect_trailing_newline(source_str: str) -> bool:
         _CONTINUATION_RE.fullmatch(source_str[-2:])
         or _CONTINUATION_RE.fullmatch(source_str[-3:])
     )
+
+
+def _detect_future_imports(tokens: Iterable[Token]) -> Set[str]:
+    """
+    Finds __future__ imports in their proper locations.
+
+    See `https://www.python.org/dev/peps/pep-0236/`_
+    """
+    future_imports: Set[str] = set()
+    state = 0
+    for tok in tokens:
+        if state == 0 and tok.type in (_STRING, _NEWLINE):
+            continue
+        elif state == 0 and tok.string == "from":
+            state = 1
+        elif state == 1 and tok.string == "__future__":
+            state = 2
+        elif state == 2 and tok.string == "import":
+            state = 3
+        elif state == 3 and tok.string == "as":
+            state = 4
+        elif state == 3 and tok.type == _NAME:
+            future_imports.add(tok.string)
+        elif state == 4 and tok.type == _NAME:
+            state = 3
+        elif state == 3 and tok.string in "(),":
+            continue
+        elif state == 3 and tok.type == _NEWLINE:
+            state = 0
+        else:
+            break
+    return future_imports
 
 
 def detect_config(
@@ -144,6 +180,14 @@ def detect_config(
     else:
         default_indent = partial_default_indent
 
+    partial_future_imports = partial.future_imports
+    if isinstance(partial_future_imports, AutoConfig):
+        # Same note as above re itertools.tee, we will consume tokens.
+        tokens, tokens_dup = itertools.tee(tokens)
+        future_imports = _detect_future_imports(tokens_dup)
+    else:
+        future_imports = partial_future_imports
+
     return ConfigDetectionResult(
         config=ParserConfig(
             lines=lines,
@@ -152,6 +196,7 @@ def detect_config(
             default_newline=default_newline,
             has_trailing_newline=has_trailing_newline,
             version=python_version,
+            future_imports=future_imports,
         ),
         tokens=tokens,
     )
