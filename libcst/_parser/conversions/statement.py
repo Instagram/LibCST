@@ -306,6 +306,15 @@ def convert_annassign(config: ParserConfig, children: Sequence[Any]) -> Any:
         "('+=' | '-=' | '*=' | '@=' | '/=' | '%=' | '&=' | '|=' | '^=' | '<<=' | "
         + "'>>=' | '**=' | '//=') (yield_expr | testlist)"
     ),
+    version=">=3.5",
+)
+@with_production(
+    "augassign",
+    (
+        "('+=' | '-=' | '*=' | '/=' | '%=' | '&=' | '|=' | '^=' | '<<=' | "
+        + "'>>=' | '**=' | '//=') (yield_expr | testlist)"
+    ),
+    version="<3.5",
 )
 def convert_augassign(config: ParserConfig, children: Sequence[Any]) -> Any:
     op, expr = children

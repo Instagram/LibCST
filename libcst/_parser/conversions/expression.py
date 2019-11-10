@@ -478,7 +478,8 @@ def convert_star_expr(
 @with_production("and_expr", "shift_expr ('&' shift_expr)*")
 @with_production("shift_expr", "arith_expr (('<<'|'>>') arith_expr)*")
 @with_production("arith_expr", "term (('+'|'-') term)*")
-@with_production("term", "factor (('*'|'@'|'/'|'%'|'//') factor)*")
+@with_production("term", "factor (('*'|'@'|'/'|'%'|'//') factor)*", version=">=3.5")
+@with_production("term", "factor (('*'|'/'|'%'|'//') factor)*", version="<3.5")
 def convert_binop(
     config: ParserConfig, children: typing.Sequence[typing.Any]
 ) -> typing.Any:
