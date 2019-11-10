@@ -59,6 +59,9 @@ class AutoConfig(Enum):
         return str(self)
 
 
+KNOWN_PYTHON_VERSION_STRINGS = ["3.3", "3.5", "3.6", "3.7", "3.8"]
+
+
 @add_slots
 @dataclass(frozen=True)
 class PartialParserConfig:
@@ -84,7 +87,7 @@ class PartialParserConfig:
     #: run LibCST. For example, you can parse code as 3.7 with a CPython 3.6
     #: interpreter.
     #:
-    #: Currently, only Python 3.5, 3.6, 3.7 and 3.8 syntax is supported.
+    #: Currently, only Python 3.3, 3.5, 3.6, 3.7 and 3.8 syntax is supported.
     python_version: Union[str, AutoConfig] = AutoConfig.token
 
     #: A named tuple with the ``major`` and ``minor`` Python version numbers. This is
@@ -121,15 +124,14 @@ class PartialParserConfig:
 
         # Once we add support for more versions of Python, we can change this to detect
         # the supported version range.
-        if parsed_python_version not in (
-            PythonVersionInfo(3, 5),
-            PythonVersionInfo(3, 6),
-            PythonVersionInfo(3, 7),
-            PythonVersionInfo(3, 8),
+        if not any(
+            parsed_python_version == parse_version_string(v)
+            for v in KNOWN_PYTHON_VERSION_STRINGS
         ):
+            comma_versions = ", ".join(KNOWN_PYTHON_VERSION_STRINGS)
             raise ValueError(
                 "LibCST can only parse code using one of the following versions of "
-                + "Python's grammar: 3.5, 3.6, 3.7, 3.8. More versions may be "
+                + f"Python's grammar: {comma_versions}. More versions may be "
                 + "supported by future releases."
             )
 
