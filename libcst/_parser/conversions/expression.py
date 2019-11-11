@@ -1103,13 +1103,16 @@ def convert_fstring_format_spec(
 
 @with_production(
     "testlist_comp_tuple",
-    "(test|star_expr) ( comp_for | (',' (test|star_expr))* [','] )",
-    version="<=3.7",
+    "(namedexpr_test|star_expr) ( comp_for | (',' (namedexpr_test|star_expr))* [','] )",
+    version=">=3.8",
 )
 @with_production(
     "testlist_comp_tuple",
-    "(namedexpr_test|star_expr) ( comp_for | (',' (namedexpr_test|star_expr))* [','] )",
-    version=">=3.8",
+    "(test|star_expr) ( comp_for | (',' (test|star_expr))* [','] )",
+    version=">=3.5,<3.8",
+)
+@with_production(
+    "testlist_comp_tuple", "(test) ( comp_for | (',' (test))* [','] )", version="<3.5",
 )
 def convert_testlist_comp_tuple(
     config: ParserConfig, children: typing.Sequence[typing.Any]
@@ -1125,13 +1128,16 @@ def convert_testlist_comp_tuple(
 
 @with_production(
     "testlist_comp_list",
-    "(test|star_expr) ( comp_for | (',' (test|star_expr))* [','] )",
-    version="<=3.7",
+    "(namedexpr_test|star_expr) ( comp_for | (',' (namedexpr_test|star_expr))* [','] )",
+    version=">=3.8",
 )
 @with_production(
     "testlist_comp_list",
-    "(namedexpr_test|star_expr) ( comp_for | (',' (namedexpr_test|star_expr))* [','] )",
-    version=">=3.8",
+    "(test|star_expr) ( comp_for | (',' (test|star_expr))* [','] )",
+    version=">=3.5,<3.8",
+)
+@with_production(
+    "testlist_comp_list", "(test) ( comp_for | (',' (test))* [','] )", version="<3.5",
 )
 def convert_testlist_comp_list(
     config: ParserConfig, children: typing.Sequence[typing.Any]
@@ -1242,6 +1248,17 @@ def _convert_sequencelike(
         + "((test | star_expr) "
         + " (comp_for | (',' (test | star_expr))* [','])) )"
     ),
+    version=">=3.5",
+)
+@with_production(
+    "dictorsetmaker",
+    (
+        "( ((test ':' test)"
+        + " (comp_for | (',' (test ':' test))* [','])) |"
+        + "((test) "
+        + " (comp_for | (',' (test))* [','])) )"
+    ),
+    version="<3.5",
 )
 def convert_dictorsetmaker(
     config: ParserConfig, children: typing.Sequence[typing.Any]

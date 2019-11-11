@@ -8,7 +8,7 @@ from typing import Any, Callable
 
 import libcst as cst
 from libcst import parse_expression
-from libcst._nodes.tests.base import CSTNodeTest
+from libcst._nodes.tests.base import CSTNodeTest, parse_expression_as
 from libcst.testing.utils import data_provider
 
 
@@ -118,3 +118,20 @@ class ListTest(CSTNodeTest):
         self, get_node: Callable[[], cst.CSTNode], expected_re: str
     ) -> None:
         self.assert_invalid(get_node, expected_re)
+
+    @data_provider(
+        (
+            {
+                "code": "{*x, 2}",
+                "parser": parse_expression_as(python_version="3.5"),
+                "expect_success": True,
+            },
+            {
+                "code": "{*x, 2}",
+                "parser": parse_expression_as(python_version="3.3"),
+                "expect_success": False,
+            },
+        )
+    )
+    def test_versions(self, code, parser, expect_success) -> None:
+        self.assert_parses(code, parser, expect_success)
