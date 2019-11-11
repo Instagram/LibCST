@@ -1,3 +1,31 @@
+# 0.2.3 - 2019-11-11
+
+## Added
+
+ - Preliminary support for 3.8 walrus operator.
+ - CI config and fuzz tests for 3.8.
+ - Experimental re-entrant codegen API.
+ - Added `unsafe_skip_copy` optimization to `MetadataWrapper`.
+ - Matchers API now includes a `findall` function.
+ - Matchers now have a `MatchMetadataIfTrue` special matcher.
+
+## Updated
+
+ - Updated to latest Black release.
+ - Better type documentation for generated matchers.
+
+## Fixed
+
+ - Clarified matchers documentation in several confusing areas.
+ - Drastically sped up codegen and tests.
+ - `QualifiedName` now supports imported attributtes.
+ - `ExpressionContext` properly marks loop variables as `STORE`.
+ - Various typos in documentation are fixed.
+
+## Deprecated
+
+ - Deprecated `BasicPositionProvider` and `SyntacticPositionProvider` in favor of `WhitespaceInclusivePositionProvider` and `PositionProvider`.
+
 # 0.2.2 - 2019-10-24
 
 ## Added
@@ -22,7 +50,6 @@
 
  - Deprecated `ExtSlice` in favor of `SubscriptElement`.
  - Deprecated parsing `Subscript` slices directly into `Index` or `Slice` nodes.
- - Deprecated `BasicPositionProvider` and `SyntacticPositionProvider`. Replaced with new name `WhitespaceInclusivePositionProvider` and `PositionProvider`.
 
 # 0.2.1 - 2019-10-14
 
