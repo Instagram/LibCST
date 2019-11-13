@@ -170,7 +170,7 @@ class AddLogicMatchersToUnions(cst.CSTTransformer):
             # Take the original node, remove do not care so we have concrete types.
             # Explicitly taking the original node because we want to discard nested
             # changes.
-            concrete_only_expr = _remove_types(original_node, ["DoNotCareSentinel"])
+            concrete_only_expr = _remove_types(updated_node, ["DoNotCareSentinel"])
             return updated_node.with_changes(
                 slice=[
                     *updated_node.slice,
@@ -337,18 +337,71 @@ def _get_clean_type_from_expression(
     return _wrap_clean_type(aliases, name, value)
 
 
+def _maybe_fix_sequence_in_union(
+    aliases: List[Alias], typecst: cst.SubscriptElement
+) -> cst.SubscriptElement:
+    slc = typecst.slice
+    if isinstance(slc, cst.Index):
+        val = slc.value
+        if isinstance(val, cst.Subscript):
+            return cst.ensure_type(
+                typecst.deep_replace(val, _get_clean_type_from_subscript(aliases, val)),
+                cst.SubscriptElement,
+            )
+    return typecst
+
+
+def _get_clean_type_from_union(
+    aliases: List[Alias], typecst: cst.Subscript
+) -> cst.BaseExpression:
+    name = _get_alias_name(typecst)
+    value = typecst.with_changes(
+        slice=[
+            # pyre-ignore We know .slice is a sequence. This can go away once we
+            # deprecate ExtSlice.
+            *[_maybe_fix_sequence_in_union(aliases, slc) for slc in typecst.slice],
+            _get_match_metadata(),
+            _get_match_if_true(typecst),
+        ]
+    )
+    return _wrap_clean_type(aliases, name, value)
+
+
 def _get_clean_type_from_subscript(
     aliases: List[Alias], typecst: cst.Subscript
 ) -> cst.BaseExpression:
+    if typecst.value.deep_equals(cst.Name("Sequence")):
+        # Lets attempt to widen the sequence type and alias it.
+        slc = typecst.slice
+        # TODO: This instance check can go away once we deprecate ExtSlice
+        if not isinstance(slc, Sequence):
+            raise Exception("Logic error, expected Sequence to have children!")
+
+        if len(slc) != 1:
+            raise Exception("Logic error, Sequence shouldn't have more than one param!")
+        inner_type = slc[0].slice
+        if not isinstance(inner_type, cst.Index):
+            raise Exception("Logic error, expecting Index for only Sequence element!")
+        inner_type = inner_type.value
+
+        if isinstance(inner_type, cst.Subscript):
+            clean_inner_type = _get_clean_type_from_subscript(aliases, inner_type)
+        elif isinstance(inner_type, (cst.Name, cst.SimpleString)):
+            clean_inner_type = _get_clean_type_from_expression(aliases, inner_type)
+        else:
+            raise Exception("Logic error, unexpected type in Sequence!")
+
+        return _get_wrapped_union_type(
+            typecst.deep_replace(inner_type, clean_inner_type),
+            _get_do_not_care(),
+            _get_match_if_true(typecst),
+        )
     # We can modify this as-is to add our extra values
-    if not typecst.value.deep_equals(cst.Name("Union")):
+    elif typecst.value.deep_equals(cst.Name("Union")):
+        return _get_clean_type_from_union(aliases, typecst)
+    else:
         # Don't handle other types like "Literal", just widen them.
         return _get_clean_type_from_expression(aliases, typecst)
-    name = _get_alias_name(typecst)
-    value = typecst.with_changes(
-        slice=[*typecst.slice, _get_match_metadata(), _get_match_if_true(typecst)]
-    )
-    return _wrap_clean_type(aliases, name, value)
 
 
 def _get_clean_type_and_aliases(
@@ -370,44 +423,9 @@ def _get_clean_type_and_aliases(
     typecst = typecst.visit(cleanser)
     aliases: List[Alias] = []
 
-    # Now, convert the type to allow for MetadataMatchType and MatchIfTrue values. This
-    # looks like it should be recursive given the Sequence code below, but we only
-    # want to do one level of recursion if that happens, so its unrolled.
+    # Now, convert the type to allow for MetadataMatchType and MatchIfTrue values.
     if isinstance(typecst, cst.Subscript):
-        if typecst.value.deep_equals(cst.Name("Sequence")):
-            # Lets attempt to widen the sequence type and alias it.
-            slc = typecst.slice
-            # TODO: This instance check can go away once we deprecate ExtSlice
-            if not isinstance(slc, Sequence):
-                raise Exception("Logic error, expected Sequence to have children!")
-
-            if len(slc) != 1:
-                raise Exception(
-                    "Logic error, Sequence shouldn't have more than one param!"
-                )
-            inner_type = slc[0].slice
-            if not isinstance(inner_type, cst.Index):
-                raise Exception(
-                    "Logic error, expecting Index for only Sequence element!"
-                )
-            inner_type = inner_type.value
-
-            if isinstance(inner_type, cst.Subscript):
-                clean_inner_type = _get_clean_type_from_subscript(aliases, inner_type)
-            elif isinstance(inner_type, (cst.Name, cst.SimpleString)):
-                clean_inner_type = _get_clean_type_from_expression(aliases, inner_type)
-            else:
-                raise Exception("Logic error, unexpected type in Sequence!")
-
-            clean_type = _get_wrapped_union_type(
-                typecst.deep_replace(inner_type, clean_inner_type),
-                _get_do_not_care(),
-                _get_match_if_true(inner_type),
-            )
-        else:
-            # This handles "Union" by aliasing this type. It also handles "Literal"
-            # since it will fail to alias, so we will fall back to widening.
-            clean_type = _get_clean_type_from_subscript(aliases, typecst)
+        clean_type = _get_clean_type_from_subscript(aliases, typecst)
     elif isinstance(typecst, (cst.Name, cst.SimpleString)):
         clean_type = _get_clean_type_from_expression(aliases, typecst)
     else:
