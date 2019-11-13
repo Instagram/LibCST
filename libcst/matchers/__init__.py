@@ -489,17 +489,31 @@ class Assign(BaseSmallStatement, BaseMatcherNode):
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.AssignTarget], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.AssignTarget]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         AssignTargetMatchType,
-                        AtLeastN[AssignTargetMatchType],
-                        AtMostN[AssignTargetMatchType],
+                        OneOf[AssignTargetMatchType],
+                        AllOf[AssignTargetMatchType],
+                        AtLeastN[
+                            Union[
+                                AssignTargetMatchType,
+                                OneOf[AssignTargetMatchType],
+                                AllOf[AssignTargetMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                AssignTargetMatchType,
+                                OneOf[AssignTargetMatchType],
+                                AllOf[AssignTargetMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.AssignTarget], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.AssignTarget]], bool]],
             ]
         ],
         AllOf[
@@ -507,11 +521,25 @@ class Assign(BaseSmallStatement, BaseMatcherNode):
                 Sequence[
                     Union[
                         AssignTargetMatchType,
-                        AtLeastN[AssignTargetMatchType],
-                        AtMostN[AssignTargetMatchType],
+                        OneOf[AssignTargetMatchType],
+                        AllOf[AssignTargetMatchType],
+                        AtLeastN[
+                            Union[
+                                AssignTargetMatchType,
+                                OneOf[AssignTargetMatchType],
+                                AllOf[AssignTargetMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                AssignTargetMatchType,
+                                OneOf[AssignTargetMatchType],
+                                AllOf[AssignTargetMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.AssignTarget], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.AssignTarget]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -662,17 +690,31 @@ class Attribute(
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.LeftParen], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         LeftParenMatchType,
-                        AtLeastN[LeftParenMatchType],
-                        AtMostN[LeftParenMatchType],
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                        AtLeastN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.LeftParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
             ]
         ],
         AllOf[
@@ -680,11 +722,25 @@ class Attribute(
                 Sequence[
                     Union[
                         LeftParenMatchType,
-                        AtLeastN[LeftParenMatchType],
-                        AtMostN[LeftParenMatchType],
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                        AtLeastN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.LeftParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -714,17 +770,31 @@ class Attribute(
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.RightParen], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         RightParenMatchType,
-                        AtLeastN[RightParenMatchType],
-                        AtMostN[RightParenMatchType],
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                        AtLeastN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.RightParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
             ]
         ],
         AllOf[
@@ -732,11 +802,25 @@ class Attribute(
                 Sequence[
                     Union[
                         RightParenMatchType,
-                        AtLeastN[RightParenMatchType],
-                        AtMostN[RightParenMatchType],
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                        AtLeastN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.RightParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -821,17 +905,31 @@ class Await(BaseExpression, BaseMatcherNode):
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.LeftParen], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         LeftParenMatchType,
-                        AtLeastN[LeftParenMatchType],
-                        AtMostN[LeftParenMatchType],
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                        AtLeastN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.LeftParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
             ]
         ],
         AllOf[
@@ -839,11 +937,25 @@ class Await(BaseExpression, BaseMatcherNode):
                 Sequence[
                     Union[
                         LeftParenMatchType,
-                        AtLeastN[LeftParenMatchType],
-                        AtMostN[LeftParenMatchType],
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                        AtLeastN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.LeftParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -873,17 +985,31 @@ class Await(BaseExpression, BaseMatcherNode):
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.RightParen], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         RightParenMatchType,
-                        AtLeastN[RightParenMatchType],
-                        AtMostN[RightParenMatchType],
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                        AtLeastN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.RightParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
             ]
         ],
         AllOf[
@@ -891,11 +1017,25 @@ class Await(BaseExpression, BaseMatcherNode):
                 Sequence[
                     Union[
                         RightParenMatchType,
-                        AtLeastN[RightParenMatchType],
-                        AtMostN[RightParenMatchType],
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                        AtLeastN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.RightParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -964,17 +1104,31 @@ class BinaryOperation(BaseExpression, BaseMatcherNode):
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.LeftParen], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         LeftParenMatchType,
-                        AtLeastN[LeftParenMatchType],
-                        AtMostN[LeftParenMatchType],
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                        AtLeastN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.LeftParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
             ]
         ],
         AllOf[
@@ -982,11 +1136,25 @@ class BinaryOperation(BaseExpression, BaseMatcherNode):
                 Sequence[
                     Union[
                         LeftParenMatchType,
-                        AtLeastN[LeftParenMatchType],
-                        AtMostN[LeftParenMatchType],
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                        AtLeastN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.LeftParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -1016,17 +1184,31 @@ class BinaryOperation(BaseExpression, BaseMatcherNode):
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.RightParen], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         RightParenMatchType,
-                        AtLeastN[RightParenMatchType],
-                        AtMostN[RightParenMatchType],
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                        AtLeastN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.RightParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
             ]
         ],
         AllOf[
@@ -1034,11 +1216,25 @@ class BinaryOperation(BaseExpression, BaseMatcherNode):
                 Sequence[
                     Union[
                         RightParenMatchType,
-                        AtLeastN[RightParenMatchType],
-                        AtMostN[RightParenMatchType],
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                        AtLeastN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.RightParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -1249,17 +1445,31 @@ class BooleanOperation(BaseExpression, BaseMatcherNode):
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.LeftParen], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         LeftParenMatchType,
-                        AtLeastN[LeftParenMatchType],
-                        AtMostN[LeftParenMatchType],
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                        AtLeastN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.LeftParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
             ]
         ],
         AllOf[
@@ -1267,11 +1477,25 @@ class BooleanOperation(BaseExpression, BaseMatcherNode):
                 Sequence[
                     Union[
                         LeftParenMatchType,
-                        AtLeastN[LeftParenMatchType],
-                        AtMostN[LeftParenMatchType],
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                        AtLeastN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.LeftParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -1301,17 +1525,31 @@ class BooleanOperation(BaseExpression, BaseMatcherNode):
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.RightParen], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         RightParenMatchType,
-                        AtLeastN[RightParenMatchType],
-                        AtMostN[RightParenMatchType],
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                        AtLeastN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.RightParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
             ]
         ],
         AllOf[
@@ -1319,11 +1557,25 @@ class BooleanOperation(BaseExpression, BaseMatcherNode):
                 Sequence[
                     Union[
                         RightParenMatchType,
-                        AtLeastN[RightParenMatchType],
-                        AtMostN[RightParenMatchType],
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                        AtLeastN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.RightParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -1388,21 +1640,49 @@ class Call(BaseExpression, BaseMatcherNode):
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.Arg], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.Arg]], bool]],
         OneOf[
             Union[
                 Sequence[
-                    Union[ArgMatchType, AtLeastN[ArgMatchType], AtMostN[ArgMatchType]]
+                    Union[
+                        ArgMatchType,
+                        OneOf[ArgMatchType],
+                        AllOf[ArgMatchType],
+                        AtLeastN[
+                            Union[
+                                ArgMatchType, OneOf[ArgMatchType], AllOf[ArgMatchType]
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                ArgMatchType, OneOf[ArgMatchType], AllOf[ArgMatchType]
+                            ]
+                        ],
+                    ]
                 ],
-                MatchIfTrue[Callable[[cst.Arg], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.Arg]], bool]],
             ]
         ],
         AllOf[
             Union[
                 Sequence[
-                    Union[ArgMatchType, AtLeastN[ArgMatchType], AtMostN[ArgMatchType]]
+                    Union[
+                        ArgMatchType,
+                        OneOf[ArgMatchType],
+                        AllOf[ArgMatchType],
+                        AtLeastN[
+                            Union[
+                                ArgMatchType, OneOf[ArgMatchType], AllOf[ArgMatchType]
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                ArgMatchType, OneOf[ArgMatchType], AllOf[ArgMatchType]
+                            ]
+                        ],
+                    ]
                 ],
-                MatchIfTrue[Callable[[cst.Arg], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.Arg]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -1432,17 +1712,31 @@ class Call(BaseExpression, BaseMatcherNode):
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.LeftParen], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         LeftParenMatchType,
-                        AtLeastN[LeftParenMatchType],
-                        AtMostN[LeftParenMatchType],
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                        AtLeastN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.LeftParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
             ]
         ],
         AllOf[
@@ -1450,11 +1744,25 @@ class Call(BaseExpression, BaseMatcherNode):
                 Sequence[
                     Union[
                         LeftParenMatchType,
-                        AtLeastN[LeftParenMatchType],
-                        AtMostN[LeftParenMatchType],
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                        AtLeastN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.LeftParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -1484,17 +1792,31 @@ class Call(BaseExpression, BaseMatcherNode):
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.RightParen], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         RightParenMatchType,
-                        AtLeastN[RightParenMatchType],
-                        AtMostN[RightParenMatchType],
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                        AtLeastN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.RightParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
             ]
         ],
         AllOf[
@@ -1502,11 +1824,25 @@ class Call(BaseExpression, BaseMatcherNode):
                 Sequence[
                     Union[
                         RightParenMatchType,
-                        AtLeastN[RightParenMatchType],
-                        AtMostN[RightParenMatchType],
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                        AtLeastN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.RightParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -1578,21 +1914,49 @@ class ClassDef(BaseCompoundStatement, BaseStatement, BaseMatcherNode):
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.Arg], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.Arg]], bool]],
         OneOf[
             Union[
                 Sequence[
-                    Union[ArgMatchType, AtLeastN[ArgMatchType], AtMostN[ArgMatchType]]
+                    Union[
+                        ArgMatchType,
+                        OneOf[ArgMatchType],
+                        AllOf[ArgMatchType],
+                        AtLeastN[
+                            Union[
+                                ArgMatchType, OneOf[ArgMatchType], AllOf[ArgMatchType]
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                ArgMatchType, OneOf[ArgMatchType], AllOf[ArgMatchType]
+                            ]
+                        ],
+                    ]
                 ],
-                MatchIfTrue[Callable[[cst.Arg], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.Arg]], bool]],
             ]
         ],
         AllOf[
             Union[
                 Sequence[
-                    Union[ArgMatchType, AtLeastN[ArgMatchType], AtMostN[ArgMatchType]]
+                    Union[
+                        ArgMatchType,
+                        OneOf[ArgMatchType],
+                        AllOf[ArgMatchType],
+                        AtLeastN[
+                            Union[
+                                ArgMatchType, OneOf[ArgMatchType], AllOf[ArgMatchType]
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                ArgMatchType, OneOf[ArgMatchType], AllOf[ArgMatchType]
+                            ]
+                        ],
+                    ]
                 ],
-                MatchIfTrue[Callable[[cst.Arg], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.Arg]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -1622,21 +1986,49 @@ class ClassDef(BaseCompoundStatement, BaseStatement, BaseMatcherNode):
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.Arg], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.Arg]], bool]],
         OneOf[
             Union[
                 Sequence[
-                    Union[ArgMatchType, AtLeastN[ArgMatchType], AtMostN[ArgMatchType]]
+                    Union[
+                        ArgMatchType,
+                        OneOf[ArgMatchType],
+                        AllOf[ArgMatchType],
+                        AtLeastN[
+                            Union[
+                                ArgMatchType, OneOf[ArgMatchType], AllOf[ArgMatchType]
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                ArgMatchType, OneOf[ArgMatchType], AllOf[ArgMatchType]
+                            ]
+                        ],
+                    ]
                 ],
-                MatchIfTrue[Callable[[cst.Arg], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.Arg]], bool]],
             ]
         ],
         AllOf[
             Union[
                 Sequence[
-                    Union[ArgMatchType, AtLeastN[ArgMatchType], AtMostN[ArgMatchType]]
+                    Union[
+                        ArgMatchType,
+                        OneOf[ArgMatchType],
+                        AllOf[ArgMatchType],
+                        AtLeastN[
+                            Union[
+                                ArgMatchType, OneOf[ArgMatchType], AllOf[ArgMatchType]
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                ArgMatchType, OneOf[ArgMatchType], AllOf[ArgMatchType]
+                            ]
+                        ],
+                    ]
                 ],
-                MatchIfTrue[Callable[[cst.Arg], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.Arg]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -1666,17 +2058,31 @@ class ClassDef(BaseCompoundStatement, BaseStatement, BaseMatcherNode):
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.Decorator], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.Decorator]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         DecoratorMatchType,
-                        AtLeastN[DecoratorMatchType],
-                        AtMostN[DecoratorMatchType],
+                        OneOf[DecoratorMatchType],
+                        AllOf[DecoratorMatchType],
+                        AtLeastN[
+                            Union[
+                                DecoratorMatchType,
+                                OneOf[DecoratorMatchType],
+                                AllOf[DecoratorMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                DecoratorMatchType,
+                                OneOf[DecoratorMatchType],
+                                AllOf[DecoratorMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.Decorator], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.Decorator]], bool]],
             ]
         ],
         AllOf[
@@ -1684,11 +2090,25 @@ class ClassDef(BaseCompoundStatement, BaseStatement, BaseMatcherNode):
                 Sequence[
                     Union[
                         DecoratorMatchType,
-                        AtLeastN[DecoratorMatchType],
-                        AtMostN[DecoratorMatchType],
+                        OneOf[DecoratorMatchType],
+                        AllOf[DecoratorMatchType],
+                        AtLeastN[
+                            Union[
+                                DecoratorMatchType,
+                                OneOf[DecoratorMatchType],
+                                AllOf[DecoratorMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                DecoratorMatchType,
+                                OneOf[DecoratorMatchType],
+                                AllOf[DecoratorMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.Decorator], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.Decorator]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -1730,17 +2150,31 @@ class ClassDef(BaseCompoundStatement, BaseStatement, BaseMatcherNode):
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.EmptyLine], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.EmptyLine]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         EmptyLineMatchType,
-                        AtLeastN[EmptyLineMatchType],
-                        AtMostN[EmptyLineMatchType],
+                        OneOf[EmptyLineMatchType],
+                        AllOf[EmptyLineMatchType],
+                        AtLeastN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.EmptyLine], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.EmptyLine]], bool]],
             ]
         ],
         AllOf[
@@ -1748,11 +2182,25 @@ class ClassDef(BaseCompoundStatement, BaseStatement, BaseMatcherNode):
                 Sequence[
                     Union[
                         EmptyLineMatchType,
-                        AtLeastN[EmptyLineMatchType],
-                        AtMostN[EmptyLineMatchType],
+                        OneOf[EmptyLineMatchType],
+                        AllOf[EmptyLineMatchType],
+                        AtLeastN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.EmptyLine], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.EmptyLine]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -1782,17 +2230,31 @@ class ClassDef(BaseCompoundStatement, BaseStatement, BaseMatcherNode):
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.EmptyLine], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.EmptyLine]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         EmptyLineMatchType,
-                        AtLeastN[EmptyLineMatchType],
-                        AtMostN[EmptyLineMatchType],
+                        OneOf[EmptyLineMatchType],
+                        AllOf[EmptyLineMatchType],
+                        AtLeastN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.EmptyLine], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.EmptyLine]], bool]],
             ]
         ],
         AllOf[
@@ -1800,11 +2262,25 @@ class ClassDef(BaseCompoundStatement, BaseStatement, BaseMatcherNode):
                 Sequence[
                     Union[
                         EmptyLineMatchType,
-                        AtLeastN[EmptyLineMatchType],
-                        AtMostN[EmptyLineMatchType],
+                        OneOf[EmptyLineMatchType],
+                        AllOf[EmptyLineMatchType],
+                        AtLeastN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.EmptyLine], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.EmptyLine]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -1951,17 +2427,31 @@ class CompFor(BaseMatcherNode):
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.CompIf], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.CompIf]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         CompIfMatchType,
-                        AtLeastN[CompIfMatchType],
-                        AtMostN[CompIfMatchType],
+                        OneOf[CompIfMatchType],
+                        AllOf[CompIfMatchType],
+                        AtLeastN[
+                            Union[
+                                CompIfMatchType,
+                                OneOf[CompIfMatchType],
+                                AllOf[CompIfMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                CompIfMatchType,
+                                OneOf[CompIfMatchType],
+                                AllOf[CompIfMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.CompIf], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.CompIf]], bool]],
             ]
         ],
         AllOf[
@@ -1969,11 +2459,25 @@ class CompFor(BaseMatcherNode):
                 Sequence[
                     Union[
                         CompIfMatchType,
-                        AtLeastN[CompIfMatchType],
-                        AtMostN[CompIfMatchType],
+                        OneOf[CompIfMatchType],
+                        AllOf[CompIfMatchType],
+                        AtLeastN[
+                            Union[
+                                CompIfMatchType,
+                                OneOf[CompIfMatchType],
+                                AllOf[CompIfMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                CompIfMatchType,
+                                OneOf[CompIfMatchType],
+                                AllOf[CompIfMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.CompIf], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.CompIf]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -2090,17 +2594,31 @@ class Comparison(BaseExpression, BaseMatcherNode):
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.ComparisonTarget], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.ComparisonTarget]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         ComparisonTargetMatchType,
-                        AtLeastN[ComparisonTargetMatchType],
-                        AtMostN[ComparisonTargetMatchType],
+                        OneOf[ComparisonTargetMatchType],
+                        AllOf[ComparisonTargetMatchType],
+                        AtLeastN[
+                            Union[
+                                ComparisonTargetMatchType,
+                                OneOf[ComparisonTargetMatchType],
+                                AllOf[ComparisonTargetMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                ComparisonTargetMatchType,
+                                OneOf[ComparisonTargetMatchType],
+                                AllOf[ComparisonTargetMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.ComparisonTarget], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.ComparisonTarget]], bool]],
             ]
         ],
         AllOf[
@@ -2108,11 +2626,25 @@ class Comparison(BaseExpression, BaseMatcherNode):
                 Sequence[
                     Union[
                         ComparisonTargetMatchType,
-                        AtLeastN[ComparisonTargetMatchType],
-                        AtMostN[ComparisonTargetMatchType],
+                        OneOf[ComparisonTargetMatchType],
+                        AllOf[ComparisonTargetMatchType],
+                        AtLeastN[
+                            Union[
+                                ComparisonTargetMatchType,
+                                OneOf[ComparisonTargetMatchType],
+                                AllOf[ComparisonTargetMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                ComparisonTargetMatchType,
+                                OneOf[ComparisonTargetMatchType],
+                                AllOf[ComparisonTargetMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.ComparisonTarget], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.ComparisonTarget]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -2142,17 +2674,31 @@ class Comparison(BaseExpression, BaseMatcherNode):
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.LeftParen], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         LeftParenMatchType,
-                        AtLeastN[LeftParenMatchType],
-                        AtMostN[LeftParenMatchType],
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                        AtLeastN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.LeftParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
             ]
         ],
         AllOf[
@@ -2160,11 +2706,25 @@ class Comparison(BaseExpression, BaseMatcherNode):
                 Sequence[
                     Union[
                         LeftParenMatchType,
-                        AtLeastN[LeftParenMatchType],
-                        AtMostN[LeftParenMatchType],
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                        AtLeastN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.LeftParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -2194,17 +2754,31 @@ class Comparison(BaseExpression, BaseMatcherNode):
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.RightParen], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         RightParenMatchType,
-                        AtLeastN[RightParenMatchType],
-                        AtMostN[RightParenMatchType],
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                        AtLeastN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.RightParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
             ]
         ],
         AllOf[
@@ -2212,11 +2786,25 @@ class Comparison(BaseExpression, BaseMatcherNode):
                 Sequence[
                     Union[
                         RightParenMatchType,
-                        AtLeastN[RightParenMatchType],
-                        AtMostN[RightParenMatchType],
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                        AtLeastN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.RightParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -2314,17 +2902,31 @@ class ConcatenatedString(BaseExpression, BaseString, BaseMatcherNode):
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.LeftParen], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         LeftParenMatchType,
-                        AtLeastN[LeftParenMatchType],
-                        AtMostN[LeftParenMatchType],
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                        AtLeastN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.LeftParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
             ]
         ],
         AllOf[
@@ -2332,11 +2934,25 @@ class ConcatenatedString(BaseExpression, BaseString, BaseMatcherNode):
                 Sequence[
                     Union[
                         LeftParenMatchType,
-                        AtLeastN[LeftParenMatchType],
-                        AtMostN[LeftParenMatchType],
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                        AtLeastN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.LeftParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -2366,17 +2982,31 @@ class ConcatenatedString(BaseExpression, BaseString, BaseMatcherNode):
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.RightParen], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         RightParenMatchType,
-                        AtLeastN[RightParenMatchType],
-                        AtMostN[RightParenMatchType],
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                        AtLeastN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.RightParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
             ]
         ],
         AllOf[
@@ -2384,11 +3014,25 @@ class ConcatenatedString(BaseExpression, BaseString, BaseMatcherNode):
                 Sequence[
                     Union[
                         RightParenMatchType,
-                        AtLeastN[RightParenMatchType],
-                        AtMostN[RightParenMatchType],
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                        AtLeastN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.RightParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -2470,17 +3114,31 @@ class Decorator(BaseMatcherNode):
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.EmptyLine], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.EmptyLine]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         EmptyLineMatchType,
-                        AtLeastN[EmptyLineMatchType],
-                        AtMostN[EmptyLineMatchType],
+                        OneOf[EmptyLineMatchType],
+                        AllOf[EmptyLineMatchType],
+                        AtLeastN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.EmptyLine], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.EmptyLine]], bool]],
             ]
         ],
         AllOf[
@@ -2488,11 +3146,25 @@ class Decorator(BaseMatcherNode):
                 Sequence[
                     Union[
                         EmptyLineMatchType,
-                        AtLeastN[EmptyLineMatchType],
-                        AtMostN[EmptyLineMatchType],
+                        OneOf[EmptyLineMatchType],
+                        AllOf[EmptyLineMatchType],
+                        AtLeastN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.EmptyLine], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.EmptyLine]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -2596,17 +3268,31 @@ class Dict(BaseDict, BaseExpression, BaseMatcherNode):
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.BaseDictElement], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.BaseDictElement]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         BaseDictElementMatchType,
-                        AtLeastN[BaseDictElementMatchType],
-                        AtMostN[BaseDictElementMatchType],
+                        OneOf[BaseDictElementMatchType],
+                        AllOf[BaseDictElementMatchType],
+                        AtLeastN[
+                            Union[
+                                BaseDictElementMatchType,
+                                OneOf[BaseDictElementMatchType],
+                                AllOf[BaseDictElementMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                BaseDictElementMatchType,
+                                OneOf[BaseDictElementMatchType],
+                                AllOf[BaseDictElementMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.BaseDictElement], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.BaseDictElement]], bool]],
             ]
         ],
         AllOf[
@@ -2614,11 +3300,25 @@ class Dict(BaseDict, BaseExpression, BaseMatcherNode):
                 Sequence[
                     Union[
                         BaseDictElementMatchType,
-                        AtLeastN[BaseDictElementMatchType],
-                        AtMostN[BaseDictElementMatchType],
+                        OneOf[BaseDictElementMatchType],
+                        AllOf[BaseDictElementMatchType],
+                        AtLeastN[
+                            Union[
+                                BaseDictElementMatchType,
+                                OneOf[BaseDictElementMatchType],
+                                AllOf[BaseDictElementMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                BaseDictElementMatchType,
+                                OneOf[BaseDictElementMatchType],
+                                AllOf[BaseDictElementMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.BaseDictElement], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.BaseDictElement]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -2660,17 +3360,31 @@ class Dict(BaseDict, BaseExpression, BaseMatcherNode):
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.LeftParen], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         LeftParenMatchType,
-                        AtLeastN[LeftParenMatchType],
-                        AtMostN[LeftParenMatchType],
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                        AtLeastN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.LeftParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
             ]
         ],
         AllOf[
@@ -2678,11 +3392,25 @@ class Dict(BaseDict, BaseExpression, BaseMatcherNode):
                 Sequence[
                     Union[
                         LeftParenMatchType,
-                        AtLeastN[LeftParenMatchType],
-                        AtMostN[LeftParenMatchType],
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                        AtLeastN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.LeftParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -2712,17 +3440,31 @@ class Dict(BaseDict, BaseExpression, BaseMatcherNode):
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.RightParen], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         RightParenMatchType,
-                        AtLeastN[RightParenMatchType],
-                        AtMostN[RightParenMatchType],
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                        AtLeastN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.RightParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
             ]
         ],
         AllOf[
@@ -2730,11 +3472,25 @@ class Dict(BaseDict, BaseExpression, BaseMatcherNode):
                 Sequence[
                     Union[
                         RightParenMatchType,
-                        AtLeastN[RightParenMatchType],
-                        AtMostN[RightParenMatchType],
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                        AtLeastN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.RightParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -2809,17 +3565,31 @@ class DictComp(BaseComp, BaseDict, BaseExpression, BaseMatcherNode):
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.LeftParen], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         LeftParenMatchType,
-                        AtLeastN[LeftParenMatchType],
-                        AtMostN[LeftParenMatchType],
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                        AtLeastN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.LeftParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
             ]
         ],
         AllOf[
@@ -2827,11 +3597,25 @@ class DictComp(BaseComp, BaseDict, BaseExpression, BaseMatcherNode):
                 Sequence[
                     Union[
                         LeftParenMatchType,
-                        AtLeastN[LeftParenMatchType],
-                        AtMostN[LeftParenMatchType],
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                        AtLeastN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.LeftParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -2861,17 +3645,31 @@ class DictComp(BaseComp, BaseDict, BaseExpression, BaseMatcherNode):
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.RightParen], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         RightParenMatchType,
-                        AtLeastN[RightParenMatchType],
-                        AtMostN[RightParenMatchType],
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                        AtLeastN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.RightParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
             ]
         ],
         AllOf[
@@ -2879,11 +3677,25 @@ class DictComp(BaseComp, BaseDict, BaseExpression, BaseMatcherNode):
                 Sequence[
                     Union[
                         RightParenMatchType,
-                        AtLeastN[RightParenMatchType],
-                        AtMostN[RightParenMatchType],
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                        AtLeastN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.RightParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -3057,17 +3869,31 @@ class Ellipsis(BaseExpression, BaseMatcherNode):
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.LeftParen], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         LeftParenMatchType,
-                        AtLeastN[LeftParenMatchType],
-                        AtMostN[LeftParenMatchType],
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                        AtLeastN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.LeftParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
             ]
         ],
         AllOf[
@@ -3075,11 +3901,25 @@ class Ellipsis(BaseExpression, BaseMatcherNode):
                 Sequence[
                     Union[
                         LeftParenMatchType,
-                        AtLeastN[LeftParenMatchType],
-                        AtMostN[LeftParenMatchType],
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                        AtLeastN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.LeftParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -3109,17 +3949,31 @@ class Ellipsis(BaseExpression, BaseMatcherNode):
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.RightParen], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         RightParenMatchType,
-                        AtLeastN[RightParenMatchType],
-                        AtMostN[RightParenMatchType],
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                        AtLeastN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.RightParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
             ]
         ],
         AllOf[
@@ -3127,11 +3981,25 @@ class Ellipsis(BaseExpression, BaseMatcherNode):
                 Sequence[
                     Union[
                         RightParenMatchType,
-                        AtLeastN[RightParenMatchType],
-                        AtMostN[RightParenMatchType],
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                        AtLeastN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.RightParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -3177,17 +4045,31 @@ class Else(BaseMatcherNode):
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.EmptyLine], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.EmptyLine]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         EmptyLineMatchType,
-                        AtLeastN[EmptyLineMatchType],
-                        AtMostN[EmptyLineMatchType],
+                        OneOf[EmptyLineMatchType],
+                        AllOf[EmptyLineMatchType],
+                        AtLeastN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.EmptyLine], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.EmptyLine]], bool]],
             ]
         ],
         AllOf[
@@ -3195,11 +4077,25 @@ class Else(BaseMatcherNode):
                 Sequence[
                     Union[
                         EmptyLineMatchType,
-                        AtLeastN[EmptyLineMatchType],
-                        AtMostN[EmptyLineMatchType],
+                        OneOf[EmptyLineMatchType],
+                        AllOf[EmptyLineMatchType],
+                        AtLeastN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.EmptyLine], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.EmptyLine]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -3336,17 +4232,31 @@ class ExceptHandler(BaseMatcherNode):
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.EmptyLine], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.EmptyLine]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         EmptyLineMatchType,
-                        AtLeastN[EmptyLineMatchType],
-                        AtMostN[EmptyLineMatchType],
+                        OneOf[EmptyLineMatchType],
+                        AllOf[EmptyLineMatchType],
+                        AtLeastN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.EmptyLine], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.EmptyLine]], bool]],
             ]
         ],
         AllOf[
@@ -3354,11 +4264,25 @@ class ExceptHandler(BaseMatcherNode):
                 Sequence[
                     Union[
                         EmptyLineMatchType,
-                        AtLeastN[EmptyLineMatchType],
-                        AtMostN[EmptyLineMatchType],
+                        OneOf[EmptyLineMatchType],
+                        AllOf[EmptyLineMatchType],
+                        AtLeastN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.EmptyLine], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.EmptyLine]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -3438,17 +4362,31 @@ class Finally(BaseMatcherNode):
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.EmptyLine], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.EmptyLine]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         EmptyLineMatchType,
-                        AtLeastN[EmptyLineMatchType],
-                        AtMostN[EmptyLineMatchType],
+                        OneOf[EmptyLineMatchType],
+                        AllOf[EmptyLineMatchType],
+                        AtLeastN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.EmptyLine], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.EmptyLine]], bool]],
             ]
         ],
         AllOf[
@@ -3456,11 +4394,25 @@ class Finally(BaseMatcherNode):
                 Sequence[
                     Union[
                         EmptyLineMatchType,
-                        AtLeastN[EmptyLineMatchType],
-                        AtMostN[EmptyLineMatchType],
+                        OneOf[EmptyLineMatchType],
+                        AllOf[EmptyLineMatchType],
+                        AtLeastN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.EmptyLine], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.EmptyLine]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -3509,17 +4461,31 @@ class Float(BaseExpression, BaseNumber, BaseMatcherNode):
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.LeftParen], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         LeftParenMatchType,
-                        AtLeastN[LeftParenMatchType],
-                        AtMostN[LeftParenMatchType],
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                        AtLeastN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.LeftParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
             ]
         ],
         AllOf[
@@ -3527,11 +4493,25 @@ class Float(BaseExpression, BaseNumber, BaseMatcherNode):
                 Sequence[
                     Union[
                         LeftParenMatchType,
-                        AtLeastN[LeftParenMatchType],
-                        AtMostN[LeftParenMatchType],
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                        AtLeastN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.LeftParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -3561,17 +4541,31 @@ class Float(BaseExpression, BaseNumber, BaseMatcherNode):
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.RightParen], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         RightParenMatchType,
-                        AtLeastN[RightParenMatchType],
-                        AtMostN[RightParenMatchType],
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                        AtLeastN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.RightParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
             ]
         ],
         AllOf[
@@ -3579,11 +4573,25 @@ class Float(BaseExpression, BaseNumber, BaseMatcherNode):
                 Sequence[
                     Union[
                         RightParenMatchType,
-                        AtLeastN[RightParenMatchType],
-                        AtMostN[RightParenMatchType],
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                        AtLeastN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.RightParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -3705,17 +4713,31 @@ class For(BaseCompoundStatement, BaseStatement, BaseMatcherNode):
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.EmptyLine], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.EmptyLine]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         EmptyLineMatchType,
-                        AtLeastN[EmptyLineMatchType],
-                        AtMostN[EmptyLineMatchType],
+                        OneOf[EmptyLineMatchType],
+                        AllOf[EmptyLineMatchType],
+                        AtLeastN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.EmptyLine], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.EmptyLine]], bool]],
             ]
         ],
         AllOf[
@@ -3723,11 +4745,25 @@ class For(BaseCompoundStatement, BaseStatement, BaseMatcherNode):
                 Sequence[
                     Union[
                         EmptyLineMatchType,
-                        AtLeastN[EmptyLineMatchType],
-                        AtMostN[EmptyLineMatchType],
+                        OneOf[EmptyLineMatchType],
+                        AllOf[EmptyLineMatchType],
+                        AtLeastN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.EmptyLine], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.EmptyLine]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -3798,17 +4834,31 @@ class FormattedString(BaseExpression, BaseString, BaseMatcherNode):
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.BaseFormattedStringContent], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.BaseFormattedStringContent]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         BaseFormattedStringContentMatchType,
-                        AtLeastN[BaseFormattedStringContentMatchType],
-                        AtMostN[BaseFormattedStringContentMatchType],
+                        OneOf[BaseFormattedStringContentMatchType],
+                        AllOf[BaseFormattedStringContentMatchType],
+                        AtLeastN[
+                            Union[
+                                BaseFormattedStringContentMatchType,
+                                OneOf[BaseFormattedStringContentMatchType],
+                                AllOf[BaseFormattedStringContentMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                BaseFormattedStringContentMatchType,
+                                OneOf[BaseFormattedStringContentMatchType],
+                                AllOf[BaseFormattedStringContentMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.BaseFormattedStringContent], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.BaseFormattedStringContent]], bool]],
             ]
         ],
         AllOf[
@@ -3816,11 +4866,25 @@ class FormattedString(BaseExpression, BaseString, BaseMatcherNode):
                 Sequence[
                     Union[
                         BaseFormattedStringContentMatchType,
-                        AtLeastN[BaseFormattedStringContentMatchType],
-                        AtMostN[BaseFormattedStringContentMatchType],
+                        OneOf[BaseFormattedStringContentMatchType],
+                        AllOf[BaseFormattedStringContentMatchType],
+                        AtLeastN[
+                            Union[
+                                BaseFormattedStringContentMatchType,
+                                OneOf[BaseFormattedStringContentMatchType],
+                                AllOf[BaseFormattedStringContentMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                BaseFormattedStringContentMatchType,
+                                OneOf[BaseFormattedStringContentMatchType],
+                                AllOf[BaseFormattedStringContentMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.BaseFormattedStringContent], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.BaseFormattedStringContent]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -3873,17 +4937,31 @@ class FormattedString(BaseExpression, BaseString, BaseMatcherNode):
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.LeftParen], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         LeftParenMatchType,
-                        AtLeastN[LeftParenMatchType],
-                        AtMostN[LeftParenMatchType],
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                        AtLeastN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.LeftParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
             ]
         ],
         AllOf[
@@ -3891,11 +4969,25 @@ class FormattedString(BaseExpression, BaseString, BaseMatcherNode):
                 Sequence[
                     Union[
                         LeftParenMatchType,
-                        AtLeastN[LeftParenMatchType],
-                        AtMostN[LeftParenMatchType],
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                        AtLeastN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.LeftParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -3925,17 +5017,31 @@ class FormattedString(BaseExpression, BaseString, BaseMatcherNode):
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.RightParen], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         RightParenMatchType,
-                        AtLeastN[RightParenMatchType],
-                        AtMostN[RightParenMatchType],
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                        AtLeastN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.RightParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
             ]
         ],
         AllOf[
@@ -3943,11 +5049,25 @@ class FormattedString(BaseExpression, BaseString, BaseMatcherNode):
                 Sequence[
                     Union[
                         RightParenMatchType,
-                        AtLeastN[RightParenMatchType],
-                        AtMostN[RightParenMatchType],
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                        AtLeastN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.RightParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -3979,7 +5099,90 @@ class FormattedStringExpression(BaseFormattedStringContent, BaseMatcherNode):
         AllOf[strOrNoneMatchType],
     ] = DoNotCare()
     format_spec: Union[
-        Sequence["BaseFormattedStringContent"],
+        Union[
+            Sequence[
+                Union[
+                    BaseFormattedStringContentMatchType,
+                    DoNotCareSentinel,
+                    OneOf[BaseFormattedStringContentMatchType],
+                    AllOf[BaseFormattedStringContentMatchType],
+                    AtLeastN[
+                        Union[
+                            BaseFormattedStringContentMatchType,
+                            DoNotCareSentinel,
+                            OneOf[BaseFormattedStringContentMatchType],
+                            AllOf[BaseFormattedStringContentMatchType],
+                        ]
+                    ],
+                    AtMostN[
+                        Union[
+                            BaseFormattedStringContentMatchType,
+                            DoNotCareSentinel,
+                            OneOf[BaseFormattedStringContentMatchType],
+                            AllOf[BaseFormattedStringContentMatchType],
+                        ]
+                    ],
+                ]
+            ],
+            DoNotCareSentinel,
+            MatchIfTrue[Callable[[Sequence[cst.BaseFormattedStringContent]], bool]],
+            OneOf[
+                Union[
+                    Sequence[
+                        Union[
+                            BaseFormattedStringContentMatchType,
+                            OneOf[BaseFormattedStringContentMatchType],
+                            AllOf[BaseFormattedStringContentMatchType],
+                            AtLeastN[
+                                Union[
+                                    BaseFormattedStringContentMatchType,
+                                    OneOf[BaseFormattedStringContentMatchType],
+                                    AllOf[BaseFormattedStringContentMatchType],
+                                ]
+                            ],
+                            AtMostN[
+                                Union[
+                                    BaseFormattedStringContentMatchType,
+                                    OneOf[BaseFormattedStringContentMatchType],
+                                    AllOf[BaseFormattedStringContentMatchType],
+                                ]
+                            ],
+                        ]
+                    ],
+                    MatchIfTrue[
+                        Callable[[Sequence[cst.BaseFormattedStringContent]], bool]
+                    ],
+                ]
+            ],
+            AllOf[
+                Union[
+                    Sequence[
+                        Union[
+                            BaseFormattedStringContentMatchType,
+                            OneOf[BaseFormattedStringContentMatchType],
+                            AllOf[BaseFormattedStringContentMatchType],
+                            AtLeastN[
+                                Union[
+                                    BaseFormattedStringContentMatchType,
+                                    OneOf[BaseFormattedStringContentMatchType],
+                                    AllOf[BaseFormattedStringContentMatchType],
+                                ]
+                            ],
+                            AtMostN[
+                                Union[
+                                    BaseFormattedStringContentMatchType,
+                                    OneOf[BaseFormattedStringContentMatchType],
+                                    AllOf[BaseFormattedStringContentMatchType],
+                                ]
+                            ],
+                        ]
+                    ],
+                    MatchIfTrue[
+                        Callable[[Sequence[cst.BaseFormattedStringContent]], bool]
+                    ],
+                ]
+            ],
+        ],
         None,
         MetadataMatchType,
         MatchIfTrue[
@@ -3998,24 +5201,226 @@ class FormattedStringExpression(BaseFormattedStringContent, BaseMatcherNode):
         DoNotCareSentinel,
         OneOf[
             Union[
-                Sequence["BaseFormattedStringContent"],
+                Union[
+                    Sequence[
+                        Union[
+                            BaseFormattedStringContentMatchType,
+                            OneOf[BaseFormattedStringContentMatchType],
+                            AllOf[BaseFormattedStringContentMatchType],
+                            AtLeastN[
+                                Union[
+                                    BaseFormattedStringContentMatchType,
+                                    OneOf[BaseFormattedStringContentMatchType],
+                                    AllOf[BaseFormattedStringContentMatchType],
+                                ]
+                            ],
+                            AtMostN[
+                                Union[
+                                    BaseFormattedStringContentMatchType,
+                                    OneOf[BaseFormattedStringContentMatchType],
+                                    AllOf[BaseFormattedStringContentMatchType],
+                                ]
+                            ],
+                        ]
+                    ],
+                    MatchIfTrue[
+                        Callable[[Sequence[cst.BaseFormattedStringContent]], bool]
+                    ],
+                    OneOf[
+                        Union[
+                            Sequence[
+                                Union[
+                                    BaseFormattedStringContentMatchType,
+                                    OneOf[BaseFormattedStringContentMatchType],
+                                    AllOf[BaseFormattedStringContentMatchType],
+                                    AtLeastN[
+                                        Union[
+                                            BaseFormattedStringContentMatchType,
+                                            OneOf[BaseFormattedStringContentMatchType],
+                                            AllOf[BaseFormattedStringContentMatchType],
+                                        ]
+                                    ],
+                                    AtMostN[
+                                        Union[
+                                            BaseFormattedStringContentMatchType,
+                                            OneOf[BaseFormattedStringContentMatchType],
+                                            AllOf[BaseFormattedStringContentMatchType],
+                                        ]
+                                    ],
+                                ]
+                            ],
+                            MatchIfTrue[
+                                Callable[
+                                    [Sequence[cst.BaseFormattedStringContent]], bool
+                                ]
+                            ],
+                        ]
+                    ],
+                    AllOf[
+                        Union[
+                            Sequence[
+                                Union[
+                                    BaseFormattedStringContentMatchType,
+                                    OneOf[BaseFormattedStringContentMatchType],
+                                    AllOf[BaseFormattedStringContentMatchType],
+                                    AtLeastN[
+                                        Union[
+                                            BaseFormattedStringContentMatchType,
+                                            OneOf[BaseFormattedStringContentMatchType],
+                                            AllOf[BaseFormattedStringContentMatchType],
+                                        ]
+                                    ],
+                                    AtMostN[
+                                        Union[
+                                            BaseFormattedStringContentMatchType,
+                                            OneOf[BaseFormattedStringContentMatchType],
+                                            AllOf[BaseFormattedStringContentMatchType],
+                                        ]
+                                    ],
+                                ]
+                            ],
+                            MatchIfTrue[
+                                Callable[
+                                    [Sequence[cst.BaseFormattedStringContent]], bool
+                                ]
+                            ],
+                        ]
+                    ],
+                ],
                 None,
                 MetadataMatchType,
                 MatchIfTrue[
                     Callable[
-                        [Union[Sequence[cst.BaseFormattedStringContent], None]], bool
+                        [
+                            Union[
+                                Sequence[cst.BaseFormattedStringContent],
+                                None,
+                                OneOf[
+                                    Union[
+                                        Sequence[cst.BaseFormattedStringContent], None
+                                    ]
+                                ],
+                                AllOf[
+                                    Union[
+                                        Sequence[cst.BaseFormattedStringContent], None
+                                    ]
+                                ],
+                            ]
+                        ],
+                        bool,
                     ]
                 ],
             ]
         ],
         AllOf[
             Union[
-                Sequence["BaseFormattedStringContent"],
+                Union[
+                    Sequence[
+                        Union[
+                            BaseFormattedStringContentMatchType,
+                            OneOf[BaseFormattedStringContentMatchType],
+                            AllOf[BaseFormattedStringContentMatchType],
+                            AtLeastN[
+                                Union[
+                                    BaseFormattedStringContentMatchType,
+                                    OneOf[BaseFormattedStringContentMatchType],
+                                    AllOf[BaseFormattedStringContentMatchType],
+                                ]
+                            ],
+                            AtMostN[
+                                Union[
+                                    BaseFormattedStringContentMatchType,
+                                    OneOf[BaseFormattedStringContentMatchType],
+                                    AllOf[BaseFormattedStringContentMatchType],
+                                ]
+                            ],
+                        ]
+                    ],
+                    MatchIfTrue[
+                        Callable[[Sequence[cst.BaseFormattedStringContent]], bool]
+                    ],
+                    OneOf[
+                        Union[
+                            Sequence[
+                                Union[
+                                    BaseFormattedStringContentMatchType,
+                                    OneOf[BaseFormattedStringContentMatchType],
+                                    AllOf[BaseFormattedStringContentMatchType],
+                                    AtLeastN[
+                                        Union[
+                                            BaseFormattedStringContentMatchType,
+                                            OneOf[BaseFormattedStringContentMatchType],
+                                            AllOf[BaseFormattedStringContentMatchType],
+                                        ]
+                                    ],
+                                    AtMostN[
+                                        Union[
+                                            BaseFormattedStringContentMatchType,
+                                            OneOf[BaseFormattedStringContentMatchType],
+                                            AllOf[BaseFormattedStringContentMatchType],
+                                        ]
+                                    ],
+                                ]
+                            ],
+                            MatchIfTrue[
+                                Callable[
+                                    [Sequence[cst.BaseFormattedStringContent]], bool
+                                ]
+                            ],
+                        ]
+                    ],
+                    AllOf[
+                        Union[
+                            Sequence[
+                                Union[
+                                    BaseFormattedStringContentMatchType,
+                                    OneOf[BaseFormattedStringContentMatchType],
+                                    AllOf[BaseFormattedStringContentMatchType],
+                                    AtLeastN[
+                                        Union[
+                                            BaseFormattedStringContentMatchType,
+                                            OneOf[BaseFormattedStringContentMatchType],
+                                            AllOf[BaseFormattedStringContentMatchType],
+                                        ]
+                                    ],
+                                    AtMostN[
+                                        Union[
+                                            BaseFormattedStringContentMatchType,
+                                            OneOf[BaseFormattedStringContentMatchType],
+                                            AllOf[BaseFormattedStringContentMatchType],
+                                        ]
+                                    ],
+                                ]
+                            ],
+                            MatchIfTrue[
+                                Callable[
+                                    [Sequence[cst.BaseFormattedStringContent]], bool
+                                ]
+                            ],
+                        ]
+                    ],
+                ],
                 None,
                 MetadataMatchType,
                 MatchIfTrue[
                     Callable[
-                        [Union[Sequence[cst.BaseFormattedStringContent], None]], bool
+                        [
+                            Union[
+                                Sequence[cst.BaseFormattedStringContent],
+                                None,
+                                OneOf[
+                                    Union[
+                                        Sequence[cst.BaseFormattedStringContent], None
+                                    ]
+                                ],
+                                AllOf[
+                                    Union[
+                                        Sequence[cst.BaseFormattedStringContent], None
+                                    ]
+                                ],
+                            ]
+                        ],
+                        bool,
                     ]
                 ],
             ]
@@ -4136,17 +5541,31 @@ class FunctionDef(BaseCompoundStatement, BaseStatement, BaseMatcherNode):
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.Decorator], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.Decorator]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         DecoratorMatchType,
-                        AtLeastN[DecoratorMatchType],
-                        AtMostN[DecoratorMatchType],
+                        OneOf[DecoratorMatchType],
+                        AllOf[DecoratorMatchType],
+                        AtLeastN[
+                            Union[
+                                DecoratorMatchType,
+                                OneOf[DecoratorMatchType],
+                                AllOf[DecoratorMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                DecoratorMatchType,
+                                OneOf[DecoratorMatchType],
+                                AllOf[DecoratorMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.Decorator], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.Decorator]], bool]],
             ]
         ],
         AllOf[
@@ -4154,11 +5573,25 @@ class FunctionDef(BaseCompoundStatement, BaseStatement, BaseMatcherNode):
                 Sequence[
                     Union[
                         DecoratorMatchType,
-                        AtLeastN[DecoratorMatchType],
-                        AtMostN[DecoratorMatchType],
+                        OneOf[DecoratorMatchType],
+                        AllOf[DecoratorMatchType],
+                        AtLeastN[
+                            Union[
+                                DecoratorMatchType,
+                                OneOf[DecoratorMatchType],
+                                AllOf[DecoratorMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                DecoratorMatchType,
+                                OneOf[DecoratorMatchType],
+                                AllOf[DecoratorMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.Decorator], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.Decorator]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -4200,17 +5633,31 @@ class FunctionDef(BaseCompoundStatement, BaseStatement, BaseMatcherNode):
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.EmptyLine], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.EmptyLine]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         EmptyLineMatchType,
-                        AtLeastN[EmptyLineMatchType],
-                        AtMostN[EmptyLineMatchType],
+                        OneOf[EmptyLineMatchType],
+                        AllOf[EmptyLineMatchType],
+                        AtLeastN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.EmptyLine], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.EmptyLine]], bool]],
             ]
         ],
         AllOf[
@@ -4218,11 +5665,25 @@ class FunctionDef(BaseCompoundStatement, BaseStatement, BaseMatcherNode):
                 Sequence[
                     Union[
                         EmptyLineMatchType,
-                        AtLeastN[EmptyLineMatchType],
-                        AtMostN[EmptyLineMatchType],
+                        OneOf[EmptyLineMatchType],
+                        AllOf[EmptyLineMatchType],
+                        AtLeastN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.EmptyLine], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.EmptyLine]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -4252,17 +5713,31 @@ class FunctionDef(BaseCompoundStatement, BaseStatement, BaseMatcherNode):
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.EmptyLine], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.EmptyLine]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         EmptyLineMatchType,
-                        AtLeastN[EmptyLineMatchType],
-                        AtMostN[EmptyLineMatchType],
+                        OneOf[EmptyLineMatchType],
+                        AllOf[EmptyLineMatchType],
+                        AtLeastN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.EmptyLine], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.EmptyLine]], bool]],
             ]
         ],
         AllOf[
@@ -4270,11 +5745,25 @@ class FunctionDef(BaseCompoundStatement, BaseStatement, BaseMatcherNode):
                 Sequence[
                     Union[
                         EmptyLineMatchType,
-                        AtLeastN[EmptyLineMatchType],
-                        AtMostN[EmptyLineMatchType],
+                        OneOf[EmptyLineMatchType],
+                        AllOf[EmptyLineMatchType],
+                        AtLeastN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.EmptyLine], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.EmptyLine]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -4350,17 +5839,31 @@ class GeneratorExp(BaseComp, BaseExpression, BaseSimpleComp, BaseMatcherNode):
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.LeftParen], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         LeftParenMatchType,
-                        AtLeastN[LeftParenMatchType],
-                        AtMostN[LeftParenMatchType],
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                        AtLeastN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.LeftParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
             ]
         ],
         AllOf[
@@ -4368,11 +5871,25 @@ class GeneratorExp(BaseComp, BaseExpression, BaseSimpleComp, BaseMatcherNode):
                 Sequence[
                     Union[
                         LeftParenMatchType,
-                        AtLeastN[LeftParenMatchType],
-                        AtMostN[LeftParenMatchType],
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                        AtLeastN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.LeftParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -4402,17 +5919,31 @@ class GeneratorExp(BaseComp, BaseExpression, BaseSimpleComp, BaseMatcherNode):
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.RightParen], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         RightParenMatchType,
-                        AtLeastN[RightParenMatchType],
-                        AtMostN[RightParenMatchType],
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                        AtLeastN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.RightParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
             ]
         ],
         AllOf[
@@ -4420,11 +5951,25 @@ class GeneratorExp(BaseComp, BaseExpression, BaseSimpleComp, BaseMatcherNode):
                 Sequence[
                     Union[
                         RightParenMatchType,
-                        AtLeastN[RightParenMatchType],
-                        AtMostN[RightParenMatchType],
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                        AtLeastN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.RightParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -4469,17 +6014,31 @@ class Global(BaseSmallStatement, BaseMatcherNode):
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.NameItem], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.NameItem]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         NameItemMatchType,
-                        AtLeastN[NameItemMatchType],
-                        AtMostN[NameItemMatchType],
+                        OneOf[NameItemMatchType],
+                        AllOf[NameItemMatchType],
+                        AtLeastN[
+                            Union[
+                                NameItemMatchType,
+                                OneOf[NameItemMatchType],
+                                AllOf[NameItemMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                NameItemMatchType,
+                                OneOf[NameItemMatchType],
+                                AllOf[NameItemMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.NameItem], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.NameItem]], bool]],
             ]
         ],
         AllOf[
@@ -4487,11 +6046,25 @@ class Global(BaseSmallStatement, BaseMatcherNode):
                 Sequence[
                     Union[
                         NameItemMatchType,
-                        AtLeastN[NameItemMatchType],
-                        AtMostN[NameItemMatchType],
+                        OneOf[NameItemMatchType],
+                        AllOf[NameItemMatchType],
+                        AtLeastN[
+                            Union[
+                                NameItemMatchType,
+                                OneOf[NameItemMatchType],
+                                AllOf[NameItemMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                NameItemMatchType,
+                                OneOf[NameItemMatchType],
+                                AllOf[NameItemMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.NameItem], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.NameItem]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -4614,17 +6187,31 @@ class If(BaseCompoundStatement, BaseStatement, BaseMatcherNode):
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.EmptyLine], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.EmptyLine]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         EmptyLineMatchType,
-                        AtLeastN[EmptyLineMatchType],
-                        AtMostN[EmptyLineMatchType],
+                        OneOf[EmptyLineMatchType],
+                        AllOf[EmptyLineMatchType],
+                        AtLeastN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.EmptyLine], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.EmptyLine]], bool]],
             ]
         ],
         AllOf[
@@ -4632,11 +6219,25 @@ class If(BaseCompoundStatement, BaseStatement, BaseMatcherNode):
                 Sequence[
                     Union[
                         EmptyLineMatchType,
-                        AtLeastN[EmptyLineMatchType],
-                        AtMostN[EmptyLineMatchType],
+                        OneOf[EmptyLineMatchType],
+                        AllOf[EmptyLineMatchType],
+                        AtLeastN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.EmptyLine], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.EmptyLine]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -4706,17 +6307,31 @@ class IfExp(BaseExpression, BaseMatcherNode):
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.LeftParen], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         LeftParenMatchType,
-                        AtLeastN[LeftParenMatchType],
-                        AtMostN[LeftParenMatchType],
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                        AtLeastN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.LeftParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
             ]
         ],
         AllOf[
@@ -4724,11 +6339,25 @@ class IfExp(BaseExpression, BaseMatcherNode):
                 Sequence[
                     Union[
                         LeftParenMatchType,
-                        AtLeastN[LeftParenMatchType],
-                        AtMostN[LeftParenMatchType],
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                        AtLeastN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.LeftParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -4758,17 +6387,31 @@ class IfExp(BaseExpression, BaseMatcherNode):
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.RightParen], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         RightParenMatchType,
-                        AtLeastN[RightParenMatchType],
-                        AtMostN[RightParenMatchType],
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                        AtLeastN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.RightParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
             ]
         ],
         AllOf[
@@ -4776,11 +6419,25 @@ class IfExp(BaseExpression, BaseMatcherNode):
                 Sequence[
                     Union[
                         RightParenMatchType,
-                        AtLeastN[RightParenMatchType],
-                        AtMostN[RightParenMatchType],
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                        AtLeastN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.RightParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -4847,17 +6504,31 @@ class Imaginary(BaseExpression, BaseNumber, BaseMatcherNode):
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.LeftParen], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         LeftParenMatchType,
-                        AtLeastN[LeftParenMatchType],
-                        AtMostN[LeftParenMatchType],
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                        AtLeastN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.LeftParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
             ]
         ],
         AllOf[
@@ -4865,11 +6536,25 @@ class Imaginary(BaseExpression, BaseNumber, BaseMatcherNode):
                 Sequence[
                     Union[
                         LeftParenMatchType,
-                        AtLeastN[LeftParenMatchType],
-                        AtMostN[LeftParenMatchType],
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                        AtLeastN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.LeftParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -4899,17 +6584,31 @@ class Imaginary(BaseExpression, BaseNumber, BaseMatcherNode):
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.RightParen], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         RightParenMatchType,
-                        AtLeastN[RightParenMatchType],
-                        AtMostN[RightParenMatchType],
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                        AtLeastN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.RightParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
             ]
         ],
         AllOf[
@@ -4917,11 +6616,25 @@ class Imaginary(BaseExpression, BaseNumber, BaseMatcherNode):
                 Sequence[
                     Union[
                         RightParenMatchType,
-                        AtLeastN[RightParenMatchType],
-                        AtMostN[RightParenMatchType],
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                        AtLeastN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.RightParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -4966,17 +6679,31 @@ class Import(BaseSmallStatement, BaseMatcherNode):
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.ImportAlias], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.ImportAlias]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         ImportAliasMatchType,
-                        AtLeastN[ImportAliasMatchType],
-                        AtMostN[ImportAliasMatchType],
+                        OneOf[ImportAliasMatchType],
+                        AllOf[ImportAliasMatchType],
+                        AtLeastN[
+                            Union[
+                                ImportAliasMatchType,
+                                OneOf[ImportAliasMatchType],
+                                AllOf[ImportAliasMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                ImportAliasMatchType,
+                                OneOf[ImportAliasMatchType],
+                                AllOf[ImportAliasMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.ImportAlias], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.ImportAlias]], bool]],
             ]
         ],
         AllOf[
@@ -4984,11 +6711,25 @@ class Import(BaseSmallStatement, BaseMatcherNode):
                 Sequence[
                     Union[
                         ImportAliasMatchType,
-                        AtLeastN[ImportAliasMatchType],
-                        AtMostN[ImportAliasMatchType],
+                        OneOf[ImportAliasMatchType],
+                        AllOf[ImportAliasMatchType],
+                        AtLeastN[
+                            Union[
+                                ImportAliasMatchType,
+                                OneOf[ImportAliasMatchType],
+                                AllOf[ImportAliasMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                ImportAliasMatchType,
+                                OneOf[ImportAliasMatchType],
+                                AllOf[ImportAliasMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.ImportAlias], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.ImportAlias]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -5075,7 +6816,86 @@ class ImportFrom(BaseSmallStatement, BaseMatcherNode):
         AllOf[AttributeOrNameOrNoneMatchType],
     ] = DoNotCare()
     names: Union[
-        Sequence["ImportAlias"],
+        Union[
+            Sequence[
+                Union[
+                    ImportAliasMatchType,
+                    DoNotCareSentinel,
+                    OneOf[ImportAliasMatchType],
+                    AllOf[ImportAliasMatchType],
+                    AtLeastN[
+                        Union[
+                            ImportAliasMatchType,
+                            DoNotCareSentinel,
+                            OneOf[ImportAliasMatchType],
+                            AllOf[ImportAliasMatchType],
+                        ]
+                    ],
+                    AtMostN[
+                        Union[
+                            ImportAliasMatchType,
+                            DoNotCareSentinel,
+                            OneOf[ImportAliasMatchType],
+                            AllOf[ImportAliasMatchType],
+                        ]
+                    ],
+                ]
+            ],
+            DoNotCareSentinel,
+            MatchIfTrue[Callable[[Sequence[cst.ImportAlias]], bool]],
+            OneOf[
+                Union[
+                    Sequence[
+                        Union[
+                            ImportAliasMatchType,
+                            OneOf[ImportAliasMatchType],
+                            AllOf[ImportAliasMatchType],
+                            AtLeastN[
+                                Union[
+                                    ImportAliasMatchType,
+                                    OneOf[ImportAliasMatchType],
+                                    AllOf[ImportAliasMatchType],
+                                ]
+                            ],
+                            AtMostN[
+                                Union[
+                                    ImportAliasMatchType,
+                                    OneOf[ImportAliasMatchType],
+                                    AllOf[ImportAliasMatchType],
+                                ]
+                            ],
+                        ]
+                    ],
+                    MatchIfTrue[Callable[[Sequence[cst.ImportAlias]], bool]],
+                ]
+            ],
+            AllOf[
+                Union[
+                    Sequence[
+                        Union[
+                            ImportAliasMatchType,
+                            OneOf[ImportAliasMatchType],
+                            AllOf[ImportAliasMatchType],
+                            AtLeastN[
+                                Union[
+                                    ImportAliasMatchType,
+                                    OneOf[ImportAliasMatchType],
+                                    AllOf[ImportAliasMatchType],
+                                ]
+                            ],
+                            AtMostN[
+                                Union[
+                                    ImportAliasMatchType,
+                                    OneOf[ImportAliasMatchType],
+                                    AllOf[ImportAliasMatchType],
+                                ]
+                            ],
+                        ]
+                    ],
+                    MatchIfTrue[Callable[[Sequence[cst.ImportAlias]], bool]],
+                ]
+            ],
+        ],
         "ImportStar",
         MetadataMatchType,
         MatchIfTrue[
@@ -5094,21 +6914,191 @@ class ImportFrom(BaseSmallStatement, BaseMatcherNode):
         DoNotCareSentinel,
         OneOf[
             Union[
-                Sequence["ImportAlias"],
+                Union[
+                    Sequence[
+                        Union[
+                            ImportAliasMatchType,
+                            OneOf[ImportAliasMatchType],
+                            AllOf[ImportAliasMatchType],
+                            AtLeastN[
+                                Union[
+                                    ImportAliasMatchType,
+                                    OneOf[ImportAliasMatchType],
+                                    AllOf[ImportAliasMatchType],
+                                ]
+                            ],
+                            AtMostN[
+                                Union[
+                                    ImportAliasMatchType,
+                                    OneOf[ImportAliasMatchType],
+                                    AllOf[ImportAliasMatchType],
+                                ]
+                            ],
+                        ]
+                    ],
+                    MatchIfTrue[Callable[[Sequence[cst.ImportAlias]], bool]],
+                    OneOf[
+                        Union[
+                            Sequence[
+                                Union[
+                                    ImportAliasMatchType,
+                                    OneOf[ImportAliasMatchType],
+                                    AllOf[ImportAliasMatchType],
+                                    AtLeastN[
+                                        Union[
+                                            ImportAliasMatchType,
+                                            OneOf[ImportAliasMatchType],
+                                            AllOf[ImportAliasMatchType],
+                                        ]
+                                    ],
+                                    AtMostN[
+                                        Union[
+                                            ImportAliasMatchType,
+                                            OneOf[ImportAliasMatchType],
+                                            AllOf[ImportAliasMatchType],
+                                        ]
+                                    ],
+                                ]
+                            ],
+                            MatchIfTrue[Callable[[Sequence[cst.ImportAlias]], bool]],
+                        ]
+                    ],
+                    AllOf[
+                        Union[
+                            Sequence[
+                                Union[
+                                    ImportAliasMatchType,
+                                    OneOf[ImportAliasMatchType],
+                                    AllOf[ImportAliasMatchType],
+                                    AtLeastN[
+                                        Union[
+                                            ImportAliasMatchType,
+                                            OneOf[ImportAliasMatchType],
+                                            AllOf[ImportAliasMatchType],
+                                        ]
+                                    ],
+                                    AtMostN[
+                                        Union[
+                                            ImportAliasMatchType,
+                                            OneOf[ImportAliasMatchType],
+                                            AllOf[ImportAliasMatchType],
+                                        ]
+                                    ],
+                                ]
+                            ],
+                            MatchIfTrue[Callable[[Sequence[cst.ImportAlias]], bool]],
+                        ]
+                    ],
+                ],
                 "ImportStar",
                 MetadataMatchType,
                 MatchIfTrue[
-                    Callable[[Union[Sequence[cst.ImportAlias], cst.ImportStar]], bool]
+                    Callable[
+                        [
+                            Union[
+                                Sequence[cst.ImportAlias],
+                                cst.ImportStar,
+                                OneOf[Union[Sequence[cst.ImportAlias], cst.ImportStar]],
+                                AllOf[Union[Sequence[cst.ImportAlias], cst.ImportStar]],
+                            ]
+                        ],
+                        bool,
+                    ]
                 ],
             ]
         ],
         AllOf[
             Union[
-                Sequence["ImportAlias"],
+                Union[
+                    Sequence[
+                        Union[
+                            ImportAliasMatchType,
+                            OneOf[ImportAliasMatchType],
+                            AllOf[ImportAliasMatchType],
+                            AtLeastN[
+                                Union[
+                                    ImportAliasMatchType,
+                                    OneOf[ImportAliasMatchType],
+                                    AllOf[ImportAliasMatchType],
+                                ]
+                            ],
+                            AtMostN[
+                                Union[
+                                    ImportAliasMatchType,
+                                    OneOf[ImportAliasMatchType],
+                                    AllOf[ImportAliasMatchType],
+                                ]
+                            ],
+                        ]
+                    ],
+                    MatchIfTrue[Callable[[Sequence[cst.ImportAlias]], bool]],
+                    OneOf[
+                        Union[
+                            Sequence[
+                                Union[
+                                    ImportAliasMatchType,
+                                    OneOf[ImportAliasMatchType],
+                                    AllOf[ImportAliasMatchType],
+                                    AtLeastN[
+                                        Union[
+                                            ImportAliasMatchType,
+                                            OneOf[ImportAliasMatchType],
+                                            AllOf[ImportAliasMatchType],
+                                        ]
+                                    ],
+                                    AtMostN[
+                                        Union[
+                                            ImportAliasMatchType,
+                                            OneOf[ImportAliasMatchType],
+                                            AllOf[ImportAliasMatchType],
+                                        ]
+                                    ],
+                                ]
+                            ],
+                            MatchIfTrue[Callable[[Sequence[cst.ImportAlias]], bool]],
+                        ]
+                    ],
+                    AllOf[
+                        Union[
+                            Sequence[
+                                Union[
+                                    ImportAliasMatchType,
+                                    OneOf[ImportAliasMatchType],
+                                    AllOf[ImportAliasMatchType],
+                                    AtLeastN[
+                                        Union[
+                                            ImportAliasMatchType,
+                                            OneOf[ImportAliasMatchType],
+                                            AllOf[ImportAliasMatchType],
+                                        ]
+                                    ],
+                                    AtMostN[
+                                        Union[
+                                            ImportAliasMatchType,
+                                            OneOf[ImportAliasMatchType],
+                                            AllOf[ImportAliasMatchType],
+                                        ]
+                                    ],
+                                ]
+                            ],
+                            MatchIfTrue[Callable[[Sequence[cst.ImportAlias]], bool]],
+                        ]
+                    ],
+                ],
                 "ImportStar",
                 MetadataMatchType,
                 MatchIfTrue[
-                    Callable[[Union[Sequence[cst.ImportAlias], cst.ImportStar]], bool]
+                    Callable[
+                        [
+                            Union[
+                                Sequence[cst.ImportAlias],
+                                cst.ImportStar,
+                                OneOf[Union[Sequence[cst.ImportAlias], cst.ImportStar]],
+                                AllOf[Union[Sequence[cst.ImportAlias], cst.ImportStar]],
+                            ]
+                        ],
+                        bool,
+                    ]
                 ],
             ]
         ],
@@ -5139,21 +7129,49 @@ class ImportFrom(BaseSmallStatement, BaseMatcherNode):
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.Dot], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.Dot]], bool]],
         OneOf[
             Union[
                 Sequence[
-                    Union[DotMatchType, AtLeastN[DotMatchType], AtMostN[DotMatchType]]
+                    Union[
+                        DotMatchType,
+                        OneOf[DotMatchType],
+                        AllOf[DotMatchType],
+                        AtLeastN[
+                            Union[
+                                DotMatchType, OneOf[DotMatchType], AllOf[DotMatchType]
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                DotMatchType, OneOf[DotMatchType], AllOf[DotMatchType]
+                            ]
+                        ],
+                    ]
                 ],
-                MatchIfTrue[Callable[[cst.Dot], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.Dot]], bool]],
             ]
         ],
         AllOf[
             Union[
                 Sequence[
-                    Union[DotMatchType, AtLeastN[DotMatchType], AtMostN[DotMatchType]]
+                    Union[
+                        DotMatchType,
+                        OneOf[DotMatchType],
+                        AllOf[DotMatchType],
+                        AtLeastN[
+                            Union[
+                                DotMatchType, OneOf[DotMatchType], AllOf[DotMatchType]
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                DotMatchType, OneOf[DotMatchType], AllOf[DotMatchType]
+                            ]
+                        ],
+                    ]
                 ],
-                MatchIfTrue[Callable[[cst.Dot], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.Dot]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -5266,17 +7284,31 @@ class IndentedBlock(BaseSuite, BaseMatcherNode):
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.BaseStatement], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.BaseStatement]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         BaseStatementMatchType,
-                        AtLeastN[BaseStatementMatchType],
-                        AtMostN[BaseStatementMatchType],
+                        OneOf[BaseStatementMatchType],
+                        AllOf[BaseStatementMatchType],
+                        AtLeastN[
+                            Union[
+                                BaseStatementMatchType,
+                                OneOf[BaseStatementMatchType],
+                                AllOf[BaseStatementMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                BaseStatementMatchType,
+                                OneOf[BaseStatementMatchType],
+                                AllOf[BaseStatementMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.BaseStatement], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.BaseStatement]], bool]],
             ]
         ],
         AllOf[
@@ -5284,11 +7316,25 @@ class IndentedBlock(BaseSuite, BaseMatcherNode):
                 Sequence[
                     Union[
                         BaseStatementMatchType,
-                        AtLeastN[BaseStatementMatchType],
-                        AtMostN[BaseStatementMatchType],
+                        OneOf[BaseStatementMatchType],
+                        AllOf[BaseStatementMatchType],
+                        AtLeastN[
+                            Union[
+                                BaseStatementMatchType,
+                                OneOf[BaseStatementMatchType],
+                                AllOf[BaseStatementMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                BaseStatementMatchType,
+                                OneOf[BaseStatementMatchType],
+                                AllOf[BaseStatementMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.BaseStatement], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.BaseStatement]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -5330,17 +7376,31 @@ class IndentedBlock(BaseSuite, BaseMatcherNode):
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.EmptyLine], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.EmptyLine]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         EmptyLineMatchType,
-                        AtLeastN[EmptyLineMatchType],
-                        AtMostN[EmptyLineMatchType],
+                        OneOf[EmptyLineMatchType],
+                        AllOf[EmptyLineMatchType],
+                        AtLeastN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.EmptyLine], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.EmptyLine]], bool]],
             ]
         ],
         AllOf[
@@ -5348,11 +7408,25 @@ class IndentedBlock(BaseSuite, BaseMatcherNode):
                 Sequence[
                     Union[
                         EmptyLineMatchType,
-                        AtLeastN[EmptyLineMatchType],
-                        AtMostN[EmptyLineMatchType],
+                        OneOf[EmptyLineMatchType],
+                        AllOf[EmptyLineMatchType],
+                        AtLeastN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.EmptyLine], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.EmptyLine]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -5411,17 +7485,31 @@ class Integer(BaseExpression, BaseNumber, BaseMatcherNode):
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.LeftParen], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         LeftParenMatchType,
-                        AtLeastN[LeftParenMatchType],
-                        AtMostN[LeftParenMatchType],
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                        AtLeastN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.LeftParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
             ]
         ],
         AllOf[
@@ -5429,11 +7517,25 @@ class Integer(BaseExpression, BaseNumber, BaseMatcherNode):
                 Sequence[
                     Union[
                         LeftParenMatchType,
-                        AtLeastN[LeftParenMatchType],
-                        AtMostN[LeftParenMatchType],
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                        AtLeastN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.LeftParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -5463,17 +7565,31 @@ class Integer(BaseExpression, BaseNumber, BaseMatcherNode):
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.RightParen], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         RightParenMatchType,
-                        AtLeastN[RightParenMatchType],
-                        AtMostN[RightParenMatchType],
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                        AtLeastN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.RightParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
             ]
         ],
         AllOf[
@@ -5481,11 +7597,25 @@ class Integer(BaseExpression, BaseNumber, BaseMatcherNode):
                 Sequence[
                     Union[
                         RightParenMatchType,
-                        AtLeastN[RightParenMatchType],
-                        AtMostN[RightParenMatchType],
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                        AtLeastN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.RightParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -5595,17 +7725,31 @@ class Lambda(BaseExpression, BaseMatcherNode):
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.LeftParen], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         LeftParenMatchType,
-                        AtLeastN[LeftParenMatchType],
-                        AtMostN[LeftParenMatchType],
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                        AtLeastN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.LeftParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
             ]
         ],
         AllOf[
@@ -5613,11 +7757,25 @@ class Lambda(BaseExpression, BaseMatcherNode):
                 Sequence[
                     Union[
                         LeftParenMatchType,
-                        AtLeastN[LeftParenMatchType],
-                        AtMostN[LeftParenMatchType],
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                        AtLeastN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.LeftParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -5647,17 +7805,31 @@ class Lambda(BaseExpression, BaseMatcherNode):
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.RightParen], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         RightParenMatchType,
-                        AtLeastN[RightParenMatchType],
-                        AtMostN[RightParenMatchType],
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                        AtLeastN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.RightParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
             ]
         ],
         AllOf[
@@ -5665,11 +7837,25 @@ class Lambda(BaseExpression, BaseMatcherNode):
                 Sequence[
                     Union[
                         RightParenMatchType,
-                        AtLeastN[RightParenMatchType],
-                        AtMostN[RightParenMatchType],
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                        AtLeastN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.RightParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -5872,17 +8058,31 @@ class List(
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.BaseElement], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.BaseElement]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         BaseElementMatchType,
-                        AtLeastN[BaseElementMatchType],
-                        AtMostN[BaseElementMatchType],
+                        OneOf[BaseElementMatchType],
+                        AllOf[BaseElementMatchType],
+                        AtLeastN[
+                            Union[
+                                BaseElementMatchType,
+                                OneOf[BaseElementMatchType],
+                                AllOf[BaseElementMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                BaseElementMatchType,
+                                OneOf[BaseElementMatchType],
+                                AllOf[BaseElementMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.BaseElement], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.BaseElement]], bool]],
             ]
         ],
         AllOf[
@@ -5890,11 +8090,25 @@ class List(
                 Sequence[
                     Union[
                         BaseElementMatchType,
-                        AtLeastN[BaseElementMatchType],
-                        AtMostN[BaseElementMatchType],
+                        OneOf[BaseElementMatchType],
+                        AllOf[BaseElementMatchType],
+                        AtLeastN[
+                            Union[
+                                BaseElementMatchType,
+                                OneOf[BaseElementMatchType],
+                                AllOf[BaseElementMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                BaseElementMatchType,
+                                OneOf[BaseElementMatchType],
+                                AllOf[BaseElementMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.BaseElement], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.BaseElement]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -5936,17 +8150,31 @@ class List(
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.LeftParen], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         LeftParenMatchType,
-                        AtLeastN[LeftParenMatchType],
-                        AtMostN[LeftParenMatchType],
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                        AtLeastN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.LeftParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
             ]
         ],
         AllOf[
@@ -5954,11 +8182,25 @@ class List(
                 Sequence[
                     Union[
                         LeftParenMatchType,
-                        AtLeastN[LeftParenMatchType],
-                        AtMostN[LeftParenMatchType],
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                        AtLeastN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.LeftParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -5988,17 +8230,31 @@ class List(
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.RightParen], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         RightParenMatchType,
-                        AtLeastN[RightParenMatchType],
-                        AtMostN[RightParenMatchType],
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                        AtLeastN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.RightParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
             ]
         ],
         AllOf[
@@ -6006,11 +8262,25 @@ class List(
                 Sequence[
                     Union[
                         RightParenMatchType,
-                        AtLeastN[RightParenMatchType],
-                        AtMostN[RightParenMatchType],
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                        AtLeastN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.RightParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -6074,17 +8344,31 @@ class ListComp(BaseComp, BaseExpression, BaseList, BaseSimpleComp, BaseMatcherNo
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.LeftParen], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         LeftParenMatchType,
-                        AtLeastN[LeftParenMatchType],
-                        AtMostN[LeftParenMatchType],
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                        AtLeastN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.LeftParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
             ]
         ],
         AllOf[
@@ -6092,11 +8376,25 @@ class ListComp(BaseComp, BaseExpression, BaseList, BaseSimpleComp, BaseMatcherNo
                 Sequence[
                     Union[
                         LeftParenMatchType,
-                        AtLeastN[LeftParenMatchType],
-                        AtMostN[LeftParenMatchType],
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                        AtLeastN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.LeftParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -6126,17 +8424,31 @@ class ListComp(BaseComp, BaseExpression, BaseList, BaseSimpleComp, BaseMatcherNo
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.RightParen], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         RightParenMatchType,
-                        AtLeastN[RightParenMatchType],
-                        AtMostN[RightParenMatchType],
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                        AtLeastN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.RightParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
             ]
         ],
         AllOf[
@@ -6144,11 +8456,25 @@ class ListComp(BaseComp, BaseExpression, BaseList, BaseSimpleComp, BaseMatcherNo
                 Sequence[
                     Union[
                         RightParenMatchType,
-                        AtLeastN[RightParenMatchType],
-                        AtMostN[RightParenMatchType],
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                        AtLeastN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.RightParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -6261,15 +8587,21 @@ class Module(BaseMatcherNode):
         MatchIfTrue[
             Callable[
                 [
-                    Union[
-                        cst.SimpleStatementLine,
-                        cst.BaseCompoundStatement,
-                        OneOf[
-                            Union[cst.SimpleStatementLine, cst.BaseCompoundStatement]
-                        ],
-                        AllOf[
-                            Union[cst.SimpleStatementLine, cst.BaseCompoundStatement]
-                        ],
+                    Sequence[
+                        Union[
+                            cst.SimpleStatementLine,
+                            cst.BaseCompoundStatement,
+                            OneOf[
+                                Union[
+                                    cst.SimpleStatementLine, cst.BaseCompoundStatement
+                                ]
+                            ],
+                            AllOf[
+                                Union[
+                                    cst.SimpleStatementLine, cst.BaseCompoundStatement
+                                ]
+                            ],
+                        ]
                     ]
                 ],
                 bool,
@@ -6280,13 +8612,54 @@ class Module(BaseMatcherNode):
                 Sequence[
                     Union[
                         SimpleStatementLineOrBaseCompoundStatementMatchType,
-                        AtLeastN[SimpleStatementLineOrBaseCompoundStatementMatchType],
-                        AtMostN[SimpleStatementLineOrBaseCompoundStatementMatchType],
+                        OneOf[SimpleStatementLineOrBaseCompoundStatementMatchType],
+                        AllOf[SimpleStatementLineOrBaseCompoundStatementMatchType],
+                        AtLeastN[
+                            Union[
+                                SimpleStatementLineOrBaseCompoundStatementMatchType,
+                                OneOf[
+                                    SimpleStatementLineOrBaseCompoundStatementMatchType
+                                ],
+                                AllOf[
+                                    SimpleStatementLineOrBaseCompoundStatementMatchType
+                                ],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                SimpleStatementLineOrBaseCompoundStatementMatchType,
+                                OneOf[
+                                    SimpleStatementLineOrBaseCompoundStatementMatchType
+                                ],
+                                AllOf[
+                                    SimpleStatementLineOrBaseCompoundStatementMatchType
+                                ],
+                            ]
+                        ],
                     ]
                 ],
                 MatchIfTrue[
                     Callable[
-                        [Union[cst.SimpleStatementLine, cst.BaseCompoundStatement]],
+                        [
+                            Sequence[
+                                Union[
+                                    cst.SimpleStatementLine,
+                                    cst.BaseCompoundStatement,
+                                    OneOf[
+                                        Union[
+                                            cst.SimpleStatementLine,
+                                            cst.BaseCompoundStatement,
+                                        ]
+                                    ],
+                                    AllOf[
+                                        Union[
+                                            cst.SimpleStatementLine,
+                                            cst.BaseCompoundStatement,
+                                        ]
+                                    ],
+                                ]
+                            ]
+                        ],
                         bool,
                     ]
                 ],
@@ -6297,13 +8670,54 @@ class Module(BaseMatcherNode):
                 Sequence[
                     Union[
                         SimpleStatementLineOrBaseCompoundStatementMatchType,
-                        AtLeastN[SimpleStatementLineOrBaseCompoundStatementMatchType],
-                        AtMostN[SimpleStatementLineOrBaseCompoundStatementMatchType],
+                        OneOf[SimpleStatementLineOrBaseCompoundStatementMatchType],
+                        AllOf[SimpleStatementLineOrBaseCompoundStatementMatchType],
+                        AtLeastN[
+                            Union[
+                                SimpleStatementLineOrBaseCompoundStatementMatchType,
+                                OneOf[
+                                    SimpleStatementLineOrBaseCompoundStatementMatchType
+                                ],
+                                AllOf[
+                                    SimpleStatementLineOrBaseCompoundStatementMatchType
+                                ],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                SimpleStatementLineOrBaseCompoundStatementMatchType,
+                                OneOf[
+                                    SimpleStatementLineOrBaseCompoundStatementMatchType
+                                ],
+                                AllOf[
+                                    SimpleStatementLineOrBaseCompoundStatementMatchType
+                                ],
+                            ]
+                        ],
                     ]
                 ],
                 MatchIfTrue[
                     Callable[
-                        [Union[cst.SimpleStatementLine, cst.BaseCompoundStatement]],
+                        [
+                            Sequence[
+                                Union[
+                                    cst.SimpleStatementLine,
+                                    cst.BaseCompoundStatement,
+                                    OneOf[
+                                        Union[
+                                            cst.SimpleStatementLine,
+                                            cst.BaseCompoundStatement,
+                                        ]
+                                    ],
+                                    AllOf[
+                                        Union[
+                                            cst.SimpleStatementLine,
+                                            cst.BaseCompoundStatement,
+                                        ]
+                                    ],
+                                ]
+                            ]
+                        ],
                         bool,
                     ]
                 ],
@@ -6336,17 +8750,31 @@ class Module(BaseMatcherNode):
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.EmptyLine], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.EmptyLine]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         EmptyLineMatchType,
-                        AtLeastN[EmptyLineMatchType],
-                        AtMostN[EmptyLineMatchType],
+                        OneOf[EmptyLineMatchType],
+                        AllOf[EmptyLineMatchType],
+                        AtLeastN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.EmptyLine], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.EmptyLine]], bool]],
             ]
         ],
         AllOf[
@@ -6354,11 +8782,25 @@ class Module(BaseMatcherNode):
                 Sequence[
                     Union[
                         EmptyLineMatchType,
-                        AtLeastN[EmptyLineMatchType],
-                        AtMostN[EmptyLineMatchType],
+                        OneOf[EmptyLineMatchType],
+                        AllOf[EmptyLineMatchType],
+                        AtLeastN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.EmptyLine], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.EmptyLine]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -6388,17 +8830,31 @@ class Module(BaseMatcherNode):
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.EmptyLine], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.EmptyLine]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         EmptyLineMatchType,
-                        AtLeastN[EmptyLineMatchType],
-                        AtMostN[EmptyLineMatchType],
+                        OneOf[EmptyLineMatchType],
+                        AllOf[EmptyLineMatchType],
+                        AtLeastN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.EmptyLine], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.EmptyLine]], bool]],
             ]
         ],
         AllOf[
@@ -6406,11 +8862,25 @@ class Module(BaseMatcherNode):
                 Sequence[
                     Union[
                         EmptyLineMatchType,
-                        AtLeastN[EmptyLineMatchType],
-                        AtMostN[EmptyLineMatchType],
+                        OneOf[EmptyLineMatchType],
+                        AllOf[EmptyLineMatchType],
+                        AtLeastN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.EmptyLine], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.EmptyLine]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -6555,17 +9025,31 @@ class Name(
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.LeftParen], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         LeftParenMatchType,
-                        AtLeastN[LeftParenMatchType],
-                        AtMostN[LeftParenMatchType],
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                        AtLeastN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.LeftParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
             ]
         ],
         AllOf[
@@ -6573,11 +9057,25 @@ class Name(
                 Sequence[
                     Union[
                         LeftParenMatchType,
-                        AtLeastN[LeftParenMatchType],
-                        AtMostN[LeftParenMatchType],
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                        AtLeastN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.LeftParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -6607,17 +9105,31 @@ class Name(
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.RightParen], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         RightParenMatchType,
-                        AtLeastN[RightParenMatchType],
-                        AtMostN[RightParenMatchType],
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                        AtLeastN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.RightParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
             ]
         ],
         AllOf[
@@ -6625,11 +9137,25 @@ class Name(
                 Sequence[
                     Union[
                         RightParenMatchType,
-                        AtLeastN[RightParenMatchType],
-                        AtMostN[RightParenMatchType],
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                        AtLeastN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.RightParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -6697,17 +9223,31 @@ class NamedExpr(BaseExpression, BaseMatcherNode):
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.LeftParen], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         LeftParenMatchType,
-                        AtLeastN[LeftParenMatchType],
-                        AtMostN[LeftParenMatchType],
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                        AtLeastN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.LeftParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
             ]
         ],
         AllOf[
@@ -6715,11 +9255,25 @@ class NamedExpr(BaseExpression, BaseMatcherNode):
                 Sequence[
                     Union[
                         LeftParenMatchType,
-                        AtLeastN[LeftParenMatchType],
-                        AtMostN[LeftParenMatchType],
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                        AtLeastN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.LeftParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -6749,17 +9303,31 @@ class NamedExpr(BaseExpression, BaseMatcherNode):
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.RightParen], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         RightParenMatchType,
-                        AtLeastN[RightParenMatchType],
-                        AtMostN[RightParenMatchType],
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                        AtLeastN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.RightParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
             ]
         ],
         AllOf[
@@ -6767,11 +9335,25 @@ class NamedExpr(BaseExpression, BaseMatcherNode):
                 Sequence[
                     Union[
                         RightParenMatchType,
-                        AtLeastN[RightParenMatchType],
-                        AtMostN[RightParenMatchType],
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                        AtLeastN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.RightParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -6839,17 +9421,31 @@ class Nonlocal(BaseSmallStatement, BaseMatcherNode):
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.NameItem], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.NameItem]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         NameItemMatchType,
-                        AtLeastN[NameItemMatchType],
-                        AtMostN[NameItemMatchType],
+                        OneOf[NameItemMatchType],
+                        AllOf[NameItemMatchType],
+                        AtLeastN[
+                            Union[
+                                NameItemMatchType,
+                                OneOf[NameItemMatchType],
+                                AllOf[NameItemMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                NameItemMatchType,
+                                OneOf[NameItemMatchType],
+                                AllOf[NameItemMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.NameItem], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.NameItem]], bool]],
             ]
         ],
         AllOf[
@@ -6857,11 +9453,25 @@ class Nonlocal(BaseSmallStatement, BaseMatcherNode):
                 Sequence[
                     Union[
                         NameItemMatchType,
-                        AtLeastN[NameItemMatchType],
-                        AtMostN[NameItemMatchType],
+                        OneOf[NameItemMatchType],
+                        AllOf[NameItemMatchType],
+                        AtLeastN[
+                            Union[
+                                NameItemMatchType,
+                                OneOf[NameItemMatchType],
+                                AllOf[NameItemMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                NameItemMatchType,
+                                OneOf[NameItemMatchType],
+                                AllOf[NameItemMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.NameItem], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.NameItem]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -7083,17 +9693,31 @@ class Parameters(BaseMatcherNode):
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.Param], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.Param]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         ParamMatchType,
-                        AtLeastN[ParamMatchType],
-                        AtMostN[ParamMatchType],
+                        OneOf[ParamMatchType],
+                        AllOf[ParamMatchType],
+                        AtLeastN[
+                            Union[
+                                ParamMatchType,
+                                OneOf[ParamMatchType],
+                                AllOf[ParamMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                ParamMatchType,
+                                OneOf[ParamMatchType],
+                                AllOf[ParamMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.Param], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.Param]], bool]],
             ]
         ],
         AllOf[
@@ -7101,11 +9725,25 @@ class Parameters(BaseMatcherNode):
                 Sequence[
                     Union[
                         ParamMatchType,
-                        AtLeastN[ParamMatchType],
-                        AtMostN[ParamMatchType],
+                        OneOf[ParamMatchType],
+                        AllOf[ParamMatchType],
+                        AtLeastN[
+                            Union[
+                                ParamMatchType,
+                                OneOf[ParamMatchType],
+                                AllOf[ParamMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                ParamMatchType,
+                                OneOf[ParamMatchType],
+                                AllOf[ParamMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.Param], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.Param]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -7135,17 +9773,31 @@ class Parameters(BaseMatcherNode):
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.Param], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.Param]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         ParamMatchType,
-                        AtLeastN[ParamMatchType],
-                        AtMostN[ParamMatchType],
+                        OneOf[ParamMatchType],
+                        AllOf[ParamMatchType],
+                        AtLeastN[
+                            Union[
+                                ParamMatchType,
+                                OneOf[ParamMatchType],
+                                AllOf[ParamMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                ParamMatchType,
+                                OneOf[ParamMatchType],
+                                AllOf[ParamMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.Param], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.Param]], bool]],
             ]
         ],
         AllOf[
@@ -7153,11 +9805,25 @@ class Parameters(BaseMatcherNode):
                 Sequence[
                     Union[
                         ParamMatchType,
-                        AtLeastN[ParamMatchType],
-                        AtMostN[ParamMatchType],
+                        OneOf[ParamMatchType],
+                        AllOf[ParamMatchType],
+                        AtLeastN[
+                            Union[
+                                ParamMatchType,
+                                OneOf[ParamMatchType],
+                                AllOf[ParamMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                ParamMatchType,
+                                OneOf[ParamMatchType],
+                                AllOf[ParamMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.Param], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.Param]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -7193,17 +9859,31 @@ class Parameters(BaseMatcherNode):
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.Param], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.Param]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         ParamMatchType,
-                        AtLeastN[ParamMatchType],
-                        AtMostN[ParamMatchType],
+                        OneOf[ParamMatchType],
+                        AllOf[ParamMatchType],
+                        AtLeastN[
+                            Union[
+                                ParamMatchType,
+                                OneOf[ParamMatchType],
+                                AllOf[ParamMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                ParamMatchType,
+                                OneOf[ParamMatchType],
+                                AllOf[ParamMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.Param], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.Param]], bool]],
             ]
         ],
         AllOf[
@@ -7211,11 +9891,25 @@ class Parameters(BaseMatcherNode):
                 Sequence[
                     Union[
                         ParamMatchType,
-                        AtLeastN[ParamMatchType],
-                        AtMostN[ParamMatchType],
+                        OneOf[ParamMatchType],
+                        AllOf[ParamMatchType],
+                        AtLeastN[
+                            Union[
+                                ParamMatchType,
+                                OneOf[ParamMatchType],
+                                AllOf[ParamMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                ParamMatchType,
+                                OneOf[ParamMatchType],
+                                AllOf[ParamMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.Param], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.Param]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -7267,17 +9961,31 @@ class ParenthesizedWhitespace(BaseParenthesizableWhitespace, BaseMatcherNode):
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.EmptyLine], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.EmptyLine]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         EmptyLineMatchType,
-                        AtLeastN[EmptyLineMatchType],
-                        AtMostN[EmptyLineMatchType],
+                        OneOf[EmptyLineMatchType],
+                        AllOf[EmptyLineMatchType],
+                        AtLeastN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.EmptyLine], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.EmptyLine]], bool]],
             ]
         ],
         AllOf[
@@ -7285,11 +9993,25 @@ class ParenthesizedWhitespace(BaseParenthesizableWhitespace, BaseMatcherNode):
                 Sequence[
                     Union[
                         EmptyLineMatchType,
-                        AtLeastN[EmptyLineMatchType],
-                        AtMostN[EmptyLineMatchType],
+                        OneOf[EmptyLineMatchType],
+                        AllOf[EmptyLineMatchType],
+                        AtLeastN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.EmptyLine], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.EmptyLine]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -7598,17 +10320,31 @@ class Set(BaseExpression, BaseSet, BaseMatcherNode):
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.BaseElement], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.BaseElement]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         BaseElementMatchType,
-                        AtLeastN[BaseElementMatchType],
-                        AtMostN[BaseElementMatchType],
+                        OneOf[BaseElementMatchType],
+                        AllOf[BaseElementMatchType],
+                        AtLeastN[
+                            Union[
+                                BaseElementMatchType,
+                                OneOf[BaseElementMatchType],
+                                AllOf[BaseElementMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                BaseElementMatchType,
+                                OneOf[BaseElementMatchType],
+                                AllOf[BaseElementMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.BaseElement], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.BaseElement]], bool]],
             ]
         ],
         AllOf[
@@ -7616,11 +10352,25 @@ class Set(BaseExpression, BaseSet, BaseMatcherNode):
                 Sequence[
                     Union[
                         BaseElementMatchType,
-                        AtLeastN[BaseElementMatchType],
-                        AtMostN[BaseElementMatchType],
+                        OneOf[BaseElementMatchType],
+                        AllOf[BaseElementMatchType],
+                        AtLeastN[
+                            Union[
+                                BaseElementMatchType,
+                                OneOf[BaseElementMatchType],
+                                AllOf[BaseElementMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                BaseElementMatchType,
+                                OneOf[BaseElementMatchType],
+                                AllOf[BaseElementMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.BaseElement], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.BaseElement]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -7662,17 +10412,31 @@ class Set(BaseExpression, BaseSet, BaseMatcherNode):
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.LeftParen], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         LeftParenMatchType,
-                        AtLeastN[LeftParenMatchType],
-                        AtMostN[LeftParenMatchType],
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                        AtLeastN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.LeftParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
             ]
         ],
         AllOf[
@@ -7680,11 +10444,25 @@ class Set(BaseExpression, BaseSet, BaseMatcherNode):
                 Sequence[
                     Union[
                         LeftParenMatchType,
-                        AtLeastN[LeftParenMatchType],
-                        AtMostN[LeftParenMatchType],
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                        AtLeastN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.LeftParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -7714,17 +10492,31 @@ class Set(BaseExpression, BaseSet, BaseMatcherNode):
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.RightParen], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         RightParenMatchType,
-                        AtLeastN[RightParenMatchType],
-                        AtMostN[RightParenMatchType],
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                        AtLeastN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.RightParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
             ]
         ],
         AllOf[
@@ -7732,11 +10524,25 @@ class Set(BaseExpression, BaseSet, BaseMatcherNode):
                 Sequence[
                     Union[
                         RightParenMatchType,
-                        AtLeastN[RightParenMatchType],
-                        AtMostN[RightParenMatchType],
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                        AtLeastN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.RightParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -7800,17 +10606,31 @@ class SetComp(BaseComp, BaseExpression, BaseSet, BaseSimpleComp, BaseMatcherNode
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.LeftParen], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         LeftParenMatchType,
-                        AtLeastN[LeftParenMatchType],
-                        AtMostN[LeftParenMatchType],
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                        AtLeastN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.LeftParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
             ]
         ],
         AllOf[
@@ -7818,11 +10638,25 @@ class SetComp(BaseComp, BaseExpression, BaseSet, BaseSimpleComp, BaseMatcherNode
                 Sequence[
                     Union[
                         LeftParenMatchType,
-                        AtLeastN[LeftParenMatchType],
-                        AtMostN[LeftParenMatchType],
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                        AtLeastN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.LeftParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -7852,17 +10686,31 @@ class SetComp(BaseComp, BaseExpression, BaseSet, BaseSimpleComp, BaseMatcherNode
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.RightParen], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         RightParenMatchType,
-                        AtLeastN[RightParenMatchType],
-                        AtMostN[RightParenMatchType],
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                        AtLeastN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.RightParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
             ]
         ],
         AllOf[
@@ -7870,11 +10718,25 @@ class SetComp(BaseComp, BaseExpression, BaseSet, BaseSimpleComp, BaseMatcherNode
                 Sequence[
                     Union[
                         RightParenMatchType,
-                        AtLeastN[RightParenMatchType],
-                        AtMostN[RightParenMatchType],
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                        AtLeastN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.RightParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -7921,17 +10783,31 @@ class SimpleStatementLine(BaseStatement, BaseMatcherNode):
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.BaseSmallStatement], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.BaseSmallStatement]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         BaseSmallStatementMatchType,
-                        AtLeastN[BaseSmallStatementMatchType],
-                        AtMostN[BaseSmallStatementMatchType],
+                        OneOf[BaseSmallStatementMatchType],
+                        AllOf[BaseSmallStatementMatchType],
+                        AtLeastN[
+                            Union[
+                                BaseSmallStatementMatchType,
+                                OneOf[BaseSmallStatementMatchType],
+                                AllOf[BaseSmallStatementMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                BaseSmallStatementMatchType,
+                                OneOf[BaseSmallStatementMatchType],
+                                AllOf[BaseSmallStatementMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.BaseSmallStatement], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.BaseSmallStatement]], bool]],
             ]
         ],
         AllOf[
@@ -7939,11 +10815,25 @@ class SimpleStatementLine(BaseStatement, BaseMatcherNode):
                 Sequence[
                     Union[
                         BaseSmallStatementMatchType,
-                        AtLeastN[BaseSmallStatementMatchType],
-                        AtMostN[BaseSmallStatementMatchType],
+                        OneOf[BaseSmallStatementMatchType],
+                        AllOf[BaseSmallStatementMatchType],
+                        AtLeastN[
+                            Union[
+                                BaseSmallStatementMatchType,
+                                OneOf[BaseSmallStatementMatchType],
+                                AllOf[BaseSmallStatementMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                BaseSmallStatementMatchType,
+                                OneOf[BaseSmallStatementMatchType],
+                                AllOf[BaseSmallStatementMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.BaseSmallStatement], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.BaseSmallStatement]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -7973,17 +10863,31 @@ class SimpleStatementLine(BaseStatement, BaseMatcherNode):
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.EmptyLine], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.EmptyLine]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         EmptyLineMatchType,
-                        AtLeastN[EmptyLineMatchType],
-                        AtMostN[EmptyLineMatchType],
+                        OneOf[EmptyLineMatchType],
+                        AllOf[EmptyLineMatchType],
+                        AtLeastN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.EmptyLine], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.EmptyLine]], bool]],
             ]
         ],
         AllOf[
@@ -7991,11 +10895,25 @@ class SimpleStatementLine(BaseStatement, BaseMatcherNode):
                 Sequence[
                     Union[
                         EmptyLineMatchType,
-                        AtLeastN[EmptyLineMatchType],
-                        AtMostN[EmptyLineMatchType],
+                        OneOf[EmptyLineMatchType],
+                        AllOf[EmptyLineMatchType],
+                        AtLeastN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.EmptyLine], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.EmptyLine]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -8041,17 +10959,31 @@ class SimpleStatementSuite(BaseSuite, BaseMatcherNode):
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.BaseSmallStatement], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.BaseSmallStatement]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         BaseSmallStatementMatchType,
-                        AtLeastN[BaseSmallStatementMatchType],
-                        AtMostN[BaseSmallStatementMatchType],
+                        OneOf[BaseSmallStatementMatchType],
+                        AllOf[BaseSmallStatementMatchType],
+                        AtLeastN[
+                            Union[
+                                BaseSmallStatementMatchType,
+                                OneOf[BaseSmallStatementMatchType],
+                                AllOf[BaseSmallStatementMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                BaseSmallStatementMatchType,
+                                OneOf[BaseSmallStatementMatchType],
+                                AllOf[BaseSmallStatementMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.BaseSmallStatement], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.BaseSmallStatement]], bool]],
             ]
         ],
         AllOf[
@@ -8059,11 +10991,25 @@ class SimpleStatementSuite(BaseSuite, BaseMatcherNode):
                 Sequence[
                     Union[
                         BaseSmallStatementMatchType,
-                        AtLeastN[BaseSmallStatementMatchType],
-                        AtMostN[BaseSmallStatementMatchType],
+                        OneOf[BaseSmallStatementMatchType],
+                        AllOf[BaseSmallStatementMatchType],
+                        AtLeastN[
+                            Union[
+                                BaseSmallStatementMatchType,
+                                OneOf[BaseSmallStatementMatchType],
+                                AllOf[BaseSmallStatementMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                BaseSmallStatementMatchType,
+                                OneOf[BaseSmallStatementMatchType],
+                                AllOf[BaseSmallStatementMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.BaseSmallStatement], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.BaseSmallStatement]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -8118,17 +11064,31 @@ class SimpleString(BaseExpression, BaseString, BaseMatcherNode):
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.LeftParen], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         LeftParenMatchType,
-                        AtLeastN[LeftParenMatchType],
-                        AtMostN[LeftParenMatchType],
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                        AtLeastN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.LeftParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
             ]
         ],
         AllOf[
@@ -8136,11 +11096,25 @@ class SimpleString(BaseExpression, BaseString, BaseMatcherNode):
                 Sequence[
                     Union[
                         LeftParenMatchType,
-                        AtLeastN[LeftParenMatchType],
-                        AtMostN[LeftParenMatchType],
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                        AtLeastN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.LeftParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -8170,17 +11144,31 @@ class SimpleString(BaseExpression, BaseString, BaseMatcherNode):
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.RightParen], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         RightParenMatchType,
-                        AtLeastN[RightParenMatchType],
-                        AtMostN[RightParenMatchType],
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                        AtLeastN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.RightParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
             ]
         ],
         AllOf[
@@ -8188,11 +11176,25 @@ class SimpleString(BaseExpression, BaseString, BaseMatcherNode):
                 Sequence[
                     Union[
                         RightParenMatchType,
-                        AtLeastN[RightParenMatchType],
-                        AtMostN[RightParenMatchType],
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                        AtLeastN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.RightParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -8313,17 +11315,31 @@ class StarredElement(BaseElement, BaseMatcherNode):
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.LeftParen], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         LeftParenMatchType,
-                        AtLeastN[LeftParenMatchType],
-                        AtMostN[LeftParenMatchType],
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                        AtLeastN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.LeftParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
             ]
         ],
         AllOf[
@@ -8331,11 +11347,25 @@ class StarredElement(BaseElement, BaseMatcherNode):
                 Sequence[
                     Union[
                         LeftParenMatchType,
-                        AtLeastN[LeftParenMatchType],
-                        AtMostN[LeftParenMatchType],
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                        AtLeastN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.LeftParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -8365,17 +11395,31 @@ class StarredElement(BaseElement, BaseMatcherNode):
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.RightParen], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         RightParenMatchType,
-                        AtLeastN[RightParenMatchType],
-                        AtMostN[RightParenMatchType],
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                        AtLeastN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.RightParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
             ]
         ],
         AllOf[
@@ -8383,11 +11427,25 @@ class StarredElement(BaseElement, BaseMatcherNode):
                 Sequence[
                     Union[
                         RightParenMatchType,
-                        AtLeastN[RightParenMatchType],
-                        AtMostN[RightParenMatchType],
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                        AtLeastN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.RightParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -8405,6 +11463,13 @@ class StarredElement(BaseElement, BaseMatcherNode):
     ] = DoNotCare()
 
 
+SubscriptElementMatchType = Union[
+    "SubscriptElement",
+    MetadataMatchType,
+    MatchIfTrue[Callable[[cst.SubscriptElement], bool]],
+]
+
+
 @dataclass(frozen=True, eq=False, unsafe_hash=False)
 class Subscript(
     BaseAssignTargetExpression, BaseDelTargetExpression, BaseExpression, BaseMatcherNode
@@ -8418,7 +11483,86 @@ class Subscript(
     slice: Union[
         "Index",
         "Slice",
-        Sequence["SubscriptElement"],
+        Union[
+            Sequence[
+                Union[
+                    SubscriptElementMatchType,
+                    DoNotCareSentinel,
+                    OneOf[SubscriptElementMatchType],
+                    AllOf[SubscriptElementMatchType],
+                    AtLeastN[
+                        Union[
+                            SubscriptElementMatchType,
+                            DoNotCareSentinel,
+                            OneOf[SubscriptElementMatchType],
+                            AllOf[SubscriptElementMatchType],
+                        ]
+                    ],
+                    AtMostN[
+                        Union[
+                            SubscriptElementMatchType,
+                            DoNotCareSentinel,
+                            OneOf[SubscriptElementMatchType],
+                            AllOf[SubscriptElementMatchType],
+                        ]
+                    ],
+                ]
+            ],
+            DoNotCareSentinel,
+            MatchIfTrue[Callable[[Sequence[cst.SubscriptElement]], bool]],
+            OneOf[
+                Union[
+                    Sequence[
+                        Union[
+                            SubscriptElementMatchType,
+                            OneOf[SubscriptElementMatchType],
+                            AllOf[SubscriptElementMatchType],
+                            AtLeastN[
+                                Union[
+                                    SubscriptElementMatchType,
+                                    OneOf[SubscriptElementMatchType],
+                                    AllOf[SubscriptElementMatchType],
+                                ]
+                            ],
+                            AtMostN[
+                                Union[
+                                    SubscriptElementMatchType,
+                                    OneOf[SubscriptElementMatchType],
+                                    AllOf[SubscriptElementMatchType],
+                                ]
+                            ],
+                        ]
+                    ],
+                    MatchIfTrue[Callable[[Sequence[cst.SubscriptElement]], bool]],
+                ]
+            ],
+            AllOf[
+                Union[
+                    Sequence[
+                        Union[
+                            SubscriptElementMatchType,
+                            OneOf[SubscriptElementMatchType],
+                            AllOf[SubscriptElementMatchType],
+                            AtLeastN[
+                                Union[
+                                    SubscriptElementMatchType,
+                                    OneOf[SubscriptElementMatchType],
+                                    AllOf[SubscriptElementMatchType],
+                                ]
+                            ],
+                            AtMostN[
+                                Union[
+                                    SubscriptElementMatchType,
+                                    OneOf[SubscriptElementMatchType],
+                                    AllOf[SubscriptElementMatchType],
+                                ]
+                            ],
+                        ]
+                    ],
+                    MatchIfTrue[Callable[[Sequence[cst.SubscriptElement]], bool]],
+                ]
+            ],
+        ],
         MetadataMatchType,
         MatchIfTrue[
             Callable[
@@ -8443,11 +11587,110 @@ class Subscript(
             Union[
                 "Index",
                 "Slice",
-                Sequence["SubscriptElement"],
+                Union[
+                    Sequence[
+                        Union[
+                            SubscriptElementMatchType,
+                            OneOf[SubscriptElementMatchType],
+                            AllOf[SubscriptElementMatchType],
+                            AtLeastN[
+                                Union[
+                                    SubscriptElementMatchType,
+                                    OneOf[SubscriptElementMatchType],
+                                    AllOf[SubscriptElementMatchType],
+                                ]
+                            ],
+                            AtMostN[
+                                Union[
+                                    SubscriptElementMatchType,
+                                    OneOf[SubscriptElementMatchType],
+                                    AllOf[SubscriptElementMatchType],
+                                ]
+                            ],
+                        ]
+                    ],
+                    MatchIfTrue[Callable[[Sequence[cst.SubscriptElement]], bool]],
+                    OneOf[
+                        Union[
+                            Sequence[
+                                Union[
+                                    SubscriptElementMatchType,
+                                    OneOf[SubscriptElementMatchType],
+                                    AllOf[SubscriptElementMatchType],
+                                    AtLeastN[
+                                        Union[
+                                            SubscriptElementMatchType,
+                                            OneOf[SubscriptElementMatchType],
+                                            AllOf[SubscriptElementMatchType],
+                                        ]
+                                    ],
+                                    AtMostN[
+                                        Union[
+                                            SubscriptElementMatchType,
+                                            OneOf[SubscriptElementMatchType],
+                                            AllOf[SubscriptElementMatchType],
+                                        ]
+                                    ],
+                                ]
+                            ],
+                            MatchIfTrue[
+                                Callable[[Sequence[cst.SubscriptElement]], bool]
+                            ],
+                        ]
+                    ],
+                    AllOf[
+                        Union[
+                            Sequence[
+                                Union[
+                                    SubscriptElementMatchType,
+                                    OneOf[SubscriptElementMatchType],
+                                    AllOf[SubscriptElementMatchType],
+                                    AtLeastN[
+                                        Union[
+                                            SubscriptElementMatchType,
+                                            OneOf[SubscriptElementMatchType],
+                                            AllOf[SubscriptElementMatchType],
+                                        ]
+                                    ],
+                                    AtMostN[
+                                        Union[
+                                            SubscriptElementMatchType,
+                                            OneOf[SubscriptElementMatchType],
+                                            AllOf[SubscriptElementMatchType],
+                                        ]
+                                    ],
+                                ]
+                            ],
+                            MatchIfTrue[
+                                Callable[[Sequence[cst.SubscriptElement]], bool]
+                            ],
+                        ]
+                    ],
+                ],
                 MetadataMatchType,
                 MatchIfTrue[
                     Callable[
-                        [Union[cst.Index, cst.Slice, Sequence[cst.SubscriptElement]]],
+                        [
+                            Union[
+                                cst.Index,
+                                cst.Slice,
+                                Sequence[cst.SubscriptElement],
+                                OneOf[
+                                    Union[
+                                        cst.Index,
+                                        cst.Slice,
+                                        Sequence[cst.SubscriptElement],
+                                    ]
+                                ],
+                                AllOf[
+                                    Union[
+                                        cst.Index,
+                                        cst.Slice,
+                                        Sequence[cst.SubscriptElement],
+                                    ]
+                                ],
+                            ]
+                        ],
                         bool,
                     ]
                 ],
@@ -8457,11 +11700,110 @@ class Subscript(
             Union[
                 "Index",
                 "Slice",
-                Sequence["SubscriptElement"],
+                Union[
+                    Sequence[
+                        Union[
+                            SubscriptElementMatchType,
+                            OneOf[SubscriptElementMatchType],
+                            AllOf[SubscriptElementMatchType],
+                            AtLeastN[
+                                Union[
+                                    SubscriptElementMatchType,
+                                    OneOf[SubscriptElementMatchType],
+                                    AllOf[SubscriptElementMatchType],
+                                ]
+                            ],
+                            AtMostN[
+                                Union[
+                                    SubscriptElementMatchType,
+                                    OneOf[SubscriptElementMatchType],
+                                    AllOf[SubscriptElementMatchType],
+                                ]
+                            ],
+                        ]
+                    ],
+                    MatchIfTrue[Callable[[Sequence[cst.SubscriptElement]], bool]],
+                    OneOf[
+                        Union[
+                            Sequence[
+                                Union[
+                                    SubscriptElementMatchType,
+                                    OneOf[SubscriptElementMatchType],
+                                    AllOf[SubscriptElementMatchType],
+                                    AtLeastN[
+                                        Union[
+                                            SubscriptElementMatchType,
+                                            OneOf[SubscriptElementMatchType],
+                                            AllOf[SubscriptElementMatchType],
+                                        ]
+                                    ],
+                                    AtMostN[
+                                        Union[
+                                            SubscriptElementMatchType,
+                                            OneOf[SubscriptElementMatchType],
+                                            AllOf[SubscriptElementMatchType],
+                                        ]
+                                    ],
+                                ]
+                            ],
+                            MatchIfTrue[
+                                Callable[[Sequence[cst.SubscriptElement]], bool]
+                            ],
+                        ]
+                    ],
+                    AllOf[
+                        Union[
+                            Sequence[
+                                Union[
+                                    SubscriptElementMatchType,
+                                    OneOf[SubscriptElementMatchType],
+                                    AllOf[SubscriptElementMatchType],
+                                    AtLeastN[
+                                        Union[
+                                            SubscriptElementMatchType,
+                                            OneOf[SubscriptElementMatchType],
+                                            AllOf[SubscriptElementMatchType],
+                                        ]
+                                    ],
+                                    AtMostN[
+                                        Union[
+                                            SubscriptElementMatchType,
+                                            OneOf[SubscriptElementMatchType],
+                                            AllOf[SubscriptElementMatchType],
+                                        ]
+                                    ],
+                                ]
+                            ],
+                            MatchIfTrue[
+                                Callable[[Sequence[cst.SubscriptElement]], bool]
+                            ],
+                        ]
+                    ],
+                ],
                 MetadataMatchType,
                 MatchIfTrue[
                     Callable[
-                        [Union[cst.Index, cst.Slice, Sequence[cst.SubscriptElement]]],
+                        [
+                            Union[
+                                cst.Index,
+                                cst.Slice,
+                                Sequence[cst.SubscriptElement],
+                                OneOf[
+                                    Union[
+                                        cst.Index,
+                                        cst.Slice,
+                                        Sequence[cst.SubscriptElement],
+                                    ]
+                                ],
+                                AllOf[
+                                    Union[
+                                        cst.Index,
+                                        cst.Slice,
+                                        Sequence[cst.SubscriptElement],
+                                    ]
+                                ],
+                            ]
+                        ],
                         bool,
                     ]
                 ],
@@ -8506,17 +11848,31 @@ class Subscript(
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.LeftParen], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         LeftParenMatchType,
-                        AtLeastN[LeftParenMatchType],
-                        AtMostN[LeftParenMatchType],
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                        AtLeastN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.LeftParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
             ]
         ],
         AllOf[
@@ -8524,11 +11880,25 @@ class Subscript(
                 Sequence[
                     Union[
                         LeftParenMatchType,
-                        AtLeastN[LeftParenMatchType],
-                        AtMostN[LeftParenMatchType],
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                        AtLeastN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.LeftParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -8558,17 +11928,31 @@ class Subscript(
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.RightParen], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         RightParenMatchType,
-                        AtLeastN[RightParenMatchType],
-                        AtMostN[RightParenMatchType],
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                        AtLeastN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.RightParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
             ]
         ],
         AllOf[
@@ -8576,11 +11960,25 @@ class Subscript(
                 Sequence[
                     Union[
                         RightParenMatchType,
-                        AtLeastN[RightParenMatchType],
-                        AtMostN[RightParenMatchType],
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                        AtLeastN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.RightParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -8742,17 +12140,31 @@ class Try(BaseCompoundStatement, BaseStatement, BaseMatcherNode):
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.ExceptHandler], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.ExceptHandler]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         ExceptHandlerMatchType,
-                        AtLeastN[ExceptHandlerMatchType],
-                        AtMostN[ExceptHandlerMatchType],
+                        OneOf[ExceptHandlerMatchType],
+                        AllOf[ExceptHandlerMatchType],
+                        AtLeastN[
+                            Union[
+                                ExceptHandlerMatchType,
+                                OneOf[ExceptHandlerMatchType],
+                                AllOf[ExceptHandlerMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                ExceptHandlerMatchType,
+                                OneOf[ExceptHandlerMatchType],
+                                AllOf[ExceptHandlerMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.ExceptHandler], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.ExceptHandler]], bool]],
             ]
         ],
         AllOf[
@@ -8760,11 +12172,25 @@ class Try(BaseCompoundStatement, BaseStatement, BaseMatcherNode):
                 Sequence[
                     Union[
                         ExceptHandlerMatchType,
-                        AtLeastN[ExceptHandlerMatchType],
-                        AtMostN[ExceptHandlerMatchType],
+                        OneOf[ExceptHandlerMatchType],
+                        AllOf[ExceptHandlerMatchType],
+                        AtLeastN[
+                            Union[
+                                ExceptHandlerMatchType,
+                                OneOf[ExceptHandlerMatchType],
+                                AllOf[ExceptHandlerMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                ExceptHandlerMatchType,
+                                OneOf[ExceptHandlerMatchType],
+                                AllOf[ExceptHandlerMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.ExceptHandler], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.ExceptHandler]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -8806,17 +12232,31 @@ class Try(BaseCompoundStatement, BaseStatement, BaseMatcherNode):
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.EmptyLine], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.EmptyLine]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         EmptyLineMatchType,
-                        AtLeastN[EmptyLineMatchType],
-                        AtMostN[EmptyLineMatchType],
+                        OneOf[EmptyLineMatchType],
+                        AllOf[EmptyLineMatchType],
+                        AtLeastN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.EmptyLine], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.EmptyLine]], bool]],
             ]
         ],
         AllOf[
@@ -8824,11 +12264,25 @@ class Try(BaseCompoundStatement, BaseStatement, BaseMatcherNode):
                 Sequence[
                     Union[
                         EmptyLineMatchType,
-                        AtLeastN[EmptyLineMatchType],
-                        AtMostN[EmptyLineMatchType],
+                        OneOf[EmptyLineMatchType],
+                        AllOf[EmptyLineMatchType],
+                        AtLeastN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.EmptyLine], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.EmptyLine]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -8876,17 +12330,31 @@ class Tuple(
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.BaseElement], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.BaseElement]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         BaseElementMatchType,
-                        AtLeastN[BaseElementMatchType],
-                        AtMostN[BaseElementMatchType],
+                        OneOf[BaseElementMatchType],
+                        AllOf[BaseElementMatchType],
+                        AtLeastN[
+                            Union[
+                                BaseElementMatchType,
+                                OneOf[BaseElementMatchType],
+                                AllOf[BaseElementMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                BaseElementMatchType,
+                                OneOf[BaseElementMatchType],
+                                AllOf[BaseElementMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.BaseElement], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.BaseElement]], bool]],
             ]
         ],
         AllOf[
@@ -8894,11 +12362,25 @@ class Tuple(
                 Sequence[
                     Union[
                         BaseElementMatchType,
-                        AtLeastN[BaseElementMatchType],
-                        AtMostN[BaseElementMatchType],
+                        OneOf[BaseElementMatchType],
+                        AllOf[BaseElementMatchType],
+                        AtLeastN[
+                            Union[
+                                BaseElementMatchType,
+                                OneOf[BaseElementMatchType],
+                                AllOf[BaseElementMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                BaseElementMatchType,
+                                OneOf[BaseElementMatchType],
+                                AllOf[BaseElementMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.BaseElement], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.BaseElement]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -8928,17 +12410,31 @@ class Tuple(
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.LeftParen], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         LeftParenMatchType,
-                        AtLeastN[LeftParenMatchType],
-                        AtMostN[LeftParenMatchType],
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                        AtLeastN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.LeftParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
             ]
         ],
         AllOf[
@@ -8946,11 +12442,25 @@ class Tuple(
                 Sequence[
                     Union[
                         LeftParenMatchType,
-                        AtLeastN[LeftParenMatchType],
-                        AtMostN[LeftParenMatchType],
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                        AtLeastN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.LeftParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -8980,17 +12490,31 @@ class Tuple(
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.RightParen], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         RightParenMatchType,
-                        AtLeastN[RightParenMatchType],
-                        AtMostN[RightParenMatchType],
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                        AtLeastN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.RightParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
             ]
         ],
         AllOf[
@@ -8998,11 +12522,25 @@ class Tuple(
                 Sequence[
                     Union[
                         RightParenMatchType,
-                        AtLeastN[RightParenMatchType],
-                        AtMostN[RightParenMatchType],
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                        AtLeastN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.RightParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -9059,17 +12597,31 @@ class UnaryOperation(BaseExpression, BaseMatcherNode):
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.LeftParen], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         LeftParenMatchType,
-                        AtLeastN[LeftParenMatchType],
-                        AtMostN[LeftParenMatchType],
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                        AtLeastN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.LeftParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
             ]
         ],
         AllOf[
@@ -9077,11 +12629,25 @@ class UnaryOperation(BaseExpression, BaseMatcherNode):
                 Sequence[
                     Union[
                         LeftParenMatchType,
-                        AtLeastN[LeftParenMatchType],
-                        AtMostN[LeftParenMatchType],
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                        AtLeastN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.LeftParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -9111,17 +12677,31 @@ class UnaryOperation(BaseExpression, BaseMatcherNode):
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.RightParen], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         RightParenMatchType,
-                        AtLeastN[RightParenMatchType],
-                        AtMostN[RightParenMatchType],
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                        AtLeastN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.RightParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
             ]
         ],
         AllOf[
@@ -9129,11 +12709,25 @@ class UnaryOperation(BaseExpression, BaseMatcherNode):
                 Sequence[
                     Union[
                         RightParenMatchType,
-                        AtLeastN[RightParenMatchType],
-                        AtMostN[RightParenMatchType],
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                        AtLeastN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.RightParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -9191,17 +12785,31 @@ class While(BaseCompoundStatement, BaseStatement, BaseMatcherNode):
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.EmptyLine], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.EmptyLine]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         EmptyLineMatchType,
-                        AtLeastN[EmptyLineMatchType],
-                        AtMostN[EmptyLineMatchType],
+                        OneOf[EmptyLineMatchType],
+                        AllOf[EmptyLineMatchType],
+                        AtLeastN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.EmptyLine], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.EmptyLine]], bool]],
             ]
         ],
         AllOf[
@@ -9209,11 +12817,25 @@ class While(BaseCompoundStatement, BaseStatement, BaseMatcherNode):
                 Sequence[
                     Union[
                         EmptyLineMatchType,
-                        AtLeastN[EmptyLineMatchType],
-                        AtMostN[EmptyLineMatchType],
+                        OneOf[EmptyLineMatchType],
+                        AllOf[EmptyLineMatchType],
+                        AtLeastN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.EmptyLine], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.EmptyLine]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -9270,17 +12892,31 @@ class With(BaseCompoundStatement, BaseStatement, BaseMatcherNode):
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.WithItem], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.WithItem]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         WithItemMatchType,
-                        AtLeastN[WithItemMatchType],
-                        AtMostN[WithItemMatchType],
+                        OneOf[WithItemMatchType],
+                        AllOf[WithItemMatchType],
+                        AtLeastN[
+                            Union[
+                                WithItemMatchType,
+                                OneOf[WithItemMatchType],
+                                AllOf[WithItemMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                WithItemMatchType,
+                                OneOf[WithItemMatchType],
+                                AllOf[WithItemMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.WithItem], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.WithItem]], bool]],
             ]
         ],
         AllOf[
@@ -9288,11 +12924,25 @@ class With(BaseCompoundStatement, BaseStatement, BaseMatcherNode):
                 Sequence[
                     Union[
                         WithItemMatchType,
-                        AtLeastN[WithItemMatchType],
-                        AtMostN[WithItemMatchType],
+                        OneOf[WithItemMatchType],
+                        AllOf[WithItemMatchType],
+                        AtLeastN[
+                            Union[
+                                WithItemMatchType,
+                                OneOf[WithItemMatchType],
+                                AllOf[WithItemMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                WithItemMatchType,
+                                OneOf[WithItemMatchType],
+                                AllOf[WithItemMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.WithItem], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.WithItem]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -9334,17 +12984,31 @@ class With(BaseCompoundStatement, BaseStatement, BaseMatcherNode):
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.EmptyLine], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.EmptyLine]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         EmptyLineMatchType,
-                        AtLeastN[EmptyLineMatchType],
-                        AtMostN[EmptyLineMatchType],
+                        OneOf[EmptyLineMatchType],
+                        AllOf[EmptyLineMatchType],
+                        AtLeastN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.EmptyLine], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.EmptyLine]], bool]],
             ]
         ],
         AllOf[
@@ -9352,11 +13016,25 @@ class With(BaseCompoundStatement, BaseStatement, BaseMatcherNode):
                 Sequence[
                     Union[
                         EmptyLineMatchType,
-                        AtLeastN[EmptyLineMatchType],
-                        AtMostN[EmptyLineMatchType],
+                        OneOf[EmptyLineMatchType],
+                        AllOf[EmptyLineMatchType],
+                        AtLeastN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.EmptyLine], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.EmptyLine]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -9448,17 +13126,31 @@ class Yield(BaseExpression, BaseMatcherNode):
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.LeftParen], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         LeftParenMatchType,
-                        AtLeastN[LeftParenMatchType],
-                        AtMostN[LeftParenMatchType],
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                        AtLeastN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.LeftParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
             ]
         ],
         AllOf[
@@ -9466,11 +13158,25 @@ class Yield(BaseExpression, BaseMatcherNode):
                 Sequence[
                     Union[
                         LeftParenMatchType,
-                        AtLeastN[LeftParenMatchType],
-                        AtMostN[LeftParenMatchType],
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                        AtLeastN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.LeftParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -9500,17 +13206,31 @@ class Yield(BaseExpression, BaseMatcherNode):
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Callable[[cst.RightParen], bool]],
+        MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
         OneOf[
             Union[
                 Sequence[
                     Union[
                         RightParenMatchType,
-                        AtLeastN[RightParenMatchType],
-                        AtMostN[RightParenMatchType],
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                        AtLeastN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.RightParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
             ]
         ],
         AllOf[
@@ -9518,11 +13238,25 @@ class Yield(BaseExpression, BaseMatcherNode):
                 Sequence[
                     Union[
                         RightParenMatchType,
-                        AtLeastN[RightParenMatchType],
-                        AtMostN[RightParenMatchType],
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                        AtLeastN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
                     ]
                 ],
-                MatchIfTrue[Callable[[cst.RightParen], bool]],
+                MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
             ]
         ],
     ] = DoNotCare()
