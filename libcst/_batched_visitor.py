@@ -40,8 +40,10 @@ class BatchableCSTVisitor(CSTTypedVisitorFunctions, MetadataDependent):
 
     def get_visitors(self) -> Mapping[str, VisitorMethod]:
         """
-        Returns a mapping of all the ``visit_<Type[CSTNode]>`` and ``leave_<Type[CSTNode]>``
-        methods defined by this visitor, excluding all empty stubs.
+        Returns a mapping of all the ``visit_<Type[CSTNode]>``,
+        ``visit_<Type[CSTNode]>_<attribute>``, ``leave_<Type[CSTNode]>`` and
+        `leave_<Type[CSTNode]>_<attribute>`` methods defined by this visitor,
+        excluding all empty stubs.
         """
 
         methods = inspect.getmembers(
@@ -70,8 +72,9 @@ def visit_batched(
     Do a batched traversal over ``node`` with all ``visitors``.
 
     ``before_visit`` and ``after_leave`` are provided as optional hooks to
-    execute before the ``visit_<Type[CSTNode]>`` and ``leave_<Type[CSTNode]>``
-    methods from each visitor in ``visitor`` are executed by the batched visitor.
+    execute before the ``visit_<Type[CSTNode]>`` and after the
+    ``leave_<Type[CSTNode]>`` methods from each visitor in ``visitor`` are
+    executed by the batched visitor.
 
     This function does not handle metadata dependency resolution for ``visitors``.
     See :func:`~libcst.MetadataWrapper.visit_batched` from
@@ -89,7 +92,8 @@ def _get_visitor_methods(
     batchable_visitors: Iterable[BatchableCSTVisitor],
 ) -> _VisitorMethodCollection:
     """
-    Gather all ``visit_<Type[CSTNode]>`` and ``leave_<Type[CSTNode]>`` methods
+    Gather all ``visit_<Type[CSTNode]>``, ``visit_<Type[CSTNode]>_<attribute>``,
+    ``leave_<Type[CSTNode]>`` amd `leave_<Type[CSTNode]>_<attribute>`` methods
     from ``batchabled_visitors``.
     """
     visitor_methods: MutableMapping[str, List[VisitorMethod]] = {}
@@ -142,3 +146,21 @@ class _BatchedCSTVisitor(CSTVisitor):
         after_leave = self.after_leave
         if after_leave is not None:
             after_leave(original_node)
+
+    def on_visit_attribute(self, node: "CSTNode", attribute: str) -> None:
+        """
+        Call appropriate visit attribute methods on node before visiting
+        attribute's children.
+        """
+        type_name = type(node).__name__
+        for v in self.visitor_methods.get(f"visit_{type_name}_{attribute}", []):
+            v(node)
+
+    def on_leave_attribute(self, original_node: "CSTNode", attribute: str) -> None:
+        """
+        Call appropriate leave attribute methods on node after visiting
+        attribute's children.
+        """
+        type_name = type(original_node).__name__
+        for v in self.visitor_methods.get(f"leave_{type_name}_{attribute}", []):
+            v(original_node)

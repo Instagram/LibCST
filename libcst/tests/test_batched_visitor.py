@@ -13,7 +13,7 @@ from libcst.testing.utils import UnitTest
 
 
 class BatchedVisitorTest(UnitTest):
-    def test(self) -> None:
+    def test_simple(self) -> None:
         mock = Mock()
 
         class ABatchable(BatchableCSTVisitor):
@@ -36,3 +36,38 @@ class BatchedVisitorTest(UnitTest):
         # Check that each visitor was only called once
         mock.visited_a.assert_called_once()
         mock.visited_b.assert_called_once()
+
+    def test_all_visits(self) -> None:
+        mock = Mock()
+
+        class Batchable(BatchableCSTVisitor):
+            def visit_Pass(self, node: cst.Pass) -> None:
+                mock.visit_Pass()
+                object.__setattr__(node, "visit_Pass", True)
+
+            def visit_Pass_semicolon(self, node: cst.Pass) -> None:
+                mock.visit_Pass_semicolon()
+                object.__setattr__(node, "visit_Pass_semicolon", True)
+
+            def leave_Pass_semicolon(self, original_node: cst.Pass) -> None:
+                mock.leave_Pass_semicolon()
+                object.__setattr__(original_node, "leave_Pass_semicolon", True)
+
+            def leave_Pass(self, original_node: cst.Pass) -> None:
+                mock.leave_Pass()
+                object.__setattr__(original_node, "leave_Pass", True)
+
+        module = visit_batched(parse_module("pass"), [Batchable()])
+        pass_ = cast(cst.SimpleStatementLine, module.body[0]).body[0]
+
+        # Check properties were set
+        self.assertEqual(object.__getattribute__(pass_, "visit_Pass"), True)
+        self.assertEqual(object.__getattribute__(pass_, "leave_Pass"), True)
+        self.assertEqual(object.__getattribute__(pass_, "visit_Pass_semicolon"), True)
+        self.assertEqual(object.__getattribute__(pass_, "leave_Pass_semicolon"), True)
+
+        # Check that each visitor was only called once
+        mock.visit_Pass.assert_called_once()
+        mock.leave_Pass.assert_called_once()
+        mock.visit_Pass_semicolon.assert_called_once()
+        mock.leave_Pass_semicolon.assert_called_once()
