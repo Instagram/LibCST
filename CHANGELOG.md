@@ -1,3 +1,9 @@
+# 0.2.4 - 2019-11-13
+
+## Fixed
+
+ - Fixed broken types for sequence matchers.
+
 # 0.2.3 - 2019-11-11
 
 ## Added
