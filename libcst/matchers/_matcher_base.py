@@ -138,9 +138,6 @@ class OneOf(Generic[_MatcherT], BaseMatcherNode):
                 actual_options.extend(option.options)
             else:
                 actual_options.append(option)
-
-        if len(actual_options) < 2:
-            raise Exception("Must provide at least two options to OneOf!")
         self._options: Sequence[_MatcherT] = tuple(actual_options)
 
     @property
@@ -215,9 +212,6 @@ class AllOf(Generic[_MatcherT], BaseMatcherNode):
                 actual_options.extend(option.options)
             else:
                 actual_options.append(option)
-
-        if len(actual_options) < 2:
-            raise Exception("Must provide at least two options to AllOf!")
         self._options: Sequence[_MatcherT] = tuple(actual_options)
 
     @property
