@@ -95,12 +95,12 @@ class MetadataDependent(ABC):
     ) -> _T:
         """
         Returns the metadata provided by the ``key`` if it is accessible from
-        this vistor. Metadata is accessible in a subclass of this class if ``key``
+        this visitor. Metadata is accessible in a subclass of this class if ``key``
         is declared as a dependency by any class in the MRO of this class.
         """
         if key not in self.get_inherited_dependencies():
             raise KeyError(
-                f"{key.__name__} is not declared as a dependency from {type(self).__name__}"
+                f"{key.__name__} is not declared as a dependency in {type(self).__name__}.METADATA_DEPENDENCIES."
             )
 
         if default is not _UNDEFINED_DEFAULT:

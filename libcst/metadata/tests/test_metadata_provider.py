@@ -323,7 +323,8 @@ class MetadataProviderTest(UnitTest):
                 return True
 
         with self.assertRaisesRegex(
-            KeyError, "ProviderB is not declared as a dependency from AVisitor"
+            KeyError,
+            "ProviderB is not declared as a dependency in AVisitor.METADATA_DEPENDENCIES.",
         ):
             MetadataWrapper(cst.Module([])).visit(AVisitor())
 
