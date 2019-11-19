@@ -13,7 +13,7 @@ from libcst.metadata import (
     MetadataWrapper,
     VisitorMetadataProvider,
 )
-from libcst.metadata.base_provider import _gen_batchable
+from libcst.metadata.wrapper import _gen_batchable
 from libcst.testing.utils import UnitTest
 
 

@@ -5,17 +5,7 @@
 
 # pyre-strict
 from types import MappingProxyType
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Generic,
-    Iterable,
-    Mapping,
-    MutableMapping,
-    Type,
-    TypeVar,
-    cast,
-)
+from typing import TYPE_CHECKING, Generic, Mapping, MutableMapping, Type, TypeVar, cast
 
 from libcst._batched_visitor import BatchableCSTVisitor
 from libcst._metadata_dependent import (
@@ -144,18 +134,3 @@ class BatchableMetadataProvider(
         implementation should be provided in _gen_impl.
         """
         pass
-
-
-def _gen_batchable(
-    wrapper: "MetadataWrapper",
-    # pyre-fixme[2]: Parameter `providers` must have a type that does not contain `Any`
-    providers: Iterable[BatchableMetadataProvider[Any]],
-) -> Mapping[ProviderT, Mapping["CSTNode", object]]:
-    """
-    Returns map of metadata mappings from resolving ``providers`` on ``wrapper``.
-    """
-    wrapper.visit_batched(providers)
-
-    # Make immutable metadata mapping
-    # pyre-ignore[7]
-    return {type(p): MappingProxyType(dict(p._computed)) for p in providers}
