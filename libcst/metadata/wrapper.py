@@ -7,12 +7,15 @@
 
 import textwrap
 from contextlib import ExitStack
+from types import MappingProxyType
 from typing import (
     TYPE_CHECKING,
+    Any,
     Collection,
     Iterable,
     Mapping,
     MutableMapping,
+    MutableSet,
     Optional,
     Type,
     TypeVar,
@@ -20,7 +23,8 @@ from typing import (
 )
 
 from libcst._batched_visitor import BatchableCSTVisitor, VisitorMethod, visit_batched
-from libcst.metadata._resolver import _resolve_impl
+from libcst._exceptions import MetadataException
+from libcst.metadata.base_provider import BatchableMetadataProvider
 
 
 if TYPE_CHECKING:
@@ -34,6 +38,68 @@ if TYPE_CHECKING:
 
 
 _T = TypeVar("_T")
+
+
+def _gen_batchable(
+    wrapper: "MetadataWrapper",
+    # pyre-fixme[2]: Parameter `providers` must have a type that does not contain `Any`
+    providers: Iterable[BatchableMetadataProvider[Any]],
+) -> Mapping["ProviderT", Mapping["CSTNode", object]]:
+    """
+    Returns map of metadata mappings from resolving ``providers`` on ``wrapper``.
+    """
+    wrapper.visit_batched(providers)
+
+    # Make immutable metadata mapping
+    # pyre-ignore[7]
+    return {type(p): MappingProxyType(dict(p._computed)) for p in providers}
+
+
+def _gather_providers(
+    providers: Collection["ProviderT"], gathered: MutableSet["ProviderT"]
+) -> MutableSet["ProviderT"]:
+    """
+    Recursively gathers all the given providers and their dependencies.
+    """
+    for P in providers:
+        if P not in gathered:
+            gathered.add(P)
+            _gather_providers(P.METADATA_DEPENDENCIES, gathered)
+    return gathered
+
+
+def _resolve_impl(
+    wrapper: "MetadataWrapper", providers: Collection["ProviderT"]
+) -> None:
+    """
+    Updates the _metadata map on wrapper with metadata from the given providers
+    as well as their dependencies.
+    """
+    providers = set(providers) - set(wrapper._metadata.keys())
+    remaining = _gather_providers(providers, set())
+
+    completed = set()
+    while len(remaining) > 0:
+        batchable = set()
+
+        for P in remaining:
+            if set(P.METADATA_DEPENDENCIES).issubset(completed):
+                if issubclass(P, BatchableMetadataProvider):
+                    batchable.add(P)
+                else:
+                    wrapper._metadata[P] = P()._gen(wrapper)
+                    completed.add(P)
+
+        metadata_batch = _gen_batchable(wrapper, [p() for p in batchable])
+        wrapper._metadata.update(metadata_batch)
+        completed |= batchable
+
+        if len(completed) == 0 and len(batchable) == 0:
+            # remaining must be non-empty at this point
+            names = ", ".join([P.__name__ for P in remaining])
+            raise MetadataException(f"Detected circular dependencies in {names}")
+
+        remaining -= completed
 
 
 class MetadataWrapper:
