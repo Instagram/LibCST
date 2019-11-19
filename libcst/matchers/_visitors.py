@@ -13,6 +13,7 @@ from typing import (
     Optional,
     Sequence,
     Set,
+    Tuple,
     Type,
     TypeVar,
     Union,
@@ -53,12 +54,23 @@ CONCRETE_METHODS: Set[str] = {
 _CSTNodeT = TypeVar("_CSTNodeT", bound=cst.CSTNode)
 
 
+# pyre-ignore We don't care about Any here, its not exposed.
+def _match_decorator_unpickler(kwargs: Any) -> "MatchDecoratorMismatch":
+    return MatchDecoratorMismatch(**kwargs)
+
+
 class MatchDecoratorMismatch(Exception):
-    # pyre-ignore We don't care about the type of func, just that its callable.
-    def __init__(self, func: Callable[..., Any], message: str) -> None:
-        super().__init__(
-            # pyre-ignore Pyre doesn't believe functions have __qualname__
-            f"Invalid function signature for {func.__qualname__}: {message}"
+    def __init__(self, func: str, message: str) -> None:
+        super().__init__(f"Invalid function signature for {func}: {message}")
+        self.func = func
+        self.message = message
+
+    def __reduce__(
+        self,
+    ) -> Tuple[Callable[..., "MatchDecoratorMismatch"], Tuple[object, ...]]:
+        return (
+            _match_decorator_unpickler,
+            ({"func": self.func, "message": self.message},),
         )
 
 
@@ -107,7 +119,7 @@ def _verify_return_annotation(
         # it is "None".
         if type_hints.get("return", type(None)) is not type(None):  # noqa: E721
             raise MatchDecoratorMismatch(
-                meth,
+                meth.__qualname__,
                 f"@{decorator_name} should only decorate functions that do "
                 + "not return.",
             )
@@ -137,7 +149,7 @@ def _verify_return_annotation(
                 # The current ret was not a subclass of any of the annotated
                 # return types.
                 raise MatchDecoratorMismatch(
-                    meth,
+                    meth.__qualname__,
                     f"@{decorator_name} decorated function cannot return "
                     + f"the type {ret.__name__}.",
                 )
@@ -155,7 +167,7 @@ def _verify_parameter_annotations(
     meth_signature = signature(meth)
     if len(meth_signature.parameters) != expected_param_count:
         raise MatchDecoratorMismatch(
-            meth,
+            meth.__qualname__,
             f"@{decorator_name} should decorate functions which take "
             + f"{expected_param_count} parameter"
             + ("s" if expected_param_count > 1 else ""),
@@ -181,7 +193,7 @@ def _verify_parameter_annotations(
                 # The current match was not a subclass of any of the annotated
                 # types.
                 raise MatchDecoratorMismatch(
-                    meth,
+                    meth.__qualname__,
                     f"@{decorator_name} can be called with {match.__name__} "
                     + f"but the decorated function parameter annotations do "
                     + f"not include this type.",
@@ -211,14 +223,15 @@ def _check_types(
             # First thing first, make sure this isn't wrapping an inner class.
             if not ismethod(meth):
                 raise MatchDecoratorMismatch(
-                    meth,
+                    meth.__qualname__,
                     "Matcher decorators should only be used on methods of "
                     + "MatcherDecoratableTransformer or "
                     + "MatcherDecoratableVisitor",
                 )
             if has_invalid_top_level:
                 raise MatchDecoratorMismatch(
-                    meth,
+                    # pyre-ignore This anonymous method has a qualname.
+                    meth.__qualname__,
                     "The root matcher in a matcher decorator cannot be an "
                     + "AtLeastN, AtMostN or MatchIfTrue matcher",
                 )
@@ -263,7 +276,8 @@ def _assert_not_concrete(
 ) -> None:
     if func.__name__ in CONCRETE_METHODS:
         raise MatchDecoratorMismatch(
-            func,
+            # pyre-ignore This anonymous method has a qualname.
+            func.__qualname__,
             f"@{decorator_name} should not decorate functions that are concrete "
             + "visit or leave methods.",
         )
