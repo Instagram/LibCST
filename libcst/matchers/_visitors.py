@@ -140,7 +140,6 @@ def _verify_return_annotation(
                     f"@{decorator_name} decorated function cannot return "
                     + f"the type {ret.__name__}.",
                 )
-                pass
 
 
 def _verify_parameter_annotations(
