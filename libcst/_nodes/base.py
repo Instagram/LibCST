@@ -6,27 +6,13 @@
 from abc import ABC, abstractmethod
 from copy import deepcopy
 from dataclasses import dataclass, field, fields, replace
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Dict,
-    List,
-    Mapping,
-    Sequence,
-    TypeVar,
-    Union,
-    cast,
-)
+from typing import Any, Dict, List, Mapping, Sequence, TypeVar, Union, cast
 
 from libcst._nodes.internal import CodegenState
 from libcst._removal_sentinel import RemovalSentinel
 from libcst._type_enforce import is_value_of_type
 from libcst._types import CSTNodeT
 from libcst._visitors import CSTTransformer, CSTVisitor, CSTVisitorT
-
-
-if TYPE_CHECKING:
-    from libcst.metadata.base_provider import BaseMetadataProvider  # noqa: F401
 
 
 _T = TypeVar("_T")
