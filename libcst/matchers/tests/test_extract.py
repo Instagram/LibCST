@@ -39,9 +39,7 @@ class MatchersExtractTest(UnitTest):
         nodes = m.extract(
             expression,
             m.SaveMatchedNode(
-                m.Tuple(
-                    elements=[m.Element(m.BinaryOperation(),), m.Element(m.Call(),),]
-                ),
+                m.Tuple(elements=[m.Element(m.BinaryOperation()), m.Element(m.Call())]),
                 name="node",
             ),
         )
@@ -57,7 +55,7 @@ class MatchersExtractTest(UnitTest):
                     m.Element(
                         m.BinaryOperation(left=m.SaveMatchedNode(m.Name(), "left"))
                     ),
-                    m.Element(m.Call(),),
+                    m.Element(m.Call()),
                 ]
             ),
         )
@@ -75,7 +73,7 @@ class MatchersExtractTest(UnitTest):
                     m.Element(
                         m.BinaryOperation(left=m.SaveMatchedNode(m.Subscript(), "left"))
                     ),
-                    m.Element(m.Call(),),
+                    m.Element(m.Call()),
                 ]
             ),
         )
@@ -99,7 +97,7 @@ class MatchersExtractTest(UnitTest):
             cst.BinaryOperation,
         ).left
         extracted_node_func = cst.ensure_type(
-            cst.ensure_type(expression, cst.Tuple).elements[1].value, cst.Call,
+            cst.ensure_type(expression, cst.Tuple).elements[1].value, cst.Call
         ).func
         self.assertEqual(
             nodes, {"left": extracted_node_left, "func": extracted_node_func}
@@ -128,7 +126,7 @@ class MatchersExtractTest(UnitTest):
             cst.BinaryOperation,
         ).left
         extracted_node_func = cst.ensure_type(
-            cst.ensure_type(expression, cst.Tuple).elements[1].value, cst.Call,
+            cst.ensure_type(expression, cst.Tuple).elements[1].value, cst.Call
         ).func
         self.assertEqual(
             nodes, {"left": extracted_node_left, "func": extracted_node_func}
@@ -156,7 +154,7 @@ class MatchersExtractTest(UnitTest):
             cst.BinaryOperation,
         ).left
         extracted_node_attr = cst.ensure_type(
-            cst.ensure_type(expression, cst.Tuple).elements[1].value, cst.Call,
+            cst.ensure_type(expression, cst.Tuple).elements[1].value, cst.Call
         ).func
         self.assertEqual(
             nodes, {"left": extracted_node_left, "attr": extracted_node_attr}
@@ -188,7 +186,7 @@ class MatchersExtractTest(UnitTest):
                             )
                         )
                     ),
-                    m.Element(m.Call(),),
+                    m.Element(m.Call()),
                 ]
             ),
             metadata_resolver=wrapper,
@@ -217,7 +215,7 @@ class MatchersExtractTest(UnitTest):
                             )
                         )
                     ),
-                    m.Element(m.Call(),),
+                    m.Element(m.Call()),
                 ]
             ),
             metadata_resolver=wrapper,
@@ -237,10 +235,10 @@ class MatchersExtractTest(UnitTest):
                                 args=[
                                     m.Arg(m.SaveMatchedNode(m.Name(), "name")),
                                     m.DoNotCare(),
-                                ],
+                                ]
                             ),
                             "name",
-                        ),
+                        )
                     ),
                 ]
             ),
@@ -260,7 +258,7 @@ class MatchersExtractTest(UnitTest):
                             args=[
                                 m.Arg(m.SaveMatchedNode(m.DoNotCare(), "arg")),
                                 m.Arg(m.SaveMatchedNode(m.DoNotCare(), "arg")),
-                            ],
+                            ]
                         )
                     ),
                 ]
@@ -268,7 +266,7 @@ class MatchersExtractTest(UnitTest):
         )
         extracted_node = (
             cst.ensure_type(
-                cst.ensure_type(expression, cst.Tuple).elements[1].value, cst.Call,
+                cst.ensure_type(expression, cst.Tuple).elements[1].value, cst.Call
             )
             .args[1]
             .value
@@ -287,8 +285,8 @@ class MatchersExtractTest(UnitTest):
                             args=[
                                 m.ZeroOrMore(
                                     m.Arg(m.SaveMatchedNode(m.DoNotCare(), "arg"))
-                                ),
-                            ],
+                                )
+                            ]
                         )
                     ),
                 ]
@@ -296,7 +294,7 @@ class MatchersExtractTest(UnitTest):
         )
         extracted_node = (
             cst.ensure_type(
-                cst.ensure_type(expression, cst.Tuple).elements[1].value, cst.Call,
+                cst.ensure_type(expression, cst.Tuple).elements[1].value, cst.Call
             )
             .args[1]
             .value
@@ -315,9 +313,9 @@ class MatchersExtractTest(UnitTest):
                             args=[
                                 m.ZeroOrMore(),
                                 m.ZeroOrOne(
-                                    m.Arg(m.SaveMatchedNode(m.Attribute(), "arg")),
+                                    m.Arg(m.SaveMatchedNode(m.Attribute(), "arg"))
                                 ),
-                            ],
+                            ]
                         )
                     ),
                 ]
@@ -338,9 +336,9 @@ class MatchersExtractTest(UnitTest):
                                 m.DoNotCare(),
                                 m.DoNotCare(),
                                 m.ZeroOrOne(
-                                    m.Arg(m.SaveMatchedNode(m.Attribute(), "arg")),
+                                    m.Arg(m.SaveMatchedNode(m.Attribute(), "arg"))
                                 ),
-                            ],
+                            ]
                         )
                     ),
                 ]
@@ -348,7 +346,7 @@ class MatchersExtractTest(UnitTest):
         )
         extracted_node = (
             cst.ensure_type(
-                cst.ensure_type(expression, cst.Tuple).elements[1].value, cst.Call,
+                cst.ensure_type(expression, cst.Tuple).elements[1].value, cst.Call
             )
             .args[2]
             .value
@@ -362,14 +360,12 @@ class MatchersExtractTest(UnitTest):
             m.Tuple(
                 elements=[
                     m.DoNotCare(),
-                    m.Element(
-                        m.Call(args=m.SaveMatchedNode([m.ZeroOrMore(),], "args"),)
-                    ),
+                    m.Element(m.Call(args=m.SaveMatchedNode([m.ZeroOrMore()], "args"))),
                 ]
             ),
         )
         extracted_seq = cst.ensure_type(
-            cst.ensure_type(expression, cst.Tuple).elements[1].value, cst.Call,
+            cst.ensure_type(expression, cst.Tuple).elements[1].value, cst.Call
         ).args
         self.assertEqual(nodes, {"args": extracted_seq})
 
@@ -386,7 +382,7 @@ class MatchersExtractTest(UnitTest):
             ),
         )
         extracted_seq = cst.ensure_type(
-            cst.ensure_type(expression, cst.Tuple).elements[1].value, cst.Call,
+            cst.ensure_type(expression, cst.Tuple).elements[1].value, cst.Call
         ).args
         self.assertEqual(nodes, {"args": extracted_seq})
 

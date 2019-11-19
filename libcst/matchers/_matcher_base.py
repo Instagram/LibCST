@@ -1027,7 +1027,7 @@ def _sequence_matches(  # noqa: C901
     elif isinstance(matcher, _ExtractMatchingNode):
         # See if the raw matcher matches. If it does, capture the sequence we matched and store it.
         sequence_capture = _sequence_matches(
-            nodes, [matcher.matcher, *matchers[1:]], metadata_lookup,
+            nodes, [matcher.matcher, *matchers[1:]], metadata_lookup
         )
         if sequence_capture is not None:
             return {
