@@ -54,7 +54,7 @@ from libcst._parser.whitespace_parser import parse_parenthesizable_whitespace
 )
 def convert_argslist(config: ParserConfig, children: Sequence[Any]) -> Any:
     params: List[Param] = []
-    default_params: List[Param] = []
+    seen_default: bool = False
     star_arg: Union[Param, ParamStar, MaybeSentinel] = MaybeSentinel.DEFAULT
     kwonly_params: List[Param] = []
     star_kwarg: Optional[Param] = None
@@ -64,10 +64,11 @@ def convert_argslist(config: ParserConfig, children: Sequence[Any]) -> Any:
     ) -> Optional[List[Param]]:
         nonlocal star_arg
         nonlocal star_kwarg
+        nonlocal seen_default
 
         if isinstance(param, ParamStar):
             # Only can add this if we don't already have a "*" or a "*param".
-            if current_param in [params, default_params]:
+            if current_param is params:
                 star_arg = param
                 current_param = kwonly_params
             else:
@@ -81,7 +82,7 @@ def convert_argslist(config: ParserConfig, children: Sequence[Any]) -> Any:
         # pyre-ignore Pyre seems to think param.star.__eq__ is not callable
         elif isinstance(param.star, str) and param.star == "" and param.default is None:
             # Can only add this if we're in the params or kwonly_params section
-            if current_param is params:
+            if current_param is params and not seen_default:
                 params.append(param)
             elif current_param is kwonly_params:
                 kwonly_params.append(param)
@@ -98,11 +99,10 @@ def convert_argslist(config: ParserConfig, children: Sequence[Any]) -> Any:
             and param.star == ""
             and param.default is not None
         ):
-            if current_param is params:
-                current_param = default_params
             # Can only add this if we're not yet at star args.
-            if current_param is default_params:
-                default_params.append(param)
+            if current_param is params:
+                seen_default = True
+                params.append(param)
             elif current_param is kwonly_params:
                 kwonly_params.append(param)
             else:
@@ -116,9 +116,9 @@ def convert_argslist(config: ParserConfig, children: Sequence[Any]) -> Any:
             and param.star == "*"
             and param.default is None
         ):
-            # Can only add this if we're in params/default_params, since
-            # we only allow one of "*" or "*param".
-            if current_param in [params, default_params]:
+            # Can only add this if we're in params, since we only allow one of
+            # "*" or "*param".
+            if current_param is params:
                 star_arg = param
                 current_param = kwonly_params
             else:
@@ -204,7 +204,8 @@ def convert_argslist(config: ParserConfig, children: Sequence[Any]) -> Any:
 
     return Parameters(
         params=tuple(params),
-        default_params=tuple(default_params),
+        # TODO: Kill this once we kill the default_params argument to Parameters
+        default_params=(),
         star_arg=star_arg,
         kwonly_params=tuple(kwonly_params),
         star_kwarg=star_kwarg,

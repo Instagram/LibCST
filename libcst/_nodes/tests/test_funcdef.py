@@ -88,7 +88,7 @@ class FunctionDefCreationTest(CSTNodeTest):
                 "node": cst.FunctionDef(
                     cst.Name("foo"),
                     cst.Parameters(
-                        default_params=(
+                        params=(
                             cst.Param(
                                 cst.Name("bar"), default=cst.SimpleString('"one"')
                             ),
@@ -104,7 +104,7 @@ class FunctionDefCreationTest(CSTNodeTest):
                 "node": cst.FunctionDef(
                     cst.Name("foo"),
                     cst.Parameters(
-                        default_params=(
+                        params=(
                             cst.Param(
                                 cst.Name("bar"),
                                 cst.Annotation(cst.Name("str")),
@@ -128,8 +128,6 @@ class FunctionDefCreationTest(CSTNodeTest):
                     cst.Parameters(
                         params=(
                             cst.Param(cst.Name("bar"), cst.Annotation(cst.Name("str"))),
-                        ),
-                        default_params=(
                             cst.Param(
                                 cst.Name("baz"),
                                 cst.Annotation(cst.Name("int")),
@@ -207,12 +205,12 @@ class FunctionDefCreationTest(CSTNodeTest):
                 ),
                 "code": 'def foo(first, second, *, bar: str = "one", baz: int, biz: str = "two"): pass\n',
             },
-            # Mixed default_params and kwonly_params
+            # Mixed params and kwonly_params
             {
                 "node": cst.FunctionDef(
                     cst.Name("foo"),
                     cst.Parameters(
-                        default_params=(
+                        params=(
                             cst.Param(cst.Name("first"), default=cst.Float("1.0")),
                             cst.Param(cst.Name("second"), default=cst.Float("1.5")),
                         ),
@@ -234,7 +232,7 @@ class FunctionDefCreationTest(CSTNodeTest):
                 ),
                 "code": 'def foo(first = 1.0, second = 1.5, *, bar: str = "one", baz: int, biz: str = "two"): pass\n',
             },
-            # Mixed params, default_params, and kwonly_params
+            # Mixed params and kwonly_params
             {
                 "node": cst.FunctionDef(
                     cst.Name("foo"),
@@ -242,8 +240,6 @@ class FunctionDefCreationTest(CSTNodeTest):
                         params=(
                             cst.Param(cst.Name("first")),
                             cst.Param(cst.Name("second")),
-                        ),
-                        default_params=(
                             cst.Param(cst.Name("third"), default=cst.Float("1.0")),
                             cst.Param(cst.Name("fourth"), default=cst.Float("1.5")),
                         ),
@@ -300,7 +296,7 @@ class FunctionDefCreationTest(CSTNodeTest):
                 ),
                 "code": 'def foo(*params: str, bar: str = "one", baz: int, biz: str = "two"): pass\n',
             },
-            # Mixed params default_params, star_arg and kwonly_params
+            # Mixed params star_arg and kwonly_params
             {
                 "node": cst.FunctionDef(
                     cst.Name("foo"),
@@ -308,8 +304,6 @@ class FunctionDefCreationTest(CSTNodeTest):
                         params=(
                             cst.Param(cst.Name("first")),
                             cst.Param(cst.Name("second")),
-                        ),
-                        default_params=(
                             cst.Param(cst.Name("third"), default=cst.Float("1.0")),
                             cst.Param(cst.Name("fourth"), default=cst.Float("1.5")),
                         ),
@@ -521,8 +515,6 @@ class FunctionDefCreationTest(CSTNodeTest):
                     params=(
                         cst.Param(cst.Name("first")),
                         cst.Param(cst.Name("second")),
-                    ),
-                    default_params=(
                         cst.Param(cst.Name("third"), default=cst.Float("1.0")),
                         cst.Param(cst.Name("fourth"), default=cst.Float("1.5")),
                     ),
@@ -621,19 +613,12 @@ class FunctionDefCreationTest(CSTNodeTest):
                             cst.Param(
                                 cst.Name("bar"), default=cst.SimpleString('"one"')
                             ),
+                            cst.Param(cst.Name("bar")),
                         )
                     ),
                     cst.SimpleStatementSuite((cst.Pass(),)),
                 ),
-                "Cannot have defaults for params",
-            ),
-            (
-                lambda: cst.FunctionDef(
-                    cst.Name("foo"),
-                    cst.Parameters(default_params=(cst.Param(cst.Name("bar")),)),
-                    cst.SimpleStatementSuite((cst.Pass(),)),
-                ),
-                "Must have defaults for default_params",
+                "Cannot have param without defaults following a param with defaults.",
             ),
             (
                 lambda: cst.FunctionDef(
@@ -655,7 +640,7 @@ class FunctionDefCreationTest(CSTNodeTest):
                 lambda: cst.FunctionDef(
                     cst.Name("foo"),
                     cst.Parameters(
-                        default_params=(
+                        params=(
                             cst.Param(
                                 cst.Name("bar"),
                                 default=cst.SimpleString('"one"'),
@@ -826,7 +811,7 @@ class FunctionDefParserTest(CSTNodeTest):
                 cst.FunctionDef(
                     cst.Name("foo"),
                     cst.Parameters(
-                        default_params=(
+                        params=(
                             cst.Param(
                                 cst.Name("bar"),
                                 equal=cst.AssignEqual(),
@@ -853,7 +838,7 @@ class FunctionDefParserTest(CSTNodeTest):
                 cst.FunctionDef(
                     cst.Name("foo"),
                     cst.Parameters(
-                        default_params=(
+                        params=(
                             cst.Param(
                                 cst.Name("bar"),
                                 cst.Annotation(
@@ -907,8 +892,6 @@ class FunctionDefParserTest(CSTNodeTest):
                                     whitespace_after=cst.SimpleWhitespace(" ")
                                 ),
                             ),
-                        ),
-                        default_params=(
                             cst.Param(
                                 cst.Name("baz"),
                                 cst.Annotation(
@@ -1078,12 +1061,12 @@ class FunctionDefParserTest(CSTNodeTest):
                 ),
                 'def foo(first, second, *, bar: str = "one", baz: int, biz: str = "two"): pass\n',
             ),
-            # Mixed default_params and kwonly_params
+            # Mixed params and kwonly_params
             (
                 cst.FunctionDef(
                     cst.Name("foo"),
                     cst.Parameters(
-                        default_params=(
+                        params=(
                             cst.Param(
                                 cst.Name("first"),
                                 annotation=None,
@@ -1154,7 +1137,7 @@ class FunctionDefParserTest(CSTNodeTest):
                 ),
                 'def foo(first = 1.0, second = 1.5, *, bar: str = "one", baz: int, biz: str = "two"): pass\n',
             ),
-            # Mixed params, default_params, and kwonly_params
+            # Mixed params, and kwonly_params
             (
                 cst.FunctionDef(
                     cst.Name("foo"),
@@ -1178,8 +1161,6 @@ class FunctionDefParserTest(CSTNodeTest):
                                     whitespace_after=cst.SimpleWhitespace(" ")
                                 ),
                             ),
-                        ),
-                        default_params=(
                             cst.Param(
                                 cst.Name("third"),
                                 annotation=None,
@@ -1326,7 +1307,7 @@ class FunctionDefParserTest(CSTNodeTest):
                 ),
                 'def foo(*params: str, bar: str = "one", baz: int, biz: str = "two"): pass\n',
             ),
-            # Mixed params default_params, star_arg and kwonly_params
+            # Mixed params star_arg and kwonly_params
             (
                 cst.FunctionDef(
                     cst.Name("foo"),
@@ -1350,8 +1331,6 @@ class FunctionDefParserTest(CSTNodeTest):
                                     whitespace_after=cst.SimpleWhitespace(" ")
                                 ),
                             ),
-                        ),
-                        default_params=(
                             cst.Param(
                                 cst.Name("third"),
                                 annotation=None,

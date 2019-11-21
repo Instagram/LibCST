@@ -32,7 +32,7 @@ class LambdaCreationTest(CSTNodeTest):
             (
                 cst.Lambda(
                     cst.Parameters(
-                        default_params=(
+                        params=(
                             cst.Param(
                                 cst.Name("bar"), default=cst.SimpleString('"one"')
                             ),
@@ -47,8 +47,8 @@ class LambdaCreationTest(CSTNodeTest):
             (
                 cst.Lambda(
                     cst.Parameters(
-                        params=(cst.Param(cst.Name("bar")),),
-                        default_params=(
+                        params=(
+                            cst.Param(cst.Name("bar")),
                             cst.Param(cst.Name("baz"), default=cst.Integer("5")),
                         ),
                     ),
@@ -93,11 +93,11 @@ class LambdaCreationTest(CSTNodeTest):
                 ),
                 'lambda first, second, *, bar = "one", baz, biz = "two": 5',
             ),
-            # Mixed default_params and kwonly_params
+            # Mixed params and kwonly_params
             (
                 cst.Lambda(
                     cst.Parameters(
-                        default_params=(
+                        params=(
                             cst.Param(cst.Name("first"), default=cst.Float("1.0")),
                             cst.Param(cst.Name("second"), default=cst.Float("1.5")),
                         ),
@@ -115,15 +115,13 @@ class LambdaCreationTest(CSTNodeTest):
                 ),
                 'lambda first = 1.0, second = 1.5, *, bar = "one", baz, biz = "two": 5',
             ),
-            # Mixed params, default_params, and kwonly_params
+            # Mixed params and kwonly_params
             (
                 cst.Lambda(
                     cst.Parameters(
                         params=(
                             cst.Param(cst.Name("first")),
                             cst.Param(cst.Name("second")),
-                        ),
-                        default_params=(
                             cst.Param(cst.Name("third"), default=cst.Float("1.0")),
                             cst.Param(cst.Name("fourth"), default=cst.Float("1.5")),
                         ),
@@ -169,15 +167,13 @@ class LambdaCreationTest(CSTNodeTest):
                 ),
                 'lambda *params, bar = "one", baz, biz = "two": 5',
             ),
-            # Mixed params default_params, star_arg and kwonly_params
+            # Mixed params, star_arg and kwonly_params
             (
                 cst.Lambda(
                     cst.Parameters(
                         params=(
                             cst.Param(cst.Name("first")),
                             cst.Param(cst.Name("second")),
-                        ),
-                        default_params=(
                             cst.Param(cst.Name("third"), default=cst.Float("1.0")),
                             cst.Param(cst.Name("fourth"), default=cst.Float("1.5")),
                         ),
@@ -264,9 +260,7 @@ class LambdaCreationTest(CSTNodeTest):
             (
                 lambda: cst.Lambda(
                     cst.Parameters(
-                        default_params=(
-                            cst.Param(cst.Name("arg"), default=cst.Integer("5")),
-                        )
+                        params=(cst.Param(cst.Name("arg"), default=cst.Integer("5")),)
                     ),
                     cst.Integer("5"),
                     whitespace_after_lambda=cst.SimpleWhitespace(""),
@@ -320,18 +314,12 @@ class LambdaCreationTest(CSTNodeTest):
                             cst.Param(
                                 cst.Name("bar"), default=cst.SimpleString('"one"')
                             ),
+                            cst.Param(cst.Name("bar")),
                         )
                     ),
                     cst.Integer("5"),
                 ),
-                "Cannot have defaults for params",
-            ),
-            (
-                lambda: cst.Lambda(
-                    cst.Parameters(default_params=(cst.Param(cst.Name("bar")),)),
-                    cst.Integer("5"),
-                ),
-                "Must have defaults for default_params",
+                "Cannot have param without defaults following a param with defaults.",
             ),
             (
                 lambda: cst.Lambda(
@@ -349,7 +337,7 @@ class LambdaCreationTest(CSTNodeTest):
             (
                 lambda: cst.Lambda(
                     cst.Parameters(
-                        default_params=(
+                        params=(
                             cst.Param(
                                 cst.Name("bar"),
                                 default=cst.SimpleString('"one"'),
@@ -402,7 +390,7 @@ class LambdaCreationTest(CSTNodeTest):
             (
                 lambda: cst.Lambda(
                     cst.Parameters(
-                        default_params=(
+                        params=(
                             cst.Param(
                                 cst.Name("arg"),
                                 default=cst.Integer("5"),
@@ -491,7 +479,7 @@ class LambdaParserTest(CSTNodeTest):
             (
                 cst.Lambda(
                     cst.Parameters(
-                        default_params=(
+                        params=(
                             cst.Param(
                                 cst.Name("bar"),
                                 default=cst.SimpleString('"one"'),
@@ -526,8 +514,6 @@ class LambdaParserTest(CSTNodeTest):
                                     whitespace_after=cst.SimpleWhitespace(" ")
                                 ),
                             ),
-                        ),
-                        default_params=(
                             cst.Param(
                                 cst.Name("baz"),
                                 default=cst.Integer("5"),
@@ -615,11 +601,11 @@ class LambdaParserTest(CSTNodeTest):
                 ),
                 'lambda first, second, *, bar = "one", baz, biz = "two": 5',
             ),
-            # Mixed default_params and kwonly_params
+            # Mixed params and kwonly_params
             (
                 cst.Lambda(
                     cst.Parameters(
-                        default_params=(
+                        params=(
                             cst.Param(
                                 cst.Name("first"),
                                 default=cst.Float("1.0"),
@@ -670,7 +656,7 @@ class LambdaParserTest(CSTNodeTest):
                 ),
                 'lambda first = 1.0, second = 1.5, *, bar = "one", baz, biz = "two": 5',
             ),
-            # Mixed params, default_params, and kwonly_params
+            # Mixed params and kwonly_params
             (
                 cst.Lambda(
                     cst.Parameters(
@@ -689,8 +675,6 @@ class LambdaParserTest(CSTNodeTest):
                                     whitespace_after=cst.SimpleWhitespace(" ")
                                 ),
                             ),
-                        ),
-                        default_params=(
                             cst.Param(
                                 cst.Name("third"),
                                 default=cst.Float("1.0"),
@@ -789,7 +773,7 @@ class LambdaParserTest(CSTNodeTest):
                 ),
                 'lambda *params, bar = "one", baz, biz = "two": 5',
             ),
-            # Mixed params default_params, star_arg and kwonly_params
+            # Mixed params, star_arg and kwonly_params
             (
                 cst.Lambda(
                     cst.Parameters(
@@ -808,8 +792,6 @@ class LambdaParserTest(CSTNodeTest):
                                     whitespace_after=cst.SimpleWhitespace(" ")
                                 ),
                             ),
-                        ),
-                        default_params=(
                             cst.Param(
                                 cst.Name("third"),
                                 default=cst.Float("1.0"),
