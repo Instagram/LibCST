@@ -471,7 +471,7 @@ class ScopeProviderTest(UnitTest):
         self.assertIsInstance(scope_of_f, FunctionScope)
 
         decorator = f.decorators[0]
-        x = f.params.default_params[0]
+        x = f.params.params[0]
         xT = ensure_type(x.annotation, cst.Annotation)
         one = ensure_type(x.default, cst.BaseExpression)
         vararg = ensure_type(f.params.star_arg, cst.Param)
@@ -529,7 +529,7 @@ class ScopeProviderTest(UnitTest):
         scope_of_f = scopes[f.body]
         self.assertIsInstance(scope_of_f, FunctionScope)
 
-        x = f.params.default_params[0]
+        x = f.params.params[0]
         one = ensure_type(x.default, cst.BaseExpression)
         vararg = ensure_type(f.params.star_arg, cst.Param)
         y = f.params.kwonly_params[0]
