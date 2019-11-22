@@ -5,8 +5,10 @@
 
 # pyre-strict
 
+from typing import Optional
+
 import libcst as cst
-from libcst.metadata import MetadataWrapper
+from libcst.metadata import BatchableMetadataProvider, MetadataWrapper
 from libcst.testing.utils import UnitTest
 
 
@@ -41,3 +43,34 @@ class MetadataWrapperTest(UnitTest):
         self.assertNotEqual(hash(mw1), hash(mw2))
         self.assertNotEqual(hash(mw1), hash(mw3))
         self.assertNotEqual(hash(mw2), hash(mw3))
+
+    def test_metadata_cache(self) -> None:
+        class DummyMetadataProvider(BatchableMetadataProvider[None]):
+            is_cache_required = True
+
+        m = cst.parse_module("pass")
+        mw = MetadataWrapper(m)
+        with self.assertRaisesRegex(
+            Exception, "Cache is required for initializing DummyMetadataProvider."
+        ):
+            mw.resolve(DummyMetadataProvider)
+
+        class SimpleCacheMetadataProvider(BatchableMetadataProvider[object]):
+            is_cache_required = True
+
+            def __init__(self, cache: object) -> None:
+                super().__init__(cache)
+                self.cache = cache
+
+            def visit_Pass(self, node: cst.Pass) -> Optional[bool]:
+                self.set_metadata(node, self.cache)
+
+        cached_data = object()
+        # pyre-fixme[6]: Expected `Mapping[Type[BaseMetadataProvider[object]],
+        #  object]` for 2nd param but got `Dict[Type[SimpleCacheMetadataProvider],
+        #  object]`.
+        mw = MetadataWrapper(m, cache={SimpleCacheMetadataProvider: cached_data})
+        pass_node = cst.ensure_type(mw.module.body[0], cst.SimpleStatementLine).body[0]
+        self.assertEqual(
+            mw.resolve(SimpleCacheMetadataProvider)[pass_node], cached_data
+        )
