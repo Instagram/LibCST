@@ -31,8 +31,10 @@ from libcst.matchers._matcher_base import (
     ZeroOrMore,
     ZeroOrOne,
     extract,
+    extractall,
     findall,
     matches,
+    replace,
 )
 from libcst.matchers._visitors import (
     MatchDecoratorMismatch,
@@ -13466,8 +13468,10 @@ __all__ = [
     "call_if_inside",
     "call_if_not_inside",
     "extract",
+    "extractall",
     "findall",
     "leave",
     "matches",
+    "replace",
     "visit",
 ]

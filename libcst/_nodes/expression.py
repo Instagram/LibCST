@@ -1669,11 +1669,12 @@ class Parameters(CSTNode):
     A function or lambda parameter list.
     """
 
-    #: Positional parameters.
+    #: Positional parameters, with or without defaults. Positional parameters
+    #: with defaults must all be after those without defaults.
     params: Sequence[Param] = ()
 
-    #: Positional parameters with defaults.
-    default_params: Sequence[Param] = ()
+    #: Deprecated spot for default params, please place them into above params.
+    default_params: Sequence[Param] = ()  # TODO: Kill this input
 
     # Optional parameter that captures unspecified positional arguments or a sentinel
     # star that dictates parameters following are kwonly args.
@@ -1702,16 +1703,20 @@ class Parameters(CSTNode):
             )
 
     def _validate_defaults(self) -> None:
-        for param in self.params:
-            if param.default is not None:
-                raise CSTValidationError(
-                    "Cannot have defaults for params. Place them in default_params."
-                )
-        for param in self.default_params:
-            if param.default is None:
-                raise CSTValidationError(
-                    "Must have defaults for default_params. Place non-defaults in params."
-                )
+        # TODO: Collapse this to just looking at self.params once we deprecate default_params.
+        params_and_defaults = (*self.params, *self.default_params)
+        seen_default = False
+        for param in params_and_defaults:
+            if param.default:
+                # Mark that we've moved onto defaults
+                if not seen_default:
+                    seen_default = True
+            else:
+                if seen_default:
+                    # We accidentally included a non-default after a default arg!
+                    raise CSTValidationError(
+                        "Cannot have param without defaults following a param with defaults."
+                    )
         star_arg = self.star_arg
         if isinstance(star_arg, Param) and star_arg.default is not None:
             raise CSTValidationError("Cannot have default for star_arg.")
@@ -1722,6 +1727,7 @@ class Parameters(CSTNode):
     def _validate_stars(self) -> None:
         if len(self.params) > 0:
             self._validate_stars_sequence(self.params, section="params")
+        # TODO: Drop the following check once we deprecate default_params
         if len(self.default_params) > 0:
             self._validate_stars_sequence(self.default_params, section="default_params")
         star_arg = self.star_arg
@@ -1750,7 +1756,7 @@ class Parameters(CSTNode):
     def _validate(self) -> None:
         # Validate kwonly_param star placement semantics.
         self._validate_kwonlystar()
-        # Validate defaults semantics for params, default_params and star_arg/star_kwarg.
+        # Validate defaults semantics for params and star_arg/star_kwarg.
         self._validate_defaults()
         # Validate that we don't have random stars on non star_kwarg.
         self._validate_stars()
@@ -1758,6 +1764,7 @@ class Parameters(CSTNode):
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Parameters":
         return Parameters(
             params=visit_sequence(self, "params", self.params, visitor),
+            # TODO: Drop this attribute once we deprecate default_params
             default_params=visit_sequence(
                 self, "default_params", self.default_params, visitor
             ),
@@ -1779,23 +1786,13 @@ class Parameters(CSTNode):
         else:
             starincluded = False
         # Render out the params first, computing necessary trailing commas.
-        lastparam = len(self.params) - 1
-        more_values = (
-            len(self.default_params) > 0
-            or starincluded
-            or len(self.kwonly_params) > 0
-            or self.star_kwarg is not None
-        )
-        for i, param in enumerate(self.params):
-            param._codegen(
-                state, default_star="", default_comma=(i < lastparam or more_values)
-            )
-        # Render out the default_params next, computing necessary trailing commas.
-        lastparam = len(self.default_params) - 1
+        # TODO: Get rid of this concatenation once we kill default_params
+        params_and_defaults = (*self.params, *self.default_params)
+        lastparam = len(params_and_defaults) - 1
         more_values = (
             starincluded or len(self.kwonly_params) > 0 or self.star_kwarg is not None
         )
-        for i, param in enumerate(self.default_params):
+        for i, param in enumerate(params_and_defaults):
             param._codegen(
                 state, default_star="", default_comma=(i < lastparam or more_values)
             )
@@ -1869,6 +1866,7 @@ class Lambda(BaseExpression):
         # Sum up all parameters
         all_params = [
             *self.params.params,
+            # TODO: Drop this addition once we kill default_params
             *self.params.default_params,
             *self.params.kwonly_params,
         ]
@@ -1914,6 +1912,7 @@ class Lambda(BaseExpression):
             if isinstance(whitespace_after_lambda, MaybeSentinel):
                 if not (
                     len(self.params.params) == 0
+                    # TODO: Drop this check once we kill default_params
                     and len(self.params.default_params) == 0
                     and not isinstance(self.params.star_arg, Param)
                     and len(self.params.kwonly_params) == 0

@@ -4,6 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 # pyre-strict
+import pickle
 from typing import Union
 
 import libcst as cst
@@ -501,3 +502,10 @@ class MatchersVisitLeaveDecoratorTypingTest(UnitTest):
             "@leave should not decorate functions that are concrete visit or leave methods",
         ):
             TestVisitor()
+
+    def test_pickleable_exception(self) -> None:
+        original = MatchDecoratorMismatch("func", "message")
+        serialized = pickle.dumps(original)
+        unserialized = pickle.loads(serialized)
+        self.assertEqual(original.message, unserialized.message)
+        self.assertEqual(original.func, unserialized.func)
