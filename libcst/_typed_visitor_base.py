@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, Any, Callable, TypeVar, cast
 if TYPE_CHECKING:
     from libcst._typed_visitor import CSTTypedBaseFunctions  # noqa: F401
 
-FuncType = Callable[["CSTTypedBaseFunctions", ...], None]
+FuncType = Callable
 F = TypeVar("F", bound=FuncType)
 
 
