@@ -11,11 +11,11 @@ if TYPE_CHECKING:
     from libcst._typed_visitor import CSTTypedBaseFunctions  # noqa: F401
 
 T = TypeVar("T")
+FuncType = Callable[["CSTTypedBaseFunctions", T], None]
+F = TypeVar("F", bound=FuncType)
 
 
-def mark_no_op(
-    f: Callable[["CSTTypedBaseFunctions", T], None]
-) -> Callable[["CSTTypedBaseFunctions", T], None]:
+def mark_no_op(f: F) -> F:
     """
     Annotates stubs with a field to indicate they should not be collected
     by BatchableCSTVisitor.get_visitors() to reduce function call
