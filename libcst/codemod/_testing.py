@@ -11,12 +11,12 @@ from libcst.testing.utils import UnitTest
 # pyre-fixme[13]: This should be an ABC but there are metaclass conflicts due to
 # the way we implement the data_provider decorator, so pyre complains about the
 # uninitialized TRANSFORM below.
-class CodemodTest(UnitTest):
+class _CodemodTest:
     """
-    Base test class for a transform test. Provides facilities for auto-instantiating
-    and executing a transform, given the args/kwargs that should be passed to it.
-    Set the TRANSFORM class attribute to the class you wish to test and call
-    assertCodemod to verify it transforms various code chunks correctly.
+    Mixin that can be added to a unit test framework in order to provide
+    convenience features. This is provided as an internal-only feature so
+    that CodemodTest can be used with other frameworks. This is necessary
+    since we set a metaclass on our UnitTest implementation.
     """
 
     TRANSFORM: Type[Codemod]
@@ -52,6 +52,7 @@ class CodemodTest(UnitTest):
         on two strings that may have come from a triple-quoted string.
         """
 
+        # pyre-ignore This mixin needs to be used with a UnitTest subclass.
         self.assertEqual(
             CodemodTest.make_fixture_data(expected),
             CodemodTest.make_fixture_data(actual),
@@ -88,7 +89,19 @@ class CodemodTest(UnitTest):
             output_tree = input_tree
         else:
             if expected_skip:
+                # pyre-ignore This mixin needs to be used with a UnitTest subclass.
                 self.fail("Expected SkipFile but was not raised")
+        # pyre-ignore This mixin needs to be used with a UnitTest subclass.
         self.assertEqual(CodemodTest.make_fixture_data(after), output_tree.code)
         if expected_warnings is not None:
+            # pyre-ignore This mixin needs to be used with a UnitTest subclass.
             self.assertSequenceEqual(expected_warnings, context.warnings)
+
+
+class CodemodTest(_CodemodTest, UnitTest):
+    """
+    Base test class for a transform test. Provides facilities for auto-instantiating
+    and executing a transform, given the args/kwargs that should be passed to it.
+    Set the TRANSFORM class attribute to the class you wish to test and call
+    assertCodemod to verify it transforms various code chunks correctly.
+    """
