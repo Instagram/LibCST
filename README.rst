@@ -183,7 +183,6 @@ Future
 ======
 
 - Python 3.8 support, both in running on Python 3.8 and parsing 3.8 code.
-- Addition to Matchers API which allows for operations such as extract/find/replaceall, similar to the RE module.
 - Additional layer providing command-line frontend for executing refactors.
 - More metadata providers from deep static analysis including variable type annotation, etc.
 
