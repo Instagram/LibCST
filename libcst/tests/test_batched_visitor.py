@@ -49,9 +49,9 @@ class BatchedVisitorTest(UnitTest):
                 mock.visit_Pass_semicolon()
                 object.__setattr__(node, "visit_Pass_semicolon", True)
 
-            def leave_Pass_semicolon(self, original_node: cst.Pass) -> None:
+            def leave_Pass_semicolon(self, node: cst.Pass) -> None:
                 mock.leave_Pass_semicolon()
-                object.__setattr__(original_node, "leave_Pass_semicolon", True)
+                object.__setattr__(node, "leave_Pass_semicolon", True)
 
             def leave_Pass(self, original_node: cst.Pass) -> None:
                 mock.leave_Pass()

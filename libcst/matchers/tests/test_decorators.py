@@ -113,8 +113,8 @@ class MatchersGatingDecoratorsTest(UnitTest):
                 self.visits.append(node.value)
 
             @call_if_inside(m.FunctionDef())
-            def leave_SimpleString(self, node: cst.SimpleString) -> None:
-                self.leaves.append(node.value)
+            def leave_SimpleString(self, original_node: cst.SimpleString) -> None:
+                self.leaves.append(original_node.value)
 
         # Parse a module and verify we visited correctly.
         module = fixture(
@@ -316,8 +316,8 @@ class MatchersGatingDecoratorsTest(UnitTest):
                 self.visits.append(node.value)
 
             @call_if_not_inside(m.FunctionDef())
-            def leave_SimpleString(self, node: cst.SimpleString) -> None:
-                self.leaves.append(node.value)
+            def leave_SimpleString(self, original_node: cst.SimpleString) -> None:
+                self.leaves.append(original_node.value)
 
         # Parse a module and verify we visited correctly.
         module = fixture(
@@ -832,8 +832,8 @@ class MatchersVisitLeaveDecoratorsTest(UnitTest):
                 self.visits.append(node.value)
 
             @call_if_inside(m.FunctionDef())
-            def leave_SimpleString_lpar(self, original_node: cst.SimpleString) -> None:
-                self.leaves.append(original_node.value)
+            def leave_SimpleString_lpar(self, node: cst.SimpleString) -> None:
+                self.leaves.append(node.value)
 
         # Parse a module and verify we visited correctly.
         module = fixture(
@@ -868,8 +868,8 @@ class MatchersVisitLeaveDecoratorsTest(UnitTest):
                 self.visits.append(node.value)
 
             @call_if_inside(m.FunctionDef())
-            def leave_SimpleString_lpar(self, original_node: cst.SimpleString) -> None:
-                self.leaves.append(original_node.value)
+            def leave_SimpleString_lpar(self, node: cst.SimpleString) -> None:
+                self.leaves.append(node.value)
 
         # Parse a module and verify we visited correctly.
         module = fixture(
@@ -904,8 +904,8 @@ class MatchersVisitLeaveDecoratorsTest(UnitTest):
                 self.visits.append(node.value)
 
             @call_if_not_inside(m.FunctionDef())
-            def leave_SimpleString_lpar(self, original_node: cst.SimpleString) -> None:
-                self.leaves.append(original_node.value)
+            def leave_SimpleString_lpar(self, node: cst.SimpleString) -> None:
+                self.leaves.append(node.value)
 
         # Parse a module and verify we visited correctly.
         module = fixture(
@@ -940,8 +940,8 @@ class MatchersVisitLeaveDecoratorsTest(UnitTest):
                 self.visits.append(node.value)
 
             @call_if_not_inside(m.FunctionDef())
-            def leave_SimpleString_lpar(self, original_node: cst.SimpleString) -> None:
-                self.leaves.append(original_node.value)
+            def leave_SimpleString_lpar(self, node: cst.SimpleString) -> None:
+                self.leaves.append(node.value)
 
         # Parse a module and verify we visited correctly.
         module = fixture(
