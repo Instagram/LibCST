@@ -10,8 +10,7 @@ from typing import TYPE_CHECKING, Any, Callable, TypeVar, cast
 if TYPE_CHECKING:
     from libcst._typed_visitor import CSTTypedBaseFunctions  # noqa: F401
 
-FuncType = Callable
-F = TypeVar("F", bound=FuncType)
+F = TypeVar("F", bound=Callable)
 
 
 def mark_no_op(f: F) -> F:
