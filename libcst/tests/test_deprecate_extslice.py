@@ -107,11 +107,11 @@ class ExtSliceDeprecatedUseTest(UnitTest):
                     ).value
                 )
 
-            def leave_ExtSlice_slice(self, original_node: cst.ExtSlice) -> None:
+            def leave_ExtSlice_slice(self, node: cst.ExtSlice) -> None:
                 self.leaves.add(
                     "attr "
                     + cst.ensure_type(
-                        cst.ensure_type(original_node.slice, cst.Index).value,
+                        cst.ensure_type(node.slice, cst.Index).value,
                         cst.Integer,
                     ).value
                 )
