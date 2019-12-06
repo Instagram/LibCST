@@ -111,8 +111,7 @@ class ExtSliceDeprecatedUseTest(UnitTest):
                 self.leaves.add(
                     "attr "
                     + cst.ensure_type(
-                        cst.ensure_type(node.slice, cst.Index).value,
-                        cst.Integer,
+                        cst.ensure_type(node.slice, cst.Index).value, cst.Integer
                     ).value
                 )
 
