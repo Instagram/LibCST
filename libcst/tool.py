@@ -11,11 +11,20 @@
 # pyre-strict
 import argparse
 import dataclasses
+import importlib
 import sys
-from typing import List, Sequence
+from typing import Any, Dict, List, Sequence
 
 from libcst import CSTNode, IndentedBlock, Module, parse_module
 from libcst._nodes.deep_equals import deep_equals
+from libcst.codemod import (
+    CodemodCommand,
+    CodemodContext,
+    diff_code,
+    exec_transform_with_prettyprint,
+    gather_files,
+    parallel_exec_transform_with_prettyprint,
+)
 
 
 _DEFAULT_INDENT: str = "  "
@@ -198,7 +207,30 @@ def dump(
     )
 
 
-def _print_tree_impl(args: argparse.Namespace) -> int:
+def _print_tree_impl(command_args: List[str]) -> int:
+    parser = argparse.ArgumentParser(prog="libcst.tool print")
+    parser.add_argument(
+        "infile",
+        metavar="INFILE",
+        help='File to print tree for. Use "-" for stdin',
+        type=str,
+    )
+    parser.add_argument(
+        "--show-whitespace",
+        action="store_true",
+        help="Show whitespace nodes in printed tree",
+    )
+    parser.add_argument(
+        "--show-defaults",
+        action="store_true",
+        help="Show values that are unchanged from the default",
+    )
+    parser.add_argument(
+        "--show-syntax",
+        action="store_true",
+        help="Show values that exist only for syntax, like commas or semicolons",
+    )
+    args = parser.parse_args(command_args)
     infile = args.infile
 
     # Grab input file
@@ -220,43 +252,242 @@ def _print_tree_impl(args: argparse.Namespace) -> int:
     return 0
 
 
-def main(cli_args: List[str]) -> int:
-    parser = argparse.ArgumentParser()
-    subparsers = parser.add_subparsers(title="commands", description="valid commands")
+def _find_and_load_config() -> Dict[str, Any]:
+    return {
+        "generated_code_marker": f"@gen{''}erated",
+        "formatter": ["black", "-"],
+        "blacklist_patterns": [],
+        "modules": ["libcst.codemod.commands"],
+    }
 
-    print_parser = subparsers.add_parser(
-        "print", help="Print LibCST tree for a python file."
-    )
-    print_parser.set_defaults(func=_print_tree_impl)
-    print_parser.add_argument(
-        "infile",
-        metavar="INFILE",
-        help='File to print tree for. Use "-" for stdin',
-        type=str,
-    )
-    print_parser.add_argument(
-        "--show-whitespace",
-        action="store_true",
-        help="Show whitespace nodes in printed tree",
-    )
-    print_parser.add_argument(
-        "--show-defaults",
-        action="store_true",
-        help="Show values that are unchanged from the default",
-    )
-    print_parser.add_argument(
-        "--show-syntax",
-        action="store_true",
-        help="Show values that exist only for syntax, like commas or semicolons",
-    )
 
-    args = parser.parse_args(cli_args)
-    if "func" in args:
-        return args.func(args)
+def _codemod_impl(command_args: List[str]) -> int:  # noqa: C901
+    # Grab the configuration for running this, if it exsts.
+    config = _find_and_load_config()
+
+    # First, try to grab the command with a first pass. We aren't going to react
+    # to user input here, so refuse to add help. Help will be parsed in the
+    # full parser below once we know the command and have added its arguments.
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument("command", metavar="COMMAND", type=str, nargs="?", default=None)
+    args, _ = parser.parse_known_args(command_args)
+
+    # Now, try to load the class and get its arguments for help purposes.
+    if args.command is not None:
+        command_path = args.command.split(".")
+        if len(command_path) != 2:
+            print(
+                f"{args.command} is not a valid codemod command", file=sys.stderr,
+            )
+            return 1
+        command_module_name, command_class_name = (
+            ".".join(command_path[:-1]),
+            command_path[-1],
+        )
+        command_class = None
+        for module in config["modules"]:
+            try:
+                command_class = getattr(
+                    importlib.import_module(f"{module}.{command_module_name}"),
+                    command_class_name,
+                )
+                break
+            except AttributeError:
+                continue
+            except ModuleNotFoundError:
+                continue
+        if command_class is None:
+            print(
+                f"Could not find {command_module_name} in any configured modules",
+                file=sys.stderr,
+            )
+            return 1
     else:
+        # Dummy, specifically to allow for running --help with no arguments.
+        command_class = CodemodCommand
+
+    # Now, construct the full parser, parse the args and run the class.
+    parser = argparse.ArgumentParser(prog="libcst.tool codemod")
+    parser.add_argument(
+        "command",
+        metavar="COMMAND",
+        type=str,
+        help=(
+            "The name of the file (minus the path and extension) and class joined with "
+            + "a '.' that defines your command (e.g. strip_strings_from_types.StripStringsCommand)"
+        ),
+    )
+    parser.add_argument(
+        "path",
+        metavar="PATH",
+        nargs="+",
+        help=(
+            "Path to codemod. Can be a directory, file, or multiple of either. To "
+            + 'instead read from stdin and write to stdout, use "-"'
+        ),
+    )
+    parser.add_argument(
+        "-j",
+        "--jobs",
+        metavar="JOBS",
+        help="Number of jobs to use when processing files. Defaults to number of cores",
+        type=int,
+        default=None,
+    )
+    parser.add_argument(
+        "-u",
+        "--unified-diff",
+        metavar="CONTEXT",
+        help="Output unified diff instead of contents. Implies outputting to stdout",
+        type=int,
+        nargs="?",
+        default=None,
+        const=5,
+    )
+    parser.add_argument(
+        "--include-generated", action="store_true", help="Codemod generated files."
+    )
+    parser.add_argument(
+        "--include-stubs", action="store_true", help="Codemod typing stub files."
+    )
+    parser.add_argument(
+        "--no-format",
+        action="store_true",
+        help="Don't format resulting codemod with black.",
+    )
+    parser.add_argument(
+        "--show-successes",
+        action="store_true",
+        help="Print files successfully codemodded with no warnings.",
+    )
+    parser.add_argument(
+        "--hide-generated-warnings",
+        action="store_true",
+        help="Do not print files that are skipped for being autogenerated.",
+    )
+    parser.add_argument(
+        "--hide-blacklisted-warnings",
+        action="store_true",
+        help="Do not print files that are skipped for being blacklisted.",
+    )
+    parser.add_argument(
+        "--hide-progress",
+        action="store_true",
+        help="Do not print progress indicator. Useful if calling from a script.",
+    )
+    command_class.add_args(parser)
+    args = parser.parse_args(command_args)
+
+    codemod_args = {
+        k: v
+        for k, v in vars(args).items()
+        if k
+        not in [
+            "command",
+            "path",
+            "unified_diff",
+            "jobs",
+            "include_generated",
+            "include_stubs",
+            "no_format",
+            "show_successes",
+            "hide_generated_warnings",
+            "hide_blacklisted_warnings",
+            "hide_progress",
+        ]
+    }
+    command_instance = command_class(CodemodContext(), **codemod_args)
+
+    # Special case for allowing stdin/stdout
+    if any(p == "-" for p in args.path):
+        if len(args.path) > 1:
+            raise Exception("Cannot specify multiple paths when reading from stdin!")
+
+        print("Codemodding from stdin", file=sys.stderr)
+        oldcode = sys.stdin.read()
+        newcode = exec_transform_with_prettyprint(
+            command_instance,
+            oldcode,
+            include_generated=args.include_generated,
+            generated_code_marker=config["generated_code_marker"],
+            format_code=not args.no_format,
+            formatter_args=config["formatter"],
+        )
+        if not newcode:
+            print("Failed to codemod from stdin", file=sys.stderr)
+            return 1
+
+        # Now, either print or diff the code
+        if args.unified_diff:
+            print(diff_code(oldcode, newcode, args.unified_diff, filename="stdin"))
+        else:
+            print(newcode)
+        return 0
+
+    # Let's run it!
+    files = gather_files(args.path, include_stubs=args.include_stubs)
+    try:
+        result = parallel_exec_transform_with_prettyprint(
+            command_instance,
+            files,
+            jobs=args.jobs,
+            unified_diff=args.unified_diff,
+            include_generated=args.include_generated,
+            generated_code_marker=config["generated_code_marker"],
+            format_code=not args.no_format,
+            formatter_args=config["formatter"],
+            show_successes=args.show_successes,
+            hide_generated=args.hide_generated_warnings,
+            hide_blacklisted=args.hide_blacklisted_warnings,
+            hide_progress=args.hide_progress,
+            blacklist_patterns=config["blacklist_patterns"],
+        )
+    except KeyboardInterrupt:
+        print("Interrupted!", file=sys.stderr)
+        return 2
+
+    # Print a fancy summary at the end.
+    print(
+        f"Finished codemodding {result.successes + result.skips + result.failures} files!",
+        file=sys.stderr,
+    )
+    print(f" - Transformed {result.successes} files successfully.", file=sys.stderr)
+    print(f" - Skipped {result.skips} files.", file=sys.stderr)
+    print(f" - Failed to codemod {result.failures} files.", file=sys.stderr)
+    print(f" - {result.warnings} warnings were generated.", file=sys.stderr)
+    return 1 if result.failures > 0 else 0
+
+
+def main(cli_args: List[str]) -> int:
+    # Hack to allow "--help" to print out generic help, but also allow subcommands
+    # to customize their parsing and help messages.
+    first_arg = cli_args[0] if cli_args else "--help"
+    add_help = first_arg in {"--help", "-h"}
+
+    # Create general parser to determine which command we are invoking.
+    parser = argparse.ArgumentParser(
+        description="Collection of utilities that ship with LibCST.",
+        add_help=add_help,
+        prog="libcst.tool",
+    )
+    parser.add_argument(
+        "action",
+        help="Action to take. Valid options include print, codemod.",
+        choices=["print", "codemod"],
+    )
+    args, command_args = parser.parse_known_args(cli_args)
+
+    # Create a dummy command in case the user manages to get into
+    # this state.
+    def _invalid_command(command_args: List[str]) -> int:
         print("Please specify a command!\n", file=sys.stderr)
         parser.print_help(sys.stderr)
         return 1
+
+    # Look up the command and delegate parsing/running.
+    return {"print": _print_tree_impl, "codemod": _codemod_impl,}.get(
+        args.action or None, _invalid_command
+    )(command_args)
 
 
 if __name__ == "__main__":

@@ -1,5 +1,6 @@
 from libcst.codemod._cli import (
     ParallelTransformResult,
+    diff_code,
     exec_transform_with_prettyprint,
     gather_files,
     parallel_exec_transform_with_prettyprint,
@@ -46,4 +47,5 @@ __all__ = [
     "gather_files",
     "exec_transform_with_prettyprint",
     "parallel_exec_transform_with_prettyprint",
+    "diff_code",
 ]
