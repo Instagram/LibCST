@@ -640,9 +640,6 @@ class MatcherDecoratableTransformer(CSTTransformer):
         """
         return replace(tree, matcher, replacement, metadata_resolver=self)
 
-    def _transform_module_impl(self, tree: cst.Module) -> cst.Module:
-        return tree.visit(self)
-
 
 class MatcherDecoratableVisitor(CSTVisitor):
     """

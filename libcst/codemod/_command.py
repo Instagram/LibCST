@@ -20,7 +20,7 @@ class CodemodCommand(Codemod, ABC):
     that it can be used anywhere that any other Codemod can be used.
     However, it can also be used with 'run_command' to make a transform
     into a CLI tool. It also includes facilities for automatically running
-    certain common transforms after executing your _transform_module_impl.
+    certain common transforms after executing your transform_module_impl.
     The following list of transforms are supported at this time:
 
      - AddImportsVisitor (adds needed imports to a file).
@@ -141,7 +141,7 @@ class MagicArgsCodemodCommand(CodemodCommand, ABC):
         # Return an instance of the transform with those arguments
         return transform(self.context, *args, **kwargs)
 
-    def _transform_module_impl(self, tree: Module) -> Module:
+    def transform_module_impl(self, tree: Module) -> Module:
         for transform in self.get_transforms():
             inst = self._instantiate(transform)
             tree = inst.transform_module(tree)
