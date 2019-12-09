@@ -12,8 +12,12 @@
 import argparse
 import dataclasses
 import importlib
+import os
+import os.path
 import sys
 from typing import Any, Dict, List, Sequence
+
+import yaml
 
 from libcst import CSTNode, IndentedBlock, Module, parse_module
 from libcst._nodes.deep_equals import deep_equals
@@ -252,13 +256,58 @@ def _print_tree_impl(command_args: List[str]) -> int:
     return 0
 
 
-def _find_and_load_config() -> Dict[str, Any]:
+def _default_config() -> Dict[str, Any]:
     return {
         "generated_code_marker": f"@gen{''}erated",
         "formatter": ["black", "-"],
         "blacklist_patterns": [],
         "modules": ["libcst.codemod.commands"],
     }
+
+
+def _find_and_load_config() -> Dict[str, Any]:
+    # Initialize with some sane defaults.
+    config = _default_config()
+
+    # Walk up the filesystem looking for a config file.
+    current_dir = os.path.abspath(os.getcwd())
+    previous_dir = None
+    while current_dir != previous_dir:
+        # See if the config file exists
+        config_file = os.path.join(current_dir, ".libcst.codemod.yaml")
+        if os.path.isfile(config_file):
+            # Load it, override defaults with what is in the config.
+            with open(config_file, "r") as fp:
+                possible_config = yaml.load(fp.read())
+
+            # Lets be careful with all user input so we don't crash.
+            if isinstance(possible_config, dict):
+                # Grab the generated code marker.
+                for str_setting in ["generated_code_marker"]:
+                    if str_setting in possible_config and isinstance(
+                        possible_config[str_setting], str
+                    ):
+                        config[str_setting] = possible_config[str_setting]
+
+                # Grab the formatter, blacklisted patterns and module directories.
+                for list_setting in ["formatter", "blacklist_patterns", "modules"]:
+                    if (
+                        list_setting in possible_config
+                        and isinstance(possible_config[list_setting], list)
+                        and all(
+                            isinstance(s, str) for s in possible_config[list_setting]
+                        )
+                    ):
+                        config[list_setting] = possible_config[list_setting]
+
+            # We successfully located a file, stop traversing.
+            break
+
+        # Try the parent directory.
+        previous_dir = current_dir
+        current_dir = os.path.abspath(os.path.join(current_dir, os.pardir))
+
+    return config
 
 
 def _codemod_impl(command_args: List[str]) -> int:  # noqa: C901
