@@ -17,7 +17,7 @@ class ContextAwareTransformer(Codemod, MatcherDecoratableTransformer):
         Codemod.__init__(self, context)
         MatcherDecoratableTransformer.__init__(self)
 
-    def _transform_module_impl(self, tree: cst.Module) -> cst.Module:
+    def transform_module_impl(self, tree: cst.Module) -> cst.Module:
         return tree.visit(self)
 
 

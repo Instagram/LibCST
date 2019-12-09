@@ -45,7 +45,7 @@ class Codemod(MetadataDependent, ABC):
         return module
 
     @abstractmethod
-    def _transform_module_impl(self, tree: Module) -> Module:
+    def transform_module_impl(self, tree: Module) -> Module:
         """
         Override this with your transform. You should take in the tree,
         optionally mutate it and then return it.
@@ -68,12 +68,13 @@ class Codemod(MetadataDependent, ABC):
     def transform_module(self, tree: Module) -> Module:
         """
         Transform entrypoint which handles multi-pass logic and metadata calculation
-        for you.
+        for you. This is the method that you should call if you wish to
+        invoke a codemod directly.
         """
 
         if not self.should_allow_multiple_passes():
             with self._handle_metadata_reference(tree) as tree_with_metadata:
-                return self._transform_module_impl(tree_with_metadata)
+                return self.transform_module_impl(tree_with_metadata)
 
         # We allow multiple passes, so we execute 1+ passes until there are
         # no more changes.
@@ -84,6 +85,6 @@ class Codemod(MetadataDependent, ABC):
                 tree = parse_module(after)
                 before = after
             with self._handle_metadata_reference(tree) as tree_with_metadata:
-                tree = self._transform_module_impl(tree_with_metadata)
+                tree = self.transform_module_impl(tree_with_metadata)
             after = tree.code
         return tree
