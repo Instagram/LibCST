@@ -15,6 +15,8 @@ import importlib
 import os
 import os.path
 import sys
+import textwrap
+from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Sequence
 
 import yaml
@@ -265,6 +267,9 @@ def _default_config() -> Dict[str, Any]:
     }
 
 
+CONFIG_FILE_NAME = ".libcst.codemod.yaml"
+
+
 def _find_and_load_config() -> Dict[str, Any]:
     # Initialize with some sane defaults.
     config = _default_config()
@@ -274,11 +279,11 @@ def _find_and_load_config() -> Dict[str, Any]:
     previous_dir = None
     while current_dir != previous_dir:
         # See if the config file exists
-        config_file = os.path.join(current_dir, ".libcst.codemod.yaml")
+        config_file = os.path.join(current_dir, CONFIG_FILE_NAME)
         if os.path.isfile(config_file):
             # Load it, override defaults with what is in the config.
             with open(config_file, "r") as fp:
-                possible_config = yaml.load(fp.read())
+                possible_config = yaml.safe_load(fp.read())
 
             # Lets be careful with all user input so we don't crash.
             if isinstance(possible_config, dict):
@@ -507,6 +512,95 @@ def _codemod_impl(command_args: List[str]) -> int:  # noqa: C901
     return 1 if result.failures > 0 else 0
 
 
+class _SerializerBase(ABC):
+    def __init__(self, comment: str) -> None:
+        self.comment = comment
+
+    def serialize(self, key: str, value: object) -> str:
+        comments = os.linesep.join(
+            f"# {comment}" for comment in textwrap.wrap(self.comment)
+        )
+        return f"{comments}{os.linesep}{self._serialize_impl(key, value)}{os.linesep}"
+
+    @abstractmethod
+    def _serialize_impl(self, key: str, value: object) -> str:
+        ...
+
+
+class _StrSerializer(_SerializerBase):
+    def _serialize_impl(self, key: str, value: object) -> str:
+        return f"{key}: {value!r}"
+
+
+class _ListSerializer(_SerializerBase):
+    def __init__(self, comment: str, *, newlines: bool = False) -> None:
+        super().__init__(comment)
+        self.newlines = newlines
+
+    def _serialize_impl(self, key: str, value: object) -> str:
+        if not isinstance(value, list):
+            raise Exception("Can only serialize lists!")
+        if self.newlines:
+            values = [f"- {v!r}" for v in value]
+            return f"{key}:{os.linesep}{os.linesep.join(values)}"
+        else:
+            values = [repr(v) for v in value]
+            return f"{key}: [{', '.join(values)}]"
+
+
+def _initialize_impl(command_args: List[str]) -> int:
+    # Now, construct the full parser, parse the args and run the class.
+    parser = argparse.ArgumentParser(prog="libcst.tool initialize")
+    parser.add_argument(
+        "path",
+        metavar="PATH",
+        type=str,
+        help=("Path to initialize with a default LibCST codemod configuration"),
+    )
+    args = parser.parse_args(command_args)
+
+    # Get default configuration file, write it to the YAML file we
+    # recognize as our config.
+    default_config = _default_config()
+
+    # We serialize for ourselves here, since PyYAML doesn't allow
+    # us to control comments in the default file.
+    serializers: Dict[str, _SerializerBase] = {
+        "generated_code_marker": _StrSerializer(
+            "String that LibCST should look for in code which indicates "
+            + "that the module is generated code."
+        ),
+        "formatter": _ListSerializer(
+            "Command line and arguments for invoking a code formatter. "
+            + "Anything specified here must be capable of taking code via "
+            + "stdin and returning formatted code via stdout."
+        ),
+        "blacklist_patterns": _ListSerializer(
+            "List of regex patterns which LibCST will evaluate against "
+            + "filenames to determine if the module should be touched."
+        ),
+        "modules": _ListSerializer(
+            "List of modules that contain codemods inside of them.", newlines=True,
+        ),
+    }
+
+    config_str = "".join(
+        serializers[key].serialize(key, val) for key, val in default_config.items()
+    )
+
+    # For safety, verify that it parses to the identical file.
+    actual_config = yaml.safe_load(config_str)
+    if actual_config != default_config:
+        raise Exception("Logic error, serialization is invalid!")
+
+    config_file = os.path.abspath(os.path.join(args.path, CONFIG_FILE_NAME))
+    with open(config_file, "w") as fp:
+        fp.write(config_str)
+
+    print(f"Successfully wrote default config file to {config_file}")
+    return 0
+
+
 def main(cli_args: List[str]) -> int:
     # Hack to allow "--help" to print out generic help, but also allow subcommands
     # to customize their parsing and help messages.
@@ -521,8 +615,8 @@ def main(cli_args: List[str]) -> int:
     )
     parser.add_argument(
         "action",
-        help="Action to take. Valid options include print, codemod.",
-        choices=["print", "codemod"],
+        help="Action to take. Valid options include: print, codemod, initialize.",
+        choices=["print", "codemod", "initialize"],
     )
     args, command_args = parser.parse_known_args(cli_args)
 
@@ -534,9 +628,11 @@ def main(cli_args: List[str]) -> int:
         return 1
 
     # Look up the command and delegate parsing/running.
-    return {"print": _print_tree_impl, "codemod": _codemod_impl,}.get(
-        args.action or None, _invalid_command
-    )(command_args)
+    return {
+        "print": _print_tree_impl,
+        "codemod": _codemod_impl,
+        "initialize": _initialize_impl,
+    }.get(args.action or None, _invalid_command)(command_args)
 
 
 if __name__ == "__main__":
