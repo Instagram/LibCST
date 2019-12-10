@@ -27,6 +27,10 @@ class CodemodCommand(Codemod, ABC):
 
     """
 
+    # An overrideable description attribute so that codemods can provide
+    # a short summary of what they do.
+    DESCRIPTION: str = "No description."
+
     @staticmethod
     def add_args(arg_parser: argparse.ArgumentParser) -> None:
         """

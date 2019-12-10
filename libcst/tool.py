@@ -12,6 +12,7 @@
 import argparse
 import dataclasses
 import importlib
+import inspect
 import os
 import os.path
 import sys
@@ -601,6 +602,60 @@ def _initialize_impl(command_args: List[str]) -> int:
     return 0
 
 
+def _list_impl(command_args: List[str]) -> int:  # noqa: C901
+    # Grab the configuration so we can determine which modules to list from
+    config = _find_and_load_config()
+
+    parser = argparse.ArgumentParser(prog="libcst.tool list")
+    _ = parser.parse_args(command_args)
+
+    # Now, import each of the modules to determine their paths.
+    for module in config["modules"]:
+        try:
+            imported_module = importlib.import_module(module)
+        except AttributeError:
+            imported_module = None
+        except ModuleNotFoundError:
+            imported_module = None
+
+        if not imported_module:
+            print(
+                f"Could not import {module}, cannot list codemods inside it",
+                file=sys.stderr,
+            )
+            continue
+
+        # Grab the path, try to import all of the files inside of it.
+        path = os.path.dirname(os.path.abspath(imported_module.__file__))
+        for filename in os.listdir(path):
+            if not filename.endswith(".py"):
+                continue
+            try:
+                potential_codemod = importlib.import_module(f"{module}.{filename[:-3]}")
+            except AttributeError:
+                continue
+            except ModuleNotFoundError:
+                continue
+
+            for objname in dir(potential_codemod):
+                try:
+                    obj = getattr(potential_codemod, objname)
+                    if not issubclass(obj, CodemodCommand):
+                        continue
+                    if inspect.isabstract(obj):
+                        continue
+                    # isabstract is broken for direct subclasses of ABC which
+                    # don't themselves define any abstract methods, so lets
+                    # check for that here.
+                    if any(cls[0] is ABC for cls in inspect.getclasstree([obj])):
+                        continue
+                    print(f"{filename[:-3]}.{obj.__name__} - {obj.DESCRIPTION}")
+                except TypeError:
+                    continue
+
+    return 0
+
+
 def main(cli_args: List[str]) -> int:
     # Hack to allow "--help" to print out generic help, but also allow subcommands
     # to customize their parsing and help messages.
@@ -615,8 +670,8 @@ def main(cli_args: List[str]) -> int:
     )
     parser.add_argument(
         "action",
-        help="Action to take. Valid options include: print, codemod, initialize.",
-        choices=["print", "codemod", "initialize"],
+        help="Action to take. Valid options include: print, codemod, list, initialize.",
+        choices=["print", "codemod", "list", "initialize"],
     )
     args, command_args = parser.parse_known_args(cli_args)
 
@@ -632,6 +687,7 @@ def main(cli_args: List[str]) -> int:
         "print": _print_tree_impl,
         "codemod": _codemod_impl,
         "initialize": _initialize_impl,
+        "list": _list_impl,
     }.get(args.action or None, _invalid_command)(command_args)
 
 
