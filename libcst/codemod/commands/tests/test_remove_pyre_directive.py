@@ -1,3 +1,4 @@
+# pyre-strict
 from libcst.codemod import CodemodTest
 from libcst.codemod.commands.remove_pyre_directive import (
     RemovePyreStrictCommand,

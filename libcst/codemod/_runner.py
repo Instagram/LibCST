@@ -1,3 +1,4 @@
+# pyre-strict
 """
 Provides everything needed to run a CodemodCommand.
 """

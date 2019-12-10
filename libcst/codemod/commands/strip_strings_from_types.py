@@ -1,3 +1,4 @@
+# pyre-strict
 from ast import literal_eval
 from typing import Union
 

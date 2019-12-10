@@ -1,3 +1,4 @@
+# pyre-strict
 import ast
 from typing import Generator, List, Optional, Sequence, Set, Tuple
 

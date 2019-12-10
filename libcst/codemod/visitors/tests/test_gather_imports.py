@@ -1,3 +1,4 @@
+# pyre-strict
 from libcst import parse_module
 from libcst.codemod import CodemodContext, CodemodTest
 from libcst.codemod.visitors import GatherImportsVisitor

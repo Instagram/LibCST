@@ -1,3 +1,4 @@
+# pyre-strict
 from abc import ABC, abstractmethod
 from contextlib import contextmanager
 from dataclasses import replace

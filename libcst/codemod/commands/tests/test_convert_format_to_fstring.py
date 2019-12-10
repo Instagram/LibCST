@@ -1,3 +1,4 @@
+# pyre-strict
 from libcst.codemod import CodemodTest
 from libcst.codemod.commands.convert_format_to_fstring import ConvertFormatStringCommand
 

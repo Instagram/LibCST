@@ -1,3 +1,4 @@
+# pyre-strict
 from textwrap import dedent
 
 import libcst as cst

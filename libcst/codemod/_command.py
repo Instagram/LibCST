@@ -1,7 +1,8 @@
+# pyre-strict
 import argparse
 import inspect
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Generator, List, Type, TypeVar
+from typing import Dict, Generator, List, Type, TypeVar
 
 from libcst import Module
 from libcst.codemod._codemod import Codemod
@@ -95,7 +96,7 @@ class MagicArgsCodemodCommand(CodemodCommand, ABC):
     transforms.
     """
 
-    def __init__(self, context: CodemodContext, **kwargs: Dict[str, Any]) -> None:
+    def __init__(self, context: CodemodContext, **kwargs: Dict[str, object]) -> None:
         super().__init__(context)
         self.context.scratch.update(kwargs)
 
@@ -106,8 +107,8 @@ class MagicArgsCodemodCommand(CodemodCommand, ABC):
     def _instantiate(self, transform: Type[Codemod]) -> Codemod:
         # Grab the expected arguments
         argspec = inspect.getfullargspec(transform.__init__)
-        args: List[Any] = []
-        kwargs: Dict[str, Any] = {}
+        args: List[object] = []
+        kwargs: Dict[str, object] = {}
         # pyre-fixme[6]: Expected `Sized` for 1st param but got `Union[Tuple[],
         #  Tuple[Any, ...]]`.
         last_default_arg = len(argspec.args) - len(argspec.defaults or ())

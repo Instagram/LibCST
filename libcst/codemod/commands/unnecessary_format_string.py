@@ -1,3 +1,4 @@
+# pyre-strict
 import libcst
 import libcst.matchers as m
 from libcst.codemod import VisitorBasedCodemodCommand

@@ -1,3 +1,4 @@
+# pyre-strict
 from libcst.codemod._cli import (
     ParallelTransformResult,
     diff_code,

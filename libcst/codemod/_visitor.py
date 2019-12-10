@@ -1,8 +1,12 @@
+# pyre-strict
+from typing import Mapping
+
 import libcst as cst
 from libcst import MetadataDependent
 from libcst.codemod._codemod import Codemod
 from libcst.codemod._context import CodemodContext
 from libcst.matchers import MatcherDecoratableTransformer, MatcherDecoratableVisitor
+from libcst.metadata import ProviderT
 
 
 class ContextAwareTransformer(Codemod, MatcherDecoratableTransformer):
@@ -52,7 +56,9 @@ class ContextAwareVisitor(MatcherDecoratableVisitor, MetadataDependent):
                         + f"parent transforms of {self.__class__.__name__} declare "
                         + f"{dep.__name__} as a metadata dependency."
                     )
-            self.metadata = {dep: wrapper._metadata[dep] for dep in dependencies}
+            self.metadata: Mapping[ProviderT, Mapping[cst.CSTNode, object]] = {
+                dep: wrapper._metadata[dep] for dep in dependencies
+            }
 
     @property
     def module(self) -> cst.Module:

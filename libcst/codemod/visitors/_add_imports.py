@@ -1,3 +1,4 @@
+# pyre-strict
 from typing import Dict, List, Optional, Sequence, Set, Tuple, Union
 
 import libcst

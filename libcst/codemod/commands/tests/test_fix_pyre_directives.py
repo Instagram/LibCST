@@ -1,3 +1,4 @@
+# pyre-strict
 from libcst.codemod import CodemodTest
 from libcst.codemod.commands.fix_pyre_directives import FixPyreDirectivesCommand
 

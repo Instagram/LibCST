@@ -1,3 +1,4 @@
+# pyre-strict
 from libcst.codemod import CodemodTest
 from libcst.codemod.commands.add_pyre_directive import AddPyreUnsafeCommand
 

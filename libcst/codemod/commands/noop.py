@@ -1,3 +1,4 @@
+# pyre-strict
 from libcst import Module
 from libcst.codemod import CodemodCommand
 

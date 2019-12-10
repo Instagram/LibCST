@@ -1,3 +1,4 @@
+# pyre-strict
 """
 Provides helpers for CLI interaction.
 """

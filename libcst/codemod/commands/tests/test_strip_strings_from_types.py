@@ -1,3 +1,4 @@
+# pyre-strict
 from libcst.codemod import CodemodTest
 from libcst.codemod.commands.strip_strings_from_types import StripStringsCommand
 

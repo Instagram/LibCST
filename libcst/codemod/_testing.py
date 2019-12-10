@@ -1,3 +1,4 @@
+# pyre-strict
 from textwrap import dedent
 from typing import Optional, Sequence, Type
 

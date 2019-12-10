@@ -1,3 +1,4 @@
+# pyre-strict
 from typing import Type
 
 from libcst.codemod import Codemod, CodemodTest

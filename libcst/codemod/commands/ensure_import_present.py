@@ -1,3 +1,4 @@
+# pyre-strict
 import argparse
 from typing import Generator, Type
 
