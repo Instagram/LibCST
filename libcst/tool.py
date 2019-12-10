@@ -621,6 +621,7 @@ def _list_impl(proc_name: str, command_args: List[str]) -> int:  # noqa: C901
     _ = parser.parse_args(command_args)
 
     # Now, import each of the modules to determine their paths.
+    codemods: List[str] = []
     for module in config["modules"]:
         try:
             imported_module = importlib.import_module(module)
@@ -660,10 +661,13 @@ def _list_impl(proc_name: str, command_args: List[str]) -> int:  # noqa: C901
                     # check for that here.
                     if any(cls[0] is ABC for cls in inspect.getclasstree([obj])):
                         continue
-                    print(f"{filename[:-3]}.{obj.__name__} - {obj.DESCRIPTION}")
+                    codemods.append(
+                        f"{filename[:-3]}.{obj.__name__} - {obj.DESCRIPTION}"
+                    )
                 except TypeError:
                     continue
 
+    print("\n".join(sorted(codemods)))
     return 0
 
 
