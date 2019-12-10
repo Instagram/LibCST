@@ -18,7 +18,7 @@ import os.path
 import sys
 import textwrap
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Sequence
+from typing import Any, Callable, Dict, List, Sequence
 
 import yaml
 
@@ -214,8 +214,11 @@ def dump(
     )
 
 
-def _print_tree_impl(command_args: List[str]) -> int:
-    parser = argparse.ArgumentParser(prog="libcst.tool print")
+def _print_tree_impl(proc_name: str, command_args: List[str]) -> int:
+    parser = argparse.ArgumentParser(
+        description="Print the LibCST tree representation of a file.",
+        prog=f"{proc_name} print",
+    )
     parser.add_argument(
         "infile",
         metavar="INFILE",
@@ -316,7 +319,7 @@ def _find_and_load_config() -> Dict[str, Any]:
     return config
 
 
-def _codemod_impl(command_args: List[str]) -> int:  # noqa: C901
+def _codemod_impl(proc_name: str, command_args: List[str]) -> int:  # noqa: C901
     # Grab the configuration for running this, if it exsts.
     config = _find_and_load_config()
 
@@ -362,7 +365,10 @@ def _codemod_impl(command_args: List[str]) -> int:  # noqa: C901
         command_class = CodemodCommand
 
     # Now, construct the full parser, parse the args and run the class.
-    parser = argparse.ArgumentParser(prog="libcst.tool codemod")
+    parser = argparse.ArgumentParser(
+        description="Execute a codemod against a series of files.",
+        prog=f"{proc_name} codemod",
+    )
     parser.add_argument(
         "command",
         metavar="COMMAND",
@@ -549,9 +555,12 @@ class _ListSerializer(_SerializerBase):
             return f"{key}: [{', '.join(values)}]"
 
 
-def _initialize_impl(command_args: List[str]) -> int:
+def _initialize_impl(proc_name: str, command_args: List[str]) -> int:
     # Now, construct the full parser, parse the args and run the class.
-    parser = argparse.ArgumentParser(prog="libcst.tool initialize")
+    parser = argparse.ArgumentParser(
+        description="Initialize a directory by writing a default LibCST config to it.",
+        prog=f"{proc_name} initialize",
+    )
     parser.add_argument(
         "path",
         metavar="PATH",
@@ -602,11 +611,13 @@ def _initialize_impl(command_args: List[str]) -> int:
     return 0
 
 
-def _list_impl(command_args: List[str]) -> int:  # noqa: C901
+def _list_impl(proc_name: str, command_args: List[str]) -> int:  # noqa: C901
     # Grab the configuration so we can determine which modules to list from
     config = _find_and_load_config()
 
-    parser = argparse.ArgumentParser(prog="libcst.tool list")
+    parser = argparse.ArgumentParser(
+        description="List all codemods available to run.", prog=f"{proc_name} list",
+    )
     _ = parser.parse_args(command_args)
 
     # Now, import each of the modules to determine their paths.
@@ -656,7 +667,7 @@ def _list_impl(command_args: List[str]) -> int:  # noqa: C901
     return 0
 
 
-def main(cli_args: List[str]) -> int:
+def main(proc_name: str, cli_args: List[str]) -> int:
     # Hack to allow "--help" to print out generic help, but also allow subcommands
     # to customize their parsing and help messages.
     first_arg = cli_args[0] if cli_args else "--help"
@@ -666,7 +677,7 @@ def main(cli_args: List[str]) -> int:
     parser = argparse.ArgumentParser(
         description="Collection of utilities that ship with LibCST.",
         add_help=add_help,
-        prog="libcst.tool",
+        prog=proc_name,
     )
     parser.add_argument(
         "action",
@@ -677,19 +688,20 @@ def main(cli_args: List[str]) -> int:
 
     # Create a dummy command in case the user manages to get into
     # this state.
-    def _invalid_command(command_args: List[str]) -> int:
+    def _invalid_command(proc_name: str, command_args: List[str]) -> int:
         print("Please specify a command!\n", file=sys.stderr)
         parser.print_help(sys.stderr)
         return 1
 
     # Look up the command and delegate parsing/running.
-    return {
+    lookup: Dict[str, Callable[[str, List[str]], int]] = {
         "print": _print_tree_impl,
         "codemod": _codemod_impl,
         "initialize": _initialize_impl,
         "list": _list_impl,
-    }.get(args.action or None, _invalid_command)(command_args)
+    }
+    return lookup.get(args.action or None, _invalid_command)(proc_name, command_args)
 
 
 if __name__ == "__main__":
-    sys.exit(main(sys.argv[1:]))
+    sys.exit(main("libcst.tool", sys.argv[1:]))
