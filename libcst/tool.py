@@ -366,7 +366,11 @@ def _codemod_impl(proc_name: str, command_args: List[str]) -> int:  # noqa: C901
 
     # Now, construct the full parser, parse the args and run the class.
     parser = argparse.ArgumentParser(
-        description="Execute a codemod against a series of files.",
+        description=(
+            "Execute a codemod against a series of files."
+            if command_class is CodemodCommand
+            else command_class.DESCRIPTION
+        ),
         prog=f"{proc_name} codemod",
     )
     parser.add_argument(
