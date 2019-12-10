@@ -712,4 +712,6 @@ def main(proc_name: str, cli_args: List[str]) -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main("libcst.tool", sys.argv[1:]))
+    sys.exit(
+        main(os.environ.get("LIBCST_TOOL_COMMAND_NAME", "libcst.tool"), sys.argv[1:])
+    )
