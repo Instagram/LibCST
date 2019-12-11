@@ -11,6 +11,7 @@
 # pyre-strict
 import argparse
 import dataclasses
+import distutils.spawn
 import importlib
 import inspect
 import os
@@ -316,6 +317,14 @@ def _find_and_load_config() -> Dict[str, Any]:
         previous_dir = current_dir
         current_dir = os.path.abspath(os.path.join(current_dir, os.pardir))
 
+    # Make sure that the formatter is findable.
+    if config["formatter"]:
+        exe = (
+            distutils.spawn.find_executable(config["formatter"][0])
+            or config["formatter"][0]
+        )
+        config["formatter"] = [os.path.abspath(exe), *config["formatter"][1:]]
+
     return config
 
 
@@ -418,7 +427,7 @@ def _codemod_impl(proc_name: str, command_args: List[str]) -> int:  # noqa: C901
     parser.add_argument(
         "--no-format",
         action="store_true",
-        help="Don't format resulting codemod with black.",
+        help="Don't format resulting codemod with configured formatter.",
     )
     parser.add_argument(
         "--show-successes",
