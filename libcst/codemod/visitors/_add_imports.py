@@ -1,4 +1,3 @@
-# @oncall instagram_server_framework
 from typing import Dict, List, Optional, Sequence, Set, Tuple, Union
 
 import libcst

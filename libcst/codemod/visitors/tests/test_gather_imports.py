@@ -1,4 +1,3 @@
-# @oncall instagram_server_framework
 from libcst import parse_module
 from libcst.codemod import CodemodContext, CodemodTest
 from libcst.codemod.visitors import GatherImportsVisitor
@@ -6,9 +5,6 @@ from libcst.testing.utils import UnitTest
 
 
 class TestGatherImportsVisitor(UnitTest):
-
-    ONCALL_SHORTNAME = "instagram_server_framework"
-
     def gather_imports(self, code: str) -> GatherImportsVisitor:
         transform_instance = GatherImportsVisitor(CodemodContext())
         input_tree = parse_module(CodemodTest.make_fixture_data(code))

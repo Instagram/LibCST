@@ -1,11 +1,8 @@
-# @oncall instagram_server_framework
 from libcst.codemod import CodemodTest
 from libcst.codemod.visitors import AddImportsVisitor
 
 
 class TestAddImportsCodemod(CodemodTest):
-
-    ONCALL_SHORTNAME = "instagram_server_framework"
 
     TRANSFORM = AddImportsVisitor
 
