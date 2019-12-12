@@ -19,7 +19,10 @@ class ContextAwareTransformer(Codemod, MatcherDecoratableTransformer):
     A transformer which visits using LibCST. Allows visitor-based mutation of a tree.
     Classes wishing to do arbitrary non-visitor-based mutation on a tree should
     instead subclass from :class:`Codemod` and implement
-    :meth:`~Codemod.transform_module_impl`.
+    :meth:`~Codemod.transform_module_impl`. This is a subclass of
+    :class:`~libcst.matchers.MatcherDecoratableTransformer` so all features of matchers
+    as well as :class:`~libcst.CSTTransformer` are available to subclasses of this
+    class.
     """
 
     def __init__(self, context: CodemodContext) -> None:
@@ -32,10 +35,30 @@ class ContextAwareTransformer(Codemod, MatcherDecoratableTransformer):
 
 class ContextAwareVisitor(MatcherDecoratableVisitor, MetadataDependent):
     """
-    A collector which visits using LibCST. Allows visitor-based collecting of info
+    A visitor which visits using LibCST. Allows visitor-based collecting of info
     on a tree. All codemods which wish to implement an information collector should
-    subclass from this instead of directly from :class:`MatcherDecoratableVisitor`
-    or :class:`CSTVisitor` since this provides access to the current codemod context.
+    subclass from this instead of directly from
+    :class:`~libcst.matchers.MatcherDecoratableVisitor` or :class:`~libcst.CSTVisitor`
+    since this provides access to the current codemod context. As a result, this
+    class allows access to metadata which was calculated in a parent
+    :class:`~libcst.codemod.Codemod` through the
+    :meth:`~libcst.MetadataDependent.get_metadata` method.
+
+    Note that you cannot directly run a :class:`~libcst.codemod.ContextAwareVisitor`
+    using :func:`~libcst.codemod.transform_module` because visitors by definition
+    do not transform trees. However, you can instantiate a
+    :class:`~libcst.codemod.ContextAwareVisitor` inside a codemod and pass it to the
+    :class:`~libcst.CSTNode.visit` method on any node in order to run information
+    gathering with metadata and context support.
+
+    Remember that a :class:`~libcst.codemod.ContextAwareVisitor` is a subclass of
+    :class:`~libcst.MetadataDependent`, meaning that you still need to declare
+    your metadata dependencies with
+    :attr:`~libcst.MetadataDependent.METADATA_DEPENDENCIES` before you can retrieve
+    metadata using :meth:`~libcst.MetadataDependent.get_metadata`, even if the parent
+    codemod has listed its own metadata dependencies. Note also that the dependencies
+    listed on this class must be a strict subset of the dependencies listed in the
+    parent codemod.
     """
 
     def __init__(self, context: CodemodContext) -> None:
@@ -64,6 +87,12 @@ class ContextAwareVisitor(MatcherDecoratableVisitor, MetadataDependent):
             self.metadata: Mapping[ProviderT, Mapping[cst.CSTNode, object]] = {
                 dep: wrapper._metadata[dep] for dep in dependencies
             }
+
+    def warn(self, warning: str) -> None:
+        """
+        Emit a warning that is displayed to the user who has invoked this codemod.
+        """
+        self.context.warnings.append(warning)
 
     @property
     def module(self) -> cst.Module:

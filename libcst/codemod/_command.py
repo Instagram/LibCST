@@ -21,31 +21,33 @@ _Codemod = TypeVar("_Codemod", bound=Codemod)
 
 class CodemodCommand(Codemod, ABC):
     """
-    A command is a type of transform that is normally instantiated and
-    run from the command-line. It behaves like any other Codemod in
-    that it can be used anywhere that any other Codemod can be used.
-    However, it can also be used with 'run_command' to make a transform
-    into a CLI tool. It also includes facilities for automatically running
-    certain common transforms after executing your transform_module_impl.
-    The following list of transforms are supported at this time:
+    A :class:`~libcst.codemod.Codemod` which can be invoked on the command-line
+    using the ``libcst.tool codemod`` utility. It behaves like any other codemod
+    in that it can be instantiated and run identically to a
+    :class:`~libcst.codemod.Codemod`. However, it provides support for providing
+    help text and command-line arguments to ``libcst.tool codemod`` as well as
+    facilities for automatically running certain common transforms after executing
+    your :meth:`~libcst.codemod.Codemod.transform_module_impl`.
 
-     - AddImportsVisitor (adds needed imports to a file).
+    The following list of transforms are automatically run at this time:
 
+     - :class:`~libcst.codemod.visitors.AddImportsVisitor` (adds needed imports to a file).
     """
 
-    # An overrideable description attribute so that codemods can provide
-    # a short summary of what they do.
+    #: An overrideable description attribute so that codemods can provide
+    #: a short summary of what they do. This description will show up in
+    #: command-line help as well as when listing available codemods.
     DESCRIPTION: str = "No description."
 
     @staticmethod
     def add_args(arg_parser: argparse.ArgumentParser) -> None:
         """
         Override this to add arguments to the CLI argument parser. These args
-        will show up when the user invokes the 'run_command' script with
-        --help. They will also be presented to your class's __init__ method.
-        So, if you define a command with an argument 'foo', you should also
+        will show up when the user invokes ``libcst.tool codemod`` with
+        ``--help``. They will also be presented to your class's ``__init__``
+        method. So, if you define a command with an argument 'foo', you should also
         have a corresponding 'foo' positional or keyword argument in your
-        class's __init__ method.
+        class's ``__init__`` method.
         """
 
         pass
@@ -53,6 +55,14 @@ class CodemodCommand(Codemod, ABC):
     def _instantiate_and_run(self, transform: Type[_Codemod], tree: Module) -> Module:
         inst = transform(self.context)
         return inst.transform_module(tree)
+
+    @abstractmethod
+    def transform_module_impl(self, tree: Module) -> Module:
+        """
+        Override this with your transform. You should take in the tree, optionally
+        mutate it and then return the mutated version. The module reference and all                                                                calculated metadata are available for the lifetime of this function.
+        """
+        ...
 
     def transform_module(self, tree: Module) -> Module:
         # Overrides (but then calls) Codemod's transform_module to provide
@@ -81,8 +91,10 @@ class CodemodCommand(Codemod, ABC):
 class VisitorBasedCodemodCommand(ContextAwareTransformer, CodemodCommand, ABC):
     """
     A command that acts identically to a visitor-based transform, but also has
-    the support of add_args and running supported helper transforms after
-    execution. See CodemodCommand and ContextAwareTransformer for documentation.
+    the support of :meth:`~libcst.codemod.CodemodCommand.add_args` and running
+    supported helper transforms after execution. See
+    :class:`~libcst.codemod.CodemodCommand` and
+    :class:`~libcst.codemod.ContextAwareTransformer` for additional documentation.
     """
 
     pass
@@ -91,14 +103,16 @@ class VisitorBasedCodemodCommand(ContextAwareTransformer, CodemodCommand, ABC):
 class MagicArgsCodemodCommand(CodemodCommand, ABC):
     """
     A "magic" args command, which auto-magically looks up the transforms that
-    are yielded from get_transforms and instantiates them using values out
-    of the context. Visitors yielded in get_transforms must have constructor
-    arguments that match a key in the context scratch. The easiest way to
-    guarantee that is to use add_args to add a command arg that will be parsed
-    for each of the args. However, if you wish to chain transforms, adding
-    to the scratch in one transform will make the value available in the
-    constructor in subsequent transforms as well as the scratch for subsequent
-    transforms.
+    are yielded from :meth:`~libcst.codemod.MagicArgsCodemodCommand.get_transforms`
+    and instantiates them using values out of the context. Visitors yielded in
+    :meth:`~libcst.codemod.MagicArgsCodemodCommand.get_transforms` must have
+    constructor arguments that match a key in the context
+    :attr:`~libcst.codemod.CodemodContext.scratch`. The easiest way to
+    guarantee that is to use :meth:`~libcst.codemod.CodemodCommand.add_args`
+    to add a command arg that will be parsed for each of the args. However, if
+    you wish to chain transforms, adding to the scratch in one transform will make
+    the value available to the constructor in subsequent transforms as well as the
+    scratch for subsequent transforms.
     """
 
     def __init__(self, context: CodemodContext, **kwargs: Dict[str, object]) -> None:
@@ -107,6 +121,18 @@ class MagicArgsCodemodCommand(CodemodCommand, ABC):
 
     @abstractmethod
     def get_transforms(self) -> Generator[Type[Codemod], None, None]:
+        """
+        A generator which yields one or more subclasses of
+        :class:`~libcst.codemod.Codemod`. In the general case, you will usually
+        yield a series of classes, but it is possible to programmatically decide
+        which classes to yield depending on the contents of the context
+        :attr:`~libcst.codemod.CodemodContext.scratch`.
+
+        Note that you should yield classes, not instances of classes, as the
+        point of :class:`~libcst.codemod.MagicArgsCodemodCommand` is to
+        instantiate them for you with the contents of
+        :attr:`~libcst.codemod.CodemodContext.scratch`.
+        """
         ...
 
     def _instantiate(self, transform: Type[Codemod]) -> Codemod:

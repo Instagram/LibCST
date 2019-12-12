@@ -76,7 +76,9 @@ def gather_files(
 ) -> List[str]:
     """
     Given a list of files or directories (can be intermingled), return a list of
-    all python files that exist at those locations.
+    all python files that exist at those locations. If ``include_stubs`` is ``True``,
+    this will include ``.py`` and ``.pyi`` stub files. If it is ``False``, only
+    ``.py`` files will be included in the returned list.
     """
     ret: List[str] = []
     for fd in files_or_dirs:
@@ -94,6 +96,16 @@ def gather_files(
 def diff_code(
     oldcode: str, newcode: str, context: int, *, filename: Optional[str] = None
 ) -> str:
+    """
+    Given two strings representing a module before and after a codemod, produce
+    a unified diff of the changes with ``context`` lines of context. Optionally,
+    assign the ``filename`` to the change, and if it is not available, assume
+    that the change was performed on stdin/stdout. If no change is detected,
+    return an empty string instead of returning an empty unified diff. This is
+    comparable to revision control software which only shows differences for
+    files that have changed.
+    """
+
     if oldcode == newcode:
         return ""
 
@@ -123,8 +135,15 @@ def exec_transform_with_prettyprint(
     formatter_args: Sequence[str] = (),
 ) -> Optional[str]:
     """
-    Given an instantiated transform, and a code string, transform that code string
-    by executing the transform, and then print any generated warnings to the screen.
+    Given an instantiated codemod and a string representing a module, transform that
+    code by executing the transform, optionally invoking the formatter and finally
+    printing any generated warnings to stderr. If the code includes the generated
+    marker at any spot and ``include_generated`` is not set to ``True``, the code
+    will not be modified. If ``format_code`` is set to ``False`` or the instantiated
+    codemod does not modify the code, the code will not be formatted.
+
+    In all cases a module will be returned. Whether it is changed depends on the
+    input parameters as well as the codemod itself.
     """
 
     if not include_generated and generated_code_marker in code:
@@ -408,13 +427,23 @@ def _print_parallel_result(
 
 @dataclass(frozen=True)
 class ParallelTransformResult:
-    # Number of files that we successfully transformed
+    """
+    The result of running
+    :func:`~libcst.codemod.parallel_exec_transform_with_prettyprint` against
+    a series of files. This is a simple summary, with counts for number of
+    successfully codemodded files, number of files that we failed to codemod,
+    number of warnings generated when running the codemod across the files, and
+    the number of files that we skipped when running the codemod.
+    """
+
+    #: Number of files that we successfully transformed.
     successes: int
-    # Number of files that we failed to transform
+    #: Number of files that we failed to transform.
     failures: int
-    # Number of warnings generated when running transform across files
+    #: Number of warnings generated when running transform across files.
     warnings: int
-    # Number of files skipped because they were blacklisted or generated
+    #: Number of files skipped because they were blacklisted, generated
+    #: or the codemod requested to skip.
     skips: int
 
 
@@ -435,11 +464,31 @@ def parallel_exec_transform_with_prettyprint(  # noqa: C901
     blacklist_patterns: Sequence[str] = (),
 ) -> ParallelTransformResult:
     """
-    Given a list of files, and an instantiated transform we should apply to them,
-    fork and apply in parallel to all of the files. "jobs" controls the maximum
-    number of in-flight transforms, and needs to be at least 1. To make this API
-    simpler, we take an instantiated transform. This means we're implicitly relying
-    on fork behavior on *NIX systems, and this will not work on Windows.
+    Given a list of files and an instantiated codemod we should apply to them,
+    fork and apply the codemod in parallel to all of the files, including any
+    configured formatter. The ``jobs`` parameter controls the maximum number of
+    in-flight transforms, and needs to be at least 1. If not included, the number
+    of jobs will automatically be set to the number of CPU cores. If ``unified_diff``
+    is set to a number, changes to files will be printed to stdout with
+    ``unified_diff`` lines of context. If it is set to ``None`` or left out, files
+    themselves will be updated with changes and formatting.
+
+    A progress indicator as well as any generated warnings will be printed to stderr.
+    To supress the interactive progress indicator, set ``hide_progress`` to ``True``.
+    Files that include the generated code marker will be skipped unless the
+    ``include_generated`` parameter is set to ``True``. Similarly, files that match
+    a supplied blacklist of regex patterns will be skipped. Warnings for skipping
+    both blacklisted and generated files will be printed to stderr along with
+    warnings generated by the codemod unless ``hide_blacklisted`` and
+    ``hide_generated`` are set to ``True``. Files that were successfully codemodded
+    will not be printed to stderr unless ``show_successes`` is set to ``True``.
+
+    To make this API possible, we take an instantiated transform. This is due to
+    the fact that lambdas are not pickleable and pickling functions is undefined.
+    This means we're implicitly relying on fork behavior on UNIX-like systems, and
+    this function will not work on Windows systems. To create a command-line utility
+    that runs on Windows, please instead see
+    :func:`~libcst.codemod.exec_transform_with_prettyprint`.
     """
 
     # Ensure that we have no duplicates, otherwise we might get race conditions

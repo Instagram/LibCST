@@ -27,6 +27,7 @@ LibCST
    Metadata <metadata_tutorial>
    Scope Analysis <scope_tutorial>
    Matchers <matchers_tutorial>
+   Codemodding <codemods_tutorial>
    Best Practices <best_practices>
 
 
@@ -39,6 +40,7 @@ LibCST
    visitors
    metadata
    matchers
+   codemods
    experimental
 
 

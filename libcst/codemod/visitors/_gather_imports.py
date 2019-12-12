@@ -12,6 +12,44 @@ from libcst.codemod._visitor import ContextAwareVisitor
 
 
 class GatherImportsVisitor(ContextAwareVisitor):
+    """
+    Gathers all imports in a module and stores them as attributes on the instance.
+    Intended to be instantiated and passed to a :class:`~libcst.Module`
+    :meth:`~libcst.CSTNode.visit` method in order to gather up information about
+    imports on a module. Note that this is not a substitute for scope analysis or
+    qualified name support. Please see :ref:`libcst-scope-tutorial` for a more
+    robust way of determining the qualified name and definition for an arbitrary
+    node.
+
+    After visiting a module the following attributes will be populated:
+
+     module_imports
+      A sequence of strings representing modules that were imported directly, such as
+      in the case of ``import typing``. Each module directly imported but not aliased
+      will be included here.
+     object_mapping
+      A mapping of strings to sequences of strings representing modules where we
+      imported objects from, such as in the case of ``from typing import Optional``.
+      Each from import that was not aliased will be included here, where the keys of
+      the mapping are the module we are importing from, and the value is a
+      sequence of objects we are importing from the module.
+     module_aliases
+      A mapping of strings representing modules that were imported and aliased,
+      such as in the case of ``import typing as t``. Each module imported this
+      way will be represented as a key in this mapping, and the value will be
+      the local alias of the module.
+     alias_mapping
+      A mapping of strings to sequences of tuples representing modules where we
+      imported objects from and aliased using ``as`` syntax, such as in the case
+      of ``from typing import Optional as opt``. Each from import that was aliased
+      will be included here, where the keys of the mapping are the module we are
+      importing from, and the value is a tuple representing the original object
+      name and the alias.
+     all_imports
+      A collection of all :class:`~libcst.Import` and :class:`~libcst.ImportFrom`
+      statements that were encountered in the module.
+    """
+
     def __init__(self, context: CodemodContext) -> None:
         super().__init__(context)
         # Track the available imports in this transform
