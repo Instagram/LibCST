@@ -14,6 +14,46 @@ from libcst.codemod.visitors._gather_imports import GatherImportsVisitor
 
 
 class AddImportsVisitor(ContextAwareTransformer):
+    """
+    Ensures that given imports exist in a module. Given a
+    :class:`~libcst.codemod.CodemodContext` and a sequence of tuples specifying
+    a module to import from as a string and optionally an object to import from
+    that module, ensures that that import exists. It will modify existing imports
+    as necessary if the module in question is already being imported from.
+
+    This is one of the transforms that is available automatically to you when
+    running a codemod. To use it in this manner, import
+    :class:`~libcst.codemod.visitors.AddImportsVisitor` and then call the static
+    :meth:`~libcst.codemod.visitors.AddImportsVisitor.add_needed_import` method,
+    giving it the current context (found as ``self.context`` for all subclasses of
+    :class:`~libcst.codemod.Codemod`), the module you wish to import from and
+    optionally an object you wish to import from that module.
+
+    For example::
+
+        AddImportsVisitor.add_needed_import(self.context, "typing", "Optional")
+
+    This will produce the following code in a module, assuming there was no
+    typing import already::
+
+        from typing import Optional
+
+    As another example::
+
+        AddImportsVisitor.add_needed_import(self.context, "typing")
+
+    This will produce the following code in a module, assuming there was no
+    import already::
+
+        import typing
+
+    Note that this is a subclass of :class:`~libcst.CSTTransformer` so it is
+    possible to instantiate it and pass it to a :class:`~libcst.Module`
+    :meth:`~libcst.CSTNode.visit` method. However, it is far easier to use
+    the automatic transform feature of :class:`~libcst.codemod.CodemodCommand`
+    and schedule an import to be added by calling
+    :meth:`~libcst.codemod.visitors.AddImportsVisitor.add_needed_import`
+    """
 
     CONTEXT_KEY = "AddImportsVisitor"
 
@@ -30,6 +70,17 @@ class AddImportsVisitor(ContextAwareTransformer):
     def add_needed_import(
         context: CodemodContext, module: str, obj: Optional[str] = None
     ) -> None:
+        """
+        Schedule an import to be added in a future invocation of this class by
+        updating the ``context`` to include the ``module`` and optionally ``obj``
+        to be imported. When subclassing from
+        :class:`~libcst.codemod.CodemodCommand`, this will be performed for you
+        after your transform finishes executing. If you are subclassing from a
+        :class:`~libcst.codemod.Codemod` instead, you will need to call the
+        :meth:`~libcst.CSTNode.visit` method on the module under modification
+        with an instance of this class after performing your transform.
+        """
+
         if module == "__future__" and obj is None:
             raise Exception("Cannot import __future__ directly!")
         imports = AddImportsVisitor._get_imports_from_context(context)
