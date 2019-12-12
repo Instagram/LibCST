@@ -5,7 +5,10 @@
 #
 # pyre-strict
 from libcst.codemod import CodemodTest
-from libcst.codemod.commands.convert_format_to_fstring import ConvertFormatStringCommand
+from libcst.codemod.commands.convert_format_to_fstring import (
+    ConvertFormatStringCommand,
+    _string_prefix_and_quotes,
+)
 
 
 class ConvertFormatStringCommandTest(CodemodTest):
@@ -33,6 +36,13 @@ class ConvertFormatStringCommandTest(CodemodTest):
         """
 
         self.assertCodemod(before, after)
+
+    def test_string_prefix_and_quotes(self) -> None:
+        """
+        Test some edge cases not covered by below tests.
+        """
+        self.assertEqual(_string_prefix_and_quotes('b""'), ("b", '"', ""))
+        self.assertEqual(_string_prefix_and_quotes('f""""""'), ("f", '"""', ""))
 
     def test_unsupported_expansion(self) -> None:
         """
@@ -88,6 +98,9 @@ class ConvertFormatStringCommandTest(CodemodTest):
 
             def foobarbaz() -> str:
                 return "{}".format('\\n')
+
+            def awaitable() -> str:
+                return "{}".format(await bla())
         """
         after = """
             def foo() -> str:
@@ -109,6 +122,9 @@ class ConvertFormatStringCommandTest(CodemodTest):
 
             def foobarbaz() -> str:
                 return "{}".format('\\n')
+
+            def awaitable() -> str:
+                return "{}".format(await bla())
         """
 
         self.assertCodemod(
@@ -120,7 +136,26 @@ class ConvertFormatStringCommandTest(CodemodTest):
                 "Unsupported backslash in format expression",
                 "Unsupported comment in format() call",
                 "Unsupported backslash in format expression",
+                "Unsupported await in format() call",
             ],
+        )
+
+    def test_unsupported_formatspec(self) -> None:
+        """
+        Should do nothing, we don't support format-specs right now.
+        """
+        before = """
+            def foo() -> str:
+                return "{0:#0{1}x}".format(1, 4)
+        """
+        after = """
+            def foo() -> str:
+                return "{0:#0{1}x}".format(1, 4)
+        """
+        self.assertCodemod(
+            before,
+            after,
+            expected_warnings=["Unsupported format_spec #0{1}x in format() call",],
         )
 
     def test_position_replacement(self) -> None:
