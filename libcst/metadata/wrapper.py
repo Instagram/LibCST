@@ -6,7 +6,6 @@
 # pyre-strict
 
 import textwrap
-from collections import defaultdict
 from contextlib import ExitStack
 from types import MappingProxyType
 from typing import (
@@ -89,14 +88,14 @@ def _resolve_impl(
                     batchable.add(P)
                 else:
                     wrapper._metadata[P] = (
-                        P(wrapper._cache[P])._gen(wrapper)
+                        P(wrapper._cache.get(P))._gen(wrapper)
                         if P.is_cache_required
                         else P()._gen(wrapper)
                     )
                     completed.add(P)
 
         initialized_batchable = [
-            p(wrapper._cache[p]) if p.is_cache_required else p() for p in batchable
+            p(wrapper._cache.get(p)) if p.is_cache_required else p() for p in batchable
         ]
         metadata_batch = _gen_batchable(wrapper, initialized_batchable)
         wrapper._metadata.update(metadata_batch)
@@ -134,7 +133,7 @@ class MetadataWrapper:
         self,
         module: "Module",
         unsafe_skip_copy: bool = False,
-        cache: Mapping["ProviderT", object] = defaultdict(dict),
+        cache: Mapping["ProviderT", object] = {},
     ) -> None:
         """
         :param module: The module to wrap. This is deeply copied by default.

@@ -20,7 +20,7 @@ class VisitorTest(UnitTest):
             def visit_If(self, node: cst.If) -> None:
                 self.visit_order.append("visit_If")
 
-            def leave_If(self, node: cst.If) -> None:
+            def leave_If(self, original_node: cst.If) -> None:
                 self.visit_order.append("leave_If")
 
             def visit_If_test(self, node: cst.If) -> None:
@@ -32,7 +32,7 @@ class VisitorTest(UnitTest):
             def visit_Name(self, node: cst.Name) -> None:
                 self.visit_order.append("visit_Name")
 
-            def leave_Name(self, node: cst.Name) -> None:
+            def leave_Name(self, original_node: cst.Name) -> None:
                 self.visit_order.append("leave_Name")
 
         # Create and visit a simple module.
@@ -68,7 +68,7 @@ class VisitorTest(UnitTest):
             def visit_If_test(self, node: cst.If) -> None:
                 self.visit_order.append("visit_If_test")
 
-            def leave_If_test(self, updated_node: cst.If) -> None:
+            def leave_If_test(self, node: cst.If) -> None:
                 self.visit_order.append("leave_If_test")
 
             def visit_Name(self, node: cst.Name) -> None:

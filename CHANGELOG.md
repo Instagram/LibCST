@@ -1,3 +1,20 @@
+# 0.2.5 - 2018-12-05
+
+## Added
+
+ - Added `extract`, `extractall` and `replace` functions to Matchers API.
+
+## Fixed
+
+ - Fixed length restrictions for `AllOf` and `OneOf` so that they can be used with sequence expansion operators.
+ - Fixed batchable visitors not calling attribute visit functions.
+ - Fixed typos in docstrings.
+ - Fixed matcher type exception not being pickleable.
+
+## Deprecated
+
+ - Deprecated parsing function parameters with defaults into `default_params` attribute. They can be found in the `params` attribute instead.
+
 # 0.2.4 - 2019-11-13
 
 ## Fixed
