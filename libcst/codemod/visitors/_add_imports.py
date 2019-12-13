@@ -47,6 +47,11 @@ class AddImportsVisitor(ContextAwareTransformer):
             *imports,
         ]
 
+        # Verify that the imports are valid
+        for module, obj in imports:
+            if module == "__future__" and obj is None:
+                raise Exception("Cannot import __future__ directly!")
+
         # List of modules we need to ensure are imported
         self.module_imports: Set[str] = {
             module for (module, obj) in imports if obj is None

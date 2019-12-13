@@ -370,7 +370,9 @@ class TestAddImportsCodemod(CodemodTest):
         self.assertCodemod(before, after, [("a.b.c", "D"), ("argparse", None)])
 
     def test_strict_module_no_imports(self) -> None:
-        """First added import in strict module should go after __strict__ flag."""
+        """
+        First added import in strict module should go after __strict__ flag.
+        """
         before = """
             __strict__ = True
 
@@ -379,6 +381,30 @@ class TestAddImportsCodemod(CodemodTest):
         """
         after = """
             __strict__ = True
+            import argparse
+
+            class Foo:
+                pass
+        """
+
+        self.assertCodemod(before, after, [("argparse", None)])
+
+    def test_strict_module_with_imports(self) -> None:
+        """
+        First added import in strict module should go after __strict__ flag.
+        """
+        before = """
+            __strict__ = True
+
+            import unittest
+
+            class Foo:
+                pass
+        """
+        after = """
+            __strict__ = True
+
+            import unittest
             import argparse
 
             class Foo:
