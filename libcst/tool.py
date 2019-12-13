@@ -11,9 +11,17 @@
 # pyre-strict
 import argparse
 import dataclasses
+import distutils.spawn
 import importlib
+import inspect
+import os
+import os.path
 import sys
-from typing import Any, Dict, List, Sequence
+import textwrap
+from abc import ABC, abstractmethod
+from typing import Any, Callable, Dict, List, Sequence
+
+import yaml
 
 from libcst import CSTNode, IndentedBlock, Module, parse_module
 from libcst._nodes.deep_equals import deep_equals
@@ -207,8 +215,11 @@ def dump(
     )
 
 
-def _print_tree_impl(command_args: List[str]) -> int:
-    parser = argparse.ArgumentParser(prog="libcst.tool print")
+def _print_tree_impl(proc_name: str, command_args: List[str]) -> int:
+    parser = argparse.ArgumentParser(
+        description="Print the LibCST tree representation of a file.",
+        prog=f"{proc_name} print",
+    )
     parser.add_argument(
         "infile",
         metavar="INFILE",
@@ -252,7 +263,7 @@ def _print_tree_impl(command_args: List[str]) -> int:
     return 0
 
 
-def _find_and_load_config() -> Dict[str, Any]:
+def _default_config() -> Dict[str, Any]:
     return {
         "generated_code_marker": f"@gen{''}erated",
         "formatter": ["black", "-"],
@@ -261,7 +272,63 @@ def _find_and_load_config() -> Dict[str, Any]:
     }
 
 
-def _codemod_impl(command_args: List[str]) -> int:  # noqa: C901
+CONFIG_FILE_NAME = ".libcst.codemod.yaml"
+
+
+def _find_and_load_config() -> Dict[str, Any]:
+    # Initialize with some sane defaults.
+    config = _default_config()
+
+    # Walk up the filesystem looking for a config file.
+    current_dir = os.path.abspath(os.getcwd())
+    previous_dir = None
+    while current_dir != previous_dir:
+        # See if the config file exists
+        config_file = os.path.join(current_dir, CONFIG_FILE_NAME)
+        if os.path.isfile(config_file):
+            # Load it, override defaults with what is in the config.
+            with open(config_file, "r") as fp:
+                possible_config = yaml.safe_load(fp.read())
+
+            # Lets be careful with all user input so we don't crash.
+            if isinstance(possible_config, dict):
+                # Grab the generated code marker.
+                for str_setting in ["generated_code_marker"]:
+                    if str_setting in possible_config and isinstance(
+                        possible_config[str_setting], str
+                    ):
+                        config[str_setting] = possible_config[str_setting]
+
+                # Grab the formatter, blacklisted patterns and module directories.
+                for list_setting in ["formatter", "blacklist_patterns", "modules"]:
+                    if (
+                        list_setting in possible_config
+                        and isinstance(possible_config[list_setting], list)
+                        and all(
+                            isinstance(s, str) for s in possible_config[list_setting]
+                        )
+                    ):
+                        config[list_setting] = possible_config[list_setting]
+
+            # We successfully located a file, stop traversing.
+            break
+
+        # Try the parent directory.
+        previous_dir = current_dir
+        current_dir = os.path.abspath(os.path.join(current_dir, os.pardir))
+
+    # Make sure that the formatter is findable.
+    if config["formatter"]:
+        exe = (
+            distutils.spawn.find_executable(config["formatter"][0])
+            or config["formatter"][0]
+        )
+        config["formatter"] = [os.path.abspath(exe), *config["formatter"][1:]]
+
+    return config
+
+
+def _codemod_impl(proc_name: str, command_args: List[str]) -> int:  # noqa: C901
     # Grab the configuration for running this, if it exsts.
     config = _find_and_load_config()
 
@@ -307,7 +374,14 @@ def _codemod_impl(command_args: List[str]) -> int:  # noqa: C901
         command_class = CodemodCommand
 
     # Now, construct the full parser, parse the args and run the class.
-    parser = argparse.ArgumentParser(prog="libcst.tool codemod")
+    parser = argparse.ArgumentParser(
+        description=(
+            "Execute a codemod against a series of files."
+            if command_class is CodemodCommand
+            else command_class.DESCRIPTION
+        ),
+        prog=f"{proc_name} codemod",
+    )
     parser.add_argument(
         "command",
         metavar="COMMAND",
@@ -353,7 +427,7 @@ def _codemod_impl(command_args: List[str]) -> int:  # noqa: C901
     parser.add_argument(
         "--no-format",
         action="store_true",
-        help="Don't format resulting codemod with black.",
+        help="Don't format resulting codemod with configured formatter.",
     )
     parser.add_argument(
         "--show-successes",
@@ -458,7 +532,159 @@ def _codemod_impl(command_args: List[str]) -> int:  # noqa: C901
     return 1 if result.failures > 0 else 0
 
 
-def main(cli_args: List[str]) -> int:
+class _SerializerBase(ABC):
+    def __init__(self, comment: str) -> None:
+        self.comment = comment
+
+    def serialize(self, key: str, value: object) -> str:
+        comments = os.linesep.join(
+            f"# {comment}" for comment in textwrap.wrap(self.comment)
+        )
+        return f"{comments}{os.linesep}{self._serialize_impl(key, value)}{os.linesep}"
+
+    @abstractmethod
+    def _serialize_impl(self, key: str, value: object) -> str:
+        ...
+
+
+class _StrSerializer(_SerializerBase):
+    def _serialize_impl(self, key: str, value: object) -> str:
+        return f"{key}: {value!r}"
+
+
+class _ListSerializer(_SerializerBase):
+    def __init__(self, comment: str, *, newlines: bool = False) -> None:
+        super().__init__(comment)
+        self.newlines = newlines
+
+    def _serialize_impl(self, key: str, value: object) -> str:
+        if not isinstance(value, list):
+            raise Exception("Can only serialize lists!")
+        if self.newlines:
+            values = [f"- {v!r}" for v in value]
+            return f"{key}:{os.linesep}{os.linesep.join(values)}"
+        else:
+            values = [repr(v) for v in value]
+            return f"{key}: [{', '.join(values)}]"
+
+
+def _initialize_impl(proc_name: str, command_args: List[str]) -> int:
+    # Now, construct the full parser, parse the args and run the class.
+    parser = argparse.ArgumentParser(
+        description="Initialize a directory by writing a default LibCST config to it.",
+        prog=f"{proc_name} initialize",
+    )
+    parser.add_argument(
+        "path",
+        metavar="PATH",
+        type=str,
+        help=("Path to initialize with a default LibCST codemod configuration"),
+    )
+    args = parser.parse_args(command_args)
+
+    # Get default configuration file, write it to the YAML file we
+    # recognize as our config.
+    default_config = _default_config()
+
+    # We serialize for ourselves here, since PyYAML doesn't allow
+    # us to control comments in the default file.
+    serializers: Dict[str, _SerializerBase] = {
+        "generated_code_marker": _StrSerializer(
+            "String that LibCST should look for in code which indicates "
+            + "that the module is generated code."
+        ),
+        "formatter": _ListSerializer(
+            "Command line and arguments for invoking a code formatter. "
+            + "Anything specified here must be capable of taking code via "
+            + "stdin and returning formatted code via stdout."
+        ),
+        "blacklist_patterns": _ListSerializer(
+            "List of regex patterns which LibCST will evaluate against "
+            + "filenames to determine if the module should be touched."
+        ),
+        "modules": _ListSerializer(
+            "List of modules that contain codemods inside of them.", newlines=True,
+        ),
+    }
+
+    config_str = "".join(
+        serializers[key].serialize(key, val) for key, val in default_config.items()
+    )
+
+    # For safety, verify that it parses to the identical file.
+    actual_config = yaml.safe_load(config_str)
+    if actual_config != default_config:
+        raise Exception("Logic error, serialization is invalid!")
+
+    config_file = os.path.abspath(os.path.join(args.path, CONFIG_FILE_NAME))
+    with open(config_file, "w") as fp:
+        fp.write(config_str)
+
+    print(f"Successfully wrote default config file to {config_file}")
+    return 0
+
+
+def _list_impl(proc_name: str, command_args: List[str]) -> int:  # noqa: C901
+    # Grab the configuration so we can determine which modules to list from
+    config = _find_and_load_config()
+
+    parser = argparse.ArgumentParser(
+        description="List all codemods available to run.", prog=f"{proc_name} list",
+    )
+    _ = parser.parse_args(command_args)
+
+    # Now, import each of the modules to determine their paths.
+    codemods: List[str] = []
+    for module in config["modules"]:
+        try:
+            imported_module = importlib.import_module(module)
+        except AttributeError:
+            imported_module = None
+        except ModuleNotFoundError:
+            imported_module = None
+
+        if not imported_module:
+            print(
+                f"Could not import {module}, cannot list codemods inside it",
+                file=sys.stderr,
+            )
+            continue
+
+        # Grab the path, try to import all of the files inside of it.
+        path = os.path.dirname(os.path.abspath(imported_module.__file__))
+        for filename in os.listdir(path):
+            if not filename.endswith(".py"):
+                continue
+            try:
+                potential_codemod = importlib.import_module(f"{module}.{filename[:-3]}")
+            except AttributeError:
+                continue
+            except ModuleNotFoundError:
+                continue
+
+            for objname in dir(potential_codemod):
+                try:
+                    obj = getattr(potential_codemod, objname)
+                    if not issubclass(obj, CodemodCommand):
+                        continue
+                    if inspect.isabstract(obj):
+                        continue
+                    # isabstract is broken for direct subclasses of ABC which
+                    # don't themselves define any abstract methods, so lets
+                    # check for that here.
+                    if any(cls[0] is ABC for cls in inspect.getclasstree([obj])):
+                        continue
+                    codemods.append(
+                        f"{filename[:-3]}.{obj.__name__} - {obj.DESCRIPTION}"
+                    )
+                except TypeError:
+                    continue
+
+    print("\n".join(sorted(codemods)))
+    return 0
+
+
+def main(proc_name: str, cli_args: List[str]) -> int:
     # Hack to allow "--help" to print out generic help, but also allow subcommands
     # to customize their parsing and help messages.
     first_arg = cli_args[0] if cli_args else "--help"
@@ -468,27 +694,33 @@ def main(cli_args: List[str]) -> int:
     parser = argparse.ArgumentParser(
         description="Collection of utilities that ship with LibCST.",
         add_help=add_help,
-        prog="libcst.tool",
+        prog=proc_name,
     )
     parser.add_argument(
         "action",
-        help="Action to take. Valid options include print, codemod.",
-        choices=["print", "codemod"],
+        help="Action to take. Valid options include: print, codemod, list, initialize.",
+        choices=["print", "codemod", "list", "initialize"],
     )
     args, command_args = parser.parse_known_args(cli_args)
 
     # Create a dummy command in case the user manages to get into
     # this state.
-    def _invalid_command(command_args: List[str]) -> int:
+    def _invalid_command(proc_name: str, command_args: List[str]) -> int:
         print("Please specify a command!\n", file=sys.stderr)
         parser.print_help(sys.stderr)
         return 1
 
     # Look up the command and delegate parsing/running.
-    return {"print": _print_tree_impl, "codemod": _codemod_impl,}.get(
-        args.action or None, _invalid_command
-    )(command_args)
+    lookup: Dict[str, Callable[[str, List[str]], int]] = {
+        "print": _print_tree_impl,
+        "codemod": _codemod_impl,
+        "initialize": _initialize_impl,
+        "list": _list_impl,
+    }
+    return lookup.get(args.action or None, _invalid_command)(proc_name, command_args)
 
 
 if __name__ == "__main__":
-    sys.exit(main(sys.argv[1:]))
+    sys.exit(
+        main(os.environ.get("LIBCST_TOOL_COMMAND_NAME", "libcst.tool"), sys.argv[1:])
+    )
