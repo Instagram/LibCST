@@ -49,7 +49,7 @@ class BaseMetadataProvider(MetadataDependent, Generic[_ProvidedMetadataT]):
     def __init__(self, cache: object = None) -> None:
         super().__init__()
         self._computed = {}
-        if self.is_cache_required and not cache:
+        if self.is_cache_required and cache is not None:
             # The metadata provider implementation is responsible to store and use cache.
             raise Exception(
                 f"Cache is required for initializing {self.__class__.__name__}."
