@@ -626,7 +626,7 @@ class MatcherDecoratableTransformer(CSTTransformer):
             cst.RemovalSentinel,
             cst.CSTNode,
             Callable[
-                [cst.CSTNode, Dict[str, Union[cst.CSTNode, Sequence[cst.CSTNode]]],],
+                [cst.CSTNode, Dict[str, Union[cst.CSTNode, Sequence[cst.CSTNode]]]],
                 Union[cst.MaybeSentinel, cst.RemovalSentinel, cst.CSTNode],
             ],
         ],
@@ -821,7 +821,7 @@ class MatcherDecoratableVisitor(CSTVisitor):
             cst.RemovalSentinel,
             cst.CSTNode,
             Callable[
-                [cst.CSTNode, Dict[str, Union[cst.CSTNode, Sequence[cst.CSTNode]]],],
+                [cst.CSTNode, Dict[str, Union[cst.CSTNode, Sequence[cst.CSTNode]]]],
                 Union[cst.MaybeSentinel, cst.RemovalSentinel, cst.CSTNode],
             ],
         ],

@@ -24,11 +24,11 @@ class MatchersReplaceTest(UnitTest):
 
         # Verify behavior when provided a sentinel
         replaced = m.replace(
-            cst.RemovalSentinel.REMOVE, m.Name("True") | m.Name("False"), _swap_bools,
+            cst.RemovalSentinel.REMOVE, m.Name("True") | m.Name("False"), _swap_bools
         )
         self.assertEqual(replaced, cst.RemovalSentinel.REMOVE)
         replaced = m.replace(
-            cst.MaybeSentinel.DEFAULT, m.Name("True") | m.Name("False"), _swap_bools,
+            cst.MaybeSentinel.DEFAULT, m.Name("True") | m.Name("False"), _swap_bools
         )
         self.assertEqual(replaced, cst.MaybeSentinel.DEFAULT)
 
@@ -44,7 +44,7 @@ class MatchersReplaceTest(UnitTest):
         # Verify behavior when there's nothing to replace.
         original = cst.parse_module("foo: int = 5\ndef bar() -> str:\n    return 's'\n")
         replaced = cst.ensure_type(
-            m.replace(original, m.Name("True") | m.Name("False"), _swap_bools,),
+            m.replace(original, m.Name("True") | m.Name("False"), _swap_bools),
             cst.Module,
         )
         # Should be identical tree contents
@@ -71,7 +71,7 @@ class MatchersReplaceTest(UnitTest):
             "def bar(x: int, y: int) -> bool:\n    return False\n"
         )
         replaced = cst.ensure_type(
-            m.replace(original, m.Param(), cst.RemoveFromParent()), cst.Module,
+            m.replace(original, m.Param(), cst.RemoveFromParent()), cst.Module
         ).code
         self.assertEqual(replaced, "def bar() -> bool:\n    return False\n")
 
@@ -106,7 +106,7 @@ class MatchersReplaceTest(UnitTest):
         # Verify slightly more complex transform behavior.
         original = cst.parse_module("foo: int = 36\ndef bar() -> int:\n    return 41\n")
         replaced = cst.ensure_type(
-            m.replace(original, m.Integer(), _add_one), cst.Module,
+            m.replace(original, m.Integer(), _add_one), cst.Module
         ).code
         self.assertEqual(replaced, "foo: int = 37\ndef bar() -> int:\n    return 42\n")
 
@@ -152,7 +152,7 @@ class MatchersReplaceTest(UnitTest):
             return cst.ensure_type(node, cst.FunctionDef).with_changes(
                 # pyre-ignore We know "params" is a Sequence[Parameters] but asserting that
                 # to pyre is difficult.
-                params=cst.Parameters(params=list(reversed(extraction["params"]))),
+                params=cst.Parameters(params=list(reversed(extraction["params"])))
             )
 
         # Verify that we can still extract sequences with replace.
@@ -164,7 +164,7 @@ class MatchersReplaceTest(UnitTest):
                 original,
                 m.FunctionDef(
                     params=m.Parameters(
-                        params=m.SaveMatchedNode([m.ZeroOrMore(m.Param())], "params"),
+                        params=m.SaveMatchedNode([m.ZeroOrMore(m.Param())], "params")
                     )
                 ),
                 _reverse_params,
@@ -193,7 +193,7 @@ class MatchersReplaceTest(UnitTest):
                     metadata=m.MatchMetadataIfTrue(
                         meta.QualifiedNameProvider,
                         lambda qualnames: any(n.name == "foo" for n in qualnames),
-                    ),
+                    )
                 ),
                 _rename_foo,
             ),
@@ -234,7 +234,7 @@ class MatchersReplaceTest(UnitTest):
                                 lambda qualnames: any(
                                     n.name == "foo" for n in qualnames
                                 ),
-                            ),
+                            )
                         ),
                         _rename_foo,
                     ),

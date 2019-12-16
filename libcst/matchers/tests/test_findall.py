@@ -169,7 +169,7 @@ class MatchersExtractAllTest(UnitTest):
         expression = cst.parse_expression("a + b[c], d(e, f * g, h.i.j)")
         matches = extractall(expression, m.Arg(m.SaveMatchedNode(~m.Name(), "expr")))
         extracted_args = cst.ensure_type(
-            cst.ensure_type(expression, cst.Tuple).elements[1].value, cst.Call,
+            cst.ensure_type(expression, cst.Tuple).elements[1].value, cst.Call
         ).args
         self.assertEqual(
             matches,

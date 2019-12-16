@@ -133,7 +133,7 @@ class FunctionDefCreationTest(CSTNodeTest):
                                 cst.Annotation(cst.Name("int")),
                                 default=cst.Integer("5"),
                             ),
-                        ),
+                        )
                     ),
                     cst.SimpleStatementSuite((cst.Pass(),)),
                 ),
@@ -904,7 +904,7 @@ class FunctionDefParserTest(CSTNodeTest):
                                 default=cst.Integer("5"),
                                 star="",
                             ),
-                        ),
+                        )
                     ),
                     cst.SimpleStatementSuite((cst.Pass(),)),
                 ),

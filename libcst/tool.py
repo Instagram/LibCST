@@ -343,9 +343,7 @@ def _codemod_impl(proc_name: str, command_args: List[str]) -> int:  # noqa: C901
     if args.command is not None:
         command_path = args.command.split(".")
         if len(command_path) != 2:
-            print(
-                f"{args.command} is not a valid codemod command", file=sys.stderr,
-            )
+            print(f"{args.command} is not a valid codemod command", file=sys.stderr)
             return 1
         command_module_name, command_class_name = (
             ".".join(command_path[:-1]),

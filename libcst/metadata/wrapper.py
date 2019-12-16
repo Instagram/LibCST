@@ -87,10 +87,17 @@ def _resolve_impl(
                 if issubclass(P, BatchableMetadataProvider):
                     batchable.add(P)
                 else:
-                    wrapper._metadata[P] = P()._gen(wrapper)
+                    wrapper._metadata[P] = (
+                        P(wrapper._cache.get(P))._gen(wrapper)
+                        if P.is_cache_required
+                        else P()._gen(wrapper)
+                    )
                     completed.add(P)
 
-        metadata_batch = _gen_batchable(wrapper, [p() for p in batchable])
+        initialized_batchable = [
+            p(wrapper._cache.get(p)) if p.is_cache_required else p() for p in batchable
+        ]
+        metadata_batch = _gen_batchable(wrapper, initialized_batchable)
         wrapper._metadata.update(metadata_batch)
         completed |= batchable
 
@@ -116,18 +123,25 @@ class MetadataWrapper:
     node's identity.
     """
 
-    __slots__ = ["__module", "_metadata"]
+    __slots__ = ["__module", "_metadata", "_cache"]
 
     __module: "Module"
     _metadata: MutableMapping["ProviderT", Mapping["CSTNode", object]]
+    _cache: Mapping["ProviderT", object]
 
-    def __init__(self, module: "Module", unsafe_skip_copy: bool = False) -> None:
+    def __init__(
+        self,
+        module: "Module",
+        unsafe_skip_copy: bool = False,
+        cache: Mapping["ProviderT", object] = {},
+    ) -> None:
         """
         :param module: The module to wrap. This is deeply copied by default.
         :param unsafe_skip_copy: When true, this skips the deep cloning of the module.
             This can provide a small performance benefit, but you should only use this
             if you know that there are no duplicate nodes in your tree (e.g. this
             module came from the parser).
+        :param cache: Pass the needed cache to wrapper to be used when resolving metadata.
         """
         # Ensure that module is safe to use by copying the module to remove
         # any duplicate nodes.
@@ -135,6 +149,7 @@ class MetadataWrapper:
             module = module.deep_clone()
         self.__module = module
         self._metadata = {}
+        self._cache = cache
 
     def __repr__(self) -> str:
         return f"MetadataWrapper(\n{textwrap.indent(repr(self.module), ' ' * 4)},\n)"

@@ -1544,7 +1544,7 @@ def _find_or_extract_all(
 def findall(
     tree: Union[MaybeSentinel, RemovalSentinel, libcst.CSTNode, meta.MetadataWrapper],
     matcher: Union[
-        BaseMatcherNode, MatchIfTrue[Callable[[object], bool]], _BaseMetadataMatcher,
+        BaseMatcherNode, MatchIfTrue[Callable[[object], bool]], _BaseMetadataMatcher
     ],
     *,
     metadata_resolver: Optional[
@@ -1579,7 +1579,7 @@ def findall(
 def extractall(
     tree: Union[MaybeSentinel, RemovalSentinel, libcst.CSTNode, meta.MetadataWrapper],
     matcher: Union[
-        BaseMatcherNode, MatchIfTrue[Callable[[object], bool]], _BaseMetadataMatcher,
+        BaseMatcherNode, MatchIfTrue[Callable[[object], bool]], _BaseMetadataMatcher
     ],
     *,
     metadata_resolver: Optional[
@@ -1686,7 +1686,7 @@ class _ReplaceTransformer(libcst.CSTTransformer):
         self.node_lut: Dict[libcst.CSTNode, libcst.CSTNode] = {}
 
     def _node_translate(
-        self, node_or_sequence: Union[libcst.CSTNode, Sequence[libcst.CSTNode]],
+        self, node_or_sequence: Union[libcst.CSTNode, Sequence[libcst.CSTNode]]
     ) -> Union[libcst.CSTNode, Sequence[libcst.CSTNode]]:
         if isinstance(node_or_sequence, Sequence):
             return tuple(self.node_lut[node] for node in node_or_sequence)
@@ -1730,7 +1730,7 @@ class _ReplaceTransformer(libcst.CSTTransformer):
 def replace(
     tree: Union[MaybeSentinel, RemovalSentinel, libcst.CSTNode, meta.MetadataWrapper],
     matcher: Union[
-        BaseMatcherNode, MatchIfTrue[Callable[[object], bool]], _BaseMetadataMatcher,
+        BaseMatcherNode, MatchIfTrue[Callable[[object], bool]], _BaseMetadataMatcher
     ],
     replacement: Union[
         MaybeSentinel,

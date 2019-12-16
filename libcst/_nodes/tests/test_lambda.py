@@ -50,7 +50,7 @@ class LambdaCreationTest(CSTNodeTest):
                         params=(
                             cst.Param(cst.Name("bar")),
                             cst.Param(cst.Name("baz"), default=cst.Integer("5")),
-                        ),
+                        )
                     ),
                     cst.Integer("5"),
                 ),
@@ -520,7 +520,7 @@ class LambdaParserTest(CSTNodeTest):
                                 equal=cst.AssignEqual(),
                                 star="",
                             ),
-                        ),
+                        )
                     ),
                     cst.Integer("5"),
                     whitespace_after_lambda=cst.SimpleWhitespace(" "),

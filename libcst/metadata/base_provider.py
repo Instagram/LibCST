@@ -44,9 +44,17 @@ class BaseMetadataProvider(MetadataDependent, Generic[_ProvidedMetadataT]):
     # explanation.
     _computed: MutableMapping["CSTNode", _ProvidedMetadataT]
 
-    def __init__(self) -> None:
+    is_cache_required: bool = False
+
+    def __init__(self, cache: object = None) -> None:
         super().__init__()
         self._computed = {}
+        if self.is_cache_required and cache is None:
+            # The metadata provider implementation is responsible to store and use cache.
+            raise Exception(
+                f"Cache is required for initializing {self.__class__.__name__}."
+            )
+        self.cache = cache
 
     def _gen(
         self, wrapper: "MetadataWrapper"
