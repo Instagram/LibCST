@@ -1,8 +1,17 @@
+# Copyright (c) Facebook, Inc. and its affiliates.
+#
+# This source code is licensed under the MIT license found in the
+# LICENSE file in the root directory of this source tree.
+#
+# pyre-strict
+from typing import Mapping
+
 import libcst as cst
 from libcst import MetadataDependent
 from libcst.codemod._codemod import Codemod
 from libcst.codemod._context import CodemodContext
 from libcst.matchers import MatcherDecoratableTransformer, MatcherDecoratableVisitor
+from libcst.metadata import ProviderT
 
 
 class ContextAwareTransformer(Codemod, MatcherDecoratableTransformer):
@@ -52,7 +61,9 @@ class ContextAwareVisitor(MatcherDecoratableVisitor, MetadataDependent):
                         + f"parent transforms of {self.__class__.__name__} declare "
                         + f"{dep.__name__} as a metadata dependency."
                     )
-            self.metadata = {dep: wrapper._metadata[dep] for dep in dependencies}
+            self.metadata: Mapping[ProviderT, Mapping[cst.CSTNode, object]] = {
+                dep: wrapper._metadata[dep] for dep in dependencies
+            }
 
     @property
     def module(self) -> cst.Module:

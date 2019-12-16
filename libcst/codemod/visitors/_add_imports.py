@@ -1,3 +1,9 @@
+# Copyright (c) Facebook, Inc. and its affiliates.
+#
+# This source code is licensed under the MIT license found in the
+# LICENSE file in the root directory of this source tree.
+#
+# pyre-strict
 from typing import Dict, List, Optional, Sequence, Set, Tuple, Union
 
 import libcst
@@ -40,6 +46,11 @@ class AddImportsVisitor(ContextAwareTransformer):
             *AddImportsVisitor._get_imports_from_context(context),
             *imports,
         ]
+
+        # Verify that the imports are valid
+        for module, obj in imports:
+            if module == "__future__" and obj is None:
+                raise Exception("Cannot import __future__ directly!")
 
         # List of modules we need to ensure are imported
         self.module_imports: Set[str] = {
