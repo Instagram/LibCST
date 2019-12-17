@@ -1,0 +1,438 @@
+{
+  "types": [
+    {
+      "location": {
+        "path": "libcst/tests/pyre/simple_class.py",
+        "start": {
+          "line": 11,
+          "column": 26
+        },
+        "stop": {
+          "line": 11,
+          "column": 29
+        }
+      },
+      "annotation": "typing.Type[int]"
+    },
+    {
+      "location": {
+        "path": "libcst/tests/pyre/simple_class.py",
+        "start": {
+          "line": 22,
+          "column": 4
+        },
+        "stop": {
+          "line": 22,
+          "column": 8
+        }
+      },
+      "annotation": "libcst.tests.pyre.simple_class.Item"
+    },
+    {
+      "location": {
+        "path": "libcst/tests/pyre/simple_class.py",
+        "start": {
+          "line": 16,
+          "column": 44
+        },
+        "stop": {
+          "line": 16,
+          "column": 48
+        }
+      },
+      "annotation": "typing.Type[libcst.tests.pyre.simple_class.Item]"
+    },
+    {
+      "location": {
+        "path": "libcst/tests/pyre/simple_class.py",
+        "start": {
+          "line": 22,
+          "column": 12
+        },
+        "stop": {
+          "line": 22,
+          "column": 17
+        }
+      },
+      "annotation": "typing.Sequence[libcst.tests.pyre.simple_class.Item]"
+    },
+    {
+      "location": {
+        "path": "libcst/tests/pyre/simple_class.py",
+        "start": {
+          "line": 15,
+          "column": 6
+        },
+        "stop": {
+          "line": 15,
+          "column": 19
+        }
+      },
+      "annotation": "typing.Type[libcst.tests.pyre.simple_class.ItemCollector]"
+    },
+    {
+      "location": {
+        "path": "libcst/tests/pyre/simple_class.py",
+        "start": {
+          "line": 16,
+          "column": 18
+        },
+        "stop": {
+          "line": 16,
+          "column": 22
+        }
+      },
+      "annotation": "libcst.tests.pyre.simple_class.ItemCollector"
+    },
+    {
+      "location": {
+        "path": "libcst/tests/pyre/simple_class.py",
+        "start": {
+          "line": 17,
+          "column": 16
+        },
+        "stop": {
+          "line": 17,
+          "column": 22
+        }
+      },
+      "annotation": "libcst.tests.pyre.simple_class.Item"
+    },
+    {
+      "location": {
+        "path": "libcst/tests/pyre/simple_class.py",
+        "start": {
+          "line": 21,
+          "column": 8
+        },
+        "stop": {
+          "line": 21,
+          "column": 17
+        }
+      },
+      "annotation": "libcst.tests.pyre.simple_class.ItemCollector"
+    },
+    {
+      "location": {
+        "path": "libcst/tests/pyre/simple_class.py",
+        "start": {
+          "line": 12,
+          "column": 22
+        },
+        "stop": {
+          "line": 12,
+          "column": 23
+        }
+      },
+      "annotation": "int"
+    },
+    {
+      "location": {
+        "path": "libcst/tests/pyre/simple_class.py",
+        "start": {
+          "line": 16,
+          "column": 27
+        },
+        "stop": {
+          "line": 16,
+          "column": 30
+        }
+      },
+      "annotation": "typing.Type[int]"
+    },
+    {
+      "location": {
+        "path": "libcst/tests/pyre/simple_class.py",
+        "start": {
+          "line": 16,
+          "column": 35
+        },
+        "stop": {
+          "line": 16,
+          "column": 43
+        }
+      },
+      "annotation": "typing.Callable(typing.GenericMeta.__getitem__)[[typing.Type[Variable[typing._T_co](covariant)]], typing.Type[typing.Sequence[Variable[typing._T_co](covariant)]]]"
+    },
+    {
+      "location": {
+        "path": "libcst/tests/pyre/simple_class.py",
+        "start": {
+          "line": 20,
+          "column": 0
+        },
+        "stop": {
+          "line": 20,
+          "column": 9
+        }
+      },
+      "annotation": "libcst.tests.pyre.simple_class.ItemCollector"
+    },
+    {
+      "location": {
+        "path": "libcst/tests/pyre/simple_class.py",
+        "start": {
+          "line": 17,
+          "column": 32
+        },
+        "stop": {
+          "line": 17,
+          "column": 37
+        }
+      },
+      "annotation": "typing.Type[range]"
+    },
+    {
+      "location": {
+        "path": "libcst/tests/pyre/simple_class.py",
+        "start": {
+          "line": 16,
+          "column": 24
+        },
+        "stop": {
+          "line": 16,
+          "column": 25
+        }
+      },
+      "annotation": "int"
+    },
+    {
+      "location": {
+        "path": "libcst/tests/pyre/simple_class.py",
+        "start": {
+          "line": 11,
+          "column": 23
+        },
+        "stop": {
+          "line": 11,
+          "column": 24
+        }
+      },
+      "annotation": "int"
+    },
+    {
+      "location": {
+        "path": "libcst/tests/pyre/simple_class.py",
+        "start": {
+          "line": 16,
+          "column": 8
+        },
+        "stop": {
+          "line": 16,
+          "column": 17
+        }
+      },
+      "annotation": "typing.Callable(libcst.tests.pyre.simple_class.ItemCollector.get_items)[[Named(self, unknown), Named(n, int)], typing.Sequence[libcst.tests.pyre.simple_class.Item]]"
+    },
+    {
+      "location": {
+        "path": "libcst/tests/pyre/simple_class.py",
+        "start": {
+          "line": 23,
+          "column": 4
+        },
+        "stop": {
+          "line": 23,
+          "column": 8
+        }
+      },
+      "annotation": "libcst.tests.pyre.simple_class.Item"
+    },
+    {
+      "location": {
+        "path": "libcst/tests/pyre/simple_class.py",
+        "start": {
+          "line": 17,
+          "column": 15
+        },
+        "stop": {
+          "line": 17,
+          "column": 41
+        }
+      },
+      "annotation": "typing.List[libcst.tests.pyre.simple_class.Item]"
+    },
+    {
+      "location": {
+        "path": "libcst/tests/pyre/simple_class.py",
+        "start": {
+          "line": 21,
+          "column": 0
+        },
+        "stop": {
+          "line": 21,
+          "column": 5
+        }
+      },
+      "annotation": "typing.Sequence[libcst.tests.pyre.simple_class.Item]"
+    },
+    {
+      "location": {
+        "path": "libcst/tests/pyre/simple_class.py",
+        "start": {
+          "line": 11,
+          "column": 17
+        },
+        "stop": {
+          "line": 11,
+          "column": 21
+        }
+      },
+      "annotation": "libcst.tests.pyre.simple_class.Item"
+    },
+    {
+      "location": {
+        "path": "libcst/tests/pyre/simple_class.py",
+        "start": {
+          "line": 10,
+          "column": 6
+        },
+        "stop": {
+          "line": 10,
+          "column": 10
+        }
+      },
+      "annotation": "typing.Type[libcst.tests.pyre.simple_class.Item]"
+    },
+    {
+      "location": {
+        "path": "libcst/tests/pyre/simple_class.py",
+        "start": {
+          "line": 16,
+          "column": 35
+        },
+        "stop": {
+          "line": 16,
+          "column": 49
+        }
+      },
+      "annotation": "typing.Type[typing.Sequence[libcst.tests.pyre.simple_class.Item]]"
+    },
+    {
+      "location": {
+        "path": "libcst/tests/pyre/simple_class.py",
+        "start": {
+          "line": 20,
+          "column": 12
+        },
+        "stop": {
+          "line": 20,
+          "column": 25
+        }
+      },
+      "annotation": "typing.Type[libcst.tests.pyre.simple_class.ItemCollector]"
+    },
+    {
+      "location": {
+        "path": "libcst/tests/pyre/simple_class.py",
+        "start": {
+          "line": 21,
+          "column": 8
+        },
+        "stop": {
+          "line": 21,
+          "column": 27
+        }
+      },
+      "annotation": "typing.Callable(libcst.tests.pyre.simple_class.ItemCollector.get_items)[[Named(n, int)], typing.Sequence[libcst.tests.pyre.simple_class.Item]]"
+    },
+    {
+      "location": {
+        "path": "libcst/tests/pyre/simple_class.py",
+        "start": {
+          "line": 21,
+          "column": 8
+        },
+        "stop": {
+          "line": 21,
+          "column": 29
+        }
+      },
+      "annotation": "typing.Sequence[libcst.tests.pyre.simple_class.Item]"
+    },
+    {
+      "location": {
+        "path": "libcst/tests/pyre/simple_class.py",
+        "start": {
+          "line": 20,
+          "column": 12
+        },
+        "stop": {
+          "line": 20,
+          "column": 27
+        }
+      },
+      "annotation": "libcst.tests.pyre.simple_class.ItemCollector"
+    },
+    {
+      "location": {
+        "path": "libcst/tests/pyre/simple_class.py",
+        "start": {
+          "line": 17,
+          "column": 38
+        },
+        "stop": {
+          "line": 17,
+          "column": 39
+        }
+      },
+      "annotation": "int"
+    },
+    {
+      "location": {
+        "path": "libcst/tests/pyre/simple_class.py",
+        "start": {
+          "line": 17,
+          "column": 32
+        },
+        "stop": {
+          "line": 17,
+          "column": 40
+        }
+      },
+      "annotation": "range"
+    },
+    {
+      "location": {
+        "path": "libcst/tests/pyre/simple_class.py",
+        "start": {
+          "line": 12,
+          "column": 8
+        },
+        "stop": {
+          "line": 12,
+          "column": 12
+        }
+      },
+      "annotation": "libcst.tests.pyre.simple_class.Item"
+    },
+    {
+      "location": {
+        "path": "libcst/tests/pyre/simple_class.py",
+        "start": {
+          "line": 11,
+          "column": 8
+        },
+        "stop": {
+          "line": 11,
+          "column": 16
+        }
+      },
+      "annotation": "typing.Callable(libcst.tests.pyre.simple_class.Item.__init__)[[Named(self, unknown), Named(n, int)], unknown]"
+    },
+    {
+      "location": {
+        "path": "libcst/tests/pyre/simple_class.py",
+        "start": {
+          "line": 17,
+          "column": 16
+        },
+        "stop": {
+          "line": 17,
+          "column": 20
+        }
+      },
+      "annotation": "typing.Type[libcst.tests.pyre.simple_class.Item]"
+    }
+  ]
+}
