@@ -155,7 +155,7 @@ class ConvertFormatStringCommandTest(CodemodTest):
         self.assertCodemod(
             before,
             after,
-            expected_warnings=["Unsupported format_spec #0{1}x in format() call",],
+            expected_warnings=["Unsupported format_spec #0{1}x in format() call"],
         )
 
     def test_position_replacement(self) -> None:
