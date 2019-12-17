@@ -787,10 +787,15 @@ def convert_subscript(
             lower=lower.value if lower is not None else None,
             first_colon=Colon(
                 whitespace_before=parse_parenthesizable_whitespace(
-                    config, first_colon.whitespace_before
+                    config,
+                    # pyre-fixme[16]: Optional type has no attribute
+                    #  `whitespace_before`.
+                    first_colon.whitespace_before,
                 ),
                 whitespace_after=parse_parenthesizable_whitespace(
-                    config, first_colon.whitespace_after
+                    config,
+                    # pyre-fixme[16]: Optional type has no attribute `whitespace_after`.
+                    first_colon.whitespace_after,
                 ),
             ),
             upper=upper.value if upper is not None else None,
@@ -1195,7 +1200,9 @@ def _convert_sequencelike(
 
     # lpar/rpar are the responsibility of our parent
     return WithLeadingWhitespace(
-        sequence_type(elements, lpar=(), rpar=()), children[0].whitespace_before
+        # pyre-ignore[29]: `Union[Type[List], Type[Set], Type[Tuple]]` is not a function.
+        sequence_type(elements, lpar=(), rpar=()),
+        children[0].whitespace_before,
     )
 
 
