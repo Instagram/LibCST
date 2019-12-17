@@ -119,7 +119,6 @@ def _get_args(typeobj: object) -> List[object]:
 
 def _is_sequence(typeobj: object) -> bool:
     origin = _get_origin(typeobj)
-    # pyre-ignore Pyre doesn't know about collections.abc.Sequence
     return origin is Sequence or origin is ABCSequence
 
 

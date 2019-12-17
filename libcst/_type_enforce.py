@@ -72,7 +72,6 @@ def is_value_of_type(  # noqa: C901 "too complex"
             literal_values = get_args(expected_type, evaluate=True)
         return any(value == literal for literal in literal_values)
 
-    # pyre-fixme[16]: Module `typing` has no attribute `ForwardRef`.
     elif isinstance(expected_origin_type, ForwardRef):
         # not much we can do here for now, lets just return :(
         return True

@@ -601,7 +601,7 @@ def _initialize_impl(proc_name: str, command_args: List[str]) -> int:
             + "filenames to determine if the module should be touched."
         ),
         "modules": _ListSerializer(
-            "List of modules that contain codemods inside of them.", newlines=True,
+            "List of modules that contain codemods inside of them.", newlines=True
         ),
     }
 
@@ -627,7 +627,7 @@ def _list_impl(proc_name: str, command_args: List[str]) -> int:  # noqa: C901
     config = _find_and_load_config()
 
     parser = argparse.ArgumentParser(
-        description="List all codemods available to run.", prog=f"{proc_name} list",
+        description="List all codemods available to run.", prog=f"{proc_name} list"
     )
     _ = parser.parse_args(command_args)
 
