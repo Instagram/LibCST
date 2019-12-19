@@ -142,3 +142,90 @@ class TestStripStringsCodemod(CodemodTest):
         """
 
         self.assertCodemod(before, after)
+
+    def test_literal_alias(self) -> None:
+        before = """
+            from typing_extensions import Literal as Lit
+
+            class Class:
+                pass
+
+            def foo(a: Lit["one", "two", "three"]):
+                pass
+
+            def bar(a: Union["Class", Lit["one", "two", "three"]]):
+                pass
+        """
+        after = """
+            from __future__ import annotations
+            from typing_extensions import Literal as Lit
+
+            class Class:
+                pass
+
+            def foo(a: Lit["one", "two", "three"]):
+                pass
+
+            def bar(a: Union[Class, Lit["one", "two", "three"]]):
+                pass
+        """
+
+        self.assertCodemod(before, after)
+
+    def test_literal_object(self) -> None:
+        before = """
+            import typing_extensions
+
+            class Class:
+                pass
+
+            def foo(a: typing_extensions.Literal["one", "two", "three"]):
+                pass
+
+            def bar(a: Union["Class", typing_extensions.Literal["one", "two", "three"]]):
+                pass
+        """
+        after = """
+            from __future__ import annotations
+            import typing_extensions
+
+            class Class:
+                pass
+
+            def foo(a: typing_extensions.Literal["one", "two", "three"]):
+                pass
+
+            def bar(a: Union[Class, typing_extensions.Literal["one", "two", "three"]]):
+                pass
+        """
+
+        self.assertCodemod(before, after)
+
+    def test_literal_object_alias(self) -> None:
+        before = """
+            import typing_extensions as typext
+
+            class Class:
+                pass
+
+            def foo(a: typext.Literal["one", "two", "three"]):
+                pass
+
+            def bar(a: Union["Class", typext.Literal["one", "two", "three"]]):
+                pass
+        """
+        after = """
+            from __future__ import annotations
+            import typing_extensions as typext
+
+            class Class:
+                pass
+
+            def foo(a: typext.Literal["one", "two", "three"]):
+                pass
+
+            def bar(a: Union[Class, typext.Literal["one", "two", "three"]]):
+                pass
+        """
+
+        self.assertCodemod(before, after)
