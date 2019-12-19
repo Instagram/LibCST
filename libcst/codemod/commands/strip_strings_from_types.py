@@ -12,18 +12,40 @@ import libcst.matchers as m
 from libcst import parse_expression
 from libcst.codemod import VisitorBasedCodemodCommand
 from libcst.codemod.visitors import AddImportsVisitor
+from libcst.metadata import QualifiedNameProvider
 
 
 class StripStringsCommand(VisitorBasedCodemodCommand):
 
     DESCRIPTION: str = "Converts string type annotations to 3.7-compatible forward references."
 
+    METADATA_DEPENDENCIES = (QualifiedNameProvider,)
+
+    # We want to gate the SimpleString visitor below to only SimpleStrings inside
+    # an Annotation.
     @m.call_if_inside(m.Annotation())
-    @m.call_if_not_inside(m.Subscript(m.Name("Literal")))
+    # We also want to gate the SimpleString visitor below to ensure that we don't
+    # erroneously strip strings from a Literal.
+    @m.call_if_not_inside(
+        m.Subscript(
+            # We could match on value=m.Name("Literal") here, but then we might miss
+            # instances where people are importing typing_extensions directly, or
+            # importing Literal as an alias.
+            value=m.MatchMetadataIfTrue(
+                QualifiedNameProvider,
+                lambda qualnames: any(
+                    qualname.name == "typing_extensions.Literal"
+                    for qualname in qualnames
+                ),
+            ),
+        ),
+    )
     def leave_SimpleString(
         self, original_node: libcst.SimpleString, updated_node: libcst.SimpleString
     ) -> Union[libcst.SimpleString, libcst.BaseExpression]:
         AddImportsVisitor.add_needed_import(self.context, "__future__", "annotations")
+        # Just use LibCST to evaluate the expression itself, and insert that as the
+        # annotation.
         return parse_expression(
             literal_eval(updated_node.value), config=self.module.config_for_parsing
         )
