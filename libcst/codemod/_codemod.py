@@ -7,9 +7,9 @@
 from abc import ABC, abstractmethod
 from contextlib import contextmanager
 from dataclasses import replace
-from typing import Generator, Optional
+from typing import Generator
 
-from libcst import MetadataDependent, MetadataWrapper, Module, parse_module
+from libcst import MetadataDependent, MetadataWrapper, Module
 from libcst.codemod._context import CodemodContext
 
 
@@ -99,13 +99,11 @@ class Codemod(MetadataDependent, ABC):
 
         # We allow multiple passes, so we execute 1+ passes until there are
         # no more changes.
-        before: str = tree.code
-        after: Optional[str] = None
-        while before != after:
-            if after is not None:
-                tree = parse_module(after)
-                before = after
+        previous: Module = tree
+        while True:
             with self._handle_metadata_reference(tree) as tree_with_metadata:
                 tree = self.transform_module_impl(tree_with_metadata)
-            after = tree.code
+            if tree.deep_equals(previous):
+                break
+            previous = tree
         return tree

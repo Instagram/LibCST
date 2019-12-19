@@ -20,7 +20,7 @@ from pathlib import Path
 from queue import Empty
 from typing import AnyStr, List, Optional, Sequence, cast
 
-from libcst import parse_module
+from libcst import PartialParserConfig, parse_module
 from libcst.codemod._codemod import Codemod
 from libcst.codemod._runner import (
     SkipFile,
@@ -133,6 +133,7 @@ def exec_transform_with_prettyprint(
     generated_code_marker: str = _DEFAULT_GENERATED_CODE_MARKER,
     format_code: bool = False,
     formatter_args: Sequence[str] = (),
+    python_version: Optional[str] = None,
 ) -> Optional[str]:
     """
     Given an instantiated codemod and a string representing a module, transform that
@@ -140,7 +141,10 @@ def exec_transform_with_prettyprint(
     printing any generated warnings to stderr. If the code includes the generated
     marker at any spot and ``include_generated`` is not set to ``True``, the code
     will not be modified. If ``format_code`` is set to ``False`` or the instantiated
-    codemod does not modify the code, the code will not be formatted.
+    codemod does not modify the code, the code will not be formatted.  If a
+    ``python_version`` is provided, then we will parse the module using
+    this version. Otherwise, we will use the version of the currently executing python
+    binary.
 
     In all cases a module will be returned. Whether it is changed depends on the
     input parameters as well as the codemod itself.
@@ -154,7 +158,7 @@ def exec_transform_with_prettyprint(
         )
         return code
 
-    result = transform_module(transform, code)
+    result = transform_module(transform, code, python_version=python_version)
     code: Optional[str] = None if isinstance(
         result, (TransformFailure, TransformExit, TransformSkip)
     ) else result.code
@@ -197,6 +201,7 @@ def _parallel_exec_process_stub(  # noqa: C901
     format_code: bool,
     formatter_args: Sequence[str],
     blacklist_patterns: Sequence[str],
+    python_version: Optional[str],
 ) -> None:
     for pattern in blacklist_patterns:
         if re.fullmatch(pattern, filename):
@@ -238,7 +243,14 @@ def _parallel_exec_process_stub(  # noqa: C901
 
         # Run the transform, bail if we failed or if we aren't formatting code
         try:
-            input_tree = parse_module(oldcode)
+            input_tree = parse_module(
+                oldcode,
+                config=(
+                    PartialParserConfig(python_version=python_version)
+                    if python_version is not None
+                    else PartialParserConfig()
+                ),
+            )
             output_tree = transformer.transform_module(input_tree)
             newcode = output_tree.bytes
             encoding = output_tree.encoding
@@ -462,6 +474,7 @@ def parallel_exec_transform_with_prettyprint(  # noqa: C901
     hide_blacklisted: bool = False,
     hide_progress: bool = False,
     blacklist_patterns: Sequence[str] = (),
+    python_version: Optional[str] = None,
 ) -> ParallelTransformResult:
     """
     Given a list of files and an instantiated codemod we should apply to them,
@@ -471,7 +484,10 @@ def parallel_exec_transform_with_prettyprint(  # noqa: C901
     of jobs will automatically be set to the number of CPU cores. If ``unified_diff``
     is set to a number, changes to files will be printed to stdout with
     ``unified_diff`` lines of context. If it is set to ``None`` or left out, files
-    themselves will be updated with changes and formatting.
+    themselves will be updated with changes and formatting. If a
+    ``python_version`` is provided, then we will parse each source file using
+    this version. Otherwise, we will use the version of the currently executing python
+    binary.
 
     A progress indicator as well as any generated warnings will be printed to stderr.
     To supress the interactive progress indicator, set ``hide_progress`` to ``True``.
@@ -524,6 +540,7 @@ def parallel_exec_transform_with_prettyprint(  # noqa: C901
             format_code=format_code,
             formatter_args=formatter_args,
             blacklist_patterns=blacklist_patterns,
+            python_version=python_version,
         )
         result = queue.get()
         _print_parallel_result(
@@ -558,8 +575,15 @@ def parallel_exec_transform_with_prettyprint(  # noqa: C901
         else:
             raise Exception("Logic error, unaccounted for result!")
 
-    # Warm the parser
-    parse_module("")
+    # Warm the parser, pre-fork.
+    parse_module(
+        "",
+        config=(
+            PartialParserConfig(python_version=python_version)
+            if python_version is not None
+            else PartialParserConfig()
+        ),
+    )
 
     # Complex case, more than one file
     successes: int = 0
@@ -583,6 +607,7 @@ def parallel_exec_transform_with_prettyprint(  # noqa: C901
                     format_code,
                     formatter_args,
                     blacklist_patterns,
+                    python_version,
                 ),
             )
         )
