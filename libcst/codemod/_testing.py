@@ -70,7 +70,7 @@ class _CodemodTest:
         after: str,
         *args: object,
         context_override: Optional[CodemodContext] = None,
-        python_version: str = "3.7",
+        python_version: Optional[str] = None,
         expected_warnings: Optional[Sequence[str]] = None,
         expected_skip: bool = False,
         **kwargs: object,
@@ -85,7 +85,11 @@ class _CodemodTest:
         transform_instance = self.TRANSFORM(context, *args, **kwargs)
         input_tree = parse_module(
             CodemodTest.make_fixture_data(before),
-            config=PartialParserConfig(python_version=python_version),
+            config=(
+                PartialParserConfig(python_version=python_version)
+                if python_version is not None
+                else PartialParserConfig()
+            ),
         )
         try:
             output_tree = transform_instance.transform_module(input_tree)

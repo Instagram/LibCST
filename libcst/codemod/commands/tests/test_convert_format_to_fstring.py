@@ -138,6 +138,8 @@ class ConvertFormatStringCommandTest(CodemodTest):
                 "Unsupported backslash in format expression",
                 "Unsupported await in format() call",
             ],
+            # await isn't supported inside functions in 3.6
+            python_version="3.7",
         )
 
     def test_unsupported_formatspec(self) -> None:

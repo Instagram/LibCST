@@ -12,9 +12,9 @@ Provides everything needed to run a CodemodCommand.
 import traceback
 from dataclasses import dataclass
 from enum import Enum
-from typing import Sequence, Union
+from typing import Optional, Sequence, Union
 
-from libcst import parse_module
+from libcst import PartialParserConfig, parse_module
 from libcst.codemod._codemod import Codemod
 
 
@@ -115,7 +115,9 @@ TransformResult = Union[
 ]
 
 
-def transform_module(transformer: Codemod, code: str) -> TransformResult:
+def transform_module(
+    transformer: Codemod, code: str, *, python_version: Optional[str] = None
+) -> TransformResult:
     """
     Given a module as represented by a string and a :class:`~libcst.codemod.Codemod`
     that we wish to run, execute the codemod on the code and return a
@@ -132,7 +134,14 @@ def transform_module(transformer: Codemod, code: str) -> TransformResult:
     codemod crashed.
     """
     try:
-        input_tree = parse_module(code)
+        input_tree = parse_module(
+            code,
+            config=(
+                PartialParserConfig(python_version=python_version)
+                if python_version is not None
+                else PartialParserConfig()
+            ),
+        )
         output_tree = transformer.transform_module(input_tree)
         return TransformSuccess(
             code=output_tree.code, warning_messages=transformer.context.warnings
