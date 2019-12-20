@@ -11,7 +11,12 @@ import libcst
 
 
 def insert_header_comments(node: libcst.Module, comments: List[str]) -> libcst.Module:
-    """Insert comments after last non-empty line in header."""
+    """
+    Insert comments after last non-empty line in header. Use this to insert one or more
+    comments after any copyright preamble in a :class:`~libcst.Module`. Each comment in
+    the list of ``comments`` must start with a ``#`` and will be placed on its own line
+    in the appropriate location.
+    """
     # Split the lines up into a contiguous comment-containing section and
     # the empty whitespace section that follows
     last_comment_index = -1

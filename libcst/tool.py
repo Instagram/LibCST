@@ -407,6 +407,17 @@ def _codemod_impl(proc_name: str, command_args: List[str]) -> int:  # noqa: C901
         default=None,
     )
     parser.add_argument(
+        "-p",
+        "--python-version",
+        metavar="VERSION",
+        help=(
+            "Override the version string used for parsing Python source files. Defaults "
+            + "to the version of python used to run this tool."
+        ),
+        type=str,
+        default=None,
+    )
+    parser.add_argument(
         "-u",
         "--unified-diff",
         metavar="CONTEXT",
@@ -459,6 +470,7 @@ def _codemod_impl(proc_name: str, command_args: List[str]) -> int:  # noqa: C901
             "path",
             "unified_diff",
             "jobs",
+            "python_version",
             "include_generated",
             "include_stubs",
             "no_format",
@@ -484,6 +496,7 @@ def _codemod_impl(proc_name: str, command_args: List[str]) -> int:  # noqa: C901
             generated_code_marker=config["generated_code_marker"],
             format_code=not args.no_format,
             formatter_args=config["formatter"],
+            python_version=args.python_version,
         )
         if not newcode:
             print("Failed to codemod from stdin", file=sys.stderr)
@@ -513,6 +526,7 @@ def _codemod_impl(proc_name: str, command_args: List[str]) -> int:  # noqa: C901
             hide_blacklisted=args.hide_blacklisted_warnings,
             hide_progress=args.hide_progress,
             blacklist_patterns=config["blacklist_patterns"],
+            python_version=args.python_version,
         )
     except KeyboardInterrupt:
         print("Interrupted!", file=sys.stderr)
@@ -601,7 +615,7 @@ def _initialize_impl(proc_name: str, command_args: List[str]) -> int:
             + "filenames to determine if the module should be touched."
         ),
         "modules": _ListSerializer(
-            "List of modules that contain codemods inside of them.", newlines=True,
+            "List of modules that contain codemods inside of them.", newlines=True
         ),
     }
 
@@ -627,7 +641,7 @@ def _list_impl(proc_name: str, command_args: List[str]) -> int:  # noqa: C901
     config = _find_and_load_config()
 
     parser = argparse.ArgumentParser(
-        description="List all codemods available to run.", prog=f"{proc_name} list",
+        description="List all codemods available to run.", prog=f"{proc_name} list"
     )
     _ = parser.parse_args(command_args)
 
