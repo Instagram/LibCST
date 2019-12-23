@@ -37,8 +37,8 @@ class StripStringsCommand(VisitorBasedCodemodCommand):
                     qualname.name == "typing_extensions.Literal"
                     for qualname in qualnames
                 ),
-            ),
-        ),
+            )
+        )
     )
     def leave_SimpleString(
         self, original_node: libcst.SimpleString, updated_node: libcst.SimpleString
