@@ -40,7 +40,7 @@ def _parse(
         detect_default_newline=detect_default_newline,
     )
     validate_grammar()
-    grammar = get_grammar(config.parsed_python_version)
+    grammar = get_grammar(config.parsed_python_version, config.future_imports)
 
     parser = PythonCSTParser(
         tokens=detection_result.tokens,

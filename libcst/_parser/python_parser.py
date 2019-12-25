@@ -35,7 +35,9 @@ class PythonCSTParser(BaseParser[Token, TokenType, Any]):
         )
         self.config = config
         self.terminal_conversions = get_terminal_conversions()
-        self.nonterminal_conversions = get_nonterminal_conversions(config.version)
+        self.nonterminal_conversions = get_nonterminal_conversions(
+            config.version, config.future_imports
+        )
 
     def convert_nonterminal(self, nonterminal: str, children: Sequence[Any]) -> Any:
         return self.nonterminal_conversions[nonterminal](self.config, children)

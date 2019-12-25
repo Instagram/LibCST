@@ -6,7 +6,7 @@
 # pyre-strict
 import re
 from functools import lru_cache
-from typing import Iterator, Mapping, Optional, Tuple
+from typing import FrozenSet, Iterator, Mapping, Optional, Tuple, Union
 
 from libcst._parser.conversions.expression import (
     convert_arg_assign_comp_for,
@@ -138,6 +138,7 @@ from libcst._parser.parso.pgen2.generator import Grammar, generate_grammar
 from libcst._parser.parso.python.token import PythonTokenTypes, TokenType
 from libcst._parser.parso.utils import PythonVersionInfo, parse_version_string
 from libcst._parser.production_decorator import get_productions
+from libcst._parser.types.config import AutoConfig
 from libcst._parser.types.conversions import NonterminalConversion, TerminalConversion
 from libcst._parser.types.production import Production
 
@@ -269,7 +270,7 @@ _NONTERMINAL_CONVERSIONS_SEQUENCE: Tuple[NonterminalConversion, ...] = (
 )
 
 
-def get_grammar_str(version: PythonVersionInfo) -> str:
+def get_grammar_str(version: PythonVersionInfo, future_imports: FrozenSet[str]) -> str:
     """
     Returns an BNF-like grammar text that `parso.pgen2.generator.generate_grammar` can
     handle.
@@ -278,7 +279,7 @@ def get_grammar_str(version: PythonVersionInfo) -> str:
     debugging the grammar.
     """
     lines = []
-    for p in get_nonterminal_productions(version):
+    for p in get_nonterminal_productions(version, future_imports):
         lines.append(str(p))
     return "\n".join(lines) + "\n"
 
@@ -287,8 +288,13 @@ def get_grammar_str(version: PythonVersionInfo) -> str:
 # of how we're defining our grammar, efficient cache invalidation is harder, though not
 # impossible.
 @lru_cache()
-def get_grammar(version: PythonVersionInfo) -> "Grammar[TokenType]":
-    return generate_grammar(get_grammar_str(version), PythonTokenTypes)
+def get_grammar(
+    version: PythonVersionInfo, future_imports: Union[FrozenSet[str], AutoConfig],
+) -> "Grammar[TokenType]":
+    if isinstance(future_imports, AutoConfig):
+        # For easier testing, if not provided assume no __future__ imports
+        future_imports = frozenset(())
+    return generate_grammar(get_grammar_str(version, future_imports), PythonTokenTypes)
 
 
 @lru_cache()
@@ -360,16 +366,31 @@ def _should_include(
     return True
 
 
-def get_nonterminal_productions(version: PythonVersionInfo) -> Iterator[Production]:
+def _should_include_future(
+    future: Optional[str], future_imports: FrozenSet[str],
+) -> bool:
+    if future is None:
+        return True
+    if future[:1] == "!":
+        return future[1:] not in future_imports
+    return future in future_imports
+
+
+def get_nonterminal_productions(
+    version: PythonVersionInfo, future_imports: FrozenSet[str]
+) -> Iterator[Production]:
     for conversion in _NONTERMINAL_CONVERSIONS_SEQUENCE:
         for production in get_productions(conversion):
-            if _should_include(production.version, version):
-                yield production
+            if not _should_include(production.version, version):
+                continue
+            if not _should_include_future(production.future, future_imports):
+                continue
+            yield production
 
 
 @lru_cache()
 def get_nonterminal_conversions(
-    version: PythonVersionInfo,
+    version: PythonVersionInfo, future_imports: FrozenSet[str],
 ) -> Mapping[str, NonterminalConversion]:
     """
     Returns a mapping from nonterminal production name to the conversion function that
@@ -379,6 +400,8 @@ def get_nonterminal_conversions(
     for fn in _NONTERMINAL_CONVERSIONS_SEQUENCE:
         for fn_production in get_productions(fn):
             if not _should_include(fn_production.version, version):
+                continue
+            if not _should_include_future(fn_production.future, future_imports):
                 continue
             if fn_production.name in conversions:
                 raise Exception(

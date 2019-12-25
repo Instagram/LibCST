@@ -10,7 +10,7 @@ import codecs
 import re
 from dataclasses import dataclass, field, fields
 from enum import Enum
-from typing import List, Pattern, Sequence, Set, Union
+from typing import FrozenSet, List, Pattern, Sequence, Union
 
 from libcst._add_slots import add_slots
 from libcst._nodes.whitespace import NEWLINE_RE
@@ -45,7 +45,7 @@ class ParserConfig(BaseWhitespaceParserConfig):
     default_newline: str
     has_trailing_newline: bool
     version: PythonVersionInfo
-    future_imports: Set[str]
+    future_imports: FrozenSet[str]
 
 
 class AutoConfig(Enum):
@@ -98,7 +98,7 @@ class PartialParserConfig:
     encoding: Union[str, AutoConfig] = AutoConfig.token
 
     #: Detected ``__future__`` import names
-    future_imports: Union[Set[str], AutoConfig] = AutoConfig.token
+    future_imports: Union[FrozenSet[str], AutoConfig] = AutoConfig.token
 
     #: The indentation of the file, expressed as a series of tabs and/or spaces. This
     #: value is inferred from the contents of the parsed source code by default.

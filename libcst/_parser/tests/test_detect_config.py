@@ -28,7 +28,7 @@ class TestDetectConfig(UnitTest):
                     default_newline="\n",
                     has_trailing_newline=False,
                     version=PythonVersionInfo(3, 7),
-                    future_imports=set(),
+                    future_imports=frozenset(),
                 ),
             },
             "detect_trailing_newline_disabled": {
@@ -43,7 +43,7 @@ class TestDetectConfig(UnitTest):
                     default_newline="\n",
                     has_trailing_newline=False,
                     version=PythonVersionInfo(3, 7),
-                    future_imports=set(),
+                    future_imports=frozenset(),
                 ),
             },
             "detect_default_newline_disabled": {
@@ -58,7 +58,7 @@ class TestDetectConfig(UnitTest):
                     default_newline="\n",
                     has_trailing_newline=False,
                     version=PythonVersionInfo(3, 7),
-                    future_imports=set(),
+                    future_imports=frozenset(),
                 ),
             },
             "newline_inferred": {
@@ -73,7 +73,7 @@ class TestDetectConfig(UnitTest):
                     default_newline="\r\n",
                     has_trailing_newline=True,
                     version=PythonVersionInfo(3, 7),
-                    future_imports=set(),
+                    future_imports=frozenset(),
                 ),
             },
             "newline_partial_given": {
@@ -90,7 +90,7 @@ class TestDetectConfig(UnitTest):
                     default_newline="\n",  # The given partial disables inference
                     has_trailing_newline=True,
                     version=PythonVersionInfo(3, 7),
-                    future_imports=set(),
+                    future_imports=frozenset(),
                 ),
             },
             "indent_inferred": {
@@ -105,7 +105,7 @@ class TestDetectConfig(UnitTest):
                     default_newline="\n",
                     has_trailing_newline=True,
                     version=PythonVersionInfo(3, 7),
-                    future_imports=set(),
+                    future_imports=frozenset(),
                 ),
             },
             "indent_partial_given": {
@@ -122,7 +122,7 @@ class TestDetectConfig(UnitTest):
                     default_newline="\n",
                     has_trailing_newline=True,
                     version=PythonVersionInfo(3, 7),
-                    future_imports=set(),
+                    future_imports=frozenset(),
                 ),
             },
             "encoding_inferred": {
@@ -142,7 +142,7 @@ class TestDetectConfig(UnitTest):
                     default_newline="\n",
                     has_trailing_newline=True,
                     version=PythonVersionInfo(3, 7),
-                    future_imports=set(),
+                    future_imports=frozenset(),
                 ),
             },
             "encoding_partial_given": {
@@ -164,7 +164,7 @@ class TestDetectConfig(UnitTest):
                     default_newline="\n",
                     has_trailing_newline=True,
                     version=PythonVersionInfo(3, 7),
-                    future_imports=set(),
+                    future_imports=frozenset(),
                 ),
             },
             "encoding_str_not_bytes_disables_inference": {
@@ -184,7 +184,7 @@ class TestDetectConfig(UnitTest):
                     default_newline="\n",
                     has_trailing_newline=True,
                     version=PythonVersionInfo(3, 7),
-                    future_imports=set(),
+                    future_imports=frozenset(),
                 ),
             },
             "encoding_non_ascii_compatible_utf_16_with_bom": {
@@ -199,7 +199,7 @@ class TestDetectConfig(UnitTest):
                     default_newline="\n",
                     has_trailing_newline=False,
                     version=PythonVersionInfo(3, 7),
-                    future_imports=set(),
+                    future_imports=frozenset(),
                 ),
             },
             "detect_trailing_newline_missing_newline": {
@@ -214,7 +214,7 @@ class TestDetectConfig(UnitTest):
                     default_newline="\n",
                     has_trailing_newline=False,
                     version=PythonVersionInfo(3, 7),
-                    future_imports=set(),
+                    future_imports=frozenset(),
                 ),
             },
             "detect_trailing_newline_has_newline": {
@@ -229,7 +229,7 @@ class TestDetectConfig(UnitTest):
                     default_newline="\n",
                     has_trailing_newline=True,
                     version=PythonVersionInfo(3, 7),
-                    future_imports=set(),
+                    future_imports=frozenset(),
                 ),
             },
             "detect_trailing_newline_missing_newline_after_line_continuation": {
@@ -244,7 +244,7 @@ class TestDetectConfig(UnitTest):
                     default_newline="\n",
                     has_trailing_newline=False,
                     version=PythonVersionInfo(3, 7),
-                    future_imports=set(),
+                    future_imports=frozenset(),
                 ),
             },
             "detect_trailing_newline_has_newline_after_line_continuation": {
@@ -259,7 +259,7 @@ class TestDetectConfig(UnitTest):
                     default_newline="\n",
                     has_trailing_newline=True,
                     version=PythonVersionInfo(3, 7),
-                    future_imports=set(),
+                    future_imports=frozenset(),
                 ),
             },
             "future_imports_in_correct_position": {
@@ -279,7 +279,7 @@ class TestDetectConfig(UnitTest):
                     default_newline="\n",
                     has_trailing_newline=True,
                     version=PythonVersionInfo(3, 7),
-                    future_imports={"a"},
+                    future_imports=frozenset({"a"}),
                 ),
             },
             "future_imports_in_mixed_position": {
@@ -302,7 +302,7 @@ class TestDetectConfig(UnitTest):
                     default_newline="\n",
                     has_trailing_newline=True,
                     version=PythonVersionInfo(3, 7),
-                    future_imports={"a", "b"},
+                    future_imports=frozenset({"a", "b"}),
                 ),
             },
         }
