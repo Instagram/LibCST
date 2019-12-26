@@ -167,7 +167,7 @@ if __name__ == "__main__":
         print(stdout)
         print(stderr)
 
-    for path in (TEST_SUITE_PATH).glob("*.py"):
+    for path in TEST_SUITE_PATH.glob("*.py"):
         cmd = f'''pyre query "types(path='{path}')"'''
         print(cmd)
         stdout, stderr, return_code = _run_command(cmd)
