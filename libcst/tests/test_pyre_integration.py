@@ -6,15 +6,13 @@
 # pyre-strict
 
 import json
-import subprocess
 from pathlib import Path
-from typing import Dict, List, Mapping, Optional, Sequence, Tuple, Union
-
-from mypy_extensions import TypedDict
+from typing import Dict, List, Mapping, Optional, Tuple, Union
 
 import libcst as cst
 from libcst.metadata import MetadataWrapper, PositionProvider
-from libcst.metadata.type_inference_provider import InferredType
+from libcst.metadata.full_repo_manager import _process_pyre_data, run_command
+from libcst.metadata.type_inference_provider import PyreData
 from libcst.testing.utils import UnitTest, data_provider
 
 
@@ -122,24 +120,6 @@ class PyreIntegrationTest(UnitTest):
         MetadataWrapper(module).visit(TypeVerificationVisitor(lookup, self))
 
 
-def _run_command(command: str) -> Tuple[str, str, int]:
-    process = subprocess.Popen(
-        command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True
-    )
-    stdout, stderr = process.communicate()
-    return stdout.decode(), stderr.decode(), process.returncode
-
-
-class PyreData(TypedDict):
-    types: Sequence[InferredType]
-
-
-def _sort_by_position(data: InferredType) -> Tuple[int, int, int, int]:
-    start = data["location"]["start"]
-    stop = data["location"]["stop"]
-    return start["line"], start["column"], stop["line"], stop["column"]
-
-
 if __name__ == "__main__":
     """Run this script directly to generate pyre data for test suite (tests/pyre/*.py)
     """
@@ -147,7 +127,7 @@ if __name__ == "__main__":
     stdout: str
     stderr: str
     return_code: int
-    stdout, stderr, return_code = _run_command("pyre")
+    stdout, stderr, return_code = run_command("pyre")
     if return_code != 0:
         print(stdout)
         print(stderr)
@@ -155,14 +135,13 @@ if __name__ == "__main__":
     for path in TEST_SUITE_PATH.glob("*.py"):
         cmd = f'''pyre query "types(path='{path}')"'''
         print(cmd)
-        stdout, stderr, return_code = _run_command(cmd)
+        stdout, stderr, return_code = run_command(cmd)
         if return_code != 0:
             print(stdout)
             print(stderr)
         data = json.loads(stdout)
         data = data["response"][0]
-        del data["path"]
-        data["types"].sort(key=_sort_by_position)
+        _process_pyre_data(data)
         output_path = path.with_suffix(".json")
         print(f"write output to {output_path}")
         output_path.write_text(json.dumps(data, indent=2))
