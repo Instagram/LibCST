@@ -5,7 +5,7 @@
 
 # pyre-strict
 
-from typing import Dict, List, Optional
+from typing import Dict, Optional, Sequence
 
 from mypy_extensions import TypedDict
 
@@ -47,14 +47,18 @@ class InferredType(TypedDict):
     annotation: str
 
 
+class PyreData(TypedDict):
+    types: Sequence[InferredType]
+
+
 class TypeInferenceProvider(BatchableMetadataProvider[str]):
     METADATA_DEPENDENCIES = (PositionProvider,)
     is_cache_required = True
 
-    def __init__(self, cache: List[InferredType]) -> None:
+    def __init__(self, cache: PyreData) -> None:
         super().__init__(cache)
         lookup: Dict[CodeRange, str] = {}
-        for item in cache:
+        for item in cache["types"]:
             location = item["location"]
             start = location["start"]
             end = location["stop"]

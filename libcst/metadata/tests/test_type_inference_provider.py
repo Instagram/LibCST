@@ -10,9 +10,9 @@ from pathlib import Path
 
 import libcst as cst
 from libcst import MetadataWrapper
-from libcst.metadata.type_inference_provider import TypeInferenceProvider
+from libcst.metadata.type_inference_provider import PyreData, TypeInferenceProvider
 from libcst.testing.utils import UnitTest, data_provider
-from libcst.tests.test_pyre_integration import TEST_SUITE_PATH, PyreData
+from libcst.tests.test_pyre_integration import TEST_SUITE_PATH
 
 
 class TypeInferenceProviderTest(UnitTest):
@@ -26,7 +26,7 @@ class TypeInferenceProviderTest(UnitTest):
             # pyre-fixme[6]: Expected `Mapping[Type[BaseMetadataProvider[object]],
             #  Any]` for 2nd param but got `Dict[Type[TypeInferenceProvider],
             #  Sequence[InferredType]]`.
-            cache={TypeInferenceProvider: data["types"]},
+            cache={TypeInferenceProvider: data},
         )
         types = wrapper.resolve(TypeInferenceProvider)
         m = wrapper.module
