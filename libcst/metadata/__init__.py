@@ -44,6 +44,7 @@ from libcst.metadata.scope_provider import (
     Scope,
     ScopeProvider,
 )
+from libcst.metadata.type_inference_provider import TypeInferenceProvider
 from libcst.metadata.wrapper import MetadataWrapper
 
 
@@ -77,6 +78,7 @@ __all__ = [
     "ProviderT",
     "Assignments",
     "Accesses",
+    "TypeInferenceProvider",
     # Experimental APIs:
     "ExperimentalReentrantCodegenProvider",
     "CodegenPartial",
