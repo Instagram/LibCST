@@ -113,7 +113,7 @@ BinaryOperation(
 )
 
 For a more detailed usage example, `see our documentation 
-<https://libcst.readthedocs.io/en/latest/usage.html>`__.
+<https://libcst.readthedocs.io/en/latest/tutorial.html>`__.
 
 Installation
 ------------
