@@ -14,6 +14,7 @@ from mypy_extensions import TypedDict
 
 import libcst as cst
 from libcst.metadata import MetadataWrapper, PositionProvider
+from libcst.metadata.type_inference_provider import InferredType
 from libcst.testing.utils import UnitTest, data_provider
 
 
@@ -129,22 +130,6 @@ def _run_command(command: str) -> Tuple[str, str, int]:
     return stdout.decode(), stderr.decode(), process.returncode
 
 
-class Position(TypedDict):
-    line: int
-    column: int
-
-
-class Location(TypedDict):
-    path: str
-    start: Position
-    stop: Position
-
-
-class InferredType(TypedDict):
-    location: Location
-    annotation: str
-
-
 class PyreData(TypedDict):
     types: Sequence[InferredType]
 
@@ -152,7 +137,7 @@ class PyreData(TypedDict):
 def _sort_by_position(data: InferredType) -> Tuple[int, int, int, int]:
     start = data["location"]["start"]
     stop = data["location"]["stop"]
-    return (start["line"], start["column"], stop["line"], stop["column"])
+    return start["line"], start["column"], stop["line"], stop["column"]
 
 
 if __name__ == "__main__":
