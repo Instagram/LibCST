@@ -4,6 +4,8 @@
 # LICENSE file in the root directory of this source tree.
 
 # pyre-strict
+
+
 import json
 import subprocess
 from pathlib import Path
@@ -20,7 +22,7 @@ from typing import (
 
 from mypy_extensions import TypedDict
 
-from libcst._parser.entrypoints import parse_module
+import libcst as cst
 from libcst.metadata.type_inference_provider import (
     InferredType,
     PyreData,
@@ -44,10 +46,8 @@ class FullRepoManager:
         self.root_path: Path = Path(repo_root_dir)
         self._cache: Dict["ProviderT", Mapping[str, object]] = {}
         self._timeout = timeout
-        for provider in providers:
-            handler = self._get_cache_handler(provider)
-            if handler:
-                self._cache[provider] = handler(paths)
+        self._providers = providers
+        self._paths = paths
 
     def _get_cache_handler(self, provider: "ProviderT") -> Optional[Callable]:
         maps: Dict["ProviderT", Callable[[List[str]], Mapping[str, object]]] = {
@@ -71,8 +71,18 @@ class FullRepoManager:
             raise Exception(f"{e}\n\nstderr:\n {stderr}\nstdout:\n {stdout}")
         return {path: _process_pyre_data(data) for path, data in zip(paths, resp)}
 
+    def _resolve_cache(self) -> None:
+        if not self._cache:
+            cache: Dict["ProviderT", Mapping[str, object]] = {}
+            for provider in self._providers:
+                handler = self._get_cache_handler(provider)
+                if handler:
+                    cache[provider] = handler(self._paths)
+            self._cache = cache
+
     def get_metadata_wrapper_for_path(self, path: str) -> MetadataWrapper:
-        module = parse_module((self.root_path / path).read_text())
+        self._resolve_cache()
+        module = cst.parse_module((self.root_path / path).read_text())
         cache = {
             provider: data
             for provider, files in self._cache.items()

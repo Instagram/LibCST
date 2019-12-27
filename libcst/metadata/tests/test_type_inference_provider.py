@@ -15,6 +15,43 @@ from libcst.testing.utils import UnitTest, data_provider
 from libcst.tests.test_pyre_integration import TEST_SUITE_PATH
 
 
+def _test_simple_class_helper(test: UnitTest, wrapper: MetadataWrapper) -> None:
+    types = wrapper.resolve(TypeInferenceProvider)
+    m = wrapper.module
+    assign = cst.ensure_type(
+        cst.ensure_type(
+            cst.ensure_type(
+                cst.ensure_type(m.body[1].body, cst.IndentedBlock).body[0],
+                cst.FunctionDef,
+            ).body.body[0],
+            cst.SimpleStatementLine,
+        ).body[0],
+        cst.Assign,
+    )
+    self_number_attr = cst.ensure_type(assign.targets[0].target, cst.Attribute,)
+    # TODO: uncomment when typing issue is fixed
+    # self.assertEqual(types[self_number_attr], "int")
+
+    test.assertEqual(types[assign.value], "int")
+
+    # self
+    test.assertEqual(
+        types[self_number_attr.value], "libcst.tests.pyre.simple_class.Item"
+    )
+    collector_assign = cst.ensure_type(
+        cst.ensure_type(m.body[3], cst.SimpleStatementLine).body[0], cst.Assign
+    )
+    collector = collector_assign.targets[0].target
+    test.assertEqual(types[collector], "libcst.tests.pyre.simple_class.ItemCollector")
+    items_assign = cst.ensure_type(
+        cst.ensure_type(m.body[4], cst.SimpleStatementLine).body[0], cst.Assign
+    )
+    items = items_assign.targets[0].target
+    test.assertEqual(
+        types[items], "typing.Sequence[libcst.tests.pyre.simple_class.Item]"
+    )
+
+
 class TypeInferenceProviderTest(UnitTest):
     @data_provider(
         ((TEST_SUITE_PATH / "simple_class.py", TEST_SUITE_PATH / "simple_class.json"),)
@@ -28,39 +65,4 @@ class TypeInferenceProviderTest(UnitTest):
             #  Sequence[InferredType]]`.
             cache={TypeInferenceProvider: data},
         )
-        types = wrapper.resolve(TypeInferenceProvider)
-        m = wrapper.module
-        assign = cst.ensure_type(
-            cst.ensure_type(
-                cst.ensure_type(
-                    cst.ensure_type(m.body[1].body, cst.IndentedBlock).body[0],
-                    cst.FunctionDef,
-                ).body.body[0],
-                cst.SimpleStatementLine,
-            ).body[0],
-            cst.Assign,
-        )
-        self_number_attr = cst.ensure_type(assign.targets[0].target, cst.Attribute,)
-        # TODO: uncomment when typing issue is fixed
-        # self.assertEqual(types[self_number_attr], "int")
-
-        self.assertEqual(types[assign.value], "int")
-
-        # self
-        self.assertEqual(
-            types[self_number_attr.value], "libcst.tests.pyre.simple_class.Item"
-        )
-        collector_assign = cst.ensure_type(
-            cst.ensure_type(m.body[3], cst.SimpleStatementLine).body[0], cst.Assign
-        )
-        collector = collector_assign.targets[0].target
-        self.assertEqual(
-            types[collector], "libcst.tests.pyre.simple_class.ItemCollector"
-        )
-        items_assign = cst.ensure_type(
-            cst.ensure_type(m.body[4], cst.SimpleStatementLine).body[0], cst.Assign
-        )
-        items = items_assign.targets[0].target
-        self.assertEqual(
-            types[items], "typing.Sequence[libcst.tests.pyre.simple_class.Item]"
-        )
+        _test_simple_class_helper(self, wrapper)
