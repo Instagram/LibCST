@@ -75,8 +75,9 @@ Metadata Providers
 :class:`~libcst.metadata.WhitespaceInclusivePositionProvider`,
 :class:`~libcst.metadata.ExpressionContextProvider`,
 :class:`~libcst.metadata.ScopeProvider`,
-:class:`~libcst.metadata.QualifiedNameProvider`, and
-:class:`~libcst.metadata.ParentNodeProvider`
+:class:`~libcst.metadata.QualifiedNameProvider`,
+:class:`~libcst.metadata.ParentNodeProvider`, and
+:class:`~libcst.metadata.TypeInferenceProvider`
 are currently provided. Each metadata provider may has its own custom data structure.
 
 Position Metadata
@@ -183,3 +184,21 @@ We provide :class:`~libcst.metadata.ParentNodeProvider` for those use cases.
 
 .. autoclass:: libcst.metadata.ParentNodeProvider
    :no-undoc-members:
+
+Type Inference Metadata
+-----------------------
+`Type inference <https://en.wikipedia.org/wiki/Type_inference>`_ is to automatically infer
+data types of expression for deeper understanding source code.
+In Python, type checkers like `Mypy <https://github.com/python/mypy>`_ or
+`Pyre <https://pyre-check.org/>`_ analyze `type annotations <https://docs.python.org/3/library/typing.html>`_
+and infer types for expressions.
+:class:`~libcst.metadata.TypeInferenceProvider` is provided by `Pyre Query API <https://pyre-check.org/docs/querying-pyre.html>`_
+which requires `setup watchman <https://pyre-check.org/docs/watchman-integration.html>`_ for incremental typechecking.
+:class:`~libcst.metadata.FullRepoManger` is built for manage the inter process communication to Pyre.
+
+.. autoclass:: libcst.metadata.TypeInferenceProvider
+   :no-undoc-members:
+
+.. autoclass:: libcst.metadata.FullRepoManager
+   :no-undoc-members:
+   :special-members: __init__

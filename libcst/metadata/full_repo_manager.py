@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import (
     TYPE_CHECKING,
     Callable,
+    Collection,
     Dict,
     List,
     Mapping,
@@ -39,10 +40,21 @@ class FullRepoManager:
     def __init__(
         self,
         repo_root_dir: str,
-        paths: List[str],
-        providers: List["ProviderT"],
+        paths: Collection[str],
+        providers: Collection["ProviderT"],
         timeout: int = 5,
     ) -> None:
+        """
+        Given project root directory with pyre and watchman setup, :class:`~libcst.metadata.FullRepoManager`
+        handles the inter process communication to read the required full repository cache data for
+        metadata provider like :class:`~libcst.metadata.TypeInferenceProvider`.
+
+        :param paths: a collection of paths to access full repository data.
+        :param providers: a collection of metadata provider classes require accessing full repository
+            data, currently supports :class:`~libcst.metadata.TypeInferenceProvider`.
+        :param timeout: number of seconds. Raises `TimeoutExpired <https://docs.python.org/3/library/subprocess.html#subprocess.TimeoutExpired>`_
+            when timeout.
+        """
         self.root_path: Path = Path(repo_root_dir)
         self._cache: Dict["ProviderT", Mapping[str, object]] = {}
         self._timeout = timeout
@@ -80,15 +92,42 @@ class FullRepoManager:
                     cache[provider] = handler(self._paths)
             self._cache = cache
 
-    def get_metadata_wrapper_for_path(self, path: str) -> MetadataWrapper:
+    def get_cache_for_path(self, path: str) -> Mapping["ProviderT", object]:
+        """
+        Retrieve cache for a source file. The file needs to appear in the ``paths`` parameter when
+        constructing :class:`~libcst.metadata.FullRepoManager`.
+
+        .. code-block:: python
+
+            manager = FullRepoManager(".", {"a.py", "b.py"}, {TypeInferenceProvider})
+            MetadataWrapper(module, cache=manager.get_cache_for_path("a.py"))
+        """
+        if path not in self._paths:
+            raise Exception(
+                "The path needs to be in paths parameter when constructing FullRepoManager for efficient batch processing."
+            )
         self._resolve_cache()
-        module = cst.parse_module((self.root_path / path).read_text())
-        cache = {
+        return {
             provider: data
             for provider, files in self._cache.items()
             for _path, data in files.items()
             if _path == path
         }
+
+    def get_metadata_wrapper_for_path(self, path: str) -> MetadataWrapper:
+        """
+        Create a :class:`~libcst.metadata.MetadataWrapper` given a source file path.
+        The path needs to be a path relative to project root directory.
+        The source code is read and parsed as :class:`~libcst.Module` for
+        :class:`~libcst.metadata.MetadataWrapper`.
+
+        .. code-block:: python
+
+            manager = FullRepoManager(".", {"a.py", "b.py"}, {TypeInferenceProvider})
+            wrapper = manager.get_metadata_wrapper_for_path("a.py")
+        """
+        module = cst.parse_module((self.root_path / path).read_text())
+        cache = self.get_cache_for_path(path)
         return MetadataWrapper(module, True, cache)
 
 
