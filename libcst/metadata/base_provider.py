@@ -4,8 +4,20 @@
 # LICENSE file in the root directory of this source tree.
 
 # pyre-strict
+from pathlib import Path
 from types import MappingProxyType
-from typing import TYPE_CHECKING, Generic, Mapping, MutableMapping, Type, TypeVar, cast
+from typing import (
+    TYPE_CHECKING,
+    Callable,
+    Generic,
+    List,
+    Mapping,
+    MutableMapping,
+    Optional,
+    Type,
+    TypeVar,
+    cast,
+)
 
 from libcst._batched_visitor import BatchableCSTVisitor
 from libcst._metadata_dependent import (
@@ -44,12 +56,15 @@ class BaseMetadataProvider(MetadataDependent, Generic[_ProvidedMetadataT]):
     # explanation.
     _computed: MutableMapping["CSTNode", _ProvidedMetadataT]
 
-    is_cache_required: bool = False
+    #: Implement gen_cache to indicate the matadata provider depends on cache from external
+    #: system. This function will be called by :class:`~libcst.metadata.FullRepoManager`
+    #: to compute required cache object per file path.
+    gen_cache: Optional[Callable[[Path, List[str], int], Mapping[str, object]]] = None
 
     def __init__(self, cache: object = None) -> None:
         super().__init__()
         self._computed = {}
-        if self.is_cache_required and cache is None:
+        if self.gen_cache and cache is None:
             # The metadata provider implementation is responsible to store and use cache.
             raise Exception(
                 f"Cache is required for initializing {self.__class__.__name__}."
