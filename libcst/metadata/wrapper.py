@@ -89,13 +89,13 @@ def _resolve_impl(
                 else:
                     wrapper._metadata[P] = (
                         P(wrapper._cache.get(P))._gen(wrapper)
-                        if P.is_cache_required
+                        if P.gen_cache
                         else P()._gen(wrapper)
                     )
                     completed.add(P)
 
         initialized_batchable = [
-            p(wrapper._cache.get(p)) if p.is_cache_required else p() for p in batchable
+            p(wrapper._cache.get(p)) if p.gen_cache else p() for p in batchable
         ]
         metadata_batch = _gen_batchable(wrapper, initialized_batchable)
         wrapper._metadata.update(metadata_batch)

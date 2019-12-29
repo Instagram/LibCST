@@ -4,8 +4,10 @@
 # LICENSE file in the root directory of this source tree.
 
 # pyre-strict
-
-from typing import Dict, Optional, Sequence
+import json
+import subprocess
+from pathlib import Path
+from typing import Dict, List, Mapping, Optional, Sequence, Tuple
 
 from mypy_extensions import TypedDict
 
@@ -66,7 +68,25 @@ class TypeInferenceProvider(BatchableMetadataProvider[str]):
     """
 
     METADATA_DEPENDENCIES = (PositionProvider,)
-    is_cache_required = True
+
+    @staticmethod
+    def gen_cache(
+        root_path: Path, paths: List[str], timeout: Optional[int]
+    ) -> Mapping[str, object]:
+        params = ",".join(f"path='{root_path / path}'" for path in paths)
+        cmd = f'''pyre query "types({params})"'''
+        try:
+            stdout, stderr, return_code = run_command(cmd, timeout=timeout)
+        except subprocess.TimeoutExpired as exc:
+            raise exc
+
+        if return_code != 0:
+            raise Exception(f"stderr:\n {stderr}\nstdout:\n {stdout}")
+        try:
+            resp = json.loads(stdout)["response"]
+        except Exception as e:
+            raise Exception(f"{e}\n\nstderr:\n {stderr}\nstdout:\n {stdout}")
+        return {path: _process_pyre_data(data) for path, data in zip(paths, resp)}
 
     def __init__(self, cache: PyreData) -> None:
         super().__init__(cache)
@@ -96,3 +116,26 @@ class TypeInferenceProvider(BatchableMetadataProvider[str]):
 
     def visit_Call(self, node: cst.Call) -> Optional[bool]:
         self._parse_metadata(node)
+
+
+def run_command(command: str, timeout: Optional[int] = None) -> Tuple[str, str, int]:
+    process = subprocess.Popen(
+        command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True
+    )
+    stdout, stderr = process.communicate(timeout=timeout)
+    return stdout.decode(), stderr.decode(), process.returncode
+
+
+class RawPyreData(TypedDict):
+    path: str
+    types: Sequence[InferredType]
+
+
+def _process_pyre_data(data: RawPyreData) -> PyreData:
+    return {"types": sorted(data["types"], key=_sort_by_position)}
+
+
+def _sort_by_position(data: InferredType) -> Tuple[int, int, int, int]:
+    start = data["location"]["start"]
+    stop = data["location"]["stop"]
+    return start["line"], start["column"], stop["line"], stop["column"]

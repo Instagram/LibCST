@@ -46,7 +46,7 @@ class MetadataWrapperTest(UnitTest):
 
     def test_metadata_cache(self) -> None:
         class DummyMetadataProvider(BatchableMetadataProvider[None]):
-            is_cache_required = True
+            gen_cache = tuple
 
         m = cst.parse_module("pass")
         mw = MetadataWrapper(m)
@@ -56,7 +56,7 @@ class MetadataWrapperTest(UnitTest):
             mw.resolve(DummyMetadataProvider)
 
         class SimpleCacheMetadataProvider(BatchableMetadataProvider[object]):
-            is_cache_required = True
+            gen_cache = tuple
 
             def __init__(self, cache: object) -> None:
                 super().__init__(cache)

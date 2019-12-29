@@ -9,39 +9,23 @@
 import json
 import subprocess
 from pathlib import Path
-from typing import (
-    TYPE_CHECKING,
-    Callable,
-    Collection,
-    Dict,
-    List,
-    Mapping,
-    Optional,
-    Sequence,
-    Tuple,
-)
-
-from mypy_extensions import TypedDict
+from typing import TYPE_CHECKING, Dict, List, Mapping
 
 import libcst as cst
-from libcst.metadata.type_inference_provider import (
-    InferredType,
-    PyreData,
-    TypeInferenceProvider,
-)
+from libcst.metadata.type_inference_provider import _process_pyre_data, run_command
 from libcst.metadata.wrapper import MetadataWrapper
 
 
 if TYPE_CHECKING:
-    from libcst.metadata.base_provider import ProviderT
+    from libcst.metadata.base_provider import ProviderT  # noqa: F401
 
 
 class FullRepoManager:
     def __init__(
         self,
         repo_root_dir: str,
-        paths: Collection[str],
-        providers: Collection["ProviderT"],
+        paths: List[str],
+        providers: List["ProviderT"],
         timeout: int = 5,
     ) -> None:
         """
@@ -60,12 +44,6 @@ class FullRepoManager:
         self._timeout = timeout
         self._providers = providers
         self._paths = paths
-
-    def _get_cache_handler(self, provider: "ProviderT") -> Optional[Callable]:
-        maps: Dict["ProviderT", Callable[[List[str]], Mapping[str, object]]] = {
-            TypeInferenceProvider: self._handle_pyre_cache
-        }
-        return maps.get(provider)
 
     def _handle_pyre_cache(self, paths: List[str]) -> Mapping[str, object]:
         params = ",".join(f"path='{self.root_path/path}'" for path in paths)
@@ -87,9 +65,11 @@ class FullRepoManager:
         if not self._cache:
             cache: Dict["ProviderT", Mapping[str, object]] = {}
             for provider in self._providers:
-                handler = self._get_cache_handler(provider)
+                handler = provider.gen_cache
                 if handler:
-                    cache[provider] = handler(self._paths)
+                    cache[provider] = handler(
+                        self.root_path, self._paths, self._timeout
+                    )
             self._cache = cache
 
     def get_cache_for_path(self, path: str) -> Mapping["ProviderT", object]:
@@ -129,26 +109,3 @@ class FullRepoManager:
         module = cst.parse_module((self.root_path / path).read_text())
         cache = self.get_cache_for_path(path)
         return MetadataWrapper(module, True, cache)
-
-
-def run_command(command: str, timeout: Optional[int] = None) -> Tuple[str, str, int]:
-    process = subprocess.Popen(
-        command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True
-    )
-    stdout, stderr = process.communicate(timeout=timeout)
-    return stdout.decode(), stderr.decode(), process.returncode
-
-
-def _sort_by_position(data: InferredType) -> Tuple[int, int, int, int]:
-    start = data["location"]["start"]
-    stop = data["location"]["stop"]
-    return start["line"], start["column"], stop["line"], stop["column"]
-
-
-class RawPyreData(TypedDict):
-    path: str
-    types: Sequence[InferredType]
-
-
-def _process_pyre_data(data: RawPyreData) -> PyreData:
-    return {"types": sorted(data["types"], key=_sort_by_position)}

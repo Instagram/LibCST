@@ -11,8 +11,11 @@ from typing import Dict, List, Mapping, Optional, Tuple, Union
 
 import libcst as cst
 from libcst.metadata import MetadataWrapper, PositionProvider
-from libcst.metadata.full_repo_manager import _process_pyre_data, run_command
-from libcst.metadata.type_inference_provider import PyreData
+from libcst.metadata.type_inference_provider import (
+    PyreData,
+    _process_pyre_data,
+    run_command,
+)
 from libcst.testing.utils import UnitTest, data_provider
 
 
