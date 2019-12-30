@@ -130,7 +130,7 @@ if __name__ == "__main__":
     stdout: str
     stderr: str
     return_code: int
-    stdout, stderr, return_code = run_command("pyre")
+    stdout, stderr, return_code = run_command("pyre start")
     if return_code != 0:
         print(stdout)
         print(stderr)
@@ -144,7 +144,7 @@ if __name__ == "__main__":
             print(stderr)
         data = json.loads(stdout)
         data = data["response"][0]
-        _process_pyre_data(data)
+        data = _process_pyre_data(data)
         output_path = path.with_suffix(".json")
         print(f"write output to {output_path}")
         output_path.write_text(json.dumps(data, indent=2))
