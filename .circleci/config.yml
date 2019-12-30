@@ -72,6 +72,8 @@ jobs:
             pip install --upgrade pip
             pip install -r requirements.txt -r requirements-dev.txt
             pyre check
+            PYTHONPATH=`pwd` python libcst/tests/test_pyre_integration.py
+            git diff --exit-code  # verify no generated changes
       - save_cache:
           key: pyre-v1-{{ checksum "tox.ini" }}-{{ checksum "requirements.txt" }}-{{ checksum "requirements-dev.txt" }}-{{ checksum "setup.py" }}-{{ checksum ".circleci/config.yml" }}
           paths:
