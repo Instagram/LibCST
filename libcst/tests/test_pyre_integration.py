@@ -43,18 +43,11 @@ class TypeVerificationVisitor(cst.CSTVisitor):
         tup = (start.line, start.column, end.line, end.column)
 
         # remove this if condition when the type issues are fixed.
-        if not any(
-            node.deep_equals(name)
-            for name in {
-                cst.Attribute(cst.Name("self"), attr=cst.Name("number")),
-                cst.Attribute(cst.Name("item"), attr=cst.Name("number")),
-            }
-        ):
-            self.test.assertIn(
-                tup,
-                self.lookup,
-                f"Attribute node {node} at {tup} found without inferred type.",
-            )
+        self.test.assertIn(
+            tup,
+            self.lookup,
+            f"Attribute node {node} at {tup} found without inferred type.",
+        )
 
     def leave_Attribute(self, original_node: cst.Attribute) -> None:
         self.attributes.pop()
@@ -73,7 +66,7 @@ class TypeVerificationVisitor(cst.CSTVisitor):
         # remove this if condition when the type issues are fixed.
         if not any(
             node.deep_equals(name) and tup == _tup
-            for (name, _tup) in {(cst.Name("i"), (17, 21, 17, 22)),}
+            for (name, _tup) in {(cst.Name("i"), (18, 21, 18, 22)),}
         ):
             self.test.assertIn(
                 tup,

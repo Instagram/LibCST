@@ -4,11 +4,11 @@
       "location": {
         "path": "libcst/tests/pyre/simple_class.py",
         "start": {
-          "line": 7,
+          "line": 8,
           "column": 19
         },
         "stop": {
-          "line": 7,
+          "line": 8,
           "column": 27
         }
       },
@@ -18,11 +18,11 @@
       "location": {
         "path": "libcst/tests/pyre/simple_class.py",
         "start": {
-          "line": 10,
+          "line": 11,
           "column": 6
         },
         "stop": {
-          "line": 10,
+          "line": 11,
           "column": 10
         }
       },
@@ -32,11 +32,11 @@
       "location": {
         "path": "libcst/tests/pyre/simple_class.py",
         "start": {
-          "line": 11,
+          "line": 12,
           "column": 8
         },
         "stop": {
-          "line": 11,
+          "line": 12,
           "column": 16
         }
       },
@@ -46,11 +46,11 @@
       "location": {
         "path": "libcst/tests/pyre/simple_class.py",
         "start": {
-          "line": 11,
+          "line": 12,
           "column": 17
         },
         "stop": {
-          "line": 11,
+          "line": 12,
           "column": 21
         }
       },
@@ -60,11 +60,11 @@
       "location": {
         "path": "libcst/tests/pyre/simple_class.py",
         "start": {
-          "line": 11,
+          "line": 12,
           "column": 23
         },
         "stop": {
-          "line": 11,
+          "line": 12,
           "column": 24
         }
       },
@@ -74,11 +74,11 @@
       "location": {
         "path": "libcst/tests/pyre/simple_class.py",
         "start": {
-          "line": 11,
+          "line": 12,
           "column": 26
         },
         "stop": {
-          "line": 11,
+          "line": 12,
           "column": 29
         }
       },
@@ -88,11 +88,11 @@
       "location": {
         "path": "libcst/tests/pyre/simple_class.py",
         "start": {
-          "line": 11,
+          "line": 12,
           "column": 34
         },
         "stop": {
-          "line": 11,
+          "line": 12,
           "column": 38
         }
       },
@@ -102,11 +102,11 @@
       "location": {
         "path": "libcst/tests/pyre/simple_class.py",
         "start": {
-          "line": 12,
+          "line": 13,
           "column": 8
         },
         "stop": {
-          "line": 12,
+          "line": 13,
           "column": 12
         }
       },
@@ -116,12 +116,12 @@
       "location": {
         "path": "libcst/tests/pyre/simple_class.py",
         "start": {
-          "line": 12,
-          "column": 22
+          "line": 13,
+          "column": 8
         },
         "stop": {
-          "line": 12,
-          "column": 23
+          "line": 13,
+          "column": 19
         }
       },
       "annotation": "int"
@@ -130,11 +130,39 @@
       "location": {
         "path": "libcst/tests/pyre/simple_class.py",
         "start": {
-          "line": 15,
+          "line": 13,
+          "column": 21
+        },
+        "stop": {
+          "line": 13,
+          "column": 24
+        }
+      },
+      "annotation": "typing.Type[int]"
+    },
+    {
+      "location": {
+        "path": "libcst/tests/pyre/simple_class.py",
+        "start": {
+          "line": 13,
+          "column": 27
+        },
+        "stop": {
+          "line": 13,
+          "column": 28
+        }
+      },
+      "annotation": "int"
+    },
+    {
+      "location": {
+        "path": "libcst/tests/pyre/simple_class.py",
+        "start": {
+          "line": 16,
           "column": 6
         },
         "stop": {
-          "line": 15,
+          "line": 16,
           "column": 19
         }
       },
@@ -144,11 +172,11 @@
       "location": {
         "path": "libcst/tests/pyre/simple_class.py",
         "start": {
-          "line": 16,
+          "line": 17,
           "column": 8
         },
         "stop": {
-          "line": 16,
+          "line": 17,
           "column": 17
         }
       },
@@ -158,11 +186,11 @@
       "location": {
         "path": "libcst/tests/pyre/simple_class.py",
         "start": {
-          "line": 16,
+          "line": 17,
           "column": 18
         },
         "stop": {
-          "line": 16,
+          "line": 17,
           "column": 22
         }
       },
@@ -172,11 +200,11 @@
       "location": {
         "path": "libcst/tests/pyre/simple_class.py",
         "start": {
-          "line": 16,
+          "line": 17,
           "column": 24
         },
         "stop": {
-          "line": 16,
+          "line": 17,
           "column": 25
         }
       },
@@ -186,11 +214,11 @@
       "location": {
         "path": "libcst/tests/pyre/simple_class.py",
         "start": {
-          "line": 16,
+          "line": 17,
           "column": 27
         },
         "stop": {
-          "line": 16,
+          "line": 17,
           "column": 30
         }
       },
@@ -200,11 +228,11 @@
       "location": {
         "path": "libcst/tests/pyre/simple_class.py",
         "start": {
-          "line": 16,
+          "line": 17,
           "column": 35
         },
         "stop": {
-          "line": 16,
+          "line": 17,
           "column": 43
         }
       },
@@ -214,11 +242,11 @@
       "location": {
         "path": "libcst/tests/pyre/simple_class.py",
         "start": {
-          "line": 16,
+          "line": 17,
           "column": 35
         },
         "stop": {
-          "line": 16,
+          "line": 17,
           "column": 49
         }
       },
@@ -228,11 +256,11 @@
       "location": {
         "path": "libcst/tests/pyre/simple_class.py",
         "start": {
-          "line": 16,
+          "line": 17,
           "column": 44
         },
         "stop": {
-          "line": 16,
+          "line": 17,
           "column": 48
         }
       },
@@ -242,11 +270,11 @@
       "location": {
         "path": "libcst/tests/pyre/simple_class.py",
         "start": {
-          "line": 17,
+          "line": 18,
           "column": 15
         },
         "stop": {
-          "line": 17,
+          "line": 18,
           "column": 42
         }
       },
@@ -256,11 +284,11 @@
       "location": {
         "path": "libcst/tests/pyre/simple_class.py",
         "start": {
-          "line": 17,
+          "line": 18,
           "column": 16
         },
         "stop": {
-          "line": 17,
+          "line": 18,
           "column": 20
         }
       },
@@ -270,11 +298,11 @@
       "location": {
         "path": "libcst/tests/pyre/simple_class.py",
         "start": {
-          "line": 17,
+          "line": 18,
           "column": 16
         },
         "stop": {
-          "line": 17,
+          "line": 18,
           "column": 23
         }
       },
@@ -284,11 +312,11 @@
       "location": {
         "path": "libcst/tests/pyre/simple_class.py",
         "start": {
-          "line": 17,
+          "line": 18,
           "column": 28
         },
         "stop": {
-          "line": 17,
+          "line": 18,
           "column": 29
         }
       },
@@ -298,11 +326,11 @@
       "location": {
         "path": "libcst/tests/pyre/simple_class.py",
         "start": {
-          "line": 17,
+          "line": 18,
           "column": 33
         },
         "stop": {
-          "line": 17,
+          "line": 18,
           "column": 38
         }
       },
@@ -312,11 +340,11 @@
       "location": {
         "path": "libcst/tests/pyre/simple_class.py",
         "start": {
-          "line": 17,
+          "line": 18,
           "column": 33
         },
         "stop": {
-          "line": 17,
+          "line": 18,
           "column": 41
         }
       },
@@ -326,11 +354,11 @@
       "location": {
         "path": "libcst/tests/pyre/simple_class.py",
         "start": {
-          "line": 17,
+          "line": 18,
           "column": 39
         },
         "stop": {
-          "line": 17,
+          "line": 18,
           "column": 40
         }
       },
@@ -340,11 +368,11 @@
       "location": {
         "path": "libcst/tests/pyre/simple_class.py",
         "start": {
-          "line": 20,
+          "line": 21,
           "column": 0
         },
         "stop": {
-          "line": 20,
+          "line": 21,
           "column": 9
         }
       },
@@ -354,11 +382,11 @@
       "location": {
         "path": "libcst/tests/pyre/simple_class.py",
         "start": {
-          "line": 20,
+          "line": 21,
           "column": 12
         },
         "stop": {
-          "line": 20,
+          "line": 21,
           "column": 25
         }
       },
@@ -368,11 +396,11 @@
       "location": {
         "path": "libcst/tests/pyre/simple_class.py",
         "start": {
-          "line": 20,
+          "line": 21,
           "column": 12
         },
         "stop": {
-          "line": 20,
+          "line": 21,
           "column": 27
         }
       },
@@ -382,11 +410,11 @@
       "location": {
         "path": "libcst/tests/pyre/simple_class.py",
         "start": {
-          "line": 21,
+          "line": 22,
           "column": 0
         },
         "stop": {
-          "line": 21,
+          "line": 22,
           "column": 5
         }
       },
@@ -396,12 +424,26 @@
       "location": {
         "path": "libcst/tests/pyre/simple_class.py",
         "start": {
-          "line": 21,
-          "column": 8
+          "line": 22,
+          "column": 7
         },
         "stop": {
-          "line": 21,
-          "column": 17
+          "line": 22,
+          "column": 21
+        }
+      },
+      "annotation": "typing.Type[typing.Sequence[libcst.tests.pyre.simple_class.Item]]"
+    },
+    {
+      "location": {
+        "path": "libcst/tests/pyre/simple_class.py",
+        "start": {
+          "line": 22,
+          "column": 24
+        },
+        "stop": {
+          "line": 22,
+          "column": 33
         }
       },
       "annotation": "libcst.tests.pyre.simple_class.ItemCollector"
@@ -410,12 +452,12 @@
       "location": {
         "path": "libcst/tests/pyre/simple_class.py",
         "start": {
-          "line": 21,
-          "column": 8
+          "line": 22,
+          "column": 24
         },
         "stop": {
-          "line": 21,
-          "column": 27
+          "line": 22,
+          "column": 43
         }
       },
       "annotation": "typing.Callable(libcst.tests.pyre.simple_class.ItemCollector.get_items)[[Named(n, int)], typing.Sequence[libcst.tests.pyre.simple_class.Item]]"
@@ -424,12 +466,12 @@
       "location": {
         "path": "libcst/tests/pyre/simple_class.py",
         "start": {
-          "line": 21,
-          "column": 8
+          "line": 22,
+          "column": 24
         },
         "stop": {
-          "line": 21,
-          "column": 30
+          "line": 22,
+          "column": 46
         }
       },
       "annotation": "typing.Sequence[libcst.tests.pyre.simple_class.Item]"
@@ -438,12 +480,12 @@
       "location": {
         "path": "libcst/tests/pyre/simple_class.py",
         "start": {
-          "line": 21,
-          "column": 28
+          "line": 22,
+          "column": 44
         },
         "stop": {
-          "line": 21,
-          "column": 29
+          "line": 22,
+          "column": 45
         }
       },
       "annotation": "typing_extensions.Literal[3]"
@@ -452,11 +494,11 @@
       "location": {
         "path": "libcst/tests/pyre/simple_class.py",
         "start": {
-          "line": 22,
+          "line": 23,
           "column": 4
         },
         "stop": {
-          "line": 22,
+          "line": 23,
           "column": 8
         }
       },
@@ -466,11 +508,11 @@
       "location": {
         "path": "libcst/tests/pyre/simple_class.py",
         "start": {
-          "line": 22,
+          "line": 23,
           "column": 12
         },
         "stop": {
-          "line": 22,
+          "line": 23,
           "column": 17
         }
       },
@@ -480,15 +522,29 @@
       "location": {
         "path": "libcst/tests/pyre/simple_class.py",
         "start": {
-          "line": 23,
+          "line": 24,
           "column": 4
         },
         "stop": {
-          "line": 23,
+          "line": 24,
           "column": 8
         }
       },
       "annotation": "libcst.tests.pyre.simple_class.Item"
+    },
+    {
+      "location": {
+        "path": "libcst/tests/pyre/simple_class.py",
+        "start": {
+          "line": 24,
+          "column": 4
+        },
+        "stop": {
+          "line": 24,
+          "column": 15
+        }
+      },
+      "annotation": "int"
     }
   ]
 }

@@ -26,13 +26,15 @@ def _test_simple_class_helper(test: UnitTest, wrapper: MetadataWrapper) -> None:
             ).body.body[0],
             cst.SimpleStatementLine,
         ).body[0],
-        cst.Assign,
+        cst.AnnAssign,
     )
-    self_number_attr = cst.ensure_type(assign.targets[0].target, cst.Attribute,)
+    self_number_attr = cst.ensure_type(assign.target, cst.Attribute)
     # TODO: uncomment when typing issue is fixed
     # self.assertEqual(types[self_number_attr], "int")
 
-    test.assertEqual(types[assign.value], "int")
+    value = assign.value
+    if value:
+        test.assertEqual(types[value], "int")
 
     # self
     test.assertEqual(
@@ -44,9 +46,9 @@ def _test_simple_class_helper(test: UnitTest, wrapper: MetadataWrapper) -> None:
     collector = collector_assign.targets[0].target
     test.assertEqual(types[collector], "libcst.tests.pyre.simple_class.ItemCollector")
     items_assign = cst.ensure_type(
-        cst.ensure_type(m.body[4], cst.SimpleStatementLine).body[0], cst.Assign
+        cst.ensure_type(m.body[4], cst.SimpleStatementLine).body[0], cst.AnnAssign
     )
-    items = items_assign.targets[0].target
+    items = items_assign.target
     test.assertEqual(
         types[items], "typing.Sequence[libcst.tests.pyre.simple_class.Item]"
     )
