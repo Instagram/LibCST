@@ -1,4 +1,24 @@
-# 0.2.5 - 2018-12-05
+# 0.2.6 - 2020-01-01
+
+## Added
+ - Added Codemod framework for running code transform over a codebase in parallel.
+   - Codemod for code transform logic.
+   - CodemodContext for preserving states across transforms.
+   - CodemodCommand for CLI interface.
+   - CodemodTest for testing codemod easily.
+   - yaml codemod config.
+   - Pre-build commands in codemod/commands/.
+ - Added TypeInferenceProvider for inferred type info from Pyre. A regression test suite was included.
+ - Added FullRepoManager for metadata inter-process cache handing.
+
+## Fixed
+ - Fixed usage link in README.
+ - Fixed type annotation for Mypy compatibility.
+
+## Updated
+ - Upgraded Pyre to 0.0.38
+
+# 0.2.5 - 2019-12-05
 
 ## Added
 
