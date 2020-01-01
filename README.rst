@@ -126,6 +126,11 @@ packaging tools. We recommend installing the latest stable release from
 
     pip install libcst
 
+Further Reading
+---------------
+- `Static Analysis at Scale: An Instagram Story. <https://instagram-engineering.com/static-analysis-at-scale-an-instagram-story-8f498ab71a0c>`_
+- `Refactoring Python with LibCST. <https://chairnerd.seatgeek.com/refactoring-python-with-libcst/>`_
+
 Development
 -----------
 
@@ -184,7 +189,7 @@ Future
 
 - Python 3.8 support, both in running on Python 3.8 and parsing 3.8 code.
 - Additional layer providing command-line frontend for executing refactors.
-- More metadata providers from deep static analysis including variable type annotation, etc.
+- Advanced full repository facts providers like fully qualified name and call graph.
 
 License
 =======
@@ -197,3 +202,4 @@ Acknowledgements
 - Guido van Rossum for creating the parser generator pgen2 (originally used in lib2to3 and forked into parso).
 - David Halter for parso which provides the parser and tokenizer that LibCST sits on top of.
 - Zac Hatfield-Dodds for hypothesis integration which continues to help us find bugs.
+- Zach Hammer improved type annotation for Mypy compatibility.
