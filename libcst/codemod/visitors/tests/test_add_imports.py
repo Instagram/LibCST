@@ -56,7 +56,7 @@ class TestAddImportsCodemod(CodemodTest):
                 return 5
         """
 
-        self.assertCodemod(before, after, [("a.b.c", None)])
+        self.assertCodemod(before, after, [("a.b.c", None, None)])
 
     def test_dont_add_module_simple(self) -> None:
         """
@@ -82,7 +82,57 @@ class TestAddImportsCodemod(CodemodTest):
                 return 5
         """
 
-        self.assertCodemod(before, after, [("a.b.c", None)])
+        self.assertCodemod(before, after, [("a.b.c", None, None)])
+
+    def test_add_module_alias_simple(self) -> None:
+        """
+        Should add module with alias as an import.
+        """
+
+        before = """
+            def foo() -> None:
+                pass
+
+            def bar() -> int:
+                return 5
+        """
+        after = """
+            import a.b.c as d
+
+            def foo() -> None:
+                pass
+
+            def bar() -> int:
+                return 5
+        """
+
+        self.assertCodemod(before, after, [("a.b.c", None, "d")])
+
+    def test_dont_add_module_alias_simple(self) -> None:
+        """
+        Should not add module with alias as an import since it exists
+        """
+
+        before = """
+            import a.b.c as d
+
+            def foo() -> None:
+                pass
+
+            def bar() -> int:
+                return 5
+        """
+        after = """
+            import a.b.c as d
+
+            def foo() -> None:
+                pass
+
+            def bar() -> int:
+                return 5
+        """
+
+        self.assertCodemod(before, after, [("a.b.c", None, "d")])
 
     def test_add_module_complex(self) -> None:
         """
@@ -104,6 +154,8 @@ class TestAddImportsCodemod(CodemodTest):
             import sys
             import a.b.c
             import defg.hi
+            import jkl as h
+            import i.j as k
 
             def foo() -> None:
                 pass
@@ -113,7 +165,15 @@ class TestAddImportsCodemod(CodemodTest):
         """
 
         self.assertCodemod(
-            before, after, [("a.b.c", None), ("defg.hi", None), ("argparse", None)]
+            before,
+            after,
+            [
+                ("a.b.c", None, None),
+                ("defg.hi", None, None),
+                ("argparse", None, None),
+                ("jkl", None, "h"),
+                ("i.j", None, "k"),
+            ],
         )
 
     def test_add_object_simple(self) -> None:
@@ -138,7 +198,31 @@ class TestAddImportsCodemod(CodemodTest):
                 return 5
         """
 
-        self.assertCodemod(before, after, [("a.b.c", "D")])
+        self.assertCodemod(before, after, [("a.b.c", "D", None)])
+
+    def test_add_object_alias_simple(self) -> None:
+        """
+        Should add object with alias as an import.
+        """
+
+        before = """
+            def foo() -> None:
+                pass
+
+            def bar() -> int:
+                return 5
+        """
+        after = """
+            from a.b.c import D as E
+
+            def foo() -> None:
+                pass
+
+            def bar() -> int:
+                return 5
+        """
+
+        self.assertCodemod(before, after, [("a.b.c", "D", "E")])
 
     def test_add_future(self) -> None:
         """
@@ -167,7 +251,7 @@ class TestAddImportsCodemod(CodemodTest):
                 return 5
         """
 
-        self.assertCodemod(before, after, [("__future__", "dummy_feature")])
+        self.assertCodemod(before, after, [("__future__", "dummy_feature", None)])
 
     def test_dont_add_object_simple(self) -> None:
         """
@@ -193,7 +277,33 @@ class TestAddImportsCodemod(CodemodTest):
                 return 5
         """
 
-        self.assertCodemod(before, after, [("a.b.c", "D")])
+        self.assertCodemod(before, after, [("a.b.c", "D", None)])
+
+    def test_dont_add_object_alias_simple(self) -> None:
+        """
+        Should not add object as an import since it exists.
+        """
+
+        before = """
+            from a.b.c import D as E
+
+            def foo() -> None:
+                pass
+
+            def bar() -> int:
+                return 5
+        """
+        after = """
+            from a.b.c import D as E
+
+            def foo() -> None:
+                pass
+
+            def bar() -> int:
+                return 5
+        """
+
+        self.assertCodemod(before, after, [("a.b.c", "D", "E")])
 
     def test_add_object_modify_simple(self) -> None:
         """
@@ -219,7 +329,33 @@ class TestAddImportsCodemod(CodemodTest):
                 return 5
         """
 
-        self.assertCodemod(before, after, [("a.b.c", "D")])
+        self.assertCodemod(before, after, [("a.b.c", "D", None)])
+
+    def test_add_object_alias_modify_simple(self) -> None:
+        """
+        Should modify existing import with alias to add new object
+        """
+
+        before = """
+            from a.b.c import E, F
+
+            def foo() -> None:
+                pass
+
+            def bar() -> int:
+                return 5
+        """
+        after = """
+            from a.b.c import D as _, E, F
+
+            def foo() -> None:
+                pass
+
+            def bar() -> int:
+                return 5
+        """
+
+        self.assertCodemod(before, after, [("a.b.c", "D", "_")])
 
     def test_add_object_modify_complex(self) -> None:
         """
@@ -227,7 +363,7 @@ class TestAddImportsCodemod(CodemodTest):
         """
 
         before = """
-            from a.b.c import E, F
+            from a.b.c import E, F, G as H
             from d.e.f import Foo, Bar
 
             def foo() -> None:
@@ -237,9 +373,9 @@ class TestAddImportsCodemod(CodemodTest):
                 return 5
         """
         after = """
-            from a.b.c import D, E, F
-            from d.e.f import Foo, Bar
-            from g.h.i import X, Y, Z
+            from a.b.c import D, E, F, G as H
+            from d.e.f import Baz as Qux, Foo, Bar
+            from g.h.i import V as W, X, Y, Z
 
             def foo() -> None:
                 pass
@@ -252,14 +388,17 @@ class TestAddImportsCodemod(CodemodTest):
             before,
             after,
             [
-                ("a.b.c", "D"),
-                ("a.b.c", "F"),
-                ("d.e.f", "Foo"),
-                ("g.h.i", "Z"),
-                ("g.h.i", "X"),
-                ("d.e.f", "Bar"),
-                ("g.h.i", "Y"),
-                ("a.b.c", "F"),
+                ("a.b.c", "D", None),
+                ("a.b.c", "F", None),
+                ("a.b.c", "G", "H"),
+                ("d.e.f", "Foo", None),
+                ("g.h.i", "Z", None),
+                ("g.h.i", "X", None),
+                ("d.e.f", "Bar", None),
+                ("d.e.f", "Baz", "Qux"),
+                ("g.h.i", "Y", None),
+                ("g.h.i", "V", "W"),
+                ("a.b.c", "F", None),
             ],
         )
 
@@ -273,6 +412,7 @@ class TestAddImportsCodemod(CodemodTest):
             import sys
             from a.b.c import E, F
             from d.e.f import Foo, Bar
+            import bar as baz
 
             def foo() -> None:
                 pass
@@ -285,7 +425,9 @@ class TestAddImportsCodemod(CodemodTest):
             import sys
             from a.b.c import D, E, F
             from d.e.f import Foo, Bar
+            import bar as baz
             import foo
+            import qux as quux
             from g.h.i import X, Y, Z
 
             def foo() -> None:
@@ -299,16 +441,18 @@ class TestAddImportsCodemod(CodemodTest):
             before,
             after,
             [
-                ("a.b.c", "D"),
-                ("a.b.c", "F"),
-                ("d.e.f", "Foo"),
-                ("sys", None),
-                ("g.h.i", "Z"),
-                ("g.h.i", "X"),
-                ("d.e.f", "Bar"),
-                ("g.h.i", "Y"),
-                ("foo", None),
-                ("a.b.c", "F"),
+                ("a.b.c", "D", None),
+                ("a.b.c", "F", None),
+                ("d.e.f", "Foo", None),
+                ("sys", None, None),
+                ("g.h.i", "Z", None),
+                ("g.h.i", "X", None),
+                ("d.e.f", "Bar", None),
+                ("g.h.i", "Y", None),
+                ("foo", None, None),
+                ("a.b.c", "F", None),
+                ("bar", None, "baz"),
+                ("qux", None, "quux"),
             ],
         )
 
@@ -338,7 +482,7 @@ class TestAddImportsCodemod(CodemodTest):
                 return 5
         """
 
-        self.assertCodemod(before, after, [("a.b.c", "D")])
+        self.assertCodemod(before, after, [("a.b.c", "D", None)])
 
     def test_add_import_preserve_doctring_multiples(self) -> None:
         """
@@ -367,7 +511,9 @@ class TestAddImportsCodemod(CodemodTest):
                 return 5
         """
 
-        self.assertCodemod(before, after, [("a.b.c", "D"), ("argparse", None)])
+        self.assertCodemod(
+            before, after, [("a.b.c", "D", None), ("argparse", None, None)]
+        )
 
     def test_strict_module_no_imports(self) -> None:
         """
@@ -387,7 +533,7 @@ class TestAddImportsCodemod(CodemodTest):
                 pass
         """
 
-        self.assertCodemod(before, after, [("argparse", None)])
+        self.assertCodemod(before, after, [("argparse", None, None)])
 
     def test_strict_module_with_imports(self) -> None:
         """
@@ -411,4 +557,4 @@ class TestAddImportsCodemod(CodemodTest):
                 pass
         """
 
-        self.assertCodemod(before, after, [("argparse", None)])
+        self.assertCodemod(before, after, [("argparse", None, None)])
