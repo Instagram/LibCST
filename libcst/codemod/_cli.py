@@ -13,12 +13,13 @@ import os.path
 import re
 import subprocess
 import sys
+import time
 import traceback
 from dataclasses import dataclass, replace
 from multiprocessing import Process, Queue, cpu_count
 from pathlib import Path
 from queue import Empty
-from typing import AnyStr, List, Optional, Sequence, cast
+from typing import AnyStr, List, Optional, Sequence, Union, cast
 
 from libcst import PartialParserConfig, parse_module
 from libcst.codemod._codemod import Codemod
@@ -371,17 +372,53 @@ class Progress:
         self.total = total
         # 1/100 = 0, len("0") = 1, precision = 0, more digits for more files
         self.pretty_precision: int = len(str(self.total // 100)) - 1
+        # Pretend we start processing immediately. This is not true, but it's
+        # close enough to true.
+        self.started_at: float = time.time()
 
     def print(self, finished: int) -> None:
         if not self.enabled:
             return
         left = self.total - finished
         percent = 100.0 * (float(finished) / float(self.total))
+        elapsed_time = max(time.time() - self.started_at, 0)
+
         print(
-            f"{self.ERASE_CURRENT_LINE}{percent:.{self.pretty_precision}f}% complete, {left} files to go...",
+            f"{self.ERASE_CURRENT_LINE}{self._human_seconds(elapsed_time)} {percent:.{self.pretty_precision}f}% complete, {self.estimate_completion(elapsed_time, finished, left)} estimated for {left} files to go...",
             end="",
             file=sys.stderr,
         )
+
+    def _human_seconds(self, seconds: Union[int, float]) -> str:
+        """
+        This returns a string which is a human-ish readable elapsed time such
+        as 30.42s or 10m 31s
+        """
+
+        minutes, seconds = divmod(seconds, 60)
+        hours, minutes = divmod(minutes, 60)
+        if hours > 0:
+            return f"{hours:.0f}h {minutes:02.0f}m {seconds:02.0f}s"
+        elif minutes > 0:
+            return f"{minutes:02.0f}m {seconds:02.0f}s"
+        else:
+            return f"{seconds:02.2f}s"
+
+    def estimate_completion(
+        self, elapsed_seconds: float, files_finished: int, files_left: int
+    ) -> str:
+        """
+        Computes a really basic estimated completion given a number of
+        operations still to do.
+        """
+
+        if files_finished <= 0:
+            # Technically infinite but calculating sounds better.
+            return "[calculating]"
+
+        fps = files_finished / elapsed_seconds
+        estimated_seconds_left = files_left / fps
+        return self._human_seconds(estimated_seconds_left)
 
     def clear(self) -> None:
         if not self.enabled:
