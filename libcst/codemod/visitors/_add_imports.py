@@ -4,6 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 #
 # pyre-strict
+from collections import defaultdict
 from typing import Dict, List, Optional, Sequence, Set, Tuple, Union
 
 import libcst
@@ -60,7 +61,7 @@ class AddImportsVisitor(ContextAwareTransformer):
     @staticmethod
     def _get_imports_from_context(
         context: CodemodContext,
-    ) -> List[Tuple[str, Optional[str]]]:
+    ) -> List[Tuple[str, Optional[str], Optional[str]]]:
         imports = context.scratch.get(AddImportsVisitor.CONTEXT_KEY, [])
         if not isinstance(imports, list):
             raise Exception("Logic error!")
@@ -68,7 +69,10 @@ class AddImportsVisitor(ContextAwareTransformer):
 
     @staticmethod
     def add_needed_import(
-        context: CodemodContext, module: str, obj: Optional[str] = None
+        context: CodemodContext,
+        module: str,
+        obj: Optional[str] = None,
+        asname: Optional[str] = None,
     ) -> None:
         """
         Schedule an import to be added in a future invocation of this class by
@@ -84,38 +88,72 @@ class AddImportsVisitor(ContextAwareTransformer):
         if module == "__future__" and obj is None:
             raise Exception("Cannot import __future__ directly!")
         imports = AddImportsVisitor._get_imports_from_context(context)
-        imports.append((module, obj))
+        imports.append((module, obj, asname))
         context.scratch[AddImportsVisitor.CONTEXT_KEY] = imports
 
     def __init__(
-        self, context: CodemodContext, imports: Sequence[Tuple[str, Optional[str]]] = ()
+        self,
+        context: CodemodContext,
+        imports: Sequence[Tuple[str, Optional[str], Optional[str]]] = (),
     ) -> None:
         # Allow for instantiation from either a context (used when multiple transforms
         # get chained) or from a direct instantiation.
         super().__init__(context)
-        imports: List[Tuple[str, Optional[str]]] = [
+        imports: List[Tuple[str, Optional[str], Optional[str]]] = [
             *AddImportsVisitor._get_imports_from_context(context),
             *imports,
         ]
 
         # Verify that the imports are valid
-        for module, obj in imports:
+        for module, obj, alias in imports:
             if module == "__future__" and obj is None:
                 raise Exception("Cannot import __future__ directly!")
+            if module == "__future__" and alias is not None:
+                raise Exception("Cannot import __future__ objects with aliases!")
 
         # List of modules we need to ensure are imported
         self.module_imports: Set[str] = {
-            module for (module, obj) in imports if obj is None
+            module for (module, obj, alias) in imports if obj is None and alias is None
         }
+
         # List of modules we need to check for object imports on
         from_imports: Set[str] = {
-            module for (module, obj) in imports if obj is not None
+            module
+            for (module, obj, alias) in imports
+            if obj is not None and alias is None
         }
         # Mapping of modules we're adding to the object they should import
         self.module_mapping: Dict[str, Set[str]] = {
-            module: {o for (m, o) in imports if m == module and o is not None}
+            module: {
+                o
+                for (m, o, n) in imports
+                if m == module and o is not None and n is None
+            }
             for module in sorted(from_imports)
         }
+
+        # List of aliased modules we need to ensure are imported
+        self.module_aliases: Dict[str, str] = {
+            module: alias
+            for (module, obj, alias) in imports
+            if obj is None and alias is not None
+        }
+        # List of modules we need to check for object imports on
+        from_imports_aliases: Set[str] = {
+            module
+            for (module, obj, alias) in imports
+            if obj is not None and alias is not None
+        }
+        # Mapping of modules we're adding to the object with alias they should import
+        self.alias_mapping: Dict[str, List[Tuple[str, str]]] = {
+            module: [
+                (o, n)
+                for (m, o, n) in imports
+                if m == module and o is not None and n is not None
+            ]
+            for module in sorted(from_imports_aliases)
+        }
+
         # Track the list of imports found in the file
         self.all_imports: List[Union[libcst.Import, libcst.ImportFrom]] = []
 
@@ -124,7 +162,21 @@ class AddImportsVisitor(ContextAwareTransformer):
         gatherer = GatherImportsVisitor(self.context)
         node.visit(gatherer)
         self.all_imports = gatherer.all_imports
+
         self.module_imports = self.module_imports - gatherer.module_imports
+        for module, alias in gatherer.module_aliases.items():
+            if module in self.module_aliases and self.module_aliases[module] == alias:
+                del self.module_aliases[module]
+        for module, aliases in gatherer.alias_mapping.items():
+            for (obj, alias) in aliases:
+                if (
+                    module in self.alias_mapping
+                    and (obj, alias) in self.alias_mapping[module]
+                ):
+                    self.alias_mapping[module].remove((obj, alias))
+                    if len(self.alias_mapping[module]) == 0:
+                        del self.alias_mapping[module]
+
         for module, imports in gatherer.object_mapping.items():
             if module not in self.module_mapping:
                 # We don't care about this import at all
@@ -161,17 +213,28 @@ class AddImportsVisitor(ContextAwareTransformer):
 
         # Get the module we're importing as a string, see if we have work to do
         module = self._get_string_name(updated_node.module)
-        if module not in self.module_mapping:
+        if module not in self.module_mapping and module not in self.alias_mapping:
             return updated_node
 
         # We have work to do, mark that we won't modify this again.
-        imports_to_add = self.module_mapping[module]
-        del self.module_mapping[module]
+        imports_to_add = self.module_mapping.get(module, [])
+        if module in self.module_mapping:
+            del self.module_mapping[module]
+        aliases_to_add = self.alias_mapping.get(module, [])
+        if module in self.alias_mapping:
+            del self.alias_mapping[module]
 
         # Now, do the actual update.
         return updated_node.with_changes(
             names=(
                 *[libcst.ImportAlias(name=libcst.Name(imp)) for imp in imports_to_add],
+                *[
+                    libcst.ImportAlias(
+                        name=libcst.Name(imp),
+                        asname=libcst.AsName(name=libcst.Name(alias)),
+                    )
+                    for (imp, alias) in aliases_to_add
+                ],
                 *updated_node.names,
             )
         )
@@ -249,7 +312,12 @@ class AddImportsVisitor(ContextAwareTransformer):
         self, original_node: libcst.Module, updated_node: libcst.Module
     ) -> libcst.Module:
         # Don't try to modify if we have nothing to do
-        if not self.module_imports and not self.module_mapping:
+        if (
+            not self.module_imports
+            and not self.module_mapping
+            and not self.module_aliases
+            and not self.alias_mapping
+        ):
             return updated_node
 
         # First, find the insertion point for imports
@@ -260,15 +328,34 @@ class AddImportsVisitor(ContextAwareTransformer):
         # Make sure there's at least one empty line before the first non-import
         statements_after_imports = self._insert_empty_line(statements_after_imports)
 
+        # Mapping of modules we're adding to the object with and without alias they should import
+        module_and_alias_mapping = defaultdict(list)
+        for module, aliases in self.alias_mapping.items():
+            module_and_alias_mapping[module].extend(aliases)
+        for module, imports in self.module_mapping.items():
+            module_and_alias_mapping[module].extend(
+                [(object, None) for object in imports]
+            )
+        module_and_alias_mapping = {
+            module: sorted(aliases)
+            for module, aliases in module_and_alias_mapping.items()
+        }
+        # import ptvsd; ptvsd.set_trace()
         # Now, add all of the imports we need!
         return updated_node.with_changes(
             body=(
                 *[
                     parse_statement(
-                        f"from {module} import {', '.join(sorted(imports))}",
+                        f"from {module} import "
+                        + ", ".join(
+                            [
+                                obj if alias is None else f"{obj} as {alias}"
+                                for (obj, alias) in aliases
+                            ]
+                        ),
                         config=updated_node.config_for_parsing,
                     )
-                    for module, imports in self.module_mapping.items()
+                    for module, aliases in module_and_alias_mapping.items()
                     if module == "__future__"
                 ],
                 *statements_before_imports,
@@ -280,10 +367,23 @@ class AddImportsVisitor(ContextAwareTransformer):
                 ],
                 *[
                     parse_statement(
-                        f"from {module} import {', '.join(sorted(imports))}",
+                        f"import {module} as {asname}",
                         config=updated_node.config_for_parsing,
                     )
-                    for module, imports in self.module_mapping.items()
+                    for (module, asname) in self.module_aliases.items()
+                ],
+                *[
+                    parse_statement(
+                        f"from {module} import "
+                        + ", ".join(
+                            [
+                                obj if alias is None else f"{obj} as {alias}"
+                                for (obj, alias) in aliases
+                            ]
+                        ),
+                        config=updated_node.config_for_parsing,
+                    )
+                    for module, aliases in module_and_alias_mapping.items()
                     if module != "__future__"
                 ],
                 *statements_after_imports,
