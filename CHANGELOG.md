@@ -1,6 +1,14 @@
+# 0.2.7 - 2020-01-07
+
+## Updated
+
+ - Command-line interface now shows rough estimate of time remaining while executing a codemod.
+ - Add needed import now supports import aliases.
+
 # 0.2.6 - 2020-01-01
 
 ## Added
+
  - Added Codemod framework for running code transform over a codebase in parallel.
    - Codemod for code transform logic.
    - CodemodContext for preserving states across transforms.
@@ -12,10 +20,12 @@
  - Added FullRepoManager for metadata inter-process cache handing.
 
 ## Fixed
+
  - Fixed usage link in README.
  - Fixed type annotation for Mypy compatibility.
 
 ## Updated
+
  - Upgraded Pyre to 0.0.38
 
 # 0.2.5 - 2019-12-05
