@@ -188,7 +188,6 @@ Future
 ======
 
 - Python 3.8 support, both in running on Python 3.8 and parsing 3.8 code.
-- Additional layer providing command-line frontend for executing refactors.
 - Advanced full repository facts providers like fully qualified name and call graph.
 
 License
