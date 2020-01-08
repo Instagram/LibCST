@@ -201,14 +201,12 @@ class AddWildcardsToSequenceUnions(cst.CSTTransformer):
                 # We don't want to add AtLeastN/AtMostN inside MatchIfTrue
                 # type blocks, even for sequence types.
                 return
-            slc = node.slice
-            # TODO: We can remove the instance check after ExtSlice is deprecated.
-            if not isinstance(slc, Sequence) or len(slc) != 1:
+            if len(node.slice) != 1:
                 raise Exception(
                     "Unexpected number of sequence elements inside Sequence type "
                     + "annotation!"
                 )
-            nodeslice = slc[0].slice
+            nodeslice = node.slice[0].slice
             if isinstance(nodeslice, cst.Index):
                 possibleunion = nodeslice.value
                 if isinstance(possibleunion, cst.Subscript):
@@ -303,13 +301,10 @@ def _get_alias_name(node: cst.CSTNode) -> Optional[str]:
         return f"{_get_raw_name(node)}MatchType"
     elif isinstance(node, cst.Subscript):
         if node.value.deep_equals(cst.Name("Union")):
-            slc = node.slice
-            # TODO: This instance check can go away once we deprecate ExtSlice
-            if isinstance(slc, Sequence):
-                names = [_get_raw_name(s) for s in slc]
-                if any(n is None for n in names):
-                    return None
-                return "Or".join(n for n in names if n is not None) + "MatchType"
+            names = [_get_raw_name(s) for s in node.slice]
+            if any(n is None for n in names):
+                return None
+            return "Or".join(n for n in names if n is not None) + "MatchType"
 
     return None
 
@@ -357,8 +352,6 @@ def _get_clean_type_from_union(
     name = _get_alias_name(typecst)
     value = typecst.with_changes(
         slice=[
-            # pyre-ignore We know .slice is a sequence. This can go away once we
-            # deprecate ExtSlice.
             *[_maybe_fix_sequence_in_union(aliases, slc) for slc in typecst.slice],
             _get_match_metadata(),
             _get_match_if_true(typecst),
@@ -372,14 +365,9 @@ def _get_clean_type_from_subscript(
 ) -> cst.BaseExpression:
     if typecst.value.deep_equals(cst.Name("Sequence")):
         # Lets attempt to widen the sequence type and alias it.
-        slc = typecst.slice
-        # TODO: This instance check can go away once we deprecate ExtSlice
-        if not isinstance(slc, Sequence):
-            raise Exception("Logic error, expected Sequence to have children!")
-
-        if len(slc) != 1:
+        if len(typecst.slice) != 1:
             raise Exception("Logic error, Sequence shouldn't have more than one param!")
-        inner_type = slc[0].slice
+        inner_type = typecst.slice[0].slice
         if not isinstance(inner_type, cst.Index):
             raise Exception("Logic error, expecting Index for only Sequence element!")
         inner_type = inner_type.value
@@ -574,14 +562,6 @@ for node in all_libcst_nodes:
     generated_code.append(
         f"    metadata: Union[MetadataMatchType, DoNotCareSentinel, OneOf[MetadataMatchType], AllOf[MetadataMatchType]] = DoNotCare()"
     )
-
-
-# TODO: Remove this once we completely remove ExtSlice.
-# Allow old ExtSlice notation so that we don't break existing code
-generated_code.append("")
-generated_code.append("")
-generated_code.append("ExtSlice = SubscriptElement")
-all_exports.add("ExtSlice")
 
 
 # Make sure to add an __all__ for flake8 and compatibility with "from libcst.matchers import *"

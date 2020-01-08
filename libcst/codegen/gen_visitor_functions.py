@@ -36,8 +36,6 @@ for module, objects in imports.items():
     generated_code.append(f"    from {module} import (  # noqa: F401")
     generated_code.append(f"        {', '.join(sorted(list(objects)))}")
     generated_code.append("    )")
-# TODO: Remove this once we completely remove ExtSlice.
-generated_code.append("    ExtSlice = SubscriptElement")
 
 
 # Generate the base visit_ methods
@@ -48,33 +46,6 @@ for node in sorted(nodebases.keys(), key=lambda node: node.__name__):
     name = node.__name__
     if name.startswith("Base"):
         continue
-    # TODO: Remove this hack once we completely remove ExtSlice.
-    if name == "SubscriptElement":
-        # HACK! Point SubscriptElement visitors at ExtSlice visitors for now,
-        # so that deprecated visitors still work. This requires us to drop the
-        # optimization @mark_no_op for the time being.
-        generated_code.append("")
-        generated_code.append(
-            f'    def visit_SubscriptElement(self, node: "SubscriptElement") -> Optional[bool]:'
-        )
-        generated_code.append("        return self.visit_ExtSlice(node)")
-        for field in fields(node) or []:
-            if field.name == "_metadata":
-                continue
-            generated_code.append("")
-            generated_code.append(
-                f'    def visit_SubscriptElement_{field.name}(self, node: "SubscriptElement") -> None:'
-            )
-            generated_code.append(f"        self.visit_ExtSlice_{field.name}(node)")
-            generated_code.append("")
-            generated_code.append(
-                f'    def leave_SubscriptElement_{field.name}(self, node: "SubscriptElement") -> None:'
-            )
-            generated_code.append(f"        self.leave_ExtSlice_{field.name}(node)")
-
-        # HACK: Pretend we didn't output code and change the name to ExtSlice,
-        # so we can use the common code below.
-        name = "ExtSlice"
 
     generated_code.append("")
     generated_code.append("    @mark_no_op")
@@ -106,19 +77,6 @@ for node in sorted(nodebases.keys(), key=lambda node: node.__name__):
     name = node.__name__
     if name.startswith("Base"):
         continue
-    # TODO: Remove this hack once we completely remove ExtSlice.
-    if name == "SubscriptElement":
-        # HACK! Point SubscriptElement visitors at ExtSlice visitors for now,
-        # so that deprecated visitors still work. This requires us to drop the
-        # optimization @mark_no_op for the time being.
-        generated_code.append("")
-        generated_code.append(
-            f'    def leave_SubscriptElement(self, original_node: "SubscriptElement") -> None:'
-        )
-        generated_code.append("        self.leave_ExtSlice(original_node)")
-        # HACK: Pretend we didn't output code and change the name to ExtSlice,
-        # so we can use the common code below.
-        name = "ExtSlice"
 
     generated_code.append("")
     generated_code.append("    @mark_no_op")
@@ -150,20 +108,6 @@ for node in sorted(nodebases.keys(), key=lambda node: node.__name__):
         or base_uses.sequence
     ):
         valid_return_types.append("RemovalSentinel")
-    # TODO: Remove this hack once we completely remove ExtSlice.
-    if name == "SubscriptElement":
-        # HACK! Point SubscriptElement visitors at ExtSlice visitors for now,
-        # so that deprecated visitors still work. This requires us to drop the
-        # optimization @mark_no_op for the time being.
-        generated_code.append(
-            f'    def leave_SubscriptElement(self, original_node: "SubscriptElement", updated_node: "SubscriptElement") -> Union[{", ".join(valid_return_types)}]:'
-        )
-        generated_code.append(
-            "        return self.leave_ExtSlice(original_node, updated_node)"
-        )
-        # HACK: Pretend we didn't output code and change the name to ExtSlice,
-        # so we can use the common code below.
-        name = "ExtSlice"
 
     generated_code.append(
         f'    def leave_{name}(self, original_node: "{name}", updated_node: "{name}") -> Union[{", ".join(valid_return_types)}]:'

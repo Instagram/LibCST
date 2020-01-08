@@ -153,8 +153,7 @@ Subscripts and Slices
 .. autoclass:: libcst.Subscript
 .. autoclass:: libcst.Index
 .. autoclass:: libcst.Slice
-.. autoclass:: libcst.ExtSlice
-
+.. autoclass:: libcst.SubscriptElement
 
 Parenthesis, Brackets, and Braces
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

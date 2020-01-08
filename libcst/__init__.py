@@ -196,11 +196,6 @@ from libcst.metadata.base_provider import (
 from libcst.metadata.wrapper import MetadataWrapper
 
 
-# TODO: Remove this once we completely remove ExtSlice.
-# Provide a backwards-compatible reference to deprecated ExtSlice
-ExtSlice = SubscriptElement
-
-
 __all__ = [
     "BatchableCSTVisitor",
     "CodePosition",  # Deprecated export, import from libcst.metadata instead
@@ -254,7 +249,6 @@ __all__ = [
     "DictElement",
     "Element",
     "Ellipsis",
-    "ExtSlice",
     "Float",
     "FormattedString",
     "FormattedStringExpression",
