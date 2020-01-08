@@ -19,7 +19,7 @@ import os.path
 import sys
 import textwrap
 from abc import ABC, abstractmethod
-from typing import Any, Callable, Dict, List, Sequence
+from typing import Any, Callable, Dict, List, Sequence, Tuple, Type
 
 import yaml
 
@@ -342,7 +342,7 @@ def _codemod_impl(proc_name: str, command_args: List[str]) -> int:  # noqa: C901
     # Now, try to load the class and get its arguments for help purposes.
     if args.command is not None:
         command_path = args.command.split(".")
-        if len(command_path) != 2:
+        if len(command_path) < 2:
             print(f"{args.command} is not a valid codemod command", file=sys.stderr)
             return 1
         command_module_name, command_class_name = (
@@ -636,6 +636,38 @@ def _initialize_impl(proc_name: str, command_args: List[str]) -> int:
     return 0
 
 
+def _recursive_find(base_dir: str, base_module: str) -> List[Tuple[str, object]]:
+    """
+    Given a base directory and a base module, recursively walk the directory looking
+    for importable python modules, returning them and their relative module name
+    based off of the base_module.
+    """
+
+    modules: List[Tuple[str, object]] = []
+
+    for path in os.listdir(base_dir):
+        full_path = os.path.join(base_dir, path)
+        if os.path.isdir(full_path):
+            # Recursively add files in subdirectories.
+            additions = _recursive_find(full_path, f"{base_module}.{path}")
+            for module_name, module_object in additions:
+                modules.append((f"{path}.{module_name}", module_object))
+            continue
+
+        if not os.path.isfile(full_path) or not path.endswith(".py"):
+            continue
+        try:
+            module_name = path[:-3]
+            potential_codemod = importlib.import_module(f"{base_module}.{module_name}")
+            modules.append((module_name, potential_codemod))
+        except AttributeError:
+            continue
+        except ModuleNotFoundError:
+            continue
+
+    return modules
+
+
 def _list_impl(proc_name: str, command_args: List[str]) -> int:  # noqa: C901
     # Grab the configuration so we can determine which modules to list from
     config = _find_and_load_config()
@@ -646,7 +678,7 @@ def _list_impl(proc_name: str, command_args: List[str]) -> int:  # noqa: C901
     _ = parser.parse_args(command_args)
 
     # Now, import each of the modules to determine their paths.
-    codemods: List[str] = []
+    codemods: Dict[Type[CodemodCommand], str] = {}
     for module in config["modules"]:
         try:
             imported_module = importlib.import_module(module)
@@ -664,19 +696,10 @@ def _list_impl(proc_name: str, command_args: List[str]) -> int:  # noqa: C901
 
         # Grab the path, try to import all of the files inside of it.
         path = os.path.dirname(os.path.abspath(imported_module.__file__))
-        for filename in os.listdir(path):
-            if not filename.endswith(".py"):
-                continue
-            try:
-                potential_codemod = importlib.import_module(f"{module}.{filename[:-3]}")
-            except AttributeError:
-                continue
-            except ModuleNotFoundError:
-                continue
-
-            for objname in dir(potential_codemod):
+        for name, imported_module in _recursive_find(path, module):
+            for objname in dir(imported_module):
                 try:
-                    obj = getattr(potential_codemod, objname)
+                    obj = getattr(imported_module, objname)
                     if not issubclass(obj, CodemodCommand):
                         continue
                     if inspect.isabstract(obj):
@@ -686,13 +709,21 @@ def _list_impl(proc_name: str, command_args: List[str]) -> int:  # noqa: C901
                     # check for that here.
                     if any(cls[0] is ABC for cls in inspect.getclasstree([obj])):
                         continue
-                    codemods.append(
-                        f"{filename[:-3]}.{obj.__name__} - {obj.DESCRIPTION}"
-                    )
+                    # Deduplicate any codemods that were referenced in other
+                    # codemods. Always take the shortest name.
+                    fullname = f"{name}.{obj.__name__}"
+                    if obj in codemods:
+                        if len(fullname) < len(codemods[obj]):
+                            codemods[obj] = fullname
+                    else:
+                        codemods[obj] = fullname
                 except TypeError:
                     continue
 
-    print("\n".join(sorted(codemods)))
+    printable_codemods: List[str] = [
+        f"{name} - {obj.DESCRIPTION}" for obj, name in codemods.items()
+    ]
+    print("\n".join(sorted(printable_codemods)))
     return 0
 
 
