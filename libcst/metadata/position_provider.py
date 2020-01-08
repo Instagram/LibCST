@@ -127,9 +127,7 @@ class PositionProvider(BaseMetadataProvider[CodeRange]):
     significant.
 
     The positions provided by this provider should eventually match the positions used
-    by Pyre_ for equivalent nodes.
-
-    .. _Pyre: https://github.com/facebook/pyre-check
+    by `Pyre <https://github.com/facebook/pyre-check>`__ for equivalent nodes.
     """
 
     def _gen_impl(self, module: Module) -> None:

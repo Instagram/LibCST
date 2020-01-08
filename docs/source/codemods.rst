@@ -40,6 +40,16 @@ emitted up to the exception being thrown will be preserved in the result.
 
 .. autoclass:: libcst.codemod.SkipFile
 
+Finally, its often easier to test codemods by writing verification tests instead of
+running repeatedly on your project. LibCST makes this easy with
+:class:`~libcst.codemod.CodemodTest`. Often you can develop the majority of your
+codemod using just tests, augmenting functionality when you run into an unexpected
+edge case when running it against your repository.
+
+.. autoclass:: libcst.codemod.CodemodTest
+  :inherited-members:
+  :exclude-members: addCleanup, addTypeEqualityFunc, assertAlmostEqual, assertAlmostEquals, assertCountEqual, assertDictContainsSubset, assertDictEqual, assertEqual, assertEquals, assertFalse, assertGreater, assertGreaterEqual, assertIn, assertIs, assertIsInstance, assertIsNone, assertIsNot, assertIsNotNone, assertLess, assertLessEqual, assertListEqual, assertLogs, assertMultiLineEqual, assertNotAlmostEqual, assertNotAlmostEquals, assertNotEqual, assertNotEquals, assertNotIn, assertNotIsInstance, assertNotRegex, assertNotRegexpMatches, assertRaises, assertRaisesRegex, assertRaisesRegexp, assertRegex, assertRegexpMatches, assertSequenceEqual, assertSetEqual, assertTrue, assertTupleEqual, assertWarns, assertWarnsRegex, assert_, countTestCases, debug, defaultTestResult, doCleanups, fail, failIf, failIfAlmostEqual, failIfEqual, failUnless, failUnlessAlmostEqual, failUnlessEqual, failUnlessRaises, failureException, id, longMessage, maxDiff, run, setUp, classmethod, setUpClass, shortDescription, skipTest, subTest, tearDown, tearDownClass
+
 -------------------
 Execution Interface
 -------------------
