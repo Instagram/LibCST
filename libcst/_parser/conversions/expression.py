@@ -1556,7 +1556,8 @@ def convert_yield_expr(
     return WithLeadingWhitespace(yield_node, yield_token.whitespace_before)
 
 
-@with_production("yield_arg", "'from' test | testlist", version="<=3.7")
+@with_production("yield_arg", "testlist", version="<3.3")
+@with_production("yield_arg", "'from' test | testlist", version=">=3.3,<3.8")
 @with_production("yield_arg", "'from' test | testlist_star_expr", version=">=3.8")
 def convert_yield_arg(
     config: ParserConfig, children: typing.Sequence[typing.Any]

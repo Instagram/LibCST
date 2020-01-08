@@ -8,7 +8,7 @@ from typing import Callable, Optional
 
 import libcst as cst
 from libcst import parse_statement
-from libcst._nodes.tests.base import CSTNodeTest
+from libcst._nodes.tests.base import CSTNodeTest, parse_statement_as
 from libcst.helpers import ensure_type
 from libcst.metadata import CodeRange
 from libcst.testing.utils import data_provider
@@ -225,3 +225,20 @@ class YieldParsingTest(CSTNodeTest):
                 cst.Expr,
             ).value,
         )
+
+    @data_provider(
+        (
+            {
+                "code": "yield from x",
+                "parser": parse_statement_as(python_version="3.3"),
+                "expect_success": True,
+            },
+            {
+                "code": "yield from x",
+                "parser": parse_statement_as(python_version="3.1"),
+                "expect_success": False,
+            },
+        )
+    )
+    def test_versions(self, code, parser, expect_success) -> None:
+        self.assert_parses(code, parser, expect_success)
