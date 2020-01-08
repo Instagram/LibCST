@@ -15,7 +15,6 @@ from typing import (
     Set,
     Tuple,
     Type,
-    TypeVar,
     Union,
     cast,
     get_type_hints,
@@ -23,6 +22,7 @@ from typing import (
 
 import libcst as cst
 from libcst import CSTTransformer, CSTVisitor
+from libcst._types import CSTNodeT
 from libcst.matchers._decorators import (
     CONSTRUCTED_LEAVE_MATCHER_ATTR,
     CONSTRUCTED_VISIT_MATCHER_ATTR,
@@ -51,9 +51,6 @@ CONCRETE_METHODS: Set[str] = {
     *{f"visit_{cls.__name__}" for cls in TYPED_FUNCTION_RETURN_MAPPING},
     *{f"leave_{cls.__name__}" for cls in TYPED_FUNCTION_RETURN_MAPPING},
 }
-
-
-_CSTNodeT = TypeVar("_CSTNodeT", bound=cst.CSTNode)
 
 
 # pyre-ignore We don't care about Any here, its not exposed.
@@ -497,8 +494,8 @@ class MatcherDecoratableTransformer(CSTTransformer):
         return CSTTransformer.on_visit(self, node)
 
     def on_leave(
-        self, original_node: _CSTNodeT, updated_node: _CSTNodeT
-    ) -> Union[_CSTNodeT, cst.RemovalSentinel]:
+        self, original_node: CSTNodeT, updated_node: CSTNodeT
+    ) -> Union[CSTNodeT, cst.RemovalSentinel]:
         # First, evaluate whether this current function has a decorator on it.
         if _should_allow_visit(
             self._matchers, getattr(self, f"leave_{type(original_node).__name__}", None)
