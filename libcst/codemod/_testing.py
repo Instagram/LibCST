@@ -25,10 +25,16 @@ class _CodemodTest:
     since we set a metaclass on our UnitTest implementation.
     """
 
-    TRANSFORM: Type[Codemod]
+    TRANSFORM: Type[Codemod] = ...
 
     @staticmethod
     def make_fixture_data(data: str) -> str:
+        """
+        Given a code string originting from a multi-line triple-quoted string,
+        normalize the code using ``dedent`` and ensuring a trailing newline
+        is present.
+        """
+
         lines = dedent(data).split("\n")
 
         def filter_line(line: str) -> str:
@@ -53,9 +59,10 @@ class _CodemodTest:
 
     def assertCodeEqual(self, expected: str, actual: str) -> None:
         """
-        Given a before and after code string, makes sure they equal. This ensures
-        that both the expected and actual are sanitized, so its safe to use this
-        on two strings that may have come from a triple-quoted string.
+        Given an expected and actual code string, makes sure they equal. This
+        ensures that both the expected and actual are sanitized, so its safe to
+        use this on strings that may have come from a triple-quoted multi-line
+        string.
         """
 
         # pyre-ignore This mixin needs to be used with a UnitTest subclass.
@@ -76,9 +83,19 @@ class _CodemodTest:
         **kwargs: object,
     ) -> None:
         """
-        Given a before and after string, and optionally any args/kwargs that
-        should be passed to the codemod visitor constructor, validate that
-        the codemod executes as expected.
+        Given a before and after code string, and any args/kwargs that should
+        be passed to the codemod constructor specified in
+        :attr:`~CodemodTest.TRANSFORM`, validate that the codemod executes as
+        expected. Verify that the codemod completes successfully, unless the
+        ``expected_skip`` option is set to ``True``, in which case verify that
+        the codemod skips.  Optionally, a :class:`CodemodContext` can be provided.
+        If none is specified, a default, empty context is created for you.
+        Additionally, the python version for the code parser can be overridden
+        to a valid python version string such as `"3.6"`. If none is specified,
+        the version of the interpreter running your tests will be used. Also, a
+        list of warning strings can be specified and :meth:`~CodemodTest.assertCodemod`
+        will verify that the codemod generates those warnings in the order
+        specified. If it is left out, warnings are not checked.
         """
 
         context = context_override if context_override is not None else CodemodContext()
@@ -110,8 +127,14 @@ class _CodemodTest:
 
 class CodemodTest(_CodemodTest, UnitTest):
     """
-    Base test class for a transform test. Provides facilities for auto-instantiating
-    and executing a transform, given the args/kwargs that should be passed to it.
-    Set the TRANSFORM class attribute to the class you wish to test and call
-    assertCodemod to verify it transforms various code chunks correctly.
+    Base test class for a :class:`Codemod` test. Provides facilities for
+    auto-instantiating and executing a codemod, given the args/kwargs that
+    should be passed to it. Set the :attr:`~CodemodTest.TRANSFORM` class
+    attribute to the :class:`Codemod` class you wish to test and call
+    :meth:`~CodemodTest.assertCodemod` inside your test method to verify it
+    transforms various source code chunks correctly.
+
+    Note that this is a subclass of ``UnitTest`` so any :class:`CodemodTest`
+    can be executed using your favorite test runner such as the ``unittest``
+    module.
     """

@@ -187,12 +187,12 @@ We provide :class:`~libcst.metadata.ParentNodeProvider` for those use cases.
 
 Type Inference Metadata
 -----------------------
-`Type inference <https://en.wikipedia.org/wiki/Type_inference>`_ is to automatically infer
+`Type inference <https://en.wikipedia.org/wiki/Type_inference>`__ is to automatically infer
 data types of expression for deeper understanding source code.
 In Python, type checkers like `Mypy <https://github.com/python/mypy>`_ or
-`Pyre <https://pyre-check.org/>`_ analyze `type annotations <https://docs.python.org/3/library/typing.html>`_
+`Pyre <https://pyre-check.org/>`__ analyze `type annotations <https://docs.python.org/3/library/typing.html>`__
 and infer types for expressions.
-:class:`~libcst.metadata.TypeInferenceProvider` is provided by `Pyre Query API <https://pyre-check.org/docs/querying-pyre.html>`_
+:class:`~libcst.metadata.TypeInferenceProvider` is provided by `Pyre Query API <https://pyre-check.org/docs/querying-pyre.html>`__
 which requires `setup watchman <https://pyre-check.org/docs/watchman-integration.html>`_ for incremental typechecking.
 :class:`~libcst.metadata.FullRepoManger` is built for manage the inter process communication to Pyre.
 
