@@ -1673,9 +1673,6 @@ class Parameters(CSTNode):
     #: with defaults must all be after those without defaults.
     params: Sequence[Param] = ()
 
-    #: Deprecated spot for default params, please place them into above params.
-    default_params: Sequence[Param] = ()  # TODO: Kill this input
-
     # Optional parameter that captures unspecified positional arguments or a sentinel
     # star that dictates parameters following are kwonly args.
     star_arg: Union[Param, ParamStar, MaybeSentinel] = MaybeSentinel.DEFAULT
@@ -1703,10 +1700,8 @@ class Parameters(CSTNode):
             )
 
     def _validate_defaults(self) -> None:
-        # TODO: Collapse this to just looking at self.params once we deprecate default_params.
-        params_and_defaults = (*self.params, *self.default_params)
         seen_default = False
-        for param in params_and_defaults:
+        for param in self.params:
             if param.default:
                 # Mark that we've moved onto defaults
                 if not seen_default:
@@ -1727,9 +1722,6 @@ class Parameters(CSTNode):
     def _validate_stars(self) -> None:
         if len(self.params) > 0:
             self._validate_stars_sequence(self.params, section="params")
-        # TODO: Drop the following check once we deprecate default_params
-        if len(self.default_params) > 0:
-            self._validate_stars_sequence(self.default_params, section="default_params")
         star_arg = self.star_arg
         if (
             isinstance(star_arg, Param)
@@ -1764,10 +1756,6 @@ class Parameters(CSTNode):
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Parameters":
         return Parameters(
             params=visit_sequence(self, "params", self.params, visitor),
-            # TODO: Drop this attribute once we deprecate default_params
-            default_params=visit_sequence(
-                self, "default_params", self.default_params, visitor
-            ),
             star_arg=visit_sentinel(self, "star_arg", self.star_arg, visitor),
             kwonly_params=visit_sequence(
                 self, "kwonly_params", self.kwonly_params, visitor
@@ -1786,13 +1774,11 @@ class Parameters(CSTNode):
         else:
             starincluded = False
         # Render out the params first, computing necessary trailing commas.
-        # TODO: Get rid of this concatenation once we kill default_params
-        params_and_defaults = (*self.params, *self.default_params)
-        lastparam = len(params_and_defaults) - 1
+        lastparam = len(self.params) - 1
         more_values = (
             starincluded or len(self.kwonly_params) > 0 or self.star_kwarg is not None
         )
-        for i, param in enumerate(params_and_defaults):
+        for i, param in enumerate(self.params):
             param._codegen(
                 state, default_star="", default_comma=(i < lastparam or more_values)
             )
@@ -1866,8 +1852,6 @@ class Lambda(BaseExpression):
         # Sum up all parameters
         all_params = [
             *self.params.params,
-            # TODO: Drop this addition once we kill default_params
-            *self.params.default_params,
             *self.params.kwonly_params,
         ]
         star_arg = self.params.star_arg
@@ -1912,8 +1896,6 @@ class Lambda(BaseExpression):
             if isinstance(whitespace_after_lambda, MaybeSentinel):
                 if not (
                     len(self.params.params) == 0
-                    # TODO: Drop this check once we kill default_params
-                    and len(self.params.default_params) == 0
                     and not isinstance(self.params.star_arg, Param)
                     and len(self.params.kwonly_params) == 0
                     and self.params.star_kwarg is None

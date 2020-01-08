@@ -1093,16 +1093,6 @@ def convert_funcdef(config: ParserConfig, children: Sequence[Any]) -> Any:
                     whitespace_after_param=param_partial.rpar.whitespace_before
                 )
             )
-    elif parameters.default_params:
-        if parameters.default_params[-1].comma == MaybeSentinel.DEFAULT:
-            parameters = parameters.with_changes(
-                default_params=(
-                    *parameters.default_params[:-1],
-                    parameters.default_params[-1].with_changes(
-                        whitespace_after_param=param_partial.rpar.whitespace_before
-                    ),
-                )
-            )
     elif parameters.params:
         if parameters.params[-1].comma == MaybeSentinel.DEFAULT:
             parameters = parameters.with_changes(

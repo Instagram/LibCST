@@ -204,8 +204,6 @@ def convert_argslist(config: ParserConfig, children: Sequence[Any]) -> Any:
 
     return Parameters(
         params=tuple(params),
-        # TODO: Kill this once we kill the default_params argument to Parameters
-        default_params=(),
         star_arg=star_arg,
         kwonly_params=tuple(kwonly_params),
         star_kwarg=star_kwarg,

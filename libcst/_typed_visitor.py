@@ -3571,14 +3571,6 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
-    def visit_Parameters_default_params(self, node: "Parameters") -> None:
-        pass
-
-    @mark_no_op
-    def leave_Parameters_default_params(self, node: "Parameters") -> None:
-        pass
-
-    @mark_no_op
     def visit_Parameters_star_arg(self, node: "Parameters") -> None:
         pass
 
