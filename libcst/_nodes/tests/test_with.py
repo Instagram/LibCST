@@ -8,7 +8,7 @@ from typing import Any
 
 import libcst as cst
 from libcst import PartialParserConfig, parse_statement
-from libcst._nodes.tests.base import CSTNodeTest, DummyIndentedBlock
+from libcst._nodes.tests.base import CSTNodeTest, DummyIndentedBlock, parse_statement_as
 from libcst.metadata import CodeRange
 from libcst.testing.utils import data_provider
 
@@ -215,3 +215,20 @@ class WithTest(CSTNodeTest):
     )
     def test_invalid(self, **kwargs: Any) -> None:
         self.assert_invalid(**kwargs)
+
+    @data_provider(
+        (
+            {
+                "code": "with a, b: pass",
+                "parser": parse_statement_as(python_version="3.1"),
+                "expect_success": True,
+            },
+            {
+                "code": "with a, b: pass",
+                "parser": parse_statement_as(python_version="3.0"),
+                "expect_success": False,
+            },
+        )
+    )
+    def test_versions(self, code, parser, expect_success) -> None:
+        self.assert_parses(code, parser, expect_success)

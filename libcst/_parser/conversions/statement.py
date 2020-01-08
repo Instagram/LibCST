@@ -979,7 +979,10 @@ def convert_except_clause(config: ParserConfig, children: Sequence[Any]) -> Any:
     )
 
 
-@with_production("with_stmt", "'with' with_item (',' with_item)*  ':' suite")
+@with_production(
+    "with_stmt", "'with' with_item (',' with_item)*  ':' suite", version=">=3.1"
+)
+@with_production("with_stmt", "'with' with_item ':' suite", version="<3.1")
 def convert_with_stmt(config: ParserConfig, children: Sequence[Any]) -> Any:
     (with_token, *items, colon_token, suite) = children
     item_nodes: List[WithItem] = []
