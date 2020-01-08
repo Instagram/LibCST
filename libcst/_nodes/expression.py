@@ -1365,7 +1365,7 @@ class SubscriptElement(CSTNode):
     <https://docs.scipy.org/doc/numpy-1.10.1/user/basics.indexing.html>`_.
     """
 
-    #: A slice or index that is part of the extslice.
+    #: A slice or index that is part of a subscript.
     slice: Union[Index, Slice]
 
     #: A separating comma, with any whitespace it owns.
@@ -1400,9 +1400,8 @@ class Subscript(BaseAssignTargetExpression, BaseDelTargetExpression):
     #: ``x`` in ``x[2]``.
     value: BaseExpression
 
-    #: The :class:`Index`, :class:`Slice`, or :class:`SubscriptElement` to extract from the
-    #: ``value``.
-    slice: Union[Index, Slice, Sequence[SubscriptElement]]
+    #: The :class:`SubscriptElement` to extract from the ``value``.
+    slice: Sequence[SubscriptElement]
 
     lbracket: LeftSquareBracket = LeftSquareBracket.field()
     #: Brackets after the ``value`` surrounding the ``slice``.
@@ -1417,14 +1416,11 @@ class Subscript(BaseAssignTargetExpression, BaseDelTargetExpression):
 
     def _validate(self) -> None:
         super(Subscript, self)._validate()
-        slc = self.slice
-        if isinstance(slc, Sequence):
-            # Validate valid commas
-            if len(slc) < 1:
-                raise CSTValidationError("Cannot have empty SubscriptElement.")
+        # Validate valid commas
+        if len(self.slice) < 1:
+            raise CSTValidationError("Cannot have empty SubscriptElement.")
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Subscript":
-        slice = self.slice
         return Subscript(
             lpar=visit_sequence(self, "lpar", self.lpar, visitor),
             value=visit_required(self, "value", self.value, visitor),
@@ -1432,9 +1428,7 @@ class Subscript(BaseAssignTargetExpression, BaseDelTargetExpression):
                 self, "whitespace_after_value", self.whitespace_after_value, visitor
             ),
             lbracket=visit_required(self, "lbracket", self.lbracket, visitor),
-            slice=visit_required(self, "slice", slice, visitor)
-            if isinstance(slice, (Index, Slice))
-            else visit_sequence(self, "slice", slice, visitor),
+            slice=visit_sequence(self, "slice", self.slice, visitor),
             rbracket=visit_required(self, "rbracket", self.rbracket, visitor),
             rpar=visit_sequence(self, "rpar", self.rpar, visitor),
         )
@@ -1453,16 +1447,9 @@ class Subscript(BaseAssignTargetExpression, BaseDelTargetExpression):
             self.value._codegen(state)
             self.whitespace_after_value._codegen(state)
             self.lbracket._codegen(state)
-            slc = self.slice
-            if isinstance(slc, (Index, Slice)):
-                slc._codegen(state)
-            elif isinstance(slc, Sequence):
-                lastslice = len(slc) - 1
-                for i, slice in enumerate(slc):
-                    slice._codegen(state, default_comma=(i != lastslice))
-            else:
-                # We can make pyre happy this way!
-                raise Exception("Logic error!")
+            lastslice = len(self.slice) - 1
+            for i, slice in enumerate(self.slice):
+                slice._codegen(state, default_comma=(i != lastslice))
             self.rbracket._codegen(state)
 
 

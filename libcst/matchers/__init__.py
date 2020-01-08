@@ -11485,332 +11485,82 @@ class Subscript(
         AllOf[BaseExpressionMatchType],
     ] = DoNotCare()
     slice: Union[
-        "Index",
-        "Slice",
-        Union[
-            Sequence[
-                Union[
-                    SubscriptElementMatchType,
-                    DoNotCareSentinel,
-                    OneOf[SubscriptElementMatchType],
-                    AllOf[SubscriptElementMatchType],
-                    AtLeastN[
-                        Union[
-                            SubscriptElementMatchType,
-                            DoNotCareSentinel,
-                            OneOf[SubscriptElementMatchType],
-                            AllOf[SubscriptElementMatchType],
-                        ]
-                    ],
-                    AtMostN[
-                        Union[
-                            SubscriptElementMatchType,
-                            DoNotCareSentinel,
-                            OneOf[SubscriptElementMatchType],
-                            AllOf[SubscriptElementMatchType],
-                        ]
-                    ],
-                ]
-            ],
-            DoNotCareSentinel,
-            MatchIfTrue[Callable[[Sequence[cst.SubscriptElement]], bool]],
-            OneOf[
-                Union[
-                    Sequence[
-                        Union[
-                            SubscriptElementMatchType,
-                            OneOf[SubscriptElementMatchType],
-                            AllOf[SubscriptElementMatchType],
-                            AtLeastN[
-                                Union[
-                                    SubscriptElementMatchType,
-                                    OneOf[SubscriptElementMatchType],
-                                    AllOf[SubscriptElementMatchType],
-                                ]
-                            ],
-                            AtMostN[
-                                Union[
-                                    SubscriptElementMatchType,
-                                    OneOf[SubscriptElementMatchType],
-                                    AllOf[SubscriptElementMatchType],
-                                ]
-                            ],
-                        ]
-                    ],
-                    MatchIfTrue[Callable[[Sequence[cst.SubscriptElement]], bool]],
-                ]
-            ],
-            AllOf[
-                Union[
-                    Sequence[
-                        Union[
-                            SubscriptElementMatchType,
-                            OneOf[SubscriptElementMatchType],
-                            AllOf[SubscriptElementMatchType],
-                            AtLeastN[
-                                Union[
-                                    SubscriptElementMatchType,
-                                    OneOf[SubscriptElementMatchType],
-                                    AllOf[SubscriptElementMatchType],
-                                ]
-                            ],
-                            AtMostN[
-                                Union[
-                                    SubscriptElementMatchType,
-                                    OneOf[SubscriptElementMatchType],
-                                    AllOf[SubscriptElementMatchType],
-                                ]
-                            ],
-                        ]
-                    ],
-                    MatchIfTrue[Callable[[Sequence[cst.SubscriptElement]], bool]],
-                ]
-            ],
-        ],
-        MetadataMatchType,
-        MatchIfTrue[
-            Callable[
-                [
+        Sequence[
+            Union[
+                SubscriptElementMatchType,
+                DoNotCareSentinel,
+                OneOf[SubscriptElementMatchType],
+                AllOf[SubscriptElementMatchType],
+                AtLeastN[
                     Union[
-                        cst.Index,
-                        cst.Slice,
-                        Sequence[cst.SubscriptElement],
-                        OneOf[
-                            Union[cst.Index, cst.Slice, Sequence[cst.SubscriptElement]]
-                        ],
-                        AllOf[
-                            Union[cst.Index, cst.Slice, Sequence[cst.SubscriptElement]]
-                        ],
+                        SubscriptElementMatchType,
+                        DoNotCareSentinel,
+                        OneOf[SubscriptElementMatchType],
+                        AllOf[SubscriptElementMatchType],
                     ]
                 ],
-                bool,
+                AtMostN[
+                    Union[
+                        SubscriptElementMatchType,
+                        DoNotCareSentinel,
+                        OneOf[SubscriptElementMatchType],
+                        AllOf[SubscriptElementMatchType],
+                    ]
+                ],
             ]
         ],
         DoNotCareSentinel,
+        MatchIfTrue[Callable[[Sequence[cst.SubscriptElement]], bool]],
         OneOf[
             Union[
-                "Index",
-                "Slice",
-                Union[
-                    Sequence[
-                        Union[
-                            SubscriptElementMatchType,
-                            OneOf[SubscriptElementMatchType],
-                            AllOf[SubscriptElementMatchType],
-                            AtLeastN[
-                                Union[
-                                    SubscriptElementMatchType,
-                                    OneOf[SubscriptElementMatchType],
-                                    AllOf[SubscriptElementMatchType],
-                                ]
-                            ],
-                            AtMostN[
-                                Union[
-                                    SubscriptElementMatchType,
-                                    OneOf[SubscriptElementMatchType],
-                                    AllOf[SubscriptElementMatchType],
-                                ]
-                            ],
-                        ]
-                    ],
-                    MatchIfTrue[Callable[[Sequence[cst.SubscriptElement]], bool]],
-                    OneOf[
-                        Union[
-                            Sequence[
-                                Union[
-                                    SubscriptElementMatchType,
-                                    OneOf[SubscriptElementMatchType],
-                                    AllOf[SubscriptElementMatchType],
-                                    AtLeastN[
-                                        Union[
-                                            SubscriptElementMatchType,
-                                            OneOf[SubscriptElementMatchType],
-                                            AllOf[SubscriptElementMatchType],
-                                        ]
-                                    ],
-                                    AtMostN[
-                                        Union[
-                                            SubscriptElementMatchType,
-                                            OneOf[SubscriptElementMatchType],
-                                            AllOf[SubscriptElementMatchType],
-                                        ]
-                                    ],
-                                ]
-                            ],
-                            MatchIfTrue[
-                                Callable[[Sequence[cst.SubscriptElement]], bool]
-                            ],
-                        ]
-                    ],
-                    AllOf[
-                        Union[
-                            Sequence[
-                                Union[
-                                    SubscriptElementMatchType,
-                                    OneOf[SubscriptElementMatchType],
-                                    AllOf[SubscriptElementMatchType],
-                                    AtLeastN[
-                                        Union[
-                                            SubscriptElementMatchType,
-                                            OneOf[SubscriptElementMatchType],
-                                            AllOf[SubscriptElementMatchType],
-                                        ]
-                                    ],
-                                    AtMostN[
-                                        Union[
-                                            SubscriptElementMatchType,
-                                            OneOf[SubscriptElementMatchType],
-                                            AllOf[SubscriptElementMatchType],
-                                        ]
-                                    ],
-                                ]
-                            ],
-                            MatchIfTrue[
-                                Callable[[Sequence[cst.SubscriptElement]], bool]
-                            ],
-                        ]
-                    ],
-                ],
-                MetadataMatchType,
-                MatchIfTrue[
-                    Callable[
-                        [
+                Sequence[
+                    Union[
+                        SubscriptElementMatchType,
+                        OneOf[SubscriptElementMatchType],
+                        AllOf[SubscriptElementMatchType],
+                        AtLeastN[
                             Union[
-                                cst.Index,
-                                cst.Slice,
-                                Sequence[cst.SubscriptElement],
-                                OneOf[
-                                    Union[
-                                        cst.Index,
-                                        cst.Slice,
-                                        Sequence[cst.SubscriptElement],
-                                    ]
-                                ],
-                                AllOf[
-                                    Union[
-                                        cst.Index,
-                                        cst.Slice,
-                                        Sequence[cst.SubscriptElement],
-                                    ]
-                                ],
+                                SubscriptElementMatchType,
+                                OneOf[SubscriptElementMatchType],
+                                AllOf[SubscriptElementMatchType],
                             ]
                         ],
-                        bool,
+                        AtMostN[
+                            Union[
+                                SubscriptElementMatchType,
+                                OneOf[SubscriptElementMatchType],
+                                AllOf[SubscriptElementMatchType],
+                            ]
+                        ],
                     ]
                 ],
+                MatchIfTrue[Callable[[Sequence[cst.SubscriptElement]], bool]],
             ]
         ],
         AllOf[
             Union[
-                "Index",
-                "Slice",
-                Union[
-                    Sequence[
-                        Union[
-                            SubscriptElementMatchType,
-                            OneOf[SubscriptElementMatchType],
-                            AllOf[SubscriptElementMatchType],
-                            AtLeastN[
-                                Union[
-                                    SubscriptElementMatchType,
-                                    OneOf[SubscriptElementMatchType],
-                                    AllOf[SubscriptElementMatchType],
-                                ]
-                            ],
-                            AtMostN[
-                                Union[
-                                    SubscriptElementMatchType,
-                                    OneOf[SubscriptElementMatchType],
-                                    AllOf[SubscriptElementMatchType],
-                                ]
-                            ],
-                        ]
-                    ],
-                    MatchIfTrue[Callable[[Sequence[cst.SubscriptElement]], bool]],
-                    OneOf[
-                        Union[
-                            Sequence[
-                                Union[
-                                    SubscriptElementMatchType,
-                                    OneOf[SubscriptElementMatchType],
-                                    AllOf[SubscriptElementMatchType],
-                                    AtLeastN[
-                                        Union[
-                                            SubscriptElementMatchType,
-                                            OneOf[SubscriptElementMatchType],
-                                            AllOf[SubscriptElementMatchType],
-                                        ]
-                                    ],
-                                    AtMostN[
-                                        Union[
-                                            SubscriptElementMatchType,
-                                            OneOf[SubscriptElementMatchType],
-                                            AllOf[SubscriptElementMatchType],
-                                        ]
-                                    ],
-                                ]
-                            ],
-                            MatchIfTrue[
-                                Callable[[Sequence[cst.SubscriptElement]], bool]
-                            ],
-                        ]
-                    ],
-                    AllOf[
-                        Union[
-                            Sequence[
-                                Union[
-                                    SubscriptElementMatchType,
-                                    OneOf[SubscriptElementMatchType],
-                                    AllOf[SubscriptElementMatchType],
-                                    AtLeastN[
-                                        Union[
-                                            SubscriptElementMatchType,
-                                            OneOf[SubscriptElementMatchType],
-                                            AllOf[SubscriptElementMatchType],
-                                        ]
-                                    ],
-                                    AtMostN[
-                                        Union[
-                                            SubscriptElementMatchType,
-                                            OneOf[SubscriptElementMatchType],
-                                            AllOf[SubscriptElementMatchType],
-                                        ]
-                                    ],
-                                ]
-                            ],
-                            MatchIfTrue[
-                                Callable[[Sequence[cst.SubscriptElement]], bool]
-                            ],
-                        ]
-                    ],
-                ],
-                MetadataMatchType,
-                MatchIfTrue[
-                    Callable[
-                        [
+                Sequence[
+                    Union[
+                        SubscriptElementMatchType,
+                        OneOf[SubscriptElementMatchType],
+                        AllOf[SubscriptElementMatchType],
+                        AtLeastN[
                             Union[
-                                cst.Index,
-                                cst.Slice,
-                                Sequence[cst.SubscriptElement],
-                                OneOf[
-                                    Union[
-                                        cst.Index,
-                                        cst.Slice,
-                                        Sequence[cst.SubscriptElement],
-                                    ]
-                                ],
-                                AllOf[
-                                    Union[
-                                        cst.Index,
-                                        cst.Slice,
-                                        Sequence[cst.SubscriptElement],
-                                    ]
-                                ],
+                                SubscriptElementMatchType,
+                                OneOf[SubscriptElementMatchType],
+                                AllOf[SubscriptElementMatchType],
                             ]
                         ],
-                        bool,
+                        AtMostN[
+                            Union[
+                                SubscriptElementMatchType,
+                                OneOf[SubscriptElementMatchType],
+                                AllOf[SubscriptElementMatchType],
+                            ]
+                        ],
                     ]
                 ],
+                MatchIfTrue[Callable[[Sequence[cst.SubscriptElement]], bool]],
             ]
         ],
     ] = DoNotCare()
@@ -13278,7 +13028,6 @@ class Yield(BaseExpression, BaseMatcherNode):
     ] = DoNotCare()
 
 
-ExtSlice = SubscriptElement
 __all__ = [
     "Add",
     "AddAssign",
@@ -13362,7 +13111,6 @@ __all__ = [
     "Equal",
     "ExceptHandler",
     "Expr",
-    "ExtSlice",
     "Finally",
     "Float",
     "FloorDivide",

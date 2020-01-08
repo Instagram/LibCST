@@ -178,8 +178,6 @@ if TYPE_CHECKING:
     )
     from libcst._nodes.module import Module  # noqa: F401
 
-    ExtSlice = SubscriptElement
-
 
 class CSTTypedBaseFunctions:
     @mark_no_op
@@ -4282,39 +4280,24 @@ class CSTTypedBaseFunctions:
     def leave_Subscript_whitespace_after_value(self, node: "Subscript") -> None:
         pass
 
+    @mark_no_op
     def visit_SubscriptElement(self, node: "SubscriptElement") -> Optional[bool]:
-        return self.visit_ExtSlice(node)
+        pass
 
+    @mark_no_op
     def visit_SubscriptElement_slice(self, node: "SubscriptElement") -> None:
-        self.visit_ExtSlice_slice(node)
+        pass
 
+    @mark_no_op
     def leave_SubscriptElement_slice(self, node: "SubscriptElement") -> None:
-        self.leave_ExtSlice_slice(node)
+        pass
 
+    @mark_no_op
     def visit_SubscriptElement_comma(self, node: "SubscriptElement") -> None:
-        self.visit_ExtSlice_comma(node)
+        pass
 
+    @mark_no_op
     def leave_SubscriptElement_comma(self, node: "SubscriptElement") -> None:
-        self.leave_ExtSlice_comma(node)
-
-    @mark_no_op
-    def visit_ExtSlice(self, node: "ExtSlice") -> Optional[bool]:
-        pass
-
-    @mark_no_op
-    def visit_ExtSlice_slice(self, node: "ExtSlice") -> None:
-        pass
-
-    @mark_no_op
-    def leave_ExtSlice_slice(self, node: "ExtSlice") -> None:
-        pass
-
-    @mark_no_op
-    def visit_ExtSlice_comma(self, node: "ExtSlice") -> None:
-        pass
-
-    @mark_no_op
-    def leave_ExtSlice_comma(self, node: "ExtSlice") -> None:
         pass
 
     @mark_no_op
@@ -5199,11 +5182,8 @@ class CSTTypedVisitorFunctions(CSTTypedBaseFunctions):
     def leave_Subscript(self, original_node: "Subscript") -> None:
         pass
 
-    def leave_SubscriptElement(self, original_node: "SubscriptElement") -> None:
-        self.leave_ExtSlice(original_node)
-
     @mark_no_op
-    def leave_ExtSlice(self, original_node: "ExtSlice") -> None:
+    def leave_SubscriptElement(self, original_node: "SubscriptElement") -> None:
         pass
 
     @mark_no_op
@@ -6017,11 +5997,6 @@ class CSTTypedTransformerFunctions(CSTTypedBaseFunctions):
     @mark_no_op
     def leave_SubscriptElement(
         self, original_node: "SubscriptElement", updated_node: "SubscriptElement"
-    ) -> Union["SubscriptElement", RemovalSentinel]:
-        return self.leave_ExtSlice(original_node, updated_node)
-
-    def leave_ExtSlice(
-        self, original_node: "ExtSlice", updated_node: "ExtSlice"
     ) -> Union["SubscriptElement", RemovalSentinel]:
         return updated_node
 

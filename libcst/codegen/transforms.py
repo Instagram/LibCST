@@ -24,15 +24,9 @@ class SimplifyUnionsTransformer(m.MatcherDecoratableTransformer):
     def _leave_union(
         self, original_node: cst.Subscript, updated_node: cst.Subscript
     ) -> cst.BaseExpression:
-        slc = updated_node.slice
-        # TODO: We can remove the instance check after ExtSlice is deprecated.
-        if isinstance(slc, (cst.Slice, cst.Index)):
-            # This is deprecated, so lets not support it.
-            raise Exception("Unexpected Slice in Union!")
-        if len(slc) == 1:
-            # This is a Union[SimpleType,] which is equivalent to
-            # just SimpleType
-            return cst.ensure_type(slc[0].slice, cst.Index).value
+        if len(updated_node.slice) == 1:
+            # This is a Union[SimpleType,] which is equivalent to just SimpleType
+            return cst.ensure_type(updated_node.slice[0].slice, cst.Index).value
         return updated_node
 
 
