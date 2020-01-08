@@ -32,7 +32,6 @@ from libcst._parser.types.whitespace_state import WhitespaceState
 
 
 _T = TypeVar("_T")
-_V = TypeVar("_V")
 
 
 @add_slots

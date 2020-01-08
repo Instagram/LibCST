@@ -39,7 +39,6 @@ from libcst._parser.types.token import Token
 
 
 _NodeT = TypeVar("_NodeT")
-_LeafT = TypeVar("_LeafT")
 _TokenTypeT = TypeVar("_TokenTypeT", bound=TokenType)
 _TokenT = TypeVar("_TokenT", bound=Token)
 
