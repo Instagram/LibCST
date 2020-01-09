@@ -9,6 +9,7 @@ from typing import Dict, List, Optional, Sequence, Set, Tuple, Union
 import libcst
 from libcst.codemod._context import CodemodContext
 from libcst.codemod._visitor import ContextAwareVisitor
+from libcst.helpers.expression import get_full_name_for_node
 
 
 class GatherImportsVisitor(ContextAwareVisitor):
@@ -62,14 +63,11 @@ class GatherImportsVisitor(ContextAwareVisitor):
         self.all_imports: List[Union[libcst.Import, libcst.ImportFrom]] = []
 
     def _get_string_name(self, node: Optional[libcst.CSTNode]) -> str:
-        if node is None:
-            return ""
-        elif isinstance(node, libcst.Name):
-            return node.value
-        elif isinstance(node, libcst.Attribute):
-            return self._get_string_name(node.value) + "." + node.attr.value
-        else:
+        name = "" if node is None else get_full_name_for_node(node)
+        if name is None:
             raise Exception(f"Invalid node type {type(node)}!")
+
+        return name
 
     def visit_Import(self, node: libcst.Import) -> None:
         # Track this import statement for later analysis.

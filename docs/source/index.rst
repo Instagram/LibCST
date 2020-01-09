@@ -41,6 +41,7 @@ LibCST
    metadata
    matchers
    codemods
+   helpers
    experimental
 
 
