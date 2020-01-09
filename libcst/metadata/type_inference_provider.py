@@ -33,22 +33,6 @@ class InferredType(TypedDict):
     annotation: str
 
 
-class Position(TypedDict):
-    line: int
-    column: int
-
-
-class Location(TypedDict):
-    path: str
-    start: Position
-    stop: Position
-
-
-class InferredType(TypedDict):
-    location: Location
-    annotation: str
-
-
 class PyreData(TypedDict):
     types: Sequence[InferredType]
 
