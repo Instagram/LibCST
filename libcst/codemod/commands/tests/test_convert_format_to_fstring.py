@@ -162,7 +162,7 @@ class ConvertFormatStringCommandTest(CodemodTest):
 
     def test_position_replacement(self) -> None:
         """
-        Should convert a format with positional-only paramaters.
+        Should convert a format with positional-only parameters.
         """
 
         before = """
@@ -196,7 +196,7 @@ class ConvertFormatStringCommandTest(CodemodTest):
 
     def test_name_replacement(self) -> None:
         """
-        Should convert a format with name-only paramaters.
+        Should convert a format with name-only parameters.
         """
 
         before = """

@@ -22,7 +22,7 @@ class TestUnnecessaryFormatString(CodemodTest):
             good = "good" % {}
             good = "good" % ()
             good = rf"good\d+{bar}"
-            good = f"wow i dont have args but dont mess my braces {{ up }}"
+            good = f"wow i don't have args but don't mess my braces {{ up }}"
 
             bad: str = f"bad" + "bad"
             bad: str = f'bad'
@@ -36,7 +36,7 @@ class TestUnnecessaryFormatString(CodemodTest):
             good = "good" % {}
             good = "good" % ()
             good = rf"good\d+{bar}"
-            good = f"wow i dont have args but dont mess my braces {{ up }}"
+            good = f"wow i don't have args but don't mess my braces {{ up }}"
 
             bad: str = "bad" + "bad"
             bad: str = 'bad'
