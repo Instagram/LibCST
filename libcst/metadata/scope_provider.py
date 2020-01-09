@@ -27,6 +27,7 @@ from typing import (
 
 import libcst as cst
 from libcst._add_slots import add_slots
+from libcst.helpers.expression import get_full_name_for_node
 from libcst.metadata.base_provider import BatchableMetadataProvider
 from libcst.metadata.expression_context_provider import (
     ExpressionContext,
@@ -190,22 +191,6 @@ class QualifiedName:
 
 class _NameUtil:
     @staticmethod
-    def get_full_name_for(node: Union[str, cst.CSTNode]) -> Optional[str]:
-        if isinstance(node, cst.Name):
-            return node.value
-        elif isinstance(node, str):
-            return node
-        elif isinstance(node, cst.Attribute):
-            return f"{_NameUtil.get_full_name_for(node.value)}.{node.attr.value}"
-        elif isinstance(node, cst.Call):
-            return _NameUtil.get_full_name_for(node.func)
-        elif isinstance(node, cst.Subscript):
-            return _NameUtil.get_full_name_for(node.value)
-        elif isinstance(node, (cst.FunctionDef, cst.ClassDef)):
-            return _NameUtil.get_full_name_for(node.name)
-        return None
-
-    @staticmethod
     def get_name_for(node: Union[str, cst.CSTNode]) -> Optional[str]:
         """A helper function to retrieve simple name str from a CSTNode or str"""
         if isinstance(node, cst.Name):
@@ -230,11 +215,11 @@ class _NameUtil:
             module_attr = assignment_node.module
             if module_attr:
                 # TODO: for relative import, keep the relative Dot in the qualified name
-                module = _NameUtil.get_full_name_for(module_attr)
+                module = get_full_name_for_node(module_attr)
         import_names = assignment_node.names
         if not isinstance(import_names, cst.ImportStar):
             for name in import_names:
-                real_name = _NameUtil.get_full_name_for(name.name)
+                real_name = get_full_name_for_node(name.name)
                 as_name = real_name
                 if name and name.asname:
                     name_asname = name.asname
@@ -415,7 +400,7 @@ class Scope(abc.ABC):
         resolve, e.g. ``List[Union[int, str]]``.
         """
         results = set()
-        full_name = _NameUtil.get_full_name_for(node)
+        full_name = get_full_name_for_node(node)
         if full_name is None:
             return results
         parts = full_name.split(".")
@@ -647,9 +632,7 @@ class ScopeVisitor(cst.CSTVisitor):
         self.scope.record_assignment(node.name.value, node)
         self.provider.set_metadata(node.name, self.scope)
 
-        with self._new_scope(
-            FunctionScope, node, _NameUtil.get_full_name_for(node.name)
-        ):
+        with self._new_scope(FunctionScope, node, get_full_name_for_node(node.name)):
             node.params.visit(self)
             node.body.visit(self)
 
@@ -724,7 +707,7 @@ class ScopeVisitor(cst.CSTVisitor):
         for keyword in node.keywords:
             keyword.visit(self)
 
-        with self._new_scope(ClassScope, node, _NameUtil.get_full_name_for(node.name)):
+        with self._new_scope(ClassScope, node, get_full_name_for_node(node.name)):
             for statement in node.body.body:
                 statement.visit(self)
 
