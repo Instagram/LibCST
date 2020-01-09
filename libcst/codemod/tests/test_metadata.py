@@ -9,25 +9,25 @@ from textwrap import dedent
 import libcst as cst
 from libcst import parse_module
 from libcst.codemod import CodemodContext, ContextAwareTransformer, ContextAwareVisitor
-from libcst.metadata import SyntacticPositionProvider
+from libcst.metadata import PositionProvider
 from libcst.testing.utils import UnitTest
 
 
 class TestingCollector(ContextAwareVisitor):
 
-    METADATA_DEPENDENCIES = (SyntacticPositionProvider,)
+    METADATA_DEPENDENCIES = (PositionProvider,)
 
     def visit_Pass(self, node: cst.Pass) -> None:
-        position = self.get_metadata(SyntacticPositionProvider, node)
+        position = self.get_metadata(PositionProvider, node)
         self.context.scratch["pass"] = (position.start.line, position.start.column)
 
 
 class TestingTransform(ContextAwareTransformer):
 
-    METADATA_DEPENDENCIES = (SyntacticPositionProvider,)
+    METADATA_DEPENDENCIES = (PositionProvider,)
 
     def visit_FunctionDef(self, node: cst.FunctionDef) -> None:
-        position = self.get_metadata(SyntacticPositionProvider, node)
+        position = self.get_metadata(PositionProvider, node)
         self.context.scratch[node.name.value] = (
             position.start.line,
             position.start.column,

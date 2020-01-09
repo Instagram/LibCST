@@ -581,7 +581,7 @@ class MatchMetadataIfTrue(_BaseMetadataMatcher):
         m.Name(
             value="foo",
             metadata=m.MatchMetadataIfTrue(
-                meta.SyntacticPositionProvider,
+                meta.PositionProvider,
                 lambda position: position.start.column == 0,
             )
         )

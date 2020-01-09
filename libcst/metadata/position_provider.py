@@ -137,9 +137,3 @@ class PositionProvider(BaseMetadataProvider[CodeRange]):
             provider=self,
         )
         module._codegen(state)
-
-
-# DEPRECATED: These names are here for backwards compatibility and will be removed in
-# the future.
-BasicPositionProvider = WhitespaceInclusivePositionProvider
-SyntacticPositionProvider = PositionProvider
