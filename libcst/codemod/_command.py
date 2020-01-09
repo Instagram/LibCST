@@ -60,7 +60,8 @@ class CodemodCommand(Codemod, ABC):
     def transform_module_impl(self, tree: Module) -> Module:
         """
         Override this with your transform. You should take in the tree, optionally
-        mutate it and then return the mutated version. The module reference and all                                                                calculated metadata are available for the lifetime of this function.
+        mutate it and then return the mutated version. The module reference and all
+        calculated metadata are available for the lifetime of this function.
         """
         ...
 
