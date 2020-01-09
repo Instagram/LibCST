@@ -19,9 +19,7 @@ from libcst.metadata.expression_context_provider import (
 from libcst.metadata.full_repo_manager import FullRepoManager
 from libcst.metadata.parent_node_provider import ParentNodeProvider
 from libcst.metadata.position_provider import (
-    BasicPositionProvider,
     PositionProvider,
-    SyntacticPositionProvider,
     WhitespaceInclusivePositionProvider,
 )
 from libcst.metadata.reentrant_codegen import (
@@ -54,8 +52,6 @@ __all__ = [
     "CodeRange",
     "WhitespaceInclusivePositionProvider",
     "PositionProvider",
-    "BasicPositionProvider",  # deprecated name for backwards compatibility
-    "SyntacticPositionProvider",  # deprecated name for backwards compatibility
     "BaseMetadataProvider",
     "ExpressionContext",
     "ExpressionContextProvider",

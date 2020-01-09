@@ -178,7 +178,7 @@ class MatchersExtractTest(UnitTest):
                             left=m.Name(
                                 metadata=m.SaveMatchedNode(
                                     m.MatchMetadata(
-                                        meta.SyntacticPositionProvider,
+                                        meta.PositionProvider,
                                         self._make_coderange((1, 0), (1, 1)),
                                     ),
                                     "left",
@@ -207,7 +207,7 @@ class MatchersExtractTest(UnitTest):
                             left=m.Name(
                                 metadata=m.SaveMatchedNode(
                                     m.MatchMetadata(
-                                        meta.SyntacticPositionProvider,
+                                        meta.PositionProvider,
                                         self._make_coderange((1, 0), (1, 2)),
                                     ),
                                     "left",
