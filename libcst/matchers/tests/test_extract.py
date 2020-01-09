@@ -15,10 +15,10 @@ from libcst.testing.utils import UnitTest
 class MatchersExtractTest(UnitTest):
     def _make_coderange(
         self, start: Tuple[int, int], end: Tuple[int, int]
-    ) -> cst.CodeRange:
-        return cst.CodeRange(
-            start=cst.CodePosition(line=start[0], column=start[1]),
-            end=cst.CodePosition(line=end[0], column=end[1]),
+    ) -> meta.CodeRange:
+        return meta.CodeRange(
+            start=meta.CodePosition(line=start[0], column=start[1]),
+            end=meta.CodePosition(line=end[0], column=end[1]),
         )
 
     def test_extract_sentinel(self) -> None:

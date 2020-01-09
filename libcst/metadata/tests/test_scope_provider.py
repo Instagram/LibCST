@@ -810,9 +810,6 @@ class ScopeProviderTest(UnitTest):
             cast(Assignment, list(a_outer_assignments)[0]).node, a_outer_assign
         )
         self.assertEqual(
-            {i.node for i in list(a_outer_assignments)[0].accesses}, {a_outer_access}
-        )
-        self.assertEqual(
             {i.node for i in list(a_outer_assignments)[0].references}, {a_outer_access}
         )
 
