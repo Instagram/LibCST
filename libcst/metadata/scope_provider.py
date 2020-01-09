@@ -7,7 +7,6 @@
 
 import abc
 import builtins
-import warnings
 from collections import defaultdict
 from contextlib import contextmanager
 from dataclasses import dataclass
@@ -99,21 +98,6 @@ class BaseAssignment(abc.ABC):
         """Return all accesses of the assignment."""
         # we don't want to publicly expose the mutable version of this
         return self.__accesses
-
-    @property
-    def accesses(self) -> Tuple[Access, ...]:
-        """Return all accesses of the assignment.
-
-        .. warning::
-           Deprecated: This will be removed soon. Please use
-           :attr:`~libcst.metadata.BaseAssignment.references` instead!
-        """
-        # we don't want to publicly expose the mutable version of this
-        warnings.warn(
-            "This will be removed soon. Please use `.references` instead!",
-            DeprecationWarning,
-        )
-        return tuple(self.__accesses)
 
     def __hash__(self) -> int:
         return id(self)
