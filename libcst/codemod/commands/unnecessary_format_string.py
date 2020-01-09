@@ -38,7 +38,7 @@ class UnnecessaryFormatString(VisitorBasedCodemodCommand):
         if old_string_evaled != new_string_evaled:
             warn_message = (
                 f"Attempted to codemod |{old_string_literal}| to "
-                + f"|{new_string_literal}| but dont eval to the same! First is |{old_string_evaled}| and "
+                + f"|{new_string_literal}| but don't eval to the same! First is |{old_string_evaled}| and "
                 + f"second is |{new_string_evaled}|"
             )
             self.warn(warn_message)
