@@ -734,7 +734,7 @@ def main(proc_name: str, cli_args: List[str]) -> int:
     add_help = first_arg in {"--help", "-h"}
 
     # Create general parser to determine which command we are invoking.
-    parser = argparse.ArgumentParser(
+    parser: argparse.ArgumentParser = argparse.ArgumentParser(
         description="Collection of utilities that ship with LibCST.",
         add_help=add_help,
         prog=proc_name,
