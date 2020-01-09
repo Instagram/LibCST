@@ -167,7 +167,6 @@ class BaseTestMeta(type):
     def __new__(mcs, name: str, bases: Tuple[type, ...], dct: Dict[str, Any]) -> object:
         validate_provider_tests(dct)
         populate_data_provider_tests(dct)
-        # pyre-ignore Pyre doesn't seem to know about __new__
         return super().__new__(mcs, name, bases, dict(dct))
 
 
