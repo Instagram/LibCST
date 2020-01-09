@@ -593,7 +593,7 @@ def _initialize_impl(proc_name: str, command_args: List[str]) -> int:
         "path",
         metavar="PATH",
         type=str,
-        help=("Path to initialize with a default LibCST codemod configuration"),
+        help="Path to initialize with a default LibCST codemod configuration",
     )
     args = parser.parse_args(command_args)
 
