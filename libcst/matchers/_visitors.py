@@ -531,7 +531,7 @@ class MatcherDecoratableTransformer(CSTTransformer):
         ):
             # Either the visit_func doesn't exist, we have no matchers, or we passed all
             # matchers. In either case, just call the superclass behavior.
-            return CSTVisitor.on_visit_attribute(self, node, attribute)
+            return CSTTransformer.on_visit_attribute(self, node, attribute)
 
     def on_leave_attribute(self, original_node: cst.CSTNode, attribute: str) -> None:
         # Evaluate whether this current function has a decorator on it.
@@ -541,7 +541,7 @@ class MatcherDecoratableTransformer(CSTTransformer):
         ):
             # Either the visit_func doesn't exist, we have no matchers, or we passed all
             # matchers. In either case, just call the superclass behavior.
-            CSTVisitor.on_leave_attribute(self, original_node, attribute)
+            CSTTransformer.on_leave_attribute(self, original_node, attribute)
 
     def matches(
         self,
