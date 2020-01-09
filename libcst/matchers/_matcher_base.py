@@ -1646,30 +1646,23 @@ class _ReplaceTransformer(libcst.CSTTransformer):
     ) -> None:
         self.matcher = matcher
         self.metadata_lookup = metadata_lookup
+        self.replacement: Callable[
+            [
+                libcst.CSTNode,
+                Dict[str, Union[libcst.CSTNode, Sequence[libcst.CSTNode]]],
+            ],
+            Union[MaybeSentinel, RemovalSentinel, libcst.CSTNode],
+        ]
+
         if inspect.isfunction(replacement):
             # pyre-ignore Pyre knows replacement is a function, but somehow drops
             # the type hint from the init signature.
-            self.replacement: Callable[
-                [
-                    libcst.CSTNode,
-                    Dict[str, Union[libcst.CSTNode, Sequence[libcst.CSTNode]]],
-                ]
-            ] = replacement
+            self.replacement = replacement
         elif isinstance(replacement, (MaybeSentinel, RemovalSentinel)):
-            self.replacement: Callable[
-                [
-                    libcst.CSTNode,
-                    Dict[str, Union[libcst.CSTNode, Sequence[libcst.CSTNode]]],
-                ]
-            ] = lambda node, matches: copy.deepcopy(replacement)
+            self.replacement = lambda node, matches: copy.deepcopy(replacement)
         else:
-            self.replacement: Callable[
-                [
-                    libcst.CSTNode,
-                    Dict[str, Union[libcst.CSTNode, Sequence[libcst.CSTNode]]],
-                ]
-                # pyre-ignore We know this is a CSTNode.
-            ] = lambda node, matches: replacement.deep_clone()
+            # pyre-ignore We know this is a CSTNode.
+            self.replacement = lambda node, matches: replacement.deep_clone()
         # We run into a really weird problem here, where we need to run the match
         # and extract step on the original node in order for metadata to work.
         # However, if we do that, then using things like `deep_replace` will fail
