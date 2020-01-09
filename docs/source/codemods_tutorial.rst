@@ -87,7 +87,7 @@ So, you can write something similar to the following::
 
         @staticmethod
         def add_args(arg_parser: argparse.ArgumentParser) -> None:
-            # Add command-line args that a codemodd user can specify for running this
+            # Add command-line args that a user can specify for running this
             # codemod.
             arg_parser.add_argument(
                 "--string",
@@ -142,7 +142,7 @@ codemod by running the following command::
 
 Notice that along with the default arguments, the ``--string`` and ``--constant``
 arguments are present in the help, and the command-line description has been updated
-with the codemod's description string. You'' notice that the codemod also shows up
+with the codemod's description string. You'll notice that the codemod also shows up
 on ``libcst.tool list``.
 
 ----------------
