@@ -6,7 +6,7 @@
 # pyre-strict
 
 from textwrap import dedent
-from typing import Collection, Mapping, Tuple
+from typing import Collection, Mapping, Optional, Tuple
 
 import libcst as cst
 from libcst import ensure_type
@@ -219,3 +219,28 @@ class ScopeProviderTest(UnitTest):
                 )
             },
         )
+
+    def test_has_name_helper(self) -> None:
+        class TestVisitor(cst.CSTVisitor):
+            METADATA_DEPENDENCIES = (QualifiedNameProvider,)
+
+            def __init__(self, test: UnitTest) -> None:
+                self.test = test
+
+            def visit_Call(self, node: cst.Call) -> Optional[bool]:
+                self.test.assertTrue(
+                    QualifiedNameProvider.has_name(self, node, "a.b.c")
+                )
+                self.test.assertFalse(QualifiedNameProvider.has_name(self, node, "a.b"))
+                self.test.assertTrue(
+                    QualifiedNameProvider.has_name(
+                        self, node, QualifiedName("a.b.c", QualifiedNameSource.IMPORT)
+                    )
+                )
+                self.test.assertFalse(
+                    QualifiedNameProvider.has_name(
+                        self, node, QualifiedName("a.b.c", QualifiedNameSource.LOCAL)
+                    )
+                )
+
+        MetadataWrapper(cst.parse_module("import a;a.b.c()")).visit(TestVisitor(self))

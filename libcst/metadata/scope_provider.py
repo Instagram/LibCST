@@ -27,6 +27,7 @@ from typing import (
 
 import libcst as cst
 from libcst._add_slots import add_slots
+from libcst._metadata_dependent import MetadataDependent
 from libcst.helpers.expression import get_full_name_for_node
 from libcst.metadata.base_provider import BatchableMetadataProvider
 from libcst.metadata.expression_context_provider import (
@@ -914,3 +915,14 @@ class QualifiedNameProvider(BatchableMetadataProvider[Collection[QualifiedName]]
     def visit_Module(self, node: cst.Module) -> Optional[bool]:
         visitor = QualifiedNameVisitor(self)
         node.visit(visitor)
+
+    @staticmethod
+    def has_name(
+        visitor: MetadataDependent, node: cst.CSTNode, name: Union[str, QualifiedName]
+    ) -> bool:
+        """Check if any of qualified name has the str name or :class:`~libcst.metadata.QualifiedName` name."""
+        qualified_names = visitor.get_metadata(QualifiedNameProvider, node, set())
+        if isinstance(name, str):
+            return any(qn.name == name for qn in qualified_names)
+        else:
+            return any(qn == name for qn in qualified_names)
