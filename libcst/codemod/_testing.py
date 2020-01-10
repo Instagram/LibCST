@@ -119,7 +119,10 @@ class _CodemodTest:
                 # pyre-ignore This mixin needs to be used with a UnitTest subclass.
                 self.fail("Expected SkipFile but was not raised")
         # pyre-ignore This mixin needs to be used with a UnitTest subclass.
-        self.assertEqual(CodemodTest.make_fixture_data(after), output_tree.code)
+        self.assertEqual(
+            CodemodTest.make_fixture_data(after),
+            CodemodTest.make_fixture_data(output_tree.code),
+        )
         if expected_warnings is not None:
             # pyre-ignore This mixin needs to be used with a UnitTest subclass.
             self.assertSequenceEqual(expected_warnings, context.warnings)
