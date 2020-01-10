@@ -6,7 +6,6 @@
 # pyre-strict
 from libcst._batched_visitor import BatchableCSTVisitor, visit_batched
 from libcst._exceptions import MetadataException, ParserSyntaxError
-from libcst._helpers import ensure_type
 from libcst._maybe_sentinel import MaybeSentinel
 from libcst._metadata_dependent import MetadataDependent
 from libcst._nodes.base import CSTNode, CSTValidationError
@@ -187,6 +186,7 @@ from libcst._parser.entrypoints import parse_expression, parse_module, parse_sta
 from libcst._parser.types.config import PartialParserConfig
 from libcst._removal_sentinel import RemovalSentinel, RemoveFromParent
 from libcst._visitors import CSTNodeT, CSTTransformer, CSTVisitor, CSTVisitorT
+from libcst.helpers.expression import ensure_type
 from libcst.metadata.base_provider import (
     BaseMetadataProvider,
     BatchableMetadataProvider,

@@ -149,4 +149,3 @@ inside codemods. As of now, the list includes the following helpers.
   :exclude-members: visit_Import, visit_ImportFrom
 .. autoclass:: libcst.codemod.visitors.AddImportsVisitor
   :exclude-members: CONTEXT_KEY, visit_Module, leave_ImportFrom, leave_Module
-.. autofunction:: libcst.helpers.module.insert_header_comments
