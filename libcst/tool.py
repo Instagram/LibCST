@@ -219,6 +219,7 @@ def _print_tree_impl(proc_name: str, command_args: List[str]) -> int:
     parser = argparse.ArgumentParser(
         description="Print the LibCST tree representation of a file.",
         prog=f"{proc_name} print",
+        fromfile_prefix_chars="@",
     )
     parser.add_argument(
         "infile",
@@ -335,7 +336,7 @@ def _codemod_impl(proc_name: str, command_args: List[str]) -> int:  # noqa: C901
     # First, try to grab the command with a first pass. We aren't going to react
     # to user input here, so refuse to add help. Help will be parsed in the
     # full parser below once we know the command and have added its arguments.
-    parser = argparse.ArgumentParser(add_help=False)
+    parser = argparse.ArgumentParser(add_help=False, fromfile_prefix_chars="@")
     parser.add_argument("command", metavar="COMMAND", type=str, nargs="?", default=None)
     args, _ = parser.parse_known_args(command_args)
 
@@ -379,6 +380,7 @@ def _codemod_impl(proc_name: str, command_args: List[str]) -> int:  # noqa: C901
             else command_class.DESCRIPTION
         ),
         prog=f"{proc_name} codemod",
+        fromfile_prefix_chars="@",
     )
     parser.add_argument(
         "command",
@@ -585,6 +587,7 @@ def _initialize_impl(proc_name: str, command_args: List[str]) -> int:
     parser = argparse.ArgumentParser(
         description="Initialize a directory by writing a default LibCST config to it.",
         prog=f"{proc_name} initialize",
+        fromfile_prefix_chars="@",
     )
     parser.add_argument(
         "path",
@@ -673,7 +676,9 @@ def _list_impl(proc_name: str, command_args: List[str]) -> int:  # noqa: C901
     config = _find_and_load_config()
 
     parser = argparse.ArgumentParser(
-        description="List all codemods available to run.", prog=f"{proc_name} list"
+        description="List all codemods available to run.",
+        prog=f"{proc_name} list",
+        fromfile_prefix_chars="@",
     )
     _ = parser.parse_args(command_args)
 
@@ -738,6 +743,7 @@ def main(proc_name: str, cli_args: List[str]) -> int:
         description="Collection of utilities that ship with LibCST.",
         add_help=add_help,
         prog=proc_name,
+        fromfile_prefix_chars="@",
     )
     parser.add_argument(
         "action",
