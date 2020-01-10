@@ -12,8 +12,6 @@ Excessive use of ``isinstance`` implies that you should rewrite your check as a
 matcher or unroll it into a set of visitor methods. Often, you should make use of
 :func:`~libcst.ensure_type` to make your type checker aware of a node's type.
 
-.. autofunction:: libcst.ensure_type
-
 Often it is far easier to use :ref:`libcst-matchers` over explicit instance checks
 in a transform. Matching against some pattern and then extracting a value from a
 node's child is often easier and far more readable. Unfortunately this clashes with
