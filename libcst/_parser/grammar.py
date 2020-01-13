@@ -64,6 +64,7 @@ from libcst._parser.conversions.params import (
     convert_argslist,
     convert_fpdef,
     convert_fpdef_assign,
+    convert_fpdef_slash,
     convert_fpdef_star,
     convert_fpdef_starstar,
 )
@@ -209,6 +210,7 @@ _NONTERMINAL_CONVERSIONS_SEQUENCE: Tuple[NonterminalConversion, ...] = (
     convert_asyncable_stmt,
     convert_parameters,
     convert_argslist,
+    convert_fpdef_slash,
     convert_fpdef_star,
     convert_fpdef_starstar,
     convert_fpdef_assign,

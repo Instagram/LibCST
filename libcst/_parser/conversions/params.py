@@ -7,7 +7,14 @@ from typing import Any, List, Optional, Sequence, Union
 
 from libcst._exceptions import PartialParserSyntaxError
 from libcst._maybe_sentinel import MaybeSentinel
-from libcst._nodes.expression import Annotation, Name, Param, Parameters, ParamStar
+from libcst._nodes.expression import (
+    Annotation,
+    Name,
+    Param,
+    Parameters,
+    ParamSlash,
+    ParamStar,
+)
 from libcst._nodes.op import AssignEqual, Comma
 from libcst._parser.custom_itertools import grouper
 from libcst._parser.production_decorator import with_production
@@ -18,12 +25,29 @@ from libcst._parser.whitespace_parser import parse_parenthesizable_whitespace
 
 @with_production(  # noqa: C901: too complex
     "typedargslist",
+    """(
+      (tfpdef_assign (',' tfpdef_assign)* ',' tfpdef_posind [',' [ tfpdef_assign (
+            ',' tfpdef_assign)* [',' [
+            tfpdef_star (',' tfpdef_assign)* [',' [tfpdef_starstar [',']]]
+          | tfpdef_starstar [',']]]
+      | tfpdef_star (',' tfpdef_assign)* [',' [tfpdef_starstar [',']]]
+      | tfpdef_starstar [',']]] )
+    |  (tfpdef_assign (',' tfpdef_assign)* [',' [
+       tfpdef_star (',' tfpdef_assign)* [',' [tfpdef_starstar [',']]]
+      | tfpdef_starstar [',']]]
+      | tfpdef_star (',' tfpdef_assign)* [',' [tfpdef_starstar [',']]]
+      | tfpdef_starstar [','])
+    )""",
+    version=">=3.8",
+)
+@with_production(  # noqa: C901: too complex
+    "typedargslist",
     (
         "(tfpdef_assign (',' tfpdef_assign)* "
         + "[',' [tfpdef_star (',' tfpdef_assign)* [',' [tfpdef_starstar [',']]] | tfpdef_starstar [',']]]"
         + "| tfpdef_star (',' tfpdef_assign)* [',' [tfpdef_starstar [',']]] | tfpdef_starstar [','])"
     ),
-    version=">=3.6",
+    version=">=3.6,<=3.7",
 )
 @with_production(  # noqa: C901: too complex
     "typedargslist",
@@ -36,12 +60,26 @@ from libcst._parser.whitespace_parser import parse_parenthesizable_whitespace
 )
 @with_production(
     "varargslist",
+    """vfpdef_assign (',' vfpdef_assign)* ',' vfpdef_posind [',' [ (vfpdef_assign (',' vfpdef_assign)* [',' [
+            vfpdef_star (',' vfpdef_assign)* [',' [vfpdef_starstar [',']]]
+          | vfpdef_starstar [',']]]
+      | vfpdef_star (',' vfpdef_assign)* [',' [vfpdef_starstar [',']]]
+      | vfpdef_starstar [',']) ]] | (vfpdef_assign (',' vfpdef_assign)* [',' [
+            vfpdef_star (',' vfpdef_assign)* [',' [vfpdef_starstar [',']]]
+          | vfpdef_starstar [',']]]
+      | vfpdef_star (',' vfpdef_assign)* [',' [vfpdef_starstar [',']]]
+      | vfpdef_starstar [',']
+    )""",
+    version=">=3.8",
+)
+@with_production(
+    "varargslist",
     (
         "(vfpdef_assign (',' vfpdef_assign)* "
         + "[',' [vfpdef_star (',' vfpdef_assign)* [',' [vfpdef_starstar [',']]] | vfpdef_starstar [',']]]"
         + "| vfpdef_star (',' vfpdef_assign)* [',' [vfpdef_starstar [',']]] | vfpdef_starstar [','])"
     ),
-    version=">=3.6",
+    version=">=3.6,<=3.7",
 )
 @with_production(
     "varargslist",
@@ -53,6 +91,8 @@ from libcst._parser.whitespace_parser import parse_parenthesizable_whitespace
     version="<=3.5",
 )
 def convert_argslist(config: ParserConfig, children: Sequence[Any]) -> Any:
+    posonly_params: List[Param] = []
+    posonly_ind: Union[ParamSlash, MaybeSentinel] = MaybeSentinel.DEFAULT
     params: List[Param] = []
     seen_default: bool = False
     star_arg: Union[Param, ParamStar, MaybeSentinel] = MaybeSentinel.DEFAULT
@@ -65,6 +105,9 @@ def convert_argslist(config: ParserConfig, children: Sequence[Any]) -> Any:
         nonlocal star_arg
         nonlocal star_kwarg
         nonlocal seen_default
+        nonlocal posonly_params
+        nonlocal posonly_ind
+        nonlocal params
 
         if isinstance(param, ParamStar):
             # Only can add this if we don't already have a "*" or a "*param".
@@ -77,6 +120,21 @@ def convert_argslist(config: ParserConfig, children: Sequence[Any]) -> Any:
                 # This should be unreachable, the grammar already disallows it.
                 raise Exception(
                     "Cannot have multiple star ('*') markers in a single argument "
+                    + "list."
+                )
+        elif isinstance(param, ParamSlash):
+            # Only can add this if we don't already have a "/" or a "*" or a "*param".
+            if current_param is params and len(posonly_params) == 0:
+                posonly_ind = param
+                posonly_params = params
+                params = []
+                current_param = params
+            else:
+                # Example code:
+                # def fn(foo, /, *, /, bar): ...
+                # This should be unreachable, the grammar already disallows it.
+                raise Exception(
+                    "Cannot have multiple slash ('/') markers in a single argument "
                     + "list."
                 )
         # pyre-ignore Pyre seems to think param.star.__eq__ is not callable
@@ -203,6 +261,8 @@ def convert_argslist(config: ParserConfig, children: Sequence[Any]) -> Any:
         )
 
     return Parameters(
+        posonly_params=tuple(posonly_params),
+        posonly_ind=posonly_ind,
         params=tuple(params),
         star_arg=star_arg,
         kwonly_params=tuple(kwonly_params),
@@ -282,3 +342,9 @@ def convert_fpdef(config: ParserConfig, children: Sequence[Any]) -> Any:
         )
 
     return Param(star="", name=namenode, annotation=annotation, default=None)
+
+
+@with_production("tfpdef_posind", "'/'")
+@with_production("vfpdef_posind", "'/'")
+def convert_fpdef_slash(config: ParserConfig, children: Sequence[Any]) -> Any:
+    return ParamSlash()
