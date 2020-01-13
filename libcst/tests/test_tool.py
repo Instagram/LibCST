@@ -58,6 +58,8 @@ class PrettyPrintNodesTest(UnitTest):
                     star_arg=MaybeSentinel.DEFAULT,
                     kwonly_params=[],
                     star_kwarg=None,
+                    posonly_params=[],
+                    posonly_ind=MaybeSentinel.DEFAULT,
                   ),
                   body=IndentedBlock(
                     body=[
@@ -208,6 +210,8 @@ class PrettyPrintNodesTest(UnitTest):
                     star_arg=MaybeSentinel.DEFAULT,
                     kwonly_params=[],
                     star_kwarg=None,
+                    posonly_params=[],
+                    posonly_ind=MaybeSentinel.DEFAULT,
                   ),
                   body=IndentedBlock(
                     body=[
@@ -446,6 +450,8 @@ class PrettyPrintNodesTest(UnitTest):
                     star_arg=MaybeSentinel.DEFAULT,
                     kwonly_params=[],
                     star_kwarg=None,
+                    posonly_params=[],
+                    posonly_ind=MaybeSentinel.DEFAULT,
                   ),
                   body=IndentedBlock(
                     body=[
@@ -578,6 +584,8 @@ class PrettyPrintNodesTest(UnitTest):
                     star_arg=MaybeSentinel.DEFAULT,
                     kwonly_params=[],
                     star_kwarg=None,
+                    posonly_params=[],
+                    posonly_ind=MaybeSentinel.DEFAULT,
                   ),
                   body=IndentedBlock(
                     body=[
