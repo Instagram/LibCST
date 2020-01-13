@@ -1531,7 +1531,7 @@ class Annotation(CSTNode):
 @dataclass(frozen=True)
 class ParamStar(CSTNode):
     """
-    A sentinel indicator on a :class:`Parameter` list to denote that the subsequent
+    A sentinel indicator on a :class:`Parameters` list to denote that the subsequent
     params are keyword-only args.
 
     This syntax is described in `PEP 3102`_.
@@ -1552,9 +1552,37 @@ class ParamStar(CSTNode):
 
 @add_slots
 @dataclass(frozen=True)
+class ParamSlash(CSTNode):
+    """
+    A sentinel indicator on a :class:`Parameters` list to denote that the previous
+    params are positional-only args.
+
+    This syntax is described in `PEP 570`_.
+
+    .. _PEP 570: https://www.python.org/dev/peps/pep-0570/#specification
+    """
+
+    # Optional comma that comes after the slash.
+    comma: Union[Comma, MaybeSentinel] = MaybeSentinel.DEFAULT
+
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "ParamSlash":
+        return ParamSlash(comma=visit_sentinel(self, "comma", self.comma, visitor))
+
+    def _codegen_impl(self, state: CodegenState, default_comma: bool = False) -> None:
+        state.add_token("/")
+
+        comma = self.comma
+        if comma is MaybeSentinel.DEFAULT and default_comma:
+            state.add_token(", ")
+        elif isinstance(comma, Comma):
+            comma._codegen(state)
+
+
+@add_slots
+@dataclass(frozen=True)
 class Param(CSTNode):
     """
-    A positional or keyword argument in a :class:`Parameter` list. May contain an
+    A positional or keyword argument in a :class:`Parameters` list. May contain an
     :class:`Annotation` and, in some cases, a ``default``.
     """
 
@@ -1670,6 +1698,14 @@ class Parameters(CSTNode):
     #: Optional parameter that captures unspecified kwargs.
     star_kwarg: Optional[Param] = None
 
+    #: Positional-only parameters, with or without defaults. Positional-only
+    #: parameters with defaults must all be after those without defaults.
+    posonly_params: Sequence[Param] = ()
+
+    #: Optional sentinel that dictates parameters preceeding are positional-only
+    #: args.
+    posonly_ind: Union[ParamSlash, MaybeSentinel] = MaybeSentinel.DEFAULT
+
     def _validate_stars_sequence(self, vals: Sequence[Param], *, section: str) -> None:
         if len(vals) == 0:
             return
@@ -1680,7 +1716,13 @@ class Parameters(CSTNode):
                     f"Expecting a star prefix of '' for {section} Param."
                 )
 
-    def _validate_kwonlystar(self) -> None:
+    def _validate_posonly_ind(self) -> None:
+        if isinstance(self.posonly_ind, ParamSlash) and len(self.posonly_params) == 0:
+            raise CSTValidationError(
+                "Must have at least one posonly param if ParamSlash is used."
+            )
+
+    def _validate_kwonly_star(self) -> None:
         if isinstance(self.star_arg, ParamStar) and len(self.kwonly_params) == 0:
             raise CSTValidationError(
                 "Must have at least one kwonly param if ParamStar is used."
@@ -1688,7 +1730,7 @@ class Parameters(CSTNode):
 
     def _validate_defaults(self) -> None:
         seen_default = False
-        for param in self.params:
+        for param in (*self.posonly_params, *self.params):
             if param.default:
                 # Mark that we've moved onto defaults
                 if not seen_default:
@@ -1709,6 +1751,8 @@ class Parameters(CSTNode):
     def _validate_stars(self) -> None:
         if len(self.params) > 0:
             self._validate_stars_sequence(self.params, section="params")
+        if len(self.posonly_params) > 0:
+            self._validate_stars_sequence(self.posonly_params, section="posonly_params")
         star_arg = self.star_arg
         if (
             isinstance(star_arg, Param)
@@ -1733,8 +1777,10 @@ class Parameters(CSTNode):
             )
 
     def _validate(self) -> None:
+        # Validate posonly_params slash placement semantics.
+        self._validate_posonly_ind()
         # Validate kwonly_param star placement semantics.
-        self._validate_kwonlystar()
+        self._validate_kwonly_star()
         # Validate defaults semantics for params and star_arg/star_kwarg.
         self._validate_defaults()
         # Validate that we don't have random stars on non star_kwarg.
@@ -1742,6 +1788,10 @@ class Parameters(CSTNode):
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Parameters":
         return Parameters(
+            posonly_params=visit_sequence(
+                self, "posonly_params", self.posonly_params, visitor
+            ),
+            posonly_ind=visit_sentinel(self, "posonly_ind", self.posonly_ind, visitor),
             params=visit_sequence(self, "params", self.params, visitor),
             star_arg=visit_sentinel(self, "star_arg", self.star_arg, visitor),
             kwonly_params=visit_sequence(
@@ -1750,7 +1800,7 @@ class Parameters(CSTNode):
             star_kwarg=visit_optional(self, "star_kwarg", self.star_kwarg, visitor),
         )
 
-    def _codegen_impl(self, state: CodegenState) -> None:
+    def _codegen_impl(self, state: CodegenState) -> None:  # noqa: C901
         # Compute the star existence first so we can ask about whether
         # each element is the last in the list or not.
         star_arg = self.star_arg
@@ -1760,7 +1810,29 @@ class Parameters(CSTNode):
             starincluded = True
         else:
             starincluded = False
-        # Render out the params first, computing necessary trailing commas.
+        # Render out the positional-only params first. They will always have trailing
+        # commas because in order to have positional-only params, there must be a
+        # slash afterwards.
+        for i, param in enumerate(self.posonly_params):
+            param._codegen(state, default_star="", default_comma=True)
+        # Render out the positional-only indicator if necessary.
+        more_values = (
+            starincluded
+            or len(self.params) > 0
+            or len(self.kwonly_params) > 0
+            or self.star_kwarg is not None
+        )
+        posonly_ind = self.posonly_ind
+        if isinstance(posonly_ind, ParamSlash):
+            # Its explicitly included, so render the version we have here which
+            # might have spacing applied to its comma.
+            posonly_ind._codegen(state, default_comma=more_values)
+        elif len(self.posonly_params) > 0:
+            if more_values:
+                state.add_token("/, ")
+            else:
+                state.add_token("/")
+        # Render out the params next, computing necessary trailing commas.
         lastparam = len(self.params) - 1
         more_values = (
             starincluded or len(self.kwonly_params) > 0 or self.star_kwarg is not None
@@ -1838,6 +1910,7 @@ class Lambda(BaseExpression):
         super(Lambda, self)._validate()
         # Sum up all parameters
         all_params = [
+            *self.params.posonly_params,
             *self.params.params,
             *self.params.kwonly_params,
         ]
@@ -1882,7 +1955,8 @@ class Lambda(BaseExpression):
             whitespace_after_lambda = self.whitespace_after_lambda
             if isinstance(whitespace_after_lambda, MaybeSentinel):
                 if not (
-                    len(self.params.params) == 0
+                    len(self.params.posonly_params) == 0
+                    and len(self.params.params) == 0
                     and not isinstance(self.params.star_arg, Param)
                     and len(self.params.kwonly_params) == 0
                     and self.params.star_kwarg is None

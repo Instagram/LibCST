@@ -150,6 +150,7 @@ if TYPE_CHECKING:
         Name,
         NamedExpr,
         Param,
+        ParamSlash,
         ParamStar,
         Parameters,
         RightCurlyBrace,
@@ -3545,6 +3546,18 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_ParamSlash(self, node: "ParamSlash") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_ParamSlash_comma(self, node: "ParamSlash") -> None:
+        pass
+
+    @mark_no_op
+    def leave_ParamSlash_comma(self, node: "ParamSlash") -> None:
+        pass
+
+    @mark_no_op
     def visit_ParamStar(self, node: "ParamStar") -> Optional[bool]:
         pass
 
@@ -3590,6 +3603,22 @@ class CSTTypedBaseFunctions:
 
     @mark_no_op
     def leave_Parameters_star_kwarg(self, node: "Parameters") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Parameters_posonly_params(self, node: "Parameters") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Parameters_posonly_params(self, node: "Parameters") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Parameters_posonly_ind(self, node: "Parameters") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Parameters_posonly_ind(self, node: "Parameters") -> None:
         pass
 
     @mark_no_op
@@ -5073,6 +5102,10 @@ class CSTTypedVisitorFunctions(CSTTypedBaseFunctions):
         pass
 
     @mark_no_op
+    def leave_ParamSlash(self, original_node: "ParamSlash") -> None:
+        pass
+
+    @mark_no_op
     def leave_ParamStar(self, original_node: "ParamStar") -> None:
         pass
 
@@ -5836,6 +5869,12 @@ class CSTTypedTransformerFunctions(CSTTypedBaseFunctions):
     def leave_Param(
         self, original_node: "Param", updated_node: "Param"
     ) -> Union["Param", MaybeSentinel, RemovalSentinel]:
+        return updated_node
+
+    @mark_no_op
+    def leave_ParamSlash(
+        self, original_node: "ParamSlash", updated_node: "ParamSlash"
+    ) -> Union["ParamSlash", MaybeSentinel]:
         return updated_node
 
     @mark_no_op

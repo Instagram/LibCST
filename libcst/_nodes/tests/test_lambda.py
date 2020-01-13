@@ -18,6 +18,19 @@ class LambdaCreationTest(CSTNodeTest):
         (
             # Simple lambda
             (cst.Lambda(cst.Parameters(), cst.Integer("5")), "lambda: 5"),
+            # Test basic positional only params
+            {
+                "node": cst.Lambda(
+                    cst.Parameters(
+                        posonly_params=(
+                            cst.Param(cst.Name("bar")),
+                            cst.Param(cst.Name("baz")),
+                        )
+                    ),
+                    cst.Integer("5"),
+                ),
+                "code": "lambda bar, baz, /: 5",
+            },
             # Test basic positional params
             (
                 cst.Lambda(
@@ -251,6 +264,14 @@ class LambdaCreationTest(CSTNodeTest):
             ),
             (
                 lambda: cst.Lambda(
+                    cst.Parameters(posonly_params=(cst.Param(cst.Name("arg")),)),
+                    cst.Integer("5"),
+                    whitespace_after_lambda=cst.SimpleWhitespace(""),
+                ),
+                "at least one space after lambda",
+            ),
+            (
+                lambda: cst.Lambda(
                     cst.Parameters(params=(cst.Param(cst.Name("arg")),)),
                     cst.Integer("5"),
                     whitespace_after_lambda=cst.SimpleWhitespace(""),
@@ -371,6 +392,21 @@ class LambdaCreationTest(CSTNodeTest):
                     cst.Integer("5"),
                 ),
                 r"Expecting a star prefix of '\*\*'",
+            ),
+            (
+                lambda: cst.Lambda(
+                    cst.Parameters(
+                        posonly_params=(
+                            cst.Param(
+                                cst.Name("arg"),
+                                annotation=cst.Annotation(cst.Name("str")),
+                            ),
+                        )
+                    ),
+                    cst.Integer("5"),
+                    whitespace_after_lambda=cst.SimpleWhitespace(""),
+                ),
+                "Lambda params cannot have type annotations",
             ),
             (
                 lambda: cst.Lambda(

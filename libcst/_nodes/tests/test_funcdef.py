@@ -121,6 +121,72 @@ class FunctionDefCreationTest(CSTNodeTest):
                 ),
                 "code": 'def foo(bar: str = "one", baz: int = 5): pass\n',
             },
+            # Test basic positional only params
+            {
+                "node": cst.FunctionDef(
+                    cst.Name("foo"),
+                    cst.Parameters(
+                        posonly_params=(
+                            cst.Param(cst.Name("bar")),
+                            cst.Param(cst.Name("baz")),
+                        )
+                    ),
+                    cst.SimpleStatementSuite((cst.Pass(),)),
+                ),
+                "code": "def foo(bar, baz, /): pass\n",
+            },
+            # Typed positional only params
+            {
+                "node": cst.FunctionDef(
+                    cst.Name("foo"),
+                    cst.Parameters(
+                        posonly_params=(
+                            cst.Param(cst.Name("bar"), cst.Annotation(cst.Name("str"))),
+                            cst.Param(cst.Name("baz"), cst.Annotation(cst.Name("int"))),
+                        )
+                    ),
+                    cst.SimpleStatementSuite((cst.Pass(),)),
+                ),
+                "code": "def foo(bar: str, baz: int, /): pass\n",
+            },
+            # Test basic positional only default params
+            {
+                "node": cst.FunctionDef(
+                    cst.Name("foo"),
+                    cst.Parameters(
+                        posonly_params=(
+                            cst.Param(
+                                cst.Name("bar"), default=cst.SimpleString('"one"')
+                            ),
+                            cst.Param(cst.Name("baz"), default=cst.Integer("5")),
+                        )
+                    ),
+                    cst.SimpleStatementSuite((cst.Pass(),)),
+                ),
+                "code": 'def foo(bar = "one", baz = 5, /): pass\n',
+            },
+            # Typed positional only default params
+            {
+                "node": cst.FunctionDef(
+                    cst.Name("foo"),
+                    cst.Parameters(
+                        posonly_params=(
+                            cst.Param(
+                                cst.Name("bar"),
+                                cst.Annotation(cst.Name("str")),
+                                default=cst.SimpleString('"one"'),
+                            ),
+                            cst.Param(
+                                cst.Name("baz"),
+                                cst.Annotation(cst.Name("int")),
+                                default=cst.Integer("5"),
+                            ),
+                        )
+                    ),
+                    cst.SimpleStatementSuite((cst.Pass(),)),
+                ),
+                "code": 'def foo(bar: str = "one", baz: int = 5, /): pass\n',
+            },
             # Mixed positional and default params.
             {
                 "node": cst.FunctionDef(
@@ -364,6 +430,54 @@ class FunctionDefCreationTest(CSTNodeTest):
                     cst.SimpleStatementSuite((cst.Pass(),)),
                 ),
                 "code": "def foo(*params: str, **kwparams: int): pass\n",
+            },
+            # Test positional only params and positional params
+            {
+                "node": cst.FunctionDef(
+                    cst.Name("foo"),
+                    cst.Parameters(
+                        posonly_params=(cst.Param(cst.Name("bar")),),
+                        params=(cst.Param(cst.Name("baz")),),
+                    ),
+                    cst.SimpleStatementSuite((cst.Pass(),)),
+                ),
+                "code": "def foo(bar, /, baz): pass\n",
+            },
+            # Test positional only params and star args
+            {
+                "node": cst.FunctionDef(
+                    cst.Name("foo"),
+                    cst.Parameters(
+                        posonly_params=(cst.Param(cst.Name("bar")),),
+                        star_arg=cst.Param(cst.Name("baz")),
+                    ),
+                    cst.SimpleStatementSuite((cst.Pass(),)),
+                ),
+                "code": "def foo(bar, /, *baz): pass\n",
+            },
+            # Test positional only params and kwonly params
+            {
+                "node": cst.FunctionDef(
+                    cst.Name("foo"),
+                    cst.Parameters(
+                        posonly_params=(cst.Param(cst.Name("bar")),),
+                        kwonly_params=(cst.Param(cst.Name("baz")),),
+                    ),
+                    cst.SimpleStatementSuite((cst.Pass(),)),
+                ),
+                "code": "def foo(bar, /, *, baz): pass\n",
+            },
+            # Test positional only params and star kwargs
+            {
+                "node": cst.FunctionDef(
+                    cst.Name("foo"),
+                    cst.Parameters(
+                        posonly_params=(cst.Param(cst.Name("bar")),),
+                        star_kwarg=cst.Param(cst.Name("baz")),
+                    ),
+                    cst.SimpleStatementSuite((cst.Pass(),)),
+                ),
+                "code": "def foo(bar, /, **baz): pass\n",
             },
             # Test decorators
             {
@@ -623,10 +737,33 @@ class FunctionDefCreationTest(CSTNodeTest):
             (
                 lambda: cst.FunctionDef(
                     cst.Name("foo"),
+                    cst.Parameters(
+                        posonly_params=(
+                            cst.Param(
+                                cst.Name("bar"), default=cst.SimpleString('"one"')
+                            ),
+                        ),
+                        params=(cst.Param(cst.Name("bar")),),
+                    ),
+                    cst.SimpleStatementSuite((cst.Pass(),)),
+                ),
+                "Cannot have param without defaults following a param with defaults.",
+            ),
+            (
+                lambda: cst.FunctionDef(
+                    cst.Name("foo"),
                     cst.Parameters(star_arg=cst.ParamStar()),
                     cst.SimpleStatementSuite((cst.Pass(),)),
                 ),
                 "Must have at least one kwonly param if ParamStar is used.",
+            ),
+            (
+                lambda: cst.FunctionDef(
+                    cst.Name("foo"),
+                    cst.Parameters(posonly_ind=cst.ParamSlash()),
+                    cst.SimpleStatementSuite((cst.Pass(),)),
+                ),
+                "Must have at least one posonly param if ParamSlash is used.",
             ),
             (
                 lambda: cst.FunctionDef(

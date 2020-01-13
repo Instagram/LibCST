@@ -9640,6 +9640,19 @@ class Param(BaseMatcherNode):
 
 
 @dataclass(frozen=True, eq=False, unsafe_hash=False)
+class ParamSlash(BaseMatcherNode):
+    comma: Union[
+        CommaMatchType, DoNotCareSentinel, OneOf[CommaMatchType], AllOf[CommaMatchType]
+    ] = DoNotCare()
+    metadata: Union[
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
+    ] = DoNotCare()
+
+
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class ParamStar(BaseMatcherNode):
     comma: Union[
         CommaMatchType, DoNotCareSentinel, OneOf[CommaMatchType], AllOf[CommaMatchType]
@@ -9666,6 +9679,9 @@ ParamOrNoneMatchType = Union[
     None,
     MetadataMatchType,
     MatchIfTrue[Callable[[Union[cst.Param, None]], bool]],
+]
+ParamSlashMatchType = Union[
+    "ParamSlash", MetadataMatchType, MatchIfTrue[Callable[[cst.ParamSlash], bool]]
 ]
 
 
@@ -9842,6 +9858,92 @@ class Parameters(BaseMatcherNode):
         DoNotCareSentinel,
         OneOf[ParamOrNoneMatchType],
         AllOf[ParamOrNoneMatchType],
+    ] = DoNotCare()
+    posonly_params: Union[
+        Sequence[
+            Union[
+                ParamMatchType,
+                DoNotCareSentinel,
+                OneOf[ParamMatchType],
+                AllOf[ParamMatchType],
+                AtLeastN[
+                    Union[
+                        ParamMatchType,
+                        DoNotCareSentinel,
+                        OneOf[ParamMatchType],
+                        AllOf[ParamMatchType],
+                    ]
+                ],
+                AtMostN[
+                    Union[
+                        ParamMatchType,
+                        DoNotCareSentinel,
+                        OneOf[ParamMatchType],
+                        AllOf[ParamMatchType],
+                    ]
+                ],
+            ]
+        ],
+        DoNotCareSentinel,
+        MatchIfTrue[Callable[[Sequence[cst.Param]], bool]],
+        OneOf[
+            Union[
+                Sequence[
+                    Union[
+                        ParamMatchType,
+                        OneOf[ParamMatchType],
+                        AllOf[ParamMatchType],
+                        AtLeastN[
+                            Union[
+                                ParamMatchType,
+                                OneOf[ParamMatchType],
+                                AllOf[ParamMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                ParamMatchType,
+                                OneOf[ParamMatchType],
+                                AllOf[ParamMatchType],
+                            ]
+                        ],
+                    ]
+                ],
+                MatchIfTrue[Callable[[Sequence[cst.Param]], bool]],
+            ]
+        ],
+        AllOf[
+            Union[
+                Sequence[
+                    Union[
+                        ParamMatchType,
+                        OneOf[ParamMatchType],
+                        AllOf[ParamMatchType],
+                        AtLeastN[
+                            Union[
+                                ParamMatchType,
+                                OneOf[ParamMatchType],
+                                AllOf[ParamMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                ParamMatchType,
+                                OneOf[ParamMatchType],
+                                AllOf[ParamMatchType],
+                            ]
+                        ],
+                    ]
+                ],
+                MatchIfTrue[Callable[[Sequence[cst.Param]], bool]],
+            ]
+        ],
+    ] = DoNotCare()
+    posonly_ind: Union[
+        ParamSlashMatchType,
+        DoNotCareSentinel,
+        OneOf[ParamSlashMatchType],
+        AllOf[ParamSlashMatchType],
     ] = DoNotCare()
     metadata: Union[
         MetadataMatchType,
@@ -13094,6 +13196,7 @@ __all__ = [
     "OneOf",
     "Or",
     "Param",
+    "ParamSlash",
     "ParamStar",
     "Parameters",
     "ParenthesizedWhitespace",

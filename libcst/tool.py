@@ -101,7 +101,7 @@ def _node_repr_recursive(  # noqa: C901
                 type_str = repr(field.type)
                 if (
                     "Sentinel" in type_str
-                    and field.name not in ["star_arg", "star"]
+                    and field.name not in ["star_arg", "star", "posonly_ind"]
                     and "whitespace" not in field.name
                 ):
                     # This is a value that can optionally be specified, so its

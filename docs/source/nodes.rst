@@ -242,6 +242,7 @@ they belong with.
    sense to group these closer to FunctionDef than with Lambda.
 .. autoclass:: libcst.Parameters
 .. autoclass:: libcst.Param
+.. autoclass:: libcst.ParamSlash
 .. autoclass:: libcst.ParamStar
 
 .. autoclass:: libcst.WithItem
