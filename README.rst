@@ -28,9 +28,9 @@ A Concrete Syntax Tree (CST) parser and serializer library for Python
 
 .. intro-start
 
-LibCST parses Python 3.5, 3.6 or 3.7 source code as a CST tree that keeps all formatting
-details (comments, whitespaces, parentheses, etc). It's useful for building 
-automated refactoring (codemod) applications and linters.
+LibCST parses Python 3.5, 3.6, 3.7 or 3.8 source code as a CST tree that keeps all
+formatting details (comments, whitespaces, parentheses, etc). It's useful for
+building automated refactoring (codemod) applications and linters.
 
 .. intro-end
 
@@ -187,7 +187,6 @@ To generate documents, do the following in the root:
 Future
 ======
 
-- Python 3.8 support, both in running on Python 3.8 and parsing 3.8 code.
 - Advanced full repository facts providers like fully qualified name and call graph.
 
 License

@@ -839,6 +839,15 @@ class FunctionDefCreationTest(CSTNodeTest):
         self.assert_invalid(get_node, expected_re)
 
 
+def _parse_statement_force_38(code: str) -> cst.BaseCompoundStatement:
+    statement = cst.parse_statement(
+        code, config=cst.PartialParserConfig(python_version="3.8")
+    )
+    if not isinstance(statement, cst.BaseCompoundStatement):
+        raise Exception("This function is expecting to parse compound statements only!")
+    return statement
+
+
 class FunctionDefParserTest(CSTNodeTest):
     @data_provider(
         (
@@ -1728,3 +1737,245 @@ class FunctionDefParserTest(CSTNodeTest):
     )
     def test_valid(self, node: cst.CSTNode, code: str) -> None:
         self.validate_node(node, code, parse_statement)
+
+    @data_provider(
+        (
+            # Test basic positional only params
+            {
+                "node": cst.FunctionDef(
+                    cst.Name("foo"),
+                    cst.Parameters(
+                        posonly_params=(
+                            cst.Param(
+                                cst.Name("bar"),
+                                star="",
+                                comma=cst.Comma(
+                                    whitespace_after=cst.SimpleWhitespace(" ")
+                                ),
+                            ),
+                            cst.Param(
+                                cst.Name("baz"),
+                                star="",
+                                comma=cst.Comma(
+                                    whitespace_after=cst.SimpleWhitespace(" ")
+                                ),
+                            ),
+                        ),
+                        posonly_ind=cst.ParamSlash(),
+                    ),
+                    cst.SimpleStatementSuite((cst.Pass(),)),
+                ),
+                "code": "def foo(bar, baz, /): pass\n",
+            },
+            # Typed positional only params
+            {
+                "node": cst.FunctionDef(
+                    cst.Name("foo"),
+                    cst.Parameters(
+                        posonly_params=(
+                            cst.Param(
+                                cst.Name("bar"),
+                                cst.Annotation(
+                                    cst.Name("str"),
+                                    whitespace_before_indicator=cst.SimpleWhitespace(
+                                        ""
+                                    ),
+                                ),
+                                star="",
+                                comma=cst.Comma(
+                                    whitespace_after=cst.SimpleWhitespace(" ")
+                                ),
+                            ),
+                            cst.Param(
+                                cst.Name("baz"),
+                                cst.Annotation(
+                                    cst.Name("int"),
+                                    whitespace_before_indicator=cst.SimpleWhitespace(
+                                        ""
+                                    ),
+                                ),
+                                star="",
+                                comma=cst.Comma(
+                                    whitespace_after=cst.SimpleWhitespace(" ")
+                                ),
+                            ),
+                        ),
+                        posonly_ind=cst.ParamSlash(),
+                    ),
+                    cst.SimpleStatementSuite((cst.Pass(),)),
+                ),
+                "code": "def foo(bar: str, baz: int, /): pass\n",
+            },
+            # Test basic positional only default params
+            {
+                "node": cst.FunctionDef(
+                    cst.Name("foo"),
+                    cst.Parameters(
+                        posonly_params=(
+                            cst.Param(
+                                cst.Name("bar"),
+                                default=cst.SimpleString('"one"'),
+                                equal=cst.AssignEqual(),
+                                star="",
+                                comma=cst.Comma(
+                                    whitespace_after=cst.SimpleWhitespace(" ")
+                                ),
+                            ),
+                            cst.Param(
+                                cst.Name("baz"),
+                                default=cst.Integer("5"),
+                                equal=cst.AssignEqual(),
+                                star="",
+                                comma=cst.Comma(
+                                    whitespace_after=cst.SimpleWhitespace(" ")
+                                ),
+                            ),
+                        ),
+                        posonly_ind=cst.ParamSlash(),
+                    ),
+                    cst.SimpleStatementSuite((cst.Pass(),)),
+                ),
+                "code": 'def foo(bar = "one", baz = 5, /): pass\n',
+            },
+            # Typed positional only default params
+            {
+                "node": cst.FunctionDef(
+                    cst.Name("foo"),
+                    cst.Parameters(
+                        posonly_params=(
+                            cst.Param(
+                                cst.Name("bar"),
+                                cst.Annotation(
+                                    cst.Name("str"),
+                                    whitespace_before_indicator=cst.SimpleWhitespace(
+                                        ""
+                                    ),
+                                ),
+                                default=cst.SimpleString('"one"'),
+                                equal=cst.AssignEqual(),
+                                star="",
+                                comma=cst.Comma(
+                                    whitespace_after=cst.SimpleWhitespace(" ")
+                                ),
+                            ),
+                            cst.Param(
+                                cst.Name("baz"),
+                                cst.Annotation(
+                                    cst.Name("int"),
+                                    whitespace_before_indicator=cst.SimpleWhitespace(
+                                        ""
+                                    ),
+                                ),
+                                default=cst.Integer("5"),
+                                equal=cst.AssignEqual(),
+                                star="",
+                                comma=cst.Comma(
+                                    whitespace_after=cst.SimpleWhitespace(" ")
+                                ),
+                            ),
+                        ),
+                        posonly_ind=cst.ParamSlash(),
+                    ),
+                    cst.SimpleStatementSuite((cst.Pass(),)),
+                ),
+                "code": 'def foo(bar: str = "one", baz: int = 5, /): pass\n',
+            },
+            # Test positional only params and positional params
+            {
+                "node": cst.FunctionDef(
+                    cst.Name("foo"),
+                    cst.Parameters(
+                        posonly_params=(
+                            cst.Param(
+                                cst.Name("bar"),
+                                star="",
+                                comma=cst.Comma(
+                                    whitespace_after=cst.SimpleWhitespace(" ")
+                                ),
+                            ),
+                        ),
+                        posonly_ind=cst.ParamSlash(
+                            comma=cst.Comma(whitespace_after=cst.SimpleWhitespace(" ")),
+                        ),
+                        params=(cst.Param(cst.Name("baz"), star="",),),
+                    ),
+                    cst.SimpleStatementSuite((cst.Pass(),)),
+                ),
+                "code": "def foo(bar, /, baz): pass\n",
+            },
+            # Test positional only params and star args
+            {
+                "node": cst.FunctionDef(
+                    cst.Name("foo"),
+                    cst.Parameters(
+                        posonly_params=(
+                            cst.Param(
+                                cst.Name("bar"),
+                                star="",
+                                comma=cst.Comma(
+                                    whitespace_after=cst.SimpleWhitespace(" ")
+                                ),
+                            ),
+                        ),
+                        posonly_ind=cst.ParamSlash(
+                            comma=cst.Comma(whitespace_after=cst.SimpleWhitespace(" ")),
+                        ),
+                        star_arg=cst.Param(cst.Name("baz"), star="*"),
+                    ),
+                    cst.SimpleStatementSuite((cst.Pass(),)),
+                ),
+                "code": "def foo(bar, /, *baz): pass\n",
+            },
+            # Test positional only params and kwonly params
+            {
+                "node": cst.FunctionDef(
+                    cst.Name("foo"),
+                    cst.Parameters(
+                        posonly_params=(
+                            cst.Param(
+                                cst.Name("bar"),
+                                star="",
+                                comma=cst.Comma(
+                                    whitespace_after=cst.SimpleWhitespace(" ")
+                                ),
+                            ),
+                        ),
+                        posonly_ind=cst.ParamSlash(
+                            comma=cst.Comma(whitespace_after=cst.SimpleWhitespace(" ")),
+                        ),
+                        star_arg=cst.ParamStar(
+                            comma=cst.Comma(whitespace_after=cst.SimpleWhitespace(" ")),
+                        ),
+                        kwonly_params=(cst.Param(cst.Name("baz"), star=""),),
+                    ),
+                    cst.SimpleStatementSuite((cst.Pass(),)),
+                ),
+                "code": "def foo(bar, /, *, baz): pass\n",
+            },
+            # Test positional only params and star kwargs
+            {
+                "node": cst.FunctionDef(
+                    cst.Name("foo"),
+                    cst.Parameters(
+                        posonly_params=(
+                            cst.Param(
+                                cst.Name("bar"),
+                                star="",
+                                comma=cst.Comma(
+                                    whitespace_after=cst.SimpleWhitespace(" ")
+                                ),
+                            ),
+                        ),
+                        posonly_ind=cst.ParamSlash(
+                            comma=cst.Comma(whitespace_after=cst.SimpleWhitespace(" ")),
+                        ),
+                        star_kwarg=cst.Param(cst.Name("baz"), star="**"),
+                    ),
+                    cst.SimpleStatementSuite((cst.Pass(),)),
+                ),
+                "code": "def foo(bar, /, **baz): pass\n",
+            },
+        )
+    )
+    def test_valid_38(self, node: cst.CSTNode, code: str) -> None:
+        self.validate_node(node, code, _parse_statement_force_38)

@@ -486,6 +486,12 @@ class LambdaCreationTest(CSTNodeTest):
         self.assert_invalid(get_node, expected_re)
 
 
+def _parse_expression_force_38(code: str) -> cst.BaseExpression:
+    return cst.parse_expression(
+        code, config=cst.PartialParserConfig(python_version="3.8")
+    )
+
+
 class LambdaParserTest(CSTNodeTest):
     @data_provider(
         (
@@ -929,3 +935,39 @@ class LambdaParserTest(CSTNodeTest):
         self, node: cst.CSTNode, code: str, position: Optional[CodeRange] = None
     ) -> None:
         self.validate_node(node, code, parse_expression, position)
+
+    @data_provider(
+        (
+            # Test basic positional only params
+            {
+                "node": cst.Lambda(
+                    cst.Parameters(
+                        posonly_params=(
+                            cst.Param(
+                                cst.Name("bar"),
+                                star="",
+                                comma=cst.Comma(
+                                    whitespace_after=cst.SimpleWhitespace(" ")
+                                ),
+                            ),
+                            cst.Param(
+                                cst.Name("baz"),
+                                star="",
+                                comma=cst.Comma(
+                                    whitespace_after=cst.SimpleWhitespace(" ")
+                                ),
+                            ),
+                        ),
+                        posonly_ind=cst.ParamSlash(),
+                    ),
+                    cst.Integer("5"),
+                    whitespace_after_lambda=cst.SimpleWhitespace(" "),
+                ),
+                "code": "lambda bar, baz, /: 5",
+            },
+        )
+    )
+    def test_valid_38(
+        self, node: cst.CSTNode, code: str, position: Optional[CodeRange] = None
+    ) -> None:
+        self.validate_node(node, code, _parse_expression_force_38, position)
