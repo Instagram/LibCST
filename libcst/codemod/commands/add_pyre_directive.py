@@ -10,7 +10,7 @@ from typing import Pattern
 
 import libcst
 from libcst.codemod import CodemodContext, VisitorBasedCodemodCommand
-from libcst.helpers.module import insert_header_comments
+from libcst.helpers import insert_header_comments
 
 
 class AddPyreDirectiveCommand(VisitorBasedCodemodCommand, ABC):

@@ -7,7 +7,7 @@
 from typing import Optional, Union
 
 import libcst as cst
-from libcst.helpers.expression import get_full_name_for_node
+from libcst.helpers import get_full_name_for_node
 from libcst.testing.utils import UnitTest, data_provider
 
 

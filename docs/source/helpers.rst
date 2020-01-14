@@ -10,6 +10,6 @@ We add helpers as method of ``CSTNode`` or ``libcst.helpers`` package based on t
 libcst.helpers
 --------------
 
-.. autofunction:: libcst.helpers.module.insert_header_comments
-.. autofunction:: libcst.helpers.expression.get_full_name_for_node
-.. autofunction:: libcst.ensure_type
+.. autofunction:: libcst.helpers.insert_header_comments
+.. autofunction:: libcst.helpers.get_full_name_for_node
+.. autofunction:: libcst.helpers.ensure_type

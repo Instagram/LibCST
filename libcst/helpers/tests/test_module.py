@@ -5,7 +5,7 @@
 #
 # pyre-strict
 import libcst
-from libcst.helpers.module import insert_header_comments
+from libcst.helpers import insert_header_comments
 from libcst.testing.utils import UnitTest
 
 
