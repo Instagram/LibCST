@@ -28,7 +28,7 @@ from typing import (
 import libcst as cst
 from libcst._add_slots import add_slots
 from libcst._metadata_dependent import MetadataDependent
-from libcst.helpers.expression import get_full_name_for_node
+from libcst.helpers import get_full_name_for_node
 from libcst.metadata.base_provider import BatchableMetadataProvider
 from libcst.metadata.expression_context_provider import (
     ExpressionContext,

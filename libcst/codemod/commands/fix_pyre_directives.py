@@ -9,7 +9,7 @@ from typing import Dict, Sequence, Union
 import libcst
 import libcst.matchers as m
 from libcst.codemod import CodemodContext, VisitorBasedCodemodCommand
-from libcst.helpers.module import insert_header_comments
+from libcst.helpers import insert_header_comments
 
 
 class FixPyreDirectivesCommand(VisitorBasedCodemodCommand):

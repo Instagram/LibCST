@@ -186,7 +186,9 @@ from libcst._parser.entrypoints import parse_expression, parse_module, parse_sta
 from libcst._parser.types.config import PartialParserConfig
 from libcst._removal_sentinel import RemovalSentinel, RemoveFromParent
 from libcst._visitors import CSTNodeT, CSTTransformer, CSTVisitor, CSTVisitorT
-from libcst.helpers.expression import ensure_type
+from libcst.helpers import (  # from libcst import ensure_type is deprecated, will be removed in 0.4.0
+    ensure_type,
+)
 from libcst.metadata.base_provider import (
     BaseMetadataProvider,
     BatchableMetadataProvider,
@@ -208,7 +210,7 @@ __all__ = [
     "PartialParserConfig",
     "RemoveFromParent",
     "RemovalSentinel",
-    "ensure_type",
+    "ensure_type",  # from libcst import ensure_type is deprecated, will be removed in 0.4.0
     "visit_batched",
     "parse_module",
     "parse_expression",

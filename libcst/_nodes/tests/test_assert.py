@@ -10,7 +10,7 @@ from typing import Any
 import libcst as cst
 from libcst import parse_statement
 from libcst._nodes.tests.base import CSTNodeTest
-from libcst.helpers.expression import ensure_type
+from libcst.helpers import ensure_type
 from libcst.metadata import CodeRange
 from libcst.testing.utils import data_provider
 

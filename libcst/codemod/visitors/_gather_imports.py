@@ -9,7 +9,7 @@ from typing import Dict, List, Optional, Sequence, Set, Tuple, Union
 import libcst
 from libcst.codemod._context import CodemodContext
 from libcst.codemod._visitor import ContextAwareVisitor
-from libcst.helpers.expression import get_full_name_for_node
+from libcst.helpers import get_full_name_for_node
 
 
 class GatherImportsVisitor(ContextAwareVisitor):
