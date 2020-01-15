@@ -23,7 +23,7 @@ from typing import Any, Callable, Dict, List, Sequence, Tuple, Type
 
 import yaml
 
-from libcst import CSTNode, IndentedBlock, Module, parse_module
+from libcst import CSTNode, IndentedBlock, Module, PartialParserConfig, parse_module
 from libcst._nodes.deep_equals import deep_equals
 from libcst.codemod import (
     CodemodCommand,
@@ -242,6 +242,17 @@ def _print_tree_impl(proc_name: str, command_args: List[str]) -> int:
         action="store_true",
         help="Show values that exist only for syntax, like commas or semicolons",
     )
+    parser.add_argument(
+        "-p",
+        "--python-version",
+        metavar="VERSION",
+        help=(
+            "Override the version string used for parsing Python source files. Defaults "
+            + "to the version of python used to run this tool."
+        ),
+        type=str,
+        default=None,
+    )
     args = parser.parse_args(command_args)
     infile = args.infile
 
@@ -252,7 +263,14 @@ def _print_tree_impl(proc_name: str, command_args: List[str]) -> int:
         with open(infile, "rb") as fp:
             code = fp.read()
 
-    tree = parse_module(code)
+    tree = parse_module(
+        code,
+        config=(
+            PartialParserConfig(python_version=args.python_version)
+            if args.python_version is not None
+            else PartialParserConfig()
+        ),
+    )
     print(
         dump(
             tree,
