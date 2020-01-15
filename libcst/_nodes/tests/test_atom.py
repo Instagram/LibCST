@@ -14,6 +14,12 @@ from libcst.metadata import CodeRange
 from libcst.testing.utils import data_provider
 
 
+def _parse_expression_force_38(code: str) -> cst.BaseExpression:
+    return cst.parse_expression(
+        code, config=cst.PartialParserConfig(python_version="3.8")
+    )
+
+
 class AtomTest(CSTNodeTest):
     @data_provider(
         (
@@ -524,6 +530,118 @@ class AtomTest(CSTNodeTest):
                 ),
                 "code": 'f"{foo!s:{bar}}"',
                 "parser": parse_expression,
+                "expected_position": None,
+            },
+            # Test equality expression added in 3.8.
+            {
+                "node": cst.FormattedString(
+                    parts=(
+                        cst.FormattedStringExpression(
+                            cst.Name("foo"),
+                            equal=cst.AssignEqual(
+                                whitespace_before=cst.SimpleWhitespace(""),
+                                whitespace_after=cst.SimpleWhitespace(""),
+                            ),
+                        ),
+                    ),
+                ),
+                "code": 'f"{foo=}"',
+                "parser": _parse_expression_force_38,
+                "expected_position": None,
+            },
+            {
+                "node": cst.FormattedString(
+                    parts=(
+                        cst.FormattedStringExpression(
+                            cst.Name("foo"),
+                            equal=cst.AssignEqual(
+                                whitespace_before=cst.SimpleWhitespace(""),
+                                whitespace_after=cst.SimpleWhitespace(""),
+                            ),
+                            conversion="s",
+                        ),
+                    ),
+                ),
+                "code": 'f"{foo=!s}"',
+                "parser": _parse_expression_force_38,
+                "expected_position": None,
+            },
+            {
+                "node": cst.FormattedString(
+                    parts=(
+                        cst.FormattedStringExpression(
+                            cst.Name("foo"),
+                            equal=cst.AssignEqual(
+                                whitespace_before=cst.SimpleWhitespace(""),
+                                whitespace_after=cst.SimpleWhitespace(""),
+                            ),
+                            conversion="s",
+                            format_spec=(
+                                cst.FormattedStringExpression(cst.Name("bar")),
+                            ),
+                        ),
+                    ),
+                ),
+                "code": 'f"{foo=!s:{bar}}"',
+                "parser": _parse_expression_force_38,
+                "expected_position": None,
+            },
+            # Test that equality support doesn't break existing support
+            {
+                "node": cst.FormattedString(
+                    parts=(
+                        cst.FormattedStringExpression(
+                            cst.Comparison(
+                                left=cst.Name(value="a",),
+                                comparisons=[
+                                    cst.ComparisonTarget(
+                                        operator=cst.Equal(),
+                                        comparator=cst.Name(value="b",),
+                                    ),
+                                ],
+                            ),
+                        ),
+                    ),
+                ),
+                "code": 'f"{a == b}"',
+                "parser": _parse_expression_force_38,
+                "expected_position": None,
+            },
+            {
+                "node": cst.FormattedString(
+                    parts=(
+                        cst.FormattedStringExpression(
+                            cst.Comparison(
+                                left=cst.Name(value="a",),
+                                comparisons=[
+                                    cst.ComparisonTarget(
+                                        operator=cst.NotEqual(),
+                                        comparator=cst.Name(value="b",),
+                                    ),
+                                ],
+                            ),
+                        ),
+                    ),
+                ),
+                "code": 'f"{a != b}"',
+                "parser": _parse_expression_force_38,
+                "expected_position": None,
+            },
+            {
+                "node": cst.FormattedString(
+                    parts=(
+                        cst.FormattedStringExpression(
+                            cst.NamedExpr(
+                                target=cst.Name(value="a",),
+                                value=cst.Integer(value="5",),
+                                lpar=(cst.LeftParen(),),
+                                rpar=(cst.RightParen(),),
+                            ),
+                        ),
+                    ),
+                ),
+                "code": 'f"{(a := 5)}"',
+                "parser": _parse_expression_force_38,
                 "expected_position": None,
             },
             # Validate parens

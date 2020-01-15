@@ -1019,13 +1019,42 @@ def convert_fstring_conversion(
     return FormattedStringConversionPartial(name.string, exclaim.whitespace_before)
 
 
+@with_production("fstring_equality", "'='", version=">=3.8")
+def convert_fstring_equality(
+    config: ParserConfig, children: typing.Sequence[typing.Any]
+) -> typing.Any:
+    (equal,) = children
+    return AssignEqual(
+        whitespace_before=parse_parenthesizable_whitespace(
+            config, equal.whitespace_before
+        ),
+        whitespace_after=parse_parenthesizable_whitespace(
+            config, equal.whitespace_after
+        ),
+    )
+
+
 @with_production(
-    "fstring_expr", "'{' testlist [ fstring_conversion ] [ fstring_format_spec ] '}'"
+    "fstring_expr",
+    "'{' testlist [ fstring_equality ] [ fstring_conversion ] [ fstring_format_spec ] '}'",
+    version=">=3.8",
+)
+@with_production(
+    "fstring_expr",
+    "'{' testlist [ fstring_conversion ] [ fstring_format_spec ] '}'",
+    version="<=3.7",
 )
 def convert_fstring_expr(
     config: ParserConfig, children: typing.Sequence[typing.Any]
 ) -> typing.Any:
     openbrkt, testlist, *conversions, closebrkt = children
+
+    # Extract any optional equality (self-debugging expressions)
+    if len(conversions) > 0 and isinstance(conversions[0], AssignEqual):
+        equal = conversions[0]
+        conversions = conversions[1:]
+    else:
+        equal = None
 
     # Extract any optional conversion
     if len(conversions) > 0 and isinstance(
@@ -1042,14 +1071,22 @@ def convert_fstring_expr(
     else:
         format_spec = None
 
+    # Fix up any spacing issue we find due to the fact that the equal can
+    # have whitespace and is also at the end of the expression.
+    if equal is not None:
+        whitespace_after_expression = SimpleWhitespace("")
+    else:
+        whitespace_after_expression = parse_parenthesizable_whitespace(
+            config, children[2].whitespace_before
+        )
+
     return FormattedStringExpression(
         whitespace_before_expression=parse_parenthesizable_whitespace(
             config, testlist.whitespace_before
         ),
         expression=testlist.value,
-        whitespace_after_expression=parse_parenthesizable_whitespace(
-            config, children[2].whitespace_before
-        ),
+        equal=equal,
+        whitespace_after_expression=whitespace_after_expression,
         conversion=conversion,
         format_spec=format_spec,
     )

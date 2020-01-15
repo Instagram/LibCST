@@ -2096,6 +2096,18 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_FormattedStringExpression_equal(
+        self, node: "FormattedStringExpression"
+    ) -> None:
+        pass
+
+    @mark_no_op
+    def leave_FormattedStringExpression_equal(
+        self, node: "FormattedStringExpression"
+    ) -> None:
+        pass
+
+    @mark_no_op
     def visit_FormattedStringText(self, node: "FormattedStringText") -> Optional[bool]:
         pass
 
