@@ -276,13 +276,14 @@ def _default_config() -> Dict[str, Any]:
 CONFIG_FILE_NAME = ".libcst.codemod.yaml"
 
 
-def _find_and_load_config() -> Dict[str, Any]:
+def _find_and_load_config(proc_name: str) -> Dict[str, Any]:
     # Initialize with some sane defaults.
     config = _default_config()
 
     # Walk up the filesystem looking for a config file.
     current_dir = os.path.abspath(os.getcwd())
     previous_dir = None
+    found_config = False
     while current_dir != previous_dir:
         # See if the config file exists
         config_file = os.path.join(current_dir, CONFIG_FILE_NAME)
@@ -311,12 +312,22 @@ def _find_and_load_config() -> Dict[str, Any]:
                     ):
                         config[list_setting] = possible_config[list_setting]
 
-            # We successfully located a file, stop traversing.
-            break
+                # We successfully located a file, stop traversing.
+                found_config = True
+                break
 
         # Try the parent directory.
         previous_dir = current_dir
         current_dir = os.path.abspath(os.path.join(current_dir, os.pardir))
+
+    requires_config = bool(os.environ.get("LIBCST_TOOL_REQUIRE_CONFIG", ""))
+    if requires_config and not found_config:
+        raise Exception(
+            f"Did not find a {CONFIG_FILE_NAME} in current directory or any "
+            + "parent directory! Perhaps you meant to run this command from a "
+            + "configured subdirectory, or you need to initialize a new project "
+            + f'using "{proc_name} initialize"?'
+        )
 
     # Make sure that the formatter is findable.
     if config["formatter"]:
@@ -331,7 +342,7 @@ def _find_and_load_config() -> Dict[str, Any]:
 
 def _codemod_impl(proc_name: str, command_args: List[str]) -> int:  # noqa: C901
     # Grab the configuration for running this, if it exsts.
-    config = _find_and_load_config()
+    config = _find_and_load_config(proc_name)
 
     # First, try to grab the command with a first pass. We aren't going to react
     # to user input here, so refuse to add help. Help will be parsed in the
@@ -673,7 +684,7 @@ def _recursive_find(base_dir: str, base_module: str) -> List[Tuple[str, object]]
 
 def _list_impl(proc_name: str, command_args: List[str]) -> int:  # noqa: C901
     # Grab the configuration so we can determine which modules to list from
-    config = _find_and_load_config()
+    config = _find_and_load_config(proc_name)
 
     parser = argparse.ArgumentParser(
         description="List all codemods available to run.",
