@@ -1,3 +1,38 @@
+# 0.3.0 - 2020-01-16
+
+## Added
+
+ - Added support for parsing and rendering Python 3.8 source code.
+ - Added more documentation for codemods.
+ - Added `get_full_name_for_expression` helper method.
+ - Added `has_name` helper to `QualifiedNameProvider`.
+ - Added a `--python-version` flag to `libcst.tool print` utility.
+
+## Updated
+
+ - Codemod command can now discover codemods in subdirectories of configured modules.
+ - Updgraded Pyre dependency to 0.0.39.
+
+## Fixed
+
+ - Cleaned up some typos and formatting issues in comments and documentation.
+ - Cleaned up a few redundant typevars.
+ - Fixed callable typing in matchers implementation.
+ - Fixed incorrect base class references in matcher decorator attribute visitors.
+ - Fixed codemod test assertion failing for some whitespace edge cases.
+ - Fixed scope analysis to track variable usage on `del` statements.
+
+## Deprecated
+
+ - Deprecated exporting `ensure_type` from `libcst` in favor of `libcst.helpers`.
+
+## Removed
+
+ - Removed `ExtSlice` and helper code in favor of `SubscriptElement`.
+ - Removed `default_params` attribute on `Parameters`.
+ - Removed `SyntacticPositionProvider` and `BasicPositionProvider`.
+ - Removed `CodePosition` and `CodeRange` exports on `libcst` in favor of `libcst.metadata`.
+
 # 0.2.7 - 2020-01-07
 
 ## Updated
