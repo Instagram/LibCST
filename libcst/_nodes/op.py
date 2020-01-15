@@ -238,7 +238,9 @@ class AssignEqual(_BaseOneTokenOp):
     """
     Used by :class:`AnnAssign` to denote a single equal character when doing an
     assignment on top of a type annotation. Also used by :class:`Param` and
-    :class:`Arg` to denote assignment of a default value.
+    :class:`Arg` to denote assignment of a default value, and by
+    :class:`FormattedStringExpression` to denote usage of self-documenting
+    expressions.
     """
 
     #: Any space that appears directly before this equal sign.

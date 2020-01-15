@@ -5086,6 +5086,12 @@ class FormattedString(BaseExpression, BaseString, BaseMatcherNode):
 strOrNoneMatchType = Union[
     str, None, MetadataMatchType, MatchIfTrue[Callable[[Union[str, None]], bool]]
 ]
+AssignEqualOrNoneMatchType = Union[
+    "AssignEqual",
+    None,
+    MetadataMatchType,
+    MatchIfTrue[Callable[[Union[cst.AssignEqual, None]], bool]],
+]
 
 
 @dataclass(frozen=True, eq=False, unsafe_hash=False)
@@ -5441,6 +5447,12 @@ class FormattedStringExpression(BaseFormattedStringContent, BaseMatcherNode):
         DoNotCareSentinel,
         OneOf[BaseParenthesizableWhitespaceMatchType],
         AllOf[BaseParenthesizableWhitespaceMatchType],
+    ] = DoNotCare()
+    equal: Union[
+        AssignEqualOrNoneMatchType,
+        DoNotCareSentinel,
+        OneOf[AssignEqualOrNoneMatchType],
+        AllOf[AssignEqualOrNoneMatchType],
     ] = DoNotCare()
     metadata: Union[
         MetadataMatchType,

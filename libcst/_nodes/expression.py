@@ -683,6 +683,11 @@ class FormattedStringExpression(BaseFormattedStringContent):
         ""
     )
 
+    #: Equal sign for formatted string expression uses self-documenting expressions,
+    #: such as ``f"{x=}"``. See the `Python 3.8 release notes
+    #: <https://docs.python.org/3/whatsnew/3.8.html#f-strings-support-for-self-documenting-expressions-and-debugging>`_.
+    equal: Optional[AssignEqual] = None
+
     def _validate(self) -> None:
         if self.conversion is not None and self.conversion not in ("s", "r", "a"):
             raise CSTValidationError("Invalid f-string conversion.")
@@ -699,6 +704,7 @@ class FormattedStringExpression(BaseFormattedStringContent):
                 visitor,
             ),
             expression=visit_required(self, "expression", self.expression, visitor),
+            equal=visit_optional(self, "equal", self.equal, visitor),
             whitespace_after_expression=visit_required(
                 self,
                 "whitespace_after_expression",
@@ -717,6 +723,9 @@ class FormattedStringExpression(BaseFormattedStringContent):
         state.add_token("{")
         self.whitespace_before_expression._codegen(state)
         self.expression._codegen(state)
+        equal = self.equal
+        if equal is not None:
+            equal._codegen(state)
         self.whitespace_after_expression._codegen(state)
         conversion = self.conversion
         if conversion is not None:
@@ -1593,7 +1602,7 @@ class Param(CSTNode):
     #: hints.
     annotation: Optional[Annotation] = None
 
-    #: The equals sign used to denote assignment if there is a default.
+    #: The equal sign used to denote assignment if there is a default.
     equal: Union[AssignEqual, MaybeSentinel] = MaybeSentinel.DEFAULT
 
     #: Any optional default value, used when the argument is not supplied.
@@ -1987,7 +1996,7 @@ class Arg(CSTNode):
     #: Optional keyword for the argument.
     keyword: Optional[Name] = None
 
-    #: The equals sign used to denote assignment if there is a keyword.
+    #: The equal sign used to denote assignment if there is a keyword.
     equal: Union[AssignEqual, MaybeSentinel] = MaybeSentinel.DEFAULT
 
     #: Any trailing comma.
