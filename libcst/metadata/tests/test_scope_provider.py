@@ -935,3 +935,55 @@ class ScopeProviderTest(UnitTest):
             scopes[fn_call].get_qualified_names_for(mock),
             {QualifiedName(name="unittest.mock", source=QualifiedNameSource.IMPORT)},
         )
+
+    def test_del_context_names(self) -> None:
+        m, scopes = get_scope_metadata_provider(
+            """
+                import a
+                dic = {}
+                del dic
+                del dic["key"]
+                del a.b
+            """
+        )
+        dic = ensure_type(
+            ensure_type(
+                ensure_type(m.body[1], cst.SimpleStatementLine).body[0], cst.Assign
+            ).targets[0],
+            cst.AssignTarget,
+        ).target
+        del_dic = ensure_type(
+            ensure_type(m.body[2], cst.SimpleStatementLine).body[0], cst.Del
+        )
+        scope = scopes[del_dic]
+        assignments = list(scope["dic"])
+        self.assertEqual(len(assignments), 1)
+        dic_assign = assignments[0]
+        self.assertIsInstance(dic_assign, Assignment)
+        self.assertEqual(cast(Assignment, dic_assign).node, dic)
+        self.assertEqual(len(dic_assign.references), 2)
+        del_dic_subscript = ensure_type(
+            ensure_type(
+                ensure_type(m.body[3], cst.SimpleStatementLine).body[0], cst.Del
+            ).target,
+            cst.Subscript,
+        )
+        self.assertSetEqual(
+            {i.node for i in dic_assign.references},
+            {del_dic.target, del_dic_subscript.value},
+        )
+        assignments = list(scope["a"])
+        self.assertEqual(len(assignments), 1)
+        a_assign = assignments[0]
+        self.assertIsInstance(a_assign, Assignment)
+        import_a = ensure_type(m.body[0], cst.SimpleStatementLine).body[0]
+        self.assertEqual(cast(Assignment, a_assign).node, import_a)
+        self.assertEqual(len(a_assign.references), 1)
+        del_a_b = ensure_type(
+            ensure_type(m.body[4], cst.SimpleStatementLine).body[0], cst.Del
+        )
+        self.assertEqual(
+            {i.node for i in a_assign.references},
+            {ensure_type(del_a_b.target, cst.Attribute).value},
+        )
+        self.assertEqual(scope["b"], ())

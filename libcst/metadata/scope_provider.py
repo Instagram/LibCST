@@ -624,7 +624,7 @@ class ScopeVisitor(cst.CSTVisitor):
         context = self.provider.get_metadata(ExpressionContextProvider, node, None)
         if context == ExpressionContext.STORE:
             self.scope.record_assignment(node.value, node)
-        elif context == ExpressionContext.LOAD:
+        elif context in (ExpressionContext.LOAD, ExpressionContext.DEL):
             access = Access(node, self.scope)
             self.__deferred_accesses.append(access)
             self.scope.record_access(node.value, access)
