@@ -677,8 +677,9 @@ class FormattedStringExpression(BaseFormattedStringContent):
         ""
     )
 
-    #: Whitespace after the ``expression``, ``conversion``, and ``format_spec``, but
-    #: before the closing curly brace (``}``).
+    #: Whitespace after the ``expression``, but before the ``conversion``,
+    #: ``format_spec`` and the closing curly brace (``}``). Python does not
+    #: allow whitespace inside or after a ``conversion`` or ``format_spec``.
     whitespace_after_expression: BaseParenthesizableWhitespace = SimpleWhitespace.field(
         ""
     )
