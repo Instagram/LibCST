@@ -4,6 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 #
 # pyre-strict
+from ast import literal_eval
 from typing import Optional, Union
 
 import libcst as cst
@@ -28,3 +29,11 @@ class ExpressionTest(UnitTest):
         self, input: Union[str, cst.CSTNode], output: Optional[str],
     ) -> None:
         self.assertEqual(get_full_name_for_node(input), output)
+
+    def test_simplestring_evaluated_value(self) -> None:
+        raw_string = '"a string."'
+        node = cst.helpers.ensure_type(
+            cst.parse_expression(raw_string), cst.SimpleString
+        )
+        self.assertEqual(node.value, raw_string)
+        self.assertEqual(node.evaluated_value, literal_eval(raw_string))

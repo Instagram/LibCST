@@ -7,6 +7,7 @@
 
 import re
 from abc import ABC, abstractmethod
+from ast import literal_eval
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from enum import Enum, auto
@@ -674,6 +675,13 @@ class SimpleString(_BasePrefixedString):
     def _codegen_impl(self, state: CodegenState) -> None:
         with self._parenthesize(state):
             state.add_token(self.value)
+
+    @property
+    def evaluated_value(self) -> str:
+        """
+        Return an :func:`ast.literal_eval` evaluated str of :py:attr:`value`.
+        """
+        return literal_eval(self.value)
 
 
 class BaseFormattedStringContent(CSTNode, ABC):
