@@ -516,9 +516,27 @@ class BaseString(BaseExpression, ABC):
     pass
 
 
+StringQuoteLiteral = Literal['"', "'", '"""', "'''"]
+
+
 class _BasePrefixedString(BaseString, ABC):
-    @abstractmethod
-    def _get_prefix(self) -> str:
+    @property
+    def prefix(self) -> str:
+        """
+        Returns the string's prefix, if any exists.
+
+        See `String and Bytes literals
+        <https://docs.python.org/3.7/reference/lexical_analysis.html#string-and-bytes-literals>`_
+        for more information.
+        """
+        ...
+
+    @property
+    def quote(self) -> StringQuoteLiteral:
+        """
+        Returns the quotation used to denote the string. Can be either ``'``,
+        ``"``, ``'''`` or ``\"\"\"``.
+        """
         ...
 
     def _safe_to_use_with_word_operator(self, position: ExpressionPosition) -> bool:
@@ -529,7 +547,7 @@ class _BasePrefixedString(BaseString, ABC):
         """
         if position == ExpressionPosition.LEFT:
             return True
-        elif self._get_prefix() == "":  # and position == ExpressionPosition.RIGHT
+        elif self.prefix == "":  # and position == ExpressionPosition.RIGHT
             return True
         else:
             return super(_BasePrefixedString, self)._safe_to_use_with_word_operator(
@@ -559,7 +577,7 @@ class SimpleString(_BasePrefixedString):
         super(SimpleString, self)._validate()
 
         # Validate any prefix
-        prefix = self._get_prefix()
+        prefix = self.prefix
         if prefix not in ("", "r", "u", "b", "br", "rb"):
             raise CSTValidationError("Invalid string prefix.")
         prefixlen = len(prefix)
@@ -587,13 +605,64 @@ class SimpleString(_BasePrefixedString):
         # We should check the contents as well, but this is pretty complicated,
         # partially due to triple-quoted strings.
 
-    def _get_prefix(self) -> str:
-        prefix = ""
+    @property
+    def prefix(self) -> str:
+        """
+        Returns the string's prefix, if any exists. The prefix can be ``r``,
+        ``u``, ``b``, ``br`` or ``rb``.
+        """
+
+        prefix: str = ""
         for c in self.value:
             if c in ['"', "'"]:
                 break
             prefix += c
         return prefix.lower()
+
+    @property
+    def quote(self) -> StringQuoteLiteral:
+        """
+        Returns the quotation used to denote the string. Can be either ``'``,
+        ``"``, ``'''`` or ``\"\"\"``.
+        """
+
+        quote: str = ""
+        for char in self.value[len(self.prefix) :]:
+            if char not in {"'", '"'}:
+                break
+            if quote and char != quote[0]:
+                # This is no longer the same string quote
+                break
+            quote += char
+
+        if len(quote) == 2:
+            # Let's assume this is an empty string.
+            quote = quote[:1]
+        elif len(quote) == 6:
+            # Let's assume this is an empty triple-quoted string.
+            quote = quote[:3]
+
+        if len(quote) not in {1, 3}:
+            # We shouldn't get here due to construction validation logic,
+            # but handle the case anyway.
+            raise Exception("Invalid string {self.value}")
+
+        # pyre-ignore We know via the above validation that we will only
+        # ever return one of the four string literals.
+        return quote
+
+    @property
+    def raw_value(self) -> str:
+        """
+        Returns the raw value of the string as it appears in source, without
+        the beginning or end quotes and without the prefix. This is often
+        useful when constructing transforms which need to manipulate strings
+        in source code.
+        """
+
+        prefix_len = len(self.prefix)
+        quote_len = len(self.quote)
+        return self.value[(prefix_len + quote_len) : (-quote_len)]
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "SimpleString":
         return SimpleString(
@@ -806,7 +875,7 @@ class FormattedString(_BasePrefixedString):
         super(FormattedString, self)._validate()
 
         # Validate any prefix
-        prefix = self._get_prefix()
+        prefix = self.prefix
         if prefix not in ("f", "fr", "rf"):
             raise CSTValidationError("Invalid f-string prefix.")
 
@@ -819,13 +888,28 @@ class FormattedString(_BasePrefixedString):
         if starttoken not in ('"', "'", '"""', "'''"):
             raise CSTValidationError("Invalid f-string enclosing quotes.")
 
-    def _get_prefix(self) -> str:
+    @property
+    def prefix(self) -> str:
+        """
+        Returns the string's prefix, if any exists. The prefix can be ``f``,
+        ``fr``, or ``rf``.
+        """
+
         prefix = ""
         for c in self.start:
             if c in ['"', "'"]:
                 break
             prefix += c
         return prefix.lower()
+
+    @property
+    def quote(self) -> StringQuoteLiteral:
+        """
+        Returns the quotation used to denote the string. Can be either ``'``,
+        ``"``, ``'''`` or ``\"\"\"``.
+        """
+
+        return self.end
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "FormattedString":
         return FormattedString(
@@ -889,14 +973,14 @@ class ConcatenatedString(BaseString):
             raise CSTValidationError("Cannot concatenate parenthesized strings.")
 
         # Cannot concatenate str and bytes
-        leftbytes = "b" in self.left._get_prefix()
+        leftbytes = "b" in self.left.prefix
         right = self.right
         if isinstance(right, ConcatenatedString):
-            rightbytes = "b" in right.left._get_prefix()
+            rightbytes = "b" in right.left.prefix
         elif isinstance(right, SimpleString):
-            rightbytes = "b" in right._get_prefix()
+            rightbytes = "b" in right.prefix
         elif isinstance(right, FormattedString):
-            rightbytes = "b" in right._get_prefix()
+            rightbytes = "b" in right.prefix
         else:
             raise Exception("Logic error!")
         if leftbytes != rightbytes:

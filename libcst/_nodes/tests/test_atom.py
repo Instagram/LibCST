@@ -1022,3 +1022,26 @@ class AtomTest(CSTNodeTest):
     )
     def test_invalid(self, **kwargs: Any) -> None:
         self.assert_invalid(**kwargs)
+
+
+class StringHelperTest(CSTNodeTest):
+    def test_string_prefix_and_quotes(self) -> None:
+        """
+        Test our helpers out for various strings.
+        """
+        emptybytestring = cst.ensure_type(parse_expression('b""'), cst.SimpleString)
+        bytestring = cst.ensure_type(parse_expression('b"abc"'), cst.SimpleString)
+        multilinestring = cst.ensure_type(parse_expression('""""""'), cst.SimpleString)
+        formatstring = cst.ensure_type(parse_expression('f""""""'), cst.FormattedString)
+
+        self.assertEqual(emptybytestring.prefix, "b")
+        self.assertEqual(emptybytestring.quote, '"')
+        self.assertEqual(emptybytestring.raw_value, "")
+        self.assertEqual(bytestring.prefix, "b")
+        self.assertEqual(bytestring.quote, '"')
+        self.assertEqual(bytestring.raw_value, "abc")
+        self.assertEqual(multilinestring.prefix, "")
+        self.assertEqual(multilinestring.quote, '"""')
+        self.assertEqual(multilinestring.raw_value, "")
+        self.assertEqual(formatstring.prefix, "f")
+        self.assertEqual(formatstring.quote, '"""')
