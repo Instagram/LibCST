@@ -67,39 +67,6 @@ def _find_expr_from_field_name(
     return field_expr.deep_replace(lhs, args[index].value)
 
 
-def _string_prefix_and_quotes(string: str) -> Tuple[str, str, str]:
-    prefix: str = ""
-    quote: str = ""
-    pos: int = 0
-
-    for i in range(0, len(string)):
-        if string[i] in {"'", '"'}:
-            pos = i
-            break
-        prefix += string[i]
-
-    for i in range(pos, len(string)):
-        if string[i] not in {"'", '"'}:
-            break
-        if quote and string[i] != quote[0]:
-            # This is no longer the same string quote
-            break
-        quote += string[i]
-
-    if len(quote) == 2:
-        # Lets assume this is an empty string.
-        quote = quote[:1]
-    elif len(quote) == 6:
-        # Lets assume this is an empty string.
-        quote = quote[:3]
-    if len(quote) not in {1, 3}:
-        raise Exception(f"Invalid string {string}")
-
-    innards = string[(len(prefix) + len(quote)) : (-len(quote))]
-
-    return prefix, quote, innards
-
-
 def _get_field(formatstr: str) -> Tuple[str, Optional[str], Optional[str]]:
     in_index: int = 0
     format_spec: Optional[str] = None
@@ -228,12 +195,13 @@ class SwitchStringQuotesTransformer(ContextAwareTransformer):
     def leave_SimpleString(
         self, original_node: cst.SimpleString, updated_node: cst.SimpleString
     ) -> cst.SimpleString:
-        prefix, quote, innards = _string_prefix_and_quotes(updated_node.value)
-        if self.avoid_quote in quote:
+        if self.avoid_quote in updated_node.quote:
             # Attempt to swap the value out, verify that the string is still identical
             # before and after transformation.
-            new_quote = quote.replace(self.avoid_quote, self.replace_quote)
-            new_value = f"{prefix}{new_quote}{innards}{new_quote}"
+            new_quote = updated_node.quote.replace(self.avoid_quote, self.replace_quote)
+            new_value = (
+                f"{updated_node.prefix}{new_quote}{updated_node.raw_value}{new_quote}"
+            )
 
             try:
                 old_str = ast.literal_eval(updated_node.value)
@@ -260,20 +228,20 @@ class ConvertFormatStringCommand(VisitorBasedCodemodCommand):
         self, original_node: cst.Call, updated_node: cst.Call
     ) -> cst.BaseExpression:
         # Lets figure out if this is a "".format() call
-        if self.matches(
+        extraction = self.extract(
             updated_node,
-            m.Call(func=m.Attribute(value=m.SimpleString(), attr=m.Name("format"))),
-        ):
+            m.Call(
+                func=m.Attribute(
+                    value=m.SaveMatchedNode(m.SimpleString(), "string"),
+                    attr=m.Name("format"),
+                )
+            ),
+        )
+        if extraction is not None:
             fstring: List[cst.BaseFormattedStringContent] = []
             inserted_sequence: int = 0
-
-            # TODO: Use `extract` when it becomes available.
-            stringvalue = cst.ensure_type(
-                cst.ensure_type(updated_node.func, cst.Attribute).value,
-                cst.SimpleString,
-            ).value
-            prefix, quote, innards = _string_prefix_and_quotes(stringvalue)
-            tokens = _get_tokens(innards)
+            stringnode = cst.ensure_type(extraction["string"], cst.SimpleString)
+            tokens = _get_tokens(stringnode.raw_value)
             for (literal_text, field_name, format_spec, conversion) in tokens:
                 if literal_text:
                     fstring.append(cst.FormattedStringText(literal_text))
@@ -323,7 +291,9 @@ class ConvertFormatStringCommand(VisitorBasedCodemodCommand):
 
                 # Try our best to swap quotes on any strings that won't fit
                 expr = cst.ensure_type(
-                    expr.visit(SwitchStringQuotesTransformer(self.context, quote[0])),
+                    expr.visit(
+                        SwitchStringQuotesTransformer(self.context, stringnode.quote[0])
+                    ),
                     cst.BaseExpression,
                 )
 
@@ -348,7 +318,7 @@ class ConvertFormatStringCommand(VisitorBasedCodemodCommand):
                 quote_gatherer = StringQuoteGatherer(self.context)
                 expr.visit(quote_gatherer)
                 for stringend in quote_gatherer.stringends:
-                    if stringend in quote:
+                    if stringend in stringnode.quote:
                         self.warn(
                             f"Cannot embed string with same quote from format() call"
                         )
@@ -359,15 +329,10 @@ class ConvertFormatStringCommand(VisitorBasedCodemodCommand):
                         expression=expr, conversion=conversion
                     )
                 )
-            if quote not in ['"', '"""', "'", "'''"]:
-                raise Exception(f"Invalid f-string quote {quote}")
             return cst.FormattedString(
                 parts=fstring,
-                start=f"f{prefix}{quote}",
-                # pyre-ignore I know what I'm doing with end, so no Literal[str]
-                # here. We get the string start/end from the original SimpleString
-                # so we know its correct.
-                end=quote,
+                start=f"f{stringnode.prefix}{stringnode.quote}",
+                end=stringnode.quote,
             )
 
         return updated_node

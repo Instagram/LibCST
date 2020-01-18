@@ -5,10 +5,7 @@
 #
 # pyre-strict
 from libcst.codemod import CodemodTest
-from libcst.codemod.commands.convert_format_to_fstring import (
-    ConvertFormatStringCommand,
-    _string_prefix_and_quotes,
-)
+from libcst.codemod.commands.convert_format_to_fstring import ConvertFormatStringCommand
 
 
 class ConvertFormatStringCommandTest(CodemodTest):
@@ -36,13 +33,6 @@ class ConvertFormatStringCommandTest(CodemodTest):
         """
 
         self.assertCodemod(before, after)
-
-    def test_string_prefix_and_quotes(self) -> None:
-        """
-        Test some edge cases not covered by below tests.
-        """
-        self.assertEqual(_string_prefix_and_quotes('b""'), ("b", '"', ""))
-        self.assertEqual(_string_prefix_and_quotes('f""""""'), ("f", '"""', ""))
 
     def test_unsupported_expansion(self) -> None:
         """
