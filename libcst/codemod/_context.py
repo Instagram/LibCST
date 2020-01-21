@@ -8,6 +8,7 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
 import libcst as cst
+import libcst.metadata as meta
 
 
 @dataclass(frozen=True)
@@ -43,6 +44,9 @@ class CodemodContext:
     #: the :meth:`~libcst.MetadataDependent.get_metadata` method on
     #: :class:`~libcst.codemod.Codemod`.
     wrapper: Optional[cst.MetadataWrapper] = None
+
+    #: The current repo-level metadata manager for the active codemod.
+    metadata_manager: Optional[meta.FullRepoManager] = None
 
     @property
     def module(self) -> Optional[cst.Module]:

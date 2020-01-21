@@ -6,13 +6,10 @@
 # pyre-strict
 
 
-import json
-import subprocess
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, List, Mapping
+from typing import TYPE_CHECKING, Collection, Dict, List, Mapping
 
 import libcst as cst
-from libcst.metadata.type_inference_provider import _process_pyre_data, run_command
 from libcst.metadata.wrapper import MetadataWrapper
 
 
@@ -24,8 +21,8 @@ class FullRepoManager:
     def __init__(
         self,
         repo_root_dir: str,
-        paths: List[str],
-        providers: List["ProviderT"],
+        paths: Collection[str],
+        providers: Collection["ProviderT"],
         timeout: int = 5,
     ) -> None:
         """
@@ -43,25 +40,16 @@ class FullRepoManager:
         self._cache: Dict["ProviderT", Mapping[str, object]] = {}
         self._timeout = timeout
         self._providers = providers
-        self._paths = paths
+        self._paths: List[str] = list(paths)
 
-    def _handle_pyre_cache(self, paths: List[str]) -> Mapping[str, object]:
-        params = ",".join(f"path='{self.root_path/path}'" for path in paths)
-        cmd = f'''pyre query "types({params})"'''
-        try:
-            stdout, stderr, return_code = run_command(cmd, timeout=self._timeout)
-        except subprocess.TimeoutExpired as exc:
-            raise exc
-
-        if return_code != 0:
-            raise Exception(f"stderr:\n {stderr}\nstdout:\n {stdout}")
-        try:
-            resp = json.loads(stdout)["response"]
-        except Exception as e:
-            raise Exception(f"{e}\n\nstderr:\n {stderr}\nstdout:\n {stdout}")
-        return {path: _process_pyre_data(data) for path, data in zip(paths, resp)}
-
-    def _resolve_cache(self) -> None:
+    def resolve_cache(self) -> None:
+        """
+        Resolve cache for all providers that require it. Normally this is called by
+        :meth:`~FullRepoManager.get_cache_for_path` so you do not need to call it
+        manually. However, if you intend to do a single cache resolution pass before
+        forking, it is a good idea to call this explicitly to control when cache
+        resolution happens.
+        """
         if not self._cache:
             cache: Dict["ProviderT", Mapping[str, object]] = {}
             for provider in self._providers:
@@ -86,7 +74,9 @@ class FullRepoManager:
             raise Exception(
                 "The path needs to be in paths parameter when constructing FullRepoManager for efficient batch processing."
             )
-        self._resolve_cache()
+        # Make sure that the cache is available to us. If the user called
+        # resolve_cache() manually then this is a noop.
+        self.resolve_cache()
         return {
             provider: data
             for provider, files in self._cache.items()
