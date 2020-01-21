@@ -28,7 +28,8 @@ setuptools.setup(
     install_requires=[
         "dataclasses; python_version < '3.7'",
         "typing_extensions >= 3.7.2",
-        "typing_inspect >= 0.3.1",
+        "typing_inspect >= 0.4.0",
+        "pyyaml >= 5.2",
     ],
     extras_require={
         "dev": [
