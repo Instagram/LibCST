@@ -564,6 +564,7 @@ def parallel_exec_transform_with_prettyprint(  # noqa: C901
     if repo_root:
         # Spin up a full repo metadata manager so that we can provide metadata
         # like type inference to individual forked processes.
+        print("Calculating full-repo metadata...", file=sys.stderr)
         metadata_manager = FullRepoManager(
             os.path.abspath(repo_root), files, transform.get_inherited_dependencies(),
         )
@@ -571,6 +572,7 @@ def parallel_exec_transform_with_prettyprint(  # noqa: C901
         transform.context = replace(
             transform.context, metadata_manager=metadata_manager,
         )
+    print("Executing codemod...", file=sys.stderr)
 
     # We place results in this queue inside _parallel_exec_process_stub
     # so that we can control when things get printed to the console.
