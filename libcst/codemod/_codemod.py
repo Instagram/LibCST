@@ -77,7 +77,18 @@ class Codemod(MetadataDependent, ABC):
         self, module: Module
     ) -> Generator[Module, None, None]:
         oldwrapper = self.context.wrapper
-        wrapper = MetadataWrapper(module)
+        metadata_manager = self.context.metadata_manager
+        filename = self.context.filename
+        if metadata_manager and filename:
+            # We can look up full-repo metadata for this codemod!
+            cache = metadata_manager.get_cache_for_path(filename)
+            wrapper = MetadataWrapper(module, cache=cache)
+        else:
+            # We are missing either the repo manager or the current path,
+            # which can happen when we are codemodding from stdin or when
+            # an upstream dependency manually instantiates us.
+            wrapper = MetadataWrapper(module)
+
         with self.resolve(wrapper):
             self.context = replace(self.context, wrapper=wrapper)
             try:

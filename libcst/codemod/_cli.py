@@ -33,6 +33,7 @@ from libcst.codemod._runner import (
     TransformSuccess,
     transform_module,
 )
+from libcst.metadata import FullRepoManager
 
 
 _DEFAULT_GENERATED_CODE_MARKER: str = f"@gen{''}erated"
@@ -512,6 +513,7 @@ def parallel_exec_transform_with_prettyprint(  # noqa: C901
     hide_progress: bool = False,
     blacklist_patterns: Sequence[str] = (),
     python_version: Optional[str] = None,
+    repo_root: Optional[str] = None,
 ) -> ParallelTransformResult:
     """
     Given a list of files and an instantiated codemod we should apply to them,
@@ -546,7 +548,7 @@ def parallel_exec_transform_with_prettyprint(  # noqa: C901
 
     # Ensure that we have no duplicates, otherwise we might get race conditions
     # on write.
-    files = sorted(list(set(files)))
+    files = sorted(list(set(os.path.abspath(f) for f in files)))
     total = len(files)
     progress = Progress(enabled=not hide_progress, total=total)
 
@@ -558,6 +560,17 @@ def parallel_exec_transform_with_prettyprint(  # noqa: C901
 
     if total == 0:
         return ParallelTransformResult(successes=0, failures=0, skips=0, warnings=0)
+
+    if repo_root:
+        # Spin up a full repo metadata manager so that we can provide metadata
+        # like type inference to individual forked processes.
+        metadata_manager = FullRepoManager(
+            os.path.abspath(repo_root), files, transform.get_inherited_dependencies(),
+        )
+        metadata_manager.resolve_cache()
+        transform.context = replace(
+            transform.context, metadata_manager=metadata_manager,
+        )
 
     # We place results in this queue inside _parallel_exec_process_stub
     # so that we can control when things get printed to the console.

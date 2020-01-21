@@ -288,6 +288,7 @@ def _default_config() -> Dict[str, Any]:
         "formatter": ["black", "-"],
         "blacklist_patterns": [],
         "modules": ["libcst.codemod.commands"],
+        "repo_root": ".",
     }
 
 
@@ -329,6 +330,15 @@ def _find_and_load_config(proc_name: str) -> Dict[str, Any]:
                         )
                     ):
                         config[list_setting] = possible_config[list_setting]
+
+                # Grab the repo root config.
+                for path_setting in ["repo_root"]:
+                    if path_setting in possible_config and isinstance(
+                        possible_config[path_setting], str
+                    ):
+                        config[path_setting] = os.path.abspath(
+                            os.path.join(current_dir, possible_config[path_setting]),
+                        )
 
                 # We successfully located a file, stop traversing.
                 found_config = True
@@ -515,7 +525,8 @@ def _codemod_impl(proc_name: str, command_args: List[str]) -> int:  # noqa: C901
     }
     command_instance = command_class(CodemodContext(), **codemod_args)
 
-    # Special case for allowing stdin/stdout
+    # Special case for allowing stdin/stdout. Note that this does not allow for
+    # full-repo metadata since there is no path.
     if any(p == "-" for p in args.path):
         if len(args.path) > 1:
             raise Exception("Cannot specify multiple paths when reading from stdin!")
@@ -560,6 +571,7 @@ def _codemod_impl(proc_name: str, command_args: List[str]) -> int:  # noqa: C901
             hide_progress=args.hide_progress,
             blacklist_patterns=config["blacklist_patterns"],
             python_version=args.python_version,
+            repo_root=config["repo_root"],
         )
     except KeyboardInterrupt:
         print("Interrupted!", file=sys.stderr)
@@ -650,6 +662,11 @@ def _initialize_impl(proc_name: str, command_args: List[str]) -> int:
         ),
         "modules": _ListSerializer(
             "List of modules that contain codemods inside of them.", newlines=True
+        ),
+        "repo_root": _StrSerializer(
+            "Absolute or relative path of the repository root, used for "
+            + "providing full-repo metadata. Relative paths should be "
+            + "specified with this file location as the base."
         ),
     }
 
