@@ -155,6 +155,8 @@ That's because the ``updated_node`` tree contains the modification to ``other_fu
 By returning modifications to ``original_node`` instead of ``updated_node``, we accidentally
 discarded all the work done deeper in the tree.
 
+.. _libcst-config_best_practice:
+
 Provide a ``config`` when generating code from templates
 --------------------------------------------------------
 
