@@ -387,6 +387,8 @@ def _codemod_impl(proc_name: str, command_args: List[str]) -> int:  # noqa: C901
                     command_class_name,
                 )
                 break
+            # Only swallow known import errors, show the rest of the exceptions
+            # to the user who is trying to run the codemod.
             except AttributeError:
                 continue
             except ModuleNotFoundError:
@@ -692,9 +694,8 @@ def _recursive_find(base_dir: str, base_module: str) -> List[Tuple[str, object]]
             module_name = path[:-3]
             potential_codemod = importlib.import_module(f"{base_module}.{module_name}")
             modules.append((module_name, potential_codemod))
-        except AttributeError:
-            continue
-        except ModuleNotFoundError:
+        except Exception:
+            # Unlike running a codemod, listing shouldn't crash with exceptions.
             continue
 
     return modules
@@ -716,9 +717,8 @@ def _list_impl(proc_name: str, command_args: List[str]) -> int:  # noqa: C901
     for module in config["modules"]:
         try:
             imported_module = importlib.import_module(module)
-        except AttributeError:
-            imported_module = None
-        except ModuleNotFoundError:
+        except Exception:
+            # Unlike running a codemod, listing shouldn't crash with exceptions.
             imported_module = None
 
         if not imported_module:
