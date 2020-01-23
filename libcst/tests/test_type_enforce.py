@@ -96,6 +96,7 @@ class TypeEnforcementTest(UnitTest):
             (NamedTupleSubclass("foo", 123), Tuple[str, int]),
             (NamedTupleSubclass("foo", 123), NamedTupleSubclass),
             # forward references should just pass for anything
+            # pyre-ignore Pyre doesn't think a forwardref is a typevar.
             (MyExampleClass(), Optional["NodeUser"]),
             # class variables get unwrapped, and behave like their underlying type
             (MyExampleClass(), ClassVar[MyExampleClass]),
