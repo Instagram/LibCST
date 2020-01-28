@@ -204,10 +204,8 @@ class SwitchStringQuotesTransformer(ContextAwareTransformer):
             )
 
             try:
-                old_str = ast.literal_eval(updated_node.value)
                 new_str = ast.literal_eval(new_value)
-
-                if old_str != new_str:
+                if updated_node.evaluated_value != new_str:
                     # This isn't the same!
                     return updated_node
 
