@@ -4,7 +4,6 @@
 # LICENSE file in the root directory of this source tree.
 #
 # pyre-strict
-from ast import literal_eval
 from typing import Union
 
 import libcst
@@ -47,5 +46,5 @@ class StripStringsCommand(VisitorBasedCodemodCommand):
         # Just use LibCST to evaluate the expression itself, and insert that as the
         # annotation.
         return parse_expression(
-            literal_eval(updated_node.value), config=self.module.config_for_parsing
+            updated_node.evaluated_value, config=self.module.config_for_parsing
         )
