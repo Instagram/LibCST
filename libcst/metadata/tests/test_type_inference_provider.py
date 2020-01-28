@@ -29,8 +29,7 @@ def _test_simple_class_helper(test: UnitTest, wrapper: MetadataWrapper) -> None:
         cst.AnnAssign,
     )
     self_number_attr = cst.ensure_type(assign.target, cst.Attribute)
-    # TODO: uncomment when typing issue is fixed
-    # self.assertEqual(types[self_number_attr], "int")
+    test.assertEqual(types[self_number_attr], "int")
 
     value = assign.value
     if value:
