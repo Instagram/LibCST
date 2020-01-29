@@ -15,6 +15,9 @@ TEMPLATE_PREFIX: str = "__LIBCST_MANGLED_NAME_"
 TEMPLATE_SUFFIX: str = "_EMAN_DELGNAM_TSCBIL__"
 
 
+ValidReplacementType = Union[cst.BaseExpression, cst.Annotation, cst.AssignTarget]
+
+
 def mangled_name(var: str) -> str:
     return f"{TEMPLATE_PREFIX}{var}{TEMPLATE_SUFFIX}"
 
@@ -37,14 +40,14 @@ def mangle_template(template: str, template_vars: Set[str]) -> str:
         original = f"{{{var}}}"
         if original not in template:
             raise Exception(
-                f"Template string is missing a reference to {var} referred to in kwargs"
+                f'Template string is missing a reference to "{var}" referred to in kwargs'
             )
         template = template.replace(original, mangled_name(var))
     return template
 
 
 class TemplateTransformer(cst.CSTTransformer):
-    def __init__(self, template_replacements: Mapping[str, cst.CSTNode]) -> None:
+    def __init__(self, template_replacements: Mapping[str, ValidReplacementType]) -> None:
         self.simple_replacements: Dict[str, cst.BaseExpression] = {
             name: value
             for name, value in template_replacements.items()
@@ -55,19 +58,25 @@ class TemplateTransformer(cst.CSTTransformer):
             for name, value in template_replacements.items()
             if isinstance(value, cst.Annotation)
         }
+        self.assignment_replacements: Dict[str, cst.AssignTarget] = {
+            name: value
+            for name, value in template_replacements.items()
+            if isinstance(value, cst.AssignTarget)
+        }
 
         # Figure out if there are any variables that we can't support
         # inserting into templates.
         supported_vars = {
             *[name for name in self.simple_replacements],
             *[name for name in self.annotation_replacements],
+            *[name for name in self.assignment_replacements],
         }
         unsupported_vars = {
             name for name in template_replacements if name not in supported_vars
         }
         if unsupported_vars:
             raise Exception(
-                f"Template replacement for {next(iter(unsupported_vars))} is unsupported"
+                f'Template replacement for "{next(iter(unsupported_vars))}" is unsupported'
             )
 
     def leave_Name(
@@ -90,6 +99,17 @@ class TemplateTransformer(cst.CSTTransformer):
                 return self.annotation_replacements[var_name].deep_clone()
         return updated_node
 
+    def leave_AssignTarget(
+        self, original_node: cst.AssignTarget, updated_node: cst.AssignTarget,
+    ) -> cst.AssignTarget:
+        # We can't use matchers here due to circular imports
+        target = updated_node.target
+        if isinstance(target, cst.Name):
+            var_name = unmangled_name(target.value)
+            if var_name in self.assignment_replacements:
+                return self.assignment_replacements[var_name].deep_clone()
+        return updated_node
+
 
 class TemplateChecker(cst.CSTVisitor):
     def __init__(self, template_vars: Set[str]) -> None:
@@ -98,20 +118,17 @@ class TemplateChecker(cst.CSTVisitor):
     def visit_Name(self, node: cst.Name) -> None:
         for var in self.template_vars:
             if node.value == mangled_name(var):
-                raise Exception(f"Template variable {var} was not replaced properly",)
+                raise Exception(f'Template variable "{var}" was not replaced properly')
 
 
 def unmangle_nodes(
-    tree: cst.CSTNode, template_replacements: Mapping[str, cst.CSTNode]
+    tree: cst.CSTNode, template_replacements: Mapping[str, ValidReplacementType],
 ) -> cst.CSTNode:
     unmangler = TemplateTransformer(template_replacements)
     return ensure_type(tree.visit(unmangler), cst.CSTNode)
 
 
 _DEFAULT_PARTIAL_PARSER_CONFIG: cst.PartialParserConfig = cst.PartialParserConfig()
-
-
-ValidReplacementType = Union[cst.BaseExpression, cst.Annotation]
 
 
 def parse_template_module(
