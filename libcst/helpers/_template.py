@@ -24,6 +24,7 @@ ValidReplacementType = Union[
     cst.Arg,
     cst.BaseStatement,
     cst.BaseSmallStatement,
+    cst.BaseSuite,
 ]
 
 
@@ -99,6 +100,11 @@ class TemplateTransformer(cst.CSTTransformer):
             for name, value in template_replacements.items()
             if isinstance(value, cst.BaseStatement)
         }
+        self.suite_replacements: Dict[str, cst.BaseSuite] = {
+            name: value
+            for name, value in template_replacements.items()
+            if isinstance(value, cst.BaseSuite)
+        }
 
         # Figure out if there are any variables that we can't support
         # inserting into templates.
@@ -111,6 +117,7 @@ class TemplateTransformer(cst.CSTTransformer):
             *[name for name in self.arg_replacements],
             *[name for name in self.small_statement_replacements],
             *[name for name in self.statement_replacements],
+            *[name for name in self.suite_replacements],
         }
         unsupported_vars = {
             name for name in template_replacements if name not in supported_vars
@@ -218,6 +225,47 @@ class TemplateTransformer(cst.CSTTransformer):
             var_name = unmangled_name(name_node.value)
             if var_name in self.small_statement_replacements:
                 return self.small_statement_replacements[var_name].deep_clone()
+        return updated_node
+
+    def leave_SimpleStatementSuite(
+        self,
+        original_node: cst.SimpleStatementSuite,
+        updated_node: cst.SimpleStatementSuite,
+    ) -> cst.BaseSuite:
+        # We can't use matchers here due to circular imports. We take advantage of
+        # the fact that a name in a simple suite will be parsed as an Expr node
+        # contained in a SimpleStatementSuite, so we check for these and see if they
+        # should be expanded template-wise to a base suite of some type.
+        if len(updated_node.body) == 1:
+            body_node = updated_node.body[0]
+            if isinstance(body_node, cst.Expr):
+                name_node = body_node.value
+                if isinstance(name_node, cst.Name):
+                    var_name = unmangled_name(name_node.value)
+                    if var_name in self.suite_replacements:
+                        return self.suite_replacements[var_name].deep_clone()
+        return updated_node
+
+    def leave_IndentedBlock(
+        self, original_node: cst.IndentedBlock, updated_node: cst.IndentedBlock,
+    ) -> cst.BaseSuite:
+        # We can't use matchers here due to circular imports. We take advantage of
+        # the fact that a name in an indented block will be parsed as an Expr node
+        # contained in a SimpleStatementLine, so we check for these and see if they
+        # should be expanded template-wise to a base suite of some type.
+        if len(updated_node.body) == 1:
+            statement_node = updated_node.body[0]
+            if (
+                isinstance(statement_node, cst.SimpleStatementLine)
+                and len(statement_node.body) == 1
+            ):
+                body_node = statement_node.body[0]
+                if isinstance(body_node, cst.Expr):
+                    name_node = body_node.value
+                    if isinstance(name_node, cst.Name):
+                        var_name = unmangled_name(name_node.value)
+                        if var_name in self.suite_replacements:
+                            return self.suite_replacements[var_name].deep_clone()
         return updated_node
 
 
