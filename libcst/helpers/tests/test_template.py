@@ -197,3 +197,38 @@ class TemplateTest(UnitTest):
         self.assertEqual(
             module.code, "if foo: pass\nbar()\npass\n",
         )
+
+    def test_suite(self) -> None:
+        # Test that we can insert various types of statement suites into a
+        # spot accepting a suite.
+        module = parse_template_module(
+            "if x is True: {suite}\n",
+            suite=cst.SimpleStatementSuite(body=(cst.Pass(),),),
+        )
+        self.assertEqual(
+            module.code, "if x is True: pass\n",
+        )
+
+        module = parse_template_module(
+            "if x is True: {suite}\n",
+            suite=cst.IndentedBlock(body=(cst.SimpleStatementLine((cst.Pass(),),),),),
+        )
+        self.assertEqual(
+            module.code, "if x is True:\n    pass\n",
+        )
+
+        module = parse_template_module(
+            "if x is True:\n    {suite}\n",
+            suite=cst.SimpleStatementSuite(body=(cst.Pass(),),),
+        )
+        self.assertEqual(
+            module.code, "if x is True: pass\n",
+        )
+
+        module = parse_template_module(
+            "if x is True:\n    {suite}\n",
+            suite=cst.IndentedBlock(body=(cst.SimpleStatementLine((cst.Pass(),),),),),
+        )
+        self.assertEqual(
+            module.code, "if x is True:\n    pass\n",
+        )
