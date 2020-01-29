@@ -83,3 +83,22 @@ class TemplateTest(UnitTest):
         self.assertEqual(
             self.code(expression), "one + two + (three * four)",
         )
+
+    def test_annotation(self) -> None:
+        # Test that we can insert an annotation expression normally.
+        statement = parse_template_statement(
+            "x: {type} = {val}", type=cst.Name("int"), val=cst.Integer("5"),
+        )
+        self.assertEqual(
+            self.code(statement), "x: int = 5\n",
+        )
+
+        # Test that we can insert an annotation node as a special case.
+        statement = parse_template_statement(
+            "x: {type} = {val}",
+            type=cst.Annotation(cst.Name("int")),
+            val=cst.Integer("5"),
+        )
+        self.assertEqual(
+            self.code(statement), "x: int = 5\n",
+        )
