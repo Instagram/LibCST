@@ -102,3 +102,26 @@ class TemplateTest(UnitTest):
         self.assertEqual(
             self.code(statement), "x: int = 5\n",
         )
+
+    def test_assign_target(self) -> None:
+        # Test that we can insert an assignment target normally.
+        statement = parse_template_statement(
+            "{a} = {b} = {val}",
+            a=cst.Name("first"),
+            b=cst.Name("second"),
+            val=cst.Integer("5"),
+        )
+        self.assertEqual(
+            self.code(statement), "first = second = 5\n",
+        )
+
+        # Test that we can insert an assignment target as a special case.
+        statement = parse_template_statement(
+            "{a} = {b} = {val}",
+            a=cst.AssignTarget(cst.Name("first")),
+            b=cst.AssignTarget(cst.Name("second")),
+            val=cst.Integer("5"),
+        )
+        self.assertEqual(
+            self.code(statement), "first = second = 5\n",
+        )
