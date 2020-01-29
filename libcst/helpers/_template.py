@@ -16,7 +16,12 @@ TEMPLATE_SUFFIX: str = "_EMAN_DELGNAM_TSCBIL__"
 
 
 ValidReplacementType = Union[
-    cst.BaseExpression, cst.Annotation, cst.AssignTarget, cst.Param, cst.Parameters
+    cst.BaseExpression,
+    cst.Annotation,
+    cst.AssignTarget,
+    cst.Param,
+    cst.Parameters,
+    cst.Arg,
 ]
 
 
@@ -77,6 +82,11 @@ class TemplateTransformer(cst.CSTTransformer):
             for name, value in template_replacements.items()
             if isinstance(value, cst.Parameters)
         }
+        self.arg_replacements: Dict[str, cst.Arg] = {
+            name: value
+            for name, value in template_replacements.items()
+            if isinstance(value, cst.Arg)
+        }
 
         # Figure out if there are any variables that we can't support
         # inserting into templates.
@@ -86,6 +96,7 @@ class TemplateTransformer(cst.CSTTransformer):
             *[name for name in self.assignment_replacements],
             *[name for name in self.param_replacements],
             *[name for name in self.parameters_replacements],
+            *[name for name in self.arg_replacements],
         }
         unsupported_vars = {
             name for name in template_replacements if name not in supported_vars
@@ -152,6 +163,15 @@ class TemplateTransformer(cst.CSTTransformer):
             var_name = unmangled_name(updated_node.params[0].name.value)
             if var_name in self.parameters_replacements:
                 return self.parameters_replacements[var_name].deep_clone()
+        return updated_node
+
+    def leave_Arg(self, original_node: cst.Arg, updated_node: cst.Arg,) -> cst.Arg:
+        # We can't use matchers here due to circular imports
+        arg = updated_node.value
+        if isinstance(arg, cst.Name):
+            var_name = unmangled_name(arg.value)
+            if var_name in self.arg_replacements:
+                return self.arg_replacements[var_name].deep_clone()
         return updated_node
 
 

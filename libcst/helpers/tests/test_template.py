@@ -163,3 +163,22 @@ class TemplateTest(UnitTest):
         self.assertEqual(
             self.code(statement), "def foo(bar, baz, **rest): pass\n",
         )
+
+    def test_args(self) -> None:
+        # Test that we can insert an argument into a function call normally.
+        statement = parse_template_expression(
+            "foo({arg1}, {arg2})", arg1=cst.Name("bar"), arg2=cst.Name("baz"),
+        )
+        self.assertEqual(
+            self.code(statement), "foo(bar, baz)",
+        )
+
+        # Test that we can insert an argument as a special case.
+        statement = parse_template_expression(
+            "foo({arg1}, {arg2})",
+            arg1=cst.Arg(cst.Name("bar")),
+            arg2=cst.Arg(cst.Name("baz")),
+        )
+        self.assertEqual(
+            self.code(statement), "foo(bar, baz)",
+        )
