@@ -182,3 +182,18 @@ class TemplateTest(UnitTest):
         self.assertEqual(
             self.code(statement), "foo(bar, baz)",
         )
+
+    def test_statement(self) -> None:
+        # Test that we can insert various types of statements into a
+        # statement list.
+        module = parse_template_module(
+            "{statement1}\n{statement2}\n{statement3}\n",
+            statement1=cst.If(
+                test=cst.Name("foo"), body=cst.SimpleStatementSuite((cst.Pass(),),),
+            ),
+            statement2=cst.SimpleStatementLine((cst.Expr(cst.Call(cst.Name("bar"))),),),
+            statement3=cst.Pass(),
+        )
+        self.assertEqual(
+            module.code, "if foo: pass\nbar()\npass\n",
+        )
