@@ -22,6 +22,8 @@ ValidReplacementType = Union[
     cst.Param,
     cst.Parameters,
     cst.Arg,
+    cst.BaseStatement,
+    cst.BaseSmallStatement,
 ]
 
 
@@ -87,6 +89,16 @@ class TemplateTransformer(cst.CSTTransformer):
             for name, value in template_replacements.items()
             if isinstance(value, cst.Arg)
         }
+        self.small_statement_replacements: Dict[str, cst.BaseSmallStatement] = {
+            name: value
+            for name, value in template_replacements.items()
+            if isinstance(value, cst.BaseSmallStatement)
+        }
+        self.statement_replacements: Dict[str, cst.BaseStatement] = {
+            name: value
+            for name, value in template_replacements.items()
+            if isinstance(value, cst.BaseStatement)
+        }
 
         # Figure out if there are any variables that we can't support
         # inserting into templates.
@@ -97,6 +109,8 @@ class TemplateTransformer(cst.CSTTransformer):
             *[name for name in self.param_replacements],
             *[name for name in self.parameters_replacements],
             *[name for name in self.arg_replacements],
+            *[name for name in self.small_statement_replacements],
+            *[name for name in self.statement_replacements],
         }
         unsupported_vars = {
             name for name in template_replacements if name not in supported_vars
@@ -172,6 +186,38 @@ class TemplateTransformer(cst.CSTTransformer):
             var_name = unmangled_name(arg.value)
             if var_name in self.arg_replacements:
                 return self.arg_replacements[var_name].deep_clone()
+        return updated_node
+
+    def leave_SimpleStatementLine(
+        self,
+        original_node: cst.SimpleStatementLine,
+        updated_node: cst.SimpleStatementLine,
+    ) -> cst.BaseStatement:
+        # We can't use matchers here due to circular imports. We take advantage of
+        # the fact that a name on a single line will be parsed as an Expr node
+        # contained in a SimpleStatementLine, so we check for these and see if they
+        # should be expanded template-wise to a statement of some type.
+        if len(updated_node.body) == 1:
+            body_node = updated_node.body[0]
+            if isinstance(body_node, cst.Expr):
+                name_node = body_node.value
+                if isinstance(name_node, cst.Name):
+                    var_name = unmangled_name(name_node.value)
+                    if var_name in self.statement_replacements:
+                        return self.statement_replacements[var_name].deep_clone()
+        return updated_node
+
+    def leave_Expr(
+        self, original_node: cst.Expr, updated_node: cst.Expr,
+    ) -> cst.BaseSmallStatement:
+        # We can't use matchers here due to circular imports. We do a similar trick
+        # to the above stanza handling SimpleStatementLine to support templates
+        # which are trying to substitute a BaseSmallStatement.
+        name_node = updated_node.value
+        if isinstance(name_node, cst.Name):
+            var_name = unmangled_name(name_node.value)
+            if var_name in self.small_statement_replacements:
+                return self.small_statement_replacements[var_name].deep_clone()
         return updated_node
 
 
