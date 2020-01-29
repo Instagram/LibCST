@@ -15,7 +15,9 @@ TEMPLATE_PREFIX: str = "__LIBCST_MANGLED_NAME_"
 TEMPLATE_SUFFIX: str = "_EMAN_DELGNAM_TSCBIL__"
 
 
-ValidReplacementType = Union[cst.BaseExpression, cst.Annotation, cst.AssignTarget]
+ValidReplacementType = Union[
+    cst.BaseExpression, cst.Annotation, cst.AssignTarget, cst.Param, cst.Parameters
+]
 
 
 def mangled_name(var: str) -> str:
@@ -47,7 +49,9 @@ def mangle_template(template: str, template_vars: Set[str]) -> str:
 
 
 class TemplateTransformer(cst.CSTTransformer):
-    def __init__(self, template_replacements: Mapping[str, ValidReplacementType]) -> None:
+    def __init__(
+        self, template_replacements: Mapping[str, ValidReplacementType]
+    ) -> None:
         self.simple_replacements: Dict[str, cst.BaseExpression] = {
             name: value
             for name, value in template_replacements.items()
@@ -63,6 +67,16 @@ class TemplateTransformer(cst.CSTTransformer):
             for name, value in template_replacements.items()
             if isinstance(value, cst.AssignTarget)
         }
+        self.param_replacements: Dict[str, cst.Param] = {
+            name: value
+            for name, value in template_replacements.items()
+            if isinstance(value, cst.Param)
+        }
+        self.parameters_replacements: Dict[str, cst.Parameters] = {
+            name: value
+            for name, value in template_replacements.items()
+            if isinstance(value, cst.Parameters)
+        }
 
         # Figure out if there are any variables that we can't support
         # inserting into templates.
@@ -70,6 +84,8 @@ class TemplateTransformer(cst.CSTTransformer):
             *[name for name in self.simple_replacements],
             *[name for name in self.annotation_replacements],
             *[name for name in self.assignment_replacements],
+            *[name for name in self.param_replacements],
+            *[name for name in self.parameters_replacements],
         }
         unsupported_vars = {
             name for name in template_replacements if name not in supported_vars
@@ -108,6 +124,34 @@ class TemplateTransformer(cst.CSTTransformer):
             var_name = unmangled_name(target.value)
             if var_name in self.assignment_replacements:
                 return self.assignment_replacements[var_name].deep_clone()
+        return updated_node
+
+    def leave_Param(
+        self, original_node: cst.Param, updated_node: cst.Param,
+    ) -> cst.Param:
+        var_name = unmangled_name(updated_node.name.value)
+        if var_name in self.param_replacements:
+            return self.param_replacements[var_name].deep_clone()
+        return updated_node
+
+    def leave_Parameters(
+        self, original_node: cst.Parameters, updated_node: cst.Parameters,
+    ) -> cst.Parameters:
+        # A very special case for when we use a template variable for all
+        # function parameters.
+        if (
+            len(updated_node.params) == 1
+            and updated_node.star_arg == cst.MaybeSentinel.DEFAULT
+            and len(updated_node.kwonly_params) == 0
+            and updated_node.star_kwarg is None
+            and len(updated_node.posonly_params) == 0
+            and updated_node.posonly_ind == cst.MaybeSentinel.DEFAULT
+        ):
+            # This parameters node has only one argument, which is possibly
+            # a replacement.
+            var_name = unmangled_name(updated_node.params[0].name.value)
+            if var_name in self.parameters_replacements:
+                return self.parameters_replacements[var_name].deep_clone()
         return updated_node
 
 
