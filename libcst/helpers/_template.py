@@ -5,7 +5,7 @@
 #
 # pyre-strict
 
-from typing import Dict, Set, Union
+from typing import Dict, Mapping, Optional, Set, Union
 
 import libcst as cst
 from libcst.helpers.common import ensure_type
@@ -17,6 +17,16 @@ TEMPLATE_SUFFIX: str = "_EMAN_DELGNAM_TSCBIL__"
 
 def mangled_name(var: str) -> str:
     return f"{TEMPLATE_PREFIX}{var}{TEMPLATE_SUFFIX}"
+
+
+def unmangled_name(var: str) -> Optional[str]:
+    if TEMPLATE_PREFIX in var and TEMPLATE_SUFFIX in var:
+        prefix, name_and_suffix = var.split(TEMPLATE_PREFIX, 1)
+        name, suffix = name_and_suffix.split(TEMPLATE_SUFFIX, 1)
+        if not prefix and not suffix:
+            return name
+    # This is not a valid mangled name
+    return None
 
 
 def mangle_template(template: str, template_vars: Set[str]) -> str:
@@ -34,19 +44,26 @@ def mangle_template(template: str, template_vars: Set[str]) -> str:
 
 
 class TemplateTransformer(cst.CSTTransformer):
-    def __init__(self, template_replacements: Dict[str, cst.CSTNode]) -> None:
+    def __init__(self, template_replacements: Mapping[str, cst.CSTNode]) -> None:
         self.simple_replacements: Dict[str, cst.BaseExpression] = {
             name: value
             for name, value in template_replacements.items()
             if isinstance(value, cst.BaseExpression)
         }
+        self.annotation_replacements: Dict[str, cst.Annotation] = {
+            name: value
+            for name, value in template_replacements.items()
+            if isinstance(value, cst.Annotation)
+        }
 
         # Figure out if there are any variables that we can't support
         # inserting into templates.
+        supported_vars = {
+            *[name for name in self.simple_replacements],
+            *[name for name in self.annotation_replacements],
+        }
         unsupported_vars = {
-            name
-            for name in template_replacements
-            if name not in self.simple_replacements
+            name for name in template_replacements if name not in supported_vars
         }
         if unsupported_vars:
             raise Exception(
@@ -56,19 +73,21 @@ class TemplateTransformer(cst.CSTTransformer):
     def leave_Name(
         self, original_node: cst.Name, updated_node: cst.Name
     ) -> cst.BaseExpression:
-        if (
-            TEMPLATE_PREFIX in updated_node.value
-            and TEMPLATE_SUFFIX in updated_node.value
-        ):
-            prefix, name_and_suffix = updated_node.value.split(TEMPLATE_PREFIX, 1)
-            name, suffix = name_and_suffix.split(TEMPLATE_SUFFIX, 1)
-            if prefix or suffix:
-                # This is not a valid name, don't modify it
-                return updated_node
-            if name not in self.simple_replacements:
-                # This is not a valid name, don't modify it
-                return updated_node
-            return self.simple_replacements[name].deep_clone()
+        var_name = unmangled_name(updated_node.value)
+        if var_name is None or var_name not in self.simple_replacements:
+            # This is not a valid name, don't modify it
+            return updated_node
+        return self.simple_replacements[var_name].deep_clone()
+
+    def leave_Annotation(
+        self, original_node: cst.Annotation, updated_node: cst.Annotation,
+    ) -> cst.Annotation:
+        # We can't use matchers here due to circular imports
+        annotation = updated_node.annotation
+        if isinstance(annotation, cst.Name):
+            var_name = unmangled_name(annotation.value)
+            if var_name in self.annotation_replacements:
+                return self.annotation_replacements[var_name].deep_clone()
         return updated_node
 
 
@@ -83,7 +102,7 @@ class TemplateChecker(cst.CSTVisitor):
 
 
 def unmangle_nodes(
-    tree: cst.CSTNode, template_replacements: Dict[str, cst.CSTNode]
+    tree: cst.CSTNode, template_replacements: Mapping[str, cst.CSTNode]
 ) -> cst.CSTNode:
     unmangler = TemplateTransformer(template_replacements)
     return ensure_type(tree.visit(unmangler), cst.CSTNode)
@@ -92,10 +111,13 @@ def unmangle_nodes(
 _DEFAULT_PARTIAL_PARSER_CONFIG: cst.PartialParserConfig = cst.PartialParserConfig()
 
 
+ValidReplacementType = Union[cst.BaseExpression, cst.Annotation]
+
+
 def parse_template_module(
     template: str,
     config: cst.PartialParserConfig = _DEFAULT_PARTIAL_PARSER_CONFIG,
-    **template_replacements: cst.CSTNode,
+    **template_replacements: ValidReplacementType,
 ) -> cst.Module:
     """
     Accepts an entire python module template, including all leading and trailing
@@ -127,7 +149,7 @@ def parse_template_module(
 def parse_template_statement(
     template: str,
     config: cst.PartialParserConfig = _DEFAULT_PARTIAL_PARSER_CONFIG,
-    **template_replacements: cst.CSTNode,
+    **template_replacements: ValidReplacementType,
 ) -> Union[cst.SimpleStatementLine, cst.BaseCompoundStatement]:
     """
     Accepts a statement template followed by a trailing newline. If a trailing
@@ -162,7 +184,7 @@ def parse_template_statement(
 def parse_template_expression(
     template: str,
     config: cst.PartialParserConfig = _DEFAULT_PARTIAL_PARSER_CONFIG,
-    **template_replacements: cst.CSTNode,
+    **template_replacements: ValidReplacementType,
 ) -> cst.BaseExpression:
     """
     Accepts an expression template on a single line. Leading and trailing whitespace
