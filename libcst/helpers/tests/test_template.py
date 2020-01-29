@@ -125,3 +125,41 @@ class TemplateTest(UnitTest):
         self.assertEqual(
             self.code(statement), "first = second = 5\n",
         )
+
+    def test_parameters(self) -> None:
+        # Test that we can insert a parameter into a function def normally.
+        statement = parse_template_statement(
+            "def foo({arg}): pass", arg=cst.Name("bar"),
+        )
+        self.assertEqual(
+            self.code(statement), "def foo(bar): pass\n",
+        )
+
+        # Test that we can insert a parameter as a special case.
+        statement = parse_template_statement(
+            "def foo({arg}): pass", arg=cst.Param(cst.Name("bar")),
+        )
+        self.assertEqual(
+            self.code(statement), "def foo(bar): pass\n",
+        )
+
+        # Test that we can insert a parameters list as a special case.
+        statement = parse_template_statement(
+            "def foo({args}): pass",
+            args=cst.Parameters((cst.Param(cst.Name("bar")),),),
+        )
+        self.assertEqual(
+            self.code(statement), "def foo(bar): pass\n",
+        )
+
+        # Test filling out multiple parameters
+        statement = parse_template_statement(
+            "def foo({args}): pass",
+            args=cst.Parameters(
+                params=(cst.Param(cst.Name("bar")), cst.Param(cst.Name("baz")),),
+                star_kwarg=cst.Param(cst.Name("rest")),
+            ),
+        )
+        self.assertEqual(
+            self.code(statement), "def foo(bar, baz, **rest): pass\n",
+        )
