@@ -36,13 +36,11 @@ class DoubleQuoteForwardRefsTransformer(m.MatcherDecoratableTransformer):
         self, original_node: cst.SimpleString, updated_node: cst.SimpleString
     ) -> cst.SimpleString:
         # For prettiness, convert all single-quoted forward refs to double-quoted.
-        if updated_node.value.startswith("'") and updated_node.value.endswith("'"):
+        if "'" in updated_node.quote:
             new_value = f'"{updated_node.value[1:-1]}"'
             try:
-                if ast.literal_eval(updated_node.value) == ast.literal_eval(new_value):
-                    return updated_node.with_changes(
-                        value=f'"{updated_node.value[1:-1]}"'
-                    )
+                if updated_node.evaluated_value == ast.literal_eval(new_value):
+                    return updated_node.with_changes(value=new_value)
             except SyntaxError:
                 pass
         return updated_node

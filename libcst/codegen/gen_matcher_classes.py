@@ -4,7 +4,6 @@
 # LICENSE file in the root directory of this source tree.
 
 # pyre-strict
-import ast
 from dataclasses import dataclass, fields
 from typing import Generator, List, Optional, Sequence, Set, Tuple, Type, Union
 
@@ -94,11 +93,7 @@ class MatcherClassToLibCSTClass(cst.CSTTransformer):
     def leave_SimpleString(
         self, original_node: cst.SimpleString, updated_node: cst.SimpleString
     ) -> Union[cst.SimpleString, cst.Attribute]:
-        try:
-            value = ast.literal_eval(updated_node.value)
-        except SyntaxError:
-            return updated_node
-
+        value = updated_node.evaluated_value
         if value in CST_DIR:
             return cst.Attribute(cst.Name("cst"), cst.Name(value))
         return updated_node
@@ -287,7 +282,7 @@ def _get_raw_name(node: cst.CSTNode) -> Optional[str]:
     if isinstance(node, cst.Name):
         return node.value
     elif isinstance(node, cst.SimpleString):
-        return ast.literal_eval(node.value)
+        return node.evaluated_value
     elif isinstance(node, cst.SubscriptElement):
         return _get_raw_name(node.slice)
     elif isinstance(node, cst.Index):

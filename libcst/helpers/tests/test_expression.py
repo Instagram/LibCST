@@ -37,3 +37,21 @@ class ExpressionTest(UnitTest):
         )
         self.assertEqual(node.value, raw_string)
         self.assertEqual(node.evaluated_value, literal_eval(raw_string))
+
+    def test_integer_evaluated_value(self) -> None:
+        raw_value = "5"
+        node = cst.helpers.ensure_type(cst.parse_expression(raw_value), cst.Integer)
+        self.assertEqual(node.value, raw_value)
+        self.assertEqual(node.evaluated_value, literal_eval(raw_value))
+
+    def test_float_evaluated_value(self) -> None:
+        raw_value = "5.5"
+        node = cst.helpers.ensure_type(cst.parse_expression(raw_value), cst.Float)
+        self.assertEqual(node.value, raw_value)
+        self.assertEqual(node.evaluated_value, literal_eval(raw_value))
+
+    def test_complex_evaluated_value(self) -> None:
+        raw_value = "5j"
+        node = cst.helpers.ensure_type(cst.parse_expression(raw_value), cst.Imaginary)
+        self.assertEqual(node.value, raw_value)
+        self.assertEqual(node.evaluated_value, literal_eval(raw_value))
