@@ -27,6 +27,7 @@ ValidReplacementType = Union[
     cst.BaseSuite,
     cst.BaseSlice,
     cst.SubscriptElement,
+    cst.Decorator,
 ]
 
 
@@ -117,6 +118,11 @@ class TemplateTransformer(cst.CSTTransformer):
             for name, value in template_replacements.items()
             if isinstance(value, cst.BaseSlice)
         }
+        self.decorator_replacements: Dict[str, cst.Decorator] = {
+            name: value
+            for name, value in template_replacements.items()
+            if isinstance(value, cst.Decorator)
+        }
 
         # Figure out if there are any variables that we can't support
         # inserting into templates.
@@ -132,6 +138,7 @@ class TemplateTransformer(cst.CSTTransformer):
             *[name for name in self.suite_replacements],
             *[name for name in self.subscript_element_replacements],
             *[name for name in self.subscript_index_replacements],
+            *[name for name in self.decorator_replacements],
         }
         unsupported_vars = {
             name for name in template_replacements if name not in supported_vars
@@ -200,7 +207,7 @@ class TemplateTransformer(cst.CSTTransformer):
                 return self.parameters_replacements[var_name].deep_clone()
         return updated_node
 
-    def leave_Arg(self, original_node: cst.Arg, updated_node: cst.Arg,) -> cst.Arg:
+    def leave_Arg(self, original_node: cst.Arg, updated_node: cst.Arg) -> cst.Arg:
         # We can't use matchers here due to circular imports
         arg = updated_node.value
         if isinstance(arg, cst.Name):
@@ -308,6 +315,17 @@ class TemplateTransformer(cst.CSTTransformer):
                 var_name = unmangled_name(expr.value)
                 if var_name in self.subscript_element_replacements:
                     return self.subscript_element_replacements[var_name].deep_clone()
+        return updated_node
+
+    def leave_Decorator(
+        self, original_node: cst.Decorator, updated_node: cst.Decorator
+    ) -> cst.Decorator:
+        # We can't use matchers here due to circular imports
+        decorator = updated_node.decorator
+        if isinstance(decorator, cst.Name):
+            var_name = unmangled_name(decorator.value)
+            if var_name in self.decorator_replacements:
+                return self.decorator_replacements[var_name].deep_clone()
         return updated_node
 
 

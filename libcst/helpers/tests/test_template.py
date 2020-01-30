@@ -306,3 +306,18 @@ class TemplateTest(UnitTest):
         self.assertEqual(
             self.code(expression), "foo[5:6, 7]",
         )
+
+    def test_decorators(self) -> None:
+        # Test that we can special-case decorators when needed.
+        statement = parse_template_statement(
+            "@{decorator}\ndef foo(): pass\n", decorator=cst.Name("bar"),
+        )
+        self.assertEqual(
+            self.code(statement), "@bar\ndef foo(): pass\n",
+        )
+        statement = parse_template_statement(
+            "@{decorator}\ndef foo(): pass\n", decorator=cst.Decorator(cst.Name("bar")),
+        )
+        self.assertEqual(
+            self.code(statement), "@bar\ndef foo(): pass\n",
+        )
