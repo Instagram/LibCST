@@ -232,3 +232,77 @@ class TemplateTest(UnitTest):
         self.assertEqual(
             module.code, "if x is True:\n    pass\n",
         )
+
+    def test_subscript(self) -> None:
+        # Test that we can insert various subscript slices into an
+        # acceptible spot.
+        expression = parse_template_expression(
+            "Optional[{type}]", type=cst.Name("int"),
+        )
+        self.assertEqual(
+            self.code(expression), "Optional[int]",
+        )
+        expression = parse_template_expression(
+            "Tuple[{type1}, {type2}]", type1=cst.Name("int"), type2=cst.Name("str"),
+        )
+        self.assertEqual(
+            self.code(expression), "Tuple[int, str]",
+        )
+
+        expression = parse_template_expression(
+            "Optional[{type}]", type=cst.Index(cst.Name("int")),
+        )
+        self.assertEqual(
+            self.code(expression), "Optional[int]",
+        )
+        expression = parse_template_expression(
+            "Optional[{type}]", type=cst.SubscriptElement(cst.Index(cst.Name("int"))),
+        )
+        self.assertEqual(
+            self.code(expression), "Optional[int]",
+        )
+
+        expression = parse_template_expression(
+            "foo[{slice}]", slice=cst.Slice(cst.Integer("5"), cst.Integer("6")),
+        )
+        self.assertEqual(
+            self.code(expression), "foo[5:6]",
+        )
+        expression = parse_template_expression(
+            "foo[{slice}]",
+            slice=cst.SubscriptElement(cst.Slice(cst.Integer("5"), cst.Integer("6"))),
+        )
+        self.assertEqual(
+            self.code(expression), "foo[5:6]",
+        )
+
+        expression = parse_template_expression(
+            "foo[{slice}]", slice=cst.Slice(cst.Integer("5"), cst.Integer("6")),
+        )
+        self.assertEqual(
+            self.code(expression), "foo[5:6]",
+        )
+        expression = parse_template_expression(
+            "foo[{slice}]",
+            slice=cst.SubscriptElement(cst.Slice(cst.Integer("5"), cst.Integer("6"))),
+        )
+        self.assertEqual(
+            self.code(expression), "foo[5:6]",
+        )
+
+        expression = parse_template_expression(
+            "foo[{slice1}, {slice2}]",
+            slice1=cst.Slice(cst.Integer("5"), cst.Integer("6")),
+            slice2=cst.Index(cst.Integer("7")),
+        )
+        self.assertEqual(
+            self.code(expression), "foo[5:6, 7]",
+        )
+        expression = parse_template_expression(
+            "foo[{slice1}, {slice2}]",
+            slice1=cst.SubscriptElement(cst.Slice(cst.Integer("5"), cst.Integer("6"))),
+            slice2=cst.SubscriptElement(cst.Index(cst.Integer("7"))),
+        )
+        self.assertEqual(
+            self.code(expression), "foo[5:6, 7]",
+        )
