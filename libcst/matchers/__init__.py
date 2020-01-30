@@ -119,6 +119,10 @@ class BaseSimpleComp(ABC):
     pass
 
 
+class BaseSlice(ABC):
+    pass
+
+
 class BaseSmallStatement(ABC):
     pass
 
@@ -7455,7 +7459,7 @@ class IndentedBlock(BaseSuite, BaseMatcherNode):
 
 
 @dataclass(frozen=True, eq=False, unsafe_hash=False)
-class Index(BaseMatcherNode):
+class Index(BaseSlice, BaseMatcherNode):
     value: Union[
         BaseExpressionMatchType,
         DoNotCareSentinel,
@@ -11258,7 +11262,7 @@ class SimpleWhitespace(BaseParenthesizableWhitespace, BaseMatcherNode):
 
 
 @dataclass(frozen=True, eq=False, unsafe_hash=False)
-class Slice(BaseMatcherNode):
+class Slice(BaseSlice, BaseMatcherNode):
     lower: Union[
         BaseExpressionOrNoneMatchType,
         DoNotCareSentinel,
@@ -11784,21 +11788,18 @@ class Subscript(
     ] = DoNotCare()
 
 
-IndexOrSliceMatchType = Union[
-    "Index",
-    "Slice",
-    MetadataMatchType,
-    MatchIfTrue[Callable[[Union[cst.Index, cst.Slice]], bool]],
+BaseSliceMatchType = Union[
+    "BaseSlice", MetadataMatchType, MatchIfTrue[Callable[[cst.BaseSlice], bool]]
 ]
 
 
 @dataclass(frozen=True, eq=False, unsafe_hash=False)
 class SubscriptElement(BaseMatcherNode):
     slice: Union[
-        IndexOrSliceMatchType,
+        BaseSliceMatchType,
         DoNotCareSentinel,
-        OneOf[IndexOrSliceMatchType],
-        AllOf[IndexOrSliceMatchType],
+        OneOf[BaseSliceMatchType],
+        AllOf[BaseSliceMatchType],
     ] = DoNotCare()
     comma: Union[
         CommaMatchType, DoNotCareSentinel, OneOf[CommaMatchType], AllOf[CommaMatchType]
@@ -13101,6 +13102,7 @@ __all__ = [
     "BaseParenthesizableWhitespace",
     "BaseSet",
     "BaseSimpleComp",
+    "BaseSlice",
     "BaseSmallStatement",
     "BaseStatement",
     "BaseString",

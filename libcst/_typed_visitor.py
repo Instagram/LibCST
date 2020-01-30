@@ -118,6 +118,7 @@ if TYPE_CHECKING:
         BaseElement,
         BaseExpression,
         BaseFormattedStringContent,
+        BaseSlice,
         BinaryOperation,
         BooleanOperation,
         Call,
@@ -5700,7 +5701,7 @@ class CSTTypedTransformerFunctions(CSTTypedBaseFunctions):
         return updated_node
 
     @mark_no_op
-    def leave_Index(self, original_node: "Index", updated_node: "Index") -> "Index":
+    def leave_Index(self, original_node: "Index", updated_node: "Index") -> "BaseSlice":
         return updated_node
 
     @mark_no_op
@@ -6016,7 +6017,7 @@ class CSTTypedTransformerFunctions(CSTTypedBaseFunctions):
         return updated_node
 
     @mark_no_op
-    def leave_Slice(self, original_node: "Slice", updated_node: "Slice") -> "Slice":
+    def leave_Slice(self, original_node: "Slice", updated_node: "Slice") -> "BaseSlice":
         return updated_node
 
     @mark_no_op
