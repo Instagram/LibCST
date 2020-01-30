@@ -1384,9 +1384,16 @@ class Attribute(BaseAssignTargetExpression, BaseDelTargetExpression):
             self.attr._codegen(state)
 
 
+class BaseSlice(CSTNode, ABC):
+    """
+    Any slice type that can slot into a :class:`SubscriptElement`.
+    This node is purely for typing.
+    """
+
+
 @add_slots
 @dataclass(frozen=True)
-class Index(CSTNode):
+class Index(BaseSlice):
     """
     Any index as passed to a :class:`Subscript`. In ``x[2]``, this would be the ``2``
     value.
@@ -1404,7 +1411,7 @@ class Index(CSTNode):
 
 @add_slots
 @dataclass(frozen=True)
-class Slice(CSTNode):
+class Slice(BaseSlice):
     """
     Any slice operation in a :class:`Subscript`, such as ``1:``, ``2:3:4``, etc.
 
@@ -1468,7 +1475,7 @@ class SubscriptElement(CSTNode):
     """
 
     #: A slice or index that is part of a subscript.
-    slice: Union[Index, Slice]
+    slice: BaseSlice
 
     #: A separating comma, with any whitespace it owns.
     comma: Union[Comma, MaybeSentinel] = MaybeSentinel.DEFAULT
@@ -1576,7 +1583,7 @@ class Annotation(CSTNode):
 
     #: The annotation's value itself. This is the part of the annotation after the
     #: colon or arrow.
-    annotation: Union[BaseExpression]
+    annotation: BaseExpression
 
     whitespace_before_indicator: Union[
         BaseParenthesizableWhitespace, MaybeSentinel
@@ -2265,7 +2272,7 @@ class Call(_BaseExpressionWithArgs):
 
     #: The expression resulting in a callable that we are to call. Often a :class:`Name`
     #: or :class:`Attribute`.
-    func: Union[BaseExpression]
+    func: BaseExpression
 
     #: The arguments to pass to the resulting callable. These may be a mix of
     #: positional arguments, keyword arguments, or "starred" arguments.
