@@ -410,12 +410,8 @@ class BaseNumber(BaseExpression, ABC):
 class Integer(BaseNumber):
     #: A string representation of the integer, such as ``"100000"`` or ``100_000``.
     #:
-    #: To convert this string representation to an ``int`` pass this ``value`` into
-    #: |int|_ or :func:`ast.literal_eval`.
-    #:
-    #: .. intersphinx doesn't pick up on the `int` builtin.
-    #: .. |int| replace:: :func:`int`
-    #: .. _int: https://docs.python.org/3.7/library/functions.html#int
+    #: To convert this string representation to an ``int``, use the calculated
+    #: property :attr:`~Integer.evaluated_value`.
     value: str
 
     lpar: Sequence[LeftParen] = ()
@@ -438,6 +434,13 @@ class Integer(BaseNumber):
         with self._parenthesize(state):
             state.add_token(self.value)
 
+    @property
+    def evaluated_value(self) -> int:
+        """
+        Return an :func:`ast.literal_eval` evaluated int of :py:attr:`value`.
+        """
+        return literal_eval(self.value)
+
 
 @add_slots
 @dataclass(frozen=True)
@@ -445,12 +448,8 @@ class Float(BaseNumber):
     #: A string representation of the floating point number, such as ``"0.05"``,
     #: ``".050"``, or ``"5e-2"``.
     #:
-    #: To convert this string representation to a ``float`` pass this ``value`` into
-    #: |float|_ or :func:`ast.literal_eval`.
-    #:
-    #: .. intersphinx doesn't pick up on the `float` builtin.
-    #: .. |float| replace:: :func:`float`
-    #: .. _float: https://docs.python.org/3.7/library/functions.html#float
+    #: To convert this string representation to an ``float``, use the calculated
+    #: property :attr:`~Float.evaluated_value`.
     value: str
 
     lpar: Sequence[LeftParen] = ()
@@ -473,18 +472,21 @@ class Float(BaseNumber):
         with self._parenthesize(state):
             state.add_token(self.value)
 
+    @property
+    def evaluated_value(self) -> float:
+        """
+        Return an :func:`ast.literal_eval` evaluated float of :py:attr:`value`.
+        """
+        return literal_eval(self.value)
+
 
 @add_slots
 @dataclass(frozen=True)
 class Imaginary(BaseNumber):
     #: A string representation of the imaginary (complex) number, such as ``"2j"``.
     #:
-    #: To convert this string representation to a ``complex`` pass this ``value`` into
-    #: |complex|_ or :func:`ast.literal_eval`.
-    #:
-    #: .. intersphinx doesn't pick up on the `complex` builtin.
-    #: .. |complex| replace:: :func:`complex`
-    #: .. _complex: https://docs.python.org/3.7/library/functions.html#complex
+    #: To convert this string representation to an ``complex``, use the calculated
+    #: property :attr:`~Imaginary.evaluated_value`.
     value: str
 
     lpar: Sequence[LeftParen] = ()
@@ -506,6 +508,13 @@ class Imaginary(BaseNumber):
     def _codegen_impl(self, state: CodegenState) -> None:
         with self._parenthesize(state):
             state.add_token(self.value)
+
+    @property
+    def evaluated_value(self) -> complex:
+        """
+        Return an :func:`ast.literal_eval` evaluated complex of :py:attr:`value`.
+        """
+        return literal_eval(self.value)
 
 
 class BaseString(BaseExpression, ABC):
@@ -567,7 +576,7 @@ class SimpleString(_BasePrefixedString):
     #: The texual representation of the string, including quotes, prefix characters, and
     #: any escape characters present in the original source code , such as
     #: ``r"my string\n"``. To remove the quotes and interpret any escape characters,
-    #: pass this ``value`` into :func:`ast.literal_eval`.
+    #: use the calculated property :attr:`~SimpleString.evaluated_value`.
     value: str
 
     lpar: Sequence[LeftParen] = ()

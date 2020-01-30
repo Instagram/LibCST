@@ -21,6 +21,6 @@ def ensure_type(node: object, nodetype: Type[CSTNodeT]) -> CSTNodeT:
 
     if not isinstance(node, nodetype):
         raise Exception(
-            f"Expected a {nodetype.__name__} bot got a {node.__class__.__name__}!"
+            f"Expected a {nodetype.__name__} but got a {node.__class__.__name__}!"
         )
     return node
