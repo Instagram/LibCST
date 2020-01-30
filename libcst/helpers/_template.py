@@ -25,6 +25,8 @@ ValidReplacementType = Union[
     cst.BaseStatement,
     cst.BaseSmallStatement,
     cst.BaseSuite,
+    cst.BaseSlice,
+    cst.SubscriptElement,
 ]
 
 
@@ -105,6 +107,16 @@ class TemplateTransformer(cst.CSTTransformer):
             for name, value in template_replacements.items()
             if isinstance(value, cst.BaseSuite)
         }
+        self.subscript_element_replacements: Dict[str, cst.SubscriptElement] = {
+            name: value
+            for name, value in template_replacements.items()
+            if isinstance(value, cst.SubscriptElement)
+        }
+        self.subscript_index_replacements: Dict[str, cst.BaseSlice] = {
+            name: value
+            for name, value in template_replacements.items()
+            if isinstance(value, cst.BaseSlice)
+        }
 
         # Figure out if there are any variables that we can't support
         # inserting into templates.
@@ -118,6 +130,8 @@ class TemplateTransformer(cst.CSTTransformer):
             *[name for name in self.small_statement_replacements],
             *[name for name in self.statement_replacements],
             *[name for name in self.suite_replacements],
+            *[name for name in self.subscript_element_replacements],
+            *[name for name in self.subscript_index_replacements],
         }
         unsupported_vars = {
             name for name in template_replacements if name not in supported_vars
@@ -266,6 +280,34 @@ class TemplateTransformer(cst.CSTTransformer):
                         var_name = unmangled_name(name_node.value)
                         if var_name in self.suite_replacements:
                             return self.suite_replacements[var_name].deep_clone()
+        return updated_node
+
+    def leave_Index(
+        self, original_node: cst.Index, updated_node: cst.Index,
+    ) -> cst.BaseSlice:
+        # We can't use matchers here due to circular imports
+        expr = updated_node.value
+        if isinstance(expr, cst.Name):
+            var_name = unmangled_name(expr.value)
+            if var_name in self.subscript_index_replacements:
+                return self.subscript_index_replacements[var_name].deep_clone()
+        return updated_node
+
+    def leave_SubscriptElement(
+        self, original_node: cst.SubscriptElement, updated_node: cst.SubscriptElement,
+    ) -> cst.SubscriptElement:
+        # We can't use matchers here due to circular imports. We use the trick
+        # similar to above stanzas where a template replacement variable will
+        # always show up as a certain type (in this case an Index inside of a
+        # SubscriptElement) in order to successfully replace subscript elements
+        # in templates.
+        index = updated_node.slice
+        if isinstance(index, cst.Index):
+            expr = index.value
+            if isinstance(expr, cst.Name):
+                var_name = unmangled_name(expr.value)
+                if var_name in self.subscript_element_replacements:
+                    return self.subscript_element_replacements[var_name].deep_clone()
         return updated_node
 
 
