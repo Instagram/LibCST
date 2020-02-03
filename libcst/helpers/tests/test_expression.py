@@ -8,7 +8,7 @@ from ast import literal_eval
 from typing import Optional, Union
 
 import libcst as cst
-from libcst.helpers import get_full_name_for_node
+from libcst.helpers import ensure_type, get_full_name_for_node
 from libcst.testing.utils import UnitTest, data_provider
 
 
@@ -22,6 +22,12 @@ class ExpressionTest(UnitTest):
             (cst.parse_expression("a.b.c[i]"), "a.b.c"),
             (cst.parse_statement("def fun():  pass"), "fun"),
             (cst.parse_statement("class cls:  pass"), "cls"),
+            (
+                cst.Decorator(
+                    ensure_type(cst.parse_expression("a.b.c.d"), cst.Attribute)
+                ),
+                "a.b.c.d",
+            ),
             (cst.parse_statement("(a.b()).c()"), None),  # not a supported Node type
         )
     )

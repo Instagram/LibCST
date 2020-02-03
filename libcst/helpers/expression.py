@@ -11,7 +11,8 @@ import libcst as cst
 
 def get_full_name_for_node(node: Union[str, cst.CSTNode]) -> Optional[str]:
     """Return a dot concatenated full name for str, :class:`~libcst.Name`, :class:`~libcst.Attribute`.
-    :class:`~libcst.Call`, :class:`~libcst.Subscript`, :class:`~libcst.FunctionDef`, :class:`~libcst.ClassDef`.
+    :class:`~libcst.Call`, :class:`~libcst.Subscript`, :class:`~libcst.FunctionDef`, :class:`~libcst.ClassDef`,
+    :class:`~libcst.Decorator`.
     Return ``None`` for not supported Node.
     """
     if isinstance(node, cst.Name):
@@ -26,4 +27,6 @@ def get_full_name_for_node(node: Union[str, cst.CSTNode]) -> Optional[str]:
         return get_full_name_for_node(node.value)
     elif isinstance(node, (cst.FunctionDef, cst.ClassDef)):
         return get_full_name_for_node(node.name)
+    elif isinstance(node, cst.Decorator):
+        return get_full_name_for_node(node.decorator)
     return None
