@@ -30,3 +30,14 @@ def get_full_name_for_node(node: Union[str, cst.CSTNode]) -> Optional[str]:
     elif isinstance(node, cst.Decorator):
         return get_full_name_for_node(node.decorator)
     return None
+
+
+def get_full_name_for_node_or_raise(node: Union[str, cst.CSTNode]) -> str:
+    """Return a dot concatenated full name for str, :class:`~libcst.Name`, :class:`~libcst.Attribute`.
+    :class:`~libcst.Call`, :class:`~libcst.Subscript`, :class:`~libcst.FunctionDef`, :class:`~libcst.ClassDef`.
+    Raise Exception for not supported Node.
+    """
+    full_name = get_full_name_for_node(node)
+    if full_name is None:
+        raise Exception(f"Not able to parse full name for: {node}")
+    return full_name

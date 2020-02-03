@@ -11,12 +11,16 @@ from libcst.helpers._template import (
     parse_template_statement,
 )
 from libcst.helpers.common import ensure_type
-from libcst.helpers.expression import get_full_name_for_node
+from libcst.helpers.expression import (
+    get_full_name_for_node,
+    get_full_name_for_node_or_raise,
+)
 from libcst.helpers.module import insert_header_comments
 
 
 __all__ = [
     "get_full_name_for_node",
+    "get_full_name_for_node_or_raise",
     "ensure_type",
     "insert_header_comments",
     "parse_template_module",

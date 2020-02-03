@@ -8,7 +8,11 @@ from ast import literal_eval
 from typing import Optional, Union
 
 import libcst as cst
-from libcst.helpers import ensure_type, get_full_name_for_node
+from libcst.helpers import (
+    ensure_type,
+    get_full_name_for_node,
+    get_full_name_for_node_or_raise,
+)
 from libcst.testing.utils import UnitTest, data_provider
 
 
@@ -35,29 +39,32 @@ class ExpressionTest(UnitTest):
         self, input: Union[str, cst.CSTNode], output: Optional[str],
     ) -> None:
         self.assertEqual(get_full_name_for_node(input), output)
+        if output is None:
+            with self.assertRaises(Exception):
+                get_full_name_for_node_or_raise(input)
+        else:
+            self.assertEqual(get_full_name_for_node_or_raise(input), output)
 
     def test_simplestring_evaluated_value(self) -> None:
         raw_string = '"a string."'
-        node = cst.helpers.ensure_type(
-            cst.parse_expression(raw_string), cst.SimpleString
-        )
+        node = ensure_type(cst.parse_expression(raw_string), cst.SimpleString)
         self.assertEqual(node.value, raw_string)
         self.assertEqual(node.evaluated_value, literal_eval(raw_string))
 
     def test_integer_evaluated_value(self) -> None:
         raw_value = "5"
-        node = cst.helpers.ensure_type(cst.parse_expression(raw_value), cst.Integer)
+        node = ensure_type(cst.parse_expression(raw_value), cst.Integer)
         self.assertEqual(node.value, raw_value)
         self.assertEqual(node.evaluated_value, literal_eval(raw_value))
 
     def test_float_evaluated_value(self) -> None:
         raw_value = "5.5"
-        node = cst.helpers.ensure_type(cst.parse_expression(raw_value), cst.Float)
+        node = ensure_type(cst.parse_expression(raw_value), cst.Float)
         self.assertEqual(node.value, raw_value)
         self.assertEqual(node.evaluated_value, literal_eval(raw_value))
 
     def test_complex_evaluated_value(self) -> None:
         raw_value = "5j"
-        node = cst.helpers.ensure_type(cst.parse_expression(raw_value), cst.Imaginary)
+        node = ensure_type(cst.parse_expression(raw_value), cst.Imaginary)
         self.assertEqual(node.value, raw_value)
         self.assertEqual(node.evaluated_value, literal_eval(raw_value))
