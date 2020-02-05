@@ -619,6 +619,10 @@ class ScopeVisitor(cst.CSTVisitor):
     def visit_ImportFrom(self, node: cst.ImportFrom) -> Optional[bool]:
         return self._visit_import_alike(node)
 
+    def visit_Attribute(self, node: cst.Attribute) -> Optional[bool]:
+        node.value.visit(self)  # explicitly not visiting attr
+        return False
+
     def visit_Name(self, node: cst.Name) -> Optional[bool]:
         # not all Name have ExpressionContext
         context = self.provider.get_metadata(ExpressionContextProvider, node, None)
