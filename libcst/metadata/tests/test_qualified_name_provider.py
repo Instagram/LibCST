@@ -244,3 +244,23 @@ class ScopeProviderTest(UnitTest):
                 )
 
         MetadataWrapper(cst.parse_module("import a;a.b.c()")).visit(TestVisitor(self))
+
+    def test_name_in_attribute(self) -> None:
+        m, names = get_qualified_name_metadata_provider(
+            """
+            obj = object()
+            obj.eval
+            """
+        )
+        attr = ensure_type(
+            ensure_type(
+                ensure_type(m.body[1], cst.SimpleStatementLine).body[0], cst.Expr
+            ).value,
+            cst.Attribute,
+        )
+        self.assertEqual(
+            names[attr],
+            {QualifiedName(name="obj.eval", source=QualifiedNameSource.LOCAL)},
+        )
+        eval = attr.attr
+        self.assertEqual(names[eval], set())
