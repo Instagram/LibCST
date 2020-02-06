@@ -183,6 +183,35 @@ def exec_transform_with_prettyprint(
     return code
 
 
+def _calculate_module(repo_root: Optional[str], filename: str) -> Optional[str]:
+    # Given an absolute repo_root and an absolute filename, calculate the
+    # python module name for the file.
+    if repo_root is None:
+        # We don't have a repo root, so this is impossible to calculate.
+        return None
+
+    # Make sure the absolute path for the root ends in a separator.
+    if repo_root[-1] != os.path.sep:
+        repo_root = repo_root + os.path.sep
+
+    if not filename.startswith(repo_root):
+        # This file seems to be out of the repo root.
+        return None
+
+    # Get the relative path, get rid of any special cases and extensions.
+    relative_filename = filename[len(repo_root) :]
+    for ending in [
+        f"{os.path.sep}__init__.py",
+        f"{os.path.sep}__main__.py",
+        ".py",
+    ]:
+        if relative_filename.endswith(ending):
+            relative_filename = relative_filename[: -len(ending)]
+
+    # Now, convert all line separators to dots to represent the python module.
+    return relative_filename.replace(os.path.sep, ".")
+
+
 @dataclass(frozen=True)
 class ParallelExecResult:
     # File we have results for
@@ -197,6 +226,7 @@ def _parallel_exec_process_stub(  # noqa: C901
     result_queue: "Queue[ParallelExecResult]",
     transformer: Codemod,
     filename: str,
+    repo_root: Optional[str],
     unified_diff: Optional[int],
     include_generated: bool,
     generated_code_marker: str,
@@ -241,7 +271,11 @@ def _parallel_exec_process_stub(  # noqa: C901
         # We do this after the fork so that a context that was initialized with
         # some defaults before calling parallel_exec_transform_with_prettyprint
         # will be updated per-file.
-        transformer.context = replace(transformer.context, filename=filename)
+        transformer.context = replace(
+            transformer.context,
+            filename=filename,
+            full_module_name=_calculate_module(repo_root, filename),
+        )
 
         # Run the transform, bail if we failed or if we aren't formatting code
         try:
@@ -562,11 +596,13 @@ def parallel_exec_transform_with_prettyprint(  # noqa: C901
         return ParallelTransformResult(successes=0, failures=0, skips=0, warnings=0)
 
     if repo_root:
+        # Make sure if there is a root that we have the absolute path to it.
+        repo_root = os.path.abspath(repo_root)
         # Spin up a full repo metadata manager so that we can provide metadata
         # like type inference to individual forked processes.
         print("Calculating full-repo metadata...", file=sys.stderr)
         metadata_manager = FullRepoManager(
-            os.path.abspath(repo_root), files, transform.get_inherited_dependencies(),
+            repo_root, files, transform.get_inherited_dependencies(),
         )
         metadata_manager.resolve_cache()
         transform.context = replace(
@@ -586,6 +622,7 @@ def parallel_exec_transform_with_prettyprint(  # noqa: C901
             queue,
             transform,
             files[0],
+            repo_root,
             unified_diff=unified_diff,
             include_generated=include_generated,
             generated_code_marker=generated_code_marker,
@@ -653,6 +690,7 @@ def parallel_exec_transform_with_prettyprint(  # noqa: C901
                     queue,
                     transform,
                     f,
+                    repo_root,
                     unified_diff,
                     include_generated,
                     generated_code_marker,
