@@ -1,3 +1,27 @@
+# 0.3.1 - 2020-02-06
+
+## Added
+
+ - Added helpers to get both the raw and evaluated value of a SimpleString.
+ - Added helpers to get the quoting and prefix of SimpleString and FormattedString.
+ - Added a helper to get the evaluated value of number types.
+ - Added templated parsers for statement/expression/module to make constructing updated nodes in transforms easier.
+ - FullRepoManager is now integrated into codemods, so metadata requiring full repo analysis can now be used.
+ - Added `get_full_name_for_node_or_raise` helper to remove boilerplate of checking against `None`.
+
+## Updated
+
+ - Upgraded Pyre dependency to 0.0.41.
+ - Added additional status to `libcst codemod` command.
+ - `get_full_name_for_node` now supports decorators.
+
+## Fixed
+
+ - Clarified documentation around f-strings, fixed indentation.
+ - Fixed `libcst list` crashing if a codemod does unsafe work on import.
+ - Fixed deploy-time dependencies so pyyaml won't have to be manually installed to execute codemods.
+ - QualifiedNameProvider no longer erroneously claims names inside attributes are built-ins.
+
 # 0.3.0 - 2020-01-16
 
 ## Added

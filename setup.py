@@ -18,7 +18,7 @@ setuptools.setup(
     description="A concrete syntax tree with AST-like properties for Python 3.5, 3.6, 3.7 and 3.8 programs.",
     long_description=long_description,
     long_description_content_type="text/x-rst",
-    version="0.3.0",
+    version="0.3.1",
     url="https://github.com/Instagram/LibCST",
     license="MIT",
     packages=setuptools.find_packages(),
