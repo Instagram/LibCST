@@ -14,6 +14,7 @@ from libcst.codemod._codemod import Codemod
 from libcst.codemod._context import CodemodContext
 from libcst.codemod._visitor import ContextAwareTransformer
 from libcst.codemod.visitors._add_imports import AddImportsVisitor
+from libcst.codemod.visitors._remove_imports import RemoveImportsVisitor
 
 
 _Codemod = TypeVar("_Codemod", bound=Codemod)
@@ -31,7 +32,8 @@ class CodemodCommand(Codemod, ABC):
 
     The following list of transforms are automatically run at this time:
 
-     - :class:`~libcst.codemod.visitors.AddImportsVisitor` (adds needed imports to a file).
+     - :class:`~libcst.codemod.visitors.AddImportsVisitor` (adds needed imports to a module).
+     - :class:`~libcst.codemod.visitors.RemoveImportsVisitor` (removes unreferenced imports from a module).
     """
 
     #: An overrideable description attribute so that codemods can provide
@@ -76,7 +78,8 @@ class CodemodCommand(Codemod, ABC):
         # a context and other optional args and modifies its own context key
         # accordingly. We import them here so that we don't have circular imports.
         supported_transforms: Dict[str, Type[Codemod]] = {
-            AddImportsVisitor.CONTEXT_KEY: AddImportsVisitor
+            AddImportsVisitor.CONTEXT_KEY: AddImportsVisitor,
+            RemoveImportsVisitor.CONTEXT_KEY: RemoveImportsVisitor,
         }
 
         # For any visitors that we support auto-running, run them here if needed.

@@ -19,9 +19,10 @@ class AddImportsVisitor(ContextAwareTransformer):
     """
     Ensures that given imports exist in a module. Given a
     :class:`~libcst.codemod.CodemodContext` and a sequence of tuples specifying
-    a module to import from as a string and optionally an object to import from
-    that module, ensures that that import exists. It will modify existing imports
-    as necessary if the module in question is already being imported from.
+    a module to import from as a string. Optionally an object to import from
+    that module and any alias to assign that import, ensures that that
+    import exists. It will modify existing imports as necessary if the module
+    in question is already being imported from.
 
     This is one of the transforms that is available automatically to you when
     running a codemod. To use it in this manner, import
@@ -29,7 +30,8 @@ class AddImportsVisitor(ContextAwareTransformer):
     :meth:`~libcst.codemod.visitors.AddImportsVisitor.add_needed_import` method,
     giving it the current context (found as ``self.context`` for all subclasses of
     :class:`~libcst.codemod.Codemod`), the module you wish to import from and
-    optionally an object you wish to import from that module.
+    optionally an object you wish to import from that module and any alias you
+    would like to assign that import to.
 
     For example::
 
@@ -78,12 +80,18 @@ class AddImportsVisitor(ContextAwareTransformer):
         """
         Schedule an import to be added in a future invocation of this class by
         updating the ``context`` to include the ``module`` and optionally ``obj``
-        to be imported. When subclassing from
+        to be imported as well as optionally ``alias`` to alias the imported
+        ``module`` or ``obj`` to. When subclassing from
         :class:`~libcst.codemod.CodemodCommand`, this will be performed for you
         after your transform finishes executing. If you are subclassing from a
         :class:`~libcst.codemod.Codemod` instead, you will need to call the
-        :meth:`~libcst.CSTNode.visit` method on the module under modification
-        with an instance of this class after performing your transform.
+        :meth:`~libcst.codemod.Codemod.transform_module` method on the module
+        under modification with an instance of this class after performing your
+        transform. Note that if the particular ``module`` or ``obj`` you are
+        requesting to import already exists as an import on the current module
+        at the time of executing :meth:`~libcst.codemod.Codemod.transform_module`
+        on an instance of :class:`~libcst.codemod.visitors.AddImportsVisitor`,
+        this will perform no action in order to avoid adding duplicate imports.
         """
 
         if module == "__future__" and obj is None:
