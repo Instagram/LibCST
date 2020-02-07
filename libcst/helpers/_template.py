@@ -410,7 +410,7 @@ def parse_template_statement(
         new_statement, (cst.SimpleStatementLine, cst.BaseCompoundStatement)
     ):
         raise Exception(
-            f"Expected a statement bot got a {new_statement.__class__.__name__}!"
+            f"Expected a statement but got a {new_statement.__class__.__name__}!"
         )
     new_statement.visit(TemplateChecker({name for name in template_replacements}))
     return new_statement
