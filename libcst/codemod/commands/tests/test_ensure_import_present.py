@@ -14,14 +14,24 @@ class EnsureImportPresentCommandTest(CodemodTest):
     def test_import_module(self) -> None:
         before = ""
         after = "import a"
-        self.assertCodemod(before, after, module="a", entity=None)
+        self.assertCodemod(before, after, module="a", entity=None, alias=None)
 
     def test_import_entity(self) -> None:
         before = ""
         after = "from a import b"
-        self.assertCodemod(before, after, module="a", entity="b")
+        self.assertCodemod(before, after, module="a", entity="b", alias=None)
 
     def test_import_wildcard(self) -> None:
         before = "from a import *"
         after = "from a import *"
-        self.assertCodemod(before, after, module="a", entity="b")
+        self.assertCodemod(before, after, module="a", entity="b", alias=None)
+
+    def test_import_module_aliased(self) -> None:
+        before = ""
+        after = "import a as c"
+        self.assertCodemod(before, after, module="a", entity=None, alias="c")
+
+    def test_import_entity_aliased(self) -> None:
+        before = ""
+        after = "from a import b as c"
+        self.assertCodemod(before, after, module="a", entity="b", alias="c")
