@@ -39,9 +39,23 @@ class EnsureImportPresentCommand(MagicArgsCodemodCommand):
             type=str,
             default=None,
         )
+        parser.add_argument(
+            "--alias",
+            dest="alias",
+            metavar="ALIAS",
+            help=(
+                "Alias that will be used for the imported module or entity. If left "
+                "empty, no alias will be applied."
+            ),
+            type=str,
+            default=None,
+        )
 
     def get_transforms(self) -> Generator[Type[Codemod], None, None]:
         AddImportsVisitor.add_needed_import(
-            self.context, self.context.scratch["module"], self.context.scratch["entity"]
+            self.context,
+            self.context.scratch["module"],
+            self.context.scratch["entity"],
+            self.context.scratch["alias"],
         )
         yield AddImportsVisitor
