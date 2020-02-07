@@ -985,6 +985,33 @@ class ImportAlias(CSTNode):
         elif isinstance(comma, Comma):
             comma._codegen(state)
 
+    def _name(self, node: CSTNode) -> str:
+        # Unrolled version of get_full_name_for_node to avoid circular imports.
+        if isinstance(node, Name):
+            return node.value
+        elif isinstance(node, Attribute):
+            return f"{self._name(node.value)}.{node.attr.value}"
+        else:
+            raise Exception("Logic error!")
+
+    @property
+    def evaluated_name(self) -> str:
+        """
+        Returns the string name this :class:`ImportAlias` represents.
+        """
+        return self._name(self.name)
+
+    @property
+    def evaluated_alias(self) -> Optional[str]:
+        """
+        Returns the string name for any alias that this :class:`ImportAlias`
+        has. If there is no ``asname`` attribute, this returns ``None``.
+        """
+        asname = self.asname
+        if asname is not None:
+            return self._name(asname.name)
+        return None
+
 
 @add_slots
 @dataclass(frozen=True)
