@@ -4,12 +4,12 @@
 # LICENSE file in the root directory of this source tree.
 #
 # pyre-strict
-from typing import Dict, List, Optional, Sequence, Set, Tuple, Union
+from typing import Dict, List, Sequence, Set, Tuple, Union
 
 import libcst
 from libcst.codemod._context import CodemodContext
 from libcst.codemod._visitor import ContextAwareVisitor
-from libcst.helpers import get_full_name_for_node
+from libcst.helpers import get_absolute_module_for_import
 
 
 class GatherImportsVisitor(ContextAwareVisitor):
@@ -62,38 +62,29 @@ class GatherImportsVisitor(ContextAwareVisitor):
         # Track all of the imports found in this transform
         self.all_imports: List[Union[libcst.Import, libcst.ImportFrom]] = []
 
-    def _get_string_name(self, node: Optional[libcst.CSTNode]) -> str:
-        name = "" if node is None else get_full_name_for_node(node)
-        if name is None:
-            raise Exception(f"Invalid node type {type(node)}!")
-
-        return name
-
     def visit_Import(self, node: libcst.Import) -> None:
         # Track this import statement for later analysis.
         self.all_imports.append(node)
 
         for name in node.names:
-            asname = name.asname
-            if asname is not None:
+            alias = name.evaluated_alias
+            if alias is not None:
                 # Track this as an aliased module
-                self.module_aliases[
-                    self._get_string_name(name.name)
-                ] = libcst.ensure_type(asname.name, libcst.Name).value
+                self.module_aliases[name.evaluated_name] = alias
             else:
                 # Get the module we're importing as a string.
-                self.module_imports.add(self._get_string_name(name.name))
+                self.module_imports.add(name.evaluated_name)
 
     def visit_ImportFrom(self, node: libcst.ImportFrom) -> None:
         # Track this import statement for later analysis.
         self.all_imports.append(node)
 
-        if len(node.relative) > 0 or node.module is None:
-            # Don't support relative-only imports at the moment.
-            return
-
         # Get the module we're importing as a string.
-        module = self._get_string_name(node.module)
+        module = get_absolute_module_for_import(self.context.full_module_name, node)
+        if module is None:
+            # Can't get the absolute import from relative, so we can't
+            # support this.
+            return
         nodenames = node.names
         if isinstance(nodenames, libcst.ImportStar):
             # We cover everything, no need to bother tracking other things
@@ -102,20 +93,18 @@ class GatherImportsVisitor(ContextAwareVisitor):
         elif isinstance(nodenames, Sequence):
             # Get the list of imports we're aliasing in this import
             new_aliases = [
-                # pyre-ignore We check ia.asname below, this is safe
-                (self._get_string_name(ia.name), ia.asname.name.value)
+                (ia.evaluated_name, ia.evaluated_alias)
                 for ia in nodenames
                 if ia.asname is not None
             ]
             if new_aliases:
                 if module not in self.alias_mapping:
                     self.alias_mapping[module] = []
+                # pyre-ignore We know that aliases are not None here.
                 self.alias_mapping[module].extend(new_aliases)
 
             # Get the list of imports we're importing in this import
-            new_objects = {
-                self._get_string_name(ia.name) for ia in nodenames if ia.asname is None
-            }
+            new_objects = {ia.evaluated_name for ia in nodenames if ia.asname is None}
             if new_objects:
                 if module not in self.object_mapping:
                     self.object_mapping[module] = set()

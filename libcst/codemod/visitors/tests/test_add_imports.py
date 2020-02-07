@@ -4,7 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 #
 # pyre-strict
-from libcst.codemod import CodemodTest
+from libcst.codemod import CodemodContext, CodemodTest
 from libcst.codemod.visitors import AddImportsVisitor
 
 
@@ -558,3 +558,65 @@ class TestAddImportsCodemod(CodemodTest):
         """
 
         self.assertCodemod(before, after, [("argparse", None, None)])
+
+    def test_dont_add_relative_object_simple(self) -> None:
+        """
+        Should not add object as an import since it exists.
+        """
+
+        before = """
+            from .c import D
+
+            def foo() -> None:
+                pass
+
+            def bar() -> int:
+                return 5
+        """
+        after = """
+            from .c import D
+
+            def foo() -> None:
+                pass
+
+            def bar() -> int:
+                return 5
+        """
+
+        self.assertCodemod(
+            before,
+            after,
+            [("a.b.c", "D", None)],
+            context_override=CodemodContext(full_module_name="a.b.foobar"),
+        )
+
+    def test_add_object_relative_modify_simple(self) -> None:
+        """
+        Should modify existing import to add new object
+        """
+
+        before = """
+            from .c import E, F
+
+            def foo() -> None:
+                pass
+
+            def bar() -> int:
+                return 5
+        """
+        after = """
+            from .c import D, E, F
+
+            def foo() -> None:
+                pass
+
+            def bar() -> int:
+                return 5
+        """
+
+        self.assertCodemod(
+            before,
+            after,
+            [("a.b.c", "D", None)],
+            context_override=CodemodContext(full_module_name="a.b.foobar"),
+        )

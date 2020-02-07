@@ -12,6 +12,7 @@ from libcst import matchers as m, parse_statement
 from libcst.codemod._context import CodemodContext
 from libcst.codemod._visitor import ContextAwareTransformer
 from libcst.codemod.visitors._gather_imports import GatherImportsVisitor
+from libcst.helpers import get_absolute_module_for_import
 
 
 class AddImportsVisitor(ContextAwareTransformer):
@@ -191,29 +192,22 @@ class AddImportsVisitor(ContextAwareTransformer):
                     # There's nothing left, so lets delete this work item
                     del self.module_mapping[module]
 
-    def _get_string_name(self, node: Optional[libcst.CSTNode]) -> str:
-        if node is None:
-            return ""
-        elif isinstance(node, libcst.Name):
-            return node.value
-        elif isinstance(node, libcst.Attribute):
-            return self._get_string_name(node.value) + "." + node.attr.value
-        else:
-            raise Exception(f"Invalid node type {type(node)}!")
-
     def leave_ImportFrom(
         self, original_node: libcst.ImportFrom, updated_node: libcst.ImportFrom
     ) -> libcst.ImportFrom:
-        if len(updated_node.relative) > 0 or updated_node.module is None:
-            # Don't support relative-only imports at the moment.
-            return updated_node
-        if updated_node.names == "*":
+        if isinstance(updated_node.names, libcst.ImportStar):
             # There's nothing to do here!
             return updated_node
 
-        # Get the module we're importing as a string, see if we have work to do
-        module = self._get_string_name(updated_node.module)
-        if module not in self.module_mapping and module not in self.alias_mapping:
+        # Get the module we're importing as a string, see if we have work to do.
+        module = get_absolute_module_for_import(
+            self.context.full_module_name, updated_node
+        )
+        if (
+            module is None
+            or module not in self.module_mapping
+            and module not in self.alias_mapping
+        ):
             return updated_node
 
         # We have work to do, mark that we won't modify this again.

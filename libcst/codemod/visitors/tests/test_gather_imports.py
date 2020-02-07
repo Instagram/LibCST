@@ -12,7 +12,9 @@ from libcst.testing.utils import UnitTest
 
 class TestGatherImportsVisitor(UnitTest):
     def gather_imports(self, code: str) -> GatherImportsVisitor:
-        transform_instance = GatherImportsVisitor(CodemodContext())
+        transform_instance = GatherImportsVisitor(
+            CodemodContext(full_module_name="a.b.foobar")
+        )
         input_tree = parse_module(CodemodTest.make_fixture_data(code))
         input_tree.visit(transform_instance)
         return transform_instance
@@ -154,3 +156,21 @@ class TestGatherImportsVisitor(UnitTest):
         self.assertEqual(gatherer.module_aliases, {})
         self.assertEqual(gatherer.alias_mapping, {"a.b.c": [("d", "e")]})
         self.assertEqual(len(gatherer.all_imports), 1)
+
+    def test_gather_relative_object(self) -> None:
+        code = """
+            from .c import d as e, f, g
+            from a.b.c import h, i, j
+
+            def foo() -> None:
+                pass
+
+            def bar() -> int:
+                return 5
+        """
+        gatherer = self.gather_imports(code)
+        self.assertEqual(gatherer.module_imports, set())
+        self.assertEqual(gatherer.object_mapping, {"a.b.c": {"f", "g", "h", "i", "j"}})
+        self.assertEqual(gatherer.module_aliases, {})
+        self.assertEqual(gatherer.alias_mapping, {"a.b.c": [("d", "e")]})
+        self.assertEqual(len(gatherer.all_imports), 2)
