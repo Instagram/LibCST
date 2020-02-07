@@ -23,7 +23,14 @@ from typing import Any, Callable, Dict, List, Sequence, Tuple, Type
 
 import yaml
 
-from libcst import CSTNode, IndentedBlock, Module, PartialParserConfig, parse_module
+from libcst import (
+    LIBCST_VERSION,
+    CSTNode,
+    IndentedBlock,
+    Module,
+    PartialParserConfig,
+    parse_module,
+)
 from libcst._nodes.deep_equals import deep_equals
 from libcst.codemod import (
     CodemodCommand,
@@ -790,6 +797,12 @@ def main(proc_name: str, cli_args: List[str]) -> int:
         add_help=add_help,
         prog=proc_name,
         fromfile_prefix_chars="@",
+    )
+    parser.add_argument(
+        "--version",
+        help="Print current version of LibCST toolset.",
+        action="version",
+        version=f"LibCST version {LIBCST_VERSION}",
     )
     parser.add_argument(
         "action",

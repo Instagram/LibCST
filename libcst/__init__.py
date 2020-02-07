@@ -187,6 +187,7 @@ from libcst._nodes.whitespace import (
 from libcst._parser.entrypoints import parse_expression, parse_module, parse_statement
 from libcst._parser.types.config import PartialParserConfig
 from libcst._removal_sentinel import RemovalSentinel, RemoveFromParent
+from libcst._version import LIBCST_VERSION
 from libcst._visitors import CSTNodeT, CSTTransformer, CSTVisitor, CSTVisitorT
 from libcst.helpers import (  # from libcst import ensure_type is deprecated, will be removed in 0.4.0
     ensure_type,
@@ -200,6 +201,7 @@ from libcst.metadata.wrapper import MetadataWrapper
 
 
 __all__ = [
+    "LIBCST_VERSION",
     "BatchableCSTVisitor",
     "CSTNodeT",
     "CSTTransformer",
