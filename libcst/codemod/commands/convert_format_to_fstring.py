@@ -4,6 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 #
 # pyre-strict
+import argparse
 import ast
 from typing import Generator, List, Optional, Sequence, Set, Tuple
 
@@ -222,6 +223,37 @@ class ConvertFormatStringCommand(VisitorBasedCodemodCommand):
 
     DESCRIPTION: str = "Converts instances of str.format() to f-string."
 
+    @staticmethod
+    def add_args(parser: argparse.ArgumentParser) -> None:
+        parser.add_argument(
+            "--allow-strip-comments",
+            dest="allow_strip_comments",
+            help=(
+                "Allow stripping comments inside .format() calls when converting "
+                + "to f-strings."
+            ),
+            action="store_true",
+        )
+        parser.add_argument(
+            "--allow-await",
+            dest="allow_await",
+            help=(
+                "Allow converting expressions inside .format() calls that contain "
+                + "an await expression (only compatible with Python 3.7+)."
+            ),
+            action="store_true",
+        )
+
+    def __init__(
+        self,
+        context: CodemodContext,
+        allow_strip_comments: bool = False,
+        allow_await: bool = False,
+    ) -> None:
+        super().__init__(context)
+        self.allow_strip_comments = allow_strip_comments
+        self.allow_await = allow_await
+
     def leave_Call(  # noqa: C901
         self, original_node: cst.Call, updated_node: cst.Call
     ) -> cst.BaseExpression:
@@ -267,7 +299,7 @@ class ConvertFormatStringCommand(VisitorBasedCodemodCommand):
                 # allowed in f-strings, and newlines need parenthesization. We can
                 # have formattedstrings inside other formattedstrings, but I chose not
                 # to doeal with that for now.
-                if self.findall(expr, m.Comment()):
+                if self.findall(expr, m.Comment()) and not self.allow_strip_comments:
                     # We could strip comments, but this is a formatting change so
                     # we choose not to for now.
                     self.warn(f"Unsupported comment in format() call")
@@ -275,7 +307,7 @@ class ConvertFormatStringCommand(VisitorBasedCodemodCommand):
                 if self.findall(expr, m.FormattedString()):
                     self.warn(f"Unsupported f-string in format() call")
                     return updated_node
-                if self.findall(expr, m.Await()):
+                if self.findall(expr, m.Await()) and not self.allow_await:
                     # This is fixed in 3.7 but we don't currently have a flag
                     # to enable/disable it.
                     self.warn(f"Unsupported await in format() call")
