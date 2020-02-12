@@ -172,22 +172,39 @@ class ConvertFormatStringCommandTest(CodemodTest):
             before, after, allow_await=True, python_version="3.7",
         )
 
-    def test_unsupported_formatspec(self) -> None:
+    def test_formatspec_conversion(self) -> None:
         """
-        Should do nothing, we don't support format-specs right now.
+        Should convert a format specifier which includes format-spec mini language
+        of its own as well as several basic varieties.
         """
         before = """
             def foo() -> str:
                 return "{0:#0{1}x}".format(1, 4)
+
+            def bar() -> str:
+                return "{:#0{}x} {}".format(1, 4, 5)
+
+            def baz() -> str:
+                return "{x:#0{y}x}".format(x=1, y=4)
+
+            def foobar() -> str:
+                return "{:0>3d}".format(x)
         """
         after = """
             def foo() -> str:
-                return "{0:#0{1}x}".format(1, 4)
+                return f"{1:#0{4}x}"
+
+            def bar() -> str:
+                return f"{1:#0{4}x} {5}"
+
+            def baz() -> str:
+                return f"{1:#0{4}x}"
+
+            def foobar() -> str:
+                return f"{x:0>3d}"
         """
         self.assertCodemod(
-            before,
-            after,
-            expected_warnings=["Unsupported format_spec #0{1}x in format() call"],
+            before, after,
         )
 
     def test_position_replacement(self) -> None:
