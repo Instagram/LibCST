@@ -30,4 +30,5 @@ Traversing Helpers
 Functions that assist in traversing an existing LibCST tree.
 
 .. autofunction:: libcst.helpers.get_full_name_for_node
+.. autofunction:: libcst.helpers.get_full_name_for_node_or_raise
 .. autofunction:: libcst.helpers.ensure_type
