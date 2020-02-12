@@ -278,87 +278,65 @@ class ConvertFormatStringCommand(VisitorBasedCodemodCommand):
                 if field_name is None:
                     # This is not a format-specification
                     continue
-                if format_spec is not None and len(format_spec) > 0:
-                    # TODO: This is supportable since format specs are compatible
-                    # with f-string format specs, but it would require matching
-                    # format specifier expansions.
-                    self.warn(f"Unsupported format_spec {format_spec} in format() call")
-                    return updated_node
-
                 # Auto-insert field sequence if it is empty
                 if field_name == "":
                     field_name = str(inserted_sequence)
                     inserted_sequence += 1
-                expr = _find_expr_from_field_name(field_name, updated_node.args)
-                if expr is None:
-                    # Most likely they used * expansion in a format.
-                    self.warn(f"Unsupported field_name {field_name} in format() call")
-                    return updated_node
 
-                # Verify that we don't have any comments or newlines. Comments aren't
-                # allowed in f-strings, and newlines need parenthesization. We can
-                # have formattedstrings inside other formattedstrings, but I chose not
-                # to doeal with that for now.
-                if self.findall(expr, m.Comment()) and not self.allow_strip_comments:
-                    # We could strip comments, but this is a formatting change so
-                    # we choose not to for now.
-                    self.warn(f"Unsupported comment in format() call")
-                    return updated_node
-                if self.findall(expr, m.FormattedString()):
-                    self.warn(f"Unsupported f-string in format() call")
-                    return updated_node
-                if self.findall(expr, m.Await()) and not self.allow_await:
-                    # This is fixed in 3.7 but we don't currently have a flag
-                    # to enable/disable it.
-                    self.warn(f"Unsupported await in format() call")
-                    return updated_node
+                # Now, if there is a valid format spec, parse it as a f-string
+                # as well, since it allows for insertion of parameters just
+                # like regular f-strings.
+                format_spec_parts: List[cst.BaseFormattedStringContent] = []
+                if format_spec is not None and len(format_spec) > 0:
+                    # Parse the format spec out as a series of tokens as well.
+                    format_spec_tokens = _get_tokens(format_spec)
+                    for (
+                        spec_literal_text,
+                        spec_field_name,
+                        spec_format_spec,
+                        spec_conversion,
+                    ) in format_spec_tokens:
+                        if spec_format_spec:
+                            # This shouldn't be possible, we don't allow it in the spec!
+                            raise Exception("Logic error!")
+                        if spec_literal_text:
+                            format_spec_parts.append(
+                                cst.FormattedStringText(spec_literal_text)
+                            )
+                        if spec_field_name is None:
+                            # This is not a format-specification
+                            continue
+                        # Auto-insert field sequence if it is empty
+                        if spec_field_name == "":
+                            spec_field_name = str(inserted_sequence)
+                            inserted_sequence += 1
 
-                # Stripping newlines is effectively a format-only change.
-                expr = cst.ensure_type(
-                    expr.visit(StripNewlinesTransformer(self.context)),
-                    cst.BaseExpression,
-                )
-
-                # Try our best to swap quotes on any strings that won't fit
-                expr = cst.ensure_type(
-                    expr.visit(
-                        SwitchStringQuotesTransformer(self.context, stringnode.quote[0])
-                    ),
-                    cst.BaseExpression,
-                )
-
-                # Verify that the resulting expression doesn't have a backslash
-                # in it.
-                raw_expr_string = self.module.code_for_node(expr)
-                if "\\" in raw_expr_string:
-                    self.warn(f"Unsupported backslash in format expression")
-                    return updated_node
-
-                # For safety sake, if this is a dict/set or dict/set comprehension,
-                # wrap it in parens so that it doesn't accidentally create an
-                # escape.
-                if (
-                    raw_expr_string.startswith("{") or raw_expr_string.endswith("}")
-                ) and (not expr.lpar or not expr.rpar):
-                    expr = expr.with_changes(
-                        lpar=[cst.LeftParen()], rpar=[cst.RightParen()]
-                    )
-
-                # Verify that any strings we insert don't have the same quote
-                quote_gatherer = StringQuoteGatherer(self.context)
-                expr.visit(quote_gatherer)
-                for stringend in quote_gatherer.stringends:
-                    if stringend in stringnode.quote:
-                        self.warn(
-                            f"Cannot embed string with same quote from format() call"
+                        # Now, convert the spec expression itself.
+                        fstring_expression = self._convert_token_to_fstring_expression(
+                            spec_field_name,
+                            spec_conversion,
+                            updated_node.args,
+                            stringnode,
                         )
-                        return updated_node
+                        if fstring_expression is None:
+                            return updated_node
+                        format_spec_parts.append(fstring_expression)
 
-                fstring.append(
-                    cst.FormattedStringExpression(
-                        expression=expr, conversion=conversion
-                    )
+                # Finally, output the converted value.
+                fstring_expression = self._convert_token_to_fstring_expression(
+                    field_name, conversion, updated_node.args, stringnode
                 )
+                if fstring_expression is None:
+                    return updated_node
+                # Technically its valid to add the parts even if it is empty, but
+                # it results in an empty format spec being added which is ugly.
+                if format_spec_parts:
+                    fstring_expression = fstring_expression.with_changes(
+                        format_spec=format_spec_parts
+                    )
+                fstring.append(fstring_expression)
+
+            # We converted each part, so lets bang together the f-string itself.
             return cst.FormattedString(
                 parts=fstring,
                 start=f"f{stringnode.prefix}{stringnode.quote}",
@@ -366,3 +344,72 @@ class ConvertFormatStringCommand(VisitorBasedCodemodCommand):
             )
 
         return updated_node
+
+    def _convert_token_to_fstring_expression(
+        self,
+        field_name: str,
+        conversion: Optional[str],
+        arguments: Sequence[cst.Arg],
+        containing_string: cst.SimpleString,
+    ) -> Optional[cst.FormattedStringExpression]:
+        expr = _find_expr_from_field_name(field_name, arguments)
+        if expr is None:
+            # Most likely they used * expansion in a format.
+            self.warn(f"Unsupported field_name {field_name} in format() call")
+            return None
+
+        # Verify that we don't have any comments or newlines. Comments aren't
+        # allowed in f-strings, and newlines need parenthesization. We can
+        # have formattedstrings inside other formattedstrings, but I chose not
+        # to doeal with that for now.
+        if self.findall(expr, m.Comment()) and not self.allow_strip_comments:
+            # We could strip comments, but this is a formatting change so
+            # we choose not to for now.
+            self.warn(f"Unsupported comment in format() call")
+            return None
+        if self.findall(expr, m.FormattedString()):
+            self.warn(f"Unsupported f-string in format() call")
+            return None
+        if self.findall(expr, m.Await()) and not self.allow_await:
+            # This is fixed in 3.7 but we don't currently have a flag
+            # to enable/disable it.
+            self.warn(f"Unsupported await in format() call")
+            return None
+
+        # Stripping newlines is effectively a format-only change.
+        expr = cst.ensure_type(
+            expr.visit(StripNewlinesTransformer(self.context)), cst.BaseExpression,
+        )
+
+        # Try our best to swap quotes on any strings that won't fit
+        expr = cst.ensure_type(
+            expr.visit(
+                SwitchStringQuotesTransformer(self.context, containing_string.quote[0])
+            ),
+            cst.BaseExpression,
+        )
+
+        # Verify that the resulting expression doesn't have a backslash
+        # in it.
+        raw_expr_string = self.module.code_for_node(expr)
+        if "\\" in raw_expr_string:
+            self.warn(f"Unsupported backslash in format expression")
+            return None
+
+        # For safety sake, if this is a dict/set or dict/set comprehension,
+        # wrap it in parens so that it doesn't accidentally create an
+        # escape.
+        if (raw_expr_string.startswith("{") or raw_expr_string.endswith("}")) and (
+            not expr.lpar or not expr.rpar
+        ):
+            expr = expr.with_changes(lpar=[cst.LeftParen()], rpar=[cst.RightParen()])
+
+        # Verify that any strings we insert don't have the same quote
+        quote_gatherer = StringQuoteGatherer(self.context)
+        expr.visit(quote_gatherer)
+        for stringend in quote_gatherer.stringends:
+            if stringend in containing_string.quote:
+                self.warn(f"Cannot embed string with same quote from format() call")
+                return None
+
+        return cst.FormattedStringExpression(expression=expr, conversion=conversion)
