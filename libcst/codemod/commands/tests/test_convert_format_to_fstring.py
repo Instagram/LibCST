@@ -89,7 +89,7 @@ class ConvertFormatStringCommandTest(CodemodTest):
             def foobarbaz() -> str:
                 return "{}".format('\\n')
 
-            def awaitable() -> str:
+            async def awaitable() -> str:
                 return "{}".format(await bla())
         """
         after = """
@@ -113,7 +113,7 @@ class ConvertFormatStringCommandTest(CodemodTest):
             def foobarbaz() -> str:
                 return "{}".format('\\n')
 
-            def awaitable() -> str:
+            async def awaitable() -> str:
                 return "{}".format(await bla())
         """
 
@@ -130,6 +130,46 @@ class ConvertFormatStringCommandTest(CodemodTest):
             ],
             # await isn't supported inside functions in 3.6
             python_version="3.7",
+        )
+
+    def test_enable_unsupported_comments(self) -> None:
+        """
+        Should codemod code with a comment in it, by removing the comment.
+        """
+
+        before = """
+            def foobar() -> str:
+                return "{}".format((
+                    1 +
+                    # Woah, comment
+                    2
+                ))
+        """
+        after = """
+            def foobar() -> str:
+                return f"{( 1 + 2 )}"
+        """
+
+        self.assertCodemod(
+            before, after, allow_strip_comments=True, python_version="3.7",
+        )
+
+    def test_enable_unsupported_await(self) -> None:
+        """
+        Should codemod code with an await in it, by enabling 3.7+ behavior.
+        """
+
+        before = """
+            async def awaitable() -> str:
+                return "{}".format(await bla())
+        """
+        after = """
+            async def awaitable() -> str:
+                return f"{await bla()}"
+        """
+
+        self.assertCodemod(
+            before, after, allow_await=True, python_version="3.7",
         )
 
     def test_unsupported_formatspec(self) -> None:
