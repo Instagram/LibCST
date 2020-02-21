@@ -16,7 +16,9 @@ with open(path.join(this_directory, "README.rst"), encoding="utf-8") as f:
     long_description = f.read()
 
 # Grab the version constant so that libcst.tool stays in sync with this package.
-spec = importlib.util.spec_from_file_location("version", path.join(this_directory, "libcst/_version.py"))
+spec = importlib.util.spec_from_file_location(
+    "version", path.join(this_directory, "libcst/_version.py")
+)
 version = importlib.util.module_from_spec(spec)
 # pyre-ignore Pyre doesn't know about importlib entirely.
 spec.loader.exec_module(version)
