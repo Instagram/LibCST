@@ -20,9 +20,9 @@ class AddImportsVisitor(ContextAwareTransformer):
     Ensures that given imports exist in a module. Given a
     :class:`~libcst.codemod.CodemodContext` and a sequence of tuples specifying
     a module to import from as a string. Optionally an object to import from
-    that module and any alias to assign that import, ensures that that
-    import exists. It will modify existing imports as necessary if the module
-    in question is already being imported from.
+    that module and any alias to assign that import, ensures that import exists.
+    It will modify existing imports as necessary if the module in question is
+    already being imported from.
 
     This is one of the transforms that is available automatically to you when
     running a codemod. To use it in this manner, import
