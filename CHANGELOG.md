@@ -1,3 +1,18 @@
+# 0.3.2 - 2020-02-24
+
+## Added
+ - Added `RemoveImportsVisitor` to remove an import if it's not used in a module.
+ - Added `GatherExportsVisitor` to gather exports specified in `__all__`.
+ - Added property helpers `evaluated_name` and `evaluated_name` in `ImportAlias`.
+ - Added helper to get full module name: `get_absolute_module_for_import` and `get_absolute_module_for_import_or_raise`.
+ - Added `CodemodContext.full_module_name` for full dotted module name.
+ - Added format specifiers f-string conversion support to `ConvertFormatStringCommand`.
+
+## Updated
+ - Moved LibCST version to `_version.py` and can print it by `python -m libcst.tool --version`.
+ - Improved `EnsureImportPresentCommand` with `--alias` option.
+ - Improved `ConvertFormatStringCommand` with `--allow-strip-comments` and `--allow-await` options.
+
 # 0.3.1 - 2020-02-06
 
 ## Added
