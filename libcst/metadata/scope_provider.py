@@ -556,6 +556,8 @@ class ComprehensionScope(LocalScope):
 
 
 class ScopeVisitor(cst.CSTVisitor):
+    # TODO: Don't provide scope for formatting nodes (semicolon, which space, etc.)
+    # since it's probably not useful. That can makes this visitor cleaner.
     def __init__(self, provider: "ScopeProvider") -> None:
         self.provider: ScopeProvider = provider
         self.scope: Scope = GlobalScope()
@@ -700,7 +702,7 @@ class ScopeVisitor(cst.CSTVisitor):
                 attr.visit(self)
         return False
 
-    def visit_Arg(self, node: cst.Arg) -> Optional[bool]:
+    def visit_Arg(self, node: cst.Arg) -> bool:
         # The keyword of Arg is neither an Assignment nor an Access and we explicitly don't visit it.
         for attr in [
             node.value,
