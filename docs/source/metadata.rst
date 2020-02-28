@@ -72,6 +72,7 @@ not use the visitor pattern for computing metadata for a tree.
 Metadata Providers
 ------------------
 :class:`~libcst.metadata.PositionProvider`,
+:class:`~libcst.metadata.ByteSpanPositionProvider`,
 :class:`~libcst.metadata.WhitespaceInclusivePositionProvider`,
 :class:`~libcst.metadata.ExpressionContextProvider`,
 :class:`~libcst.metadata.ScopeProvider`,
@@ -82,8 +83,14 @@ are currently provided. Each metadata provider may has its own custom data struc
 
 Position Metadata
 -----------------
-Position (line and column numbers) metadata are accessible through the metadata
-interface by declaring the one of the following providers as a dependency. For
+There are two types of position metadata available. They both track the same
+position concept, but differ in terms of representation. One represents
+position with line and column numbers, while the other outputs byte offset and
+length pairs.
+
+Line and column numbers are available through the metadata interface by
+declaring one of :class:`~libcst.metadata.PositionProvider` or
+:class:`~libcst.metadata.WhitespaceInclusivePositionProvider`. For
 most cases, :class:`~libcst.metadata.PositionProvider` is what you probably
 want.
 
@@ -96,6 +103,15 @@ objects. See :ref:`the above example<libcst-metadata-position-example>`.
 .. autoclass:: libcst.metadata.CodeRange
 .. autoclass:: libcst.metadata.CodePosition
 
+Byte offset and length pairs can be accessed using
+:class:`~libcst.metadata.ByteSpanPositionProvider`. This provider represents
+positions using :class:`~libcst.metadata.CodeSpan`, which will contain the
+byte offsets of a :class:`~libcst.CSTNode` from the start of the file, and
+its length (also in bytes).
+
+.. autoclass:: libcst.metadata.ByteSpanPositionProvider
+
+.. autoclass:: libcst.metadata.CodeSpan
 
 Expression Context Metadata
 ---------------------------
