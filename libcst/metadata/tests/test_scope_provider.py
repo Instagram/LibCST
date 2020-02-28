@@ -17,6 +17,7 @@ from libcst.metadata.scope_provider import (
     ComprehensionScope,
     FunctionScope,
     GlobalScope,
+    LocalScope,
     QualifiedName,
     QualifiedNameSource,
     Scope,
@@ -996,3 +997,50 @@ class ScopeProviderTest(UnitTest):
         scope = scopes[call]
         self.assertIsInstance(scope, GlobalScope)
         self.assertEqual(len(scope["arg"]), 0)  # no assignment should exist
+
+    def test_global_contains_is_read_only(self) -> None:
+        gscope = GlobalScope()
+        before_assignments = list(gscope._assignments.items())
+        before_accesses = list(gscope._accesses.items())
+        self.assertFalse("doesnt_exist" in gscope)
+        self.assertEqual(list(gscope._accesses.items()), before_accesses)
+        self.assertEqual(list(gscope._assignments.items()), before_assignments)
+
+    def test_contains_is_read_only(self) -> None:
+        for s in [LocalScope, FunctionScope, ClassScope, ComprehensionScope]:
+            with self.subTest(scope=s):
+                gscope = GlobalScope()
+                scope = s(parent=gscope, node=cst.Name("lol"))
+                before_assignments = list(scope._assignments.items())
+                before_accesses = list(scope._accesses.items())
+                before_overwrites = list(scope._scope_overwrites.items())
+                before_parent_assignments = list(scope.parent._assignments.items())
+                before_parent_accesses = list(scope.parent._accesses.items())
+
+                self.assertFalse("doesnt_exist" in scope)
+                self.assertEqual(list(scope._accesses.items()), before_accesses)
+                self.assertEqual(list(scope._assignments.items()), before_assignments)
+                self.assertEqual(
+                    list(scope._scope_overwrites.items()), before_overwrites
+                )
+                self.assertEqual(
+                    list(scope.parent._assignments.items()), before_parent_assignments
+                )
+                self.assertEqual(
+                    list(scope.parent._accesses.items()), before_parent_accesses
+                )
+
+    def test_get_qualified_names_for_is_read_only(self) -> None:
+        m, scopes = get_scope_metadata_provider(
+            """
+                import a
+                import b
+            """
+        )
+        a = m.body[0]
+        scope = scopes[a]
+        assignments_len_before = len(scope._assignments)
+        accesses_len_before = len(scope._accesses)
+        scope.get_qualified_names_for("doesnt_exist")
+        self.assertEqual(len(scope._assignments), assignments_len_before)
+        self.assertEqual(len(scope._accesses), accesses_len_before)
