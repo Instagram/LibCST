@@ -987,3 +987,12 @@ class ScopeProviderTest(UnitTest):
             {ensure_type(del_a_b.target, cst.Attribute).value},
         )
         self.assertEqual(scope["b"], ())
+
+    def test_keyword_arg_in_call(self) -> None:
+        m, scopes = get_scope_metadata_provider("call(arg=val)")
+        call = ensure_type(
+            ensure_type(m.body[0], cst.SimpleStatementLine).body[0], cst.Expr
+        ).value
+        scope = scopes[call]
+        self.assertIsInstance(scope, GlobalScope)
+        self.assertEqual(len(scope["arg"]), 0)  # no assignment should exist

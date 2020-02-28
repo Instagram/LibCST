@@ -36,6 +36,8 @@ from libcst.metadata.expression_context_provider import (
 )
 
 
+@add_slots
+@dataclass(frozen=False)
 class Access:
     """
     An Access records an access of an assignment.
@@ -698,10 +700,19 @@ class ScopeVisitor(cst.CSTVisitor):
                 attr.visit(self)
         return False
 
-    def visit_Arg_keyword(self, node: cst.Arg) -> None:
-        keyword = node.keyword
-        if keyword is not None:
-            self.scope.record_assignment(keyword.value, node)
+    def visit_Arg(self, node: cst.Arg) -> Optional[bool]:
+        # The keyword of Arg is neither an Assignment nor an Access and we explicitly don't visit it.
+        for attr in [
+            node.value,
+            node.equal,
+            node.comma,
+            node.star,
+            node.whitespace_after_star,
+            node.whitespace_after_arg,
+        ]:
+            if isinstance(attr, cst.CSTNode):
+                attr.visit(self)
+        return False
 
     def visit_ClassDef(self, node: cst.ClassDef) -> Optional[bool]:
         self.scope.record_assignment(node.name.value, node)
