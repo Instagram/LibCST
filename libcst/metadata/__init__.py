@@ -43,6 +43,7 @@ from libcst.metadata.scope_provider import (
     Scope,
     ScopeProvider,
 )
+from libcst.metadata.span_provider import ByteSpanPositionProvider, CodeSpan
 from libcst.metadata.type_inference_provider import TypeInferenceProvider
 from libcst.metadata.wrapper import MetadataWrapper
 
@@ -50,8 +51,10 @@ from libcst.metadata.wrapper import MetadataWrapper
 __all__ = [
     "CodePosition",
     "CodeRange",
+    "CodeSpan",
     "WhitespaceInclusivePositionProvider",
     "PositionProvider",
+    "ByteSpanPositionProvider",
     "BaseMetadataProvider",
     "ExpressionContext",
     "ExpressionContextProvider",
