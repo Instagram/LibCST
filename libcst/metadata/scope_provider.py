@@ -317,13 +317,18 @@ class Scope(abc.ABC):
         """Overridden by ClassScope to hide it's assignments from child scopes."""
         return self[name]
 
+    def _contains_in_self_or_parent(self, name: str) -> bool:
+        """Overridden by ClassScope to hide it's assignments from child scopes."""
+        return name in self
+
     def _record_assignment_as_parent(self, name: str, node: cst.CSTNode) -> None:
         """Overridden by ClassScope to forward 'nonlocal' assignments from child scopes."""
         self.record_assignment(name, node)
 
+    @abc.abstractmethod
     def __contains__(self, name: str) -> bool:
         """ Check if the name str exist in current scope by ``name in scope``. """
-        return len(self[name]) > 0
+        ...
 
     @abc.abstractmethod
     def __getitem__(self, name: str) -> Set[BaseAssignment]:
@@ -412,7 +417,8 @@ class Scope(abc.ABC):
         if full_name is None:
             return results
         parts = full_name.split(".")
-        for assignment in self[parts[0]]:
+        assignments = self[parts[0]] if parts[0] in self else set()
+        for assignment in assignments:
             if isinstance(assignment, Assignment):
                 assignment_node = assignment.node
                 if isinstance(assignment_node, (cst.Import, cst.ImportFrom)):
@@ -450,6 +456,11 @@ class GlobalScope(Scope):
     def __init__(self) -> None:
         self.globals: Scope = self  # must be defined before Scope.__init__ is called
         super().__init__(parent=self)
+
+    def __contains__(self, name: str) -> bool:
+        return hasattr(builtins, name) or (
+            name in self._assignments and len(self._assignments[name]) > 0
+        )
 
     def __getitem__(self, name: str) -> Set[BaseAssignment]:
         if hasattr(builtins, name):
@@ -494,6 +505,13 @@ class LocalScope(Scope, abc.ABC):
             self._scope_overwrites[name]._record_assignment_as_parent(name, node)
         else:
             super().record_assignment(name, node)
+
+    def __contains__(self, name: str) -> bool:
+        if name in self._scope_overwrites:
+            return name in self._scope_overwrites[name]
+        if name in self._assignments:
+            return len(self._assignments[name]) > 0
+        return self.parent._contains_in_self_or_parent(name)
 
     def __getitem__(self, name: str) -> Set[BaseAssignment]:
         if name in self._scope_overwrites:
@@ -542,6 +560,12 @@ class ClassScope(LocalScope):
         self.attribute in child scopes. They cannot be accessed with their bare names.
         """
         return self.parent._getitem_from_self_or_parent(name)
+
+    def _contains_in_self_or_parent(self, name: str) -> bool:
+        """
+        See :meth:`_getitem_from_self_or_parent`
+        """
+        return self.parent._contains_in_self_or_parent(name)
 
 
 # even though we don't override the constructor.
