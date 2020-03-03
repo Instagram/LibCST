@@ -20,7 +20,6 @@ from typing import (
     MutableMapping,
     Optional,
     Set,
-    Tuple,
     Type,
     Union,
 )
@@ -78,6 +77,9 @@ class Access:
     def record_assignment(self, assignment: "BaseAssignment") -> None:
         self.__assignments.add(assignment)
 
+    def record_assignments(self, assignments: Set["BaseAssignment"]) -> None:
+        self.__assignments |= assignments
+
 
 class BaseAssignment(abc.ABC):
     """Abstract base class of :class:`Assignment` and :class:`BuitinAssignment`."""
@@ -96,6 +98,9 @@ class BaseAssignment(abc.ABC):
 
     def record_access(self, access: Access) -> None:
         self.__accesses.add(access)
+
+    def record_accesses(self, accesses: Set[Access]) -> None:
+        self.__accesses |= accesses
 
     @property
     def references(self) -> Collection[Access]:
@@ -308,7 +313,7 @@ class Scope(abc.ABC):
     def record_access(self, name: str, access: Access) -> None:
         self._accesses[name].add(access)
 
-    def _getitem_from_self_or_parent(self, name: str) -> Tuple[BaseAssignment, ...]:
+    def _getitem_from_self_or_parent(self, name: str) -> Set[BaseAssignment]:
         """Overridden by ClassScope to hide it's assignments from child scopes."""
         return self[name]
 
@@ -321,7 +326,7 @@ class Scope(abc.ABC):
         return len(self[name]) > 0
 
     @abc.abstractmethod
-    def __getitem__(self, name: str) -> Tuple[BaseAssignment, ...]:
+    def __getitem__(self, name: str) -> Set[BaseAssignment]:
         """
         Get assignments given a name str by ``scope[name]``.
 
@@ -356,7 +361,7 @@ class Scope(abc.ABC):
            As a result, instead of returning a single declaration,
            we're forced to return a collection of all of the assignments we think could have
            defined a given name by the time a piece of code is executed.
-           For the above example, value would resolve to a tuple of both assignments.
+           For the above example, value would resolve to a set of both assignments.
         """
         ...
 
@@ -446,13 +451,13 @@ class GlobalScope(Scope):
         self.globals: Scope = self  # must be defined before Scope.__init__ is called
         super().__init__(parent=self)
 
-    def __getitem__(self, name: str) -> Tuple[BaseAssignment, ...]:
+    def __getitem__(self, name: str) -> Set[BaseAssignment]:
         if hasattr(builtins, name):
             if not any(
                 isinstance(i, BuiltinAssignment) for i in self._assignments[name]
             ):
                 self._assignments[name].add(BuiltinAssignment(name, self))
-        return tuple(self._assignments[name])
+        return self._assignments[name]
 
     def record_global_overwrite(self, name: str) -> None:
         pass
@@ -490,11 +495,11 @@ class LocalScope(Scope, abc.ABC):
         else:
             super().record_assignment(name, node)
 
-    def __getitem__(self, name: str) -> Tuple[BaseAssignment, ...]:
+    def __getitem__(self, name: str) -> Set[BaseAssignment]:
         if name in self._scope_overwrites:
             return self._scope_overwrites[name]._getitem_from_self_or_parent(name)
         if name in self._assignments:
-            return tuple(self._assignments[name])
+            return self._assignments[name]
         else:
             return self.parent._getitem_from_self_or_parent(name)
 
@@ -531,7 +536,7 @@ class ClassScope(LocalScope):
         """
         self.parent._record_assignment_as_parent(name, node)
 
-    def _getitem_from_self_or_parent(self, name: str) -> Tuple[BaseAssignment, ...]:
+    def _getitem_from_self_or_parent(self, name: str) -> Set[BaseAssignment]:
         """
         Class variables are only accessible using ClassName.attribute, cls.attribute, or
         self.attribute in child scopes. They cannot be accessed with their bare names.
@@ -755,10 +760,19 @@ class ScopeVisitor(cst.CSTVisitor):
         return False
 
     def infer_accesses(self) -> None:
+        # Aggregate access with the same name and batch add with set union as an optimization.
+        # In worst case, all accesses (m) and assignments (n) refer to the same name,
+        # the time complexity is O(m x n), this optimizes it as O(m + n).
+        scope_name_accesses = defaultdict(set)
         for access in self.__deferred_accesses:
-            for assignment in access.scope[access.node.value]:
-                assignment.record_access(access)
-                access.record_assignment(assignment)
+            name = access.node.value
+            scope_name_accesses[(access.scope, name)].add(access)
+            access.record_assignments(access.scope[name])
+
+        for (scope, name), accesses in scope_name_accesses.items():
+            for assignment in scope[name]:
+                assignment.record_accesses(accesses)
+
         self.__deferred_accesses = []
 
     def on_leave(self, original_node: cst.CSTNode) -> None:

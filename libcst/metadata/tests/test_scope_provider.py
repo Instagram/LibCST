@@ -49,7 +49,7 @@ class ScopeProviderTest(UnitTest):
             """
         )
         global_scope = scopes[m]
-        self.assertEqual(global_scope["not_in_scope"], ())
+        self.assertEqual(global_scope["not_in_scope"], set())
 
     def test_accesses(self) -> None:
         m, scopes = get_scope_metadata_provider(
@@ -64,7 +64,7 @@ class ScopeProviderTest(UnitTest):
         )
         scope_of_module = scopes[m]
         self.assertIsInstance(scope_of_module, GlobalScope)
-        global_foo_assignments = scope_of_module["foo"]
+        global_foo_assignments = list(scope_of_module["foo"])
         self.assertEqual(len(global_foo_assignments), 1)
         foo_assignment = global_foo_assignments[0]
         self.assertEqual(len(foo_assignment.references), 2)
@@ -91,7 +91,7 @@ class ScopeProviderTest(UnitTest):
         self.assertIsInstance(scope_of_func_statement, FunctionScope)
         func_foo_assignments = scope_of_func_statement["foo"]
         self.assertEqual(len(func_foo_assignments), 1)
-        foo_assignment = func_foo_assignments[0]
+        foo_assignment = list(func_foo_assignments)[0]
         self.assertEqual(len(foo_assignment.references), 1)
         fn3_call_arg = ensure_type(
             ensure_type(
@@ -145,7 +145,7 @@ class ScopeProviderTest(UnitTest):
                 len(scope_of_module[in_scope]), 1, f"{in_scope} should be in scope."
             )
 
-            assignment = cast(Assignment, scope_of_module[in_scope][0])
+            assignment = cast(Assignment, list(scope_of_module[in_scope])[0])
             self.assertEqual(
                 assignment.name,
                 in_scope,
@@ -171,7 +171,7 @@ class ScopeProviderTest(UnitTest):
             self.assertEqual(
                 len(scope_of_module[in_scope]), 1, f"{in_scope} should be in scope."
             )
-            import_assignment = cast(Assignment, scope_of_module[in_scope][0])
+            import_assignment = cast(Assignment, list(scope_of_module[in_scope])[0])
             self.assertEqual(
                 import_assignment.name,
                 in_scope,
@@ -226,7 +226,7 @@ class ScopeProviderTest(UnitTest):
         )
         scope_of_module = scopes[m]
         self.assertIsInstance(scope_of_module, GlobalScope)
-        cls_assignments = scope_of_module["Cls"]
+        cls_assignments = list(scope_of_module["Cls"])
         self.assertEqual(len(cls_assignments), 1)
         cls_assignment = cast(Assignment, cls_assignments[0])
         cls_def = ensure_type(m.body[1], cst.ClassDef)
@@ -444,14 +444,14 @@ class ScopeProviderTest(UnitTest):
         scope_of_outer_f = scopes[outer_f.body.body[0]]
         self.assertIsInstance(scope_of_outer_f, FunctionScope)
         self.assertTrue("f" in scope_of_outer_f)
-        out_f_assignment = scope_of_module["f"][0]
+        out_f_assignment = list(scope_of_module["f"])[0]
         self.assertEqual(cast(Assignment, out_f_assignment).node, outer_f)
 
         inner_f = ensure_type(outer_f.body.body[0], cst.FunctionDef)
         scope_of_inner_f = scopes[inner_f.body.body[0]]
         self.assertIsInstance(scope_of_inner_f, FunctionScope)
         self.assertTrue("f" in scope_of_inner_f)
-        inner_f_assignment = scope_of_outer_f["f"][0]
+        inner_f_assignment = list(scope_of_outer_f["f"])[0]
         self.assertEqual(cast(Assignment, inner_f_assignment).node, inner_f)
 
     def test_func_param_scope(self) -> None:
@@ -505,11 +505,11 @@ class ScopeProviderTest(UnitTest):
         self.assertTrue("kwarg" not in scope_of_module)
         self.assertTrue("kwarg" in scope_of_f)
 
-        self.assertEqual(cast(Assignment, scope_of_f["x"][0]).node, x)
-        self.assertEqual(cast(Assignment, scope_of_f["vararg"][0]).node, vararg)
-        self.assertEqual(cast(Assignment, scope_of_f["y"][0]).node, y)
-        self.assertEqual(cast(Assignment, scope_of_f["z"][0]).node, z)
-        self.assertEqual(cast(Assignment, scope_of_f["kwarg"][0]).node, kwarg)
+        self.assertEqual(cast(Assignment, list(scope_of_f["x"])[0]).node, x)
+        self.assertEqual(cast(Assignment, list(scope_of_f["vararg"])[0]).node, vararg)
+        self.assertEqual(cast(Assignment, list(scope_of_f["y"])[0]).node, y)
+        self.assertEqual(cast(Assignment, list(scope_of_f["z"])[0]).node, z)
+        self.assertEqual(cast(Assignment, list(scope_of_f["kwarg"])[0]).node, kwarg)
 
     def test_lambda_param_scope(self) -> None:
         m, scopes = get_scope_metadata_provider(
@@ -556,11 +556,11 @@ class ScopeProviderTest(UnitTest):
         self.assertTrue("kwarg" not in scope_of_module)
         self.assertTrue("kwarg" in scope_of_f)
 
-        self.assertEqual(cast(Assignment, scope_of_f["x"][0]).node, x)
-        self.assertEqual(cast(Assignment, scope_of_f["vararg"][0]).node, vararg)
-        self.assertEqual(cast(Assignment, scope_of_f["y"][0]).node, y)
-        self.assertEqual(cast(Assignment, scope_of_f["z"][0]).node, z)
-        self.assertEqual(cast(Assignment, scope_of_f["kwarg"][0]).node, kwarg)
+        self.assertEqual(cast(Assignment, list(scope_of_f["x"])[0]).node, x)
+        self.assertEqual(cast(Assignment, list(scope_of_f["vararg"])[0]).node, vararg)
+        self.assertEqual(cast(Assignment, list(scope_of_f["y"])[0]).node, y)
+        self.assertEqual(cast(Assignment, list(scope_of_f["z"])[0]).node, z)
+        self.assertEqual(cast(Assignment, list(scope_of_f["kwarg"])[0]).node, kwarg)
 
     def test_except_handler(self) -> None:
         """
@@ -581,7 +581,7 @@ class ScopeProviderTest(UnitTest):
         self.assertIsInstance(scope_of_module, GlobalScope)
         self.assertTrue("ex" in scope_of_module)
         self.assertEqual(
-            cast(Assignment, scope_of_module["ex"][0]).node,
+            cast(Assignment, list(scope_of_module["ex"])[0]).node,
             ensure_type(
                 ensure_type(m.body[0], cst.Try).handlers[0].name, cst.AsName
             ).name,
@@ -598,7 +598,7 @@ class ScopeProviderTest(UnitTest):
         self.assertIsInstance(scope_of_module, GlobalScope)
         self.assertTrue("f" in scope_of_module)
         self.assertEqual(
-            cast(Assignment, scope_of_module["f"][0]).node,
+            cast(Assignment, list(scope_of_module["f"])[0]).node,
             ensure_type(
                 ensure_type(m.body[0], cst.With).items[0].asname, cst.AsName
             ).name,
@@ -806,11 +806,10 @@ class ScopeProviderTest(UnitTest):
         scope_of_module = scopes[a_outer_assign]
         a_outer_assignments = scope_of_module.assignments[a_outer_access]
         self.assertEqual(len(a_outer_assignments), 1)
+        a_outer_assignment = list(a_outer_assignments)[0]
+        self.assertEqual(cast(Assignment, a_outer_assignment).node, a_outer_assign)
         self.assertEqual(
-            cast(Assignment, list(a_outer_assignments)[0]).node, a_outer_assign
-        )
-        self.assertEqual(
-            {i.node for i in list(a_outer_assignments)[0].references}, {a_outer_access}
+            {i.node for i in a_outer_assignment.references}, {a_outer_access}
         )
 
         a_outer_assesses = scope_of_module.accesses[a_outer_assign]
@@ -986,7 +985,7 @@ class ScopeProviderTest(UnitTest):
             {i.node for i in a_assign.references},
             {ensure_type(del_a_b.target, cst.Attribute).value},
         )
-        self.assertEqual(scope["b"], ())
+        self.assertEqual(scope["b"], set())
 
     def test_keyword_arg_in_call(self) -> None:
         m, scopes = get_scope_metadata_provider("call(arg=val)")
