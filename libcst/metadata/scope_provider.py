@@ -787,6 +787,7 @@ class ScopeProvider(BatchableMetadataProvider[Optional[Scope]]):
     more advanced static analysis. E.g. given a :class:`~libcst.FunctionDef`
     node, we can check the type of its Scope to figure out whether it is a class method
     (:class:`ClassScope`) or a regular function (:class:`GlobalScope`).
+
     Scope metadata is available for most node types other than formatting information nodes
     (whitespace, parentheses, etc.).
     """
