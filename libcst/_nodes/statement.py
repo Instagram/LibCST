@@ -3,6 +3,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import inspect
 import re
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
@@ -20,6 +21,7 @@ from libcst._nodes.expression import (
     BaseDelTargetExpression,
     BaseExpression,
     Call,
+    ConcatenatedString,
     ExpressionPosition,
     From,
     LeftParen,
@@ -27,6 +29,7 @@ from libcst._nodes.expression import (
     Name,
     Parameters,
     RightParen,
+    SimpleString,
     Tuple,
 )
 from libcst._nodes.internal import (
@@ -1472,6 +1475,40 @@ class Decorator(CSTNode):
         self.trailing_whitespace._codegen(state)
 
 
+def get_docstring_impl(
+    body: Union[BaseSuite, Sequence[Union[SimpleStatementLine, BaseCompoundStatement]]],
+    clean: bool,
+) -> Optional[str]:
+    """
+    Implementation Reference:
+    - :func:`ast.get_docstring` https://docs.python.org/3/library/ast.html#ast.get_docstring
+    and https://github.com/python/cpython/blob/89aa4694fc8c6d190325ef8ed6ce6a6b8efb3e50/Lib/ast.py#L254
+    - PEP 257 https://www.python.org/dev/peps/pep-0257/
+    """
+    if isinstance(body, Sequence):
+        if body:
+            expr = body[0]
+        else:
+            return None
+    else:
+        expr = body
+    while isinstance(expr, (BaseSuite, SimpleStatementLine)):
+        if len(expr.body) == 0:
+            return None
+        expr = expr.body[0]
+    if not isinstance(expr, Expr):
+        return None
+    val = expr.value
+    if isinstance(val, (SimpleString, ConcatenatedString)):
+        evaluated_value = val.evaluated_value
+    else:
+        return None
+
+    if evaluated_value is not None and clean:
+        return inspect.cleandoc(evaluated_value)
+    return evaluated_value
+
+
 @add_slots
 @dataclass(frozen=True)
 class FunctionDef(BaseCompoundStatement):
@@ -1590,6 +1627,13 @@ class FunctionDef(BaseCompoundStatement):
             self.whitespace_before_colon._codegen(state)
             state.add_token(":")
             self.body._codegen(state)
+
+    def get_docstring(self, clean=True) -> Optional[str]:
+        """
+        When docstring is available, returns a :func:`inspect.cleandoc` cleaned docstring.
+        Otherwise, returns ``None``.
+        """
+        return get_docstring_impl(self.body, clean)
 
 
 @add_slots
@@ -1732,6 +1776,12 @@ class ClassDef(BaseCompoundStatement):
             self.whitespace_before_colon._codegen(state)
             state.add_token(":")
             self.body._codegen(state)
+
+    def get_docstring(self, clean=True) -> Optional[str]:
+        """
+        Returns a :func:`inspect.cleandoc` cleaned docstring if the docstring is available, ``None`` otherwise.
+        """
+        return get_docstring_impl(self.body, clean)
 
 
 @add_slots

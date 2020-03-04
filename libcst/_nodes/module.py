@@ -4,12 +4,16 @@
 # LICENSE file in the root directory of this source tree.
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Sequence, TypeVar, Union, cast
+from typing import TYPE_CHECKING, Optional, Sequence, TypeVar, Union, cast
 
 from libcst._add_slots import add_slots
 from libcst._nodes.base import CSTNode
 from libcst._nodes.internal import CodegenState, visit_body_sequence, visit_sequence
-from libcst._nodes.statement import BaseCompoundStatement, SimpleStatementLine
+from libcst._nodes.statement import (
+    BaseCompoundStatement,
+    SimpleStatementLine,
+    get_docstring_impl,
+)
 from libcst._nodes.whitespace import EmptyLine
 from libcst._removal_sentinel import RemovalSentinel
 from libcst._visitors import CSTVisitorT
@@ -154,3 +158,9 @@ class Module(CSTNode):
             default_indent=self.default_indent,
             default_newline=self.default_newline,
         )
+
+    def get_docstring(self, clean=True) -> Optional[str]:
+        """
+        Returns a :func:`inspect.cleandoc` cleaned docstring if the docstring is available, ``None`` otherwise.
+        """
+        return get_docstring_impl(self.body, clean)
