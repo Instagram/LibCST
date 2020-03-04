@@ -1020,6 +1020,23 @@ class ConcatenatedString(BaseString):
             self.whitespace_between._codegen(state)
             self.right._codegen(state)
 
+    @property
+    def evaluated_value(self) -> Optional[str]:
+        """
+        Return an :func:`ast.literal_eval` evaluated str of recursively concatenated :py:attr:`left` and :py:attr:`right`
+        if and only if both :py:attr:`left` and :py:attr:`right` are composed by :class:`SimpleString` or :class:`ConcatenatedString`
+        (:class:`FormattedString` cannot be evaluated).
+        """
+        left = self.left
+        right = self.right
+        if isinstance(left, FormattedString) or isinstance(right, FormattedString):
+            return None
+        left_val = left.evaluated_value
+        right_val = right.evaluated_value
+        if right_val is None:
+            return None
+        return left_val + right_val
+
 
 @add_slots
 @dataclass(frozen=True)

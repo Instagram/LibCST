@@ -68,3 +68,17 @@ class ExpressionTest(UnitTest):
         node = ensure_type(cst.parse_expression(raw_value), cst.Imaginary)
         self.assertEqual(node.value, raw_value)
         self.assertEqual(node.evaluated_value, literal_eval(raw_value))
+
+    def test_concatenated_string_evaluated_value(self) -> None:
+        code = '"This " "is " "a " "concatenated " "string."'
+        node = ensure_type(cst.parse_expression(code), cst.ConcatenatedString)
+        self.assertEqual(node.evaluated_value, "This is a concatenated string.")
+        code = 'b"A concatenated" b" byte."'
+        node = ensure_type(cst.parse_expression(code), cst.ConcatenatedString)
+        self.assertEqual(node.evaluated_value, b"A concatenated byte.")
+        code = '"var=" f" {var}"'
+        node = ensure_type(cst.parse_expression(code), cst.ConcatenatedString)
+        self.assertEqual(node.evaluated_value, None)
+        code = '"var" "=" f" {var}"'
+        node = ensure_type(cst.parse_expression(code), cst.ConcatenatedString)
+        self.assertEqual(node.evaluated_value, None)
