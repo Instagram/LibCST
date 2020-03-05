@@ -785,10 +785,15 @@ class ExceptHandler(CSTNode):
             raise CSTValidationError(
                 "Must use a Name node for AsName name inside ExceptHandler."
             )
-        if self.type is not None and self.whitespace_after_except.empty:
-            raise CSTValidationError(
-                "Must have at least one space after except when ExceptHandler has a type."
-            )
+        type_ = self.type
+        if type_ is not None and self.whitespace_after_except.empty:
+            # Space is only required when the first char in `type` could start
+            # an identifier.  In the most common cases, we want to allow
+            # grouping or tuple parens.
+            if isinstance(type_, Name) and not type_.lpar:
+                raise CSTValidationError(
+                    "Must have at least one space after except when ExceptHandler has a type."
+                )
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "ExceptHandler":
         return ExceptHandler(

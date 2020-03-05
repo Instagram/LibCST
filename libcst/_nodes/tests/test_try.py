@@ -281,6 +281,50 @@ class TryTest(CSTNodeTest):
                 + "        pass\n",
                 "parser": None,
             },
+            # No space when using grouping parens
+            {
+                "node": cst.Try(
+                    cst.SimpleStatementSuite((cst.Pass(),)),
+                    handlers=(
+                        cst.ExceptHandler(
+                            cst.SimpleStatementSuite((cst.Pass(),)),
+                            whitespace_after_except=cst.SimpleWhitespace(""),
+                            type=cst.Name(
+                                "Exception",
+                                lpar=(cst.LeftParen(),),
+                                rpar=(cst.RightParen(),),
+                            ),
+                        ),
+                    ),
+                ),
+                "code": "try: pass\nexcept(Exception): pass\n",
+                "parser": parse_statement,
+            },
+            # No space when using tuple
+            {
+                "node": cst.Try(
+                    cst.SimpleStatementSuite((cst.Pass(),)),
+                    handlers=(
+                        cst.ExceptHandler(
+                            cst.SimpleStatementSuite((cst.Pass(),)),
+                            whitespace_after_except=cst.SimpleWhitespace(""),
+                            type=cst.Tuple(
+                                [
+                                    cst.Element(
+                                        cst.Name("IOError"),
+                                        comma=cst.Comma(
+                                            whitespace_after=cst.SimpleWhitespace(" ")
+                                        ),
+                                    ),
+                                    cst.Element(cst.Name("ImportError")),
+                                ]
+                            ),
+                        ),
+                    ),
+                ),
+                "code": "try: pass\nexcept(IOError, ImportError): pass\n",
+                "parser": parse_statement,
+            },
         )
     )
     def test_valid(self, **kwargs: Any) -> None:
