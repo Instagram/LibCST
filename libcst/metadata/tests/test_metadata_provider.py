@@ -300,7 +300,10 @@ class MetadataProviderTest(UnitTest):
                 self.get_metadata(ProviderA, node)
                 return True
 
-        with self.assertRaises(KeyError):
+        with self.assertRaisesRegex(
+            KeyError,
+            "ProviderA is a dependency, but not set; did you forget a MetadataWrapper?",
+        ):
             cst.Module([]).visit(AVisitor())
 
     def test_undeclared_metadata(self) -> None:

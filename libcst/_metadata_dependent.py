@@ -103,6 +103,11 @@ class MetadataDependent(ABC):
                 f"{key.__name__} is not declared as a dependency in {type(self).__name__}.METADATA_DEPENDENCIES."
             )
 
+        if key not in self.metadata:
+            raise KeyError(
+                f"{key.__name__} is a dependency, but not set; did you forget a MetadataWrapper?"
+            )
+
         if default is not _UNDEFINED_DEFAULT:
             return cast(_T, self.metadata[key].get(node, default))
         else:
