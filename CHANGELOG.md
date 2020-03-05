@@ -1,3 +1,18 @@
+# 0.3.3 - 2020-03-05
+
+## Added
+ - `ByteSpanPositionProvider` provides start offset and length of CSTNode as metadata. 
+ - `get_docstring` helper provides docstring from `Module`, `ClassDef` and `FunctionDef` node types.
+
+## Updated
+ - Optimized `ScopeProvider` performance to run faster and use less memory:
+   - remove unnecessary `Assignment` of keyword `Arg`.
+   - don't provide scope object for formatting information nodes.
+   - batch set union updates in `infer_accesses` step.
+
+## Fixed
+ - Fixed `_assignments` mutation when calling read-only `Scope.get_qualified_names_for` and `__contains__`.
+
 # 0.3.2 - 2020-02-24
 
 ## Added
