@@ -181,7 +181,7 @@ verify types for the library, do the following in the root:
 
 .. code-block:: shell
 
-    pyre check
+    pyre --preserve-pythonpath check
 
 To generate documents, do the following in the root:
 
