@@ -6,7 +6,6 @@
 import importlib.util
 from os import path
 
-# pyre-ignore Pyre doesn't know about setuptools.
 import setuptools
 
 
