@@ -71,7 +71,7 @@ jobs:
             source /tmp/libcst-env/bin/activate
             pip install --upgrade pip
             pip install -r requirements.txt -r requirements-dev.txt
-            pyre check
+            pyre --preserve-pythonpath check
             PYTHONPATH=`pwd` python libcst/tests/test_pyre_integration.py
             git diff --exit-code  # verify no generated changes
       - save_cache:
