@@ -872,7 +872,7 @@ def convert_atom_basic(
     elif child.type.name == "NUMBER":
         # We must determine what type of number it is since we split node
         # types up this way.
-        if re.fullmatch(INTNUMBER_RE, child.string):
+        if re.fullmatch(INTNUMBER_RE + "[Ll]?", child.string):
             return WithLeadingWhitespace(Integer(child.string), child.whitespace_before)
         elif re.fullmatch(FLOATNUMBER_RE, child.string):
             return WithLeadingWhitespace(Float(child.string), child.whitespace_before)

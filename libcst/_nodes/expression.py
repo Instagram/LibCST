@@ -426,7 +426,7 @@ class Integer(BaseNumber):
 
     def _validate(self) -> None:
         super(Integer, self)._validate()
-        if not re.fullmatch(INTNUMBER_RE, self.value):
+        if not re.fullmatch(INTNUMBER_RE + "[Ll]?", self.value):
             raise CSTValidationError("Number is not a valid integer.")
 
     def _codegen_impl(self, state: CodegenState) -> None:
@@ -438,7 +438,8 @@ class Integer(BaseNumber):
         """
         Return an :func:`ast.literal_eval` evaluated int of :py:attr:`value`.
         """
-        return literal_eval(self.value)
+        # Allow evaluating py2 code on py3
+        return literal_eval(self.value.rstrip("Ll"))
 
 
 @add_slots

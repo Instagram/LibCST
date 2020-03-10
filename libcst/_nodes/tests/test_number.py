@@ -7,7 +7,7 @@ from typing import Callable, Optional
 
 import libcst as cst
 from libcst import parse_expression
-from libcst._nodes.tests.base import CSTNodeTest
+from libcst._nodes.tests.base import CSTNodeTest, parse_expression_as
 from libcst.metadata import CodeRange
 from libcst.testing.utils import data_provider
 
@@ -129,3 +129,10 @@ class NumberTest(CSTNodeTest):
         self, get_node: Callable[[], cst.CSTNode], expected_re: str
     ) -> None:
         self.assert_invalid(get_node, expected_re)
+
+    def test_versions(self) -> None:
+        with self.assertRaises(Exception):
+            parse_expression_as(python_version="3.6")("5L")
+        num = parse_expression_as(python_version="2.7")("5L")
+        assert isinstance(num, cst.Integer)
+        self.assertEqual(5, num.evaluated_value)
