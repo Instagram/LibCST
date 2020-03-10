@@ -4,7 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 # pyre-strict
-from typing import Callable, Optional
+from typing import Any, Callable, Optional
 
 import libcst as cst
 from libcst import parse_statement
@@ -240,5 +240,5 @@ class YieldParsingTest(CSTNodeTest):
             },
         )
     )
-    def test_versions(self, code, parser, expect_success) -> None:
-        self.assert_parses(code, parser, expect_success)
+    def test_versions(self, **kwargs: Any) -> None:
+        self.assert_parses(**kwargs)

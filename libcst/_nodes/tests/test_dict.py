@@ -187,5 +187,5 @@ class DictTest(CSTNodeTest):
             },
         )
     )
-    def test_versions(self, code, parser, expect_success) -> None:
-        self.assert_parses(code, parser, expect_success)
+    def test_versions(self, **kwargs: Any) -> None:
+        self.assert_parses(**kwargs)
