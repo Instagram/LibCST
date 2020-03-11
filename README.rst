@@ -176,12 +176,23 @@ this:
 See the `unittest documentation <https://docs.python.org/3/library/unittest.html>`_
 for more examples of how to run tests.
 
-We use `Pyre <https://github.com/facebook/pyre-check>`_ for type-checking. To
-verify types for the library, do the following in the root:
+We use `Pyre <https://github.com/facebook/pyre-check>`_ for type-checking.
+
+To set up pyre check environment:
+
+1. Copy the example Pyre config: ``cp .pyre_configuration.example .pyre_configuration``.
+2. In the config file, add your venv site-pacakges dir to "search_path". (e.g. add "/workspace/libcst-env/lib/python3.7/site-packages")
+2. Remove installed LibCST and install from the source code:
+
+.. code-block:: shell
+    pip uninstall -y libcst
+    pip install -e .
+
+To verify types for the library, do the following in the root:
 
 .. code-block:: shell
 
-    pyre --preserve-pythonpath check
+    pyre check
 
 To generate documents, do the following in the root:
 

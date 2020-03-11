@@ -1,0 +1,11 @@
+{
+    "source_directories": [
+        "."
+    ],
+    "search_path": [
+        "stubs", "/tmp/libcst-env/lib/python3.7/site-packages"
+    ],
+    "exclude": [
+        ".*/\\.tox/.*"
+    ]
+}
