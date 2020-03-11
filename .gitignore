@@ -12,3 +12,4 @@ docs/source/.ipynb_checkpoints/
 build/
 .coverage
 .hypothesis/
+.pyre_configuration
