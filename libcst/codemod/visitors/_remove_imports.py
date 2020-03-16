@@ -306,20 +306,14 @@ class RemoveImportsVisitor(ContextAwareTransformer):
         if name_or_alias in self.exported_objects:
             return True
 
-        # number of references to the name
-        references_count = 0
-        # number of imports to the same name
-        assignments_count = 0
         for assignment in scope[name_or_alias]:
-            if isinstance(assignment, Assignment) and isinstance(
-                assignment.node, (cst.ImportFrom, cst.Import)
+            if (
+                isinstance(assignment, Assignment)
+                and isinstance(assignment.node, (cst.ImportFrom, cst.Import))
+                and len(assignment.references) > 0
             ):
-                assignments_count += 1
-                references_count += len(assignment.references)
-
-        # Remove the import if it's a candidate to remove with no references or
-        # multiple assignments.
-        return not (references_count == 0 or assignments_count > 1)
+                return True
+        return False
 
     def leave_Import(
         self, original_node: cst.Import, updated_node: cst.Import
