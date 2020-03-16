@@ -457,7 +457,7 @@ class TestRemoveImportsCodemod(CodemodTest):
 
     def test_remove_import_multiple_assignments(self) -> None:
         """
-        Should remove import with multiple assignments
+        Should not remove import with multiple assignments
         """
 
         before = """
@@ -468,6 +468,7 @@ class TestRemoveImportsCodemod(CodemodTest):
                 bar()
         """
         after = """
+            from foo import bar
             from qux import bar
 
             def foo() -> None:
@@ -475,6 +476,42 @@ class TestRemoveImportsCodemod(CodemodTest):
         """
 
         self.assertCodemod(before, after, [("foo", "bar", None)])
+
+    def test_remove_multiple_imports(self) -> None:
+        """
+        Multiple imports
+        """
+        before = """
+            try:
+                import a
+            except Exception:
+                import a
+
+            a.hello()
+        """
+        after = """
+            try:
+                import a
+            except Exception:
+                import a
+
+            a.hello()
+        """
+        self.assertCodemod(before, after, [("a", None, None)])
+
+        before = """
+            try:
+                import a
+            except Exception:
+                import a
+        """
+        after = """
+            try:
+                pass
+            except Exception:
+                pass
+        """
+        self.assertCodemod(before, after, [("a", None, None)])
 
     @data_provider(
         (
