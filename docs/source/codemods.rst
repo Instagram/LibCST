@@ -153,3 +153,5 @@ inside codemods. As of now, the list includes the following helpers.
   :exclude-members: CONTEXT_KEY, visit_Module, leave_ImportFrom, leave_Module
 .. autoclass:: libcst.codemod.visitors.RemoveImportsVisitor
   :exclude-members: CONTEXT_KEY, METADATA_DEPENDENCIES, visit_Module, leave_ImportFrom, leave_Import
+.. autoclass:: libcst.codemod.visitors.ApplyTypeAnnotationsVisitor
+  :exclude-members: CONTEXT_KEY, transform_module_impl, visit_ClassDef, visit_Comment, visit_FunctionDef, leave_Assign, leave_ClassDef, leave_FunctionDef, leave_ImportFrom, leave_Module

@@ -5,6 +5,7 @@
 #
 # pyre-strict
 from libcst.codemod.visitors._add_imports import AddImportsVisitor
+from libcst.codemod.visitors._apply_type_annotations import ApplyTypeAnnotationsVisitor
 from libcst.codemod.visitors._gather_exports import GatherExportsVisitor
 from libcst.codemod.visitors._gather_imports import GatherImportsVisitor
 from libcst.codemod.visitors._remove_imports import RemoveImportsVisitor
@@ -14,5 +15,6 @@ __all__ = [
     "AddImportsVisitor",
     "GatherImportsVisitor",
     "GatherExportsVisitor",
+    "ApplyTypeAnnotationsVisitor",
     "RemoveImportsVisitor",
 ]
