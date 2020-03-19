@@ -54,10 +54,12 @@ motivations for the project
 in `our documentation <https://libcst.readthedocs.io/en/latest/index.html>`__.
 Try it out with `notebook examples <https://mybinder.org/v2/gh/Instagram/LibCST/master?filepath=docs%2Fsource%2Ftutorial.ipynb>`__.
 
+Example expression:
 ::
 
     1 + 2
 
+CST representation:
 ::
 
     BinaryOperation(
