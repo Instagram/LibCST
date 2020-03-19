@@ -159,7 +159,7 @@ class Module(CSTNode):
             default_newline=self.default_newline,
         )
 
-    def get_docstring(self, clean=True) -> Optional[str]:
+    def get_docstring(self, clean: bool = True) -> Optional[str]:
         """
         Returns a :func:`inspect.cleandoc` cleaned docstring if the docstring is available, ``None`` otherwise.
         """
