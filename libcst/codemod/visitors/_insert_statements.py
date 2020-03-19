@@ -33,35 +33,35 @@ class InsertStatementsVisitor(ContextAwareTransformer):
 
     This class is a mixin for :class:`~libcst.codemod.ContextAwareTransformer`. Subclasses gain the methods :meth:`~libcst.codemod.visitors.InsertStatementsVisitor.insert_statements_before_current` and :meth:`~libcst.codemod.visitors.InsertStatementsVisitor.insert_statements_after_current`. For example, you can create a pass that inserts print statements before each use of a variable::
 
-        from libcst.metadata.visitors import InsertStatementsVisitor
-        from libcst.metadata import ExpressionContextProvider, ExpressionContext
-        class InsertPrintVisitor(InsertStatementsVisitor):
-            METADATA_DEPENDENCIES = (ExpressionContextProvider,)
+      from libcst.metadata.visitors import InsertStatementsVisitor
+      from libcst.metadata import ExpressionContextProvider, ExpressionContext
+      class InsertPrintVisitor(InsertStatementsVisitor):
+          METADATA_DEPENDENCIES = (ExpressionContextProvider,)
 
-            def __init__(self, context: CodemodContext, name: str) -> None:
-                super().__init__(context)
-                self.name = name
+          def __init__(self, context: CodemodContext, name: str) -> None:
+              super().__init__(context)
+              self.name = name
 
-            def visit_Name(self, node: cst.Name) -> None:
-                if (
-                    node.value == self.name
-                    and self.get_metadata(ExpressionContextProvider, node)
-                    == ExpressionContext.LOAD
-                ):
-                    self.insert_statements_before_current(
-                        [cst.parse_statement(f"print({self.name})")]
-                    )
+          def visit_Name(self, node: cst.Name) -> None:
+              if (
+                  node.value == self.name
+                  and self.get_metadata(ExpressionContextProvider, node)
+                  == ExpressionContext.LOAD
+              ):
+                  self.insert_statements_before_current(
+                      [cst.parse_statement(f"print({self.name})")]
+                  )
 
     After initializing this visitor with ``name = "y"``, it will take this code::
 
-          y = 1
-          x = y
+        y = 1
+        x = y
 
     And transform it into this code::
 
-          y = 1
-          print(y)
-          x = y
+        y = 1
+        print(y)
+        x = y
     """
 
     CONTEXT_KEY = "InsertStatementsVisitor"
@@ -69,8 +69,8 @@ class InsertStatementsVisitor(ContextAwareTransformer):
     def __init__(self, context: CodemodContext) -> None:
         super().__init__(context)
         self.context.scratch[
-            InsertStatementsVisitor.CONTEXT_KEY] = InsertStatementsVisitorContext({}, {},
-                                                                                  [])
+            InsertStatementsVisitor.CONTEXT_KEY
+        ] = InsertStatementsVisitorContext({}, {}, [])
 
     def _context(self) -> InsertStatementsVisitorContext:
         return self.context.scratch[InsertStatementsVisitor.CONTEXT_KEY]
@@ -121,15 +121,17 @@ class InsertStatementsVisitor(ContextAwareTransformer):
             new_stmts.extend(ctx.stmts_after.get(stmt, []))
         return new_stmts
 
-    def leave_IndentedBlock(self, original_node: cst.IndentedBlock,
-                            updated_node: cst.IndentedBlock) -> cst.BaseSuite:
+    def leave_IndentedBlock(
+        self, original_node: cst.IndentedBlock, updated_node: cst.IndentedBlock
+    ) -> cst.BaseSuite:
         final_node = super().leave_IndentedBlock(original_node, updated_node)
         if isinstance(final_node, cst.IndentedBlock):
             return final_node.with_changes(body=self._build_body(final_node.body))
         return final_node
 
-    def leave_Module(self, original_node: cst.Module,
-                     updated_node: cst.Module) -> cst.Module:
+    def leave_Module(
+        self, original_node: cst.Module, updated_node: cst.Module
+    ) -> cst.Module:
         final_node = super().leave_Module(original_node, updated_node)
         return final_node.with_changes(body=self._build_body(updated_node.body))
 
@@ -138,9 +140,9 @@ class InsertStatementsVisitor(ContextAwareTransformer):
         ctx.stmt_visit_stack.append(node)
 
     def _leave_stmt(
-            self,
-            original_node: cst.BaseStatement,
-            final_node: Union[cst.BaseStatement, cst.RemovalSentinel],
+        self,
+        original_node: cst.BaseStatement,
+        final_node: Union[cst.BaseStatement, cst.RemovalSentinel],
     ) -> None:
         ctx = self._context()
         ctx.stmt_visit_stack.pop()
@@ -149,14 +151,16 @@ class InsertStatementsVisitor(ContextAwareTransformer):
             ctx.stmts_before[final_node] = ctx.stmts_before.get(original_node, [])
             ctx.stmts_after[final_node] = ctx.stmts_after.get(original_node, [])
 
-    def visit_SimpleStatementLine(self, node: cst.SimpleStatementLine) -> Optional[bool]:
+    def visit_SimpleStatementLine(
+        self, node: cst.SimpleStatementLine
+    ) -> Optional[bool]:
         self._visit_stmt(node)
         return super().visit_SimpleStatementLine(node)
 
     def leave_SimpleStatementLine(
-            self,
-            original_node: cst.SimpleStatementLine,
-            updated_node: cst.SimpleStatementLine,
+        self,
+        original_node: cst.SimpleStatementLine,
+        updated_node: cst.SimpleStatementLine,
     ) -> Union[cst.BaseStatement, cst.RemovalSentinel]:
         final_node = super().leave_SimpleStatementLine(original_node, updated_node)
         self._leave_stmt(original_node, final_node)
@@ -167,9 +171,7 @@ class InsertStatementsVisitor(ContextAwareTransformer):
         return super().visit_If(node)
 
     def leave_If(
-            self,
-            original_node: cst.If,
-            updated_node: cst.If,
+        self, original_node: cst.If, updated_node: cst.If,
     ) -> Union[cst.BaseStatement, cst.RemovalSentinel]:
         final_node = super().leave_If(original_node, updated_node)
         self._leave_stmt(original_node, final_node)
@@ -180,9 +182,7 @@ class InsertStatementsVisitor(ContextAwareTransformer):
         return super().visit_Try(node)
 
     def leave_Try(
-            self,
-            original_node: cst.Try,
-            updated_node: cst.Try,
+        self, original_node: cst.Try, updated_node: cst.Try,
     ) -> Union[cst.BaseStatement, cst.RemovalSentinel]:
         final_node = super().leave_Try(original_node, updated_node)
         self._leave_stmt(original_node, final_node)
@@ -193,9 +193,7 @@ class InsertStatementsVisitor(ContextAwareTransformer):
         return super().visit_FunctionDef(node)
 
     def leave_FunctionDef(
-            self,
-            original_node: cst.FunctionDef,
-            updated_node: cst.FunctionDef,
+        self, original_node: cst.FunctionDef, updated_node: cst.FunctionDef,
     ) -> Union[cst.BaseStatement, cst.RemovalSentinel]:
         final_node = super().leave_FunctionDef(original_node, updated_node)
         self._leave_stmt(original_node, final_node)
@@ -206,9 +204,7 @@ class InsertStatementsVisitor(ContextAwareTransformer):
         return super().visit_ClassDef(node)
 
     def leave_ClassDef(
-            self,
-            original_node: cst.ClassDef,
-            updated_node: cst.ClassDef,
+        self, original_node: cst.ClassDef, updated_node: cst.ClassDef,
     ) -> Union[cst.BaseStatement, cst.RemovalSentinel]:
         final_node = super().leave_ClassDef(original_node, updated_node)
         self._leave_stmt(original_node, final_node)
@@ -219,9 +215,7 @@ class InsertStatementsVisitor(ContextAwareTransformer):
         return super().visit_With(node)
 
     def leave_With(
-            self,
-            original_node: cst.With,
-            updated_node: cst.With,
+        self, original_node: cst.With, updated_node: cst.With,
     ) -> Union[cst.BaseStatement, cst.RemovalSentinel]:
         final_node = super().leave_With(original_node, updated_node)
         self._leave_stmt(original_node, final_node)
@@ -232,9 +226,7 @@ class InsertStatementsVisitor(ContextAwareTransformer):
         return super().visit_For(node)
 
     def leave_For(
-            self,
-            original_node: cst.For,
-            updated_node: cst.For,
+        self, original_node: cst.For, updated_node: cst.For,
     ) -> Union[cst.BaseStatement, cst.RemovalSentinel]:
         final_node = super().leave_For(original_node, updated_node)
         self._leave_stmt(original_node, final_node)
@@ -245,9 +237,7 @@ class InsertStatementsVisitor(ContextAwareTransformer):
         return super().visit_While(node)
 
     def leave_While(
-            self,
-            original_node: cst.While,
-            updated_node: cst.While,
+        self, original_node: cst.While, updated_node: cst.While,
     ) -> Union[cst.BaseStatement, cst.RemovalSentinel]:
         final_node = super().leave_While(original_node, updated_node)
         self._leave_stmt(original_node, final_node)
