@@ -54,13 +54,11 @@ motivations for the project
 in `our documentation <https://libcst.readthedocs.io/en/latest/index.html>`__.
 Try it out with `notebook examples <https://mybinder.org/v2/gh/Instagram/LibCST/master?filepath=docs%2Fsource%2Ftutorial.ipynb>`__.
 
-Example expression:
-::
+Example expression::
 
     1 + 2
 
-CST representation:
-::
+CST representation::
 
     BinaryOperation(
         left=Integer(
@@ -91,9 +89,7 @@ Getting Started
 Examining a sample tree
 -----------------------
 
-To examine the tree that is parsed from a particular file, do the following:
-
-::
+To examine the tree that is parsed from a particular file, do the following::
 
     python -m libcst.tool print <some_py_file.py>
 
