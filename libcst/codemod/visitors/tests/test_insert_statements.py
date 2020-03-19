@@ -4,14 +4,13 @@
 # LICENSE file in the root directory of this source tree.
 #
 # pyre-strict
-from typing import Type
-
 import libcst as cst
 from libcst.codemod import CodemodContext, CodemodTest
 from libcst.codemod.visitors import InsertStatementsVisitor
+from libcst.metadata import ExpressionContext, ExpressionContextProvider
 
 
-class InsertAssignAroundAssignVisitor(InsertStatementsVisitor):
+class InsertAssignAroundIntegerVisitor(InsertStatementsVisitor):
     def leave_Integer(
         self, original_node: cst.Integer, updated_node: cst.Integer
     ) -> cst.Integer:
@@ -19,14 +18,34 @@ class InsertAssignAroundAssignVisitor(InsertStatementsVisitor):
         self.insert_statements_after_current([cst.parse_statement("z = 1")])
         return updated_node
 
+    def leave_Try(
+        self, original_node: cst.Try, updated_node: cst.Try
+    ) -> cst.RemovalSentinel:
+        return cst.RemovalSentinel.REMOVE
+
+
+class InsertPrintVisitor(InsertStatementsVisitor):
+    METADATA_DEPENDENCIES = (ExpressionContextProvider,)
+
+    def __init__(self, context: CodemodContext, name: str) -> None:
+        super().__init__(context)
+        self.name = name
+
+    def visit_Name(self, node: cst.Name) -> None:
+        if (
+            node.value == self.name
+            and self.get_metadata(ExpressionContextProvider, node)
+            == ExpressionContext.LOAD
+        ):
+            self.insert_statements_before_current(
+                [cst.parse_statement(f"print({self.name})")]
+            )
+
 
 class TestInsertStatementsVisitor(CodemodTest):
-    def insert_statements(
-        self, Visitor: Type[InsertStatementsVisitor], code: str
-    ) -> str:
-        transform_instance = Visitor(CodemodContext())
+    def insert_statements(self, visitor: InsertStatementsVisitor, code: str) -> str:
         input_tree = cst.parse_module(CodemodTest.make_fixture_data(code))
-        return input_tree.visit(transform_instance).code
+        return cst.MetadataWrapper(input_tree).visit(visitor).code
 
     def test_noop(self) -> None:
         """
@@ -41,10 +60,12 @@ class TestInsertStatementsVisitor(CodemodTest):
             x = "a"
         """
 
-        actual_after = self.insert_statements(InsertAssignAroundAssignVisitor, before)
+        actual_after = self.insert_statements(
+            InsertAssignAroundIntegerVisitor(CodemodContext()), before
+        )
         self.assertCodeEqual(expected_after, actual_after)
 
-    def test_insert_assign(self) -> None:
+    def test_insert(self) -> None:
         """
         Should add assignments before and after the x = ...
         """
@@ -65,5 +86,73 @@ class TestInsertStatementsVisitor(CodemodTest):
                 z = 1
         """
 
-        actual_after = self.insert_statements(InsertAssignAroundAssignVisitor, before)
+        actual_after = self.insert_statements(
+            InsertAssignAroundIntegerVisitor(CodemodContext()), before
+        )
+        self.assertCodeEqual(expected_after, actual_after)
+
+    def test_compound_statement(self) -> None:
+        """
+        Test that inserts before/after a compound statement (If) should not
+        get inserted into an indented block.
+        """
+
+        before = """
+            if x == 1:
+              pass
+        """
+
+        expected_after = """
+            y = 1
+            if x == 1:
+              pass
+            z = 1
+        """
+
+        actual_after = self.insert_statements(
+            InsertAssignAroundIntegerVisitor(CodemodContext()), before
+        )
+        self.assertCodeEqual(expected_after, actual_after)
+
+    def test_insert_and_remove(self) -> None:
+        """
+        Test that insertions placed into a deleted block actually get deleted.
+        """
+
+        before = """
+            pass
+            try:
+              x = 1
+            except:
+              pass
+        """
+
+        expected_after = """
+            pass
+        """
+
+        actual_after = self.insert_statements(
+            InsertAssignAroundIntegerVisitor(CodemodContext()), before
+        )
+        self.assertCodeEqual(expected_after, actual_after)
+
+    def test_print(self) -> None:
+        """
+        Test print visitor used in documentation
+        """
+
+        before = """
+          y = 1
+          x = y
+        """
+
+        expected_after = """
+          y = 1
+          print(y)
+          x = y
+        """
+
+        actual_after = self.insert_statements(
+            InsertPrintVisitor(CodemodContext(), "y"), before
+        )
         self.assertCodeEqual(expected_after, actual_after)
