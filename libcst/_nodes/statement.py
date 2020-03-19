@@ -7,7 +7,7 @@ import inspect
 import re
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Optional, Sequence, Union
+from typing import Optional, Pattern, Sequence, Union
 
 from libcst._add_slots import add_slots
 from libcst._maybe_sentinel import MaybeSentinel
@@ -50,7 +50,7 @@ from libcst._nodes.whitespace import (
 from libcst._visitors import CSTVisitorT
 
 
-_INDENT_WHITESPACE_RE = re.compile(r"[ \f\t]+", re.UNICODE)
+_INDENT_WHITESPACE_RE: Pattern[str] = re.compile(r"[ \f\t]+", re.UNICODE)
 
 
 class BaseSuite(CSTNode, ABC):
@@ -1633,7 +1633,7 @@ class FunctionDef(BaseCompoundStatement):
             state.add_token(":")
             self.body._codegen(state)
 
-    def get_docstring(self, clean=True) -> Optional[str]:
+    def get_docstring(self, clean: bool = True) -> Optional[str]:
         """
         When docstring is available, returns a :func:`inspect.cleandoc` cleaned docstring.
         Otherwise, returns ``None``.
@@ -1782,7 +1782,7 @@ class ClassDef(BaseCompoundStatement):
             state.add_token(":")
             self.body._codegen(state)
 
-    def get_docstring(self, clean=True) -> Optional[str]:
+    def get_docstring(self, clean: bool = True) -> Optional[str]:
         """
         Returns a :func:`inspect.cleandoc` cleaned docstring if the docstring is available, ``None`` otherwise.
         """

@@ -3,22 +3,28 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+
 import importlib.util
 from os import path
+from typing import TYPE_CHECKING
 
 import setuptools
 
 
+if TYPE_CHECKING:
+    from importlib.machinery import ModuleSpec
+    from types import ModuleType
+
 # Grab the readme so that our package stays in sync with github.
-this_directory = path.abspath(path.dirname(__file__))
+this_directory: str = path.abspath(path.dirname(__file__))
 with open(path.join(this_directory, "README.rst"), encoding="utf-8") as f:
     long_description = f.read()
 
 # Grab the version constant so that libcst.tool stays in sync with this package.
-spec = importlib.util.spec_from_file_location(
+spec: "ModuleSpec" = importlib.util.spec_from_file_location(
     "version", path.join(this_directory, "libcst/_version.py")
 )
-version = importlib.util.module_from_spec(spec)
+version: "ModuleType" = importlib.util.module_from_spec(spec)
 # pyre-ignore Pyre doesn't know about importlib entirely.
 spec.loader.exec_module(version)
 # pyre-ignore Pyre has no way of knowing that this constant exists.

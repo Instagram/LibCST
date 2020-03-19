@@ -20,5 +20,5 @@ class ExpandTabsTest(UnitTest):
             ("\tsuffix", "        suffix"),
         ]
     )
-    def test_expand_tabs(self, input, output) -> None:
+    def test_expand_tabs(self, input: str, output: str) -> None:
         self.assertEqual(expand_tabs(input), output)

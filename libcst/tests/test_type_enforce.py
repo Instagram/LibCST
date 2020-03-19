@@ -36,7 +36,7 @@ class MyExampleChildClass(MyExampleClass):
     pass
 
 
-class WeirdSubclassOfList(List):
+class WeirdSubclassOfList(List[int]):
     pass
 
 
@@ -130,7 +130,7 @@ class TypeEnforcementTest(UnitTest):
             (MyExampleClassWithMetaclass(), Any),
         ]
     )
-    def test_basic_pass(self, value, expected_type) -> None:
+    def test_basic_pass(self, value: object, expected_type: object) -> None:
         self.assertTrue(
             is_value_of_type(value, expected_type),
             f"value {value!r} was supposed to be of type {expected_type!r}",
