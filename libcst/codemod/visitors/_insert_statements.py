@@ -26,6 +26,9 @@ class InsertStatementsVisitorContext(NamedTuple):
     # Stack of BaseStatements being visited
     stmt_visit_stack: List[cst.BaseStatement]
 
+    # Map from original nodes to updated nodes
+    original_to_updated: Dict[cst.BaseStatement, cst.BaseStatement]
+
 
 class InsertStatementsVisitor(ContextAwareTransformer):
     """
@@ -70,7 +73,7 @@ class InsertStatementsVisitor(ContextAwareTransformer):
         super().__init__(context)
         self.context.scratch[
             InsertStatementsVisitor.CONTEXT_KEY
-        ] = InsertStatementsVisitorContext({}, {}, [])
+        ] = InsertStatementsVisitorContext({}, {}, [], {})
 
     def _context(self) -> InsertStatementsVisitorContext:
         return self.context.scratch[InsertStatementsVisitor.CONTEXT_KEY]
@@ -100,7 +103,7 @@ class InsertStatementsVisitor(ContextAwareTransformer):
         """
         Inserts a list of statements after the currently visited statement.
 
-        See :meth:`libcst.codemod.visitors.InsertStatementVisitor.insert_statements_before_current` for details.
+        See :meth:`~libcst.codemod.visitors.InsertStatementVisitor.insert_statements_before_current` for details.
         """
 
         ctx = self._context()
@@ -113,11 +116,17 @@ class InsertStatementsVisitor(ContextAwareTransformer):
         ctx.stmts_after[cur_stmt].extend(stmts)
 
     def _build_body(self, body: Sequence[cst.BaseStatement]) -> List[cst.BaseStatement]:
+        """
+        Creates the body of a block (Module or IndentedBlock) from accumulated statements.
+
+        For each statement in the old body, we get the corresponding new statement from the context. Then we find its inserted statements from context, and append the three together.
+        """
         ctx = self._context()
         new_stmts = []
         for stmt in body:
             new_stmts.extend(ctx.stmts_before.get(stmt, []))
-            new_stmts.append(stmt)
+            if stmt in ctx.original_to_updated:
+                new_stmts.append(ctx.original_to_updated[stmt])
             new_stmts.extend(ctx.stmts_after.get(stmt, []))
         return new_stmts
 
@@ -126,14 +135,14 @@ class InsertStatementsVisitor(ContextAwareTransformer):
     ) -> cst.BaseSuite:
         final_node = super().leave_IndentedBlock(original_node, updated_node)
         if isinstance(final_node, cst.IndentedBlock):
-            return final_node.with_changes(body=self._build_body(final_node.body))
+            return final_node.with_changes(body=self._build_body(original_node.body))
         return final_node
 
     def leave_Module(
         self, original_node: cst.Module, updated_node: cst.Module
     ) -> cst.Module:
         final_node = super().leave_Module(original_node, updated_node)
-        return final_node.with_changes(body=self._build_body(updated_node.body))
+        return final_node.with_changes(body=self._build_body(original_node.body))
 
     def _visit_stmt(self, node: cst.BaseStatement) -> None:
         ctx = self._context()
@@ -146,10 +155,8 @@ class InsertStatementsVisitor(ContextAwareTransformer):
     ) -> None:
         ctx = self._context()
         ctx.stmt_visit_stack.pop()
-
         if isinstance(final_node, cst.BaseStatement):
-            ctx.stmts_before[final_node] = ctx.stmts_before.get(original_node, [])
-            ctx.stmts_after[final_node] = ctx.stmts_after.get(original_node, [])
+            ctx.original_to_updated[original_node] = final_node
 
     def visit_SimpleStatementLine(
         self, node: cst.SimpleStatementLine
