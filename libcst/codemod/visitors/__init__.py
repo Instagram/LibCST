@@ -7,6 +7,7 @@
 from libcst.codemod.visitors._add_imports import AddImportsVisitor
 from libcst.codemod.visitors._gather_exports import GatherExportsVisitor
 from libcst.codemod.visitors._gather_imports import GatherImportsVisitor
+from libcst.codemod.visitors._insert_statements import InsertStatementsVisitor
 from libcst.codemod.visitors._remove_imports import RemoveImportsVisitor
 
 
@@ -15,4 +16,5 @@ __all__ = [
     "GatherImportsVisitor",
     "GatherExportsVisitor",
     "RemoveImportsVisitor",
+    "InsertStatementsVisitor",
 ]
