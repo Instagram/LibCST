@@ -478,7 +478,8 @@ def convert_star_expr(
 @with_production("and_expr", "shift_expr ('&' shift_expr)*")
 @with_production("shift_expr", "arith_expr (('<<'|'>>') arith_expr)*")
 @with_production("arith_expr", "term (('+'|'-') term)*")
-@with_production("term", "factor (('*'|'@'|'/'|'%'|'//') factor)*")
+@with_production("term", "factor (('*'|'@'|'/'|'%'|'//') factor)*", version=">=3.5")
+@with_production("term", "factor (('*'|'/'|'%'|'//') factor)*", version="<3.5")
 def convert_binop(
     config: ParserConfig, children: typing.Sequence[typing.Any]
 ) -> typing.Any:
@@ -1102,13 +1103,16 @@ def convert_fstring_format_spec(
 
 @with_production(
     "testlist_comp_tuple",
-    "(test|star_expr) ( comp_for | (',' (test|star_expr))* [','] )",
-    version="<=3.7",
+    "(namedexpr_test|star_expr) ( comp_for | (',' (namedexpr_test|star_expr))* [','] )",
+    version=">=3.8",
 )
 @with_production(
     "testlist_comp_tuple",
-    "(namedexpr_test|star_expr) ( comp_for | (',' (namedexpr_test|star_expr))* [','] )",
-    version=">=3.8",
+    "(test|star_expr) ( comp_for | (',' (test|star_expr))* [','] )",
+    version=">=3.5,<3.8",
+)
+@with_production(
+    "testlist_comp_tuple", "(test) ( comp_for | (',' (test))* [','] )", version="<3.5",
 )
 def convert_testlist_comp_tuple(
     config: ParserConfig, children: typing.Sequence[typing.Any]
@@ -1124,13 +1128,16 @@ def convert_testlist_comp_tuple(
 
 @with_production(
     "testlist_comp_list",
-    "(test|star_expr) ( comp_for | (',' (test|star_expr))* [','] )",
-    version="<=3.7",
+    "(namedexpr_test|star_expr) ( comp_for | (',' (namedexpr_test|star_expr))* [','] )",
+    version=">=3.8",
 )
 @with_production(
     "testlist_comp_list",
-    "(namedexpr_test|star_expr) ( comp_for | (',' (namedexpr_test|star_expr))* [','] )",
-    version=">=3.8",
+    "(test|star_expr) ( comp_for | (',' (test|star_expr))* [','] )",
+    version=">=3.5,<3.8",
+)
+@with_production(
+    "testlist_comp_list", "(test) ( comp_for | (',' (test))* [','] )", version="<3.5",
 )
 def convert_testlist_comp_list(
     config: ParserConfig, children: typing.Sequence[typing.Any]
@@ -1241,6 +1248,17 @@ def _convert_sequencelike(
         + "((test | star_expr) "
         + " (comp_for | (',' (test | star_expr))* [','])) )"
     ),
+    version=">=3.5",
+)
+@with_production(
+    "dictorsetmaker",
+    (
+        "( ((test ':' test)"
+        + " (comp_for | (',' (test ':' test))* [','])) |"
+        + "((test) "
+        + " (comp_for | (',' (test))* [','])) )"
+    ),
+    version="<3.5",
 )
 def convert_dictorsetmaker(
     config: ParserConfig, children: typing.Sequence[typing.Any]
@@ -1538,7 +1556,8 @@ def convert_yield_expr(
     return WithLeadingWhitespace(yield_node, yield_token.whitespace_before)
 
 
-@with_production("yield_arg", "'from' test | testlist", version="<=3.7")
+@with_production("yield_arg", "testlist", version="<3.3")
+@with_production("yield_arg", "'from' test | testlist", version=">=3.3,<3.8")
 @with_production("yield_arg", "'from' test | testlist_star_expr", version=">=3.8")
 def convert_yield_arg(
     config: ParserConfig, children: typing.Sequence[typing.Any]

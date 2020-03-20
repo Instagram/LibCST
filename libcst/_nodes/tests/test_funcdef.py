@@ -8,7 +8,7 @@ from typing import Any, Callable
 
 import libcst as cst
 from libcst import parse_statement
-from libcst._nodes.tests.base import CSTNodeTest, DummyIndentedBlock
+from libcst._nodes.tests.base import CSTNodeTest, DummyIndentedBlock, parse_statement_as
 from libcst.metadata import CodeRange
 from libcst.testing.utils import data_provider
 
@@ -1979,3 +1979,30 @@ class FunctionDefParserTest(CSTNodeTest):
     )
     def test_valid_38(self, node: cst.CSTNode, code: str) -> None:
         self.validate_node(node, code, _parse_statement_force_38)
+
+    @data_provider(
+        (
+            {
+                "code": "async def foo(): pass",
+                "parser": parse_statement_as(python_version="3.7"),
+                "expect_success": True,
+            },
+            {
+                "code": "async def foo(): pass",
+                "parser": parse_statement_as(python_version="3.6"),
+                "expect_success": True,
+            },
+            {
+                "code": "async def foo(): pass",
+                "parser": parse_statement_as(python_version="3.5"),
+                "expect_success": True,
+            },
+            {
+                "code": "async def foo(): pass",
+                "parser": parse_statement_as(python_version="3.3"),
+                "expect_success": False,
+            },
+        )
+    )
+    def test_versions(self, **kwargs: Any) -> None:
+        self.assert_parses(**kwargs)

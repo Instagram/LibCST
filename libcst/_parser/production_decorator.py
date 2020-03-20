@@ -18,7 +18,11 @@ _NonterminalConversionT = TypeVar(
 # We could version our grammar at a later point by adding a version metadata kwarg to
 # this decorator.
 def with_production(
-    production_name: str, children: str, *, version: Optional[str] = None
+    production_name: str,
+    children: str,
+    *,
+    version: Optional[str] = None,
+    future: Optional[str] = None,
 ) -> Callable[[_NonterminalConversionT], _NonterminalConversionT]:
     """
     Attaches a bit of grammar to a conversion function. The parser extracts all of these
@@ -38,7 +42,7 @@ def with_production(
                 + f"'{fn_name}'."
             )
         # pyre-ignore: Pyre doesn't know about this magic field we added
-        fn.productions.append(Production(production_name, children, version))
+        fn.productions.append(Production(production_name, children, version, future))
         return fn
 
     return inner

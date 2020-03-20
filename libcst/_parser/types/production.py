@@ -14,6 +14,7 @@ class Production:
     name: str
     children: str
     version: Optional[str]
+    future: Optional[str]
 
     def __str__(self) -> str:
         return f"{self.name}: {self.children}"

@@ -101,9 +101,11 @@ def _all_string_prefixes(
     # The valid string prefixes. Only contain the lower case versions,
     #  and don't contain any permuations (include 'fr', but not
     #  'rf'). The various permutations will be generated.
-    valid_string_prefixes = ["b", "r", "u"]
+    valid_string_prefixes = ["b", "r"]
     if version_info >= (3, 0):
         valid_string_prefixes.append("br")
+    if version_info < (3, 0) or version_info >= (3, 3):
+        valid_string_prefixes.append("u")
 
     result = set([""])
     if version_info >= (3, 6) and include_fstring:
