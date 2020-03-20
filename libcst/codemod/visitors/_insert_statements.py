@@ -123,7 +123,7 @@ class InsertStatementsVisitor(ContextAwareTransformer):
 
     def _visit_block(self) -> None:
         ctx = self._context()
-        ctx.ctx_block.append(BlockContext(set(), []))
+        ctx.ctx_block.append(BlockContext(new_body=[], added_stmts=set()))
 
     def visit_IndentedBlock(self, node: cst.IndentedBlock) -> Optional[bool]:
         self._visit_block()
@@ -166,7 +166,7 @@ class InsertStatementsVisitor(ContextAwareTransformer):
 
     def _visit_stmt(self, node: cst.BaseStatement) -> None:
         ctx = self._context()
-        ctx.ctx_stmt.append(StatementContext([], []))
+        ctx.ctx_stmt.append(StatementContext(before_stmts=[], after_stmts=[]))
 
     def _leave_stmt(
         self,
