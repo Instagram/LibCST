@@ -11,33 +11,46 @@ from libcst.metadata import ExpressionContext, ExpressionContextProvider
 
 
 class InsertAssignAroundIntegerVisitor(InsertStatementsVisitor):
-    def leave_Integer(self, original_node: cst.Integer,
-                      updated_node: cst.Integer) -> cst.Integer:
+    def leave_Integer(
+        self, original_node: cst.Integer, updated_node: cst.Integer
+    ) -> cst.Integer:
         self.insert_statements_before_current([cst.parse_statement("y = 1")])
         self.insert_statements_after_current([cst.parse_statement("z = 1")])
         return updated_node
 
-    def leave_While(self, original_node: cst.While,
-                    updated_node: cst.While) -> cst.RemovalSentinel:
+    def leave_While(
+        self, original_node: cst.While, updated_node: cst.While
+    ) -> cst.RemovalSentinel:
+        super().leave_While(original_node, updated_node)
         return cst.RemovalSentinel.REMOVE
 
-    def leave_Try(self, original_node: cst.Try,
-                  updated_node: cst.Try) -> cst.RemovalSentinel:
+    def leave_Try(
+        self, original_node: cst.Try, updated_node: cst.Try
+    ) -> cst.RemovalSentinel:
+        super().leave_Try(original_node, updated_node)
         return cst.RemovalSentinel.REMOVE
+
+    def visit_FunctionDef(self, node: cst.FunctionDef) -> bool:
+        super().visit_FunctionDef(node)
+        return False
 
 
 class InsertPrintVisitor(InsertStatementsVisitor):
-    METADATA_DEPENDENCIES = (ExpressionContextProvider, )
+    METADATA_DEPENDENCIES = (ExpressionContextProvider,)
 
     def __init__(self, context: CodemodContext, name: str) -> None:
         super().__init__(context)
         self.name = name
 
     def visit_Name(self, node: cst.Name) -> None:
-        if (node.value == self.name and self.get_metadata(
-                ExpressionContextProvider, node) == ExpressionContext.LOAD):
+        if (
+            node.value == self.name
+            and self.get_metadata(ExpressionContextProvider, node)
+            == ExpressionContext.LOAD
+        ):
             self.insert_statements_before_current(
-                [cst.parse_statement(f"print({self.name})")])
+                [cst.parse_statement(f"print({self.name})")]
+            )
 
 
 class TestInsertStatementsVisitor(CodemodTest):
@@ -59,7 +72,8 @@ class TestInsertStatementsVisitor(CodemodTest):
         """
 
         actual_after = self.insert_statements(
-            InsertAssignAroundIntegerVisitor(CodemodContext()), before)
+            InsertAssignAroundIntegerVisitor(CodemodContext()), before
+        )
         self.assertCodeEqual(expected_after, actual_after)
 
     def test_insert(self) -> None:
@@ -84,7 +98,8 @@ class TestInsertStatementsVisitor(CodemodTest):
         """
 
         actual_after = self.insert_statements(
-            InsertAssignAroundIntegerVisitor(CodemodContext()), before)
+            InsertAssignAroundIntegerVisitor(CodemodContext()), before
+        )
         self.assertCodeEqual(expected_after, actual_after)
 
     def test_compound_statement(self) -> None:
@@ -106,7 +121,8 @@ class TestInsertStatementsVisitor(CodemodTest):
         """
 
         actual_after = self.insert_statements(
-            InsertAssignAroundIntegerVisitor(CodemodContext()), before)
+            InsertAssignAroundIntegerVisitor(CodemodContext()), before
+        )
         self.assertCodeEqual(expected_after, actual_after)
 
     def test_nested_remove(self) -> None:
@@ -127,7 +143,8 @@ class TestInsertStatementsVisitor(CodemodTest):
         """
 
         actual_after = self.insert_statements(
-            InsertAssignAroundIntegerVisitor(CodemodContext()), before)
+            InsertAssignAroundIntegerVisitor(CodemodContext()), before
+        )
         self.assertCodeEqual(expected_after, actual_after)
 
     def test_insert_around_remove(self) -> None:
@@ -146,7 +163,27 @@ class TestInsertStatementsVisitor(CodemodTest):
         """
 
         actual_after = self.insert_statements(
-            InsertAssignAroundIntegerVisitor(CodemodContext()), before)
+            InsertAssignAroundIntegerVisitor(CodemodContext()), before
+        )
+        self.assertCodeEqual(expected_after, actual_after)
+
+    def test_no_visit(self) -> None:
+
+        before = """
+            pass
+            def test(): pass
+            pass
+        """
+
+        expected_after = """
+            pass
+            def test(): pass
+            pass
+        """
+
+        actual_after = self.insert_statements(
+            InsertAssignAroundIntegerVisitor(CodemodContext()), before
+        )
         self.assertCodeEqual(expected_after, actual_after)
 
     def test_print(self) -> None:
@@ -165,6 +202,7 @@ class TestInsertStatementsVisitor(CodemodTest):
           x = y
         """
 
-        actual_after = self.insert_statements(InsertPrintVisitor(CodemodContext(), "y"),
-                                              before)
+        actual_after = self.insert_statements(
+            InsertPrintVisitor(CodemodContext(), "y"), before
+        )
         self.assertCodeEqual(expected_after, actual_after)

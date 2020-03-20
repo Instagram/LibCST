@@ -4,11 +4,27 @@
 # LICENSE file in the root directory of this source tree.
 #
 # pyre-strict
-from typing import Dict, List, NamedTuple, Optional, Sequence, Union
+from typing import List, NamedTuple, Optional, Sequence, Set, Union
 
 import libcst as cst
 from libcst.codemod._context import CodemodContext
 from libcst.codemod._visitor import ContextAwareTransformer
+
+
+class StatementContext(NamedTuple):
+    # List of statements to insert before the current statement
+    before_stmts: List[cst.BaseStatement]
+
+    # List of statements to insert after the current statement
+    after_stmts: List[cst.BaseStatement]
+
+
+class BlockContext(NamedTuple):
+    # Ordered list of all statements accumulated into the new block body
+    new_body: List[cst.BaseStatement]
+
+    # Set of all inserted statements (through insert_* methods)
+    added_stmts: Set[cst.BaseStatement]
 
 
 class InsertStatementsVisitorContext(NamedTuple):
@@ -17,17 +33,11 @@ class InsertStatementsVisitorContext(NamedTuple):
     have been requested to insert before/after the current one.
     """
 
-    # Mapping from a statement to list of statements to insert before it
-    stmts_before: Dict[cst.BaseStatement, List[cst.BaseStatement]]
+    # Stack of contexts for statements
+    ctx_stmt: List[StatementContext]
 
-    # Mapping from a statement to list of statements to insert after it
-    stmts_after: Dict[cst.BaseStatement, List[cst.BaseStatement]]
-
-    # Stack of BaseStatements being visited
-    stmt_visit_stack: List[cst.BaseStatement]
-
-    # Map from original nodes to updated nodes
-    original_to_updated: Dict[cst.BaseStatement, cst.BaseStatement]
+    # Stack of contexts for blocks
+    ctx_block: List[BlockContext]
 
 
 class InsertStatementsVisitor(ContextAwareTransformer):
@@ -65,6 +75,8 @@ class InsertStatementsVisitor(ContextAwareTransformer):
         y = 1
         print(y)
         x = y
+
+    You **must** call ``super()`` methods if you override any visit or leave method for: Module, IndentedBlock, SimpleStatementLine, If, Try, FunctionDef, ClassDef, With, For, While.
     """
 
     CONTEXT_KEY = "InsertStatementsVisitor"
@@ -73,7 +85,7 @@ class InsertStatementsVisitor(ContextAwareTransformer):
         super().__init__(context)
         self.context.scratch[
             InsertStatementsVisitor.CONTEXT_KEY
-        ] = InsertStatementsVisitorContext({}, {}, [], {})
+        ] = InsertStatementsVisitorContext([], [])
 
     def _context(self) -> InsertStatementsVisitorContext:
         return self.context.scratch[InsertStatementsVisitor.CONTEXT_KEY]
@@ -87,17 +99,14 @@ class InsertStatementsVisitor(ContextAwareTransformer):
             if y:
               x = 1
 
-        When visiting ``y`` in ``visit_Name``, the current statement is the ``if``. When visiting ``1`` in ``visit_Integer``, the current statement is the ``x = 1`` assignment. Calling ``insert_statments_before_current`` will add a list of statements to be inserted before ``current``, which is handled in :meth:`~libcst.codemod.visitors.InsertStatementsVisitor.leave_Module` and :meth:`~libcst.codemod.visitors.InsertStatementsVisitor.leave_IndentedBlock`. This means you **must** call the corresponding ``super()`` method if you override these in a child class.
+        When visiting ``y`` in ``visit_Name``, the current statement is the ``if``. When visiting ``1`` in ``visit_Integer``, the current statement is the ``x = 1`` assignment. Calling ``insert_statments_before_current`` will add a list of statements to be inserted before ``current``, which is handled in :meth:`~libcst.codemod.visitors.InsertStatementsVisitor.leave_Module` and :meth:`~libcst.codemod.visitors.InsertStatementsVisitor.leave_IndentedBlock`.
         """
 
         ctx = self._context()
         assert (
-            len(ctx.stmt_visit_stack) > 0
-        ), "Attempted to call insert_statments_before_current before visiting a statement"
-        cur_stmt = ctx.stmt_visit_stack[-1]
-        if cur_stmt not in ctx.stmts_before:
-            ctx.stmts_before[cur_stmt] = []
-        ctx.stmts_before[cur_stmt].extend(stmts)
+            len(ctx.ctx_block) > 0
+        ), "InsertStatementVisitor is inserting a statement before having entered a statement"
+        ctx.ctx_stmt[-1].before_stmts.extend(stmts)
 
     def insert_statements_after_current(self, stmts: List[cst.BaseStatement]) -> None:
         """
@@ -108,45 +117,56 @@ class InsertStatementsVisitor(ContextAwareTransformer):
 
         ctx = self._context()
         assert (
-            len(ctx.stmt_visit_stack) > 0
-        ), "Attempted to call insert_statments_after_current before visiting a statement"
-        cur_stmt = ctx.stmt_visit_stack[-1]
-        if cur_stmt not in ctx.stmts_after:
-            ctx.stmts_after[cur_stmt] = []
-        ctx.stmts_after[cur_stmt].extend(stmts)
+            len(ctx.ctx_block) > 0
+        ), "InsertStatementVisitor is inserting a statement before having entered a statement"
+        ctx.ctx_stmt[-1].after_stmts.extend(stmts)
 
-    def _build_body(self, body: Sequence[cst.BaseStatement]) -> List[cst.BaseStatement]:
-        """
-        Creates the body of a block (Module or IndentedBlock) from accumulated statements.
-
-        For each statement in the old body, we get the corresponding new statement from the context. Then we find its inserted statements from context, and append the three together.
-        """
+    def _visit_block(self) -> None:
         ctx = self._context()
-        new_stmts = []
-        for stmt in body:
-            new_stmts.extend(ctx.stmts_before.get(stmt, []))
-            if stmt in ctx.original_to_updated:
-                new_stmts.append(ctx.original_to_updated[stmt])
-            new_stmts.extend(ctx.stmts_after.get(stmt, []))
-        return new_stmts
+        ctx.ctx_block.append(BlockContext(set(), []))
+
+    def visit_IndentedBlock(self, node: cst.IndentedBlock) -> Optional[bool]:
+        self._visit_block()
+        return super().visit_IndentedBlock(node)
+
+    def _leave_block(
+        self, updated_body: Sequence[cst.BaseStatement]
+    ) -> List[cst.BaseStatement]:
+        ctx = self._context()
+        ctx_block = ctx.ctx_block.pop()
+        return [
+            stmt
+            for stmt in ctx_block.new_body
+            if stmt in updated_body or stmt in ctx_block.added_stmts
+        ]
 
     def leave_IndentedBlock(
         self, original_node: cst.IndentedBlock, updated_node: cst.IndentedBlock
     ) -> cst.BaseSuite:
         final_node = super().leave_IndentedBlock(original_node, updated_node)
         if isinstance(final_node, cst.IndentedBlock):
-            return final_node.with_changes(body=self._build_body(original_node.body))
+            new_body = self._leave_block(final_node.body)
+            return final_node.with_changes(body=new_body)
+        else:
+            self._context().ctx_block.pop()
+            return final_node
+
         return final_node
+
+    def visit_Module(self, node: cst.Module) -> Optional[bool]:
+        self._visit_block()
+        return super().visit_Module(node)
 
     def leave_Module(
         self, original_node: cst.Module, updated_node: cst.Module
     ) -> cst.Module:
         final_node = super().leave_Module(original_node, updated_node)
-        return final_node.with_changes(body=self._build_body(original_node.body))
+        new_body = self._leave_block(final_node.body)
+        return final_node.with_changes(body=new_body)
 
     def _visit_stmt(self, node: cst.BaseStatement) -> None:
         ctx = self._context()
-        ctx.stmt_visit_stack.append(node)
+        ctx.ctx_stmt.append(StatementContext([], []))
 
     def _leave_stmt(
         self,
@@ -154,9 +174,20 @@ class InsertStatementsVisitor(ContextAwareTransformer):
         final_node: Union[cst.BaseStatement, cst.RemovalSentinel],
     ) -> None:
         ctx = self._context()
-        ctx.stmt_visit_stack.pop()
+        assert (
+            len(ctx.ctx_block) > 0
+        ), "InsertStatementVisitor is leaving a statement before having entered a block"
+        ctx_block = ctx.ctx_block[-1]
+        ctx_stmt = ctx.ctx_stmt.pop()
+
+        ctx_block.new_body.extend(ctx_stmt.before_stmts)
+        ctx_block.added_stmts.update(set(ctx_stmt.before_stmts))
+
         if isinstance(final_node, cst.BaseStatement):
-            ctx.original_to_updated[original_node] = final_node
+            ctx_block.new_body.append(final_node)
+
+        ctx_block.new_body.extend(ctx_stmt.after_stmts)
+        ctx_block.added_stmts.update(set(ctx_stmt.after_stmts))
 
     def visit_SimpleStatementLine(
         self, node: cst.SimpleStatementLine
