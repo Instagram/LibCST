@@ -620,3 +620,21 @@ class TestAddImportsCodemod(CodemodTest):
             [("a.b.c", "D", None)],
             context_override=CodemodContext(full_module_name="a.b.foobar"),
         )
+
+    def test_import_order(self) -> None:
+        """
+        The imports should be in alphabetic order of added imports, added import alias, original imports.
+        """
+        before = """
+            from a import b, e, h
+        """
+        after = """
+            from a import c, f, d as x, g as y, b, e, h
+        """
+
+        self.assertCodemod(
+            before,
+            after,
+            [("a", "f", None), ("a", "g", "y"), ("a", "c", None), ("a", "d", "x")],
+            context_override=CodemodContext(full_module_name="a.b.foobar"),
+        )

@@ -228,17 +228,20 @@ class AddImportsVisitor(ContextAwareTransformer):
 
         # Now, do the actual update.
         return updated_node.with_changes(
-            names=(
-                *[libcst.ImportAlias(name=libcst.Name(imp)) for imp in imports_to_add],
-                *[
+            names=[
+                *(
+                    libcst.ImportAlias(name=libcst.Name(imp))
+                    for imp in sorted(imports_to_add)
+                ),
+                *(
                     libcst.ImportAlias(
                         name=libcst.Name(imp),
                         asname=libcst.AsName(name=libcst.Name(alias)),
                     )
-                    for (imp, alias) in aliases_to_add
-                ],
+                    for (imp, alias) in sorted(aliases_to_add)
+                ),
                 *updated_node.names,
-            )
+            ]
         )
 
     def _split_module(
