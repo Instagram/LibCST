@@ -39,7 +39,9 @@ def _parse(
         detect_default_newline=detect_default_newline,
     )
     validate_grammar()
-    grammar = get_grammar(config.parsed_python_version, config.future_imports)
+    grammar = get_grammar(
+        config.parsed_python_version, detection_result.config.future_imports
+    )
 
     parser = PythonCSTParser(
         tokens=detection_result.tokens,
