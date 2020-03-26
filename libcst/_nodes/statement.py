@@ -2618,3 +2618,93 @@ class Exec(BaseSmallStatement):
                 state.add_token("; ")
         elif isinstance(semicolon, Semicolon):
             semicolon._codegen(state)
+
+
+@add_slots
+@dataclass(frozen=True)
+class Py2PrintExpr(CSTNode):
+    """
+    An expression wrapper similar to a function param, but when ``print`` is a
+    statement on python 2.
+    """
+
+    #: The item being printed, which can be any expression
+    item: BaseExpression
+
+    #: Any comma that appears after this item (which in addition to being
+    #: required *between* items, if included at the *end* carries meaning.
+    comma: Union[Comma, MaybeSentinel] = MaybeSentinel.DEFAULT
+
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Py2PrintExpr":
+        return Py2PrintExpr(
+            item=visit_required(self, "item", self.item, visitor),
+            comma=visit_sentinel(self, "comma", self.comma, visitor),
+        )
+
+    def _codegen_impl(self, state: CodegenState, default_comma: bool = False) -> None:
+        with state.record_syntactic_position(self):
+            self.item._codegen(state)
+
+        comma = self.comma
+        # TODO tests for making sure we don't add these unnecessarily
+        if comma is MaybeSentinel.DEFAULT and default_comma:
+            state.add_token(", ")
+        elif isinstance(comma, Comma):
+            comma._codegen(state)
+
+
+@add_slots
+@dataclass(frozen=True)
+class Py2Print(BaseSmallStatement):
+    """
+    """
+
+    #: The items to be printed; comma can never be loose without an item before.
+    #: A trailing comma is put in trailing_comma here instead of in the
+    #: Py2PrintExpr.
+    items: Sequence[Py2PrintExpr]
+
+    #: The trailing comma meaning to omit newline, if present.
+    trailing_comma: Optional[Comma] = None
+
+    #: The target of a statement that prints somewhere else, such as ``print >>sys.stderr``
+    #: which has a required comma only if items is nonempty.
+    print_to: Optional[BaseExpression] = None
+
+    whitespace_after_print: SimpleWhitespace = SimpleWhitespace.field(" ")
+    semicolon: Union[Semicolon, MaybeSentinel] = MaybeSentinel.DEFAULT
+
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Py2Print":
+        return Py2Print(
+            whitespace_after_print=visit_required(
+                self, "whitespace_after_print", self.whitespace_after_print, visitor
+            ),
+            print_to=visit_optional(self, "print_to", self.print_to, visitor),
+            items=visit_sequence(self, "items", self.items, visitor),
+            trailing_comma=visit_optional(
+                self, "trailing_comma", self.trailing_comma, visitor
+            ),
+            semicolon=visit_sentinel(self, "semicolon", self.semicolon, visitor),
+        )
+
+    def _codegen_impl(
+        self, state: CodegenState, default_semicolon: bool = False
+    ) -> None:
+        with state.record_syntactic_position(self):
+            state.add_token("print")
+            self.whitespace_after_print._codegen(state)
+            print_to = self.print_to
+            if print_to:
+                print_to._codegen(state)
+            for i in self.items:
+                i._codegen(state)
+            trailing_comma = self.trailing_comma
+            if trailing_comma:
+                trailing_comma._codegen(state)
+
+        semicolon = self.semicolon
+        if isinstance(semicolon, MaybeSentinel):
+            if default_semicolon:
+                state.add_token("; ")
+        elif isinstance(semicolon, Semicolon):
+            semicolon._codegen(state)

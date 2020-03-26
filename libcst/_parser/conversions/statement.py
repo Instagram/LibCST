@@ -71,6 +71,8 @@ from libcst._nodes.statement import (
     NameItem,
     Nonlocal,
     Pass,
+    Py2Print,
+    Py2PrintExpr,
     Py2Raise,
     Raise,
     Return,
@@ -213,7 +215,27 @@ def convert_simple_stmt_suite(config: ParserConfig, children: Sequence[Any]) -> 
         + "| py2_raise_stmt | yield_stmt | import_stmt | global_stmt | assert_stmt"
         + "| exec_stmt"
     ),
-    version="<3.0",
+    version=">=2.6,<3.0",
+    future="print_function",
+)
+@with_production(
+    "small_stmt",
+    (
+        "expr_stmt | del_stmt | pass_stmt | break_stmt | continue_stmt | return_stmt"
+        + "| py2_raise_stmt | yield_stmt | import_stmt | global_stmt | assert_stmt"
+        + "| exec_stmt | py2_print_stmt"
+    ),
+    version="<2.6",
+)
+@with_production(
+    "small_stmt",
+    (
+        "expr_stmt | del_stmt | pass_stmt | break_stmt | continue_stmt | return_stmt"
+        + "| py2_raise_stmt | yield_stmt | import_stmt | global_stmt | assert_stmt"
+        + "| exec_stmt | py2_print_stmt"
+    ),
+    version=">=2.6,<3.0",
+    future="!print_function",
 )
 def convert_small_stmt(config: ParserConfig, children: Sequence[Any]) -> Any:
     # Doesn't construct SmallStatement, because we don't know about semicolons yet.
@@ -796,6 +818,62 @@ def convert_assert_stmt(config: ParserConfig, children: Sequence[Any]) -> Any:
         )
 
     return WithLeadingWhitespace(assert_node, assert_token.whitespace_before)
+
+
+@with_production(
+    "py2_print_stmt",
+    "'print' ( [ test (',' test)* [','] ] | '>>' test [ (',' test)+ [','] ] )",
+    version=">=2.6,<3.0",
+    future="!print_function",
+)
+@with_production(
+    "py2_print_stmt",
+    "'print' ( [ test (',' test)* [','] ] | '>>' test [ (',' test)+ [','] ] )",
+    version="<2.6",
+)
+def convert_py2_print_stmt(config: ParserConfig, children: Sequence[Any]) -> Any:
+    (print_token, *rest) = children
+
+    whitespace = None
+    if rest:
+        whitespace = parse_parenthesizable_whitespace(config, rest[0].whitespace_before)
+
+    print_to = None
+    if rest and isinstance(rest[0], Token) and rest[0].string == ">>":
+        # TODO preserve whitespace, comma
+        print_to = rest[1]
+        del rest[:3]
+
+    items = []
+    comma = None
+    if len(rest) and len(rest) % 2 == 0:
+        # extract trailing comma
+        *rest, comma = rest
+
+    for print_item, maybe_comma in grouper(rest, 2):
+        assert isinstance(print_item, WithLeadingWhitespace)
+        if maybe_comma is not None:
+            items.append(
+                Py2PrintExpr(
+                    item=print_item.value,
+                    comma=Comma(
+                        whitespace_before=parse_parenthesizable_whitespace(
+                            config, maybe_comma.whitespace_before
+                        ),
+                        whitespace_after=parse_parenthesizable_whitespace(
+                            config, maybe_comma.whitespace_after
+                        ),
+                    ),
+                )
+            )
+        else:
+            items.append(Py2PrintExpr(item=print_item.value))
+
+    obj = Py2Print(items=items, trailing_comma=comma, print_to=print_to)
+    if whitespace is not None:
+        obj = obj.with_changes(whitespace_after_print=whitespace)
+    return WithLeadingWhitespace(obj, print_token.whitespace_before)
+
 
 @with_production("exec_stmt", "'exec' expr ['in' test [',' test]]", version="<3.0")
 def convert_exec_stmt(config: ParserConfig, children: Sequence[Any]) -> Any:

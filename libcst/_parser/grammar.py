@@ -105,8 +105,9 @@ from libcst._parser.conversions.statement import (
     convert_nonlocal_stmt,
     convert_parameters,
     convert_pass_stmt,
-    convert_raise_stmt,
+    convert_py2_print_stmt,
     convert_py2_raise_stmt,
+    convert_raise_stmt,
     convert_return_stmt,
     convert_simple_stmt_line,
     convert_simple_stmt_partial,
@@ -190,6 +191,7 @@ _NONTERMINAL_CONVERSIONS_SEQUENCE: Tuple[NonterminalConversion, ...] = (
     convert_dotted_name,
     convert_return_stmt,
     convert_raise_stmt,
+    convert_py2_print_stmt,  # not in the py3 list
     convert_py2_raise_stmt,
     convert_global_stmt,
     convert_nonlocal_stmt,
