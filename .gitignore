@@ -13,3 +13,4 @@ build/
 .coverage
 .hypothesis/
 .pyre_configuration
+pip-wheel-metadata
