@@ -138,6 +138,7 @@ def convert_simple_stmt_partial(config: ParserConfig, children: Sequence[Any]) -
     last_stmt = len(statements) / 2
     body = []
     for i, (stmt_body, semi) in enumerate(grouper(statements, 2)):
+        assert isinstance(stmt_body, WithLeadingWhitespace)
         if semi is not None:
             if i == (last_stmt - 1):
                 # Trailing semicolons only own the whitespace before.
