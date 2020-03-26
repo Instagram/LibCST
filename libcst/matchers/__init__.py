@@ -10154,6 +10154,196 @@ class PowerAssign(BaseAugOp, BaseMatcherNode):
     ] = DoNotCare()
 
 
+Py2PrintExprMatchType = Union[
+    "Py2PrintExpr", MetadataMatchType, MatchIfTrue[Callable[[cst.Py2PrintExpr], bool]]
+]
+CommaOrNoneMatchType = Union[
+    "Comma",
+    None,
+    MetadataMatchType,
+    MatchIfTrue[Callable[[Union[cst.Comma, None]], bool]],
+]
+
+
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
+class Py2Print(BaseSmallStatement, BaseMatcherNode):
+    items: Union[
+        Sequence[
+            Union[
+                Py2PrintExprMatchType,
+                DoNotCareSentinel,
+                OneOf[Py2PrintExprMatchType],
+                AllOf[Py2PrintExprMatchType],
+                AtLeastN[
+                    Union[
+                        Py2PrintExprMatchType,
+                        DoNotCareSentinel,
+                        OneOf[Py2PrintExprMatchType],
+                        AllOf[Py2PrintExprMatchType],
+                    ]
+                ],
+                AtMostN[
+                    Union[
+                        Py2PrintExprMatchType,
+                        DoNotCareSentinel,
+                        OneOf[Py2PrintExprMatchType],
+                        AllOf[Py2PrintExprMatchType],
+                    ]
+                ],
+            ]
+        ],
+        DoNotCareSentinel,
+        MatchIfTrue[Callable[[Sequence[cst.Py2PrintExpr]], bool]],
+        OneOf[
+            Union[
+                Sequence[
+                    Union[
+                        Py2PrintExprMatchType,
+                        OneOf[Py2PrintExprMatchType],
+                        AllOf[Py2PrintExprMatchType],
+                        AtLeastN[
+                            Union[
+                                Py2PrintExprMatchType,
+                                OneOf[Py2PrintExprMatchType],
+                                AllOf[Py2PrintExprMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                Py2PrintExprMatchType,
+                                OneOf[Py2PrintExprMatchType],
+                                AllOf[Py2PrintExprMatchType],
+                            ]
+                        ],
+                    ]
+                ],
+                MatchIfTrue[Callable[[Sequence[cst.Py2PrintExpr]], bool]],
+            ]
+        ],
+        AllOf[
+            Union[
+                Sequence[
+                    Union[
+                        Py2PrintExprMatchType,
+                        OneOf[Py2PrintExprMatchType],
+                        AllOf[Py2PrintExprMatchType],
+                        AtLeastN[
+                            Union[
+                                Py2PrintExprMatchType,
+                                OneOf[Py2PrintExprMatchType],
+                                AllOf[Py2PrintExprMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                Py2PrintExprMatchType,
+                                OneOf[Py2PrintExprMatchType],
+                                AllOf[Py2PrintExprMatchType],
+                            ]
+                        ],
+                    ]
+                ],
+                MatchIfTrue[Callable[[Sequence[cst.Py2PrintExpr]], bool]],
+            ]
+        ],
+    ] = DoNotCare()
+    trailing_comma: Union[
+        CommaOrNoneMatchType,
+        DoNotCareSentinel,
+        OneOf[CommaOrNoneMatchType],
+        AllOf[CommaOrNoneMatchType],
+    ] = DoNotCare()
+    print_to: Union[
+        BaseExpressionOrNoneMatchType,
+        DoNotCareSentinel,
+        OneOf[BaseExpressionOrNoneMatchType],
+        AllOf[BaseExpressionOrNoneMatchType],
+    ] = DoNotCare()
+    whitespace_after_print: Union[
+        SimpleWhitespaceMatchType,
+        DoNotCareSentinel,
+        OneOf[SimpleWhitespaceMatchType],
+        AllOf[SimpleWhitespaceMatchType],
+    ] = DoNotCare()
+    semicolon: Union[
+        SemicolonMatchType,
+        DoNotCareSentinel,
+        OneOf[SemicolonMatchType],
+        AllOf[SemicolonMatchType],
+    ] = DoNotCare()
+    metadata: Union[
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
+    ] = DoNotCare()
+
+
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
+class Py2PrintExpr(BaseMatcherNode):
+    item: Union[
+        BaseExpressionMatchType,
+        DoNotCareSentinel,
+        OneOf[BaseExpressionMatchType],
+        AllOf[BaseExpressionMatchType],
+    ] = DoNotCare()
+    comma: Union[
+        CommaMatchType, DoNotCareSentinel, OneOf[CommaMatchType], AllOf[CommaMatchType]
+    ] = DoNotCare()
+    metadata: Union[
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
+    ] = DoNotCare()
+
+
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
+class Py2Raise(BaseSmallStatement, BaseMatcherNode):
+    exc: Union[
+        BaseExpressionOrNoneMatchType,
+        DoNotCareSentinel,
+        OneOf[BaseExpressionOrNoneMatchType],
+        AllOf[BaseExpressionOrNoneMatchType],
+    ] = DoNotCare()
+    msg: Union[
+        BaseExpressionOrNoneMatchType,
+        DoNotCareSentinel,
+        OneOf[BaseExpressionOrNoneMatchType],
+        AllOf[BaseExpressionOrNoneMatchType],
+    ] = DoNotCare()
+    tb: Union[
+        BaseExpressionOrNoneMatchType,
+        DoNotCareSentinel,
+        OneOf[BaseExpressionOrNoneMatchType],
+        AllOf[BaseExpressionOrNoneMatchType],
+    ] = DoNotCare()
+    first_comma: Union[
+        CommaMatchType, DoNotCareSentinel, OneOf[CommaMatchType], AllOf[CommaMatchType]
+    ] = DoNotCare()
+    second_comma: Union[
+        CommaMatchType, DoNotCareSentinel, OneOf[CommaMatchType], AllOf[CommaMatchType]
+    ] = DoNotCare()
+    whitespace_after_raise: Union[
+        SimpleWhitespaceMatchType,
+        DoNotCareSentinel,
+        OneOf[SimpleWhitespaceMatchType],
+        AllOf[SimpleWhitespaceMatchType],
+    ] = DoNotCare()
+    semicolon: Union[
+        SemicolonMatchType,
+        DoNotCareSentinel,
+        OneOf[SemicolonMatchType],
+        AllOf[SemicolonMatchType],
+    ] = DoNotCare()
+    metadata: Union[
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
+    ] = DoNotCare()
+
+
 FromOrNoneMatchType = Union[
     "From",
     None,
@@ -13222,6 +13412,9 @@ __all__ = [
     "Plus",
     "Power",
     "PowerAssign",
+    "Py2Print",
+    "Py2PrintExpr",
+    "Py2Raise",
     "Raise",
     "Return",
     "RightCurlyBrace",

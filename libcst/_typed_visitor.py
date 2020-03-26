@@ -160,6 +160,9 @@ if TYPE_CHECKING:
         NameItem,
         Nonlocal,
         Pass,
+        Py2Print,
+        Py2PrintExpr,
+        Py2Raise,
         Raise,
         Return,
         SimpleStatementLine,
@@ -3752,6 +3755,130 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_Py2Print(self, node: "Py2Print") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_Py2Print_items(self, node: "Py2Print") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Py2Print_items(self, node: "Py2Print") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Py2Print_trailing_comma(self, node: "Py2Print") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Py2Print_trailing_comma(self, node: "Py2Print") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Py2Print_print_to(self, node: "Py2Print") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Py2Print_print_to(self, node: "Py2Print") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Py2Print_whitespace_after_print(self, node: "Py2Print") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Py2Print_whitespace_after_print(self, node: "Py2Print") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Py2Print_semicolon(self, node: "Py2Print") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Py2Print_semicolon(self, node: "Py2Print") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Py2PrintExpr(self, node: "Py2PrintExpr") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_Py2PrintExpr_item(self, node: "Py2PrintExpr") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Py2PrintExpr_item(self, node: "Py2PrintExpr") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Py2PrintExpr_comma(self, node: "Py2PrintExpr") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Py2PrintExpr_comma(self, node: "Py2PrintExpr") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Py2Raise(self, node: "Py2Raise") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_Py2Raise_exc(self, node: "Py2Raise") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Py2Raise_exc(self, node: "Py2Raise") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Py2Raise_msg(self, node: "Py2Raise") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Py2Raise_msg(self, node: "Py2Raise") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Py2Raise_tb(self, node: "Py2Raise") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Py2Raise_tb(self, node: "Py2Raise") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Py2Raise_first_comma(self, node: "Py2Raise") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Py2Raise_first_comma(self, node: "Py2Raise") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Py2Raise_second_comma(self, node: "Py2Raise") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Py2Raise_second_comma(self, node: "Py2Raise") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Py2Raise_whitespace_after_raise(self, node: "Py2Raise") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Py2Raise_whitespace_after_raise(self, node: "Py2Raise") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Py2Raise_semicolon(self, node: "Py2Raise") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Py2Raise_semicolon(self, node: "Py2Raise") -> None:
+        pass
+
+    @mark_no_op
     def visit_Raise(self, node: "Raise") -> Optional[bool]:
         pass
 
@@ -5148,6 +5275,18 @@ class CSTTypedVisitorFunctions(CSTTypedBaseFunctions):
         pass
 
     @mark_no_op
+    def leave_Py2Print(self, original_node: "Py2Print") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Py2PrintExpr(self, original_node: "Py2PrintExpr") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Py2Raise(self, original_node: "Py2Raise") -> None:
+        pass
+
+    @mark_no_op
     def leave_Raise(self, original_node: "Raise") -> None:
         pass
 
@@ -5929,6 +6068,24 @@ class CSTTypedTransformerFunctions(CSTTypedBaseFunctions):
     def leave_PowerAssign(
         self, original_node: "PowerAssign", updated_node: "PowerAssign"
     ) -> "BaseAugOp":
+        return updated_node
+
+    @mark_no_op
+    def leave_Py2Print(
+        self, original_node: "Py2Print", updated_node: "Py2Print"
+    ) -> Union["BaseSmallStatement", RemovalSentinel]:
+        return updated_node
+
+    @mark_no_op
+    def leave_Py2PrintExpr(
+        self, original_node: "Py2PrintExpr", updated_node: "Py2PrintExpr"
+    ) -> Union["Py2PrintExpr", RemovalSentinel]:
+        return updated_node
+
+    @mark_no_op
+    def leave_Py2Raise(
+        self, original_node: "Py2Raise", updated_node: "Py2Raise"
+    ) -> Union["BaseSmallStatement", RemovalSentinel]:
         return updated_node
 
     @mark_no_op
