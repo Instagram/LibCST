@@ -1,3 +1,20 @@
+# 0.3.4 - 2020-03-27
+
+## Added
+ - Supported CST parsing for Python 3.0, 3.1 and 3.3. [#261](https://github.com/Instagram/LibCST/pull/261)
+ - Added `RemoveUnusedImportsCommand` for removing unused import codemod. [#266](https://github.com/Instagram/LibCST/pull/266)
+ - Added `ApplyTypeAnnotationsVisitor.add_stub_to_context` for apply type annotations from stub modules. [#265](https://github.com/Instagram/LibCST/pull/265)
+
+## Updated
+ - Improved exception message of `get_metadata` when MetadataWrapper is not used. [#257](https://github.com/Instagram/LibCST/pull/257)
+ - New steps for Pyre type check in README.rst which analyzes installed Python sources for better type checking. [#262](https://github.com/Instagram/LibCST/pull/262)
+
+## Fixed
+ - Parsed `except(Exception):` correctly while there is no space after except syntax. [#256](https://github.com/Instagram/LibCST/pull/256)
+ - Fixed `RemoveImportsVisitor` to not remove imports when references still exist. [#264](https://github.com/Instagram/LibCST/pull/264)
+ - Fixed missing type annotations. [#271](https://github.com/Instagram/LibCST/pull/271)
+ - `AddImportsVisitor` generates deterministic order for added imports. [#274](https://github.com/Instagram/LibCST/pull/274)
+
 # 0.3.3 - 2020-03-05
 
 ## Added
