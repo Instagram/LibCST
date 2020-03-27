@@ -1270,7 +1270,10 @@ def convert_asyncable_funcdef(config: ParserConfig, children: Sequence[Any]) -> 
     )
 
 
-@with_production("funcdef", "'def' NAME parameters [funcdef_annotation] ':' suite")
+@with_production(
+    "funcdef", "'def' NAME parameters [funcdef_annotation] ':' suite", version=">=3.0"
+)
+@with_production("funcdef", "'def' NAME parameters ':' suite", version="<3.0")
 def convert_funcdef(config: ParserConfig, children: Sequence[Any]) -> Any:
     defnode, namenode, param_partial, *annotation, colon, suite = children
 
@@ -1335,7 +1338,8 @@ def convert_funcdef(config: ParserConfig, children: Sequence[Any]) -> Any:
     )
 
 
-@with_production("parameters", "'(' [typedargslist] ')'")
+@with_production("parameters", "'(' [typedargslist] ')'", version=">=3.0")
+@with_production("parameters", "'(' [varargslist] ')'", version="<3.0")
 def convert_parameters(config: ParserConfig, children: Sequence[Any]) -> Any:
     lpar, *paramlist, rpar = children
     return FuncdefPartial(
