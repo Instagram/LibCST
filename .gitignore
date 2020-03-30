@@ -14,3 +14,5 @@ build/
 .hypothesis/
 .pyre_configuration
 .python-version
+.venv/
+venv/
