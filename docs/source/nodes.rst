@@ -3,7 +3,7 @@
 Nodes
 =====
 
-CSTNode and it's subclasses cover Python's full grammar in a
+CSTNode and its subclasses cover Python's full grammar in a
 whitespace-sensitive fashion, forming LibCST's concrete syntax tree.
 
 Many of these nodes are designed to `behave similarly to Python's abstract
