@@ -763,8 +763,7 @@ def parallel_exec_transform_with_prettyprint(  # noqa: C901
         process = filename_to_process.pop(result.filename, None)
         if process:
             process.join()
-            if process in joinable_processes:
-                joinable_processes.remove(process)
+            joinable_processes.discard(process)
 
     # Now, join on all of them so we don't leave zombies or hang
     for p in joinable_processes:
