@@ -756,11 +756,13 @@ def parallel_exec_transform_with_prettyprint(  # noqa: C901
             skips += 1
 
         warnings += len(result.transform_result.warning_messages)
-        process = filename_to_process.get(result.filename)
+
+        # Join the process to free any related resources.
+        # Remove all references to the process to allow the GC to
+        # clean up any file handles.
+        process = filename_to_process.pop(result.filename, None)
         if process:
-            # Join and close the process to free any related file handles.
             process.join()
-            process.close()
             if process in joinable_processes:
                 joinable_processes.remove(process)
 
