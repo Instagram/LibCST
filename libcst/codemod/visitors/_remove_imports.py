@@ -12,6 +12,7 @@ from libcst.codemod._visitor import ContextAwareTransformer, ContextAwareVisitor
 from libcst.codemod.visitors._gather_exports import GatherExportsVisitor
 from libcst.helpers import get_absolute_module_for_import, get_full_name_for_node
 from libcst.metadata import Assignment, Scope, ScopeProvider
+from libcst.metadata.scope_provider import _gen_dotted_names
 
 
 class RemovedNodeVisitor(ContextAwareVisitor):
@@ -295,24 +296,21 @@ class RemoveImportsVisitor(ContextAwareTransformer):
     def _is_in_use(self, scope: Scope, alias: cst.ImportAlias) -> bool:
         # Grab the string name of this alias from the point of view of this module.
         asname = alias.asname
-        if asname is not None:
-            name_node = asname.name
-        else:
-            name_node = alias.name
-            while isinstance(name_node, cst.Attribute):
-                name_node = name_node.value
-        name_or_alias = cst.ensure_type(name_node, cst.Name).value
+        names = _gen_dotted_names(
+            cst.ensure_type(asname.name, cst.Name) if asname is not None else alias.name
+        )
 
-        if name_or_alias in self.exported_objects:
-            return True
-
-        for assignment in scope[name_or_alias]:
-            if (
-                isinstance(assignment, Assignment)
-                and isinstance(assignment.node, (cst.ImportFrom, cst.Import))
-                and len(assignment.references) > 0
-            ):
+        for name_or_alias, _ in names:
+            if name_or_alias in self.exported_objects:
                 return True
+
+            for assignment in scope[name_or_alias]:
+                if (
+                    isinstance(assignment, Assignment)
+                    and isinstance(assignment.node, (cst.ImportFrom, cst.Import))
+                    and len(assignment.references) > 0
+                ):
+                    return True
         return False
 
     def leave_Import(

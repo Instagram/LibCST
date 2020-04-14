@@ -141,25 +141,60 @@ class ScopeProviderTest(UnitTest):
             """
         )
         scope_of_module = scopes[m]
-        for idx, in_scope in enumerate(["foo", "fizzbuzz", "a", "g"]):
-            self.assertEqual(
-                len(scope_of_module[in_scope]), 1, f"{in_scope} should be in scope."
-            )
+        for idx, in_scopes in enumerate(
+            [["foo", "foo.bar"], ["fizzbuzz"], ["a", "a.b", "a.b.c"], ["g"],]
+        ):
+            for in_scope in in_scopes:
+                self.assertEqual(
+                    len(scope_of_module[in_scope]), 1, f"{in_scope} should be in scope."
+                )
 
-            assignment = cast(Assignment, list(scope_of_module[in_scope])[0])
-            self.assertEqual(
-                assignment.name,
-                in_scope,
-                f"Assignment name {assignment.name} should equal to {in_scope}.",
-            )
-            import_node = ensure_type(m.body[idx], cst.SimpleStatementLine).body[0]
-            self.assertEqual(
-                assignment.node,
-                import_node,
-                f"The node of Assignment {assignment.node} should equal to {import_node}",
-            )
+                assignment = cast(Assignment, list(scope_of_module[in_scope])[0])
+                self.assertEqual(
+                    assignment.name,
+                    in_scope,
+                    f"Assignment name {assignment.name} should equal to {in_scope}.",
+                )
+                import_node = ensure_type(m.body[idx], cst.SimpleStatementLine).body[0]
+                self.assertEqual(
+                    assignment.node,
+                    import_node,
+                    f"The node of Assignment {assignment.node} should equal to {import_node}",
+                )
 
-    def test_imoprt_from(self) -> None:
+    def test_dotted_import_access(self) -> None:
+        m, scopes = get_scope_metadata_provider(
+            """
+            import a.b.c, x.y
+            a.b.c(x.z)
+            """
+        )
+        scope_of_module = scopes[m]
+        first_statement = ensure_type(m.body[1], cst.SimpleStatementLine)
+        call = ensure_type(
+            ensure_type(first_statement.body[0], cst.Expr).value, cst.Call
+        )
+        self.assertTrue("a.b.c" in scope_of_module)
+        self.assertTrue("a" in scope_of_module)
+        self.assertEqual(scope_of_module.accesses["a"], set())
+
+        a_b_c_assignment = cast(Assignment, list(scope_of_module["a.b.c"])[0])
+        a_b_c_access = list(a_b_c_assignment.references)[0]
+        self.assertEqual(scope_of_module.accesses["a.b.c"], {a_b_c_access})
+        self.assertEqual(a_b_c_access.node, call.func)
+
+        x_assignment = cast(Assignment, list(scope_of_module["x"])[0])
+        x_access = list(x_assignment.references)[0]
+        self.assertEqual(scope_of_module.accesses["x"], {x_access})
+        self.assertEqual(
+            x_access.node, ensure_type(call.args[0].value, cst.Attribute).value
+        )
+
+        self.assertTrue("x.y" in scope_of_module)
+        self.assertEqual(list(scope_of_module["x.y"])[0].references, set())
+        self.assertEqual(scope_of_module.accesses["x.y"], set())
+
+    def test_import_from(self) -> None:
         m, scopes = get_scope_metadata_provider(
             """
             from foo.bar import a, b as b_renamed
@@ -782,7 +817,7 @@ class ScopeProviderTest(UnitTest):
             },
         )
 
-    def test_assignemnts_and_accesses(self) -> None:
+    def test_assignments_and_accesses(self) -> None:
         m, scopes = get_scope_metadata_provider(
             """
                 a = 1

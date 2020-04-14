@@ -387,21 +387,25 @@ class TestRemoveImportsCodemod(CodemodTest):
             import baz, qux
             import a.b
             import c.d
+            import x.y.z
             import e.f as g
             import h.i as j
 
             def foo() -> None:
                 c.d()
+                x.u
                 j()
         """
         after = """
             import bar
             import qux
             import c.d
+            import x.y.z
             import h.i as j
 
             def foo() -> None:
                 c.d()
+                x.u
                 j()
         """
 
@@ -414,6 +418,7 @@ class TestRemoveImportsCodemod(CodemodTest):
                 ("c.d", None, None),
                 ("e.f", None, "g"),
                 ("h.i", None, "j"),
+                ("x.y.z", None, None),
             ],
         )
 
