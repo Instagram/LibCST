@@ -14,6 +14,7 @@ from enum import Enum, auto
 from typing import (
     Collection,
     Dict,
+    Iterable,
     Iterator,
     List,
     Mapping,
@@ -23,7 +24,6 @@ from typing import (
     Tuple,
     Type,
     Union,
-    Iterable,
 )
 
 import libcst as cst
