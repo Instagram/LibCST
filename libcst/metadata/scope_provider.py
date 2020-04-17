@@ -55,11 +55,14 @@ class Access:
                    ...
     """
 
-    #: The name node of the access. A name is an access when the expression context is
-    #: :attr:`ExpressionContext.LOAD`.
+    #: The node of the access. A name is an access when the expression context is
+    #: :attr:`ExpressionContext.LOAD`. This is usually the name node representing the
+    #: access, except for dotted imports, when it might be the attribute that
+    #: represents the most specific part of the imported symbol.
     node: Union[cst.Name, cst.Attribute]
 
-    #: The scope of the access. Note that a access could be in a child scope of its assignment.
+    #: The scope of the access. Note that a access could be in a child scope of its
+    #: assignment.
     scope: "Scope"
 
     __assignments: Set["BaseAssignment"]
