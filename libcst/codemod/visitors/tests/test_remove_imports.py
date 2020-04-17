@@ -377,46 +377,6 @@ class TestRemoveImportsCodemod(CodemodTest):
             context_override=CodemodContext(full_module_name="a.b.foobar"),
         )
 
-    def test_remove_dotted_import(self) -> None:
-        before = """
-            import a.b, a.b.c
-            import e.f
-            import g.h
-            import x.y, x.y.z
-
-            def foo() -> None:
-                a.b
-                e.g
-                g.h.i
-                x.y.z
-        """
-
-        after = """
-            import a.b, a.b.c
-            import e.f
-            import g.h
-            import x.y.z
-
-            def foo() -> None:
-                a.b
-                e.g
-                g.h.i
-                x.y.z
-        """
-
-        self.assertCodemod(
-            before,
-            after,
-            [
-                ("a.b", None, None),
-                ("a.b.c", None, None),
-                ("e.f", None, None),
-                ("g.h", None, None),
-                ("x.y", None, None),
-                ("x.y.z", None, None),
-            ],
-        )
-
     def test_remove_import_complex(self) -> None:
         """
         Should remove complex module as import

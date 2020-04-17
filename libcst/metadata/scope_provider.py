@@ -810,9 +810,8 @@ class ScopeVisitor(cst.CSTVisitor):
         scope_name_accesses = defaultdict(set)
         for (access, enclosing_attribute) in self.__deferred_accesses:
             if enclosing_attribute is not None:
-                names = _gen_dotted_names(enclosing_attribute)
                 name = None
-                for name, node in names:
+                for name, node in _gen_dotted_names(enclosing_attribute):
                     if name in access.scope:
                         access.node = node
                         break
