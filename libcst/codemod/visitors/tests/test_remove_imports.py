@@ -433,6 +433,7 @@ class TestRemoveImportsCodemod(CodemodTest):
             from d.e import f
             from h.i import j as k
             from l.m import n as o
+            from x import *
 
             def foo() -> None:
                 f()
@@ -442,6 +443,7 @@ class TestRemoveImportsCodemod(CodemodTest):
             from bar import qux
             from d.e import f
             from h.i import j as k
+            from x import *
 
             def foo() -> None:
                 f()
