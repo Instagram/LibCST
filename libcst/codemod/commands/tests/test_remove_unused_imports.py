@@ -48,3 +48,32 @@ class RemoveUnusedImportsCommandTest(CodemodTest):
             x: a = 1
         """
         self.assertCodemod(before, before)
+
+    def test_dotted_imports(self) -> None:
+        before = """
+            import a.b, a.b.c
+            import e.f
+            import g.h
+            import x.y, x.y.z
+
+            def foo() -> None:
+                a.b
+                e.g
+                g.h.i
+                x.y.z
+        """
+
+        after = """
+            import a.b, a.b.c
+            import e.f
+            import g.h
+            import x.y.z
+
+            def foo() -> None:
+                a.b
+                e.g
+                g.h.i
+                x.y.z
+        """
+
+        self.assertCodemod(before, after)

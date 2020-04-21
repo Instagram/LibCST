@@ -141,12 +141,25 @@ There are four different type of scope in Python:
 :class:`~libcst.metadata.ComprehensionScope`.
 
 .. image:: _static/img/python_scopes.png
-   :alt: LibCST
+   :alt: Diagram showing how the above 4 scopes are nested in each other
    :width: 400
    :align: center
 
 LibCST allows you to inspect these scopes to see what local variables are
 assigned or accessed within.
+
+.. note::
+   Import statements bring new symbols into scope that are declared in other files.
+   As such, they are represented by :class:`~libcst.metadata.Assignment` for scope
+   analysis purposes. Dotted imports (e.g. ``import a.b.c``) generate multiple
+   :class:`~libcst.metadata.Assignment` objects — one for each module. When analyzing
+   references, only the most specific access is recorded.
+   
+   For example, the above ``import a.b.c`` statement generates three
+   :class:`~libcst.metadata.Assignment` objects: one for ``a``, one for ``a.b``, and
+   one for ``a.b.c``. A reference for ``a.b.c`` records an access only for the last
+   assignment, while a reference for ``a.d`` only records an access for the
+   :class:`~libcst.metadata.Assignment` representing ``a``.
 
 .. autoclass:: libcst.metadata.ScopeProvider
    :no-undoc-members:

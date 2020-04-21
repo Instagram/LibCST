@@ -14,17 +14,20 @@ from enum import Enum, auto
 from typing import (
     Collection,
     Dict,
+    Iterable,
     Iterator,
     List,
     Mapping,
     MutableMapping,
     Optional,
     Set,
+    Tuple,
     Type,
     Union,
 )
 
 import libcst as cst
+from libcst import ensure_type
 from libcst._add_slots import add_slots
 from libcst._metadata_dependent import MetadataDependent
 from libcst.helpers import get_full_name_for_node
@@ -52,11 +55,14 @@ class Access:
                    ...
     """
 
-    #: The name node of the access. A name is an access when the expression context is
-    #: :attr:`ExpressionContext.LOAD`.
-    node: cst.Name
+    #: The node of the access. A name is an access when the expression context is
+    #: :attr:`ExpressionContext.LOAD`. This is usually the name node representing the
+    #: access, except for dotted imports, when it might be the attribute that
+    #: represents the most specific part of the imported symbol.
+    node: Union[cst.Name, cst.Attribute]
 
-    #: The scope of the access. Note that a access could be in a child scope of its assignment.
+    #: The scope of the access. Note that a access could be in a child scope of its
+    #: assignment.
     scope: "Scope"
 
     __assignments: Set["BaseAssignment"]
@@ -584,12 +590,32 @@ class ComprehensionScope(LocalScope):
     pass
 
 
+# Generates dotted names from an Attribute or Name node:
+# Attribute(value=Name(value="a"), attr=Name(value="b")) -> ("a.b", "a")
+# each string has the corresponding CSTNode attached to it
+def _gen_dotted_names(
+    node: Union[cst.Attribute, cst.Name]
+) -> Iterable[Tuple[str, Union[cst.Attribute, cst.Name]]]:
+    if isinstance(node, cst.Name):
+        yield (node.value, node)
+    else:
+        value = node.value
+        if not isinstance(value, (cst.Attribute, cst.Name)):
+            raise ValueError(f"Unexpected name value in import: {value}")
+        name_values = iter(_gen_dotted_names(value))
+        (next_name, next_node) = next(name_values)
+        yield (f"{next_name}.{node.attr.value}", node)
+        yield (next_name, next_node)
+        yield from name_values
+
+
 class ScopeVisitor(cst.CSTVisitor):
     # since it's probably not useful. That can makes this visitor cleaner.
     def __init__(self, provider: "ScopeProvider") -> None:
         self.provider: ScopeProvider = provider
         self.scope: Scope = GlobalScope()
-        self.__deferred_accesses: List[Access] = []
+        self.__deferred_accesses: List[Tuple[Access, Optional[cst.Attribute]]] = []
+        self.__top_level_attribute: Optional[cst.Attribute] = None
 
     @contextmanager
     def _new_scope(
@@ -613,24 +639,18 @@ class ScopeVisitor(cst.CSTVisitor):
 
     def _visit_import_alike(self, node: Union[cst.Import, cst.ImportFrom]) -> bool:
         names = node.names
-        if not isinstance(names, cst.ImportStar):
-            # make sure node.names is Sequence[ImportAlias]
-            for name in names:
-                asname = name.asname
-                if asname is not None:
-                    name_value = cst.ensure_type(asname.name, cst.Name).value
-                else:
-                    name_node = name.name
-                    while isinstance(name_node, cst.Attribute):
-                        # the value of Attribute in import alike can only be either Name or Attribute
-                        name_node = name_node.value
-                    if isinstance(name_node, cst.Name):
-                        name_value = name_node.value
-                    else:
-                        raise Exception(
-                            f"Unexpected ImportAlias name value: {name_node}"
-                        )
+        if isinstance(names, cst.ImportStar):
+            return False
 
+        # make sure node.names is Sequence[ImportAlias]
+        for name in names:
+            asname = name.asname
+            if asname is not None:
+                name_values = _gen_dotted_names(cst.ensure_type(asname.name, cst.Name))
+            else:
+                name_values = _gen_dotted_names(name.name)
+
+            for name_value, _ in name_values:
                 self.scope.record_assignment(name_value, node)
         return False
 
@@ -641,7 +661,11 @@ class ScopeVisitor(cst.CSTVisitor):
         return self._visit_import_alike(node)
 
     def visit_Attribute(self, node: cst.Attribute) -> Optional[bool]:
+        if self.__top_level_attribute is None:
+            self.__top_level_attribute = node
         node.value.visit(self)  # explicitly not visiting attr
+        if self.__top_level_attribute is node:
+            self.__top_level_attribute = None
         return False
 
     def visit_Name(self, node: cst.Name) -> Optional[bool]:
@@ -651,8 +675,7 @@ class ScopeVisitor(cst.CSTVisitor):
             self.scope.record_assignment(node.value, node)
         elif context in (ExpressionContext.LOAD, ExpressionContext.DEL):
             access = Access(node, self.scope)
-            self.__deferred_accesses.append(access)
-            self.scope.record_access(node.value, access)
+            self.__deferred_accesses.append((access, self.__top_level_attribute))
 
     def visit_FunctionDef(self, node: cst.FunctionDef) -> Optional[bool]:
         self.scope.record_assignment(node.name.value, node)
@@ -788,10 +811,19 @@ class ScopeVisitor(cst.CSTVisitor):
         # In worst case, all accesses (m) and assignments (n) refer to the same name,
         # the time complexity is O(m x n), this optimizes it as O(m + n).
         scope_name_accesses = defaultdict(set)
-        for access in self.__deferred_accesses:
-            name = access.node.value
+        for (access, enclosing_attribute) in self.__deferred_accesses:
+            if enclosing_attribute is not None:
+                name = None
+                for name, node in _gen_dotted_names(enclosing_attribute):
+                    if name in access.scope:
+                        access.node = node
+                        break
+                assert name is not None
+            else:
+                name = ensure_type(access.node, cst.Name).value
             scope_name_accesses[(access.scope, name)].add(access)
             access.record_assignments(access.scope[name])
+            access.scope.record_access(name, access)
 
         for (scope, name), accesses in scope_name_accesses.items():
             for assignment in scope[name]:
