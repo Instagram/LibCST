@@ -787,6 +787,48 @@ class ScopeProviderTest(UnitTest):
             {QualifiedName("f4.<locals>.f5.<locals>.C", QualifiedNameSource.LOCAL)},
         )
 
+    def test_get_qualified_names_for_dotted_imports(self) -> None:
+        m, scopes = get_scope_metadata_provider(
+            """
+                import a.b.c
+                a(a.b.d)
+            """
+        )
+        call = ensure_type(
+            ensure_type(
+                ensure_type(m.body[1], cst.SimpleStatementLine).body[0], cst.Expr
+            ).value,
+            cst.Call,
+        )
+        module_scope = scopes[m]
+        self.assertEqual(
+            module_scope.get_qualified_names_for(call.func),
+            {QualifiedName("a", QualifiedNameSource.IMPORT)},
+        )
+        self.assertEqual(
+            module_scope.get_qualified_names_for(call.args[0].value),
+            {QualifiedName("a.b.d", QualifiedNameSource.IMPORT)},
+        )
+
+        import_stmt = ensure_type(
+            ensure_type(m.body[0], cst.SimpleStatementLine).body[0], cst.Import
+        )
+        a_b_c = ensure_type(import_stmt.names[0].name, cst.Attribute)
+        a_b = ensure_type(a_b_c.value, cst.Attribute)
+        a = a_b.value
+        self.assertEqual(
+            module_scope.get_qualified_names_for(a_b_c),
+            {QualifiedName("a.b.c", QualifiedNameSource.IMPORT)},
+        )
+        self.assertEqual(
+            module_scope.get_qualified_names_for(a_b),
+            {QualifiedName("a.b", QualifiedNameSource.IMPORT)},
+        )
+        self.assertEqual(
+            module_scope.get_qualified_names_for(a),
+            {QualifiedName("a", QualifiedNameSource.IMPORT)},
+        )
+
     def test_multiple_assignments(self) -> None:
         m, scopes = get_scope_metadata_provider(
             """
