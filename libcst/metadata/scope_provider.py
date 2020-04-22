@@ -234,15 +234,23 @@ class _NameUtil:
         if not isinstance(import_names, cst.ImportStar):
             for name in import_names:
                 real_name = get_full_name_for_node(name.name)
-                as_name = real_name
-                if name and name.asname:
-                    name_asname = name.asname
-                    if name_asname:
-                        as_name = cst.ensure_type(name_asname.name, cst.Name).value
-                if as_name and full_name.startswith(as_name):
+                if not real_name:
+                    continue
+                # real_name can contain `.` for dotted imports
+                # for these we want to find the longest prefix that matches full_name
+                parts = real_name.split(".")
+                real_names = [
+                    ".".join(parts[: i + 1]) for i in reversed(range(len(parts)))
+                ]
+                for real_name in real_names:
+                    as_name = real_name
                     if module:
                         real_name = f"{module}.{real_name}"
-                    if real_name:
+                    if name and name.asname:
+                        name_asname = name.asname
+                        if name_asname:
+                            as_name = cst.ensure_type(name_asname.name, cst.Name).value
+                    if full_name.startswith(as_name):
                         remaining_name = full_name.split(as_name)[1].lstrip(".")
                         results.add(
                             QualifiedName(
@@ -252,6 +260,7 @@ class _NameUtil:
                                 QualifiedNameSource.IMPORT,
                             )
                         )
+                        break
         return results
 
     @staticmethod
@@ -422,8 +431,13 @@ class Scope(abc.ABC):
         full_name = get_full_name_for_node(node)
         if full_name is None:
             return results
+        assignments = set()
         parts = full_name.split(".")
-        assignments = self[parts[0]] if parts[0] in self else set()
+        for i in reversed(range(len(parts))):
+            prefix = ".".join(parts[: i + 1])
+            if prefix in self:
+                assignments = self[prefix]
+                break
         for assignment in assignments:
             if isinstance(assignment, Assignment):
                 assignment_node = assignment.node
