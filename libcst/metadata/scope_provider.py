@@ -239,17 +239,13 @@ class _NameUtil:
                 # real_name can contain `.` for dotted imports
                 # for these we want to find the longest prefix that matches full_name
                 parts = real_name.split(".")
-                real_names = [
-                    ".".join(parts[: i + 1]) for i in reversed(range(len(parts)))
-                ]
+                real_names = [".".join(parts[:i]) for i in range(len(parts), 0, -1)]
                 for real_name in real_names:
                     as_name = real_name
                     if module:
                         real_name = f"{module}.{real_name}"
                     if name and name.asname:
-                        name_asname = name.asname
-                        if name_asname:
-                            as_name = cst.ensure_type(name_asname.name, cst.Name).value
+                        as_name = name.evaluated_alias
                     if full_name.startswith(as_name):
                         remaining_name = full_name.split(as_name)[1].lstrip(".")
                         results.add(
@@ -433,8 +429,8 @@ class Scope(abc.ABC):
             return results
         assignments = set()
         parts = full_name.split(".")
-        for i in reversed(range(len(parts))):
-            prefix = ".".join(parts[: i + 1])
+        for i in range(len(parts), 0, -1):
+            prefix = ".".join(parts[:i])
             if prefix in self:
                 assignments = self[prefix]
                 break
