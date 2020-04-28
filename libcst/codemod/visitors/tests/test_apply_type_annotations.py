@@ -608,7 +608,45 @@ class TestApplyAnnotationsVisitor(CodemodTest):
     )
     def test_annotate_functions(self, stub: str, before: str, after: str) -> None:
         context = CodemodContext()
-        ApplyTypeAnnotationsVisitor.add_stub_to_context(
+        ApplyTypeAnnotationsVisitor.store_stub_in_context(
             context, parse_module(textwrap.dedent(stub.rstrip()))
+        )
+        self.assertCodemod(before, after, context_override=context)
+
+    @data_provider(
+        (
+            (
+                """
+                def fully_annotated_with_different_stub(a: bool, b: bool) -> str: ...
+                """,
+                """
+                def fully_annotated_with_different_stub(a: int, b: str) -> bool:
+                    return 'hello'
+                """,
+                """
+                def fully_annotated_with_different_stub(a: bool, b: bool) -> str:
+                    return 'hello'
+                """,
+            ),
+        )
+    )
+    def test_annotate_functions_with_existing_annotations(
+        self, stub: str, before: str, after: str
+    ) -> None:
+        context = CodemodContext()
+        ApplyTypeAnnotationsVisitor.store_stub_in_context(
+            context, parse_module(textwrap.dedent(stub.rstrip()))
+        )
+        # Test setting the overwrite flag on the codemod instance.
+        self.assertCodemod(
+            before, after, context_override=context, overwrite_existing_annotations=True
+        )
+
+        # Test setting the flag when storing the stub in the context.
+        context = CodemodContext()
+        ApplyTypeAnnotationsVisitor.store_stub_in_context(
+            context,
+            parse_module(textwrap.dedent(stub.rstrip())),
+            overwrite_existing_annotations=True,
         )
         self.assertCodemod(before, after, context_override=context)
