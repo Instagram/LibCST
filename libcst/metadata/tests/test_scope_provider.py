@@ -1064,6 +1064,13 @@ class ScopeProviderTest(UnitTest):
                     list(scope.parent._accesses.items()), before_parent_accesses
                 )
 
+    def test_attribute_of_function_call(self) -> None:
+        get_scope_metadata_provider("foo().bar")
+
+    def test_self(self) -> None:
+        with open(__file__) as f:
+            get_scope_metadata_provider(f.read())
+
     def test_get_qualified_names_for_is_read_only(self) -> None:
         m, scopes = get_scope_metadata_provider(
             """

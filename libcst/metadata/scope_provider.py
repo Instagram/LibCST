@@ -601,7 +601,8 @@ def _gen_dotted_names(
     else:
         value = node.value
         if not isinstance(value, (cst.Attribute, cst.Name)):
-            raise ValueError(f"Unexpected name value in import: {value}")
+            # this is not an import
+            return
         name_values = iter(_gen_dotted_names(value))
         (next_name, next_node) = next(name_values)
         yield (f"{next_name}.{node.attr.value}", node)
@@ -818,7 +819,8 @@ class ScopeVisitor(cst.CSTVisitor):
                     if name in access.scope:
                         access.node = node
                         break
-                assert name is not None
+                if name is None:
+                    continue
             else:
                 name = ensure_type(access.node, cst.Name).value
             scope_name_accesses[(access.scope, name)].add(access)
