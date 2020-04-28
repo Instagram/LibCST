@@ -245,7 +245,9 @@ class _NameUtil:
                     if module:
                         real_name = f"{module}.{real_name}"
                     if name and name.asname:
-                        as_name = name.evaluated_alias
+                        eval_alias = name.evaluated_alias
+                        if eval_alias is not None:
+                            as_name = eval_alias
                     if full_name.startswith(as_name):
                         remaining_name = full_name.split(as_name)[1].lstrip(".")
                         results.add(
