@@ -1,3 +1,17 @@
+# 0.3.5 - 2020-05-12
+
+## Updated
+ - Expose more granular `Assignments` and `Accesses` for dotted imports in `ScopeProvider`. [#284](https://github.com/Instagram/LibCST/pull/284)
+ - `get_qualified_names_for` returns the most appropriate qualified name. [#290](https://github.com/Instagram/LibCST/pull/290)
+ - Surface `SyntaxError` raised by formatter in codemod run. [#288](https://github.com/Instagram/LibCST/pull/288) [#289](https://github.com/Instagram/LibCST/pull/289)
+ - Rename `ApplyTypeAnnotationsVisitor.add_stub_to_context` as `ApplyTypeAnnotationsVisitor.store_stub_in_context` and add `overwrite_existing_annotations` to allow overwrite existing type annotations. [#289](https://github.com/Instagram/LibCST/pull/291)
+
+## Fixed
+ - Close opened file handles on finishing codemod to avoid `Too many open files` on OSX. [#283](https://github.com/Instagram/LibCST/pull/283)
+
+## Deprecated
+ - `ApplyTypeAnnotationsVisitor.add_stub_to_context` is renamed as `ApplyTypeAnnotationsVisitor.store_stub_in_context`.
+
 # 0.3.4 - 2020-03-27
 
 ## Added
