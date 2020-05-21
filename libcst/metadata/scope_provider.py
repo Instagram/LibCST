@@ -616,7 +616,10 @@ def _gen_dotted_names(
             # this is not an import
             return
         name_values = iter(_gen_dotted_names(value))
-        (next_name, next_node) = next(name_values)
+        next_pair = next(name_values, None)
+        if next_pair is None:
+            return
+        (next_name, next_node) = next_pair
         yield (f"{next_name}.{node.attr.value}", node)
         yield (next_name, next_node)
         yield from name_values
@@ -825,16 +828,15 @@ class ScopeVisitor(cst.CSTVisitor):
         # the time complexity is O(m x n), this optimizes it as O(m + n).
         scope_name_accesses = defaultdict(set)
         for (access, enclosing_attribute) in self.__deferred_accesses:
+            name = ensure_type(access.node, cst.Name).value
             if enclosing_attribute is not None:
-                name = None
+                # if _gen_dotted_names doesn't generate any values, fall back to
+                # the original name node above
                 for name, node in _gen_dotted_names(enclosing_attribute):
                     if name in access.scope:
                         access.node = node
                         break
-                if name is None:
-                    continue
-            else:
-                name = ensure_type(access.node, cst.Name).value
+
             scope_name_accesses[(access.scope, name)].add(access)
             access.record_assignments(access.scope[name])
             access.scope.record_access(name, access)
