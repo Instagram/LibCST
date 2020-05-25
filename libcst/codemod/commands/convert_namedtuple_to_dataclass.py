@@ -41,7 +41,7 @@ class ConvertNamedTupleToDataclassCommand(VisitorBasedCodemodCommand):
             name=f"{self.MODULE}.{self.OBJECT}", source=QualifiedNameSource.IMPORT
         )
 
-        # Need to iterate through the original node's bases since they are directly tied to import metadata
+        # Need to examine the original node's bases since they are directly tied to import metadata
         for base_class in original_node.bases:
             # Compare the base class's qualified named against the expected typing.NamedTuple
             if not QualifiedNameProvider.has_name(
