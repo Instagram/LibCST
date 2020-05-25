@@ -1,0 +1,77 @@
+# Copyright (c) Facebook, Inc. and its affiliates.
+#
+# This source code is licensed under the MIT license found in the
+# LICENSE file in the root directory of this source tree.
+#
+# pyre-strict
+from typing import Sequence
+
+import libcst as cst
+from libcst import MaybeSentinel, ensure_type, parse_expression
+from libcst.codemod import VisitorBasedCodemodCommand
+from libcst.codemod.visitors import AddImportsVisitor, RemoveImportsVisitor
+from libcst.metadata import (
+    ProviderT,
+    QualifiedName,
+    QualifiedNameProvider,
+    QualifiedNameSource,
+)
+
+
+class ConvertNamedTupleToDataclassCommand(VisitorBasedCodemodCommand):
+    """
+    Convert NamedTuple class declarations to Python 3.7 dataclasses.
+
+    This only performs a conversion at the class declaration level.
+    It does not perform type annotation conversions, nor does it convert
+    NamedTuple-specific attributes and methods.
+    """
+
+    DESCRIPTION: str = "Convert legacy NamedTuple class declarations to Python 3.7 dataclasses."
+    METADATA_DEPENDENCIES: Sequence[ProviderT] = (QualifiedNameProvider,)
+
+    MODULE: str = "typing"
+    OBJECT: str = "NamedTuple"
+
+    def leave_ClassDef(
+        self, original_node: cst.ClassDef, updated_node: cst.ClassDef
+    ) -> cst.ClassDef:
+        new_bases = []
+        namedtuple_base = None
+
+        for base_class in original_node.bases:
+            # Compare the base class's qualified named against the expected typing.NamedTuple
+            if not QualifiedNameProvider.has_name(
+                self,
+                base_class.value,
+                QualifiedName(
+                    name=f"{self.MODULE}.{self.OBJECT}",
+                    source=QualifiedNameSource.IMPORT,
+                ),
+            ):
+                # Keep all bases that are not of type typing.NamedTuple
+                new_bases.append(base_class)
+            else:
+                namedtuple_base = base_class
+
+        # We still want to return the updated node in case some of its children have been modified
+        if not namedtuple_base:
+            return updated_node
+
+        AddImportsVisitor.add_needed_import(self.context, "dataclasses", "dataclass")
+        RemoveImportsVisitor.remove_unused_import_by_node(
+            self.context, namedtuple_base.value
+        )
+
+        call = ensure_type(
+            parse_expression(
+                "dataclass(frozen=True)", config=self.module.config_for_parsing
+            ),
+            cst.Call,
+        )
+        return updated_node.with_changes(
+            lpar=MaybeSentinel.DEFAULT,
+            rpar=MaybeSentinel.DEFAULT,
+            bases=new_bases,
+            decorators=[*original_node.decorators, cst.Decorator(decorator=call)],
+        )
