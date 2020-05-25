@@ -4,10 +4,9 @@
 # LICENSE file in the root directory of this source tree.
 #
 # pyre-strict
-from typing import Sequence
+from typing import List, Optional, Sequence
 
 import libcst as cst
-from libcst import MaybeSentinel, ensure_type, parse_expression
 from libcst.codemod import VisitorBasedCodemodCommand
 from libcst.codemod.visitors import AddImportsVisitor, RemoveImportsVisitor
 from libcst.metadata import (
@@ -36,18 +35,17 @@ class ConvertNamedTupleToDataclassCommand(VisitorBasedCodemodCommand):
     def leave_ClassDef(
         self, original_node: cst.ClassDef, updated_node: cst.ClassDef
     ) -> cst.ClassDef:
-        new_bases = []
-        namedtuple_base = None
+        new_bases: List[cst.Arg] = []
+        namedtuple_base: Optional[cst.Arg] = None
+        qualified_namedtuple: QualifiedName = QualifiedName(
+            name=f"{self.MODULE}.{self.OBJECT}", source=QualifiedNameSource.IMPORT
+        )
 
+        # Need to iterate through the original node's bases since they are directly tied to import metadata
         for base_class in original_node.bases:
             # Compare the base class's qualified named against the expected typing.NamedTuple
             if not QualifiedNameProvider.has_name(
-                self,
-                base_class.value,
-                QualifiedName(
-                    name=f"{self.MODULE}.{self.OBJECT}",
-                    source=QualifiedNameSource.IMPORT,
-                ),
+                self, base_class.value, qualified_namedtuple
             ):
                 # Keep all bases that are not of type typing.NamedTuple
                 new_bases.append(base_class)
@@ -63,15 +61,15 @@ class ConvertNamedTupleToDataclassCommand(VisitorBasedCodemodCommand):
             self.context, namedtuple_base.value
         )
 
-        call = ensure_type(
-            parse_expression(
+        call = cst.ensure_type(
+            cst.parse_expression(
                 "dataclass(frozen=True)", config=self.module.config_for_parsing
             ),
             cst.Call,
         )
         return updated_node.with_changes(
-            lpar=MaybeSentinel.DEFAULT,
-            rpar=MaybeSentinel.DEFAULT,
+            lpar=cst.MaybeSentinel.DEFAULT,
+            rpar=cst.MaybeSentinel.DEFAULT,
             bases=new_bases,
             decorators=[*original_node.decorators, cst.Decorator(decorator=call)],
         )
