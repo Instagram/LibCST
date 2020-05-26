@@ -26,26 +26,25 @@ class ConvertNamedTupleToDataclassCommand(VisitorBasedCodemodCommand):
     NamedTuple-specific attributes and methods.
     """
 
-    DESCRIPTION: str = "Convert legacy NamedTuple class declarations to Python 3.7 dataclasses."
+    DESCRIPTION: str = "Convert NamedTuple class declarations to Python 3.7 dataclasses using the @dataclass decorator."
     METADATA_DEPENDENCIES: Sequence[ProviderT] = (QualifiedNameProvider,)
 
-    MODULE: str = "typing"
-    OBJECT: str = "NamedTuple"
+    # The `NamedTuple` we are interested in
+    qualified_namedtuple: QualifiedName = QualifiedName(
+        name="typing.NamedTuple", source=QualifiedNameSource.IMPORT
+    )
 
     def leave_ClassDef(
         self, original_node: cst.ClassDef, updated_node: cst.ClassDef
     ) -> cst.ClassDef:
         new_bases: List[cst.Arg] = []
         namedtuple_base: Optional[cst.Arg] = None
-        qualified_namedtuple: QualifiedName = QualifiedName(
-            name=f"{self.MODULE}.{self.OBJECT}", source=QualifiedNameSource.IMPORT
-        )
 
         # Need to examine the original node's bases since they are directly tied to import metadata
         for base_class in original_node.bases:
-            # Compare the base class's qualified named against the expected typing.NamedTuple
+            # Compare the base class' qualified name against the expected typing.NamedTuple
             if not QualifiedNameProvider.has_name(
-                self, base_class.value, qualified_namedtuple
+                self, base_class.value, self.qualified_namedtuple
             ):
                 # Keep all bases that are not of type typing.NamedTuple
                 new_bases.append(base_class)
