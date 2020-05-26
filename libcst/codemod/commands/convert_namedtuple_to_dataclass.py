@@ -53,7 +53,7 @@ class ConvertNamedTupleToDataclassCommand(VisitorBasedCodemodCommand):
                 namedtuple_base = base_class
 
         # We still want to return the updated node in case some of its children have been modified
-        if not namedtuple_base:
+        if namedtuple_base is None:
             return updated_node
 
         AddImportsVisitor.add_needed_import(self.context, "dataclasses", "dataclass")
