@@ -1,3 +1,8 @@
+# 0.3.6 - 2020-05-27
+
+## Added
+- Added `ConvertNamedTupleToDataclassCommand` to convert `NamedTuple` class declarations to Python 3.7 `dataclasses` using the `@dataclass(frozen=True)` decorator. [#299](https://github.com/Instagram/LibCST/pull/299)
+
 # 0.3.5 - 2020-05-12
 
 ## Updated
@@ -32,7 +37,7 @@
 # 0.3.3 - 2020-03-05
 
 ## Added
- - `ByteSpanPositionProvider` provides start offset and length of CSTNode as metadata. 
+ - `ByteSpanPositionProvider` provides start offset and length of CSTNode as metadata.
  - `get_docstring` helper provides docstring from `Module`, `ClassDef` and `FunctionDef` node types.
 
 ## Updated
