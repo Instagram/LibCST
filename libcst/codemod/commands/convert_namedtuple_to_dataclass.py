@@ -29,7 +29,7 @@ class ConvertNamedTupleToDataclassCommand(VisitorBasedCodemodCommand):
     DESCRIPTION: str = "Convert NamedTuple class declarations to Python 3.7 dataclasses using the @dataclass decorator."
     METADATA_DEPENDENCIES: Sequence[ProviderT] = (QualifiedNameProvider,)
 
-    # The `NamedTuple` we are interested in
+    # The 'NamedTuple' we are interested in
     qualified_namedtuple: QualifiedName = QualifiedName(
         name="typing.NamedTuple", source=QualifiedNameSource.IMPORT
     )
@@ -42,7 +42,7 @@ class ConvertNamedTupleToDataclassCommand(VisitorBasedCodemodCommand):
 
         # Need to examine the original node's bases since they are directly tied to import metadata
         for base_class in original_node.bases:
-            # Compare the base class' qualified name against the expected typing.NamedTuple
+            # Compare the base class's qualified name against the expected typing.NamedTuple
             if not QualifiedNameProvider.has_name(
                 self, base_class.value, self.qualified_namedtuple
             ):
