@@ -1109,6 +1109,11 @@ class ScopeProviderTest(UnitTest):
     def test_attribute_of_function_call(self) -> None:
         get_scope_metadata_provider("foo().bar")
 
+    def test_attribute_of_subscript_called(self) -> None:
+        m, scopes = get_scope_metadata_provider("foo[0].bar.baz()")
+        scope = scopes[m]
+        self.assertIn("foo", scope.accesses)
+
     def test_self(self) -> None:
         with open(__file__) as f:
             get_scope_metadata_provider(f.read())
