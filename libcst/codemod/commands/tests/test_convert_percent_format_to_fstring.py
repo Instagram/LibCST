@@ -5,7 +5,7 @@
 #
 # pyre-strict
 from libcst.codemod import CodemodTest
-from libcst.codemod.commands.convert_precent_format_to_fstring import (
+from libcst.codemod.commands.convert_percent_format_to_fstring import (
     ConvertPercentFormatStringCommand,
 )
 
