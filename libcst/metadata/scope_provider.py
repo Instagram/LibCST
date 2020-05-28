@@ -14,7 +14,6 @@ from enum import Enum, auto
 from typing import (
     Collection,
     Dict,
-    Iterable,
     Iterator,
     List,
     Mapping,
@@ -607,22 +606,23 @@ class ComprehensionScope(LocalScope):
 # each string has the corresponding CSTNode attached to it
 def _gen_dotted_names(
     node: Union[cst.Attribute, cst.Name]
-) -> Iterable[Tuple[str, Union[cst.Attribute, cst.Name]]]:
+) -> Iterator[Tuple[str, Union[cst.Attribute, cst.Name]]]:
     if isinstance(node, cst.Name):
-        yield (node.value, node)
+        yield node.value, node
     else:
         value = node.value
         if not isinstance(value, (cst.Attribute, cst.Name)):
             # this is not an import
             return
-        name_values = iter(_gen_dotted_names(value))
-        next_pair = next(name_values, None)
-        if next_pair is None:
+        name_values = _gen_dotted_names(value)
+        try:
+            next_name, next_node = next(name_values)
+        except StopIteration:
             return
-        (next_name, next_node) = next_pair
-        yield (f"{next_name}.{node.attr.value}", node)
-        yield (next_name, next_node)
-        yield from name_values
+        else:
+            yield f"{next_name}.{node.attr.value}", node
+            yield next_name, next_node
+            yield from name_values
 
 
 class ScopeVisitor(cst.CSTVisitor):
