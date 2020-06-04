@@ -47,9 +47,9 @@ fields, we've created a lossless CST that looks and feels like an AST.
 
 .. why-libcst-intro-end
 
-You can learn more about `the value that LibCST provides 
-<https://libcst.readthedocs.io/en/latest/why_libcst.html>`__ and `our 
-motivations for the project 
+You can learn more about `the value that LibCST provides
+<https://libcst.readthedocs.io/en/latest/why_libcst.html>`__ and `our
+motivations for the project
 <https://libcst.readthedocs.io/en/latest/motivation.html>`__
 in `our documentation <https://libcst.readthedocs.io/en/latest/index.html>`__.
 Try it out with `notebook examples <https://mybinder.org/v2/gh/Instagram/LibCST/master?filepath=docs%2Fsource%2Ftutorial.ipynb>`__.
@@ -115,14 +115,14 @@ BinaryOperation(
   ],
 )
 
-For a more detailed usage example, `see our documentation 
+For a more detailed usage example, `see our documentation
 <https://libcst.readthedocs.io/en/latest/tutorial.html>`__.
 
 Installation
 ------------
 
 LibCST requires Python 3.6+ and can be easily installed using most common Python
-packaging tools. We recommend installing the latest stable release from 
+packaging tools. We recommend installing the latest stable release from
 `PyPI <https://pypi.org/project/libcst/>`_ with pip:
 
 .. code-block:: shell
@@ -208,6 +208,16 @@ License
 =======
 
 LibCST is MIT licensed, as found in the LICENSE file.
+
+.. fb-docs-start
+
+Privacy Policy and Terms of Use
+===============================
+
+- `Privacy Policy <https://opensource.facebook.com/legal/privacy>`_
+- `Terms of Use <https://opensource.facebook.com/legal/terms>`_
+
+.. fb-docs-end
 
 Acknowledgements
 ================
