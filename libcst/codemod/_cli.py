@@ -58,7 +58,6 @@ def invoke_formatter(formatter_args: Sequence[str], code: AnyStr) -> AnyStr:
             formatter_args,
             env={},
             input=code,
-            stderr=subprocess.STDOUT,
             universal_newlines=not work_with_bytes,
             encoding=None if work_with_bytes else "utf-8",
         ),
