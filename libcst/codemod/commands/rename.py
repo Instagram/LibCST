@@ -190,10 +190,3 @@ class RenameCommand(VisitorBasedCodemodCommand):
             )
 
         return updated_node
-
-
-def _get_alias_as_str(node: cst.ImportAlias) -> Optional[str]:
-    asname = node.asname
-    if asname is not None:
-        return cst.ensure_type(cst.ensure_type(asname, cst.AsName).name, cst.Name).value
-    return None
