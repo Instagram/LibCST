@@ -8,9 +8,10 @@
 import abc
 import codecs
 import re
+import sys
 from dataclasses import dataclass, field, fields
 from enum import Enum
-from typing import FrozenSet, List, Pattern, Sequence, Union
+from typing import FrozenSet, List, Optional, Pattern, Sequence, Union
 
 from libcst._add_slots import add_slots
 from libcst._nodes.whitespace import NEWLINE_RE
@@ -59,6 +60,7 @@ class AutoConfig(Enum):
         return str(self)
 
 
+# This list should be kept in sorted order.
 KNOWN_PYTHON_VERSION_STRINGS = ["3.0", "3.1", "3.3", "3.5", "3.6", "3.7", "3.8"]
 
 
@@ -87,7 +89,11 @@ class PartialParserConfig:
     #: run LibCST. For example, you can parse code as 3.7 with a CPython 3.6
     #: interpreter.
     #:
+    #: If unspecified, it will default to the syntax of the running interpreter
+    #: (rounding down from among the following list).
+    #:
     #: Currently, only Python 3.0, 3.1, 3.3, 3.5, 3.6, 3.7 and 3.8 syntax is supported.
+    #: The gaps did not have any syntax changes from the version prior.
     python_version: Union[str, AutoConfig] = AutoConfig.token
 
     #: A named tuple with the ``major`` and ``minor`` Python version numbers. This is
@@ -113,17 +119,20 @@ class PartialParserConfig:
 
     def __post_init__(self) -> None:
         raw_python_version = self.python_version
-        # `parse_version_string` will raise a ValueError if the version is invalid.
-        #
-        # We use object.__setattr__ because the dataclass is frozen. See:
-        # https://docs.python.org/3/library/dataclasses.html#frozen-instances
-        # This should be safe behavior inside of `__post_init__`.
-        parsed_python_version = parse_version_string(
-            None if isinstance(raw_python_version, AutoConfig) else raw_python_version
-        )
 
-        # Once we add support for more versions of Python, we can change this to detect
-        # the supported version range.
+        if isinstance(raw_python_version, AutoConfig):
+            # If unspecified, we'll try to pick the same as the running
+            # interpreter.  There will always be at least one entry.
+            parsed_python_version = _pick_compatible_python_version()
+        else:
+            # If the caller specified a version, we require that to be a known
+            # version (because we don't want to encourage doing duplicate work
+            # when there weren't syntax changes).
+
+            # `parse_version_string` will raise a ValueError if the version is
+            # invalid.
+            parsed_python_version = parse_version_string(raw_python_version)
+
         if not any(
             parsed_python_version == parse_version_string(v)
             for v in KNOWN_PYTHON_VERSION_STRINGS
@@ -135,6 +144,9 @@ class PartialParserConfig:
                 + "supported by future releases."
             )
 
+        # We use object.__setattr__ because the dataclass is frozen. See:
+        # https://docs.python.org/3/library/dataclasses.html#frozen-instances
+        # This should be safe behavior inside of `__post_init__`.
         object.__setattr__(self, "parsed_python_version", parsed_python_version)
 
         encoding = self.encoding
@@ -170,3 +182,16 @@ class PartialParserConfig:
                 init_keys.append(f"{f.name}={value!r}")
 
         return f"{self.__class__.__name__}({', '.join(init_keys)})"
+
+
+def _pick_compatible_python_version(version: Optional[str] = None) -> PythonVersionInfo:
+    max_version = parse_version_string(version)
+    for v in KNOWN_PYTHON_VERSION_STRINGS[::-1]:
+        tmp = parse_version_string(v)
+        if tmp <= max_version:
+            return tmp
+
+    raise ValueError(
+        f"No version found older than {version} ({max_version}) while "
+        + f"running on {sys.version_info}"
+    )

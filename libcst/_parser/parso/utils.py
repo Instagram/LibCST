@@ -182,7 +182,7 @@ class PythonVersionInfo:
 
 
 def _parse_version(version: str) -> PythonVersionInfo:
-    match = re.match(r"(\d+)(?:\.(\d)(?:\.\d+)?)?$", version)
+    match = re.match(r"(\d+)(?:\.(\d+)(?:\.\d+)?)?$", version)
     if match is None:
         raise ValueError(
             "The given version is not in the right format. "
