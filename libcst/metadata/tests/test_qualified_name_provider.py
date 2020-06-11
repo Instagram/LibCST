@@ -264,3 +264,27 @@ class ScopeProviderTest(UnitTest):
         )
         eval = attr.attr
         self.assertEqual(names[eval], set())
+
+    def test_repeated_values_in_qualified_name(self) -> None:
+        m, names = get_qualified_name_metadata_provider(
+            """
+            import a
+            class Foo:
+                bar: a.aa.aaa
+            """
+        )
+        foo = ensure_type(m.body[1], cst.ClassDef)
+        bar = ensure_type(
+            ensure_type(
+                ensure_type(foo.body, cst.IndentedBlock).body[0],
+                cst.SimpleStatementLine,
+            ).body[0],
+            cst.AnnAssign,
+        )
+
+        annotation = ensure_type(bar.annotation, cst.Annotation)
+        attribute = ensure_type(annotation.annotation, cst.Attribute)
+
+        self.assertEqual(
+            names[attribute], {QualifiedName("a.aa.aaa", QualifiedNameSource.IMPORT)}
+        )
