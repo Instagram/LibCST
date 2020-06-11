@@ -48,10 +48,10 @@ class TestRenameCommand(CodemodTest):
                 bla(5)
         """
         after = """
-            from baz import qux as bla
+            from baz import qux
 
             def test() -> None:
-                bla(5)
+                qux(5)
         """
 
         self.assertCodemod(
@@ -96,10 +96,10 @@ class TestRenameCommand(CodemodTest):
                 bar.qux(5)
         """
         after = """
-            import baz as bar
+            import baz
 
             def test() -> None:
-                bar.quux(5)
+                baz.quux(5)
         """
 
         self.assertCodemod(
@@ -148,19 +148,6 @@ class TestRenameCommand(CodemodTest):
             before, after, orig_object="x", new_object="z",
         )
 
-    def test_rename_local_object_attr(self) -> None:
-        before = """
-            x = Foo()
-            x.bar = 5
-        """
-        after = """
-            x = Foo()
-            x.baz = 5
-        """
-        self.assertCodemod(
-            before, after, orig_object="x.bar", new_object="x.baz",
-        )
-
     def test_module_does_not_change(self) -> None:
         before = """
             from a import b
@@ -180,17 +167,44 @@ class TestRenameCommand(CodemodTest):
 
     def test_other_imports_untouched(self) -> None:
         before = """
-            from a import b, c, d, e
+            import a, b, c
 
-            class Foo(b):
-                pass
+            class Foo(a.z):
+                bar: b.bar
+                baz: c.baz
         """
         after = """
-            from a import c, d, e
+            import b, c
+            import d
+
+            class Foo(d.z):
+                bar: b.bar
+                baz: c.baz
+        """
+        self.assertCodemod(
+            before,
+            after,
+            orig_module="a",
+            orig_object="z",
+            new_module="d",
+            new_object="z",
+        )
+
+    def test_other_import_froms_untouched(self) -> None:
+        before = """
+            from a import b, c, d
+
+            class Foo(b):
+                bar: c.bar
+                baz: d.baz
+        """
+        after = """
+            from a import c, d
             from f import b
 
             class Foo(b):
-                pass
+                bar: c.bar
+                baz: d.baz
         """
         self.assertCodemod(
             before,
@@ -199,4 +213,78 @@ class TestRenameCommand(CodemodTest):
             orig_object="b",
             new_module="f",
             new_object="b",
+        )
+
+    def test_no_removal_of_import_in_use(self) -> None:
+        before = """
+            import a
+
+            class Foo(a.b):
+                pass
+            class Foo2(a.c):
+                pass
+        """
+        after = """
+            import a
+            import z
+
+            class Foo(z.b):
+                pass
+            class Foo2(a.c):
+                pass
+        """
+        self.assertCodemod(
+            before,
+            after,
+            orig_module="a",
+            orig_object="b",
+            new_module="z",
+            new_object="b",
+        )
+
+    def test_no_removal_of_import_from_in_use(self) -> None:
+        before = """
+            from a import m
+
+            class Foo(m.CstNode):
+                bar: m.Attribute
+        """
+        after = """
+            from a import m
+            import blah
+
+            class Foo(blah.CstNode):
+                bar: m.Attribute
+        """
+        self.assertCodemod(
+            before,
+            after,
+            orig_module="a",
+            orig_object="m.CstNode",
+            new_module="blah",
+            new_object="CstNode",
+        )
+
+    def test_other_unused_imports_untouched(self) -> None:
+        before = """
+            import a
+            import b
+
+            class Foo(a.obj):
+                pass
+        """
+        after = """
+            import b
+            import c
+
+            class Foo(c.obj):
+                pass
+        """
+        self.assertCodemod(
+            before,
+            after,
+            orig_module="a",
+            orig_object="obj",
+            new_module="c",
+            new_object="obj",
         )

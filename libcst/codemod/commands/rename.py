@@ -9,7 +9,7 @@ from typing import Optional, Sequence, Union
 
 import libcst as cst
 from libcst.codemod import CodemodContext, VisitorBasedCodemodCommand
-from libcst.codemod.visitors import AddImportsVisitor
+from libcst.codemod.visitors import AddImportsVisitor, RemoveImportsVisitor
 from libcst.helpers import get_full_name_for_node
 from libcst.metadata import QualifiedName, QualifiedNameProvider, QualifiedNameSource
 
@@ -87,10 +87,11 @@ class RenameCommand(VisitorBasedCodemodCommand):
         for import_alias in original_node.names:
             name = get_full_name_for_node(import_alias.name)
             if name is not None and name == self.orig_module:
-                # Remove old import altogether
-                return cst.RemoveFromParent()
-
-        return updated_node
+                # Schedule this import to be potentially removed
+                RemoveImportsVisitor.remove_unused_import_by_node(
+                    self.context, original_node
+                )
+        return original_node
 
     def leave_ImportFrom(
         self, original_node: cst.ImportFrom, updated_node: cst.ImportFrom
@@ -131,35 +132,24 @@ class RenameCommand(VisitorBasedCodemodCommand):
         if QualifiedNameProvider.has_name(
             self, original_node, QualifiedName(name=self.orig_name, source=self.source),
         ):
-            name = get_full_name_for_node(original_node)
-            if name is None:
+            full_name = get_full_name_for_node(original_node)
+            if full_name is None:
                 raise Exception("Logic error!")
-            module_name = ".".join(name.split(".")[:-1])
-            module_asname = (
-                None
-                if module_name == self.orig_module
-                else ".".join(name.split(".")[:-1])
-            )
-
-            if self.new_module is not None:
+            module_name = ".".join(full_name.split(".")[:-1])
+            # New assignment for pyre check.
+            new_import = self.new_module
+            if new_import is not None:
                 AddImportsVisitor.add_needed_import(
-                    self.context,
-                    # pyre-ignore[6]: Expected `str` for 2nd parameter `module` to call
-                    # `cst.codemod.visitors._add_imports.AddImportsVisitor.add_needed_import`
-                    # but got `Optional[str]`.
-                    module=self.new_module,
-                    asname=module_asname,
+                    self.context, module=new_import, asname=None,
                 )
-            return updated_node.with_changes(
-                value=cst.parse_expression(
-                    # pyre-ignore[6]: Expected `str` for 1st anonymous parameter to call
-                    # `cst._parser.entrypoints.parse_expression` but got `Optional[str]`.
-                    self.new_module
-                    if module_asname is None
-                    else module_asname
-                ),
-                attr=cst.Name(value=self.new_object.split(".")[-1]),
-            )
+            # New assignment for pyre check.
+            new_value = self.new_module if self.new_module is not None else module_name
+            # If we reach here, new_value should never technically be None since new_module and module_asname cannot both be None.
+            if new_value is not None:
+                return updated_node.with_changes(
+                    value=cst.parse_expression(new_value),
+                    attr=cst.Name(value=self.new_object.split(".")[-1]),
+                )
 
         return updated_node
 
@@ -170,23 +160,14 @@ class RenameCommand(VisitorBasedCodemodCommand):
             name = get_full_name_for_node(original_node)
             if name is None:
                 raise Exception("Logic error!")
-            asname = None if name == self.orig_object else name
 
-            if self.new_module is not None:
-                # Add import with new asname
+            # New assignment for pyre check.
+            new_import = self.new_module
+            if new_import is not None:
                 AddImportsVisitor.add_needed_import(
-                    self.context,
-                    # pyre-ignore[6]: Expected `str` for 2nd parameter `module` to call
-                    # `cst.codemod.visitors._add_imports.AddImportsVisitor.add_needed_import`
-                    # but got `Optional[str]`.
-                    module=self.new_module,
-                    obj=self.new_object,
-                    asname=asname,
+                    self.context, module=new_import, obj=self.new_object, asname=None
                 )
 
-            # add with new asname
-            return updated_node.with_changes(
-                value=self.new_object if asname is None else asname
-            )
+            return updated_node.with_changes(value=self.new_object)
 
         return updated_node
