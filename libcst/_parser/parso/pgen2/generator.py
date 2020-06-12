@@ -11,6 +11,7 @@
 #
 # The following changes were made:
 # - Type stubs were directly applied.
+# pyre-unsafe
 
 """
 This module defines the data structures used to represent a grammar.

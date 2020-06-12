@@ -3,7 +3,6 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-# pyre-strict
 
 import itertools
 import re
@@ -48,6 +47,7 @@ def _detect_encoding(source: Union[str, bytes]) -> str:
 
     if isinstance(source, str):
         return "utf-8"
+    # pyre-fixme[16]: Module `tokenize` has no attribute `detect_encoding`.
     return py_tokenize_detect_encoding(BytesIO(source).readline)[0]
 
 

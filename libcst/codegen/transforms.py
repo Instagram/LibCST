@@ -12,7 +12,6 @@
 # use features such as matchers which rely on previously generated
 # code to function.
 
-# pyre-strict
 import ast
 
 import libcst as cst

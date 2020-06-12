@@ -7,5 +7,6 @@
     ],
     "exclude": [
         ".*/\\.tox/.*"
-    ]
+    ],
+    "strict": true
 }

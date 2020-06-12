@@ -449,6 +449,7 @@ class CSTNode(ABC):
         return "\n".join(lines)
 
     @classmethod
+    # pyre-fixme[3]: Return annotation cannot be `Any`.
     def field(cls, *args: object, **kwargs: object) -> Any:
         """
         A helper that allows us to easily use CSTNodes in dataclass constructor

@@ -80,6 +80,7 @@ class Module(CSTNode):
             has_trailing_newline=self.has_trailing_newline,
         )
 
+    # pyre-fixme[14]: `visit` overrides method defined in `CSTNode` inconsistently.
     def visit(self: _ModuleSelfT, visitor: CSTVisitorT) -> _ModuleSelfT:
         """
         Returns the result of running a visitor over this module.

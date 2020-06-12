@@ -8,7 +8,6 @@
 # python -m libcst.tool --help
 # python -m libcst.tool print python_file.py
 
-# pyre-strict
 import argparse
 import dataclasses
 import distutils.spawn

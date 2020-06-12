@@ -3,7 +3,6 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-# pyre-strict
 
 """
 Parso's tokenize doesn't give us tokens in the format that we'd ideally like, so this

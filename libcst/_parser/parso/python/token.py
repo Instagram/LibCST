@@ -12,8 +12,8 @@
 # The following changes were made:
 # - Explicit TokenType references instead of dynamic creation.
 # - Use dataclasses instead of raw classes.
+# pyre-unsafe
 
-# pyre-strict
 from dataclasses import dataclass
 
 
