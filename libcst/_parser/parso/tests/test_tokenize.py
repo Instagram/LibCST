@@ -12,6 +12,7 @@
 # The following changes were made:
 # - Convert base test to Unittet
 # - Remove grammar-specific tests
+# pyre-unsafe
 
 # -*- coding: utf-8    # This file contains Unicode characters.
 from textwrap import dedent

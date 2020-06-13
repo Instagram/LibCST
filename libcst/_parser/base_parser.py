@@ -22,7 +22,6 @@
 #   As a consequence parser may only be used once.
 # - Supports our custom Token class, instead of `parso.python.tokenize.Token`.
 
-# pyre-strict
 
 from dataclasses import dataclass, field
 from typing import Generic, Iterable, List, Sequence, TypeVar, Union

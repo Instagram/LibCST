@@ -16,7 +16,6 @@
 # - Make PythonVersionInfo directly usable in hashmaps
 # - Unroll total ordering because Pyre doesn't understand it
 
-# pyre-strict
 
 import re
 import sys

@@ -3,7 +3,6 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-# pyre-strict
 
 import json
 from pathlib import Path
@@ -66,7 +65,7 @@ class TypeVerificationVisitor(cst.CSTVisitor):
         # remove this if condition when the type issues are fixed.
         if not any(
             node.deep_equals(name) and tup == _tup
-            for (name, _tup) in {(cst.Name("i"), (18, 21, 18, 22)),}
+            for (name, _tup) in {(cst.Name("i"), (17, 21, 17, 22)),}
         ):
             self.test.assertIn(
                 tup,

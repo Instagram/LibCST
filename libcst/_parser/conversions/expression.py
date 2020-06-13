@@ -2,6 +2,7 @@
 #
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
+# pyre-unsafe
 
 import re
 import typing
@@ -861,10 +862,13 @@ def convert_atom_basic(
     elif child.type.name == "NUMBER":
         # We must determine what type of number it is since we split node
         # types up this way.
+        # pyre-fixme[16]: Module `tokenize` has no attribute `Intnumber`.
         if re.fullmatch(INTNUMBER_RE, child.string):
             return WithLeadingWhitespace(Integer(child.string), child.whitespace_before)
+        # pyre-fixme[16]: Module `tokenize` has no attribute `Floatnumber`.
         elif re.fullmatch(FLOATNUMBER_RE, child.string):
             return WithLeadingWhitespace(Float(child.string), child.whitespace_before)
+        # pyre-fixme[16]: Module `tokenize` has no attribute `Imagnumber`.
         elif re.fullmatch(IMAGNUMBER_RE, child.string):
             return WithLeadingWhitespace(
                 Imaginary(child.string), child.whitespace_before

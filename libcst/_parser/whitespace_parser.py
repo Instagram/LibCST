@@ -3,7 +3,6 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-# pyre-strict
 """
 Parso doesn't attempt to parse (or even emit tokens for) whitespace or comments that
 isn't syntatically important. Instead, we're just given the whitespace as a "prefix" of

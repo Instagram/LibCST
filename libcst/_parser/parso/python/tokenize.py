@@ -25,6 +25,7 @@
 # Basically this is a stripped down version of the standard library module, so
 # you can read the documentation there. Additionally we included some speed and
 # memory optimizations here.
+# pyre-unsafe
 from __future__ import absolute_import
 
 import itertools as _itertools

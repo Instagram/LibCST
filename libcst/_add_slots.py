@@ -2,7 +2,6 @@
 # https://github.com/ericvsmith/dataclasses/blob/ae712dd993420d43444f188f452/LICENSE.txt
 # https://github.com/ericvsmith/dataclasses/blob/ae712dd993420d43444f/dataclass_tools.py
 
-# pyre-strict
 import dataclasses
 from typing import Any, Mapping, Type, TypeVar
 

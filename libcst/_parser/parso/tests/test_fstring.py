@@ -12,6 +12,7 @@
 # The following changes were made:
 # - Convert base test to Unittet
 # - Remove grammar-specific tests
+# pyre-unsafe
 from libcst._parser.parso.python.tokenize import tokenize
 from libcst._parser.parso.utils import parse_version_string
 from libcst.testing.utils import UnitTest, data_provider

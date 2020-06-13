@@ -11,6 +11,7 @@
 #
 # The following changes were made:
 # - Type stubs were directly applied.
+# pyre-unsafe
 
 from typing import Generator, List, Optional, Tuple
 

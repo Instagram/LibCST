@@ -8,7 +8,6 @@
 # python -m libcst.codegen.generate --help
 # python -m libcst.codegen.generate visitors
 
-# pyre-strict
 import argparse
 import os
 import os.path
