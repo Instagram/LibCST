@@ -398,7 +398,10 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
         return annotations.parameters.with_changes(
             params=update_annotation(
                 updated_node.params.params, annotations.parameters.params
-            )
+            ),
+            kwonly_params=update_annotation(
+                updated_node.params.kwonly_params, annotations.parameters.kwonly_params
+            ),
         )
 
     def _insert_empty_line(

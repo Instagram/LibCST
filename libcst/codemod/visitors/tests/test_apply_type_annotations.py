@@ -33,6 +33,25 @@ class TestApplyAnnotationsVisitor(CodemodTest):
             ),
             (
                 """
+                def foo(
+                    b: str, c: int = ..., *, d: str = ..., e: int, f: int = ...
+                ) -> int: ...
+                """,
+                """
+                def foo(
+                    b, c=5, *, d="a", e, f=10
+                ) -> int:
+                    return 1
+                """,
+                """
+                def foo(
+                    b: str, c: int=5, *, d: str="a", e: int, f: int=10
+                ) -> int:
+                    return 1
+                """,
+            ),
+            (
+                """
                 import bar
 
                 def foo() -> bar.Baz: ...
