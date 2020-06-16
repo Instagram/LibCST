@@ -4,7 +4,9 @@
 # LICENSE file in the root directory of this source tree.
 #
 
+import sys
 import textwrap
+import unittest
 from typing import Type
 
 from libcst import parse_module
@@ -28,6 +30,25 @@ class TestApplyAnnotationsVisitor(CodemodTest):
                 """,
                 """
                 def foo() -> int:
+                    return 1
+                """,
+            ),
+            (
+                """
+                def foo(
+                    b: str, c: int = ..., *, d: str = ..., e: int, f: int = ...
+                ) -> int: ...
+                """,
+                """
+                def foo(
+                    b, c=5, *, d="a", e, f=10
+                ) -> int:
+                    return 1
+                """,
+                """
+                def foo(
+                    b: str, c: int=5, *, d: str="a", e: int, f: int=10
+                ) -> int:
                     return 1
                 """,
             ),
@@ -606,6 +627,56 @@ class TestApplyAnnotationsVisitor(CodemodTest):
         )
     )
     def test_annotate_functions(self, stub: str, before: str, after: str) -> None:
+        context = CodemodContext()
+        ApplyTypeAnnotationsVisitor.store_stub_in_context(
+            context, parse_module(textwrap.dedent(stub.rstrip()))
+        )
+        self.assertCodemod(before, after, context_override=context)
+
+    @data_provider(
+        (
+            (
+                """
+                def foo(
+                    a: int, /, b: str, c: int = ..., *, d: str = ..., e: int, f: int = ...
+                ) -> int: ...
+                """,
+                """
+                def foo(
+                    a, /, b, c=5, *, d="a", e, f=10
+                ) -> int:
+                    return 1
+                """,
+                """
+                def foo(
+                    a: int, /, b: str, c: int=5, *, d: str="a", e: int, f: int=10
+                ) -> int:
+                    return 1
+                """,
+            ),
+            (
+                """
+                def foo(
+                    a: int, b: int = ..., /, c: int = ..., *, d: str = ..., e: int, f: int = ...
+                ) -> int: ...
+                """,
+                """
+                def foo(
+                    a, b = 5, /, c = 10, *, d = "a", e, f = 20
+                ) -> int:
+                    return 1
+                """,
+                """
+                def foo(
+                    a: int, b: int = 5, /, c: int = 10, *, d: str = "a", e: int, f: int = 20
+                ) -> int:
+                    return 1
+                """,
+            ),
+        )
+    )
+    @unittest.skipIf(sys.version_info < (3, 8), "Unsupported Python version")
+    def test_annotate_functions_py38(self, stub: str, before: str, after: str) -> None:
         context = CodemodContext()
         ApplyTypeAnnotationsVisitor.store_stub_in_context(
             context, parse_module(textwrap.dedent(stub.rstrip()))
