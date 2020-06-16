@@ -16,13 +16,10 @@ from libcst.metadata import QualifiedName, QualifiedNameProvider, QualifiedNameS
 
 class RenameCommand(VisitorBasedCodemodCommand):
     """
-    Rename all instances of a variable or import.
+    Rename all instances of a local or imported object.
     """
 
-    DESCRIPTION: str = (
-        "Rename all instances of a variable or import. "
-        + "The existing import may not be removed and RenameCommand needs more work to be perfect."
-    )
+    DESCRIPTION: str = "Rename all instances of a local or imported object."
 
     METADATA_DEPENDENCIES = (QualifiedNameProvider,)
 
