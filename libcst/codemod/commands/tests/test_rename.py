@@ -113,25 +113,25 @@ class TestRenameCommand(CodemodTest):
 
     def test_rename_module(self) -> None:
         before = """
-            from a import b
+            from A import B
 
-            class Foo(b):
+            class Foo(B.some_class):
                 pass
         """
         after = """
-            from c import b
+            from C import B
 
-            class Foo(b):
+            class Foo(B.some_class):
                 pass
         """
 
         self.assertCodemod(
             before,
             after,
-            orig_module="a",
-            orig_object="b",
-            new_module="c",
-            new_object="b",
+            orig_module="A",
+            orig_object="B",
+            new_module="C",
+            new_object="B",
         )
 
     def test_rename_local_variable(self) -> None:
