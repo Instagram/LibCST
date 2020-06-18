@@ -43,6 +43,7 @@ class DependentVisitor(CSTVisitor):
         self.test.assertEqual(
             self.get_metadata(ExpressionContextProvider, node, None),
             self.name_to_context[node.value],
+            f"Context doesn't match for Name {node.value}",
         )
 
     def visit_Attribute(self, node: cst.Attribute) -> None:
@@ -148,7 +149,7 @@ class ExpressionContextProviderTest(UnitTest):
             DependentVisitor(
                 test=self,
                 name_to_context={
-                    "a": ExpressionContext.STORE,
+                    "a": ExpressionContext.LOAD,
                     "b": ExpressionContext.LOAD,
                     "c": ExpressionContext.LOAD,
                     "d": ExpressionContext.LOAD,
@@ -226,7 +227,7 @@ class ExpressionContextProviderTest(UnitTest):
             DependentVisitor(
                 test=self,
                 name_to_context={
-                    "a": ExpressionContext.DEL,
+                    "a": ExpressionContext.LOAD,
                     "b": ExpressionContext.LOAD,
                 },
                 subscript_to_context={"a[b]": ExpressionContext.DEL},
@@ -278,7 +279,7 @@ class ExpressionContextProviderTest(UnitTest):
             )
         )
 
-    def test_list_with_assing(self) -> None:
+    def test_list_with_assign(self) -> None:
         wrapper = MetadataWrapper(parse_module("[a] = [b]"))
         wrapper.visit(
             DependentVisitor(
@@ -294,7 +295,7 @@ class ExpressionContextProviderTest(UnitTest):
             )
         )
 
-    def test_nested_list_with_assing(self) -> None:
+    def test_nested_list_with_assign(self) -> None:
         wrapper = MetadataWrapper(parse_module("[[a, b], c] = [[d, e], f]"))
         wrapper.visit(
             DependentVisitor(
@@ -313,6 +314,21 @@ class ExpressionContextProviderTest(UnitTest):
                     "[d, e]": ExpressionContext.LOAD,
                     "[[d, e], f]": ExpressionContext.LOAD,
                 },
+            )
+        )
+
+    def test_expressions_with_assign(self) -> None:
+        wrapper = MetadataWrapper(parse_module("f(a)[b] = c"))
+        wrapper.visit(
+            DependentVisitor(
+                test=self,
+                name_to_context={
+                    "a": ExpressionContext.LOAD,
+                    "b": ExpressionContext.LOAD,
+                    "c": ExpressionContext.LOAD,
+                    "f": ExpressionContext.LOAD,
+                },
+                subscript_to_context={"f(a)[b]": ExpressionContext.STORE},
             )
         )
 

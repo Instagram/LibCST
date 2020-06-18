@@ -133,7 +133,9 @@ class ExpressionContextVisitor(cst.CSTVisitor):
 
     def visit_Subscript(self, node: cst.Subscript) -> bool:
         self.provider.set_metadata(node, self.context)
-        node.value.visit(self)
+        node.value.visit(
+            ExpressionContextVisitor(self.provider, ExpressionContext.LOAD)
+        )
         slice = node.slice
         if isinstance(slice, Sequence):
             for sli in slice:

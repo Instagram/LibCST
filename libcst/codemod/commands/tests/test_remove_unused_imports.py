@@ -76,3 +76,10 @@ class RemoveUnusedImportsCommandTest(CodemodTest):
         """
 
         self.assertCodemod(before, after)
+
+    def test_access_in_assignment(self) -> None:
+        before = """
+            from a import b
+            b(0)[x] = False
+        """
+        self.assertCodemod(before, before)
