@@ -265,6 +265,29 @@ class TestRenameCommand(CodemodTest):
             new_object="CstNode",
         )
 
+    def test_no_removal_of_import_from_in_use_2(self) -> None:
+        before = """
+            from a import m
+
+            class Foo(m.CstNode):
+                bar: m.Attribute
+        """
+        after = """
+            from a import m
+            import blah
+
+            class Foo(blah.CstNode):
+                bar: m.Attribute
+        """
+        self.assertCodemod(
+            before,
+            after,
+            orig_module="a.m",
+            orig_object="CstNode",
+            new_module="blah",
+            new_object="CstNode",
+        )
+
     def test_other_unused_imports_untouched(self) -> None:
         before = """
             import a
