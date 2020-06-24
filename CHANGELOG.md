@@ -1,3 +1,19 @@
+# 0.3.7 - 2020-06-24
+
+## Added
+ - Added `RenameCommand` to rename all instances of a local or imported object to a specified new name. [#308](https://github.com/Instagram/LibCST/pull/308)
+
+## Updated
+ - Upgraded Codecov dev dependency to 2.1.4. [#311](https://github.com/Instagram/LibCST/pull/311)
+ - Enabled Pyre `strict` mode by default. [#313](https://github.com/Instagram/LibCST/pull/313)
+
+## Fixed
+ - Fixed `ImportError` under Python 3.9. [#306](https://github.com/Instagram/LibCST/pull/306)
+ - Fixed `stdout` being plugged into successfully codemod-ed files. [#309](https://github.com/Instagram/LibCST/pull/309)
+ - Fixed `QualifiedName` retrieval for names with repeated substrings. [#312](https://github.com/Instagram/LibCST/pull/312)
+ - Fixed default values of keyword-only and positional-only arguments in `ApplyTypeAnnotationsVisitor`. [#314](https://github.com/Instagram/LibCST/pull/314)
+ - Fixed `ExpressionContextProvider` by giving subscript values a `LOAD`context. [#319](https://github.com/Instagram/LibCST/pull/319)
+
 # 0.3.6 - 2020-05-27
 
 ## Added
