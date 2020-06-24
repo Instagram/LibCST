@@ -55,8 +55,9 @@ class RenameCommand(VisitorBasedCodemodCommand):
             dest="new_name",
             required=True,
             help=(
-                "Full dotted name of replacement object. You may provide a colon-delimited name to specify how you want the new import to be structured."
-                + "\nEg: `foo.bar:baz` will be translated to 'from foo.bar import baz'."
+                "Full dotted name of replacement object. You may provide a single-colon-delimited name to specify how you want the new import to be structured."
+                + "\nEg: `foo:bar.baz` will be translated to `from foo import bar`."
+                + "\nIf no ':' character is provided, the import statement will default to `from foo.bar import baz` for a `new_name` value of `foo.bar.baz`."
             ),
         )
 
@@ -66,9 +67,9 @@ class RenameCommand(VisitorBasedCodemodCommand):
         new_module, has_colon, new_mod_or_obj = new_name.rpartition(":")
         # Exit early if improperly formatted args.
         if ":" in new_module:
-            raise Exception("Error: `new_name` should contain at most one colon.")
+            raise ValueError("Error: `new_name` should contain at most one colon.")
         if ":" in old_name:
-            raise Exception("Error: `old_name` should not contain any colons.")
+            raise ValueError("Error: `old_name` should not contain any colons.")
 
         if not has_colon or not new_module:
             new_module, _, new_mod_or_obj = new_name.rpartition(".")

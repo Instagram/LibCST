@@ -11,8 +11,6 @@ from libcst.codemod.commands.rename import RenameCommand
 
 class TestRenameCommand(CodemodTest):
 
-    ONCALL_SHORTNAME = "instagram_server_framework"
-
     TRANSFORM = RenameCommand
 
     def test_rename_name(self) -> None:
