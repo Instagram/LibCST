@@ -5,13 +5,31 @@
 #
 # pyre-strict
 import argparse
-from typing import Sequence, Set, Union
+from typing import Callable, Optional, Sequence, Set, Tuple, Union
 
 import libcst as cst
 from libcst.codemod import CodemodContext, VisitorBasedCodemodCommand
 from libcst.codemod.visitors import AddImportsVisitor, RemoveImportsVisitor
 from libcst.helpers import get_full_name_for_node
 from libcst.metadata import QualifiedNameProvider
+
+
+def leave_import_decorator(
+    method: Callable[..., Union[cst.Import, cst.ImportFrom]]
+) -> Callable[..., Union[cst.Import, cst.ImportFrom]]:
+    # We want to record any 'as name' that is relevant but only after we leave the corresponding Import/ImportFrom node as we don't want the 'as name'
+    # to interfere with children 'Name' and 'Attribute' nodes.
+    def wrapper(
+        self: VisitorBasedCodemodCommand,
+        original_node: Union[cst.Import, cst.ImportFrom],
+        updated_node: Union[cst.Import, cst.ImportFrom],
+    ) -> Union[cst.Import, cst.ImportFrom]:
+        updated_node = method(self, original_node, updated_node)
+        if original_node != updated_node:
+            getattr(self, "record_asname")(original_node)
+        return updated_node
+
+    return wrapper
 
 
 class RenameCommand(VisitorBasedCodemodCommand):
@@ -53,6 +71,8 @@ class RenameCommand(VisitorBasedCodemodCommand):
         self.old_mod_or_obj: str = old_mod_or_obj
         self.new_mod_or_obj: str = new_mod_or_obj
 
+        self.as_name: Optional[Tuple[str, str]] = None
+
         self.scheduled_removals: Set[cst.CSTNode] = set()
         self.bypass_imports = False
         self.schedule_import = False
@@ -65,13 +85,11 @@ class RenameCommand(VisitorBasedCodemodCommand):
                 # If the import statement is exactly equivalent to the old name, it will be taken care of in `leave_Name` or `leave_Attribute`.
                 if alias_name == self.old_name:
                     self.bypass_imports = True
-                # If the import is a parent module of `self.old_name`, it will be renamed in `leave_Import`.
-                elif self.old_name.startswith(alias_name + "."):
-                    pass
                 # If we are renaming a top-level module of the import, we know that the rename will be taken care of in `leave_Name` or `leave_Attribute`.
                 elif alias_name.startswith(self.old_name + "."):
                     self.bypass_imports = True
 
+    @leave_import_decorator
     def leave_Import(
         self, original_node: cst.Import, updated_node: cst.Import
     ) -> cst.Import:
@@ -114,14 +132,6 @@ class RenameCommand(VisitorBasedCodemodCommand):
             else:
                 new_names.append(import_alias)
 
-        # Finally, we need to record the 'as' name using the original node.
-        for import_alias in original_node.names:
-            alias_name = get_full_name_for_node(import_alias.name)
-            if alias_name is not None:
-                if alias_name == self.old_name or self.old_name.startswith(
-                    alias_name + "."
-                ):
-                    self.record_asname(import_alias, alias_name)
         return updated_node.with_changes(names=new_names)
 
     def visit_ImportFrom(self, node: cst.ImportFrom) -> None:
@@ -131,17 +141,14 @@ class RenameCommand(VisitorBasedCodemodCommand):
         imported_module_name = get_full_name_for_node(module)
         if imported_module_name is None:
             return
-
         if imported_module_name == self.old_name:
             # If the imported module is exactly equivalent to the old name, it will be taken care of in `leave_Name` or `leave_Attribute`.
             self.bypass_imports = True
-        elif self.old_name.startswith(imported_module_name + "."):
-            # If the imported module is a parent module of `self.old_name`, it will be renamed in `leave_ImportFrom`.
-            pass
         elif imported_module_name.startswith(self.old_name + "."):
             # If we are renaming a parent module of the current module, we know that the rename will be taken care of in `leave_Name` or `leave_Attribute`.
             self.bypass_imports = True
 
+    @leave_import_decorator
     def leave_ImportFrom(
         self, original_node: cst.ImportFrom, updated_node: cst.ImportFrom
     ) -> cst.ImportFrom:
@@ -167,8 +174,6 @@ class RenameCommand(VisitorBasedCodemodCommand):
                         )
                         replacement_obj = self.gen_replacement(alias_name)
 
-                        # Record the 'as' name after we finish generating the new names for the import.
-                        self.record_asname(import_alias, alias_name)
                         new_import_alias_name: cst.BaseExpression = cst.parse_expression(
                             replacement_obj
                         )
@@ -275,6 +280,15 @@ class RenameCommand(VisitorBasedCodemodCommand):
         return updated_node
 
     def gen_replacement(self, original_name: str) -> str:
+        module_as_name = self.as_name
+        if module_as_name is not None:
+            if original_name == module_as_name[0]:
+                original_name = module_as_name[1]
+            elif original_name.startswith(module_as_name[0] + "."):
+                original_name = original_name.replace(
+                    module_as_name[0] + ".", module_as_name[1] + ".", 1
+                )
+
         if original_name == self.old_mod_or_obj:
             return self.new_mod_or_obj
         elif original_name == ".".join([self.old_module, self.old_mod_or_obj]):
@@ -287,12 +301,34 @@ class RenameCommand(VisitorBasedCodemodCommand):
     def gen_replacement_module(self, original_module: str) -> str:
         return self.new_module if original_module == self.old_module else ""
 
-    def record_asname(self, import_alias: cst.ImportAlias, import_name: str) -> None:
-        # Record the import's `as` name if it has one, and set the corresponding attribute to it.
-        as_name = import_alias.asname
-        name = as_name.name if as_name is not None else None
-        if name is not None and isinstance(name, cst.Name):
-            if import_name == self.old_mod_or_obj:
-                self.old_mod_or_obj = name.value
-            elif import_name == self.old_module:
-                self.old_module = name.value
+    def record_asname(self, original_node: Union[cst.Import, cst.ImportFrom]) -> None:
+        # Record the import's `as` name if it has one, and set the attribute mapping.
+        names = original_node.names
+        if not isinstance(names, Sequence):
+            return
+        for import_alias in names:
+            alias_name = get_full_name_for_node(import_alias.name)
+            if isinstance(original_node, cst.ImportFrom):
+                module = original_node.module
+                if module is None:
+                    return
+                module_name = get_full_name_for_node(module)
+                if module_name is None:
+                    return
+                qual_name = f"{module_name}.{alias_name}"
+            else:
+                qual_name = alias_name
+            if qual_name is not None and alias_name is not None:
+                if qual_name == self.old_name or self.old_name.startswith(
+                    qual_name + "."
+                ):
+                    as_name_optional = import_alias.asname
+                    as_name_node = (
+                        as_name_optional.name if as_name_optional is not None else None
+                    )
+                    if as_name_node is not None and isinstance(
+                        as_name_node, (cst.Name, cst.Attribute)
+                    ):
+                        full_as_name = get_full_name_for_node(as_name_node)
+                        if full_as_name is not None:
+                            self.as_name = (full_as_name, alias_name)

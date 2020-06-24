@@ -411,6 +411,21 @@ class TestRenameCommand(CodemodTest):
         """
         self.assertCodemod(before, after, old_name="a.b.c.d.e.f", new_name="g.h.i.j")
 
+    def test_complex_module_rename_with_asname(self) -> None:
+        before = """
+            from a.b.c import d as ddd
+
+            class Foo(ddd.e.f):
+                pass
+        """
+        after = """
+            from g.h.i import j
+
+            class Foo(j):
+                pass
+        """
+        self.assertCodemod(before, after, old_name="a.b.c.d.e.f", new_name="g.h.i.j")
+
     def test_names_with_repeated_substrings(self) -> None:
         before = """
             from aa import aaaa
