@@ -540,3 +540,49 @@ class TestRenameCommand(CodemodTest):
                 pass
         """
         self.assertCodemod(before, after, old_name="a", new_name="z")
+
+    def test_input_with_colon_sep(self) -> None:
+        before = """
+            from a.b.c import d
+
+            class Foo(d.e.f):
+                pass
+        """
+        after = """
+            from g.h import i
+
+            class Foo(i.j):
+                pass
+        """
+        self.assertCodemod(before, after, old_name="a.b.c.d.e.f", new_name="g.h:i.j")
+
+    def test_input_with_colon_sep_at_the_end(self) -> None:
+        before = """
+            from a.b.c import d
+
+            class Foo(d.e):
+                pass
+        """
+        after = """
+            import g.h.i.j
+
+            class Foo(g.h.i.j.e):
+                pass
+        """
+        self.assertCodemod(before, after, old_name="a.b.c.d", new_name="g.h.i.j:")
+
+    def test_input_with_colon_sep_at_the_front(self) -> None:
+        # This case should treat it as if no colon separator.
+        before = """
+            from a.b.c import d
+
+            class Foo(d.e):
+                pass
+        """
+        after = """
+            from g.h.i import j
+
+            class Foo(j.e):
+                pass
+        """
+        self.assertCodemod(before, after, old_name="a.b.c.d", new_name=":g.h.i.j")
