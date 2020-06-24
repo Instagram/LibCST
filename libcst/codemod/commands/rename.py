@@ -5,7 +5,7 @@
 #
 # pyre-strict
 import argparse
-from typing import Dict, Sequence, Set, Union
+from typing import Sequence, Set, Union
 
 import libcst as cst
 from libcst.codemod import CodemodContext, VisitorBasedCodemodCommand
@@ -53,13 +53,6 @@ class RenameCommand(VisitorBasedCodemodCommand):
         self.old_mod_or_obj: str = old_mod_or_obj
         self.new_mod_or_obj: str = new_mod_or_obj
 
-        # Mapping for easy lookup later.
-        self.equivalent_mod_or_objs: Dict[str, str] = {
-            self.old_mod_or_obj: self.new_mod_or_obj
-        }
-
-        self.equivalent_modules: Dict[str, str] = {self.old_module: self.new_module}
-
         self.scheduled_removals: Set[cst.CSTNode] = set()
         self.bypass_imports = False
         self.schedule_import = False
@@ -71,11 +64,10 @@ class RenameCommand(VisitorBasedCodemodCommand):
 
                 # If the import statement is exactly equivalent to the old name, it will be taken care of in `leave_Name` or `leave_Attribute`.
                 if alias_name == self.old_name:
-                    self.record_asname(import_alias, alias_name)
                     self.bypass_imports = True
                 # If the import is a parent module of `self.old_name`, it will be renamed in `leave_Import`.
                 elif self.old_name.startswith(alias_name + "."):
-                    self.record_asname(import_alias, alias_name)
+                    pass
                 # If we are renaming a top-level module of the import, we know that the rename will be taken care of in `leave_Name` or `leave_Attribute`.
                 elif alias_name.startswith(self.old_name + "."):
                     self.bypass_imports = True
@@ -89,6 +81,7 @@ class RenameCommand(VisitorBasedCodemodCommand):
             import_alias_full_name = get_full_name_for_node(import_alias_name)
             if import_alias_full_name is None:
                 raise Exception("Could not parse full name for ImportAlias.name node.")
+
             if isinstance(import_alias_name, cst.Name) and self.old_name.startswith(
                 import_alias_full_name + "."
             ):
@@ -120,6 +113,15 @@ class RenameCommand(VisitorBasedCodemodCommand):
                 self.bypass_imports = True
             else:
                 new_names.append(import_alias)
+
+        # Finally, we need to record the 'as' name using the original node.
+        for import_alias in original_node.names:
+            alias_name = get_full_name_for_node(import_alias.name)
+            if alias_name is not None:
+                if alias_name == self.old_name or self.old_name.startswith(
+                    alias_name + "."
+                ):
+                    self.record_asname(import_alias, alias_name)
         return updated_node.with_changes(names=new_names)
 
     def visit_ImportFrom(self, node: cst.ImportFrom) -> None:
@@ -159,12 +161,14 @@ class RenameCommand(VisitorBasedCodemodCommand):
                 if alias_name is not None:
                     qual_name = f"{imported_module_name}.{alias_name}"
                     if self.old_name == qual_name:
-                        self.record_asname(import_alias, alias_name)
 
                         replacement_module = self.gen_replacement_module(
                             imported_module_name
                         )
                         replacement_obj = self.gen_replacement(alias_name)
+
+                        # Record the 'as' name after we finish generating the new names for the import.
+                        self.record_asname(import_alias, alias_name)
                         new_import_alias_name: cst.BaseExpression = cst.parse_expression(
                             replacement_obj
                         )
@@ -193,10 +197,10 @@ class RenameCommand(VisitorBasedCodemodCommand):
                         # and if the module is the same, add an extra alias, if not, schedule a whole new import.
                         new_names.append(import_alias)
                         self.scheduled_removals.add(original_node)
-                        if imported_module_name in self.equivalent_modules:
-                            new_module_name = self.gen_replacement_module(
-                                imported_module_name
-                            )
+                        new_module_name = self.gen_replacement_module(
+                            imported_module_name
+                        )
+                        if new_module_name:
                             if new_module_name == imported_module_name:
                                 new_names.append(
                                     cst.ImportAlias(
@@ -271,35 +275,24 @@ class RenameCommand(VisitorBasedCodemodCommand):
         return updated_node
 
     def gen_replacement(self, original_name: str) -> str:
-        index = original_name.rfind(".")
-        parts = (
-            (original_name[: index + 1], original_name[index + 1 :])
-            if index > -1
-            else (original_name,)
-        )
-        replacement_parts = []
-        for part in parts:
-            if part in self.equivalent_mod_or_objs:
-                replacement_parts.append(self.equivalent_mod_or_objs[part])
-            elif part.rstrip(".") in self.equivalent_modules:
-                replacement_parts.append(self.equivalent_modules[part.rstrip(".")])
-                replacement_parts.append(".")
-
-        return "".join(replacement_parts).rstrip(".")
+        if original_name == self.old_mod_or_obj:
+            return self.new_mod_or_obj
+        elif original_name == ".".join([self.old_module, self.old_mod_or_obj]):
+            return self.new_name
+        elif original_name.endswith("." + self.old_mod_or_obj):
+            return self.new_mod_or_obj
+        else:
+            return self.gen_replacement_module(original_name)
 
     def gen_replacement_module(self, original_module: str) -> str:
-        return self.equivalent_modules.get(original_module, "")
+        return self.new_module if original_module == self.old_module else ""
 
     def record_asname(self, import_alias: cst.ImportAlias, import_name: str) -> None:
-        # Record the import's `as` name if it has one, and map it to the equivalent new name.
+        # Record the import's `as` name if it has one, and set the corresponding attribute to it.
         as_name = import_alias.asname
         name = as_name.name if as_name is not None else None
         if name is not None and isinstance(name, cst.Name):
-            if import_name in self.equivalent_mod_or_objs:
-                self.equivalent_mod_or_objs[name.value] = self.equivalent_mod_or_objs[
-                    import_name
-                ]
-            elif import_name in self.equivalent_modules:
-                self.equivalent_modules[name.value] = self.equivalent_modules[
-                    import_name
-                ]
+            if import_name == self.old_mod_or_obj:
+                self.old_mod_or_obj = name.value
+            elif import_name == self.old_module:
+                self.old_module = name.value
