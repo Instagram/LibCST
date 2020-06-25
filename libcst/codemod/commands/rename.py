@@ -126,7 +126,7 @@ class RenameCommand(VisitorBasedCodemodCommand):
             if isinstance(import_alias_name, cst.Name) and self.old_name.startswith(
                 import_alias_full_name + "."
             ):
-                # Might, be in use elsewhere in the code, so schedule a potential removal, and add another alias
+                # Might, be in use elsewhere in the code, so schedule a potential removal, and add another alias.
                 new_names.append(import_alias)
                 self.scheduled_removals.add(original_node)
                 new_names.append(
@@ -166,7 +166,7 @@ class RenameCommand(VisitorBasedCodemodCommand):
             self.old_name + "."
         ):
             # If the imported module is exactly equivalent to the old name or we are renaming a parent module of the current module,
-            # it will be taken care of in `leave_Name` or `leave_Attribute` when visiting the Name and Attribute children of this ImportFrom.
+            # it will be taken care of in `leave_Name` or `leave_Attribute` when visiting the children of this ImportFrom.
             self.bypass_import = True
 
     @leave_import_decorator
@@ -195,8 +195,8 @@ class RenameCommand(VisitorBasedCodemodCommand):
                         )
                         replacement_obj = self.gen_replacement(alias_name)
                         if not replacement_obj:
-                            # The user has requested an `import` statement rather than an `import ... from`.
-                            # In the meantime, schedule for potential removal.
+                            # The user has requested an `import` statement rather than an `from ... import`.
+                            # This will be taken care of in `leave_Module`, in the meantime, schedule for potential removal.
                             new_names.append(import_alias)
                             self.scheduled_removals.add(original_node)
                             continue
@@ -217,11 +217,10 @@ class RenameCommand(VisitorBasedCodemodCommand):
                             new_names.append(
                                 cst.ImportAlias(name=new_import_alias_name)
                             )
-                    elif self.old_name.startswith(qual_name + "."):
-                        # This import might be in use elsewhere in the code, so schedule a potential removal.
-                        new_names.append(import_alias)
-                        self.scheduled_removals.add(original_node)
                     else:
+                        if self.old_name.startswith(qual_name + "."):
+                            # This import might be in use elsewhere in the code, so schedule a potential removal.
+                            self.scheduled_removals.add(original_node)
                         new_names.append(import_alias)
 
             return updated_node.with_changes(names=new_names)
