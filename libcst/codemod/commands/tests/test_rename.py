@@ -584,3 +584,10 @@ class TestRenameCommand(CodemodTest):
                 pass
         """
         self.assertCodemod(before, after, old_name="a.b.c.d", new_name=":g.h.i.j")
+
+    def test_no_change_because_no_match_was_found(self) -> None:
+        before = """
+            from foo import bar
+            bar(42)
+        """
+        self.assertCodemod(before, before, old_name="baz.bar", new_name="qux.bar")

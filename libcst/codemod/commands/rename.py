@@ -17,16 +17,16 @@ from libcst.metadata import QualifiedNameProvider
 def leave_import_decorator(
     method: Callable[..., Union[cst.Import, cst.ImportFrom]]
 ) -> Callable[..., Union[cst.Import, cst.ImportFrom]]:
-    # We want to record any 'as name' that is relevant but only after we leave the corresponding Import/ImportFrom node as we don't want the 'as name'
-    # to interfere with children 'Name' and 'Attribute' nodes.
+    # We want to record any 'as name' that is relevant but only after we leave the corresponding Import/ImportFrom node since
+    # we don't want the 'as name' to interfere with children 'Name' and 'Attribute' nodes.
     def wrapper(
-        self: VisitorBasedCodemodCommand,
+        self: "RenameCommand",
         original_node: Union[cst.Import, cst.ImportFrom],
         updated_node: Union[cst.Import, cst.ImportFrom],
     ) -> Union[cst.Import, cst.ImportFrom]:
         updated_node = method(self, original_node, updated_node)
         if original_node != updated_node:
-            getattr(self, "record_asname")(original_node)
+            self.record_asname(original_node)
         return updated_node
 
     return wrapper
@@ -57,7 +57,8 @@ class RenameCommand(VisitorBasedCodemodCommand):
             help=(
                 "Full dotted name of replacement object. You may provide a single-colon-delimited name to specify how you want the new import to be structured."
                 + "\nEg: `foo:bar.baz` will be translated to `from foo import bar`."
-                + "\nIf no ':' character is provided, the import statement will default to `from foo.bar import baz` for a `new_name` value of `foo.bar.baz`."
+                + "\nIf no ':' character is provided, the import statement will default to `from foo.bar import baz` for a `new_name` value of `foo.bar.baz`"
+                + " or simply replace the old import on the spot if the old import is an exact match."
             ),
         )
 
@@ -78,21 +79,27 @@ class RenameCommand(VisitorBasedCodemodCommand):
         self.new_module: str = new_module.replace(":", ".").strip(".")
         self.new_mod_or_obj: str = new_mod_or_obj
 
+        # If `new_name` contains a single colon at the end, then we assume the user wants the import
+        # to be structured as 'import new_name'. So both self.new_mod_or_obj and self.old_mod_or_obj
+        # will be empty in this case.
         if not self.new_mod_or_obj:
             old_module = old_name
             old_mod_or_obj = ""
         else:
             old_module, _, old_mod_or_obj = old_name.rpartition(".")
 
-        self.old_name: str = old_name.replace(":", ".")
-        self.old_module: str = old_module.replace(":", ".")
-        self.old_mod_or_obj: str = old_mod_or_obj.replace(":", ".")
+        self.old_name: str = old_name
+        self.old_module: str = old_module
+        self.old_mod_or_obj: str = old_mod_or_obj
 
         self.as_name: Optional[Tuple[str, str]] = None
 
+        # A set of nodes that have been renamed to help with the cleanup of now potentially unused
+        # imports, during import cleanup in `leave_Module`.
         self.scheduled_removals: Set[cst.CSTNode] = set()
-        self.bypass_imports = False
-        self.schedule_import = False
+        # If an import has been renamed while inside an `Import` or `ImportFrom` node, we want to flag
+        # this so that we do not end up with two of the same import.
+        self.bypass_import = False
 
     def visit_Import(self, node: cst.Import) -> None:
         for import_alias in node.names:
@@ -103,7 +110,7 @@ class RenameCommand(VisitorBasedCodemodCommand):
                 ):
                     # If the import statement is exactly equivalent to the old name, or we are renaming a top-level module of the import,
                     # it will be taken care of in `leave_Name` or `leave_Attribute` when visiting the Name and Attribute children of this Import.
-                    self.bypass_imports = True
+                    self.bypass_import = True
 
     @leave_import_decorator
     def leave_Import(
@@ -129,7 +136,7 @@ class RenameCommand(VisitorBasedCodemodCommand):
                         )
                     )
                 )
-                self.bypass_imports = True
+                self.bypass_import = True
             elif isinstance(
                 import_alias_name, cst.Attribute
             ) and self.old_name.startswith(import_alias_full_name + "."):
@@ -142,7 +149,7 @@ class RenameCommand(VisitorBasedCodemodCommand):
                     self.gen_replacement_module(import_alias_full_name)
                 )
                 new_names.append(cst.ImportAlias(name=new_name_node))
-                self.bypass_imports = True
+                self.bypass_import = True
             else:
                 new_names.append(import_alias)
 
@@ -160,7 +167,7 @@ class RenameCommand(VisitorBasedCodemodCommand):
         ):
             # If the imported module is exactly equivalent to the old name or we are renaming a parent module of the current module,
             # it will be taken care of in `leave_Name` or `leave_Attribute` when visiting the Name and Attribute children of this ImportFrom.
-            self.bypass_imports = True
+            self.bypass_import = True
 
     @leave_import_decorator
     def leave_ImportFrom(
@@ -188,10 +195,9 @@ class RenameCommand(VisitorBasedCodemodCommand):
                         )
                         replacement_obj = self.gen_replacement(alias_name)
                         if not replacement_obj:
-                            # The use has requested an `import` statement rather than an `import ... from`.
+                            # The user has requested an `import` statement rather than an `import ... from`.
                             # In the meantime, schedule for potential removal.
                             new_names.append(import_alias)
-                            self.schedule_import = True
                             self.scheduled_removals.add(original_node)
                             continue
 
@@ -200,25 +206,21 @@ class RenameCommand(VisitorBasedCodemodCommand):
                         ] = self.gen_name_or_attr_node(replacement_obj)
                         # Rename on the spot only if this is the only imported name under the module.
                         if len(names) == 1:
-                            self.bypass_imports = True
+                            self.bypass_import = True
                             return updated_node.with_changes(
                                 module=cst.parse_expression(replacement_module),
                                 names=(cst.ImportAlias(name=new_import_alias_name),),
                             )
                         # Or if the module name is to stay the same.
                         elif replacement_module == imported_module_name:
-                            self.bypass_imports = True
+                            self.bypass_import = True
                             new_names.append(
                                 cst.ImportAlias(name=new_import_alias_name)
                             )
-                        else:
-                            # Otherwise, don't append this import and schedule a new import.
-                            self.schedule_import = True
                     elif self.old_name.startswith(qual_name + "."):
-                        # This import might be in use elsewhere in the code, so schedule a potential removal, and schedule a whole new import.
+                        # This import might be in use elsewhere in the code, so schedule a potential removal.
                         new_names.append(import_alias)
                         self.scheduled_removals.add(original_node)
-                        self.schedule_import = True
                     else:
                         new_names.append(import_alias)
 
@@ -230,12 +232,18 @@ class RenameCommand(VisitorBasedCodemodCommand):
     ) -> Union[cst.Attribute, cst.Name]:
         full_name_for_node: str = original_node.value
         full_replacement_name = self.gen_replacement(full_name_for_node)
+
+        # If a node has no associated QualifiedName, we are still inside an import statement.
+        inside_import_statement: bool = not self.get_metadata(
+            QualifiedNameProvider, original_node, set()
+        )
         if QualifiedNameProvider.has_name(self, original_node, self.old_name) or (
-            not self.get_metadata(QualifiedNameProvider, original_node, set())
-            and full_replacement_name == self.new_name
+            inside_import_statement and full_replacement_name == self.new_name
         ):
             if not full_replacement_name:
                 full_replacement_name = self.new_name
+            if not inside_import_statement:
+                self.scheduled_removals.add(original_node)
             return self.gen_name_or_attr_node(full_replacement_name)
 
         return updated_node
@@ -247,13 +255,17 @@ class RenameCommand(VisitorBasedCodemodCommand):
         if full_name_for_node is None:
             raise Exception("Could not parse full name for Attribute node.")
         full_replacement_name = self.gen_replacement(full_name_for_node)
+
+        # If a node has no associated QualifiedName, we are still inside an import statement.
+        inside_import_statement: bool = not self.get_metadata(
+            QualifiedNameProvider, original_node, set()
+        )
         if QualifiedNameProvider.has_name(self, original_node, self.old_name,) or (
-            not self.get_metadata(QualifiedNameProvider, original_node, set())
-            and full_replacement_name == self.new_name
+            inside_import_statement and full_replacement_name == self.new_name
         ):
             new_value, new_attr = self.new_module, self.new_mod_or_obj
-            self.scheduled_removals.add(original_node.value)
-            self.schedule_import = True
+            if not inside_import_statement:
+                self.scheduled_removals.add(original_node.value)
             if full_replacement_name == self.new_name:
                 return updated_node.with_changes(
                     value=cst.parse_expression(new_value),
@@ -271,8 +283,10 @@ class RenameCommand(VisitorBasedCodemodCommand):
             RemoveImportsVisitor.remove_unused_import_by_node(
                 self.context, removal_node
             )
-        if not self.bypass_imports and self.schedule_import:
-            if self.new_module is not None:
+        # If bypass_import is False, we know that no import statements were directly renamed, and the fact
+        # that we have any `self.scheduled_removals` tells us we encountered a matching `old_name` in the code.
+        if not self.bypass_import and self.scheduled_removals:
+            if self.new_module:
                 new_obj: Optional[str] = self.new_mod_or_obj.split(".")[
                     0
                 ] if self.new_mod_or_obj else None
