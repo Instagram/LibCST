@@ -46,7 +46,7 @@ class Access:
        This scope analysis only analyzes access via a :class:`~libcst.Name` or  a :class:`~libcst.Name`
        node embedded in other node like :class:`~libcst.Call` or :class:`~libcst.Attribute`.
        It doesn't support type annontation using :class:`~libcst.SimpleString` literal for forward
-       references. E.g. in this example, the ``"Tree"`` isn't parsed as as an access::
+       references. E.g. in this example, the ``"Tree"`` isn't parsed as an access::
 
            class Tree:
                def __new__(cls) -> "Tree":
