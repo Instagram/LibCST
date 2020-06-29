@@ -669,7 +669,7 @@ class GreaterThanEqual(BaseCompOp, _BaseOneTokenOp):
 
 @add_slots
 @dataclass(frozen=True)
-class NotEqual(BaseCompOp):
+class NotEqual(BaseCompOp, _BaseOneTokenOp):
     """
     A comparison operator that can be used in a :class:`Comparison` expression.
 
@@ -691,7 +691,7 @@ class NotEqual(BaseCompOp):
         if self.value not in ["!=", "<>"]:
             raise CSTValidationError("Invalid value for NotEqual node.")
 
-    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "BaseCompOp":
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "NotEqual":
         return self.__class__(
             whitespace_before=visit_required(
                 self, "whitespace_before", self.whitespace_before, visitor
@@ -702,10 +702,8 @@ class NotEqual(BaseCompOp):
             ),
         )
 
-    def _codegen_impl(self, state: CodegenState) -> None:
-        self.whitespace_before._codegen(state)
-        state.add_token(self.value)
-        self.whitespace_after._codegen(state)
+    def _get_token(self) -> str:
+        return self.value
 
 
 @add_slots
