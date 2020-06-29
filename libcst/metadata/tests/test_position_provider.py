@@ -9,7 +9,7 @@ from typing import Tuple
 import libcst as cst
 from libcst import parse_module
 from libcst._batched_visitor import BatchableCSTVisitor
-from libcst._visitors import CSTTransformer
+from libcst._visitors import CSTVisitor
 from libcst.metadata import (
     CodeRange,
     MetadataWrapper,
@@ -38,7 +38,7 @@ class PositionProviderTest(UnitTest):
         """
         test = self
 
-        class DependentVisitor(CSTTransformer):
+        class DependentVisitor(CSTVisitor):
             METADATA_DEPENDENCIES = (PositionProvider,)
 
             def visit_Pass(self, node: cst.Pass) -> None:
@@ -48,6 +48,26 @@ class PositionProviderTest(UnitTest):
 
         wrapper = MetadataWrapper(parse_module("pass"))
         wrapper.visit(DependentVisitor())
+
+    def test_equal_range(self) -> None:
+        test = self
+        expected_range = CodeRange((1, 4), (1, 6))
+
+        class EqualPositionVisitor(CSTVisitor):
+            METADATA_DEPENDENCIES = (PositionProvider,)
+
+            def visit_Equal(self, node: cst.Equal) -> None:
+                test.assertEqual(
+                    self.get_metadata(PositionProvider, node), expected_range
+                )
+
+            def visit_NotEqual(self, node: cst.NotEqual) -> None:
+                test.assertEqual(
+                    self.get_metadata(PositionProvider, node), expected_range
+                )
+
+        MetadataWrapper(parse_module("var == 1")).visit(EqualPositionVisitor())
+        MetadataWrapper(parse_module("var != 1")).visit(EqualPositionVisitor())
 
     def test_batchable_provider(self) -> None:
         test = self
