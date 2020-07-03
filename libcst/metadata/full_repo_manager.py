@@ -82,6 +82,27 @@ class FullRepoManager:
             if _path == path
         }
 
+    def get_cache_for_provider(self, provider: "ProviderT") -> Mapping[str, object]:
+        """
+        Retrieve cache from a provider for all source files. The provider needs to appear in the ```providers```
+        parameters when constructing :class`~libcst.metadata.FullRepoManager`.
+
+        Returns a mapping of source file path to cache for source file.
+
+        .. code-block:: python
+
+            manager = FullRepoManager(".", {"a.py", "b.py"}, {TypeInferenceProvider})
+            type_inference_cache = manager.get_cache_for_provider(TypeInferenceProvider)
+        """
+        if provider not in self._providers:
+            raise Exception(
+                "The provider needs to be in the providers parameter when constructing FullRepoManager."
+            )
+        # Make sure that the cache is available to us. If the user called
+        # resolve_cache() manually then this is a noop.
+        self.resolve_cache()
+        return self._cache[provider]
+
     def get_metadata_wrapper_for_path(self, path: str) -> MetadataWrapper:
         """
         Create a :class:`~libcst.metadata.MetadataWrapper` given a source file path.

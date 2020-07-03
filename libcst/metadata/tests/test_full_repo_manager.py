@@ -48,3 +48,15 @@ class FullRepoManagerTest(UnitTest):
             "The path needs to be in paths parameter when constructing FullRepoManager for efficient batch processing.",
         ):
             manager.get_metadata_wrapper_for_path(path)
+
+    @patch.object(TypeInferenceProvider, "gen_cache")
+    def test_get_cache_for_provider(self, gen_cache: Mock) -> None:
+        path_prefix = "tests/pyre/simple_class"
+        path = f"{path_prefix}.py"
+        mock_cache = {
+            path: json.loads((Path(REPO_ROOT_DIR) / f"{path_prefix}.json").read_text())
+        }
+        gen_cache.return_value = mock_cache
+        manager = FullRepoManager(REPO_ROOT_DIR, path, [TypeInferenceProvider])
+        type_inference_cache = manager.get_cache_for_provider(TypeInferenceProvider)
+        self.assertEqual(type_inference_cache, mock_cache)
