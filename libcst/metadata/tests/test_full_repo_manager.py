@@ -50,7 +50,7 @@ class FullRepoManagerTest(UnitTest):
             manager.get_metadata_wrapper_for_path(path)
 
     @patch.object(TypeInferenceProvider, "gen_cache")
-    def test_get_cache_for_provider(self, gen_cache: Mock) -> None:
+    def test_get_full_repo_cache(self, gen_cache: Mock) -> None:
         path_prefix = "tests/pyre/simple_class"
         path = f"{path_prefix}.py"
         mock_cache = {
@@ -58,5 +58,5 @@ class FullRepoManagerTest(UnitTest):
         }
         gen_cache.return_value = mock_cache
         manager = FullRepoManager(REPO_ROOT_DIR, path, [TypeInferenceProvider])
-        type_inference_cache = manager.get_cache_for_provider(TypeInferenceProvider)
-        self.assertEqual(type_inference_cache, mock_cache)
+        cache = manager.cache
+        self.assertEqual(cache, {TypeInferenceProvider: mock_cache})
