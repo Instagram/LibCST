@@ -40,6 +40,16 @@ class FullRepoManager:
         self._providers = providers
         self._paths: List[str] = list(paths)
 
+    @property
+    def cache(self) -> Dict["ProviderT", Mapping[str, object]]:
+        """
+        The full repository cache data for all metadata providers passed in the ``providers`` parameter when
+        constructing :class:`~libcst.metadata.FullRepoManager`. Each provider is mapped to a mapping of path to cache.
+        """
+        # Make sure that the cache is available to us. If resolve_cache() was called manually then this is a noop.
+        self.resolve_cache()
+        return self._cache
+
     def resolve_cache(self) -> None:
         """
         Resolve cache for all providers that require it. Normally this is called by
