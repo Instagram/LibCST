@@ -797,3 +797,17 @@ class TestRemoveImportsCodemod(CodemodTest):
             after,
             RemoveImportTransformer(CodemodContext()).transform_module(module).code,
         )
+
+    def test_remove_comma(self) -> None:
+        """
+        Trailing commas should be removed if and only if the last alias is removed.
+        """
+        before = """
+            from m import (a, b,)
+            import x, y
+        """
+        after = """
+            from m import (b,)
+            import x
+        """
+        self.assertCodemod(before, after, [("m", "a", None), ("y", None, None)])

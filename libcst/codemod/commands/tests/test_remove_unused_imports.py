@@ -83,3 +83,10 @@ class RemoveUnusedImportsCommandTest(CodemodTest):
             b(0)[x] = False
         """
         self.assertCodemod(before, before)
+
+    def test_no_formatting_if_no_unused_imports(self) -> None:
+        before = """
+            from m import (a, b,)
+            a(b, 'look at these ugly quotes')
+        """
+        self.assertCodemod(before, before)
