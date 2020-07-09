@@ -343,17 +343,22 @@ class RemoveImportsVisitor(ContextAwareTransformer):
                 names_to_keep.append(import_alias)
                 continue
 
+        # no changes
+        if names_to_keep == original_node.names:
+            return updated_node
+
         # Now, either remove this statement or remove the imports we are
         # deleting from this statement.
         if len(names_to_keep) == 0:
             return cst.RemoveFromParent()
-        else:
+
+        if names_to_keep[-1] != original_node.names[-1]:
             # Remove trailing comma in order to not mess up import statements.
             names_to_keep = [
                 *names_to_keep[:-1],
                 names_to_keep[-1].with_changes(comma=cst.MaybeSentinel.DEFAULT),
             ]
-            return updated_node.with_changes(names=names_to_keep)
+        return updated_node.with_changes(names=names_to_keep)
 
     def leave_ImportFrom(
         self, original_node: cst.ImportFrom, updated_node: cst.ImportFrom
@@ -399,14 +404,19 @@ class RemoveImportsVisitor(ContextAwareTransformer):
                 names_to_keep.append(import_alias)
                 continue
 
+        # no changes
+        if names_to_keep == names:
+            return updated_node
+
         # Now, either remove this statement or remove the imports we are
         # deleting from this statement.
         if len(names_to_keep) == 0:
             return cst.RemoveFromParent()
-        else:
+
+        if names_to_keep[-1] != names[-1]:
             # Remove trailing comma in order to not mess up import statements.
             names_to_keep = [
                 *names_to_keep[:-1],
                 names_to_keep[-1].with_changes(comma=cst.MaybeSentinel.DEFAULT),
             ]
-            return updated_node.with_changes(names=names_to_keep)
+        return updated_node.with_changes(names=names_to_keep)
