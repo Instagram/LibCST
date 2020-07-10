@@ -650,8 +650,7 @@ class TestApplyAnnotationsVisitor(CodemodTest):
 
                 example: Dict[str, Type[foo.Example]] = { "test": foo() }
                 """,
-            )
-
+            ),
         )
     )
     def test_annotate_functions(self, stub: str, before: str, after: str) -> None:

@@ -8,12 +8,13 @@ from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Sequence, Set, Tuple, Union
 
 import libcst as cst
+from libcst import matchers as m
 from libcst.codemod._context import CodemodContext
 from libcst.codemod._visitor import ContextAwareTransformer
 from libcst.codemod.visitors._add_imports import AddImportsVisitor
 from libcst.codemod.visitors._gather_imports import GatherImportsVisitor
 from libcst.helpers import get_full_name_for_node
-from libcst import matchers as m
+
 
 def _get_import_alias_names(import_aliases: Sequence[cst.ImportAlias]) -> Set[str]:
     import_names = set()
@@ -107,7 +108,6 @@ class TypeCollector(cst.CSTVisitor):
                     self.context, module_name, import_name
                 )
 
-
     def _add_annotation_to_imports(
         self, annotation: cst.Attribute
     ) -> Union[cst.Name, cst.Attribute]:
@@ -134,7 +134,10 @@ class TypeCollector(cst.CSTVisitor):
 
     def _handle_Subscript(self, node: cst.Subscript) -> cst.Subscript:
         slice = node.slice
-        if m.matches(node.value, m.Name()) and cst.ensure_type(node.value, cst.Name).value == 'Type':
+        if (
+            m.matches(node.value, m.Name())
+            and cst.ensure_type(node.value, cst.Name).value == "Type"
+        ):
             return node
         if isinstance(slice, list):
             new_slice = []
