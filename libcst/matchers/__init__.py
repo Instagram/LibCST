@@ -5799,10 +5799,10 @@ class FunctionDef(BaseCompoundStatement, BaseStatement, BaseMatcherNode):
         AllOf[SimpleWhitespaceMatchType],
     ] = DoNotCare()
     whitespace_before_params: Union[
-        SimpleWhitespaceMatchType,
+        BaseParenthesizableWhitespaceMatchType,
         DoNotCareSentinel,
-        OneOf[SimpleWhitespaceMatchType],
-        AllOf[SimpleWhitespaceMatchType],
+        OneOf[BaseParenthesizableWhitespaceMatchType],
+        AllOf[BaseParenthesizableWhitespaceMatchType],
     ] = DoNotCare()
     whitespace_before_colon: Union[
         SimpleWhitespaceMatchType,
