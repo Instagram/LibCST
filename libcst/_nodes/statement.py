@@ -906,6 +906,9 @@ class Try(BaseCompoundStatement):
                 "A Try statement must have at least one ExceptHandler in order "
                 + "to have an Else"
             )
+        # Check bare excepts are always at the last position
+        if any(handler.type is None for handler in self.handlers[:-1]):
+            raise CSTValidationError("The bare except: handler must be the last one")
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Try":
         return Try(
@@ -972,6 +975,14 @@ class ImportAlias(CSTNode):
             raise CSTValidationError(
                 "Must use a Name node for AsName name inside ImportAlias."
             )
+        try:
+            self.evaluated_name
+        except Exception as e:
+            if str(e) == "Logic error!":
+                raise CSTValidationError(
+                    "The imported name must be a valid qualified name."
+                )
+            raise e
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "ImportAlias":
         return ImportAlias(
