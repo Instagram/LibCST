@@ -665,6 +665,22 @@ class FunctionDefCreationTest(CSTNodeTest):
                 "code": "* third",
                 "expected_position": CodeRange((1, 0), (1, 7)),
             },
+            {
+                "node": cst.FunctionDef(
+                    name=cst.Name(value="foo",),
+                    params=cst.Parameters(
+                        params=[cst.Param(name=cst.Name(value="param1",),),],
+                    ),
+                    body=cst.IndentedBlock(
+                        body=[cst.SimpleStatementLine(body=[cst.Pass(),],),],
+                    ),
+                    whitespace_before_params=cst.ParenthesizedWhitespace(
+                        last_line=cst.SimpleWhitespace(value="    ",),
+                    ),
+                ),
+                "code": "def foo(\n    param1):\n    pass\n",
+                "expected_position": CodeRange((1, 0), (3, 8)),
+            },
         )
     )
     def test_valid(self, **kwargs: Any) -> None:
