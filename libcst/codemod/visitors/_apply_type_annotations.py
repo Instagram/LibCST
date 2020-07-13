@@ -134,10 +134,7 @@ class TypeCollector(cst.CSTVisitor):
 
     def _handle_Subscript(self, node: cst.Subscript) -> cst.Subscript:
         slice = node.slice
-        if (
-            m.matches(node.value, m.Name())
-            and cst.ensure_type(node.value, cst.Name).value == "Type"
-        ):
+        if m.matches(node.value, m.Name(value="Type")):
             return node
         if isinstance(slice, list):
             new_slice = []
@@ -169,7 +166,7 @@ class TypeCollector(cst.CSTVisitor):
             return cst.Annotation(annotation=attr)
         if isinstance(annotation, cst.Subscript):
             value = annotation.value
-            if isinstance(value, cst.Name) and value.value == "Type":
+            if m.matches(value, m.Name(value="Type")):
                 return returns
             return cst.Annotation(annotation=self._handle_Subscript(annotation))
         else:
