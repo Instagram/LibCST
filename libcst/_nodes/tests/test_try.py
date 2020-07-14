@@ -386,7 +386,7 @@ class TryTest(CSTNodeTest):
                         ),
                     ),
                 ),
-                "expected_re": "The bare except: handler must be the last one",
+                "expected_re": "The bare except: handler must be the last one.",
             },
             {
                 "get_node": lambda: cst.Try(
@@ -401,7 +401,7 @@ class TryTest(CSTNodeTest):
                         ),
                     ),
                 ),
-                "expected_re": "The bare except: handler must be the last one",
+                "expected_re": "The bare except: handler must be the last one.",
             },
         )
     )
