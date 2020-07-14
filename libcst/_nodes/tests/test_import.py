@@ -205,7 +205,7 @@ class ImportCreateTest(CSTNodeTest):
                         )
                     ]
                 ),
-                "expected_re": "imported name must be a valid qualified name",
+                "expected_re": "imported name must be a valid qualified name.",
             },
         )
     )
