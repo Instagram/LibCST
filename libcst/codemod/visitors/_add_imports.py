@@ -248,7 +248,9 @@ class AddImportsVisitor(ContextAwareTransformer):
     ) -> Tuple[
         List[Union[libcst.SimpleStatementLine, libcst.BaseCompoundStatement]],
         List[Union[libcst.SimpleStatementLine, libcst.BaseCompoundStatement]],
+        List[Union[libcst.SimpleStatementLine, libcst.BaseCompoundStatement]],
     ]:
+        statement_before_import_location = 0
         import_add_location = 0
 
         # never insert an import before initial __strict__ flag
@@ -267,14 +269,18 @@ class AddImportsVisitor(ContextAwareTransformer):
                 ]
             ),
         ):
-            import_add_location = 1
+            statement_before_import_location = import_add_location = 1
 
         # This works under the principle that while we might modify node contents,
         # we have yet to modify the number of statements. So we can match on the
         # original tree but break up the statements of the modified tree. If we
         # change this assumption in this visitor, we will have to change this code.
         for i, statement in enumerate(orig_module.body):
-            if isinstance(statement, libcst.SimpleStatementLine):
+            if m.matches(
+                statement, m.SimpleStatementLine(body=[m.Expr(value=m.SimpleString())])
+            ):
+                statement_before_import_location = import_add_location = 1
+            elif isinstance(statement, libcst.SimpleStatementLine):
                 for possible_import in statement.body:
                     for last_import in self.all_imports:
                         if possible_import is last_import:
@@ -282,7 +288,12 @@ class AddImportsVisitor(ContextAwareTransformer):
                             break
 
         return (
-            list(updated_module.body[:import_add_location]),
+            list(updated_module.body[:statement_before_import_location]),
+            list(
+                updated_module.body[
+                    statement_before_import_location:import_add_location
+                ]
+            ),
             list(updated_module.body[import_add_location:]),
         )
 
@@ -325,9 +336,11 @@ class AddImportsVisitor(ContextAwareTransformer):
             return updated_node
 
         # First, find the insertion point for imports
-        statements_before_imports, statements_after_imports = self._split_module(
-            original_node, updated_node
-        )
+        (
+            statements_before_imports,
+            statements_until_add_imports,
+            statements_after_imports,
+        ) = self._split_module(original_node, updated_node)
 
         # Make sure there's at least one empty line before the first non-import
         statements_after_imports = self._insert_empty_line(statements_after_imports)
@@ -348,6 +361,7 @@ class AddImportsVisitor(ContextAwareTransformer):
         # Now, add all of the imports we need!
         return updated_node.with_changes(
             body=(
+                *statements_before_imports,
                 *[
                     parse_statement(
                         f"from {module} import "
@@ -362,7 +376,7 @@ class AddImportsVisitor(ContextAwareTransformer):
                     for module, aliases in module_and_alias_mapping.items()
                     if module == "__future__"
                 ],
-                *statements_before_imports,
+                *statements_until_add_imports,
                 *[
                     parse_statement(
                         f"import {module}", config=updated_node.config_for_parsing
