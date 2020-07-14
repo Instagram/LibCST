@@ -624,6 +624,33 @@ class TestApplyAnnotationsVisitor(CodemodTest):
                   return []
                 """,
             ),
+            (
+                """
+                from typing import Dict
+
+                example: Dict[str, Type[foo.Example]] = ...
+                """,
+                """
+                from typing import Type
+
+                def foo() -> Type[foo.Example]:
+                    class Example:
+                        pass
+                    return Example
+
+                example = { "test": foo() }
+                """,
+                """
+                from typing import Dict, Type
+
+                def foo() -> Type[foo.Example]:
+                    class Example:
+                        pass
+                    return Example
+
+                example: Dict[str, Type[foo.Example]] = { "test": foo() }
+                """,
+            ),
         )
     )
     def test_annotate_functions(self, stub: str, before: str, after: str) -> None:
