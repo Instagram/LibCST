@@ -637,3 +637,24 @@ class TestAddImportsCodemod(CodemodTest):
             [("a", "f", None), ("a", "g", "y"), ("a", "c", None), ("a", "d", "x")],
             context_override=CodemodContext(full_module_name="a.b.foobar"),
         )
+
+    def test_import_in_docstring_module(self) -> None:
+        """
+        The import should be added after module docstring.
+        """
+        before = """
+            '''Docstring.'''
+            import typing
+        """
+        after = """
+            '''Docstring.'''
+            from __future__ import annotations
+            import typing
+        """
+
+        self.assertCodemod(
+            before,
+            after,
+            [("__future__", "annotations", None)],
+            context_override=CodemodContext(full_module_name="a.b.foobar"),
+        )
