@@ -195,6 +195,18 @@ class ImportCreateTest(CSTNodeTest):
                 ),
                 "expected_re": "at least one space",
             },
+            {
+                "get_node": lambda: cst.Import(
+                    names=[
+                        cst.ImportAlias(
+                            name=cst.Attribute(
+                                value=cst.Float(value="0."), attr=cst.Name(value="A")
+                            )
+                        )
+                    ]
+                ),
+                "expected_re": "imported name must be a valid qualified name.",
+            },
         )
     )
     def test_invalid(self, **kwargs: Any) -> None:

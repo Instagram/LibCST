@@ -374,6 +374,35 @@ class TryTest(CSTNodeTest):
                 ),
                 "expected_re": "at least one ExceptHandler in order to have an Else",
             },
+            {
+                "get_node": lambda: cst.Try(
+                    body=cst.SimpleStatementSuite(body=[cst.Pass()]),
+                    handlers=(
+                        cst.ExceptHandler(
+                            body=cst.SimpleStatementSuite(body=[cst.Pass()]),
+                        ),
+                        cst.ExceptHandler(
+                            body=cst.SimpleStatementSuite(body=[cst.Pass()]),
+                        ),
+                    ),
+                ),
+                "expected_re": "The bare except: handler must be the last one.",
+            },
+            {
+                "get_node": lambda: cst.Try(
+                    body=cst.SimpleStatementSuite(body=[cst.Pass()]),
+                    handlers=(
+                        cst.ExceptHandler(
+                            body=cst.SimpleStatementSuite(body=[cst.Pass()]),
+                        ),
+                        cst.ExceptHandler(
+                            body=cst.SimpleStatementSuite(body=[cst.Pass()]),
+                            type=cst.Name("Exception"),
+                        ),
+                    ),
+                ),
+                "expected_re": "The bare except: handler must be the last one.",
+            },
         )
     )
     def test_invalid(self, **kwargs: Any) -> None:
