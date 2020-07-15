@@ -1572,7 +1572,7 @@ class FunctionDef(BaseCompoundStatement):
 
     #: Whitespace after the opening parenthesis for the parameters but before
     #: the first param itself.
-    whitespace_before_params: SimpleWhitespace = SimpleWhitespace.field("")
+    whitespace_before_params: BaseParenthesizableWhitespace = SimpleWhitespace.field("")
 
     #: Whitespace after the closing parenthesis or return annotation and before
     #: the colon.
