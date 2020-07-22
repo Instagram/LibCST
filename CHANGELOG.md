@@ -1,3 +1,20 @@
+# 0.3.8 - 2020-07-22
+
+## Added
+ - Handle type subscripts when applying annotations. [#335](https://github.com/Instagram/LibCST/pull/335)
+ - Added FullRepoManager `cache` property [#330](https://github.com/Instagram/LibCST/pull/330)
+ - Added optional args for tox commands [#327](https://github.com/Instagram/LibCST/pull/327)
+
+## Updated
+ - Only remove trailing comma if the last alias is removed [#334](https://github.com/Instagram/LibCST/pull/334)
+
+## Fixed
+ - Fixed inserting imports after module docstring [#343](https://github.com/Instagram/LibCST/pull/343)
+ - Fixed ParenthesizedWhitespace before params in FuncDef [#342](https://github.com/Instagram/LibCST/pull/342)
+ - Fixed validation for ImportAlias and Try statements [#340](https://github.com/Instagram/LibCST/pull/340)
+ - Fixed NotEqual position issue [#325](https://github.com/Instagram/LibCST/pull/325)
+ - Fixed minor typo in scope_provider.py [#324](https://github.com/Instagram/LibCST/pull/324)
+
 # 0.3.7 - 2020-06-24
 
 ## Added
