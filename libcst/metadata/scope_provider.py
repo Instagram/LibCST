@@ -733,6 +733,7 @@ class ScopeVisitor(cst.CSTVisitor):
 
     def visit_ClassDef(self, node: cst.ClassDef) -> Optional[bool]:
         self.scope.record_assignment(node.name.value, node)
+        self.provider.set_metadata(node.name, self.scope)
         for decorator in node.decorators:
             decorator.visit(self)
         for base in node.bases:
