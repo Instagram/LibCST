@@ -235,8 +235,9 @@ class ScopeProviderTest(UnitTest):
             """
         )
         scope_of_module = scopes[m]
-        func_body = ensure_type(m.body[1], cst.FunctionDef).body
-        func_body_statement = func_body.body[0]
+        func_def = ensure_type(m.body[1], cst.FunctionDef)
+        self.assertEqual(scopes[func_def], scopes[func_def.name])
+        func_body_statement = func_def.body.body[0]
         scope_of_func = scopes[func_body_statement]
         self.assertIsInstance(scope_of_func, FunctionScope)
         self.assertTrue("global_var" in scope_of_module)
@@ -266,6 +267,7 @@ class ScopeProviderTest(UnitTest):
         cls_assignment = cast(Assignment, cls_assignments[0])
         cls_def = ensure_type(m.body[1], cst.ClassDef)
         self.assertEqual(cls_assignment.node, cls_def)
+        self.assertEqual(scopes[cls_def], scopes[cls_def.name])
         cls_body = cls_def.body
         cls_body_statement = cls_body.body[0]
         scope_of_class = scopes[cls_body_statement]
