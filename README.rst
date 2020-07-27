@@ -207,7 +207,7 @@ Future
 License
 =======
 
-LibCST is MIT licensed, as found in the LICENSE file.
+LibCST is `MIT licensed <https://github.com/Instagram/LibCST/blob/master/LICENSE>`_, as found in the LICENSE file.
 
 .. fb-docs-start
 
