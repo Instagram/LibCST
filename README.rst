@@ -93,7 +93,7 @@ To examine the tree that is parsed from a particular file, do the following::
 
     python -m libcst.tool print <some_py_file.py>
 
-Alternatively you can import LibCST into a Python REPL and use the included parser
+Alternatively, you can import LibCST into a Python REPL and use the included parser
 and pretty printing functions:
 
 >>> import libcst as cst
