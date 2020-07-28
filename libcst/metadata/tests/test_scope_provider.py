@@ -140,6 +140,16 @@ class ScopeProviderTest(UnitTest):
             """
         )
         scope_of_module = scopes[m]
+
+        import_0 = cst.ensure_type(
+            cst.ensure_type(m.body[0], cst.SimpleStatementLine).body[0], cst.Import
+        )
+        self.assertEqual(scopes[import_0], scope_of_module)
+        import_aliases = import_0.names
+        if not isinstance(import_aliases, cst.ImportStar):
+            for alias in import_aliases:
+                self.assertEqual(scopes[alias], scope_of_module)
+
         for idx, in_scopes in enumerate(
             [["foo", "foo.bar"], ["fizzbuzz"], ["a", "a.b", "a.b.c"], ["g"],]
         ):
@@ -202,6 +212,16 @@ class ScopeProviderTest(UnitTest):
             """
         )
         scope_of_module = scopes[m]
+
+        import_from = cst.ensure_type(
+            cst.ensure_type(m.body[0], cst.SimpleStatementLine).body[0], cst.ImportFrom
+        )
+        self.assertEqual(scopes[import_from], scope_of_module)
+        import_aliases = import_from.names
+        if not isinstance(import_aliases, cst.ImportStar):
+            for alias in import_aliases:
+                self.assertEqual(scopes[alias], scope_of_module)
+
         for idx, in_scope in [(0, "a"), (0, "b_renamed"), (1, "c"), (2, "d")]:
             self.assertEqual(
                 len(scope_of_module[in_scope]), 1, f"{in_scope} should be in scope."
