@@ -3,7 +3,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 #
-from libcst import parse_module, MetadataWrapper, Comment
+from libcst import Comment, MetadataWrapper, parse_module
 from libcst.codemod import CodemodContext, CodemodTest
 from libcst.codemod.visitors import GatherCommentsVisitor
 from libcst.testing.utils import UnitTest

@@ -3,13 +3,14 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from typing import Union, Set, cast
+from typing import Set, Union, cast
 
 import libcst as cst
 import libcst.matchers as m
 from libcst.codemod._context import CodemodContext
 from libcst.codemod._visitor import ContextAwareVisitor
 from libcst.metadata import QualifiedNameProvider
+
 
 FUNCS_CONSIDERED_AS_STRING_ANNOTATIONS = {"typing.TypeVar"}
 ANNOTATION_MATCHER = m.Annotation() | m.Call(

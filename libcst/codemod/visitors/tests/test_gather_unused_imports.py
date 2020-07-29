@@ -3,12 +3,12 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 #
-from libcst import parse_module, MetadataWrapper
+from typing import Set
+
+from libcst import MetadataWrapper, parse_module
 from libcst.codemod import CodemodContext, CodemodTest
 from libcst.codemod.visitors import GatherUnusedImportsVisitor
 from libcst.testing.utils import UnitTest
-
-from typing import Set
 
 
 class TestGatherUnusedImportsVisitor(UnitTest):
@@ -126,4 +126,3 @@ class TestGatherUnusedImportsVisitor(UnitTest):
             """
         )
         self.assertEqual(imports, set())
-

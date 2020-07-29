@@ -4,17 +4,17 @@
 # LICENSE file in the root directory of this source tree.
 #
 
-from typing import Set, Tuple, Union, Iterable
+from typing import Iterable, Set, Tuple, Union
 
 import libcst as cst
 import libcst.matchers as m
 from libcst.codemod._context import CodemodContext
 from libcst.codemod._visitor import ContextAwareVisitor
-from libcst.metadata import ScopeProvider
 from libcst.codemod.visitors._gather_exports import GatherExportsVisitor
 from libcst.codemod.visitors._gather_string_annotation_names import (
     GatherNamesFromStringAnnotationsVisitor,
 )
+from libcst.metadata import ScopeProvider
 from libcst.metadata.scope_provider import _gen_dotted_names
 
 
@@ -94,4 +94,3 @@ class GatherUnusedImportsVisitor(ContextAwareVisitor):
                 ):
                     return True
         return False
-
