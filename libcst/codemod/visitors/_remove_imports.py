@@ -10,8 +10,7 @@ from libcst.codemod._context import CodemodContext
 from libcst.codemod._visitor import ContextAwareTransformer, ContextAwareVisitor
 from libcst.codemod.visitors._gather_unused_imports import GatherUnusedImportsVisitor
 from libcst.helpers import get_absolute_module_for_import, get_full_name_for_node
-from libcst.metadata import Assignment, Scope, ScopeProvider
-from libcst.metadata.scope_provider import _gen_dotted_names
+from libcst.metadata import Assignment, ScopeProvider
 
 
 class RemovedNodeVisitor(ContextAwareVisitor):

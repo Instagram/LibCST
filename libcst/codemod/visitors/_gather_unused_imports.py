@@ -4,33 +4,25 @@
 # LICENSE file in the root directory of this source tree.
 #
 
-from typing import Dict, List, Optional, Sequence, Set, Tuple, Union, Iterable
+from typing import Set, Tuple, Union, Iterable
 
 import libcst as cst
 import libcst.matchers as m
 from libcst.codemod._context import CodemodContext
 from libcst.codemod._visitor import ContextAwareVisitor
-from libcst.metadata import QualifiedNameProvider, ScopeProvider, PositionProvider
+from libcst.metadata import ScopeProvider
 from libcst.codemod.visitors._gather_exports import GatherExportsVisitor
-from libcst.codemod.visitors._gather_comments import GatherCommentsVisitor
 from libcst.codemod.visitors._gather_string_annotation_names import (
     GatherNamesFromStringAnnotationsVisitor,
 )
 from libcst.metadata.scope_provider import _gen_dotted_names
 
 
-DEFAULT_SUPPRESS_COMMENT_REGEX = (
-    r".*\W(lint-ignore: ?unused-import|noqa|lint-ignore: ?F401)(\W.*)?$"
-)
-
-
 class GatherUnusedImportsVisitor(ContextAwareVisitor):
 
     SUPPRESS_COMMENT_REGEX_CONTEXT_KEY = f"GatherUnusedImportsVisitor.suppress_regex"
     METADATA_DEPENDENCIES = (
-        *GatherCommentsVisitor.METADATA_DEPENDENCIES,
         *GatherNamesFromStringAnnotationsVisitor.METADATA_DEPENDENCIES,
-        PositionProvider,
         ScopeProvider,
     )
 
@@ -38,7 +30,6 @@ class GatherUnusedImportsVisitor(ContextAwareVisitor):
         super().__init__(context)
 
         self._string_annotation_names: Set[str] = set()
-        self._ignored_lines: Set[int] = set()
         self._exported_names: Set[str] = set()
         self.unused_imports: Set[
             Tuple[cst.ImportAlias, Union[cst.Import, cst.ImportFrom]]
@@ -48,14 +39,6 @@ class GatherUnusedImportsVisitor(ContextAwareVisitor):
         export_collector = GatherExportsVisitor(self.context)
         node.visit(export_collector)
         self._exported_names = export_collector.explicit_exported_objects
-        comment_visitor = GatherCommentsVisitor(
-            self.context,
-            self.context.scratch.get(
-                self.SUPPRESS_COMMENT_REGEX_CONTEXT_KEY, DEFAULT_SUPPRESS_COMMENT_REGEX,
-            ),
-        )
-        node.visit(comment_visitor)
-        self._ignored_lines = set(comment_visitor.comments.keys())
         annotation_visitor = GatherNamesFromStringAnnotationsVisitor(self.context)
         node.visit(annotation_visitor)
         self._string_annotation_names = annotation_visitor.names
@@ -71,15 +54,8 @@ class GatherUnusedImportsVisitor(ContextAwareVisitor):
     def handle_import(self, node: Union[cst.Import, cst.ImportFrom]) -> None:
         assert not isinstance(node.names, cst.ImportStar)  # hello, type checker
 
-        node_start = self.get_metadata(PositionProvider, node).start.line
-        if node_start in self._ignored_lines:
-            return
-
         for alias in node.names:
-            position = self.get_metadata(PositionProvider, alias)
-            lines = set(range(position.start.line, position.end.line + 1))
-            if lines.isdisjoint(self._ignored_lines):
-                self.unused_imports.add((alias, node))
+            self.unused_imports.add((alias, node))
 
     def leave_Module(self, original_node: cst.Module) -> None:
         self.unused_imports = self.filter_unused_imports(self.unused_imports)

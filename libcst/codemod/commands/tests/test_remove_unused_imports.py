@@ -90,3 +90,33 @@ class RemoveUnusedImportsCommandTest(CodemodTest):
             a(b, 'look at these ugly quotes')
         """
         self.assertCodemod(before, before)
+
+    def test_suppression_on_first_line_of_multiline_import_refers_to_whole_block(
+        self,
+    ) -> None:
+        before = """
+            from a import (  # lint-ignore: unused-import
+                b,
+                c,
+            )
+        """
+        self.assertCodemod(before, before)
+
+    def test_suppression(self) -> None:
+        before = """
+            # noqa
+            import a, b
+            import c
+            from x import (
+                y,
+                z,  # noqa
+            )
+        """
+        after = """
+            # noqa
+            import a, b
+            from x import (
+                z,  # noqa
+            )
+        """
+        self.assertCodemod(before, after)

@@ -95,20 +95,6 @@ class TestGatherUnusedImportsVisitor(UnitTest):
         )
         self.assertEqual(imports, set())
 
-    def test_suppression(self) -> None:
-        imports = self.gather_imports(
-            """
-            # noqa
-            import a, b
-            import c
-            from x import (
-                y,  # noqa
-                z,
-            )
-            """
-        )
-        self.assertEqual(imports, {"c", "z"})
-
     def test_string_annotation(self) -> None:
         imports = self.gather_imports(
             """
@@ -141,15 +127,3 @@ class TestGatherUnusedImportsVisitor(UnitTest):
         )
         self.assertEqual(imports, set())
 
-    def test_suppression_on_first_line_of_multiline_import_refers_to_whole_block(
-        self,
-    ) -> None:
-        imports = self.gather_imports(
-            """
-            from a import (  # lint-ignore: unused-import
-                b,
-                c,
-            )
-            """
-        )
-        self.assertEqual(imports, set())
