@@ -4,13 +4,13 @@
 # LICENSE file in the root directory of this source tree.
 #
 
-from typing import Union
+from typing import Set, Tuple, Union
 
-from libcst import Import, ImportFrom, Module
-from libcst.codemod import VisitorBasedCodemodCommand
+from libcst import Import, ImportFrom, ImportStar, Module
+from libcst.codemod import CodemodContext, VisitorBasedCodemodCommand
 from libcst.codemod.visitors import GatherCommentsVisitor, RemoveImportsVisitor
 from libcst.helpers import get_absolute_module_for_import
-from libcst.metadata import PositionProvider
+from libcst.metadata import PositionProvider, ProviderT
 
 
 DEFAULT_SUPPRESS_COMMENT_REGEX = (
@@ -33,10 +33,14 @@ class RemoveUnusedImportsCommand(VisitorBasedCodemodCommand):
         "Note: only considers the file in isolation. "
     )
 
-    METADATA_DEPENDENCIES = (
+    METADATA_DEPENDENCIES: Tuple[ProviderT] = (
         PositionProvider,
         *GatherCommentsVisitor.METADATA_DEPENDENCIES,
     )
+
+    def __init__(self, context: CodemodContext) -> None:
+        super().__init__(context)
+        self._ignored_lines: Set[int] = set()
 
     def visit_Module(self, node: Module) -> bool:
         comment_visitor = GatherCommentsVisitor(
@@ -59,7 +63,11 @@ class RemoveUnusedImportsCommand(VisitorBasedCodemodCommand):
         if node_start in self._ignored_lines:
             return
 
-        for alias in node.names:
+        names = node.names
+        if isinstance(names, ImportStar):
+            return
+
+        for alias in names:
             position = self.get_metadata(PositionProvider, alias)
             lines = set(range(position.start.line, position.end.line + 1))
             if lines.isdisjoint(self._ignored_lines):

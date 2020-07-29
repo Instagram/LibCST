@@ -10,7 +10,7 @@ from libcst.codemod._context import CodemodContext
 from libcst.codemod._visitor import ContextAwareTransformer, ContextAwareVisitor
 from libcst.codemod.visitors._gather_unused_imports import GatherUnusedImportsVisitor
 from libcst.helpers import get_absolute_module_for_import, get_full_name_for_node
-from libcst.metadata import Assignment, ScopeProvider
+from libcst.metadata import Assignment, ProviderT, ScopeProvider
 
 
 class RemovedNodeVisitor(ContextAwareVisitor):
@@ -172,7 +172,9 @@ class RemoveImportsVisitor(ContextAwareTransformer):
     """
 
     CONTEXT_KEY = "RemoveImportsVisitor"
-    METADATA_DEPENDENCIES = (*GatherUnusedImportsVisitor.METADATA_DEPENDENCIES,)
+    METADATA_DEPENDENCIES: Tuple[ProviderT] = (
+        *GatherUnusedImportsVisitor.METADATA_DEPENDENCIES,
+    )
 
     @staticmethod
     def _get_imports_from_context(

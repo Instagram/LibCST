@@ -4,7 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 import re
-from typing import Dict, Union
+from typing import Dict, Pattern, Union
 
 import libcst as cst
 import libcst.matchers as m
@@ -21,16 +21,17 @@ class GatherCommentsVisitor(ContextAwareVisitor):
 
         self.comments: Dict[int, cst.Comment] = {}
 
-        self._comment_matcher = re.compile(comment_regex)
+        self._comment_matcher: Pattern[str] = re.compile(comment_regex)
 
     @m.visit(m.EmptyLine(comment=m.DoesNotMatch(None)))
     @m.visit(m.TrailingWhitespace(comment=m.DoesNotMatch(None)))
     def visit_comment(self, node: Union[cst.EmptyLine, cst.TrailingWhitespace]) -> None:
-        assert node.comment is not None  # hello, type checker
-        if not self._comment_matcher.match(node.comment.value):
+        comment = node.comment
+        assert comment is not None  # hello, type checker
+        if not self._comment_matcher.match(comment.value):
             return
-        line = self.get_metadata(PositionProvider, node.comment).start.line
+        line = self.get_metadata(PositionProvider, comment).start.line
         if isinstance(node, cst.EmptyLine):
             # Standalone comments refer to the next line
             line += 1
-        self.comments[line] = node.comment
+        self.comments[line] = comment

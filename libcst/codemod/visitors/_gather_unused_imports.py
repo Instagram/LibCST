@@ -14,14 +14,14 @@ from libcst.codemod.visitors._gather_exports import GatherExportsVisitor
 from libcst.codemod.visitors._gather_string_annotation_names import (
     GatherNamesFromStringAnnotationsVisitor,
 )
-from libcst.metadata import ScopeProvider
+from libcst.metadata import ProviderT, ScopeProvider
 from libcst.metadata.scope_provider import _gen_dotted_names
 
 
 class GatherUnusedImportsVisitor(ContextAwareVisitor):
 
     SUPPRESS_COMMENT_REGEX_CONTEXT_KEY = f"GatherUnusedImportsVisitor.suppress_regex"
-    METADATA_DEPENDENCIES = (
+    METADATA_DEPENDENCIES: Tuple[ProviderT] = (
         *GatherNamesFromStringAnnotationsVisitor.METADATA_DEPENDENCIES,
         ScopeProvider,
     )
@@ -52,9 +52,10 @@ class GatherUnusedImportsVisitor(ContextAwareVisitor):
         )
     )
     def handle_import(self, node: Union[cst.Import, cst.ImportFrom]) -> None:
-        assert not isinstance(node.names, cst.ImportStar)  # hello, type checker
+        names = node.names
+        assert not isinstance(names, cst.ImportStar)  # hello, type checker
 
-        for alias in node.names:
+        for alias in names:
             self.unused_imports.add((alias, node))
 
     def leave_Module(self, original_node: cst.Module) -> None:
