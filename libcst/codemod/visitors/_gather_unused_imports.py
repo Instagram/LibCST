@@ -20,7 +20,6 @@ from libcst.metadata.scope_provider import _gen_dotted_names
 
 class GatherUnusedImportsVisitor(ContextAwareVisitor):
 
-    SUPPRESS_COMMENT_REGEX_CONTEXT_KEY = f"GatherUnusedImportsVisitor.suppress_regex"
     METADATA_DEPENDENCIES: Tuple[ProviderT] = (
         *GatherNamesFromStringAnnotationsVisitor.METADATA_DEPENDENCIES,
         ScopeProvider,
