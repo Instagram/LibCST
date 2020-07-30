@@ -9,7 +9,7 @@ import libcst as cst
 import libcst.matchers as m
 from libcst.codemod._context import CodemodContext
 from libcst.codemod._visitor import ContextAwareVisitor
-from libcst.metadata import QualifiedNameProvider
+from libcst.metadata import MetadataWrapper, QualifiedNameProvider
 
 
 FUNCS_CONSIDERED_AS_STRING_ANNOTATIONS = {"typing.TypeVar"}
@@ -42,11 +42,16 @@ class GatherNamesFromStringAnnotationsVisitor(ContextAwareVisitor):
         mod = cst.parse_module(value)
         extracted_nodes = m.extractall(
             mod,
-            m.Name(value=m.SaveMatchedNode(m.DoNotCare(), "name"))
+            m.Name(
+                value=m.SaveMatchedNode(m.DoNotCare(), "name"),
+                metadata=m.MatchMetadataIfTrue(
+                    cst.metadata.ParentNodeProvider,
+                    lambda parent: not isinstance(parent, cst.Attribute),
+                ),
+            )
             | m.SaveMatchedNode(m.Attribute(), "attribute"),
+            metadata_resolver=MetadataWrapper(mod, unsafe_skip_copy=True),
         )
-        # This captures a bit more than necessary. For attributes, we capture the inner
-        # Name twice.
         names = {
             cast(str, values["name"]) for values in extracted_nodes if "name" in values
         } | {

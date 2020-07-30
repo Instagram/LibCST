@@ -69,3 +69,14 @@ class TestGatherNamesFromStringAnnotationsVisitor(UnitTest):
         self.assertEqual(
             visitor.names, {"A", "Item", "Container", "ThisIsExpensiveToImport"}
         )
+
+    def test_dotted_names(self) -> None:
+        visitor = self.gather_names(
+            """
+            a: "api.http_exceptions.HttpException"
+            """
+        )
+        self.assertEqual(
+            visitor.names,
+            {"api", "api.http_exceptions", "api.http_exceptions.HttpException"},
+        )

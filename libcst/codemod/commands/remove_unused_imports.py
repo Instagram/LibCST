@@ -33,10 +33,7 @@ class RemoveUnusedImportsCommand(VisitorBasedCodemodCommand):
         "Note: only considers the file in isolation. "
     )
 
-    METADATA_DEPENDENCIES: Tuple[ProviderT] = (
-        PositionProvider,
-        *GatherCommentsVisitor.METADATA_DEPENDENCIES,
-    )
+    METADATA_DEPENDENCIES: Tuple[ProviderT] = (PositionProvider,)
 
     def __init__(self, context: CodemodContext) -> None:
         super().__init__(context)
