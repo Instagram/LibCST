@@ -19,6 +19,18 @@ from libcst.metadata.scope_provider import _gen_dotted_names
 
 
 class GatherUnusedImportsVisitor(ContextAwareVisitor):
+    """
+    Collects all imports from a module not directly used in the same module.
+    Intended to be instantiated and passed to a :class:`libcst.Module`
+    :meth:`~libcst.CSTNode.visit` method to process the full module.
+
+    Note that imports that are only used indirectly (from other modules) are
+    still collected.
+
+    After visiting a module the attribute ``unused_imports`` will contain a
+    set of unused :class:`~libcst.ImportAlias` objects, paired with their
+    parent import node.
+    """
 
     METADATA_DEPENDENCIES: Tuple[ProviderT] = (
         *GatherNamesFromStringAnnotationsVisitor.METADATA_DEPENDENCIES,
@@ -30,6 +42,8 @@ class GatherUnusedImportsVisitor(ContextAwareVisitor):
 
         self._string_annotation_names: Set[str] = set()
         self._exported_names: Set[str] = set()
+        #: Contains a set of (alias, parent_import) pairs that are not used
+        #: in the module after visiting.
         self.unused_imports: Set[
             Tuple[cst.ImportAlias, Union[cst.Import, cst.ImportFrom]]
         ] = set()
@@ -64,6 +78,13 @@ class GatherUnusedImportsVisitor(ContextAwareVisitor):
         self,
         candidates: Iterable[Tuple[cst.ImportAlias, Union[cst.Import, cst.ImportFrom]]],
     ) -> Set[Tuple[cst.ImportAlias, Union[cst.Import, cst.ImportFrom]]]:
+        """
+        Return the imports in ``candidates`` which are not used.
+
+        This function implements the main logic of this visitor, and is called after traversal. It calls :meth:`~is_in_use` on each import.
+
+        Override this in a subclass for additional filtering.
+        """
         unused_imports = set()
         for (alias, parent) in candidates:
             scope = self.get_metadata(ScopeProvider, parent)
@@ -74,6 +95,13 @@ class GatherUnusedImportsVisitor(ContextAwareVisitor):
         return unused_imports
 
     def is_in_use(self, scope: cst.metadata.Scope, alias: cst.ImportAlias) -> bool:
+        """
+        Check if ``alias`` is in use in the given ``scope``.
+
+        An alias is in use if it's directly referenced, exported, or appears in
+        a string type annotation. Override this in a subclass for additional
+        filtering.
+        """
         asname = alias.asname
         names = _gen_dotted_names(
             cst.ensure_type(asname.name, cst.Name) if asname is not None else alias.name

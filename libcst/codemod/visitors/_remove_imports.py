@@ -118,7 +118,7 @@ class RemoveImportsVisitor(ContextAwareTransformer):
     object appears in an ``__any__`` list.
 
     This is one of the transforms that is available automatically to you when running
-    a codemod. To use it in this manner, importi
+    a codemod. To use it in this manner, import
     :class:`~libcst.codemod.visitors.RemoveImportsVisitor` and then call the static
     :meth:`~libcst.codemod.visitors.RemoveImportsVisitor.remove_unused_import` method,
     giving it the current context (found as ``self.context`` for all subclasses of

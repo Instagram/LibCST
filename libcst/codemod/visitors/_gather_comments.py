@@ -14,11 +14,25 @@ from libcst.metadata import PositionProvider
 
 
 class GatherCommentsVisitor(ContextAwareVisitor):
+    """
+    Collects all comments matching a certain regex and their line numbers.
+    This visitor is useful for capturing special-purpose comments, for example
+    ``noqa`` style lint suppression annotations.
+
+    Standalone comments are assumed to affect the line following them, and
+    inline ones are recorded with the line they are on.
+
+    After visiting a CST, matching comments are collected in the ``comments``
+    attribute.
+    """
+
     METADATA_DEPENDENCIES = (PositionProvider,)
 
     def __init__(self, context: CodemodContext, comment_regex: str) -> None:
         super().__init__(context)
 
+        #: Dictionary of comments found in the CST. Keys are line numbers,
+        #: values are comment nodes.
         self.comments: Dict[int, cst.Comment] = {}
 
         self._comment_matcher: Pattern[str] = re.compile(comment_regex)

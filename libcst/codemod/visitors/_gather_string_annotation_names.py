@@ -24,11 +24,21 @@ ANNOTATION_MATCHER: m.BaseMatcherNode = m.Annotation() | m.Call(
 
 
 class GatherNamesFromStringAnnotationsVisitor(ContextAwareVisitor):
+    """
+    Collects all names from string literals used for typing purposes.
+    This includes annotations like ``foo: "SomeType"``, and parameters to
+    special functions related to typing (currently only `typing.TypeVar`).
+
+    After visiting, a set of all found names will be available on the ``names``
+    attribute of this visitor.
+    """
+
     METADATA_DEPENDENCIES = (QualifiedNameProvider,)
 
     def __init__(self, context: CodemodContext) -> None:
         super().__init__(context)
 
+        #: The set of names collected from string literals.
         self.names: Set[str] = set()
 
     @m.call_if_inside(ANNOTATION_MATCHER)
