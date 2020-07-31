@@ -8,10 +8,9 @@ from typing import Dict, List, Optional, Sequence, Set, Tuple, Union
 import libcst as cst
 from libcst.codemod._context import CodemodContext
 from libcst.codemod._visitor import ContextAwareTransformer, ContextAwareVisitor
-from libcst.codemod.visitors._gather_exports import GatherExportsVisitor
+from libcst.codemod.visitors._gather_unused_imports import GatherUnusedImportsVisitor
 from libcst.helpers import get_absolute_module_for_import, get_full_name_for_node
-from libcst.metadata import Assignment, Scope, ScopeProvider
-from libcst.metadata.scope_provider import _gen_dotted_names
+from libcst.metadata import Assignment, ProviderT, ScopeProvider
 
 
 class RemovedNodeVisitor(ContextAwareVisitor):
@@ -119,7 +118,7 @@ class RemoveImportsVisitor(ContextAwareTransformer):
     object appears in an ``__any__`` list.
 
     This is one of the transforms that is available automatically to you when running
-    a codemod. To use it in this manner, importi
+    a codemod. To use it in this manner, import
     :class:`~libcst.codemod.visitors.RemoveImportsVisitor` and then call the static
     :meth:`~libcst.codemod.visitors.RemoveImportsVisitor.remove_unused_import` method,
     giving it the current context (found as ``self.context`` for all subclasses of
@@ -173,7 +172,9 @@ class RemoveImportsVisitor(ContextAwareTransformer):
     """
 
     CONTEXT_KEY = "RemoveImportsVisitor"
-    METADATA_DEPENDENCIES = (ScopeProvider,)
+    METADATA_DEPENDENCIES: Tuple[ProviderT] = (
+        *GatherUnusedImportsVisitor.METADATA_DEPENDENCIES,
+    )
 
     @staticmethod
     def _get_imports_from_context(
@@ -279,48 +280,24 @@ class RemoveImportsVisitor(ContextAwareTransformer):
             module: alias for module, obj, alias in all_unused_imports if obj is None
         }
         self.unused_obj_imports: Dict[str, Set[Tuple[str, Optional[str]]]] = {}
-        self.exported_objects: Set[str] = set()
         for module, obj, alias in all_unused_imports:
             if obj is None:
                 continue
             if module not in self.unused_obj_imports:
                 self.unused_obj_imports[module] = set()
             self.unused_obj_imports[module].add((obj, alias))
+        self._unused_imports: Dict[
+            cst.ImportAlias, Union[cst.Import, cst.ImportFrom]
+        ] = {}
 
     def visit_Module(self, node: cst.Module) -> None:
-        object_visitor = GatherExportsVisitor(self.context)
-        node.visit(object_visitor)
-        self.exported_objects = object_visitor.explicit_exported_objects
-
-    def _is_in_use(self, scope: Scope, alias: cst.ImportAlias) -> bool:
-        # Grab the string name of this alias from the point of view of this module.
-        asname = alias.asname
-        names = _gen_dotted_names(
-            cst.ensure_type(asname.name, cst.Name) if asname is not None else alias.name
-        )
-
-        for name_or_alias, _ in names:
-            if name_or_alias in self.exported_objects:
-                return True
-
-            for assignment in scope[name_or_alias]:
-                if (
-                    isinstance(assignment, Assignment)
-                    and isinstance(assignment.node, (cst.ImportFrom, cst.Import))
-                    and len(assignment.references) > 0
-                ):
-                    return True
-        return False
+        visitor = GatherUnusedImportsVisitor(self.context)
+        node.visit(visitor)
+        self._unused_imports = {k: v for (k, v) in visitor.unused_imports}
 
     def leave_Import(
         self, original_node: cst.Import, updated_node: cst.Import
     ) -> Union[cst.Import, cst.RemovalSentinel]:
-        # Grab the scope for this import. If we don't have scope, we can't determine
-        # whether this import is unused so it is unsafe to remove.
-        scope = self.get_metadata(ScopeProvider, original_node, None)
-        if scope is None:
-            return updated_node
-
         names_to_keep = []
         for import_alias in original_node.names:
             if import_alias.evaluated_name not in self.unused_module_imports:
@@ -339,7 +316,7 @@ class RemoveImportsVisitor(ContextAwareTransformer):
 
             # Now that we know we want to remove this module, figure out if
             # there are any live references to it.
-            if self._is_in_use(scope, import_alias):
+            if import_alias not in self._unused_imports:
                 names_to_keep.append(import_alias)
                 continue
 
@@ -363,13 +340,6 @@ class RemoveImportsVisitor(ContextAwareTransformer):
     def leave_ImportFrom(
         self, original_node: cst.ImportFrom, updated_node: cst.ImportFrom
     ) -> Union[cst.ImportFrom, cst.RemovalSentinel]:
-        # Grab the scope for this import. If we don't have scope, we can't determine
-        # whether this import is unused so it is unsafe to remove.
-        scope = self.get_metadata(ScopeProvider, original_node, None)
-        if scope is None:
-            return updated_node
-
-        # Make sure we have anything to do with this node.
         names = original_node.names
         if isinstance(names, cst.ImportStar):
             # This is a star import, so we won't remove it.
@@ -400,7 +370,7 @@ class RemoveImportsVisitor(ContextAwareTransformer):
 
             # Now that we know we want to remove this object, figure out if
             # there are any live references to it.
-            if self._is_in_use(scope, import_alias):
+            if import_alias not in self._unused_imports:
                 names_to_keep.append(import_alias)
                 continue
 

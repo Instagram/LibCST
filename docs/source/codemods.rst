@@ -146,12 +146,18 @@ LibCST additionally includes a library of transforms to reduce the need for boil
 inside codemods. As of now, the list includes the following helpers.
 
 .. autoclass:: libcst.codemod.visitors.GatherImportsVisitor
-  :exclude-members: visit_Import, visit_ImportFrom
+  :no-undoc-members:
 .. autoclass:: libcst.codemod.visitors.GatherExportsVisitor
-  :exclude-members: visit_AnnAssign, leave_AnnAssign, visit_Assign, leave_Assign, visit_List, leave_List, visit_Tuple, leave_Tuple, visit_Set, leave_Set, visit_Element
+  :no-undoc-members:
 .. autoclass:: libcst.codemod.visitors.AddImportsVisitor
-  :exclude-members: CONTEXT_KEY, visit_Module, leave_ImportFrom, leave_Module
+  :no-undoc-members:
 .. autoclass:: libcst.codemod.visitors.RemoveImportsVisitor
-  :exclude-members: CONTEXT_KEY, METADATA_DEPENDENCIES, visit_Module, leave_ImportFrom, leave_Import
+  :no-undoc-members:
 .. autoclass:: libcst.codemod.visitors.ApplyTypeAnnotationsVisitor
-  :exclude-members: CONTEXT_KEY, transform_module_impl, visit_ClassDef, visit_Comment, visit_FunctionDef, leave_Assign, leave_ClassDef, leave_FunctionDef, leave_ImportFrom, leave_Module
+  :no-undoc-members:
+.. autoclass:: libcst.codemod.visitors.GatherUnusedImportsVisitor
+  :no-undoc-members:
+.. autoclass:: libcst.codemod.visitors.GatherCommentsVisitor
+  :no-undoc-members:
+.. autoclass:: libcst.codemod.visitors.GatherNamesFromStringAnnotationsVisitor
+  :no-undoc-members:

@@ -5,7 +5,7 @@
 #
 # pyre-strict
 
-import subprocess  # noqa: F401
+import subprocess
 from contextlib import AsyncExitStack
 
 
