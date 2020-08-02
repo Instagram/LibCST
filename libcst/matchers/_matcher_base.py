@@ -933,14 +933,12 @@ def SaveMatchedNode(matcher: _OtherNodeT, name: str) -> _OtherNodeT:
 
 
 def _matches_zero_nodes(
-    matcher: Sequence[
-        Union[
-            BaseMatcherNode,
-            _BaseWildcardNode,
-            MatchIfTrue[Callable[[object], bool]],
-            _BaseMetadataMatcher,
-            DoNotCareSentinel,
-        ]
+    matcher: Union[
+        BaseMatcherNode,
+        _BaseWildcardNode,
+        MatchIfTrue[Callable[[object], bool]],
+        _BaseMetadataMatcher,
+        DoNotCareSentinel,
     ]
 ) -> bool:
     if isinstance(matcher, AtLeastN) and matcher.n == 0:
