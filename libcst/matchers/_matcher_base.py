@@ -932,6 +932,26 @@ def SaveMatchedNode(matcher: _OtherNodeT, name: str) -> _OtherNodeT:
     return cast(_OtherNodeT, _ExtractMatchingNode(matcher, name))
 
 
+def _matches_zero_nodes(
+    matcher: Sequence[
+        Union[
+            BaseMatcherNode,
+            _BaseWildcardNode,
+            MatchIfTrue[Callable[[object], bool]],
+            _BaseMetadataMatcher,
+            DoNotCareSentinel,
+        ]
+    ]
+) -> bool:
+    if isinstance(matcher, AtLeastN) and matcher.n == 0:
+        return True
+    if isinstance(matcher, AtMostN):
+        return True
+    if isinstance(matcher, _ExtractMatchingNode):
+        return _matches_zero_nodes(matcher.matcher)
+    return False
+
+
 def _sequence_matches(  # noqa: C901
     nodes: Sequence[Union[MaybeSentinel, libcst.CSTNode]],
     matchers: Sequence[
@@ -950,14 +970,10 @@ def _sequence_matches(  # noqa: C901
         return {}
     if not nodes and matchers:
         # Base case, we have one or more matcher that wasn't matched
-        return (
-            {}
-            if all(
-                (isinstance(m, AtLeastN) and m.n == 0) or isinstance(m, AtMostN)
-                for m in matchers
-            )
-            else None
-        )
+        if all(_matches_zero_nodes(m) for m in matchers):
+            return {m.name: () for m in matchers if isinstance(m, _ExtractMatchingNode)}
+        else:
+            return None
     if nodes and not matchers:
         # Base case, we have nodes left that don't match any matcher
         return None

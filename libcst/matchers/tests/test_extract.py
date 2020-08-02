@@ -322,6 +322,34 @@ class MatchersExtractTest(UnitTest):
         )
         self.assertEqual(nodes, {})
 
+    def test_extract_optional_wildcard_head(self) -> None:
+        expression = cst.parse_expression("[3]")
+        nodes = m.extract(
+            expression,
+            m.List(
+                elements=[
+                    m.SaveMatchedNode(m.ZeroOrMore(), "head1"),
+                    m.SaveMatchedNode(m.ZeroOrMore(), "head2"),
+                    m.Element(value=m.Integer(value="3")),
+                ]
+            ),
+        )
+        self.assertEqual(nodes, {"head1": (), "head2": ()})
+
+    def test_extract_optional_wildcard_tail(self) -> None:
+        expression = cst.parse_expression("[3]")
+        nodes = m.extract(
+            expression,
+            m.List(
+                elements=[
+                    m.Element(value=m.Integer(value="3")),
+                    m.SaveMatchedNode(m.ZeroOrMore(), "tail1"),
+                    m.SaveMatchedNode(m.ZeroOrMore(), "tail2"),
+                ]
+            ),
+        )
+        self.assertEqual(nodes, {"tail1": (), "tail2": ()})
+
     def test_extract_optional_wildcard_present(self) -> None:
         expression = cst.parse_expression("a + b[c], d(e, f * g, h.i.j)")
         nodes = m.extract(
