@@ -47,7 +47,6 @@ def _detect_encoding(source: Union[str, bytes]) -> str:
 
     if isinstance(source, str):
         return "utf-8"
-    # pyre-fixme[16]: Module `tokenize` has no attribute `detect_encoding`.
     return py_tokenize_detect_encoding(BytesIO(source).readline)[0]
 
 
