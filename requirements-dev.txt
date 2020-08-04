@@ -11,3 +11,4 @@ nbsphinx==0.4.2
 pyre-check==0.0.41
 sphinx-rtd-theme==0.4.3
 prompt-toolkit==2.0.9
+tox==3.18.1

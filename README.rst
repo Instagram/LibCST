@@ -169,7 +169,7 @@ this:
 
 .. code-block:: shell
 
-    python -m unitttest libcst.tests.test_batched_visitor
+    python -m unittest libcst.tests.test_batched_visitor
 
 See the `unittest documentation <https://docs.python.org/3/library/unittest.html>`_
 for more examples of how to run tests.
