@@ -77,6 +77,16 @@ class RemoveUnusedImportsCommandTest(CodemodTest):
 
         self.assertCodemod(before, after)
 
+    def test_enclosed_attributes(self) -> None:
+        before = """
+            from a.b import c
+            import x
+
+            def foo() -> None:
+                x.y(c.d()).z()
+        """
+        self.assertCodemod(before, before)
+
     def test_access_in_assignment(self) -> None:
         before = """
             from a import b
