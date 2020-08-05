@@ -426,7 +426,6 @@ class Integer(BaseNumber):
 
     def _validate(self) -> None:
         super(Integer, self)._validate()
-        # pyre-fixme[16]: Module `tokenize` has no attribute `Intnumber`.
         if not re.fullmatch(INTNUMBER_RE, self.value):
             raise CSTValidationError("Number is not a valid integer.")
 
@@ -465,7 +464,6 @@ class Float(BaseNumber):
 
     def _validate(self) -> None:
         super(Float, self)._validate()
-        # pyre-fixme[16]: Module `tokenize` has no attribute `Floatnumber`.
         if not re.fullmatch(FLOATNUMBER_RE, self.value):
             raise CSTValidationError("Number is not a valid float.")
 
@@ -503,7 +501,6 @@ class Imaginary(BaseNumber):
 
     def _validate(self) -> None:
         super(Imaginary, self)._validate()
-        # pyre-fixme[16]: Module `tokenize` has no attribute `Imagnumber`.
         if not re.fullmatch(IMAGNUMBER_RE, self.value):
             raise CSTValidationError("Number is not a valid imaginary.")
 
