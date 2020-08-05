@@ -610,18 +610,27 @@ def _gen_dotted_names(
         yield node.value, node
     else:
         value = node.value
-        if not isinstance(value, (cst.Attribute, cst.Name)):
-            # this is not an import
-            return
-        name_values = _gen_dotted_names(value)
-        try:
-            next_name, next_node = next(name_values)
-        except StopIteration:
-            return
-        else:
-            yield f"{next_name}.{node.attr.value}", node
-            yield next_name, next_node
-            yield from name_values
+        if isinstance(value, cst.Call):
+            value = value.func
+            if isinstance(value, (cst.Attribute, cst.Name)):
+                name_values = _gen_dotted_names(value)
+                try:
+                    next_name, next_node = next(name_values)
+                except StopIteration:
+                    return
+                else:
+                    yield next_name, next_node
+                    yield from name_values
+        elif isinstance(value, (cst.Attribute, cst.Name)):
+            name_values = _gen_dotted_names(value)
+            try:
+                next_name, next_node = next(name_values)
+            except StopIteration:
+                return
+            else:
+                yield f"{next_name}.{node.attr.value}", node
+                yield next_name, next_node
+                yield from name_values
 
 
 class ScopeVisitor(cst.CSTVisitor):
