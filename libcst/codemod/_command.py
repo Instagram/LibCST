@@ -162,20 +162,16 @@ class MagicArgsCodemodCommand(CodemodCommand, ABC):
                 )
             # No default, but we found something in scratch. So, forward it.
             args.append(self.context.scratch[arg])
+        kwonlydefaults = argspec.kwonlydefaults or {}
         for kwarg in argspec.kwonlyargs:
-            if (
-                kwarg not in self.context.scratch
-                and kwarg not in argspec.kwonlydefaults
-            ):
+            if kwarg not in self.context.scratch and kwarg not in kwonlydefaults:
                 raise KeyError(
                     f"Visitor {transform.__name__} requires keyword arg {kwarg} but "
                     + "it is not in our context nor does it have a default! It should "
                     + "be provided by an argument returned from the 'add_args' method "
                     + "or populated into context.scratch by a previous transform!"
                 )
-            kwargs[kwarg] = self.context.scratch.get(
-                kwarg, argspec.kwonlydefaults[kwarg]
-            )
+            kwargs[kwarg] = self.context.scratch.get(kwarg, kwonlydefaults[kwarg])
 
         # Return an instance of the transform with those arguments
         return transform(self.context, *args, **kwargs)
