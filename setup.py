@@ -39,7 +39,11 @@ setuptools.setup(
     url="https://github.com/Instagram/LibCST",
     license="MIT",
     packages=setuptools.find_packages(),
-    package_data={"libcst": ["py.typed"]},
+    package_data={
+        "libcst": ["py.typed"],
+        "libcst.tests.pyre": ["*"],
+        "libcst.codemod.tests": ["*"],
+    },
     test_suite="libcst",
     python_requires=">=3.6",
     install_requires=[
