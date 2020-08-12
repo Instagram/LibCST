@@ -3680,19 +3680,6 @@ class NamedExpr(BaseExpression):
     #: Whitespace after the walrus operator, but before the value.
     whitespace_after_walrus: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
-    def _validate(self) -> None:
-        super(NamedExpr, self)._validate()
-        if (
-            self.whitespace_before_walrus.empty
-            and not self.target._safe_to_use_with_word_operator(ExpressionPosition.LEFT)
-        ):
-            raise CSTValidationError("Must have at least one space after target.")
-        if (
-            self.whitespace_after_walrus.empty
-            and not self.value._safe_to_use_with_word_operator(ExpressionPosition.RIGHT)
-        ):
-            raise CSTValidationError("Must have at least one space before value.")
-
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "NamedExpr":
         return NamedExpr(
             lpar=visit_sequence(self, "lpar", self.lpar, visitor),
