@@ -87,6 +87,20 @@ class NamedExprTest(CSTNodeTest):
                 "parser": _parse_statement_force_38,
                 "expected_position": None,
             },
+            {
+                "node": cst.If(
+                    test=cst.NamedExpr(
+                        target=cst.Name(value="x"),
+                        value=cst.Integer(value="1"),
+                        whitespace_before_walrus=cst.SimpleWhitespace(""),
+                        whitespace_after_walrus=cst.SimpleWhitespace(""),
+                    ),
+                    body=cst.SimpleStatementSuite(body=[cst.Pass()]),
+                ),
+                "code": "if x:=1: pass\n",
+                "parser": _parse_statement_force_38,
+                "expected_position": None,
+            },
         )
     )
     def test_valid(self, **kwargs: Any) -> None:
