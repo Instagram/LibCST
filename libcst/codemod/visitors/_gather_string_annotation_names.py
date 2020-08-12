@@ -13,14 +13,6 @@ from libcst.metadata import MetadataWrapper, QualifiedNameProvider
 
 
 FUNCS_CONSIDERED_AS_STRING_ANNOTATIONS = {"typing.TypeVar"}
-ANNOTATION_MATCHER: m.BaseMatcherNode = m.Annotation() | m.Call(
-    metadata=m.MatchMetadataIfTrue(
-        QualifiedNameProvider,
-        lambda qualnames: any(
-            qn.name in FUNCS_CONSIDERED_AS_STRING_ANNOTATIONS for qn in qualnames
-        ),
-    )
-)
 
 
 class GatherNamesFromStringAnnotationsVisitor(ContextAwareVisitor):
