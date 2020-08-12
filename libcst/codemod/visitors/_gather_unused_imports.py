@@ -4,10 +4,9 @@
 # LICENSE file in the root directory of this source tree.
 #
 
-from typing import Iterable, Set, Tuple, Union
+from typing import Iterable, Optional, Set, Tuple, Union
 
 import libcst as cst
-import libcst.matchers as m
 from libcst.codemod._context import CodemodContext
 from libcst.codemod._visitor import ContextAwareVisitor
 from libcst.codemod.visitors._gather_exports import GatherExportsVisitor
@@ -37,9 +36,18 @@ class GatherUnusedImportsVisitor(ContextAwareVisitor):
         ScopeProvider,
     )
 
-    def __init__(self, context: CodemodContext) -> None:
+    def __init__(
+        self,
+        context: CodemodContext,
+        ignored_modules: Optional[Set[str]] = None,
+        typing_functions: Optional[Set[str]] = None,
+    ) -> None:
         super().__init__(context)
 
+        self._ignored_modules: Set[str] = (
+            ignored_modules if ignored_modules is not None else {"__future__"}
+        )
+        self._typing_functions = typing_functions
         self._string_annotation_names: Set[str] = set()
         self._exported_names: Set[str] = set()
         #: Contains a set of (alias, parent_import) pairs that are not used
@@ -52,18 +60,27 @@ class GatherUnusedImportsVisitor(ContextAwareVisitor):
         export_collector = GatherExportsVisitor(self.context)
         node.visit(export_collector)
         self._exported_names = export_collector.explicit_exported_objects
-        annotation_visitor = GatherNamesFromStringAnnotationsVisitor(self.context)
+        annotation_visitor = GatherNamesFromStringAnnotationsVisitor(
+            self.context, typing_functions=self._typing_functions
+        )
         node.visit(annotation_visitor)
         self._string_annotation_names = annotation_visitor.names
         return True
 
-    @m.visit(
-        m.Import()
-        | m.ImportFrom(
-            module=m.DoesNotMatch(m.Name("__future__")),
-            names=m.DoesNotMatch(m.ImportStar()),
-        )
-    )
+    def visit_Import(self, node: cst.Import) -> bool:
+        self.handle_import(node)
+        return False
+
+    def visit_ImportFrom(self, node: cst.ImportFrom) -> bool:
+        module = node.module
+        if (
+            not isinstance(node.names, cst.ImportStar)
+            and module is not None
+            and module.value not in self._ignored_modules
+        ):
+            self.handle_import(node)
+        return False
+
     def handle_import(self, node: Union[cst.Import, cst.ImportFrom]) -> None:
         names = node.names
         assert not isinstance(names, cst.ImportStar)  # hello, type checker
