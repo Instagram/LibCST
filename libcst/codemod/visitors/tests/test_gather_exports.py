@@ -26,6 +26,10 @@ class TestGatherExportsVisitor(UnitTest):
 
             list_of_str = ["foo", "bar", "baz"]
 
+            set_of_str = {"foo", "bar", "baz"}
+
+            tuple_of_str = ("foo", "bar", "baz")
+
             another: List[str] = ["foobar", "foobarbaz"]
         """
 
@@ -100,12 +104,34 @@ class TestGatherExportsVisitor(UnitTest):
         gatherer = self.gather_exports(code)
         self.assertEqual(gatherer.explicit_exported_objects, {"bar", "baz"})
 
-    def test_gather_exports_ignore_invalid_3(self) -> None:
+    def test_gather_exports_ignore_valid_1(self) -> None:
         code = """
             from foo import bar
             from biz import baz
 
-            __all__ = ["bar", "baz", "foo""bar"]
+            __all__ = ["bar", "b""a""z"]
+        """
+
+        gatherer = self.gather_exports(code)
+        self.assertEqual(gatherer.explicit_exported_objects, {"bar", "baz"})
+
+    def test_gather_exports_ignore_valid_2(self) -> None:
+        code = """
+            from foo import bar
+            from biz import baz
+
+            __all__, _ = ["bar", "baz"], ["biz"]
+        """
+
+        gatherer = self.gather_exports(code)
+        self.assertEqual(gatherer.explicit_exported_objects, {"bar", "baz"})
+
+    def test_gather_exports_ignore_valid_3(self) -> None:
+        code = """
+            from foo import bar
+            from biz import baz
+
+            __all__ = exported = ["bar", "baz"]
         """
 
         gatherer = self.gather_exports(code)

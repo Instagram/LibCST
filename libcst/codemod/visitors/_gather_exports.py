@@ -3,13 +3,12 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 #
-from typing import Set
+from typing import Set, Union
 
-import libcst
-import libcst.matchers as m
+import libcst as cst
 from libcst.codemod._context import CodemodContext
 from libcst.codemod._visitor import ContextAwareVisitor
-from libcst.helpers import ensure_type, get_full_name_for_node
+from libcst.helpers import get_full_name_for_node
 
 
 class GatherExportsVisitor(ContextAwareVisitor):
@@ -32,7 +31,8 @@ class GatherExportsVisitor(ContextAwareVisitor):
 
     def __init__(self, context: CodemodContext) -> None:
         super().__init__(context)
-        # Track any re-exported objects in an __all__ reference
+        # Track any re-exported objects in an __all__ reference and whether
+        # they're defined or not
         self.explicit_exported_objects: Set[str] = set()
 
         # Presumably at some point in the future it would be useful to grab
@@ -43,68 +43,87 @@ class GatherExportsVisitor(ContextAwareVisitor):
         # that we have a reasonable place to put implicit objects in the future.
 
         # Internal bookkeeping
-        self._in_assignment: int = 0
-        self._in_list: int = 0
+        self._is_assigned_export: Set[Union[cst.Tuple, cst.List, cst.Set]] = set()
+        self._in_assigned_export: Set[Union[cst.Tuple, cst.List, cst.Set]] = set()
 
-    def visit_AnnAssign(self, node: libcst.AnnAssign) -> bool:
-        target = get_full_name_for_node(node.target)
-        if target == "__all__":
-            self._in_assignment += 1
-            return True
-        return False
-
-    def leave_AnnAssign(self, original_node: libcst.AnnAssign) -> None:
-        self._in_assignment -= 1
-
-    def visit_Assign(self, node: libcst.Assign) -> bool:
-        for target_node in node.targets:
-            target = get_full_name_for_node(target_node.target)
-            if target == "__all__":
-                self._in_assignment += 1
+    def visit_AnnAssign(self, node: cst.AnnAssign) -> bool:
+        value = node.value
+        if value:
+            if self._handle_assign_target(node.target, value):
                 return True
         return False
 
-    def leave_Assign(self, original_node: libcst.Assign) -> None:
-        self._in_assignment -= 1
-
-    def visit_List(self, node: libcst.List) -> bool:
-        self._in_list += 1
-        # Only visit list/set entries when we're in an __all__
-        # assignment. We gate also by internal counters, so this
-        # is simply an optimization.
-        return self._in_assignment == 1 and self._in_list == 1
-
-    def leave_List(self, original_node: libcst.List) -> None:
-        self._in_list -= 1
-
-    def visit_Tuple(self, node: libcst.Tuple) -> bool:
-        self._in_list += 1
-        # Only visit list/set entries when we're in an __all__
-        # assignment. We gate also by internal counters, so this
-        # is simply an optimization.
-        return self._in_assignment == 1 and self._in_list == 1
-
-    def leave_Tuple(self, original_node: libcst.Tuple) -> None:
-        self._in_list -= 1
-
-    def visit_Set(self, node: libcst.Set) -> bool:
-        # Only visit list/set entries when we're in an __all__
-        # assignment. We gate also by internal counters, so this
-        # is simply an optimization.
-        self._in_list += 1
-        return self._in_assignment == 1 and self._in_list == 1
-
-    def leave_Set(self, original_node: libcst.Set) -> None:
-        self._in_list -= 1
-
-    def visit_Element(self, node: libcst.Element) -> bool:
-        # See if this is a entry that is a string.
-        extraction = self.extract(
-            node, m.Element(m.SaveMatchedNode(m.SimpleString(), "string"))
-        )
-        if extraction:
-            string = ensure_type(extraction["string"], libcst.SimpleString)
-            self.explicit_exported_objects.add(string.evaluated_value)
-
-        # Don't need to visit children
+    def visit_Assign(self, node: cst.Assign) -> bool:
+        for target_node in node.targets:
+            if self._handle_assign_target(target_node.target, node.value):
+                return True
         return False
+
+    def _handle_assign_target(
+        self, target: cst.BaseExpression, value: cst.BaseExpression
+    ) -> bool:
+        target_name = get_full_name_for_node(target)
+        if target_name == "__all__":
+            # Assignments such as `__all__ = ["os"]`
+            # or `__all__ = exports = ["os"]`
+            if isinstance(value, (cst.List, cst.Tuple, cst.Set)):
+                self._is_assigned_export.add(value)
+                return True
+        elif isinstance(target, cst.Tuple) and isinstance(value, cst.Tuple):
+            # Assignments such as `__all__, x = ["os"], []`
+            for element_idx, element_node in enumerate(target.elements):
+                element_name = get_full_name_for_node(element_node.value)
+                if element_name == "__all__":
+                    element_value = value.elements[element_idx].value
+                    if isinstance(element_value, (cst.List, cst.Tuple, cst.Set)):
+                        self._is_assigned_export.add(value)
+                        self._is_assigned_export.add(element_value)
+                        return True
+        return False
+
+    def visit_List(self, node: cst.List) -> bool:
+        if node in self._is_assigned_export:
+            self._in_assigned_export.add(node)
+            return True
+        return False
+
+    def leave_List(self, original_node: cst.List) -> None:
+        self._is_assigned_export.discard(original_node)
+        self._in_assigned_export.discard(original_node)
+
+    def visit_Tuple(self, node: cst.Tuple) -> bool:
+        if node in self._is_assigned_export:
+            self._in_assigned_export.add(node)
+            return True
+        return False
+
+    def leave_Tuple(self, original_node: cst.Tuple) -> None:
+        self._is_assigned_export.discard(original_node)
+        self._in_assigned_export.discard(original_node)
+
+    def visit_Set(self, node: cst.Set) -> bool:
+        if node in self._is_assigned_export:
+            self._in_assigned_export.add(node)
+            return True
+        return False
+
+    def leave_Set(self, original_node: cst.Set) -> None:
+        self._is_assigned_export.discard(original_node)
+        self._in_assigned_export.discard(original_node)
+
+    def visit_SimpleString(self, node: cst.SimpleString) -> bool:
+        self._handle_string_export(node)
+        return False
+
+    def visit_ConcatenatedString(self, node: cst.ConcatenatedString) -> bool:
+        self._handle_string_export(node)
+        return False
+
+    def _handle_string_export(
+        self, node: Union[cst.SimpleString, cst.ConcatenatedString]
+    ) -> None:
+        if self._in_assigned_export:
+            name = node.evaluated_value
+            if name is None:
+                return
+            self.explicit_exported_objects.add(name)
