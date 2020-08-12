@@ -28,15 +28,10 @@ class GatherNamesFromStringAnnotationsVisitor(ContextAwareVisitor):
     METADATA_DEPENDENCIES = (QualifiedNameProvider,)
 
     def __init__(
-        self, context: CodemodContext, typing_functions: Optional[Set[str]] = None
+        self, context: CodemodContext, typing_functions: Collection[str] = FUNCS_CONSIDERED_AS_STRING_ANNOTATIONS
     ) -> None:
         super().__init__(context)
-
-        self._typing_functions: Set[str] = (
-            typing_functions
-            if typing_functions is not None
-            else FUNCS_CONSIDERED_AS_STRING_ANNOTATIONS
-        )
+        self._typing_functions: Collection[str] = typing_functions
         self._annotation_stack: List[cst.CSTNode] = []
         #: The set of names collected from string literals.
         self.names: Set[str] = set()
