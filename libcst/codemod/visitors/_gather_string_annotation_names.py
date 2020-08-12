@@ -56,16 +56,16 @@ class GatherNamesFromStringAnnotationsVisitor(ContextAwareVisitor):
         return False
 
     def leave_Call(self, original_node: cst.Call) -> None:
-        if self._annotation_stack != [] and self._annotation_stack[-1] == original_node:
+        if self._annotation_stack and self._annotation_stack[-1] == original_node:
             self._annotation_stack.pop()
 
     def visit_ConcatenatedString(self, node: cst.ConcatenatedString) -> bool:
-        if self._annotation_stack != []:
+        if self._annotation_stack:
             self.handle_any_string(node)
         return False
 
     def visit_SimpleString(self, node: cst.SimpleString) -> bool:
-        if self._annotation_stack != []:
+        if self._annotation_stack:
             self.handle_any_string(node)
         return False
 
