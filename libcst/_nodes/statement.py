@@ -1367,7 +1367,8 @@ class AnnAssign(BaseSmallStatement):
     ) -> None:
         with state.record_syntactic_position(self):
             self.target._codegen(state)
-            self.annotation._codegen(state, default_indicator=":")
+            if self.annotation is not None:
+                self.annotation._codegen(state, default_indicator=":")
             equal = self.equal
             if equal is MaybeSentinel.DEFAULT and self.value is not None:
                 state.add_token(" = ")
