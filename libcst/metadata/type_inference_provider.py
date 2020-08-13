@@ -57,7 +57,7 @@ class TypeInferenceProvider(BatchableMetadataProvider[str]):
         root_path: Path, paths: List[str], timeout: Optional[int]
     ) -> Mapping[str, object]:
         params = ",".join(f"path='{root_path / path}'" for path in paths)
-        cmd = f'''pyre query "types({params})"'''
+        cmd = f'''pyre --noninteractive query "types({params})"'''
         try:
             stdout, stderr, return_code = run_command(cmd, timeout=timeout)
         except subprocess.TimeoutExpired as exc:
