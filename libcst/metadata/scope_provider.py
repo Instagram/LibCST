@@ -63,11 +63,14 @@ class Access:
     #: assignment.
     scope: "Scope"
 
+    is_annotation: bool
+
     __assignments: Set["BaseAssignment"]
 
-    def __init__(self, node: cst.Name, scope: "Scope") -> None:
+    def __init__(self, node: cst.Name, scope: "Scope", is_annotation: bool) -> None:
         self.node = node
         self.scope = scope
+        self.is_annotation = is_annotation
         self.__assignments = set()
 
     def __hash__(self) -> int:
@@ -640,6 +643,7 @@ class ScopeVisitor(cst.CSTVisitor):
         self.scope: Scope = GlobalScope()
         self.__deferred_accesses: List[Tuple[Access, Optional[cst.Attribute]]] = []
         self.__top_level_attribute_stack: List[Optional[cst.Attribute]] = [None]
+        self.__in_annotation: Set[Union[cst.Call, cst.Annotation]] = set()
 
     @contextmanager
     def _new_scope(
@@ -699,13 +703,19 @@ class ScopeVisitor(cst.CSTVisitor):
     def leave_Call(self, original_node: cst.Call) -> None:
         self.__top_level_attribute_stack.pop()
 
+    def visit_Annotation(self, node: cst.Annotation) -> Optional[bool]:
+        self.__in_annotation.add(node)
+
+    def leave_Annotation(self, original_node: cst.Annotation) -> None:
+        self.__in_annotation.discard(original_node)
+
     def visit_Name(self, node: cst.Name) -> Optional[bool]:
         # not all Name have ExpressionContext
         context = self.provider.get_metadata(ExpressionContextProvider, node, None)
         if context == ExpressionContext.STORE:
             self.scope.record_assignment(node.value, node)
         elif context in (ExpressionContext.LOAD, ExpressionContext.DEL):
-            access = Access(node, self.scope)
+            access = Access(node, self.scope, is_annotation=bool(self.__in_annotation))
             self.__deferred_accesses.append(
                 (access, self.__top_level_attribute_stack[-1])
             )

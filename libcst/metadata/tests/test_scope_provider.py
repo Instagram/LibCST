@@ -1010,6 +1010,25 @@ class ScopeProviderTest(UnitTest):
 
         self.assertEqual(len(set(scopes.values())), 3)
 
+    def test_annotation_access(self) -> None:
+        m, scopes = get_scope_metadata_provider(
+            """
+                from t import T
+                def f(t: T):
+                    pass
+            """
+        )
+        imp = ensure_type(
+            ensure_type(m.body[0], cst.SimpleStatementLine).body[0], cst.ImportFrom
+        )
+        scope = scopes[imp]
+        assignments = list(scope["T"])
+        assignment = assignments[0]
+        self.assertIsInstance(assignment, Assignment)
+        self.assertEqual(len(assignment.references), 1)
+        references = list(assignment.references)
+        self.assertTrue(references[0].is_annotation)
+
     def test_node_of_scopes(self) -> None:
         m, scopes = get_scope_metadata_provider(
             """
