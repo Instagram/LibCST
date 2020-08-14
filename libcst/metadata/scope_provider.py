@@ -699,9 +699,20 @@ class ScopeVisitor(cst.CSTVisitor):
 
     def visit_Call(self, node: cst.Call) -> Optional[bool]:
         self.__top_level_attribute_stack.append(None)
+        if any(
+            qn.name == "typing.TypeVar"
+            for qn in self.scope.get_qualified_names_for(node)
+        ):
+            node.func.visit(self)
+            self.__in_annotation.add(node)
+            for arg in node.args[1:]:
+                arg.visit(self)
+            return False
+        return True
 
     def leave_Call(self, original_node: cst.Call) -> None:
         self.__top_level_attribute_stack.pop()
+        self.__in_annotation.discard(original_node)
 
     def visit_Annotation(self, node: cst.Annotation) -> Optional[bool]:
         self.__in_annotation.add(node)
@@ -709,12 +720,38 @@ class ScopeVisitor(cst.CSTVisitor):
     def leave_Annotation(self, original_node: cst.Annotation) -> None:
         self.__in_annotation.discard(original_node)
 
+    def visit_SimpleString(self, node: cst.SimpleString) -> Optional[bool]:
+        self._handle_string_annotation(node)
+        return False
+
+    def visit_ConcatenatedString(self, node: cst.ConcatenatedString) -> Optional[bool]:
+        self._handle_string_annotation(node)
+        return False
+
+    def _handle_string_annotation(
+        self, node: Union[cst.SimpleString, cst.ConcatenatedString]
+    ) -> None:
+        if self.__in_annotation:
+            value = node.evaluated_value
+            if value:
+                mod = cst.parse_module(value)
+                mod.visit(self)
+
+    def visit_Subscript(self, node: cst.Subscript) -> Optional[bool]:
+        if any(
+            qn.name == "typing.Literal"
+            for qn in self.scope.get_qualified_names_for(node.value)
+        ):
+            node.value.visit(self)
+            return False
+        return True
+
     def visit_Name(self, node: cst.Name) -> Optional[bool]:
         # not all Name have ExpressionContext
         context = self.provider.get_metadata(ExpressionContextProvider, node, None)
         if context == ExpressionContext.STORE:
             self.scope.record_assignment(node.value, node)
-        elif context in (ExpressionContext.LOAD, ExpressionContext.DEL):
+        elif context in (ExpressionContext.LOAD, ExpressionContext.DEL, None):
             access = Access(node, self.scope, is_annotation=bool(self.__in_annotation))
             self.__deferred_accesses.append(
                 (access, self.__top_level_attribute_stack[-1])
