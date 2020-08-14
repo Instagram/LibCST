@@ -7,7 +7,6 @@ import re
 from typing import Dict, Pattern, Union
 
 import libcst as cst
-import libcst.matchers as m
 from libcst.codemod._context import CodemodContext
 from libcst.codemod._visitor import ContextAwareVisitor
 from libcst.metadata import PositionProvider
@@ -37,11 +36,21 @@ class GatherCommentsVisitor(ContextAwareVisitor):
 
         self._comment_matcher: Pattern[str] = re.compile(comment_regex)
 
-    @m.visit(m.EmptyLine(comment=m.DoesNotMatch(None)))
-    @m.visit(m.TrailingWhitespace(comment=m.DoesNotMatch(None)))
-    def visit_comment(self, node: Union[cst.EmptyLine, cst.TrailingWhitespace]) -> None:
+    def visit_EmptyLine(self, node: cst.EmptyLine) -> bool:
+        if node.comment is not None:
+            self.handle_comment(node)
+        return False
+
+    def visit_TrailingWhitespace(self, node: cst.TrailingWhitespace) -> bool:
+        if node.comment is not None:
+            self.handle_comment(node)
+        return False
+
+    def handle_comment(
+        self, node: Union[cst.EmptyLine, cst.TrailingWhitespace]
+    ) -> None:
         comment = node.comment
-        assert comment is not None  # hello, type checker
+        assert comment is not None  # ensured by callsites above
         if not self._comment_matcher.match(comment.value):
             return
         line = self.get_metadata(PositionProvider, comment).start.line
