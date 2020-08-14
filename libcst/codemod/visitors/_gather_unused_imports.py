@@ -11,6 +11,7 @@ from libcst.codemod._context import CodemodContext
 from libcst.codemod._visitor import ContextAwareVisitor
 from libcst.codemod.visitors._gather_exports import GatherExportsVisitor
 from libcst.codemod.visitors._gather_string_annotation_names import (
+    FUNCS_CONSIDERED_AS_STRING_ANNOTATIONS,
     GatherNamesFromStringAnnotationsVisitor,
 )
 from libcst.metadata import ProviderT, ScopeProvider
@@ -43,7 +44,7 @@ class GatherUnusedImportsVisitor(ContextAwareVisitor):
         self,
         context: CodemodContext,
         ignored_modules: Collection[str] = MODULES_IGNORED_BY_DEFAULT,
-        typing_functions: Collection[str] = set(),
+        typing_functions: Collection[str] = FUNCS_CONSIDERED_AS_STRING_ANNOTATIONS,
     ) -> None:
         super().__init__(context)
 
