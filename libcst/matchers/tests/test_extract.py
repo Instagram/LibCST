@@ -432,3 +432,25 @@ class MatchersExtractTest(UnitTest):
             ),
         )
         self.assertIsNone(nodes)
+
+    def test_extract_sequence_multiple_wildcards(self) -> None:
+        expression = cst.parse_expression("1, 2, 3, 4")
+        nodes = m.extract(
+            expression,
+            m.Tuple(
+                elements=(
+                    m.SaveMatchedNode(m.ZeroOrMore(), "head"),
+                    m.SaveMatchedNode(m.Element(value=m.Integer(value="3")), "element"),
+                    m.SaveMatchedNode(m.ZeroOrMore(), "tail"),
+                )
+            ),
+        )
+        tuple_elements = cst.ensure_type(expression, cst.Tuple).elements
+        self.assertEqual(
+            nodes,
+            {
+                "head": tuple(tuple_elements[:2]),
+                "element": tuple_elements[2],
+                "tail": tuple(tuple_elements[3:]),
+            },
+        )

@@ -610,18 +610,27 @@ def _gen_dotted_names(
         yield node.value, node
     else:
         value = node.value
-        if not isinstance(value, (cst.Attribute, cst.Name)):
-            # this is not an import
-            return
-        name_values = _gen_dotted_names(value)
-        try:
-            next_name, next_node = next(name_values)
-        except StopIteration:
-            return
-        else:
-            yield f"{next_name}.{node.attr.value}", node
-            yield next_name, next_node
-            yield from name_values
+        if isinstance(value, cst.Call):
+            value = value.func
+            if isinstance(value, (cst.Attribute, cst.Name)):
+                name_values = _gen_dotted_names(value)
+                try:
+                    next_name, next_node = next(name_values)
+                except StopIteration:
+                    return
+                else:
+                    yield next_name, next_node
+                    yield from name_values
+        elif isinstance(value, (cst.Attribute, cst.Name)):
+            name_values = _gen_dotted_names(value)
+            try:
+                next_name, next_node = next(name_values)
+            except StopIteration:
+                return
+            else:
+                yield f"{next_name}.{node.attr.value}", node
+                yield next_name, next_node
+                yield from name_values
 
 
 class ScopeVisitor(cst.CSTVisitor):
@@ -630,7 +639,7 @@ class ScopeVisitor(cst.CSTVisitor):
         self.provider: ScopeProvider = provider
         self.scope: Scope = GlobalScope()
         self.__deferred_accesses: List[Tuple[Access, Optional[cst.Attribute]]] = []
-        self.__top_level_attribute: Optional[cst.Attribute] = None
+        self.__top_level_attribute_stack: List[Optional[cst.Attribute]] = [None]
 
     @contextmanager
     def _new_scope(
@@ -677,12 +686,18 @@ class ScopeVisitor(cst.CSTVisitor):
         return self._visit_import_alike(node)
 
     def visit_Attribute(self, node: cst.Attribute) -> Optional[bool]:
-        if self.__top_level_attribute is None:
-            self.__top_level_attribute = node
+        if self.__top_level_attribute_stack[-1] is None:
+            self.__top_level_attribute_stack[-1] = node
         node.value.visit(self)  # explicitly not visiting attr
-        if self.__top_level_attribute is node:
-            self.__top_level_attribute = None
+        if self.__top_level_attribute_stack[-1] is node:
+            self.__top_level_attribute_stack[-1] = None
         return False
+
+    def visit_Call(self, node: cst.Call) -> Optional[bool]:
+        self.__top_level_attribute_stack.append(None)
+
+    def leave_Call(self, original_node: cst.Call) -> None:
+        self.__top_level_attribute_stack.pop()
 
     def visit_Name(self, node: cst.Name) -> Optional[bool]:
         # not all Name have ExpressionContext
@@ -691,7 +706,9 @@ class ScopeVisitor(cst.CSTVisitor):
             self.scope.record_assignment(node.value, node)
         elif context in (ExpressionContext.LOAD, ExpressionContext.DEL):
             access = Access(node, self.scope)
-            self.__deferred_accesses.append((access, self.__top_level_attribute))
+            self.__deferred_accesses.append(
+                (access, self.__top_level_attribute_stack[-1])
+            )
 
     def visit_FunctionDef(self, node: cst.FunctionDef) -> Optional[bool]:
         self.scope.record_assignment(node.name.value, node)
@@ -833,9 +850,10 @@ class ScopeVisitor(cst.CSTVisitor):
             if enclosing_attribute is not None:
                 # if _gen_dotted_names doesn't generate any values, fall back to
                 # the original name node above
-                for name, node in _gen_dotted_names(enclosing_attribute):
-                    if name in access.scope:
+                for attr_name, node in _gen_dotted_names(enclosing_attribute):
+                    if attr_name in access.scope:
                         access.node = node
+                        name = attr_name
                         break
 
             scope_name_accesses[(access.scope, name)].add(access)

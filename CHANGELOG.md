@@ -1,3 +1,14 @@
+# 0.3.9 - 2020-09-07
+
+## Added
+ - Support string type annotations in RemoveUnusedImports [#353](https://github.com/Instagram/LibCST/issues/353)
+ - Add scope to ImportAlias [#350](https://github.com/Instagram/LibCST/issues/350)
+ - Add scope to ClassDef [#349](https://github.com/Instagram/LibCST/issues/349)
+
+## Fixed
+ - Fixed all pyre related errors [#360](https://github.com/Instagram/LibCST/issues/360)
+ - Fixed enclosing attribute for attributes in call arguments [#362](https://github.com/Instagram/LibCST/issues/362)
+
 # 0.3.8 - 2020-07-22
 
 ## Added

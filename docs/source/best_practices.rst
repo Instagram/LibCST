@@ -80,7 +80,7 @@ You could instead write something like::
         def visit_Call(self, node: cst.Call) -> None:
             # Store all calls in a stack
             if m.matches(node.func, m.Name()):
-                self.call_stack.append(cst.ensure_type(node.func, m.Name).value)
+                self.call_stack.append(cst.ensure_type(node.func, cst.Name).value)
 
         def leave_Call(self, original_node: cst.Call) -> None:
             # Pop the latest call off the stack
