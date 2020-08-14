@@ -739,7 +739,7 @@ class ScopeVisitor(cst.CSTVisitor):
 
     def visit_Subscript(self, node: cst.Subscript) -> Optional[bool]:
         if any(
-            qn.name == "typing.Literal"
+            qn.name in ("typing.Literal", "typing_extensions.Literal")
             for qn in self.scope.get_qualified_names_for(node.value)
         ):
             node.value.visit(self)
