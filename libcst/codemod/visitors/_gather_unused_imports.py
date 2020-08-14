@@ -4,7 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 #
 
-from typing import Iterable, Optional, Set, Tuple, Union
+from typing import Collection, Iterable, Set, Tuple, Union
 
 import libcst as cst
 from libcst.codemod._context import CodemodContext
@@ -16,6 +16,8 @@ from libcst.codemod.visitors._gather_string_annotation_names import (
 from libcst.metadata import ProviderT, ScopeProvider
 from libcst.metadata.scope_provider import _gen_dotted_names
 
+
+MODULES_IGNORED_BY_DEFAULT = {"__future__"}
 
 class GatherUnusedImportsVisitor(ContextAwareVisitor):
     """
@@ -39,14 +41,12 @@ class GatherUnusedImportsVisitor(ContextAwareVisitor):
     def __init__(
         self,
         context: CodemodContext,
-        ignored_modules: Optional[Set[str]] = None,
-        typing_functions: Optional[Set[str]] = None,
+        ignored_modules: Collection[str] = MODULES_IGNORED_BY_DEFAULT,
+        typing_functions: Collection[str] = set(),
     ) -> None:
         super().__init__(context)
 
-        self._ignored_modules: Set[str] = (
-            ignored_modules if ignored_modules is not None else {"__future__"}
-        )
+        self._ignored_modules: Set[str] = ignored_modules
         self._typing_functions = typing_functions
         self._string_annotation_names: Set[str] = set()
         self._exported_names: Set[str] = set()

@@ -3,7 +3,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from typing import List, Optional, Set, Union, cast
+from typing import Collection, List, Set, Union, cast
 
 import libcst as cst
 import libcst.matchers as m
@@ -28,7 +28,9 @@ class GatherNamesFromStringAnnotationsVisitor(ContextAwareVisitor):
     METADATA_DEPENDENCIES = (QualifiedNameProvider,)
 
     def __init__(
-        self, context: CodemodContext, typing_functions: Collection[str] = FUNCS_CONSIDERED_AS_STRING_ANNOTATIONS
+        self,
+        context: CodemodContext,
+        typing_functions: Collection[str] = FUNCS_CONSIDERED_AS_STRING_ANNOTATIONS,
     ) -> None:
         super().__init__(context)
         self._typing_functions: Collection[str] = typing_functions
