@@ -1017,7 +1017,7 @@ class ScopeProviderTest(UnitTest):
                 from a import A, B, C, D, E, F
                 def x(a: A):
                     pass
-                def y(b: B):
+                def y(b: "B"):
                     pass
                 def z(c: Literal["C"]):
                     pass
