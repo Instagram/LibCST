@@ -1,13 +1,29 @@
+# 0.3.10 - 2020-09-17
+
+## Added
+- Handle string annotations in ScopeProvider [#373](https://github.com/Instagram/LibCST/pull/373)
+- Add is_annotation subtype for Access inreferences. [#372](https://github.com/Instagram/LibCST/pull/372)
+
+## Updated
+- Call pyre query with noninteractive logging [#371](https://github.com/Instagram/LibCST/pull/371)
+- Replace matchers with explicit visitation in gatherers [#366](https://github.com/Instagram/LibCST/pull/366)
+- Include missing test data in install [#365](https://github.com/Instagram/LibCST/pull/365)
+
+## Fixed
+- Spaces around walrus operator are not required [#368](https://github.com/Instagram/LibCST/pull/368)
+- SaveMachedNode now matches with trailing empty wildcards [#356](https://github.com/Instagram/LibCST/pull/356)
+- Correctly extract wildcard matchers [#355](https://github.com/Instagram/LibCST/pull/355)
+
 # 0.3.9 - 2020-09-07
 
 ## Added
- - Support string type annotations in RemoveUnusedImports [#353](https://github.com/Instagram/LibCST/issues/353)
- - Add scope to ImportAlias [#350](https://github.com/Instagram/LibCST/issues/350)
- - Add scope to ClassDef [#349](https://github.com/Instagram/LibCST/issues/349)
+ - Support string type annotations in RemoveUnusedImports [#353](https://github.com/Instagram/LibCST/pull/353)
+ - Add scope to ImportAlias [#350](https://github.com/Instagram/LibCST/pull/350)
+ - Add scope to ClassDef [#349](https://github.com/Instagram/LibCST/pull/349)
 
 ## Fixed
- - Fixed all pyre related errors [#360](https://github.com/Instagram/LibCST/issues/360)
- - Fixed enclosing attribute for attributes in call arguments [#362](https://github.com/Instagram/LibCST/issues/362)
+ - Fixed all pyre related errors [#360](https://github.com/Instagram/LibCST/pull/360)
+ - Fixed enclosing attribute for attributes in call arguments [#362](https://github.com/Instagram/LibCST/pull/362)
 
 # 0.3.8 - 2020-07-22
 
