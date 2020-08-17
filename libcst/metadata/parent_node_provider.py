@@ -21,6 +21,6 @@ class ParentNodeVisitor(cst.CSTVisitor):
         super().on_leave(original_node)
 
 
-class ParentNodeProvider(BatchableMetadataProvider[Optional[cst.CSTNode]]):
+class ParentNodeProvider(BatchableMetadataProvider[cst.CSTNode]):
     def visit_Module(self, node: cst.Module) -> Optional[bool]:
         node.visit(ParentNodeVisitor(self))
