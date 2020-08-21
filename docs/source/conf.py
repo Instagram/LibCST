@@ -50,6 +50,7 @@ extensions = [
     "sphinx.ext.autosummary",
     "sphinx.ext.graphviz",
     "sphinx.ext.intersphinx",
+    "sphinx.ext.viewcode",
     "sphinx_rtd_theme",
 ]
 
