@@ -46,12 +46,7 @@ setuptools.setup(
     },
     test_suite="libcst",
     python_requires=">=3.6",
-    install_requires=[
-        "dataclasses; python_version < '3.7'",
-        "typing_extensions >= 3.7.4.2",
-        "typing_inspect >= 0.4.0",
-        "pyyaml >= 5.2",
-    ],
+    install_requires=[dep.strip() for dep in open("requirements.txt").readlines()],
     extras_require={
         "dev": [
             "black",
