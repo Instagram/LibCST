@@ -193,8 +193,8 @@ def _verify_parameter_annotations(
                 raise MatchDecoratorMismatch(
                     meth.__qualname__,
                     f"@{decorator_name} can be called with {match.__name__} "
-                    + f"but the decorated function parameter annotations do "
-                    + f"not include this type.",
+                    + "but the decorated function parameter annotations do "
+                    + "not include this type.",
                 )
 
 

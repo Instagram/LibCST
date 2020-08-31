@@ -667,15 +667,31 @@ class FunctionDefCreationTest(CSTNodeTest):
             },
             {
                 "node": cst.FunctionDef(
-                    name=cst.Name(value="foo",),
+                    name=cst.Name(
+                        value="foo",
+                    ),
                     params=cst.Parameters(
-                        params=[cst.Param(name=cst.Name(value="param1",),),],
+                        params=[
+                            cst.Param(
+                                name=cst.Name(
+                                    value="param1",
+                                ),
+                            ),
+                        ],
                     ),
                     body=cst.IndentedBlock(
-                        body=[cst.SimpleStatementLine(body=[cst.Pass(),],),],
+                        body=[
+                            cst.SimpleStatementLine(
+                                body=[
+                                    cst.Pass(),
+                                ],
+                            ),
+                        ],
                     ),
                     whitespace_before_params=cst.ParenthesizedWhitespace(
-                        last_line=cst.SimpleWhitespace(value="    ",),
+                        last_line=cst.SimpleWhitespace(
+                            value="    ",
+                        ),
                     ),
                 ),
                 "code": "def foo(\n    param1):\n    pass\n",
@@ -1912,7 +1928,12 @@ class FunctionDefParserTest(CSTNodeTest):
                         posonly_ind=cst.ParamSlash(
                             comma=cst.Comma(whitespace_after=cst.SimpleWhitespace(" ")),
                         ),
-                        params=(cst.Param(cst.Name("baz"), star="",),),
+                        params=(
+                            cst.Param(
+                                cst.Name("baz"),
+                                star="",
+                            ),
+                        ),
                     ),
                     cst.SimpleStatementSuite((cst.Pass(),)),
                 ),

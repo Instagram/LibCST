@@ -161,7 +161,7 @@ class ParserSyntaxError(Exception):
 
     def __repr__(self) -> str:
         return (
-            f"ParserSyntaxError("
+            "ParserSyntaxError("
             + f"{self.message!r}, lines=[...], raw_line={self.raw_line!r}, "
             + f"raw_column={self.raw_column!r})"
         )

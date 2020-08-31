@@ -5,6 +5,7 @@
 
 from types import MappingProxyType
 from typing import (
+    TYPE_CHECKING,
     Any,
     AsyncGenerator,
     ClassVar,
@@ -26,6 +27,10 @@ from typing_extensions import Literal
 
 from libcst._type_enforce import is_value_of_type
 from libcst.testing.utils import UnitTest, data_provider
+
+
+if TYPE_CHECKING:
+    from collections import Counter  # noqa: F401
 
 
 class MyExampleClass:
@@ -97,7 +102,7 @@ class TypeEnforcementTest(UnitTest):
             (NamedTupleSubclass("foo", 123), NamedTupleSubclass),
             # forward references should just pass for anything
             # pyre-ignore Pyre doesn't think a forwardref is a typevar.
-            (MyExampleClass(), Optional["NodeUser"]),
+            (MyExampleClass(), Optional["Counter"]),
             # class variables get unwrapped, and behave like their underlying type
             (MyExampleClass(), ClassVar[MyExampleClass]),
             # dicts work

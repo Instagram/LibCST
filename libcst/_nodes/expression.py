@@ -758,8 +758,8 @@ class FormattedStringExpression(BaseFormattedStringContent):
     format_spec: Optional[Sequence[BaseFormattedStringContent]] = None
 
     #: Whitespace after the opening curly brace (``{``), but before the ``expression``.
-    whitespace_before_expression: BaseParenthesizableWhitespace = SimpleWhitespace.field(
-        ""
+    whitespace_before_expression: BaseParenthesizableWhitespace = (
+        SimpleWhitespace.field("")
     )
 
     #: Whitespace after the ``expression``, but before the ``conversion``,

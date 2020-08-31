@@ -259,8 +259,13 @@ class RenameCommand(VisitorBasedCodemodCommand):
         inside_import_statement: bool = not self.get_metadata(
             QualifiedNameProvider, original_node, set()
         )
-        if QualifiedNameProvider.has_name(self, original_node, self.old_name,) or (
-            inside_import_statement and full_replacement_name == self.new_name
+        if (
+            QualifiedNameProvider.has_name(
+                self,
+                original_node,
+                self.old_name,
+            )
+            or (inside_import_statement and full_replacement_name == self.new_name)
         ):
             new_value, new_attr = self.new_module, self.new_mod_or_obj
             if not inside_import_statement:
@@ -286,9 +291,9 @@ class RenameCommand(VisitorBasedCodemodCommand):
         # that we have any `self.scheduled_removals` tells us we encountered a matching `old_name` in the code.
         if not self.bypass_import and self.scheduled_removals:
             if self.new_module:
-                new_obj: Optional[str] = self.new_mod_or_obj.split(".")[
-                    0
-                ] if self.new_mod_or_obj else None
+                new_obj: Optional[str] = (
+                    self.new_mod_or_obj.split(".")[0] if self.new_mod_or_obj else None
+                )
                 AddImportsVisitor.add_needed_import(
                     self.context, module=self.new_module, obj=new_obj
                 )

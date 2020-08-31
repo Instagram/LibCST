@@ -29,7 +29,7 @@ generated_code.append("from libcst._typed_visitor_base import mark_no_op")
 # cause an import cycle otherwise.
 generated_code.append("")
 generated_code.append("")
-generated_code.append(f"if TYPE_CHECKING:")
+generated_code.append("if TYPE_CHECKING:")
 for module, objects in imports.items():
     generated_code.append(f"    from {module} import (  # noqa: F401")
     generated_code.append(f"        {', '.join(sorted(list(objects)))}")

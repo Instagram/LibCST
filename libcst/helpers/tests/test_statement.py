@@ -35,7 +35,10 @@ class StatementTest(UnitTest):
         )
     )
     def test_get_absolute_module(
-        self, module: Optional[str], importfrom: str, output: Optional[str],
+        self,
+        module: Optional[str],
+        importfrom: str,
+        output: Optional[str],
     ) -> None:
         node = ensure_type(cst.parse_statement(importfrom), cst.SimpleStatementLine)
         assert len(node.body) == 1, "Unexpected number of statements!"

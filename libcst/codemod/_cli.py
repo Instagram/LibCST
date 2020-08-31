@@ -162,9 +162,11 @@ def exec_transform_with_prettyprint(
         return code
 
     result = transform_module(transform, code, python_version=python_version)
-    code: Optional[str] = None if isinstance(
-        result, (TransformFailure, TransformExit, TransformSkip)
-    ) else result.code
+    code: Optional[str] = (
+        None
+        if isinstance(result, (TransformFailure, TransformExit, TransformSkip))
+        else result.code
+    )
 
     if code is not None and format_code:
         try:
@@ -603,11 +605,14 @@ def parallel_exec_transform_with_prettyprint(  # noqa: C901
         # like type inference to individual forked processes.
         print("Calculating full-repo metadata...", file=sys.stderr)
         metadata_manager = FullRepoManager(
-            repo_root, files, transform.get_inherited_dependencies(),
+            repo_root,
+            files,
+            transform.get_inherited_dependencies(),
         )
         metadata_manager.resolve_cache()
         transform.context = replace(
-            transform.context, metadata_manager=metadata_manager,
+            transform.context,
+            metadata_manager=metadata_manager,
         )
     print("Executing codemod...", file=sys.stderr)
 

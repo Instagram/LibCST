@@ -46,7 +46,10 @@ class TestRenameCommand(CodemodTest):
         """
 
         self.assertCodemod(
-            before, after, old_name="foo.bar", new_name="baz.qux",
+            before,
+            after,
+            old_name="foo.bar",
+            new_name="baz.qux",
         )
 
     def test_rename_repeated_name_with_asname(self) -> None:
@@ -63,7 +66,10 @@ class TestRenameCommand(CodemodTest):
                 qux.bla(5)
         """
         self.assertCodemod(
-            before, after, old_name="foo.foo", new_name="baz.qux",
+            before,
+            after,
+            old_name="foo.foo",
+            new_name="baz.qux",
         )
 
     def test_rename_attr(self) -> None:
@@ -82,7 +88,10 @@ class TestRenameCommand(CodemodTest):
         """
 
         self.assertCodemod(
-            before, after, old_name="a.b.c", new_name="d.e.f",
+            before,
+            after,
+            old_name="a.b.c",
+            new_name="d.e.f",
         )
 
     def test_rename_attr_asname(self) -> None:
@@ -101,7 +110,10 @@ class TestRenameCommand(CodemodTest):
         """
 
         self.assertCodemod(
-            before, after, old_name="foo.qux", new_name="baz.quux",
+            before,
+            after,
+            old_name="foo.qux",
+            new_name="baz.quux",
         )
 
     def test_rename_module_import(self) -> None:
@@ -119,7 +131,10 @@ class TestRenameCommand(CodemodTest):
         """
 
         self.assertCodemod(
-            before, after, old_name="a.b", new_name="c.b",
+            before,
+            after,
+            old_name="a.b",
+            new_name="c.b",
         )
 
     def test_rename_module_import_2(self) -> None:
@@ -137,7 +152,10 @@ class TestRenameCommand(CodemodTest):
         """
 
         self.assertCodemod(
-            before, after, old_name="a", new_name="c",
+            before,
+            after,
+            old_name="a",
+            new_name="c",
         )
 
     def test_rename_module_import_no_change(self) -> None:
@@ -149,7 +167,10 @@ class TestRenameCommand(CodemodTest):
                 pass
         """
         self.assertCodemod(
-            before, before, old_name="b", new_name="c.b",
+            before,
+            before,
+            old_name="b",
+            new_name="c.b",
         )
 
     def test_rename_module_import_from(self) -> None:
@@ -167,7 +188,10 @@ class TestRenameCommand(CodemodTest):
         """
 
         self.assertCodemod(
-            before, after, old_name="a.b", new_name="c.b",
+            before,
+            after,
+            old_name="a.b",
+            new_name="c.b",
         )
 
     def test_rename_module_import_from_2(self) -> None:
@@ -185,7 +209,10 @@ class TestRenameCommand(CodemodTest):
         """
 
         self.assertCodemod(
-            before, after, old_name="a", new_name="c",
+            before,
+            after,
+            old_name="a",
+            new_name="c",
         )
 
     def test_rename_class(self) -> None:
@@ -202,7 +229,10 @@ class TestRenameCommand(CodemodTest):
                 pass
         """
         self.assertCodemod(
-            before, after, old_name="a.b.some_class", new_name="c.b.some_class",
+            before,
+            after,
+            old_name="a.b.some_class",
+            new_name="c.b.some_class",
         )
 
     def test_rename_importfrom_same_module(self) -> None:
@@ -219,7 +249,10 @@ class TestRenameCommand(CodemodTest):
                 pass
         """
         self.assertCodemod(
-            before, after, old_name="a.b.Class_1", new_name="a.b.Class_3",
+            before,
+            after,
+            old_name="a.b.Class_1",
+            new_name="a.b.Class_3",
         )
 
     def test_rename_importfrom_same_module_2(self) -> None:
@@ -258,7 +291,10 @@ class TestRenameCommand(CodemodTest):
         """
 
         self.assertCodemod(
-            before, after, old_name="x", new_name="z",
+            before,
+            after,
+            old_name="x",
+            new_name="z",
         )
 
     def test_module_does_not_change(self) -> None:
@@ -292,7 +328,10 @@ class TestRenameCommand(CodemodTest):
                 baz: c.baz
         """
         self.assertCodemod(
-            before, after, old_name="a.z", new_name="d.z",
+            before,
+            after,
+            old_name="a.z",
+            new_name="d.z",
         )
 
     def test_other_import_froms_untouched(self) -> None:
@@ -312,7 +351,10 @@ class TestRenameCommand(CodemodTest):
                 baz: d.baz
         """
         self.assertCodemod(
-            before, after, old_name="a.b", new_name="f.b",
+            before,
+            after,
+            old_name="a.b",
+            new_name="f.b",
         )
 
     def test_no_removal_of_import_in_use(self) -> None:
@@ -333,7 +375,10 @@ class TestRenameCommand(CodemodTest):
                 pass
         """
         self.assertCodemod(
-            before, after, old_name="a.b", new_name="z.b",
+            before,
+            after,
+            old_name="a.b",
+            new_name="z.b",
         )
 
     def test_no_removal_of_dotted_import_in_use(self) -> None:
@@ -354,7 +399,10 @@ class TestRenameCommand(CodemodTest):
                 pass
         """
         self.assertCodemod(
-            before, after, old_name="a.b.c", new_name="z.b.c",
+            before,
+            after,
+            old_name="a.b.c",
+            new_name="z.b.c",
         )
 
     def test_no_removal_of_import_from_in_use(self) -> None:
@@ -372,7 +420,10 @@ class TestRenameCommand(CodemodTest):
                 bar: b.some_other_class
         """
         self.assertCodemod(
-            before, after, old_name="a.b.some_class", new_name="blah.some_class",
+            before,
+            after,
+            old_name="a.b.some_class",
+            new_name="blah.some_class",
         )
 
     def test_other_unused_imports_untouched(self) -> None:
@@ -391,7 +442,10 @@ class TestRenameCommand(CodemodTest):
                 pass
         """
         self.assertCodemod(
-            before, after, old_name="a.obj", new_name="c.obj",
+            before,
+            after,
+            old_name="a.obj",
+            new_name="c.obj",
         )
 
     def test_complex_module_rename(self) -> None:
@@ -438,7 +492,10 @@ class TestRenameCommand(CodemodTest):
                 pass
         """
         self.assertCodemod(
-            before, after, old_name="aa.aaaa", new_name="b.c",
+            before,
+            after,
+            old_name="aa.aaaa",
+            new_name="b.c",
         )
 
     def test_repeated_name(self) -> None:
@@ -455,7 +512,10 @@ class TestRenameCommand(CodemodTest):
                 qux(5)
         """
         self.assertCodemod(
-            before, after, old_name="foo.foo", new_name="qux.qux",
+            before,
+            after,
+            old_name="foo.foo",
+            new_name="qux.qux",
         )
 
     def test_no_codemod(self) -> None:
@@ -466,7 +526,10 @@ class TestRenameCommand(CodemodTest):
                 bar(5)
         """
         self.assertCodemod(
-            before, before, old_name="bar", new_name="qux",
+            before,
+            before,
+            old_name="bar",
+            new_name="qux",
         )
 
     def test_rename_import_prefix(self) -> None:
@@ -477,7 +540,10 @@ class TestRenameCommand(CodemodTest):
             import x.y.c.d
         """
         self.assertCodemod(
-            before, after, old_name="a.b", new_name="x.y",
+            before,
+            after,
+            old_name="a.b",
+            new_name="x.y",
         )
 
     def test_rename_import_from_prefix(self) -> None:
@@ -488,7 +554,10 @@ class TestRenameCommand(CodemodTest):
             from x.y.c.d import foo
         """
         self.assertCodemod(
-            before, after, old_name="a.b", new_name="x.y",
+            before,
+            after,
+            old_name="a.b",
+            new_name="x.y",
         )
 
     def test_rename_multiple_occurrences(self) -> None:

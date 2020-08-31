@@ -93,7 +93,9 @@ class ExperimentalReentrantCodegenProviderTest(UnitTest):
         self.assertEqual(codegen_partial.get_original_module_code(), old_module)
         self.assertEqual(codegen_partial.get_modified_module_code(new_node), new_module)
 
-    def test_byte_conversion(self,) -> None:
+    def test_byte_conversion(
+        self,
+    ) -> None:
         module_bytes = "fn()\n".encode("utf-16")
         mw = MetadataWrapper(
             cst.parse_module("fn()\n", cst.PartialParserConfig(encoding="utf-16"))

@@ -65,7 +65,9 @@ class TypeVerificationVisitor(cst.CSTVisitor):
         # remove this if condition when the type issues are fixed.
         if not any(
             node.deep_equals(name) and tup == _tup
-            for (name, _tup) in {(cst.Name("i"), (17, 21, 17, 22)),}
+            for (name, _tup) in {
+                (cst.Name("i"), (17, 21, 17, 22)),
+            }
         ):
             self.test.assertIn(
                 tup,
@@ -116,8 +118,7 @@ class PyreIntegrationTest(UnitTest):
 
 
 if __name__ == "__main__":
-    """Run this script directly to generate pyre data for test suite (tests/pyre/*.py)
-    """
+    """Run this script directly to generate pyre data for test suite (tests/pyre/*.py)"""
     print("start pyre server")
     stdout: str
     stderr: str

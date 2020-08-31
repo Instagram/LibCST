@@ -157,7 +157,9 @@ class TemplateTransformer(cst.CSTTransformer):
         return self.simple_replacements[var_name].deep_clone()
 
     def leave_Annotation(
-        self, original_node: cst.Annotation, updated_node: cst.Annotation,
+        self,
+        original_node: cst.Annotation,
+        updated_node: cst.Annotation,
     ) -> cst.Annotation:
         # We can't use matchers here due to circular imports
         annotation = updated_node.annotation
@@ -168,7 +170,9 @@ class TemplateTransformer(cst.CSTTransformer):
         return updated_node
 
     def leave_AssignTarget(
-        self, original_node: cst.AssignTarget, updated_node: cst.AssignTarget,
+        self,
+        original_node: cst.AssignTarget,
+        updated_node: cst.AssignTarget,
     ) -> cst.AssignTarget:
         # We can't use matchers here due to circular imports
         target = updated_node.target
@@ -179,7 +183,9 @@ class TemplateTransformer(cst.CSTTransformer):
         return updated_node
 
     def leave_Param(
-        self, original_node: cst.Param, updated_node: cst.Param,
+        self,
+        original_node: cst.Param,
+        updated_node: cst.Param,
     ) -> cst.Param:
         var_name = unmangled_name(updated_node.name.value)
         if var_name in self.param_replacements:
@@ -187,7 +193,9 @@ class TemplateTransformer(cst.CSTTransformer):
         return updated_node
 
     def leave_Parameters(
-        self, original_node: cst.Parameters, updated_node: cst.Parameters,
+        self,
+        original_node: cst.Parameters,
+        updated_node: cst.Parameters,
     ) -> cst.Parameters:
         # A very special case for when we use a template variable for all
         # function parameters.
@@ -235,7 +243,9 @@ class TemplateTransformer(cst.CSTTransformer):
         return updated_node
 
     def leave_Expr(
-        self, original_node: cst.Expr, updated_node: cst.Expr,
+        self,
+        original_node: cst.Expr,
+        updated_node: cst.Expr,
     ) -> cst.BaseSmallStatement:
         # We can't use matchers here due to circular imports. We do a similar trick
         # to the above stanza handling SimpleStatementLine to support templates
@@ -267,7 +277,9 @@ class TemplateTransformer(cst.CSTTransformer):
         return updated_node
 
     def leave_IndentedBlock(
-        self, original_node: cst.IndentedBlock, updated_node: cst.IndentedBlock,
+        self,
+        original_node: cst.IndentedBlock,
+        updated_node: cst.IndentedBlock,
     ) -> cst.BaseSuite:
         # We can't use matchers here due to circular imports. We take advantage of
         # the fact that a name in an indented block will be parsed as an Expr node
@@ -289,7 +301,9 @@ class TemplateTransformer(cst.CSTTransformer):
         return updated_node
 
     def leave_Index(
-        self, original_node: cst.Index, updated_node: cst.Index,
+        self,
+        original_node: cst.Index,
+        updated_node: cst.Index,
     ) -> cst.BaseSlice:
         # We can't use matchers here due to circular imports
         expr = updated_node.value
@@ -300,7 +314,9 @@ class TemplateTransformer(cst.CSTTransformer):
         return updated_node
 
     def leave_SubscriptElement(
-        self, original_node: cst.SubscriptElement, updated_node: cst.SubscriptElement,
+        self,
+        original_node: cst.SubscriptElement,
+        updated_node: cst.SubscriptElement,
     ) -> cst.SubscriptElement:
         # We can't use matchers here due to circular imports. We use the trick
         # similar to above stanzas where a template replacement variable will
@@ -339,7 +355,8 @@ class TemplateChecker(cst.CSTVisitor):
 
 
 def unmangle_nodes(
-    tree: cst.CSTNode, template_replacements: Mapping[str, ValidReplacementType],
+    tree: cst.CSTNode,
+    template_replacements: Mapping[str, ValidReplacementType],
 ) -> cst.CSTNode:
     unmangler = TemplateTransformer(template_replacements)
     return ensure_type(tree.visit(unmangler), cst.CSTNode)

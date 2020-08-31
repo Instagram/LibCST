@@ -93,10 +93,14 @@ class GrammarParser:
     def _parse_items(self):
         # items: item+
         a, b = self._parse_item()
-        while self.type in (
-            PythonTokenTypes.NAME,
-            PythonTokenTypes.STRING,
-        ) or self.value in ("(", "["):
+        while (
+            self.type
+            in (
+                PythonTokenTypes.NAME,
+                PythonTokenTypes.STRING,
+            )
+            or self.value in ("(", "[")
+        ):
             c, d = self._parse_item()
             # Need to end on the next item.
             b.add_arc(c)

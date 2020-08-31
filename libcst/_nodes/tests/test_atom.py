@@ -591,11 +591,15 @@ class AtomTest(CSTNodeTest):
                     parts=(
                         cst.FormattedStringExpression(
                             cst.Comparison(
-                                left=cst.Name(value="a",),
+                                left=cst.Name(
+                                    value="a",
+                                ),
                                 comparisons=[
                                     cst.ComparisonTarget(
                                         operator=cst.Equal(),
-                                        comparator=cst.Name(value="b",),
+                                        comparator=cst.Name(
+                                            value="b",
+                                        ),
                                     ),
                                 ],
                             ),
@@ -611,11 +615,15 @@ class AtomTest(CSTNodeTest):
                     parts=(
                         cst.FormattedStringExpression(
                             cst.Comparison(
-                                left=cst.Name(value="a",),
+                                left=cst.Name(
+                                    value="a",
+                                ),
                                 comparisons=[
                                     cst.ComparisonTarget(
                                         operator=cst.NotEqual(),
-                                        comparator=cst.Name(value="b",),
+                                        comparator=cst.Name(
+                                            value="b",
+                                        ),
                                     ),
                                 ],
                             ),
@@ -631,8 +639,12 @@ class AtomTest(CSTNodeTest):
                     parts=(
                         cst.FormattedStringExpression(
                             cst.NamedExpr(
-                                target=cst.Name(value="a",),
-                                value=cst.Integer(value="5",),
+                                target=cst.Name(
+                                    value="a",
+                                ),
+                                value=cst.Integer(
+                                    value="5",
+                                ),
                                 lpar=(cst.LeftParen(),),
                                 rpar=(cst.RightParen(),),
                             ),

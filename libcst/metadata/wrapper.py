@@ -29,11 +29,11 @@ from libcst.metadata.base_provider import BatchableMetadataProvider
 if TYPE_CHECKING:
     from libcst._nodes.base import CSTNode  # noqa: F401
     from libcst._nodes.module import Module  # noqa: F401
+    from libcst._visitors import CSTVisitorT  # noqa: F401
     from libcst.metadata.base_provider import (  # noqa: F401
         BaseMetadataProvider,
         ProviderT,
     )
-    from libcst._visitors import CSTVisitorT  # noqa: F401
 
 
 _T = TypeVar("_T")

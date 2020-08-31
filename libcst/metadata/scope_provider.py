@@ -398,7 +398,7 @@ class Scope(abc.ABC):
     def get_qualified_names_for(
         self, node: Union[str, cst.CSTNode]
     ) -> Collection[QualifiedName]:
-        """ Get all :class:`~libcst.metadata.QualifiedName` in current scope given a
+        """Get all :class:`~libcst.metadata.QualifiedName` in current scope given a
         :class:`~libcst.CSTNode`.
         The source of a qualified name can be either :attr:`QualifiedNameSource.IMPORT`,
         :attr:`QualifiedNameSource.BUILTIN` or :attr:`QualifiedNameSource.LOCAL`.

@@ -15,7 +15,9 @@ from libcst.metadata import QualifiedNameProvider
 
 class StripStringsCommand(VisitorBasedCodemodCommand):
 
-    DESCRIPTION: str = "Converts string type annotations to 3.7-compatible forward references."
+    DESCRIPTION: str = (
+        "Converts string type annotations to 3.7-compatible forward references."
+    )
 
     METADATA_DEPENDENCIES = (QualifiedNameProvider,)
 
