@@ -26,9 +26,7 @@ from libcst.codegen.transforms import (
 
 def format_file(fname: str) -> None:
     with open(os.devnull, "w") as devnull:
-        subprocess.check_call(
-            ["isort", "-q", fname], stdout=devnull, stderr=devnull
-        )
+        subprocess.check_call(["isort", "-q", fname], stdout=devnull, stderr=devnull)
         subprocess.check_call(["black", fname], stdout=devnull, stderr=devnull)
 
 
