@@ -8,4 +8,3 @@ include_trailing_comma = true
 force_grid_wrap = 0
 lines_after_imports = 2
 combine_as_imports = true
-not_skip = "__init__.py"

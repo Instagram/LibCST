@@ -288,7 +288,8 @@ def get_grammar_str(version: PythonVersionInfo, future_imports: FrozenSet[str]) 
 # impossible.
 @lru_cache()
 def get_grammar(
-    version: PythonVersionInfo, future_imports: Union[FrozenSet[str], AutoConfig],
+    version: PythonVersionInfo,
+    future_imports: Union[FrozenSet[str], AutoConfig],
 ) -> "Grammar[TokenType]":
     if isinstance(future_imports, AutoConfig):
         # For easier testing, if not provided assume no __future__ imports
@@ -366,7 +367,8 @@ def _should_include(
 
 
 def _should_include_future(
-    future: Optional[str], future_imports: FrozenSet[str],
+    future: Optional[str],
+    future_imports: FrozenSet[str],
 ) -> bool:
     if future is None:
         return True
@@ -389,7 +391,8 @@ def get_nonterminal_productions(
 
 @lru_cache()
 def get_nonterminal_conversions(
-    version: PythonVersionInfo, future_imports: FrozenSet[str],
+    version: PythonVersionInfo,
+    future_imports: FrozenSet[str],
 ) -> Mapping[str, NonterminalConversion]:
     """
     Returns a mapping from nonterminal production name to the conversion function that

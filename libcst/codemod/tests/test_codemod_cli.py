@@ -28,7 +28,8 @@ class TestCodemodCLI(UnitTest):
         version = sys.version_info
         if version[0] == 3 and version[1] == 6:
             self.assertIn(
-                "ParserSyntaxError: Syntax Error @ 14:11.", rlt.stderr.decode("utf-8"),
+                "ParserSyntaxError: Syntax Error @ 14:11.",
+                rlt.stderr.decode("utf-8"),
             )
         else:
             self.assertIn(

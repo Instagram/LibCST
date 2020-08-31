@@ -706,10 +706,10 @@ class AtLeastN(Generic[_MatcherT], _BaseWildcardNode):
         return self._matcher
 
     def __or__(self, other: object) -> NoReturn:
-        raise Exception(f"AtLeastN cannot be used in a OneOf matcher")
+        raise Exception("AtLeastN cannot be used in a OneOf matcher")
 
     def __and__(self, other: object) -> NoReturn:
-        raise Exception(f"AtLeastN cannot be used in an AllOf matcher")
+        raise Exception("AtLeastN cannot be used in an AllOf matcher")
 
     def __invert__(self) -> NoReturn:
         raise Exception("Cannot invert an AtLeastN matcher!")
@@ -808,10 +808,10 @@ class AtMostN(Generic[_MatcherT], _BaseWildcardNode):
         return self._matcher
 
     def __or__(self, other: object) -> NoReturn:
-        raise Exception(f"AtMostN cannot be used in a OneOf matcher")
+        raise Exception("AtMostN cannot be used in a OneOf matcher")
 
     def __and__(self, other: object) -> NoReturn:
-        raise Exception(f"AtMostN cannot be used in an AllOf matcher")
+        raise Exception("AtMostN cannot be used in an AllOf matcher")
 
     def __invert__(self) -> NoReturn:
         raise Exception("Cannot invert an AtMostN matcher!")

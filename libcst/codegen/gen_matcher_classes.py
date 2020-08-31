@@ -553,7 +553,7 @@ for node in all_libcst_nodes:
 
     # Add special metadata field
     generated_code.append(
-        f"    metadata: Union[MetadataMatchType, DoNotCareSentinel, OneOf[MetadataMatchType], AllOf[MetadataMatchType]] = DoNotCare()"
+        "    metadata: Union[MetadataMatchType, DoNotCareSentinel, OneOf[MetadataMatchType], AllOf[MetadataMatchType]] = DoNotCare()"
     )
 
 

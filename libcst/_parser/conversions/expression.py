@@ -1113,7 +1113,9 @@ def convert_fstring_format_spec(
     version=">=3.5,<3.8",
 )
 @with_production(
-    "testlist_comp_tuple", "(test) ( comp_for | (',' (test))* [','] )", version="<3.5",
+    "testlist_comp_tuple",
+    "(test) ( comp_for | (',' (test))* [','] )",
+    version="<3.5",
 )
 def convert_testlist_comp_tuple(
     config: ParserConfig, children: typing.Sequence[typing.Any]
@@ -1138,7 +1140,9 @@ def convert_testlist_comp_tuple(
     version=">=3.5,<3.8",
 )
 @with_production(
-    "testlist_comp_list", "(test) ( comp_for | (',' (test))* [','] )", version="<3.5",
+    "testlist_comp_list",
+    "(test) ( comp_for | (',' (test))* [','] )",
+    version="<3.5",
 )
 def convert_testlist_comp_list(
     config: ParserConfig, children: typing.Sequence[typing.Any]

@@ -150,7 +150,10 @@ class ConvertFormatStringCommandTest(CodemodTest):
         """
 
         self.assertCodemod(
-            before, after, allow_strip_comments=True, python_version="3.7",
+            before,
+            after,
+            allow_strip_comments=True,
+            python_version="3.7",
         )
 
     def test_enable_unsupported_await(self) -> None:
@@ -168,7 +171,10 @@ class ConvertFormatStringCommandTest(CodemodTest):
         """
 
         self.assertCodemod(
-            before, after, allow_await=True, python_version="3.7",
+            before,
+            after,
+            allow_await=True,
+            python_version="3.7",
         )
 
     def test_formatspec_conversion(self) -> None:
@@ -203,7 +209,8 @@ class ConvertFormatStringCommandTest(CodemodTest):
                 return f"{x:0>3d}"
         """
         self.assertCodemod(
-            before, after,
+            before,
+            after,
         )
 
     def test_position_replacement(self) -> None:

@@ -35,7 +35,9 @@ class ExpressionTest(UnitTest):
         )
     )
     def test_get_full_name_for_expression(
-        self, input: Union[str, cst.CSTNode], output: Optional[str],
+        self,
+        input: Union[str, cst.CSTNode],
+        output: Optional[str],
     ) -> None:
         self.assertEqual(get_full_name_for_node(input), output)
         if output is None:

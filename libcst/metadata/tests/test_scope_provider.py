@@ -152,7 +152,12 @@ class ScopeProviderTest(UnitTest):
                 self.assertEqual(scopes[alias], scope_of_module)
 
         for idx, in_scopes in enumerate(
-            [["foo", "foo.bar"], ["fizzbuzz"], ["a", "a.b", "a.b.c"], ["g"],]
+            [
+                ["foo", "foo.bar"],
+                ["fizzbuzz"],
+                ["a", "a.b", "a.b.c"],
+                ["g"],
+            ]
         ):
             for in_scope in in_scopes:
                 self.assertEqual(

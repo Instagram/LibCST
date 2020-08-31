@@ -330,8 +330,9 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
             name = get_full_name_for_node(only_target)
             if name is not None:
                 self.qualifier.append(name)
-                if self._qualifier_name() in self.annotations.attribute_annotations and not isinstance(
-                    only_target, cst.Subscript
+                if (
+                    self._qualifier_name() in self.annotations.attribute_annotations
+                    and not isinstance(only_target, cst.Subscript)
                 ):
                     annotation = self.annotations.attribute_annotations[
                         self._qualifier_name()

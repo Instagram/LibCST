@@ -25,7 +25,10 @@ class DocstringTest(UnitTest):
                 ''',
                 "docstring in triple quotes.",
             ),
-            ('''"docstring in single quotes."''', "docstring in single quotes.",),
+            (
+                '''"docstring in single quotes."''',
+                "docstring in single quotes.",
+            ),
             (
                 '''
                 # comment

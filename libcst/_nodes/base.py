@@ -91,7 +91,7 @@ def _pretty_repr_sequence(seq: Sequence[object]) -> str:
 
 
 def _indent(value: str) -> str:
-    return "\n".join(f"    {l}" for l in value.split("\n"))
+    return "\n".join(f"    {line}" for line in value.split("\n"))
 
 
 def _clone(val: object) -> object:
@@ -236,7 +236,7 @@ class CSTNode(ABC):
         # validate return type of the user-defined `visitor.on_leave` method
         if not isinstance(leave_result, (CSTNode, RemovalSentinel)):
             raise Exception(
-                f"Expected a node of type CSTNode or a RemovalSentinel, "
+                "Expected a node of type CSTNode or a RemovalSentinel, "
                 + f"but got a return value of {type(leave_result).__name__}"
             )
 

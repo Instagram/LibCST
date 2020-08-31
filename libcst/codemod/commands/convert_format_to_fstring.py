@@ -364,20 +364,21 @@ class ConvertFormatStringCommand(VisitorBasedCodemodCommand):
         if self.findall(expr, m.Comment()) and not self.allow_strip_comments:
             # We could strip comments, but this is a formatting change so
             # we choose not to for now.
-            self.warn(f"Unsupported comment in format() call")
+            self.warn("Unsupported comment in format() call")
             return None
         if self.findall(expr, m.FormattedString()):
-            self.warn(f"Unsupported f-string in format() call")
+            self.warn("Unsupported f-string in format() call")
             return None
         if self.findall(expr, m.Await()) and not self.allow_await:
             # This is fixed in 3.7 but we don't currently have a flag
             # to enable/disable it.
-            self.warn(f"Unsupported await in format() call")
+            self.warn("Unsupported await in format() call")
             return None
 
         # Stripping newlines is effectively a format-only change.
         expr = cst.ensure_type(
-            expr.visit(StripNewlinesTransformer(self.context)), cst.BaseExpression,
+            expr.visit(StripNewlinesTransformer(self.context)),
+            cst.BaseExpression,
         )
 
         # Try our best to swap quotes on any strings that won't fit
@@ -392,7 +393,7 @@ class ConvertFormatStringCommand(VisitorBasedCodemodCommand):
         # in it.
         raw_expr_string = self.module.code_for_node(expr)
         if "\\" in raw_expr_string:
-            self.warn(f"Unsupported backslash in format expression")
+            self.warn("Unsupported backslash in format expression")
             return None
 
         # For safety sake, if this is a dict/set or dict/set comprehension,
@@ -408,7 +409,7 @@ class ConvertFormatStringCommand(VisitorBasedCodemodCommand):
         expr.visit(quote_gatherer)
         for stringend in quote_gatherer.stringends:
             if stringend in containing_string.quote:
-                self.warn(f"Cannot embed string with same quote from format() call")
+                self.warn("Cannot embed string with same quote from format() call")
                 return None
 
         return cst.FormattedStringExpression(expression=expr, conversion=conversion)

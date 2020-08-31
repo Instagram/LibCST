@@ -77,7 +77,8 @@ class ConvertPercentFormatStringCommand(VisitorBasedCodemodCommand):
                 left=m.MatchIfTrue(_match_simple_string),
                 operator=m.Modulo(),
                 right=m.SaveMatchedNode(
-                    m.MatchIfTrue(_gen_match_simple_expression(self.module)), expr_key,
+                    m.MatchIfTrue(_gen_match_simple_expression(self.module)),
+                    expr_key,
                 ),
             ),
         )

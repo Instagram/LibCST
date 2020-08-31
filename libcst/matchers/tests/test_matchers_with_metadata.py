@@ -46,7 +46,8 @@ class MatchersMetadataTest(UnitTest):
                 m.Name(
                     value="foo",
                     metadata=m.MatchMetadata(
-                        meta.PositionProvider, self._make_coderange((1, 0), (1, 3)),
+                        meta.PositionProvider,
+                        self._make_coderange((1, 0), (1, 3)),
                     ),
                 ),
                 metadata_resolver=wrapper,
@@ -59,10 +60,12 @@ class MatchersMetadataTest(UnitTest):
                 node,
                 m.BinaryOperation(
                     left=m.MatchMetadata(
-                        meta.PositionProvider, self._make_coderange((1, 0), (1, 1)),
+                        meta.PositionProvider,
+                        self._make_coderange((1, 0), (1, 1)),
                     ),
                     right=m.MatchMetadata(
-                        meta.PositionProvider, self._make_coderange((1, 4), (1, 5)),
+                        meta.PositionProvider,
+                        self._make_coderange((1, 4), (1, 5)),
                     ),
                 ),
                 metadata_resolver=wrapper,
@@ -78,7 +81,8 @@ class MatchersMetadataTest(UnitTest):
                 m.Name(
                     value="foo",
                     metadata=m.MatchMetadata(
-                        meta.PositionProvider, self._make_coderange((2, 0), (2, 3)),
+                        meta.PositionProvider,
+                        self._make_coderange((2, 0), (2, 3)),
                     ),
                 ),
                 metadata_resolver=wrapper,
@@ -91,10 +95,12 @@ class MatchersMetadataTest(UnitTest):
                 node,
                 m.BinaryOperation(
                     left=m.MatchMetadata(
-                        meta.PositionProvider, self._make_coderange((1, 0), (1, 1)),
+                        meta.PositionProvider,
+                        self._make_coderange((1, 0), (1, 1)),
                     ),
                     right=m.MatchMetadata(
-                        meta.PositionProvider, self._make_coderange((1, 4), (1, 5)),
+                        meta.PositionProvider,
+                        self._make_coderange((1, 4), (1, 5)),
                     ),
                 ),
                 metadata_resolver=wrapper,
@@ -201,10 +207,12 @@ class MatchersMetadataTest(UnitTest):
             left=m.Name(
                 metadata=m.OneOf(
                     m.MatchMetadata(
-                        meta.PositionProvider, self._make_coderange((1, 0), (1, 1)),
+                        meta.PositionProvider,
+                        self._make_coderange((1, 0), (1, 1)),
                     ),
                     m.MatchMetadata(
-                        meta.PositionProvider, self._make_coderange((1, 0), (1, 2)),
+                        meta.PositionProvider,
+                        self._make_coderange((1, 0), (1, 2)),
                     ),
                 )
             )
@@ -215,10 +223,12 @@ class MatchersMetadataTest(UnitTest):
             left=m.Integer(
                 metadata=m.OneOf(
                     m.MatchMetadata(
-                        meta.PositionProvider, self._make_coderange((1, 0), (1, 1)),
+                        meta.PositionProvider,
+                        self._make_coderange((1, 0), (1, 1)),
                     ),
                     m.MatchMetadata(
-                        meta.PositionProvider, self._make_coderange((1, 0), (1, 2)),
+                        meta.PositionProvider,
+                        self._make_coderange((1, 0), (1, 2)),
                     ),
                 )
             )
@@ -233,7 +243,8 @@ class MatchersMetadataTest(UnitTest):
             left=m.Name(
                 metadata=m.AllOf(
                     m.MatchMetadata(
-                        meta.PositionProvider, self._make_coderange((1, 0), (1, 1)),
+                        meta.PositionProvider,
+                        self._make_coderange((1, 0), (1, 1)),
                     ),
                     m.MatchMetadata(
                         meta.ExpressionContextProvider, meta.ExpressionContext.LOAD
