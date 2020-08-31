@@ -48,20 +48,7 @@ setuptools.setup(
     python_requires=">=3.6",
     install_requires=[dep.strip() for dep in open("requirements.txt").readlines()],
     extras_require={
-        "dev": [
-            "black",
-            "codecov",
-            "coverage",
-            "hypothesis >= 4.36.0",
-            "hypothesmith >= 0.0.4",
-            "isort",
-            "flake8",
-            "jupyter",
-            "nbsphinx",
-            "pyre-check",
-            "Sphinx",
-            "sphinx-rtd-theme",
-        ]
+        "dev": [dep.strip() for dep in open("requirements-dev.txt").readlines() if ">=" in dep],
     },
     classifiers=[
         "License :: OSI Approved :: MIT License",
