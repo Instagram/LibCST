@@ -48,7 +48,7 @@ setuptools.setup(
     python_requires=">=3.6",
     install_requires=[dep.strip() for dep in open("requirements.txt").readlines()],
     extras_require={
-        "dev": [dep.strip() for dep in open("requirements-dev.txt").readlines() if ">=" in dep],
+        "dev": [dep.strip() for dep in open("requirements-dev.txt").readlines() if "=" in dep],
     },
     classifiers=[
         "License :: OSI Approved :: MIT License",
