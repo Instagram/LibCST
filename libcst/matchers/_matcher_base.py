@@ -152,7 +152,7 @@ class TypeOf(Generic[_MatcherTypeT], BaseMatcherNode):
 
         self._initalized = False
         self._call_items: Tuple[Tuple[object, ...], Dict[str, object]] = ((), {})
-        self._raw_options: Tuple[_MatcherTypeT] = tuple(actual_options)
+        self._raw_options: Tuple[_MatcherTypeT, ...] = tuple(actual_options)
 
     @property
     def initalized(self) -> bool:
