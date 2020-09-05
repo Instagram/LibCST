@@ -7,12 +7,14 @@ import collections.abc
 import copy
 import inspect
 import re
+from abc import ABCMeta
 from dataclasses import dataclass, fields
 from enum import Enum, auto
 from typing import (
     Callable,
     Dict,
     Generic,
+    Iterator,
     List,
     Mapping,
     NoReturn,
@@ -51,9 +53,18 @@ _CallableT = TypeVar("_CallableT", bound="Callable", covariant=True)
 _BaseMatcherNodeSelfT = TypeVar("_BaseMatcherNodeSelfT", bound="BaseMatcherNode")
 _OtherNodeT = TypeVar("_OtherNodeT")
 _MetadataValueT = TypeVar("_MetadataValueT")
+_MatcherTypeT = TypeVar("_MatcherTypeT", bound=Type["BaseMatcherNode"])
+_OtherNodeMatcherTypeT = TypeVar(
+    "_OtherNodeMatcherTypeT", bound=Type["BaseMatcherNode"]
+)
 
 
 _METADATA_MISSING_SENTINEL = object()
+
+
+class AbstractBaseMatcherNodeMeta(ABCMeta):
+    def __or__(self, node: Type["BaseMatcherNode"]) -> "TypeOf":
+        return TypeOf(self, node)
 
 
 class BaseMatcherNode:
@@ -101,6 +112,81 @@ def DoNotCare() -> DoNotCareSentinel:
         m.Call(args=[m.DoNotCare(), m.DoNotCare(), m.DoNotCare()])
     """
     return DoNotCareSentinel.DEFAULT
+
+
+class TypeOf(Generic[_MatcherTypeT], BaseMatcherNode):
+    """
+    Matcher that matches any one of the given types. Useful when you want to work
+    with trees where a common property might belong to more than a single type.
+
+    For example, if you want either a binary operation or a boolean operation
+    where the left side has a name ``foo``::
+
+        m.TypeOf(m.BinaryOperation, m.BooleanOperation)(left = m.Name("foo"))
+
+    Or you could use the shorthand, like::
+
+        (m.BinaryOperation | m.BooleanOperation)(left = m.Name("foo"))
+
+    Also :class:`TypeOf` matchers can be used with initalizing in the default
+    state of other node matchers (without passing any extra patterns)::
+
+        m.Name | m.SimpleString
+
+    The will be equal to::
+
+        m.OneOf(m.Name(), m.SimpleString())
+    """
+
+    def __init__(self, *options: Union[_MatcherTypeT, "TypeOf[_MatcherTypeT]"]) -> None:
+        actual_options = []
+        for option in options:
+            if isinstance(option, TypeOf):
+                if option.initalized:
+                    raise Exception(
+                        "Cannot chain an uninitalized TypeOf with an initalized one"
+                    )
+                actual_options.extend(option._raw_options)
+            else:
+                actual_options.append(option)
+
+        self._initalized = False
+        self._call_items = ((), {})
+        self._raw_options = tuple(actual_options)
+
+    @property
+    def initalized(self) -> bool:
+        return self._initalized
+
+    @property
+    def options(self) -> Iterator[BaseMatcherNode]:
+        for option in self._raw_options:
+            args, kwargs = self._call_items
+            matcher_pattern = option(*args, **kwargs)
+            yield matcher_pattern
+
+    def __call__(self, *args, **kwargs) -> BaseMatcherNode:
+        self._initalized = True
+        self._call_items = (args, kwargs)
+        return self
+
+    def __or__(
+        self, other: _OtherNodeMatcherTypeT
+    ) -> "TypeOf[Union[_MatcherTypeT, _OtherNodeMatcherTypeT]]":
+        return TypeOf[Union[_MatcherTypeT, _OtherNodeMatcherTypeT]](self, other)
+
+    def __and__(self, other: _OtherNodeMatcherTypeT) -> NoReturn:
+        left, right = type(self).__name__, other.__name__
+        raise TypeError(
+            f"TypeError: unsupported operand type(s) for &: {left!r} and {right!r}"
+        )
+
+    def __invert__(self) -> "AllOf[BaseMatcherNode]":
+        return AllOf(*map(DoesNotMatch, self.options))
+
+    def __repr__(self) -> str:
+        types = ", ".join(repr(option) for option in self._raw_options)
+        return f"TypeOf({types}, initalized = {self.initalized})"
 
 
 class OneOf(Generic[_MatcherT], BaseMatcherNode):
@@ -1383,7 +1469,7 @@ def _matches(
         return {} if isinstance(matcher, _InverseOf) else None
 
     # Now, evaluate the matcher node itself.
-    if isinstance(matcher, OneOf):
+    if isinstance(matcher, (OneOf, TypeOf)):
         for matcher in matcher.options:
             node_capture = _node_matches(node, matcher, metadata_lookup)
             if node_capture is not None:

@@ -145,6 +145,7 @@ when calling :func:`~libcst.matchers.matches` or using decorators.
 
 .. autoclass:: libcst.matchers.OneOf
 .. autoclass:: libcst.matchers.AllOf
+.. autoclass:: libcst.matchers.TypeOf
 .. autofunction:: libcst.matchers.DoesNotMatch
 .. autoclass:: libcst.matchers.MatchIfTrue
 .. autofunction:: libcst.matchers.MatchRegex

@@ -3,6 +3,7 @@
 ## Added
 - Handle string annotations in ScopeProvider [#373](https://github.com/Instagram/LibCST/pull/373)
 - Add is_annotation subtype for Access inreferences. [#372](https://github.com/Instagram/LibCST/pull/372)
+- Implement TypeOf matcher. [#384](https://github.com/Instagram/LibCST/pull/384)
 
 ## Updated
 - Call pyre query with noninteractive logging [#371](https://github.com/Instagram/LibCST/pull/371)
