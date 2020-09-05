@@ -63,7 +63,7 @@ _METADATA_MISSING_SENTINEL = object()
 
 
 class AbstractBaseMatcherNodeMeta(ABCMeta):
-    def __or__(self, node: Type["BaseMatcherNode"]) -> "TypeOf":
+    def __or__(self, node: Type["BaseMatcherNode"]) -> "TypeOf[Type[BaseMatcherNode]]":
         return TypeOf(self, node)
 
 
@@ -151,8 +151,8 @@ class TypeOf(Generic[_MatcherTypeT], BaseMatcherNode):
                 actual_options.append(option)
 
         self._initalized = False
-        self._call_items = ((), {})
-        self._raw_options = tuple(actual_options)
+        self._call_items: Tuple[Tuple[object, ...], Dict[str, object]] = ((), {})
+        self._raw_options: Tuple[_MatcherTypeT] = tuple(actual_options)
 
     @property
     def initalized(self) -> bool:
@@ -165,7 +165,7 @@ class TypeOf(Generic[_MatcherTypeT], BaseMatcherNode):
             matcher_pattern = option(*args, **kwargs)
             yield matcher_pattern
 
-    def __call__(self, *args, **kwargs) -> BaseMatcherNode:
+    def __call__(self, *args: object, **kwargs: object) -> BaseMatcherNode:
         self._initalized = True
         self._call_items = (args, kwargs)
         return self

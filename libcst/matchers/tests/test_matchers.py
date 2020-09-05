@@ -218,9 +218,11 @@ class MatchersMatcherTest(UnitTest):
             )
         )
         with self.assertRaises(Exception):
+            # pyre-ignore
             m.TypeOf(cst.Float)(value=1.0) | cst.Name
-    
+
         with self.assertRaises(TypeError):
+            # pyre-ignore
             m.TypeOf(cst.Float) & cst.SimpleString
 
         for case in (
