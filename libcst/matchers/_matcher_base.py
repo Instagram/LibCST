@@ -139,7 +139,7 @@ class TypeOf(Generic[_MatcherTypeT], BaseMatcherNode):
     """
 
     def __init__(self, *options: Union[_MatcherTypeT, "TypeOf[_MatcherTypeT]"]) -> None:
-        actual_options = []
+        actual_options: List[_MatcherTypeT] = []
         for option in options:
             if isinstance(option, TypeOf):
                 if option.initalized:

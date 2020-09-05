@@ -241,7 +241,8 @@ class MatchersMatcherTest(UnitTest):
             new_case = dataclasses.replace(case, left=case.right, right=case.left)
             self.assertTrue(
                 matches(
-                    case, ~(m.BinaryOperation | m.BooleanOperation)(left=m.Name("bar"))
+                    new_case,
+                    ~(m.BinaryOperation | m.BooleanOperation)(left=m.Name("foo")),
                 )
             )
 
