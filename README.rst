@@ -14,7 +14,7 @@ A Concrete Syntax Tree (CST) parser and serializer library for Python
    :target: https://circleci.com/gh/Instagram/LibCST/tree/master
    :alt: CircleCI
 
-.. |codecov-badge| image:: http://codecov.io/gh/Instagram/LibCST/coverage.svg?branch=master
+.. |codecov-badge| image:: https://codecov.io/gh/Instagram/LibCST/branch/master/graph/badge.svg
    :target: https://codecov.io/gh/Instagram/LibCST/branch/master
    :alt: CodeCov
 
