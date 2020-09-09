@@ -63,6 +63,12 @@ _METADATA_MISSING_SENTINEL = object()
 
 
 class AbstractBaseMatcherNodeMeta(ABCMeta):
+    """
+    Metaclass that all matcher nodes uses. Allows chaining 2 node type
+    together with an bitwise-or operator to produce an :class:`TypeOf`
+    matcher.
+    """
+
     def __or__(self, node: Type["BaseMatcherNode"]) -> "TypeOf[Type[BaseMatcherNode]]":
         return TypeOf(self, node)
 
