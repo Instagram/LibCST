@@ -284,7 +284,7 @@ class TestDetectConfig(UnitTest):
             "future_imports_in_mixed_position": {
                 "source": (
                     b"from __future__ import a, b\nimport os\n"
-                    b"from __future__ import c\n"
+                    + b"from __future__ import c\n"
                 ),
                 "partial": PartialParserConfig(python_version="3.7"),
                 "detect_trailing_newline": True,

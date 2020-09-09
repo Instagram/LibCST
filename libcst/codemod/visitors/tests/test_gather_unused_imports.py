@@ -17,10 +17,10 @@ class TestGatherUnusedImportsVisitor(UnitTest):
         mod.resolve_many(GatherUnusedImportsVisitor.METADATA_DEPENDENCIES)
         instance = GatherUnusedImportsVisitor(CodemodContext(wrapper=mod))
         mod.visit(instance)
-        return set(
+        return {
             alias.evaluated_alias or alias.evaluated_name
             for alias, _ in instance.unused_imports
-        )
+        }
 
     def test_no_imports(self) -> None:
         imports = self.gather_imports(

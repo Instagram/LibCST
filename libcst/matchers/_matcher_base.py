@@ -352,8 +352,10 @@ class _ExtractMatchingNode(Generic[_MatcherT]):
         # same node, or none of them. It makes more sense to move the SaveMatchedNode
         # up to wrap the AllOf.
         raise Exception(
-            "Cannot use AllOf with SavedMatchedNode children! Instead, you should "
-            "use SaveMatchedNode(AllOf(options...))."
+            (
+                "Cannot use AllOf with SavedMatchedNode children! Instead, you should "
+                + "use SaveMatchedNode(AllOf(options...))."
+            )
         )
 
     def __getattr__(self, key: str) -> object:
@@ -366,8 +368,10 @@ class _ExtractMatchingNode(Generic[_MatcherT]):
         # This doesn't make sense. We don't want to capture a node only if it
         # doesn't match, since this will never capture anything.
         raise Exception(
-            "Cannot invert a SaveMatchedNode. Instead you should wrap SaveMatchedNode "
-            "around your inversion itself"
+            (
+                "Cannot invert a SaveMatchedNode. Instead you should wrap SaveMatchedNode "
+                + "around your inversion itself"
+            )
         )
 
     def __repr__(self) -> str:

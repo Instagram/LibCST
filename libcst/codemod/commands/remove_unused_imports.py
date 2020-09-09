@@ -30,7 +30,7 @@ class RemoveUnusedImportsCommand(VisitorBasedCodemodCommand):
 
     DESCRIPTION: str = (
         "Remove all imports that are not used in a file. "
-        "Note: only considers the file in isolation. "
+        + "Note: only considers the file in isolation. "
     )
 
     METADATA_DEPENDENCIES: Tuple[ProviderT] = (PositionProvider,)

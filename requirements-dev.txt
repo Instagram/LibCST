@@ -1,6 +1,7 @@
 black>=19.10b0
 codecov>=2.1.4
 coverage>=4.5.4
+fixit>=0.1.0
 flake8>=3.7.8
 hypothesis>=4.36.0
 hypothesmith>=0.0.4

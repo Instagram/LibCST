@@ -321,8 +321,10 @@ def _calculate_tree_traversal(nonterminal_to_dfas):
                             ]
                         )
                         raise ValueError(
-                            "Rule %s is ambiguous; given a %s token, we "
-                            "can't determine if we should evaluate %s or %s."
+                            (
+                                "Rule %s is ambiguous; given a %s token, we "
+                                + "can't determine if we should evaluate %s or %s."
+                            )
                             % ((dfa_state.from_rule, transition) + tuple(choices))
                         )
                     transitions[transition] = DFAPlan(next_dfa, pushes)

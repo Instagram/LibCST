@@ -44,7 +44,7 @@ class EnsureImportPresentCommand(MagicArgsCodemodCommand):
             metavar="ALIAS",
             help=(
                 "Alias that will be used for the imported module or entity. If left "
-                "empty, no alias will be applied."
+                + "empty, no alias will be applied."
             ),
             type=str,
             default=None,
