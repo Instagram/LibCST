@@ -3,6 +3,8 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import dataclasses
+
 import libcst as cst
 import libcst.matchers as m
 from libcst.matchers import matches
@@ -201,6 +203,88 @@ class MatchersMatcherTest(UnitTest):
                 ),
             )
         )
+
+    def test_type_of_matcher_true(self) -> None:
+        self.assertTrue(matches(cst.Name("true"), m.TypeOf(m.Name)))
+        self.assertTrue(matches(cst.Name("true"), m.TypeOf(m.Name)(value="true")))
+        self.assertTrue(matches(cst.Name("true"), m.Name | m.Float | m.SimpleString))
+        self.assertTrue(
+            matches(cst.SimpleString("'foo'"), m.TypeOf(m.Name, m.SimpleString))
+        )
+        self.assertTrue(
+            matches(
+                cst.SimpleString("'foo'"),
+                m.TypeOf(m.Name, m.SimpleString)(value="'foo'"),
+            )
+        )
+        with self.assertRaises(Exception):
+            # pyre-ignore
+            m.TypeOf(cst.Float)(value=1.0) | cst.Name
+
+        with self.assertRaises(TypeError):
+            # pyre-ignore
+            m.TypeOf(cst.Float) & cst.SimpleString
+
+        for case in (
+            cst.BinaryOperation(
+                left=cst.Name("foo"), operator=cst.Add(), right=cst.Name("bar")
+            ),
+            cst.BooleanOperation(
+                left=cst.Name("foo"), operator=cst.Or(), right=cst.Name("bar")
+            ),
+        ):
+            self.assertTrue(
+                matches(
+                    case, (m.BinaryOperation | m.BooleanOperation)(left=m.Name("foo"))
+                )
+            )
+            new_case = dataclasses.replace(case, left=case.right, right=case.left)
+            self.assertTrue(
+                matches(
+                    new_case,
+                    ~(m.BinaryOperation | m.BooleanOperation)(left=m.Name("foo")),
+                )
+            )
+
+    def test_type_of_matcher_false(self) -> None:
+        self.assertFalse(matches(cst.Name("true"), m.TypeOf(m.SimpleString)))
+        self.assertFalse(matches(cst.Name("true"), m.TypeOf(m.Name)(value="false")))
+        self.assertFalse(
+            matches(cst.Name("true"), m.TypeOf(m.SimpleString)(value="true"))
+        )
+        self.assertFalse(
+            matches(cst.SimpleString("'foo'"), m.TypeOf(m.Name, m.Attribute))
+        )
+        self.assertFalse(
+            matches(
+                cst.SimpleString("'foo'"), m.TypeOf(m.Name, m.Attribute)(value="'foo'")
+            )
+        )
+        self.assertFalse(
+            matches(
+                cst.SimpleString("'foo'"),
+                m.TypeOf(m.Name, m.SimpleString)(value="'bar'"),
+            )
+        )
+
+        for case in (
+            cst.BinaryOperation(
+                left=cst.Name("foo"), operator=cst.Add(), right=cst.Name("bar")
+            ),
+            cst.BooleanOperation(
+                left=cst.Name("foo"), operator=cst.Or(), right=cst.Name("bar")
+            ),
+        ):
+            self.assertFalse(
+                matches(
+                    case, (m.BinaryOperation | m.BooleanOperation)(left=m.Name("bar"))
+                )
+            )
+            self.assertFalse(
+                matches(
+                    case, ~(m.BinaryOperation | m.BooleanOperation)(left=m.Name("foo"))
+                )
+            )
 
     def test_or_matcher_true(self) -> None:
         # Match on either True or False identifier.
