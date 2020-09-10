@@ -49,7 +49,7 @@ class ParsoUtilsTest(UnitTest):
     def test_python_bytes_to_unicode_unicode_text(self):
         source = (
             b"# vim: fileencoding=utf-8\n"
-            b"# \xe3\x81\x82\xe3\x81\x84\xe3\x81\x86\xe3\x81\x88\xe3\x81\x8a\n"
+            + b"# \xe3\x81\x82\xe3\x81\x84\xe3\x81\x86\xe3\x81\x88\xe3\x81\x8a\n"
         )
         actual = python_bytes_to_unicode(source)
         expected = source.decode("utf-8")

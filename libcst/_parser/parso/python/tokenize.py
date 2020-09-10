@@ -108,7 +108,7 @@ def _all_string_prefixes(
     if version_info < (3, 0) or version_info >= (3, 3):
         valid_string_prefixes.append("u")
 
-    result = set([""])
+    result = {""}
     if version_info >= (3, 6) and include_fstring:
         f = ["f", "fr"]
         if only_fstring:
@@ -326,7 +326,7 @@ class PythonToken(Token):
         )
 
 
-class FStringNode(object):
+class FStringNode:
     def __init__(self, quote):
         self.quote = quote
         self.parentheses_count = 0

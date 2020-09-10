@@ -1,0 +1,10 @@
+block_list_patterns:
+- '@generated'
+- '@nolint'
+block_list_rules: ["UseFstringRule", "CompareSingletonPrimitivesByIsRule"]
+fixture_dir: ./fixtures
+formatter: ["black", "-"]
+packages:
+- fixit.rules
+repo_root: libcst
+rule_config: {}
