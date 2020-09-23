@@ -354,6 +354,8 @@ class RemoveImportsVisitor(ContextAwareTransformer):
             return updated_node
         objects_to_remove = self.unused_obj_imports[module_name]
 
+        updates = {}
+
         names_to_keep = []
         for import_alias in names:
             # Figure out if it is in our list of things to kill
@@ -374,6 +376,32 @@ class RemoveImportsVisitor(ContextAwareTransformer):
                 names_to_keep.append(import_alias)
                 continue
 
+            # We are about to remove `import_alias`. Check if there are any
+            # trailing comments and reparent them to the previous import.
+            # We only do this in case there's a trailing comma, otherwise the
+            # entire import statement is going to be removed anyway.
+            if isinstance(import_alias.comma, cst.Comma):
+                if len(names_to_keep) != 0:
+                    # there is a previous import alias
+                    prev = names_to_keep[-1]
+                    names_to_keep[-1] = prev.with_deep_changes(
+                        whitespace_after=_merge_whitespace_after(
+                            prev.comma.whitespace_after,
+                            import_alias.comma.whitespace_after,
+                        )
+                    )
+                elif isinstance(updated_node.lpar, cst.LeftParen):
+                    # No previous import alias, need to attach comment to `ImportFrom`.
+                    # We can only do this if there was a leftparen on the import
+                    # statement. Otherwise there can't be any standalone comments
+                    # anyway, so it's fine to skip this logic.
+                    updates["lpar"] = updated_node.lpar.with_changes(
+                        whitespace_after=_merge_whitespace_after(
+                            updated_node.lpar.whitespace_after,
+                            import_alias.comma.whitespace_after,
+                        )
+                    )
+
         # no changes
         if names_to_keep == names:
             return updated_node
@@ -389,4 +417,20 @@ class RemoveImportsVisitor(ContextAwareTransformer):
                 *names_to_keep[:-1],
                 names_to_keep[-1].with_changes(comma=cst.MaybeSentinel.DEFAULT),
             ]
-        return updated_node.with_changes(names=names_to_keep)
+        updates["names"] = names_to_keep
+        return updated_node.with_changes(**updates)
+
+
+def _merge_whitespace_after(
+    left: cst.BaseParenthesizableWhitespace, right: cst.BaseParenthesizableWhitespace
+) -> cst.BaseParenthesizableWhitespace:
+    if not isinstance(right, cst.ParenthesizedWhitespace):
+        return left
+    if not isinstance(left, cst.ParenthesizedWhitespace):
+        return right
+
+    return left.with_changes(
+        empty_lines=tuple(
+            line for line in right.empty_lines if line.comment is not None
+        ),
+    )
