@@ -57,6 +57,22 @@ class TestRemoveImportsCodemod(CodemodTest):
 
         self.assertCodemod(before, after, [("baz", None, None)])
 
+    def test_remove_fromimport_keeping_comment(self) -> None:
+        before = """
+            from foo import (
+                bar,
+                # comment
+                baz,
+            )
+        """
+        after = """
+            from foo import (
+                # comment
+                baz,
+            )
+        """
+        self.assertCodemod(before, after, [("foo", "bar", None)])
+
     def test_remove_import_alias_simple(self) -> None:
         """
         Should remove aliased module as import
