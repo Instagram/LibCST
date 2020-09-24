@@ -376,3 +376,26 @@ class ExpressionContextProviderTest(UnitTest):
                 },
             )
         )
+
+    def test_class(self) -> None:
+        wrapper = MetadataWrapper(parse_module("class Foo: pass"))
+        wrapper.visit(
+            DependentVisitor(
+                test=self,
+                name_to_context={
+                    "Foo": ExpressionContext.STORE,
+                },
+            )
+        )
+
+
+    def test_function(self) -> None:
+        wrapper = MetadataWrapper(parse_module("def foo(): pass"))
+        wrapper.visit(
+            DependentVisitor(
+                test=self,
+                name_to_context={
+                    "foo": ExpressionContext.STORE,
+                },
+            )
+        )
