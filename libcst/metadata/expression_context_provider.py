@@ -155,6 +155,29 @@ class ExpressionContextVisitor(cst.CSTVisitor):
     def visit_StarredElement(self, node: cst.StarredElement) -> Optional[bool]:
         self.provider.set_metadata(node, self.context)
 
+    def visit_ClassDef(self, node: cst.ClassDef) -> Optional[bool]:
+        node.name.visit(
+            ExpressionContextVisitor(self.provider, ExpressionContext.STORE)
+        )
+        node.body.visit(self)
+        for base in node.bases:
+            base.visit(self)
+        for keyword in node.keywords:
+            keyword.visit(self)
+        for decorator in node.decorators:
+            decorator.visit(self)
+        return False
+
+    def visit_FunctionDef(self, node: cst.FunctionDef) -> Optional[bool]:
+        node.name.visit(
+            ExpressionContextVisitor(self.provider, ExpressionContext.STORE)
+        )
+        node.params.visit(self)
+        node.body.visit(self)
+        for decorator in node.decorators:
+            decorator.visiet(self)
+        return False
+
 
 class ExpressionContextProvider(BatchableMetadataProvider[Optional[ExpressionContext]]):
     """
