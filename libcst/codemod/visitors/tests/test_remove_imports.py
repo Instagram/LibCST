@@ -57,6 +57,95 @@ class TestRemoveImportsCodemod(CodemodTest):
 
         self.assertCodemod(before, after, [("baz", None, None)])
 
+    def test_remove_fromimport_simple(self) -> None:
+        before = "from a import b, c"
+        after = "from a import c"
+        self.assertCodemod(before, after, [("a", "b", None)])
+
+    def test_remove_fromimport_keeping_standalone_comment(self) -> None:
+        before = """
+            from foo import (
+                bar,
+                # comment
+                baz,
+            )
+            from loooong import (
+                bar,
+                # comment
+                short,
+                this_stays
+            )
+            from third import (
+                # comment
+                short,
+                this_stays_too
+            )
+        """
+        after = """
+            from foo import (
+                # comment
+                baz,
+            )
+            from loooong import (
+                this_stays
+            )
+            from third import (
+                this_stays_too
+            )
+        """
+        self.assertCodemod(
+            before,
+            after,
+            [
+                ("foo", "bar", None),
+                ("loooong", "short", None),
+                ("loooong", "bar", None),
+                ("third", "short", None),
+            ],
+        )
+
+    def test_remove_fromimport_keeping_inline_comment(self) -> None:
+        before = """
+            from foo import (  # comment
+                bar,
+                # comment2
+                baz,
+            )
+            from loooong import (
+                bar,
+                short,  # comment
+                # comment2
+                this_stays
+            )
+            from third import (
+                short,  # comment
+                this_stays_too  # comment2
+            )
+        """
+        after = """
+            from foo import (  # comment
+                # comment2
+                baz,
+            )
+            from loooong import (
+                # comment2
+                this_stays
+            )
+            from third import (
+                this_stays_too  # comment2
+            )
+        """
+        self.assertCodemod(
+            before,
+            after,
+            [
+                ("foo", "bar", None),
+                ("loooong", "short", None),
+                ("loooong", "bar", None),
+                ("third", "short", None),
+            ],
+        )
+
     def test_remove_import_alias_simple(self) -> None:
         """
         Should remove aliased module as import
