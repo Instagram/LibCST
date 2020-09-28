@@ -1,3 +1,15 @@
+# 0.3.11 - 2020-09-29
+
+## Added
+- Implement TypeOf matcher [#384](https://github.com/Instagram/LibCST/pull/384)
+
+## Updated
+- Update return type of ParentNodeProvider to be CSTNode [#377](https://github.com/Instagram/LibCST/pull/377)
+- Add source code links to each class/function [#378](https://github.com/Instagram/LibCST/pull/378)
+
+## Fixed
+- Removing an import alias with a trailing standalone comment should preserve the comment [#392](https://github.com/Instagram/LibCST/pull/392)
+
 # 0.3.10 - 2020-09-17
 
 ## Added
