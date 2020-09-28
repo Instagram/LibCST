@@ -1332,7 +1332,7 @@ class AnnAssign(BaseSmallStatement):
     """
 
     #: The target that is being annotated and possibly assigned to.
-    target: BaseExpression
+    target: BaseAssignTargetExpression
 
     #: The annotation for the target.
     annotation: Annotation
@@ -1393,7 +1393,7 @@ class AugAssign(BaseSmallStatement):
     """
 
     #: Target that is being operated on and assigned to.
-    target: BaseExpression
+    target: BaseAssignTargetExpression
 
     #: The augmented assignment operation being performed.
     operator: BaseAugOp
