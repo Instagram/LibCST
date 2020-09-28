@@ -175,7 +175,7 @@ class ExpressionContextVisitor(cst.CSTVisitor):
         node.params.visit(self)
         node.body.visit(self)
         for decorator in node.decorators:
-            decorator.visiet(self)
+            decorator.visit(self)
         return False
 
 
