@@ -388,7 +388,6 @@ class ExpressionContextProviderTest(UnitTest):
             )
         )
 
-
     def test_function(self) -> None:
         wrapper = MetadataWrapper(parse_module("def foo(): pass"))
         wrapper.visit(
