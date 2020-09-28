@@ -176,6 +176,21 @@ class ExpressionContextVisitor(cst.CSTVisitor):
         node.body.visit(self)
         for decorator in node.decorators:
             decorator.visit(self)
+        returns = node.returns
+        if returns:
+            returns.visit(self)
+        return False
+
+    def visit_Param(self, node: cst.Param) -> Optional[bool]:
+        node.name.visit(
+            ExpressionContextVisitor(self.provider, ExpressionContext.STORE)
+        )
+        annotation = node.annotation
+        if annotation:
+            annotation.visit(self)
+        default = node.default
+        if default:
+            default.visit(self)
         return False
 
 
