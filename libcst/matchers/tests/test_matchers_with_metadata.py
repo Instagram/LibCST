@@ -492,7 +492,7 @@ class MatchersVisitorMetadataTest(UnitTest):
         visitor = TestVisitor()
         module.visit(visitor)
 
-        self.assertEqual(visitor.match_names, {"a", "b", "c"})
+        self.assertEqual(visitor.match_names, {"a", "b", "c", "foo", "bar"})
 
     def test_matches_on_transformers(self) -> None:
         # Set up a simple visitor that has a metadata dependency, try to use it in matchers.
@@ -533,7 +533,7 @@ class MatchersVisitorMetadataTest(UnitTest):
         visitor = TestTransformer()
         module.visit(visitor)
 
-        self.assertEqual(visitor.match_names, {"a", "b", "c"})
+        self.assertEqual(visitor.match_names, {"a", "b", "c", "foo", "bar"})
 
     def test_matches_decorator_on_visitors(self) -> None:
         # Set up a simple visitor that has a metadata dependency, try to use it in matchers.
@@ -573,7 +573,7 @@ class MatchersVisitorMetadataTest(UnitTest):
         visitor = TestVisitor()
         module.visit(visitor)
 
-        self.assertEqual(visitor.match_names, {"a", "b", "c"})
+        self.assertEqual(visitor.match_names, {"a", "b", "c", "foo", "bar"})
 
     def test_matches_decorator_on_transformers(self) -> None:
         # Set up a simple visitor that has a metadata dependency, try to use it in matchers.
@@ -613,4 +613,4 @@ class MatchersVisitorMetadataTest(UnitTest):
         visitor = TestTransformer()
         module.visit(visitor)
 
-        self.assertEqual(visitor.match_names, {"a", "b", "c"})
+        self.assertEqual(visitor.match_names, {"a", "b", "c", "foo", "bar"})

@@ -75,7 +75,15 @@ class MatchersFindAllTest(UnitTest):
                 meta.ExpressionContextProvider, meta.ExpressionContext.STORE
             ),
         )
-        self.assertNodeSequenceEqual(booleans, [cst.Name("a"), cst.Name("b")])
+        self.assertNodeSequenceEqual(
+            booleans,
+            [
+                cst.Name("a"),
+                cst.Name("b"),
+                cst.Name("foo"),
+                cst.Name("bar"),
+            ],
+        )
 
         # Test that we can provide an explicit resolver and tree
         booleans = findall(
@@ -85,7 +93,15 @@ class MatchersFindAllTest(UnitTest):
             ),
             metadata_resolver=wrapper,
         )
-        self.assertNodeSequenceEqual(booleans, [cst.Name("a"), cst.Name("b")])
+        self.assertNodeSequenceEqual(
+            booleans,
+            [
+                cst.Name("a"),
+                cst.Name("b"),
+                cst.Name("foo"),
+                cst.Name("bar"),
+            ],
+        )
 
         # Test that failing to provide metadata leads to no match
         booleans = findall(
@@ -127,7 +143,15 @@ class MatchersFindAllTest(UnitTest):
         wrapper = meta.MetadataWrapper(module)
         visitor = TestVisitor()
         wrapper.visit(visitor)
-        self.assertNodeSequenceEqual(visitor.results, [cst.Name("a"), cst.Name("b")])
+        self.assertNodeSequenceEqual(
+            visitor.results,
+            [
+                cst.Name("a"),
+                cst.Name("b"),
+                cst.Name("foo"),
+                cst.Name("bar"),
+            ],
+        )
 
     def test_findall_with_transformers(self) -> None:
         # Find all assignments in a tree
@@ -160,7 +184,15 @@ class MatchersFindAllTest(UnitTest):
         wrapper = meta.MetadataWrapper(module)
         visitor = TestTransformer()
         wrapper.visit(visitor)
-        self.assertNodeSequenceEqual(visitor.results, [cst.Name("a"), cst.Name("b")])
+        self.assertNodeSequenceEqual(
+            visitor.results,
+            [
+                cst.Name("a"),
+                cst.Name("b"),
+                cst.Name("foo"),
+                cst.Name("bar"),
+            ],
+        )
 
 
 class MatchersExtractAllTest(UnitTest):
