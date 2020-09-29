@@ -6,7 +6,7 @@
 import libcst as cst
 import libcst.matchers as m
 from libcst.codemod import CodemodContext, CodemodTest, VisitorBasedCodemodCommand
-from libcst.codemod.visitors import RemoveImportsVisitor, AddImportsVisitor
+from libcst.codemod.visitors import AddImportsVisitor, RemoveImportsVisitor
 from libcst.metadata import (
     QualifiedName,
     QualifiedNameProvider,
