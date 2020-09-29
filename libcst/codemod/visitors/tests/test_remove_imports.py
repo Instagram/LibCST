@@ -6,7 +6,7 @@
 import libcst as cst
 import libcst.matchers as m
 from libcst.codemod import CodemodContext, CodemodTest, VisitorBasedCodemodCommand
-from libcst.codemod.visitors import RemoveImportsVisitor
+from libcst.codemod.visitors import RemoveImportsVisitor, AddImportsVisitor
 from libcst.metadata import (
     QualifiedName,
     QualifiedNameProvider,
@@ -885,6 +885,21 @@ class TestRemoveImportsCodemod(CodemodTest):
         self.assertCodeEqual(
             after,
             RemoveImportTransformer(CodemodContext()).transform_module(module).code,
+        )
+
+    def test_remove_import_alias_after_inserting(self) -> None:
+        before = "from foo import bar, baz"
+        after = "from foo import quux, baz"
+
+        class AddRemoveTransformer(VisitorBasedCodemodCommand):
+            def visit_Module(self, node: cst.Module) -> None:
+                AddImportsVisitor.add_needed_import(self.context, "foo", "quux")
+                RemoveImportsVisitor.remove_unused_import(self.context, "foo", "bar")
+
+        module = cst.parse_module(self.make_fixture_data(before))
+        self.assertCodeEqual(
+            AddRemoveTransformer(CodemodContext()).transform_module(module).code,
+            after,
         )
 
     def test_remove_comma(self) -> None:
