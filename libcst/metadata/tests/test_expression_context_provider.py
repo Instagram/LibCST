@@ -4,6 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 
+from textwrap import dedent
 from typing import Dict, Optional, cast
 
 import libcst as cst
@@ -373,6 +374,40 @@ class ExpressionContextProviderTest(UnitTest):
                     "i": ExpressionContext.STORE,
                     "items": ExpressionContext.LOAD,
                     "j": ExpressionContext.STORE,
+                },
+            )
+        )
+
+    def test_class(self) -> None:
+        code = """
+        class Foo(Bar):
+            x = y
+        """
+        wrapper = MetadataWrapper(parse_module(dedent(code)))
+        wrapper.visit(
+            DependentVisitor(
+                test=self,
+                name_to_context={
+                    "Foo": ExpressionContext.STORE,
+                    "Bar": ExpressionContext.LOAD,
+                    "x": ExpressionContext.STORE,
+                    "y": ExpressionContext.LOAD,
+                },
+            )
+        )
+
+    def test_function(self) -> None:
+        code = """def foo(x: int = y) -> None: pass"""
+        wrapper = MetadataWrapper(parse_module(code))
+        wrapper.visit(
+            DependentVisitor(
+                test=self,
+                name_to_context={
+                    "foo": ExpressionContext.STORE,
+                    "x": ExpressionContext.STORE,
+                    "int": ExpressionContext.LOAD,
+                    "y": ExpressionContext.LOAD,
+                    "None": ExpressionContext.LOAD,
                 },
             )
         )
