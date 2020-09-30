@@ -95,6 +95,12 @@ class CSTNodeTest(UnitTest):
         with self.assertRaisesRegex(cst.CSTValidationError, expected_re):
             get_node()
 
+    def assert_invalid_types(
+        self, get_node: Callable[[], cst.CSTNode], expected_re: str
+    ) -> None:
+        with self.assertRaisesRegex(TypeError, expected_re):
+            get_node().validate_types_shallow()
+
     def __assert_codegen(
         self,
         node: cst.CSTNode,

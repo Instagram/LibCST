@@ -119,6 +119,28 @@ class AssignTest(CSTNodeTest):
     def test_invalid(self, **kwargs: Any) -> None:
         self.assert_invalid(**kwargs)
 
+    @data_provider(
+        (
+            {
+                "get_node": (
+                    lambda: cst.Assign(
+                        targets=[
+                            cst.BinaryOperation(
+                                left=cst.Name("x"),
+                                operator=cst.Add(),
+                                right=cst.Integer("1"),
+                            ),
+                        ],
+                        value=cst.Name("y"),
+                    )
+                ),
+                "expected_re": "Expected an instance of .*statement.AssignTarget.*",
+            },
+        )
+    )
+    def test_invalid_types(self, **kwargs: Any) -> None:
+        self.assert_invalid_types(**kwargs)
+
 
 class AnnAssignTest(CSTNodeTest):
     @data_provider(
@@ -284,6 +306,30 @@ class AnnAssignTest(CSTNodeTest):
     def test_invalid(self, **kwargs: Any) -> None:
         self.assert_invalid(**kwargs)
 
+    @data_provider(
+        (
+            {
+                "get_node": (
+                    lambda: cst.AnnAssign(
+                        target=cst.BinaryOperation(
+                            left=cst.Name("x"),
+                            operator=cst.Add(),
+                            right=cst.Integer("1"),
+                        ),
+                        annotation=cst.Annotation(cst.Name("int")),
+                        equal=cst.AssignEqual(),
+                        value=cst.Name("y"),
+                    )
+                ),
+                "expected_re": (
+                    "Expected an instance of .*BaseAssignTargetExpression.*"
+                ),
+            },
+        )
+    )
+    def test_invalid_types(self, **kwargs: Any) -> None:
+        self.assert_invalid_types(**kwargs)
+
 
 class AugAssignTest(CSTNodeTest):
     @data_provider(
@@ -362,3 +408,26 @@ class AugAssignTest(CSTNodeTest):
     )
     def test_valid(self, **kwargs: Any) -> None:
         self.validate_node(**kwargs)
+
+    @data_provider(
+        (
+            {
+                "get_node": (
+                    lambda: cst.AugAssign(
+                        target=cst.BinaryOperation(
+                            left=cst.Name("x"),
+                            operator=cst.Add(),
+                            right=cst.Integer("1"),
+                        ),
+                        operator=cst.Add(),
+                        value=cst.Name("y"),
+                    )
+                ),
+                "expected_re": (
+                    "Expected an instance of .*BaseAssignTargetExpression.*"
+                ),
+            },
+        )
+    )
+    def test_invalid_types(self, **kwargs: Any) -> None:
+        self.assert_invalid_types(**kwargs)
