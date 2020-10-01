@@ -1,3 +1,9 @@
+# 0.3.12 - 2020-10-01
+
+## Fixed
+- fix RemoveImportsVisitor crash when ImportAlias is inserted without comma [#397](https://github.com/Instagram/LibCST/pull/397)
+- Provide STORE for {Class,Function}Def.name in ExpressionContextProvider [#394](https://github.com/Instagram/LibCST/pull/394)
+
 # 0.3.11 - 2020-09-29
 
 ## Added
