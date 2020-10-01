@@ -223,10 +223,10 @@ class And(BaseBooleanOp, BaseMatcherNode):
     ] = DoNotCare()
 
 
-BaseExpressionMatchType = Union[
-    "BaseExpression",
+BaseAssignTargetExpressionMatchType = Union[
+    "BaseAssignTargetExpression",
     MetadataMatchType,
-    MatchIfTrue[Callable[[cst.BaseExpression], bool]],
+    MatchIfTrue[Callable[[cst.BaseAssignTargetExpression], bool]],
 ]
 AnnotationMatchType = Union[
     "Annotation", MetadataMatchType, MatchIfTrue[Callable[[cst.Annotation], bool]]
@@ -248,10 +248,10 @@ SemicolonMatchType = Union[
 @dataclass(frozen=True, eq=False, unsafe_hash=False)
 class AnnAssign(BaseSmallStatement, BaseMatcherNode):
     target: Union[
-        BaseExpressionMatchType,
+        BaseAssignTargetExpressionMatchType,
         DoNotCareSentinel,
-        OneOf[BaseExpressionMatchType],
-        AllOf[BaseExpressionMatchType],
+        OneOf[BaseAssignTargetExpressionMatchType],
+        AllOf[BaseAssignTargetExpressionMatchType],
     ] = DoNotCare()
     annotation: Union[
         AnnotationMatchType,
@@ -283,6 +283,13 @@ class AnnAssign(BaseSmallStatement, BaseMatcherNode):
         OneOf[MetadataMatchType],
         AllOf[MetadataMatchType],
     ] = DoNotCare()
+
+
+BaseExpressionMatchType = Union[
+    "BaseExpression",
+    MetadataMatchType,
+    MatchIfTrue[Callable[[cst.BaseExpression], bool]],
+]
 
 
 @dataclass(frozen=True, eq=False, unsafe_hash=False)
@@ -597,13 +604,6 @@ class AssignEqual(BaseMatcherNode):
     ] = DoNotCare()
 
 
-BaseAssignTargetExpressionMatchType = Union[
-    "BaseAssignTargetExpression",
-    MetadataMatchType,
-    MatchIfTrue[Callable[[cst.BaseAssignTargetExpression], bool]],
-]
-
-
 @dataclass(frozen=True, eq=False, unsafe_hash=False)
 class AssignTarget(BaseMatcherNode):
     target: Union[
@@ -852,10 +852,10 @@ BaseAugOpMatchType = Union[
 @dataclass(frozen=True, eq=False, unsafe_hash=False)
 class AugAssign(BaseSmallStatement, BaseMatcherNode):
     target: Union[
-        BaseExpressionMatchType,
+        BaseAssignTargetExpressionMatchType,
         DoNotCareSentinel,
-        OneOf[BaseExpressionMatchType],
-        AllOf[BaseExpressionMatchType],
+        OneOf[BaseAssignTargetExpressionMatchType],
+        AllOf[BaseAssignTargetExpressionMatchType],
     ] = DoNotCare()
     operator: Union[
         BaseAugOpMatchType,
