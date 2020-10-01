@@ -124,6 +124,7 @@ class AssignTest(CSTNodeTest):
             {
                 "get_node": (
                     lambda: cst.Assign(
+                        # pyre-ignore: Incompatible parameter type [6]
                         targets=[
                             cst.BinaryOperation(
                                 left=cst.Name("x"),
@@ -311,6 +312,7 @@ class AnnAssignTest(CSTNodeTest):
             {
                 "get_node": (
                     lambda: cst.AnnAssign(
+                        # pyre-ignore: Incompatible parameter type [6]
                         target=cst.BinaryOperation(
                             left=cst.Name("x"),
                             operator=cst.Add(),
@@ -414,6 +416,7 @@ class AugAssignTest(CSTNodeTest):
             {
                 "get_node": (
                     lambda: cst.AugAssign(
+                        # pyre-ignore: Incompatible parameter type [6]
                         target=cst.BinaryOperation(
                             left=cst.Name("x"),
                             operator=cst.Add(),
