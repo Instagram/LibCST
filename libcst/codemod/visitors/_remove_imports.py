@@ -374,12 +374,20 @@ class RemoveImportsVisitor(ContextAwareTransformer):
                 if len(names_to_keep) != 0:
                     # there is a previous import alias
                     prev = names_to_keep[-1]
-                    names_to_keep[-1] = prev.with_deep_changes(
-                        whitespace_after=_merge_whitespace_after(
-                            prev.comma.whitespace_after,
-                            comma.whitespace_after,
+                    if isinstance(prev.comma, cst.Comma):
+                        prev = prev.with_deep_changes(
+                            prev.comma,
+                            whitespace_after=_merge_whitespace_after(
+                                prev.comma.whitespace_after,
+                                comma.whitespace_after,
+                            ),
                         )
-                    )
+                    else:
+                        # The previous alias didn't have a trailing comma. This can
+                        # occur if the alias was generated, instead of being parsed
+                        # from source.
+                        prev = prev.with_changes(comma=comma)
+                    names_to_keep[-1] = prev
                 else:
                     # No previous import alias, need to attach comment to `ImportFrom`.
                     # We can only do this if there was a leftparen on the import
