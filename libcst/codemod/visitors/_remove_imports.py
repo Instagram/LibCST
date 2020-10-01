@@ -376,10 +376,11 @@ class RemoveImportsVisitor(ContextAwareTransformer):
                     prev = names_to_keep[-1]
                     if isinstance(prev.comma, cst.Comma):
                         prev = prev.with_deep_changes(
+                            prev.comma,
                             whitespace_after=_merge_whitespace_after(
                                 prev.comma.whitespace_after,
                                 comma.whitespace_after,
-                            )
+                            ),
                         )
                     else:
                         # The previous alias didn't have a trailing comma. This can

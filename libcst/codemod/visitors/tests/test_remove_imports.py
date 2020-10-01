@@ -80,6 +80,12 @@ class TestRemoveImportsCodemod(CodemodTest):
                 short,
                 this_stays_too
             )
+            from fourth import (
+                a,
+                # comment
+                b,
+                c
+            )
         """
         after = """
             from foo import (
@@ -92,6 +98,10 @@ class TestRemoveImportsCodemod(CodemodTest):
             from third import (
                 this_stays_too
             )
+            from fourth import (
+                a,
+                c
+            )
         """
         self.assertCodemod(
             before,
@@ -101,6 +111,7 @@ class TestRemoveImportsCodemod(CodemodTest):
                 ("loooong", "short", None),
                 ("loooong", "bar", None),
                 ("third", "short", None),
+                ("fourth", "b", None),
             ],
         )
 
