@@ -12,7 +12,7 @@ from libcst.testing.utils import UnitTest, data_provider
 class TestConfig(UnitTest):
     @data_provider(
         {
-            "empty": (lambda: PartialParserConfig(),),
+            "empty": (PartialParserConfig,),
             "python_version_a": (lambda: PartialParserConfig(python_version="3.7"),),
             "python_version_b": (lambda: PartialParserConfig(python_version="3.7.1"),),
             "encoding": (lambda: PartialParserConfig(encoding="latin-1"),),
