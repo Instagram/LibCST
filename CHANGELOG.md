@@ -1,3 +1,9 @@
+# 0.3.13 - 2020-10-12
+
+## Fixed
+- Use correct type for AugAssign and AnnAssign target [#396](https://github.com/Instagram/LibCST/pull/396)
+- Support string annotations for type aliases [#401](https://github.com/Instagram/LibCST/pull/401)
+
 # 0.3.12 - 2020-10-01
 
 ## Fixed
