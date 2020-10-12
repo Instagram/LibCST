@@ -21,6 +21,7 @@ from typing import AnyStr, List, Optional, Sequence, Tuple, Union, cast
 
 from libcst import PartialParserConfig, parse_module
 from libcst.codemod._codemod import Codemod
+from libcst.codemod._dummy_pool import DummyPool
 from libcst.codemod._runner import (
     SkipFile,
     SkipReason,
@@ -524,7 +525,6 @@ def _execute_transform_wrap(
         config=config,
     )
 
-
 def parallel_exec_transform_with_prettyprint(  # noqa: C901
     transform: Codemod,
     files: Sequence[str],
@@ -619,63 +619,28 @@ def parallel_exec_transform_with_prettyprint(  # noqa: C901
     )
 
     if total == 1:
-        # Simple case, we should not pay for process overhead. Lets still
-        # use the exec stub however, so we can share code.
-        progress.print(0)
-        result = _execute_transform(
-            transform,
-            files[0],
-            config,
+        # Simple case, we should not pay for process overhead.
+        # Let's just use a dummy synchronous pool.
+        jobs = 1
+        pool_impl = DummyPool
+    else:
+        pool_impl = Pool
+        # Warm the parser, pre-fork.
+        parse_module(
+            "",
+            config=(
+                PartialParserConfig(python_version=python_version)
+                if python_version is not None
+                else PartialParserConfig()
+            ),
         )
-        _print_parallel_result(
-            result,
-            progress,
-            unified_diff=bool(unified_diff),
-            show_successes=show_successes,
-            hide_generated=hide_generated,
-            hide_blacklisted=hide_blacklisted,
-        )
-        if isinstance(result.transform_result, TransformFailure):
-            return ParallelTransformResult(
-                successes=0,
-                failures=1,
-                skips=0,
-                warnings=len(result.transform_result.warning_messages),
-            )
-        elif isinstance(result.transform_result, (TransformSkip, TransformExit)):
-            return ParallelTransformResult(
-                successes=0,
-                failures=0,
-                skips=1,
-                warnings=len(result.transform_result.warning_messages),
-            )
-        elif isinstance(result.transform_result, TransformSuccess):
-            return ParallelTransformResult(
-                successes=1,
-                failures=0,
-                skips=0,
-                warnings=len(result.transform_result.warning_messages),
-            )
-        else:
-            raise Exception("Logic error, unaccounted for result!")
 
-    # Warm the parser, pre-fork.
-    parse_module(
-        "",
-        config=(
-            PartialParserConfig(python_version=python_version)
-            if python_version is not None
-            else PartialParserConfig()
-        ),
-    )
-
-    # Complex case, more than one file
     successes: int = 0
     failures: int = 0
     warnings: int = 0
     skips: int = 0
 
-    with Pool(processes=jobs) as p:
+    with pool_impl(processes=jobs) as p:  # type: ignore
         args = [(transform, f, config) for f in files]
         try:
             for result in p.imap_unordered(_execute_transform_wrap, args, chunksize=4):
