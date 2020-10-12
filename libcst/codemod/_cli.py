@@ -15,10 +15,9 @@ import sys
 import time
 import traceback
 from dataclasses import dataclass, replace
-from multiprocessing import Process, Queue, cpu_count
+from multiprocessing import Pool, cpu_count
 from pathlib import Path
-from queue import Empty
-from typing import AnyStr, Dict, List, Optional, Sequence, Set, Union, cast
+from typing import AnyStr, List, Optional, Sequence, Tuple, Union, cast
 
 from libcst import PartialParserConfig, parse_module
 from libcst.codemod._codemod import Codemod
@@ -382,20 +381,6 @@ def _execute_transform(  # noqa: C901
         )
 
 
-def _parallel_exec_process_stub(
-    result_queue: "Queue[ParallelExecResult]",
-    transformer: Codemod,
-    filename: str,
-    config: ExecutionConfig,
-) -> None:
-    result = _execute_transform(
-        transformer=transformer,
-        filename=filename,
-        config=config,
-    )
-    result_queue.put(result)
-
-
 class Progress:
     ERASE_CURRENT_LINE: str = "\r\033[2K"
 
@@ -528,6 +513,18 @@ class ParallelTransformResult:
     skips: int
 
 
+# Unfortunate wrapper required since there is no `istarmap_unordered`...
+def _execute_transform_wrap(
+    args: Tuple[Codemod, str, ExecutionConfig],
+) -> ExecutionResult:
+    transformer, filename, config = args
+    return _execute_transform(
+        transformer=transformer,
+        filename=filename,
+        config=config,
+    )
+
+
 def parallel_exec_transform_with_prettyprint(  # noqa: C901
     transform: Codemod,
     files: Sequence[str],
@@ -610,10 +607,6 @@ def parallel_exec_transform_with_prettyprint(  # noqa: C901
         )
     print("Executing codemod...", file=sys.stderr)
 
-    # We place results in this queue inside _parallel_exec_process_stub
-    # so that we can control when things get printed to the console.
-    queue = Queue()
-
     config = ExecutionConfig(
         repo_root=repo_root,
         unified_diff=unified_diff,
@@ -681,95 +674,36 @@ def parallel_exec_transform_with_prettyprint(  # noqa: C901
     failures: int = 0
     warnings: int = 0
     skips: int = 0
-    pending_processes: List[Process] = []
 
-    # Start processes
-    filename_to_process: Dict[str, Process] = {}
-    for f in files:
-        process = Process(
-            target=_parallel_exec_process_stub,
-            args=(
-                queue,
-                transform,
-                f,
-                config,
-            ),
-        )
-        pending_processes.append(process)
-        filename_to_process[f] = process
-
-    # Start the processes, allowing no more than num_processes to be running
-    # at once.
-    results_left = len(pending_processes)
-    joinable_processes: Set[Process] = set()
-    processes_started = 0
-
-    interrupted = False
-    while results_left > 0 and not interrupted:
-        while processes_started < jobs and pending_processes:
-            try:
-                # Move this process to the joinables
-                process = pending_processes.pop(0)
-                joinable_processes.add(process)
-
-                # Start it, bookkeep that we did
-                process.start()
-                processes_started += 1
-            except KeyboardInterrupt:
-                interrupted = True
-                continue
-
+    with Pool(processes=jobs) as p:
+        args = [(transform, f, config) for f in files]
         try:
-            result = queue.get(block=True, timeout=0.005)
-        except KeyboardInterrupt:
-            interrupted = True
-            continue
-        except Empty:
-            progress.print(successes + failures + skips)
-            continue
+            for result in p.imap_unordered(_execute_transform_wrap, args, chunksize=4):
+                # Print an execution result, keep track of failures
+                _print_parallel_result(
+                    result,
+                    progress,
+                    unified_diff=bool(unified_diff),
+                    show_successes=show_successes,
+                    hide_generated=hide_generated,
+                    hide_blacklisted=hide_blacklisted,
+                )
+                progress.print(successes + failures + skips)
 
-        # Bookkeep the result, since we know the process that returned this is done.
-        results_left -= 1
-        processes_started -= 1
+                if isinstance(result.transform_result, TransformFailure):
+                    failures += 1
+                elif isinstance(result.transform_result, TransformSuccess):
+                    successes += 1
+                elif isinstance(
+                    result.transform_result, (TransformExit, TransformSkip)
+                ):
+                    skips += 1
 
-        # Print an execution result, keep track of failures
-        _print_parallel_result(
-            result,
-            progress,
-            unified_diff=bool(unified_diff),
-            show_successes=show_successes,
-            hide_generated=hide_generated,
-            hide_blacklisted=hide_blacklisted,
-        )
-        progress.print(successes + failures + skips)
-
-        if isinstance(result.transform_result, TransformFailure):
-            failures += 1
-        elif isinstance(result.transform_result, TransformSuccess):
-            successes += 1
-        elif isinstance(result.transform_result, (TransformExit, TransformSkip)):
-            skips += 1
-
-        warnings += len(result.transform_result.warning_messages)
-
-        # Join the process to free any related resources.
-        # Remove all references to the process to allow the GC to
-        # clean up any file handles.
-        process = filename_to_process.pop(result.filename, None)
-        if process:
-            process.join()
-            joinable_processes.discard(process)
-
-    # Now, join on all of them so we don't leave zombies or hang
-    for p in joinable_processes:
-        p.join()
+                warnings += len(result.transform_result.warning_messages)
+        finally:
+            progress.clear()
 
     # Return whether there was one or more failure.
-    progress.clear()
-
-    # If we caught an interrupt, raise that
-    if interrupted:
-        raise KeyboardInterrupt()
     return ParallelTransformResult(
         successes=successes, failures=failures, skips=skips, warnings=warnings
     )
