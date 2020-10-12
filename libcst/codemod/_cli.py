@@ -216,7 +216,7 @@ def _calculate_module(repo_root: Optional[str], filename: str) -> Optional[str]:
 
 
 @dataclass(frozen=True)
-class ParallelExecResult:
+class ExecutionResult:
     # File we have results for
     filename: str
     # Whether we actually changed the code for the file or not
@@ -225,50 +225,51 @@ class ParallelExecResult:
     transform_result: TransformResult
 
 
-def _parallel_exec_process_stub(  # noqa: C901
-    result_queue: "Queue[ParallelExecResult]",
+@dataclass(frozen=True)
+class ExecutionConfig:
+    blacklist_patterns: Sequence[str] = ()
+    format_code: bool = False
+    formatter_args: Sequence[str] = ()
+    generated_code_marker: str = _DEFAULT_GENERATED_CODE_MARKER
+    include_generated: bool = False
+    python_version: Optional[str] = None
+    repo_root: Optional[str] = None
+    unified_diff: Optional[int] = None
+
+
+def _execute_transform(  # noqa: C901
     transformer: Codemod,
     filename: str,
-    repo_root: Optional[str],
-    unified_diff: Optional[int],
-    include_generated: bool,
-    generated_code_marker: str,
-    format_code: bool,
-    formatter_args: Sequence[str],
-    blacklist_patterns: Sequence[str],
-    python_version: Optional[str],
-) -> None:
-    for pattern in blacklist_patterns:
+    config: ExecutionConfig,
+) -> ExecutionResult:
+    for pattern in config.blacklist_patterns:
         if re.fullmatch(pattern, filename):
-            result_queue.put(
-                ParallelExecResult(
-                    filename=filename,
-                    changed=False,
-                    transform_result=TransformSkip(
-                        skip_reason=SkipReason.BLACKLISTED,
-                        skip_description=f"Blacklisted by pattern {pattern}.",
-                    ),
-                )
+            return ExecutionResult(
+                filename=filename,
+                changed=False,
+                transform_result=TransformSkip(
+                    skip_reason=SkipReason.BLACKLISTED,
+                    skip_description=f"Blacklisted by pattern {pattern}.",
+                ),
             )
-            return
 
     try:
         with open(filename, "rb") as fp:
             oldcode = fp.read()
 
         # Skip generated files
-        if not include_generated and generated_code_marker.encode("utf-8") in oldcode:
-            result_queue.put(
-                ParallelExecResult(
-                    filename=filename,
-                    changed=False,
-                    transform_result=TransformSkip(
-                        skip_reason=SkipReason.GENERATED,
-                        skip_description="Generated file.",
-                    ),
-                )
+        if (
+            not config.include_generated
+            and config.generated_code_marker.encode("utf-8") in oldcode
+        ):
+            return ExecutionResult(
+                filename=filename,
+                changed=False,
+                transform_result=TransformSkip(
+                    skip_reason=SkipReason.GENERATED,
+                    skip_description="Generated file.",
+                ),
             )
-            return
 
         # Somewhat gross hack to provide the filename in the transform's context.
         # We do this after the fork so that a context that was initialized with
@@ -277,7 +278,7 @@ def _parallel_exec_process_stub(  # noqa: C901
         transformer.context = replace(
             transformer.context,
             filename=filename,
-            full_module_name=_calculate_module(repo_root, filename),
+            full_module_name=_calculate_module(config.repo_root, filename),
         )
 
         # Run the transform, bail if we failed or if we aren't formatting code
@@ -285,8 +286,8 @@ def _parallel_exec_process_stub(  # noqa: C901
             input_tree = parse_module(
                 oldcode,
                 config=(
-                    PartialParserConfig(python_version=python_version)
-                    if python_version is not None
+                    PartialParserConfig(python_version=str(config.python_version))
+                    if config.python_version is not None
                     else PartialParserConfig()
                 ),
             )
@@ -294,28 +295,43 @@ def _parallel_exec_process_stub(  # noqa: C901
             newcode = output_tree.bytes
             encoding = output_tree.encoding
         except KeyboardInterrupt:
-            result_queue.put(
-                ParallelExecResult(
-                    filename=filename, changed=False, transform_result=TransformExit()
-                )
+            return ExecutionResult(
+                filename=filename, changed=False, transform_result=TransformExit()
             )
-            return
         except SkipFile as ex:
-            result_queue.put(
-                ParallelExecResult(
+            return ExecutionResult(
+                filename=filename,
+                changed=False,
+                transform_result=TransformSkip(
+                    skip_reason=SkipReason.OTHER,
+                    skip_description=str(ex),
+                    warning_messages=transformer.context.warnings,
+                ),
+            )
+        except Exception as ex:
+            return ExecutionResult(
+                filename=filename,
+                changed=False,
+                transform_result=TransformFailure(
+                    error=ex,
+                    traceback_str=traceback.format_exc(),
+                    warning_messages=transformer.context.warnings,
+                ),
+            )
+
+        # Call formatter if needed, but only if we actually changed something in this
+        # file
+        if config.format_code and newcode != oldcode:
+            try:
+                newcode = invoke_formatter(config.formatter_args, newcode)
+            except KeyboardInterrupt:
+                return ExecutionResult(
                     filename=filename,
                     changed=False,
-                    transform_result=TransformSkip(
-                        skip_reason=SkipReason.OTHER,
-                        skip_description=str(ex),
-                        warning_messages=transformer.context.warnings,
-                    ),
+                    transform_result=TransformExit(),
                 )
-            )
-            return
-        except Exception as ex:
-            result_queue.put(
-                ParallelExecResult(
+            except Exception as ex:
+                return ExecutionResult(
                     filename=filename,
                     changed=False,
                     transform_result=TransformFailure(
@@ -324,44 +340,14 @@ def _parallel_exec_process_stub(  # noqa: C901
                         warning_messages=transformer.context.warnings,
                     ),
                 )
-            )
-            return
-
-        # Call formatter if needed, but only if we actually changed something in this
-        # file
-        if format_code and newcode != oldcode:
-            try:
-                newcode = invoke_formatter(formatter_args, newcode)
-            except KeyboardInterrupt:
-                result_queue.put(
-                    ParallelExecResult(
-                        filename=filename,
-                        changed=False,
-                        transform_result=TransformExit(),
-                    )
-                )
-                return
-            except Exception as ex:
-                result_queue.put(
-                    ParallelExecResult(
-                        filename=filename,
-                        changed=False,
-                        transform_result=TransformFailure(
-                            error=ex,
-                            traceback_str=traceback.format_exc(),
-                            warning_messages=transformer.context.warnings,
-                        ),
-                    )
-                )
-                return
 
         # Format as unified diff if needed, otherwise save it back
         changed = oldcode != newcode
-        if unified_diff:
+        if config.unified_diff:
             newcode = diff_code(
                 oldcode.decode(encoding),
                 newcode.decode(encoding),
-                unified_diff,
+                config.unified_diff,
                 filename=filename,
             )
         else:
@@ -373,33 +359,41 @@ def _parallel_exec_process_stub(  # noqa: C901
             newcode = ""
 
         # Inform success
-        result_queue.put(
-            ParallelExecResult(
-                filename=filename,
-                changed=changed,
-                transform_result=TransformSuccess(
-                    warning_messages=transformer.context.warnings, code=newcode
-                ),
-            )
+        return ExecutionResult(
+            filename=filename,
+            changed=changed,
+            transform_result=TransformSuccess(
+                warning_messages=transformer.context.warnings, code=newcode
+            ),
         )
     except KeyboardInterrupt:
-        result_queue.put(
-            ParallelExecResult(
-                filename=filename, changed=False, transform_result=TransformExit()
-            )
+        return ExecutionResult(
+            filename=filename, changed=False, transform_result=TransformExit()
         )
     except Exception as ex:
-        result_queue.put(
-            ParallelExecResult(
-                filename=filename,
-                changed=False,
-                transform_result=TransformFailure(
-                    error=ex,
-                    traceback_str=traceback.format_exc(),
-                    warning_messages=transformer.context.warnings,
-                ),
-            )
+        return ExecutionResult(
+            filename=filename,
+            changed=False,
+            transform_result=TransformFailure(
+                error=ex,
+                traceback_str=traceback.format_exc(),
+                warning_messages=transformer.context.warnings,
+            ),
         )
+
+
+def _parallel_exec_process_stub(
+    result_queue: "Queue[ParallelExecResult]",
+    transformer: Codemod,
+    filename: str,
+    config: ExecutionConfig,
+) -> None:
+    result = _execute_transform(
+        transformer=transformer,
+        filename=filename,
+        config=config,
+    )
+    result_queue.put(result)
 
 
 class Progress:
@@ -465,7 +459,7 @@ class Progress:
 
 
 def _print_parallel_result(
-    exec_result: ParallelExecResult,
+    exec_result: ExecutionResult,
     progress: Progress,
     *,
     unified_diff: bool,
@@ -620,24 +614,26 @@ def parallel_exec_transform_with_prettyprint(  # noqa: C901
     # so that we can control when things get printed to the console.
     queue = Queue()
 
+    config = ExecutionConfig(
+        repo_root=repo_root,
+        unified_diff=unified_diff,
+        include_generated=include_generated,
+        generated_code_marker=generated_code_marker,
+        format_code=format_code,
+        formatter_args=formatter_args,
+        blacklist_patterns=blacklist_patterns,
+        python_version=python_version,
+    )
+
     if total == 1:
         # Simple case, we should not pay for process overhead. Lets still
         # use the exec stub however, so we can share code.
         progress.print(0)
-        _parallel_exec_process_stub(
-            queue,
+        result = _execute_transform(
             transform,
             files[0],
-            repo_root,
-            unified_diff=unified_diff,
-            include_generated=include_generated,
-            generated_code_marker=generated_code_marker,
-            format_code=format_code,
-            formatter_args=formatter_args,
-            blacklist_patterns=blacklist_patterns,
-            python_version=python_version,
+            config,
         )
-        result = queue.get()
         _print_parallel_result(
             result,
             progress,
@@ -696,14 +692,7 @@ def parallel_exec_transform_with_prettyprint(  # noqa: C901
                 queue,
                 transform,
                 f,
-                repo_root,
-                unified_diff,
-                include_generated,
-                generated_code_marker,
-                format_code,
-                formatter_args,
-                blacklist_patterns,
-                python_version,
+                config,
             ),
         )
         pending_processes.append(process)
