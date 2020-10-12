@@ -53,6 +53,7 @@ class MyExampleClassWithMetaclass(metaclass=MyExampleMetaclass):
     pass
 
 
+# lint-ignore: NoNamedTupleRule
 class NamedTupleSubclass(NamedTuple):
     a: str
     b: int

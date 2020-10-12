@@ -643,7 +643,10 @@ class ScopeVisitor(cst.CSTVisitor):
         self.scope: Scope = GlobalScope()
         self.__deferred_accesses: List[Tuple[Access, Optional[cst.Attribute]]] = []
         self.__top_level_attribute_stack: List[Optional[cst.Attribute]] = [None]
-        self.__in_annotation: Set[Union[cst.Call, cst.Annotation]] = set()
+        self.__in_annotation: Set[
+            Union[cst.Call, cst.Annotation, cst.Subscript]
+        ] = set()
+        self.__in_ignored_subscript: Set[cst.Subscript] = set()
 
     @contextmanager
     def _new_scope(
@@ -699,10 +702,8 @@ class ScopeVisitor(cst.CSTVisitor):
 
     def visit_Call(self, node: cst.Call) -> Optional[bool]:
         self.__top_level_attribute_stack.append(None)
-        if any(
-            qn.name == "typing.TypeVar"
-            for qn in self.scope.get_qualified_names_for(node)
-        ):
+        qnames = self.scope.get_qualified_names_for(node)
+        if any(qn.name in {"typing.NewType", "typing.TypeVar"} for qn in qnames):
             node.func.visit(self)
             self.__in_annotation.add(node)
             for arg in node.args[1:]:
@@ -731,20 +732,25 @@ class ScopeVisitor(cst.CSTVisitor):
     def _handle_string_annotation(
         self, node: Union[cst.SimpleString, cst.ConcatenatedString]
     ) -> None:
-        if self.__in_annotation:
+        if self.__in_annotation and not self.__in_ignored_subscript:
             value = node.evaluated_value
             if value:
                 mod = cst.parse_module(value)
                 mod.visit(self)
 
     def visit_Subscript(self, node: cst.Subscript) -> Optional[bool]:
+        qnames = self.scope.get_qualified_names_for(node.value)
+        if any(qn.name.startswith(("typing.", "typing_extensions.")) for qn in qnames):
+            self.__in_annotation.add(node)
         if any(
-            qn.name in ("typing.Literal", "typing_extensions.Literal")
-            for qn in self.scope.get_qualified_names_for(node.value)
+            qn.name in {"typing.Literal", "typing_extensions.Literal"} for qn in qnames
         ):
-            node.value.visit(self)
-            return False
+            self.__in_ignored_subscript.add(node)
         return True
+
+    def leave_Subscript(self, original_node: cst.Subscript) -> None:
+        self.__in_annotation.discard(original_node)
+        self.__in_ignored_subscript.discard(original_node)
 
     def visit_Name(self, node: cst.Name) -> Optional[bool]:
         # not all Name have ExpressionContext
