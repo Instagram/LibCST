@@ -647,6 +647,7 @@ class ScopeVisitor(cst.CSTVisitor):
             Union[cst.Call, cst.Annotation, cst.Subscript]
         ] = set()
         self.__in_ignored_subscript: Set[cst.Subscript] = set()
+        self.__ignore_annotation: bool = False
 
     @contextmanager
     def _new_scope(
@@ -705,7 +706,6 @@ class ScopeVisitor(cst.CSTVisitor):
         qnames = self.scope.get_qualified_names_for(node)
         if any(qn.name in {"typing.NewType", "typing.TypeVar"} for qn in qnames):
             node.func.visit(self)
-            self.__in_annotation.add(node)
             for arg in node.args[1:]:
                 arg.visit(self)
             return False
@@ -716,10 +716,17 @@ class ScopeVisitor(cst.CSTVisitor):
         self.__in_annotation.discard(original_node)
 
     def visit_Annotation(self, node: cst.Annotation) -> Optional[bool]:
-        self.__in_annotation.add(node)
+        if not self.__ignore_annotation:
+            self.__in_annotation.add(node)
 
     def leave_Annotation(self, original_node: cst.Annotation) -> None:
         self.__in_annotation.discard(original_node)
+
+    def visit_Assign_value(self, original_node: cst.Assign) -> None:
+        self.__ignore_annotation = True
+
+    def leave_Assign_value(self, original_node: cst.Assign) -> None:
+        self.__ignore_annotation = False
 
     def visit_SimpleString(self, node: cst.SimpleString) -> Optional[bool]:
         self._handle_string_annotation(node)
@@ -740,7 +747,10 @@ class ScopeVisitor(cst.CSTVisitor):
 
     def visit_Subscript(self, node: cst.Subscript) -> Optional[bool]:
         qnames = self.scope.get_qualified_names_for(node.value)
-        if any(qn.name.startswith(("typing.", "typing_extensions.")) for qn in qnames):
+        if (
+            any(qn.name.startswith(("typing.", "typing_extensions.")) for qn in qnames)
+            and not self.__ignore_annotation
+        ):
             self.__in_annotation.add(node)
         if any(
             qn.name in {"typing.Literal", "typing_extensions.Literal"} for qn in qnames
@@ -816,6 +826,12 @@ class ScopeVisitor(cst.CSTVisitor):
             for statement in node.body.body:
                 statement.visit(self)
         return False
+
+    def visit_ClassDef_bases(self, node: cst.ClassDef) -> None:
+        self.__ignore_annotation = True
+
+    def leave_ClassDef_bases(self, node: cst.ClassDef) -> None:
+        self.__ignore_annotation = False
 
     def visit_Global(self, node: cst.Global) -> Optional[bool]:
         for name_item in node.names:
