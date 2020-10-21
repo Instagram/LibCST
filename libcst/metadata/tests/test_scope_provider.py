@@ -1066,7 +1066,9 @@ class ScopeProviderTest(UnitTest):
 
         assignment = list(scope["E"])[0]
         self.assertIsInstance(assignment, Assignment)
-        self.assertEqual(len(assignment.references), 0)
+        self.assertEqual(len(assignment.references), 1)
+        references = list(assignment.references)
+        self.assertFalse(references[0].is_annotation)
 
         assignment = list(scope["F"])[0]
         self.assertIsInstance(assignment, Assignment)
@@ -1074,11 +1076,15 @@ class ScopeProviderTest(UnitTest):
 
         assignment = list(scope["G"])[0]
         self.assertIsInstance(assignment, Assignment)
-        self.assertEqual(len(assignment.references), 0)
+        self.assertEqual(len(assignment.references), 1)
+        references = list(assignment.references)
+        self.assertFalse(references[0].is_annotation)
 
         assignment = list(scope["H"])[0]
         self.assertIsInstance(assignment, Assignment)
-        self.assertEqual(len(assignment.references), 0)
+        self.assertEqual(len(assignment.references), 1)
+        references = list(assignment.references)
+        self.assertFalse(references[0].is_annotation)
 
         assignment = list(scope["I"])[0]
         self.assertIsInstance(assignment, Assignment)
