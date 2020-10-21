@@ -725,7 +725,7 @@ class ScopeVisitor(cst.CSTVisitor):
     def visit_Assign_value(self, node: cst.Assign) -> None:
         self.__ignore_annotation += 1
 
-    def leave_Assign_value(self, original_node: cst.Assign) -> None:
+    def leave_Assign_value(self, node: cst.Assign) -> None:
         self.__ignore_annotation -= 1
 
     def visit_SimpleString(self, node: cst.SimpleString) -> Optional[bool]:
@@ -833,7 +833,7 @@ class ScopeVisitor(cst.CSTVisitor):
     def visit_ClassDef_bases(self, node: cst.ClassDef) -> None:
         self.__ignore_annotation += 1
 
-    def leave_ClassDef_bases(self, original_node: cst.ClassDef) -> None:
+    def leave_ClassDef_bases(self, node: cst.ClassDef) -> None:
         self.__ignore_annotation -= 1
 
     def visit_Global(self, node: cst.Global) -> Optional[bool]:
