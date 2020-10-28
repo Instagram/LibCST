@@ -65,12 +65,17 @@ class Access:
 
     is_annotation: bool
 
+    is_type_hint: bool
+
     __assignments: Set["BaseAssignment"]
 
-    def __init__(self, node: cst.Name, scope: "Scope", is_annotation: bool) -> None:
+    def __init__(
+        self, node: cst.Name, scope: "Scope", is_annotation: bool, is_type_hint: bool
+    ) -> None:
         self.node = node
         self.scope = scope
         self.is_annotation = is_annotation
+        self.is_type_hint = is_type_hint
         self.__assignments = set()
 
     def __hash__(self) -> int:
@@ -646,7 +651,9 @@ class ScopeVisitor(cst.CSTVisitor):
         self.__in_annotation: Set[
             Union[cst.Call, cst.Annotation, cst.Subscript]
         ] = set()
+        self.__in_type_hint: Set[Union[cst.Call, cst.Annotation, cst.Subscript]] = set()
         self.__in_ignored_subscript: Set[cst.Subscript] = set()
+        self.__ignore_annotation: int = 0
 
     @contextmanager
     def _new_scope(
@@ -705,7 +712,7 @@ class ScopeVisitor(cst.CSTVisitor):
         qnames = self.scope.get_qualified_names_for(node)
         if any(qn.name in {"typing.NewType", "typing.TypeVar"} for qn in qnames):
             node.func.visit(self)
-            self.__in_annotation.add(node)
+            self.__in_type_hint.add(node)
             for arg in node.args[1:]:
                 arg.visit(self)
             return False
@@ -713,7 +720,7 @@ class ScopeVisitor(cst.CSTVisitor):
 
     def leave_Call(self, original_node: cst.Call) -> None:
         self.__top_level_attribute_stack.pop()
-        self.__in_annotation.discard(original_node)
+        self.__in_type_hint.discard(original_node)
 
     def visit_Annotation(self, node: cst.Annotation) -> Optional[bool]:
         self.__in_annotation.add(node)
@@ -732,7 +739,9 @@ class ScopeVisitor(cst.CSTVisitor):
     def _handle_string_annotation(
         self, node: Union[cst.SimpleString, cst.ConcatenatedString]
     ) -> None:
-        if self.__in_annotation and not self.__in_ignored_subscript:
+        if (
+            self.__in_type_hint or self.__in_annotation
+        ) and not self.__in_ignored_subscript:
             value = node.evaluated_value
             if value:
                 mod = cst.parse_module(value)
@@ -741,7 +750,7 @@ class ScopeVisitor(cst.CSTVisitor):
     def visit_Subscript(self, node: cst.Subscript) -> Optional[bool]:
         qnames = self.scope.get_qualified_names_for(node.value)
         if any(qn.name.startswith(("typing.", "typing_extensions.")) for qn in qnames):
-            self.__in_annotation.add(node)
+            self.__in_type_hint.add(node)
         if any(
             qn.name in {"typing.Literal", "typing_extensions.Literal"} for qn in qnames
         ):
@@ -749,7 +758,7 @@ class ScopeVisitor(cst.CSTVisitor):
         return True
 
     def leave_Subscript(self, original_node: cst.Subscript) -> None:
-        self.__in_annotation.discard(original_node)
+        self.__in_type_hint.discard(original_node)
         self.__in_ignored_subscript.discard(original_node)
 
     def visit_Name(self, node: cst.Name) -> Optional[bool]:
@@ -758,7 +767,14 @@ class ScopeVisitor(cst.CSTVisitor):
         if context == ExpressionContext.STORE:
             self.scope.record_assignment(node.value, node)
         elif context in (ExpressionContext.LOAD, ExpressionContext.DEL, None):
-            access = Access(node, self.scope, is_annotation=bool(self.__in_annotation))
+            access = Access(
+                node,
+                self.scope,
+                is_annotation=bool(
+                    self.__in_annotation and not self.__ignore_annotation
+                ),
+                is_type_hint=bool(self.__in_type_hint),
+            )
             self.__deferred_accesses.append(
                 (access, self.__top_level_attribute_stack[-1])
             )
@@ -816,6 +832,12 @@ class ScopeVisitor(cst.CSTVisitor):
             for statement in node.body.body:
                 statement.visit(self)
         return False
+
+    def visit_ClassDef_bases(self, node: cst.ClassDef) -> None:
+        self.__ignore_annotation += 1
+
+    def leave_ClassDef_bases(self, node: cst.ClassDef) -> None:
+        self.__ignore_annotation -= 1
 
     def visit_Global(self, node: cst.Global) -> Optional[bool]:
         for name_item in node.names:

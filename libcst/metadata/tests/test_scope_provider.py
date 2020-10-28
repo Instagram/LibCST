@@ -1018,8 +1018,8 @@ class ScopeProviderTest(UnitTest):
     def test_annotation_access(self) -> None:
         m, scopes = get_scope_metadata_provider(
             """
-                from typing import Literal, NewType, Optional, TypeVar
-                from a import A, B, C, D, E, F, G, H
+                from typing import Literal, NewType, Optional, TypeVar, Callable
+                from a import A, B, C, D, E, F, G, H, I, J
                 def x(a: A):
                     pass
                 def y(b: "B"):
@@ -1031,6 +1031,10 @@ class ScopeProviderTest(UnitTest):
                 FType = TypeVar("F")
                 GType = NewType("GType", "Optional[G]")
                 HType = Optional["H"]
+                IType = Callable[..., I]
+
+                class Test(Generic[J]):
+                    pass
             """
         )
         imp = ensure_type(
@@ -1058,13 +1062,15 @@ class ScopeProviderTest(UnitTest):
         self.assertIsInstance(assignment, Assignment)
         self.assertEqual(len(assignment.references), 1)
         references = list(assignment.references)
-        self.assertTrue(references[0].is_annotation)
+        self.assertFalse(references[0].is_annotation)
+        self.assertTrue(references[0].is_type_hint)
 
         assignment = list(scope["E"])[0]
         self.assertIsInstance(assignment, Assignment)
         self.assertEqual(len(assignment.references), 1)
         references = list(assignment.references)
-        self.assertTrue(references[0].is_annotation)
+        self.assertFalse(references[0].is_annotation)
+        self.assertTrue(references[0].is_type_hint)
 
         assignment = list(scope["F"])[0]
         self.assertIsInstance(assignment, Assignment)
@@ -1074,13 +1080,27 @@ class ScopeProviderTest(UnitTest):
         self.assertIsInstance(assignment, Assignment)
         self.assertEqual(len(assignment.references), 1)
         references = list(assignment.references)
-        self.assertTrue(references[0].is_annotation)
+        self.assertFalse(references[0].is_annotation)
+        self.assertTrue(references[0].is_type_hint)
 
         assignment = list(scope["H"])[0]
         self.assertIsInstance(assignment, Assignment)
         self.assertEqual(len(assignment.references), 1)
         references = list(assignment.references)
-        self.assertTrue(references[0].is_annotation)
+        self.assertFalse(references[0].is_annotation)
+        self.assertTrue(references[0].is_type_hint)
+
+        assignment = list(scope["I"])[0]
+        self.assertIsInstance(assignment, Assignment)
+        self.assertEqual(len(assignment.references), 1)
+        references = list(assignment.references)
+        self.assertFalse(references[0].is_annotation)
+
+        assignment = list(scope["J"])[0]
+        self.assertIsInstance(assignment, Assignment)
+        self.assertEqual(len(assignment.references), 1)
+        references = list(assignment.references)
+        self.assertFalse(references[0].is_annotation)
 
     def test_node_of_scopes(self) -> None:
         m, scopes = get_scope_metadata_provider(
