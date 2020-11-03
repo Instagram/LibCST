@@ -733,12 +733,12 @@ class ScopeVisitor(cst.CSTVisitor):
         return False
 
     def visit_ConcatenatedString(self, node: cst.ConcatenatedString) -> Optional[bool]:
-        self._handle_string_annotation(node)
-        return False
+        return not self._handle_string_annotation(node)
 
     def _handle_string_annotation(
         self, node: Union[cst.SimpleString, cst.ConcatenatedString]
-    ) -> None:
+    ) -> bool:
+        """Returns whether it successfully handled the string annotation"""
         if (
             self.__in_type_hint or self.__in_annotation
         ) and not self.__in_ignored_subscript:
@@ -746,6 +746,8 @@ class ScopeVisitor(cst.CSTVisitor):
             if value:
                 mod = cst.parse_module(value)
                 mod.visit(self)
+                return True
+        return False
 
     def visit_Subscript(self, node: cst.Subscript) -> Optional[bool]:
         qnames = self.scope.get_qualified_names_for(node.value)
