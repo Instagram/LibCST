@@ -590,7 +590,7 @@ def parallel_exec_transform_with_prettyprint(  # noqa: C901
     progress = Progress(enabled=not hide_progress, total=total)
 
     # Grab number of cores if we need to
-    jobs: int = jobs or cpu_count()
+    jobs: int = jobs if jobs is not None else cpu_count()
 
     if jobs < 1:
         raise Exception("Must have at least one job to process!")
@@ -598,7 +598,7 @@ def parallel_exec_transform_with_prettyprint(  # noqa: C901
     if total == 0:
         return ParallelTransformResult(successes=0, failures=0, skips=0, warnings=0)
 
-    if repo_root:
+    if repo_root is not None:
         # Make sure if there is a root that we have the absolute path to it.
         repo_root = os.path.abspath(repo_root)
         # Spin up a full repo metadata manager so that we can provide metadata

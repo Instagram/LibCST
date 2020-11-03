@@ -20,7 +20,7 @@ def _get_import_alias_names(import_aliases: Sequence[cst.ImportAlias]) -> Set[st
     import_names = set()
     for imported_name in import_aliases:
         asname = imported_name.asname
-        if asname:
+        if asname is not None:
             import_names.add(get_full_name_for_node(asname.name))
         else:
             import_names.add(get_full_name_for_node(imported_name.name))
@@ -242,7 +242,9 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
         super().__init__(context)
         # Qualifier for storing the canonical name of the current function.
         self.qualifier: List[str] = []
-        self.annotations: Annotations = annotations or Annotations()
+        self.annotations: Annotations = (
+            Annotations() if annotations is None else annotations
+        )
         self.toplevel_annotations: Dict[str, cst.Annotation] = {}
         self.visited_classes: Set[str] = set()
         self.overwrite_existing_annotations = overwrite_existing_annotations
@@ -297,7 +299,7 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
         context_contents = self.context.scratch.get(
             ApplyTypeAnnotationsVisitor.CONTEXT_KEY
         )
-        if context_contents:
+        if context_contents is not None:
             stub, overwrite_existing_annotations = context_contents
             self.overwrite_existing_annotations = (
                 self.overwrite_existing_annotations or overwrite_existing_annotations

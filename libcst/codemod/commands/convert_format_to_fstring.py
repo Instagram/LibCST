@@ -295,7 +295,7 @@ class ConvertFormatStringCommand(VisitorBasedCodemodCommand):
                         spec_format_spec,
                         spec_conversion,
                     ) in format_spec_tokens:
-                        if spec_format_spec:
+                        if spec_format_spec is not None:
                             # This shouldn't be possible, we don't allow it in the spec!
                             raise Exception("Logic error!")
                         if spec_literal_text:
