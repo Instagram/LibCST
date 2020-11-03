@@ -31,7 +31,7 @@ def get_absolute_module_for_import(
         return None
     base_module = ".".join(modules[:-num_dots])
     # Finally, if the module name was supplied, append it to the end.
-    if module_name:
+    if module_name is not None:
         # If we went all the way to the top, the base module should be empty, so we
         # should return the relative bit as absolute. Otherwise, combine the base
         # module and module name using a dot separator.
