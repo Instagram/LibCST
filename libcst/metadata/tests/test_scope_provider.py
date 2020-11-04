@@ -1310,3 +1310,51 @@ class ScopeProviderTest(UnitTest):
             )
         }
         self.assertEqual(names, {"a.b.c", "a.b", "a"})
+
+    def test_ordering(self) -> None:
+        m, scopes = get_scope_metadata_provider(
+            """
+            from a import b
+            class X:
+                x = b
+                b = b
+                y = b
+            """
+        )
+        global_scope = scopes[m]
+        import_stmt = ensure_type(
+            ensure_type(m.body[0], cst.SimpleStatementLine).body[0], cst.ImportFrom
+        )
+        first_assignment = list(global_scope.assignments)[0]
+        assert isinstance(first_assignment, cst.metadata.Assignment)
+        self.assertEqual(first_assignment.node, import_stmt)
+        global_refs = list(first_assignment.references)
+        self.assertEqual(len(global_refs), 2)
+        class_def = ensure_type(m.body[1], cst.ClassDef)
+        x = ensure_type(
+            ensure_type(class_def.body.body[0], cst.SimpleStatementLine).body[0],
+            cst.Assign,
+        )
+        self.assertEqual(x.value, global_refs[0].node)
+        class_b = ensure_type(
+            ensure_type(class_def.body.body[1], cst.SimpleStatementLine).body[0],
+            cst.Assign,
+        )
+        self.assertEqual(class_b.value, global_refs[1].node)
+
+        class_accesses = list(scopes[x].accesses)
+        self.assertEqual(len(class_accesses), 3)
+        self.assertIn(
+            class_b.targets[0].target,
+            [
+                ref.node
+                for acc in class_accesses
+                for ref in acc.referents
+                if isinstance(ref, Assignment)
+            ],
+        )
+        y = ensure_type(
+            ensure_type(class_def.body.body[2], cst.SimpleStatementLine).body[0],
+            cst.Assign,
+        )
+        self.assertIn(y.value, [access.node for access in class_accesses])

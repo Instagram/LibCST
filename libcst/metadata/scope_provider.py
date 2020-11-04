@@ -68,6 +68,7 @@ class Access:
     is_type_hint: bool
 
     __assignments: Set["BaseAssignment"]
+    __index: int
 
     def __init__(
         self, node: cst.Name, scope: "Scope", is_annotation: bool, is_type_hint: bool
@@ -77,6 +78,7 @@ class Access:
         self.is_annotation = is_annotation
         self.is_type_hint = is_type_hint
         self.__assignments = set()
+        self.__index = scope._assignment_count
 
     def __hash__(self) -> int:
         return id(self)
@@ -86,11 +88,25 @@ class Access:
         """Return all assignments of the access."""
         return self.__assignments
 
-    def record_assignment(self, assignment: "BaseAssignment") -> None:
-        self.__assignments.add(assignment)
+    @property
+    def _index(self) -> int:
+        return self.__index
 
-    def record_assignments(self, assignments: Set["BaseAssignment"]) -> None:
-        self.__assignments |= assignments
+    def record_assignment(self, assignment: "BaseAssignment") -> None:
+        if assignment.scope != self.scope or assignment._index < self.__index:
+            self.__assignments.add(assignment)
+
+    def record_assignments(self, name: str) -> None:
+        assignments = self.scope[name]
+        # filter out assignments that happened later than this access
+        previous_assignments = {
+            assignment
+            for assignment in self.scope[name]
+            if assignment.scope != self.scope or assignment._index < self.__index
+        }
+        if previous_assignments == set() and assignments != set():
+            previous_assignments = self.scope.parent[name]
+        self.__assignments |= previous_assignments
 
 
 class BaseAssignment(abc.ABC):
@@ -109,10 +125,20 @@ class BaseAssignment(abc.ABC):
         self.__accesses = set()
 
     def record_access(self, access: Access) -> None:
-        self.__accesses.add(access)
+        if access.scope != self.scope or self._index < access._index:
+            self.__accesses.add(access)
 
     def record_accesses(self, accesses: Set[Access]) -> None:
-        self.__accesses |= accesses
+        later_accesses = {
+            access
+            for access in accesses
+            if access.scope != self.scope or self._index < access._index
+        }
+        self.__accesses |= later_accesses
+        earlier_accesses = accesses - later_accesses
+        if earlier_accesses != set() and self.scope.parent != self.scope:
+            for shadowed_assignment in self.scope.parent[self.name]:
+                shadowed_assignment.record_accesses(earlier_accesses)
 
     @property
     def references(self) -> Collection[Access]:
@@ -123,6 +149,11 @@ class BaseAssignment(abc.ABC):
     def __hash__(self) -> int:
         return id(self)
 
+    @property
+    def _index(self) -> int:
+        """Return an integer that represents the order of assignments in `scope`"""
+        return -1
+
 
 class Assignment(BaseAssignment):
     """An assignment records the name, CSTNode and its accesses."""
@@ -130,10 +161,18 @@ class Assignment(BaseAssignment):
     #: The node of assignment, it could be a :class:`~libcst.Import`, :class:`~libcst.ImportFrom`,
     #: :class:`~libcst.Name`, :class:`~libcst.FunctionDef`, or :class:`~libcst.ClassDef`.
     node: cst.CSTNode
+    __index: int
 
-    def __init__(self, name: str, scope: "Scope", node: cst.CSTNode) -> None:
+    def __init__(
+        self, name: str, scope: "Scope", node: cst.CSTNode, index: int
+    ) -> None:
         self.node = node
+        self.__index = index
         super().__init__(name, scope)
+
+    @property
+    def _index(self) -> int:
+        return self.__index
 
 
 # even though we don't override the constructor.
@@ -318,6 +357,7 @@ class Scope(abc.ABC):
     globals: "GlobalScope"
     _assignments: MutableMapping[str, Set[BaseAssignment]]
     _accesses: MutableMapping[str, Set[Access]]
+    _assignment_count: int
 
     def __init__(self, parent: "Scope") -> None:
         super().__init__()
@@ -325,9 +365,12 @@ class Scope(abc.ABC):
         self.globals = parent.globals
         self._assignments = defaultdict(set)
         self._accesses = defaultdict(set)
+        self._assignment_count = 0
 
     def record_assignment(self, name: str, node: cst.CSTNode) -> None:
-        self._assignments[name].add(Assignment(name=name, scope=self, node=node))
+        self._assignments[name].add(
+            Assignment(name=name, scope=self, node=node, index=self._assignment_count)
+        )
 
     def record_access(self, name: str, access: Access) -> None:
         self._accesses[name].add(access)
@@ -675,6 +718,9 @@ class ScopeVisitor(cst.CSTVisitor):
         finally:
             self.scope = current_scope
 
+    def _leave_assignment_alike(self) -> None:
+        self.scope._assignment_count += 1
+
     def _visit_import_alike(self, node: Union[cst.Import, cst.ImportFrom]) -> bool:
         names = node.names
         if isinstance(names, cst.ImportStar):
@@ -698,6 +744,12 @@ class ScopeVisitor(cst.CSTVisitor):
 
     def visit_ImportFrom(self, node: cst.ImportFrom) -> Optional[bool]:
         return self._visit_import_alike(node)
+
+    def leave_Import(self, original_node: cst.Import) -> None:
+        self._leave_assignment_alike()
+
+    def leave_ImportFrom(self, original_node: cst.ImportFrom) -> None:
+        self._leave_assignment_alike()
 
     def visit_Attribute(self, node: cst.Attribute) -> Optional[bool]:
         if self.__top_level_attribute_stack[-1] is None:
@@ -795,6 +847,9 @@ class ScopeVisitor(cst.CSTVisitor):
 
         return False
 
+    def leave_FunctionDef(self, original_node: cst.FunctionDef) -> None:
+        self._leave_assignment_alike()
+
     def visit_Lambda(self, node: cst.Lambda) -> Optional[bool]:
         with self._new_scope(FunctionScope, node):
             node.params.visit(self)
@@ -833,6 +888,9 @@ class ScopeVisitor(cst.CSTVisitor):
                 statement.visit(self)
         return False
 
+    def leave_classDef(self, original_node: cst.ClassDef) -> None:
+        self._leave_assignment_alike()
+
     def visit_ClassDef_bases(self, node: cst.ClassDef) -> None:
         self.__ignore_annotation += 1
 
@@ -844,10 +902,16 @@ class ScopeVisitor(cst.CSTVisitor):
             self.scope.record_global_overwrite(name_item.name.value)
         return False
 
+    def leave_Global(self, original_node: cst.Global) -> None:
+        self._leave_assignment_alike()
+
     def visit_Nonlocal(self, node: cst.Nonlocal) -> Optional[bool]:
         for name_item in node.names:
             self.scope.record_nonlocal_overwrite(name_item.name.value)
         return False
+
+    def leave_Nonlocal(self, original_node: cst.Nonlocal) -> None:
+        self._leave_assignment_alike()
 
     def visit_ListComp(self, node: cst.ListComp) -> Optional[bool]:
         return self._visit_comp_alike(node)
@@ -915,6 +979,33 @@ class ScopeVisitor(cst.CSTVisitor):
                 node.elt.visit(self)
         return False
 
+    def leave_Assign(self, original_node: cst.Assign) -> None:
+        self._leave_assignment_alike()
+
+    def leave_AnnAssign(self, original_node: cst.AnnAssign) -> None:
+        self._leave_assignment_alike()
+
+    def leave_AugAssign(self, original_node: cst.AugAssign) -> None:
+        self._leave_assignment_alike()
+
+    def leave_AsName(self, original_node: cst.AsName) -> None:
+        self._leave_assignment_alike()
+
+    def leave_CompFor(self, original_node: cst.CompFor) -> None:
+        self._leave_assignment_alike()
+
+    def leave_For(self, original_node: cst.For) -> None:
+        self._leave_assignment_alike()
+
+    def leave_NamedExpr(self, original_node: cst.NamedExpr) -> None:
+        self._leave_assignment_alike()
+
+    def leave_Parameters(self, original_node: cst.Parameters) -> None:
+        self._leave_assignment_alike()
+
+    def leave_WithItem(self, original_node: cst.WithItem) -> None:
+        self._leave_assignment_alike()
+
     def infer_accesses(self) -> None:
         # Aggregate access with the same name and batch add with set union as an optimization.
         # In worst case, all accesses (m) and assignments (n) refer to the same name,
@@ -932,7 +1023,7 @@ class ScopeVisitor(cst.CSTVisitor):
                         break
 
             scope_name_accesses[(access.scope, name)].add(access)
-            access.record_assignments(access.scope[name])
+            access.record_assignments(name)
             access.scope.record_access(name, access)
 
         for (scope, name), accesses in scope_name_accesses.items():
