@@ -1358,3 +1358,57 @@ class ScopeProviderTest(UnitTest):
             cst.Assign,
         )
         self.assertIn(y.value, [access.node for access in class_accesses])
+
+    def test_ordering_between_scopes(self) -> None:
+        m, scopes = get_scope_metadata_provider(
+            """
+            def f(a):
+                print(a)
+                print(b)
+            a = 1
+            b = 1
+            """
+        )
+        f = cst.ensure_type(m.body[0], cst.FunctionDef)
+        a_param = f.params.params[0].name
+        a_param_assignment = list(scopes[a_param]["a"])[0]
+        a_param_refs = list(a_param_assignment.references)
+        first_print = cst.ensure_type(
+            cst.ensure_type(
+                cst.ensure_type(f.body.body[0], cst.SimpleStatementLine).body[0],
+                cst.Expr,
+            ).value,
+            cst.Call,
+        )
+        second_print = cst.ensure_type(
+            cst.ensure_type(
+                cst.ensure_type(f.body.body[1], cst.SimpleStatementLine).body[0],
+                cst.Expr,
+            ).value,
+            cst.Call,
+        )
+        self.assertEqual(
+            first_print.args[0].value,
+            a_param_refs[0].node,
+        )
+        a_global = (
+            cst.ensure_type(
+                cst.ensure_type(m.body[1], cst.SimpleStatementLine).body[0], cst.Assign
+            )
+            .targets[0]
+            .target
+        )
+        a_global_assignment = list(scopes[a_global]["a"])[0]
+        a_global_refs = list(a_global_assignment.references)
+        self.assertEqual(a_global_refs, [])
+        b_global = (
+            cst.ensure_type(
+                cst.ensure_type(m.body[2], cst.SimpleStatementLine).body[0], cst.Assign
+            )
+            .targets[0]
+            .target
+        )
+        b_global_assignment = list(scopes[b_global]["b"])[0]
+        b_global_refs = list(b_global_assignment.references)
+        self.assertEqual(len(b_global_refs), 1)
+        self.assertEqual(b_global_refs[0].node, second_print.args[0].value)
