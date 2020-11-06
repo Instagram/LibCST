@@ -111,6 +111,25 @@ class ScopeProviderTest(UnitTest):
         wrapper = MetadataWrapper(cst.parse_module("def a():\n    from b import c\n\n"))
         wrapper.visit(DependentVisitor())
 
+    def test_fstring_accesses(self) -> None:
+        m, scopes = get_scope_metadata_provider(
+            """
+            from a import b
+            f"{b}" "hello"
+            """
+        )
+        global_scope = scopes[m]
+        self.assertIsInstance(global_scope, GlobalScope)
+        global_accesses = list(global_scope.accesses)
+        self.assertEqual(len(global_accesses), 1)
+        import_node = ensure_type(
+            ensure_type(m.body[0], cst.SimpleStatementLine).body[0], cst.ImportFrom
+        )
+        b_referent = list(global_accesses[0].referents)[0]
+        self.assertIsInstance(b_referent, Assignment)
+        if isinstance(b_referent, Assignment):  # for the typechecker's eyes
+            self.assertEqual(b_referent.node, import_node)
+
     @data_provider((("any",), ("True",), ("Exception",), ("__name__",)))
     def test_builtins(self, builtin: str) -> None:
         m, scopes = get_scope_metadata_provider(
