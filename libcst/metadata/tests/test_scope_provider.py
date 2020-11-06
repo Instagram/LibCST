@@ -127,8 +127,8 @@ class ScopeProviderTest(UnitTest):
         )
         b_referent = list(global_accesses[0].referents)[0]
         self.assertIsInstance(b_referent, Assignment)
-        assert isinstance(b_referent, Assignment)  # for the typechecker's eyes
-        self.assertEqual(b_referent.node, import_node)
+        if isinstance(b_referent, Assignment):  # for the typechecker's eyes
+            self.assertEqual(b_referent.node, import_node)
 
     @data_provider((("any",), ("True",), ("Exception",), ("__name__",)))
     def test_builtins(self, builtin: str) -> None:
