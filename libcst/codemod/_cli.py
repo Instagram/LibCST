@@ -17,7 +17,7 @@ import traceback
 from dataclasses import dataclass, replace
 from multiprocessing import Pool, cpu_count
 from pathlib import Path
-from typing import AnyStr, List, Optional, Sequence, Tuple, Union, cast
+from typing import Any, AnyStr, Dict, List, Optional, Sequence, Union, cast
 
 from libcst import PartialParserConfig, parse_module
 from libcst.codemod._codemod import Codemod
@@ -516,14 +516,10 @@ class ParallelTransformResult:
 
 # Unfortunate wrapper required since there is no `istarmap_unordered`...
 def _execute_transform_wrap(
-    args: Tuple[Codemod, str, ExecutionConfig],
+    job: Dict[str, Any],
 ) -> ExecutionResult:
-    transformer, filename, config = args
-    return _execute_transform(
-        transformer=transformer,
-        filename=filename,
-        config=config,
-    )
+    return _execute_transform(**job)
+
 
 def parallel_exec_transform_with_prettyprint(  # noqa: C901
     transform: Codemod,
@@ -641,7 +637,14 @@ def parallel_exec_transform_with_prettyprint(  # noqa: C901
     skips: int = 0
 
     with pool_impl(processes=jobs) as p:  # type: ignore
-        args = [(transform, f, config) for f in files]
+        args = [
+            {
+                "transformer": transform,
+                "filename": filename,
+                "config": config,
+            }
+            for filename in files
+        ]
         try:
             for result in p.imap_unordered(_execute_transform_wrap, args, chunksize=4):
                 # Print an execution result, keep track of failures
