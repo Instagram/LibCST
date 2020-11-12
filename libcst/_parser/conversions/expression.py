@@ -1038,12 +1038,12 @@ def convert_fstring_equality(
 
 @with_production(
     "fstring_expr",
-    "'{' testlist [ fstring_equality ] [ fstring_conversion ] [ fstring_format_spec ] '}'",
+    "'{' testlist_comp_tuple [ fstring_equality ] [ fstring_conversion ] [ fstring_format_spec ] '}'",
     version=">=3.8",
 )
 @with_production(
     "fstring_expr",
-    "'{' testlist [ fstring_conversion ] [ fstring_format_spec ] '}'",
+    "'{' testlist_comp_tuple [ fstring_conversion ] [ fstring_format_spec ] '}'",
     version="<=3.7",
 )
 def convert_fstring_expr(
