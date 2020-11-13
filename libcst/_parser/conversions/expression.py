@@ -1441,8 +1441,16 @@ def convert_arg_assign_comp_for(
         elt, for_in = children
         return Arg(value=GeneratorExp(elt.value, for_in, lpar=(), rpar=()))
     else:
-        # "key = value" assignment argument
         lhs, equal, rhs = children
+        # "key := value" assignment; positional
+        if equal.string == ":=":
+            val = convert_namedexpr_test(config, children)
+            if not isinstance(val, WithLeadingWhitespace):
+                raise Exception(
+                    f"convert_namedexpr_test returned {val!r}, not WithLeadingWhitespace"
+                )
+            return Arg(value=val.value)
+        # "key = value" assignment; keyword argument
         return Arg(
             keyword=lhs.value,
             equal=AssignEqual(

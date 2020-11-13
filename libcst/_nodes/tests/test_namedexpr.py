@@ -101,6 +101,71 @@ class NamedExprTest(CSTNodeTest):
                 "parser": _parse_statement_force_38,
                 "expected_position": None,
             },
+            # Function args
+            {
+                "node": cst.Call(
+                    func=cst.Name(value="f"),
+                    args=[
+                        cst.Arg(
+                            value=cst.NamedExpr(
+                                target=cst.Name(value="y"),
+                                value=cst.Integer(value="1"),
+                                whitespace_before_walrus=cst.SimpleWhitespace(""),
+                                whitespace_after_walrus=cst.SimpleWhitespace(""),
+                            )
+                        ),
+                    ],
+                ),
+                "code": "f(y:=1)",
+                "parser": _parse_expression_force_38,
+                "expected_position": None,
+            },
+            # Whitespace handling on args is fragile
+            {
+                "node": cst.Call(
+                    func=cst.Name(value="f"),
+                    args=[
+                        cst.Arg(
+                            value=cst.Name(value="x"),
+                            comma=cst.Comma(
+                                whitespace_after=cst.SimpleWhitespace("  ")
+                            ),
+                        ),
+                        cst.Arg(
+                            value=cst.NamedExpr(
+                                target=cst.Name(value="y"),
+                                value=cst.Integer(value="1"),
+                                whitespace_before_walrus=cst.SimpleWhitespace("   "),
+                                whitespace_after_walrus=cst.SimpleWhitespace("    "),
+                            ),
+                            whitespace_after_arg=cst.SimpleWhitespace("     "),
+                        ),
+                    ],
+                ),
+                "code": "f(x,  y   :=    1     )",
+                "parser": _parse_expression_force_38,
+                "expected_position": None,
+            },
+            {
+                "node": cst.Call(
+                    func=cst.Name(value="f"),
+                    args=[
+                        cst.Arg(
+                            value=cst.NamedExpr(
+                                target=cst.Name(value="y"),
+                                value=cst.Integer(value="1"),
+                                whitespace_before_walrus=cst.SimpleWhitespace("   "),
+                                whitespace_after_walrus=cst.SimpleWhitespace("    "),
+                            ),
+                            whitespace_after_arg=cst.SimpleWhitespace("     "),
+                        ),
+                    ],
+                    whitespace_before_args=cst.SimpleWhitespace("  "),
+                ),
+                "code": "f(  y   :=    1     )",
+                "parser": _parse_expression_force_38,
+                "expected_position": None,
+            },
         )
     )
     def test_valid(self, **kwargs: Any) -> None:
