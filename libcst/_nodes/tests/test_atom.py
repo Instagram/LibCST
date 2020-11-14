@@ -732,6 +732,17 @@ class AtomTest(CSTNodeTest):
                 "parser": parse_expression,
                 "expected_position": CodeRange((1, 2), (1, 10)),
             },
+            # Backticks, only on py2
+            {
+                "node": cst.Py2Backticks(
+                    cst.Integer("4"),
+                    whitespace_before_expr=cst.SimpleWhitespace("  "),
+                    whitespace_after_expr=cst.SimpleWhitespace("  "),
+                ),
+                "code": "`  4  `",
+                "parser": parse_expression_as(python_version="2.7"),
+                "expected_position": CodeRange((1, 0), (1, 7)),
+            },
         )
     )
     def test_valid(self, **kwargs: Any) -> None:

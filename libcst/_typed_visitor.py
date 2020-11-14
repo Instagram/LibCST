@@ -59,6 +59,7 @@ if TYPE_CHECKING:
         Parameters,
         ParamSlash,
         ParamStar,
+        Py2Backticks,
         RightCurlyBrace,
         RightParen,
         RightSquareBracket,
@@ -3755,6 +3756,34 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_Py2Backticks(self, node: "Py2Backticks") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_Py2Backticks_expr(self, node: "Py2Backticks") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Py2Backticks_expr(self, node: "Py2Backticks") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Py2Backticks_whitespace_before_expr(self, node: "Py2Backticks") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Py2Backticks_whitespace_before_expr(self, node: "Py2Backticks") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Py2Backticks_whitespace_after_expr(self, node: "Py2Backticks") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Py2Backticks_whitespace_after_expr(self, node: "Py2Backticks") -> None:
+        pass
+
+    @mark_no_op
     def visit_Py2Print(self, node: "Py2Print") -> Optional[bool]:
         pass
 
@@ -5275,6 +5304,10 @@ class CSTTypedVisitorFunctions(CSTTypedBaseFunctions):
         pass
 
     @mark_no_op
+    def leave_Py2Backticks(self, original_node: "Py2Backticks") -> None:
+        pass
+
+    @mark_no_op
     def leave_Py2Print(self, original_node: "Py2Print") -> None:
         pass
 
@@ -6068,6 +6101,12 @@ class CSTTypedTransformerFunctions(CSTTypedBaseFunctions):
     def leave_PowerAssign(
         self, original_node: "PowerAssign", updated_node: "PowerAssign"
     ) -> "BaseAugOp":
+        return updated_node
+
+    @mark_no_op
+    def leave_Py2Backticks(
+        self, original_node: "Py2Backticks", updated_node: "Py2Backticks"
+    ) -> "BaseExpression":
         return updated_node
 
     @mark_no_op

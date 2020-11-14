@@ -10154,6 +10154,34 @@ class PowerAssign(BaseAugOp, BaseMatcherNode):
     ] = DoNotCare()
 
 
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
+class Py2Backticks(BaseExpression, BaseMatcherNode):
+    expr: Union[
+        BaseExpressionMatchType,
+        DoNotCareSentinel,
+        OneOf[BaseExpressionMatchType],
+        AllOf[BaseExpressionMatchType],
+    ] = DoNotCare()
+    whitespace_before_expr: Union[
+        BaseParenthesizableWhitespaceMatchType,
+        DoNotCareSentinel,
+        OneOf[BaseParenthesizableWhitespaceMatchType],
+        AllOf[BaseParenthesizableWhitespaceMatchType],
+    ] = DoNotCare()
+    whitespace_after_expr: Union[
+        BaseParenthesizableWhitespaceMatchType,
+        DoNotCareSentinel,
+        OneOf[BaseParenthesizableWhitespaceMatchType],
+        AllOf[BaseParenthesizableWhitespaceMatchType],
+    ] = DoNotCare()
+    metadata: Union[
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
+    ] = DoNotCare()
+
+
 Py2PrintExprMatchType = Union[
     "Py2PrintExpr", MetadataMatchType, MatchIfTrue[Callable[[cst.Py2PrintExpr], bool]]
 ]
@@ -13412,6 +13440,7 @@ __all__ = [
     "Plus",
     "Power",
     "PowerAssign",
+    "Py2Backticks",
     "Py2Print",
     "Py2PrintExpr",
     "Py2Raise",

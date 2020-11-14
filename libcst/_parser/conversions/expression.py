@@ -52,6 +52,7 @@ from libcst._nodes.expression import (
     NamedExpr,
     Param,
     Parameters,
+    Py2Backticks,
     RightCurlyBrace,
     RightParen,
     RightSquareBracket,
@@ -852,6 +853,12 @@ def convert_trailer_attribute(
 @with_production(
     "atom",
     "atom_parens | atom_squarebrackets | atom_curlybraces | atom_string | atom_basic | atom_ellipses",
+    version=">=3.0",
+)
+@with_production(
+    "atom",
+    "atom_parens | atom_squarebrackets | atom_curlybraces | atom_string | atom_basic | atom_ellipses | atom_backticks",
+    version="<3.0",
 )
 def convert_atom(
     config: ParserConfig, children: typing.Sequence[typing.Any]
@@ -1110,6 +1117,27 @@ def convert_fstring_format_spec(
 ) -> typing.Any:
     colon, *content = children
     return FormattedStringFormatSpecPartial(tuple(content), colon.whitespace_before)
+
+
+@with_production(
+    "atom_backticks", "'`' testlist '`'", version="<3.0",
+)
+def convert_atom_backticks(
+    config: ParserConfig, children: typing.Sequence[typing.Any]
+) -> typing.Any:
+    start, expr, end = children
+    return WithLeadingWhitespace(
+        Py2Backticks(
+            expr=expr.value,
+            whitespace_before_expr=parse_parenthesizable_whitespace(
+                config, expr.whitespace_before
+            ),
+            whitespace_after_expr=parse_parenthesizable_whitespace(
+                config, end.whitespace_before
+            ),
+        ),
+        start.whitespace_before,
+    )
 
 
 @with_production(

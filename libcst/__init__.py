@@ -63,6 +63,7 @@ from libcst._nodes.expression import (
     Parameters,
     ParamSlash,
     ParamStar,
+    Py2Backticks,
     RightCurlyBrace,
     RightParen,
     RightSquareBracket,
@@ -401,4 +402,5 @@ __all__ = [
     "Py2Print",
     "Py2PrintExpr",
     "Py2Raise",
+    "Py2Backticks",
 ]

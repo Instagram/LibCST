@@ -3702,3 +3702,33 @@ class NamedExpr(BaseExpression):
             state.add_token(":=")
             self.whitespace_after_walrus._codegen(state)
             self.value._codegen(state)
+
+
+@add_slots
+@dataclass(frozen=True)
+class Py2Backticks(BaseExpression):
+    """
+    An expression that is repr spelled with punctuation.
+    """
+
+    expr: BaseExpression
+    whitespace_before_expr: BaseParenthesizableWhitespace = SimpleWhitespace.field("")
+    whitespace_after_expr: BaseParenthesizableWhitespace = SimpleWhitespace.field("")
+
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Py2Backticks":
+        return Py2Backticks(
+            whitespace_before_expr=visit_required(
+                self, "whitespace_before_expr", self.whitespace_before_expr, visitor
+            ),
+            expr=visit_required(self, "expr", self.expr, visitor),
+            whitespace_after_expr=visit_required(
+                self, "whitespace_after_expr", self.whitespace_after_expr, visitor
+            ),
+        )
+
+    def _codegen_impl(self, state: CodegenState) -> None:
+        state.add_token("`")
+        self.whitespace_before_expr._codegen(state)
+        self.expr._codegen(state)
+        self.whitespace_after_expr._codegen(state)
+        state.add_token("`")
