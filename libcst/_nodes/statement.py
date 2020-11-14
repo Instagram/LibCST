@@ -2465,7 +2465,7 @@ class Nonlocal(BaseSmallStatement):
     #: A list of one or more names.
     names: Sequence[NameItem]
 
-    #: Whitespace appearing after the ``global`` keyword and before the first name.
+    #: Whitespace appearing after the ``nonlocal`` keyword and before the first name.
     whitespace_after_nonlocal: SimpleWhitespace = SimpleWhitespace.field(" ")
 
     #: Optional semicolon when this is used in a statement line. This semicolon

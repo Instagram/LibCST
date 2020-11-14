@@ -173,7 +173,7 @@ class BaseParser(Generic[_TokenT, _TokenTypeT, _NodeT]):
                             lines=self.lines,
                             raw_line=token.start_pos[0],
                             raw_column=token.start_pos[1],
-                        )
+                        ) from ex
                 else:
                     # We never broke out -- EOF is too soon -- Unfinished statement.
                     #

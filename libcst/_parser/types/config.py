@@ -60,7 +60,19 @@ class AutoConfig(Enum):
 
 
 # This list should be kept in sorted order.
-KNOWN_PYTHON_VERSION_STRINGS = ["2.7", "3.0", "3.1", "3.3", "3.5", "3.6", "3.7", "3.8"]
+KNOWN_PYTHON_VERSION_STRINGS = [
+    "2.3",
+    "2.4",
+    "2.6",
+    "2.7",
+    "3.0",
+    "3.1",
+    "3.3",
+    "3.5",
+    "3.6",
+    "3.7",
+    "3.8",
+]
 
 
 @add_slots
@@ -91,8 +103,9 @@ class PartialParserConfig:
     #: If unspecified, it will default to the syntax of the running interpreter
     #: (rounding down from among the following list).
     #:
-    #: Currently, only Python 2.7, 3.0, 3.1, 3.3, 3.5, 3.6, 3.7 and 3.8 syntax is
-    #: supported. The gaps did not have any syntax changes from the version prior.
+    #: Currently, only Python 2.3, 2.4, 2.6, 2.7, 3.0, 3.1, 3.3, 3.5, 3.6, 3.7
+    #: and 3.8 syntax is supported. The gaps did not have any syntax changes
+    #: from the version prior.
     python_version: Union[str, AutoConfig] = AutoConfig.token
 
     #: A named tuple with the ``major`` and ``minor`` Python version numbers. This is
