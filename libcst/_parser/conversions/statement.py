@@ -1093,10 +1093,15 @@ def convert_except_clause(config: ParserConfig, children: Sequence[Any]) -> Any:
     )
 
 
+# This was backported to 2.7, but initially added in 3.1
 @with_production(
     "with_stmt", "'with' with_item (',' with_item)*  ':' suite", version=">=3.1"
 )
-@with_production("with_stmt", "'with' with_item ':' suite", version="<3.1")
+@with_production("with_stmt", "'with' with_item ':' suite", version=">=3.0,<3.1")
+@with_production(
+    "with_stmt", "'with' with_item (',' with_item)*  ':' suite", version=">=2.7,<3.0"
+)
+@with_production("with_stmt", "'with' with_item ':' suite", version="<2.7")
 def convert_with_stmt(config: ParserConfig, children: Sequence[Any]) -> Any:
     (with_token, *items, colon_token, suite) = children
     item_nodes: List[WithItem] = []
@@ -1429,7 +1434,10 @@ def convert_decorated(config: ParserConfig, children: Sequence[Any]) -> Any:
 @with_production(
     "asyncable_stmt", "[ASYNC] (funcdef | with_stmt | for_stmt)", version=">=3.5,<3.7"
 )
-@with_production("asyncable_stmt", "funcdef | with_stmt | for_stmt", version="<3.5")
+@with_production(
+    "asyncable_stmt", "funcdef | with_stmt | for_stmt", version=">=2.6,<3.5"
+)
+@with_production("asyncable_stmt", "funcdef | for_stmt", version="<2.6")
 def convert_asyncable_stmt(config: ParserConfig, children: Sequence[Any]) -> Any:
     leading_lines, asyncnode, stmtnode = _extract_async(config, children)
     if isinstance(stmtnode, FunctionDef):

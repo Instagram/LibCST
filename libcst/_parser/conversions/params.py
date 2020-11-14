@@ -273,8 +273,10 @@ def convert_argslist(  # noqa: C901
     )
 
 
-@with_production("tfpdef_star", "'*' [tfpdef]")
-@with_production("vfpdef_star", "'*' [vfpdef]")
+@with_production("tfpdef_star", "'*' [tfpdef]", version=">=3.0")
+@with_production("tfpdef_star", "'*' tfpdef", version="<3.0")
+@with_production("vfpdef_star", "'*' [vfpdef]", version=">=3.0")
+@with_production("vfpdef_star", "'*' vfpdef", version="<3.0")
 def convert_fpdef_star(config: ParserConfig, children: Sequence[Any]) -> Any:
     if len(children) == 1:
         (star,) = children
