@@ -2193,6 +2193,100 @@ class Raise(BaseSmallStatement):
 
 @add_slots
 @dataclass(frozen=True)
+class Py2Raise(BaseSmallStatement):
+    """
+    A ``raise exc`` or ``raise cls, msg, tb`` statement.
+    """
+
+    #: The exception that we should raise.
+    exc: Optional[BaseExpression] = None
+    msg: Optional[BaseExpression] = None
+    tb: Optional[BaseExpression] = None
+
+    first_comma: Union[Comma, MaybeSentinel] = MaybeSentinel.DEFAULT
+    second_comma: Union[Comma, MaybeSentinel] = MaybeSentinel.DEFAULT
+
+    #: Any whitespace appearing between the ``raise`` keyword and the exception.
+    whitespace_after_raise: Union[
+        SimpleWhitespace, MaybeSentinel
+    ] = MaybeSentinel.DEFAULT
+
+    #: Optional semicolon when this is used in a statement line. This semicolon
+    #: owns the whitespace on both sides of it when it is used.
+    semicolon: Union[Semicolon, MaybeSentinel] = MaybeSentinel.DEFAULT
+
+    def _validate(self) -> None:
+        # Validate spacing between "raise" and "exc"
+        exc = self.exc
+        if exc is not None:
+            whitespace_after_raise = self.whitespace_after_raise
+            has_no_gap = (
+                not isinstance(whitespace_after_raise, MaybeSentinel)
+                and whitespace_after_raise.empty
+            )
+            if has_no_gap and not exc._safe_to_use_with_word_operator(
+                ExpressionPosition.RIGHT
+            ):
+                raise CSTValidationError("Must have at least one space after 'raise'.")
+
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Py2Raise":
+        return Py2Raise(
+            whitespace_after_raise=visit_sentinel(
+                self, "whitespace_after_raise", self.whitespace_after_raise, visitor
+            ),
+            exc=visit_optional(self, "exc", self.exc, visitor),
+            first_comma=visit_sentinel(self, "first_comma", self.first_comma, visitor),
+            msg=visit_optional(self, "msg", self.msg, visitor),
+            second_comma=visit_sentinel(
+                self, "second_comma", self.second_comma, visitor
+            ),
+            tb=visit_optional(self, "tb", self.tb, visitor),
+            semicolon=visit_sentinel(self, "semicolon", self.semicolon, visitor),
+        )
+
+    def _codegen_impl(
+        self, state: CodegenState, default_semicolon: bool = False
+    ) -> None:
+        with state.record_syntactic_position(self):
+            exc = self.exc
+            state.add_token("raise")
+            whitespace_after_raise = self.whitespace_after_raise
+            if isinstance(whitespace_after_raise, MaybeSentinel):
+                if exc is not None:
+                    state.add_token(" ")
+            else:
+                whitespace_after_raise._codegen(state)
+            if exc is not None:
+                exc._codegen(state)
+
+            msg = self.msg
+            first_comma = self.first_comma
+            if msg is not None:
+                if isinstance(first_comma, MaybeSentinel):
+                    state.add_token(", ")
+                else:
+                    first_comma._codegen(state)
+                msg._codegen(state)
+
+                tb = self.tb
+                second_comma = self.second_comma
+                if tb is not None:
+                    if isinstance(second_comma, MaybeSentinel):
+                        state.add_token(", ")
+                    else:
+                        second_comma._codegen(state)
+                    tb._codegen(state)
+
+        semicolon = self.semicolon
+        if isinstance(semicolon, MaybeSentinel):
+            if default_semicolon:
+                state.add_token("; ")
+        elif isinstance(semicolon, Semicolon):
+            semicolon._codegen(state)
+
+
+@add_slots
+@dataclass(frozen=True)
 class Assert(BaseSmallStatement):
     """
     An assert statement such as ``assert x > 5`` or ``assert x > 5, 'Uh oh!'``
@@ -2413,6 +2507,110 @@ class Nonlocal(BaseSmallStatement):
             last_name = len(self.names) - 1
             for i, name in enumerate(self.names):
                 name._codegen(state, default_comma=(i != last_name))
+
+        semicolon = self.semicolon
+        if isinstance(semicolon, MaybeSentinel):
+            if default_semicolon:
+                state.add_token("; ")
+        elif isinstance(semicolon, Semicolon):
+            semicolon._codegen(state)
+
+
+@add_slots
+@dataclass(frozen=True)
+class ExecTarget(CSTNode):
+    """
+    """
+
+    target_globals: BaseExpression
+    target_locals: Optional[BaseExpression]
+
+    whitespace_before_in: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
+    whitespace_after_in: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
+
+    comma: Union[Comma, MaybeSentinel] = MaybeSentinel.DEFAULT
+
+    def _validate(self) -> None:
+        if self.whitespace_after_in.empty:
+            raise CSTValidationError(
+                "There must be at least one space between 'in' and the target."
+            )
+        if self.whitespace_before_in.empty:
+            raise CSTValidationError("There must be at least one space before 'in'.")
+        if self.target_locals is None and self.comma is not MaybeSentinel.DEFAULT:
+            raise CSTValidationError("There must be a target locals to have a comma.")
+
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "ExecTarget":
+        return ExecTarget(
+            whitespace_before_in=visit_required(
+                self, "whitespace_before_in", self.whitespace_before_in, visitor
+            ),
+            whitespace_after_in=visit_required(
+                self, "whitespace_after_in", self.whitespace_after_in, visitor
+            ),
+            target_globals=visit_required(
+                self, "target_globals", self.target_globals, visitor
+            ),
+            comma=visit_sentinel(self, "comma", self.comma, visitor),
+            target_locals=visit_optional(
+                self, "target_loclas", self.target_locals, visitor
+            ),
+        )
+
+    def _codegen_impl(self, state: CodegenState) -> None:
+        self.whitespace_before_in._codegen(state)
+        state.add_token("in")
+        self.whitespace_after_in._codegen(state)
+
+        self.target_globals._codegen(state)
+
+        target_locals = self.target_locals
+        if target_locals:
+            comma = self.comma
+            if comma is MaybeSentinel.DEFAULT:
+                state.add_token(", ")
+            elif isinstance(comma, Comma):
+                comma._codegen(state)
+
+            target_locals._codegen(state)
+
+
+@add_slots
+@dataclass(frozen=True)
+class Exec(BaseSmallStatement):
+    """
+    A Python 2 exec statement, such as ``exec "a=1"`` or ``exec "a=1" in
+    globals(), locals()``
+    """
+
+    expr: BaseExpression
+    target: Optional[ExecTarget]
+
+    whitespace_after_exec: SimpleWhitespace = SimpleWhitespace.field(" ")
+
+    semicolon: Union[Semicolon, MaybeSentinel] = MaybeSentinel.DEFAULT
+
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Exec":
+        return Exec(
+            whitespace_after_exec=visit_required(
+                self, "whitespace_after_exec", self.whitespace_after_exec, visitor
+            ),
+            expr=visit_required(self, "expr", self.expr, visitor),
+            target=visit_optional(self, "target", self.target, visitor),
+            semicolon=visit_sentinel(self, "semicolon", self.semicolon, visitor),
+        )
+
+    def _codegen_impl(
+        self, state: CodegenState, default_semicolon: bool = False
+    ) -> None:
+        with state.record_syntactic_position(self):
+            state.add_token("exec")
+            self.whitespace_after_exec._codegen(state)
+            self.expr._codegen(state)
+
+        target = self.target
+        if target is not None:
+            target._codegen(state)
 
         semicolon = self.semicolon
         if isinstance(semicolon, MaybeSentinel):

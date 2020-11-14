@@ -56,6 +56,8 @@ from libcst._nodes.statement import (
     Del,
     Else,
     ExceptHandler,
+    Exec,
+    ExecTarget,
     Expr,
     Finally,
     For,
@@ -69,6 +71,7 @@ from libcst._nodes.statement import (
     NameItem,
     Nonlocal,
     Pass,
+    Py2Raise,
     Raise,
     Return,
     SimpleStatementLine,
@@ -201,6 +204,16 @@ def convert_simple_stmt_suite(config: ParserConfig, children: Sequence[Any]) -> 
         + "| raise_stmt | yield_stmt | import_stmt | global_stmt | nonlocal_stmt"
         + "| assert_stmt"
     ),
+    version=">=3.0",
+)
+@with_production(
+    "small_stmt",
+    (
+        "expr_stmt | del_stmt | pass_stmt | break_stmt | continue_stmt | return_stmt"
+        + "| py2_raise_stmt | yield_stmt | import_stmt | global_stmt | assert_stmt"
+        + "| exec_stmt"
+    ),
+    version="<3.0",
 )
 def convert_small_stmt(config: ParserConfig, children: Sequence[Any]) -> Any:
     # Doesn't construct SmallStatement, because we don't know about semicolons yet.
@@ -620,7 +633,7 @@ def convert_dotted_name(config: ParserConfig, children: Sequence[Any]) -> Any:
     return node
 
 
-@with_production("raise_stmt", "'raise' [test ['from' test]]")
+@with_production("raise_stmt", "'raise' [test ['from' test]]", version=">=3.0")
 def convert_raise_stmt(config: ParserConfig, children: Sequence[Any]) -> Any:
     if len(children) == 1:
         (raise_token,) = children
@@ -650,6 +663,57 @@ def convert_raise_stmt(config: ParserConfig, children: Sequence[Any]) -> Any:
 
     return WithLeadingWhitespace(
         Raise(whitespace_after_raise=whitespace_after_raise, exc=exc, cause=cause),
+        raise_token.whitespace_before,
+    )
+
+
+@with_production(
+    "py2_raise_stmt", "'raise' [test [',' test [',' test]]]", version="<3.0"
+)
+def convert_py2_raise_stmt(config: ParserConfig, children: Sequence[Any]) -> Any:
+    exc, msg, tb = None, None, None
+    whitespace_after_raise = MaybeSentinel.DEFAULT
+    first_comma = MaybeSentinel.DEFAULT
+    second_comma = MaybeSentinel.DEFAULT
+
+    raise_token = children[0]
+    if len(children) >= 2:
+        test = children[1]
+        whitespace_after_raise = parse_simple_whitespace(config, test.whitespace_before)
+
+    if len(children) >= 4:
+        comma = children[2]
+        first_comma = Comma(
+            whitespace_before=parse_parenthesizable_whitespace(
+                config, comma.whitespace_before
+            ),
+            whitespace_after=parse_parenthesizable_whitespace(
+                config, comma.whitespace_after
+            ),
+        )
+        msg = children[3].value
+
+    if len(children) == 6:
+        comma = children[4]
+        second_comma = Comma(
+            whitespace_before=parse_parenthesizable_whitespace(
+                config, comma.whitespace_before
+            ),
+            whitespace_after=parse_parenthesizable_whitespace(
+                config, comma.whitespace_after
+            ),
+        )
+        tb = children[5].value
+
+    return WithLeadingWhitespace(
+        Py2Raise(
+            whitespace_after_raise=whitespace_after_raise,
+            exc=exc,
+            msg=msg,
+            tb=tb,
+            first_comma=first_comma,
+            second_comma=second_comma,
+        ),
         raise_token.whitespace_before,
     )
 
@@ -732,6 +796,54 @@ def convert_assert_stmt(config: ParserConfig, children: Sequence[Any]) -> Any:
         )
 
     return WithLeadingWhitespace(assert_node, assert_token.whitespace_before)
+
+@with_production("exec_stmt", "'exec' expr ['in' test [',' test]]", version="<3.0")
+def convert_exec_stmt(config: ParserConfig, children: Sequence[Any]) -> Any:
+    (exec_token, subj, *rest) = children
+    target = None
+
+    if len(rest) == 2:
+        (in_token, target_globals) = rest
+        target = ExecTarget(
+            whitespace_before_in=parse_simple_whitespace(
+                config, in_token.whitespace_before
+            ),
+            whitespace_after_in=parse_simple_whitespace(
+                config, in_token.whitespace_after
+            ),
+            target_globals=target_globals,
+            target_locals=None,
+        )
+    elif len(rest) == 4:
+        (in_token, target_globals, comma, target_locals) = rest
+        target = ExecTarget(
+            whitespace_before_in=parse_simple_whitespace(
+                config, in_token.whitespace_before
+            ),
+            whitespace_after_in=parse_simple_whitespace(
+                config, in_token.whitespace_after
+            ),
+            target_globals=target_globals,
+            comma=Comma(
+                whitespace_before=parse_parenthesizable_whitespace(
+                    config, comma.whitespace_before
+                ),
+                whitespace_after=parse_parenthesizable_whitespace(
+                    config, comma.whitespace_after
+                ),
+            ),
+            target_locals=target_locals,
+        )
+
+    exec_node = Exec(
+        whitespace_after_exec=parse_simple_whitespace(
+            config, exec_token.whitespace_after
+        ),
+        expr=subj.value,
+        target=target,
+    )
+
+    return WithLeadingWhitespace(exec_node, exec_token.whitespace_before)
 
 
 @with_production(
