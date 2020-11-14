@@ -2518,7 +2518,7 @@ class Nonlocal(BaseSmallStatement):
 
 @add_slots
 @dataclass(frozen=True)
-class ExecTarget(CSTNode):
+class Py2ExecTarget(CSTNode):
     """
     """
 
@@ -2540,8 +2540,8 @@ class ExecTarget(CSTNode):
         if self.target_locals is None and self.comma is not MaybeSentinel.DEFAULT:
             raise CSTValidationError("There must be a target locals to have a comma.")
 
-    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "ExecTarget":
-        return ExecTarget(
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Py2ExecTarget":
+        return Py2ExecTarget(
             whitespace_before_in=visit_required(
                 self, "whitespace_before_in", self.whitespace_before_in, visitor
             ),
@@ -2577,21 +2577,21 @@ class ExecTarget(CSTNode):
 
 @add_slots
 @dataclass(frozen=True)
-class Exec(BaseSmallStatement):
+class Py2Exec(BaseSmallStatement):
     """
     A Python 2 exec statement, such as ``exec "a=1"`` or ``exec "a=1" in
     globals(), locals()``
     """
 
     expr: BaseExpression
-    target: Optional[ExecTarget]
+    target: Optional[Py2ExecTarget]
 
     whitespace_after_exec: SimpleWhitespace = SimpleWhitespace.field(" ")
 
     semicolon: Union[Semicolon, MaybeSentinel] = MaybeSentinel.DEFAULT
 
-    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Exec":
-        return Exec(
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Py2Exec":
+        return Py2Exec(
             whitespace_after_exec=visit_required(
                 self, "whitespace_after_exec", self.whitespace_after_exec, visitor
             ),

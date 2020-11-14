@@ -134,5 +134,9 @@ class NumberTest(CSTNodeTest):
         with self.assertRaises(Exception):
             parse_expression_as(python_version="3.6")("5L")
         num = parse_expression_as(python_version="2.7")("5L")
-        assert isinstance(num, cst.Integer)
+        assert isinstance(num, cst.Py2Integer)
         self.assertEqual(5, num.evaluated_value)
+
+        num = parse_expression_as(python_version="2.7")("0177L")
+        assert isinstance(num, cst.Py2Integer)
+        self.assertEqual(127, num.evaluated_value)

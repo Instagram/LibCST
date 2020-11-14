@@ -188,8 +188,10 @@ def _create_token_collection(  # noqa: C901
         Binnumber = r"0[bB][01]+"
         if version_info >= (3, 0):
             Octnumber = r"0[oO][0-7]+"
-        else:
+        elif version_info >= (2, 6):
             Octnumber = "0[oO]?[0-7]+"
+        else:
+            Octnumber = "0[0-7]+"
         Decnumber = r"(?:0+|[1-9][0-9]*)"
         Intnumber = group(Hexnumber, Binnumber, Octnumber, Decnumber)
         if version_info.major < 3:

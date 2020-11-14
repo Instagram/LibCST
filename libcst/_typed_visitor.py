@@ -60,6 +60,7 @@ if TYPE_CHECKING:
         ParamSlash,
         ParamStar,
         Py2Backticks,
+        Py2Integer,
         RightCurlyBrace,
         RightParen,
         RightSquareBracket,
@@ -161,6 +162,8 @@ if TYPE_CHECKING:
         NameItem,
         Nonlocal,
         Pass,
+        Py2Exec,
+        Py2ExecTarget,
         Py2Print,
         Py2PrintExpr,
         Py2Raise,
@@ -3784,6 +3787,114 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_Py2Exec(self, node: "Py2Exec") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_Py2Exec_expr(self, node: "Py2Exec") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Py2Exec_expr(self, node: "Py2Exec") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Py2Exec_target(self, node: "Py2Exec") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Py2Exec_target(self, node: "Py2Exec") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Py2Exec_whitespace_after_exec(self, node: "Py2Exec") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Py2Exec_whitespace_after_exec(self, node: "Py2Exec") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Py2Exec_semicolon(self, node: "Py2Exec") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Py2Exec_semicolon(self, node: "Py2Exec") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Py2ExecTarget(self, node: "Py2ExecTarget") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_Py2ExecTarget_target_globals(self, node: "Py2ExecTarget") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Py2ExecTarget_target_globals(self, node: "Py2ExecTarget") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Py2ExecTarget_target_locals(self, node: "Py2ExecTarget") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Py2ExecTarget_target_locals(self, node: "Py2ExecTarget") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Py2ExecTarget_whitespace_before_in(self, node: "Py2ExecTarget") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Py2ExecTarget_whitespace_before_in(self, node: "Py2ExecTarget") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Py2ExecTarget_whitespace_after_in(self, node: "Py2ExecTarget") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Py2ExecTarget_whitespace_after_in(self, node: "Py2ExecTarget") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Py2ExecTarget_comma(self, node: "Py2ExecTarget") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Py2ExecTarget_comma(self, node: "Py2ExecTarget") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Py2Integer(self, node: "Py2Integer") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_Py2Integer_value(self, node: "Py2Integer") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Py2Integer_value(self, node: "Py2Integer") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Py2Integer_lpar(self, node: "Py2Integer") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Py2Integer_lpar(self, node: "Py2Integer") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Py2Integer_rpar(self, node: "Py2Integer") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Py2Integer_rpar(self, node: "Py2Integer") -> None:
+        pass
+
+    @mark_no_op
     def visit_Py2Print(self, node: "Py2Print") -> Optional[bool]:
         pass
 
@@ -5308,6 +5419,18 @@ class CSTTypedVisitorFunctions(CSTTypedBaseFunctions):
         pass
 
     @mark_no_op
+    def leave_Py2Exec(self, original_node: "Py2Exec") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Py2ExecTarget(self, original_node: "Py2ExecTarget") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Py2Integer(self, original_node: "Py2Integer") -> None:
+        pass
+
+    @mark_no_op
     def leave_Py2Print(self, original_node: "Py2Print") -> None:
         pass
 
@@ -6106,6 +6229,24 @@ class CSTTypedTransformerFunctions(CSTTypedBaseFunctions):
     @mark_no_op
     def leave_Py2Backticks(
         self, original_node: "Py2Backticks", updated_node: "Py2Backticks"
+    ) -> "BaseExpression":
+        return updated_node
+
+    @mark_no_op
+    def leave_Py2Exec(
+        self, original_node: "Py2Exec", updated_node: "Py2Exec"
+    ) -> Union["BaseSmallStatement", RemovalSentinel]:
+        return updated_node
+
+    @mark_no_op
+    def leave_Py2ExecTarget(
+        self, original_node: "Py2ExecTarget", updated_node: "Py2ExecTarget"
+    ) -> "Py2ExecTarget":
+        return updated_node
+
+    @mark_no_op
+    def leave_Py2Integer(
+        self, original_node: "Py2Integer", updated_node: "Py2Integer"
     ) -> "BaseExpression":
         return updated_node
 

@@ -15,6 +15,7 @@ from tokenize import (
 from libcst._exceptions import PartialParserSyntaxError
 from libcst._maybe_sentinel import MaybeSentinel
 from libcst._nodes.expression import (
+    PY2_OCTAL_RE,
     Arg,
     Asynchronous,
     Attribute,
@@ -53,6 +54,7 @@ from libcst._nodes.expression import (
     Param,
     Parameters,
     Py2Backticks,
+    Py2Integer,
     RightCurlyBrace,
     RightParen,
     RightSquareBracket,
@@ -879,8 +881,18 @@ def convert_atom_basic(
     elif child.type.name == "NUMBER":
         # We must determine what type of number it is since we split node
         # types up this way.
-        if re.fullmatch(INTNUMBER_RE + "[Ll]?", child.string):
+        if re.fullmatch(INTNUMBER_RE, child.string):
             return WithLeadingWhitespace(Integer(child.string), child.whitespace_before)
+        elif config.version.major == 2 and re.fullmatch(
+            INTNUMBER_RE + "[Ll]?", child.string
+        ):
+            return WithLeadingWhitespace(
+                Py2Integer(child.string), child.whitespace_before
+            )
+        elif config.version.major == 2 and re.fullmatch(PY2_OCTAL_RE, child.string):
+            return WithLeadingWhitespace(
+                Py2Integer(child.string), child.whitespace_before
+            )
         elif re.fullmatch(FLOATNUMBER_RE, child.string):
             return WithLeadingWhitespace(Float(child.string), child.whitespace_before)
         elif re.fullmatch(IMAGNUMBER_RE, child.string):
@@ -888,7 +900,7 @@ def convert_atom_basic(
                 Imaginary(child.string), child.whitespace_before
             )
         else:
-            raise Exception("Unparseable number {child.string}")
+            raise Exception(f"Unparseable number {child.string}")
     else:
         raise Exception(f"Logic error, unexpected token {child.type.name}")
 

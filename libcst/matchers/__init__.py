@@ -10182,6 +10182,258 @@ class Py2Backticks(BaseExpression, BaseMatcherNode):
     ] = DoNotCare()
 
 
+Py2ExecTargetOrNoneMatchType = Union[
+    "Py2ExecTarget",
+    None,
+    MetadataMatchType,
+    MatchIfTrue[Callable[[Union[cst.Py2ExecTarget, None]], bool]],
+]
+
+
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
+class Py2Exec(BaseSmallStatement, BaseMatcherNode):
+    expr: Union[
+        BaseExpressionMatchType,
+        DoNotCareSentinel,
+        OneOf[BaseExpressionMatchType],
+        AllOf[BaseExpressionMatchType],
+    ] = DoNotCare()
+    target: Union[
+        Py2ExecTargetOrNoneMatchType,
+        DoNotCareSentinel,
+        OneOf[Py2ExecTargetOrNoneMatchType],
+        AllOf[Py2ExecTargetOrNoneMatchType],
+    ] = DoNotCare()
+    whitespace_after_exec: Union[
+        SimpleWhitespaceMatchType,
+        DoNotCareSentinel,
+        OneOf[SimpleWhitespaceMatchType],
+        AllOf[SimpleWhitespaceMatchType],
+    ] = DoNotCare()
+    semicolon: Union[
+        SemicolonMatchType,
+        DoNotCareSentinel,
+        OneOf[SemicolonMatchType],
+        AllOf[SemicolonMatchType],
+    ] = DoNotCare()
+    metadata: Union[
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
+    ] = DoNotCare()
+
+
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
+class Py2ExecTarget(BaseMatcherNode):
+    target_globals: Union[
+        BaseExpressionMatchType,
+        DoNotCareSentinel,
+        OneOf[BaseExpressionMatchType],
+        AllOf[BaseExpressionMatchType],
+    ] = DoNotCare()
+    target_locals: Union[
+        BaseExpressionOrNoneMatchType,
+        DoNotCareSentinel,
+        OneOf[BaseExpressionOrNoneMatchType],
+        AllOf[BaseExpressionOrNoneMatchType],
+    ] = DoNotCare()
+    whitespace_before_in: Union[
+        BaseParenthesizableWhitespaceMatchType,
+        DoNotCareSentinel,
+        OneOf[BaseParenthesizableWhitespaceMatchType],
+        AllOf[BaseParenthesizableWhitespaceMatchType],
+    ] = DoNotCare()
+    whitespace_after_in: Union[
+        BaseParenthesizableWhitespaceMatchType,
+        DoNotCareSentinel,
+        OneOf[BaseParenthesizableWhitespaceMatchType],
+        AllOf[BaseParenthesizableWhitespaceMatchType],
+    ] = DoNotCare()
+    comma: Union[
+        CommaMatchType, DoNotCareSentinel, OneOf[CommaMatchType], AllOf[CommaMatchType]
+    ] = DoNotCare()
+    metadata: Union[
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
+    ] = DoNotCare()
+
+
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
+class Py2Integer(BaseExpression, BaseNumber, BaseMatcherNode):
+    value: Union[
+        strMatchType, DoNotCareSentinel, OneOf[strMatchType], AllOf[strMatchType]
+    ] = DoNotCare()
+    lpar: Union[
+        Sequence[
+            Union[
+                LeftParenMatchType,
+                DoNotCareSentinel,
+                OneOf[LeftParenMatchType],
+                AllOf[LeftParenMatchType],
+                AtLeastN[
+                    Union[
+                        LeftParenMatchType,
+                        DoNotCareSentinel,
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                    ]
+                ],
+                AtMostN[
+                    Union[
+                        LeftParenMatchType,
+                        DoNotCareSentinel,
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                    ]
+                ],
+            ]
+        ],
+        DoNotCareSentinel,
+        MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
+        OneOf[
+            Union[
+                Sequence[
+                    Union[
+                        LeftParenMatchType,
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                        AtLeastN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                    ]
+                ],
+                MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
+            ]
+        ],
+        AllOf[
+            Union[
+                Sequence[
+                    Union[
+                        LeftParenMatchType,
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                        AtLeastN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                    ]
+                ],
+                MatchIfTrue[Callable[[Sequence[cst.LeftParen]], bool]],
+            ]
+        ],
+    ] = DoNotCare()
+    rpar: Union[
+        Sequence[
+            Union[
+                RightParenMatchType,
+                DoNotCareSentinel,
+                OneOf[RightParenMatchType],
+                AllOf[RightParenMatchType],
+                AtLeastN[
+                    Union[
+                        RightParenMatchType,
+                        DoNotCareSentinel,
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                    ]
+                ],
+                AtMostN[
+                    Union[
+                        RightParenMatchType,
+                        DoNotCareSentinel,
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                    ]
+                ],
+            ]
+        ],
+        DoNotCareSentinel,
+        MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
+        OneOf[
+            Union[
+                Sequence[
+                    Union[
+                        RightParenMatchType,
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                        AtLeastN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                    ]
+                ],
+                MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
+            ]
+        ],
+        AllOf[
+            Union[
+                Sequence[
+                    Union[
+                        RightParenMatchType,
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                        AtLeastN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                    ]
+                ],
+                MatchIfTrue[Callable[[Sequence[cst.RightParen]], bool]],
+            ]
+        ],
+    ] = DoNotCare()
+    metadata: Union[
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
+    ] = DoNotCare()
+
+
 Py2PrintExprMatchType = Union[
     "Py2PrintExpr", MetadataMatchType, MatchIfTrue[Callable[[cst.Py2PrintExpr], bool]]
 ]
@@ -13441,6 +13693,9 @@ __all__ = [
     "Power",
     "PowerAssign",
     "Py2Backticks",
+    "Py2Exec",
+    "Py2ExecTarget",
+    "Py2Integer",
     "Py2Print",
     "Py2PrintExpr",
     "Py2Raise",

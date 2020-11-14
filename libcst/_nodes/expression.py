@@ -48,6 +48,9 @@ from libcst._nodes.whitespace import BaseParenthesizableWhitespace, SimpleWhites
 from libcst._visitors import CSTVisitorT
 
 
+PY2_OCTAL_RE = r"0[0-7]+[Ll]?"
+
+
 @add_slots
 @dataclass(frozen=True)
 class LeftSquareBracket(CSTNode):
@@ -426,7 +429,47 @@ class Integer(BaseNumber):
 
     def _validate(self) -> None:
         super(Integer, self)._validate()
-        if not re.fullmatch(INTNUMBER_RE + "[Ll]?", self.value):
+        if not re.fullmatch(INTNUMBER_RE, self.value):
+            raise CSTValidationError("Number is not a valid integer.")
+
+    def _codegen_impl(self, state: CodegenState) -> None:
+        with self._parenthesize(state):
+            state.add_token(self.value)
+
+    @property
+    def evaluated_value(self) -> int:
+        """
+        Return an :func:`ast.literal_eval` evaluated int of :py:attr:`value`.
+        """
+        return literal_eval(self.value)
+
+
+@add_slots
+@dataclass(frozen=True)
+class Py2Integer(BaseNumber):
+    #: A string representation of a py2-only integer, such as ``0177`` or ``2L``.
+    #:
+    #: To convert this string representation to an ``int``, use the calculated
+    #: property :attr:`~Integer.evaluated_value`.
+    value: str
+
+    lpar: Sequence[LeftParen] = ()
+    #: Sequence of parenthesis for precedence dictation.
+    rpar: Sequence[RightParen] = ()
+
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Py2Integer":
+        return Py2Integer(
+            lpar=visit_sequence(self, "lpar", self.lpar, visitor),
+            value=self.value,
+            rpar=visit_sequence(self, "rpar", self.rpar, visitor),
+        )
+
+    def _validate(self) -> None:
+        super(Py2Integer, self)._validate()
+        if not (
+            re.fullmatch(PY2_OCTAL_RE, self.value)
+            or re.fullmatch(INTNUMBER_RE + "[Ll]?", self.value)
+        ):
             raise CSTValidationError("Number is not a valid integer.")
 
     def _codegen_impl(self, state: CodegenState) -> None:
@@ -439,7 +482,10 @@ class Integer(BaseNumber):
         Return an :func:`ast.literal_eval` evaluated int of :py:attr:`value`.
         """
         # Allow evaluating py2 code on py3
-        return literal_eval(self.value.rstrip("Ll"))
+        if re.fullmatch(PY2_OCTAL_RE, self.value):
+            return literal_eval("0o" + self.value.rstrip("Ll"))
+        else:
+            return literal_eval(self.value.rstrip("Ll"))
 
 
 @add_slots
