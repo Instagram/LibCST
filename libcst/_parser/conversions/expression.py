@@ -390,7 +390,14 @@ def convert_comparison(
 
 
 @with_production(
-    "comp_op", "('<'|'>'|'=='|'>='|'<='|'<>'|'!='|'in'|'not' 'in'|'is'|'is' 'not')"
+    "comp_op",
+    "('<'|'>'|'=='|'>='|'<='|'!='|'in'|'not' 'in'|'is'|'is' 'not')",
+    version=">=3",
+)
+@with_production(
+    "comp_op",
+    "('<'|'>'|'=='|'>='|'<='|'!='|'<>'|'in'|'not' 'in'|'is'|'is' 'not')",
+    version="<3",
 )
 def convert_comp_op(
     config: ParserConfig, children: typing.Sequence[typing.Any]

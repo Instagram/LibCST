@@ -7,7 +7,7 @@ from typing import Callable, Optional
 
 import libcst as cst
 from libcst import parse_expression
-from libcst._nodes.tests.base import CSTNodeTest
+from libcst._nodes.tests.base import CSTNodeTest, parse_expression_as
 from libcst.metadata import CodeRange
 from libcst.testing.utils import data_provider
 
@@ -351,3 +351,35 @@ class ComparisonTest(CSTNodeTest):
         self, get_node: Callable[[], cst.CSTNode], expected_re: str
     ) -> None:
         self.assert_invalid(get_node, expected_re)
+
+    @data_provider(
+        (
+            {
+                "code": "1 != 2",
+                "parser": parse_expression_as(python_version="3.6"),
+                "expect_success": True,
+            },
+            {
+                "code": "1 <> 2",
+                "parser": parse_expression_as(python_version="3.6"),
+                "expect_success": False,
+            },
+            {
+                "code": "3 <> 4",
+                "parser": parse_expression_as(python_version="2.7"),
+                "expect_success": True,
+            },
+            {
+                "code": "3 != 4",
+                "parser": parse_expression_as(python_version="2.7"),
+                "expect_success": True,
+            },
+        )
+    )
+    def test_versions(
+        self,
+        code: str,
+        parser: Callable[[str], cst.BaseExpression],
+        expect_success: bool,
+    ) -> None:
+        self.assert_parses(code, parser, expect_success)
