@@ -36,6 +36,25 @@ from libcst.metadata.expression_context_provider import (
 )
 
 
+_ASSIGNMENT_LIKE_NODES = (
+    cst.AnnAssign,
+    cst.AsName,
+    cst.Assign,
+    cst.AugAssign,
+    cst.ClassDef,
+    cst.CompFor,
+    cst.For,
+    cst.FunctionDef,
+    cst.Global,
+    cst.Import,
+    cst.ImportFrom,
+    cst.NamedExpr,
+    cst.Nonlocal,
+    cst.Parameters,
+    cst.WithItem,
+)
+
+
 @add_slots
 @dataclass(frozen=False)
 class Access:
@@ -101,10 +120,10 @@ class Access:
         # filter out assignments that happened later than this access
         previous_assignments = {
             assignment
-            for assignment in self.scope[name]
+            for assignment in assignments
             if assignment.scope != self.scope or assignment._index < self.__index
         }
-        if previous_assignments == set() and assignments != set():
+        if not previous_assignments and assignments:
             previous_assignments = self.scope.parent[name]
         self.__assignments |= previous_assignments
 
@@ -136,7 +155,9 @@ class BaseAssignment(abc.ABC):
         }
         self.__accesses |= later_accesses
         earlier_accesses = accesses - later_accesses
-        if earlier_accesses != set() and self.scope.parent != self.scope:
+        if earlier_accesses and self.scope.parent != self.scope:
+            # Accesses "earlier" than the relevant assignment should be attached
+            # to assignments of the same name in the parent
             for shadowed_assignment in self.scope.parent[self.name]:
                 shadowed_assignment.record_accesses(earlier_accesses)
 
@@ -718,9 +739,6 @@ class ScopeVisitor(cst.CSTVisitor):
         finally:
             self.scope = current_scope
 
-    def _leave_assignment_alike(self) -> None:
-        self.scope._assignment_count += 1
-
     def _visit_import_alike(self, node: Union[cst.Import, cst.ImportFrom]) -> bool:
         names = node.names
         if isinstance(names, cst.ImportStar):
@@ -744,12 +762,6 @@ class ScopeVisitor(cst.CSTVisitor):
 
     def visit_ImportFrom(self, node: cst.ImportFrom) -> Optional[bool]:
         return self._visit_import_alike(node)
-
-    def leave_Import(self, original_node: cst.Import) -> None:
-        self._leave_assignment_alike()
-
-    def leave_ImportFrom(self, original_node: cst.ImportFrom) -> None:
-        self._leave_assignment_alike()
 
     def visit_Attribute(self, node: cst.Attribute) -> Optional[bool]:
         if self.__top_level_attribute_stack[-1] is None:
@@ -847,9 +859,6 @@ class ScopeVisitor(cst.CSTVisitor):
 
         return False
 
-    def leave_FunctionDef(self, original_node: cst.FunctionDef) -> None:
-        self._leave_assignment_alike()
-
     def visit_Lambda(self, node: cst.Lambda) -> Optional[bool]:
         with self._new_scope(FunctionScope, node):
             node.params.visit(self)
@@ -888,9 +897,6 @@ class ScopeVisitor(cst.CSTVisitor):
                 statement.visit(self)
         return False
 
-    def leave_classDef(self, original_node: cst.ClassDef) -> None:
-        self._leave_assignment_alike()
-
     def visit_ClassDef_bases(self, node: cst.ClassDef) -> None:
         self.__ignore_annotation += 1
 
@@ -902,16 +908,10 @@ class ScopeVisitor(cst.CSTVisitor):
             self.scope.record_global_overwrite(name_item.name.value)
         return False
 
-    def leave_Global(self, original_node: cst.Global) -> None:
-        self._leave_assignment_alike()
-
     def visit_Nonlocal(self, node: cst.Nonlocal) -> Optional[bool]:
         for name_item in node.names:
             self.scope.record_nonlocal_overwrite(name_item.name.value)
         return False
-
-    def leave_Nonlocal(self, original_node: cst.Nonlocal) -> None:
-        self._leave_assignment_alike()
 
     def visit_ListComp(self, node: cst.ListComp) -> Optional[bool]:
         return self._visit_comp_alike(node)
@@ -979,33 +979,6 @@ class ScopeVisitor(cst.CSTVisitor):
                 node.elt.visit(self)
         return False
 
-    def leave_Assign(self, original_node: cst.Assign) -> None:
-        self._leave_assignment_alike()
-
-    def leave_AnnAssign(self, original_node: cst.AnnAssign) -> None:
-        self._leave_assignment_alike()
-
-    def leave_AugAssign(self, original_node: cst.AugAssign) -> None:
-        self._leave_assignment_alike()
-
-    def leave_AsName(self, original_node: cst.AsName) -> None:
-        self._leave_assignment_alike()
-
-    def leave_CompFor(self, original_node: cst.CompFor) -> None:
-        self._leave_assignment_alike()
-
-    def leave_For(self, original_node: cst.For) -> None:
-        self._leave_assignment_alike()
-
-    def leave_NamedExpr(self, original_node: cst.NamedExpr) -> None:
-        self._leave_assignment_alike()
-
-    def leave_Parameters(self, original_node: cst.Parameters) -> None:
-        self._leave_assignment_alike()
-
-    def leave_WithItem(self, original_node: cst.WithItem) -> None:
-        self._leave_assignment_alike()
-
     def infer_accesses(self) -> None:
         # Aggregate access with the same name and batch add with set union as an optimization.
         # In worst case, all accesses (m) and assignments (n) refer to the same name,
@@ -1034,6 +1007,8 @@ class ScopeVisitor(cst.CSTVisitor):
 
     def on_leave(self, original_node: cst.CSTNode) -> None:
         self.provider.set_metadata(original_node, self.scope)
+        if isinstance(original_node, _ASSIGNMENT_LIKE_NODES):
+            self.scope._assignment_count += 1
         super().on_leave(original_node)
 
 
