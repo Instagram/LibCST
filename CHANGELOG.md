@@ -1,3 +1,12 @@
+# 0.3.14 - 2020-11-18
+## Fixed
+- Fix is_annotation for types used in classdef base and assign value [#406](https://github.com/Instagram/LibCST/pull/406)
+- Visit concatenated f-strings during scope analysis [#411](https://github.com/Instagram/LibCST/pull/411)
+- Correct handling of walrus operator in function args [#417](https://github.com/Instagram/LibCST/pull/417)
+- Allow generator expressions in f-strings [#419](https://github.com/Instagram/LibCST/pull/419)
+- Keep track of assignment/access ordering during scope analysis [#413](https://github.com/Instagram/LibCST/pull/413)
+- Handle string type references in cast() during scope analysis [#418](https://github.com/Instagram/LibCST/pull/418)
+
 # 0.3.13 - 2020-10-12
 
 ## Fixed
