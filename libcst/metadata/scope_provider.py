@@ -36,6 +36,25 @@ from libcst.metadata.expression_context_provider import (
 )
 
 
+_ASSIGNMENT_LIKE_NODES = (
+    cst.AnnAssign,
+    cst.AsName,
+    cst.Assign,
+    cst.AugAssign,
+    cst.ClassDef,
+    cst.CompFor,
+    cst.For,
+    cst.FunctionDef,
+    cst.Global,
+    cst.Import,
+    cst.ImportFrom,
+    cst.NamedExpr,
+    cst.Nonlocal,
+    cst.Parameters,
+    cst.WithItem,
+)
+
+
 @add_slots
 @dataclass(frozen=False)
 class Access:
@@ -68,6 +87,7 @@ class Access:
     is_type_hint: bool
 
     __assignments: Set["BaseAssignment"]
+    __index: int
 
     def __init__(
         self, node: cst.Name, scope: "Scope", is_annotation: bool, is_type_hint: bool
@@ -77,6 +97,7 @@ class Access:
         self.is_annotation = is_annotation
         self.is_type_hint = is_type_hint
         self.__assignments = set()
+        self.__index = scope._assignment_count
 
     def __hash__(self) -> int:
         return id(self)
@@ -86,11 +107,25 @@ class Access:
         """Return all assignments of the access."""
         return self.__assignments
 
-    def record_assignment(self, assignment: "BaseAssignment") -> None:
-        self.__assignments.add(assignment)
+    @property
+    def _index(self) -> int:
+        return self.__index
 
-    def record_assignments(self, assignments: Set["BaseAssignment"]) -> None:
-        self.__assignments |= assignments
+    def record_assignment(self, assignment: "BaseAssignment") -> None:
+        if assignment.scope != self.scope or assignment._index < self.__index:
+            self.__assignments.add(assignment)
+
+    def record_assignments(self, name: str) -> None:
+        assignments = self.scope[name]
+        # filter out assignments that happened later than this access
+        previous_assignments = {
+            assignment
+            for assignment in assignments
+            if assignment.scope != self.scope or assignment._index < self.__index
+        }
+        if not previous_assignments and assignments:
+            previous_assignments = self.scope.parent[name]
+        self.__assignments |= previous_assignments
 
 
 class BaseAssignment(abc.ABC):
@@ -109,10 +144,22 @@ class BaseAssignment(abc.ABC):
         self.__accesses = set()
 
     def record_access(self, access: Access) -> None:
-        self.__accesses.add(access)
+        if access.scope != self.scope or self._index < access._index:
+            self.__accesses.add(access)
 
     def record_accesses(self, accesses: Set[Access]) -> None:
-        self.__accesses |= accesses
+        later_accesses = {
+            access
+            for access in accesses
+            if access.scope != self.scope or self._index < access._index
+        }
+        self.__accesses |= later_accesses
+        earlier_accesses = accesses - later_accesses
+        if earlier_accesses and self.scope.parent != self.scope:
+            # Accesses "earlier" than the relevant assignment should be attached
+            # to assignments of the same name in the parent
+            for shadowed_assignment in self.scope.parent[self.name]:
+                shadowed_assignment.record_accesses(earlier_accesses)
 
     @property
     def references(self) -> Collection[Access]:
@@ -123,6 +170,11 @@ class BaseAssignment(abc.ABC):
     def __hash__(self) -> int:
         return id(self)
 
+    @property
+    def _index(self) -> int:
+        """Return an integer that represents the order of assignments in `scope`"""
+        return -1
+
 
 class Assignment(BaseAssignment):
     """An assignment records the name, CSTNode and its accesses."""
@@ -130,10 +182,18 @@ class Assignment(BaseAssignment):
     #: The node of assignment, it could be a :class:`~libcst.Import`, :class:`~libcst.ImportFrom`,
     #: :class:`~libcst.Name`, :class:`~libcst.FunctionDef`, or :class:`~libcst.ClassDef`.
     node: cst.CSTNode
+    __index: int
 
-    def __init__(self, name: str, scope: "Scope", node: cst.CSTNode) -> None:
+    def __init__(
+        self, name: str, scope: "Scope", node: cst.CSTNode, index: int
+    ) -> None:
         self.node = node
+        self.__index = index
         super().__init__(name, scope)
+
+    @property
+    def _index(self) -> int:
+        return self.__index
 
 
 # even though we don't override the constructor.
@@ -318,6 +378,7 @@ class Scope(abc.ABC):
     globals: "GlobalScope"
     _assignments: MutableMapping[str, Set[BaseAssignment]]
     _accesses: MutableMapping[str, Set[Access]]
+    _assignment_count: int
 
     def __init__(self, parent: "Scope") -> None:
         super().__init__()
@@ -325,9 +386,12 @@ class Scope(abc.ABC):
         self.globals = parent.globals
         self._assignments = defaultdict(set)
         self._accesses = defaultdict(set)
+        self._assignment_count = 0
 
     def record_assignment(self, name: str, node: cst.CSTNode) -> None:
-        self._assignments[name].add(Assignment(name=name, scope=self, node=node))
+        self._assignments[name].add(
+            Assignment(name=name, scope=self, node=node, index=self._assignment_count)
+        )
 
     def record_access(self, name: str, access: Access) -> None:
         self._accesses[name].add(access)
@@ -934,7 +998,7 @@ class ScopeVisitor(cst.CSTVisitor):
                         break
 
             scope_name_accesses[(access.scope, name)].add(access)
-            access.record_assignments(access.scope[name])
+            access.record_assignments(name)
             access.scope.record_access(name, access)
 
         for (scope, name), accesses in scope_name_accesses.items():
@@ -945,6 +1009,8 @@ class ScopeVisitor(cst.CSTVisitor):
 
     def on_leave(self, original_node: cst.CSTNode) -> None:
         self.provider.set_metadata(original_node, self.scope)
+        if isinstance(original_node, _ASSIGNMENT_LIKE_NODES):
+            self.scope._assignment_count += 1
         super().on_leave(original_node)
 
 
