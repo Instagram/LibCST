@@ -668,6 +668,35 @@ class AtomTest(CSTNodeTest):
                 "parser": parse_expression,
                 "expected_position": CodeRange((1, 1), (1, 4)),
             },
+            # Generator expression (doesn't make sense, but legal syntax)
+            {
+                "node": cst.FormattedString(
+                    start='f"',
+                    parts=[
+                        cst.FormattedStringExpression(
+                            expression=cst.GeneratorExp(
+                                elt=cst.Name(
+                                    value="x",
+                                ),
+                                for_in=cst.CompFor(
+                                    target=cst.Name(
+                                        value="x",
+                                    ),
+                                    iter=cst.Name(
+                                        value="y",
+                                    ),
+                                ),
+                                lpar=[],
+                                rpar=[],
+                            ),
+                        ),
+                    ],
+                    end='"',
+                ),
+                "code": 'f"{x for x in y}"',
+                "parser": parse_expression,
+                "expected_position": None,
+            },
             # Concatenated strings
             {
                 "node": cst.ConcatenatedString(
