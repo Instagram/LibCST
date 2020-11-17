@@ -773,12 +773,18 @@ class ScopeVisitor(cst.CSTVisitor):
 
     def visit_Call(self, node: cst.Call) -> Optional[bool]:
         self.__top_level_attribute_stack.append(None)
-        qnames = self.scope.get_qualified_names_for(node)
-        if any(qn.name in {"typing.NewType", "typing.TypeVar"} for qn in qnames):
+        qnames = {qn.name for qn in self.scope.get_qualified_names_for(node)}
+        if "typing.NewType" in qnames or "typing.TypeVar" in qnames:
             node.func.visit(self)
             self.__in_type_hint.add(node)
             for arg in node.args[1:]:
                 arg.visit(self)
+            return False
+        if "typing.cast" in qnames:
+            node.func.visit(self)
+            self.__in_type_hint.add(node)
+            if len(node.args) > 0:
+                node.args[0].visit(self)
             return False
         return True
 
@@ -814,12 +820,10 @@ class ScopeVisitor(cst.CSTVisitor):
         return False
 
     def visit_Subscript(self, node: cst.Subscript) -> Optional[bool]:
-        qnames = self.scope.get_qualified_names_for(node.value)
-        if any(qn.name.startswith(("typing.", "typing_extensions.")) for qn in qnames):
+        qnames = {qn.name for qn in self.scope.get_qualified_names_for(node.value)}
+        if any(qn.startswith(("typing.", "typing_extensions.")) for qn in qnames):
             self.__in_type_hint.add(node)
-        if any(
-            qn.name in {"typing.Literal", "typing_extensions.Literal"} for qn in qnames
-        ):
+        if "typing.Literal" in qnames or "typing_extensions.Literal" in qnames:
             self.__in_ignored_subscript.add(node)
         return True
 
