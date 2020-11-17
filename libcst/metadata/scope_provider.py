@@ -719,8 +719,8 @@ class ScopeVisitor(cst.CSTVisitor):
         if "typing.cast" in qnames:
             node.func.visit(self)
             self.__in_type_hint.add(node)
-            for arg in node.args[:1]:
-                arg.visit(self)
+            if len(node.args) > 0:
+                node.args[0].visit(self)
             return False
         return True
 
