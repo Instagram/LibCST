@@ -1,4 +1,5 @@
 # 0.3.14 - 2020-11-18
+
 ## Fixed
 - Fix is_annotation for types used in classdef base and assign value [#406](https://github.com/Instagram/LibCST/pull/406)
 - Visit concatenated f-strings during scope analysis [#411](https://github.com/Instagram/LibCST/pull/411)
