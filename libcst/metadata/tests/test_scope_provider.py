@@ -1038,7 +1038,7 @@ class ScopeProviderTest(UnitTest):
         m, scopes = get_scope_metadata_provider(
             """
                 from typing import Literal, NewType, Optional, TypeVar, Callable, cast
-                from a import A, B, C, D, D2, E, E2, F, G, G2, H, I, J, K, K2
+                from a import A, B, C, D, D2, E, E2, F, G, G2, H, I, J, K, K2, L, M
                 def x(a: A):
                     pass
                 def y(b: "B"):
@@ -1054,7 +1054,8 @@ class ScopeProviderTest(UnitTest):
 
                 class Test(Generic[J]):
                     pass
-                casted = cast("K", "K2")
+                castedK = cast("K", "K2")
+                castedL = cast("L", M)
             """
         )
         imp = ensure_type(
@@ -1143,6 +1144,16 @@ class ScopeProviderTest(UnitTest):
         assignment = list(scope["K2"])[0]
         self.assertIsInstance(assignment, Assignment)
         self.assertEqual(len(assignment.references), 0)
+
+        assignment = list(scope["L"])[0]
+        self.assertIsInstance(assignment, Assignment)
+        self.assertEqual(len(assignment.references), 1)
+        references = list(assignment.references)
+
+        assignment = list(scope["M"])[0]
+        self.assertIsInstance(assignment, Assignment)
+        self.assertEqual(len(assignment.references), 1)
+        references = list(assignment.references)
 
     def test_node_of_scopes(self) -> None:
         m, scopes = get_scope_metadata_provider(
