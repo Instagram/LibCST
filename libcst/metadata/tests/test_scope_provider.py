@@ -4,6 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 
+from libcst._nodes.statement import Assign
 from textwrap import dedent
 from typing import Mapping, Tuple, cast
 
@@ -1509,9 +1510,10 @@ class ScopeProviderTest(UnitTest):
         # We record both assignments because it's impossible to know which one
         # the access refers to without running the program
         self.assertEqual(len(a_third_comp_access.referents), 2)
+        assert third_comp.for_in.inner_for_in is not None
         self.assertIn(
             third_comp.for_in.inner_for_in.target,
-            {ref.node for ref in a_third_comp_access.referents},
+            {ref.node for ref in a_third_comp_access.referents if isinstance(ref, Assignment)},
         )
 
         a_global = (
