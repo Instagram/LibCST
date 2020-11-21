@@ -658,6 +658,21 @@ class AtomTest(CSTNodeTest):
             {
                 "node": cst.FormattedString(
                     parts=(
+                        cst.FormattedStringExpression(
+                            cst.Yield(
+                                value=cst.Integer("1"),
+                                whitespace_after_yield=cst.SimpleWhitespace(" "),
+                            ),
+                        ),
+                    ),
+                ),
+                "code": 'f"{yield 1}"',
+                "parser": _parse_expression_force_38,
+                "expected_position": None,
+            },
+            {
+                "node": cst.FormattedString(
+                    parts=(
                         cst.FormattedStringText("\\N{X Y}"),
                         cst.FormattedStringExpression(
                             cst.Name(value="Z"),
