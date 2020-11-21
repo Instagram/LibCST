@@ -146,8 +146,15 @@ def _get_token_collection(version_info: PythonVersionInfo) -> TokenCollection:
         return result
 
 
-fstring_string_single_line = _compile(r"(?:\{\{|\}\}|\\(?:\r\n?|\n)|[^{}\r\n])+")
-fstring_string_multi_line = _compile(r"(?:[^{}]+|\{\{|\}\})+")
+unicode_character_name = r"[A-Za-z0-9\-]+(?: [A-Za-z0-9\-]+)*"
+fstring_string_single_line = _compile(
+    r"(?:\{\{|\}\}|\\N\{"
+    + unicode_character_name
+    + r"\}|\\(?:\r\n?|\n)|\\[^\r\nN]|[^{}\r\n\\])+"
+)
+fstring_string_multi_line = _compile(
+    r"(?:\{\{|\}\}|\\N\{" + unicode_character_name + r"\}|\\[^N]|[^{}\\])+"
+)
 fstring_format_spec_single_line = _compile(r"(?:\\(?:\r\n?|\n)|[^{}\r\n])+")
 fstring_format_spec_multi_line = _compile(r"[^{}]+")
 
