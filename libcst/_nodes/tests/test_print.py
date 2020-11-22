@@ -19,7 +19,11 @@ class PrintTest(CSTNodeTest):
                 "node": cst.SimpleStatementLine(
                     [
                         cst.Py2Print(
-                            [cst.Py2PrintExpr(cst.Name("abc"),),],
+                            [
+                                cst.Py2PrintExpr(
+                                    cst.Name("abc"),
+                                ),
+                            ],
                             whitespace_after_print=cst.SimpleWhitespace(" "),
                         )
                     ]
@@ -32,7 +36,11 @@ class PrintTest(CSTNodeTest):
                 "node": cst.SimpleStatementLine(
                     [
                         cst.Py2Print(
-                            [cst.Py2PrintExpr(cst.Name("abc"),),],
+                            [
+                                cst.Py2PrintExpr(
+                                    cst.Name("abc"),
+                                ),
+                            ],
                             whitespace_after_print=cst.SimpleWhitespace("   "),
                         )
                     ]
@@ -66,14 +74,142 @@ class PrintTest(CSTNodeTest):
                 "node": cst.SimpleStatementLine(
                     [
                         cst.Py2Print(
-                            [cst.Py2PrintExpr(cst.Name("abc"),)],
+                            [
+                                cst.Py2PrintExpr(
+                                    cst.Name("abc"),
+                                )
+                            ],
+                            whitespace_after_print=cst.SimpleWhitespace("  "),
                             semicolon=cst.Semicolon(),
                         )
                     ]
                 ),
-                "code": "print abc;\n",
+                "code": "print  abc;\n",
                 "parser": parse_statement_as(python_version="2.6"),
-                "expected_position": CodeRange((1, 0), (1, 9)),
+                "expected_position": CodeRange((1, 0), (1, 10)),
+            },
+            {
+                "node": cst.SimpleStatementLine(
+                    [
+                        cst.Py2Print(
+                            [
+                                cst.Py2PrintExpr(
+                                    cst.Tuple(
+                                        [
+                                            cst.Element(
+                                                value=cst.Name("abc"),
+                                                comma=cst.Comma(),
+                                            ),
+                                        ],
+                                    ),
+                                )
+                            ],
+                            whitespace_after_print=cst.SimpleWhitespace("  "),
+                            semicolon=cst.Semicolon(
+                                whitespace_before=cst.SimpleWhitespace(" ")
+                            ),
+                        )
+                    ]
+                ),
+                "code": "print  (abc,) ;\n",
+                "parser": parse_statement_as(python_version="2.6"),
+                "expected_position": CodeRange((1, 0), (1, 13)),
+            },
+            {
+                "node": cst.SimpleStatementLine(
+                    [
+                        cst.Py2Print(
+                            items=[
+                                cst.Py2PrintExpr(
+                                    item=cst.Name(
+                                        value="x",
+                                    ),
+                                ),
+                            ],
+                            print_to=cst.Attribute(
+                                value=cst.Name(
+                                    value="sys",
+                                    lpar=[],
+                                    rpar=[],
+                                ),
+                                attr=cst.Name(
+                                    value="stderr",
+                                    lpar=[],
+                                    rpar=[],
+                                ),
+                                dot=cst.Dot(
+                                    whitespace_before=cst.SimpleWhitespace(
+                                        value="",
+                                    ),
+                                    whitespace_after=cst.SimpleWhitespace(
+                                        value="",
+                                    ),
+                                ),
+                                lpar=[],
+                                rpar=[],
+                            ),
+                            print_to_comma=cst.Comma(
+                                whitespace_before=cst.SimpleWhitespace(value="    "),
+                                whitespace_after=cst.SimpleWhitespace(value="     "),
+                            ),
+                            whitespace_after_print=cst.SimpleWhitespace(value="  "),
+                            whitespace_before_print_to=cst.SimpleWhitespace(
+                                value="   "
+                            ),
+                        ),
+                    ]
+                ),
+                "code": "print  >>   sys.stderr    ,     x\n",
+                "parser": parse_statement_as(python_version="2.6"),
+                "expected_position": None,
+            },
+            {
+                "node": cst.SimpleStatementLine(
+                    [
+                        cst.Py2Print(items=[]),
+                    ]
+                ),
+                "code": "print\n",
+                "parser": parse_statement_as(python_version="2.6"),
+                "expected_position": None,
+            },
+            {
+                "node": cst.SimpleStatementLine(
+                    [
+                        cst.Py2Print(
+                            items=[],
+                            print_to=cst.Attribute(
+                                value=cst.Name(
+                                    value="sys",
+                                    lpar=[],
+                                    rpar=[],
+                                ),
+                                attr=cst.Name(
+                                    value="stderr",
+                                    lpar=[],
+                                    rpar=[],
+                                ),
+                                dot=cst.Dot(
+                                    whitespace_before=cst.SimpleWhitespace(
+                                        value="",
+                                    ),
+                                    whitespace_after=cst.SimpleWhitespace(
+                                        value="",
+                                    ),
+                                ),
+                                lpar=[],
+                                rpar=[],
+                            ),
+                            whitespace_after_print=cst.SimpleWhitespace(value="  "),
+                            whitespace_before_print_to=cst.SimpleWhitespace(
+                                value="   "
+                            ),
+                        ),
+                    ]
+                ),
+                "code": "print  >>   sys.stderr\n",
+                "parser": parse_statement_as(python_version="2.6"),
+                "expected_position": None,
             },
         )
     )

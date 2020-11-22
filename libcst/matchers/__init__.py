@@ -10539,7 +10539,19 @@ class Py2Print(BaseSmallStatement, BaseMatcherNode):
         OneOf[BaseExpressionOrNoneMatchType],
         AllOf[BaseExpressionOrNoneMatchType],
     ] = DoNotCare()
+    print_to_comma: Union[
+        CommaOrNoneMatchType,
+        DoNotCareSentinel,
+        OneOf[CommaOrNoneMatchType],
+        AllOf[CommaOrNoneMatchType],
+    ] = DoNotCare()
     whitespace_after_print: Union[
+        SimpleWhitespaceMatchType,
+        DoNotCareSentinel,
+        OneOf[SimpleWhitespaceMatchType],
+        AllOf[SimpleWhitespaceMatchType],
+    ] = DoNotCare()
+    whitespace_before_print_to: Union[
         SimpleWhitespaceMatchType,
         DoNotCareSentinel,
         OneOf[SimpleWhitespaceMatchType],

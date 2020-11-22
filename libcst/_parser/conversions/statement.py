@@ -834,14 +834,37 @@ def convert_assert_stmt(config: ParserConfig, children: Sequence[Any]) -> Any:
 def convert_py2_print_stmt(config: ParserConfig, children: Sequence[Any]) -> Any:
     (print_token, *rest) = children
 
-    whitespace = None
+    whitespace: Dict[str, Any] = {}
     if rest:
-        whitespace = parse_parenthesizable_whitespace(config, rest[0].whitespace_before)
+        whitespace["whitespace_after_print"] = parse_parenthesizable_whitespace(
+            config, rest[0].whitespace_before
+        )
 
     print_to = None
+    print_to_comma = None
     if rest and isinstance(rest[0], Token) and rest[0].string == ">>":
         # TODO preserve whitespace, comma
-        print_to = rest[1]
+        print_to = rest[1].value
+        whitespace["whitespace_before_print_to"] = parse_simple_whitespace(
+            config, rest[1].whitespace_before
+        )
+
+        if len(rest) >= 4:
+            print_to_comma = Comma(
+                whitespace_before=parse_simple_whitespace(
+                    config, rest[2].whitespace_before
+                ),
+                whitespace_after=parse_simple_whitespace(
+                    config, rest[3].whitespace_before
+                ),
+            )
+        elif len(rest) >= 3:
+            print_to_comma = Comma(
+                whitespace_before=parse_simple_whitespace(
+                    config, rest[2].whitespace_before
+                )
+            )
+
         del rest[:3]
 
     items = []
@@ -869,9 +892,14 @@ def convert_py2_print_stmt(config: ParserConfig, children: Sequence[Any]) -> Any
         else:
             items.append(Py2PrintExpr(item=print_item.value))
 
-    obj = Py2Print(items=items, trailing_comma=comma, print_to=print_to)
-    if whitespace is not None:
-        obj = obj.with_changes(whitespace_after_print=whitespace)
+    obj = Py2Print(
+        items=items,
+        trailing_comma=comma,
+        print_to=print_to,
+        print_to_comma=print_to_comma,
+    )
+    if whitespace:
+        obj = obj.with_changes(**whitespace)
     return WithLeadingWhitespace(obj, print_token.whitespace_before)
 
 

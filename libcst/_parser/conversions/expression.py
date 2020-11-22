@@ -1132,7 +1132,9 @@ def convert_fstring_format_spec(
 
 
 @with_production(
-    "atom_backticks", "'`' testlist '`'", version="<3.0",
+    "atom_backticks",
+    "'`' testlist '`'",
+    version="<3.0",
 )
 def convert_atom_backticks(
     config: ParserConfig, children: typing.Sequence[typing.Any]
@@ -1168,7 +1170,9 @@ def convert_atom_backticks(
     version=">=2.4,<3.5",
 )
 @with_production(
-    "testlist_comp_tuple", "(test) ( (',' (test))* [','] )", version="<2.4",
+    "testlist_comp_tuple",
+    "(test) ( (',' (test))* [','] )",
+    version="<2.4",
 )
 def convert_testlist_comp_tuple(
     config: ParserConfig, children: typing.Sequence[typing.Any]
@@ -1319,7 +1323,9 @@ def _convert_sequencelike(
     version=">=2.7,<3.5",
 )
 @with_production(
-    "dictorsetmaker", ("(test ':' test) | (test)"), version="<2.7",
+    "dictorsetmaker",
+    ("(test ':' test) | (test)"),
+    version="<2.7",
 )
 def convert_dictorsetmaker(
     config: ParserConfig, children: typing.Sequence[typing.Any]
@@ -1487,7 +1493,9 @@ def convert_argument(
     "arg_assign_comp_for", "test [comp_for] | test '=' test", version="<3.8,>=2.4"
 )
 @with_production(
-    "arg_assign_comp_for", "test | test '=' test", version="<2.4",
+    "arg_assign_comp_for",
+    "test | test '=' test",
+    version="<2.4",
 )
 def convert_arg_assign_comp_for(
     config: ParserConfig, children: typing.Sequence[typing.Any]

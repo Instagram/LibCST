@@ -3923,11 +3923,27 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_Py2Print_print_to_comma(self, node: "Py2Print") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Py2Print_print_to_comma(self, node: "Py2Print") -> None:
+        pass
+
+    @mark_no_op
     def visit_Py2Print_whitespace_after_print(self, node: "Py2Print") -> None:
         pass
 
     @mark_no_op
     def leave_Py2Print_whitespace_after_print(self, node: "Py2Print") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Py2Print_whitespace_before_print_to(self, node: "Py2Print") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Py2Print_whitespace_before_print_to(self, node: "Py2Print") -> None:
         pass
 
     @mark_no_op

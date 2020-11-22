@@ -2195,12 +2195,15 @@ class Raise(BaseSmallStatement):
 @dataclass(frozen=True)
 class Py2Raise(BaseSmallStatement):
     """
-    A ``raise exc`` or ``raise cls, msg, tb`` statement.
+    A ``raise exc`` or ``raise cls, msg, tb`` statement that uses py2 syntax.
     """
 
     #: The exception that we should raise.
     exc: Optional[BaseExpression] = None
+    #: Optionally, message, which can be used if ``exc`` is a class instead of an
+    #: instance.
     msg: Optional[BaseExpression] = None
+    #: Optionally, a traceback.
     tb: Optional[BaseExpression] = None
 
     first_comma: Union[Comma, MaybeSentinel] = MaybeSentinel.DEFAULT
@@ -2520,14 +2523,24 @@ class Nonlocal(BaseSmallStatement):
 @dataclass(frozen=True)
 class Py2ExecTarget(CSTNode):
     """
+    The ``in globals(), locals()`` portion of a Python 2 exec statement.
+
+    In Python 3, exec is a function and these would just be args.
     """
 
+    #: The globals dict, which is required.
     target_globals: BaseExpression
+    #: The locals idct, which is optional.
     target_locals: Optional[BaseExpression]
 
+    #: Any whitespace appearing between the string to exec and the ``in``
+    #: keyword.
     whitespace_before_in: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
+    #: Any whitespace appearing between the ``in`` keyword, and the globals
+    #: argument.
     whitespace_after_in: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
+    #: Optional comma when specifying both globals and locals.
     comma: Union[Comma, MaybeSentinel] = MaybeSentinel.DEFAULT
 
     def _validate(self) -> None:
@@ -2583,11 +2596,16 @@ class Py2Exec(BaseSmallStatement):
     globals(), locals()``
     """
 
+    #: The expression string to exec.
     expr: BaseExpression
+    #: Optionally, dictionaries in which to execute.
     target: Optional[Py2ExecTarget]
 
+    #: The whitespace between the ``exec`` keyword and the expr.
     whitespace_after_exec: SimpleWhitespace = SimpleWhitespace.field(" ")
 
+    #: Optional semicolon when this is used in a statement line. This semicolon
+    #: owns the whitespace on both sides of it when it is used.
     semicolon: Union[Semicolon, MaybeSentinel] = MaybeSentinel.DEFAULT
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Py2Exec":
@@ -2625,7 +2643,7 @@ class Py2Exec(BaseSmallStatement):
 class Py2PrintExpr(CSTNode):
     """
     An expression wrapper similar to a function param, but when ``print`` is a
-    statement on python 2.
+    statement on Python 2.
     """
 
     #: The item being printed, which can be any expression
@@ -2657,6 +2675,7 @@ class Py2PrintExpr(CSTNode):
 @dataclass(frozen=True)
 class Py2Print(BaseSmallStatement):
     """
+    A ``print "x"`` or ``print >>sys.stderr, "x",`` statement on Python 2.
     """
 
     #: The items to be printed; comma can never be loose without an item before.
@@ -2670,16 +2689,37 @@ class Py2Print(BaseSmallStatement):
     #: The target of a statement that prints somewhere else, such as ``print >>sys.stderr``
     #: which has a required comma only if items is nonempty.
     print_to: Optional[BaseExpression] = None
+    #: The comma after a print_to, which is only required if there are items.
+    print_to_comma: Optional[Comma] = None
 
-    whitespace_after_print: SimpleWhitespace = SimpleWhitespace.field(" ")
+    #: Any whitespace appearing between the ``print`` keyword and the first arg.
+    whitespace_after_print: Union[
+        SimpleWhitespace, MaybeSentinel
+    ] = MaybeSentinel.DEFAULT
+    #: Any whitespace appearing between the ``>>`` and the print_to expression.
+    whitespace_before_print_to: Union[
+        SimpleWhitespace, MaybeSentinel
+    ] = MaybeSentinel.DEFAULT
+
     semicolon: Union[Semicolon, MaybeSentinel] = MaybeSentinel.DEFAULT
+
+    # TODO: _validate
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Py2Print":
         return Py2Print(
-            whitespace_after_print=visit_required(
+            whitespace_after_print=visit_sentinel(
                 self, "whitespace_after_print", self.whitespace_after_print, visitor
             ),
+            whitespace_before_print_to=visit_sentinel(
+                self,
+                "whitespace_before_print_to",
+                self.whitespace_before_print_to,
+                visitor,
+            ),
             print_to=visit_optional(self, "print_to", self.print_to, visitor),
+            print_to_comma=visit_optional(
+                self, "print_to_comma", self.print_to_comma, visitor
+            ),
             items=visit_sequence(self, "items", self.items, visitor),
             trailing_comma=visit_optional(
                 self, "trailing_comma", self.trailing_comma, visitor
@@ -2692,10 +2732,24 @@ class Py2Print(BaseSmallStatement):
     ) -> None:
         with state.record_syntactic_position(self):
             state.add_token("print")
-            self.whitespace_after_print._codegen(state)
+            whitespace_after_print = self.whitespace_after_print
+            if isinstance(whitespace_after_print, MaybeSentinel):
+                if self.items or self.print_to:
+                    state.add_token(" ")
+            else:
+                whitespace_after_print._codegen(state)
             print_to = self.print_to
             if print_to:
+                state.add_token(">>")
+                whitespace_before_print_to = self.whitespace_before_print_to
+                if isinstance(whitespace_before_print_to, MaybeSentinel):
+                    state.add_token(" ")
+                else:
+                    whitespace_before_print_to._codegen(state)
                 print_to._codegen(state)
+                print_to_comma = self.print_to_comma
+                if print_to_comma:
+                    print_to_comma._codegen(state)
             for i in self.items:
                 i._codegen(state)
             trailing_comma = self.trailing_comma
