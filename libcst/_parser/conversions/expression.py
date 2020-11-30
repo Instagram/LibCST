@@ -1038,13 +1038,13 @@ def convert_fstring_equality(
 
 @with_production(
     "fstring_expr",
-    "'{' testlist_comp_tuple [ fstring_equality ] [ fstring_conversion ] [ fstring_format_spec ] '}'",
+    "'{' (testlist_comp_tuple | yield_expr) [ fstring_equality ] [ fstring_conversion ] [ fstring_format_spec ] '}'",
     version=">=3.8",
 )
 @with_production(
     "fstring_expr",
-    "'{' testlist_comp_tuple [ fstring_conversion ] [ fstring_format_spec ] '}'",
-    version="<=3.7",
+    "'{' (testlist_comp_tuple | yield_expr) [ fstring_conversion ] [ fstring_format_spec ] '}'",
+    version="<3.8",
 )
 def convert_fstring_expr(
     config: ParserConfig, children: typing.Sequence[typing.Any]
