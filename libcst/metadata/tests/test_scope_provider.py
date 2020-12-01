@@ -1531,3 +1531,28 @@ class ScopeProviderTest(UnitTest):
         a_global_assignment = list(scopes[a_global]["a"])[0]
         a_global_refs = list(a_global_assignment.references)
         self.assertEqual(a_global_refs, [])
+
+    def test_ordering_comprehension_confusing(self) -> None:
+        m, scopes = get_scope_metadata_provider(
+            """
+            def f(a):
+                [a for a in a]
+            a = 1
+            """
+        )
+        f = cst.ensure_type(m.body[0], cst.FunctionDef)
+        a_param = f.params.params[0].name
+        a_param_assignment = list(scopes[a_param]["a"])[0]
+        a_param_refs = list(a_param_assignment.references)
+        self.assertEqual(len(a_param_refs), 1)
+        comp = cst.ensure_type(
+            cst.ensure_type(
+                cst.ensure_type(f.body.body[0], cst.SimpleStatementLine).body[0],
+                cst.Expr,
+            ).value,
+            cst.ListComp,
+        )
+        a_comp_assignment = list(scopes[comp.elt]["a"])[0]
+        self.assertEqual(list(a_param_refs)[0].node, comp.for_in.iter)
+        self.assertEqual(len(a_comp_assignment.references), 1)
+        self.assertEqual(list(a_comp_assignment.references)[0].node, comp.elt)
