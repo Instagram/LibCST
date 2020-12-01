@@ -1,3 +1,12 @@
+# 0.3.15 - 2020-12-01
+
+## Added
+- Support Named Unicode Characters and yield in f-strings [#424](https://github.com/Instagram/LibCST/pull/424)
+
+## Fixed
+- Assignment/access ordering in comprehensions [#423](https://github.com/Instagram/LibCST/pull/423)
+- Referencing of remaining objects in cast() [#422](https://github.com/Instagram/LibCST/pull/422)
+
 # 0.3.14 - 2020-11-18
 
 ## Fixed
