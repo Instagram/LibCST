@@ -36,6 +36,8 @@ from libcst.metadata.expression_context_provider import (
 )
 
 
+# Comprehensions are handled separately in _visit_comp_alike due to
+# the complexity of the semantics
 _ASSIGNMENT_LIKE_NODES = (
     cst.AnnAssign,
     cst.AsName,
@@ -976,6 +978,8 @@ class ScopeVisitor(cst.CSTVisitor):
         self.provider.set_metadata(for_in, self.scope)
         with self._new_scope(ComprehensionScope, node):
             for_in.target.visit(self)
+            # Things from here on can refer to the target.
+            self.scope._assignment_count += 1
             for condition in for_in.ifs:
                 condition.visit(self)
             inner_for_in = for_in.inner_for_in
