@@ -6,6 +6,7 @@
 from typing import Set, Union
 
 import libcst as cst
+import libcst.matchers as m
 from libcst.codemod._context import CodemodContext
 from libcst.codemod._visitor import ContextAwareVisitor
 from libcst.helpers import get_full_name_for_node
@@ -51,6 +52,21 @@ class GatherExportsVisitor(ContextAwareVisitor):
         if value:
             if self._handle_assign_target(node.target, value):
                 return True
+        return False
+
+    def visit_AugAssign(self, node: cst.AugAssign) -> bool:
+        if m.matches(
+            node,
+            m.AugAssign(
+                target=m.Name("__all__"),
+                operator=m.AddAssign(),
+                value=m.List() | m.Tuple(),
+            ),
+        ):
+            value = node.value
+            if isinstance(value, (cst.List, cst.Tuple)):
+                self._is_assigned_export.add(value)
+            return True
         return False
 
     def visit_Assign(self, node: cst.Assign) -> bool:

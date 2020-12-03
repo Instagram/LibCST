@@ -47,6 +47,18 @@ class TestGatherExportsVisitor(UnitTest):
         gatherer = self.gather_exports(code)
         self.assertEqual(gatherer.explicit_exported_objects, {"bar", "baz"})
 
+    def test_gather_exports_simple2(self) -> None:
+        code = """
+            from foo import bar
+            from biz import baz
+
+            __all__ = ["bar"]
+            __all__ += ["baz"]
+        """
+
+        gatherer = self.gather_exports(code)
+        self.assertEqual(gatherer.explicit_exported_objects, {"bar", "baz"})
+
     def test_gather_exports_simple_set(self) -> None:
         code = """
             from foo import bar
