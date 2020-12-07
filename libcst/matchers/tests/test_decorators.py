@@ -6,6 +6,7 @@
 from ast import literal_eval
 from textwrap import dedent
 from typing import List, Set
+from unittest.mock import Mock
 
 import libcst as cst
 import libcst.matchers as m
@@ -993,3 +994,25 @@ class MatchersVisitLeaveDecoratorsTest(UnitTest):
 
         # We should have only visited a select number of nodes.
         self.assertEqual(visitor.visits, ['"baz"'])
+
+
+# This is meant to simulate `cst.ImportFrom | cst.RemovalSentinel` in py3.10
+FakeUnionClass: Mock = Mock()
+setattr(FakeUnionClass, "__name__", "Union")
+setattr(FakeUnionClass, "__module__", "types")
+FakeUnion: Mock = Mock()
+FakeUnion.__class__ = FakeUnionClass
+FakeUnion.__args__ = [cst.ImportFrom, cst.RemovalSentinel]
+
+
+class MatchersUnionDecoratorsTest(UnitTest):
+    def test_init_with_new_union_annotation(self) -> None:
+        class TransformerWithUnionReturnAnnotation(m.MatcherDecoratableTransformer):
+            @m.leave(m.ImportFrom(module=m.Name(value="typing")))
+            def test(
+                self, original_node: cst.ImportFrom, updated_node: cst.ImportFrom
+            ) -> FakeUnion:
+                pass
+
+        # assert that init (specifically _check_types on return annotation) passes
+        TransformerWithUnionReturnAnnotation()

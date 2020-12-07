@@ -79,8 +79,18 @@ def _get_possible_match_classes(matcher: BaseMatcherNode) -> List[Type[cst.CSTNo
         return [getattr(cst, matcher.__class__.__name__)]
 
 
-def _get_possible_annotated_classes(annotation: object) -> List[Type[object]]:
+def _annotation_looks_like_union(annotation: object) -> bool:
     if getattr(annotation, "__origin__", None) is Union:
+        return True
+    # support PEP-604 style unions introduced in Python 3.10
+    return (
+        annotation.__class__.__name__ == "Union"
+        and annotation.__class__.__module__ == "types"
+    )
+
+
+def _get_possible_annotated_classes(annotation: object) -> List[Type[object]]:
+    if _annotation_looks_like_union(annotation):
         return getattr(annotation, "__args__", [])
     else:
         return [cast(Type[object], annotation)]
