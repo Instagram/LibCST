@@ -825,11 +825,12 @@ class ScopeVisitor(cst.CSTVisitor):
         return False
 
     def visit_Subscript(self, node: cst.Subscript) -> Optional[bool]:
-        qnames = {qn.name for qn in self.scope.get_qualified_names_for(node.value)}
-        if any(qn.startswith(("typing.", "typing_extensions.")) for qn in qnames):
-            self.__in_type_hint.add(node)
-        if "typing.Literal" in qnames or "typing_extensions.Literal" in qnames:
-            self.__in_ignored_subscript.add(node)
+        if isinstance(node.value, cst.Name):
+            qnames = {qn.name for qn in self.scope.get_qualified_names_for(node.value)}
+            if any(qn.startswith(("typing.", "typing_extensions.")) for qn in qnames):
+                self.__in_type_hint.add(node)
+            if "typing.Literal" in qnames or "typing_extensions.Literal" in qnames:
+                self.__in_ignored_subscript.add(node)
         return True
 
     def leave_Subscript(self, original_node: cst.Subscript) -> None:

@@ -1567,3 +1567,60 @@ class ScopeProviderTest(UnitTest):
         self.assertEqual(list(a_param_refs)[0].node, comp.for_in.iter)
         self.assertEqual(len(a_comp_assignment.references), 1)
         self.assertEqual(list(a_comp_assignment.references)[0].node, comp.elt)
+
+    def test_cast(self) -> None:
+        with self.assertRaises(cst.ParserSyntaxError):
+            m, scopes = get_scope_metadata_provider(
+                """
+                from typing import TypeVar
+                TypeVar("Name", "3rr0r")
+                """
+            )
+
+        try:
+            m, scopes = get_scope_metadata_provider(
+                """
+                from typing import TypeVar
+                TypeVar("3rr0r", "int")
+                """
+            )
+        except cst.ParserSyntaxError:
+            self.fail(
+                "First string argument of NewType and TypeVar should not be parsed"
+            )
+
+        with self.assertRaises(cst.ParserSyntaxError):
+            m, scopes = get_scope_metadata_provider(
+                """
+                from typing import Dict
+                Dict["str", "3rr0r"]
+                """
+            )
+
+        try:
+            m, scopes = get_scope_metadata_provider(
+                """
+                from typing import Dict, cast
+                cast(Dict[str, str], {})["3rr0r"]
+                """
+            )
+        except cst.ParserSyntaxError:
+            self.fail("Subscript of function calls should not be parsed")
+
+        try:
+            m, scopes = get_scope_metadata_provider(
+                """
+                from typing import cast
+                cast(str, "3rr0r")
+                """
+            )
+        except cst.ParserSyntaxError:
+            self.fail("String arguments of cast should not be parsed")
+
+        with self.assertRaises(cst.ParserSyntaxError):
+            m, scopes = get_scope_metadata_provider(
+                """
+                from typing import cast
+                cast("3rr0r", "")
+                """
+            )
