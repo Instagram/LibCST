@@ -993,6 +993,14 @@ class ScopeVisitor(cst.CSTVisitor):
                 node.elt.visit(self)
         return False
 
+    def visit_For(self, node: cst.For) -> Optional[bool]:
+        node.target.visit(self)
+        self.scope._assignment_count += 1
+        for child in [node.iter, node.body, node.orelse, node.asynchronous]:
+            if child is not None:
+                child.visit(self)
+        return False
+
     def infer_accesses(self) -> None:
         # Aggregate access with the same name and batch add with set union as an optimization.
         # In worst case, all accesses (m) and assignments (n) refer to the same name,
