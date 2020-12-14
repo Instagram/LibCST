@@ -45,7 +45,6 @@ _ASSIGNMENT_LIKE_NODES = (
     cst.AugAssign,
     cst.ClassDef,
     cst.CompFor,
-    cst.For,
     cst.FunctionDef,
     cst.Global,
     cst.Import,
