@@ -1609,6 +1609,25 @@ class ScopeProviderTest(UnitTest):
                     ),
                 )
 
+    def test_walrus_accesses(self) -> None:
+        m, scopes = get_scope_metadata_provider(
+            """
+            if x := y:
+                y = 1
+                x
+            """
+        )
+        for scope in scopes.values():
+            for acc in scope.accesses:
+                self.assertEqual(
+                    len(acc.referents),
+                    1 if acc.node.value == "x" else 0,
+                    msg=(
+                        "Access for node has incorrect number of referents: "
+                        + f"{acc.node}"
+                    ),
+                )
+
     def test_cast(self) -> None:
         with self.assertRaises(cst.ParserSyntaxError):
             m, scopes = get_scope_metadata_provider(

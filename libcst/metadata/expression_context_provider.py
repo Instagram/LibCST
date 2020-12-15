@@ -84,6 +84,13 @@ class ExpressionContextVisitor(cst.CSTVisitor):
         node.value.visit(self)
         return False
 
+    def visit_NamedExpr(self, node: cst.NamedExpr) -> bool:
+        node.target.visit(
+            ExpressionContextVisitor(self.provider, ExpressionContext.STORE)
+        )
+        node.value.visit(self)
+        return False
+
     def visit_Name(self, node: cst.Name) -> bool:
         self.provider.set_metadata(node, self.context)
         return False

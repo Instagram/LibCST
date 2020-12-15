@@ -411,3 +411,19 @@ class ExpressionContextProviderTest(UnitTest):
                 },
             )
         )
+
+    def test_walrus(self) -> None:
+        code = """
+        if x := y:
+            pass
+        """
+        wrapper = MetadataWrapper(parse_module(dedent(code)))
+        wrapper.visit(
+            DependentVisitor(
+                test=self,
+                name_to_context={
+                    "x": ExpressionContext.STORE,
+                    "y": ExpressionContext.LOAD,
+                },
+            )
+        )
