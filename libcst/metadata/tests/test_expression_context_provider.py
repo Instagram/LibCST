@@ -4,6 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 
+import sys
 from textwrap import dedent
 from typing import Dict, Optional, cast
 
@@ -413,6 +414,8 @@ class ExpressionContextProviderTest(UnitTest):
         )
 
     def test_walrus(self) -> None:
+        if sys.version_info < (3, 8):
+            self.skipTest("This python version does not support :=")
         code = """
         if x := y:
             pass

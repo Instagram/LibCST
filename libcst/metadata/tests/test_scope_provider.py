@@ -4,6 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 
+import sys
 from textwrap import dedent
 from typing import Mapping, Tuple, cast
 
@@ -24,7 +25,6 @@ from libcst.metadata.scope_provider import (
     _gen_dotted_names,
 )
 from libcst.testing.utils import UnitTest, data_provider
-import sys
 
 
 class DependentVisitor(cst.CSTVisitor):
