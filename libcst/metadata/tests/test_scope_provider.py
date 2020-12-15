@@ -1621,7 +1621,7 @@ class ScopeProviderTest(UnitTest):
             for acc in scope.accesses:
                 self.assertEqual(
                     len(acc.referents),
-                    1 if acc.node.value == "x" else 0,
+                    1 if getattr(acc.node, "value") == "x" else 0,
                     msg=(
                         "Access for node has incorrect number of referents: "
                         + f"{acc.node}"
