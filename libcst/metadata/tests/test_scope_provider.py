@@ -1591,6 +1591,24 @@ class ScopeProviderTest(UnitTest):
                     ),
                 )
 
+    def test_no_out_of_order_references_in_global_scope(self) -> None:
+        m, scopes = get_scope_metadata_provider(
+            """
+            x = y
+            y = 1
+            """
+        )
+        for scope in scopes.values():
+            for acc in scope.accesses:
+                self.assertEqual(
+                    len(acc.referents),
+                    0,
+                    msg=(
+                        "Access for node has incorrect number of referents: "
+                        + f"{acc.node}"
+                    ),
+                )
+
     def test_cast(self) -> None:
         with self.assertRaises(cst.ParserSyntaxError):
             m, scopes = get_scope_metadata_provider(

@@ -124,7 +124,7 @@ class Access:
             for assignment in assignments
             if assignment.scope != self.scope or assignment._index < self.__index
         }
-        if not previous_assignments and assignments:
+        if not previous_assignments and assignments and self.scope.parent != self.scope:
             previous_assignments = self.scope.parent[name]
         self.__assignments |= previous_assignments
 
