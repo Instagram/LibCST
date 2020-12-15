@@ -24,6 +24,7 @@ from libcst.metadata.scope_provider import (
     _gen_dotted_names,
 )
 from libcst.testing.utils import UnitTest, data_provider
+import sys
 
 
 class DependentVisitor(cst.CSTVisitor):
@@ -1610,6 +1611,8 @@ class ScopeProviderTest(UnitTest):
                 )
 
     def test_walrus_accesses(self) -> None:
+        if sys.version_info < (3, 8):
+            self.skipTest("This python version doesn't support :=")
         m, scopes = get_scope_metadata_provider(
             """
             if x := y:
