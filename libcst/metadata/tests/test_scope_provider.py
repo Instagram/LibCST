@@ -1568,6 +1568,29 @@ class ScopeProviderTest(UnitTest):
         self.assertEqual(len(a_comp_assignment.references), 1)
         self.assertEqual(list(a_comp_assignment.references)[0].node, comp.elt)
 
+    def test_for_scope_ordering(self) -> None:
+        m, scopes = get_scope_metadata_provider(
+            """
+            def f():
+                for x in []:
+                    x
+            class X:
+                def f():
+                    for x in []:
+                        x
+            """
+        )
+        for scope in scopes.values():
+            for acc in scope.accesses:
+                self.assertEqual(
+                    len(acc.referents),
+                    1,
+                    msg=(
+                        "Access for node has incorrect number of referents: "
+                        + f"{acc.node}"
+                    ),
+                )
+
     def test_cast(self) -> None:
         with self.assertRaises(cst.ParserSyntaxError):
             m, scopes = get_scope_metadata_provider(

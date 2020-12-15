@@ -45,7 +45,6 @@ _ASSIGNMENT_LIKE_NODES = (
     cst.AugAssign,
     cst.ClassDef,
     cst.CompFor,
-    cst.For,
     cst.FunctionDef,
     cst.Global,
     cst.Import,
@@ -991,6 +990,14 @@ class ScopeVisitor(cst.CSTVisitor):
                 node.value.visit(self)
             else:
                 node.elt.visit(self)
+        return False
+
+    def visit_For(self, node: cst.For) -> Optional[bool]:
+        node.target.visit(self)
+        self.scope._assignment_count += 1
+        for child in [node.iter, node.body, node.orelse, node.asynchronous]:
+            if child is not None:
+                child.visit(self)
         return False
 
     def infer_accesses(self) -> None:
