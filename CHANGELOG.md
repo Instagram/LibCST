@@ -1,3 +1,13 @@
+# 0.3.16 - 2020-12-15
+
+## Added
+- Support PEP-604 style unions in decorator annotations [#429](https://github.com/Instagram/LibCST/pull/429)
+
+## Fixed
+- Don't allow out of order accesses in the global scope [#431](https://github.com/Instagram/LibCST/pull/431)
+- Handle scope ordering in For statements [#430](https://github.com/Instagram/LibCST/pull/430)
+- Fix for not parsing subscripts such as `cast()["from"]` [#428](https://github.com/Instagram/LibCST/pull/428)
+
 # 0.3.15 - 2020-12-01
 
 ## Added
