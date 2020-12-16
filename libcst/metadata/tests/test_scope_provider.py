@@ -4,6 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 
+import sys
 from textwrap import dedent
 from typing import Mapping, Tuple, cast
 
@@ -1603,6 +1604,27 @@ class ScopeProviderTest(UnitTest):
                 self.assertEqual(
                     len(acc.referents),
                     0,
+                    msg=(
+                        "Access for node has incorrect number of referents: "
+                        + f"{acc.node}"
+                    ),
+                )
+
+    def test_walrus_accesses(self) -> None:
+        if sys.version_info < (3, 8):
+            self.skipTest("This python version doesn't support :=")
+        m, scopes = get_scope_metadata_provider(
+            """
+            if x := y:
+                y = 1
+                x
+            """
+        )
+        for scope in scopes.values():
+            for acc in scope.accesses:
+                self.assertEqual(
+                    len(acc.referents),
+                    1 if getattr(acc.node, "value") == "x" else 0,
                     msg=(
                         "Access for node has incorrect number of referents: "
                         + f"{acc.node}"
