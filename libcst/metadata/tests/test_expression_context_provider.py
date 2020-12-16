@@ -414,13 +414,15 @@ class ExpressionContextProviderTest(UnitTest):
         )
 
     def test_walrus(self) -> None:
-        if sys.version_info < (3, 8):
-            self.skipTest("This python version does not support :=")
         code = """
         if x := y:
             pass
         """
-        wrapper = MetadataWrapper(parse_module(dedent(code)))
+        wrapper = MetadataWrapper(
+            parse_module(
+                dedent(code), config=cst.PartialParserConfig(python_version="3.8")
+            )
+        )
         wrapper.visit(
             DependentVisitor(
                 test=self,
