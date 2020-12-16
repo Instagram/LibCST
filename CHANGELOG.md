@@ -2,11 +2,13 @@
 
 ## Added
 - Support PEP-604 style unions in decorator annotations [#429](https://github.com/Instagram/LibCST/pull/429)
+- Gathering exports in augmented assignment statements [#426](https://github.com/Instagram/LibCST/pull/426)
 
 ## Fixed
 - Don't allow out of order accesses in the global scope [#431](https://github.com/Instagram/LibCST/pull/431)
 - Handle scope ordering in For statements [#430](https://github.com/Instagram/LibCST/pull/430)
 - Fix for not parsing subscripts such as `cast()["from"]` [#428](https://github.com/Instagram/LibCST/pull/428)
+- Walrus operator's left hand side now has STORE expression context [#433](https://github.com/Instagram/LibCST/pull/433)
 
 # 0.3.15 - 2020-12-01
 
