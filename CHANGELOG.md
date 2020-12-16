@@ -1,4 +1,4 @@
-# 0.3.16 - 2020-12-15
+# 0.3.16 - 2020-12-16
 
 ## Added
 - Support PEP-604 style unions in decorator annotations [#429](https://github.com/Instagram/LibCST/pull/429)
