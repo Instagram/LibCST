@@ -576,8 +576,12 @@ def parallel_exec_transform_with_prettyprint(  # noqa: C901
     total = len(files)
     progress = Progress(enabled=not hide_progress, total=total)
 
+    chunksize = 4
     # Grab number of cores if we need to
-    jobs: int = jobs if jobs is not None else cpu_count()
+    jobs: int = min(
+        jobs if jobs is not None else cpu_count(),
+        (len(files) + chunksize - 1) // chunksize,
+    )
 
     if jobs < 1:
         raise Exception("Must have at least one job to process!")
@@ -646,7 +650,9 @@ def parallel_exec_transform_with_prettyprint(  # noqa: C901
             for filename in files
         ]
         try:
-            for result in p.imap_unordered(_execute_transform_wrap, args, chunksize=4):
+            for result in p.imap_unordered(
+                _execute_transform_wrap, args, chunksize=chunksize
+            ):
                 # Print an execution result, keep track of failures
                 _print_parallel_result(
                     result,
