@@ -70,12 +70,16 @@ class TypeCollector(cst.CSTVisitor):
     def visit_FunctionDef(self, node: cst.FunctionDef) -> bool:
         self.qualifier.append(node.name.value)
         returns = node.returns
-        if returns is not None:
-            return_annotation = self._create_import_from_annotation(returns)
-            parameter_annotations = self._import_parameter_annotations(node.params)
-            self.function_annotations[".".join(self.qualifier)] = FunctionAnnotation(
-                parameters=parameter_annotations, returns=return_annotation
-            )
+        return_annotation = (
+            self._create_import_from_annotation(returns)
+            if returns is not None
+            else None
+        )
+        parameter_annotations = self._import_parameter_annotations(node.params)
+        self.function_annotations[".".join(self.qualifier)] = FunctionAnnotation(
+            parameters=parameter_annotations, returns=return_annotation
+        )
+
         # pyi files don't support inner functions, return False to stop the traversal.
         return False
 
