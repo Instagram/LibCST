@@ -3,14 +3,12 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-
-import abc
 import codecs
 import re
 import sys
 from dataclasses import dataclass, field, fields
 from enum import Enum
-from typing import FrozenSet, List, Optional, Pattern, Sequence, Union
+from typing import Any, Callable, FrozenSet, List, Mapping, Optional, Pattern, Union
 
 from libcst._add_slots import add_slots
 from libcst._nodes.whitespace import NEWLINE_RE
@@ -19,33 +17,21 @@ from libcst._parser.parso.utils import PythonVersionInfo, parse_version_string
 
 _INDENT_RE: Pattern[str] = re.compile(r"[ \t]+")
 
+try:
+    from libcst_native import parser_config as config_mod
 
-class BaseWhitespaceParserConfig(abc.ABC):
-    """
-    Represents the subset of ParserConfig that the whitespace parser requires. This
-    makes calling the whitespace parser in tests with a mocked configuration easier.
-    """
+    MockWhitespaceParserConfig = config_mod.BaseWhitespaceParserConfig
+except ImportError:
+    from libcst._parser.types import py_config as config_mod
 
-    lines: Sequence[str]
-    default_newline: str
+    # pyre-fixme[9]: This is a small implementation difference between native and python
+    MockWhitespaceParserConfig = config_mod.MockWhitespaceParserConfig
 
-
-@add_slots  # We'll access these properties frequently, so use slots
-@dataclass(frozen=True)
-class ParserConfig(BaseWhitespaceParserConfig):
-    """
-    An internal configuration object that the python parser passes around. These values
-    are global to the parsed code and should not change during the lifetime of the
-    parser object.
-    """
-
-    lines: Sequence[str]
-    encoding: str
-    default_indent: str
-    default_newline: str
-    has_trailing_newline: bool
-    version: PythonVersionInfo
-    future_imports: FrozenSet[str]
+BaseWhitespaceParserConfig = config_mod.BaseWhitespaceParserConfig
+ParserConfig = config_mod.ParserConfig
+parser_config_asdict: Callable[
+    [ParserConfig], Mapping[str, Any]
+] = config_mod.parser_config_asdict
 
 
 class AutoConfig(Enum):

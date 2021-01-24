@@ -3,12 +3,11 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from dataclasses import dataclass
-from typing import Callable, Sequence, TypeVar
+from typing import Callable, TypeVar
 
 import libcst as cst
 from libcst._nodes.deep_equals import deep_equals
-from libcst._parser.types.config import BaseWhitespaceParserConfig
+from libcst._parser.types.config import MockWhitespaceParserConfig as Config
 from libcst._parser.types.whitespace_state import WhitespaceState as State
 from libcst._parser.whitespace_parser import (
     parse_empty_lines,
@@ -19,12 +18,6 @@ from libcst.testing.utils import UnitTest, data_provider
 
 
 _T = TypeVar("_T")
-
-
-@dataclass(frozen=True)
-class Config(BaseWhitespaceParserConfig):
-    lines: Sequence[str]
-    default_newline: str
 
 
 class WhitespaceParserTest(UnitTest):

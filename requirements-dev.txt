@@ -8,6 +8,7 @@ hypothesmith>=0.0.4
 git+https://github.com/jimmylai/sphinx.git@slots_type_annotation
 isort==5.5.3
 jupyter>=1.0.0
+maturin>=0.8.3,<0.9
 nbsphinx>=0.4.2
 pyre-check==0.0.41
 sphinx-rtd-theme>=0.4.3
