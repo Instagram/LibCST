@@ -2,9 +2,10 @@ import contextlib
 import os
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from typing import Generator
 from unittest import TestCase
 
-from libcst import Name, matchers as m
+from libcst import BaseExpression, Call, Name, matchers as m
 from libcst.codemod import (
     CodemodContext,
     VisitorBasedCodemodCommand,
@@ -15,7 +16,7 @@ from libcst.codemod.visitors import AddImportsVisitor
 
 
 class PrintToPPrintCommand(VisitorBasedCodemodCommand):
-    def leave_Call(self, original_node, updated_node):
+    def leave_Call(self, original_node: Call, updated_node: Call) -> BaseExpression:
         if m.matches(updated_node, m.Call(func=m.Name("print"))):
             AddImportsVisitor.add_needed_import(
                 self.context,
@@ -27,7 +28,7 @@ class PrintToPPrintCommand(VisitorBasedCodemodCommand):
 
 
 @contextlib.contextmanager
-def temp_workspace():
+def temp_workspace() -> Generator[Path, None, None]:
     cwd = os.getcwd()
     with TemporaryDirectory() as temp_dir:
         try:
@@ -39,7 +40,7 @@ def temp_workspace():
 
 
 class ToolE2ETest(TestCase):
-    def test_leaky_codemod(self):
+    def test_leaky_codemod(self) -> None:
         with temp_workspace() as tmp:
             # File to trigger codemod
             example: Path = tmp / "example.py"
