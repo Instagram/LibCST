@@ -619,7 +619,7 @@ def parallel_exec_transform_with_prettyprint(  # noqa: C901
         python_version=python_version,
     )
 
-    if total == 1:
+    if total == 1 or jobs == 1:
         # Simple case, we should not pay for process overhead.
         # Let's just use a dummy synchronous pool.
         jobs = 1
