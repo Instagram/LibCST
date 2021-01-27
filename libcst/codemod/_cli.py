@@ -279,6 +279,7 @@ def _execute_transform(  # noqa: C901
             transformer.context,
             filename=filename,
             full_module_name=_calculate_module(config.repo_root, filename),
+            scratch={},
         )
 
         # Run the transform, bail if we failed or if we aren't formatting code
