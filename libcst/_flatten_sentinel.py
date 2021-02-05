@@ -5,6 +5,7 @@
 
 import sys
 
+
 # PEP 585
 if sys.version_info < (3, 9):
     from typing import Iterable, Sequence

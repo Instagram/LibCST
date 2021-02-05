@@ -5,8 +5,8 @@
 
 from typing import TYPE_CHECKING, Union
 
-from libcst._metadata_dependent import MetadataDependent
 from libcst._flatten_sentinel import FlattenSentinel
+from libcst._metadata_dependent import MetadataDependent
 from libcst._removal_sentinel import RemovalSentinel
 from libcst._typed_visitor import CSTTypedTransformerFunctions, CSTTypedVisitorFunctions
 from libcst._types import CSTNodeT

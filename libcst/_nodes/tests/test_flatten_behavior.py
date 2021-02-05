@@ -6,8 +6,7 @@
 from typing import Type, Union
 
 import libcst as cst
-from libcst import FlattenSentinel, RemovalSentinel
-from libcst import parse_module, parse_expression
+from libcst import FlattenSentinel, RemovalSentinel, parse_expression, parse_module
 from libcst._nodes.tests.base import CSTNodeTest
 from libcst._types import CSTNodeT
 from libcst._visitors import CSTTransformer
@@ -19,10 +18,12 @@ class InsertPrintBeforeReturn(CSTTransformer):
         self, original_node: CSTNodeT, updated_node: CSTNodeT
     ) -> Union[CSTNodeT, RemovalSentinel, FlattenSentinel[cst.BaseSmallStatement]]:
         if isinstance(updated_node, cst.Return):
-            return FlattenSentinel([
-                cst.Expr(parse_expression("print('returning')")),
-                updated_node,
-            ])
+            return FlattenSentinel(
+                [
+                    cst.Expr(parse_expression("print('returning')")),
+                    updated_node,
+                ]
+            )
         else:
             return updated_node
 
@@ -32,11 +33,14 @@ class FlattenLines(CSTTransformer):
         self, original_node: CSTNodeT, updated_node: CSTNodeT
     ) -> Union[CSTNodeT, RemovalSentinel, FlattenSentinel[cst.SimpleStatementLine]]:
         if isinstance(updated_node, cst.SimpleStatementLine):
-            return FlattenSentinel([
-                cst.SimpleStatementLine([
-                    stmt.with_changes(semicolon=cst.MaybeSentinel.DEFAULT)
-                ]) for stmt in updated_node.body
-            ])
+            return FlattenSentinel(
+                [
+                    cst.SimpleStatementLine(
+                        [stmt.with_changes(semicolon=cst.MaybeSentinel.DEFAULT)]
+                    )
+                    for stmt in updated_node.body
+                ]
+            )
         else:
             return updated_node
 
@@ -50,7 +54,6 @@ class FlattenBehavior(CSTNodeTest):
                 "print('returning')\nreturn",
                 FlattenLines,
             ),
-
         )
     )
     def test_flatten_pass_behavior(
