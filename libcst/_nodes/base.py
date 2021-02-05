@@ -9,6 +9,7 @@ from dataclasses import dataclass, field, fields, replace
 from typing import Any, Dict, List, Mapping, Sequence, TypeVar, Union, cast
 
 from libcst._nodes.internal import CodegenState
+from libcst._flatten_sentinel import FlattenSentinel
 from libcst._removal_sentinel import RemovalSentinel
 from libcst._type_enforce import is_value_of_type
 from libcst._types import CSTNodeT
@@ -234,7 +235,7 @@ class CSTNode(ABC):
             leave_result = visitor.on_leave(self, with_updated_children)
 
         # validate return type of the user-defined `visitor.on_leave` method
-        if not isinstance(leave_result, (CSTNode, RemovalSentinel)):
+        if not isinstance(leave_result, (CSTNode, RemovalSentinel, FlattenSentinel)):
             raise Exception(
                 "Expected a node of type CSTNode or a RemovalSentinel, "
                 + f"but got a return value of {type(leave_result).__name__}"

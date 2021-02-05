@@ -12,3 +12,4 @@ if TYPE_CHECKING:
 
 
 CSTNodeT = TypeVar("CSTNodeT", bound="CSTNode")
+CSTNodeT_co = TypeVar("CSTNodeT_co", bound="CSTNode", covariant=True)

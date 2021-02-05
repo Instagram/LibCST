@@ -9,6 +9,7 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Iterable, Iterator, List, Optional, Sequence, Union
 
 from libcst._add_slots import add_slots
+from libcst._flatten_sentinel import FlattenSentinel
 from libcst._maybe_sentinel import MaybeSentinel
 from libcst._removal_sentinel import RemovalSentinel
 from libcst._types import CSTNodeT
@@ -138,7 +139,9 @@ def visit_iterable(
     visitor.on_visit_attribute(parent, fieldname)
     for child in children:
         new_child = child.visit(visitor)
-        if not isinstance(new_child, RemovalSentinel):
+        if isinstance(new_child, FlattenSentinel):
+            yield from new_child
+        elif not isinstance(new_child, RemovalSentinel):
             yield new_child
     visitor.on_leave_attribute(parent, fieldname)
 
@@ -179,11 +182,17 @@ def visit_body_iterable(
         # and the new child is. This means a RemovalSentinel
         # caused a child of this node to be dropped, and it
         # is now useless.
-        if (not child._is_removable()) and new_child._is_removable():
-            continue
 
-        # Safe to yield child in this case.
-        yield new_child
+        if isinstance(new_child, FlattenSentinel):
+            for child_ in new_child:
+                if (not child._is_removable()) and child_._is_removable():
+                    continue
+                yield child_
+        else:
+            if (not child._is_removable()) and new_child._is_removable():
+                continue
+            # Safe to yield child in this case.
+            yield new_child
     visitor.on_leave_attribute(parent, fieldname)
 
 
