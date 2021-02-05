@@ -212,6 +212,7 @@ __all__ = [
     "CSTValidationError",
     "CSTVisitor",
     "CSTVisitorT",
+    "FlattenSentinel",
     "MaybeSentinel",
     "MetadataException",
     "ParserSyntaxError",
