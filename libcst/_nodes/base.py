@@ -208,7 +208,7 @@ class CSTNode(ABC):
 
     def visit(
         self: _CSTNodeSelfT, visitor: CSTVisitorT
-    ) -> Union[_CSTNodeSelfT, RemovalSentinel]:
+    ) -> Union[_CSTNodeSelfT, RemovalSentinel, FlattenSentinel[_CSTNodeSelfT]]:
         """
         Visits the current node, its children, and all transitive children using
         the given visitor's callbacks.
@@ -380,9 +380,9 @@ class CSTNode(ABC):
         child, all instances will be replaced.
         """
         new_tree = self.visit(_ChildReplacementTransformer(old_node, new_node))
-        if isinstance(new_tree, RemovalSentinel):
-            # The above transform never returns RemovalSentinel, so this isn't possible
-            raise Exception("Logic error, cannot get a RemovalSentinel here!")
+        if isinstance(new_tree, (FlattenSentinel, RemovalSentinel)):
+            # The above transform never returns *Sentinel, so this isn't possible
+            raise Exception("Logic error, cannot get a *Sentinal here!")
         return new_tree
 
     def deep_remove(
@@ -393,9 +393,15 @@ class CSTNode(ABC):
         have previously modified the tree in a way that ``old_node`` appears more than
         once as a deep child, all instances will be removed.
         """
-        return self.visit(
+        new_tree = self.visit(
             _ChildReplacementTransformer(old_node, RemovalSentinel.REMOVE)
         )
+
+        if isinstance(new_tree, FlattenSentinel):
+            # The above transform never returns FlattenSentinel, so this isn't possible
+            raise Exception("Logic error, cannot get a FlattenSentinel here!")
+
+        return new_tree
 
     def with_deep_changes(
         self: _CSTNodeSelfT, old_node: "CSTNode", **changes: Any
@@ -413,9 +419,9 @@ class CSTNode(ABC):
         similar API in the future.
         """
         new_tree = self.visit(_ChildWithChangesTransformer(old_node, changes))
-        if isinstance(new_tree, RemovalSentinel):
+        if isinstance(new_tree, (FlattenSentinel, RemovalSentinel)):
             # This is impossible with the above transform.
-            raise Exception("Logic error, cannot get a RemovalSentinel here!")
+            raise Exception("Logic error, cannot get a *Sentinel here!")
         return new_tree
 
     def __eq__(self: _CSTNodeSelfT, other: _CSTNodeSelfT) -> bool:

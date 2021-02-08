@@ -85,6 +85,13 @@ def visit_required(
             f"We got a RemovalSentinel while visiting a {type(node).__name__}. This "
             + "node's parent does not allow it to be removed."
         )
+    elif isinstance(result, FlattenSentinel):
+        raise TypeError(
+            f"We got a FlattenSentinel while visiting a {type(node).__name__}. This "
+            + "node's parent does not allow for it to be it to be replaced with a "
+            + "sequence."
+        )
+
     visitor.on_leave_attribute(parent, fieldname)
     return result
 
@@ -102,6 +109,12 @@ def visit_optional(
         return None
     visitor.on_visit_attribute(parent, fieldname)
     result = node.visit(visitor)
+    if isinstance(result, FlattenSentinel):
+        raise TypeError(
+            f"We got a FlattenSentinel while visiting a {type(node).__name__}. This "
+            + "node's parent does not allow for it to be it to be replaced with a "
+            + "sequence."
+        )
     visitor.on_leave_attribute(parent, fieldname)
     return None if isinstance(result, RemovalSentinel) else result
 
@@ -122,6 +135,12 @@ def visit_sentinel(
         return MaybeSentinel.DEFAULT
     visitor.on_visit_attribute(parent, fieldname)
     result = node.visit(visitor)
+    if isinstance(result, FlattenSentinel):
+        raise TypeError(
+            f"We got a FlattenSentinel while visiting a {type(node).__name__}. This "
+            + "node's parent does not allow for it to be it to be replaced with a "
+            + "sequence."
+        )
     visitor.on_leave_attribute(parent, fieldname)
     return MaybeSentinel.DEFAULT if isinstance(result, RemovalSentinel) else result
 
