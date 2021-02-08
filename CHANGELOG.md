@@ -1,3 +1,14 @@
+# 0.3.17 - 2021-02-08
+
+## Updated
+- Optimization: reduce the number of unused parallel processes [#440](https://github.com/Instagram/LibCST/pull/440)
+
+## Fixed
+- Walrus operator's left hand side now has STORE expression context [#443](https://github.com/Instagram/LibCST/pull/433)
+- ApplyTypeAnnotationsVisitor applies parameter annotations even if no return type is declared [#445](https://github.com/Instagram/LibCST/pull/445)
+- Work around Windows problem by using dummy pool for `jobs=1` [#436](https://github.com/Instagram/LibCST/pull/436)
+- Remove extra unused imports added in other files [#453](https://github.com/Instagram/LibCST/pull/453)
+
 # 0.3.16 - 2020-12-16
 
 ## Added
