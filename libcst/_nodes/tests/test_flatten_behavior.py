@@ -41,6 +41,14 @@ class FlattenLines(CSTTransformer):
             return updated_node
 
 
+class RemoveReturnWithEmpty(CSTTransformer):
+    def leave_Return(
+        self, original_node: cst.Return, updated_node: cst.Return
+    ) -> Union[cst.Return, RemovalSentinel, FlattenSentinel[cst.BaseSmallStatement]]:
+        return FlattenSentinel([])
+
+
+
 class FlattenBehavior(CSTNodeTest):
     @data_provider(
         (
@@ -49,6 +57,11 @@ class FlattenBehavior(CSTNodeTest):
                 "print('returning'); return",
                 "print('returning')\nreturn",
                 FlattenLines,
+            ),
+            (
+                "print('returning')\nreturn",
+                "print('returning')",
+                RemoveReturnWithEmpty,
             ),
         )
     )
