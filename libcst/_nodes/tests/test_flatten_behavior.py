@@ -14,19 +14,15 @@ from libcst.testing.utils import data_provider
 
 
 class InsertPrintBeforeReturn(CSTTransformer):
-    def on_leave(
-        self, original_node: CSTNodeT, updated_node: CSTNodeT
-    ) -> Union[CSTNodeT, RemovalSentinel, FlattenSentinel[cst.BaseSmallStatement]]:
-        if isinstance(updated_node, cst.Return):
-            return FlattenSentinel(
-                [
-                    cst.Expr(parse_expression("print('returning')")),
-                    updated_node,
-                ]
-            )
-        else:
-            return updated_node
-
+    def leave_Return(
+        self, original_node: cst.Return, updated_node: cst.Return
+    ) -> Union[cst.Return, RemovalSentinel, FlattenSentinel[cst.BaseSmallStatement]]:
+        return FlattenSentinel(
+            [
+                cst.Expr(parse_expression("print('returning')")),
+                updated_node,
+            ]
+        )
 
 class FlattenLines(CSTTransformer):
     def on_leave(
