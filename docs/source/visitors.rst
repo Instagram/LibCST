@@ -7,6 +7,7 @@ Visitors
 .. autoclass:: libcst.CSTTransformer
 .. autofunction:: libcst.RemoveFromParent
 .. autoclass:: libcst.RemovalSentinel
+.. autoclass:: libcst.FlattenSentinel
 
 Visit and Leave Helper Functions
 --------------------------------
