@@ -24,6 +24,7 @@ class InsertPrintBeforeReturn(CSTTransformer):
             ]
         )
 
+
 class FlattenLines(CSTTransformer):
     def on_leave(
         self, original_node: CSTNodeT, updated_node: CSTNodeT
@@ -46,7 +47,6 @@ class RemoveReturnWithEmpty(CSTTransformer):
         self, original_node: cst.Return, updated_node: cst.Return
     ) -> Union[cst.Return, RemovalSentinel, FlattenSentinel[cst.BaseSmallStatement]]:
         return FlattenSentinel([])
-
 
 
 class FlattenBehavior(CSTNodeTest):

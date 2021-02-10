@@ -101,10 +101,10 @@ for node in sorted(nodebases.keys(), key=lambda node: node.__name__):
     if node_uses.maybe or base_uses.maybe:
         valid_return_types.append("MaybeSentinel")
 
-    if (node_uses.sequence or base_uses.sequence):
+    if node_uses.sequence or base_uses.sequence:
         valid_return_types.append(f'FlattenSentinel["{nodebases[node].__name__}"]')
         valid_return_types.append("RemovalSentinel")
-    elif (node_uses.optional or base_uses.optional):
+    elif node_uses.optional or base_uses.optional:
         valid_return_types.append("RemovalSentinel")
 
     generated_code.append(

@@ -33,6 +33,7 @@ class FlattenSentinel(Sequence[CSTNodeT_co]):
     Returning an empty :class:`FlattenSentinel` is equivalent to returning
     :attr:`cst.RemovalSentinel.REMOVE` and is subject to its requirements.
     """
+
     nodes: Sequence[CSTNodeT_co]
 
     def __init__(self, nodes: Iterable[CSTNodeT_co]) -> None:
