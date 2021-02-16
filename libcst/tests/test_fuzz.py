@@ -14,11 +14,25 @@ import ast
 import os
 import unittest
 from datetime import timedelta
+from typing import cast
 
 import hypothesis
 from hypothesmith import from_grammar
 
 import libcst
+from libcst import CSTTransformer
+
+
+class ParensRemover(CSTTransformer):
+    def on_leave(self,
+            original_node: libcst.CSTNode,
+            updated_node: libcst.CSTNode) -> libcst.CSTNode:
+        if isinstance(updated_node, libcst.BaseExpression):
+            return updated_node.with_changes(
+                lpar=(),
+                rpar=(),
+            )
+        return updated_node
 
 
 # If in doubt, you should use these "unit test" settings.  They tune the timeouts
@@ -92,6 +106,7 @@ class FuzzTest(unittest.TestCase):
             self.verify_identical_asts(
                 source_code, libcst.Module([]).code_for_node(tree), mode="eval"
             )
+            self.verify_round_trip_without_parens(tree)
         except libcst.ParserSyntaxError:
             # Unlike statements, which allow us to strip trailing whitespace,
             # expressions require no whitespace or newlines. Its much more work
@@ -178,6 +193,21 @@ class FuzzTest(unittest.TestCase):
             # \f characters. So, since part of these fuzz tests verifies that we
             # round trip perfectly, reject this.
             hypothesis.reject()
+
+
+    def verify_round_trip_without_parens(self, original_node: libcst.BaseExpression) -> None:
+        """
+        Verifies that removing parens from an expression does not change the
+        code.  E.g. `(1+2)*3` with the parens removed does not become `1+2*3`.
+        """
+        # Technically could return RemoveFromParent but we know it wont
+        node = cast(
+                libcst.BaseExpression,
+                original_node.visit(ParensRemover())
+        )
+        new_code = libcst.Module([]).code_for_node(node)
+        new_node = libcst.parse_expression(new_code)
+        self.assertTrue(node.deep_equals(new_node))
 
 
 if __name__ == "__main__":
