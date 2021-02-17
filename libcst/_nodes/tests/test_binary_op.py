@@ -205,10 +205,9 @@ class BinaryOperationTest(CSTNodeTest):
     def test_invalid(self, **kwargs: Any) -> None:
         self.assert_invalid(**kwargs)
 
-
     @data_provider(
         (
-            # Make sure operands are implicitly parenthesized 
+            # Make sure operands are implicitly parenthesized
             {
                 "node": cst.BinaryOperation(
                     left=cst.Name("foo"),
@@ -237,7 +236,4 @@ class BinaryOperationTest(CSTNodeTest):
         )
     )
     def test_implicit_parens(self, node: cst.CSTNode, code: str) -> None:
-        self.assertEqual(
-            cst.Module([]).code_for_node(node),
-            code
-        )
+        self.assertEqual(cst.Module([]).code_for_node(node), code)

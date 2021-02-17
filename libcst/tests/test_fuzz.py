@@ -24,9 +24,9 @@ from libcst import CSTTransformer
 
 
 class ParensRemover(CSTTransformer):
-    def on_leave(self,
-            original_node: libcst.CSTNode,
-            updated_node: libcst.CSTNode) -> libcst.CSTNode:
+    def on_leave(
+        self, original_node: libcst.CSTNode, updated_node: libcst.CSTNode
+    ) -> libcst.CSTNode:
         if isinstance(updated_node, libcst.BaseExpression):
             return updated_node.with_changes(
                 lpar=(),
@@ -194,17 +194,15 @@ class FuzzTest(unittest.TestCase):
             # round trip perfectly, reject this.
             hypothesis.reject()
 
-
-    def verify_round_trip_without_parens(self, original_node: libcst.BaseExpression) -> None:
+    def verify_round_trip_without_parens(
+        self, original_node: libcst.BaseExpression
+    ) -> None:
         """
         Verifies that removing parens from an expression does not change the
         code.  E.g. `(1+2)*3` with the parens removed does not become `1+2*3`.
         """
         # Technically could return RemoveFromParent but we know it wont
-        node = cast(
-                libcst.BaseExpression,
-                original_node.visit(ParensRemover())
-        )
+        node = cast(libcst.BaseExpression, original_node.visit(ParensRemover()))
         new_code = libcst.Module([]).code_for_node(node)
         new_node = libcst.parse_expression(new_code)
         self.assertTrue(node.deep_equals(new_node))

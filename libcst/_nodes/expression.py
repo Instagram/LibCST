@@ -9,7 +9,7 @@ from abc import ABC, abstractmethod
 from ast import literal_eval
 from contextlib import contextmanager
 from dataclasses import dataclass, field
-from enum import Enum, auto, IntEnum
+from enum import Enum, IntEnum, auto
 from tokenize import (
     Floatnumber as FLOATNUMBER_RE,
     Imagnumber as IMAGNUMBER_RE,
@@ -259,11 +259,9 @@ class _BaseParenthesizedNode(CSTNode, ABC):
         if len(self.lpar) != len(self.rpar):
             raise CSTValidationError("Cannot have unbalanced parens.")
 
-
     @property
     def _is_parenthesized(self) -> bool:
         return len(self.lpar) > 0 and len(self.rpar) > 0
-
 
     @contextmanager
     def _parenthesize(self, state: CodegenState) -> Generator[None, None, None]:
@@ -285,12 +283,14 @@ class _PrecedenceNode:
     A base class for nodes which may need to parenthesize their children
     based on operator precedence.
     """
+
     @property
     def _precedence(self) -> _Precedence:
         return getattr(_Precedence, self.__class__.__name__, _Precedence.Atom)
 
-
-    def _parenthesize_child(self, child: "BaseExpression", state: CodegenState, wrap_ties: bool=False) -> None:
+    def _parenthesize_child(
+        self, child: "BaseExpression", state: CodegenState, wrap_ties: bool = False
+    ) -> None:
         """
         A helper function that parenthesizes child if has lower precedence than self.
         """
@@ -1039,7 +1039,7 @@ class ConcatenatedString(BaseString):
         super(ConcatenatedString, self)._validate()
 
         # Strings that are concatenated cannot have parens.
-        if  self.left._is_parenthesized or self.right._is_parenthesized:
+        if self.left._is_parenthesized or self.right._is_parenthesized:
             raise CSTValidationError("Cannot concatenate parenthesized strings.")
 
         # Cannot concatenate str and bytes
@@ -1426,6 +1426,7 @@ class BooleanOperation(BaseExpression):
     @property
     def _precedence(self) -> _Precedence:
         return getattr(_Precedence, self.operator.__class__.__name__)
+
 
 @add_slots
 @dataclass(frozen=True)
