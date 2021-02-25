@@ -28,7 +28,7 @@ import libcst as cst
 from libcst import ensure_type
 from libcst._add_slots import add_slots
 from libcst._metadata_dependent import MetadataDependent
-from libcst.helpers import get_full_name_for_node
+from libcst.helpers import get_full_name_for_node, get_absolute_module_for_import
 from libcst.metadata.base_provider import BatchableMetadataProvider
 from libcst.metadata.expression_context_provider import (
     ExpressionContext,
@@ -288,15 +288,14 @@ class _NameUtil:
 
     @staticmethod
     def find_qualified_name_for_import_alike(
-        assignment_node: Union[cst.Import, cst.ImportFrom], full_name: str
+        assignment_node: Union[cst.Import, cst.ImportFrom],
+        full_name: str,
+        full_module_name: Optional[str] = None,
     ) -> Set[QualifiedName]:
         module = ""
         results = set()
         if isinstance(assignment_node, cst.ImportFrom):
-            module_attr = assignment_node.module
-            if module_attr:
-                # TODO: for relative import, keep the relative Dot in the qualified name
-                module = get_full_name_for_node(module_attr)
+            module = get_absolute_module_for_import(full_module_name, assignment_node)
         import_names = assignment_node.names
         if not isinstance(import_names, cst.ImportStar):
             for name in import_names:
@@ -466,7 +465,7 @@ class Scope(abc.ABC):
         ...
 
     def get_qualified_names_for(
-        self, node: Union[str, cst.CSTNode]
+        self, node: Union[str, cst.CSTNode], full_module_name: Optional[str] = None
     ) -> Collection[QualifiedName]:
         """Get all :class:`~libcst.metadata.QualifiedName` in current scope given a
         :class:`~libcst.CSTNode`.
@@ -512,7 +511,7 @@ class Scope(abc.ABC):
                 assignment_node = assignment.node
                 if isinstance(assignment_node, (cst.Import, cst.ImportFrom)):
                     results |= _NameUtil.find_qualified_name_for_import_alike(
-                        assignment_node, full_name
+                        assignment_node, full_name, full_module_name
                     )
                 else:
                     results |= _NameUtil.find_qualified_name_for_non_import(

@@ -939,6 +939,23 @@ class ScopeProviderTest(UnitTest):
             },
         )
 
+    def test_get_qualified_names_for_relative(self) -> None:
+        m, scopes = get_scope_metadata_provider(
+            """
+            from .. import a
+            a()
+            """
+        )
+        scope_of_module = scopes[m]
+        a_call = ensure_type(
+            ensure_type(m.body[1], cst.SimpleStatementLine).body[0], cst.Expr
+        ).value
+        self.assertIsInstance(scope_of_module, GlobalScope)
+        self.assertEqual(
+            scope_of_module.get_qualified_names_for(a_call, 'x.y.z'),
+            {QualifiedName("x.a", QualifiedNameSource.IMPORT)},
+        )
+
     def test_assignments_and_accesses(self) -> None:
         m, scopes = get_scope_metadata_provider(
             """
