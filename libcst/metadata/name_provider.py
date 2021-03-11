@@ -3,19 +3,12 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-import dataclasses
-import re
-from pathlib import Path
-from typing import Collection, List, Mapping, Optional, Pattern, Union
+from typing import Collection, Optional, Union
 
 import libcst as cst
 from libcst._metadata_dependent import MetadataDependent
 from libcst.metadata.base_provider import BatchableMetadataProvider
-from libcst.metadata.scope_provider import (
-    QualifiedName,
-    QualifiedNameSource,
-    ScopeProvider,
-)
+from libcst.metadata.scope_provider import QualifiedName, ScopeProvider
 
 
 class QualifiedNameProvider(BatchableMetadataProvider[Collection[QualifiedName]]):

@@ -16,9 +16,7 @@ from libcst.metadata.expression_context_provider import (
     ExpressionContextProvider,
 )
 from libcst.metadata.full_repo_manager import FullRepoManager
-from libcst.metadata.name_provider import (
-    QualifiedNameProvider,
-)
+from libcst.metadata.name_provider import QualifiedNameProvider
 from libcst.metadata.parent_node_provider import ParentNodeProvider
 from libcst.metadata.position_provider import (
     PositionProvider,

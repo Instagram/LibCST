@@ -3,15 +3,11 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from pathlib import Path
 from textwrap import dedent
 from typing import Set
 
 import libcst as cst
-from libcst.metadata.name_provider import (
-    FullyQualifiedNameProvider,
-    QualifiedNameProvider,
-)
+from libcst.metadata.name_provider import QualifiedNameProvider
 from libcst.metadata.scope_provider import QualifiedName, QualifiedNameSource
 from libcst.testing.utils import UnitTest
 
@@ -20,18 +16,6 @@ def get_qualified_names(module_str: str) -> Set[QualifiedName]:
     wrapper = cst.MetadataWrapper(cst.parse_module(dedent(module_str)))
     qnames = wrapper.resolve(QualifiedNameProvider)
     return set().union(*qnames.values())
-
-
-def get_fully_qualified_names(file_path: str, module_str: str) -> Set[QualifiedName]:
-    wrapper = cst.MetadataWrapper(
-        cst.parse_module(dedent(module_str)),
-        cache={
-            FullyQualifiedNameProvider: FullyQualifiedNameProvider.gen_cache(
-                Path(""), [file_path], None
-            ).get(file_path)
-        },
-    )
-    return set().union(*wrapper.resolve(FullyQualifiedNameProvider).values())
 
 
 class QualifiedNameProviderTest(UnitTest):
