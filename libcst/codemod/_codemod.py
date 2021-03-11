@@ -78,7 +78,7 @@ class Codemod(MetadataDependent, ABC):
         oldwrapper = self.context.wrapper
         metadata_manager = self.context.metadata_manager
         filename = self.context.filename
-        if metadata_manager and filename:
+        if metadata_manager is not None and filename:
             # We can look up full-repo metadata for this codemod!
             cache = metadata_manager.get_cache_for_path(filename)
             wrapper = MetadataWrapper(module, cache=cache)

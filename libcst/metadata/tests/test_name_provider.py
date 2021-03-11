@@ -3,17 +3,22 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+from pathlib import Path
+from tempfile import TemporaryDirectory
 from textwrap import dedent
 from typing import Collection, Mapping, Optional, Set, Tuple
 
 import libcst as cst
 from libcst import ensure_type
 from libcst.metadata import (
+    FullyQualifiedNameProvider,
     MetadataWrapper,
     QualifiedName,
     QualifiedNameProvider,
     QualifiedNameSource,
 )
+from libcst.metadata.full_repo_manager import FullRepoManager
+from libcst.metadata.name_provider import FullyQualifiedNameVisitor
 from libcst.testing.utils import UnitTest
 
 
@@ -25,8 +30,29 @@ def get_qualified_name_metadata_provider(
 
 
 def get_qualified_names(module_str: str) -> Set[QualifiedName]:
-    _, qnames = get_qualified_name_metadata_provider(module_str)
-    return set().union(*qnames.values())
+    _, qnames_map = get_qualified_name_metadata_provider(module_str)
+    return {qname for qnames in qnames_map.values() for qname in qnames}
+
+
+def get_fully_qualified_names(file_path: str, module_str: str) -> Set[QualifiedName]:
+    wrapper = cst.MetadataWrapper(
+        cst.parse_module(dedent(module_str)),
+        # pyre-fixme[6]: Incompatible parameter type [6]: Expected
+        # `typing.Mapping[typing.Type[cst.metadata.base_provider.BaseMetadataProvider[
+        # object]], object]` for 2nd parameter `cache` to call
+        # `cst.metadata.wrapper.MetadataWrapper.__init__` but got
+        # `typing.Dict[typing.Type[FullyQualifiedNameProvider], object]`
+        cache={
+            FullyQualifiedNameProvider: FullyQualifiedNameProvider.gen_cache(
+                Path(""), [file_path], None
+            ).get(file_path, "")
+        },
+    )
+    return {
+        qname
+        for qnames in wrapper.resolve(FullyQualifiedNameProvider).values()
+        for qname in qnames
+    }
 
 
 class QualifiedNameProviderTest(UnitTest):
@@ -325,3 +351,94 @@ class QualifiedNameProviderTest(UnitTest):
         self.assertEqual(
             names[attribute], {QualifiedName("a.aa.aaa", QualifiedNameSource.IMPORT)}
         )
+
+
+class FullyQualifiedNameProviderTest(UnitTest):
+    def test_builtins(self) -> None:
+        qnames = get_fully_qualified_names(
+            "test/module.py",
+            """
+            int(None)
+            """,
+        )
+        module_name = QualifiedName(
+            name="test.module", source=QualifiedNameSource.LOCAL
+        )
+        self.assertIn(module_name, qnames)
+        qnames -= {module_name}
+        self.assertEqual(
+            {"builtins.int", "builtins.None"},
+            {qname.name for qname in qnames},
+        )
+        for qname in qnames:
+            self.assertEqual(qname.source, QualifiedNameSource.BUILTIN, msg=f"{qname}")
+
+    def test_imports(self) -> None:
+        qnames = get_fully_qualified_names(
+            "some/test/module.py",
+            """
+            from a.b import c as d
+            from . import rel
+            from .lol import rel2
+            from .. import thing as rel3
+            d, rel, rel2, rel3
+            """,
+        )
+        module_name = QualifiedName(
+            name="some.test.module", source=QualifiedNameSource.LOCAL
+        )
+        self.assertIn(module_name, qnames)
+        qnames -= {module_name}
+        self.assertEqual(
+            {"a.b.c", "some.test.rel", "some.test.lol.rel2", "some.thing"},
+            {qname.name for qname in qnames},
+        )
+        for qname in qnames:
+            self.assertEqual(qname.source, QualifiedNameSource.IMPORT, msg=f"{qname}")
+
+    def test_locals(self) -> None:
+        qnames = get_fully_qualified_names(
+            "some/test/module.py",
+            """
+            class X:
+                a: X
+            """,
+        )
+        self.assertEqual(
+            {"some.test.module", "some.test.module.X", "some.test.module.X.a"},
+            {qname.name for qname in qnames},
+        )
+        for qname in qnames:
+            self.assertEqual(qname.source, QualifiedNameSource.LOCAL, msg=f"{qname}")
+
+    def test_local_qualification(self) -> None:
+        base_module = "some.test.module"
+        for (name, expected) in [
+            (".foo", "some.test.foo"),
+            ("..bar", "some.bar"),
+            ("foo", "some.test.module.foo"),
+        ]:
+            with self.subTest(name=name):
+                self.assertEqual(
+                    FullyQualifiedNameVisitor._fully_qualify_local(
+                        base_module,
+                        QualifiedName(name=name, source=QualifiedNameSource.LOCAL),
+                    ),
+                    expected,
+                )
+
+
+class FullyQualifiedNameIntegrationTest(UnitTest):
+    def test_with_full_repo_manager(self) -> None:
+        with TemporaryDirectory() as dir:
+            fname = "pkg/mod.py"
+            (Path(dir) / "pkg").mkdir()
+            (Path(dir) / fname).touch()
+            mgr = FullRepoManager(dir, [fname], [FullyQualifiedNameProvider])
+            wrapper = mgr.get_metadata_wrapper_for_path(fname)
+            fqnames = wrapper.resolve(FullyQualifiedNameProvider)
+            (mod, names) = next(iter(fqnames.items()))
+            self.assertIsInstance(mod, cst.Module)
+            self.assertEqual(
+                names, {QualifiedName(name="pkg.mod", source=QualifiedNameSource.LOCAL)}
+            )
