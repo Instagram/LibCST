@@ -3,9 +3,8 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-
 from textwrap import dedent
-from typing import Collection, Mapping, Optional, Tuple
+from typing import Collection, Mapping, Optional, Set, Tuple
 
 import libcst as cst
 from libcst import ensure_type
@@ -25,7 +24,46 @@ def get_qualified_name_metadata_provider(
     return wrapper.module, wrapper.resolve(QualifiedNameProvider)
 
 
-class ScopeProviderTest(UnitTest):
+def get_qualified_names(module_str: str) -> Set[QualifiedName]:
+    _, qnames = get_qualified_name_metadata_provider(module_str)
+    return set().union(*qnames.values())
+
+
+class QualifiedNameProviderTest(UnitTest):
+    def test_imports(self) -> None:
+        qnames = get_qualified_names(
+            """
+            from a.b import c as d
+            d
+            """
+        )
+        self.assertEqual({"a.b.c"}, {qname.name for qname in qnames})
+        for qname in qnames:
+            self.assertEqual(qname.source, QualifiedNameSource.IMPORT, msg=f"{qname}")
+
+    def test_builtins(self) -> None:
+        qnames = get_qualified_names(
+            """
+            int(None)
+            """
+        )
+        self.assertEqual(
+            {"builtins.int", "builtins.None"}, {qname.name for qname in qnames}
+        )
+        for qname in qnames:
+            self.assertEqual(qname.source, QualifiedNameSource.BUILTIN, msg=f"{qname}")
+
+    def test_locals(self) -> None:
+        qnames = get_qualified_names(
+            """
+            class X:
+                a: "X"
+            """
+        )
+        self.assertEqual({"X", "X.a"}, {qname.name for qname in qnames})
+        for qname in qnames:
+            self.assertEqual(qname.source, QualifiedNameSource.LOCAL, msg=f"{qname}")
+
     def test_simple_qualified_names(self) -> None:
         m, names = get_qualified_name_metadata_provider(
             """
