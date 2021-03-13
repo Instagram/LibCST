@@ -683,6 +683,20 @@ class AtomTest(CSTNodeTest):
                 "parser": parse_expression,
                 "expected_position": None,
             },
+            {
+                "node": cst.FormattedString(
+                    parts=(
+                        cst.FormattedStringText("\\"),
+                        cst.FormattedStringExpression(
+                            cst.Name(value="a"),
+                        ),
+                    ),
+                    start='fr"',
+                ),
+                "code": 'fr"\\{a}"',
+                "parser": parse_expression,
+                "expected_position": None,
+            },
             # Validate parens
             {
                 "node": cst.FormattedString(

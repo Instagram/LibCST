@@ -146,6 +146,8 @@ def _get_token_collection(version_info: PythonVersionInfo) -> TokenCollection:
         return result
 
 
+fstring_raw_string = _compile(r"(?:[^{}]+|\{\{|\}\})+")
+
 unicode_character_name = r"[A-Za-z0-9\-]+(?: [A-Za-z0-9\-]+)*"
 fstring_string_single_line = _compile(
     r"(?:\{\{|\}\}|\\N\{"
@@ -155,6 +157,7 @@ fstring_string_single_line = _compile(
 fstring_string_multi_line = _compile(
     r"(?:\{\{|\}\}|\\N\{" + unicode_character_name + r"\}|\\[^N]|[^{}\\])+"
 )
+
 fstring_format_spec_single_line = _compile(r"(?:\\(?:\r\n?|\n)|[^{}\r\n])+")
 fstring_format_spec_multi_line = _compile(r"[^{}]+")
 
@@ -334,8 +337,9 @@ class PythonToken(Token):
 
 
 class FStringNode:
-    def __init__(self, quote):
+    def __init__(self, quote, raw):
         self.quote = quote
+        self.raw = raw
         self.parentheses_count = 0
         self.previous_lines = ""
         self.last_string_start_pos = None
@@ -384,7 +388,9 @@ def _find_fstring_string(endpats, fstring_stack, line, lnum, pos):
         else:
             regex = fstring_format_spec_single_line
     else:
-        if allow_multiline:
+        if tos.raw:
+            regex = fstring_raw_string
+        elif allow_multiline:
             regex = fstring_string_multi_line
         else:
             regex = fstring_string_single_line
@@ -760,7 +766,10 @@ def _tokenize_lines_py36_or_below(  # noqa: C901
                 token in token_collection.fstring_pattern_map
             ):  # The start of an fstring.
                 fstring_stack.append(
-                    FStringNode(token_collection.fstring_pattern_map[token])
+                    FStringNode(
+                        token_collection.fstring_pattern_map[token],
+                        "r" in token or "R" in token,
+                    )
                 )
                 if stashed is not None:
                     yield stashed
@@ -1051,7 +1060,10 @@ def _tokenize_lines_py37_or_above(  # noqa: C901
                 token in token_collection.fstring_pattern_map
             ):  # The start of an fstring.
                 fstring_stack.append(
-                    FStringNode(token_collection.fstring_pattern_map[token])
+                    FStringNode(
+                        token_collection.fstring_pattern_map[token],
+                        "r" in token or "R" in token,
+                    )
                 )
                 yield PythonToken(FSTRING_START, token, spos, prefix)
             elif initial == "\\" and line[start:] in (
