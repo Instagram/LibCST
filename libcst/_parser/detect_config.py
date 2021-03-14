@@ -162,7 +162,7 @@ def detect_config(
 
     lines = split_lines(source_str, keepends=True)
 
-    tokens = tokenize_lines(lines, python_version)
+    tokens = tokenize_lines(source_str, lines, python_version)
 
     partial_default_indent = partial.default_indent
     if isinstance(partial_default_indent, AutoConfig):

@@ -1214,7 +1214,7 @@ class WrappedTokenizeTest(UnitTest):
                 _PY37,
                 (
                     Token(
-                        type=PythonTokenTypes.NAME,
+                        type=PythonTokenTypes.ASYNC,
                         string="async",
                         start_pos=(1, 0),
                         end_pos=(1, 5),
@@ -1364,7 +1364,7 @@ class WrappedTokenizeTest(UnitTest):
                         relative_indent=None,
                     ),
                     Token(
-                        type=PythonTokenTypes.NAME,
+                        type=PythonTokenTypes.AWAIT,
                         string="await",
                         start_pos=(2, 11),
                         end_pos=(2, 16),
@@ -1649,7 +1649,7 @@ class WrappedTokenizeTest(UnitTest):
                 _PY38,
                 (
                     Token(
-                        type=PythonTokenTypes.NAME,
+                        type=PythonTokenTypes.ASYNC,
                         string="async",
                         start_pos=(1, 0),
                         end_pos=(1, 5),
@@ -1799,7 +1799,7 @@ class WrappedTokenizeTest(UnitTest):
                         relative_indent=None,
                     ),
                     Token(
-                        type=PythonTokenTypes.NAME,
+                        type=PythonTokenTypes.AWAIT,
                         string="await",
                         start_pos=(2, 11),
                         end_pos=(2, 16),

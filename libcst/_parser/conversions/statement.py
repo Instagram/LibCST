@@ -1062,8 +1062,7 @@ def _extract_async(
     return (parse_empty_lines(config, whitespace_before), asyncnode, stmt.value)
 
 
-@with_production("asyncable_funcdef", "['async'] funcdef", version=">=3.7")
-@with_production("asyncable_funcdef", "[ASYNC] funcdef", version=">=3.5,<3.7")
+@with_production("asyncable_funcdef", "[ASYNC] funcdef", version=">=3.5")
 @with_production("asyncable_funcdef", "funcdef", version="<3.5")
 def convert_asyncable_funcdef(config: ParserConfig, children: Sequence[Any]) -> Any:
     leading_lines, asyncnode, funcdef = _extract_async(config, children)
@@ -1310,10 +1309,7 @@ def convert_decorated(config: ParserConfig, children: Sequence[Any]) -> Any:
 
 
 @with_production(
-    "asyncable_stmt", "['async'] (funcdef | with_stmt | for_stmt)", version=">=3.7"
-)
-@with_production(
-    "asyncable_stmt", "[ASYNC] (funcdef | with_stmt | for_stmt)", version=">=3.5,<3.7"
+    "asyncable_stmt", "[ASYNC] (funcdef | with_stmt | for_stmt)", version=">=3.5"
 )
 @with_production("asyncable_stmt", "funcdef | with_stmt | for_stmt", version="<3.5")
 def convert_asyncable_stmt(config: ParserConfig, children: Sequence[Any]) -> Any:
