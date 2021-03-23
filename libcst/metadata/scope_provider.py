@@ -338,13 +338,12 @@ class _NameUtil:
                 name_prefixes.append(scope.name)
             elif isinstance(scope, FunctionScope):
                 name_prefixes.append(f"{scope.name}.<locals>")
-            elif isinstance(scope, GlobalScope):
-                break
             elif isinstance(scope, ComprehensionScope):
                 name_prefixes.append("<comprehension>")
-            else:
+            elif not isinstance(scope, (GlobalScope, BuiltinScope)):
                 raise Exception(f"Unexpected Scope: {scope}")
-            scope = scope.parent
+
+            scope = scope.parent if scope.parent != scope else None
 
         parts = [*reversed(name_prefixes)]
         if remaining_name:
@@ -536,27 +535,49 @@ class Scope(abc.ABC):
         return Accesses(self._accesses)
 
 
+class BuiltinScope(Scope):
+    def __init__(self, globals: Scope) -> None:
+        self.globals: Scope = globals
+        super().__init__(parent=self)
+        for name in dir(builtins):
+            self._assignments[name].add(BuiltinAssignment(name, self))
+
+    def __contains__(self, name: str) -> bool:
+        return name in self._assignments and len(self._assignments[name]) > 0
+
+    def __getitem__(self, name: str) -> Set[BaseAssignment]:
+        if name in self._assignments:
+            return self._assignments[name]
+        return set()
+
+    def record_assignment(self, name: str, node: cst.CSTNode) -> None:
+        pass
+
+    def record_global_overwrite(self, name: str) -> None:
+        pass
+
+    def record_nonlocal_overwrite(self, name: str) -> None:
+        raise NotImplementedError("nonlocal declaration not allowed at module level")
+
+
 class GlobalScope(Scope):
     """
     A GlobalScope is the scope of module. All module level assignments are recorded in GlobalScope.
     """
 
     def __init__(self) -> None:
-        self.globals: Scope = self  # must be defined before Scope.__init__ is called
-        super().__init__(parent=self)
+        super().__init__(parent=BuiltinScope(self))
 
     def __contains__(self, name: str) -> bool:
-        return hasattr(builtins, name) or (
-            name in self._assignments and len(self._assignments[name]) > 0
-        )
+        if name in self._assignments:
+            return len(self._assignments[name]) > 0
+        return self.parent._contains_in_self_or_parent(name)
 
     def __getitem__(self, name: str) -> Set[BaseAssignment]:
-        if hasattr(builtins, name):
-            if not any(
-                isinstance(i, BuiltinAssignment) for i in self._assignments[name]
-            ):
-                self._assignments[name].add(BuiltinAssignment(name, self))
-        return self._assignments[name]
+        if name in self._assignments:
+            return self._assignments[name]
+        else:
+            return self.parent._getitem_from_self_or_parent(name)
 
     def record_global_overwrite(self, name: str) -> None:
         pass

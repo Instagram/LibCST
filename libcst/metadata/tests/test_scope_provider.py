@@ -13,6 +13,7 @@ from libcst import ensure_type
 from libcst.metadata import MetadataWrapper
 from libcst.metadata.scope_provider import (
     Assignment,
+    BuiltinScope,
     BuiltinAssignment,
     ClassScope,
     ComprehensionScope,
@@ -144,6 +145,11 @@ class ScopeProviderTest(UnitTest):
         self.assertIsInstance(scope_of_module, GlobalScope)
         self.assertEqual(len(scope_of_module[builtin]), 1)
         self.assertEqual(len(scope_of_module["something_not_a_builtin"]), 0)
+
+        scope_of_builtin = scope_of_module.parent
+        self.assertIsInstance(scope_of_builtin, BuiltinScope)
+        self.assertEqual(len(scope_of_builtin[builtin]), 1)
+        self.assertEqual(len(scope_of_builtin["something_not_a_builtin"]), 0)
 
         func_body = ensure_type(m.body[0], cst.FunctionDef).body
         func_pass_statement = func_body.body[0]
@@ -1702,7 +1708,7 @@ class ScopeProviderTest(UnitTest):
         self.assertEqual(len(scope_of_module["pow"]), 1)
         builtin_pow_assignment = list(scope_of_module["pow"])[0]
         self.assertIsInstance(builtin_pow_assignment, BuiltinAssignment)
-        self.assertIsInstance(builtin_pow_assignment.scope, GlobalScope)
+        self.assertIsInstance(builtin_pow_assignment.scope, BuiltinScope)
 
         global_a_assignments = scope_of_module["a"]
         self.assertEqual(len(global_a_assignments), 1)
@@ -1734,15 +1740,10 @@ class ScopeProviderTest(UnitTest):
         )
         scope_of_module = scopes[m]
         self.assertIsInstance(scope_of_module, GlobalScope)
-        self.assertEqual(len(scope_of_module["pow"]), 2)
+        self.assertEqual(len(scope_of_module["pow"]), 1)
         global_pow_assignment = list(scope_of_module["pow"])[0]
         self.assertIsInstance(global_pow_assignment, Assignment)
         self.assertIsInstance(global_pow_assignment.scope, GlobalScope)
-
-        # FIXME this is invalid
-        builtin_pow_assignment = list(scope_of_module["pow"])[1]
-        self.assertIsInstance(builtin_pow_assignment, BuiltinAssignment)
-        self.assertIsInstance(builtin_pow_assignment.scope, GlobalScope)
 
         global_a_assignments = scope_of_module["a"]
         self.assertEqual(len(global_a_assignments), 1)
@@ -1757,9 +1758,6 @@ class ScopeProviderTest(UnitTest):
         self.assertEqual(len(func_b_assignments), 1)
         b_assignment = list(func_b_assignments)[0]
         self.assertIsInstance(b_assignment, Assignment)
-
-        builtin_pow_accesses = list(builtin_pow_assignment.references)
-        self.assertEqual(len(builtin_pow_accesses), 2)
 
         global_pow_accesses = list(global_pow_assignment.references)
         self.assertEqual(len(global_pow_accesses), 2)
