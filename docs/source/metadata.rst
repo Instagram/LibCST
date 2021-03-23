@@ -40,8 +40,8 @@ The wrapper provides a :func:`~libcst.metadata.MetadataWrapper.resolve` function
 .. autoclass:: libcst.metadata.MetadataWrapper
    :special-members: __init__
 
-If you're working with visitors, which extend :class:`~libcst.MetadataDependent`, 
-metadata dependencies will be automatically computed when visited by a 
+If you're working with visitors, which extend :class:`~libcst.MetadataDependent`,
+metadata dependencies will be automatically computed when visited by a
 :class:`~libcst.metadata.MetadataWrapper` and are accessible through
 :func:`~libcst.MetadataDependent.get_metadata`
 
@@ -134,14 +134,15 @@ New scopes are created for classes, functions, and comprehensions. Other block
 constructs like conditional statements, loops, and try…except don't create their
 own scope.
 
-There are four different type of scope in Python:
+There are five different type of scope in Python:
+:class:`~libcst.metadata.BuiltinScope`,
 :class:`~libcst.metadata.GlobalScope`,
 :class:`~libcst.metadata.ClassScope`,
 :class:`~libcst.metadata.FunctionScope`, and
 :class:`~libcst.metadata.ComprehensionScope`.
 
 .. image:: _static/img/python_scopes.png
-   :alt: Diagram showing how the above 4 scopes are nested in each other
+   :alt: Diagram showing how the above 5 scopes are nested in each other
    :width: 400
    :align: center
 
@@ -174,6 +175,9 @@ assigned or accessed within.
 .. autoclass:: libcst.metadata.Scope
    :no-undoc-members:
    :special-members: __contains__, __getitem__, __iter__
+
+.. autoclass:: libcst.metadata.BuiltinScope
+   :no-undoc-members:
 
 .. autoclass:: libcst.metadata.GlobalScope
    :no-undoc-members:

@@ -536,8 +536,12 @@ class Scope(abc.ABC):
 
 
 class BuiltinScope(Scope):
+    """
+    A BuiltinScope represents python builtin declarations. See https://docs.python.org/3/library/builtins.html
+    """
+
     def __init__(self, globals: Scope) -> None:
-        self.globals: Scope = globals
+        self.globals: Scope = globals  # must be defined before Scope.__init__ is called
         super().__init__(parent=self)
         for name in dir(builtins):
             self._assignments[name].add(BuiltinAssignment(name, self))
