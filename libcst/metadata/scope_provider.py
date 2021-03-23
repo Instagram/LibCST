@@ -543,7 +543,7 @@ class BuiltinScope(Scope):
             self._assignments[name].add(BuiltinAssignment(name, self))
 
     def __contains__(self, name: str) -> bool:
-        return name in self._assignments and len(self._assignments[name]) > 0
+        return name in self._assignments
 
     def __getitem__(self, name: str) -> Set[BaseAssignment]:
         if name in self._assignments:
@@ -551,13 +551,13 @@ class BuiltinScope(Scope):
         return set()
 
     def record_assignment(self, name: str, node: cst.CSTNode) -> None:
-        pass
+        raise NotImplementedError("assignments in builtin scope are not allowed")
 
     def record_global_overwrite(self, name: str) -> None:
-        pass
+        raise NotImplementedError("global overwrite in builtin scope are not allowed")
 
     def record_nonlocal_overwrite(self, name: str) -> None:
-        raise NotImplementedError("nonlocal declaration not allowed at module level")
+        raise NotImplementedError("declarations in builtin scope are not allowed")
 
 
 class GlobalScope(Scope):

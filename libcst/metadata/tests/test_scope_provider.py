@@ -13,8 +13,8 @@ from libcst import ensure_type
 from libcst.metadata import MetadataWrapper
 from libcst.metadata.scope_provider import (
     Assignment,
-    BuiltinScope,
     BuiltinAssignment,
+    BuiltinScope,
     ClassScope,
     ComprehensionScope,
     FunctionScope,
