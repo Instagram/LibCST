@@ -9,6 +9,7 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Iterable, Iterator, List, Optional, Sequence, Union
 
 from libcst._add_slots import add_slots
+from libcst._flatten_sentinel import FlattenSentinel
 from libcst._maybe_sentinel import MaybeSentinel
 from libcst._removal_sentinel import RemovalSentinel
 from libcst._types import CSTNodeT
@@ -84,6 +85,13 @@ def visit_required(
             f"We got a RemovalSentinel while visiting a {type(node).__name__}. This "
             + "node's parent does not allow it to be removed."
         )
+    elif isinstance(result, FlattenSentinel):
+        raise TypeError(
+            f"We got a FlattenSentinel while visiting a {type(node).__name__}. This "
+            + "node's parent does not allow for it to be it to be replaced with a "
+            + "sequence."
+        )
+
     visitor.on_leave_attribute(parent, fieldname)
     return result
 
@@ -101,6 +109,12 @@ def visit_optional(
         return None
     visitor.on_visit_attribute(parent, fieldname)
     result = node.visit(visitor)
+    if isinstance(result, FlattenSentinel):
+        raise TypeError(
+            f"We got a FlattenSentinel while visiting a {type(node).__name__}. This "
+            + "node's parent does not allow for it to be it to be replaced with a "
+            + "sequence."
+        )
     visitor.on_leave_attribute(parent, fieldname)
     return None if isinstance(result, RemovalSentinel) else result
 
@@ -121,6 +135,12 @@ def visit_sentinel(
         return MaybeSentinel.DEFAULT
     visitor.on_visit_attribute(parent, fieldname)
     result = node.visit(visitor)
+    if isinstance(result, FlattenSentinel):
+        raise TypeError(
+            f"We got a FlattenSentinel while visiting a {type(node).__name__}. This "
+            + "node's parent does not allow for it to be it to be replaced with a "
+            + "sequence."
+        )
     visitor.on_leave_attribute(parent, fieldname)
     return MaybeSentinel.DEFAULT if isinstance(result, RemovalSentinel) else result
 
@@ -138,7 +158,9 @@ def visit_iterable(
     visitor.on_visit_attribute(parent, fieldname)
     for child in children:
         new_child = child.visit(visitor)
-        if not isinstance(new_child, RemovalSentinel):
+        if isinstance(new_child, FlattenSentinel):
+            yield from new_child
+        elif not isinstance(new_child, RemovalSentinel):
             yield new_child
     visitor.on_leave_attribute(parent, fieldname)
 
@@ -179,11 +201,17 @@ def visit_body_iterable(
         # and the new child is. This means a RemovalSentinel
         # caused a child of this node to be dropped, and it
         # is now useless.
-        if (not child._is_removable()) and new_child._is_removable():
-            continue
 
-        # Safe to yield child in this case.
-        yield new_child
+        if isinstance(new_child, FlattenSentinel):
+            for child_ in new_child:
+                if (not child._is_removable()) and child_._is_removable():
+                    continue
+                yield child_
+        else:
+            if (not child._is_removable()) and new_child._is_removable():
+                continue
+            # Safe to yield child in this case.
+            yield new_child
     visitor.on_leave_attribute(parent, fieldname)
 
 

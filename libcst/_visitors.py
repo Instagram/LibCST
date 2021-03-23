@@ -5,6 +5,7 @@
 
 from typing import TYPE_CHECKING, Union
 
+from libcst._flatten_sentinel import FlattenSentinel
 from libcst._metadata_dependent import MetadataDependent
 from libcst._removal_sentinel import RemovalSentinel
 from libcst._typed_visitor import CSTTypedTransformerFunctions, CSTTypedVisitorFunctions
@@ -49,7 +50,7 @@ class CSTTransformer(CSTTypedTransformerFunctions, MetadataDependent):
 
     def on_leave(
         self, original_node: CSTNodeT, updated_node: CSTNodeT
-    ) -> Union[CSTNodeT, RemovalSentinel]:
+    ) -> Union[CSTNodeT, RemovalSentinel, FlattenSentinel[CSTNodeT]]:
         """
         Called every time we leave a node, after we've visited its children. If
         the :func:`~libcst.CSTTransformer.on_visit` function for this node returns

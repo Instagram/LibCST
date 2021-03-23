@@ -30,7 +30,7 @@ from typing import (
 
 import libcst
 import libcst.metadata as meta
-from libcst import MaybeSentinel, RemovalSentinel
+from libcst import FlattenSentinel, MaybeSentinel, RemovalSentinel
 
 
 class DoNotCareSentinel(Enum):
@@ -1944,4 +1944,8 @@ def replace(
         fetcher = _construct_metadata_fetcher_dependent(metadata_resolver)
 
     replacer = _ReplaceTransformer(matcher, fetcher, replacement)
-    return tree.visit(replacer)
+    new_tree = tree.visit(replacer)
+    if isinstance(new_tree, FlattenSentinel):
+        # The above transform never returns FlattenSentinel, so this isn't possible
+        raise Exception("Logic error, cannot get a FlattenSentinel here!")
+    return new_tree

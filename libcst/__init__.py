@@ -5,6 +5,7 @@
 
 from libcst._batched_visitor import BatchableCSTVisitor, visit_batched
 from libcst._exceptions import MetadataException, ParserSyntaxError
+from libcst._flatten_sentinel import FlattenSentinel
 from libcst._maybe_sentinel import MaybeSentinel
 from libcst._metadata_dependent import MetadataDependent
 from libcst._nodes.base import CSTNode, CSTValidationError
@@ -211,6 +212,7 @@ __all__ = [
     "CSTValidationError",
     "CSTVisitor",
     "CSTVisitorT",
+    "FlattenSentinel",
     "MaybeSentinel",
     "MetadataException",
     "ParserSyntaxError",
