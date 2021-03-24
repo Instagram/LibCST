@@ -543,14 +543,18 @@ class BuiltinScope(Scope):
     def __init__(self, globals: Scope) -> None:
         self.globals: Scope = globals  # must be defined before Scope.__init__ is called
         super().__init__(parent=self)
-        for name in dir(builtins):
-            self._assignments[name].add(BuiltinAssignment(name, self))
 
     def __contains__(self, name: str) -> bool:
-        return name in self._assignments
+        return hasattr(builtins, name)
 
     def __getitem__(self, name: str) -> Set[BaseAssignment]:
         if name in self._assignments:
+            return self._assignments[name]
+        if hasattr(builtins, name):
+            # note - we only see the builtin assignments during the deferred
+            # access resolution. unfortunately that means we have to create the
+            # assignment here, which can cause the set to mutate during iteration
+            self._assignments[name].add(BuiltinAssignment(name, self))
             return self._assignments[name]
         return set()
 
