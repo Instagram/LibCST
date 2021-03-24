@@ -13,6 +13,8 @@ from libcst import ensure_type
 from libcst.metadata import MetadataWrapper
 from libcst.metadata.scope_provider import (
     Assignment,
+    BuiltinAssignment,
+    BuiltinScope,
     ClassScope,
     ComprehensionScope,
     FunctionScope,
@@ -143,6 +145,11 @@ class ScopeProviderTest(UnitTest):
         self.assertIsInstance(scope_of_module, GlobalScope)
         self.assertEqual(len(scope_of_module[builtin]), 1)
         self.assertEqual(len(scope_of_module["something_not_a_builtin"]), 0)
+
+        scope_of_builtin = scope_of_module.parent
+        self.assertIsInstance(scope_of_builtin, BuiltinScope)
+        self.assertEqual(len(scope_of_builtin[builtin]), 1)
+        self.assertEqual(len(scope_of_builtin["something_not_a_builtin"]), 0)
 
         func_body = ensure_type(m.body[0], cst.FunctionDef).body
         func_pass_statement = func_body.body[0]
@@ -1687,3 +1694,70 @@ class ScopeProviderTest(UnitTest):
                 cast("3rr0r", "")
                 """
             )
+
+    def test_builtin_scope(self) -> None:
+        m, scopes = get_scope_metadata_provider(
+            """
+            a = pow(1, 2)
+            def foo():
+                b = pow(2, 3)
+            """
+        )
+        scope_of_module = scopes[m]
+        self.assertIsInstance(scope_of_module, GlobalScope)
+        self.assertEqual(len(scope_of_module["pow"]), 1)
+        builtin_pow_assignment = list(scope_of_module["pow"])[0]
+        self.assertIsInstance(builtin_pow_assignment, BuiltinAssignment)
+        self.assertIsInstance(builtin_pow_assignment.scope, BuiltinScope)
+
+        global_a_assignments = scope_of_module["a"]
+        self.assertEqual(len(global_a_assignments), 1)
+        a_assignment = list(global_a_assignments)[0]
+        self.assertIsInstance(a_assignment, Assignment)
+
+        func_body = ensure_type(m.body[1], cst.FunctionDef).body
+        func_statement = func_body.body[0]
+        scope_of_func_statement = scopes[func_statement]
+        self.assertIsInstance(scope_of_func_statement, FunctionScope)
+        func_b_assignments = scope_of_func_statement["b"]
+        self.assertEqual(len(func_b_assignments), 1)
+        b_assignment = list(func_b_assignments)[0]
+        self.assertIsInstance(b_assignment, Assignment)
+
+        builtin_pow_accesses = list(builtin_pow_assignment.references)
+        self.assertEqual(len(builtin_pow_accesses), 2)
+
+    def test_override_builtin_scope(self) -> None:
+        m, scopes = get_scope_metadata_provider(
+            """
+            def pow(x, y):
+                return x ** y
+
+            a = pow(1, 2)
+            def foo():
+                b = pow(2, 3)
+            """
+        )
+        scope_of_module = scopes[m]
+        self.assertIsInstance(scope_of_module, GlobalScope)
+        self.assertEqual(len(scope_of_module["pow"]), 1)
+        global_pow_assignment = list(scope_of_module["pow"])[0]
+        self.assertIsInstance(global_pow_assignment, Assignment)
+        self.assertIsInstance(global_pow_assignment.scope, GlobalScope)
+
+        global_a_assignments = scope_of_module["a"]
+        self.assertEqual(len(global_a_assignments), 1)
+        a_assignment = list(global_a_assignments)[0]
+        self.assertIsInstance(a_assignment, Assignment)
+
+        func_body = ensure_type(m.body[2], cst.FunctionDef).body
+        func_statement = func_body.body[0]
+        scope_of_func_statement = scopes[func_statement]
+        self.assertIsInstance(scope_of_func_statement, FunctionScope)
+        func_b_assignments = scope_of_func_statement["b"]
+        self.assertEqual(len(func_b_assignments), 1)
+        b_assignment = list(func_b_assignments)[0]
+        self.assertIsInstance(b_assignment, Assignment)
+
+        global_pow_accesses = list(global_pow_assignment.references)
+        self.assertEqual(len(global_pow_accesses), 2)
