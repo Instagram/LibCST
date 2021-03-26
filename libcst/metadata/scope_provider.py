@@ -286,16 +286,25 @@ class _NameUtil:
         return None
 
     @staticmethod
+    def get_module_name_for_import_alike(
+        assignment_node: Union[cst.Import, cst.ImportFrom]
+    ) -> str:
+        module = ""
+        if isinstance(assignment_node, cst.ImportFrom):
+            module_attr = assignment_node.module
+            relative = assignment_node.relative
+            if module_attr:
+                module = get_full_name_for_node(module_attr) or ""
+            if relative:
+                module = "." * len(relative) + module
+        return module
+
+    @staticmethod
     def find_qualified_name_for_import_alike(
         assignment_node: Union[cst.Import, cst.ImportFrom], full_name: str
     ) -> Set[QualifiedName]:
-        module = ""
+        module = _NameUtil.get_module_name_for_import_alike(assignment_node)
         results = set()
-        if isinstance(assignment_node, cst.ImportFrom):
-            module_attr = assignment_node.module
-            if module_attr:
-                # TODO: for relative import, keep the relative Dot in the qualified name
-                module = get_full_name_for_node(module_attr)
         import_names = assignment_node.names
         if not isinstance(import_names, cst.ImportStar):
             for name in import_names:
@@ -308,7 +317,11 @@ class _NameUtil:
                 real_names = [".".join(parts[:i]) for i in range(len(parts), 0, -1)]
                 for real_name in real_names:
                     as_name = real_name
-                    if module:
+                    if module and module.endswith("."):
+                        # from . import a
+                        # real_name should be ".a"
+                        real_name = f"{module}{real_name}"
+                    elif module:
                         real_name = f"{module}.{real_name}"
                     if name and name.asname:
                         eval_alias = name.evaluated_alias

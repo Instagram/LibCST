@@ -29,8 +29,9 @@ class FullRepoManager:
         metadata provider like :class:`~libcst.metadata.TypeInferenceProvider`.
 
         :param paths: a collection of paths to access full repository data.
-        :param providers: a collection of metadata provider classes require accessing full repository
-            data, currently supports :class:`~libcst.metadata.TypeInferenceProvider`.
+        :param providers: a collection of metadata provider classes require accessing full repository data, currently supports
+        :class:`~libcst.metadata.TypeInferenceProvider` and
+        :class:`~libcst.metadata.FullyQualifiedNameProvider`.
         :param timeout: number of seconds. Raises `TimeoutExpired <https://docs.python.org/3/library/subprocess.html#subprocess.TimeoutExpired>`_
             when timeout.
         """

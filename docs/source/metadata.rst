@@ -203,9 +203,17 @@ We don't call it `fully qualified name <https://en.wikipedia.org/wiki/Fully_qual
 because the name refers to the current module which doesn't consider the hierarchy of
 code repository.
 
+For fully qualified names, there's :class:`~libcst.metadata.FullyQualifiedNameProvider`
+which is similar to the above but takes the current module's location (relative to some
+python root folder, usually the repository's root) into account.
+
+
 .. autoclass:: libcst.metadata.QualifiedNameSource
 .. autoclass:: libcst.metadata.QualifiedName
 .. autoclass:: libcst.metadata.QualifiedNameProvider
+   :no-undoc-members:
+   
+.. autoclass:: libcst.metadata.FullyQualifiedNameProvider
    :no-undoc-members:
 
 Parent Node Metadata
