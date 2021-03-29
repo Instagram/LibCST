@@ -1,3 +1,15 @@
+# 0.3.18 - 2021-03-29
+
+## Added
+- Add FlattenSentinel to support replacing a statement with multiple statements [#455](https://github.com/Instagram/LibCST/pull/455)
+- Add BuiltinScope [#469](https://github.com/Instagram/LibCST/pull/469)
+- Add FullyQualifiedNameProvider [#465](https://github.com/Instagram/LibCST/pull/465)
+
+## Updated
+- Split QualifiedNameProvider out from libcst.metadata.scope_provider [#464](https://github.com/Instagram/LibCST/pull/464)
+
+## Fixed
+- Exception while parsing escape character in raw f-strings [#462](https://github.com/Instagram/LibCST/issues/462)
 # 0.3.17 - 2021-02-08
 
 ## Updated
