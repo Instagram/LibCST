@@ -3,6 +3,7 @@
 *.pyc
 *.pyo
 *.egg-info/
+.eggs/
 .pyre/
 __pycache__/
 .tox/

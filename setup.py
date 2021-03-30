@@ -4,16 +4,10 @@
 # LICENSE file in the root directory of this source tree.
 
 
-import importlib.util
 from os import path
-from typing import TYPE_CHECKING
 
 import setuptools
 
-
-if TYPE_CHECKING:
-    from importlib.machinery import ModuleSpec
-    from types import ModuleType
 
 # Grab the readme so that our package stays in sync with github.
 this_directory: str = path.abspath(path.dirname(__file__))
@@ -22,7 +16,7 @@ with open(path.join(this_directory, "README.rst"), encoding="utf-8") as f:
 
 setuptools.setup(
     use_scm_version={
-        'write_to': 'libcst/_version.py',
+        "write_to": "libcst/_version.py",
     },
     name="libcst",
     description="A concrete syntax tree with AST-like properties for Python 3.5, 3.6, 3.7 and 3.8 programs.",
@@ -38,10 +32,14 @@ setuptools.setup(
     },
     test_suite="libcst",
     python_requires=">=3.6",
-    setup_requires=['setuptools_scm'],
+    setup_requires=["setuptools_scm"],
     install_requires=[dep.strip() for dep in open("requirements.txt").readlines()],
     extras_require={
-        "dev": [dep.strip() for dep in open("requirements-dev.txt").readlines() if "=" in dep],
+        "dev": [
+            dep.strip()
+            for dep in open("requirements-dev.txt").readlines()
+            if "=" in dep
+        ],
     },
     classifiers=[
         "License :: OSI Approved :: MIT License",
