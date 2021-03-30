@@ -10,6 +10,7 @@ docs/build/
 dist/
 docs/source/.ipynb_checkpoints/
 build/
+libcst/_version.py
 .coverage
 .hypothesis/
 .pyre_configuration

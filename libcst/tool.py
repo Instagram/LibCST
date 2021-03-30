@@ -801,7 +801,7 @@ def main(proc_name: str, cli_args: List[str]) -> int:
         "--version",
         help="Print current version of LibCST toolset.",
         action="version",
-        version=f"LibCST version {LIBCST_VERSION}",
+        version=f"LibCST version {LIBCST_VERSION}",  # pyre-ignore[16] pyre bug?
     )
     parser.add_argument(
         "action",
