@@ -408,18 +408,8 @@ mod tests {
                     parser: Box::new(parse_simple_whitespace),
                     lines: vec!["not whitespace\n", " another line\n"],
                     default_newline: "\n",
-                    start_state: State {
-                        line: 1,
-                        column: 0,
-                        absolute_indent: "".to_string(),
-                        is_parenthesized: false,
-                    },
-                    end_state: State {
-                        line: 1,
-                        column: 0,
-                        absolute_indent: "".to_string(),
-                        is_parenthesized: false,
-                    },
+                    start_state: Default::default(),
+                    end_state: Default::default(),
                     expected_node: new_simple_whitespace(py, "").unwrap(),
                 }
                 .test(py)
@@ -433,17 +423,10 @@ mod tests {
                     parser: Box::new(parse_simple_whitespace),
                     lines: vec!["\t  <-- There's some whitespace there\n"],
                     default_newline: "\n",
-                    start_state: State {
-                        line: 1,
-                        column: 0,
-                        absolute_indent: "".to_string(),
-                        is_parenthesized: false,
-                    },
+                    start_state: Default::default(),
                     end_state: State {
-                        line: 1,
                         column: 3,
-                        absolute_indent: "".to_string(),
-                        is_parenthesized: false,
+                        ..Default::default()
                     },
                     expected_node: new_simple_whitespace(py, "\t  ").unwrap(),
                 }
@@ -459,16 +442,12 @@ mod tests {
                     lines: vec!["prefix   "],
                     default_newline: "\n",
                     start_state: State {
-                        line: 1,
                         column: 6,
-                        absolute_indent: "".to_string(),
-                        is_parenthesized: false,
+                        ..Default::default()
                     },
                     end_state: State {
-                        line: 1,
                         column: 9,
-                        absolute_indent: "".to_string(),
-                        is_parenthesized: false,
+                        ..Default::default()
                     },
                     expected_node: new_simple_whitespace(py, "   ").unwrap(),
                 }
@@ -486,14 +465,12 @@ mod tests {
                     start_state: State {
                         line: 1,
                         column: 6,
-                        absolute_indent: "".to_string(),
-                        is_parenthesized: false,
+                        ..Default::default()
                     },
                     end_state: State {
                         line: 3,
                         column: 4,
-                        absolute_indent: "".to_string(),
-                        is_parenthesized: false,
+                        ..Default::default()
                     },
                     expected_node: new_simple_whitespace(py, " \\\n    \\\n    ").unwrap(),
                 }
@@ -520,18 +497,8 @@ mod tests {
                     parser: Box::new(parse_empty_lines_no_override),
                     lines: vec!["this is not an empty line"],
                     default_newline: "\n",
-                    start_state: State {
-                        line: 1,
-                        column: 0,
-                        absolute_indent: "".to_string(),
-                        is_parenthesized: false,
-                    },
-                    end_state: State {
-                        line: 1,
-                        column: 0,
-                        absolute_indent: "".to_string(),
-                        is_parenthesized: false,
-                    },
+                    start_state: Default::default(),
+                    end_state: Default::default(),
                     expected_node: PyTuple::new(py, Vec::<&PyAny>::new()),
                 }
                 .test(py)
@@ -549,13 +516,13 @@ mod tests {
                         line: 1,
                         column: 0,
                         absolute_indent: "    ".to_string(),
-                        is_parenthesized: false,
+                        ..Default::default()
                     },
                     end_state: State {
                         line: 2,
                         column: 0,
                         absolute_indent: "    ".to_string(),
-                        is_parenthesized: false,
+                        ..Default::default()
                     },
                     expected_node: PyTuple::new(
                         py,
@@ -590,13 +557,13 @@ mod tests {
                         line: 1,
                         column: 0,
                         absolute_indent: "    ".to_string(),
-                        is_parenthesized: false,
+                        ..Default::default()
                     },
                     end_state: State {
                         line: 5,
                         column: 47,
                         absolute_indent: "    ".to_string(),
-                        is_parenthesized: false,
+                        ..Default::default()
                     },
                     expected_node: PyTuple::new(
                         py,
@@ -661,17 +628,11 @@ mod tests {
                     parser: Box::new(parse_empty_lines_no_override),
                     lines: vec!["\n", "\r\n", "\r"],
                     default_newline: "\n",
-                    start_state: State {
-                        line: 1,
-                        column: 0,
-                        absolute_indent: "".to_string(),
-                        is_parenthesized: false,
-                    },
+                    start_state: Default::default(),
                     end_state: State {
                         line: 3,
                         column: 1,
-                        absolute_indent: "".to_string(),
-                        is_parenthesized: false,
+                        ..Default::default()
                     },
                     expected_node: PyTuple::new(
                         py,
@@ -721,14 +682,12 @@ mod tests {
                     start_state: State {
                         line: 1,
                         column: 9,
-                        absolute_indent: "".to_string(),
-                        is_parenthesized: false,
+                        ..Default::default()
                     },
                     end_state: State {
                         line: 1,
                         column: 21,
-                        absolute_indent: "".to_string(),
-                        is_parenthesized: false,
+                        ..Default::default()
                     },
                     expected_node: new_trailing_whitespace(
                         py,

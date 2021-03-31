@@ -18,6 +18,8 @@ pub struct WhitespaceState {
     pub absolute_indent: String,
     #[pyo3(get, set)]
     pub is_parenthesized: bool,
+
+    pub byte_offset: usize,
 }
 
 impl Default for WhitespaceState {
@@ -27,6 +29,7 @@ impl Default for WhitespaceState {
             column: 0,
             absolute_indent: "".to_string(),
             is_parenthesized: false,
+            byte_offset: 0,
         }
     }
 }
@@ -40,6 +43,7 @@ impl WhitespaceState {
             column,
             absolute_indent,
             is_parenthesized,
+            byte_offset: 0,
         }
     }
 }

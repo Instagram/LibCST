@@ -7,6 +7,7 @@
 mod macros;
 
 mod debug_utils;
+pub mod parser;
 mod parser_config;
 mod py_cached;
 mod token_type;

@@ -1,0 +1,160 @@
+use crate::tokenize::core::{TokConfig, TokError, TokState, TokType, Token, TokenIterator};
+use peg::{Parse, ParseElem, ParseLiteral, RuleResult};
+use thiserror::Error;
+
+mod whitespace;
+pub use whitespace::{
+    parse_empty_lines, parse_simple_whitespace, parse_trailing_whitespace, Comment, Config,
+    EmptyLine, Newline, SimpleWhitespace, TrailingWhitespace, WhitespaceError,
+};
+mod statement;
+pub use statement::{Decorator, FunctionDef, Statement};
+
+mod expression;
+pub use expression::{Name, Param, Parameters};
+
+mod op;
+pub use op::Semicolon;
+
+mod grammar;
+use grammar::python;
+mod codegen;
+pub use codegen::{Codegen, CodegenState};
+
+#[derive(Debug, Error, PartialEq, Eq)]
+pub enum ParserError<'a> {
+    #[error("tokenizer error")]
+    TokenizerError(TokError<'a>),
+    #[error("parser error")]
+    ParserError(peg::error::ParseError<usize>),
+    #[error(transparent)]
+    WhitespaceError(#[from] WhitespaceError),
+}
+
+type Result<'a, T> = std::result::Result<T, ParserError<'a>>;
+
+#[derive(Debug, Eq, PartialEq)]
+pub struct Module<'a> {
+    body: Vec<Statement<'a>>,
+}
+
+impl<'a> Codegen for Module<'a> {
+    fn codegen(&self, state: &mut CodegenState) -> () {
+        for s in &self.body {
+            s.codegen(state);
+        }
+    }
+}
+
+pub fn parse_module<'a>(module_text: &'a str) -> Result<'a, Module> {
+    let iter = TokenIterator::new(
+        module_text,
+        &TokConfig {
+            async_hacks: false,
+            split_fstring: true,
+        },
+    );
+
+    let result = iter
+        .collect::<std::result::Result<Vec<_>, _>>()
+        .map_err(|e| ParserError::TokenizerError(e))?
+        .into();
+
+    let conf = Config {
+        default_newline: "\n",
+        input: module_text,
+        lines: module_text.lines().collect(),
+    };
+    python::file(&result, &conf).or_else(|e| Err(ParserError::ParserError(e)))
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    #[test]
+    fn test_simple() {
+        let n = parse_module("1_");
+        assert_eq!(
+            n.err().unwrap(),
+            ParserError::TokenizerError(TokError::BadDecimal)
+        );
+    }
+
+    #[test]
+    fn test_bare_minimum_funcdef() {
+        let m = parse_module("def f(): ...");
+        assert_eq!(
+            m,
+            Ok(Module {
+                body: vec![Statement::FunctionDef(FunctionDef {
+                    name: Name { value: "f" },
+                    params: Default::default(),
+                    decorators: vec![],
+                    whitespace_after_def: SimpleWhitespace(" "),
+                    whitespace_after_name: Default::default(),
+                    whitespace_before_colon: Default::default(),
+                })]
+            })
+        );
+    }
+
+    #[test]
+    fn test_decorated_funcdef() {
+        let text = "@hello\ndef f(): ...";
+        let m = parse_module(text);
+        assert_eq!(
+            m,
+            Ok(Module {
+                body: vec![Statement::FunctionDef(FunctionDef {
+                    name: Name { value: "f" },
+                    params: Default::default(),
+                    decorators: vec![Decorator {
+                        decorator: Name { value: "hello" },
+                        ..Default::default()
+                    }],
+                    whitespace_after_def: SimpleWhitespace(" "),
+                    whitespace_after_name: Default::default(),
+                    whitespace_before_colon: Default::default(),
+                })]
+            })
+        );
+        let mut state = CodegenState {
+            default_newline: "\n".to_string(),
+            ..Default::default()
+        };
+        match &m.unwrap().body[0] {
+            Statement::FunctionDef(f) => f.codegen(&mut state),
+            _ => {}
+        }
+        assert_eq!(state.to_string(), text);
+    }
+
+    #[test]
+    fn test_funcdef_params() {
+        let m = parse_module("def g(a, b): ...");
+        assert_eq!(
+            m,
+            Ok(Module {
+                body: vec![Statement::FunctionDef(FunctionDef {
+                    name: Name { value: "g" },
+                    params: Parameters {
+                        params: vec![
+                            Param {
+                                name: Name { value: "a" },
+                                ..Default::default()
+                            },
+                            Param {
+                                name: Name { value: "b" },
+                                ..Default::default()
+                            }
+                        ]
+                    },
+                    decorators: Default::default(),
+                    whitespace_after_def: SimpleWhitespace(" "),
+                    whitespace_after_name: Default::default(),
+                    whitespace_before_colon: Default::default(),
+                })]
+            })
+        );
+    }
+}

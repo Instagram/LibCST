@@ -60,12 +60,17 @@ mod string_types;
 
 use once_cell::sync::Lazy;
 use regex::Regex;
+use std::borrow::BorrowMut;
 use std::cmp::Ordering;
 use std::convert::TryInto;
+use std::fmt::Debug;
+use std::fmt::Formatter;
+use std::fmt::Pointer;
 
 use crate::tokenize::core::string_types::{FStringNode, StringQuoteChar, StringQuoteSize};
 use crate::tokenize::operators::OPERATOR_RE;
 use crate::tokenize::text_position::{TextPosition, TextPositionSnapshot};
+use crate::whitespace_state::WhitespaceState;
 
 /// The maximum number of indentation levels at any given point in time. CPython's tokenizer.c caps
 /// this to avoid the complexity of allocating a dynamic array, but we're using a Vec, so it's not
@@ -96,7 +101,7 @@ static BINARY_TAIL_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"\A(_?[01])+").exp
 static UNICODE_IDENTIFIER_RE: Lazy<Regex> =
     Lazy::new(|| Regex::new(r"\A[\p{XID_Start}_]\p{XID_Continue}*\z").expect("regex"));
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Eq, PartialEq, Copy, Clone)]
 pub enum TokType {
     String,
     Name,
@@ -331,7 +336,9 @@ impl<'t> TokState<'t> {
                 Some('\n') => {
                     self.text_pos.next();
                     self.at_bol = true;
-                    if self.split_fstring && !self.fstring_stack.iter().all(|node| node.allow_multiline()) {
+                    if self.split_fstring
+                        && !self.fstring_stack.iter().all(|node| node.allow_multiline())
+                    {
                         Err(TokError::UnterminatedString)
                     } else if self.blank_line || !self.paren_stack.is_empty() {
                         // this newline doesn't count
@@ -988,4 +995,113 @@ fn verify_identifier(name: &str) -> bool {
     // Common case: If the entire string is ascii, we can avoid the more expensive regex check,
     // since the tokenizer already validates ascii characters before calling us.
     name.is_ascii() || UNICODE_IDENTIFIER_RE.is_match(name)
+}
+
+#[derive(Clone)]
+pub struct Token<'a> {
+    pub r#type: TokType,
+    pub string: &'a str,
+    pub start_pos: TextPositionSnapshot,
+    pub end_pos: TextPositionSnapshot,
+    pub whitespace_before: WhitespaceState,
+    pub whitespace_after: WhitespaceState,
+    pub relative_indent: Option<&'a str>,
+}
+
+impl<'a> Debug for Token<'a> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), std::fmt::Error> {
+        write!(
+            f,
+            "Token({:?}, {}, start={:?}, end={:?}, relative_indent={:?}",
+            self.r#type, self.string, self.start_pos, self.end_pos, self.relative_indent
+        )
+    }
+}
+
+pub struct TokenIterator<'a> {
+    previous_whitespace: Option<WhitespaceState>,
+    core_state: TokState<'a>,
+    absolute_indents: Vec<&'a str>,
+}
+
+impl<'a> TokenIterator<'a> {
+    pub fn new(module_text: &'a str, config: &TokConfig) -> Self {
+        Self {
+            previous_whitespace: None,
+            absolute_indents: vec![],
+            core_state: TokState::new(module_text, config),
+        }
+    }
+}
+
+impl<'a> Iterator for TokenIterator<'a> {
+    type Item = Result<Token<'a>, TokError<'a>>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let next = self.core_state.next();
+        if next.is_none() {
+            return None;
+        }
+        Some((|| {
+            let tok_type = next.unwrap()?;
+            let relative_indent = match tok_type {
+                TokType::Indent => {
+                    let end_idx = self.core_state.text_pos.byte_idx();
+                    let start_idx = end_idx - self.core_state.bol_width;
+                    let absolute_indent = &self.core_state.text_pos.text()[start_idx..end_idx];
+                    let relative_indent =
+                        if let Some(prev_absolute_indent) = self.absolute_indents.last() {
+                            if let Some(ri) = absolute_indent.strip_prefix(prev_absolute_indent) {
+                                ri
+                            } else {
+                                // TODO: return the correct exception type, improve error message
+                                return Err(TokError::Dedent);
+                            }
+                        } else {
+                            // there's no previous indent, absolute_indent is relative_indent
+                            absolute_indent
+                        };
+                    self.absolute_indents.push(absolute_indent);
+                    // HACKY: mutate and fixup the previous whitespace state
+                    if let Some(ws) = self.previous_whitespace.as_mut() {
+                        ws.absolute_indent = absolute_indent.to_string();
+                    }
+                    Some(relative_indent)
+                }
+                TokType::Dedent => {
+                    self.absolute_indents.pop();
+                    // HACKY: mutate and fixup the previous whitespace state
+                    if let Some(ws) = self.previous_whitespace.as_mut() {
+                        ws.absolute_indent =
+                            self.absolute_indents.last().unwrap_or(&"").to_string();
+                    }
+                    None
+                }
+                _ => None,
+            };
+            let text_pos = &self.core_state.text_pos;
+            let whitespace_before = self.previous_whitespace.clone().unwrap_or_default();
+            let whitespace_after = match tok_type {
+                TokType::Indent | TokType::Dedent | TokType::EndMarker => whitespace_before.clone(),
+                _ => WhitespaceState {
+                    line: text_pos.line_number(),
+                    column: text_pos.char_column_number(),
+                    byte_offset: text_pos.byte_idx(),
+                    absolute_indent: self.absolute_indents.last().unwrap_or(&"").to_string(),
+                    is_parenthesized: self.core_state.is_parenthesized(),
+                },
+            };
+            self.previous_whitespace = Some(whitespace_after.clone());
+
+            Ok(Token {
+                r#type: tok_type,
+                string: text_pos.slice_from_start_pos(&self.core_state.start_pos),
+                start_pos: self.core_state.start_pos.clone(),
+                end_pos: text_pos.into(),
+                whitespace_after: whitespace_after.clone(),
+                whitespace_before: whitespace_before.clone(),
+                relative_indent,
+            })
+        })())
+    }
 }

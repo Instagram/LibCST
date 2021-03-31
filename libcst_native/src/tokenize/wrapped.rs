@@ -188,15 +188,11 @@ impl<'t> TokenIterator<'t> {
             .previous_whitespace_state
             .as_ref()
             .map(|pws| pws.clone_ref(py))
-            .unwrap_or(Py::new(
-                py,
-                WhitespaceState {
-                    line: 1,
-                    column: 0,
-                    absolute_indent: "".to_string(),
-                    is_parenthesized: false,
-                },
-            )?);
+            .ok_or(())
+            .or_else(|_| {
+                let ws: WhitespaceState = Default::default();
+                Py::new(py, ws)
+            })?;
 
         let whitespace_after =
             if let TokType::Indent | TokType::Dedent | TokType::EndMarker = tok_type {
@@ -213,6 +209,7 @@ impl<'t> TokenIterator<'t> {
                     WhitespaceState {
                         line: self.core_state.text_pos.line_number(),
                         column: self.core_state.text_pos.char_column_number(),
+                        byte_offset: self.core_state.text_pos.byte_idx(),
                         absolute_indent: self.absolute_indents.last().unwrap_or(&"").to_string(),
                         is_parenthesized: self.core_state.is_parenthesized(),
                     },
