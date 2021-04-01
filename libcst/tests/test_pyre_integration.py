@@ -123,13 +123,13 @@ if __name__ == "__main__":
     stdout: str
     stderr: str
     return_code: int
-    stdout, stderr, return_code = run_command("pyre start")
+    stdout, stderr, return_code = run_command(["pyre", "start"])
     if return_code != 0:
         print(stdout)
         print(stderr)
 
     for path in TEST_SUITE_PATH.glob("*.py"):
-        cmd = f'''pyre query "types(path='{path}')"'''
+        cmd = ["pyre", "query", f'''"types(path='{path}')"''']
         print(cmd)
         stdout, stderr, return_code = run_command(cmd)
         if return_code != 0:
