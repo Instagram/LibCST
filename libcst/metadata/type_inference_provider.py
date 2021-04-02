@@ -57,10 +57,11 @@ class TypeInferenceProvider(BatchableMetadataProvider[str]):
         root_path: Path, paths: List[str], timeout: Optional[int]
     ) -> Mapping[str, object]:
         params = ",".join(f"path='{root_path / path}'" for path in paths)
-        cmd = f'''pyre --noninteractive query "types({params})"'''
+        cmd_args = ["pyre", "--noninteractive", "query", f'"types({params})"']
         try:
-            stdout, stderr, return_code = run_command(cmd, timeout=timeout)
+            stdout, stderr, return_code = run_command(cmd_args, timeout=timeout)
         except subprocess.TimeoutExpired as exc:
+
             raise exc
 
         if return_code != 0:
@@ -101,12 +102,11 @@ class TypeInferenceProvider(BatchableMetadataProvider[str]):
         self._parse_metadata(node)
 
 
-def run_command(command: str, timeout: Optional[int] = None) -> Tuple[str, str, int]:
-    process = subprocess.Popen(
-        command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True
-    )
-    stdout, stderr = process.communicate(timeout=timeout)
-    return stdout.decode(), stderr.decode(), process.returncode
+def run_command(
+    cmd_args: List[str], timeout: Optional[int] = None
+) -> Tuple[str, str, int]:
+    process = subprocess.run(cmd_args, capture_output=True, timeout=timeout)
+    return process.stdout.decode(), process.stderr.decode(), process.returncode
 
 
 class RawPyreData(TypedDict):
