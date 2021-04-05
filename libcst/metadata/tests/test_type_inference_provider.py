@@ -66,3 +66,7 @@ class TypeInferenceProviderTest(UnitTest):
             cache={TypeInferenceProvider: data},
         )
         _test_simple_class_helper(self, wrapper)
+
+    def test_with_empty_cache(self):
+        tip = TypeInferenceProvider({})
+        self.assertEqual(tip.lookup, {})

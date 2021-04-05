@@ -75,7 +75,8 @@ class TypeInferenceProvider(BatchableMetadataProvider[str]):
     def __init__(self, cache: PyreData) -> None:
         super().__init__(cache)
         lookup: Dict[CodeRange, str] = {}
-        for item in cache["types"]:
+        cache_types = cache.get("types", [])
+        for item in cache_types:
             location = item["location"]
             start = location["start"]
             end = location["stop"]
