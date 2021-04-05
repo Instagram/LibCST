@@ -32,7 +32,7 @@ class InferredType(TypedDict):
     annotation: str
 
 
-class PyreData(TypedDict):
+class PyreData(TypedDict, total=False):
     types: Sequence[InferredType]
 
 
