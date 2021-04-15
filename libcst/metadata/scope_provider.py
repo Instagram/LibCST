@@ -522,13 +522,17 @@ class Scope(abc.ABC):
             if isinstance(assignment, Assignment):
                 assignment_node = assignment.node
                 if isinstance(assignment_node, (cst.Import, cst.ImportFrom)):
-                    results |= _NameUtil.find_qualified_name_for_import_alike(
+                    names = _NameUtil.find_qualified_name_for_import_alike(
                         assignment_node, full_name
                     )
                 else:
-                    results |= _NameUtil.find_qualified_name_for_non_import(
+                    names = _NameUtil.find_qualified_name_for_non_import(
                         assignment, full_name
                     )
+                if assignment_node is node:
+                    return names
+                else:
+                    results |= names
             elif isinstance(assignment, BuiltinAssignment):
                 results.add(
                     QualifiedName(
