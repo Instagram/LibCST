@@ -406,15 +406,9 @@ class QualifiedNameProviderTest(UnitTest):
         self.assertEqual(
             names[first_f], {QualifiedName("f", QualifiedNameSource.LOCAL)}
         )
-        self.assertEqual(
-            names[second_f], {QualifiedName("b.f", QualifiedNameSource.IMPORT)}
-        )
-        self.assertEqual(
-            names[third_f], {QualifiedName("f", QualifiedNameSource.IMPORT)}
-        )
-        self.assertEqual(
-            names[fourth_f], {QualifiedName("a.b", QualifiedNameSource.IMPORT)}
-        )
+        self.assertEqual(names[second_f], set())
+        self.assertEqual(names[third_f], set())
+        self.assertEqual(names[fourth_f], set())
         self.assertEqual(
             names[call],
             {
