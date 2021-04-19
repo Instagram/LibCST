@@ -529,7 +529,7 @@ class Scope(abc.ABC):
                     names = _NameUtil.find_qualified_name_for_non_import(
                         assignment, full_name
                     )
-                if assignment_node is node:
+                if not isinstance(node, str) and _is_assignment(node, assignment_node):
                     return names
                 else:
                     results |= names
@@ -751,6 +751,30 @@ def _gen_dotted_names(
                 yield from name_values
 
 
+def _is_assignment(node: cst.CSTNode, assignment_node: cst.CSTNode) -> bool:
+    """
+    Returns true if ``node`` is part of the assignment at ``assignment_node``.
+
+    Normally this is just a simple identity check, except for imports where the
+    assignment is attached to the entire import statement but we are interested in
+    ``Name`` nodes inside the statement.
+    """
+    if node is assignment_node:
+        return True
+    if isinstance(assignment_node, (cst.Import, cst.ImportFrom)):
+        aliases = assignment_node.names
+        if isinstance(aliases, cst.ImportStar):
+            return False
+        for alias in aliases:
+            if alias.name is node:
+                return True
+            asname = alias.asname
+            if asname is not None:
+                if asname.name is node:
+                    return True
+    return False
+
+
 class ScopeVisitor(cst.CSTVisitor):
     # since it's probably not useful. That can makes this visitor cleaner.
     def __init__(self, provider: "ScopeProvider") -> None:
@@ -793,9 +817,11 @@ class ScopeVisitor(cst.CSTVisitor):
         # make sure node.names is Sequence[ImportAlias]
         for name in names:
             self.provider.set_metadata(name, self.scope)
+            self.provider.set_metadata(name.name, self.scope)
             asname = name.asname
             if asname is not None:
                 name_values = _gen_dotted_names(cst.ensure_type(asname.name, cst.Name))
+                self.provider.set_metadata(asname.name, self.scope)
             else:
                 name_values = _gen_dotted_names(name.name)
 
