@@ -826,9 +826,11 @@ class ScopeVisitor(cst.CSTVisitor):
         # make sure node.names is Sequence[ImportAlias]
         for name in names:
             self.provider.set_metadata(name, self.scope)
+            self.provider.set_metadata(name.name, self.scope)
             asname = name.asname
             if asname is not None:
                 name_values = _gen_dotted_names(cst.ensure_type(asname.name, cst.Name))
+                self.provider.set_metadata(asname.name, self.scope)
             else:
                 name_values = _gen_dotted_names(name.name)
 
