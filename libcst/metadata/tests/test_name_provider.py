@@ -352,6 +352,73 @@ class QualifiedNameProviderTest(UnitTest):
             names[attribute], {QualifiedName("a.aa.aaa", QualifiedNameSource.IMPORT)}
         )
 
+    def test_multiple_qualified_names(self) -> None:
+        m, names = get_qualified_name_metadata_provider(
+            """
+            if False:
+                def f(): pass
+            elif False:
+                from b import f
+            else:
+                import f
+            import a.b as f
+            
+            f()
+            """
+        )
+        if_ = ensure_type(m.body[0], cst.If)
+        first_f = ensure_type(if_.body.body[0], cst.FunctionDef)
+        second_f_alias = ensure_type(
+            ensure_type(
+                ensure_type(if_.orelse, cst.If).body.body[0],
+                cst.SimpleStatementLine,
+            ).body[0],
+            cst.ImportFrom,
+        ).names
+        self.assertFalse(isinstance(second_f_alias, cst.ImportStar))
+        second_f = second_f_alias[0].name
+        third_f_alias = ensure_type(
+            ensure_type(
+                ensure_type(ensure_type(if_.orelse, cst.If).orelse, cst.Else).body.body[
+                    0
+                ],
+                cst.SimpleStatementLine,
+            ).body[0],
+            cst.Import,
+        ).names
+        self.assertFalse(isinstance(third_f_alias, cst.ImportStar))
+        third_f = third_f_alias[0].name
+        fourth_f = ensure_type(
+            ensure_type(
+                ensure_type(m.body[1], cst.SimpleStatementLine).body[0], cst.Import
+            )
+            .names[0]
+            .asname,
+            cst.AsName,
+        ).name
+        call = ensure_type(
+            ensure_type(
+                ensure_type(m.body[2], cst.SimpleStatementLine).body[0], cst.Expr
+            ).value,
+            cst.Call,
+        )
+
+        self.assertEqual(
+            names[first_f], {QualifiedName("f", QualifiedNameSource.LOCAL)}
+        )
+        self.assertEqual(names[second_f], set())
+        self.assertEqual(names[third_f], set())
+        self.assertEqual(names[fourth_f], set())
+        self.assertEqual(
+            names[call],
+            {
+                QualifiedName("f", QualifiedNameSource.IMPORT),
+                QualifiedName("b.f", QualifiedNameSource.IMPORT),
+                QualifiedName("f", QualifiedNameSource.LOCAL),
+                QualifiedName("a.b", QualifiedNameSource.IMPORT),
+            },
+        )
+
 
 class FullyQualifiedNameProviderTest(UnitTest):
     def test_builtins(self) -> None:

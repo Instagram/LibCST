@@ -522,13 +522,17 @@ class Scope(abc.ABC):
             if isinstance(assignment, Assignment):
                 assignment_node = assignment.node
                 if isinstance(assignment_node, (cst.Import, cst.ImportFrom)):
-                    results |= _NameUtil.find_qualified_name_for_import_alike(
+                    names = _NameUtil.find_qualified_name_for_import_alike(
                         assignment_node, full_name
                     )
                 else:
-                    results |= _NameUtil.find_qualified_name_for_non_import(
+                    names = _NameUtil.find_qualified_name_for_non_import(
                         assignment, full_name
                     )
+                if not isinstance(node, str) and _is_assignment(node, assignment_node):
+                    return names
+                else:
+                    results |= names
             elif isinstance(assignment, BuiltinAssignment):
                 results.add(
                     QualifiedName(
@@ -745,6 +749,30 @@ def _gen_dotted_names(
                 yield f"{next_name}.{node.attr.value}", node
                 yield next_name, next_node
                 yield from name_values
+
+
+def _is_assignment(node: cst.CSTNode, assignment_node: cst.CSTNode) -> bool:
+    """
+    Returns true if ``node`` is part of the assignment at ``assignment_node``.
+
+    Normally this is just a simple identity check, except for imports where the
+    assignment is attached to the entire import statement but we are interested in
+    ``Name`` nodes inside the statement.
+    """
+    if node is assignment_node:
+        return True
+    if isinstance(assignment_node, (cst.Import, cst.ImportFrom)):
+        aliases = assignment_node.names
+        if isinstance(aliases, cst.ImportStar):
+            return False
+        for alias in aliases:
+            if alias.name is node:
+                return True
+            asname = alias.asname
+            if asname is not None:
+                if asname.name is node:
+                    return True
+    return False
 
 
 class ScopeVisitor(cst.CSTVisitor):
