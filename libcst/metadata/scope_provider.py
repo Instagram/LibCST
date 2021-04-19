@@ -482,12 +482,19 @@ class Scope(abc.ABC):
     ) -> Collection[QualifiedName]:
         """Get all :class:`~libcst.metadata.QualifiedName` in current scope given a
         :class:`~libcst.CSTNode`.
+
+        If the given :class:`~libcst.CSTNode` is declaring a new name (recorded by
+        :class:`~libcst.metadata.Assignment`), only a single
+        :class:`~libcst.metadata.QualifiedName` is returned that corresponds to this new
+        name.
+
         The source of a qualified name can be either :attr:`QualifiedNameSource.IMPORT`,
-        :attr:`QualifiedNameSource.BUILTIN` or :attr:`QualifiedNameSource.LOCAL`.
-        Given the following example, ``c`` has qualified name ``a.b.c`` with source ``IMPORT``,
-        ``f`` has qualified name ``Cls.f`` with source ``LOCAL``, ``a`` has qualified name
-        ``Cls.f.<locals>.a``, ``i`` has qualified name ``Cls.f.<locals>.<comprehension>.i``,
-        and the builtin ``int`` has qualified name ``builtins.int`` with source ``BUILTIN``::
+        :attr:`QualifiedNameSource.BUILTIN` or :attr:`QualifiedNameSource.LOCAL`. Given
+        the following example, ``c`` has qualified name ``a.b.c`` with source
+        ``IMPORT``, ``f`` has qualified name ``Cls.f`` with source ``LOCAL``, ``a`` has
+        qualified name ``Cls.f.<locals>.a``, ``i`` has qualified name
+        ``Cls.f.<locals>.<comprehension>.i``, and the builtin ``int`` has qualified name
+        ``builtins.int`` with source ``BUILTIN``::
 
             from a.b import c
             class Cls:
@@ -496,17 +503,19 @@ class Scope(abc.ABC):
                     a = int("1")
                     [i for i in c()]
 
-        We extends `PEP-3155 <https://www.python.org/dev/peps/pep-3155/>`_
-        (defines ``__qualname__`` for class and function only; function namespace is followed
-        by a ``<locals>``) to provide qualified name for all :class:`~libcst.CSTNode`
-        recorded by :class:`~libcst.metadata.Assignment` and :class:`~libcst.metadata.Access`.
-        The namespace of a comprehension (:class:`~libcst.ListComp`, :class:`~libcst.SetComp`,
-        :class:`~libcst.DictComp`) is represented with ``<comprehension>``.
+        We extend `PEP-3155 <https://www.python.org/dev/peps/pep-3155/>`_ (defines
+        ``__qualname__`` for class and function only; function namespace is followed by
+        a ``<locals>``) to provide qualified name for all :class:`~libcst.CSTNode`
+        recorded by :class:`~libcst.metadata.Assignment` and
+        :class:`~libcst.metadata.Access`. The namespace of a comprehension
+        (:class:`~libcst.ListComp`, :class:`~libcst.SetComp`, :class:`~libcst.DictComp`)
+        is represented with ``<comprehension>``.
 
-        An imported name may be used for type annotation with :class:`~libcst.SimpleString` and
-        currently resolving the qualified given :class:`~libcst.SimpleString` is not supported
-        considering it could be a complex type annotation in the string which is hard to
-        resolve, e.g. ``List[Union[int, str]]``.
+        An imported name may be used for type annotation with
+        :class:`~libcst.SimpleString` and currently resolving the qualified given
+        :class:`~libcst.SimpleString` is not supported considering it could be a complex
+        type annotation in the string which is hard to resolve, e.g. ``List[Union[int,
+        str]]``.
         """
         results = set()
         full_name = get_full_name_for_node(node)
