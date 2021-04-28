@@ -95,8 +95,8 @@ def _module_name(path: str) -> Optional[str]:
 class FullyQualifiedNameProvider(BatchableMetadataProvider[Collection[QualifiedName]]):
     """
     Provide fully qualified names for CST nodes. Like :class:`QualifiedNameProvider`,
-    but the provided :class:`QualifiedName`s have absolute identifier names instead of
-    local to the current module.
+    but the provided :class:`QualifiedName` instances have absolute identifier names
+    instead of local to the current module.
 
     This provider is initialized with the current module's fully qualified name, and can
     be used with :class:`~libcst.metadata.FullRepoManager`. The module's fully qualified
