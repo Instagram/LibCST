@@ -1082,6 +1082,10 @@ class ScopeProviderTest(UnitTest):
         self.assertEqual(len(assignment.references), 1)
         references = list(assignment.references)
         self.assertTrue(references[0].is_annotation)
+        reference_node = references[0].node
+        self.assertIsInstance(reference_node, cst.SimpleString)
+        if isinstance(reference_node, cst.SimpleString):
+            self.assertEqual(reference_node.evaluated_value, "B")
 
         assignment = list(scope["C"])[0]
         self.assertIsInstance(assignment, Assignment)
@@ -1104,6 +1108,10 @@ class ScopeProviderTest(UnitTest):
         references = list(assignment.references)
         self.assertFalse(references[0].is_annotation)
         self.assertTrue(references[0].is_type_hint)
+        reference_node = references[0].node
+        self.assertIsInstance(reference_node, cst.SimpleString)
+        if isinstance(reference_node, cst.SimpleString):
+            self.assertEqual(reference_node.evaluated_value, "E")
 
         assignment = list(scope["E2"])[0]
         self.assertIsInstance(assignment, Assignment)
@@ -1119,6 +1127,10 @@ class ScopeProviderTest(UnitTest):
         references = list(assignment.references)
         self.assertFalse(references[0].is_annotation)
         self.assertTrue(references[0].is_type_hint)
+        reference_node = references[0].node
+        self.assertIsInstance(reference_node, cst.SimpleString)
+        if isinstance(reference_node, cst.SimpleString):
+            self.assertEqual(reference_node.evaluated_value, "Optional[G]")
 
         assignment = list(scope["G2"])[0]
         self.assertIsInstance(assignment, Assignment)
@@ -1130,6 +1142,10 @@ class ScopeProviderTest(UnitTest):
         references = list(assignment.references)
         self.assertFalse(references[0].is_annotation)
         self.assertTrue(references[0].is_type_hint)
+        reference_node = references[0].node
+        self.assertIsInstance(reference_node, cst.SimpleString)
+        if isinstance(reference_node, cst.SimpleString):
+            self.assertEqual(reference_node.evaluated_value, "H")
 
         assignment = list(scope["I"])[0]
         self.assertIsInstance(assignment, Assignment)
@@ -1148,6 +1164,10 @@ class ScopeProviderTest(UnitTest):
         self.assertEqual(len(assignment.references), 1)
         references = list(assignment.references)
         self.assertFalse(references[0].is_annotation)
+        reference_node = references[0].node
+        self.assertIsInstance(reference_node, cst.SimpleString)
+        if isinstance(reference_node, cst.SimpleString):
+            self.assertEqual(reference_node.evaluated_value, "K")
 
         assignment = list(scope["K2"])[0]
         self.assertIsInstance(assignment, Assignment)
@@ -1157,11 +1177,63 @@ class ScopeProviderTest(UnitTest):
         self.assertIsInstance(assignment, Assignment)
         self.assertEqual(len(assignment.references), 1)
         references = list(assignment.references)
+        reference_node = references[0].node
+        self.assertIsInstance(reference_node, cst.SimpleString)
+        if isinstance(reference_node, cst.SimpleString):
+            self.assertEqual(reference_node.evaluated_value, "L")
 
         assignment = list(scope["M"])[0]
         self.assertIsInstance(assignment, Assignment)
         self.assertEqual(len(assignment.references), 1)
         references = list(assignment.references)
+
+    def test_insane_annotation_access(self) -> None:
+        m, scopes = get_scope_metadata_provider(
+            r"""
+                from typing import TypeVar
+                from a import G
+                TypeVar("G2", bound="Optional[\"G\"]")
+            """
+        )
+        imp = ensure_type(
+            ensure_type(m.body[1], cst.SimpleStatementLine).body[0], cst.ImportFrom
+        )
+        call = ensure_type(
+            ensure_type(
+                ensure_type(m.body[2], cst.SimpleStatementLine).body[0], cst.Expr
+            ).value,
+            cst.Call,
+        )
+        bound = call.args[1].value
+        scope = scopes[imp]
+        assignment = next(iter(scope["G"]))
+        self.assertIsInstance(assignment, Assignment)
+        self.assertEqual(len(assignment.references), 1)
+        self.assertEqual(list(assignment.references)[0].node, bound)
+
+    def test_dotted_annotation_access(self) -> None:
+        m, scopes = get_scope_metadata_provider(
+            r"""
+                from typing import TypeVar
+                import a.G
+                TypeVar("G2", bound="a.G")
+            """
+        )
+        imp = ensure_type(
+            ensure_type(m.body[1], cst.SimpleStatementLine).body[0], cst.Import
+        )
+        call = ensure_type(
+            ensure_type(
+                ensure_type(m.body[2], cst.SimpleStatementLine).body[0], cst.Expr
+            ).value,
+            cst.Call,
+        )
+        bound = call.args[1].value
+        scope = scopes[imp]
+        assignment = next(iter(scope["a.G"]))
+        self.assertIsInstance(assignment, Assignment)
+        self.assertEqual(len(assignment.references), 1)
+        self.assertEqual(list(assignment.references)[0].node, bound)
 
     def test_node_of_scopes(self) -> None:
         m, scopes = get_scope_metadata_provider(
