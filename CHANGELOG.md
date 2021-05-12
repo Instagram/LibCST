@@ -5,7 +5,7 @@
 - Tie accesses from string annotation to the string node [#483](https://github.com/Instagram/LibCST/pull/483) 
 ## Fixed
 - Fix leaking processes from TypeInferenceProvider [#474](https://github.com/Instagram/LibCST/pull/474)
-- Fix TypeInferenceProvider breakage with empty cache. [#476](https://github.com/Instagram/LibCST/pull/476)
+- Fix TypeInferenceProvider breakage with empty cache [#476](https://github.com/Instagram/LibCST/pull/476)
 - Fix formatting for link to QualifiedName class in docs [#480](https://github.com/Instagram/LibCST/pull/480) 
 
 # 0.3.18 - 2021-03-29
