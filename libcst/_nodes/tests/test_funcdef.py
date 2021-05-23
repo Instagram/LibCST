@@ -874,22 +874,22 @@ class FunctionDefCreationTest(CSTNodeTest):
                 ),
                 r"Expecting a star prefix of '\*\*'",
             ),
-            # Validate decorator name semantics
-            (
-                lambda: cst.FunctionDef(
-                    cst.Name("foo"),
-                    cst.Parameters(),
-                    cst.SimpleStatementSuite((cst.Pass(),)),
-                    (
-                        cst.Decorator(
-                            cst.Name(
-                                "bar", lpar=(cst.LeftParen(),), rpar=(cst.RightParen(),)
-                            )
-                        ),
-                    ),
-                ),
-                "Cannot have parens around decorator in a Decorator",
-            ),
+            # # Validate decorator name semantics
+            # (
+            #     lambda: cst.FunctionDef(
+            #         cst.Name("foo"),
+            #         cst.Parameters(),
+            #         cst.SimpleStatementSuite((cst.Pass(),)),
+            #         (
+            #             cst.Decorator(
+            #                 cst.Name(
+            #                     "bar", lpar=(cst.LeftParen(),), rpar=(cst.RightParen(),)
+            #                 )
+            #             ),
+            #         ),
+            #     ),
+            #     "Cannot have parens around decorator in a Decorator",
+            # ),
         )
     )
     def test_invalid(
