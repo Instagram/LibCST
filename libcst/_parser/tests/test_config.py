@@ -18,13 +18,13 @@ class ConfigTest(UnitTest):
             PythonVersionInfo(3, 1), _pick_compatible_python_version("3.1")
         )
         self.assertEqual(
-            PythonVersionInfo(3, 8), _pick_compatible_python_version("3.9")
+            PythonVersionInfo(3, 9), _pick_compatible_python_version("3.9")
         )
         self.assertEqual(
-            PythonVersionInfo(3, 8), _pick_compatible_python_version("3.10")
+            PythonVersionInfo(3, 9), _pick_compatible_python_version("3.10")
         )
         self.assertEqual(
-            PythonVersionInfo(3, 8), _pick_compatible_python_version("4.0")
+            PythonVersionInfo(3, 9), _pick_compatible_python_version("4.0")
         )
         with self.assertRaisesRegex(
             ValueError,
