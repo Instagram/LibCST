@@ -528,6 +528,34 @@ class FunctionDefCreationTest(CSTNodeTest):
                 "code": "@bar('123')\n@baz('456')\ndef foo(): pass\n",
                 "expected_position": CodeRange((3, 0), (3, 15)),
             },
+            {
+                "node": cst.FunctionDef(
+                    cst.Name("foo"),
+                    cst.Parameters(),
+                    cst.SimpleStatementSuite((cst.Pass(),)),
+                    (
+                        cst.Decorator(
+                            cst.Attribute(
+                                cst.Attribute(
+                                    cst.Subscript(
+                                        cst.Name("buttons"),
+                                        slice=[
+                                            cst.SubscriptElement(
+                                                cst.Index(cst.Integer("0"))
+                                            )
+                                        ],
+                                    ),
+                                    cst.Name("clicked"),
+                                ),
+                                cst.Name("connect"),
+                            ),
+                        ),
+                    ),
+                ),
+                "code": "@buttons[0].clicked.connect\ndef foo(): pass\n",
+                "expected_position": CodeRange((2, 0), (2, 15)),
+                "parser": parse_statement_as(python_version="3.9"),
+            },
             # Test indentation
             {
                 "node": DummyIndentedBlock(

@@ -1240,12 +1240,17 @@ def convert_classdef(config: ParserConfig, children: Sequence[Any]) -> Any:
         )
 
 
-@with_production("decorator", "'@' dotted_name [ '(' [arglist] ')' ] NEWLINE")
+@with_production(
+    "decorator", "'@' dotted_name [ '(' [arglist] ')' ] NEWLINE", version="<3.9"
+)
+@with_production("decorator", "'@' namedexpr_test NEWLINE", version=">=3.9")
 def convert_decorator(config: ParserConfig, children: Sequence[Any]) -> Any:
     atsign, name, *arglist, newline = children
     if not arglist:
-        # This is either a name or an attribute node, so just extract it.
-        decoratornode = name
+        # This is either a name or an attribute node, or we're in 3.9+ mode, so just extract it.
+        # Note: WithLeadingWhitespace, hence .value, which we handle through
+        # atsign.whitespace_after at the end of this func.
+        decoratornode = name.value
     else:
         # This needs to be converted into a call node, and we have the
         # arglist partial.

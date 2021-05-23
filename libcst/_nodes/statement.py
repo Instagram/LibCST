@@ -1451,18 +1451,20 @@ class Decorator(CSTNode):
     #: Optional trailing comment and newline following the decorator before the next line.
     trailing_whitespace: TrailingWhitespace = TrailingWhitespace.field()
 
-    def _validate(self) -> None:
-        decorator = self.decorator
-        if len(decorator.lpar) > 0 or len(decorator.rpar) > 0:
-            raise CSTValidationError(
-                "Cannot have parens around decorator in a Decorator."
-            )
-        if isinstance(decorator, Call) and not isinstance(
-            decorator.func, (Name, Attribute)
-        ):
-            raise CSTValidationError(
-                "Decorator call function must be Name or Attribute node."
-            )
+    # TODO: These only need to validate on <3.9, and ought to have test
+    # cases.
+    # def _validate(self) -> None:
+    #     decorator = self.decorator
+    #     if len(decorator.lpar) > 0 or len(decorator.rpar) > 0:
+    #         raise CSTValidationError(
+    #             "Cannot have parens around decorator in a Decorator."
+    #         )
+    #     if isinstance(decorator, Call) and not isinstance(
+    #         decorator.func, (Name, Attribute)
+    #     ):
+    #         raise CSTValidationError(
+    #             "Decorator call function must be Name or Attribute node."
+    #         )
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Decorator":
         return Decorator(
