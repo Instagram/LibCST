@@ -133,8 +133,9 @@ def is_value_of_type(  # noqa: C901 "too complex"
     #
     # Similarly, tuple subclasses tend to have pretty different behavior, and we should
     # fall back to the default check.
-    elif issubclass(expected_origin_type, Iterable) and not issubclass(
-        expected_origin_type, (str, bytes, Tuple)
+    elif expected_origin_type is Iterable or (
+        issubclass(expected_origin_type, Iterable)
+        and not issubclass(expected_origin_type, (str, bytes, Tuple))
     ):
         # We know this thing is *some* kind of Iterable, but we want to
         # allow subclasses. That means we want [1,2,3] to match both
