@@ -5,7 +5,7 @@ Matchers
 ========
 
 Matchers are provided as a way of asking whether a particular LibCST node and its
-children match the a particular shape. It is possible to write a visitor that
+children match a particular shape. It is possible to write a visitor that
 tracks attributes using ``visit_<Node>`` methods. It is also possible to implement
 manual instance checking and traversal of a node's children. However, both are
 cumbersome to write and hard to understand. Matchers offer a more concise way of
