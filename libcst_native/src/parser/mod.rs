@@ -10,7 +10,8 @@ use thiserror::Error;
 mod whitespace;
 pub use whitespace::{
     parse_empty_lines, parse_simple_whitespace, parse_trailing_whitespace, Comment, Config,
-    EmptyLine, Newline, SimpleWhitespace, TrailingWhitespace, WhitespaceError,
+    EmptyLine, Newline, SimpleWhitespace, State as WhitespaceState, TrailingWhitespace,
+    WhitespaceError,
 };
 mod statement;
 pub use statement::{Decorator, FunctionDef, Statement};

@@ -3,7 +3,6 @@
 // This source code is licensed under the MIT license found in the
 // LICENSE file in the root directory of this source tree.
 
-use crate::whitespace_state::WhitespaceState as State;
 use once_cell::sync::Lazy;
 use regex::Regex;
 use thiserror::Error;
@@ -278,6 +277,26 @@ pub struct ParenthesizedWhitespace<'a> {
     pub last_line: SimpleWhitespace<'a>,
 }
 
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct State<'a> {
+    pub line: usize,   // one-indexed (to match parso's behavior)
+    pub column: usize, // zero-indexed (to match parso's behavior)
+    pub absolute_indent: &'a str,
+    pub is_parenthesized: bool,
+    pub byte_offset: usize,
+}
+
+impl<'a> Default for State<'a> {
+    fn default() -> Self {
+        Self {
+            line: 1,
+            column: 0,
+            absolute_indent: "",
+            is_parenthesized: false,
+            byte_offset: 0,
+        }
+    }
+}
 // TODO
 pub struct Config<'a> {
     pub input: &'a str,

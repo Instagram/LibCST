@@ -60,17 +60,15 @@ mod string_types;
 
 use once_cell::sync::Lazy;
 use regex::Regex;
-use std::borrow::BorrowMut;
 use std::cmp::Ordering;
 use std::convert::TryInto;
 use std::fmt::Debug;
 use std::fmt::Formatter;
-use std::fmt::Pointer;
 
+use crate::parser::WhitespaceState;
 use crate::tokenize::core::string_types::{FStringNode, StringQuoteChar, StringQuoteSize};
 use crate::tokenize::operators::OPERATOR_RE;
 use crate::tokenize::text_position::{TextPosition, TextPositionSnapshot};
-use crate::whitespace_state::WhitespaceState;
 
 /// The maximum number of indentation levels at any given point in time. CPython's tokenizer.c caps
 /// this to avoid the complexity of allocating a dynamic array, but we're using a Vec, so it's not
@@ -1003,8 +1001,8 @@ pub struct Token<'a> {
     pub string: &'a str,
     pub start_pos: TextPositionSnapshot,
     pub end_pos: TextPositionSnapshot,
-    pub whitespace_before: WhitespaceState,
-    pub whitespace_after: WhitespaceState,
+    pub whitespace_before: WhitespaceState<'a>,
+    pub whitespace_after: WhitespaceState<'a>,
     pub relative_indent: Option<&'a str>,
 }
 
@@ -1019,7 +1017,7 @@ impl<'a> Debug for Token<'a> {
 }
 
 pub struct TokenIterator<'a> {
-    previous_whitespace: Option<WhitespaceState>,
+    previous_whitespace: Option<WhitespaceState<'a>>,
     core_state: TokState<'a>,
     absolute_indents: Vec<&'a str>,
 }
@@ -1064,7 +1062,7 @@ impl<'a> Iterator for TokenIterator<'a> {
                     self.absolute_indents.push(absolute_indent);
                     // HACKY: mutate and fixup the previous whitespace state
                     if let Some(ws) = self.previous_whitespace.as_mut() {
-                        ws.absolute_indent = absolute_indent.to_string();
+                        ws.absolute_indent = absolute_indent;
                     }
                     Some(relative_indent)
                 }
@@ -1072,8 +1070,7 @@ impl<'a> Iterator for TokenIterator<'a> {
                     self.absolute_indents.pop();
                     // HACKY: mutate and fixup the previous whitespace state
                     if let Some(ws) = self.previous_whitespace.as_mut() {
-                        ws.absolute_indent =
-                            self.absolute_indents.last().unwrap_or(&"").to_string();
+                        ws.absolute_indent = self.absolute_indents.last().unwrap_or(&"");
                     }
                     None
                 }
@@ -1087,7 +1084,7 @@ impl<'a> Iterator for TokenIterator<'a> {
                     line: text_pos.line_number(),
                     column: text_pos.char_column_number(),
                     byte_offset: text_pos.byte_idx(),
-                    absolute_indent: self.absolute_indents.last().unwrap_or(&"").to_string(),
+                    absolute_indent: self.absolute_indents.last().unwrap_or(&""),
                     is_parenthesized: self.core_state.is_parenthesized(),
                 },
             };
