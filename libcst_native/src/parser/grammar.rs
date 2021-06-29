@@ -3,6 +3,8 @@
 // This source code is licensed under the MIT license found in the
 // LICENSE file in the root directory of this source tree.
 
+use peg::str::LineCol;
+
 use super::*;
 use std::iter;
 
@@ -31,7 +33,7 @@ impl<'a> Into<TokVec<'a>> for Vec<Token<'a>> {
 }
 
 impl<'a> Parse for TokVec<'a> {
-    type PositionRepr = usize;
+    type PositionRepr = LineCol;
 
     fn start(&self) -> usize {
         0
@@ -42,7 +44,12 @@ impl<'a> Parse for TokVec<'a> {
     }
 
     fn position_repr(&self, pos: usize) -> Self::PositionRepr {
-        pos
+        let tok = &self.0[pos];
+        LineCol {
+            line: tok.start_pos.line_number(),
+            column: tok.start_pos.char_column_number(),
+            offset: tok.start_pos.byte_idx(),
+        }
     }
 }
 
@@ -71,6 +78,9 @@ impl<'a> ParseLiteral for TokVec<'a> {
 peg::parser! {
     pub grammar python<'a>(config: &Config<'a>) for TokVec<'a> {
         pub rule file() -> Module<'a>
+            = traced(<_file()>)
+
+        rule _file() -> Module<'a>
             = s:statements() [tok!(EndMarker)] { Module { body: s } }
 
         pub rule statements() -> Vec<Statement<'a>>
@@ -273,6 +283,25 @@ peg::parser! {
                                 _ => Err("no")
                               } }
             / &[_]? { None }
+
+
+        rule traced<T>(e: rule<T>) -> T =
+            &(input:([a@_] {a})* {
+                #[cfg(feature = "trace")]
+                {
+                    println!("[PEG_INPUT_START]");
+                    for tok in input {
+                        print!("{}", tok.string);
+                    }
+                    println!();
+                    println!("[PEG_TRACE_START]");
+                }
+            })
+            e:e()? {?
+                #[cfg(feature = "trace")]
+                println!("[PEG_TRACE_STOP]");
+                e.ok_or("")
+            }
 
     }
 }

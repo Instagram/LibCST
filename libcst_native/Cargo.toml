@@ -13,6 +13,10 @@ edition = "2018"
 name = "libcst_native"
 crate-type = ["cdylib", "rlib"]
 
+[[bin]]
+name = "parse"
+path = "src/bin.rs"
+
 [features]
 # This is a bit of a hack, since `cargo test` doesn't work with `extension-module`.
 # To run tests, use `cargo test --no-default-features`.
@@ -20,6 +24,7 @@ crate-type = ["cdylib", "rlib"]
 # Once https://github.com/PyO3/pyo3/pull/1123 lands, it may be better to use
 # `-Zextra-link-arg` for this instead.
 default = ["pyo3/extension-module"]
+trace = ["peg/trace"]
 
 [dependencies]
 once_cell = "1.5.2"

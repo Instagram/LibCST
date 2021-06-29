@@ -27,17 +27,19 @@ use grammar::python;
 mod codegen;
 pub use codegen::{Codegen, CodegenState};
 
+use self::grammar::TokVec;
+
 #[derive(Debug, Error, PartialEq, Eq)]
 pub enum ParserError<'a> {
     #[error("tokenizer error")]
     TokenizerError(TokError<'a>),
     #[error("parser error")]
-    ParserError(peg::error::ParseError<usize>),
+    ParserError(peg::error::ParseError<<grammar::TokVec<'a> as Parse>::PositionRepr>),
     #[error(transparent)]
     WhitespaceError(#[from] WhitespaceError),
 }
 
-type Result<'a, T> = std::result::Result<T, ParserError<'a>>;
+pub type Result<'a, T> = std::result::Result<T, ParserError<'a>>;
 
 #[derive(Debug, Eq, PartialEq)]
 pub struct Module<'a> {
