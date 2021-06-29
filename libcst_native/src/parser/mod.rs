@@ -66,6 +66,7 @@ pub fn parse_module<'a>(module_text: &'a str) -> Result<'a, Module> {
         .map_err(|e| ParserError::TokenizerError(e))?
         .into();
 
+    eprintln!("{:#?}", result);
     let conf = Config {
         default_newline: "\n",
         input: module_text,

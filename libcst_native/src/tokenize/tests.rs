@@ -29,6 +29,10 @@ fn tokenize_all<'t>(
     }
     // Remove the EndMarker, since it's on every non-error token stream.
     assert_eq!(result.pop().expect("EndMarker").0, TokType::EndMarker);
+    // Also remove fake newline at the end
+    if let Some((TokType::Newline, "")) = result.last() {
+        result.pop();
+    }
     Ok(result)
 }
 

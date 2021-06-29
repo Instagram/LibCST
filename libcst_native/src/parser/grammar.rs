@@ -44,7 +44,7 @@ impl<'a> Parse for TokVec<'a> {
     }
 
     fn position_repr(&self, pos: usize) -> Self::PositionRepr {
-        let tok = &self.0[pos];
+        let tok = &self.0.get(pos).unwrap_or_else(|| self.0.last().unwrap());
         LineCol {
             line: tok.start_pos.line_number(),
             column: tok.start_pos.char_column_number(),
@@ -92,8 +92,8 @@ peg::parser! {
 
 
         rule simple_stmt() -> Vec<Statement<'a>>
-            = init:(s:small_stmt() [semi@lit!(";")] { Statement::SmallStatement(s) })+
-            s:small_stmt() semi:mb_lit(";") {
+            = init:(s:small_stmt() [semi@lit!(";")] { Statement::SmallStatement(s) })*
+            s:small_stmt() semi:mb_lit(";") [tok!(Newline)] {
                 init.into_iter().chain(
                     iter::once(Statement::SmallStatement(s))
                 ).collect()
@@ -255,7 +255,7 @@ peg::parser! {
             = ([at@lit!("@")] [name@tok!(Name)] [tok!(Newline)] {? make_decorator(&config, at, name).map_err(|e| "expected decorator")} )+
 
         rule function_def_raw() -> FunctionDef<'a>
-            = [def@lit!("def")] [n@tok!(Name)] [op@lit!("(")] params:params()? [cp@lit!(")")] [c@lit!(":")] "..." {? make_function_def(&config, def, n, op, params, cp, c).map_err(|e| "ohno" )}
+            = [def@lit!("def")] [n@tok!(Name)] [op@lit!("(")] params:params()? [cp@lit!(")")] [c@lit!(":")] simple_stmt() {? make_function_def(&config, def, n, op, params, cp, c).map_err(|e| "ohno" )}
 
         rule params() -> Parameters<'a>
             = parameters()
@@ -278,11 +278,10 @@ peg::parser! {
 
 
         rule mb_lit(lit: &str) -> Option<Token<'a>>
-            = [t@Token {..}] {? match &t {
-                                Token { string: lit, ..} => Ok(Some(t)),
-                                _ => Err("no")
-                              } }
-            / &[_]? { None }
+            = ([t@Token {..}] {? if t.string == lit {
+                                    eprintln!("matched {}", lit); Ok(t)
+                                } else { Err("semicolon") }
+                              })?
 
 
         rule traced<T>(e: rule<T>) -> T =

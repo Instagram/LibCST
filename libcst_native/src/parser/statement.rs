@@ -62,6 +62,7 @@ impl<'a> Codegen for SmallStatement<'a> {
             &Self::Pass { .. } => state.add_token("pass".to_string()),
             &Self::Break { .. } => state.add_token("break".to_string()),
             &Self::Continue { .. } => state.add_token("continue".to_string()),
+            &Self::Expr { value: e, .. } => e.codegen(state),
             _ => todo!(),
         }
     }

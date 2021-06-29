@@ -146,6 +146,46 @@ pub enum Expression<'a> {
     }, // TODO: FormattedString, ConcatenatedString, Subscript, Lambda, Call, Await, IfExp, Yield, Tuple, List, Set, Dict, comprehensions
 }
 
+impl<'a> Codegen for Expression<'a> {
+    fn codegen(&self, state: &mut CodegenState) -> () {
+        match &self {
+            &Self::Ellipsis { .. } => state.add_token("...".to_string()),
+            &Self::BinaryOperation {
+                left,
+                operator,
+                right,
+                ..
+            } => self.parenthesize(state, |state| {
+                left.codegen(state);
+                state.add_token(operator.to_string()); // TODO
+                right.codegen(state);
+            }),
+            &Self::Integer { value, .. } => {
+                self.parenthesize(state, |state| state.add_token(value.to_string()))
+            }
+            _ => panic!("codegen not implemented for {:#?}", self),
+        }
+    }
+}
+
+impl<'a> ParenthesizedNode<'a> for Expression<'a> {
+    fn lpar(&self) -> &Vec<LeftParen<'a>> {
+        match &self {
+            &Self::BinaryOperation { lpar, .. } => lpar,
+            &Self::Integer { lpar, .. } => lpar,
+            _ => todo!(),
+        }
+    }
+
+    fn rpar(&self) -> &Vec<RightParen<'a>> {
+        match &self {
+            &Self::BinaryOperation { rpar, .. } => rpar,
+            &Self::Integer { rpar, .. } => rpar,
+            _ => todo!(),
+        }
+    }
+}
+
 #[derive(Debug, Eq, PartialEq)]
 pub struct ComparisonTarget<'a> {
     operator: &'a str, // TODO

@@ -223,6 +223,8 @@ pub struct TokState<'t> {
     /// Eventually, we should probably support this at the parser-level instead.
     split_fstring: bool,
     fstring_stack: Vec<FStringNode>,
+
+    has_nl_before_eof: EOFNewline,
 }
 
 pub struct TokConfig {
@@ -245,6 +247,13 @@ enum NumberState {
     Fraction,
     Exponent,
     Imaginary,
+}
+
+#[derive(Debug, Clone, Copy)]
+enum EOFNewline {
+    Unknown,
+    Faked,
+    Real,
 }
 
 impl<'t> TokState<'t> {
@@ -271,6 +280,7 @@ impl<'t> TokState<'t> {
             async_def_nl: false,
             split_fstring: config.split_fstring,
             fstring_stack: Vec::new(),
+            has_nl_before_eof: EOFNewline::Unknown,
         }
     }
 
@@ -323,7 +333,13 @@ impl<'t> TokState<'t> {
 
             return match self.text_pos.peek() {
                 // Check for EOF now
-                None => Ok(TokType::EndMarker),
+                None => match self.has_nl_before_eof {
+                    EOFNewline::Unknown => {
+                        self.has_nl_before_eof = EOFNewline::Faked;
+                        Ok(TokType::Newline)
+                    }
+                    _ => Ok(TokType::EndMarker),
+                },
 
                 // Identifier (most frequent token!)
                 Some('a'..='z') | Some('A'..='Z') | Some('_') | Some('\u{80}'..=MAX_CHAR) => {
@@ -334,6 +350,9 @@ impl<'t> TokState<'t> {
                 Some('\n') => {
                     self.text_pos.next();
                     self.at_bol = true;
+                    if self.text_pos.peek().is_none() {
+                        self.has_nl_before_eof = EOFNewline::Real;
+                    }
                     if self.split_fstring
                         && !self.fstring_stack.iter().all(|node| node.allow_multiline())
                     {
