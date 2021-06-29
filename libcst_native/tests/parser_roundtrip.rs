@@ -17,7 +17,12 @@ fn all_fixtures() -> impl Iterator<Item = (PathBuf, String)> {
 #[test]
 fn roundtrip_fixtures() {
     for (path, input) in all_fixtures() {
-        let m = parse_module(&input).expect("failed to parse");
+        let m = match parse_module(&input) {
+            Ok(m) => m,
+            Err(e) => {
+                panic!("Failed to parse {:#?} due to: {}", path, e);
+            }
+        };
         let mut state = Default::default();
         m.codegen(&mut state);
         assert_eq!(
