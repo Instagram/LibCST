@@ -1,6 +1,5 @@
+use libcst_native::parser::{parse_module, prettify_error, Codegen};
 use std::path::PathBuf;
-
-use libcst_native::parser::{parse_module, Codegen};
 
 fn all_fixtures() -> impl Iterator<Item = (PathBuf, String)> {
     let mut path = PathBuf::from(file!());
@@ -19,9 +18,10 @@ fn roundtrip_fixtures() {
     for (path, input) in all_fixtures() {
         let m = match parse_module(&input) {
             Ok(m) => m,
-            Err(e) => {
-                panic!("Failed to parse {:#?} due to: {}", path, e);
-            }
+            Err(e) => panic!(
+                "{}",
+                prettify_error(&input, e, format!("{:#?}", path).as_ref())
+            ),
         };
         let mut state = Default::default();
         m.codegen(&mut state);

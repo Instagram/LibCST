@@ -74,6 +74,21 @@ pub fn parse_module<'a>(module_text: &'a str) -> Result<'a, Module> {
     python::file(&result, &conf).or_else(|e| Err(ParserError::ParserError(e)))
 }
 
+pub fn prettify_error<'a>(module_text: &'a str, err: ParserError<'a>, label: &str) -> String {
+    match err {
+        ParserError::ParserError(e) => chic::Error::new(label)
+            .error(
+                e.location.line,
+                e.location.column,
+                e.location.column + 1,
+                module_text,
+                format!("expected {}", e.expected),
+            )
+            .to_string(),
+        e => format!("Parse error for {}: {}", label, e),
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;

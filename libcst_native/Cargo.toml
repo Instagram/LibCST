@@ -34,6 +34,7 @@ pyo3 = "0.13.2"
 regex = "1.4.3"
 thiserror = "1.0.23"
 peg = "0.7.0"
+chic = "1.2.2"
 
 [dev-dependencies]
 criterion = { version = "0.3.4", features = ["html_reports"] }
