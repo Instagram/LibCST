@@ -14,13 +14,13 @@ pub use whitespace::{
     WhitespaceError,
 };
 mod statement;
-pub use statement::{Decorator, FunctionDef, Statement};
+pub use statement::{Decorator, FunctionDef, SmallStatement, Statement};
 
 mod expression;
-pub use expression::{Name, Param, Parameters};
+pub use expression::{Expression, Name, Param, Parameters};
 
 mod op;
-pub use op::Semicolon;
+pub use op::{Comma, Semicolon};
 
 mod grammar;
 use grammar::python;
@@ -93,7 +93,10 @@ mod test {
             m,
             Ok(Module {
                 body: vec![Statement::FunctionDef(FunctionDef {
-                    name: Name { value: "f" },
+                    name: Name {
+                        value: "f",
+                        ..Default::default()
+                    },
                     params: Default::default(),
                     decorators: vec![],
                     whitespace_after_def: SimpleWhitespace(" "),
@@ -112,10 +115,16 @@ mod test {
             m,
             Ok(Module {
                 body: vec![Statement::FunctionDef(FunctionDef {
-                    name: Name { value: "f" },
+                    name: Name {
+                        value: "f",
+                        ..Default::default()
+                    },
                     params: Default::default(),
                     decorators: vec![Decorator {
-                        decorator: Name { value: "hello" },
+                        decorator: Name {
+                            value: "hello",
+                            ..Default::default()
+                        },
                         ..Default::default()
                     }],
                     whitespace_after_def: SimpleWhitespace(" "),
@@ -142,15 +151,24 @@ mod test {
             m,
             Ok(Module {
                 body: vec![Statement::FunctionDef(FunctionDef {
-                    name: Name { value: "g" },
+                    name: Name {
+                        value: "g",
+                        ..Default::default()
+                    },
                     params: Parameters {
                         params: vec![
                             Param {
-                                name: Name { value: "a" },
+                                name: Name {
+                                    value: "a",
+                                    ..Default::default()
+                                },
                                 ..Default::default()
                             },
                             Param {
-                                name: Name { value: "b" },
+                                name: Name {
+                                    value: "b",
+                                    ..Default::default()
+                                },
                                 ..Default::default()
                             }
                         ]

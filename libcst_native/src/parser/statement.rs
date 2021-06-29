@@ -4,28 +4,67 @@
 // LICENSE file in the root directory of this source tree.
 
 use super::{
-    Codegen, CodegenState, EmptyLine, Name, Parameters, Semicolon, SimpleWhitespace,
-    TrailingWhitespace,
+    Codegen, CodegenState, Comma, EmptyLine, Expression, Name, Parameters, Semicolon,
+    SimpleWhitespace, TrailingWhitespace,
 };
 
 #[derive(Debug, Eq, PartialEq)]
 pub enum Statement<'a> {
     FunctionDef(FunctionDef<'a>),
-    Pass,
+    SmallStatement(SmallStatement<'a>),
 }
 
 impl<'a> Codegen for Statement<'a> {
     fn codegen(&self, state: &mut CodegenState) -> () {
         match &self {
-            &Self::Pass => state.add_token("pass".to_string()),
+            &Self::SmallStatement(s) => s.codegen(state),
             &Self::FunctionDef(f) => f.codegen(state),
         }
     }
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Eq, PartialEq)]
-pub struct SmallStatement<'a> {
-    pub semicolon: Option<Semicolon<'a>>,
+pub enum SmallStatement<'a> {
+    Pass {
+        semicolon: Option<Semicolon<'a>>,
+    },
+    Break {
+        semicolon: Option<Semicolon<'a>>,
+    },
+    Continue {
+        semicolon: Option<Semicolon<'a>>,
+    },
+    Return {
+        value: Option<&'a str>, // TODO
+        whitespace_after_return: SimpleWhitespace<'a>,
+        semicolon: Option<Semicolon<'a>>,
+    },
+    Expr {
+        value: Expression<'a>,
+        semicolon: Option<Semicolon<'a>>,
+    },
+    Assert {
+        test: &'a str,        // TODO
+        msg: Option<&'a str>, // TODO
+        comma: Option<Comma<'a>>,
+        whitespace_after_assert: SimpleWhitespace<'a>,
+        semicolon: Option<Semicolon<'a>>,
+    }, // TODO Import, ImportFrom
+       // TODO Assign, AnnAssign
+       // TODO Raise
+       // TODO Global, Nonlocal
+}
+
+impl<'a> Codegen for SmallStatement<'a> {
+    fn codegen(&self, state: &mut CodegenState) -> () {
+        match &self {
+            &Self::Pass { .. } => state.add_token("pass".to_string()),
+            &Self::Break { .. } => state.add_token("break".to_string()),
+            &Self::Continue { .. } => state.add_token("continue".to_string()),
+            _ => todo!(),
+        }
+    }
 }
 
 #[derive(Debug, Eq, PartialEq)]

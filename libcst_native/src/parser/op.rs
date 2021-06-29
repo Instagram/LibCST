@@ -7,6 +7,16 @@ use super::SimpleWhitespace;
 
 #[derive(Debug, Eq, PartialEq)]
 pub struct Semicolon<'a> {
+    /// Any space that appears directly before this semicolon.
     pub whitespace_before: SimpleWhitespace<'a>,
+    /// Any space that appears directly after this semicolon.
+    pub whitespace_after: SimpleWhitespace<'a>,
+}
+
+#[derive(Debug, Eq, PartialEq)]
+pub struct Comma<'a> {
+    /// Any space that appears directly before this comma.
+    pub whitespace_before: SimpleWhitespace<'a>,
+    /// Any space that appears directly after this comma.
     pub whitespace_after: SimpleWhitespace<'a>,
 }

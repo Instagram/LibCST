@@ -277,6 +277,34 @@ pub struct ParenthesizedWhitespace<'a> {
     pub last_line: SimpleWhitespace<'a>,
 }
 
+impl<'a> Codegen for ParenthesizedWhitespace<'a> {
+    fn codegen(&self, state: &mut CodegenState) -> () {
+        self.first_line.codegen(state);
+        for line in &self.empty_lines {
+            line.codegen(state);
+        }
+        if self.indent {
+            state.add_indent()
+        }
+        self.last_line.codegen(state);
+    }
+}
+
+#[derive(Debug, Eq, PartialEq)]
+pub enum ParenthesizableWhitespace<'a> {
+    SimpleWhitespace(SimpleWhitespace<'a>),
+    ParenthesizedWhitespace(ParenthesizedWhitespace<'a>),
+}
+
+impl<'a> Codegen for ParenthesizableWhitespace<'a> {
+    fn codegen(&self, state: &mut CodegenState) -> () {
+        match &self {
+            &Self::SimpleWhitespace(w) => w.codegen(state),
+            &Self::ParenthesizedWhitespace(w) => w.codegen(state),
+        }
+    }
+}
+
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct State<'a> {
     pub line: usize,   // one-indexed (to match parso's behavior)
