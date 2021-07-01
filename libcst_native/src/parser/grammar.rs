@@ -3,25 +3,9 @@
 // This source code is licensed under the MIT license found in the
 // LICENSE file in the root directory of this source tree.
 
-use peg::str::LineCol;
-
 use super::*;
-use std::iter;
-
-macro_rules! lit {
-    ($e:literal) => {
-        Token { string: $e, .. }
-    };
-}
-
-macro_rules! tok {
-    ($e:ident) => {
-        Token {
-            r#type: TokType::$e,
-            ..
-        }
-    };
-}
+use peg::str::LineCol;
+use TokType::{Async, Dedent, EndMarker, Indent, Name as NameTok, Newline as NL, Number, String};
 
 #[derive(Debug)]
 pub struct TokVec<'a>(Vec<Token<'a>>);
@@ -81,7 +65,7 @@ peg::parser! {
             = traced(<_file()>)
 
         rule _file() -> Module<'a>
-            = s:statements() [tok!(EndMarker)] { Module { body: s } }
+            = s:statements() tok(EndMarker, "EOF") { Module { body: s } }
 
         pub rule statements() -> Vec<Statement<'a>>
             = statement()+
@@ -95,20 +79,20 @@ peg::parser! {
 
 
         rule simple_stmt() -> SimpleStatementParts<'a>
-            = first:&_ statements:(s:small_stmt() [semi@lit!(";")] { (s, semi) })*
-            last_statement:small_stmt() last_semi:mb_lit(";") [nl@tok!(Newline)] {
+            = first:&_ statements:(s:small_stmt() semi:lit(";") { (s, semi) })*
+            last_statement:small_stmt() last_semi:lit(";")? nl:tok(NL, "NEWLINE") {
                 SimpleStatementParts {first, statements, last_statement, last_semi, nl}
             }
 
         rule compound_stmt() -> CompoundStatement<'a>
-            = &("def" / "@" / [Async]) f:function_def() { CompoundStatement::FunctionDef(f) }
+            = &("def" / "@" / tok(Async, "ASYNC")) f:function_def() { CompoundStatement::FunctionDef(f) }
 
         rule small_stmt() -> SmallStatement<'a>
             = e:star_expressions() { SmallStatement::Expr { value: e, semicolon: None } }
             / "pass" { SmallStatement::Pass { semicolon: None } }
 
         rule block() -> Suite<'a>
-            = [n@tok!(Newline)] [ind@tok!(Indent)] s:statements() [ded@tok!(Dedent)] {?
+            = n:tok(NL, "NEWLINE") ind:tok(Indent, "INDENT") s:statements() ded:tok(Dedent, "DEDENT") {?
                 make_indented_block(&config, n, ind, s, ded)
                     .map_err(|e| "indented block")
             }
@@ -128,19 +112,19 @@ peg::parser! {
             = disjunction()
 
         rule disjunction() -> Expression<'a>
-            = a:conjunction() b:([or@lit!("or")] inner:conjunction() { (or, inner) })+ {?
+            = a:conjunction() b:(or:lit("or") inner:conjunction() { (or, inner) })+ {?
                 make_binary_op(&config, a, b).map_err(|e| "expected disjunction")
             }
             / conjunction()
 
         rule conjunction() -> Expression<'a>
-            = a:inversion() b:([and@lit!("and")] inner:inversion() { (and, inner) })+ {?
+            = a:inversion() b:(and:lit("and") inner:inversion() { (and, inner) })+ {?
                 make_binary_op(&config, a, b).map_err(|e| "expected conjunction")
             }
             / inversion()
 
         rule inversion() -> Expression<'a>
-            = [not@lit!("not")] a:inversion() {?
+            = not:lit("not") a:inversion() {?
                 make_unary_op(&config, not, a).map_err(|e| "expected inversion")
             }
             / comparison()
@@ -157,85 +141,85 @@ peg::parser! {
             / noteq_bitwise_or()
 
         rule eq_bitwise_or() -> (Token<'a>, Expression<'a>)
-            = [op@lit!("==")] e:bitwise_or() { (op, e) }
+            = op:lit("==") e:bitwise_or() { (op, e) }
 
         rule noteq_bitwise_or() -> (Token<'a>, Expression<'a>)
-            = [op@lit!("!=")] e:bitwise_or() { (op, e) } // TODO: support barry_as_flufl
+            = op:lit("!=") e:bitwise_or() { (op, e) } // TODO: support barry_as_flufl
 
         rule bitwise_or() -> Expression<'a>
             // TODO left-recursive grammar
-            = a:bitwise_xor() tail:([op@lit!("|")] b:bitwise_xor() {(op, b)})+ {?
+            = a:bitwise_xor() tail:(op:lit("|") b:bitwise_xor() {(op, b)})+ {?
                 make_binary_op(&config, a, tail).map_err(|e| "expected bitwise_or")
             }
             / bitwise_xor()
 
         rule bitwise_xor() -> Expression<'a>
             // TODO left-recursive grammar
-            = a:bitwise_and() tail:([op@lit!("^")] b:bitwise_and() {(op, b)})+ {?
+            = a:bitwise_and() tail:(op:lit("^") b:bitwise_and() {(op, b)})+ {?
                 make_binary_op(&config, a, tail).map_err(|e| "expected bitwise_xor")
             }
             / bitwise_and()
 
         rule bitwise_and() -> Expression<'a>
             // TODO left-recursive grammar
-            = a:shift_expr() tail:([op@lit!("&")] b:shift_expr() {(op, b)})+ {?
+            = a:shift_expr() tail:(op:lit("&") b:shift_expr() {(op, b)})+ {?
                 make_binary_op(&config, a, tail).map_err(|e| "expected bitwise_and")
             }
             / shift_expr()
 
         rule shift_expr() -> Expression<'a>
             // TODO left-recursive grammar
-            = a:sum() tail:([op@lit!("<<")] b:shift_expr() {(op, b)})+ {?
+            = a:sum() tail:(op:lit("<<") b:shift_expr() {(op, b)})+ {?
                 make_binary_op(&config, a, tail).map_err(|e| "expected shift_expr")
             }
-            / a:sum() tail:([op@lit!(">>")] b:shift_expr() {(op, b)})+ {?
+            / a:sum() tail:(op:lit(">>") b:shift_expr() {(op, b)})+ {?
                 make_binary_op(&config, a, tail).map_err(|e| "expected shift_expr")
             }
             / sum()
 
         rule sum() -> Expression<'a>
             // TODO left-recursive grammar
-            = a:term() tail:([op@lit!("+")] b:term() {(op, b)})+ {?
+            = a:term() tail:(op:lit("+") b:term() {(op, b)})+ {?
                 make_binary_op(&config, a, tail).map_err(|e| "expected sum")
             }
-            / a:term() tail:([op@lit!("-")] b:term() {(op, b)})+ {?
+            / a:term() tail:(op:lit("-") b:term() {(op, b)})+ {?
                 make_binary_op(&config, a, tail).map_err(|e| "expected sum")
             }
             / term()
 
         rule term() -> Expression<'a>
             // TODO left-recursive grammar
-            = a:factor() tail:([op@lit!("*")] b:factor() {(op, b)})+ {?
+            = a:factor() tail:(op:lit("*") b:factor() {(op, b)})+ {?
                 make_binary_op(&config, a, tail).map_err(|e| "expected term")
             }
-            / a:factor() tail:([op@lit!("/")] b:factor() {(op, b)})+ {?
+            / a:factor() tail:(op:lit("/") b:factor() {(op, b)})+ {?
                 make_binary_op(&config, a, tail).map_err(|e| "expected term")
             }
-            / a:factor() tail:([op@lit!("//")] b:factor() {(op, b)})+ {?
+            / a:factor() tail:(op:lit("//") b:factor() {(op, b)})+ {?
                 make_binary_op(&config, a, tail).map_err(|e| "expected term")
             }
-            / a:factor() tail:([op@lit!("%")] b:factor() {(op, b)})+ {?
+            / a:factor() tail:(op:lit("%") b:factor() {(op, b)})+ {?
                 make_binary_op(&config, a, tail).map_err(|e| "expected term")
             }
-            / a:factor() tail:([op@lit!("@")] b:factor() {(op, b)})+ {?
+            / a:factor() tail:(op:lit("@") b:factor() {(op, b)})+ {?
                 make_binary_op(&config, a, tail).map_err(|e| "expected term")
             }
             / factor()
 
         rule factor() -> Expression<'a>
-            = [op@lit!("+")] a:factor() {?
+            = op:lit("+") a:factor() {?
                 make_unary_op(&config, op, a).map_err(|e| "expected factor")
             }
-            / [op@lit!("-")] a:factor() {?
+            / op:lit("-") a:factor() {?
                 make_unary_op(&config, op, a).map_err(|e| "expected factor")
             }
-            / [op@lit!("~")] a:factor() {?
+            / op:lit("~") a:factor() {?
                 make_unary_op(&config, op, a).map_err(|e| "expected factor")
             }
             / power()
 
         rule power() -> Expression<'a>
-            = a:await_primary() [op@lit!("**")] b:factor() {?
+            = a:await_primary() op:lit("**") b:factor() {?
                 make_binary_op(&config, a, vec![(op, b)]).map_err(|e| "expected power")
             }
             / await_primary()
@@ -249,13 +233,13 @@ peg::parser! {
             // TODO: missing left-recursive branches here
 
         rule atom() -> Expression<'a>
-            = [n@lit!("name")] { Expression::Name(Name { value: n.string, lpar: vec![], rpar: vec![] }) }
-            / &[tok!(String)] s:strings() {s}
-            / [n@tok!(Number)] {? make_number(&config, n).map_err(|e| "expected number")}
-            / [lit!("...")] { Expression::Ellipsis {lpar: vec![], rpar: vec![]}}
+            = n:lit("name") { Expression::Name(Name { value: n.string, lpar: vec![], rpar: vec![] }) }
+            / &tok(String, "STRING") s:strings() {s}
+            / n:tok(Number, "NUMBER") {? make_number(&config, n).map_err(|e| "expected number")}
+            / lit("...") { Expression::Ellipsis {lpar: vec![], rpar: vec![]}}
 
         rule strings() -> Expression<'a>
-            = [s@tok!(String)] {
+            = s:tok(String, "STRING") {
                 Expression::SimpleString { value: s.string, lpar: vec![], rpar: vec![]}
             }
 
@@ -264,10 +248,10 @@ peg::parser! {
             / function_def_raw()
 
         rule decorators() -> Vec<Decorator<'a>>
-            = ([at@lit!("@")] [name@tok!(Name)] [tok!(Newline)] {? make_decorator(&config, at, name).map_err(|e| "expected decorator")} )+
+            = (at:lit("@") name:tok(NameTok, "NAME") tok(NL, "NEWLINE") {? make_decorator(&config, at, name).map_err(|e| "expected decorator")} )+
 
         rule function_def_raw() -> FunctionDef<'a>
-            = [def@lit!("def")] [n@tok!(Name)] [op@lit!("(")] params:params()? [cp@lit!(")")] [c@lit!(":")] b:block() {?
+            = def:lit("def") n:tok(NameTok, "FUNCTION NAME") op:lit("(") params:params()? cp:lit(")") c:lit(":") b:block() {?
                 make_function_def(&config, def, n, op, params, cp, c, b).map_err(|e| "function def" )
             }
 
@@ -288,18 +272,25 @@ peg::parser! {
             / a:param() &")" {a}
 
         rule param() -> Param<'a>
-            = [n@tok!(Name)] { Param {name: Name {value: n.string, ..Default::default()}, whitespace_after_param: SimpleWhitespace(""), whitespace_after_star: SimpleWhitespace("")}}
+            = n:tok(NameTok, "PARAMETER NAME") { Param {name: Name {value: n.string, ..Default::default()}, whitespace_after_param: SimpleWhitespace(""), whitespace_after_star: SimpleWhitespace("")}}
 
 
         rule mb_lit(lit: &str) -> Option<Token<'a>>
             = ([t@Token {..}] {? if t.string == lit {
-                                    eprintln!("matched {}", lit); Ok(t)
+                                    Ok(t)
                                 } else { Err("optional semicolon") }
                               })?
 
         /// matches any token, not just whitespace
         rule _() -> Token<'a>
             = [t@_] { t }
+
+        rule lit(lit: &'static str) -> Token<'a>
+            = [t@Token {..}] {? if t.string == lit { Ok(t) } else { Err(lit) } }
+
+
+        rule tok(tok: TokType, err: &'static str) -> Token<'a>
+            = [t@Token {..}] {? if t.r#type == tok { Ok(t) } else { Err(err) } }
 
         rule traced<T>(e: rule<T>) -> T =
             &(input:(_)* {
