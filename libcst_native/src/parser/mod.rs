@@ -14,7 +14,10 @@ pub use whitespace::{
     WhitespaceError,
 };
 mod statement;
-pub use statement::{Decorator, FunctionDef, SmallStatement, Statement};
+pub use statement::{
+    CompoundStatement, Decorator, FunctionDef, IndentedBlock, SimpleStatementLine,
+    SimpleStatementSuite, SmallStatement, Statement, Suite,
+};
 
 mod expression;
 pub use expression::{Expression, Name, Param, Parameters};
@@ -92,6 +95,8 @@ pub fn prettify_error<'a>(module_text: &'a str, err: ParserError<'a>, label: &st
 
 #[cfg(test)]
 mod test {
+    use crate::parser::whitespace::Fakeness;
+
     use super::*;
     #[test]
     fn test_simple() {
@@ -108,17 +113,33 @@ mod test {
         assert_eq!(
             m,
             Ok(Module {
-                body: vec![Statement::FunctionDef(FunctionDef {
-                    name: Name {
-                        value: "f",
-                        ..Default::default()
-                    },
-                    params: Default::default(),
-                    decorators: vec![],
-                    whitespace_after_def: SimpleWhitespace(" "),
-                    whitespace_after_name: Default::default(),
-                    whitespace_before_colon: Default::default(),
-                })]
+                body: vec![Statement::Compound(CompoundStatement::FunctionDef(
+                    FunctionDef {
+                        name: Name {
+                            value: "f",
+                            ..Default::default()
+                        },
+                        body: Suite::SimpleStatementSuite(SimpleStatementSuite {
+                            body: vec![SmallStatement::Expr {
+                                value: Expression::Ellipsis {
+                                    lpar: vec![],
+                                    rpar: vec![]
+                                },
+                                semicolon: None,
+                            }],
+                            trailing_whitespace: TrailingWhitespace {
+                                newline: Newline(None, Fakeness::Fake),
+                                ..Default::default()
+                            },
+                            ..Default::default()
+                        }),
+                        params: Default::default(),
+                        decorators: vec![],
+                        whitespace_after_def: SimpleWhitespace(" "),
+                        whitespace_after_name: Default::default(),
+                        whitespace_before_colon: Default::default(),
+                    }
+                ))]
             })
         );
     }
@@ -130,23 +151,39 @@ mod test {
         assert_eq!(
             m,
             Ok(Module {
-                body: vec![Statement::FunctionDef(FunctionDef {
-                    name: Name {
-                        value: "f",
-                        ..Default::default()
-                    },
-                    params: Default::default(),
-                    decorators: vec![Decorator {
-                        decorator: Name {
-                            value: "hello",
+                body: vec![Statement::Compound(CompoundStatement::FunctionDef(
+                    FunctionDef {
+                        name: Name {
+                            value: "f",
                             ..Default::default()
                         },
-                        ..Default::default()
-                    }],
-                    whitespace_after_def: SimpleWhitespace(" "),
-                    whitespace_after_name: Default::default(),
-                    whitespace_before_colon: Default::default(),
-                })]
+                        body: Suite::SimpleStatementSuite(SimpleStatementSuite {
+                            body: vec![SmallStatement::Expr {
+                                value: Expression::Ellipsis {
+                                    lpar: vec![],
+                                    rpar: vec![]
+                                },
+                                semicolon: None,
+                            }],
+                            trailing_whitespace: TrailingWhitespace {
+                                newline: Newline(None, Fakeness::Fake),
+                                ..Default::default()
+                            },
+                            ..Default::default()
+                        }),
+                        params: Default::default(),
+                        decorators: vec![Decorator {
+                            decorator: Name {
+                                value: "hello",
+                                ..Default::default()
+                            },
+                            ..Default::default()
+                        }],
+                        whitespace_after_def: SimpleWhitespace(" "),
+                        whitespace_after_name: Default::default(),
+                        whitespace_before_colon: Default::default(),
+                    }
+                ))]
             })
         );
         let mut state = CodegenState {
@@ -154,10 +191,10 @@ mod test {
             ..Default::default()
         };
         match &m.unwrap().body[0] {
-            Statement::FunctionDef(f) => f.codegen(&mut state),
+            Statement::Compound(f) => f.codegen(&mut state),
             _ => {}
         }
-        assert_eq!(state.to_string(), text);
+        assert_eq!(state.to_string().trim_end(), text);
     }
 
     #[test]
@@ -166,34 +203,50 @@ mod test {
         assert_eq!(
             m,
             Ok(Module {
-                body: vec![Statement::FunctionDef(FunctionDef {
-                    name: Name {
-                        value: "g",
-                        ..Default::default()
-                    },
-                    params: Parameters {
-                        params: vec![
-                            Param {
-                                name: Name {
-                                    value: "a",
-                                    ..Default::default()
+                body: vec![Statement::Compound(CompoundStatement::FunctionDef(
+                    FunctionDef {
+                        name: Name {
+                            value: "g",
+                            ..Default::default()
+                        },
+                        body: Suite::SimpleStatementSuite(SimpleStatementSuite {
+                            body: vec![SmallStatement::Expr {
+                                value: Expression::Ellipsis {
+                                    lpar: vec![],
+                                    rpar: vec![]
                                 },
+                                semicolon: None,
+                            }],
+                            trailing_whitespace: TrailingWhitespace {
+                                newline: Newline(None, Fakeness::Fake),
                                 ..Default::default()
                             },
-                            Param {
-                                name: Name {
-                                    value: "b",
+                            ..Default::default()
+                        }),
+                        params: Parameters {
+                            params: vec![
+                                Param {
+                                    name: Name {
+                                        value: "a",
+                                        ..Default::default()
+                                    },
                                     ..Default::default()
                                 },
-                                ..Default::default()
-                            }
-                        ]
-                    },
-                    decorators: Default::default(),
-                    whitespace_after_def: SimpleWhitespace(" "),
-                    whitespace_after_name: Default::default(),
-                    whitespace_before_colon: Default::default(),
-                })]
+                                Param {
+                                    name: Name {
+                                        value: "b",
+                                        ..Default::default()
+                                    },
+                                    ..Default::default()
+                                }
+                            ]
+                        },
+                        decorators: Default::default(),
+                        whitespace_after_def: SimpleWhitespace(" "),
+                        whitespace_after_name: Default::default(),
+                        whitespace_before_colon: Default::default(),
+                    }
+                ))]
             })
         );
     }

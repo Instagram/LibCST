@@ -10,16 +10,165 @@ use super::{
 
 #[derive(Debug, Eq, PartialEq)]
 pub enum Statement<'a> {
-    FunctionDef(FunctionDef<'a>),
-    SmallStatement(SmallStatement<'a>),
+    Simple(SimpleStatementLine<'a>),
+    Compound(CompoundStatement<'a>),
 }
 
 impl<'a> Codegen for Statement<'a> {
     fn codegen(&self, state: &mut CodegenState) -> () {
         match &self {
-            &Self::SmallStatement(s) => s.codegen(state),
+            &Self::Simple(s) => s.codegen(state),
+            &Self::Compound(f) => f.codegen(state),
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub enum CompoundStatement<'a> {
+    FunctionDef(FunctionDef<'a>),
+}
+
+impl<'a> Codegen for CompoundStatement<'a> {
+    fn codegen(&self, state: &mut CodegenState) -> () {
+        match &self {
             &Self::FunctionDef(f) => f.codegen(state),
         }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub enum Suite<'a> {
+    IndentedBlock(IndentedBlock<'a>),
+    SimpleStatementSuite(SimpleStatementSuite<'a>),
+}
+
+impl<'a> Codegen for Suite<'a> {
+    fn codegen(&self, state: &mut CodegenState) -> () {
+        match &self {
+            &Self::IndentedBlock(b) => b.codegen(state),
+            &Self::SimpleStatementSuite(s) => s.codegen(state),
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub struct IndentedBlock<'a> {
+    /// Sequence of statements belonging to this indented block.
+    pub body: Vec<Statement<'a>>,
+    /// Any optional trailing comment and the final ``NEWLINE`` at the end of the line.
+    pub header: TrailingWhitespace<'a>,
+    /// A string represents a specific indentation. A ``None`` value uses the modules's
+    /// default indentation. This is included because indentation is allowed to be
+    /// inconsistent across a file, just not ambiguously.
+    pub indent: Option<&'a str>,
+    /// Any trailing comments or lines after the dedent that are owned by this indented
+    /// block. Statements own preceeding and same-line trailing comments, but not
+    /// trailing lines, so it falls on :class:`IndentedBlock` to own it. In the case
+    /// that a statement follows an :class:`IndentedBlock`, that statement will own the
+    /// comments and lines that are at the same indent as the statement, and this
+    /// :class:`IndentedBlock` will own the comments and lines that are indented
+    /// further.
+    pub footer: Vec<EmptyLine<'a>>,
+}
+
+impl<'a> Codegen for IndentedBlock<'a> {
+    fn codegen(&self, state: &mut CodegenState) -> () {
+        self.header.codegen(state);
+
+        let indent = match self.indent {
+            Some(i) => i,
+            None => todo!(),
+        };
+        state.indent(indent.to_string());
+
+        if self.body.is_empty() {
+            // Empty indented blocks are not syntactically valid in Python unless they
+            // contain a 'pass' statement, so add one here.
+            state.add_indent();
+            state.add_token("pass".to_string());
+            state.add_token(state.default_newline.to_owned());
+        } else {
+            for stmt in &self.body {
+                // IndentedBlock is responsible for adjusting the current indentation
+                // level, but its children are responsible for actually adding that
+                // indentation to the token list.
+                stmt.codegen(state);
+            }
+        }
+
+        for f in &self.footer {
+            f.codegen(state);
+        }
+
+        state.dedent();
+    }
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub struct SimpleStatementSuite<'a> {
+    /// Sequence of small statements. All but the last statement are required to have
+    /// a semicolon.
+    pub body: Vec<SmallStatement<'a>>,
+
+    /// The whitespace between the colon in the parent statement and the body.
+    pub leading_whitespace: SimpleWhitespace<'a>,
+    /// Any optional trailing comment and the final ``NEWLINE`` at the end of the line.
+    pub trailing_whitespace: TrailingWhitespace<'a>,
+}
+
+impl<'a> Default for SimpleStatementSuite<'a> {
+    fn default() -> Self {
+        Self {
+            body: Default::default(),
+            leading_whitespace: SimpleWhitespace(" "),
+            trailing_whitespace: Default::default(),
+        }
+    }
+}
+
+fn _simple_statement_codegen<'a>(
+    body: &Vec<SmallStatement<'a>>,
+    trailing_whitespace: &TrailingWhitespace<'a>,
+    state: &mut CodegenState,
+) {
+    for stmt in body {
+        stmt.codegen(state);
+        // TODO: semicolon
+    }
+    if body.is_empty() {
+        // Empty simple statement blocks are not syntactically valid in Python
+        // unless they contain a 'pass' statement, so add one here.
+        state.add_token("pass".to_owned())
+    }
+    trailing_whitespace.codegen(state);
+}
+
+impl<'a> Codegen for SimpleStatementSuite<'a> {
+    fn codegen(&self, state: &mut CodegenState) -> () {
+        self.leading_whitespace.codegen(state);
+        _simple_statement_codegen(&self.body, &self.trailing_whitespace, state);
+    }
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub struct SimpleStatementLine<'a> {
+    /// Sequence of small statements. All but the last statement are required to have
+    /// a semicolon.
+    pub body: Vec<SmallStatement<'a>>,
+
+    /// Sequence of empty lines appearing before this simple statement line.
+    pub leading_lines: Vec<EmptyLine<'a>>,
+    /// Any optional trailing comment and the final ``NEWLINE`` at the end of the line.
+    pub trailing_whitespace: TrailingWhitespace<'a>,
+}
+
+impl<'a> Codegen for SimpleStatementLine<'a> {
+    fn codegen(&self, state: &mut CodegenState) -> () {
+        for line in &self.leading_lines {
+            line.codegen(state);
+        }
+        state.add_indent();
+        _simple_statement_codegen(&self.body, &self.trailing_whitespace, state);
     }
 }
 
@@ -71,9 +220,10 @@ impl<'a> Codegen for SmallStatement<'a> {
 #[derive(Debug, Eq, PartialEq)]
 pub struct FunctionDef<'a> {
     pub name: Name<'a>,
-    pub decorators: Vec<Decorator<'a>>,
     pub params: Parameters<'a>,
+    pub body: Suite<'a>,
 
+    pub decorators: Vec<Decorator<'a>>,
     pub whitespace_after_def: SimpleWhitespace<'a>,
     pub whitespace_after_name: SimpleWhitespace<'a>,
     pub whitespace_before_colon: SimpleWhitespace<'a>,
@@ -112,8 +262,7 @@ impl<'a> Codegen for FunctionDef<'a> {
         // TODO: returns
         self.whitespace_before_colon.codegen(state);
         state.add_token(":".to_string());
-        // TODO: body
-        state.add_token(" ...".to_string());
+        self.body.codegen(state);
     }
 }
 

@@ -51,10 +51,25 @@ impl<'a> Codegen for Comment<'a> {
 }
 
 #[derive(Debug, Eq, PartialEq, Default)]
-pub struct Newline<'a>(pub Option<&'a str>);
+pub struct Newline<'a>(pub Option<&'a str>, pub Fakeness);
+
+#[derive(Debug, PartialEq, Eq)]
+pub enum Fakeness {
+    Fake,
+    Real,
+}
+
+impl Default for Fakeness {
+    fn default() -> Self {
+        Self::Real
+    }
+}
 
 impl<'a> Codegen for Newline<'a> {
     fn codegen(&self, state: &mut CodegenState) -> () {
+        if let Fakeness::Fake = self.1 {
+            return;
+        }
         if let Some(value) = self.0 {
             state.add_token(value.to_string());
         } else {
@@ -191,11 +206,20 @@ pub fn parse_newline<'a>(config: &Config<'a>, state: &mut State) -> Result<Optio
         if state.line < config.lines.len() {
             advance_to_next_line(config, state)?;
         }
-        return Ok(Some(Newline(if newline_str == config.default_newline {
-            None
-        } else {
-            Some(newline_str)
-        })));
+        return Ok(Some(Newline(
+            if newline_str == config.default_newline {
+                None
+            } else {
+                Some(newline_str)
+            },
+            Fakeness::Real,
+        )));
+    }
+
+    // If we're at the end of the file but not on BOL, that means this is the fake
+    // newline inserted by the tokenizer.
+    if state.byte_offset == config.input.len() && state.column != 0 {
+        return Ok(Some(Newline(None, Fakeness::Fake)));
     }
     Ok(None)
 }

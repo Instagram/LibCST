@@ -84,27 +84,38 @@ peg::parser! {
             = s:statements() [tok!(EndMarker)] { Module { body: s } }
 
         pub rule statements() -> Vec<Statement<'a>>
-            = s:statement()+ {s.into_iter().flatten().collect()}
+            = statement()+
 
-        pub rule statement() -> Vec<Statement<'a>>
-            = c:compound_stmt() {vec![c]}
-            / simple_stmt()
-
-
-        rule simple_stmt() -> Vec<Statement<'a>>
-            = init:(s:small_stmt() [semi@lit!(";")] { Statement::SmallStatement(s) })*
-            s:small_stmt() semi:mb_lit(";") [tok!(Newline)] {
-                init.into_iter().chain(
-                    iter::once(Statement::SmallStatement(s))
-                ).collect()
+        pub rule statement() -> Statement<'a>
+            = c:compound_stmt() { Statement::Compound(c) }
+            / s:simple_stmt() {?
+                    Ok(Statement::Simple(make_simple_statement_line(&config, s)
+                        .map_err(|e| "simple_stmt")?))
             }
 
-        rule compound_stmt() -> Statement<'a>
-            = &("def" / "@" / [Async]) f:function_def() { Statement::FunctionDef(f) }
+
+        rule simple_stmt() -> SimpleStatementParts<'a>
+            = first:&_ statements:(s:small_stmt() [semi@lit!(";")] { (s, semi) })*
+            last_statement:small_stmt() last_semi:mb_lit(";") [nl@tok!(Newline)] {
+                SimpleStatementParts {first, statements, last_statement, last_semi, nl}
+            }
+
+        rule compound_stmt() -> CompoundStatement<'a>
+            = &("def" / "@" / [Async]) f:function_def() { CompoundStatement::FunctionDef(f) }
 
         rule small_stmt() -> SmallStatement<'a>
             = e:star_expressions() { SmallStatement::Expr { value: e, semicolon: None } }
             / "pass" { SmallStatement::Pass { semicolon: None } }
+
+        rule block() -> Suite<'a>
+            = [n@tok!(Newline)] [ind@tok!(Indent)] s:statements() [ded@tok!(Dedent)] {?
+                make_indented_block(&config, n, ind, s, ded)
+                    .map_err(|e| "indented block")
+            }
+            / s:simple_stmt() {?
+                make_simple_statement_suite(&config, s)
+                    .map_err(|e| "simple_stmt suite")
+            }
 
         rule star_expressions() -> Expression<'a>
             = star_expression()
@@ -137,6 +148,7 @@ peg::parser! {
         rule comparison() -> Expression<'a>
             = a:bitwise_or() b:compare_op_bitwise_or_pair()+ {?
                 make_comparison(&config, a, b).map_err(|e| "expected comparison")
+
             }
             / bitwise_or()
 
@@ -255,7 +267,9 @@ peg::parser! {
             = ([at@lit!("@")] [name@tok!(Name)] [tok!(Newline)] {? make_decorator(&config, at, name).map_err(|e| "expected decorator")} )+
 
         rule function_def_raw() -> FunctionDef<'a>
-            = [def@lit!("def")] [n@tok!(Name)] [op@lit!("(")] params:params()? [cp@lit!(")")] [c@lit!(":")] simple_stmt() {? make_function_def(&config, def, n, op, params, cp, c).map_err(|e| "ohno" )}
+            = [def@lit!("def")] [n@tok!(Name)] [op@lit!("(")] params:params()? [cp@lit!(")")] [c@lit!(":")] b:block() {?
+                make_function_def(&config, def, n, op, params, cp, c, b).map_err(|e| "function def" )
+            }
 
         rule params() -> Parameters<'a>
             = parameters()
@@ -280,12 +294,15 @@ peg::parser! {
         rule mb_lit(lit: &str) -> Option<Token<'a>>
             = ([t@Token {..}] {? if t.string == lit {
                                     eprintln!("matched {}", lit); Ok(t)
-                                } else { Err("semicolon") }
+                                } else { Err("optional semicolon") }
                               })?
 
+        /// matches any token, not just whitespace
+        rule _() -> Token<'a>
+            = [t@_] { t }
 
         rule traced<T>(e: rule<T>) -> T =
-            &(input:([a@_] {a})* {
+            &(input:(_)* {
                 #[cfg(feature = "trace")]
                 {
                     println!("[PEG_INPUT_START]");
@@ -313,6 +330,7 @@ fn make_function_def<'a>(
     params: Option<Parameters<'a>>,
     close_paren: Token<'a>,
     mut colon: Token<'a>,
+    body: Suite<'a>,
 ) -> Result<'a, FunctionDef<'a>> {
     Ok(FunctionDef {
         name: Name {
@@ -321,6 +339,7 @@ fn make_function_def<'a>(
         },
         params: params.unwrap_or_default(),
         decorators: Default::default(),
+        body,
         whitespace_after_def: parse_simple_whitespace(config, &mut def.whitespace_after)?,
         whitespace_after_name: parse_simple_whitespace(config, &mut name.whitespace_after)?,
         whitespace_before_colon: parse_simple_whitespace(config, &mut colon.whitespace_before)?,
@@ -392,5 +411,88 @@ fn make_number<'a>(config: &Config<'a>, num: Token<'a>) -> Result<'a, Expression
         value: num.string,
         lpar: vec![],
         rpar: vec![],
+    })
+}
+
+fn make_indented_block<'a>(
+    config: &Config<'a>,
+    mut nl: Token<'a>,
+    indent: Token<'a>,
+    statements: Vec<Statement<'a>>,
+    mut dedent: Token<'a>,
+) -> Result<'a, Suite<'a>> {
+    // We want to be able to only keep comments in the footer that are actually for
+    // this IndentedBlock. We do so by assuming that lines which are indented to the
+    // same level as the block itself are comments that go at the footer of the
+    // block. Comments that are indented to less than this indent are assumed to
+    // belong to the next line of code. We override the indent here because the
+    // dedent node's absolute indent is the resulting indentation after the dedent
+    // is performed. Its this way because the whitespace state for both the dedent's
+    // whitespace_after and the next BaseCompoundStatement's whitespace_before is
+    // shared. This allows us to partially parse here and parse the rest of the
+    // whitespace and comments on the next line, effectively making sure that
+    // comments are attached to the correct node.
+    // TODO: override indent
+    let footer = parse_empty_lines(config, &mut dedent.whitespace_after, None)?;
+    Ok(Suite::IndentedBlock(IndentedBlock {
+        body: statements,
+        header: parse_trailing_whitespace(config, &mut nl.whitespace_after)?,
+        indent: indent.relative_indent,
+        footer,
+    }))
+}
+
+struct SimpleStatementParts<'a> {
+    first: Token<'a>, // The first token of the first statement. Used for its whitespace
+    statements: Vec<(SmallStatement<'a>, Token<'a>)>, // statement, semicolon pairs
+    last_statement: SmallStatement<'a>,
+    last_semi: Option<Token<'a>>,
+    nl: Token<'a>,
+}
+
+fn _make_simple_statement<'a>(
+    config: &Config<'a>,
+    mut parts: SimpleStatementParts<'a>,
+) -> Result<'a, (Token<'a>, Vec<SmallStatement<'a>>, TrailingWhitespace<'a>)> {
+    let mut body = vec![];
+    for (statement, semi) in parts.statements {
+        // TODO: parse whitespace before and after semi and attach it to a semicolon
+        // inside statement
+        body.push(statement);
+    }
+    // TODO: parse whitespace before last semi and attach it to a semicolon inside
+    // last_statement
+    body.push(parts.last_statement);
+
+    // TODO: is this correct?
+    let trailing_whitespace = parse_trailing_whitespace(config, &mut parts.nl.whitespace_before)?;
+
+    Ok((parts.first, body, trailing_whitespace))
+}
+
+fn make_simple_statement_suite<'a>(
+    config: &Config<'a>,
+    parts: SimpleStatementParts<'a>,
+) -> Result<'a, Suite<'a>> {
+    let (mut first, body, trailing_whitespace) = _make_simple_statement(config, parts)?;
+    let leading_whitespace = parse_simple_whitespace(config, &mut first.whitespace_before)?;
+    Ok(Suite::SimpleStatementSuite(SimpleStatementSuite {
+        body,
+        leading_whitespace,
+        trailing_whitespace,
+    }))
+}
+
+fn make_simple_statement_line<'a>(
+    config: &Config<'a>,
+    parts: SimpleStatementParts<'a>,
+) -> Result<'a, SimpleStatementLine<'a>> {
+    let (mut first, body, trailing_whitespace) = _make_simple_statement(config, parts)?;
+
+    let leading_lines = parse_empty_lines(config, &mut first.whitespace_before, None)?;
+    Ok(SimpleStatementLine {
+        body,
+        leading_lines,
+        trailing_whitespace,
     })
 }
