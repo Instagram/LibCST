@@ -83,8 +83,8 @@ pub fn prettify_error<'a>(module_text: &'a str, err: ParserError<'a>, label: &st
         ParserError::ParserError(e) => chic::Error::new(label)
             .error(
                 e.location.line,
+                e.location.column - 1,
                 e.location.column,
-                e.location.column + 1,
                 module_text,
                 format!("expected {}", e.expected),
             )
