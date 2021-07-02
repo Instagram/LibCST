@@ -32,8 +32,6 @@ use grammar::python;
 mod codegen;
 pub use codegen::{Codegen, CodegenState};
 
-use itertools::Itertools;
-
 #[derive(Debug, Error, PartialEq, Eq)]
 pub enum ParserError<'a> {
     #[error("tokenizer error")]
@@ -77,7 +75,7 @@ pub fn parse_module<'a>(module_text: &'a str) -> Result<'a, Module> {
     let conf = Config {
         default_newline: "\n",
         input: module_text,
-        lines: module_text.lines().collect(),
+        lines: module_text.split_inclusive('\n').collect(),
     };
     python::file(&result, &conf).or_else(|e| Err(ParserError::ParserError(e)))
 }
@@ -127,9 +125,9 @@ pub fn prettify_error<'a>(module_text: &'a str, err: ParserError<'a>, label: &st
 
 #[cfg(test)]
 mod test {
+    use super::*;
     use crate::parser::{bol_offset, whitespace::Fakeness};
 
-    use super::*;
     #[test]
     fn test_simple() {
         let n = parse_module("1_");
