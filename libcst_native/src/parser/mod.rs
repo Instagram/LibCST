@@ -3,6 +3,8 @@
 // This source code is licensed under the MIT license found in the
 // LICENSE file in the root directory of this source tree.
 
+use std::cmp::max;
+
 use crate::tokenize::core::{TokConfig, TokError, TokState, TokType, Token, TokenIterator};
 use peg::{Parse, ParseElem, ParseLiteral, RuleResult};
 use thiserror::Error;
@@ -29,6 +31,8 @@ mod grammar;
 use grammar::python;
 mod codegen;
 pub use codegen::{Codegen, CodegenState};
+
+use itertools::Itertools;
 
 #[derive(Debug, Error, PartialEq, Eq)]
 pub enum ParserError<'a> {
@@ -78,24 +82,52 @@ pub fn parse_module<'a>(module_text: &'a str) -> Result<'a, Module> {
     python::file(&result, &conf).or_else(|e| Err(ParserError::ParserError(e)))
 }
 
+// n starts from 1
+fn bol_offset(source: &str, n: i32) -> usize {
+    if n <= 1 {
+        return 0;
+    }
+    source
+        .match_indices("\n")
+        .nth((n - 2) as usize)
+        .map(|(index, _)| index)
+        .unwrap_or_else(|| source.len())
+}
+
 pub fn prettify_error<'a>(module_text: &'a str, err: ParserError<'a>, label: &str) -> String {
     match err {
-        ParserError::ParserError(e) => chic::Error::new(label)
-            .error(
-                e.location.line,
-                e.location.column - 1,
-                e.location.column,
-                module_text,
-                format!("expected {}", e.expected),
-            )
-            .to_string(),
+        ParserError::ParserError(e) => {
+            let loc = e.location;
+            let context = 1;
+            let start_offset = bol_offset(module_text, loc.start_pos.line as i32 - 1 - context);
+            let end_offset = bol_offset(module_text, loc.end_pos.line as i32 + context + 1);
+            let source = &module_text[start_offset..end_offset];
+            chic::Error::new(label)
+                .error(
+                    max(
+                        1,
+                        loc.start_pos
+                            .line
+                            .checked_sub(context as usize)
+                            .unwrap_or(1),
+                    ),
+                    loc.start_pos.offset - start_offset,
+                    loc.end_pos.offset - start_offset,
+                    source,
+                    format!(
+                        "expected {} {} -> {}",
+                        e.expected, loc.start_pos, loc.end_pos
+                    ),
+                )
+                .to_string()
+        }
         e => format!("Parse error for {}: {}", label, e),
     }
 }
 
 #[cfg(test)]
 mod test {
-    use crate::parser::whitespace::Fakeness;
+    use crate::parser::{bol_offset, whitespace::Fakeness};
 
     use super::*;
     #[test]
@@ -249,5 +281,27 @@ mod test {
                 ))]
             })
         );
+    }
+
+    #[test]
+    fn bol_offset_first_line() {
+        assert_eq!(0, bol_offset("hello", 1));
+        assert_eq!(0, bol_offset("hello", 0));
+        assert_eq!(0, bol_offset("hello\nhello", 1));
+        assert_eq!(0, bol_offset("hello\nhello", 0));
+    }
+
+    #[test]
+    fn bol_offset_second_line() {
+        assert_eq!(5, bol_offset("hello", 2));
+        assert_eq!(5, bol_offset("hello\nhello", 2));
+        assert_eq!(5, bol_offset("hello\nhello\nhello", 2));
+    }
+
+    #[test]
+    fn bol_offset_last_line() {
+        assert_eq!(5, bol_offset("hello", 3));
+        assert_eq!(11, bol_offset("hello\nhello", 3));
+        assert_eq!(11, bol_offset("hello\nhello\nhello", 3));
     }
 }

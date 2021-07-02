@@ -16,8 +16,20 @@ impl<'a> Into<TokVec<'a>> for Vec<Token<'a>> {
     }
 }
 
+#[derive(Debug, PartialEq, Eq)]
+pub struct ParseLoc {
+    pub start_pos: LineCol,
+    pub end_pos: LineCol,
+}
+
+impl std::fmt::Display for ParseLoc {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.start_pos.fmt(f)
+    }
+}
+
 impl<'a> Parse for TokVec<'a> {
-    type PositionRepr = LineCol;
+    type PositionRepr = ParseLoc;
 
     fn start(&self) -> usize {
         0
@@ -29,10 +41,17 @@ impl<'a> Parse for TokVec<'a> {
 
     fn position_repr(&self, pos: usize) -> Self::PositionRepr {
         let tok = &self.0.get(pos).unwrap_or_else(|| self.0.last().unwrap());
-        LineCol {
-            line: tok.start_pos.line_number(),
-            column: tok.start_pos.char_column_number(),
-            offset: tok.start_pos.byte_idx(),
+        ParseLoc {
+            start_pos: LineCol {
+                line: tok.start_pos.line_number(),
+                column: tok.start_pos.char_column_number(),
+                offset: tok.start_pos.byte_idx(),
+            },
+            end_pos: LineCol {
+                line: tok.end_pos.line_number(),
+                column: tok.end_pos.char_column_number(),
+                offset: tok.end_pos.byte_idx(),
+            },
         }
     }
 }

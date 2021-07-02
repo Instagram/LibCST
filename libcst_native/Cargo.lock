@@ -348,6 +348,7 @@ version = "0.1.0"
 dependencies = [
  "chic",
  "criterion",
+ "itertools 0.10.0",
  "once_cell",
  "paste 1.0.5",
  "peg",
