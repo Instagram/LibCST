@@ -26,12 +26,14 @@ impl<'a> Codegen for Statement<'a> {
 #[derive(Debug, PartialEq, Eq)]
 pub enum CompoundStatement<'a> {
     FunctionDef(FunctionDef<'a>),
+    If(If<'a>),
 }
 
 impl<'a> Codegen for CompoundStatement<'a> {
     fn codegen(&self, state: &mut CodegenState) -> () {
         match &self {
             &Self::FunctionDef(f) => f.codegen(state),
+            &Self::If(f) => f.codegen(state),
         }
     }
 }
@@ -284,5 +286,87 @@ impl<'a> Codegen for Decorator<'a> {
         self.whitespace_after_at.codegen(state);
         self.decorator.codegen(state);
         self.trailing_whitespace.codegen(state);
+    }
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub struct If<'a> {
+    /// The expression that, when evaluated, should give us a truthy value
+    pub test: Expression<'a>,
+    // The body of this compound statement.
+    pub body: Suite<'a>,
+
+    /// An optional ``elif`` or ``else`` clause. ``If`` signifies an ``elif`` block.
+    pub orelse: Option<Box<OrElse<'a>>>,
+
+    /// Sequence of empty lines appearing before this compound statement line.
+    pub leading_lines: Vec<EmptyLine<'a>>,
+
+    /// The whitespace appearing after the ``if`` keyword but before the test
+    /// expression.
+    pub whitespace_before_test: SimpleWhitespace<'a>,
+
+    /// The whitespace appearing after the test expression but before the colon.
+    pub whitespace_after_test: SimpleWhitespace<'a>,
+
+    /// Signifies if this instance represents an ``elif`` or an ``if`` block.
+    pub is_elif: bool,
+}
+
+impl<'a> Codegen for If<'a> {
+    fn codegen(&self, state: &mut CodegenState) -> () {
+        for l in &self.leading_lines {
+            l.codegen(state);
+        }
+        state.add_indent();
+
+        state.add_token(if self.is_elif { "elif" } else { "if" }.to_string());
+        self.whitespace_before_test.codegen(state);
+        self.test.codegen(state);
+        self.whitespace_after_test.codegen(state);
+        state.add_token(":".to_string());
+        self.body.codegen(state);
+        match &self.orelse {
+            Some(orelse) => orelse.codegen(state),
+            _ => {}
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub enum OrElse<'a> {
+    Elif(If<'a>),
+    Else(Else<'a>),
+}
+
+impl<'a> Codegen for OrElse<'a> {
+    fn codegen(&self, state: &mut CodegenState) -> () {
+        match &self {
+            &Self::Elif(f) => f.codegen(state),
+            &Self::Else(f) => f.codegen(state),
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub struct Else<'a> {
+    pub body: Suite<'a>,
+    /// Sequence of empty lines appearing before this compound statement line.
+    pub leading_lines: Vec<EmptyLine<'a>>,
+    /// The whitespace appearing after the ``else`` keyword but before the colon.
+    pub whitespace_before_colon: SimpleWhitespace<'a>,
+}
+
+impl<'a> Codegen for Else<'a> {
+    fn codegen(&self, state: &mut CodegenState) -> () {
+        for l in &self.leading_lines {
+            l.codegen(state);
+        }
+        state.add_indent();
+
+        state.add_token("else".to_string());
+        self.whitespace_before_colon.codegen(state);
+        state.add_token(":".to_string());
+        self.body.codegen(state);
     }
 }

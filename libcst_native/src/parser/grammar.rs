@@ -104,7 +104,10 @@ peg::parser! {
             }
 
         rule compound_stmt() -> CompoundStatement<'a>
-            = &("def" / "@" / tok(Async, "ASYNC")) f:function_def() { CompoundStatement::FunctionDef(f) }
+            = &("def" / "@" / tok(Async, "ASYNC")) f:function_def() {
+                CompoundStatement::FunctionDef(f)
+            }
+            / &"if" f:if_stmt() { CompoundStatement::If(f) }
 
         rule small_stmt() -> SmallStatement<'a>
             = e:star_expressions() { SmallStatement::Expr { value: e, semicolon: None } }
@@ -293,6 +296,35 @@ peg::parser! {
         rule param() -> Param<'a>
             = n:tok(NameTok, "PARAMETER NAME") { Param {name: Name {value: n.string, ..Default::default()}, whitespace_after_param: SimpleWhitespace(""), whitespace_after_star: SimpleWhitespace("")}}
 
+        rule if_stmt() -> If<'a>
+            = i:lit("if") a:named_expression() col:lit(":") b:block() elif:elif_stmt() {?
+                make_if(&config, i, a, col, b, Some(OrElse::Elif(elif)), false)
+                    .map_err(|e| "if statement")
+            }
+            / i:lit("if") a:named_expression() col:lit(":") b:block() el:else_block()? {?
+                make_if(&config, i, a, col, b, el.map(OrElse::Else), false)
+                    .map_err(|e| "if statement")
+            }
+
+        rule elif_stmt() -> If<'a>
+            = i:lit("elif") a:named_expression() col:lit(":") b:block() elif:elif_stmt() {?
+                make_if(&config, i, a, col, b, Some(OrElse::Elif(elif)), true)
+                    .map_err(|e| "elif statement")
+            }
+            / i:lit("elif") a:named_expression() col:lit(":") b:block() el:else_block()? {?
+                make_if(&config, i, a, col, b, el.map(OrElse::Else), true)
+                    .map_err(|e| "elif statement")
+            }
+
+        rule else_block() -> Else<'a>
+            = el:lit("else") col:lit(":") b:block() {?
+                make_else(&config, el, col, b)
+                    .map_err(|e| "else block")
+            }
+
+        rule named_expression() -> Expression<'a>
+            = a:tok(NameTok, "NAME") op:lit(":=") b:expression() { todo!() }
+            / e:expression() !lit(":=") { e }
 
         rule mb_lit(lit: &str) -> Option<Token<'a>>
             = ([t@Token {..}] {? if t.string == lit {
@@ -336,9 +368,9 @@ fn make_function_def<'a>(
     config: &Config<'a>,
     mut def: Token<'a>,
     mut name: Token<'a>,
-    open_paren: Token<'a>,
+    _open_paren: Token<'a>,
     params: Option<Parameters<'a>>,
-    close_paren: Token<'a>,
+    _close_paren: Token<'a>,
     mut colon: Token<'a>,
     body: Suite<'a>,
 ) -> Result<'a, FunctionDef<'a>> {
@@ -382,7 +414,7 @@ fn make_comparison<'a>(
 }
 
 fn make_binary_op<'a>(
-    config: &Config<'a>,
+    _config: &Config<'a>,
     head: Expression<'a>,
     tail: Vec<(Token<'a>, Expression<'a>)>,
 ) -> Result<'a, Expression<'a>> {
@@ -404,7 +436,7 @@ fn make_binary_op<'a>(
 }
 
 fn make_unary_op<'a>(
-    config: &Config<'a>,
+    _config: &Config<'a>,
     op: Token<'a>,
     tail: Expression<'a>,
 ) -> Result<'a, Expression<'a>> {
@@ -416,7 +448,7 @@ fn make_unary_op<'a>(
     })
 }
 
-fn make_number<'a>(config: &Config<'a>, num: Token<'a>) -> Result<'a, Expression<'a>> {
+fn make_number<'a>(_config: &Config<'a>, num: Token<'a>) -> Result<'a, Expression<'a>> {
     Ok(Expression::Integer {
         value: num.string,
         lpar: vec![],
@@ -444,9 +476,10 @@ fn make_indented_block<'a>(
     // comments are attached to the correct node.
     // TODO: override indent
     let footer = parse_empty_lines(config, &mut dedent.whitespace_after, None)?;
+    let header = parse_trailing_whitespace(config, &mut nl.whitespace_before)?;
     Ok(Suite::IndentedBlock(IndentedBlock {
         body: statements,
-        header: parse_trailing_whitespace(config, &mut nl.whitespace_after)?,
+        header,
         indent: indent.relative_indent,
         footer,
     }))
@@ -504,5 +537,43 @@ fn make_simple_statement_line<'a>(
         body,
         leading_lines,
         trailing_whitespace,
+    })
+}
+
+fn make_if<'a>(
+    config: &Config<'a>,
+    mut keyword: Token<'a>,
+    cond: Expression<'a>,
+    mut colon: Token<'a>,
+    block: Suite<'a>,
+    orelse: Option<OrElse<'a>>,
+    is_elif: bool,
+) -> Result<'a, If<'a>> {
+    let leading_lines = parse_empty_lines(config, &mut keyword.whitespace_before, None)?;
+    let whitespace_before_test = parse_simple_whitespace(config, &mut keyword.whitespace_after)?;
+    let whitespace_after_test = parse_simple_whitespace(config, &mut colon.whitespace_before)?;
+    Ok(If {
+        leading_lines,
+        whitespace_before_test,
+        test: cond,
+        whitespace_after_test,
+        body: block,
+        orelse: orelse.map(Box::new),
+        is_elif,
+    })
+}
+
+fn make_else<'a>(
+    config: &Config<'a>,
+    mut keyword: Token<'a>,
+    mut colon: Token<'a>,
+    block: Suite<'a>,
+) -> Result<'a, Else<'a>> {
+    let leading_lines = parse_empty_lines(config, &mut keyword.whitespace_before, None)?;
+    let whitespace_before_colon = parse_simple_whitespace(config, &mut colon.whitespace_before)?;
+    Ok(Else {
+        leading_lines,
+        whitespace_before_colon,
+        body: block,
     })
 }

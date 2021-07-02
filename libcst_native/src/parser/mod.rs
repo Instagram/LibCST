@@ -5,7 +5,7 @@
 
 use std::cmp::max;
 
-use crate::tokenize::core::{TokConfig, TokError, TokState, TokType, Token, TokenIterator};
+use crate::tokenize::core::{TokConfig, TokError, TokType, Token, TokenIterator};
 use peg::{Parse, ParseElem, ParseLiteral, RuleResult};
 use thiserror::Error;
 
@@ -17,8 +17,8 @@ pub use whitespace::{
 };
 mod statement;
 pub use statement::{
-    CompoundStatement, Decorator, FunctionDef, IndentedBlock, SimpleStatementLine,
-    SimpleStatementSuite, SmallStatement, Statement, Suite,
+    CompoundStatement, Decorator, Else, FunctionDef, If, IndentedBlock, OrElse,
+    SimpleStatementLine, SimpleStatementSuite, SmallStatement, Statement, Suite,
 };
 
 mod expression;
