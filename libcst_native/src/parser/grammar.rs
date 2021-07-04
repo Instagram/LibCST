@@ -281,20 +281,95 @@ peg::parser! {
             = parameters()
 
         rule parameters() -> Parameters<'a>
-            = a:slash_no_default() b:param_no_default()* // c:param_with_default()* d:star_etc()? {}
-            { Parameters { params: {a.into_iter().chain(b.into_iter()).collect()}} }
-            / a:param_no_default()+ { Parameters {params: a}}
+            = a:slash_no_default() b:param_no_default()* c:param_with_default()*  d:star_etc()?
+            {? make_parameters(&config, Some(a), concat(b, c), d).map_err(|e| "parameters") }
+            / a:slash_with_default() b:param_with_default()* d:star_etc()? {?
+                make_parameters(&config, Some(a), b, d)
+                    .map_err(|e| "parameters")
+            }
+            / a:param_no_default()+ b:param_with_default()* d:star_etc()? {?
+                make_parameters(&config, None, concat(a, b), d)
+                    .map_err(|e| "parameters")
+            }
+            / a:param_with_default()+ d:star_etc()? {?
+                make_parameters(&config, None, a, d)
+                    .map_err(|e| "parameters")
+            }
+            / d:star_etc() {?
+                make_parameters(&config, None, vec![], Some(d))
+                    .map_err(|e| "parameters")
+            }
 
-        rule slash_no_default() -> Vec<Param<'a>>
-            = a:param_no_default()+ "/" "," { a }
-            / a:param_no_default()+ "/" &")" { a }
+        rule slash_no_default() -> (Vec<Param<'a>>, ParamSlash<'a>)
+            = a:param_no_default()+ slash:lit("/") com:lit(",") {?
+                make_comma(&config, com)
+                    .map(|c| (a, ParamSlash { comma: Some(c)}))
+                    .map_err(|e| "slash_no_default")
+            }
+            / a:param_no_default()+ slash:lit("/") &")" {
+                (a, ParamSlash { comma: None })
+            }
+
+        rule slash_with_default() -> (Vec<Param<'a>>, ParamSlash<'a>)
+            = a:param_no_default()* b:param_with_default()+ slash:lit("/") com:lit(",") {?
+                make_comma(&config, com)
+                    .map(|c| (concat(a, b), ParamSlash { comma: Some(c) }))
+                    .map_err(|e| "slash_with_default")
+            }
+            / a:param_no_default()* b:param_with_default()+ slash:lit("/") &")" {
+                (concat(a, b), ParamSlash { comma: None })
+            }
+
+        rule star_etc() -> StarEtc<'a>
+            = star:lit("*") a:param_no_default() b:param_maybe_default()* kw:kwds()? {?
+                add_param_star(&config, a, star)
+                    .map(|p| StarEtc(Some(StarArg::Param(p)), b, kw))
+                    .map_err(|e| "star_etc")
+            }
+            / star:lit("*") com:lit(",") b:param_maybe_default()+ kw:kwds()? {?
+                make_comma(&config, com)
+                    .map(|comma| StarEtc(Some(StarArg::Star(ParamStar {comma})), b, kw))
+                    .map_err(|e| "star_etc")
+            }
+            / kw:kwds() { StarEtc(None, vec![], Some(kw)) }
+
+        rule kwds() -> Param<'a>
+            = star:lit("**") a:param_no_default() {?
+                add_param_star(&config, a, star)
+                    .map_err(|e| "kwds")
+            }
 
         rule param_no_default() -> Param<'a>
-            = a:param() "," {a}
+            = a:param() c:lit(",") {? add_param_default(&config, a, None, Some(c)).map_err(|e| "param_no_default") }
             / a:param() &")" {a}
 
+        rule param_with_default() -> Param<'a>
+            = a:param() def:default() c:lit(",") {?
+                add_param_default(&config, a, Some(def), Some(c))
+                    .map_err(|e| "param_with_default")
+            }
+            / a:param() def:default() &")" {?
+                add_param_default(&config, a, Some(def), None)
+                    .map_err(|e| "param_with_default")
+            }
+
+        rule param_maybe_default() -> Param<'a>
+            = a:param() def:default()? c:lit(",") {?
+                add_param_default(&config, a, def, Some(c))
+                    .map_err(|e| "param_maybe_default")
+            }
+            / a:param() def:default()? &")" {?
+                add_param_default(&config, a, def, None)
+                .map_err(|e| "param_maybe_default")
+            }
+
         rule param() -> Param<'a>
-            = n:tok(NameTok, "PARAMETER NAME") { Param {name: Name {value: n.string, ..Default::default()}, whitespace_after_param: SimpleWhitespace(""), whitespace_after_star: SimpleWhitespace("")}}
+            = n:tok(NameTok, "PARAMETER NAME") { Param {name: Name {value: n.string, ..Default::default()}, ..Default::default()} }
+
+        rule default() -> (AssignEqual<'a>, Expression<'a>)
+            = eq:lit("=") ex:expression() {?
+                Ok((make_assign_equal(&config, eq).map_err(|e| "=")?, ex))
+            }
 
         rule if_stmt() -> If<'a>
             = i:lit("if") a:named_expression() col:lit(":") b:block() elif:elif_stmt() {?
@@ -576,4 +651,89 @@ fn make_else<'a>(
         whitespace_before_colon,
         body: block,
     })
+}
+
+struct StarEtc<'a>(Option<StarArg<'a>>, Vec<Param<'a>>, Option<Param<'a>>);
+
+fn make_parameters<'a>(
+    _config: &Config<'a>,
+    posonly: Option<(Vec<Param<'a>>, ParamSlash<'a>)>,
+    params: Vec<Param<'a>>,
+    star_etc: Option<StarEtc<'a>>,
+) -> Result<'a, Parameters<'a>> {
+    let (posonly_params, posonly_ind) = match posonly {
+        Some((a, b)) => (a, Some(b)),
+        None => (vec![], None),
+    };
+    let (star_arg, kwonly_params, star_kwarg) = match star_etc {
+        None => (None, vec![], None),
+        Some(StarEtc(a, b, c)) => (a, b, c),
+    };
+    Ok(Parameters {
+        params,
+        kwonly_params,
+        posonly_params,
+        posonly_ind,
+        star_kwarg,
+        star_arg,
+    })
+}
+
+fn add_param_default<'a>(
+    config: &Config<'a>,
+    param: Param<'a>,
+    def: Option<(AssignEqual<'a>, Expression<'a>)>,
+    comma_tok: Option<Token<'a>>,
+) -> Result<'a, Param<'a>> {
+    let comma = match comma_tok {
+        None => None,
+        Some(c) => Some(make_comma(config, c)?),
+    };
+
+    let (equal, default) = match def {
+        Some((a, b)) => (Some(a), Some(b)),
+        None => (None, None),
+    };
+    Ok(Param {
+        comma,
+        equal,
+        default,
+        ..param
+    })
+}
+
+fn add_param_star<'a>(
+    config: &Config<'a>,
+    param: Param<'a>,
+    mut star: Token<'a>,
+) -> Result<'a, Param<'a>> {
+    let whitespace_after_star =
+        parse_parenthesizable_whitespace(config, &mut star.whitespace_after)?;
+    Ok(Param {
+        star: Some(star.string),
+        whitespace_after_star,
+        ..param
+    })
+}
+
+fn make_assign_equal<'a>(config: &Config<'a>, mut eq: Token<'a>) -> Result<'a, AssignEqual<'a>> {
+    let whitespace_before = parse_parenthesizable_whitespace(config, &mut eq.whitespace_before)?;
+    let whitespace_after = parse_parenthesizable_whitespace(config, &mut eq.whitespace_after)?;
+    Ok(AssignEqual {
+        whitespace_after,
+        whitespace_before,
+    })
+}
+
+fn make_comma<'a>(config: &Config<'a>, mut tok: Token<'a>) -> Result<'a, Comma<'a>> {
+    let whitespace_before = parse_parenthesizable_whitespace(config, &mut tok.whitespace_before)?;
+    let whitespace_after = parse_parenthesizable_whitespace(config, &mut tok.whitespace_after)?;
+    Ok(Comma {
+        whitespace_before,
+        whitespace_after,
+    })
+}
+
+fn concat<T>(a: Vec<T>, b: Vec<T>) -> Vec<T> {
+    a.into_iter().chain(b.into_iter()).collect()
 }

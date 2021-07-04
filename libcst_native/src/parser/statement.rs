@@ -259,7 +259,7 @@ impl<'a> Codegen for FunctionDef<'a> {
         self.name.codegen(state);
         self.whitespace_after_name.codegen(state);
         state.add_token("(".to_string());
-        // TODO: params
+        self.params.codegen(state);
         state.add_token(")".to_string());
         // TODO: returns
         self.whitespace_before_colon.codegen(state);

@@ -11,9 +11,9 @@ use thiserror::Error;
 
 mod whitespace;
 pub use whitespace::{
-    parse_empty_lines, parse_simple_whitespace, parse_trailing_whitespace, Comment, Config,
-    EmptyLine, Newline, SimpleWhitespace, State as WhitespaceState, TrailingWhitespace,
-    WhitespaceError,
+    parse_empty_lines, parse_parenthesizable_whitespace, parse_simple_whitespace,
+    parse_trailing_whitespace, Comment, Config, EmptyLine, Newline, ParenthesizableWhitespace,
+    SimpleWhitespace, State as WhitespaceState, TrailingWhitespace, WhitespaceError,
 };
 mod statement;
 pub use statement::{
@@ -22,10 +22,10 @@ pub use statement::{
 };
 
 mod expression;
-pub use expression::{Expression, Name, Param, Parameters};
+pub use expression::{Expression, Name, Param, ParamSlash, ParamStar, Parameters, StarArg};
 
 mod op;
-pub use op::{Comma, Semicolon};
+pub use op::{AssignEqual, Comma, Semicolon};
 
 mod grammar;
 use grammar::python;
@@ -260,6 +260,16 @@ mod test {
                                         value: "a",
                                         ..Default::default()
                                     },
+                                    comma: Some(Comma {
+                                        whitespace_after:
+                                            ParenthesizableWhitespace::SimpleWhitespace(
+                                                SimpleWhitespace(" ")
+                                            ),
+                                        whitespace_before:
+                                            ParenthesizableWhitespace::SimpleWhitespace(
+                                                SimpleWhitespace("")
+                                            ),
+                                    }),
                                     ..Default::default()
                                 },
                                 Param {
@@ -269,7 +279,8 @@ mod test {
                                     },
                                     ..Default::default()
                                 }
-                            ]
+                            ],
+                            ..Default::default()
                         },
                         decorators: Default::default(),
                         whitespace_after_def: SimpleWhitespace(" "),

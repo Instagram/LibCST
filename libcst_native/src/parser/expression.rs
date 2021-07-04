@@ -3,12 +3,110 @@
 // This source code is licensed under the MIT license found in the
 // LICENSE file in the root directory of this source tree.
 
-use super::{whitespace::ParenthesizableWhitespace, Codegen, CodegenState, SimpleWhitespace};
+use super::{
+    whitespace::ParenthesizableWhitespace, AssignEqual, Codegen, CodegenState, Comma,
+    SimpleWhitespace,
+};
 
 #[derive(Debug, Eq, PartialEq, Default)]
 pub struct Parameters<'a> {
     pub params: Vec<Param<'a>>,
+    pub star_arg: Option<StarArg<'a>>,
+    pub kwonly_params: Vec<Param<'a>>,
+    pub star_kwarg: Option<Param<'a>>,
+    pub posonly_params: Vec<Param<'a>>,
+    pub posonly_ind: Option<ParamSlash<'a>>,
 }
+
+#[derive(Debug, PartialEq, Eq)]
+pub enum StarArg<'a> {
+    Star(ParamStar<'a>),
+    Param(Param<'a>),
+}
+
+impl<'a> Codegen for Parameters<'a> {
+    fn codegen(&self, state: &mut CodegenState) -> () {
+        let params_after_kwonly = self.star_kwarg.is_some();
+        let params_after_regular = !self.kwonly_params.is_empty() || params_after_kwonly;
+        let params_after_posonly = !self.params.is_empty() || params_after_regular;
+        let star_included = self.star_arg.is_some() || !self.kwonly_params.is_empty();
+
+        for p in &self.posonly_params {
+            p.codegen(state, None, true);
+        }
+
+        match &self.posonly_ind {
+            Some(ind) => ind.codegen(state, params_after_posonly),
+            _ => {
+                if !self.posonly_params.is_empty() {
+                    if params_after_posonly {
+                        state.add_token("/, ".to_string());
+                    } else {
+                        state.add_token("/".to_string());
+                    }
+                }
+            }
+        }
+
+        let param_size = self.params.len();
+        for (i, p) in self.params.iter().enumerate() {
+            p.codegen(state, None, params_after_regular || i < param_size - 1);
+        }
+
+        let kwonly_size = self.kwonly_params.len();
+        match &self.star_arg {
+            None => {
+                if star_included {
+                    state.add_token("*, ".to_string())
+                }
+            }
+            Some(StarArg::Param(p)) => p.codegen(
+                state,
+                Some("*"),
+                kwonly_size > 0 || self.star_kwarg.is_some(),
+            ),
+            Some(StarArg::Star(s)) => s.codegen(state),
+        }
+
+        for (i, p) in self.kwonly_params.iter().enumerate() {
+            p.codegen(state, None, params_after_kwonly || i < kwonly_size - 1);
+        }
+
+        match &self.star_kwarg {
+            Some(star) => star.codegen(state, Some("**"), false),
+            _ => {}
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub struct ParamSlash<'a> {
+    pub comma: Option<Comma<'a>>,
+}
+
+impl<'a> ParamSlash<'a> {
+    fn codegen(&self, state: &mut CodegenState, default_comma: bool) -> () {
+        state.add_token("/".to_string());
+        match (&self.comma, default_comma) {
+            (Some(comma), _) => comma.codegen(state),
+            (None, true) => state.add_token(", ".to_string()),
+            _ => {}
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub struct ParamStar<'a> {
+    pub comma: Comma<'a>,
+}
+
+impl<'a> Codegen for ParamStar<'a> {
+    fn codegen(&self, state: &mut CodegenState) -> () {
+        state.add_token("*".to_string());
+        self.comma.codegen(state);
+    }
+}
+
 #[derive(Debug, Eq, PartialEq, Default)]
 pub struct Name<'a> {
     pub value: &'a str,
@@ -34,12 +132,72 @@ impl<'a> ParenthesizedNode<'a> for Name<'a> {
     }
 }
 
-#[derive(Debug, Eq, PartialEq, Default)]
+#[derive(Debug, Eq, PartialEq)]
 pub struct Param<'a> {
     pub name: Name<'a>,
+    // TODO: annotation
+    pub equal: Option<AssignEqual<'a>>,
+    pub default: Option<Expression<'a>>,
 
-    pub whitespace_after_star: SimpleWhitespace<'a>,
-    pub whitespace_after_param: SimpleWhitespace<'a>,
+    pub comma: Option<Comma<'a>>,
+
+    pub star: Option<&'a str>,
+
+    pub whitespace_after_star: ParenthesizableWhitespace<'a>,
+    pub whitespace_after_param: ParenthesizableWhitespace<'a>,
+}
+
+impl<'a> Default for Param<'a> {
+    fn default() -> Self {
+        Self {
+            name: Default::default(),
+            equal: None,
+            default: None,
+            comma: None,
+            star: None,
+            whitespace_after_param: ParenthesizableWhitespace::SimpleWhitespace(Default::default()),
+            whitespace_after_star: ParenthesizableWhitespace::SimpleWhitespace(Default::default()),
+        }
+    }
+}
+
+impl<'a> Param<'a> {
+    fn codegen(
+        &self,
+        state: &mut CodegenState,
+        default_star: Option<&str>,
+        default_comma: bool,
+    ) -> () {
+        match (self.star, default_star) {
+            (Some(star), _) => state.add_token(star.to_owned()),
+            (None, Some(star)) => state.add_token(star.to_owned()),
+            _ => {}
+        }
+        self.whitespace_after_star.codegen(state);
+        self.name.codegen(state);
+
+        // TODO: annotation here
+
+        match (&self.equal, &self.default) {
+            (Some(equal), Some(def)) => {
+                equal.codegen(state);
+                def.codegen(state);
+            }
+            (None, Some(def)) => {
+                state.add_token(" = ".to_string());
+                def.codegen(state);
+            }
+            _ => {}
+        }
+
+        match &self.comma {
+            Some(comma) => comma.codegen(state),
+            None if default_comma => state.add_token(", ".to_string()),
+            _ => {}
+        }
+
+        self.whitespace_after_param.codegen(state);
+    }
 }
 
 #[derive(Debug, Eq, PartialEq)]

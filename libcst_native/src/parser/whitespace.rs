@@ -428,3 +428,37 @@ pub fn parse_simple_whitespace<'a>(
         &config.input[start_offset..state.byte_offset],
     ))
 }
+
+pub fn parse_parenthesizable_whitespace<'a>(
+    config: &Config<'a>,
+    state: &mut State,
+) -> Result<ParenthesizableWhitespace<'a>> {
+    if state.is_parenthesized {
+        if let Some(ws) = parse_parenthesized_whitespace(config, state)? {
+            return Ok(ParenthesizableWhitespace::ParenthesizedWhitespace(ws));
+        }
+    }
+    parse_simple_whitespace(config, state).map(ParenthesizableWhitespace::SimpleWhitespace)
+}
+
+pub fn parse_parenthesized_whitespace<'a>(
+    config: &Config<'a>,
+    state: &mut State,
+) -> Result<Option<ParenthesizedWhitespace<'a>>> {
+    if let Some(first_line) = parse_optional_trailing_whitespace(config, state)? {
+        let mut empty_lines = Vec::new();
+        while let Some(empty_line) = parse_empty_line(config, state, None)? {
+            empty_lines.push(empty_line);
+        }
+        let indent = parse_indent(config, state, None)?;
+        let last_line = parse_simple_whitespace(config, state)?;
+        Ok(Some(ParenthesizedWhitespace {
+            empty_lines,
+            first_line,
+            indent,
+            last_line,
+        }))
+    } else {
+        Ok(None)
+    }
+}
