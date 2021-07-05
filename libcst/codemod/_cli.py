@@ -55,7 +55,6 @@ def invoke_formatter(formatter_args: Sequence[str], code: AnyStr) -> AnyStr:
         AnyStr,
         subprocess.check_output(
             formatter_args,
-            env={},
             input=code,
             universal_newlines=not work_with_bytes,
             encoding=None if work_with_bytes else "utf-8",
