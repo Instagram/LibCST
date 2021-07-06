@@ -126,6 +126,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "criterion-cycles-per-byte"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8d34485a578330c7a91ccf064674f3739a7aebbf3b9d7fd498a6d3e8f7473c96"
+dependencies = [
+ "criterion",
+]
+
+[[package]]
 name = "criterion-plot"
 version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -357,6 +366,7 @@ version = "0.1.0"
 dependencies = [
  "chic",
  "criterion",
+ "criterion-cycles-per-byte",
  "indoc 1.0.3",
  "itertools 0.10.0",
  "once_cell",
