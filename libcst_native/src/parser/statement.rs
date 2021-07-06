@@ -14,8 +14,8 @@ pub enum Statement<'a> {
     Compound(CompoundStatement<'a>),
 }
 
-impl<'a> Codegen for Statement<'a> {
-    fn codegen(&self, state: &mut CodegenState) -> () {
+impl<'a> Codegen<'a> for Statement<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) -> () {
         match &self {
             &Self::Simple(s) => s.codegen(state),
             &Self::Compound(f) => f.codegen(state),
@@ -29,8 +29,8 @@ pub enum CompoundStatement<'a> {
     If(If<'a>),
 }
 
-impl<'a> Codegen for CompoundStatement<'a> {
-    fn codegen(&self, state: &mut CodegenState) -> () {
+impl<'a> Codegen<'a> for CompoundStatement<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) -> () {
         match &self {
             &Self::FunctionDef(f) => f.codegen(state),
             &Self::If(f) => f.codegen(state),
@@ -44,8 +44,8 @@ pub enum Suite<'a> {
     SimpleStatementSuite(SimpleStatementSuite<'a>),
 }
 
-impl<'a> Codegen for Suite<'a> {
-    fn codegen(&self, state: &mut CodegenState) -> () {
+impl<'a> Codegen<'a> for Suite<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) -> () {
         match &self {
             &Self::IndentedBlock(b) => b.codegen(state),
             &Self::SimpleStatementSuite(s) => s.codegen(state),
@@ -73,22 +73,22 @@ pub struct IndentedBlock<'a> {
     pub footer: Vec<EmptyLine<'a>>,
 }
 
-impl<'a> Codegen for IndentedBlock<'a> {
-    fn codegen(&self, state: &mut CodegenState) -> () {
+impl<'a> Codegen<'a> for IndentedBlock<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) -> () {
         self.header.codegen(state);
 
         let indent = match self.indent {
             Some(i) => i,
             None => todo!(),
         };
-        state.indent(indent.to_string());
+        state.indent(indent);
 
         if self.body.is_empty() {
             // Empty indented blocks are not syntactically valid in Python unless they
             // contain a 'pass' statement, so add one here.
             state.add_indent();
-            state.add_token("pass".to_string());
-            state.add_token(state.default_newline.to_owned());
+            state.add_token("pass");
+            state.add_token(state.default_newline);
         } else {
             for stmt in &self.body {
                 // IndentedBlock is responsible for adjusting the current indentation
@@ -129,9 +129,9 @@ impl<'a> Default for SimpleStatementSuite<'a> {
 }
 
 fn _simple_statement_codegen<'a>(
-    body: &Vec<SmallStatement<'a>>,
-    trailing_whitespace: &TrailingWhitespace<'a>,
-    state: &mut CodegenState,
+    body: &'a Vec<SmallStatement<'a>>,
+    trailing_whitespace: &'a TrailingWhitespace<'a>,
+    state: &mut CodegenState<'a>,
 ) {
     for stmt in body {
         stmt.codegen(state);
@@ -140,13 +140,13 @@ fn _simple_statement_codegen<'a>(
     if body.is_empty() {
         // Empty simple statement blocks are not syntactically valid in Python
         // unless they contain a 'pass' statement, so add one here.
-        state.add_token("pass".to_owned())
+        state.add_token("pass")
     }
     trailing_whitespace.codegen(state);
 }
 
-impl<'a> Codegen for SimpleStatementSuite<'a> {
-    fn codegen(&self, state: &mut CodegenState) -> () {
+impl<'a> Codegen<'a> for SimpleStatementSuite<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) -> () {
         self.leading_whitespace.codegen(state);
         _simple_statement_codegen(&self.body, &self.trailing_whitespace, state);
     }
@@ -164,8 +164,8 @@ pub struct SimpleStatementLine<'a> {
     pub trailing_whitespace: TrailingWhitespace<'a>,
 }
 
-impl<'a> Codegen for SimpleStatementLine<'a> {
-    fn codegen(&self, state: &mut CodegenState) -> () {
+impl<'a> Codegen<'a> for SimpleStatementLine<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) -> () {
         for line in &self.leading_lines {
             line.codegen(state);
         }
@@ -207,12 +207,12 @@ pub enum SmallStatement<'a> {
        // TODO Global, Nonlocal
 }
 
-impl<'a> Codegen for SmallStatement<'a> {
-    fn codegen(&self, state: &mut CodegenState) -> () {
+impl<'a> Codegen<'a> for SmallStatement<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) -> () {
         match &self {
-            &Self::Pass { .. } => state.add_token("pass".to_string()),
-            &Self::Break { .. } => state.add_token("break".to_string()),
-            &Self::Continue { .. } => state.add_token("continue".to_string()),
+            &Self::Pass { .. } => state.add_token("pass"),
+            &Self::Break { .. } => state.add_token("break"),
+            &Self::Continue { .. } => state.add_token("continue"),
             &Self::Expr { value: e, .. } => e.codegen(state),
             _ => todo!(),
         }
@@ -251,8 +251,8 @@ impl<'a> FunctionDef<'a> {
     }
 }
 
-impl<'a> Codegen for FunctionDef<'a> {
-    fn codegen(&self, state: &mut CodegenState) -> () {
+impl<'a> Codegen<'a> for FunctionDef<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) -> () {
         for l in &self.leading_lines {
             l.codegen(state);
         }
@@ -265,17 +265,17 @@ impl<'a> Codegen for FunctionDef<'a> {
         state.add_indent();
 
         // TODO: async
-        state.add_token("def".to_string());
+        state.add_token("def");
         self.whitespace_after_def.codegen(state);
         self.name.codegen(state);
         self.whitespace_after_name.codegen(state);
-        state.add_token("(".to_string());
+        state.add_token("(");
         self.whitespace_before_params.codegen(state);
         self.params.codegen(state);
-        state.add_token(")".to_string());
+        state.add_token(")");
         // TODO: returns
         self.whitespace_before_colon.codegen(state);
-        state.add_token(":".to_string());
+        state.add_token(":");
         self.body.codegen(state);
     }
 }
@@ -288,13 +288,13 @@ pub struct Decorator<'a> {
     pub trailing_whitespace: TrailingWhitespace<'a>,
 }
 
-impl<'a> Codegen for Decorator<'a> {
-    fn codegen(&self, state: &mut CodegenState) -> () {
+impl<'a> Codegen<'a> for Decorator<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) -> () {
         for ll in self.leading_lines.iter() {
             ll.codegen(state);
         }
         state.add_indent();
-        state.add_token("@".to_string());
+        state.add_token("@");
         self.whitespace_after_at.codegen(state);
         self.decorator.codegen(state);
         self.trailing_whitespace.codegen(state);
@@ -325,18 +325,18 @@ pub struct If<'a> {
     pub is_elif: bool,
 }
 
-impl<'a> Codegen for If<'a> {
-    fn codegen(&self, state: &mut CodegenState) -> () {
+impl<'a> Codegen<'a> for If<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) -> () {
         for l in &self.leading_lines {
             l.codegen(state);
         }
         state.add_indent();
 
-        state.add_token(if self.is_elif { "elif" } else { "if" }.to_string());
+        state.add_token(if self.is_elif { "elif" } else { "if" });
         self.whitespace_before_test.codegen(state);
         self.test.codegen(state);
         self.whitespace_after_test.codegen(state);
-        state.add_token(":".to_string());
+        state.add_token(":");
         self.body.codegen(state);
         match &self.orelse {
             Some(orelse) => orelse.codegen(state),
@@ -351,8 +351,8 @@ pub enum OrElse<'a> {
     Else(Else<'a>),
 }
 
-impl<'a> Codegen for OrElse<'a> {
-    fn codegen(&self, state: &mut CodegenState) -> () {
+impl<'a> Codegen<'a> for OrElse<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) -> () {
         match &self {
             &Self::Elif(f) => f.codegen(state),
             &Self::Else(f) => f.codegen(state),
@@ -369,16 +369,16 @@ pub struct Else<'a> {
     pub whitespace_before_colon: SimpleWhitespace<'a>,
 }
 
-impl<'a> Codegen for Else<'a> {
-    fn codegen(&self, state: &mut CodegenState) -> () {
+impl<'a> Codegen<'a> for Else<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) -> () {
         for l in &self.leading_lines {
             l.codegen(state);
         }
         state.add_indent();
 
-        state.add_token("else".to_string());
+        state.add_token("else");
         self.whitespace_before_colon.codegen(state);
-        state.add_token(":".to_string());
+        state.add_token(":");
         self.body.codegen(state);
     }
 }

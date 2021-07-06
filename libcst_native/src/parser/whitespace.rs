@@ -29,9 +29,9 @@ type Result<T> = std::result::Result<T, WhitespaceError>;
 #[derive(Debug, Eq, PartialEq, Default)]
 pub struct SimpleWhitespace<'a>(pub &'a str);
 
-impl<'a> Codegen for SimpleWhitespace<'a> {
-    fn codegen(&self, state: &mut CodegenState) -> () {
-        state.add_token(self.0.to_string());
+impl<'a> Codegen<'a> for SimpleWhitespace<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) -> () {
+        state.add_token(self.0);
     }
 }
 
@@ -44,9 +44,9 @@ impl<'a> Default for Comment<'a> {
     }
 }
 
-impl<'a> Codegen for Comment<'a> {
-    fn codegen(&self, state: &mut CodegenState) -> () {
-        state.add_token(self.0.to_string());
+impl<'a> Codegen<'a> for Comment<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) -> () {
+        state.add_token(self.0);
     }
 }
 
@@ -65,15 +65,15 @@ impl Default for Fakeness {
     }
 }
 
-impl<'a> Codegen for Newline<'a> {
-    fn codegen(&self, state: &mut CodegenState) -> () {
+impl<'a> Codegen<'a> for Newline<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) -> () {
         if let Fakeness::Fake = self.1 {
             return;
         }
         if let Some(value) = self.0 {
-            state.add_token(value.to_string());
+            state.add_token(value);
         } else {
-            state.add_token(state.default_newline.clone());
+            state.add_token(state.default_newline);
         }
     }
 }
@@ -85,8 +85,8 @@ pub struct TrailingWhitespace<'a> {
     pub newline: Newline<'a>,
 }
 
-impl<'a> Codegen for TrailingWhitespace<'a> {
-    fn codegen(&self, state: &mut CodegenState) -> () {
+impl<'a> Codegen<'a> for TrailingWhitespace<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) -> () {
         self.whitespace.codegen(state);
         if let Some(comment) = &self.comment {
             comment.codegen(state);
@@ -103,8 +103,8 @@ pub struct EmptyLine<'a> {
     pub newline: Newline<'a>,
 }
 
-impl<'a> Codegen for EmptyLine<'a> {
-    fn codegen(&self, state: &mut CodegenState) -> () {
+impl<'a> Codegen<'a> for EmptyLine<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) -> () {
         if self.indent {
             state.add_indent()
         }
@@ -301,8 +301,8 @@ pub struct ParenthesizedWhitespace<'a> {
     pub last_line: SimpleWhitespace<'a>,
 }
 
-impl<'a> Codegen for ParenthesizedWhitespace<'a> {
-    fn codegen(&self, state: &mut CodegenState) -> () {
+impl<'a> Codegen<'a> for ParenthesizedWhitespace<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) -> () {
         self.first_line.codegen(state);
         for line in &self.empty_lines {
             line.codegen(state);
@@ -320,8 +320,8 @@ pub enum ParenthesizableWhitespace<'a> {
     ParenthesizedWhitespace(ParenthesizedWhitespace<'a>),
 }
 
-impl<'a> Codegen for ParenthesizableWhitespace<'a> {
-    fn codegen(&self, state: &mut CodegenState) -> () {
+impl<'a> Codegen<'a> for ParenthesizableWhitespace<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) -> () {
         match &self {
             &Self::SimpleWhitespace(w) => w.codegen(state),
             &Self::ParenthesizedWhitespace(w) => w.codegen(state),

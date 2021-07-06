@@ -3,7 +3,7 @@
 // This source code is licensed under the MIT license found in the
 // LICENSE file in the root directory of this source tree.
 
-use super::{whitespace::ParenthesizableWhitespace, Codegen, SimpleWhitespace};
+use super::{whitespace::ParenthesizableWhitespace, Codegen, CodegenState};
 
 #[derive(Debug, Eq, PartialEq)]
 pub struct Semicolon<'a> {
@@ -21,10 +21,10 @@ pub struct Comma<'a> {
     pub whitespace_after: ParenthesizableWhitespace<'a>,
 }
 
-impl<'a> Codegen for Comma<'a> {
-    fn codegen(&self, state: &mut super::CodegenState) -> () {
+impl<'a> Codegen<'a> for Comma<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) -> () {
         self.whitespace_before.codegen(state);
-        state.add_token(",".to_string());
+        state.add_token(",");
         self.whitespace_after.codegen(state);
     }
 }
@@ -37,10 +37,10 @@ pub struct AssignEqual<'a> {
     pub whitespace_after: ParenthesizableWhitespace<'a>,
 }
 
-impl<'a> Codegen for AssignEqual<'a> {
-    fn codegen(&self, state: &mut super::CodegenState) -> () {
+impl<'a> Codegen<'a> for AssignEqual<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) -> () {
         self.whitespace_before.codegen(state);
-        state.add_token("=".to_string());
+        state.add_token("=");
         self.whitespace_after.codegen(state);
     }
 }

@@ -49,8 +49,8 @@ pub struct Module<'a> {
     body: Vec<Statement<'a>>,
 }
 
-impl<'a> Codegen for Module<'a> {
-    fn codegen(&self, state: &mut CodegenState) -> () {
+impl<'a> Codegen<'a> for Module<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) -> () {
         for s in &self.body {
             s.codegen(state);
         }
@@ -182,10 +182,10 @@ mod test {
     #[test]
     fn test_decorated_funcdef() {
         let text = "@hello\ndef f(): ...";
-        let m = parse_module(text);
+        let m = parse_module(text).expect("parse failed");
         assert_eq!(
             m,
-            Ok(Module {
+            Module {
                 body: vec![Statement::Compound(CompoundStatement::FunctionDef(
                     FunctionDef {
                         name: Name {
@@ -224,13 +224,13 @@ mod test {
                         ),
                     }
                 ))]
-            })
+            }
         );
         let mut state = CodegenState {
-            default_newline: "\n".to_string(),
+            default_newline: "\n",
             ..Default::default()
         };
-        match &m.unwrap().body[0] {
+        match &m.body[0] {
             Statement::Compound(f) => f.codegen(&mut state),
             _ => {}
         }
