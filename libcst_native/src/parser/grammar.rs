@@ -443,7 +443,7 @@ fn make_function_def<'a>(
     config: &Config<'a>,
     mut def: Token<'a>,
     mut name: Token<'a>,
-    _open_paren: Token<'a>,
+    mut open_paren: Token<'a>,
     params: Option<Parameters<'a>>,
     _close_paren: Token<'a>,
     mut colon: Token<'a>,
@@ -457,9 +457,15 @@ fn make_function_def<'a>(
         params: params.unwrap_or_default(),
         decorators: Default::default(),
         body,
+        leading_lines: parse_empty_lines(config, &mut def.whitespace_before, None)?,
+        lines_after_decorators: vec![],
         whitespace_after_def: parse_simple_whitespace(config, &mut def.whitespace_after)?,
         whitespace_after_name: parse_simple_whitespace(config, &mut name.whitespace_after)?,
         whitespace_before_colon: parse_simple_whitespace(config, &mut colon.whitespace_before)?,
+        whitespace_before_params: parse_parenthesizable_whitespace(
+            config,
+            &mut open_paren.whitespace_after,
+        )?,
     })
 }
 
@@ -549,8 +555,11 @@ fn make_indented_block<'a>(
     // shared. This allows us to partially parse here and parse the rest of the
     // whitespace and comments on the next line, effectively making sure that
     // comments are attached to the correct node.
-    // TODO: override indent
-    let footer = parse_empty_lines(config, &mut dedent.whitespace_after, None)?;
+    let footer = parse_empty_lines(
+        config,
+        &mut dedent.whitespace_after,
+        Some(indent.whitespace_before.absolute_indent),
+    )?;
     let header = parse_trailing_whitespace(config, &mut nl.whitespace_before)?;
     Ok(Suite::IndentedBlock(IndentedBlock {
         body: statements,

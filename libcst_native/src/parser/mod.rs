@@ -165,9 +165,14 @@ mod test {
                         }),
                         params: Default::default(),
                         decorators: vec![],
+                        leading_lines: vec![],
+                        lines_after_decorators: vec![],
                         whitespace_after_def: SimpleWhitespace(" "),
                         whitespace_after_name: Default::default(),
                         whitespace_before_colon: Default::default(),
+                        whitespace_before_params: ParenthesizableWhitespace::SimpleWhitespace(
+                            Default::default()
+                        ),
                     }
                 ))]
             })
@@ -209,9 +214,14 @@ mod test {
                             },
                             ..Default::default()
                         }],
+                        leading_lines: vec![],
+                        lines_after_decorators: vec![],
                         whitespace_after_def: SimpleWhitespace(" "),
                         whitespace_after_name: Default::default(),
                         whitespace_before_colon: Default::default(),
+                        whitespace_before_params: ParenthesizableWhitespace::SimpleWhitespace(
+                            Default::default()
+                        ),
                     }
                 ))]
             })
@@ -283,9 +293,14 @@ mod test {
                             ..Default::default()
                         },
                         decorators: Default::default(),
+                        leading_lines: vec![],
+                        lines_after_decorators: vec![],
                         whitespace_after_def: SimpleWhitespace(" "),
                         whitespace_after_name: Default::default(),
                         whitespace_before_colon: Default::default(),
+                        whitespace_before_params: ParenthesizableWhitespace::SimpleWhitespace(
+                            Default::default()
+                        ),
                     }
                 ))]
             })

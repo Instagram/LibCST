@@ -4,8 +4,8 @@
 // LICENSE file in the root directory of this source tree.
 
 use super::{
-    Codegen, CodegenState, Comma, EmptyLine, Expression, Name, Parameters, Semicolon,
-    SimpleWhitespace, TrailingWhitespace,
+    Codegen, CodegenState, Comma, EmptyLine, Expression, Name, Parameters,
+    ParenthesizableWhitespace, Semicolon, SimpleWhitespace, TrailingWhitespace,
 };
 
 #[derive(Debug, Eq, PartialEq)]
@@ -225,20 +225,27 @@ pub struct FunctionDef<'a> {
     pub params: Parameters<'a>,
     pub body: Suite<'a>,
 
+    pub leading_lines: Vec<EmptyLine<'a>>,
+    pub lines_after_decorators: Vec<EmptyLine<'a>>,
     pub decorators: Vec<Decorator<'a>>,
     pub whitespace_after_def: SimpleWhitespace<'a>,
     pub whitespace_after_name: SimpleWhitespace<'a>,
+    pub whitespace_before_params: ParenthesizableWhitespace<'a>,
     pub whitespace_before_colon: SimpleWhitespace<'a>,
 }
 
 impl<'a> FunctionDef<'a> {
-    pub fn with_decorators(self, decs: Vec<Decorator<'a>>) -> Self {
+    pub fn with_decorators(self, mut decs: Vec<Decorator<'a>>) -> Self {
+        let mut lines_before_decorators = vec![];
+        let lines_after_decorators = self.leading_lines;
+
+        if let Some(first_dec) = decs.first_mut() {
+            std::mem::swap(&mut first_dec.leading_lines, &mut lines_before_decorators);
+        }
         Self {
-            decorators: self
-                .decorators
-                .into_iter()
-                .chain(decs.into_iter())
-                .collect(),
+            decorators: decs,
+            leading_lines: lines_before_decorators,
+            lines_after_decorators,
             ..self
         }
     }
@@ -246,11 +253,15 @@ impl<'a> FunctionDef<'a> {
 
 impl<'a> Codegen for FunctionDef<'a> {
     fn codegen(&self, state: &mut CodegenState) -> () {
-        // TODO: leading lines
+        for l in &self.leading_lines {
+            l.codegen(state);
+        }
         for dec in self.decorators.iter() {
             dec.codegen(state);
         }
-        // TODO: lines_after_decorators
+        for l in &self.lines_after_decorators {
+            l.codegen(state);
+        }
         state.add_indent();
 
         // TODO: async
@@ -259,6 +270,7 @@ impl<'a> Codegen for FunctionDef<'a> {
         self.name.codegen(state);
         self.whitespace_after_name.codegen(state);
         state.add_token("(".to_string());
+        self.whitespace_before_params.codegen(state);
         self.params.codegen(state);
         state.add_token(")".to_string());
         // TODO: returns
