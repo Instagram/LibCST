@@ -888,7 +888,16 @@ fn make_import_from<'a>(
 ) -> Result<'a, ImportFrom<'a>> {
     let whitespace_after_from = parse_simple_whitespace(config, &mut from.whitespace_after)?;
     let whitespace_after_import = parse_simple_whitespace(config, &mut import.whitespace_after)?;
-    let (_lpar, names, _rpar) = aliases;
+    let (lpar_tok, names, rpar_tok) = aliases;
+
+    let lpar = match lpar_tok {
+        None => None,
+        Some(tok) => Some(make_lpar(config, tok)?),
+    };
+    let rpar = match rpar_tok {
+        None => None,
+        Some(tok) => Some(make_rpar(config, tok)?),
+    };
 
     let mut relative = vec![];
     for mut dot_tok in dots {
@@ -920,8 +929,8 @@ fn make_import_from<'a>(
         module,
         names,
         relative,
-        lpar: None,
-        rpar: None,
+        lpar,
+        rpar,
         semicolon: None,
         whitespace_after_from,
         whitespace_after_import,
@@ -954,4 +963,14 @@ fn make_import_from_as_names<'a>(
     }
     ret.push(cur);
     ret
+}
+
+fn make_lpar<'a>(config: &Config<'a>, mut tok: Token<'a>) -> Result<'a, LeftParen<'a>> {
+    let whitespace_after = parse_parenthesizable_whitespace(config, &mut tok.whitespace_after)?;
+    Ok(LeftParen { whitespace_after })
+}
+
+fn make_rpar<'a>(config: &Config<'a>, mut tok: Token<'a>) -> Result<'a, RightParen<'a>> {
+    let whitespace_before = parse_parenthesizable_whitespace(config, &mut tok.whitespace_before)?;
+    Ok(RightParen { whitespace_before })
 }

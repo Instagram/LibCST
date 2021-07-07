@@ -201,7 +201,7 @@ impl<'a> Param<'a> {
 #[derive(Debug, Eq, PartialEq)]
 pub struct LeftParen<'a> {
     /// Any space that appears directly after this left parenthesis.
-    whitespace_after: ParenthesizableWhitespace<'a>,
+    pub whitespace_after: ParenthesizableWhitespace<'a>,
 }
 
 impl<'a> Codegen<'a> for LeftParen<'a> {
@@ -214,7 +214,7 @@ impl<'a> Codegen<'a> for LeftParen<'a> {
 #[derive(Debug, Eq, PartialEq)]
 pub struct RightParen<'a> {
     /// Any space that appears directly before this right parenthesis.
-    whitespace_before: ParenthesizableWhitespace<'a>,
+    pub whitespace_before: ParenthesizableWhitespace<'a>,
 }
 
 impl<'a> Codegen<'a> for RightParen<'a> {
