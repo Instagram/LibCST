@@ -3,7 +3,7 @@
 // This source code is licensed under the MIT license found in the
 // LICENSE file in the root directory of this source tree.
 
-use std::cmp::max;
+use std::cmp::{max, min};
 
 use crate::tokenize::core::{TokConfig, TokError, TokType, Token, TokenIterator};
 use peg::{Parse, ParseElem, ParseLiteral, RuleResult};
@@ -17,15 +17,19 @@ pub use whitespace::{
 };
 mod statement;
 pub use statement::{
-    CompoundStatement, Decorator, Else, FunctionDef, If, IndentedBlock, OrElse,
-    SimpleStatementLine, SimpleStatementSuite, SmallStatement, Statement, Suite,
+    AsName, CompoundStatement, Decorator, Else, FunctionDef, If, Import, ImportAlias, ImportFrom,
+    ImportNames, IndentedBlock, OrElse, SimpleStatementLine, SimpleStatementSuite, SmallStatement,
+    Statement, Suite,
 };
 
 mod expression;
-pub use expression::{Expression, Name, Param, ParamSlash, ParamStar, Parameters, StarArg};
+pub use expression::{
+    Attribute, Expression, LeftParen, Name, NameOrAttribute, Param, ParamSlash, ParamStar,
+    Parameters, RightParen, StarArg,
+};
 
 mod op;
-pub use op::{AssignEqual, Comma, Semicolon};
+pub use op::{AssignEqual, Comma, Dot, ImportStar, Semicolon};
 
 mod grammar;
 use grammar::python;
@@ -88,7 +92,7 @@ fn bol_offset(source: &str, n: i32) -> usize {
     source
         .match_indices("\n")
         .nth((n - 2) as usize)
-        .map(|(index, _)| index)
+        .map(|(index, _)| index + 1)
         .unwrap_or_else(|| source.len())
 }
 
@@ -97,9 +101,11 @@ pub fn prettify_error<'a>(module_text: &'a str, err: ParserError<'a>, label: &st
         ParserError::ParserError(e) => {
             let loc = e.location;
             let context = 1;
-            let start_offset = bol_offset(module_text, loc.start_pos.line as i32 - 1 - context);
+            let start_offset = bol_offset(module_text, loc.start_pos.line as i32 - context);
             let end_offset = bol_offset(module_text, loc.end_pos.line as i32 + context + 1);
             let source = &module_text[start_offset..end_offset];
+            let start = loc.start_pos.offset - start_offset;
+            let end = loc.end_pos.offset - start_offset;
             chic::Error::new(label)
                 .error(
                     max(
@@ -109,8 +115,12 @@ pub fn prettify_error<'a>(module_text: &'a str, err: ParserError<'a>, label: &st
                             .checked_sub(context as usize)
                             .unwrap_or(1),
                     ),
-                    loc.start_pos.offset - start_offset,
-                    loc.end_pos.offset - start_offset,
+                    start,
+                    if start == end {
+                        min(end + 1, end_offset - start_offset + 1)
+                    } else {
+                        end
+                    },
                     source,
                     format!(
                         "expected {} {} -> {}",
@@ -318,14 +328,14 @@ mod test {
     #[test]
     fn bol_offset_second_line() {
         assert_eq!(5, bol_offset("hello", 2));
-        assert_eq!(5, bol_offset("hello\nhello", 2));
-        assert_eq!(5, bol_offset("hello\nhello\nhello", 2));
+        assert_eq!(6, bol_offset("hello\nhello", 2));
+        assert_eq!(6, bol_offset("hello\nhello\nhello", 2));
     }
 
     #[test]
     fn bol_offset_last_line() {
         assert_eq!(5, bol_offset("hello", 3));
         assert_eq!(11, bol_offset("hello\nhello", 3));
-        assert_eq!(11, bol_offset("hello\nhello\nhello", 3));
+        assert_eq!(12, bol_offset("hello\nhello\nhello", 3));
     }
 }

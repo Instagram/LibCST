@@ -5,6 +5,7 @@
 
 use super::*;
 use peg::str::LineCol;
+use std::{iter, mem::swap};
 use TokType::{Async, Dedent, EndMarker, Indent, Name as NameTok, Newline as NL, Number, String};
 
 #[derive(Debug)]
@@ -111,6 +112,9 @@ peg::parser! {
 
         rule small_stmt() -> SmallStatement<'a>
             = e:star_expressions() { SmallStatement::Expr { value: e, semicolon: None } }
+            // this is expanded from the original grammar's import_stmt rule
+            / &"import" i:import_name() { SmallStatement::Import(i) }
+            / &"from" i:import_from() { SmallStatement::ImportFrom(i) }
             / "pass" { SmallStatement::Pass { semicolon: None } }
 
         rule block() -> Suite<'a>
@@ -401,11 +405,75 @@ peg::parser! {
             = a:tok(NameTok, "NAME") op:lit(":=") b:expression() { todo!() }
             / e:expression() !lit(":=") { e }
 
+        rule import_name() -> Import<'a>
+            = kw:lit("import") a:dotted_as_names() {?
+                make_import(&config, kw, a)
+                    .map_err(|e| "import")
+            }
+
+        rule import_from() -> ImportFrom<'a>
+            = from:lit("from") dots:lit(".")* m:dotted_name()
+                import:lit("import") als:import_from_targets() {?
+                    make_import_from(&config, from, dots, Some(m), import, als)
+                        .map_err(|e| "import_from")
+            }
+            / from:lit("from") dots:lit(".")+
+                import:lit("import") als:import_from_targets() {?
+                    make_import_from(&config, from, dots, None, import, als)
+                        .map_err(|e| "import_from")
+            }
+
+        rule import_from_targets() -> ParenthesizedImportNames<'a>
+            = lpar:lit("(") als:import_from_as_names() c:comma()? rpar:lit(")") {
+                let mut als = als;
+                if let (comma@Some(_), Some(mut last)) = (c, als.last_mut()) {
+                    last.comma = comma;
+                }
+                (Some(lpar), ImportNames::Aliases(als), Some(rpar))
+            }
+            / als:import_from_as_names() !lit(",") { (None, ImportNames::Aliases(als), None)}
+            / star:lit("*") { (None, ImportNames::Star(ImportStar {}), None) }
+
+        rule import_from_as_names() -> Vec<ImportAlias<'a>>
+            = first:import_from_as_name() tail:(c:comma() al:import_from_as_name() {(c, al)})* {
+                make_import_from_as_names(first, tail)
+            }
+
+
+        rule import_from_as_name() -> ImportAlias<'a>
+            = n:tok(NameTok, "IMPORT NAME") asname:(kw:lit("as") z:tok(NameTok, "ALIAS NAME") {(kw, z)})? {?
+                make_import_alias(&config, NameOrAttribute::N(make_name(n)), asname)
+                    .map_err(|e| "import_from_as_name")
+            }
+
+        rule dotted_as_names() -> Vec<ImportAlias<'a>>
+            = init:(d:dotted_as_name() c:comma() {d.with_comma(c)})*
+                last:dotted_as_name() {
+                    concat(init, vec![last])
+            }
+
+        rule dotted_as_name() -> ImportAlias<'a>
+            = n:dotted_name() asname:(kw:lit("as") z:tok(NameTok, "ALIAS NAME") {(kw, z)})? {?
+                make_import_alias(&config, n, asname)
+                    .map_err(|e| "dotted_as_name")
+            }
+
+        rule dotted_name() -> NameOrAttribute<'a>
+            = init:(n:tok(NameTok, "NAME") dot:lit(".") {(n, dot)})* last:tok(NameTok, "NAME") {?
+                let mut init = init;
+                init.reverse();
+                make_name_or_attr(&config, init, last)
+                    .map_err(|e| "dotted_name")
+            }
+
         rule mb_lit(lit: &str) -> Option<Token<'a>>
             = ([t@Token {..}] {? if t.string == lit {
                                     Ok(t)
                                 } else { Err("optional semicolon") }
                               })?
+
+        rule comma() -> Comma<'a>
+            = c:lit(",") {? make_comma(&config, c).map_err(|e| ",") }
 
         /// matches any token, not just whitespace
         rule _() -> Token<'a>
@@ -745,4 +813,145 @@ fn make_comma<'a>(config: &Config<'a>, mut tok: Token<'a>) -> Result<'a, Comma<'
 
 fn concat<T>(a: Vec<T>, b: Vec<T>) -> Vec<T> {
     a.into_iter().chain(b.into_iter()).collect()
+}
+
+fn make_name_or_attr<'a>(
+    config: &Config<'a>,
+    mut init_reversed: Vec<(Token<'a>, Token<'a>)>,
+    last_tok: Token<'a>,
+) -> Result<'a, NameOrAttribute<'a>> {
+    if let Some((name, dot)) = init_reversed.pop() {
+        let name = make_name(name);
+        let dot = make_dot(config, dot)?;
+        return Ok(NameOrAttribute::A(Attribute {
+            attr: name,
+            dot,
+            lpar: Default::default(),
+            rpar: Default::default(),
+            value: Box::new(make_name_or_attr(config, init_reversed, last_tok)?.into()),
+        }));
+    } else {
+        Ok(NameOrAttribute::N(make_name(last_tok)))
+    }
+}
+
+fn make_name<'a>(tok: Token<'a>) -> Name<'a> {
+    Name {
+        value: tok.string,
+        ..Default::default()
+    }
+}
+
+fn make_dot<'a>(config: &Config<'a>, mut tok: Token<'a>) -> Result<'a, Dot<'a>> {
+    let whitespace_before = parse_parenthesizable_whitespace(config, &mut tok.whitespace_before)?;
+    let whitespace_after = parse_parenthesizable_whitespace(config, &mut tok.whitespace_after)?;
+    Ok(Dot {
+        whitespace_before,
+        whitespace_after,
+    })
+}
+
+fn make_import_alias<'a>(
+    config: &Config<'a>,
+    name: NameOrAttribute<'a>,
+    asname: Option<(Token<'a>, Token<'a>)>,
+) -> Result<'a, ImportAlias<'a>> {
+    Ok(ImportAlias {
+        name,
+        asname: match asname {
+            None => None,
+            Some((mut kw, n)) => {
+                let whitespace_before_as =
+                    parse_parenthesizable_whitespace(config, &mut kw.whitespace_before)?;
+                let whitespace_after_as =
+                    parse_parenthesizable_whitespace(config, &mut kw.whitespace_after)?;
+                Some(AsName {
+                    name: NameOrAttribute::N(make_name(n)),
+                    whitespace_after_as,
+                    whitespace_before_as,
+                })
+            }
+        },
+        comma: None,
+    })
+}
+
+type ParenthesizedImportNames<'a> = (Option<Token<'a>>, ImportNames<'a>, Option<Token<'a>>);
+
+fn make_import_from<'a>(
+    config: &Config<'a>,
+    mut from: Token<'a>,
+    dots: Vec<Token<'a>>,
+    module: Option<NameOrAttribute<'a>>,
+    mut import: Token<'a>,
+    aliases: ParenthesizedImportNames<'a>,
+) -> Result<'a, ImportFrom<'a>> {
+    let whitespace_after_from = parse_simple_whitespace(config, &mut from.whitespace_after)?;
+    let whitespace_after_import = parse_simple_whitespace(config, &mut import.whitespace_after)?;
+    let (_lpar, names, _rpar) = aliases;
+
+    let mut relative = vec![];
+    for mut dot_tok in dots {
+        let dot = Dot {
+            whitespace_after: ParenthesizableWhitespace::SimpleWhitespace(parse_simple_whitespace(
+                config,
+                &mut dot_tok.whitespace_after,
+            )?),
+            whitespace_before: ParenthesizableWhitespace::SimpleWhitespace(SimpleWhitespace("")),
+        };
+        relative.push(dot);
+    }
+    let mut whitespace_before_import = SimpleWhitespace("");
+    if !relative.is_empty() && module.is_none() {
+        // For relative-only imports relocate the space after the final dot to be owned
+        // by the import token.
+        if let Some(Dot {
+            whitespace_after: ParenthesizableWhitespace::SimpleWhitespace(dot_ws),
+            ..
+        }) = relative.last_mut()
+        {
+            swap(dot_ws, &mut whitespace_before_import);
+        }
+    } else {
+        whitespace_before_import = parse_simple_whitespace(config, &mut import.whitespace_before)?;
+    }
+
+    Ok(ImportFrom {
+        module,
+        names,
+        relative,
+        lpar: None,
+        rpar: None,
+        semicolon: None,
+        whitespace_after_from,
+        whitespace_after_import,
+        whitespace_before_import,
+    })
+}
+
+fn make_import<'a>(
+    config: &Config<'a>,
+    mut import: Token<'a>,
+    names: Vec<ImportAlias<'a>>,
+) -> Result<'a, Import<'a>> {
+    let whitespace_after_import = parse_simple_whitespace(config, &mut import.whitespace_after)?;
+    Ok(Import {
+        names,
+        whitespace_after_import,
+        semicolon: None,
+    })
+}
+
+fn make_import_from_as_names<'a>(
+    first: ImportAlias<'a>,
+    tail: Vec<(Comma<'a>, ImportAlias<'a>)>,
+) -> Vec<ImportAlias<'a>> {
+    let mut ret = vec![];
+    let mut cur = first;
+    for (comma, alias) in tail {
+        ret.push(cur.with_comma(comma));
+        cur = alias;
+    }
+    ret.push(cur);
+    ret
 }

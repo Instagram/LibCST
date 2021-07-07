@@ -13,6 +13,14 @@ pub struct Semicolon<'a> {
     pub whitespace_after: ParenthesizableWhitespace<'a>,
 }
 
+impl<'a> Codegen<'a> for Semicolon<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) -> () {
+        self.whitespace_before.codegen(state);
+        state.add_token(";");
+        self.whitespace_after.codegen(state);
+    }
+}
+
 #[derive(Debug, Eq, PartialEq)]
 pub struct Comma<'a> {
     /// Any space that appears directly before this comma.
@@ -42,5 +50,30 @@ impl<'a> Codegen<'a> for AssignEqual<'a> {
         self.whitespace_before.codegen(state);
         state.add_token("=");
         self.whitespace_after.codegen(state);
+    }
+}
+
+#[derive(Debug, Eq, PartialEq)]
+pub struct Dot<'a> {
+    /// Any space that appears directly before this dot.
+    pub whitespace_before: ParenthesizableWhitespace<'a>,
+    /// Any space that appears directly after this dot.
+    pub whitespace_after: ParenthesizableWhitespace<'a>,
+}
+
+impl<'a> Codegen<'a> for Dot<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) -> () {
+        self.whitespace_before.codegen(state);
+        state.add_token(".");
+        self.whitespace_after.codegen(state);
+    }
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub struct ImportStar {}
+
+impl<'a> Codegen<'a> for ImportStar {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) -> () {
+        state.add_token("*");
     }
 }

@@ -4,8 +4,9 @@
 // LICENSE file in the root directory of this source tree.
 
 use super::{
-    Codegen, CodegenState, Comma, EmptyLine, Expression, Name, Parameters,
-    ParenthesizableWhitespace, Semicolon, SimpleWhitespace, TrailingWhitespace,
+    Codegen, CodegenState, Comma, Dot, EmptyLine, Expression, ImportStar, LeftParen, Name,
+    NameOrAttribute, Parameters, ParenthesizableWhitespace, RightParen, Semicolon,
+    SimpleWhitespace, TrailingWhitespace,
 };
 
 #[derive(Debug, Eq, PartialEq)]
@@ -201,10 +202,12 @@ pub enum SmallStatement<'a> {
         comma: Option<Comma<'a>>,
         whitespace_after_assert: SimpleWhitespace<'a>,
         semicolon: Option<Semicolon<'a>>,
-    }, // TODO Import, ImportFrom
-       // TODO Assign, AnnAssign
-       // TODO Raise
-       // TODO Global, Nonlocal
+    },
+    Import(Import<'a>),
+    ImportFrom(ImportFrom<'a>),
+    // TODO Assign, AnnAssign
+    // TODO Raise
+    // TODO Global, Nonlocal
 }
 
 impl<'a> Codegen<'a> for SmallStatement<'a> {
@@ -214,7 +217,136 @@ impl<'a> Codegen<'a> for SmallStatement<'a> {
             &Self::Break { .. } => state.add_token("break"),
             &Self::Continue { .. } => state.add_token("continue"),
             &Self::Expr { value: e, .. } => e.codegen(state),
+            &Self::Import(i) => i.codegen(state),
+            &Self::ImportFrom(i) => i.codegen(state),
             _ => todo!(),
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub struct Import<'a> {
+    pub names: Vec<ImportAlias<'a>>,
+    pub semicolon: Option<Semicolon<'a>>,
+    pub whitespace_after_import: SimpleWhitespace<'a>,
+}
+
+impl<'a> Codegen<'a> for Import<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) -> () {
+        state.add_token("import");
+        self.whitespace_after_import.codegen(state);
+        for (i, name) in self.names.iter().enumerate() {
+            name.codegen(state);
+            if name.comma.is_none() && i < self.names.len() - 1 {
+                state.add_token(", ");
+            }
+        }
+        if let Some(semi) = &self.semicolon {
+            semi.codegen(state);
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub struct ImportFrom<'a> {
+    pub module: Option<NameOrAttribute<'a>>,
+    pub names: ImportNames<'a>,
+    pub relative: Vec<Dot<'a>>,
+    pub lpar: Option<LeftParen<'a>>,
+    pub rpar: Option<RightParen<'a>>,
+    pub semicolon: Option<Semicolon<'a>>,
+    pub whitespace_after_from: SimpleWhitespace<'a>,
+    pub whitespace_before_import: SimpleWhitespace<'a>,
+    pub whitespace_after_import: SimpleWhitespace<'a>,
+}
+
+impl<'a> Codegen<'a> for ImportFrom<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) -> () {
+        state.add_token("from");
+        self.whitespace_after_from.codegen(state);
+        for dot in &self.relative {
+            dot.codegen(state);
+        }
+        if let Some(module) = &self.module {
+            module.codegen(state);
+        }
+        self.whitespace_before_import.codegen(state);
+        state.add_token("import");
+        self.whitespace_after_import.codegen(state);
+        if let Some(lpar) = &self.lpar {
+            lpar.codegen(state);
+        }
+        self.names.codegen(state);
+        if let Some(rpar) = &self.rpar {
+            rpar.codegen(state);
+        }
+
+        if let Some(semi) = &self.semicolon {
+            semi.codegen(state);
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub struct ImportAlias<'a> {
+    pub name: NameOrAttribute<'a>,
+    pub asname: Option<AsName<'a>>,
+    pub comma: Option<Comma<'a>>,
+}
+
+impl<'a> ImportAlias<'a> {
+    pub fn with_comma(self, comma: Comma<'a>) -> ImportAlias<'a> {
+        let comma = Some(comma);
+        Self { comma, ..self }
+    }
+}
+
+impl<'a> Codegen<'a> for ImportAlias<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) -> () {
+        self.name.codegen(state);
+        if let Some(asname) = &self.asname {
+            asname.codegen(state);
+        }
+        if let Some(comma) = &self.comma {
+            comma.codegen(state);
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub struct AsName<'a> {
+    pub name: NameOrAttribute<'a>,
+    pub whitespace_before_as: ParenthesizableWhitespace<'a>,
+    pub whitespace_after_as: ParenthesizableWhitespace<'a>,
+}
+
+impl<'a> Codegen<'a> for AsName<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) -> () {
+        self.whitespace_before_as.codegen(state);
+        state.add_token("as");
+        self.whitespace_after_as.codegen(state);
+        self.name.codegen(state);
+    }
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub enum ImportNames<'a> {
+    Star(ImportStar),
+    Aliases(Vec<ImportAlias<'a>>),
+}
+
+impl<'a> Codegen<'a> for ImportNames<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) -> () {
+        match &self {
+            &Self::Star(s) => s.codegen(state),
+            &Self::Aliases(aliases) => {
+                for (i, alias) in aliases.iter().enumerate() {
+                    alias.codegen(state);
+                    if alias.comma.is_none() && i < aliases.len() - 1 {
+                        state.add_token(", ");
+                    }
+                }
+            }
         }
     }
 }

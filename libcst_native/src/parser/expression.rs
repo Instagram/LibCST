@@ -4,8 +4,7 @@
 // LICENSE file in the root directory of this source tree.
 
 use super::{
-    whitespace::ParenthesizableWhitespace, AssignEqual, Codegen, CodegenState, Comma,
-    SimpleWhitespace,
+    whitespace::ParenthesizableWhitespace, AssignEqual, Codegen, CodegenState, Comma, Dot,
 };
 #[derive(Debug, Eq, PartialEq, Default)]
 pub struct Parameters<'a> {
@@ -286,13 +285,7 @@ pub enum Expression<'a> {
         lpar: Vec<LeftParen<'a>>,
         rpar: Vec<RightParen<'a>>,
     },
-    Attribute {
-        value: Box<Expression<'a>>,
-        attr: Name<'a>,
-        dot: &'a str, // TODO
-        lpar: Vec<LeftParen<'a>>,
-        rpar: Vec<RightParen<'a>>,
-    },
+    Attribute(Attribute<'a>),
     NamedExpr {
         target: Box<Expression<'a>>,
         value: Box<Expression<'a>>,
@@ -320,6 +313,7 @@ impl<'a> Codegen<'a> for Expression<'a> {
             &Self::Integer { value, .. } => {
                 self.parenthesize(state, |state| state.add_token(value))
             }
+            &Self::Attribute(a) => a.codegen(state),
             _ => panic!("codegen not implemented for {:#?}", self),
         }
     }
@@ -339,6 +333,58 @@ impl<'a> ParenthesizedNode<'a> for Expression<'a> {
             &Self::BinaryOperation { rpar, .. } => rpar,
             &Self::Integer { rpar, .. } => rpar,
             _ => todo!(),
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub struct Attribute<'a> {
+    pub value: Box<Expression<'a>>,
+    pub attr: Name<'a>,
+    pub dot: Dot<'a>,
+    pub lpar: Vec<LeftParen<'a>>,
+    pub rpar: Vec<RightParen<'a>>,
+}
+
+impl<'a> Codegen<'a> for Attribute<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) -> () {
+        self.parenthesize(state, |state| {
+            self.value.codegen(state);
+            self.dot.codegen(state);
+            self.attr.codegen(state);
+        })
+    }
+}
+
+impl<'a> ParenthesizedNode<'a> for Attribute<'a> {
+    fn lpar(&self) -> &Vec<LeftParen<'a>> {
+        &self.lpar
+    }
+    fn rpar(&self) -> &Vec<RightParen<'a>> {
+        &self.rpar
+    }
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub enum NameOrAttribute<'a> {
+    N(Name<'a>),
+    A(Attribute<'a>),
+}
+
+impl<'a> Codegen<'a> for NameOrAttribute<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) -> () {
+        match &self {
+            &Self::N(n) => n.codegen(state),
+            &Self::A(a) => a.codegen(state),
+        }
+    }
+}
+
+impl<'a> Into<Expression<'a>> for NameOrAttribute<'a> {
+    fn into(self) -> Expression<'a> {
+        match self {
+            Self::N(n) => Expression::Name(n),
+            Self::A(a) => Expression::Attribute(a),
         }
     }
 }
