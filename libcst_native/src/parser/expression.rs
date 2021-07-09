@@ -314,6 +314,23 @@ impl<'a> Codegen<'a> for Expression<'a> {
                 self.parenthesize(state, |state| state.add_token(value))
             }
             &Self::Attribute(a) => a.codegen(state),
+            &Self::UnaryOperation {
+                expression,
+                operator,
+                ..
+            } => self.parenthesize(state, |state| {
+                state.add_token(operator);
+                expression.codegen(state);
+            }),
+            &Self::Name(n) => n.codegen(state),
+            &Self::Comparison {
+                left, comparisons, ..
+            } => self.parenthesize(state, |state| {
+                left.codegen(state);
+                for comp in comparisons {
+                    comp.codegen(state);
+                }
+            }),
             _ => panic!("codegen not implemented for {:#?}", self),
         }
     }
@@ -324,7 +341,9 @@ impl<'a> ParenthesizedNode<'a> for Expression<'a> {
         match &self {
             &Self::BinaryOperation { lpar, .. } => lpar,
             &Self::Integer { lpar, .. } => lpar,
-            _ => todo!(),
+            &Self::UnaryOperation { lpar, .. } => lpar,
+            &Self::Comparison { lpar, .. } => lpar,
+            _ => panic!("lpar not implemented for {:#?}", self),
         }
     }
 
@@ -332,7 +351,9 @@ impl<'a> ParenthesizedNode<'a> for Expression<'a> {
         match &self {
             &Self::BinaryOperation { rpar, .. } => rpar,
             &Self::Integer { rpar, .. } => rpar,
-            _ => todo!(),
+            &Self::UnaryOperation { rpar, .. } => rpar,
+            &Self::Comparison { rpar, .. } => rpar,
+            _ => panic!("rpar not implemented for {:#?}", self),
         }
     }
 }
@@ -391,8 +412,15 @@ impl<'a> Into<Expression<'a>> for NameOrAttribute<'a> {
 
 #[derive(Debug, Eq, PartialEq)]
 pub struct ComparisonTarget<'a> {
-    operator: &'a str, // TODO
-    comparator: Expression<'a>,
+    pub operator: &'a str, // TODO
+    pub comparator: Expression<'a>,
+}
+
+impl<'a> Codegen<'a> for ComparisonTarget<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) -> () {
+        state.add_token(self.operator);
+        self.comparator.codegen(state);
+    }
 }
 
 trait ParenthesizedNode<'a> {

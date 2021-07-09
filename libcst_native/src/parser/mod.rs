@@ -24,8 +24,8 @@ pub use statement::{
 
 mod expression;
 pub use expression::{
-    Attribute, Expression, LeftParen, Name, NameOrAttribute, Param, ParamSlash, ParamStar,
-    Parameters, RightParen, StarArg,
+    Attribute, ComparisonTarget, Expression, LeftParen, Name, NameOrAttribute, Param, ParamSlash,
+    ParamStar, Parameters, RightParen, StarArg,
 };
 
 mod op;

@@ -158,19 +158,23 @@ peg::parser! {
         rule comparison() -> Expression<'a>
             = a:bitwise_or() b:compare_op_bitwise_or_pair()+ {?
                 make_comparison(&config, a, b).map_err(|e| "expected comparison")
-
             }
             / bitwise_or()
 
         rule compare_op_bitwise_or_pair() -> (Token<'a>, Expression<'a>)
-            = eq_bitwise_or()
-            / noteq_bitwise_or()
+            = _op_bitwise_or("==")
+            / _op_bitwise_or("!=") // TODO: support barry_as_flufl
+            / _op_bitwise_or("<=")
+            / _op_bitwise_or("<")
+            / _op_bitwise_or(">=")
+            / _op_bitwise_or(">")
+            // / _op_bitwise_or2("not", "in")
+            / _op_bitwise_or("in")
+            // / _op_bitwise_or2("is", "not")
+            / _op_bitwise_or("is")
 
-        rule eq_bitwise_or() -> (Token<'a>, Expression<'a>)
-            = op:lit("==") e:bitwise_or() { (op, e) }
-
-        rule noteq_bitwise_or() -> (Token<'a>, Expression<'a>)
-            = op:lit("!=") e:bitwise_or() { (op, e) } // TODO: support barry_as_flufl
+        rule _op_bitwise_or(o: &'static str) -> (Token<'a>, Expression<'a>)
+            = op:lit(o) e:bitwise_or() { (op, e) }
 
         rule bitwise_or() -> Expression<'a>
             // TODO left-recursive grammar
@@ -259,7 +263,7 @@ peg::parser! {
             // TODO: missing left-recursive branches here
 
         rule atom() -> Expression<'a>
-            = n:lit("name") { Expression::Name(Name { value: n.string, lpar: vec![], rpar: vec![] }) }
+            = n:tok(NameTok, "NAME") { Expression::Name(Name { value: n.string, lpar: vec![], rpar: vec![] }) }
             / &tok(String, "STRING") s:strings() {s}
             / n:tok(Number, "NUMBER") {? make_number(&config, n).map_err(|e| "expected number")}
             / lit("...") { Expression::Ellipsis {lpar: vec![], rpar: vec![]}}
@@ -491,10 +495,7 @@ peg::parser! {
                 #[cfg(feature = "trace")]
                 {
                     println!("[PEG_INPUT_START]");
-                    for tok in input {
-                        print!("{}", tok.string);
-                    }
-                    println!();
+                    println!("{}", config.input);
                     println!("[PEG_TRACE_START]");
                 }
             })
@@ -556,10 +557,23 @@ fn make_decorator<'a>(
 
 fn make_comparison<'a>(
     _config: &Config<'a>,
-    _head: Expression<'a>,
-    _tail: Vec<(Token<'a>, Expression<'a>)>,
+    head: Expression<'a>,
+    tail: Vec<(Token<'a>, Expression<'a>)>,
 ) -> Result<'a, Expression<'a>> {
-    todo!()
+    let mut comparisons = vec![];
+    for (op, e) in tail {
+        let operator = op.string;
+        comparisons.push(ComparisonTarget {
+            operator,
+            comparator: e,
+        });
+    }
+    Ok(Expression::Comparison {
+        left: Box::new(head),
+        comparisons,
+        lpar: vec![],
+        rpar: vec![],
+    })
 }
 
 fn make_binary_op<'a>(
@@ -651,7 +665,7 @@ fn _make_simple_statement<'a>(
     mut parts: SimpleStatementParts<'a>,
 ) -> Result<'a, (Token<'a>, Vec<SmallStatement<'a>>, TrailingWhitespace<'a>)> {
     let mut body = vec![];
-    for (statement, semi) in parts.statements {
+    for (statement, _semi) in parts.statements {
         // TODO: parse whitespace before and after semi and attach it to a semicolon
         // inside statement
         body.push(statement);
