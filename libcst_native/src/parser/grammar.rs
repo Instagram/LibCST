@@ -5,7 +5,7 @@
 
 use super::*;
 use peg::str::LineCol;
-use std::{iter, mem::swap};
+use std::mem::swap;
 use TokType::{Async, Dedent, EndMarker, Indent, Name as NameTok, Newline as NL, Number, String};
 
 #[derive(Debug)]
@@ -540,7 +540,7 @@ fn make_function_def<'a>(
 fn make_decorator<'a>(
     config: &Config<'a>,
     mut at: Token<'a>,
-    mut name: Token<'a>,
+    name: Token<'a>,
     // mut newline: Token<'a>,
 ) -> Result<'a, Decorator<'a>> {
     Ok(Decorator {
@@ -555,9 +555,9 @@ fn make_decorator<'a>(
 }
 
 fn make_comparison<'a>(
-    config: &Config<'a>,
-    head: Expression<'a>,
-    tail: Vec<(Token<'a>, Expression<'a>)>,
+    _config: &Config<'a>,
+    _head: Expression<'a>,
+    _tail: Vec<(Token<'a>, Expression<'a>)>,
 ) -> Result<'a, Expression<'a>> {
     todo!()
 }
@@ -641,6 +641,7 @@ struct SimpleStatementParts<'a> {
     first: Token<'a>, // The first token of the first statement. Used for its whitespace
     statements: Vec<(SmallStatement<'a>, Token<'a>)>, // statement, semicolon pairs
     last_statement: SmallStatement<'a>,
+    #[allow(dead_code)]
     last_semi: Option<Token<'a>>,
     nl: Token<'a>,
 }
