@@ -133,37 +133,44 @@ peg::parser! {
         rule star_expressions() -> Expression<'a>
             = star_expression()
 
+        #[cache]
         rule star_expression() -> Expression<'a>
             = // TODO lit!("*") bitwise_or()
             expression()
 
+        #[cache]
         rule expression() -> Expression<'a>
             = disjunction()
 
+        #[cache]
         rule disjunction() -> Expression<'a>
             = a:conjunction() b:(or:lit("or") inner:conjunction() { (or, inner) })+ {?
                 make_boolean_op(&config, a, b).map_err(|e| "expected disjunction")
             }
             / conjunction()
 
+        #[cache]
         rule conjunction() -> Expression<'a>
             = a:inversion() b:(and:lit("and") inner:inversion() { (and, inner) })+ {?
                 make_boolean_op(&config, a, b).map_err(|e| "expected conjunction")
             }
             / inversion()
 
+        #[cache]
         rule inversion() -> Expression<'a>
             = not:lit("not") a:inversion() {?
                 make_unary_op(&config, not, a).map_err(|e| "expected inversion")
             }
             / comparison()
 
+        #[cache]
         rule comparison() -> Expression<'a>
             = a:bitwise_or() b:compare_op_bitwise_or_pair()+ {?
                 make_comparison(&config, a, b).map_err(|e| "expected comparison")
             }
             / bitwise_or()
 
+        #[cache]
         rule compare_op_bitwise_or_pair() -> (Token<'a>, Expression<'a>)
             = _op_bitwise_or("==")
             / _op_bitwise_or("!=") // TODO: support barry_as_flufl
@@ -239,6 +246,7 @@ peg::parser! {
             }
             / factor()
 
+        #[cache]
         rule factor() -> Expression<'a>
             = op:lit("+") a:factor() {?
                 make_unary_op(&config, op, a).map_err(|e| "expected factor")
@@ -1150,6 +1158,6 @@ fn make_module<'a>(
     body: Vec<Statement<'a>>,
     mut tok: Token<'a>,
 ) -> Result<'a, Module<'a>> {
-    let footer = parse_empty_lines(config, &mut tok.whitespace_before, None);
+    let footer = parse_empty_lines(config, &mut tok.whitespace_before, None)?;
     Ok(Module { body, footer })
 }

@@ -7,7 +7,7 @@ use super::{
     whitespace::ParenthesizableWhitespace, AssignEqual, BinaryOp, BooleanOp, Codegen, CodegenState,
     Comma, CompOp, Dot, UnaryOp,
 };
-#[derive(Debug, Eq, PartialEq, Default)]
+#[derive(Debug, Eq, PartialEq, Default, Clone)]
 pub struct Parameters<'a> {
     pub params: Vec<Param<'a>>,
     pub star_arg: Option<StarArg<'a>>,
@@ -17,7 +17,7 @@ pub struct Parameters<'a> {
     pub posonly_ind: Option<ParamSlash<'a>>,
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum StarArg<'a> {
     Star(ParamStar<'a>),
     Param(Param<'a>),
@@ -78,7 +78,7 @@ impl<'a> Codegen<'a> for Parameters<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct ParamSlash<'a> {
     pub comma: Option<Comma<'a>>,
 }
@@ -94,7 +94,7 @@ impl<'a> ParamSlash<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct ParamStar<'a> {
     pub comma: Comma<'a>,
 }
@@ -106,7 +106,7 @@ impl<'a> Codegen<'a> for ParamStar<'a> {
     }
 }
 
-#[derive(Debug, Eq, PartialEq, Default)]
+#[derive(Debug, Eq, PartialEq, Default, Clone)]
 pub struct Name<'a> {
     pub value: &'a str,
     pub lpar: Vec<LeftParen<'a>>,
@@ -131,7 +131,7 @@ impl<'a> ParenthesizedNode<'a> for Name<'a> {
     }
 }
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Param<'a> {
     pub name: Name<'a>,
     // TODO: annotation
@@ -199,7 +199,7 @@ impl<'a> Param<'a> {
     }
 }
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Eq, PartialEq, Clone)]
 pub struct LeftParen<'a> {
     /// Any space that appears directly after this left parenthesis.
     pub whitespace_after: ParenthesizableWhitespace<'a>,
@@ -212,7 +212,7 @@ impl<'a> Codegen<'a> for LeftParen<'a> {
     }
 }
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Eq, PartialEq, Clone)]
 pub struct RightParen<'a> {
     /// Any space that appears directly before this right parenthesis.
     pub whitespace_before: ParenthesizableWhitespace<'a>,
@@ -225,7 +225,7 @@ impl<'a> Codegen<'a> for RightParen<'a> {
     }
 }
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Eq, PartialEq, Clone)]
 pub enum Expression<'a> {
     Name(Name<'a>),
     Ellipsis {
@@ -371,7 +371,7 @@ impl<'a> ParenthesizedNode<'a> for Expression<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Attribute<'a> {
     pub value: Box<Expression<'a>>,
     pub attr: Name<'a>,
@@ -399,7 +399,7 @@ impl<'a> ParenthesizedNode<'a> for Attribute<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum NameOrAttribute<'a> {
     N(Name<'a>),
     A(Attribute<'a>),
@@ -423,7 +423,7 @@ impl<'a> Into<Expression<'a>> for NameOrAttribute<'a> {
     }
 }
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Eq, PartialEq, Clone)]
 pub struct ComparisonTarget<'a> {
     pub operator: CompOp<'a>,
     pub comparator: Expression<'a>,

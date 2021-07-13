@@ -5,7 +5,7 @@
 
 use super::{whitespace::ParenthesizableWhitespace, Codegen, CodegenState};
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Eq, PartialEq, Clone)]
 pub struct Semicolon<'a> {
     /// Any space that appears directly before this semicolon.
     pub whitespace_before: ParenthesizableWhitespace<'a>,
@@ -21,7 +21,7 @@ impl<'a> Codegen<'a> for Semicolon<'a> {
     }
 }
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Comma<'a> {
     /// Any space that appears directly before this comma.
     pub whitespace_before: ParenthesizableWhitespace<'a>,
@@ -37,7 +37,7 @@ impl<'a> Codegen<'a> for Comma<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct AssignEqual<'a> {
     /// Any space that appears directly before this equal sign.
     pub whitespace_before: ParenthesizableWhitespace<'a>,
@@ -53,7 +53,7 @@ impl<'a> Codegen<'a> for AssignEqual<'a> {
     }
 }
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Eq, PartialEq, Clone)]
 pub struct Dot<'a> {
     /// Any space that appears directly before this dot.
     pub whitespace_before: ParenthesizableWhitespace<'a>,
@@ -69,7 +69,7 @@ impl<'a> Codegen<'a> for Dot<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct ImportStar {}
 
 impl<'a> Codegen<'a> for ImportStar {
@@ -78,7 +78,7 @@ impl<'a> Codegen<'a> for ImportStar {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum UnaryOp<'a> {
     Plus(ParenthesizableWhitespace<'a>),
     Minus(ParenthesizableWhitespace<'a>),
@@ -99,7 +99,7 @@ impl<'a> Codegen<'a> for UnaryOp<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum BooleanOp<'a> {
     And {
         whitespace_before: ParenthesizableWhitespace<'a>,
@@ -129,7 +129,7 @@ impl<'a> Codegen<'a> for BooleanOp<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum BinaryOp<'a> {
     Add {
         whitespace_before: ParenthesizableWhitespace<'a>,
@@ -247,7 +247,7 @@ impl<'a> Codegen<'a> for BinaryOp<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum CompOp<'a> {
     LessThan {
         whitespace_before: ParenthesizableWhitespace<'a>,
