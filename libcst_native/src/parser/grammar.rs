@@ -139,13 +139,13 @@ peg::parser! {
 
         rule disjunction() -> Expression<'a>
             = a:conjunction() b:(or:lit("or") inner:conjunction() { (or, inner) })+ {?
-                make_binary_op(&config, a, b).map_err(|e| "expected disjunction")
+                make_boolean_op(&config, a, b).map_err(|e| "expected disjunction")
             }
             / conjunction()
 
         rule conjunction() -> Expression<'a>
             = a:inversion() b:(and:lit("and") inner:inversion() { (and, inner) })+ {?
-                make_binary_op(&config, a, b).map_err(|e| "expected conjunction")
+                make_boolean_op(&config, a, b).map_err(|e| "expected conjunction")
             }
             / inversion()
 
@@ -556,13 +556,13 @@ fn make_decorator<'a>(
 }
 
 fn make_comparison<'a>(
-    _config: &Config<'a>,
+    config: &Config<'a>,
     head: Expression<'a>,
     tail: Vec<(Token<'a>, Expression<'a>)>,
 ) -> Result<'a, Expression<'a>> {
     let mut comparisons = vec![];
     for (op, e) in tail {
-        let operator = op.string;
+        let operator = make_comparison_operator(config, op)?;
         comparisons.push(ComparisonTarget {
             operator,
             comparator: e,
@@ -576,8 +576,87 @@ fn make_comparison<'a>(
     })
 }
 
+fn make_comparison_operator<'a>(config: &Config<'a>, mut tok: Token<'a>) -> Result<'a, CompOp<'a>> {
+    let whitespace_before = parse_parenthesizable_whitespace(config, &mut tok.whitespace_before)?;
+    let whitespace_after = parse_parenthesizable_whitespace(config, &mut tok.whitespace_after)?;
+
+    match tok.string {
+        "<" => Ok(CompOp::LessThan {
+            whitespace_after,
+            whitespace_before,
+        }),
+        ">" => Ok(CompOp::GreaterThan {
+            whitespace_after,
+            whitespace_before,
+        }),
+        "<=" => Ok(CompOp::LessThanEqual {
+            whitespace_after,
+            whitespace_before,
+        }),
+        ">=" => Ok(CompOp::GreaterThanEqual {
+            whitespace_after,
+            whitespace_before,
+        }),
+        "==" => Ok(CompOp::Equal {
+            whitespace_after,
+            whitespace_before,
+        }),
+        "!=" => Ok(CompOp::NotEqual {
+            whitespace_after,
+            whitespace_before,
+        }),
+        "in" => Ok(CompOp::In {
+            whitespace_after,
+            whitespace_before,
+        }),
+        "is" => Ok(CompOp::Is {
+            whitespace_after,
+            whitespace_before,
+        }),
+        _ => Err(panic!("{:#?}", ParserError::OperatorError)),
+    }
+}
+
+fn make_boolean_op<'a>(
+    config: &Config<'a>,
+    head: Expression<'a>,
+    tail: Vec<(Token<'a>, Expression<'a>)>,
+) -> Result<'a, Expression<'a>> {
+    if tail.is_empty() {
+        return Ok(head);
+    }
+
+    let mut expr = head;
+    for (tok, right) in tail {
+        expr = Expression::BooleanOperation {
+            left: Box::new(expr),
+            operator: make_boolean_operator(config, tok)?,
+            right: Box::new(right),
+            lpar: vec![],
+            rpar: vec![],
+        }
+    }
+    Ok(expr)
+}
+
+fn make_boolean_operator<'a>(config: &Config<'a>, mut tok: Token<'a>) -> Result<'a, BooleanOp<'a>> {
+    let whitespace_before = parse_parenthesizable_whitespace(config, &mut tok.whitespace_before)?;
+    let whitespace_after = parse_parenthesizable_whitespace(config, &mut tok.whitespace_after)?;
+    match tok.string {
+        "and" => Ok(BooleanOp::And {
+            whitespace_after,
+            whitespace_before,
+        }),
+        "or" => Ok(BooleanOp::Or {
+            whitespace_after,
+            whitespace_before,
+        }),
+        _ => Err(ParserError::OperatorError),
+    }
+}
+
 fn make_binary_op<'a>(
-    _config: &Config<'a>,
+    config: &Config<'a>,
     head: Expression<'a>,
     tail: Vec<(Token<'a>, Expression<'a>)>,
 ) -> Result<'a, Expression<'a>> {
@@ -589,7 +668,7 @@ fn make_binary_op<'a>(
     for (tok, right) in tail {
         expr = Expression::BinaryOperation {
             left: Box::new(expr),
-            operator: tok.string,
+            operator: make_binary_operator(config, tok)?,
             right: Box::new(right),
             lpar: vec![],
             rpar: vec![],
@@ -598,17 +677,90 @@ fn make_binary_op<'a>(
     Ok(expr)
 }
 
+fn make_binary_operator<'a>(config: &Config<'a>, mut tok: Token<'a>) -> Result<'a, BinaryOp<'a>> {
+    let whitespace_before = parse_parenthesizable_whitespace(config, &mut tok.whitespace_before)?;
+    let whitespace_after = parse_parenthesizable_whitespace(config, &mut tok.whitespace_after)?;
+
+    match tok.string {
+        "+" => Ok(BinaryOp::Add {
+            whitespace_after,
+            whitespace_before,
+        }),
+        "-" => Ok(BinaryOp::Subtract {
+            whitespace_after,
+            whitespace_before,
+        }),
+        "*" => Ok(BinaryOp::Multiply {
+            whitespace_after,
+            whitespace_before,
+        }),
+        "/" => Ok(BinaryOp::Divide {
+            whitespace_after,
+            whitespace_before,
+        }),
+        "//" => Ok(BinaryOp::FloorDivide {
+            whitespace_after,
+            whitespace_before,
+        }),
+        "%" => Ok(BinaryOp::Modulo {
+            whitespace_after,
+            whitespace_before,
+        }),
+        "**" => Ok(BinaryOp::Power {
+            whitespace_after,
+            whitespace_before,
+        }),
+        "<<" => Ok(BinaryOp::LeftShift {
+            whitespace_after,
+            whitespace_before,
+        }),
+        ">>" => Ok(BinaryOp::RightShift {
+            whitespace_after,
+            whitespace_before,
+        }),
+        "|" => Ok(BinaryOp::BitOr {
+            whitespace_after,
+            whitespace_before,
+        }),
+        "&" => Ok(BinaryOp::BitAnd {
+            whitespace_after,
+            whitespace_before,
+        }),
+        "^" => Ok(BinaryOp::BitXor {
+            whitespace_after,
+            whitespace_before,
+        }),
+        "@" => Ok(BinaryOp::MatrixMultiply {
+            whitespace_after,
+            whitespace_before,
+        }),
+        _ => Err(panic!("{:#?} {}", ParserError::OperatorError, tok.string)),
+    }
+}
+
 fn make_unary_op<'a>(
-    _config: &Config<'a>,
+    config: &Config<'a>,
     op: Token<'a>,
     tail: Expression<'a>,
 ) -> Result<'a, Expression<'a>> {
+    let operator = make_unary_operator(config, op)?;
     Ok(Expression::UnaryOperation {
-        operator: op.string,
+        operator,
         expression: Box::new(tail),
         lpar: vec![],
         rpar: vec![],
     })
+}
+
+fn make_unary_operator<'a>(config: &Config<'a>, mut tok: Token<'a>) -> Result<'a, UnaryOp<'a>> {
+    let whitespace_after = parse_parenthesizable_whitespace(config, &mut tok.whitespace_after)?;
+    match tok.string {
+        "+" => Ok(UnaryOp::Plus(whitespace_after)),
+        "-" => Ok(UnaryOp::Minus(whitespace_after)),
+        "~" => Ok(UnaryOp::BitInvert(whitespace_after)),
+        "not" => Ok(UnaryOp::Not(whitespace_after)),
+        _ => Err(panic!("{:#?}", ParserError::OperatorError)),
+    }
 }
 
 fn make_number<'a>(_config: &Config<'a>, num: Token<'a>) -> Result<'a, Expression<'a>> {

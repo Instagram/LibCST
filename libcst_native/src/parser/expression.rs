@@ -4,7 +4,8 @@
 // LICENSE file in the root directory of this source tree.
 
 use super::{
-    whitespace::ParenthesizableWhitespace, AssignEqual, Codegen, CodegenState, Comma, Dot,
+    whitespace::ParenthesizableWhitespace, AssignEqual, BinaryOp, BooleanOp, Codegen, CodegenState,
+    Comma, CompOp, Dot, UnaryOp,
 };
 #[derive(Debug, Eq, PartialEq, Default)]
 pub struct Parameters<'a> {
@@ -266,21 +267,21 @@ pub enum Expression<'a> {
         rpar: Vec<RightParen<'a>>,
     },
     UnaryOperation {
-        operator: &'a str, // TODO
+        operator: UnaryOp<'a>,
         expression: Box<Expression<'a>>,
         lpar: Vec<LeftParen<'a>>,
         rpar: Vec<RightParen<'a>>,
     },
     BinaryOperation {
         left: Box<Expression<'a>>,
-        operator: &'a str, // TODO
+        operator: BinaryOp<'a>,
         right: Box<Expression<'a>>,
         lpar: Vec<LeftParen<'a>>,
         rpar: Vec<RightParen<'a>>,
     },
     BooleanOperation {
         left: Box<Expression<'a>>,
-        operator: &'a str, // TODO
+        operator: BooleanOp<'a>,
         right: Box<Expression<'a>>,
         lpar: Vec<LeftParen<'a>>,
         rpar: Vec<RightParen<'a>>,
@@ -307,7 +308,7 @@ impl<'a> Codegen<'a> for Expression<'a> {
                 ..
             } => self.parenthesize(state, |state| {
                 left.codegen(state);
-                state.add_token(*operator); // TODO
+                operator.codegen(state);
                 right.codegen(state);
             }),
             &Self::Integer { value, .. } => {
@@ -319,7 +320,7 @@ impl<'a> Codegen<'a> for Expression<'a> {
                 operator,
                 ..
             } => self.parenthesize(state, |state| {
-                state.add_token(operator);
+                operator.codegen(state);
                 expression.codegen(state);
             }),
             &Self::Name(n) => n.codegen(state),
@@ -330,6 +331,16 @@ impl<'a> Codegen<'a> for Expression<'a> {
                 for comp in comparisons {
                     comp.codegen(state);
                 }
+            }),
+            &Self::BooleanOperation {
+                left,
+                operator,
+                right,
+                ..
+            } => self.parenthesize(state, |state| {
+                left.codegen(state);
+                operator.codegen(state);
+                right.codegen(state);
             }),
             _ => panic!("codegen not implemented for {:#?}", self),
         }
@@ -343,6 +354,7 @@ impl<'a> ParenthesizedNode<'a> for Expression<'a> {
             &Self::Integer { lpar, .. } => lpar,
             &Self::UnaryOperation { lpar, .. } => lpar,
             &Self::Comparison { lpar, .. } => lpar,
+            &Self::BooleanOperation { lpar, .. } => lpar,
             _ => panic!("lpar not implemented for {:#?}", self),
         }
     }
@@ -353,6 +365,7 @@ impl<'a> ParenthesizedNode<'a> for Expression<'a> {
             &Self::Integer { rpar, .. } => rpar,
             &Self::UnaryOperation { rpar, .. } => rpar,
             &Self::Comparison { rpar, .. } => rpar,
+            &Self::BooleanOperation { rpar, .. } => rpar,
             _ => panic!("rpar not implemented for {:#?}", self),
         }
     }
@@ -412,13 +425,13 @@ impl<'a> Into<Expression<'a>> for NameOrAttribute<'a> {
 
 #[derive(Debug, Eq, PartialEq)]
 pub struct ComparisonTarget<'a> {
-    pub operator: &'a str, // TODO
+    pub operator: CompOp<'a>,
     pub comparator: Expression<'a>,
 }
 
 impl<'a> Codegen<'a> for ComparisonTarget<'a> {
     fn codegen(&'a self, state: &mut CodegenState<'a>) -> () {
-        state.add_token(self.operator);
+        self.operator.codegen(state);
         self.comparator.codegen(state);
     }
 }

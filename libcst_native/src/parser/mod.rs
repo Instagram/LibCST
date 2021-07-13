@@ -29,7 +29,9 @@ pub use expression::{
 };
 
 mod op;
-pub use op::{AssignEqual, Comma, Dot, ImportStar, Semicolon};
+pub use op::{
+    AssignEqual, BinaryOp, BooleanOp, Comma, CompOp, Dot, ImportStar, Semicolon, UnaryOp,
+};
 
 mod grammar;
 use grammar::python;
@@ -44,6 +46,8 @@ pub enum ParserError<'a> {
     ParserError(#[from] peg::error::ParseError<<grammar::TokVec<'a> as Parse>::PositionRepr>),
     #[error(transparent)]
     WhitespaceError(#[from] WhitespaceError),
+    #[error("invalid operator")]
+    OperatorError,
 }
 
 pub type Result<'a, T> = std::result::Result<T, ParserError<'a>>;
