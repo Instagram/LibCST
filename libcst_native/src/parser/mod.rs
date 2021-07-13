@@ -54,13 +54,17 @@ pub type Result<'a, T> = std::result::Result<T, ParserError<'a>>;
 
 #[derive(Debug, Eq, PartialEq)]
 pub struct Module<'a> {
-    body: Vec<Statement<'a>>,
+    pub body: Vec<Statement<'a>>,
+    pub footer: Vec<EmptyLine<'a>>,
 }
 
 impl<'a> Codegen<'a> for Module<'a> {
     fn codegen(&'a self, state: &mut CodegenState<'a>) -> () {
         for s in &self.body {
             s.codegen(state);
+        }
+        for nl in &self.footer {
+            nl.codegen(state);
         }
     }
 }
@@ -188,7 +192,8 @@ mod test {
                             Default::default()
                         ),
                     }
-                ))]
+                ))],
+                footer: vec![],
             })
         );
     }
@@ -237,7 +242,8 @@ mod test {
                             Default::default()
                         ),
                     }
-                ))]
+                ))],
+                footer: vec![],
             }
         );
         let mut state = CodegenState {
@@ -316,7 +322,8 @@ mod test {
                             Default::default()
                         ),
                     }
-                ))]
+                ))],
+                footer: vec![],
             })
         );
     }

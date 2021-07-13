@@ -85,7 +85,10 @@ peg::parser! {
             = traced(<_file()>)
 
         rule _file() -> Module<'a>
-            = s:statements() tok(EndMarker, "EOF") { Module { body: s } }
+            = s:statements() eof:tok(EndMarker, "EOF") {?
+                make_module(config, s, eof)
+                    .map_err(|e| "module")
+            }
 
         pub rule statements() -> Vec<Statement<'a>>
             = statement()+
@@ -613,7 +616,7 @@ fn make_comparison_operator<'a>(config: &Config<'a>, mut tok: Token<'a>) -> Resu
             whitespace_after,
             whitespace_before,
         }),
-        _ => Err(panic!("{:#?}", ParserError::OperatorError)),
+        _ => Err(ParserError::OperatorError),
     }
 }
 
@@ -734,7 +737,7 @@ fn make_binary_operator<'a>(config: &Config<'a>, mut tok: Token<'a>) -> Result<'
             whitespace_after,
             whitespace_before,
         }),
-        _ => Err(panic!("{:#?} {}", ParserError::OperatorError, tok.string)),
+        _ => Err(ParserError::OperatorError),
     }
 }
 
@@ -759,7 +762,7 @@ fn make_unary_operator<'a>(config: &Config<'a>, mut tok: Token<'a>) -> Result<'a
         "-" => Ok(UnaryOp::Minus(whitespace_after)),
         "~" => Ok(UnaryOp::BitInvert(whitespace_after)),
         "not" => Ok(UnaryOp::Not(whitespace_after)),
-        _ => Err(panic!("{:#?}", ParserError::OperatorError)),
+        _ => Err(ParserError::OperatorError),
     }
 }
 
@@ -1140,4 +1143,13 @@ fn make_lpar<'a>(config: &Config<'a>, mut tok: Token<'a>) -> Result<'a, LeftPare
 fn make_rpar<'a>(config: &Config<'a>, mut tok: Token<'a>) -> Result<'a, RightParen<'a>> {
     let whitespace_before = parse_parenthesizable_whitespace(config, &mut tok.whitespace_before)?;
     Ok(RightParen { whitespace_before })
+}
+
+fn make_module<'a>(
+    config: &Config<'a>,
+    body: Vec<Statement<'a>>,
+    mut tok: Token<'a>,
+) -> Result<'a, Module<'a>> {
+    let footer = parse_empty_lines(config, &mut tok.whitespace_before, None);
+    Ok(Module { body, footer })
 }

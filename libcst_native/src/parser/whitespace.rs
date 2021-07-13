@@ -129,7 +129,9 @@ pub fn parse_empty_line<'a>(
     ) {
         let whitespace = parse_simple_whitespace(config, &mut speculative_state)?;
         let comment = parse_comment(config, &mut speculative_state)?;
-        if let Some(newline) = parse_newline(config, &mut speculative_state)? {
+        if let Some(newline @ Newline(_, Fakeness::Real)) =
+            parse_newline(config, &mut speculative_state)?
+        {
             *state = speculative_state;
             return Ok(Some(EmptyLine {
                 indent,
