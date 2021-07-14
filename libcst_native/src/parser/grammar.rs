@@ -480,10 +480,8 @@ peg::parser! {
             }
 
         rule dotted_name() -> NameOrAttribute<'a>
-            = init:(n:name() dot:lit(".") {(n, dot)})* last:name() {?
-                let mut init = init;
-                init.reverse();
-                make_name_or_attr(&config, init, last)
+            = first:name() tail:(dot:lit(".") n:name() {(dot, n)})* {?
+                make_name_or_attr(&config, first, tail)
                     .map_err(|e| "dotted_name")
             }
 
@@ -1010,10 +1008,10 @@ fn concat<T>(a: Vec<T>, b: Vec<T>) -> Vec<T> {
 
 fn make_name_or_attr<'a>(
     config: &Config<'a>,
-    mut init_reversed: Vec<(Token<'a>, Token<'a>)>,
-    last_tok: Token<'a>,
+    first_tok: Token<'a>,
+    mut tail: Vec<(Token<'a>, Token<'a>)>,
 ) -> Result<'a, NameOrAttribute<'a>> {
-    if let Some((name, dot)) = init_reversed.pop() {
+    if let Some((dot, name)) = tail.pop() {
         let name = make_name(name);
         let dot = make_dot(config, dot)?;
         return Ok(NameOrAttribute::A(Attribute {
@@ -1021,10 +1019,10 @@ fn make_name_or_attr<'a>(
             dot,
             lpar: Default::default(),
             rpar: Default::default(),
-            value: Box::new(make_name_or_attr(config, init_reversed, last_tok)?.into()),
+            value: Box::new(make_name_or_attr(config, first_tok, tail)?.into()),
         }));
     } else {
-        Ok(NameOrAttribute::N(make_name(last_tok)))
+        Ok(NameOrAttribute::N(make_name(first_tok)))
     }
 }
 
