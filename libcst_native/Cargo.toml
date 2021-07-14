@@ -40,6 +40,7 @@ itertools = "0.10.0"
 criterion = { version = "0.3.4", features = ["html_reports"] }
 indoc = "1.0"
 criterion-cycles-per-byte = "0.1"
+difference = "2.0.0"
 
 [[bench]]
 name = "parser_benchmark"

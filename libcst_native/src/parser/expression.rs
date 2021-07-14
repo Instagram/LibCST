@@ -342,6 +342,9 @@ impl<'a> Codegen<'a> for Expression<'a> {
                 operator.codegen(state);
                 right.codegen(state);
             }),
+            &Self::SimpleString { value, .. } => self.parenthesize(state, |state| {
+                state.add_token(value);
+            }),
             _ => panic!("codegen not implemented for {:#?}", self),
         }
     }
@@ -355,6 +358,7 @@ impl<'a> ParenthesizedNode<'a> for Expression<'a> {
             &Self::UnaryOperation { lpar, .. } => lpar,
             &Self::Comparison { lpar, .. } => lpar,
             &Self::BooleanOperation { lpar, .. } => lpar,
+            &Self::SimpleString { lpar, .. } => lpar,
             _ => panic!("lpar not implemented for {:#?}", self),
         }
     }
@@ -366,6 +370,7 @@ impl<'a> ParenthesizedNode<'a> for Expression<'a> {
             &Self::UnaryOperation { rpar, .. } => rpar,
             &Self::Comparison { rpar, .. } => rpar,
             &Self::BooleanOperation { rpar, .. } => rpar,
+            &Self::SimpleString { rpar, .. } => rpar,
             _ => panic!("rpar not implemented for {:#?}", self),
         }
     }

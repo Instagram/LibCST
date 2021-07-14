@@ -1,3 +1,4 @@
+use difference::assert_diff;
 use libcst_native::parser::{parse_module, prettify_error, Codegen};
 use std::path::PathBuf;
 
@@ -25,11 +26,7 @@ fn roundtrip_fixtures() {
         };
         let mut state = Default::default();
         m.codegen(&mut state);
-        assert_eq!(
-            state.to_string(),
-            input,
-            "failed to roundtrip {}",
-            path.to_str().unwrap()
-        );
+        let generated = state.to_string();
+        assert_diff!(input.as_ref(), generated.as_ref(), "", 0);
     }
 }
