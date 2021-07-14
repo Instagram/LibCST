@@ -186,6 +186,7 @@ peg::parser! {
         rule _op_bitwise_or(o: &'static str) -> (Token<'a>, Expression<'a>)
             = op:lit(o) e:bitwise_or() { (op, e) }
 
+        #[cache]
         rule bitwise_or() -> Expression<'a>
             // TODO left-recursive grammar
             = a:bitwise_xor() tail:(op:lit("|") b:bitwise_xor() {(op, b)})+ {?
@@ -193,6 +194,7 @@ peg::parser! {
             }
             / bitwise_xor()
 
+        #[cache]
         rule bitwise_xor() -> Expression<'a>
             // TODO left-recursive grammar
             = a:bitwise_and() tail:(op:lit("^") b:bitwise_and() {(op, b)})+ {?
@@ -200,6 +202,7 @@ peg::parser! {
             }
             / bitwise_and()
 
+        #[cache]
         rule bitwise_and() -> Expression<'a>
             // TODO left-recursive grammar
             = a:shift_expr() tail:(op:lit("&") b:shift_expr() {(op, b)})+ {?
@@ -207,6 +210,7 @@ peg::parser! {
             }
             / shift_expr()
 
+        #[cache]
         rule shift_expr() -> Expression<'a>
             // TODO left-recursive grammar
             = a:sum() tail:(op:lit("<<") b:shift_expr() {(op, b)})+ {?
@@ -217,6 +221,7 @@ peg::parser! {
             }
             / sum()
 
+        #[cache]
         rule sum() -> Expression<'a>
             // TODO left-recursive grammar
             = a:term() tail:(op:lit("+") b:term() {(op, b)})+ {?
@@ -227,6 +232,7 @@ peg::parser! {
             }
             / term()
 
+        #[cache]
         rule term() -> Expression<'a>
             // TODO left-recursive grammar
             = a:factor() tail:(op:lit("*") b:factor() {(op, b)})+ {?
@@ -274,7 +280,7 @@ peg::parser! {
             // TODO: missing left-recursive branches here
 
         rule atom() -> Expression<'a>
-            = n:tok(NameTok, "NAME") { Expression::Name(Name { value: n.string, lpar: vec![], rpar: vec![] }) }
+            = n:name() { Expression::Name(Name { value: n.string, lpar: vec![], rpar: vec![] }) }
             / &tok(String, "STRING") s:strings() {s}
             / n:tok(Number, "NUMBER") {? make_number(&config, n).map_err(|e| "expected number")}
             / lit("...") { Expression::Ellipsis {lpar: vec![], rpar: vec![]}}
@@ -289,10 +295,10 @@ peg::parser! {
             / function_def_raw()
 
         rule decorators() -> Vec<Decorator<'a>>
-            = (at:lit("@") name:tok(NameTok, "NAME") tok(NL, "NEWLINE") {? make_decorator(&config, at, name).map_err(|e| "expected decorator")} )+
+            = (at:lit("@") name:name() tok(NL, "NEWLINE") {? make_decorator(&config, at, name).map_err(|e| "expected decorator")} )+
 
         rule function_def_raw() -> FunctionDef<'a>
-            = def:lit("def") n:tok(NameTok, "FUNCTION NAME") op:lit("(") params:params()? cp:lit(")") c:lit(":") b:block() {?
+            = def:lit("def") n:name() op:lit("(") params:params()? cp:lit(")") c:lit(":") b:block() {?
                 make_function_def(&config, def, n, op, params, cp, c, b).map_err(|e| "function def" )
             }
 
@@ -383,7 +389,7 @@ peg::parser! {
             }
 
         rule param() -> Param<'a>
-            = n:tok(NameTok, "PARAMETER NAME") { Param {name: Name {value: n.string, ..Default::default()}, ..Default::default()} }
+            = n:name() { Param {name: Name {value: n.string, ..Default::default()}, ..Default::default()} }
 
         rule default() -> (AssignEqual<'a>, Expression<'a>)
             = eq:lit("=") ex:expression() {?
@@ -417,7 +423,7 @@ peg::parser! {
             }
 
         rule named_expression() -> Expression<'a>
-            = a:tok(NameTok, "NAME") op:lit(":=") b:expression() { todo!() }
+            = a:name() op:lit(":=") b:expression() { todo!() }
             / e:expression() !lit(":=") { e }
 
         rule import_name() -> Import<'a>
@@ -456,7 +462,7 @@ peg::parser! {
 
 
         rule import_from_as_name() -> ImportAlias<'a>
-            = n:tok(NameTok, "IMPORT NAME") asname:(kw:lit("as") z:tok(NameTok, "ALIAS NAME") {(kw, z)})? {?
+            = n:name() asname:(kw:lit("as") z:name() {(kw, z)})? {?
                 make_import_alias(&config, NameOrAttribute::N(make_name(n)), asname)
                     .map_err(|e| "import_from_as_name")
             }
@@ -468,13 +474,13 @@ peg::parser! {
             }
 
         rule dotted_as_name() -> ImportAlias<'a>
-            = n:dotted_name() asname:(kw:lit("as") z:tok(NameTok, "ALIAS NAME") {(kw, z)})? {?
+            = n:dotted_name() asname:(kw:lit("as") z:name() {(kw, z)})? {?
                 make_import_alias(&config, n, asname)
                     .map_err(|e| "dotted_as_name")
             }
 
         rule dotted_name() -> NameOrAttribute<'a>
-            = init:(n:tok(NameTok, "NAME") dot:lit(".") {(n, dot)})* last:tok(NameTok, "NAME") {?
+            = init:(n:name() dot:lit(".") {(n, dot)})* last:name() {?
                 let mut init = init;
                 init.reverse();
                 make_name_or_attr(&config, init, last)
@@ -500,6 +506,15 @@ peg::parser! {
 
         rule tok(tok: TokType, err: &'static str) -> Token<'a>
             = [t@Token {..}] {? if t.r#type == tok { Ok(t) } else { Err(err) } }
+
+        rule name() -> Token<'a>
+            = !("False" / "None" / "True" / "and" / "as" / "assert" / "async" / "await"
+                / "break" / "class" / "continue" / "def" / "del" / "elif" / "else"
+                / "except" / "finally" / "for" / "from" / "global" / "if" / "import"
+                / "in" / "is" / "lambda" / "nonlocal" / "not" / "or" / "pass" / "raise"
+                / "return" / "try" / "while" / "with" / "yield"
+            )
+            t:tok(NameTok, "NAME") {t}
 
         rule traced<T>(e: rule<T>) -> T =
             &(input:(_)* {
