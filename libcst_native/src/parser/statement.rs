@@ -6,7 +6,7 @@
 use super::{
     Attribute, Codegen, CodegenState, Comma, Dot, EmptyLine, Expression, ImportStar, LeftParen,
     Name, NameOrAttribute, Parameters, ParenthesizableWhitespace, RightParen, Semicolon,
-    SimpleWhitespace, StarredElement, TrailingWhitespace,
+    SimpleWhitespace, StarredElement, TrailingWhitespace, Tuple,
 };
 
 #[derive(Debug, Eq, PartialEq)]
@@ -220,7 +220,8 @@ impl<'a> Codegen<'a> for SmallStatement<'a> {
             &Self::Expr { value: e, .. } => e.codegen(state),
             &Self::Import(i) => i.codegen(state),
             &Self::ImportFrom(i) => i.codegen(state),
-            _ => todo!(),
+            &Self::Assign(a) => a.codegen(state),
+            _ => panic!("No codegen implemented for {:#?}", self),
         }
     }
 }
@@ -265,7 +266,8 @@ pub enum AssignTargetExpression<'a> {
     Name(Name<'a>),
     Attribute(Attribute<'a>),
     StarredElement(StarredElement<'a>),
-    // TODO: Subscript, Tuple, List,
+    Tuple(Tuple<'a>),
+    // TODO: Subscript, List,
 }
 
 impl<'a> Codegen<'a> for AssignTargetExpression<'a> {
@@ -274,6 +276,7 @@ impl<'a> Codegen<'a> for AssignTargetExpression<'a> {
             &Self::Name(n) => n.codegen(state),
             &Self::Attribute(a) => a.codegen(state),
             &Self::StarredElement(e) => e.codegen(state),
+            &Self::Tuple(t) => t.codegen(state),
         }
     }
 }

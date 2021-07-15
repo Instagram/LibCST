@@ -138,12 +138,32 @@ peg::parser! {
             }
 
         rule star_expressions() -> Expression<'a>
-            = star_expression()
+            = first:star_expression()
+                rest:(comma:lit(",") e:star_expression() { (comma, expr_to_element(e)) })+
+                comma:lit(",")? {?
+                    make_tuple(&config, expr_to_element(first), rest, comma, None, None)
+                        .map(|t| Expression::Tuple(t))
+                        .map_err(|e| "star_expressions")
+            }
+            / e:star_expression() comma:lit(",") {?
+                make_tuple(&config, expr_to_element(e), vec![], Some(comma), None, None)
+                    .map(|t| Expression::Tuple(t))
+                    .map_err(|e| "star_expressions")
+            }
+            / star_expression()
 
         #[cache]
         rule star_expression() -> Expression<'a>
             = // TODO lit!("*") bitwise_or()
             expression()
+
+        rule star_named_expression() -> Element<'a>
+            = star:lit("*") e:bitwise_or() {?
+                make_starred_element(&config, star, expr_to_element(e))
+                    .map(|s| Element::Starred(s))
+                    .map_err(|e| "star_named_expression")
+            }
+            / e:named_expression() { expr_to_element(e) }
 
         #[cache]
         rule expression() -> Expression<'a>
@@ -195,10 +215,19 @@ peg::parser! {
 
         rule star_targets() -> AssignTargetExpression<'a>
             = a:star_target() !lit(",") {a}
+            / first:star_target()
+                rest:(comma:lit(",") t:star_target() {(comma, assign_target_to_element(t))})*
+                comma:lit(",")? {?
+                    make_tuple(&config, assign_target_to_element(first), rest, comma, None, None)
+                        .map(|t| AssignTargetExpression::Tuple(t) )
+                        .map_err(|e| "star_targets")
+            }
 
         rule star_target() -> AssignTargetExpression<'a>
             = star:lit("*") !lit("*") t:star_target() {?
-                make_starred_element(&config, star, t).map_err(|e| "star_target")
+                make_starred_element(&config, star, assign_target_to_element(t))
+                    .map(|e| AssignTargetExpression::StarredElement(e))
+                    .map_err(|e| "star_target")
             }
             / target_with_star_atom()
 
@@ -329,11 +358,21 @@ peg::parser! {
             = n:name() { Expression::Name(n) }
             / &tok(String, "STRING") s:strings() {s}
             / n:tok(Number, "NUMBER") {? make_number(&config, n).map_err(|e| "expected number")}
+            / &"(" e:tuple() {e}
             / lit("...") { Expression::Ellipsis {lpar: vec![], rpar: vec![]}}
 
         rule strings() -> Expression<'a>
             = s:tok(String, "STRING") {
                 Expression::SimpleString { value: s.string, lpar: vec![], rpar: vec![]}
+            }
+
+        rule tuple() -> Expression<'a>
+            = lpar:lit("(") first:star_named_expression() &","
+                rest:(c:lit(",") e:star_named_expression() {(c, e)})*
+                trailing_comma:lit(",")? rpar:lit(")") {?
+                    make_tuple(&config, first, rest, trailing_comma, Some(lpar), Some(rpar))
+                        .map(|t| Expression::Tuple(t))
+                        .map_err(|e| "tuple")
             }
 
         rule function_def() -> FunctionDef<'a>
@@ -1247,24 +1286,39 @@ fn make_attribute_expr<'a>(
 fn make_starred_element<'a>(
     config: &Config<'a>,
     mut star: Token<'a>,
-    rest: AssignTargetExpression<'a>,
-) -> Result<'a, AssignTargetExpression<'a>> {
+    rest: Element<'a>,
+) -> Result<'a, StarredElement<'a>> {
     let value = match rest {
-        AssignTargetExpression::Attribute(a) => Expression::Attribute(a),
-        AssignTargetExpression::Name(n) => Expression::Name(n),
-        AssignTargetExpression::StarredElement(_) => {
-            panic!("Internal error while making starred element")
-        }
+        Element::Simple { value, .. } => value,
+        _ => panic!("Internal error while making starred element"),
     };
     let whitespace_before_value =
         parse_parenthesizable_whitespace(config, &mut star.whitespace_after)?;
-    Ok(AssignTargetExpression::StarredElement(StarredElement {
+    Ok(StarredElement {
         value,
         whitespace_before_value,
         lpar: Default::default(),
         rpar: Default::default(),
         comma: Default::default(),
-    }))
+    })
+}
+
+fn assign_target_to_element<'a>(expr: AssignTargetExpression<'a>) -> Element<'a> {
+    match expr {
+        AssignTargetExpression::Attribute(a) => Element::Simple {
+            value: Expression::Attribute(a),
+            comma: Default::default(),
+        },
+        AssignTargetExpression::Name(a) => Element::Simple {
+            value: Expression::Name(a),
+            comma: Default::default(),
+        },
+        AssignTargetExpression::Tuple(a) => Element::Simple {
+            value: Expression::Tuple(a),
+            comma: Default::default(),
+        },
+        AssignTargetExpression::StarredElement(s) => Element::Starred(s),
+    }
 }
 
 fn make_assignment<'a>(
@@ -1287,5 +1341,60 @@ fn make_assignment<'a>(
         targets,
         value: rhs,
         semicolon: Default::default(),
+    })
+}
+
+fn expr_to_element<'a>(expr: Expression<'a>) -> Element<'a> {
+    Element::Simple {
+        value: expr,
+        comma: Default::default(),
+    }
+}
+
+fn make_tuple<'a>(
+    config: &Config<'a>,
+    first: Element<'a>,
+    rest: Vec<(Token<'a>, Element<'a>)>,
+    trailing_comma: Option<Token<'a>>,
+    lpar_tok: Option<Token<'a>>,
+    rpar_tok: Option<Token<'a>>,
+) -> Result<'a, Tuple<'a>> {
+    let mut elements = vec![];
+    let mut lpar: Vec<LeftParen<'a>> = Default::default();
+    let mut rpar: Vec<RightParen<'a>> = Default::default();
+    let mut current = first;
+    for (tok, next) in rest {
+        let comma = make_comma(config, tok)?;
+        elements.push(current.with_comma(comma));
+        current = next;
+    }
+    if let Some(mut comma) = trailing_comma {
+        // don't consume trailing whitespace for trailing comma
+        let whitespace_before =
+            parse_parenthesizable_whitespace(config, &mut comma.whitespace_before)?;
+        let whitespace_after = ParenthesizableWhitespace::SimpleWhitespace(SimpleWhitespace(""));
+        current = current.with_comma(Comma {
+            whitespace_after,
+            whitespace_before,
+        });
+    }
+    elements.push(current);
+
+    if let Some(mut lpar_tok) = lpar_tok {
+        let whitespace_after =
+            parse_parenthesizable_whitespace(config, &mut lpar_tok.whitespace_after)?;
+        lpar.push(LeftParen { whitespace_after });
+    }
+
+    if let Some(mut rpar_tok) = rpar_tok {
+        let whitespace_before =
+            parse_parenthesizable_whitespace(config, &mut rpar_tok.whitespace_before)?;
+        rpar.push(RightParen { whitespace_before });
+    }
+
+    Ok(Tuple {
+        elements,
+        lpar,
+        rpar,
     })
 }

@@ -294,7 +294,9 @@ pub enum Expression<'a> {
         rpar: Vec<RightParen<'a>>,
         whitespace_before_walrus: ParenthesizableWhitespace<'a>,
         whitespace_after_walrus: ParenthesizableWhitespace<'a>,
-    }, // TODO: FormattedString, ConcatenatedString, Subscript, Lambda, Call, Await, IfExp, Yield, Tuple, List, Set, Dict, comprehensions
+    },
+    Tuple(Tuple<'a>),
+    // TODO: FormattedString, ConcatenatedString, Subscript, Lambda, Call, Await, IfExp, Yield, List, Set, Dict, comprehensions
 }
 
 impl<'a> Codegen<'a> for Expression<'a> {
@@ -345,6 +347,7 @@ impl<'a> Codegen<'a> for Expression<'a> {
             &Self::SimpleString { value, .. } => self.parenthesize(state, |state| {
                 state.add_token(value);
             }),
+            &Self::Tuple(t) => t.codegen(state),
             _ => panic!("codegen not implemented for {:#?}", self),
         }
     }
@@ -488,5 +491,81 @@ impl<'a> ParenthesizedNode<'a> for StarredElement<'a> {
 
     fn lpar(&self) -> &Vec<LeftParen<'a>> {
         &self.lpar
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub enum Element<'a> {
+    Simple {
+        value: Expression<'a>,
+        comma: Option<Comma<'a>>,
+    },
+    Starred(StarredElement<'a>),
+}
+
+impl<'a> Element<'a> {
+    fn codegen(
+        &'a self,
+        state: &mut CodegenState<'a>,
+        default_comma: bool,
+        default_comma_whitespace: bool,
+    ) -> () {
+        match &self {
+            &Self::Simple { value, comma } => {
+                value.codegen(state);
+                if let Some(comma) = comma {
+                    comma.codegen(state)
+                }
+            }
+            &Self::Starred(s) => s.codegen(state),
+        }
+        if let None = match &self {
+            &Self::Simple { comma, .. } => comma,
+            &Self::Starred(s) => &s.comma,
+        } {
+            if default_comma {
+                state.add_token(if default_comma_whitespace { ", " } else { "," });
+            }
+        }
+    }
+
+    pub fn with_comma(self, comma: Comma<'a>) -> Self {
+        let comma = Some(comma);
+        match self {
+            Self::Simple { value, .. } => Self::Simple { comma, value },
+            Self::Starred(s) => Self::Starred(StarredElement { comma, ..s }),
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct Tuple<'a> {
+    pub elements: Vec<Element<'a>>,
+    pub lpar: Vec<LeftParen<'a>>,
+    pub rpar: Vec<RightParen<'a>>,
+}
+
+impl<'a> ParenthesizedNode<'a> for Tuple<'a> {
+    fn rpar(&self) -> &Vec<RightParen<'a>> {
+        &self.rpar
+    }
+
+    fn lpar(&self) -> &Vec<LeftParen<'a>> {
+        &self.lpar
+    }
+}
+
+impl<'a> Codegen<'a> for Tuple<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) -> () {
+        self.parenthesize(state, |state| {
+            let len = self.elements.len();
+            if len == 1 {
+                self.elements.first().unwrap().codegen(state, true, false);
+            } else {
+                for (idx, el) in self.elements.iter().enumerate() {
+                    el.codegen(state, idx < len - 1, true);
+                }
+            }
+        });
     }
 }
