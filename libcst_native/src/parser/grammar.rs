@@ -120,6 +120,12 @@ peg::parser! {
             / &"from" i:import_from() { SmallStatement::ImportFrom(i) }
             / "pass" { SmallStatement::Pass { semicolon: None } }
 
+        rule assignment() -> Assign<'a>
+            = lhs:(t:star_targets() eq:lit("=") {(t, eq)})+ rhs:(yield_expr() / star_expressions()) !lit("=") {?
+                make_assignment(config, lhs, rhs)
+                    .map_err(|e| "assignment")
+            }
+
         rule block() -> Suite<'a>
             = n:tok(NL, "NEWLINE") ind:tok(Indent, "INDENT") s:statements() ded:tok(Dedent, "DEDENT") {?
                 make_indented_block(&config, n, ind, s, ded)
@@ -185,6 +191,45 @@ peg::parser! {
 
         rule _op_bitwise_or(o: &'static str) -> (Token<'a>, Expression<'a>)
             = op:lit(o) e:bitwise_or() { (op, e) }
+
+        rule star_targets() -> AssignTargetExpression<'a>
+            = a:star_target() !lit(",") {a}
+
+        rule star_target() -> AssignTargetExpression<'a>
+            = star:lit("*") !lit("*") t:star_target() {?
+                make_starred_element(&config, star, t).map_err(|e| "star_target")
+            }
+            / target_with_star_atom()
+
+        rule target_with_star_atom() -> AssignTargetExpression<'a>
+            = a:t_primary() dot:lit(".") n:name() !t_lookahead() {?
+                make_attribute(&config, a, vec![(dot, n)])
+                    .map(|attr| AssignTargetExpression::Attribute(attr))
+                    .map_err(|e| "target_with_star_atom")
+            }
+            // make_slice
+            / a:star_atom() {a}
+
+        rule star_atom() -> AssignTargetExpression<'a>
+            = a:name() { AssignTargetExpression::Name(make_name(a)) }
+            / lpar:lit("(") a:target_with_star_atom() rpar:lit(")") { a } // TODO parens
+            // TODO: tuple, List
+
+        rule t_primary() -> Expression<'a>
+            = a:atom() rest:(dot:lit(".") n:name() {(dot, n)})+ &t_lookahead() {?
+                make_attribute(&config, a, rest)
+                    .map(|attr| Expression::Attribute(attr))
+                    .map_err(|e| "t_primary")
+            }
+            // TODO: slice, genexp, call
+            / a:atom() &t_lookahead() {a}
+
+        rule t_lookahead() -> ()
+            = "(" / "[" / "."
+
+        rule yield_expr() -> Expression<'a>
+            = lit("yield") lit("from") a:expression() { panic!("yield from not implemented") }
+            / lit("yield") a:star_expressions()? { panic!("yield not implemented") }
 
         #[cache]
         rule bitwise_or() -> Expression<'a>
@@ -1173,4 +1218,28 @@ fn make_module<'a>(
 ) -> Result<'a, Module<'a>> {
     let footer = parse_empty_lines(config, &mut tok.whitespace_before, None)?;
     Ok(Module { body, footer })
+}
+
+fn make_attribute<'a>(
+    config: &Config<'a>,
+    first: Expression<'a>,
+    rest: Vec<(Token<'a>, Token<'a>)>,
+) -> Result<'a, Attribute<'a>> {
+    todo!()
+}
+
+fn make_starred_element<'a>(
+    config: &Config<'a>,
+    star: Token<'a>,
+    rest: AssignTargetExpression<'a>,
+) -> Result<'a, AssignTargetExpression<'a>> {
+    todo!()
+}
+
+fn make_assignment<'a>(
+    config: &Config<'a>,
+    lhs: Vec<(AssignTargetExpression<'a>, Token<'a>)>,
+    rhs: Expression<'a>,
+) -> Result<'a, Assign<'a>> {
+    todo!()
 }

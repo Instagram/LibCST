@@ -4,9 +4,9 @@
 // LICENSE file in the root directory of this source tree.
 
 use super::{
-    Codegen, CodegenState, Comma, Dot, EmptyLine, Expression, ImportStar, LeftParen, Name,
-    NameOrAttribute, Parameters, ParenthesizableWhitespace, RightParen, Semicolon,
-    SimpleWhitespace, TrailingWhitespace,
+    Attribute, Codegen, CodegenState, Comma, Dot, EmptyLine, Expression, ImportStar, LeftParen,
+    Name, NameOrAttribute, Parameters, ParenthesizableWhitespace, RightParen, Semicolon,
+    SimpleWhitespace, StarredElement, TrailingWhitespace,
 };
 
 #[derive(Debug, Eq, PartialEq)]
@@ -205,6 +205,7 @@ pub enum SmallStatement<'a> {
     },
     Import(Import<'a>),
     ImportFrom(ImportFrom<'a>),
+    Assign(Assign<'a>),
     // TODO Assign, AnnAssign
     // TODO Raise
     // TODO Global, Nonlocal
@@ -220,6 +221,59 @@ impl<'a> Codegen<'a> for SmallStatement<'a> {
             &Self::Import(i) => i.codegen(state),
             &Self::ImportFrom(i) => i.codegen(state),
             _ => todo!(),
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct Assign<'a> {
+    pub targets: Vec<AssignTarget<'a>>,
+    pub value: Expression<'a>,
+    pub semicolon: Option<Semicolon<'a>>,
+}
+
+impl<'a> Codegen<'a> for Assign<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) -> () {
+        for target in &self.targets {
+            target.codegen(state);
+        }
+        self.value.codegen(state);
+        if let Some(semi) = &self.semicolon {
+            semi.codegen(state);
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct AssignTarget<'a> {
+    pub target: AssignTargetExpression<'a>,
+    pub whitespace_before_equal: SimpleWhitespace<'a>,
+    pub whitespace_after_equal: SimpleWhitespace<'a>,
+}
+
+impl<'a> Codegen<'a> for AssignTarget<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) -> () {
+        self.target.codegen(state);
+        self.whitespace_before_equal.codegen(state);
+        state.add_token("=");
+        self.whitespace_after_equal.codegen(state);
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub enum AssignTargetExpression<'a> {
+    Name(Name<'a>),
+    Attribute(Attribute<'a>),
+    StarredElement(StarredElement<'a>),
+    // TODO: Subscript, Tuple, List,
+}
+
+impl<'a> Codegen<'a> for AssignTargetExpression<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) -> () {
+        match &self {
+            &Self::Name(n) => n.codegen(state),
+            &Self::Attribute(a) => a.codegen(state),
+            &Self::StarredElement(e) => e.codegen(state),
         }
     }
 }

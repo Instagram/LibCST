@@ -441,7 +441,7 @@ impl<'a> Codegen<'a> for ComparisonTarget<'a> {
     }
 }
 
-trait ParenthesizedNode<'a> {
+pub(crate) trait ParenthesizedNode<'a> {
     fn lpar(&self) -> &Vec<LeftParen<'a>>;
     fn rpar(&self) -> &Vec<RightParen<'a>>;
 
@@ -456,5 +456,37 @@ trait ParenthesizedNode<'a> {
         for rpar in self.rpar() {
             rpar.codegen(state);
         }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct StarredElement<'a> {
+    pub value: Expression<'a>,
+    pub comma: Option<Comma<'a>>,
+    pub lpar: Vec<LeftParen<'a>>,
+    pub rpar: Vec<RightParen<'a>>,
+    pub whitespace_before_value: ParenthesizableWhitespace<'a>,
+}
+
+impl<'a> Codegen<'a> for StarredElement<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) -> () {
+        self.parenthesize(state, |state| {
+            state.add_token("*");
+            self.whitespace_before_value.codegen(state);
+            self.value.codegen(state);
+        });
+        if let Some(comma) = &self.comma {
+            comma.codegen(state);
+        }
+    }
+}
+
+impl<'a> ParenthesizedNode<'a> for StarredElement<'a> {
+    fn rpar(&self) -> &Vec<RightParen<'a>> {
+        &self.rpar
+    }
+
+    fn lpar(&self) -> &Vec<LeftParen<'a>> {
+        &self.lpar
     }
 }

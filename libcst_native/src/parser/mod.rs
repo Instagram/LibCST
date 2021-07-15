@@ -17,15 +17,15 @@ pub use whitespace::{
 };
 mod statement;
 pub use statement::{
-    AsName, CompoundStatement, Decorator, Else, FunctionDef, If, Import, ImportAlias, ImportFrom,
-    ImportNames, IndentedBlock, OrElse, SimpleStatementLine, SimpleStatementSuite, SmallStatement,
-    Statement, Suite,
+    AsName, Assign, AssignTarget, AssignTargetExpression, CompoundStatement, Decorator, Else,
+    FunctionDef, If, Import, ImportAlias, ImportFrom, ImportNames, IndentedBlock, OrElse,
+    SimpleStatementLine, SimpleStatementSuite, SmallStatement, Statement, Suite,
 };
 
 mod expression;
 pub use expression::{
     Attribute, ComparisonTarget, Expression, LeftParen, Name, NameOrAttribute, Param, ParamSlash,
-    ParamStar, Parameters, RightParen, StarArg,
+    ParamStar, Parameters, RightParen, StarArg, StarredElement,
 };
 
 mod op;
