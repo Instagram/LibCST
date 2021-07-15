@@ -114,7 +114,8 @@ peg::parser! {
             / &"if" f:if_stmt() { CompoundStatement::If(f) }
 
         rule small_stmt() -> SmallStatement<'a>
-            = e:star_expressions() { SmallStatement::Expr { value: e, semicolon: None } }
+            = a:assignment() { SmallStatement::Assign(a) }
+            / e:star_expressions() { SmallStatement::Expr { value: e, semicolon: None } }
             // this is expanded from the original grammar's import_stmt rule
             / &"import" i:import_name() { SmallStatement::Import(i) }
             / &"from" i:import_from() { SmallStatement::ImportFrom(i) }
@@ -1218,15 +1219,52 @@ fn make_attribute<'a>(
     first: Expression<'a>,
     rest: Vec<(Token<'a>, Name<'a>)>,
 ) -> Result<'a, Attribute<'a>> {
-    todo!()
+    match make_attribute_expr(config, first, rest)? {
+        Expression::Attribute(a) => Ok(a),
+        _ => panic!("Internal error while building attribute"),
+    }
+}
+
+fn make_attribute_expr<'a>(
+    config: &Config<'a>,
+    first: Expression<'a>,
+    mut rest: Vec<(Token<'a>, Name<'a>)>,
+) -> Result<'a, Expression<'a>> {
+    if let Some((dot, attr)) = rest.pop() {
+        let dot = make_dot(config, dot)?;
+        return Ok(Expression::Attribute(Attribute {
+            attr,
+            dot,
+            lpar: Default::default(),
+            rpar: Default::default(),
+            value: Box::new(make_attribute_expr(config, first, rest)?),
+        }));
+    } else {
+        return Ok(first);
+    }
 }
 
 fn make_starred_element<'a>(
     config: &Config<'a>,
-    star: Token<'a>,
+    mut star: Token<'a>,
     rest: AssignTargetExpression<'a>,
 ) -> Result<'a, AssignTargetExpression<'a>> {
-    todo!()
+    let value = match rest {
+        AssignTargetExpression::Attribute(a) => Expression::Attribute(a),
+        AssignTargetExpression::Name(n) => Expression::Name(n),
+        AssignTargetExpression::StarredElement(_) => {
+            panic!("Internal error while making starred element")
+        }
+    };
+    let whitespace_before_value =
+        parse_parenthesizable_whitespace(config, &mut star.whitespace_after)?;
+    Ok(AssignTargetExpression::StarredElement(StarredElement {
+        value,
+        whitespace_before_value,
+        lpar: Default::default(),
+        rpar: Default::default(),
+        comma: Default::default(),
+    }))
 }
 
 fn make_assignment<'a>(
@@ -1234,5 +1272,20 @@ fn make_assignment<'a>(
     lhs: Vec<(AssignTargetExpression<'a>, Token<'a>)>,
     rhs: Expression<'a>,
 ) -> Result<'a, Assign<'a>> {
-    todo!()
+    let mut targets = vec![];
+    for (target, mut equal) in lhs {
+        let whitespace_before_equal =
+            parse_simple_whitespace(config, &mut equal.whitespace_before)?;
+        let whitespace_after_equal = parse_simple_whitespace(config, &mut equal.whitespace_after)?;
+        targets.push(AssignTarget {
+            target,
+            whitespace_after_equal,
+            whitespace_before_equal,
+        });
+    }
+    Ok(Assign {
+        targets,
+        value: rhs,
+        semicolon: Default::default(),
+    })
 }
