@@ -211,7 +211,7 @@ peg::parser! {
             / a:star_atom() {a}
 
         rule star_atom() -> AssignTargetExpression<'a>
-            = a:name() { AssignTargetExpression::Name(make_name(a)) }
+            = a:name() { AssignTargetExpression::Name(a) }
             / lpar:lit("(") a:target_with_star_atom() rpar:lit(")") { a } // TODO parens
             // TODO: tuple, List
 
@@ -325,7 +325,7 @@ peg::parser! {
             // TODO: missing left-recursive branches here
 
         rule atom() -> Expression<'a>
-            = n:name() { Expression::Name(Name { value: n.string, lpar: vec![], rpar: vec![] }) }
+            = n:name() { Expression::Name(n) }
             / &tok(String, "STRING") s:strings() {s}
             / n:tok(Number, "NUMBER") {? make_number(&config, n).map_err(|e| "expected number")}
             / lit("...") { Expression::Ellipsis {lpar: vec![], rpar: vec![]}}
@@ -434,7 +434,7 @@ peg::parser! {
             }
 
         rule param() -> Param<'a>
-            = n:name() { Param {name: Name {value: n.string, ..Default::default()}, ..Default::default()} }
+            = n:name() { Param {name: n, ..Default::default() } }
 
         rule default() -> (AssignEqual<'a>, Expression<'a>)
             = eq:lit("=") ex:expression() {?
@@ -508,7 +508,7 @@ peg::parser! {
 
         rule import_from_as_name() -> ImportAlias<'a>
             = n:name() asname:(kw:lit("as") z:name() {(kw, z)})? {?
-                make_import_alias(&config, NameOrAttribute::N(make_name(n)), asname)
+                make_import_alias(&config, NameOrAttribute::N(n), asname)
                     .map_err(|e| "import_from_as_name")
             }
 
@@ -550,14 +550,14 @@ peg::parser! {
         rule tok(tok: TokType, err: &'static str) -> Token<'a>
             = [t@Token {..}] {? if t.r#type == tok { Ok(t) } else { Err(err) } }
 
-        rule name() -> Token<'a>
+        rule name() -> Name<'a>
             = !("False" / "None" / "True" / "and" / "as" / "assert" / "async" / "await"
                 / "break" / "class" / "continue" / "def" / "del" / "elif" / "else"
                 / "except" / "finally" / "for" / "from" / "global" / "if" / "import"
                 / "in" / "is" / "lambda" / "nonlocal" / "not" / "or" / "pass" / "raise"
                 / "return" / "try" / "while" / "with" / "yield"
             )
-            t:tok(NameTok, "NAME") {t}
+            t:tok(NameTok, "NAME") {make_name(t)}
 
         rule traced<T>(e: rule<T>) -> T =
             &(input:(_)* {
@@ -580,7 +580,7 @@ peg::parser! {
 fn make_function_def<'a>(
     config: &Config<'a>,
     mut def: Token<'a>,
-    mut name: Token<'a>,
+    name: Name<'a>,
     mut open_paren: Token<'a>,
     params: Option<Parameters<'a>>,
     _close_paren: Token<'a>,
@@ -588,17 +588,14 @@ fn make_function_def<'a>(
     body: Suite<'a>,
 ) -> Result<'a, FunctionDef<'a>> {
     Ok(FunctionDef {
-        name: Name {
-            value: name.string,
-            ..Default::default()
-        },
+        name,
         params: params.unwrap_or_default(),
         decorators: Default::default(),
         body,
         leading_lines: parse_empty_lines(config, &mut def.whitespace_before, None)?,
         lines_after_decorators: vec![],
         whitespace_after_def: parse_simple_whitespace(config, &mut def.whitespace_after)?,
-        whitespace_after_name: parse_simple_whitespace(config, &mut name.whitespace_after)?,
+        whitespace_after_name: parse_simple_whitespace(config, &mut open_paren.whitespace_before)?,
         whitespace_before_colon: parse_simple_whitespace(config, &mut colon.whitespace_before)?,
         whitespace_before_params: parse_parenthesizable_whitespace(
             config,
@@ -610,14 +607,11 @@ fn make_function_def<'a>(
 fn make_decorator<'a>(
     config: &Config<'a>,
     mut at: Token<'a>,
-    name: Token<'a>,
+    name: Name<'a>,
     // mut newline: Token<'a>,
 ) -> Result<'a, Decorator<'a>> {
     Ok(Decorator {
-        decorator: Name {
-            value: name.string,
-            ..Default::default()
-        },
+        decorator: name,
         leading_lines: parse_empty_lines(config, &mut at.whitespace_before, None)?,
         whitespace_after_at: parse_simple_whitespace(config, &mut at.whitespace_after)?,
         trailing_whitespace: Default::default(), //parse_trailing_whitespace(config, &mut newline.whitespace_before)?,
@@ -1053,11 +1047,10 @@ fn concat<T>(a: Vec<T>, b: Vec<T>) -> Vec<T> {
 
 fn make_name_or_attr<'a>(
     config: &Config<'a>,
-    first_tok: Token<'a>,
-    mut tail: Vec<(Token<'a>, Token<'a>)>,
+    first_tok: Name<'a>,
+    mut tail: Vec<(Token<'a>, Name<'a>)>,
 ) -> Result<'a, NameOrAttribute<'a>> {
     if let Some((dot, name)) = tail.pop() {
-        let name = make_name(name);
         let dot = make_dot(config, dot)?;
         return Ok(NameOrAttribute::A(Attribute {
             attr: name,
@@ -1067,7 +1060,7 @@ fn make_name_or_attr<'a>(
             value: Box::new(make_name_or_attr(config, first_tok, tail)?.into()),
         }));
     } else {
-        Ok(NameOrAttribute::N(make_name(first_tok)))
+        Ok(NameOrAttribute::N(first_tok))
     }
 }
 
@@ -1090,7 +1083,7 @@ fn make_dot<'a>(config: &Config<'a>, mut tok: Token<'a>) -> Result<'a, Dot<'a>> 
 fn make_import_alias<'a>(
     config: &Config<'a>,
     name: NameOrAttribute<'a>,
-    asname: Option<(Token<'a>, Token<'a>)>,
+    asname: Option<(Token<'a>, Name<'a>)>,
 ) -> Result<'a, ImportAlias<'a>> {
     Ok(ImportAlias {
         name,
@@ -1102,7 +1095,7 @@ fn make_import_alias<'a>(
                 let whitespace_after_as =
                     parse_parenthesizable_whitespace(config, &mut kw.whitespace_after)?;
                 Some(AsName {
-                    name: NameOrAttribute::N(make_name(n)),
+                    name: NameOrAttribute::N(n),
                     whitespace_after_as,
                     whitespace_before_as,
                 })
@@ -1223,7 +1216,7 @@ fn make_module<'a>(
 fn make_attribute<'a>(
     config: &Config<'a>,
     first: Expression<'a>,
-    rest: Vec<(Token<'a>, Token<'a>)>,
+    rest: Vec<(Token<'a>, Name<'a>)>,
 ) -> Result<'a, Attribute<'a>> {
     todo!()
 }
