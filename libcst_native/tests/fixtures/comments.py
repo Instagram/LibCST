@@ -22,26 +22,27 @@ from b.c.d.e import X  # some noqa comment
 
 
 # Some comment before a function.
-# y = 1
-# (
-#     # some strings
-#     y  # type: ignore
-# )
+y = 1
+(
+    # some strings
+    y  # type: ignore
+)
 
 
-# def function(default=None):
-#     """Docstring comes first.
+def function(default=None):
+    """Docstring comes first.
 
-#     Possibly many lines.
-#     """
-#     # FIXME: Some comment about why this function is crap but still in production.
-#     import inner_imports
+    Possibly many lines.
+    """
+    # FIXME: Some comment about why this function is crap but still in production.
+    import inner_imports
 
-#     if inner_imports.are_evil():
-#         # Explains why we have this if.
-#         # In great detail indeed.
-#         x = X()
-#         return x.method1()  # type: ignore
+    # if inner_imports.are_evil():
+    #     # Explains why we have this if.
+    #     # In great detail indeed.
+    #     x = X()
+    #     return x.method1()  # type: ignore
+
 
 #     # This return is also commented for some reason.
 #     return default

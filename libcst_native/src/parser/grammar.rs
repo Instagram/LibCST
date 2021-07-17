@@ -4,6 +4,8 @@
 // LICENSE file in the root directory of this source tree.
 
 use super::*;
+use crate::parser::expression::ParenthesizedNode;
+use peg::parser;
 use peg::str::LineCol;
 use std::mem::swap;
 use TokType::{Async, Dedent, EndMarker, Indent, Name as NameTok, Newline as NL, Number, String};
@@ -79,7 +81,7 @@ impl<'a> ParseLiteral for TokVec<'a> {
     }
 }
 
-peg::parser! {
+parser! {
     pub grammar python<'a>(config: &Config<'a>) for TokVec<'a> {
         pub rule file() -> Module<'a>
             = traced(<_file()>)
@@ -356,9 +358,12 @@ peg::parser! {
 
         rule atom() -> Expression<'a>
             = n:name() { Expression::Name(n) }
+            / n:lit("True") { Expression::Name(make_name(n)) }
+            / n:lit("False") { Expression::Name(make_name(n)) }
+            / n:lit("None") { Expression::Name(make_name(n)) }
             / &tok(String, "STRING") s:strings() {s}
             / n:tok(Number, "NUMBER") {? make_number(&config, n).map_err(|e| "expected number")}
-            / &"(" e:tuple() {e}
+            / &"(" e:(tuple() / group()) {e}
             / lit("...") { Expression::Ellipsis {lpar: vec![], rpar: vec![]}}
 
         rule strings() -> Expression<'a>
@@ -373,6 +378,12 @@ peg::parser! {
                     make_tuple(&config, first, rest, trailing_comma, Some(lpar), Some(rpar))
                         .map(|t| Expression::Tuple(t))
                         .map_err(|e| "tuple")
+            }
+
+        rule group() -> Expression<'a>
+            = lpar:lit("(") e:(yield_expr() / named_expression()) rpar:lit(")") {?
+                add_expr_parens(&config, e, lpar, rpar)
+                    .map_err(|e| "group")
             }
 
         rule function_def() -> FunctionDef<'a>
@@ -1249,7 +1260,7 @@ fn make_module<'a>(
     body: Vec<Statement<'a>>,
     mut tok: Token<'a>,
 ) -> Result<'a, Module<'a>> {
-    let footer = parse_empty_lines(config, &mut tok.whitespace_before, None)?;
+    let footer = parse_empty_lines(config, &mut tok.whitespace_before, Some(""))?;
     Ok(Module { body, footer })
 }
 
@@ -1380,16 +1391,12 @@ fn make_tuple<'a>(
     }
     elements.push(current);
 
-    if let Some(mut lpar_tok) = lpar_tok {
-        let whitespace_after =
-            parse_parenthesizable_whitespace(config, &mut lpar_tok.whitespace_after)?;
-        lpar.push(LeftParen { whitespace_after });
+    if let Some(lpar_tok) = lpar_tok {
+        lpar.push(make_lpar(config, lpar_tok)?);
     }
 
-    if let Some(mut rpar_tok) = rpar_tok {
-        let whitespace_before =
-            parse_parenthesizable_whitespace(config, &mut rpar_tok.whitespace_before)?;
-        rpar.push(RightParen { whitespace_before });
+    if let Some(rpar_tok) = rpar_tok {
+        rpar.push(make_rpar(config, rpar_tok)?);
     }
 
     Ok(Tuple {
@@ -1397,4 +1404,13 @@ fn make_tuple<'a>(
         lpar,
         rpar,
     })
+}
+
+fn add_expr_parens<'a>(
+    config: &Config<'a>,
+    e: Expression<'a>,
+    lpar: Token<'a>,
+    rpar: Token<'a>,
+) -> Result<'a, Expression<'a>> {
+    Ok(e.with_parens(make_lpar(config, lpar)?, make_rpar(config, rpar)?))
 }

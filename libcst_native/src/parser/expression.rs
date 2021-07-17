@@ -129,6 +129,14 @@ impl<'a> ParenthesizedNode<'a> for Name<'a> {
     fn rpar(&self) -> &Vec<RightParen<'a>> {
         &self.rpar
     }
+
+    fn with_parens(self, left: LeftParen<'a>, right: RightParen<'a>) -> Self {
+        let mut lpar = self.lpar;
+        lpar.push(left);
+        let mut rpar = self.rpar;
+        rpar.push(right);
+        Self { lpar, rpar, ..self }
+    }
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -377,6 +385,100 @@ impl<'a> ParenthesizedNode<'a> for Expression<'a> {
             _ => panic!("rpar not implemented for {:#?}", self),
         }
     }
+
+    fn with_parens(self, leftpar: LeftParen<'a>, rightpar: RightParen<'a>) -> Self {
+        match self {
+            Self::BinaryOperation {
+                lpar,
+                rpar,
+                left,
+                right,
+                operator,
+            } => {
+                let mut lpar = lpar;
+                let mut rpar = rpar;
+                lpar.push(leftpar);
+                rpar.push(rightpar);
+                Self::BinaryOperation {
+                    lpar,
+                    rpar,
+                    left,
+                    right,
+                    operator,
+                }
+            }
+            Self::Integer { rpar, lpar, value } => {
+                let mut lpar = lpar;
+                let mut rpar = rpar;
+                lpar.push(leftpar);
+                rpar.push(rightpar);
+                Self::Integer { rpar, lpar, value }
+            }
+            Self::UnaryOperation {
+                rpar,
+                lpar,
+                expression,
+                operator,
+            } => {
+                let mut lpar = lpar;
+                let mut rpar = rpar;
+                lpar.push(leftpar);
+                rpar.push(rightpar);
+                Self::UnaryOperation {
+                    rpar,
+                    lpar,
+                    expression,
+                    operator,
+                }
+            }
+            Self::Comparison {
+                lpar,
+                rpar,
+                left,
+                comparisons,
+            } => {
+                let mut lpar = lpar;
+                let mut rpar = rpar;
+                lpar.push(leftpar);
+                rpar.push(rightpar);
+                Self::Comparison {
+                    lpar,
+                    rpar,
+                    left,
+                    comparisons,
+                }
+            }
+            Self::BooleanOperation {
+                lpar,
+                rpar,
+                left,
+                operator,
+                right,
+            } => {
+                let mut lpar = lpar;
+                let mut rpar = rpar;
+                lpar.push(leftpar);
+                rpar.push(rightpar);
+                Self::BooleanOperation {
+                    lpar,
+                    rpar,
+                    left,
+                    operator,
+                    right,
+                }
+            }
+            Self::SimpleString { lpar, rpar, value } => {
+                let mut lpar = lpar;
+                let mut rpar = rpar;
+                lpar.push(leftpar);
+                rpar.push(rightpar);
+                Self::SimpleString { lpar, rpar, value }
+            }
+            Self::Name(n) => Self::Name(n.with_parens(leftpar, rightpar)),
+            Self::Attribute(a) => Self::Attribute(a.with_parens(leftpar, rightpar)),
+            _ => panic!("with_parens not implemented for {:#?}", self),
+        }
+    }
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -404,6 +506,13 @@ impl<'a> ParenthesizedNode<'a> for Attribute<'a> {
     }
     fn rpar(&self) -> &Vec<RightParen<'a>> {
         &self.rpar
+    }
+    fn with_parens(self, left: LeftParen<'a>, right: RightParen<'a>) -> Self {
+        let mut lpar = self.lpar;
+        lpar.push(left);
+        let mut rpar = self.rpar;
+        rpar.push(right);
+        Self { lpar, rpar, ..self }
     }
 }
 
@@ -460,6 +569,8 @@ pub(crate) trait ParenthesizedNode<'a> {
             rpar.codegen(state);
         }
     }
+
+    fn with_parens(self, left: LeftParen<'a>, right: RightParen<'a>) -> Self;
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -491,6 +602,14 @@ impl<'a> ParenthesizedNode<'a> for StarredElement<'a> {
 
     fn lpar(&self) -> &Vec<LeftParen<'a>> {
         &self.lpar
+    }
+
+    fn with_parens(self, left: LeftParen<'a>, right: RightParen<'a>) -> Self {
+        let mut lpar = self.lpar;
+        lpar.push(left);
+        let mut rpar = self.rpar;
+        rpar.push(right);
+        Self { lpar, rpar, ..self }
     }
 }
 
@@ -552,6 +671,14 @@ impl<'a> ParenthesizedNode<'a> for Tuple<'a> {
 
     fn lpar(&self) -> &Vec<LeftParen<'a>> {
         &self.lpar
+    }
+
+    fn with_parens(self, left: LeftParen<'a>, right: RightParen<'a>) -> Self {
+        let mut lpar = self.lpar;
+        lpar.push(left);
+        let mut rpar = self.rpar;
+        rpar.push(right);
+        Self { lpar, rpar, ..self }
     }
 }
 
