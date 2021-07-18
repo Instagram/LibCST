@@ -30,7 +30,7 @@ type Result<T> = std::result::Result<T, WhitespaceError>;
 pub struct SimpleWhitespace<'a>(pub &'a str);
 
 impl<'a> Codegen<'a> for SimpleWhitespace<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) -> () {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
         state.add_token(self.0);
     }
 }
@@ -45,7 +45,7 @@ impl<'a> Default for Comment<'a> {
 }
 
 impl<'a> Codegen<'a> for Comment<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) -> () {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
         state.add_token(self.0);
     }
 }
@@ -66,7 +66,7 @@ impl Default for Fakeness {
 }
 
 impl<'a> Codegen<'a> for Newline<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) -> () {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
         if let Fakeness::Fake = self.1 {
             return;
         }
@@ -86,7 +86,7 @@ pub struct TrailingWhitespace<'a> {
 }
 
 impl<'a> Codegen<'a> for TrailingWhitespace<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) -> () {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
         self.whitespace.codegen(state);
         if let Some(comment) = &self.comment {
             comment.codegen(state);
@@ -104,7 +104,7 @@ pub struct EmptyLine<'a> {
 }
 
 impl<'a> Codegen<'a> for EmptyLine<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) -> () {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
         if self.indent {
             state.add_indent()
         }
@@ -236,9 +236,9 @@ pub fn parse_optional_trailing_whitespace<'a>(
     if let Some(newline) = parse_newline(config, &mut speculative_state)? {
         *state = speculative_state;
         Ok(Some(TrailingWhitespace {
+            whitespace,
             comment,
             newline,
-            whitespace,
         }))
     } else {
         Ok(None)
@@ -260,7 +260,7 @@ fn parse_indent<'a>(
     state: &mut State,
     override_absolute_indent: Option<&'a str>,
 ) -> Result<bool> {
-    let absolute_indent = override_absolute_indent.unwrap_or(&state.absolute_indent[..]);
+    let absolute_indent = override_absolute_indent.unwrap_or(state.absolute_indent);
     if state.column != 0 {
         if state.column == config.get_line(state.line)?.len() && state.line == config.lines.len() {
             Ok(false)
@@ -304,7 +304,7 @@ pub struct ParenthesizedWhitespace<'a> {
 }
 
 impl<'a> Codegen<'a> for ParenthesizedWhitespace<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) -> () {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
         self.first_line.codegen(state);
         for line in &self.empty_lines {
             line.codegen(state);
@@ -323,10 +323,10 @@ pub enum ParenthesizableWhitespace<'a> {
 }
 
 impl<'a> Codegen<'a> for ParenthesizableWhitespace<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) -> () {
-        match &self {
-            &Self::SimpleWhitespace(w) => w.codegen(state),
-            &Self::ParenthesizedWhitespace(w) => w.codegen(state),
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+        match self {
+            Self::SimpleWhitespace(w) => w.codegen(state),
+            Self::ParenthesizedWhitespace(w) => w.codegen(state),
         }
     }
 }
@@ -455,8 +455,8 @@ pub fn parse_parenthesized_whitespace<'a>(
         let indent = parse_indent(config, state, None)?;
         let last_line = parse_simple_whitespace(config, state)?;
         Ok(Some(ParenthesizedWhitespace {
-            empty_lines,
             first_line,
+            empty_lines,
             indent,
             last_line,
         }))

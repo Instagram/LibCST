@@ -1056,9 +1056,7 @@ impl<'a> Iterator for TokenIterator<'a> {
 
     fn next(&mut self) -> Option<Self::Item> {
         let next = self.core_state.next();
-        if next.is_none() {
-            return None;
-        }
+        next.as_ref()?;
         Some((|| {
             let tok_type = next.unwrap()?;
             let relative_indent = match tok_type {

@@ -3,6 +3,7 @@
 // This source code is licensed under the MIT license found in the
 // LICENSE file in the root directory of this source tree.
 
+use std::fmt;
 #[derive(Debug)]
 pub struct CodegenState<'a> {
     pub tokens: String,
@@ -23,20 +24,22 @@ impl<'a> CodegenState<'a> {
     pub fn add_token(&mut self, tok: &'a str) {
         self.tokens.push_str(tok);
     }
+}
 
-    pub fn to_string(self) -> String {
-        self.tokens
+impl<'a> fmt::Display for CodegenState<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.tokens)
     }
 }
 
 pub trait Codegen<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) -> ();
+    fn codegen(&'a self, state: &mut CodegenState<'a>);
 }
 
 #[cfg(windows)]
-const LINE_ENDING: &'static str = "\r\n";
+const LINE_ENDING: &str = "\r\n";
 #[cfg(not(windows))]
-const LINE_ENDING: &'static str = "\n";
+const LINE_ENDING: &str = "\n";
 
 impl<'a> Default for CodegenState<'a> {
     fn default() -> Self {

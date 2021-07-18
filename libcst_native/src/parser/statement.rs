@@ -9,6 +9,7 @@ use super::{
     SimpleWhitespace, StarredElement, TrailingWhitespace, Tuple,
 };
 
+#[allow(clippy::large_enum_variant)]
 #[derive(Debug, Eq, PartialEq)]
 pub enum Statement<'a> {
     Simple(SimpleStatementLine<'a>),
@@ -16,10 +17,10 @@ pub enum Statement<'a> {
 }
 
 impl<'a> Codegen<'a> for Statement<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) -> () {
-        match &self {
-            &Self::Simple(s) => s.codegen(state),
-            &Self::Compound(f) => f.codegen(state),
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+        match self {
+            Self::Simple(s) => s.codegen(state),
+            Self::Compound(f) => f.codegen(state),
         }
     }
 }
@@ -31,10 +32,10 @@ pub enum CompoundStatement<'a> {
 }
 
 impl<'a> Codegen<'a> for CompoundStatement<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) -> () {
-        match &self {
-            &Self::FunctionDef(f) => f.codegen(state),
-            &Self::If(f) => f.codegen(state),
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+        match self {
+            Self::FunctionDef(f) => f.codegen(state),
+            Self::If(f) => f.codegen(state),
         }
     }
 }
@@ -46,10 +47,10 @@ pub enum Suite<'a> {
 }
 
 impl<'a> Codegen<'a> for Suite<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) -> () {
-        match &self {
-            &Self::IndentedBlock(b) => b.codegen(state),
-            &Self::SimpleStatementSuite(s) => s.codegen(state),
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+        match self {
+            Self::IndentedBlock(b) => b.codegen(state),
+            Self::SimpleStatementSuite(s) => s.codegen(state),
         }
     }
 }
@@ -75,7 +76,7 @@ pub struct IndentedBlock<'a> {
 }
 
 impl<'a> Codegen<'a> for IndentedBlock<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) -> () {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
         self.header.codegen(state);
 
         let indent = match self.indent {
@@ -130,7 +131,7 @@ impl<'a> Default for SimpleStatementSuite<'a> {
 }
 
 fn _simple_statement_codegen<'a>(
-    body: &'a Vec<SmallStatement<'a>>,
+    body: &'a [SmallStatement<'a>],
     trailing_whitespace: &'a TrailingWhitespace<'a>,
     state: &mut CodegenState<'a>,
 ) {
@@ -147,7 +148,7 @@ fn _simple_statement_codegen<'a>(
 }
 
 impl<'a> Codegen<'a> for SimpleStatementSuite<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) -> () {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
         self.leading_whitespace.codegen(state);
         _simple_statement_codegen(&self.body, &self.trailing_whitespace, state);
     }
@@ -166,7 +167,7 @@ pub struct SimpleStatementLine<'a> {
 }
 
 impl<'a> Codegen<'a> for SimpleStatementLine<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) -> () {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
         for line in &self.leading_lines {
             line.codegen(state);
         }
@@ -175,7 +176,7 @@ impl<'a> Codegen<'a> for SimpleStatementLine<'a> {
     }
 }
 
-#[allow(dead_code)]
+#[allow(dead_code, clippy::large_enum_variant)]
 #[derive(Debug, Eq, PartialEq)]
 pub enum SmallStatement<'a> {
     Pass {
@@ -212,15 +213,15 @@ pub enum SmallStatement<'a> {
 }
 
 impl<'a> Codegen<'a> for SmallStatement<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) -> () {
-        match &self {
-            &Self::Pass { .. } => state.add_token("pass"),
-            &Self::Break { .. } => state.add_token("break"),
-            &Self::Continue { .. } => state.add_token("continue"),
-            &Self::Expr { value: e, .. } => e.codegen(state),
-            &Self::Import(i) => i.codegen(state),
-            &Self::ImportFrom(i) => i.codegen(state),
-            &Self::Assign(a) => a.codegen(state),
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+        match self {
+            Self::Pass { .. } => state.add_token("pass"),
+            Self::Break { .. } => state.add_token("break"),
+            Self::Continue { .. } => state.add_token("continue"),
+            Self::Expr { value: e, .. } => e.codegen(state),
+            Self::Import(i) => i.codegen(state),
+            Self::ImportFrom(i) => i.codegen(state),
+            Self::Assign(a) => a.codegen(state),
             _ => panic!("No codegen implemented for {:#?}", self),
         }
     }
@@ -234,7 +235,7 @@ pub struct Assign<'a> {
 }
 
 impl<'a> Codegen<'a> for Assign<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) -> () {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
         for target in &self.targets {
             target.codegen(state);
         }
@@ -253,7 +254,7 @@ pub struct AssignTarget<'a> {
 }
 
 impl<'a> Codegen<'a> for AssignTarget<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) -> () {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
         self.target.codegen(state);
         self.whitespace_before_equal.codegen(state);
         state.add_token("=");
@@ -261,6 +262,7 @@ impl<'a> Codegen<'a> for AssignTarget<'a> {
     }
 }
 
+#[allow(clippy::large_enum_variant)]
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum AssignTargetExpression<'a> {
     Name(Name<'a>),
@@ -271,12 +273,12 @@ pub enum AssignTargetExpression<'a> {
 }
 
 impl<'a> Codegen<'a> for AssignTargetExpression<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) -> () {
-        match &self {
-            &Self::Name(n) => n.codegen(state),
-            &Self::Attribute(a) => a.codegen(state),
-            &Self::StarredElement(e) => e.codegen(state),
-            &Self::Tuple(t) => t.codegen(state),
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+        match self {
+            Self::Name(n) => n.codegen(state),
+            Self::Attribute(a) => a.codegen(state),
+            Self::StarredElement(e) => e.codegen(state),
+            Self::Tuple(t) => t.codegen(state),
         }
     }
 }
@@ -289,7 +291,7 @@ pub struct Import<'a> {
 }
 
 impl<'a> Codegen<'a> for Import<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) -> () {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
         state.add_token("import");
         self.whitespace_after_import.codegen(state);
         for (i, name) in self.names.iter().enumerate() {
@@ -318,7 +320,7 @@ pub struct ImportFrom<'a> {
 }
 
 impl<'a> Codegen<'a> for ImportFrom<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) -> () {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
         state.add_token("from");
         self.whitespace_after_from.codegen(state);
         for dot in &self.relative {
@@ -359,7 +361,7 @@ impl<'a> ImportAlias<'a> {
 }
 
 impl<'a> Codegen<'a> for ImportAlias<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) -> () {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
         self.name.codegen(state);
         if let Some(asname) = &self.asname {
             asname.codegen(state);
@@ -378,7 +380,7 @@ pub struct AsName<'a> {
 }
 
 impl<'a> Codegen<'a> for AsName<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) -> () {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
         self.whitespace_before_as.codegen(state);
         state.add_token("as");
         self.whitespace_after_as.codegen(state);
@@ -393,10 +395,10 @@ pub enum ImportNames<'a> {
 }
 
 impl<'a> Codegen<'a> for ImportNames<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) -> () {
-        match &self {
-            &Self::Star(s) => s.codegen(state),
-            &Self::Aliases(aliases) => {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+        match self {
+            Self::Star(s) => s.codegen(state),
+            Self::Aliases(aliases) => {
                 for (i, alias) in aliases.iter().enumerate() {
                     alias.codegen(state);
                     if alias.comma.is_none() && i < aliases.len() - 1 {
@@ -441,7 +443,7 @@ impl<'a> FunctionDef<'a> {
 }
 
 impl<'a> Codegen<'a> for FunctionDef<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) -> () {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
         for l in &self.leading_lines {
             l.codegen(state);
         }
@@ -478,7 +480,7 @@ pub struct Decorator<'a> {
 }
 
 impl<'a> Codegen<'a> for Decorator<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) -> () {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
         for ll in self.leading_lines.iter() {
             ll.codegen(state);
         }
@@ -515,7 +517,7 @@ pub struct If<'a> {
 }
 
 impl<'a> Codegen<'a> for If<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) -> () {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
         for l in &self.leading_lines {
             l.codegen(state);
         }
@@ -527,9 +529,8 @@ impl<'a> Codegen<'a> for If<'a> {
         self.whitespace_after_test.codegen(state);
         state.add_token(":");
         self.body.codegen(state);
-        match &self.orelse {
-            Some(orelse) => orelse.codegen(state),
-            _ => {}
+        if let Some(orelse) = &self.orelse {
+            orelse.codegen(state)
         }
     }
 }
@@ -541,10 +542,10 @@ pub enum OrElse<'a> {
 }
 
 impl<'a> Codegen<'a> for OrElse<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) -> () {
-        match &self {
-            &Self::Elif(f) => f.codegen(state),
-            &Self::Else(f) => f.codegen(state),
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+        match self {
+            Self::Elif(f) => f.codegen(state),
+            Self::Else(f) => f.codegen(state),
         }
     }
 }
@@ -559,7 +560,7 @@ pub struct Else<'a> {
 }
 
 impl<'a> Codegen<'a> for Else<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) -> () {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
         for l in &self.leading_lines {
             l.codegen(state);
         }

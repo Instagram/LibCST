@@ -13,9 +13,9 @@ use TokType::{Async, Dedent, EndMarker, Indent, Name as NameTok, Newline as NL, 
 #[derive(Debug)]
 pub struct TokVec<'a>(Vec<Token<'a>>);
 
-impl<'a> Into<TokVec<'a>> for Vec<Token<'a>> {
-    fn into(self) -> TokVec<'a> {
-        TokVec(self)
+impl<'a> From<Vec<Token<'a>>> for TokVec<'a> {
+    fn from(vec: Vec<Token<'a>>) -> Self {
+        TokVec(vec)
     }
 }
 
@@ -144,12 +144,12 @@ parser! {
                 rest:(comma:lit(",") e:star_expression() { (comma, expr_to_element(e)) })+
                 comma:lit(",")? {?
                     make_tuple(&config, expr_to_element(first), rest, comma, None, None)
-                        .map(|t| Expression::Tuple(t))
+                        .map(Expression::Tuple)
                         .map_err(|e| "star_expressions")
             }
             / e:star_expression() comma:lit(",") {?
                 make_tuple(&config, expr_to_element(e), vec![], Some(comma), None, None)
-                    .map(|t| Expression::Tuple(t))
+                    .map(Expression::Tuple)
                     .map_err(|e| "star_expressions")
             }
             / star_expression()
@@ -162,7 +162,7 @@ parser! {
         rule star_named_expression() -> Element<'a>
             = star:lit("*") e:bitwise_or() {?
                 make_starred_element(&config, star, expr_to_element(e))
-                    .map(|s| Element::Starred(s))
+                    .map(Element::Starred)
                     .map_err(|e| "star_named_expression")
             }
             / e:named_expression() { expr_to_element(e) }
@@ -221,14 +221,14 @@ parser! {
                 rest:(comma:lit(",") t:star_target() {(comma, assign_target_to_element(t))})*
                 comma:lit(",")? {?
                     make_tuple(&config, assign_target_to_element(first), rest, comma, None, None)
-                        .map(|t| AssignTargetExpression::Tuple(t) )
+                        .map(AssignTargetExpression::Tuple)
                         .map_err(|e| "star_targets")
             }
 
         rule star_target() -> AssignTargetExpression<'a>
             = star:lit("*") !lit("*") t:star_target() {?
                 make_starred_element(&config, star, assign_target_to_element(t))
-                    .map(|e| AssignTargetExpression::StarredElement(e))
+                    .map(AssignTargetExpression::StarredElement)
                     .map_err(|e| "star_target")
             }
             / target_with_star_atom()
@@ -236,7 +236,7 @@ parser! {
         rule target_with_star_atom() -> AssignTargetExpression<'a>
             = a:t_primary() dot:lit(".") n:name() !t_lookahead() {?
                 make_attribute(&config, a, vec![(dot, n)])
-                    .map(|attr| AssignTargetExpression::Attribute(attr))
+                    .map(AssignTargetExpression::Attribute)
                     .map_err(|e| "target_with_star_atom")
             }
             // make_slice
@@ -250,7 +250,7 @@ parser! {
         rule t_primary() -> Expression<'a>
             = a:atom() rest:(dot:lit(".") n:name() {(dot, n)})+ &t_lookahead() {?
                 make_attribute(&config, a, rest)
-                    .map(|attr| Expression::Attribute(attr))
+                    .map(Expression::Attribute)
                     .map_err(|e| "t_primary")
             }
             // TODO: slice, genexp, call
@@ -376,7 +376,7 @@ parser! {
                 rest:(c:lit(",") e:star_named_expression() {(c, e)})*
                 trailing_comma:lit(",")? rpar:lit(")") {?
                     make_tuple(&config, first, rest, trailing_comma, Some(lpar), Some(rpar))
-                        .map(|t| Expression::Tuple(t))
+                        .map(Expression::Tuple)
                         .map_err(|e| "tuple")
             }
 
@@ -444,7 +444,7 @@ parser! {
         rule star_etc() -> StarEtc<'a>
             = star:lit("*") a:param_no_default() b:param_maybe_default()* kw:kwds()? {?
                 add_param_star(&config, a, star)
-                    .map(|p| StarEtc(Some(StarArg::Param(p)), b, kw))
+                    .map(|p| StarEtc(Some(StarArg::Param(Box::new(p))), b, kw))
                     .map_err(|e| "star_etc")
             }
             / star:lit("*") com:lit(",") b:param_maybe_default()+ kw:kwds()? {?
@@ -592,7 +592,7 @@ parser! {
 
         /// matches any token, not just whitespace
         rule _() -> Token<'a>
-            = [t@_] { t }
+            = [t] { t }
 
         rule lit(lit: &'static str) -> Token<'a>
             = [t@Token {..}] {? if t.string == lit { Ok(t) } else { Err(lit) } }
@@ -628,6 +628,7 @@ parser! {
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn make_function_def<'a>(
     config: &Config<'a>,
     mut def: Token<'a>,
@@ -1029,11 +1030,11 @@ fn make_parameters<'a>(
     };
     Ok(Parameters {
         params,
+        star_arg,
         kwonly_params,
+        star_kwarg,
         posonly_params,
         posonly_ind,
-        star_kwarg,
-        star_arg,
     })
 }
 
@@ -1053,9 +1054,9 @@ fn add_param_default<'a>(
         None => (None, None),
     };
     Ok(Param {
-        comma,
         equal,
         default,
+        comma,
         ..param
     })
 }
@@ -1078,8 +1079,8 @@ fn make_assign_equal<'a>(config: &Config<'a>, mut eq: Token<'a>) -> Result<'a, A
     let whitespace_before = parse_parenthesizable_whitespace(config, &mut eq.whitespace_before)?;
     let whitespace_after = parse_parenthesizable_whitespace(config, &mut eq.whitespace_after)?;
     Ok(AssignEqual {
-        whitespace_after,
         whitespace_before,
+        whitespace_after,
     })
 }
 
@@ -1115,7 +1116,7 @@ fn make_name_or_attr<'a>(
     }
 }
 
-fn make_name<'a>(tok: Token<'a>) -> Name<'a> {
+fn make_name(tok: Token) -> Name {
     Name {
         value: tok.string,
         ..Default::default()
@@ -1290,7 +1291,7 @@ fn make_attribute_expr<'a>(
             value: Box::new(make_attribute_expr(config, first, rest)?),
         }));
     } else {
-        return Ok(first);
+        Ok(first)
     }
 }
 
@@ -1314,7 +1315,7 @@ fn make_starred_element<'a>(
     })
 }
 
-fn assign_target_to_element<'a>(expr: AssignTargetExpression<'a>) -> Element<'a> {
+fn assign_target_to_element(expr: AssignTargetExpression) -> Element {
     match expr {
         AssignTargetExpression::Attribute(a) => Element::Simple {
             value: Expression::Attribute(a),
@@ -1344,8 +1345,8 @@ fn make_assignment<'a>(
         let whitespace_after_equal = parse_simple_whitespace(config, &mut equal.whitespace_after)?;
         targets.push(AssignTarget {
             target,
-            whitespace_after_equal,
             whitespace_before_equal,
+            whitespace_after_equal,
         });
     }
     Ok(Assign {
@@ -1355,7 +1356,7 @@ fn make_assignment<'a>(
     })
 }
 
-fn expr_to_element<'a>(expr: Expression<'a>) -> Element<'a> {
+fn expr_to_element(expr: Expression) -> Element {
     Element::Simple {
         value: expr,
         comma: Default::default(),
@@ -1385,8 +1386,8 @@ fn make_tuple<'a>(
             parse_parenthesizable_whitespace(config, &mut comma.whitespace_before)?;
         let whitespace_after = ParenthesizableWhitespace::SimpleWhitespace(SimpleWhitespace(""));
         current = current.with_comma(Comma {
-            whitespace_after,
             whitespace_before,
+            whitespace_after,
         });
     }
     elements.push(current);

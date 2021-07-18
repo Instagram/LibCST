@@ -20,11 +20,11 @@ pub struct Parameters<'a> {
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum StarArg<'a> {
     Star(ParamStar<'a>),
-    Param(Param<'a>),
+    Param(Box<Param<'a>>),
 }
 
 impl<'a> Codegen<'a> for Parameters<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) -> () {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
         let params_after_kwonly = self.star_kwarg.is_some();
         let params_after_regular = !self.kwonly_params.is_empty() || params_after_kwonly;
         let params_after_posonly = !self.params.is_empty() || params_after_regular;
@@ -71,9 +71,8 @@ impl<'a> Codegen<'a> for Parameters<'a> {
             p.codegen(state, None, params_after_kwonly || i < kwonly_size - 1);
         }
 
-        match &self.star_kwarg {
-            Some(star) => star.codegen(state, Some("**"), false),
-            _ => {}
+        if let Some(star) = &self.star_kwarg {
+            star.codegen(state, Some("**"), false)
         }
     }
 }
@@ -84,7 +83,7 @@ pub struct ParamSlash<'a> {
 }
 
 impl<'a> ParamSlash<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>, default_comma: bool) -> () {
+    fn codegen(&'a self, state: &mut CodegenState<'a>, default_comma: bool) {
         state.add_token("/");
         match (&self.comma, default_comma) {
             (Some(comma), _) => comma.codegen(state),
@@ -100,7 +99,7 @@ pub struct ParamStar<'a> {
 }
 
 impl<'a> Codegen<'a> for ParamStar<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) -> () {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
         state.add_token("*");
         self.comma.codegen(state);
     }
@@ -114,7 +113,7 @@ pub struct Name<'a> {
 }
 
 impl<'a> Codegen<'a> for Name<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) -> () {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
         self.parenthesize(state, |state| {
             state.add_token(self.value);
         });
@@ -174,7 +173,7 @@ impl<'a> Param<'a> {
         state: &mut CodegenState<'a>,
         default_star: Option<&'a str>,
         default_comma: bool,
-    ) -> () {
+    ) {
         match (self.star, default_star) {
             (Some(star), _) => state.add_token(star),
             (None, Some(star)) => state.add_token(star),
@@ -214,7 +213,7 @@ pub struct LeftParen<'a> {
 }
 
 impl<'a> Codegen<'a> for LeftParen<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) -> () {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
         state.add_token("(");
         self.whitespace_after.codegen(state);
     }
@@ -227,7 +226,7 @@ pub struct RightParen<'a> {
 }
 
 impl<'a> Codegen<'a> for RightParen<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) -> () {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
         self.whitespace_before.codegen(state);
         state.add_token(")");
     }
@@ -308,10 +307,10 @@ pub enum Expression<'a> {
 }
 
 impl<'a> Codegen<'a> for Expression<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) -> () {
-        match &self {
-            &Self::Ellipsis { .. } => state.add_token("..."),
-            &Self::BinaryOperation {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+        match self {
+            Self::Ellipsis { .. } => state.add_token("..."),
+            Self::BinaryOperation {
                 left,
                 operator,
                 right,
@@ -321,11 +320,9 @@ impl<'a> Codegen<'a> for Expression<'a> {
                 operator.codegen(state);
                 right.codegen(state);
             }),
-            &Self::Integer { value, .. } => {
-                self.parenthesize(state, |state| state.add_token(value))
-            }
-            &Self::Attribute(a) => a.codegen(state),
-            &Self::UnaryOperation {
+            Self::Integer { value, .. } => self.parenthesize(state, |state| state.add_token(value)),
+            Self::Attribute(a) => a.codegen(state),
+            Self::UnaryOperation {
                 expression,
                 operator,
                 ..
@@ -333,8 +330,8 @@ impl<'a> Codegen<'a> for Expression<'a> {
                 operator.codegen(state);
                 expression.codegen(state);
             }),
-            &Self::Name(n) => n.codegen(state),
-            &Self::Comparison {
+            Self::Name(n) => n.codegen(state),
+            Self::Comparison {
                 left, comparisons, ..
             } => self.parenthesize(state, |state| {
                 left.codegen(state);
@@ -342,7 +339,7 @@ impl<'a> Codegen<'a> for Expression<'a> {
                     comp.codegen(state);
                 }
             }),
-            &Self::BooleanOperation {
+            Self::BooleanOperation {
                 left,
                 operator,
                 right,
@@ -352,10 +349,10 @@ impl<'a> Codegen<'a> for Expression<'a> {
                 operator.codegen(state);
                 right.codegen(state);
             }),
-            &Self::SimpleString { value, .. } => self.parenthesize(state, |state| {
+            Self::SimpleString { value, .. } => self.parenthesize(state, |state| {
                 state.add_token(value);
             }),
-            &Self::Tuple(t) => t.codegen(state),
+            Self::Tuple(t) => t.codegen(state),
             _ => panic!("codegen not implemented for {:#?}", self),
         }
     }
@@ -363,25 +360,25 @@ impl<'a> Codegen<'a> for Expression<'a> {
 
 impl<'a> ParenthesizedNode<'a> for Expression<'a> {
     fn lpar(&self) -> &Vec<LeftParen<'a>> {
-        match &self {
-            &Self::BinaryOperation { lpar, .. } => lpar,
-            &Self::Integer { lpar, .. } => lpar,
-            &Self::UnaryOperation { lpar, .. } => lpar,
-            &Self::Comparison { lpar, .. } => lpar,
-            &Self::BooleanOperation { lpar, .. } => lpar,
-            &Self::SimpleString { lpar, .. } => lpar,
+        match self {
+            Self::BinaryOperation { lpar, .. } => lpar,
+            Self::Integer { lpar, .. } => lpar,
+            Self::UnaryOperation { lpar, .. } => lpar,
+            Self::Comparison { lpar, .. } => lpar,
+            Self::BooleanOperation { lpar, .. } => lpar,
+            Self::SimpleString { lpar, .. } => lpar,
             _ => panic!("lpar not implemented for {:#?}", self),
         }
     }
 
     fn rpar(&self) -> &Vec<RightParen<'a>> {
-        match &self {
-            &Self::BinaryOperation { rpar, .. } => rpar,
-            &Self::Integer { rpar, .. } => rpar,
-            &Self::UnaryOperation { rpar, .. } => rpar,
-            &Self::Comparison { rpar, .. } => rpar,
-            &Self::BooleanOperation { rpar, .. } => rpar,
-            &Self::SimpleString { rpar, .. } => rpar,
+        match self {
+            Self::BinaryOperation { rpar, .. } => rpar,
+            Self::Integer { rpar, .. } => rpar,
+            Self::UnaryOperation { rpar, .. } => rpar,
+            Self::Comparison { rpar, .. } => rpar,
+            Self::BooleanOperation { rpar, .. } => rpar,
+            Self::SimpleString { rpar, .. } => rpar,
             _ => panic!("rpar not implemented for {:#?}", self),
         }
     }
@@ -491,7 +488,7 @@ pub struct Attribute<'a> {
 }
 
 impl<'a> Codegen<'a> for Attribute<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) -> () {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
         self.parenthesize(state, |state| {
             self.value.codegen(state);
             self.dot.codegen(state);
@@ -516,6 +513,7 @@ impl<'a> ParenthesizedNode<'a> for Attribute<'a> {
     }
 }
 
+#[allow(clippy::large_enum_variant)]
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum NameOrAttribute<'a> {
     N(Name<'a>),
@@ -523,19 +521,19 @@ pub enum NameOrAttribute<'a> {
 }
 
 impl<'a> Codegen<'a> for NameOrAttribute<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) -> () {
-        match &self {
-            &Self::N(n) => n.codegen(state),
-            &Self::A(a) => a.codegen(state),
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+        match self {
+            Self::N(n) => n.codegen(state),
+            Self::A(a) => a.codegen(state),
         }
     }
 }
 
-impl<'a> Into<Expression<'a>> for NameOrAttribute<'a> {
-    fn into(self) -> Expression<'a> {
-        match self {
-            Self::N(n) => Expression::Name(n),
-            Self::A(a) => Expression::Attribute(a),
+impl<'a> From<NameOrAttribute<'a>> for Expression<'a> {
+    fn from(x: NameOrAttribute<'a>) -> Self {
+        match x {
+            NameOrAttribute::N(n) => Self::Name(n),
+            NameOrAttribute::A(a) => Self::Attribute(a),
         }
     }
 }
@@ -547,7 +545,7 @@ pub struct ComparisonTarget<'a> {
 }
 
 impl<'a> Codegen<'a> for ComparisonTarget<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) -> () {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
         self.operator.codegen(state);
         self.comparator.codegen(state);
     }
@@ -557,7 +555,7 @@ pub(crate) trait ParenthesizedNode<'a> {
     fn lpar(&self) -> &Vec<LeftParen<'a>>;
     fn rpar(&self) -> &Vec<RightParen<'a>>;
 
-    fn parenthesize<F>(&'a self, state: &mut CodegenState<'a>, f: F) -> ()
+    fn parenthesize<F>(&'a self, state: &mut CodegenState<'a>, f: F)
     where
         F: FnOnce(&mut CodegenState<'a>),
     {
@@ -583,7 +581,7 @@ pub struct StarredElement<'a> {
 }
 
 impl<'a> Codegen<'a> for StarredElement<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) -> () {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
         self.parenthesize(state, |state| {
             state.add_token("*");
             self.whitespace_before_value.codegen(state);
@@ -628,23 +626,22 @@ impl<'a> Element<'a> {
         state: &mut CodegenState<'a>,
         default_comma: bool,
         default_comma_whitespace: bool,
-    ) -> () {
-        match &self {
-            &Self::Simple { value, comma } => {
+    ) {
+        match self {
+            Self::Simple { value, comma } => {
                 value.codegen(state);
                 if let Some(comma) = comma {
                     comma.codegen(state)
                 }
             }
-            &Self::Starred(s) => s.codegen(state),
+            Self::Starred(s) => s.codegen(state),
         }
-        if let None = match &self {
-            &Self::Simple { comma, .. } => comma,
-            &Self::Starred(s) => &s.comma,
-        } {
-            if default_comma {
-                state.add_token(if default_comma_whitespace { ", " } else { "," });
-            }
+        let maybe_comma = match self {
+            Self::Simple { comma, .. } => comma,
+            Self::Starred(s) => &s.comma,
+        };
+        if maybe_comma.is_none() && default_comma {
+            state.add_token(if default_comma_whitespace { ", " } else { "," });
         }
     }
 
@@ -683,7 +680,7 @@ impl<'a> ParenthesizedNode<'a> for Tuple<'a> {
 }
 
 impl<'a> Codegen<'a> for Tuple<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) -> () {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
         self.parenthesize(state, |state| {
             let len = self.elements.len();
             if len == 1 {

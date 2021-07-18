@@ -235,8 +235,8 @@ mod tests {
         assert_eq!(pos.char_column_number(), 0);
         assert_eq!(pos.line_number(), 1);
         assert_eq!(pos.peek(), None);
-        assert_eq!(pos.consume(&Regex::new(r"\Awon't match").unwrap()), false);
-        assert_eq!(pos.consume(&Regex::new(r"\A").unwrap()), true);
+        assert!(!pos.consume(&Regex::new(r"\Awon't match").unwrap()));
+        assert!(pos.consume(&Regex::new(r"\A").unwrap()));
         assert_eq!(pos.next(), None);
         // call next() again to verify that it's fused
         assert_eq!(pos.next(), None);
@@ -253,8 +253,8 @@ mod tests {
         assert_eq!(pos.line_number(), 1);
 
         // consume a few characters with a regex
-        assert_eq!(pos.consume(&Regex::new(r"\Awon't match").unwrap()), false);
-        assert_eq!(pos.consume(&Regex::new(r"\Abcd").unwrap()), true);
+        assert!(!pos.consume(&Regex::new(r"\Awon't match").unwrap()));
+        assert!(pos.consume(&Regex::new(r"\Abcd").unwrap()));
         assert_eq!(pos.byte_idx(), 4);
         assert_eq!(pos.char_column_number(), 4);
         assert_eq!(pos.line_number(), 1);

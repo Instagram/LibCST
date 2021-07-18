@@ -14,7 +14,7 @@ pub struct Semicolon<'a> {
 }
 
 impl<'a> Codegen<'a> for Semicolon<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) -> () {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
         self.whitespace_before.codegen(state);
         state.add_token(";");
         self.whitespace_after.codegen(state);
@@ -30,7 +30,7 @@ pub struct Comma<'a> {
 }
 
 impl<'a> Codegen<'a> for Comma<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) -> () {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
         self.whitespace_before.codegen(state);
         state.add_token(",");
         self.whitespace_after.codegen(state);
@@ -46,7 +46,7 @@ pub struct AssignEqual<'a> {
 }
 
 impl<'a> Codegen<'a> for AssignEqual<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) -> () {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
         self.whitespace_before.codegen(state);
         state.add_token("=");
         self.whitespace_after.codegen(state);
@@ -62,7 +62,7 @@ pub struct Dot<'a> {
 }
 
 impl<'a> Codegen<'a> for Dot<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) -> () {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
         self.whitespace_before.codegen(state);
         state.add_token(".");
         self.whitespace_after.codegen(state);
@@ -73,7 +73,7 @@ impl<'a> Codegen<'a> for Dot<'a> {
 pub struct ImportStar {}
 
 impl<'a> Codegen<'a> for ImportStar {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) -> () {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
         state.add_token("*");
     }
 }
@@ -87,12 +87,12 @@ pub enum UnaryOp<'a> {
 }
 
 impl<'a> Codegen<'a> for UnaryOp<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) -> () {
-        let (tok, whitespace_after) = match &self {
-            &Self::Plus(ws) => ("+", ws),
-            &Self::Minus(ws) => ("-", ws),
-            &Self::BitInvert(ws) => ("~", ws),
-            &Self::Not(ws) => ("not", ws),
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+        let (tok, whitespace_after) = match self {
+            Self::Plus(ws) => ("+", ws),
+            Self::Minus(ws) => ("-", ws),
+            Self::BitInvert(ws) => ("~", ws),
+            Self::Not(ws) => ("not", ws),
         };
         state.add_token(tok);
         whitespace_after.codegen(state);
@@ -112,13 +112,13 @@ pub enum BooleanOp<'a> {
 }
 
 impl<'a> Codegen<'a> for BooleanOp<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) -> () {
-        let (tok, ws_bef, ws_aft) = match &self {
-            &Self::And {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+        let (tok, ws_bef, ws_aft) = match self {
+            Self::And {
                 whitespace_after,
                 whitespace_before,
             } => ("and", whitespace_before, whitespace_after),
-            &Self::Or {
+            Self::Or {
                 whitespace_after,
                 whitespace_before,
             } => ("or", whitespace_before, whitespace_after),
@@ -186,57 +186,57 @@ pub enum BinaryOp<'a> {
 }
 
 impl<'a> Codegen<'a> for BinaryOp<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) -> () {
-        let (tok, bef, aft) = match &self {
-            &Self::Add {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+        let (tok, bef, aft) = match self {
+            Self::Add {
                 whitespace_before,
                 whitespace_after,
             } => ("+", whitespace_before, whitespace_after),
-            &Self::Subtract {
+            Self::Subtract {
                 whitespace_before,
                 whitespace_after,
             } => ("-", whitespace_before, whitespace_after),
-            &Self::Multiply {
+            Self::Multiply {
                 whitespace_before,
                 whitespace_after,
             } => ("*", whitespace_before, whitespace_after),
-            &Self::Divide {
+            Self::Divide {
                 whitespace_before,
                 whitespace_after,
             } => ("/", whitespace_before, whitespace_after),
-            &Self::FloorDivide {
+            Self::FloorDivide {
                 whitespace_before,
                 whitespace_after,
             } => ("//", whitespace_before, whitespace_after),
-            &Self::Modulo {
+            Self::Modulo {
                 whitespace_before,
                 whitespace_after,
             } => ("%", whitespace_before, whitespace_after),
-            &Self::Power {
+            Self::Power {
                 whitespace_before,
                 whitespace_after,
             } => ("**", whitespace_before, whitespace_after),
-            &Self::LeftShift {
+            Self::LeftShift {
                 whitespace_before,
                 whitespace_after,
             } => ("<<", whitespace_before, whitespace_after),
-            &Self::RightShift {
+            Self::RightShift {
                 whitespace_before,
                 whitespace_after,
             } => (">>", whitespace_before, whitespace_after),
-            &Self::BitOr {
+            Self::BitOr {
                 whitespace_before,
                 whitespace_after,
             } => ("|", whitespace_before, whitespace_after),
-            &Self::BitAnd {
+            Self::BitAnd {
                 whitespace_before,
                 whitespace_after,
             } => ("&", whitespace_before, whitespace_after),
-            &Self::BitXor {
+            Self::BitXor {
                 whitespace_before,
                 whitespace_after,
             } => ("^", whitespace_before, whitespace_after),
-            &Self::MatrixMultiply {
+            Self::MatrixMultiply {
                 whitespace_before,
                 whitespace_after,
             } => ("@", whitespace_before, whitespace_after),
@@ -294,41 +294,41 @@ pub enum CompOp<'a> {
 }
 
 impl<'a> Codegen<'a> for CompOp<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) -> () {
-        let (tok, bef, between, aft) = match &self {
-            &Self::LessThan {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+        let (tok, bef, between, aft) = match self {
+            Self::LessThan {
                 whitespace_before,
                 whitespace_after,
             } => ("<", whitespace_before, None, whitespace_after),
-            &Self::GreaterThan {
+            Self::GreaterThan {
                 whitespace_before,
                 whitespace_after,
             } => (">", whitespace_before, None, whitespace_after),
-            &Self::LessThanEqual {
+            Self::LessThanEqual {
                 whitespace_before,
                 whitespace_after,
             } => ("<=", whitespace_before, None, whitespace_after),
-            &Self::GreaterThanEqual {
+            Self::GreaterThanEqual {
                 whitespace_before,
                 whitespace_after,
             } => (">=", whitespace_before, None, whitespace_after),
-            &Self::Equal {
+            Self::Equal {
                 whitespace_before,
                 whitespace_after,
             } => ("==", whitespace_before, None, whitespace_after),
-            &Self::NotEqual {
+            Self::NotEqual {
                 whitespace_before,
                 whitespace_after,
             } => ("!=", whitespace_before, None, whitespace_after),
-            &Self::In {
+            Self::In {
                 whitespace_before,
                 whitespace_after,
             } => ("in", whitespace_before, None, whitespace_after),
-            &Self::Is {
+            Self::Is {
                 whitespace_before,
                 whitespace_after,
             } => ("is", whitespace_before, None, whitespace_after),
-            &Self::IsNot {
+            Self::IsNot {
                 whitespace_before,
                 whitespace_between,
                 whitespace_after,
@@ -338,7 +338,7 @@ impl<'a> Codegen<'a> for CompOp<'a> {
                 Some(("not", whitespace_between)),
                 whitespace_after,
             ),
-            &Self::NotIn {
+            Self::NotIn {
                 whitespace_before,
                 whitespace_between,
                 whitespace_after,

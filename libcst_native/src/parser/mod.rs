@@ -59,7 +59,7 @@ pub struct Module<'a> {
 }
 
 impl<'a> Codegen<'a> for Module<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) -> () {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
         for s in &self.body {
             s.codegen(state);
         }
@@ -80,7 +80,7 @@ pub fn parse_module<'a>(module_text: &'a str) -> Result<'a, Module> {
 
     let result = iter
         .collect::<std::result::Result<Vec<_>, _>>()
-        .map_err(|e| ParserError::TokenizerError(e))?
+        .map_err(ParserError::TokenizerError)?
         .into();
 
     // eprintln!("{:#?}", result);
@@ -89,7 +89,7 @@ pub fn parse_module<'a>(module_text: &'a str) -> Result<'a, Module> {
         input: module_text,
         lines: module_text.split_inclusive('\n').collect(),
     };
-    python::file(&result, &conf).or_else(|e| Err(ParserError::ParserError(e)))
+    python::file(&result, &conf).map_err(ParserError::ParserError)
 }
 
 // n starts from 1
@@ -98,7 +98,7 @@ fn bol_offset(source: &str, n: i32) -> usize {
         return 0;
     }
     source
-        .match_indices("\n")
+        .match_indices('\n')
         .nth((n - 2) as usize)
         .map(|(index, _)| index + 1)
         .unwrap_or_else(|| source.len())
@@ -250,9 +250,8 @@ mod test {
             default_newline: "\n",
             ..Default::default()
         };
-        match &m.body[0] {
-            Statement::Compound(f) => f.codegen(&mut state),
-            _ => {}
+        if let Statement::Compound(f) = &m.body[0] {
+            f.codegen(&mut state)
         }
         assert_eq!(state.to_string().trim_end(), text);
     }
