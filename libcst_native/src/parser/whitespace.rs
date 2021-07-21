@@ -116,7 +116,7 @@ impl<'a> Codegen<'a> for EmptyLine<'a> {
     }
 }
 
-pub fn parse_empty_line<'a>(
+fn parse_empty_line<'a>(
     config: &Config<'a>,
     state: &mut State,
     override_absolute_indent: Option<&'a str>,

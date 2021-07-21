@@ -1261,7 +1261,25 @@ fn make_module<'a>(
     body: Vec<Statement<'a>>,
     mut tok: Token<'a>,
 ) -> Result<'a, Module<'a>> {
-    let footer = parse_empty_lines(config, &mut tok.whitespace_before, Some(""))?;
+    let mut footer = parse_empty_lines(config, &mut tok.whitespace_before, Some(""))?;
+    let mut last_indented = None;
+    for (num, line) in footer.iter().enumerate() {
+        if line.whitespace.0 != "" {
+            last_indented = Some(num);
+        } else if line.comment.is_some() {
+            // This is a non-indented comment. Everything from here should belong in the
+            // footer.
+            break;
+        }
+    }
+    if let Some(num) = last_indented {
+        if num + 1 == footer.len() {
+            footer = vec![];
+        } else {
+            let (_, rest) = footer.split_at(num + 1);
+            footer = rest.to_vec();
+        }
+    }
     Ok(Module { body, footer })
 }
 
@@ -1414,4 +1432,33 @@ fn add_expr_parens<'a>(
     rpar: Token<'a>,
 ) -> Result<'a, Expression<'a>> {
     Ok(e.with_parens(make_lpar(config, lpar)?, make_rpar(config, rpar)?))
+}
+
+#[cfg(test)]
+mod test {
+    use itertools::Itertools;
+
+    use super::*;
+
+    #[test]
+    fn make_module_strips_whitespace() {
+        let input = "  # no\n\n  # no\n# yes\n  # yes\n# yes\n";
+        let c = Config {
+            input,
+            lines: input.split_inclusive('\n').collect(),
+            default_newline: "\n",
+        };
+        let toks: Vec<_> = TokenIterator::new(
+            input,
+            &TokConfig {
+                async_hacks: false,
+                split_fstring: true,
+            },
+        )
+        .try_collect()
+        .expect("tokenization error");
+        let last_tok = toks.last().unwrap().clone();
+        let m = make_module(&c, vec![], last_tok).expect("parse error");
+        assert_eq!(m.footer.len(), 3);
+    }
 }
