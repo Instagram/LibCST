@@ -206,6 +206,48 @@ impl<'a> Param<'a> {
     }
 }
 
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct Arg<'a> {
+    pub value: Expression<'a>,
+    pub keyword: Option<Name<'a>>,
+    pub equal: Option<AssignEqual<'a>>,
+    pub comma: Option<Comma<'a>>,
+    pub star: &'a str,
+    pub whitespace_after_star: ParenthesizableWhitespace<'a>,
+    pub whitespace_after_arg: ParenthesizableWhitespace<'a>,
+}
+
+impl<'a> Codegen<'a> for Arg<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+        state.add_token(self.star);
+        self.whitespace_after_star.codegen(state);
+        if let Some(kw) = &self.keyword {
+            kw.codegen(state);
+        }
+        if let Some(eq) = &self.equal {
+            eq.codegen(state);
+        } else if self.keyword.is_some() {
+            state.add_token(" = ");
+        }
+        self.value.codegen(state);
+
+        if let Some(comma) = &self.comma {
+            comma.codegen(state);
+        }
+
+        self.whitespace_after_arg.codegen(state);
+    }
+}
+
+impl<'a> Arg<'a> {
+    pub fn with_comma(self, c: Comma<'a>) -> Self {
+        Self {
+            comma: Some(c),
+            ..self
+        }
+    }
+}
+
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub struct LeftParen<'a> {
     /// Any space that appears directly after this left parenthesis.
@@ -303,7 +345,8 @@ pub enum Expression<'a> {
         whitespace_after_walrus: ParenthesizableWhitespace<'a>,
     },
     Tuple(Tuple<'a>),
-    // TODO: FormattedString, ConcatenatedString, Subscript, Lambda, Call, Await, IfExp, Yield, List, Set, Dict, comprehensions
+    Call(Call<'a>),
+    // TODO: FormattedString, ConcatenatedString, Subscript, Lambda, Await, IfExp, Yield, List, Set, Dict, comprehensions
 }
 
 impl<'a> Codegen<'a> for Expression<'a> {
@@ -353,6 +396,7 @@ impl<'a> Codegen<'a> for Expression<'a> {
                 state.add_token(value);
             }),
             Self::Tuple(t) => t.codegen(state),
+            Self::Call(c) => c.codegen(state),
             _ => panic!("codegen not implemented for {:#?}", self),
         }
     }
@@ -475,6 +519,53 @@ impl<'a> ParenthesizedNode<'a> for Expression<'a> {
             Self::Attribute(a) => Self::Attribute(a.with_parens(leftpar, rightpar)),
             _ => panic!("with_parens not implemented for {:#?}", self),
         }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct Call<'a> {
+    pub func: Box<Expression<'a>>,
+    pub args: Vec<Arg<'a>>,
+    pub lpar: Vec<LeftParen<'a>>,
+    pub rpar: Vec<RightParen<'a>>,
+    pub whitespace_after_func: ParenthesizableWhitespace<'a>,
+    pub whitespace_before_args: ParenthesizableWhitespace<'a>,
+}
+
+impl<'a> Codegen<'a> for Call<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+        self.parenthesize(state, |state| {
+            self.func.codegen(state);
+            self.whitespace_after_func.codegen(state);
+            state.add_token("(");
+            self.whitespace_before_args.codegen(state);
+            let arg_len = self.args.len();
+            for (i, arg) in self.args.iter().enumerate() {
+                arg.codegen(state);
+                if arg.comma.is_none() && i + 1 < arg_len {
+                    state.add_token(", ");
+                }
+            }
+            state.add_token(")");
+        })
+    }
+}
+
+impl<'a> ParenthesizedNode<'a> for Call<'a> {
+    fn lpar(&self) -> &Vec<LeftParen<'a>> {
+        &self.lpar
+    }
+
+    fn rpar(&self) -> &Vec<RightParen<'a>> {
+        &self.rpar
+    }
+
+    fn with_parens(self, left: LeftParen<'a>, right: RightParen<'a>) -> Self {
+        let mut lpar = self.lpar;
+        lpar.push(left);
+        let mut rpar = self.rpar;
+        rpar.push(right);
+        Self { lpar, rpar, ..self }
     }
 }
 

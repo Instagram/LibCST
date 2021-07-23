@@ -353,8 +353,50 @@ parser! {
             = primary()
 
         rule primary() -> Expression<'a>
-            = atom()
+            = f:atom() lpar:lit("(") arg:arguments()? rpar:lit(")") {?
+                make_call(&config, f, lpar, arg.unwrap_or_default(), rpar)
+                    .map(Expression::Call)
+                    .map_err(|_| "call")
+            }
+            / atom()
             // TODO: missing left-recursive branches here
+
+
+        rule arguments() -> Vec<Arg<'a>>
+            = a:args() &")" {a} // trailing comma already included
+
+        rule args() -> Vec<Arg<'a>>
+            = pos:(a:_posarg() c:comma() {a.with_comma(c)})+ kw:kwargs()? { concat(pos, kw.unwrap_or_default()) }
+            / pos:(a:_posarg() c:comma() {a.with_comma(c)})* last:_posarg() {concat(pos, vec![last])}
+            / kwargs()
+
+        rule _posarg() -> Arg<'a>
+            = a:(starred_expression() / e:named_expression() { make_arg(e) })
+                !"=" { a }
+
+        rule starred_expression() -> Arg<'a>
+            = star:lit("*") e:expression() {? make_star_arg(&config, star, e).map_err(|_| "star_arg") }
+
+        rule kwargs() -> Vec<Arg<'a>>
+            = s:(a:kwarg_or_starred() c:comma() { a.with_comma(c) })+
+                d:(a:kwarg_or_double_starred() c:comma() { a.with_comma(c)})*
+                last:kwarg_or_double_starred()? { make_kwargs(s, d, last) }
+            / s:(a:kwarg_or_starred() c:comma() { a.with_comma(c) })* last:kwarg_or_starred() { make_kwargs(s, vec![], Some(last)) }
+            / d:(a:kwarg_or_double_starred() c:comma() { a.with_comma(c) })*
+                last:kwarg_or_double_starred()? { make_kwargs(vec![], d, last) }
+
+        rule kwarg_or_starred() -> Arg<'a>
+            = _kwarg()
+            / starred_expression()
+
+        rule kwarg_or_double_starred() -> Arg<'a>
+            = _kwarg()
+            / star:lit("**") e:expression() {? make_star_arg(&config, star, e).map_err(|_| "star_arg") }
+
+        rule _kwarg() -> Arg<'a>
+            = n:name() eq:lit("=") v:expression() {?
+                make_kwarg(&config, n, eq, v).map_err(|_| "kwarg")
+            }
 
         rule atom() -> Expression<'a>
             = n:name() { Expression::Name(n) }
@@ -1432,6 +1474,98 @@ fn add_expr_parens<'a>(
     rpar: Token<'a>,
 ) -> Result<'a, Expression<'a>> {
     Ok(e.with_parens(make_lpar(config, lpar)?, make_rpar(config, rpar)?))
+}
+
+fn make_kwarg<'a>(
+    config: &Config<'a>,
+    name: Name<'a>,
+    eq: Token<'a>,
+    value: Expression<'a>,
+) -> Result<'a, Arg<'a>> {
+    let equal = Some(make_assign_equal(config, eq)?);
+    let keyword = Some(name);
+    Ok(Arg {
+        value,
+        keyword,
+        equal,
+        comma: None,
+        star: "",
+        whitespace_after_star: ParenthesizableWhitespace::SimpleWhitespace(SimpleWhitespace("")),
+        whitespace_after_arg: ParenthesizableWhitespace::SimpleWhitespace(SimpleWhitespace("")),
+    })
+}
+
+fn make_kwargs<'a>(
+    starred: Vec<Arg<'a>>,
+    mut double_starred: Vec<Arg<'a>>,
+    last: Option<Arg<'a>>,
+) -> Vec<Arg<'a>> {
+    if let Some(last) = last {
+        double_starred.push(last);
+    }
+    concat(starred, double_starred)
+}
+
+fn make_star_arg<'a>(
+    config: &Config<'a>,
+    mut star: Token<'a>,
+    expr: Expression<'a>,
+) -> Result<'a, Arg<'a>> {
+    let whitespace_after_star =
+        parse_parenthesizable_whitespace(config, &mut star.whitespace_after)?;
+    Ok(Arg {
+        value: expr,
+        keyword: None,
+        equal: None,
+        comma: None,
+        star: star.string,
+        whitespace_after_star,
+        whitespace_after_arg: ParenthesizableWhitespace::SimpleWhitespace(SimpleWhitespace("")),
+    })
+}
+
+fn make_call<'a>(
+    config: &Config<'a>,
+    func: Expression<'a>,
+    mut lpar: Token<'a>,
+    mut args: Vec<Arg<'a>>,
+    mut rpar: Token<'a>,
+) -> Result<'a, Call<'a>> {
+    let whitespace_after_func =
+        parse_parenthesizable_whitespace(config, &mut lpar.whitespace_before)?;
+    let whitespace_before_args =
+        parse_parenthesizable_whitespace(config, &mut lpar.whitespace_after)?;
+    if let Some(arg) = args.last_mut() {
+        if arg.comma.is_none() {
+            arg.whitespace_after_arg =
+                parse_parenthesizable_whitespace(config, &mut rpar.whitespace_before)?;
+        }
+    }
+
+    let lpar = vec![];
+    let rpar = vec![];
+    let func = Box::new(func);
+
+    Ok(Call {
+        func,
+        args,
+        lpar,
+        rpar,
+        whitespace_after_func,
+        whitespace_before_args,
+    })
+}
+
+fn make_arg(expr: Expression) -> Arg {
+    Arg {
+        value: expr,
+        keyword: Default::default(),
+        equal: Default::default(),
+        comma: Default::default(),
+        star: Default::default(),
+        whitespace_after_star: ParenthesizableWhitespace::SimpleWhitespace(SimpleWhitespace("")),
+        whitespace_after_arg: ParenthesizableWhitespace::SimpleWhitespace(SimpleWhitespace("")),
+    }
 }
 
 #[cfg(test)]
