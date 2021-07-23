@@ -115,13 +115,13 @@ call(
 call(**screen_kwargs)
 call(b, **screen_kwargs)
 call()()()()()()
-# call(**self.screen_kwargs)
-# call(b, **self.screen_kwargs)
-# lukasz.langa.pl
-# call.me(maybe)
-# 1 .real
-# 1.0 .real
-# ....__class__
+call(**self.screen_kwargs)
+call(b, **self.screen_kwargs)
+lukasz.langa.pl
+call.me(maybe)
+1 .real
+1.0 .real
+....__class__
 # list[str]
 # dict[str, int]
 # tuple[str, ...]
@@ -195,7 +195,7 @@ a = (1,)
 b = (1,)
 c = 1
 d = (1,) + a + (2,)
-# e = (1,).count(1)
+e = (1,).count(1)
 # f = 1, *range(10)
 # g = 1, *"ten"
 what_is_up_with_those_new_coord_names = (coord_names + set(vars_to_create)) + set(
@@ -224,6 +224,7 @@ what_is_up_with_those_new_coord_names = (coord_names | set(vars_to_create)) - se
 # )
 # Ø = set()
 # authors.łukasz.say_thanks()
+authors.lukasz.say_thanks()
 # mapping = {
 #     A: 0.25 * (10.0 / 12),
 #     B: 0.1 * (10.0 / 12),
@@ -271,18 +272,18 @@ what_is_up_with_those_new_coord_names = (coord_names | set(vars_to_create)) - se
 #     addr_sockaddr,
 # ) in socket.getaddrinfo("google.com", "http"):
 #     pass
-# a = (
-#     aaaa.bbbb.cccc.dddd.eeee.ffff.gggg.hhhh.iiii.jjjj.kkkk.llll.mmmm.nnnn.oooo.pppp
-#     in qqqq.rrrr.ssss.tttt.uuuu.vvvv.xxxx.yyyy.zzzz
-# )
+a = (
+    aaaa.bbbb.cccc.dddd.eeee.ffff.gggg.hhhh.iiii.jjjj.kkkk.llll.mmmm.nnnn.oooo.pppp
+    in qqqq.rrrr.ssss.tttt.uuuu.vvvv.xxxx.yyyy.zzzz
+)
 # a = (
 #     aaaa.bbbb.cccc.dddd.eeee.ffff.gggg.hhhh.iiii.jjjj.kkkk.llll.mmmm.nnnn.oooo.pppp
 #     not in qqqq.rrrr.ssss.tttt.uuuu.vvvv.xxxx.yyyy.zzzz
 # )
-# a = (
-#     aaaa.bbbb.cccc.dddd.eeee.ffff.gggg.hhhh.iiii.jjjj.kkkk.llll.mmmm.nnnn.oooo.pppp
-#     is qqqq.rrrr.ssss.tttt.uuuu.vvvv.xxxx.yyyy.zzzz
-# )
+a = (
+    aaaa.bbbb.cccc.dddd.eeee.ffff.gggg.hhhh.iiii.jjjj.kkkk.llll.mmmm.nnnn.oooo.pppp
+    is qqqq.rrrr.ssss.tttt.uuuu.vvvv.xxxx.yyyy.zzzz
+)
 # a = (
 #     aaaa.bbbb.cccc.dddd.eeee.ffff.gggg.hhhh.iiii.jjjj.kkkk.llll.mmmm.nnnn.oooo.pppp
 #     is not qqqq.rrrr.ssss.tttt.uuuu.vvvv.xxxx.yyyy.zzzz
@@ -351,5 +352,5 @@ what_is_up_with_those_new_coord_names = (coord_names | set(vars_to_create)) - se
 # aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa >> aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa << aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 # bbbb >> bbbb * bbbb
 # aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa ^ bbbb.a & aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa ^ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-# last_call()
+last_call()
 # standalone comment at ENDMARKER

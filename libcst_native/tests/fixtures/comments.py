@@ -37,10 +37,10 @@ def function(default=None):
     # FIXME: Some comment about why this function is crap but still in production.
     import inner_imports
 
-    # if inner_imports.are_evil():
-    #     # Explains why we have this if.
-    #     # In great detail indeed.
-    #     x = X()
+    if inner_imports.are_evil():
+        # Explains why we have this if.
+        # In great detail indeed.
+        x = X()
     #     return x.method1()  # type: ignore
 
 

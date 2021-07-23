@@ -235,7 +235,7 @@ parser! {
 
         rule target_with_star_atom() -> AssignTargetExpression<'a>
             = a:t_primary() dot:lit(".") n:name() !t_lookahead() {?
-                make_attribute(&config, a, vec![(dot, n)])
+                make_attribute(&config, a, dot, n)
                     .map(AssignTargetExpression::Attribute)
                     .map_err(|e| "target_with_star_atom")
             }
@@ -247,9 +247,10 @@ parser! {
             / lpar:lit("(") a:target_with_star_atom() rpar:lit(")") { a } // TODO parens
             // TODO: tuple, List
 
+        #[cache]
         rule t_primary() -> Expression<'a>
-            = a:atom() rest:(dot:lit(".") n:name() {(dot, n)})+ &t_lookahead() {?
-                make_attribute(&config, a, rest)
+            = value:t_primary() dot:lit(".") attr:name() &t_lookahead() {?
+                make_attribute(&config, value, dot, attr)
                     .map(Expression::Attribute)
                     .map_err(|e| "t_primary")
             }
@@ -354,7 +355,12 @@ parser! {
 
         #[cache]
         rule primary() -> Expression<'a>
-            = f:primary() lpar:lit("(") arg:arguments()? rpar:lit(")") {?
+            = v:primary() dot:lit(".") attr:name() {?
+                make_attribute(&config, v, dot, attr)
+                    .map(Expression::Attribute)
+                    .map_err(|_| "attribute")
+            }
+            / f:primary() lpar:lit("(") arg:arguments()? rpar:lit(")") {?
                 make_call(&config, f, lpar, arg.unwrap_or_default(), rpar)
                     .map(Expression::Call)
                     .map_err(|_| "call")
@@ -1328,32 +1334,18 @@ fn make_module<'a>(
 
 fn make_attribute<'a>(
     config: &Config<'a>,
-    first: Expression<'a>,
-    rest: Vec<(Token<'a>, Name<'a>)>,
+    value: Expression<'a>,
+    dot: Token<'a>,
+    attr: Name<'a>,
 ) -> Result<'a, Attribute<'a>> {
-    match make_attribute_expr(config, first, rest)? {
-        Expression::Attribute(a) => Ok(a),
-        _ => panic!("Internal error while building attribute"),
-    }
-}
-
-fn make_attribute_expr<'a>(
-    config: &Config<'a>,
-    first: Expression<'a>,
-    mut rest: Vec<(Token<'a>, Name<'a>)>,
-) -> Result<'a, Expression<'a>> {
-    if let Some((dot, attr)) = rest.pop() {
-        let dot = make_dot(config, dot)?;
-        return Ok(Expression::Attribute(Attribute {
-            attr,
-            dot,
-            lpar: Default::default(),
-            rpar: Default::default(),
-            value: Box::new(make_attribute_expr(config, first, rest)?),
-        }));
-    } else {
-        Ok(first)
-    }
+    let dot = make_dot(config, dot)?;
+    Ok(Attribute {
+        attr,
+        dot,
+        lpar: Default::default(),
+        rpar: Default::default(),
+        value: Box::new(value),
+    })
 }
 
 fn make_starred_element<'a>(
