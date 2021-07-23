@@ -32,7 +32,7 @@ paste = "1.0.4"
 pyo3 = "0.13.2"
 regex = "1.4.3"
 thiserror = "1.0.23"
-peg = { git = "https://github.com/kevinmehall/rust-peg" }
+peg = "0.7.0"
 chic = "1.2.2"
 itertools = "0.10.0"
 
@@ -45,3 +45,6 @@ difference = "2.0.0"
 [[bench]]
 name = "parser_benchmark"
 harness = false
+
+[patch.crates-io]
+peg = { git = "https://github.com/fgasperij/rust-peg", branch = "add-left-recursion-support" }

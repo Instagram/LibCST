@@ -114,6 +114,7 @@ call(
 # call(a, *gidgets[:2])
 call(**screen_kwargs)
 call(b, **screen_kwargs)
+call()()()()()()
 # call(**self.screen_kwargs)
 # call(b, **self.screen_kwargs)
 # lukasz.langa.pl

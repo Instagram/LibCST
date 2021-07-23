@@ -352,8 +352,9 @@ parser! {
             // TODO: await expressions
             = primary()
 
+        #[cache]
         rule primary() -> Expression<'a>
-            = f:atom() lpar:lit("(") arg:arguments()? rpar:lit(")") {?
+            = f:primary() lpar:lit("(") arg:arguments()? rpar:lit(")") {?
                 make_call(&config, f, lpar, arg.unwrap_or_default(), rpar)
                     .map(Expression::Call)
                     .map_err(|_| "call")
