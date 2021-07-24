@@ -65,10 +65,10 @@ use std::convert::TryInto;
 use std::fmt::Debug;
 use std::fmt::Formatter;
 
-use crate::parser::WhitespaceState;
-use crate::tokenize::core::string_types::{FStringNode, StringQuoteChar, StringQuoteSize};
-use crate::tokenize::operators::OPERATOR_RE;
-use crate::tokenize::text_position::{TextPosition, TextPositionSnapshot};
+use crate::core::string_types::{FStringNode, StringQuoteChar, StringQuoteSize};
+use crate::operators::OPERATOR_RE;
+use crate::text_position::{TextPosition, TextPositionSnapshot};
+use crate::whitespace_parser::State as WhitespaceState;
 
 /// The maximum number of indentation levels at any given point in time. CPython's tokenizer.c caps
 /// this to avoid the complexity of allocating a dynamic array, but we're using a Vec, so it's not
@@ -837,7 +837,8 @@ impl<'t> TokState<'t> {
         let quote_raw = quote_char.into();
 
         let mut end_quote_size: usize = 0;
-        while end_quote_size != quote_size.into() {
+        let quote_usize: usize = quote_size.into();
+        while end_quote_size != quote_usize {
             match (self.text_pos.next(), quote_size) {
                 (None, StringQuoteSize::Triple) => {
                     return Err(TokError::UnterminatedTripleQuotedString);

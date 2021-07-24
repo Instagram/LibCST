@@ -3,7 +3,7 @@ use std::time::Duration;
 use criterion::{black_box, criterion_group, criterion_main, measurement::Measurement, Criterion};
 use criterion_cycles_per_byte::CyclesPerByte;
 use indoc::indoc;
-use libcst_native::parser::{parse_module, Codegen};
+use libcst::{parse_module, Codegen};
 
 pub fn parser_benchmarks<T: Measurement>(c: &mut Criterion<T>) {
     let mut group = c.benchmark_group("parser");

@@ -1,4 +1,4 @@
-use libcst_native::parser::*;
+use libcst::*;
 use std::io::{self, Read};
 
 pub fn main() {

@@ -9,7 +9,7 @@
 /// Helper types for string processing in the core tokenizer.
 use std::convert::TryFrom;
 
-use crate::tokenize::text_position::TextPositionSnapshot;
+use crate::text_position::TextPositionSnapshot;
 
 #[derive(Clone, Copy, Eq, PartialEq)]
 pub enum StringQuoteSize {

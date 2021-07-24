@@ -642,7 +642,7 @@ impl<'a> Codegen<'a> for ComparisonTarget<'a> {
     }
 }
 
-pub(crate) trait ParenthesizedNode<'a> {
+pub trait ParenthesizedNode<'a> {
     fn lpar(&self) -> &Vec<LeftParen<'a>>;
     fn rpar(&self) -> &Vec<RightParen<'a>>;
 

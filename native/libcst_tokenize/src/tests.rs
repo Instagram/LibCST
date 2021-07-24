@@ -6,7 +6,7 @@
 /// Tests for the functionality in `tokenize::core`. These tests are not part of the `core` module
 /// because they're not a derivative work of CPython, and are therefore not subject to the PSF
 /// license.
-use crate::tokenize::core::{TokConfig, TokError, TokState, TokType};
+use crate::core::{TokConfig, TokError, TokState, TokType};
 
 fn default_config() -> TokConfig {
     TokConfig {

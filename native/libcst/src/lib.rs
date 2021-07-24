@@ -5,69 +5,11 @@
 
 use std::cmp::{max, min};
 
-use crate::tokenize::core::{TokConfig, TokError, TokType, Token, TokenIterator};
-use peg::{Parse, ParseElem, ParseLiteral, RuleResult};
-use thiserror::Error;
+use libcst_tokenize::{whitespace_parser, TokConfig, TokenIterator};
 
-mod whitespace;
-pub use whitespace::{
-    parse_empty_lines, parse_parenthesizable_whitespace, parse_simple_whitespace,
-    parse_trailing_whitespace, Comment, Config, EmptyLine, Newline, ParenthesizableWhitespace,
-    SimpleWhitespace, State as WhitespaceState, TrailingWhitespace, WhitespaceError,
-};
-mod statement;
-pub use statement::{
-    AsName, Assign, AssignTarget, AssignTargetExpression, CompoundStatement, Decorator, Else,
-    FunctionDef, If, Import, ImportAlias, ImportFrom, ImportNames, IndentedBlock, OrElse,
-    SimpleStatementLine, SimpleStatementSuite, SmallStatement, Statement, Suite,
-};
-
-mod expression;
-pub use expression::{
-    Arg, Attribute, Call, ComparisonTarget, Element, Expression, LeftParen, Name, NameOrAttribute,
-    Param, ParamSlash, ParamStar, Parameters, RightParen, StarArg, StarredElement, Tuple,
-};
-
-mod op;
-pub use op::{
-    AssignEqual, BinaryOp, BooleanOp, Comma, CompOp, Dot, ImportStar, Semicolon, UnaryOp,
-};
-
-mod grammar;
-use grammar::python;
-mod codegen;
-pub use codegen::{Codegen, CodegenState};
-
-#[derive(Debug, Error, PartialEq, Eq)]
-pub enum ParserError<'a> {
-    #[error("tokenizer error")]
-    TokenizerError(TokError<'a>),
-    #[error(transparent)]
-    ParserError(#[from] peg::error::ParseError<<grammar::TokVec<'a> as Parse>::PositionRepr>),
-    #[error(transparent)]
-    WhitespaceError(#[from] WhitespaceError),
-    #[error("invalid operator")]
-    OperatorError,
-}
-
-pub type Result<'a, T> = std::result::Result<T, ParserError<'a>>;
-
-#[derive(Debug, Eq, PartialEq)]
-pub struct Module<'a> {
-    pub body: Vec<Statement<'a>>,
-    pub footer: Vec<EmptyLine<'a>>,
-}
-
-impl<'a> Codegen<'a> for Module<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
-        for s in &self.body {
-            s.codegen(state);
-        }
-        for nl in &self.footer {
-            nl.codegen(state);
-        }
-    }
-}
+pub use libcst_nodes::*;
+use libcst_parser as grammar;
+use libcst_parser::{ParserError, Result};
 
 pub fn parse_module<'a>(module_text: &'a str) -> Result<'a, Module> {
     let iter = TokenIterator::new(
@@ -84,12 +26,12 @@ pub fn parse_module<'a>(module_text: &'a str) -> Result<'a, Module> {
         .into();
 
     // eprintln!("{:#?}", result);
-    let conf = Config {
+    let conf = whitespace_parser::Config {
         default_newline: "\n",
         input: module_text,
         lines: module_text.split_inclusive('\n').collect(),
     };
-    python::file(&result, &conf).map_err(ParserError::ParserError)
+    grammar::python::file(&result, &conf).map_err(ParserError::ParserError)
 }
 
 // n starts from 1
@@ -144,7 +86,7 @@ pub fn prettify_error<'a>(module_text: &'a str, err: ParserError<'a>, label: &st
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::parser::{bol_offset, whitespace::Fakeness};
+    use libcst_tokenize::TokError;
 
     #[test]
     fn test_simple() {

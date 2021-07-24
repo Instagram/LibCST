@@ -16,4 +16,4 @@ libcst/_version.py
 .hypothesis/
 .pyre_configuration
 .python-version
-libcst_native/target/
+target/

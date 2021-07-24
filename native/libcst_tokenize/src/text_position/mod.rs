@@ -10,7 +10,7 @@ use regex::Regex;
 use std::fmt;
 
 use crate::debug_utils::EllipsisDebug;
-use crate::tokenize::text_position::char_width::NewlineNormalizedCharWidths;
+use char_width::NewlineNormalizedCharWidths;
 
 static CR_OR_LF_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"[\r\n]").expect("regex"));
 

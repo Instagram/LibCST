@@ -3,12 +3,31 @@
 // This source code is licensed under the MIT license found in the
 // LICENSE file in the root directory of this source tree.
 
-use super::*;
-use crate::parser::expression::ParenthesizedNode;
-use peg::parser;
+use libcst_nodes::*;
+use libcst_tokenize::whitespace_parser::{
+    parse_empty_lines, parse_parenthesizable_whitespace, parse_simple_whitespace,
+    parse_trailing_whitespace, Config, WhitespaceError,
+};
+use libcst_tokenize::{TokError, TokType, Token};
 use peg::str::LineCol;
+use peg::{parser, Parse, ParseElem, ParseLiteral, RuleResult};
 use std::mem::swap;
+use thiserror::Error;
 use TokType::{Async, Dedent, EndMarker, Indent, Name as NameTok, Newline as NL, Number, String};
+
+#[derive(Debug, Error, PartialEq, Eq)]
+pub enum ParserError<'a> {
+    #[error("tokenizer error")]
+    TokenizerError(TokError<'a>),
+    #[error(transparent)]
+    ParserError(#[from] peg::error::ParseError<<TokVec<'a> as Parse>::PositionRepr>),
+    #[error(transparent)]
+    WhitespaceError(#[from] WhitespaceError),
+    #[error("invalid operator")]
+    OperatorError,
+}
+
+pub type Result<'a, T> = std::result::Result<T, ParserError<'a>>;
 
 #[derive(Debug)]
 pub struct TokVec<'a>(Vec<Token<'a>>);
@@ -101,7 +120,6 @@ parser! {
                     Ok(Statement::Simple(make_simple_statement_line(&config, s)
                         .map_err(|e| "simple_stmt")?))
             }
-
 
         rule simple_stmt() -> SimpleStatementParts<'a>
             = first:&_ statements:(s:small_stmt() semi:lit(";") { (s, semi) })*
@@ -368,7 +386,6 @@ parser! {
             / atom()
             // TODO: missing left-recursive branches here
 
-
         rule arguments() -> Vec<Arg<'a>>
             = a:args() &")" {a} // trailing comma already included
 
@@ -605,7 +622,6 @@ parser! {
                 make_import_from_as_names(first, tail)
             }
 
-
         rule import_from_as_name() -> ImportAlias<'a>
             = n:name() asname:(kw:lit("as") z:name() {(kw, z)})? {?
                 make_import_alias(&config, NameOrAttribute::N(n), asname)
@@ -645,7 +661,6 @@ parser! {
 
         rule lit(lit: &'static str) -> Token<'a>
             = [t@Token {..}] {? if t.string == lit { Ok(t) } else { Err(lit) } }
-
 
         rule tok(tok: TokType, err: &'static str) -> Token<'a>
             = [t@Token {..}] {? if t.r#type == tok { Ok(t) } else { Err(err) } }
@@ -1313,7 +1328,7 @@ fn make_module<'a>(
     let mut footer = parse_empty_lines(config, &mut tok.whitespace_before, Some(""))?;
     let mut last_indented = None;
     for (num, line) in footer.iter().enumerate() {
-        if line.whitespace.0 != "" {
+        if !line.whitespace.0.is_empty() {
             last_indented = Some(num);
         } else if line.comment.is_some() {
             // This is a non-indented comment. Everything from here should belong in the
@@ -1564,6 +1579,7 @@ fn make_arg(expr: Expression) -> Arg {
 #[cfg(test)]
 mod test {
     use itertools::Itertools;
+    use libcst_tokenize::{TokConfig, TokenIterator};
 
     use super::*;
 

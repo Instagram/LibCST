@@ -1,11 +1,18 @@
 use difference::assert_diff;
-use libcst_native::parser::{parse_module, prettify_error, Codegen};
-use std::path::PathBuf;
+use libcst::{parse_module, prettify_error, Codegen};
+use std::{
+    iter::once,
+    path::{Component, PathBuf},
+};
 
 fn all_fixtures() -> impl Iterator<Item = (PathBuf, String)> {
     let mut path = PathBuf::from(file!());
     path.pop();
-    path.push("fixtures");
+    path = path
+        .components()
+        .skip(1)
+        .chain(once(Component::Normal("fixtures".as_ref())))
+        .collect();
 
     path.read_dir().expect("read_dir").into_iter().map(|file| {
         let path = file.unwrap().path();

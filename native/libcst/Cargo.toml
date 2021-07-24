@@ -4,13 +4,13 @@
 # LICENSE file in the root directory of this source tree.
 
 [package]
-name = "libcst_native"
+name = "libcst"
 version = "0.1.0"
 authors = ["LibCST Developers"]
 edition = "2018"
 
 [lib]
-name = "libcst_native"
+name = "libcst"
 crate-type = ["cdylib", "rlib"]
 
 [[bin]]
@@ -24,17 +24,18 @@ path = "src/bin.rs"
 # Once https://github.com/PyO3/pyo3/pull/1123 lands, it may be better to use
 # `-Zextra-link-arg` for this instead.
 default = ["pyo3/extension-module"]
-trace = ["peg/trace"]
+trace = ["libcst_parser/trace"]
 
 [dependencies]
-once_cell = "1.5.2"
 paste = "1.0.4"
 pyo3 = "0.13.2"
-regex = "1.4.3"
 thiserror = "1.0.23"
-peg = "0.7.0"
+peg = "*"
 chic = "1.2.2"
 itertools = "0.10.0"
+libcst_nodes = { path = "../libcst_nodes" }
+libcst_parser = { path = "../libcst_parser" }
+libcst_tokenize = { path = "../libcst_tokenize" }
 
 [dev-dependencies]
 criterion = { version = "0.3.4", features = ["html_reports"] }
@@ -45,6 +46,3 @@ difference = "2.0.0"
 [[bench]]
 name = "parser_benchmark"
 harness = false
-
-[patch.crates-io]
-peg = { git = "https://github.com/fgasperij/rust-peg", branch = "add-left-recursion-support" }
