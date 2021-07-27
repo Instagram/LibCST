@@ -32,7 +32,7 @@ not great
 ~int and not v1 ^ 123 + v2 | True
 (~int) and (not ((v1 ^ (123 + v2)) | True))
 +(really ** -(confusing ** ~(operator ** -precedence)))
-# flags & ~ select.EPOLLIN and waiters.write_task is not None
+flags & ~ select.EPOLLIN and waiters.write_task is not None
 # lambda arg: None
 # lambda a=True: a
 # lambda a, b, c=True: a
@@ -276,18 +276,18 @@ a = (
     aaaa.bbbb.cccc.dddd.eeee.ffff.gggg.hhhh.iiii.jjjj.kkkk.llll.mmmm.nnnn.oooo.pppp
     in qqqq.rrrr.ssss.tttt.uuuu.vvvv.xxxx.yyyy.zzzz
 )
-# a = (
-#     aaaa.bbbb.cccc.dddd.eeee.ffff.gggg.hhhh.iiii.jjjj.kkkk.llll.mmmm.nnnn.oooo.pppp
-#     not in qqqq.rrrr.ssss.tttt.uuuu.vvvv.xxxx.yyyy.zzzz
-# )
+a = (
+    aaaa.bbbb.cccc.dddd.eeee.ffff.gggg.hhhh.iiii.jjjj.kkkk.llll.mmmm.nnnn.oooo.pppp
+    not in qqqq.rrrr.ssss.tttt.uuuu.vvvv.xxxx.yyyy.zzzz
+)
 a = (
     aaaa.bbbb.cccc.dddd.eeee.ffff.gggg.hhhh.iiii.jjjj.kkkk.llll.mmmm.nnnn.oooo.pppp
     is qqqq.rrrr.ssss.tttt.uuuu.vvvv.xxxx.yyyy.zzzz
 )
-# a = (
-#     aaaa.bbbb.cccc.dddd.eeee.ffff.gggg.hhhh.iiii.jjjj.kkkk.llll.mmmm.nnnn.oooo.pppp
-#     is not qqqq.rrrr.ssss.tttt.uuuu.vvvv.xxxx.yyyy.zzzz
-# )
+a = (
+    aaaa.bbbb.cccc.dddd.eeee.ffff.gggg.hhhh.iiii.jjjj.kkkk.llll.mmmm.nnnn.oooo.pppp
+    is not qqqq.rrrr.ssss.tttt.uuuu.vvvv.xxxx.yyyy.zzzz
+)
 # if (
 #     threading.current_thread() != threading.main_thread()
 #     and threading.current_thread() != threading.main_thread()

@@ -212,26 +212,35 @@ parser! {
 
         #[cache]
         rule comparison() -> Expression<'a>
-            = a:bitwise_or() b:compare_op_bitwise_or_pair()+ {?
-                make_comparison(&config, a, b).map_err(|e| "expected comparison")
-            }
+            = a:bitwise_or() b:compare_op_bitwise_or_pair()+ { make_comparison(a, b) }
             / bitwise_or()
 
         #[cache]
-        rule compare_op_bitwise_or_pair() -> (Token<'a>, Expression<'a>)
+        rule compare_op_bitwise_or_pair() -> (CompOp<'a>, Expression<'a>)
             = _op_bitwise_or("==")
             / _op_bitwise_or("!=") // TODO: support barry_as_flufl
             / _op_bitwise_or("<=")
             / _op_bitwise_or("<")
             / _op_bitwise_or(">=")
             / _op_bitwise_or(">")
-            // / _op_bitwise_or2("not", "in")
+            / _op_bitwise_or2("not", "in")
             / _op_bitwise_or("in")
-            // / _op_bitwise_or2("is", "not")
+            / _op_bitwise_or2("is", "not")
             / _op_bitwise_or("is")
 
-        rule _op_bitwise_or(o: &'static str) -> (Token<'a>, Expression<'a>)
-            = op:lit(o) e:bitwise_or() { (op, e) }
+        rule _op_bitwise_or(o: &'static str) -> (CompOp<'a>, Expression<'a>)
+            = op:lit(o) e:bitwise_or() {?
+                make_comparison_operator(&config, op)
+                    .map(|op| (op, e))
+                    .map_err(|_| "comparison")
+            }
+
+        rule _op_bitwise_or2(first: &'static str, second: &'static str) -> (CompOp<'a>, Expression<'a>)
+            = f:lit(first) s:lit(second) e:bitwise_or() {?
+                make_comparison_operator_2(&config, f, s)
+                    .map(|op| (op, e))
+                    .map_err(|_| "comparison")
+            }
 
         rule star_targets() -> AssignTargetExpression<'a>
             = a:star_target() !lit(",") {a}
@@ -735,24 +744,22 @@ fn make_decorator<'a>(
 }
 
 fn make_comparison<'a>(
-    config: &Config<'a>,
     head: Expression<'a>,
-    tail: Vec<(Token<'a>, Expression<'a>)>,
-) -> Result<'a, Expression<'a>> {
+    tail: Vec<(CompOp<'a>, Expression<'a>)>,
+) -> Expression<'a> {
     let mut comparisons = vec![];
-    for (op, e) in tail {
-        let operator = make_comparison_operator(config, op)?;
+    for (operator, e) in tail {
         comparisons.push(ComparisonTarget {
             operator,
             comparator: e,
         });
     }
-    Ok(Expression::Comparison {
+    Expression::Comparison {
         left: Box::new(head),
         comparisons,
         lpar: vec![],
         rpar: vec![],
-    })
+    }
 }
 
 fn make_comparison_operator<'a>(config: &Config<'a>, mut tok: Token<'a>) -> Result<'a, CompOp<'a>> {
@@ -791,6 +798,30 @@ fn make_comparison_operator<'a>(config: &Config<'a>, mut tok: Token<'a>) -> Resu
         "is" => Ok(CompOp::Is {
             whitespace_after,
             whitespace_before,
+        }),
+        _ => Err(ParserError::OperatorError),
+    }
+}
+
+fn make_comparison_operator_2<'a>(
+    config: &Config<'a>,
+    mut first: Token<'a>,
+    mut second: Token<'a>,
+) -> Result<'a, CompOp<'a>> {
+    let whitespace_before = parse_parenthesizable_whitespace(config, &mut first.whitespace_before)?;
+    let whitespace_between = parse_parenthesizable_whitespace(config, &mut first.whitespace_after)?;
+    let whitespace_after = parse_parenthesizable_whitespace(config, &mut second.whitespace_after)?;
+
+    match (first.string, second.string) {
+        ("is", "not") => Ok(CompOp::IsNot {
+            whitespace_before,
+            whitespace_between,
+            whitespace_after,
+        }),
+        ("not", "in") => Ok(CompOp::NotIn {
+            whitespace_before,
+            whitespace_between,
+            whitespace_after,
         }),
         _ => Err(ParserError::OperatorError),
     }
