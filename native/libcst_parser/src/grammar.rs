@@ -413,6 +413,13 @@ parser! {
                     .map_err(|_| "listcomp")
             }
 
+        rule setcomp() -> Expression<'a>
+            = lbrace:lit("{") elt:named_expression() comp:for_if_clauses() rbrace:lit("}") {?
+                make_set_comp(&config, lbrace, elt, comp, rbrace)
+                    .map(Expression::SetComp)
+                    .map_err(|_| "setcomp")
+            }
+
         rule genexp() -> GeneratorExp<'a>
             = lpar:lit("(") elt:named_expression() comp:for_if_clauses() rpar:lit(")") {?
                 make_genexp(&config, lpar, elt, comp, rpar).map_err(|_| "genexp")
@@ -483,6 +490,7 @@ parser! {
             / n:tok(Number, "NUMBER") {? make_number(&config, n).map_err(|e| "expected number")}
             / &"(" e:(tuple() / group() / (g:genexp() {Expression::GeneratorExp(g)})) {e}
             / &"[" e:listcomp() {e}
+            / &"{" e:setcomp() {e}
             / lit("...") { Expression::Ellipsis {lpar: vec![], rpar: vec![]}}
 
         rule strings() -> Expression<'a>
@@ -1810,6 +1818,36 @@ fn make_list_comp<'a>(
         for_in: Box::new(for_in),
         lbracket,
         rbracket,
+        lpar: Default::default(),
+        rpar: Default::default(),
+    })
+}
+
+fn make_set_comp<'a>(
+    config: &Config<'a>,
+    mut lbrace: Token<'a>,
+    elt: Expression<'a>,
+    for_in: CompFor<'a>,
+    mut rbrace: Token<'a>,
+) -> Result<'a, SetComp<'a>> {
+    let lbrace =
+        parse_parenthesizable_whitespace(config, &mut lbrace.whitespace_after).map(|ws| {
+            LeftCurlyBrace {
+                whitespace_after: ws,
+            }
+        })?;
+    let rbrace =
+        parse_parenthesizable_whitespace(config, &mut rbrace.whitespace_before).map(|ws| {
+            RightCurlyBrace {
+                whitespace_before: ws,
+            }
+        })?;
+
+    Ok(SetComp {
+        elt: Box::new(elt),
+        for_in: Box::new(for_in),
+        lbrace,
+        rbrace,
         lpar: Default::default(),
         rpar: Default::default(),
     })
