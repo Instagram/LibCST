@@ -5,7 +5,7 @@
 
 use crate::{
     whitespace::ParenthesizableWhitespace, AssignEqual, AssignTargetExpression, BinaryOp,
-    BooleanOp, Codegen, CodegenState, Comma, CompOp, Dot, SimpleWhitespace, UnaryOp,
+    BooleanOp, Codegen, CodegenState, Comma, CompOp, Dot, UnaryOp,
 };
 #[derive(Debug, Eq, PartialEq, Default, Clone)]
 pub struct Parameters<'a> {
@@ -346,6 +346,7 @@ pub enum Expression<'a> {
     },
     Tuple(Tuple<'a>),
     Call(Call<'a>),
+    GeneratorExp(GeneratorExp<'a>),
     // TODO: FormattedString, ConcatenatedString, Subscript, Lambda, Await, IfExp, Yield, List, Set, Dict, comprehensions
 }
 
@@ -397,6 +398,7 @@ impl<'a> Codegen<'a> for Expression<'a> {
             }),
             Self::Tuple(t) => t.codegen(state),
             Self::Call(c) => c.codegen(state),
+            Self::GeneratorExp(g) => g.codegen(state),
             _ => panic!("codegen not implemented for {:#?}", self),
         }
     }
@@ -787,8 +789,8 @@ impl<'a> Codegen<'a> for Tuple<'a> {
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct GeneratorExp<'a> {
-    pub elt: AssignTargetExpression<'a>,
-    pub for_in: CompFor<'a>,
+    pub elt: Box<Expression<'a>>,
+    pub for_in: Box<CompFor<'a>>,
     pub lpar: Vec<LeftParen<'a>>,
     pub rpar: Vec<RightParen<'a>>,
 }
@@ -1025,7 +1027,7 @@ impl<'a> Codegen<'a> for CompFor<'a> {
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Asynchronous<'a> {
-    pub whitespace_after: SimpleWhitespace<'a>,
+    pub whitespace_after: ParenthesizableWhitespace<'a>,
 }
 
 impl<'a> Codegen<'a> for Asynchronous<'a> {

@@ -387,13 +387,41 @@ parser! {
                     .map(Expression::Attribute)
                     .map_err(|_| "attribute")
             }
+            / a:primary() lpar:&lit("(") b:genexp() {
+                Expression::Call(make_genexp_call(&config, a, lpar, b))
+            }
             / f:primary() lpar:lit("(") arg:arguments()? rpar:lit(")") {?
                 make_call(&config, f, lpar, arg.unwrap_or_default(), rpar)
                     .map(Expression::Call)
                     .map_err(|_| "call")
             }
             / atom()
-            // TODO: missing left-recursive branches here
+            // TODO: subscript
+
+        rule genexp() -> GeneratorExp<'a>
+            = lpar:lit("(") elt:named_expression() comp:for_if_clauses() rpar:lit(")") {?
+                make_genexp(&config, lpar, elt, comp, rpar).map_err(|_| "genexp")
+            }
+
+        rule for_if_clauses() -> CompFor<'a>
+            = c:for_if_clause()+ { merge_comp_fors(c) }
+
+        rule for_if_clause() -> CompFor<'a>
+            = asy:_async() f:lit("for") tgt:star_targets() i:lit("in")
+                iter:disjunction() ifs:_comp_if()* {?
+                    make_for_if(&config, Some(asy), f, tgt, i, iter, ifs)
+                        .map_err(|_| "for_in")
+            }
+            / f:lit("for") tgt:star_targets() i:lit("in")
+            iter:disjunction() ifs:_comp_if()* {?
+                make_for_if(&config, None, f, tgt, i, iter, ifs)
+                    .map_err(|_| "for_in")
+            }
+
+        rule _comp_if() -> CompIf<'a>
+            = kw:lit("if") cond:disjunction() {?
+                make_comp_if(&config, kw, cond).map_err(|_| "comp_if")
+            }
 
         rule arguments() -> Vec<Arg<'a>>
             = a:args() &")" {a} // trailing comma already included
@@ -438,7 +466,7 @@ parser! {
             / n:lit("None") { Expression::Name(make_name(n)) }
             / &tok(String, "STRING") s:strings() {s}
             / n:tok(Number, "NUMBER") {? make_number(&config, n).map_err(|e| "expected number")}
-            / &"(" e:(tuple() / group()) {e}
+            / &"(" e:(tuple() / group() / (g:genexp() {Expression::GeneratorExp(g)})) {e}
             / lit("...") { Expression::Ellipsis {lpar: vec![], rpar: vec![]}}
 
         rule strings() -> Expression<'a>
@@ -682,6 +710,9 @@ parser! {
                 / "return" / "try" / "while" / "with" / "yield"
             )
             t:tok(NameTok, "NAME") {make_name(t)}
+
+        rule _async() -> Token<'a>
+            = tok(Async, "ASYNC")
 
         rule traced<T>(e: rule<T>) -> T =
             &(input:(_)* {
@@ -1595,6 +1626,52 @@ fn make_call<'a>(
     })
 }
 
+fn make_genexp_call<'a>(
+    config: &Config<'a>,
+    func: Expression<'a>,
+    mut lpar_tok: Token<'a>,
+    mut genexp: GeneratorExp<'a>,
+) -> Call<'a> {
+    // func ( (genexp) )
+    //      ^
+    //   lpar_tok
+
+    // lpar_tok is the same token that was used to parse genexp's first lpar.
+    // Nothing owns the whitespace before lpar_tok, so the same token is passed in here
+    // again, to be converted into whitespace_after_func. We then split off a pair of
+    // parenthesis from genexp, since now Call will own them, and shuffle around
+    // whitespace accordingly.
+
+    let mut lpars = genexp.lpar.into_iter();
+    let first_lpar = lpars.next().expect("genexp without lpar");
+    genexp.lpar = lpars.collect();
+    let last_rpar = genexp.rpar.pop().expect("genexp without rpar");
+
+    let whitespace_before_args = first_lpar.whitespace_after;
+    let whitespace_after_func =
+        parse_parenthesizable_whitespace(config, &mut lpar_tok.whitespace_before)
+            .expect("This whitespace was parsed once already, it should never fail");
+
+    Call {
+        func: Box::new(func),
+        args: vec![Arg {
+            value: Expression::GeneratorExp(genexp),
+            keyword: None,
+            equal: None,
+            comma: None,
+            star: "",
+            whitespace_after_star: ParenthesizableWhitespace::SimpleWhitespace(SimpleWhitespace(
+                "",
+            )),
+            whitespace_after_arg: last_rpar.whitespace_before,
+        }],
+        lpar: vec![],
+        rpar: vec![],
+        whitespace_after_func,
+        whitespace_before_args,
+    }
+}
+
 fn make_arg(expr: Expression) -> Arg {
     Arg {
         value: expr,
@@ -1604,6 +1681,105 @@ fn make_arg(expr: Expression) -> Arg {
         star: Default::default(),
         whitespace_after_star: ParenthesizableWhitespace::SimpleWhitespace(SimpleWhitespace("")),
         whitespace_after_arg: ParenthesizableWhitespace::SimpleWhitespace(SimpleWhitespace("")),
+    }
+}
+
+fn make_async<'a>(config: &Config<'a>, mut tok: Token<'a>) -> Result<'a, Asynchronous<'a>> {
+    let whitespace_after = parse_parenthesizable_whitespace(config, &mut tok.whitespace_after)?;
+    Ok(Asynchronous { whitespace_after })
+}
+
+fn make_comp_if<'a>(
+    config: &Config<'a>,
+    mut kw: Token<'a>,
+    test: Expression<'a>,
+) -> Result<'a, CompIf<'a>> {
+    let whitespace_before = parse_parenthesizable_whitespace(config, &mut kw.whitespace_before)?;
+    let whitespace_before_test =
+        parse_parenthesizable_whitespace(config, &mut kw.whitespace_after)?;
+    Ok(CompIf {
+        whitespace_before,
+        whitespace_before_test,
+        test,
+    })
+}
+
+fn make_for_if<'a>(
+    config: &Config<'a>,
+    mut async_tok: Option<Token<'a>>,
+    mut for_: Token<'a>,
+    target: AssignTargetExpression<'a>,
+    mut in_: Token<'a>,
+    iter: Expression<'a>,
+    ifs: Vec<CompIf<'a>>,
+) -> Result<'a, CompFor<'a>> {
+    let mut whitespace_before =
+        parse_parenthesizable_whitespace(config, &mut for_.whitespace_before)?;
+    let whitespace_after_for =
+        parse_parenthesizable_whitespace(config, &mut for_.whitespace_after)?;
+    let whitespace_before_in =
+        parse_parenthesizable_whitespace(config, &mut in_.whitespace_before)?;
+    let whitespace_after_in = parse_parenthesizable_whitespace(config, &mut in_.whitespace_after)?;
+    let inner_for_in = None;
+
+    // If there is an async keyword, the start of the CompFor expression is considered
+    // to be this keyword, so whitespace_before needs to adjust but Asynchronous will
+    // own the whitespace before the for token.
+    let asynchronous = if let Some(asy) = async_tok.as_mut() {
+        let whitespace_after = whitespace_before;
+        whitespace_before = parse_parenthesizable_whitespace(config, &mut asy.whitespace_before)?;
+        Some(Asynchronous { whitespace_after })
+    } else {
+        None
+    };
+
+    Ok(CompFor {
+        target,
+        iter,
+        ifs,
+        inner_for_in,
+        asynchronous,
+        whitespace_before,
+        whitespace_after_for,
+        whitespace_before_in,
+        whitespace_after_in,
+    })
+}
+
+fn make_genexp<'a>(
+    config: &Config<'a>,
+    lpar: Token<'a>,
+    elt: Expression<'a>,
+    for_in: CompFor<'a>,
+    rpar: Token<'a>,
+) -> Result<'a, GeneratorExp<'a>> {
+    let lpar = vec![make_lpar(config, lpar)?];
+    let rpar = vec![make_rpar(config, rpar)?];
+
+    Ok(GeneratorExp {
+        elt: Box::new(elt),
+        for_in: Box::new(for_in),
+        lpar,
+        rpar,
+    })
+}
+
+fn merge_comp_fors(comp_fors: Vec<CompFor>) -> CompFor {
+    let mut it = comp_fors.into_iter().rev();
+    let first = it.next().expect("cant merge empty comp_fors");
+
+    it.fold(first, |acc, curr| CompFor {
+        inner_for_in: Some(Box::new(acc)),
+        ..curr
+    })
+}
+
+fn expr_to_assign_target(tgt: Expression) -> AssignTargetExpression {
+    match tgt {
+        Expression::Attribute(a) => AssignTargetExpression::Attribute(a),
+        Expression::Name(n) => AssignTargetExpression::Name(n),
+        Expression::Tuple(t) => AssignTargetExpression::Tuple(t),
+        _ => panic!("Expression {:#?} is not a valid AssignTarget", tgt),
     }
 }
 
