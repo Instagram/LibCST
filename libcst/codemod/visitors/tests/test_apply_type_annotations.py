@@ -765,3 +765,84 @@ class TestApplyAnnotationsVisitor(CodemodTest):
             overwrite_existing_annotations=True,
         )
         self.assertCodemod(before, after, context_override=context)
+
+    @data_provider(
+        (
+            (
+                """
+                def fully_annotated_with_untyped_stub(a, b): ...
+                """,
+                """
+                def fully_annotated_with_untyped_stub(a: bool, b: bool) -> str:
+                    return "hello"
+                """,
+                """
+                def fully_annotated_with_untyped_stub(a: bool, b: bool) -> str:
+                    return "hello"
+                """,
+            ),
+            (
+                """
+                def params_annotated_with_return_from_stub(a, b) -> str: ...
+                """,
+                """
+                def params_annotated_with_return_from_stub(a: bool, b: bool):
+                    return "hello"
+                """,
+                """
+                def params_annotated_with_return_from_stub(a: bool, b: bool) -> str:
+                    return "hello"
+                """,
+            ),
+            (
+                """
+                def partially_annotated_params_with_partial_stub(a, b: int): ...
+                """,
+                """
+                def partially_annotated_params_with_partial_stub(a: bool, b) -> str:
+                    return "hello"
+                """,
+                """
+                def partially_annotated_params_with_partial_stub(a: bool, b: int) -> str:
+                    return "hello"
+                """,
+            ),
+            (
+                """
+                def async_with_decorators(a: bool, b: bool) -> str: ...
+                """,
+                """
+                @second_decorator
+                @first_decorator(5)
+                async def async_with_decorators(a, b):
+                    return "hello"
+                """,
+                """
+                @second_decorator
+                @first_decorator(5)
+                async def async_with_decorators(a: bool, b: bool) -> str:
+                    return "hello"
+                """,
+            ),
+        )
+    )
+    def test_annotate_using_incomplete_stubs(
+        self, stub: str, before: str, after: str
+    ) -> None:
+        context = CodemodContext()
+        ApplyTypeAnnotationsVisitor.store_stub_in_context(
+            context, parse_module(textwrap.dedent(stub.rstrip()))
+        )
+        # Test setting the overwrite flag on the codemod instance.
+        self.assertCodemod(
+            before, after, context_override=context, overwrite_existing_annotations=True
+        )
+
+        # Test setting the flag when storing the stub in the context.
+        context = CodemodContext()
+        ApplyTypeAnnotationsVisitor.store_stub_in_context(
+            context,
+            parse_module(textwrap.dedent(stub.rstrip())),
+            overwrite_existing_annotations=True,
+        )
+        self.assertCodemod(before, after, context_override=context)

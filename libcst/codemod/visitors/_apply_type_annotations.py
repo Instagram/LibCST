@@ -466,7 +466,10 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
             function_annotation = self.annotations.function_annotations[key]
             # Only add new annotation if explicitly told to overwrite existing
             # annotations or if one doesn't already exist.
-            if self.overwrite_existing_annotations or not updated_node.returns:
+            set_return_annotation = not updated_node.returns or (
+                self.overwrite_existing_annotations and function_annotation.returns
+            )
+            if set_return_annotation:
                 updated_node = updated_node.with_changes(
                     returns=function_annotation.returns
                 )
