@@ -281,7 +281,15 @@ parser! {
                     .map(Expression::Attribute)
                     .map_err(|e| "t_primary")
             }
-            // TODO: slice, genexp, call
+            // TODO: slice
+            / f:t_primary() lpar:&lit("(") gen:genexp() &t_lookahead() {
+                Expression::Call(make_genexp_call(&config, f, lpar, gen))
+            }
+            / f:t_primary() lpar:lit("(") arg:arguments()? rpar:lit(")") &t_lookahead() {?
+                make_call(&config, f, lpar, arg.unwrap_or_default(), rpar)
+                    .map(Expression::Call)
+                    .map_err(|_| "call")
+            }
             / a:atom() &t_lookahead() {a}
 
         rule t_lookahead() -> ()
