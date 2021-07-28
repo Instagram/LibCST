@@ -13,8 +13,9 @@ pub use statement::{
 mod expression;
 pub use expression::{
     Arg, Asynchronous, Attribute, Call, CompFor, CompIf, ComparisonTarget, DictComp, Element,
-    Expression, GeneratorExp, LeftParen, ListComp, Name, NameOrAttribute, Param, ParamSlash,
-    ParamStar, Parameters, ParenthesizedNode, RightParen, SetComp, StarArg, StarredElement, Tuple,
+    Expression, GeneratorExp, LeftParen, LeftSquareBracket, ListComp, Name, NameOrAttribute, Param,
+    ParamSlash, ParamStar, Parameters, ParenthesizedNode, RightParen, RightSquareBracket, SetComp,
+    StarArg, StarredElement, Tuple,
 };
 
 mod op;

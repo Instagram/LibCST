@@ -406,6 +406,13 @@ parser! {
             / atom()
             // TODO: subscript
 
+        rule listcomp() -> Expression<'a>
+            = lbrak:lit("[") elt:named_expression() comp:for_if_clauses() rbrak:lit("]") {?
+                make_list_comp(&config, lbrak, elt, comp, rbrak)
+                    .map(Expression::ListComp)
+                    .map_err(|_| "listcomp")
+            }
+
         rule genexp() -> GeneratorExp<'a>
             = lpar:lit("(") elt:named_expression() comp:for_if_clauses() rpar:lit(")") {?
                 make_genexp(&config, lpar, elt, comp, rpar).map_err(|_| "genexp")
@@ -475,6 +482,7 @@ parser! {
             / &tok(String, "STRING") s:strings() {s}
             / n:tok(Number, "NUMBER") {? make_number(&config, n).map_err(|e| "expected number")}
             / &"(" e:(tuple() / group() / (g:genexp() {Expression::GeneratorExp(g)})) {e}
+            / &"[" e:listcomp() {e}
             / lit("...") { Expression::Ellipsis {lpar: vec![], rpar: vec![]}}
 
         rule strings() -> Expression<'a>
@@ -1774,6 +1782,36 @@ fn merge_comp_fors(comp_fors: Vec<CompFor>) -> CompFor {
     it.fold(first, |acc, curr| CompFor {
         inner_for_in: Some(Box::new(acc)),
         ..curr
+    })
+}
+
+fn make_list_comp<'a>(
+    config: &Config<'a>,
+    mut lbrak: Token<'a>,
+    elt: Expression<'a>,
+    for_in: CompFor<'a>,
+    mut rbrak: Token<'a>,
+) -> Result<'a, ListComp<'a>> {
+    let lbracket =
+        parse_parenthesizable_whitespace(config, &mut lbrak.whitespace_after).map(|ws| {
+            LeftSquareBracket {
+                whitespace_after: ws,
+            }
+        })?;
+    let rbracket =
+        parse_parenthesizable_whitespace(config, &mut rbrak.whitespace_before).map(|ws| {
+            RightSquareBracket {
+                whitespace_before: ws,
+            }
+        })?;
+
+    Ok(ListComp {
+        elt: Box::new(elt),
+        for_in: Box::new(for_in),
+        lbracket,
+        rbracket,
+        lpar: Default::default(),
+        rpar: Default::default(),
     })
 }
 

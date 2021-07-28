@@ -84,10 +84,10 @@ flags & ~ select.EPOLLIN and waiters.write_task is not None
 # {(i ** 2) for i in (1, 2, 3)}
 # {(i ** 2) for i, _ in ((1, "a"), (2, "b"), (3, "c"))}
 # {((i ** 2) + j) for i in (1, 2, 3) for j in (1, 2, 3)}
-# [i for i in (1, 2, 3)]
-# [(i ** 2) for i in (1, 2, 3)]
-# [(i ** 2) for i, _ in ((1, "a"), (2, "b"), (3, "c"))]
-# [((i ** 2) + j) for i in (1, 2, 3) for j in (1, 2, 3)]
+[i for i in (1, 2, 3)]
+[(i ** 2) for i in (1, 2, 3)]
+[(i ** 2) for i, _ in ((1, "a"), (2, "b"), (3, "c"))]
+[((i ** 2) + j) for i in (1, 2, 3) for j in (1, 2, 3)]
 # {i: 0 for i in (1, 2, 3)}
 # {i: j for i, j in ((1, "a"), (2, "b"), (3, "c"))}
 # {a: b * 2 for a, b in dictionary.items()}

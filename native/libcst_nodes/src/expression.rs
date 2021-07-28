@@ -347,6 +347,7 @@ pub enum Expression<'a> {
     Tuple(Tuple<'a>),
     Call(Call<'a>),
     GeneratorExp(GeneratorExp<'a>),
+    ListComp(ListComp<'a>),
     // TODO: FormattedString, ConcatenatedString, Subscript, Lambda, Await, IfExp, Yield, List, Set, Dict, comprehensions
 }
 
@@ -399,6 +400,7 @@ impl<'a> Codegen<'a> for Expression<'a> {
             Self::Tuple(t) => t.codegen(state),
             Self::Call(c) => c.codegen(state),
             Self::GeneratorExp(g) => g.codegen(state),
+            Self::ListComp(l) => l.codegen(state),
             _ => panic!("codegen not implemented for {:#?}", self),
         }
     }
@@ -823,8 +825,8 @@ impl<'a> Codegen<'a> for GeneratorExp<'a> {
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct ListComp<'a> {
-    pub elt: AssignTargetExpression<'a>,
-    pub for_in: CompFor<'a>,
+    pub elt: Box<Expression<'a>>,
+    pub for_in: Box<CompFor<'a>>,
     pub lbracket: LeftSquareBracket<'a>,
     pub rbracket: RightSquareBracket<'a>,
     pub lpar: Vec<LeftParen<'a>>,
