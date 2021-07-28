@@ -350,7 +350,10 @@ pub enum Expression<'a> {
     ListComp(ListComp<'a>),
     SetComp(SetComp<'a>),
     DictComp(DictComp<'a>),
-    // TODO: FormattedString, ConcatenatedString, Subscript, Lambda, Await, IfExp, Yield, List, Set, Dict
+    List(List<'a>),
+    Set(Set<'a>),
+    Dict(Dict<'a>),
+    // TODO: FormattedString, ConcatenatedString, Subscript, Lambda, Await, IfExp, Yield
 }
 
 impl<'a> Codegen<'a> for Expression<'a> {
@@ -405,6 +408,9 @@ impl<'a> Codegen<'a> for Expression<'a> {
             Self::ListComp(l) => l.codegen(state),
             Self::SetComp(s) => s.codegen(state),
             Self::DictComp(d) => d.codegen(state),
+            Self::List(l) => l.codegen(state),
+            Self::Set(s) => s.codegen(state),
+            Self::Dict(d) => d.codegen(state),
             _ => panic!("codegen not implemented for {:#?}", self),
         }
     }
@@ -1056,5 +1062,190 @@ impl<'a> Codegen<'a> for CompIf<'a> {
         state.add_token("if");
         self.whitespace_before_test.codegen(state);
         self.test.codegen(state);
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct List<'a> {
+    pub elements: Vec<Element<'a>>,
+    pub lbracket: LeftSquareBracket<'a>,
+    pub rbracket: RightSquareBracket<'a>,
+    pub lpar: Vec<LeftParen<'a>>,
+    pub rpar: Vec<RightParen<'a>>,
+}
+
+impl<'a> ParenthesizedNode<'a> for List<'a> {
+    fn lpar(&self) -> &Vec<LeftParen<'a>> {
+        &self.lpar
+    }
+    fn rpar(&self) -> &Vec<RightParen<'a>> {
+        &self.rpar
+    }
+
+    fn with_parens(self, left: LeftParen<'a>, right: RightParen<'a>) -> Self {
+        let mut lpar = self.lpar;
+        lpar.push(left);
+        let mut rpar = self.rpar;
+        rpar.push(right);
+        Self { lpar, rpar, ..self }
+    }
+}
+
+impl<'a> Codegen<'a> for List<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+        self.parenthesize(state, |state| {
+            self.lbracket.codegen(state);
+            let len = self.elements.len();
+            for (idx, el) in self.elements.iter().enumerate() {
+                el.codegen(state, idx < len - 1, true);
+            }
+            self.rbracket.codegen(state);
+        })
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct Set<'a> {
+    pub elements: Vec<Element<'a>>,
+    pub lbrace: LeftCurlyBrace<'a>,
+    pub rbrace: RightCurlyBrace<'a>,
+    pub lpar: Vec<LeftParen<'a>>,
+    pub rpar: Vec<RightParen<'a>>,
+}
+
+impl<'a> ParenthesizedNode<'a> for Set<'a> {
+    fn lpar(&self) -> &Vec<LeftParen<'a>> {
+        &self.lpar
+    }
+    fn rpar(&self) -> &Vec<RightParen<'a>> {
+        &self.rpar
+    }
+
+    fn with_parens(self, left: LeftParen<'a>, right: RightParen<'a>) -> Self {
+        let mut lpar = self.lpar;
+        lpar.push(left);
+        let mut rpar = self.rpar;
+        rpar.push(right);
+        Self { lpar, rpar, ..self }
+    }
+}
+
+impl<'a> Codegen<'a> for Set<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+        self.parenthesize(state, |state| {
+            self.lbrace.codegen(state);
+            let len = self.elements.len();
+            for (idx, el) in self.elements.iter().enumerate() {
+                el.codegen(state, idx < len - 1, true);
+            }
+            self.rbrace.codegen(state);
+        })
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct Dict<'a> {
+    pub elements: Vec<DictElement<'a>>,
+    pub lbrace: LeftCurlyBrace<'a>,
+    pub rbrace: RightCurlyBrace<'a>,
+    pub lpar: Vec<LeftParen<'a>>,
+    pub rpar: Vec<RightParen<'a>>,
+}
+
+impl<'a> ParenthesizedNode<'a> for Dict<'a> {
+    fn lpar(&self) -> &Vec<LeftParen<'a>> {
+        &self.lpar
+    }
+    fn rpar(&self) -> &Vec<RightParen<'a>> {
+        &self.rpar
+    }
+
+    fn with_parens(self, left: LeftParen<'a>, right: RightParen<'a>) -> Self {
+        let mut lpar = self.lpar;
+        lpar.push(left);
+        let mut rpar = self.rpar;
+        rpar.push(right);
+        Self { lpar, rpar, ..self }
+    }
+}
+
+impl<'a> Codegen<'a> for Dict<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+        self.parenthesize(state, |state| {
+            self.lbrace.codegen(state);
+            let len = self.elements.len();
+            for (idx, el) in self.elements.iter().enumerate() {
+                el.codegen(state, idx < len - 1, true);
+            }
+            self.rbrace.codegen(state);
+        })
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub enum DictElement<'a> {
+    Simple {
+        key: Expression<'a>,
+        value: Expression<'a>,
+        comma: Option<Comma<'a>>,
+        whitespace_before_colon: ParenthesizableWhitespace<'a>,
+        whitespace_after_colon: ParenthesizableWhitespace<'a>,
+    },
+    Starred(StarredElement<'a>), // TODO: dict's starred element can't own lpar/rpar
+}
+
+impl<'a> DictElement<'a> {
+    fn codegen(
+        &'a self,
+        state: &mut CodegenState<'a>,
+        default_comma: bool,
+        default_comma_whitespace: bool,
+    ) {
+        match self {
+            Self::Simple {
+                key,
+                value,
+                comma,
+                whitespace_before_colon,
+                whitespace_after_colon,
+            } => {
+                key.codegen(state);
+                whitespace_before_colon.codegen(state);
+                state.add_token(":");
+                whitespace_after_colon.codegen(state);
+                value.codegen(state);
+                if let Some(comma) = comma {
+                    comma.codegen(state)
+                }
+            }
+            Self::Starred(s) => s.codegen(state),
+        }
+        let maybe_comma = match self {
+            Self::Simple { comma, .. } => comma,
+            Self::Starred(s) => &s.comma,
+        };
+        if maybe_comma.is_none() && default_comma {
+            state.add_token(if default_comma_whitespace { ", " } else { "," });
+        }
+    }
+
+    pub fn with_comma(self, comma: Comma<'a>) -> Self {
+        let comma = Some(comma);
+        match self {
+            Self::Starred(s) => Self::Starred(StarredElement { comma, ..s }),
+            Self::Simple {
+                key,
+                value,
+                whitespace_before_colon,
+                whitespace_after_colon,
+                ..
+            } => Self::Simple {
+                comma,
+                key,
+                value,
+                whitespace_after_colon,
+                whitespace_before_colon,
+            },
+        }
     }
 }
