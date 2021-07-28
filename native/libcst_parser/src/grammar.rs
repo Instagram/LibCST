@@ -1684,11 +1684,6 @@ fn make_arg(expr: Expression) -> Arg {
     }
 }
 
-fn make_async<'a>(config: &Config<'a>, mut tok: Token<'a>) -> Result<'a, Asynchronous<'a>> {
-    let whitespace_after = parse_parenthesizable_whitespace(config, &mut tok.whitespace_after)?;
-    Ok(Asynchronous { whitespace_after })
-}
-
 fn make_comp_if<'a>(
     config: &Config<'a>,
     mut kw: Token<'a>,
@@ -1698,9 +1693,9 @@ fn make_comp_if<'a>(
     let whitespace_before_test =
         parse_parenthesizable_whitespace(config, &mut kw.whitespace_after)?;
     Ok(CompIf {
+        test,
         whitespace_before,
         whitespace_before_test,
-        test,
     })
 }
 
@@ -1772,15 +1767,6 @@ fn merge_comp_fors(comp_fors: Vec<CompFor>) -> CompFor {
         inner_for_in: Some(Box::new(acc)),
         ..curr
     })
-}
-
-fn expr_to_assign_target(tgt: Expression) -> AssignTargetExpression {
-    match tgt {
-        Expression::Attribute(a) => AssignTargetExpression::Attribute(a),
-        Expression::Name(n) => AssignTargetExpression::Name(n),
-        Expression::Tuple(t) => AssignTargetExpression::Tuple(t),
-        _ => panic!("Expression {:#?} is not a valid AssignTarget", tgt),
-    }
 }
 
 #[cfg(test)]
