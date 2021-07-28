@@ -274,7 +274,7 @@ parser! {
             / lpar:lit("(") a:target_with_star_atom() rpar:lit(")") { a } // TODO parens
             // TODO: tuple, List
 
-        #[cache]
+        #[cache_left_rec]
         rule t_primary() -> Expression<'a>
             = value:t_primary() dot:lit(".") attr:name() &t_lookahead() {?
                 make_attribute(&config, value, dot, attr)
@@ -380,7 +380,7 @@ parser! {
             // TODO: await expressions
             = primary()
 
-        #[cache]
+        #[cache_left_rec]
         rule primary() -> Expression<'a>
             = v:primary() dot:lit(".") attr:name() {?
                 make_attribute(&config, v, dot, attr)

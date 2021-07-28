@@ -12,9 +12,9 @@ pub use statement::{
 
 mod expression;
 pub use expression::{
-    Arg, Attribute, Call, ComparisonTarget, Element, Expression, LeftParen, Name, NameOrAttribute,
-    Param, ParamSlash, ParamStar, Parameters, ParenthesizedNode, RightParen, StarArg,
-    StarredElement, Tuple,
+    Arg, Asynchronous, Attribute, Call, CompFor, CompIf, ComparisonTarget, DictComp, Element,
+    Expression, GeneratorExp, LeftParen, ListComp, Name, NameOrAttribute, Param, ParamSlash,
+    ParamStar, Parameters, ParenthesizedNode, RightParen, SetComp, StarArg, StarredElement, Tuple,
 };
 
 mod op;

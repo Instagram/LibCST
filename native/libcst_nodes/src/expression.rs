@@ -3,9 +3,9 @@
 // This source code is licensed under the MIT license found in the
 // LICENSE file in the root directory of this source tree.
 
-use super::{
-    whitespace::ParenthesizableWhitespace, AssignEqual, BinaryOp, BooleanOp, Codegen, CodegenState,
-    Comma, CompOp, Dot, UnaryOp,
+use crate::{
+    whitespace::ParenthesizableWhitespace, AssignEqual, AssignTargetExpression, BinaryOp,
+    BooleanOp, Codegen, CodegenState, Comma, CompOp, Dot, SimpleWhitespace, UnaryOp,
 };
 #[derive(Debug, Eq, PartialEq, Default, Clone)]
 pub struct Parameters<'a> {
@@ -782,5 +782,271 @@ impl<'a> Codegen<'a> for Tuple<'a> {
                 }
             }
         });
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct GeneratorExp<'a> {
+    pub elt: AssignTargetExpression<'a>,
+    pub for_in: CompFor<'a>,
+    pub lpar: Vec<LeftParen<'a>>,
+    pub rpar: Vec<RightParen<'a>>,
+}
+
+impl<'a> ParenthesizedNode<'a> for GeneratorExp<'a> {
+    fn lpar(&self) -> &Vec<LeftParen<'a>> {
+        &self.lpar
+    }
+    fn rpar(&self) -> &Vec<RightParen<'a>> {
+        &self.rpar
+    }
+
+    fn with_parens(self, left: LeftParen<'a>, right: RightParen<'a>) -> Self {
+        let mut lpar = self.lpar;
+        lpar.push(left);
+        let mut rpar = self.rpar;
+        rpar.push(right);
+        Self { lpar, rpar, ..self }
+    }
+}
+
+impl<'a> Codegen<'a> for GeneratorExp<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+        self.parenthesize(state, |state| {
+            self.elt.codegen(state);
+            self.for_in.codegen(state);
+        })
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct ListComp<'a> {
+    pub elt: AssignTargetExpression<'a>,
+    pub for_in: CompFor<'a>,
+    pub lbracket: LeftSquareBracket<'a>,
+    pub rbracket: RightSquareBracket<'a>,
+    pub lpar: Vec<LeftParen<'a>>,
+    pub rpar: Vec<RightParen<'a>>,
+}
+
+impl<'a> ParenthesizedNode<'a> for ListComp<'a> {
+    fn lpar(&self) -> &Vec<LeftParen<'a>> {
+        &self.lpar
+    }
+    fn rpar(&self) -> &Vec<RightParen<'a>> {
+        &self.rpar
+    }
+
+    fn with_parens(self, left: LeftParen<'a>, right: RightParen<'a>) -> Self {
+        let mut lpar = self.lpar;
+        lpar.push(left);
+        let mut rpar = self.rpar;
+        rpar.push(right);
+        Self { lpar, rpar, ..self }
+    }
+}
+
+impl<'a> Codegen<'a> for ListComp<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+        self.parenthesize(state, |state| {
+            self.lbracket.codegen(state);
+            self.elt.codegen(state);
+            self.for_in.codegen(state);
+            self.rbracket.codegen(state);
+        })
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct LeftSquareBracket<'a> {
+    pub whitespace_after: ParenthesizableWhitespace<'a>,
+}
+
+impl<'a> Codegen<'a> for LeftSquareBracket<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+        state.add_token("[");
+        self.whitespace_after.codegen(state);
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct RightSquareBracket<'a> {
+    pub whitespace_before: ParenthesizableWhitespace<'a>,
+}
+
+impl<'a> Codegen<'a> for RightSquareBracket<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+        self.whitespace_before.codegen(state);
+        state.add_token("]");
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct SetComp<'a> {
+    pub elt: AssignTargetExpression<'a>,
+    pub for_in: CompFor<'a>,
+    pub lbrace: LeftCurlyBrace<'a>,
+    pub rbrace: RightCurlyBrace<'a>,
+    pub lpar: Vec<LeftParen<'a>>,
+    pub rpar: Vec<RightParen<'a>>,
+}
+
+impl<'a> ParenthesizedNode<'a> for SetComp<'a> {
+    fn lpar(&self) -> &Vec<LeftParen<'a>> {
+        &self.lpar
+    }
+    fn rpar(&self) -> &Vec<RightParen<'a>> {
+        &self.rpar
+    }
+
+    fn with_parens(self, left: LeftParen<'a>, right: RightParen<'a>) -> Self {
+        let mut lpar = self.lpar;
+        lpar.push(left);
+        let mut rpar = self.rpar;
+        rpar.push(right);
+        Self { lpar, rpar, ..self }
+    }
+}
+
+impl<'a> Codegen<'a> for SetComp<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+        self.parenthesize(state, |state| {
+            self.lbrace.codegen(state);
+            self.elt.codegen(state);
+            self.for_in.codegen(state);
+            self.rbrace.codegen(state);
+        })
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct DictComp<'a> {
+    pub key: AssignTargetExpression<'a>,
+    pub value: AssignTargetExpression<'a>,
+    pub for_in: CompFor<'a>,
+    pub lbrace: LeftCurlyBrace<'a>,
+    pub rbrace: RightCurlyBrace<'a>,
+    pub lpar: Vec<LeftParen<'a>>,
+    pub rpar: Vec<RightParen<'a>>,
+    pub whitespace_before_colon: ParenthesizableWhitespace<'a>,
+    pub whitespace_after_colon: ParenthesizableWhitespace<'a>,
+}
+
+impl<'a> Codegen<'a> for DictComp<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+        self.parenthesize(state, |state| {
+            self.lbrace.codegen(state);
+            self.key.codegen(state);
+            self.whitespace_before_colon.codegen(state);
+            state.add_token(":");
+            self.whitespace_after_colon.codegen(state);
+            self.value.codegen(state);
+            self.for_in.codegen(state);
+            self.rbrace.codegen(state);
+        })
+    }
+}
+
+impl<'a> ParenthesizedNode<'a> for DictComp<'a> {
+    fn lpar(&self) -> &Vec<LeftParen<'a>> {
+        &self.lpar
+    }
+    fn rpar(&self) -> &Vec<RightParen<'a>> {
+        &self.rpar
+    }
+
+    fn with_parens(self, left: LeftParen<'a>, right: RightParen<'a>) -> Self {
+        let mut lpar = self.lpar;
+        lpar.push(left);
+        let mut rpar = self.rpar;
+        rpar.push(right);
+        Self { lpar, rpar, ..self }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct LeftCurlyBrace<'a> {
+    pub whitespace_after: ParenthesizableWhitespace<'a>,
+}
+
+impl<'a> Codegen<'a> for LeftCurlyBrace<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+        state.add_token("{");
+        self.whitespace_after.codegen(state);
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct RightCurlyBrace<'a> {
+    pub whitespace_before: ParenthesizableWhitespace<'a>,
+}
+
+impl<'a> Codegen<'a> for RightCurlyBrace<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+        self.whitespace_before.codegen(state);
+        state.add_token("}");
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct CompFor<'a> {
+    pub target: AssignTargetExpression<'a>,
+    pub iter: Expression<'a>,
+    pub ifs: Vec<CompIf<'a>>,
+    pub inner_for_in: Option<Box<CompFor<'a>>>,
+    pub asynchronous: Option<Asynchronous<'a>>,
+    pub whitespace_before: ParenthesizableWhitespace<'a>,
+    pub whitespace_after_for: ParenthesizableWhitespace<'a>,
+    pub whitespace_before_in: ParenthesizableWhitespace<'a>,
+    pub whitespace_after_in: ParenthesizableWhitespace<'a>,
+}
+
+impl<'a> Codegen<'a> for CompFor<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+        self.whitespace_before.codegen(state);
+        if let Some(asynchronous) = &self.asynchronous {
+            asynchronous.codegen(state);
+        }
+        state.add_token("for");
+        self.whitespace_after_for.codegen(state);
+        self.target.codegen(state);
+        self.whitespace_before_in.codegen(state);
+        state.add_token("in");
+        self.whitespace_after_in.codegen(state);
+        self.iter.codegen(state);
+        for if_ in &self.ifs {
+            if_.codegen(state);
+        }
+        if let Some(inner) = &self.inner_for_in {
+            inner.codegen(state);
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct Asynchronous<'a> {
+    pub whitespace_after: SimpleWhitespace<'a>,
+}
+
+impl<'a> Codegen<'a> for Asynchronous<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+        state.add_token("async");
+        self.whitespace_after.codegen(state);
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct CompIf<'a> {
+    pub test: Expression<'a>,
+    pub whitespace_before: ParenthesizableWhitespace<'a>,
+    pub whitespace_before_test: ParenthesizableWhitespace<'a>,
+}
+
+impl<'a> Codegen<'a> for CompIf<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+        self.whitespace_before.codegen(state);
+        state.add_token("if");
+        self.whitespace_before_test.codegen(state);
+        self.test.codegen(state);
     }
 }

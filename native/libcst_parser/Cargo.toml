@@ -11,7 +11,7 @@ trace = ["peg/trace"]
 [dependencies]
 itertools = "0.10.0"
 once_cell = "1.5.2"
-peg = "0.7.0"
+peg = { git = "https://github.com/kevinmehall/rust-peg" }
 regex = "1.4.3"
 libcst_nodes = { path = "../libcst_nodes" }
 libcst_tokenize = { path = "../libcst_tokenize" }
