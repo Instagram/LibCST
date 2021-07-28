@@ -349,7 +349,8 @@ pub enum Expression<'a> {
     GeneratorExp(GeneratorExp<'a>),
     ListComp(ListComp<'a>),
     SetComp(SetComp<'a>),
-    // TODO: FormattedString, ConcatenatedString, Subscript, Lambda, Await, IfExp, Yield, List, Set, Dict, comprehensions
+    DictComp(DictComp<'a>),
+    // TODO: FormattedString, ConcatenatedString, Subscript, Lambda, Await, IfExp, Yield, List, Set, Dict
 }
 
 impl<'a> Codegen<'a> for Expression<'a> {
@@ -403,6 +404,7 @@ impl<'a> Codegen<'a> for Expression<'a> {
             Self::GeneratorExp(g) => g.codegen(state),
             Self::ListComp(l) => l.codegen(state),
             Self::SetComp(s) => s.codegen(state),
+            Self::DictComp(d) => d.codegen(state),
             _ => panic!("codegen not implemented for {:#?}", self),
         }
     }
@@ -927,9 +929,9 @@ impl<'a> Codegen<'a> for SetComp<'a> {
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct DictComp<'a> {
-    pub key: AssignTargetExpression<'a>,
-    pub value: AssignTargetExpression<'a>,
-    pub for_in: CompFor<'a>,
+    pub key: Box<Expression<'a>>,
+    pub value: Box<Expression<'a>>,
+    pub for_in: Box<CompFor<'a>>,
     pub lbrace: LeftCurlyBrace<'a>,
     pub rbrace: RightCurlyBrace<'a>,
     pub lpar: Vec<LeftParen<'a>>,

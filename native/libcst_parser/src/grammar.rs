@@ -420,6 +420,16 @@ parser! {
                     .map_err(|_| "setcomp")
             }
 
+        rule dictcomp() -> Expression<'a>
+            = lbrace:lit("{") elt:kvpair() comp:for_if_clauses() rbrace:lit("}") {?
+                make_dict_comp(&config, lbrace, elt, comp, rbrace)
+                    .map(Expression::DictComp)
+                    .map_err(|_| "dictcomp")
+            }
+
+        rule kvpair() -> (Expression<'a>, Token<'a>, Expression<'a>)
+            = k:expression() colon:lit(":") v:expression() { (k, colon, v) }
+
         rule genexp() -> GeneratorExp<'a>
             = lpar:lit("(") elt:named_expression() comp:for_if_clauses() rpar:lit(")") {?
                 make_genexp(&config, lpar, elt, comp, rpar).map_err(|_| "genexp")
@@ -490,7 +500,7 @@ parser! {
             / n:tok(Number, "NUMBER") {? make_number(&config, n).map_err(|e| "expected number")}
             / &"(" e:(tuple() / group() / (g:genexp() {Expression::GeneratorExp(g)})) {e}
             / &"[" e:listcomp() {e}
-            / &"{" e:setcomp() {e}
+            / &"{" e:(dictcomp() / setcomp()) {e}
             / lit("...") { Expression::Ellipsis {lpar: vec![], rpar: vec![]}}
 
         rule strings() -> Expression<'a>
@@ -1850,6 +1860,45 @@ fn make_set_comp<'a>(
         rbrace,
         lpar: Default::default(),
         rpar: Default::default(),
+    })
+}
+
+fn make_dict_comp<'a>(
+    config: &Config<'a>,
+    mut lbrace: Token<'a>,
+    kvpair: (Expression<'a>, Token<'a>, Expression<'a>),
+    for_in: CompFor<'a>,
+    mut rbrace: Token<'a>,
+) -> Result<'a, DictComp<'a>> {
+    let lbrace =
+        parse_parenthesizable_whitespace(config, &mut lbrace.whitespace_after).map(|ws| {
+            LeftCurlyBrace {
+                whitespace_after: ws,
+            }
+        })?;
+    let rbrace =
+        parse_parenthesizable_whitespace(config, &mut rbrace.whitespace_before).map(|ws| {
+            RightCurlyBrace {
+                whitespace_before: ws,
+            }
+        })?;
+
+    let (key, mut colon, value) = kvpair;
+    let whitespace_before_colon =
+        parse_parenthesizable_whitespace(config, &mut colon.whitespace_before)?;
+    let whitespace_after_colon =
+        parse_parenthesizable_whitespace(config, &mut colon.whitespace_after)?;
+
+    Ok(DictComp {
+        key: Box::new(key),
+        value: Box::new(value),
+        for_in: Box::new(for_in),
+        lbrace,
+        rbrace,
+        lpar: vec![],
+        rpar: vec![],
+        whitespace_before_colon,
+        whitespace_after_colon,
     })
 }
 
