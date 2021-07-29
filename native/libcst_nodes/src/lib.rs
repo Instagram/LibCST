@@ -12,16 +12,17 @@ pub use statement::{
 
 mod expression;
 pub use expression::{
-    Arg, Asynchronous, Attribute, Call, CompFor, CompIf, ComparisonTarget, Dict, DictComp,
-    DictElement, DoubleStarredElement, Element, Expression, GeneratorExp, LeftCurlyBrace,
-    LeftParen, LeftSquareBracket, List, ListComp, Name, NameOrAttribute, Param, ParamSlash,
-    ParamStar, Parameters, ParenthesizedNode, RightCurlyBrace, RightParen, RightSquareBracket, Set,
-    SetComp, StarArg, StarredElement, Tuple,
+    Arg, Asynchronous, Attribute, BaseSlice, Call, CompFor, CompIf, ComparisonTarget, Dict,
+    DictComp, DictElement, DoubleStarredElement, Element, Expression, GeneratorExp, Index,
+    LeftCurlyBrace, LeftParen, LeftSquareBracket, List, ListComp, Name, NameOrAttribute, Param,
+    ParamSlash, ParamStar, Parameters, ParenthesizedNode, RightCurlyBrace, RightParen,
+    RightSquareBracket, Set, SetComp, Slice, StarArg, StarredElement, Subscript, SubscriptElement,
+    Tuple,
 };
 
 mod op;
 pub use op::{
-    AssignEqual, BinaryOp, BooleanOp, Comma, CompOp, Dot, ImportStar, Semicolon, UnaryOp,
+    AssignEqual, BinaryOp, BooleanOp, Colon, Comma, CompOp, Dot, ImportStar, Semicolon, UnaryOp,
 };
 
 mod module;

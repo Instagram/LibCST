@@ -288,7 +288,11 @@ parser! {
                     .map(Expression::Attribute)
                     .map_err(|e| "t_primary")
             }
-            // TODO: slice
+            / v:t_primary() lpar:lit("[") s:slices() rpar:lit("]") !t_lookahead() {?
+                make_subscript(&config, v, lpar, s, rpar)
+                    .map(Expression::Subscript)
+                    .map_err(|_| "list")
+            }
             / f:t_primary() lpar:&lit("(") gen:genexp() &t_lookahead() {
                 Expression::Call(make_genexp_call(&config, f, lpar, gen))
             }
@@ -410,8 +414,12 @@ parser! {
                     .map(Expression::Call)
                     .map_err(|_| "call")
             }
+            / v:primary() lbrak:lit("[") s:slices() rbrak:lit("]") {?
+                make_subscript(&config, v, lbrak, s, rbrak)
+                    .map(Expression::Subscript)
+                    .map_err(|_| "subscript")
+            }
             / atom()
-            // TODO: subscript
 
         rule list() -> Expression<'a>
             = lbrak:lit("[") e:star_named_expressions()? rbrak:lit("]") {?
@@ -419,6 +427,20 @@ parser! {
                     .map(Expression::List)
                     .map_err(|_| "list")
             }
+
+        rule slices() -> Vec<SubscriptElement<'a>>
+            = s:slice() !"," { vec![SubscriptElement { slice: s, comma: None }] }
+            / first:slice() rest:(c:comma() s:slice() {(c, s)})* trail:comma()? {
+                make_slices(first, rest, trail)
+            }
+
+        rule slice() -> BaseSlice<'a>
+            = l:expression()? col:lit(":") u:expression()?
+                rest:(c:lit(":") s:expression()? {(c, s)})? {?
+                    make_slice(&config, l, col, u, rest)
+                        .map_err(|_| "slice")
+            }
+            / v:expression() { make_index(v) }
 
         rule listcomp() -> Expression<'a>
             = lbrak:lit("[") elt:named_expression() comp:for_if_clauses() rbrak:lit("]") {?
@@ -1537,6 +1559,14 @@ fn assign_target_to_element(expr: AssignTargetExpression) -> Element {
             comma: Default::default(),
         },
         AssignTargetExpression::StarredElement(s) => Element::Starred(s),
+        AssignTargetExpression::List(l) => Element::Simple {
+            value: Expression::List(l),
+            comma: Default::default(),
+        },
+        AssignTargetExpression::Subscript(s) => Element::Simple {
+            value: Expression::Subscript(s),
+            comma: Default::default(),
+        },
     }
 }
 
@@ -2079,6 +2109,129 @@ fn make_double_starred_element<'a>(
         value,
         comma: Default::default(),
         whitespace_before_value,
+    })
+}
+
+fn make_index(value: Expression) -> BaseSlice {
+    BaseSlice::Index(Index { value })
+}
+
+fn make_colon<'a>(config: &Config<'a>, mut tok: Token<'a>) -> Result<'a, Colon<'a>> {
+    let whitespace_before = parse_parenthesizable_whitespace(config, &mut tok.whitespace_before)?;
+    let whitespace_after = parse_parenthesizable_whitespace(config, &mut tok.whitespace_after)?;
+    Ok(Colon {
+        whitespace_before,
+        whitespace_after,
+    })
+}
+
+fn make_slice<'a>(
+    config: &Config<'a>,
+    lower: Option<Expression<'a>>,
+    first_colon: Token<'a>,
+    upper: Option<Expression<'a>>,
+    rest: Option<(Token<'a>, Option<Expression<'a>>)>,
+) -> Result<'a, BaseSlice<'a>> {
+    let first_colon = make_colon(config, first_colon)?;
+    let (second_colon, step) = if let Some((tok, step)) = rest {
+        (Some(make_colon(config, tok)?), step)
+    } else {
+        (None, None)
+    };
+    Ok(BaseSlice::Slice(Slice {
+        lower,
+        upper,
+        step,
+        first_colon,
+        second_colon,
+    }))
+}
+
+// HACK: in slices if there is a colon directly before or after the comma, the colon
+// owns the whitespace. Not sure if this is by design or accident.
+fn ltrim_comma(before: &BaseSlice, comma: &mut Comma) {
+    if let BaseSlice::Slice(s) = &before {
+        let trailing_second_colon = s.step.is_none() && s.second_colon.is_some();
+        let trailing_first_colon = s.upper.is_none() && s.step.is_none();
+        if trailing_first_colon || trailing_second_colon {
+            comma.whitespace_before =
+                ParenthesizableWhitespace::SimpleWhitespace(SimpleWhitespace(""));
+        }
+    }
+}
+
+fn rtrim_comma(comma: &mut Comma, after: &BaseSlice) {
+    if let BaseSlice::Slice(s) = &after {
+        let leading_first_colon = s.lower.is_none();
+        if leading_first_colon {
+            comma.whitespace_after =
+                ParenthesizableWhitespace::SimpleWhitespace(SimpleWhitespace(""));
+        }
+    }
+}
+
+fn make_slices<'a>(
+    first: BaseSlice<'a>,
+    rest: Vec<(Comma<'a>, BaseSlice<'a>)>,
+    mut trailing_comma: Option<Comma<'a>>,
+) -> Vec<SubscriptElement<'a>> {
+    let mut elements = vec![];
+    let mut current = first;
+    for (mut comma, next) in rest {
+        ltrim_comma(&current, &mut comma);
+        rtrim_comma(&mut comma, &next);
+        elements.push(SubscriptElement {
+            slice: current,
+            comma: Some(comma),
+        });
+        current = next;
+    }
+    if let Some(comma) = trailing_comma.as_mut() {
+        ltrim_comma(&current, comma);
+    }
+    elements.push(SubscriptElement {
+        slice: current,
+        comma: trailing_comma,
+    });
+    elements
+}
+
+fn make_subscript<'a>(
+    config: &Config<'a>,
+    value: Expression<'a>,
+    mut lbrak: Token<'a>,
+    slice: Vec<SubscriptElement<'a>>,
+    mut rbrak: Token<'a>,
+) -> Result<'a, Subscript<'a>> {
+    let lbracket =
+        parse_parenthesizable_whitespace(config, &mut lbrak.whitespace_after).map(|ws| {
+            LeftSquareBracket {
+                whitespace_after: ws,
+            }
+        })?;
+
+    // if there is a trailing comma, it owns the whitespace before right bracket
+    let rbracket = if let Some(SubscriptElement { comma: Some(_), .. }) = slice.last() {
+        Ok(ParenthesizableWhitespace::SimpleWhitespace(
+            SimpleWhitespace(""),
+        ))
+    } else {
+        parse_parenthesizable_whitespace(config, &mut rbrak.whitespace_before)
+    }
+    .map(|ws| RightSquareBracket {
+        whitespace_before: ws,
+    })?;
+
+    let whitespace_after_value =
+        parse_parenthesizable_whitespace(config, &mut lbrak.whitespace_before)?;
+    Ok(Subscript {
+        value: Box::new(value),
+        slice,
+        lbracket,
+        rbracket,
+        lpar: Default::default(),
+        rpar: Default::default(),
+        whitespace_after_value,
     })
 }
 

@@ -5,7 +5,7 @@
 
 use crate::{
     whitespace::ParenthesizableWhitespace, AssignEqual, AssignTargetExpression, BinaryOp,
-    BooleanOp, Codegen, CodegenState, Comma, CompOp, Dot, UnaryOp,
+    BooleanOp, Codegen, CodegenState, Colon, Comma, CompOp, Dot, UnaryOp,
 };
 #[derive(Debug, Eq, PartialEq, Default, Clone)]
 pub struct Parameters<'a> {
@@ -353,7 +353,8 @@ pub enum Expression<'a> {
     List(List<'a>),
     Set(Set<'a>),
     Dict(Dict<'a>),
-    // TODO: FormattedString, ConcatenatedString, Subscript, Lambda, Await, IfExp, Yield
+    Subscript(Subscript<'a>),
+    // TODO: FormattedString, ConcatenatedString, Lambda, Await, IfExp, Yield
 }
 
 impl<'a> Codegen<'a> for Expression<'a> {
@@ -411,6 +412,7 @@ impl<'a> Codegen<'a> for Expression<'a> {
             Self::List(l) => l.codegen(state),
             Self::Set(s) => s.codegen(state),
             Self::Dict(d) => d.codegen(state),
+            Self::Subscript(s) => s.codegen(state),
             _ => panic!("codegen not implemented for {:#?}", self),
         }
     }
@@ -531,6 +533,7 @@ impl<'a> ParenthesizedNode<'a> for Expression<'a> {
             }
             Self::Name(n) => Self::Name(n.with_parens(leftpar, rightpar)),
             Self::Attribute(a) => Self::Attribute(a.with_parens(leftpar, rightpar)),
+            Self::Subscript(s) => Self::Subscript(s.with_parens(leftpar, rightpar)),
             _ => panic!("with_parens not implemented for {:#?}", self),
         }
     }
@@ -1265,5 +1268,122 @@ impl<'a> Codegen<'a> for DoubleStarredElement<'a> {
         if let Some(comma) = &self.comma {
             comma.codegen(state);
         }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub enum BaseSlice<'a> {
+    Index(Index<'a>),
+    Slice(Slice<'a>),
+}
+
+impl<'a> Codegen<'a> for BaseSlice<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+        match self {
+            Self::Index(i) => i.codegen(state),
+            Self::Slice(s) => s.codegen(state),
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct Index<'a> {
+    pub value: Expression<'a>,
+}
+
+impl<'a> Codegen<'a> for Index<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+        self.value.codegen(state);
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct Slice<'a> {
+    pub lower: Option<Expression<'a>>,
+    pub upper: Option<Expression<'a>>,
+    pub step: Option<Expression<'a>>,
+    pub first_colon: Colon<'a>,
+    pub second_colon: Option<Colon<'a>>,
+}
+
+impl<'a> Codegen<'a> for Slice<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+        if let Some(lower) = &self.lower {
+            lower.codegen(state);
+        }
+        self.first_colon.codegen(state);
+        if let Some(upper) = &self.upper {
+            upper.codegen(state);
+        }
+        if let Some(second_colon) = &self.second_colon {
+            second_colon.codegen(state);
+        } else if self.step.is_some() {
+            state.add_token(";");
+        }
+        if let Some(step) = &self.step {
+            step.codegen(state);
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct SubscriptElement<'a> {
+    pub slice: BaseSlice<'a>,
+    pub comma: Option<Comma<'a>>,
+}
+
+impl<'a> Codegen<'a> for SubscriptElement<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+        self.slice.codegen(state);
+        if let Some(comma) = &self.comma {
+            comma.codegen(state);
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct Subscript<'a> {
+    pub value: Box<Expression<'a>>,
+    pub slice: Vec<SubscriptElement<'a>>,
+    pub lbracket: LeftSquareBracket<'a>,
+    pub rbracket: RightSquareBracket<'a>,
+    pub lpar: Vec<LeftParen<'a>>,
+    pub rpar: Vec<RightParen<'a>>,
+    pub whitespace_after_value: ParenthesizableWhitespace<'a>,
+}
+
+impl<'a> ParenthesizedNode<'a> for Subscript<'a> {
+    fn lpar(&self) -> &Vec<LeftParen<'a>> {
+        &self.lpar
+    }
+
+    fn rpar(&self) -> &Vec<RightParen<'a>> {
+        &self.rpar
+    }
+
+    fn with_parens(self, left: LeftParen<'a>, right: RightParen<'a>) -> Self {
+        let mut lpar = self.lpar;
+        lpar.push(left);
+        let mut rpar = self.rpar;
+        rpar.push(right);
+        Self { lpar, rpar, ..self }
+    }
+}
+
+impl<'a> Codegen<'a> for Subscript<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+        self.parenthesize(state, |state| {
+            self.value.codegen(state);
+            self.whitespace_after_value.codegen(state);
+            self.lbracket.codegen(state);
+            let len = self.slice.len();
+            for (i, slice) in self.slice.iter().enumerate() {
+                slice.codegen(state);
+                if slice.comma.is_none() && i + 1 < len {
+                    state.add_token(", ")
+                }
+            }
+            self.rbracket.codegen(state);
+        })
     }
 }

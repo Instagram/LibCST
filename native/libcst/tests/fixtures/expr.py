@@ -112,8 +112,8 @@ call(
     kwarg="hey",
     **kwargs,
 )  # note: no trailing comma pre-3.6
-# call(*gidgets[:2])
-# call(a, *gidgets[:2])
+call(*gidgets[:2])
+call(a, *gidgets[:2])
 call(**screen_kwargs)
 call(b, **screen_kwargs)
 call()()()()()()
@@ -124,16 +124,16 @@ call.me(maybe)
 1 .real
 1.0 .real
 ....__class__
-# list[str]
-# dict[str, int]
-# tuple[str, ...]
-# tuple[str, int, float, dict[str, int]]
-# tuple[
-#     str,
-#     int,
-#     float,
-#     dict[str, int],
-# ]
+list[str]
+dict[str, int]
+tuple[str, ...]
+tuple[str, int, float, dict[str, int]]
+tuple[
+    str,
+    int,
+    float,
+    dict[str, int],
+]
 # very_long_variable_name_filters: t.List[
 #     t.Tuple[str, t.Union[str, t.List[t.Optional[str]]]],
 # ]
@@ -146,32 +146,32 @@ call.me(maybe)
 # xxxx_xxx_xxxx_xxxxx_xxxx_xxx: Callable[..., List[SomeClass]] = classmethod(
 #     sync(async_xxxx_xxx_xxxx_xxxxx_xxxx_xxx.__func__)
 # )  # type: ignore
-# slice[0]
-# slice[0:1]
-# slice[0:1:2]
-# slice[:]
-# slice[:-1]
-# slice[1:]
-# slice[::-1]
-# slice[d :: d + 1]
-# slice[:c, c - 1]
-# numpy[:, 0:1]
-# numpy[:, :-1]
-# numpy[0, :]
-# numpy[:, i]
-# numpy[0, :2]
-# numpy[:N, 0]
-# numpy[:2, :4]
-# numpy[2:4, 1:5]
-# numpy[4:, 2:]
-# numpy[:, (0, 1, 2, 5)]
-# numpy[0, [0]]
-# numpy[:, [i]]
-# numpy[1 : c + 1, c]
-# numpy[-(c + 1) :, d]
-# numpy[:, l[-2]]
-# numpy[:, ::-1]
-# numpy[np.newaxis, :]
+slice[0]
+slice[0:1]
+slice[0:1:2]
+slice[:]
+slice[:-1]
+slice[1:]
+slice[::-1]
+slice[d :: d + 1]
+slice[:c, c - 1]
+numpy[:, 0:1]
+numpy[:, :-1]
+numpy[0, :]
+numpy[:, i]
+numpy[0, :2]
+numpy[:N, 0]
+numpy[:2, :4]
+numpy[2:4, 1:5]
+numpy[4:, 2:]
+numpy[:, (0, 1, 2, 5)]
+numpy[0, [0]]
+numpy[:, [i]]
+numpy[1 : c + 1, c]
+numpy[-(c + 1) :, d]
+numpy[:, l[-2]]
+numpy[:, ::-1]
+numpy[np.newaxis, :]
 # (str or None) if (sys.version_info[0] > (3,)) else (str or bytes or None)
 {"2.7": dead, "3.7": long_live or die_hard}
 # {"2.7", "3.6", "3.7", "3.8", "3.9", "4.0" if gilectomy else "3.10"}

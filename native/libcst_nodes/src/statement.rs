@@ -5,8 +5,8 @@
 
 use super::{
     Attribute, Codegen, CodegenState, Comma, Dot, EmptyLine, Expression, ImportStar, LeftParen,
-    Name, NameOrAttribute, Parameters, ParenthesizableWhitespace, RightParen, Semicolon,
-    SimpleWhitespace, StarredElement, TrailingWhitespace, Tuple,
+    List, Name, NameOrAttribute, Parameters, ParenthesizableWhitespace, RightParen, Semicolon,
+    SimpleWhitespace, StarredElement, Subscript, TrailingWhitespace, Tuple,
 };
 
 #[allow(clippy::large_enum_variant)]
@@ -269,7 +269,8 @@ pub enum AssignTargetExpression<'a> {
     Attribute(Attribute<'a>),
     StarredElement(StarredElement<'a>),
     Tuple(Tuple<'a>),
-    // TODO: Subscript, List,
+    List(List<'a>),
+    Subscript(Subscript<'a>),
 }
 
 impl<'a> Codegen<'a> for AssignTargetExpression<'a> {
@@ -279,6 +280,8 @@ impl<'a> Codegen<'a> for AssignTargetExpression<'a> {
             Self::Attribute(a) => a.codegen(state),
             Self::StarredElement(e) => e.codegen(state),
             Self::Tuple(t) => t.codegen(state),
+            Self::List(l) => l.codegen(state),
+            Self::Subscript(s) => s.codegen(state),
         }
     }
 }

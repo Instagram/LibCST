@@ -358,3 +358,17 @@ impl<'a> Codegen<'a> for CompOp<'a> {
         aft.codegen(state);
     }
 }
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct Colon<'a> {
+    pub whitespace_before: ParenthesizableWhitespace<'a>,
+    pub whitespace_after: ParenthesizableWhitespace<'a>,
+}
+
+impl<'a> Codegen<'a> for Colon<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+        self.whitespace_before.codegen(state);
+        state.add_token(":");
+        self.whitespace_after.codegen(state);
+    }
+}
