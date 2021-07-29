@@ -159,13 +159,13 @@ parser! {
 
         rule star_expressions() -> Expression<'a>
             = first:star_expression()
-                rest:(comma:lit(",") e:star_expression() { (comma, expr_to_element(e)) })+
-                comma:lit(",")? {?
+                rest:(comma:comma() e:star_expression() { (comma, expr_to_element(e)) })+
+                comma:comma()? {?
                     make_tuple(&config, expr_to_element(first), rest, comma, None, None)
                         .map(Expression::Tuple)
                         .map_err(|e| "star_expressions")
             }
-            / e:star_expression() comma:lit(",") {?
+            / e:star_expression() comma:comma() {?
                 make_tuple(&config, expr_to_element(e), vec![], Some(comma), None, None)
                     .map(Expression::Tuple)
                     .map_err(|e| "star_expressions")
@@ -176,6 +176,13 @@ parser! {
         rule star_expression() -> Expression<'a>
             = // TODO lit!("*") bitwise_or()
             expression()
+
+        rule star_named_expressions() -> Vec<Element<'a>>
+            = first:star_named_expression()
+                rest:(c:comma() e:star_named_expression() { (c, e) })*
+                trail:comma()? {
+                    make_star_named_expressions(first, rest, trail)
+            }
 
         rule star_named_expression() -> Element<'a>
             = star:lit("*") e:bitwise_or() {?
@@ -245,8 +252,8 @@ parser! {
         rule star_targets() -> AssignTargetExpression<'a>
             = a:star_target() !lit(",") {a}
             / first:star_target()
-                rest:(comma:lit(",") t:star_target() {(comma, assign_target_to_element(t))})*
-                comma:lit(",")? {?
+                rest:(comma:comma() t:star_target() {(comma, assign_target_to_element(t))})*
+                comma:comma()? {?
                     make_tuple(&config, assign_target_to_element(first), rest, comma, None, None)
                         .map(AssignTargetExpression::Tuple)
                         .map_err(|e| "star_targets")
@@ -406,11 +413,25 @@ parser! {
             / atom()
             // TODO: subscript
 
+        rule list() -> Expression<'a>
+            = lbrak:lit("[") e:star_named_expressions()? rbrak:lit("]") {?
+                make_list(&config, lbrak, e.unwrap_or_default(), rbrak)
+                    .map(Expression::List)
+                    .map_err(|_| "list")
+            }
+
         rule listcomp() -> Expression<'a>
             = lbrak:lit("[") elt:named_expression() comp:for_if_clauses() rbrak:lit("]") {?
                 make_list_comp(&config, lbrak, elt, comp, rbrak)
                     .map(Expression::ListComp)
                     .map_err(|_| "listcomp")
+            }
+
+        rule set() -> Expression<'a>
+            = lbrace:lit("{") e:star_named_expressions()? rbrace:lit("}") {?
+                make_set(&config, lbrace, e.unwrap_or_default(), rbrace)
+                    .map(Expression::Set)
+                    .map_err(|_| "set")
             }
 
         rule setcomp() -> Expression<'a>
@@ -499,8 +520,8 @@ parser! {
             / &tok(String, "STRING") s:strings() {s}
             / n:tok(Number, "NUMBER") {? make_number(&config, n).map_err(|e| "expected number")}
             / &"(" e:(tuple() / group() / (g:genexp() {Expression::GeneratorExp(g)})) {e}
-            / &"[" e:listcomp() {e}
-            / &"{" e:(dictcomp() / setcomp()) {e}
+            / &"[" e:(list() / listcomp()) {e}
+            / &"{" e:(set() / dictcomp() / setcomp()) {e}
             / lit("...") { Expression::Ellipsis {lpar: vec![], rpar: vec![]}}
 
         rule strings() -> Expression<'a>
@@ -510,8 +531,8 @@ parser! {
 
         rule tuple() -> Expression<'a>
             = lpar:lit("(") first:star_named_expression() &","
-                rest:(c:lit(",") e:star_named_expression() {(c, e)})*
-                trailing_comma:lit(",")? rpar:lit(")") {?
+                rest:(c:comma() e:star_named_expression() {(c, e)})*
+                trailing_comma:comma()? rpar:lit(")") {?
                     make_tuple(&config, first, rest, trailing_comma, Some(lpar), Some(rpar))
                         .map(Expression::Tuple)
                         .map_err(|e| "tuple")
@@ -1530,31 +1551,14 @@ fn expr_to_element(expr: Expression) -> Element {
 fn make_tuple<'a>(
     config: &Config<'a>,
     first: Element<'a>,
-    rest: Vec<(Token<'a>, Element<'a>)>,
-    trailing_comma: Option<Token<'a>>,
+    rest: Vec<(Comma<'a>, Element<'a>)>,
+    trailing_comma: Option<Comma<'a>>,
     lpar_tok: Option<Token<'a>>,
     rpar_tok: Option<Token<'a>>,
 ) -> Result<'a, Tuple<'a>> {
-    let mut elements = vec![];
     let mut lpar: Vec<LeftParen<'a>> = Default::default();
     let mut rpar: Vec<RightParen<'a>> = Default::default();
-    let mut current = first;
-    for (tok, next) in rest {
-        let comma = make_comma(config, tok)?;
-        elements.push(current.with_comma(comma));
-        current = next;
-    }
-    if let Some(mut comma) = trailing_comma {
-        // don't consume trailing whitespace for trailing comma
-        let whitespace_before =
-            parse_parenthesizable_whitespace(config, &mut comma.whitespace_before)?;
-        let whitespace_after = ParenthesizableWhitespace::SimpleWhitespace(SimpleWhitespace(""));
-        current = current.with_comma(Comma {
-            whitespace_before,
-            whitespace_after,
-        });
-    }
-    elements.push(current);
+    let elements = make_star_named_expressions(first, rest, trailing_comma);
 
     if let Some(lpar_tok) = lpar_tok {
         lpar.push(make_lpar(config, lpar_tok)?);
@@ -1900,6 +1904,89 @@ fn make_dict_comp<'a>(
         whitespace_before_colon,
         whitespace_after_colon,
     })
+}
+
+fn make_list<'a>(
+    config: &Config<'a>,
+    mut lbrak: Token<'a>,
+    elements: Vec<Element<'a>>,
+    mut rbrak: Token<'a>,
+) -> Result<'a, List<'a>> {
+    let lbracket =
+        parse_parenthesizable_whitespace(config, &mut lbrak.whitespace_after).map(|ws| {
+            LeftSquareBracket {
+                whitespace_after: ws,
+            }
+        })?;
+    let rbracket =
+        parse_parenthesizable_whitespace(config, &mut rbrak.whitespace_before).map(|ws| {
+            RightSquareBracket {
+                whitespace_before: ws,
+            }
+        })?;
+    Ok(List {
+        elements,
+        lbracket,
+        rbracket,
+        lpar: Default::default(),
+        rpar: Default::default(),
+    })
+}
+
+fn make_set<'a>(
+    config: &Config<'a>,
+    mut lbrace: Token<'a>,
+    elements: Vec<Element<'a>>,
+    mut rbrace: Token<'a>,
+) -> Result<'a, Set<'a>> {
+    let lbrace =
+        parse_parenthesizable_whitespace(config, &mut lbrace.whitespace_after).map(|ws| {
+            LeftCurlyBrace {
+                whitespace_after: ws,
+            }
+        })?;
+    let rbrace =
+        parse_parenthesizable_whitespace(config, &mut rbrace.whitespace_before).map(|ws| {
+            RightCurlyBrace {
+                whitespace_before: ws,
+            }
+        })?;
+    Ok(Set {
+        elements,
+        lbrace,
+        rbrace,
+        lpar: Default::default(),
+        rpar: Default::default(),
+    })
+}
+
+fn make_star_named_expressions<'a>(
+    first: Element<'a>,
+    rest: Vec<(Comma<'a>, Element<'a>)>,
+    trailing_comma: Option<Comma<'a>>,
+) -> Vec<Element<'a>> {
+    let mut elements = vec![];
+    let mut current = first;
+    for (comma, next) in rest {
+        elements.push(current.with_comma(comma));
+        current = next;
+    }
+    if let Some(mut comma) = trailing_comma {
+        // don't consume trailing whitespace for trailing comma
+        comma.whitespace_after = ParenthesizableWhitespace::SimpleWhitespace(SimpleWhitespace(""));
+        current = current.with_comma(comma);
+    }
+    elements.push(current);
+    elements
+}
+
+fn make_dict<'a>(
+    config: &Config<'a>,
+    mut lbrace: Token<'a>,
+    els: Vec<DictElement<'a>>,
+    mut rbrace: Token<'a>,
+) -> Result<'a, Dict<'a>> {
+    todo!()
 }
 
 #[cfg(test)]
