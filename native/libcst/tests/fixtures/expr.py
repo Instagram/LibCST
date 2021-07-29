@@ -46,13 +46,13 @@ flags & ~ select.EPOLLIN and waiters.write_task is not None
 # str or None if (1 if True else 2) else str or bytes or None
 # (str or None) if (1 if True else 2) else (str or bytes or None)
 # ((super_long_variable_name or None) if (1 if super_long_test_name else 2) else (str or bytes or None))
-# {'2.7': dead, '3.7': (long_live or die_hard)}
-# {'2.7': dead, '3.7': (long_live or die_hard), **{'3.6': verygood}}
-# {**a, **b, **c}
+{'2.7': dead, '3.7': (long_live or die_hard)}
+{'2.7': dead, '3.7': (long_live or die_hard), **{'3.6': verygood}}
+{**a, **b, **c}
 {"2.7", "3.6", "3.7", "3.8", "3.9"}
 {"2.7", "3.6", "3.7", "3.8", "3.9",}
 # {"2.7", "3.6", "3.7", "3.8", "3.9", ("4.0" if gilectomy else "3.10")}
-# ({"a": "b"}, (True or False), (+value), "string", b"bytes") or None
+({"a": "b"}, (True or False), (+value), "string", b"bytes") or None
 # ()
 (1,)
 (1, 2)
@@ -173,7 +173,7 @@ call.me(maybe)
 # numpy[:, ::-1]
 # numpy[np.newaxis, :]
 # (str or None) if (sys.version_info[0] > (3,)) else (str or bytes or None)
-# {"2.7": dead, "3.7": long_live or die_hard}
+{"2.7": dead, "3.7": long_live or die_hard}
 # {"2.7", "3.6", "3.7", "3.8", "3.9", "4.0" if gilectomy else "3.10"}
 [1, 2, 3, 4, 5, 6, 7, 8, 9, 10 or A, 11 or B, 12 or C]
 (SomeName)
@@ -184,15 +184,15 @@ SomeName
 ((i ** 2) for i, _ in ((1, "a"), (2, "b"), (3, "c")))
 (((i ** 2) + j) for i in (1, 2, 3) for j in (1, 2, 3))
 (*starred,)
-# {
-#     "id": "1",
-#     "type": "type",
-#     "started_at": now(),
-#     "ended_at": now() + timedelta(days=10),
-#     "priority": 1,
-#     "import_session_id": 1,
-#     **kwargs,
-# }
+{
+    "id": "1",
+    "type": "type",
+    "started_at": now(),
+    "ended_at": now() + timedelta(days=10),
+    "priority": 1,
+    "import_session_id": 1,
+    **kwargs,
+}
 a = (1,)
 b = (1,)
 c = 1
@@ -227,12 +227,12 @@ what_is_up_with_those_new_coord_names = (coord_names | set(vars_to_create)) - se
 # Ø = set()
 # authors.łukasz.say_thanks()
 authors.lukasz.say_thanks()
-# mapping = {
-#     A: 0.25 * (10.0 / 12),
-#     B: 0.1 * (10.0 / 12),
-#     C: 0.1 * (10.0 / 12),
-#     D: 0.1 * (10.0 / 12),
-# }
+mapping = {
+    A: 0.25 * (10.0 / 12),
+    B: 0.1 * (10.0 / 12),
+    C: 0.1 * (10.0 / 12),
+    D: 0.1 * (10.0 / 12),
+}
 
 
 # def gen():

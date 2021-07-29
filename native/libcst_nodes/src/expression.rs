@@ -1191,7 +1191,7 @@ pub enum DictElement<'a> {
         whitespace_before_colon: ParenthesizableWhitespace<'a>,
         whitespace_after_colon: ParenthesizableWhitespace<'a>,
     },
-    Starred(StarredElement<'a>), // TODO: dict's starred element can't own lpar/rpar
+    Starred(DoubleStarredElement<'a>),
 }
 
 impl<'a> DictElement<'a> {
@@ -1232,7 +1232,7 @@ impl<'a> DictElement<'a> {
     pub fn with_comma(self, comma: Comma<'a>) -> Self {
         let comma = Some(comma);
         match self {
-            Self::Starred(s) => Self::Starred(StarredElement { comma, ..s }),
+            Self::Starred(s) => Self::Starred(DoubleStarredElement { comma, ..s }),
             Self::Simple {
                 key,
                 value,
@@ -1246,6 +1246,24 @@ impl<'a> DictElement<'a> {
                 whitespace_after_colon,
                 whitespace_before_colon,
             },
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct DoubleStarredElement<'a> {
+    pub value: Expression<'a>,
+    pub comma: Option<Comma<'a>>,
+    pub whitespace_before_value: ParenthesizableWhitespace<'a>,
+}
+
+impl<'a> Codegen<'a> for DoubleStarredElement<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+        state.add_token("**");
+        self.whitespace_before_value.codegen(state);
+        self.value.codegen(state);
+        if let Some(comma) = &self.comma {
+            comma.codegen(state);
         }
     }
 }

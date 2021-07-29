@@ -441,12 +441,34 @@ parser! {
                     .map_err(|_| "setcomp")
             }
 
+        rule dict() -> Expression<'a>
+            = lbrace:lit("{") els:double_starred_keypairs()? rbrace:lit("}") {?
+                make_dict(&config, lbrace, els.unwrap_or_default(), rbrace)
+                    .map(Expression::Dict)
+                    .map_err(|_| "dict")
+            }
+
         rule dictcomp() -> Expression<'a>
             = lbrace:lit("{") elt:kvpair() comp:for_if_clauses() rbrace:lit("}") {?
                 make_dict_comp(&config, lbrace, elt, comp, rbrace)
                     .map(Expression::DictComp)
                     .map_err(|_| "dictcomp")
             }
+
+        rule double_starred_keypairs() -> Vec<DictElement<'a>>
+            = first:double_starred_kvpair()
+                rest:(c:comma() e:double_starred_kvpair() {(c, e)})*
+                trail:comma()? {
+                    make_double_starred_keypairs(first, rest, trail)
+            }
+
+        rule double_starred_kvpair() -> DictElement<'a>
+            = s:lit("**") e:bitwise_or() {?
+                make_double_starred_element(&config, s, e)
+                    .map(DictElement::Starred)
+                    .map_err(|_| "double_starred_element")
+            }
+            / k:kvpair() {? make_dict_element(&config, k).map_err(|_| "dict_element")}
 
         rule kvpair() -> (Expression<'a>, Token<'a>, Expression<'a>)
             = k:expression() colon:lit(":") v:expression() { (k, colon, v) }
@@ -521,7 +543,7 @@ parser! {
             / n:tok(Number, "NUMBER") {? make_number(&config, n).map_err(|e| "expected number")}
             / &"(" e:(tuple() / group() / (g:genexp() {Expression::GeneratorExp(g)})) {e}
             / &"[" e:(list() / listcomp()) {e}
-            / &"{" e:(set() / dictcomp() / setcomp()) {e}
+            / &"{" e:(dict() / set() / dictcomp() / setcomp()) {e}
             / lit("...") { Expression::Ellipsis {lpar: vec![], rpar: vec![]}}
 
         rule strings() -> Expression<'a>
@@ -1983,10 +2005,81 @@ fn make_star_named_expressions<'a>(
 fn make_dict<'a>(
     config: &Config<'a>,
     mut lbrace: Token<'a>,
-    els: Vec<DictElement<'a>>,
+    elements: Vec<DictElement<'a>>,
     mut rbrace: Token<'a>,
 ) -> Result<'a, Dict<'a>> {
-    todo!()
+    let lbrace =
+        parse_parenthesizable_whitespace(config, &mut lbrace.whitespace_after).map(|ws| {
+            LeftCurlyBrace {
+                whitespace_after: ws,
+            }
+        })?;
+    let rbrace =
+        parse_parenthesizable_whitespace(config, &mut rbrace.whitespace_before).map(|ws| {
+            RightCurlyBrace {
+                whitespace_before: ws,
+            }
+        })?;
+    Ok(Dict {
+        elements,
+        lbrace,
+        rbrace,
+        lpar: Default::default(),
+        rpar: Default::default(),
+    })
+}
+
+fn make_double_starred_keypairs<'a>(
+    first: DictElement<'a>,
+    rest: Vec<(Comma<'a>, DictElement<'a>)>,
+    trailing_comma: Option<Comma<'a>>,
+) -> Vec<DictElement<'a>> {
+    let mut elements = vec![];
+    let mut current = first;
+    for (comma, next) in rest {
+        elements.push(current.with_comma(comma));
+        current = next;
+    }
+    if let Some(mut comma) = trailing_comma {
+        // don't consume trailing whitespace for trailing comma
+        comma.whitespace_after = ParenthesizableWhitespace::SimpleWhitespace(SimpleWhitespace(""));
+        current = current.with_comma(comma);
+    }
+    elements.push(current);
+    elements
+}
+
+fn make_dict_element<'a>(
+    config: &Config<'a>,
+    el: (Expression<'a>, Token<'a>, Expression<'a>),
+) -> Result<'a, DictElement<'a>> {
+    let (key, mut colon, value) = el;
+    let whitespace_before_colon =
+        parse_parenthesizable_whitespace(config, &mut colon.whitespace_before)?;
+    let whitespace_after_colon =
+        parse_parenthesizable_whitespace(config, &mut colon.whitespace_after)?;
+
+    Ok(DictElement::Simple {
+        key,
+        value,
+        comma: Default::default(),
+        whitespace_before_colon,
+        whitespace_after_colon,
+    })
+}
+
+fn make_double_starred_element<'a>(
+    config: &Config<'a>,
+    mut star: Token<'a>,
+    value: Expression<'a>,
+) -> Result<'a, DoubleStarredElement<'a>> {
+    let whitespace_before_value =
+        parse_parenthesizable_whitespace(config, &mut star.whitespace_after)?;
+    Ok(DoubleStarredElement {
+        value,
+        comma: Default::default(),
+        whitespace_before_value,
+    })
 }
 
 #[cfg(test)]
