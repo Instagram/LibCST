@@ -117,7 +117,7 @@ parser! {
         pub rule statement() -> Statement<'a>
             = c:compound_stmt() { Statement::Compound(c) }
             / s:simple_stmt() {?
-                    Ok(Statement::Simple(make_simple_statement_line(&config, s)
+                    Ok(Statement::Simple(make_simple_statement_line(config, s)
                         .map_err(|e| "simple_stmt")?))
             }
 
@@ -149,11 +149,11 @@ parser! {
 
         rule block() -> Suite<'a>
             = n:tok(NL, "NEWLINE") ind:tok(Indent, "INDENT") s:statements() ded:tok(Dedent, "DEDENT") {?
-                make_indented_block(&config, n, ind, s, ded)
+                make_indented_block(config, n, ind, s, ded)
                     .map_err(|e| "indented block")
             }
             / s:simple_stmt() {?
-                make_simple_statement_suite(&config, s)
+                make_simple_statement_suite(config, s)
                     .map_err(|e| "simple_stmt suite")
             }
 
@@ -161,12 +161,12 @@ parser! {
             = first:star_expression()
                 rest:(comma:comma() e:star_expression() { (comma, expr_to_element(e)) })+
                 comma:comma()? {?
-                    make_tuple(&config, expr_to_element(first), rest, comma, None, None)
+                    make_tuple(config, expr_to_element(first), rest, comma, None, None)
                         .map(Expression::Tuple)
                         .map_err(|e| "star_expressions")
             }
             / e:star_expression() comma:comma() {?
-                make_tuple(&config, expr_to_element(e), vec![], Some(comma), None, None)
+                make_tuple(config, expr_to_element(e), vec![], Some(comma), None, None)
                     .map(Expression::Tuple)
                     .map_err(|e| "star_expressions")
             }
@@ -186,7 +186,7 @@ parser! {
 
         rule star_named_expression() -> Element<'a>
             = star:lit("*") e:bitwise_or() {?
-                make_starred_element(&config, star, expr_to_element(e))
+                make_starred_element(config, star, expr_to_element(e))
                     .map(Element::Starred)
                     .map_err(|e| "star_named_expression")
             }
@@ -199,21 +199,21 @@ parser! {
         #[cache]
         rule disjunction() -> Expression<'a>
             = a:conjunction() b:(or:lit("or") inner:conjunction() { (or, inner) })+ {?
-                make_boolean_op(&config, a, b).map_err(|e| "expected disjunction")
+                make_boolean_op(config, a, b).map_err(|e| "expected disjunction")
             }
             / conjunction()
 
         #[cache]
         rule conjunction() -> Expression<'a>
             = a:inversion() b:(and:lit("and") inner:inversion() { (and, inner) })+ {?
-                make_boolean_op(&config, a, b).map_err(|e| "expected conjunction")
+                make_boolean_op(config, a, b).map_err(|e| "expected conjunction")
             }
             / inversion()
 
         #[cache]
         rule inversion() -> Expression<'a>
             = not:lit("not") a:inversion() {?
-                make_unary_op(&config, not, a).map_err(|e| "expected inversion")
+                make_unary_op(config, not, a).map_err(|e| "expected inversion")
             }
             / comparison()
 
@@ -237,14 +237,14 @@ parser! {
 
         rule _op_bitwise_or(o: &'static str) -> (CompOp<'a>, Expression<'a>)
             = op:lit(o) e:bitwise_or() {?
-                make_comparison_operator(&config, op)
+                make_comparison_operator(config, op)
                     .map(|op| (op, e))
                     .map_err(|_| "comparison")
             }
 
         rule _op_bitwise_or2(first: &'static str, second: &'static str) -> (CompOp<'a>, Expression<'a>)
             = f:lit(first) s:lit(second) e:bitwise_or() {?
-                make_comparison_operator_2(&config, f, s)
+                make_comparison_operator_2(config, f, s)
                     .map(|op| (op, e))
                     .map_err(|_| "comparison")
             }
@@ -254,14 +254,14 @@ parser! {
             / first:star_target()
                 rest:(comma:comma() t:star_target() {(comma, assign_target_to_element(t))})*
                 comma:comma()? {?
-                    make_tuple(&config, assign_target_to_element(first), rest, comma, None, None)
+                    make_tuple(config, assign_target_to_element(first), rest, comma, None, None)
                         .map(AssignTargetExpression::Tuple)
                         .map_err(|e| "star_targets")
             }
 
         rule star_target() -> AssignTargetExpression<'a>
             = star:lit("*") !lit("*") t:star_target() {?
-                make_starred_element(&config, star, assign_target_to_element(t))
+                make_starred_element(config, star, assign_target_to_element(t))
                     .map(AssignTargetExpression::StarredElement)
                     .map_err(|e| "star_target")
             }
@@ -269,7 +269,7 @@ parser! {
 
         rule target_with_star_atom() -> AssignTargetExpression<'a>
             = a:t_primary() dot:lit(".") n:name() !t_lookahead() {?
-                make_attribute(&config, a, dot, n)
+                make_attribute(config, a, dot, n)
                     .map(AssignTargetExpression::Attribute)
                     .map_err(|e| "target_with_star_atom")
             }
@@ -284,20 +284,20 @@ parser! {
         #[cache_left_rec]
         rule t_primary() -> Expression<'a>
             = value:t_primary() dot:lit(".") attr:name() &t_lookahead() {?
-                make_attribute(&config, value, dot, attr)
+                make_attribute(config, value, dot, attr)
                     .map(Expression::Attribute)
                     .map_err(|e| "t_primary")
             }
             / v:t_primary() lpar:lit("[") s:slices() rpar:lit("]") !t_lookahead() {?
-                make_subscript(&config, v, lpar, s, rpar)
+                make_subscript(config, v, lpar, s, rpar)
                     .map(Expression::Subscript)
                     .map_err(|_| "list")
             }
             / f:t_primary() lpar:&lit("(") gen:genexp() &t_lookahead() {
-                Expression::Call(make_genexp_call(&config, f, lpar, gen))
+                Expression::Call(make_genexp_call(config, f, lpar, gen))
             }
             / f:t_primary() lpar:lit("(") arg:arguments()? rpar:lit(")") &t_lookahead() {?
-                make_call(&config, f, lpar, arg.unwrap_or_default(), rpar)
+                make_call(config, f, lpar, arg.unwrap_or_default(), rpar)
                     .map(Expression::Call)
                     .map_err(|_| "call")
             }
@@ -314,7 +314,7 @@ parser! {
         rule bitwise_or() -> Expression<'a>
             // TODO left-recursive grammar
             = a:bitwise_xor() tail:(op:lit("|") b:bitwise_xor() {(op, b)})+ {?
-                make_binary_op(&config, a, tail).map_err(|e| "expected bitwise_or")
+                make_binary_op(config, a, tail).map_err(|e| "expected bitwise_or")
             }
             / bitwise_xor()
 
@@ -322,7 +322,7 @@ parser! {
         rule bitwise_xor() -> Expression<'a>
             // TODO left-recursive grammar
             = a:bitwise_and() tail:(op:lit("^") b:bitwise_and() {(op, b)})+ {?
-                make_binary_op(&config, a, tail).map_err(|e| "expected bitwise_xor")
+                make_binary_op(config, a, tail).map_err(|e| "expected bitwise_xor")
             }
             / bitwise_and()
 
@@ -330,7 +330,7 @@ parser! {
         rule bitwise_and() -> Expression<'a>
             // TODO left-recursive grammar
             = a:shift_expr() tail:(op:lit("&") b:shift_expr() {(op, b)})+ {?
-                make_binary_op(&config, a, tail).map_err(|e| "expected bitwise_and")
+                make_binary_op(config, a, tail).map_err(|e| "expected bitwise_and")
             }
             / shift_expr()
 
@@ -338,10 +338,10 @@ parser! {
         rule shift_expr() -> Expression<'a>
             // TODO left-recursive grammar
             = a:sum() tail:(op:lit("<<") b:shift_expr() {(op, b)})+ {?
-                make_binary_op(&config, a, tail).map_err(|e| "expected shift_expr")
+                make_binary_op(config, a, tail).map_err(|e| "expected shift_expr")
             }
             / a:sum() tail:(op:lit(">>") b:shift_expr() {(op, b)})+ {?
-                make_binary_op(&config, a, tail).map_err(|e| "expected shift_expr")
+                make_binary_op(config, a, tail).map_err(|e| "expected shift_expr")
             }
             / sum()
 
@@ -349,10 +349,10 @@ parser! {
         rule sum() -> Expression<'a>
             // TODO left-recursive grammar
             = a:term() tail:(op:lit("+") b:term() {(op, b)})+ {?
-                make_binary_op(&config, a, tail).map_err(|e| "expected sum")
+                make_binary_op(config, a, tail).map_err(|e| "expected sum")
             }
             / a:term() tail:(op:lit("-") b:term() {(op, b)})+ {?
-                make_binary_op(&config, a, tail).map_err(|e| "expected sum")
+                make_binary_op(config, a, tail).map_err(|e| "expected sum")
             }
             / term()
 
@@ -360,38 +360,38 @@ parser! {
         rule term() -> Expression<'a>
             // TODO left-recursive grammar
             = a:factor() tail:(op:lit("*") b:factor() {(op, b)})+ {?
-                make_binary_op(&config, a, tail).map_err(|e| "expected term")
+                make_binary_op(config, a, tail).map_err(|e| "expected term")
             }
             / a:factor() tail:(op:lit("/") b:factor() {(op, b)})+ {?
-                make_binary_op(&config, a, tail).map_err(|e| "expected term")
+                make_binary_op(config, a, tail).map_err(|e| "expected term")
             }
             / a:factor() tail:(op:lit("//") b:factor() {(op, b)})+ {?
-                make_binary_op(&config, a, tail).map_err(|e| "expected term")
+                make_binary_op(config, a, tail).map_err(|e| "expected term")
             }
             / a:factor() tail:(op:lit("%") b:factor() {(op, b)})+ {?
-                make_binary_op(&config, a, tail).map_err(|e| "expected term")
+                make_binary_op(config, a, tail).map_err(|e| "expected term")
             }
             / a:factor() tail:(op:lit("@") b:factor() {(op, b)})+ {?
-                make_binary_op(&config, a, tail).map_err(|e| "expected term")
+                make_binary_op(config, a, tail).map_err(|e| "expected term")
             }
             / factor()
 
         #[cache]
         rule factor() -> Expression<'a>
             = op:lit("+") a:factor() {?
-                make_unary_op(&config, op, a).map_err(|e| "expected factor")
+                make_unary_op(config, op, a).map_err(|e| "expected factor")
             }
             / op:lit("-") a:factor() {?
-                make_unary_op(&config, op, a).map_err(|e| "expected factor")
+                make_unary_op(config, op, a).map_err(|e| "expected factor")
             }
             / op:lit("~") a:factor() {?
-                make_unary_op(&config, op, a).map_err(|e| "expected factor")
+                make_unary_op(config, op, a).map_err(|e| "expected factor")
             }
             / power()
 
         rule power() -> Expression<'a>
             = a:await_primary() op:lit("**") b:factor() {?
-                make_binary_op(&config, a, vec![(op, b)]).map_err(|e| "expected power")
+                make_binary_op(config, a, vec![(op, b)]).map_err(|e| "expected power")
             }
             / await_primary()
 
@@ -402,20 +402,20 @@ parser! {
         #[cache_left_rec]
         rule primary() -> Expression<'a>
             = v:primary() dot:lit(".") attr:name() {?
-                make_attribute(&config, v, dot, attr)
+                make_attribute(config, v, dot, attr)
                     .map(Expression::Attribute)
                     .map_err(|_| "attribute")
             }
             / a:primary() lpar:&lit("(") b:genexp() {
-                Expression::Call(make_genexp_call(&config, a, lpar, b))
+                Expression::Call(make_genexp_call(config, a, lpar, b))
             }
             / f:primary() lpar:lit("(") arg:arguments()? rpar:lit(")") {?
-                make_call(&config, f, lpar, arg.unwrap_or_default(), rpar)
+                make_call(config, f, lpar, arg.unwrap_or_default(), rpar)
                     .map(Expression::Call)
                     .map_err(|_| "call")
             }
             / v:primary() lbrak:lit("[") s:slices() rbrak:lit("]") {?
-                make_subscript(&config, v, lbrak, s, rbrak)
+                make_subscript(config, v, lbrak, s, rbrak)
                     .map(Expression::Subscript)
                     .map_err(|_| "subscript")
             }
@@ -423,7 +423,7 @@ parser! {
 
         rule list() -> Expression<'a>
             = lbrak:lit("[") e:star_named_expressions()? rbrak:lit("]") {?
-                make_list(&config, lbrak, e.unwrap_or_default(), rbrak)
+                make_list(config, lbrak, e.unwrap_or_default(), rbrak)
                     .map(Expression::List)
                     .map_err(|_| "list")
             }
@@ -437,42 +437,42 @@ parser! {
         rule slice() -> BaseSlice<'a>
             = l:expression()? col:lit(":") u:expression()?
                 rest:(c:lit(":") s:expression()? {(c, s)})? {?
-                    make_slice(&config, l, col, u, rest)
+                    make_slice(config, l, col, u, rest)
                         .map_err(|_| "slice")
             }
             / v:expression() { make_index(v) }
 
         rule listcomp() -> Expression<'a>
             = lbrak:lit("[") elt:named_expression() comp:for_if_clauses() rbrak:lit("]") {?
-                make_list_comp(&config, lbrak, elt, comp, rbrak)
+                make_list_comp(config, lbrak, elt, comp, rbrak)
                     .map(Expression::ListComp)
                     .map_err(|_| "listcomp")
             }
 
         rule set() -> Expression<'a>
             = lbrace:lit("{") e:star_named_expressions()? rbrace:lit("}") {?
-                make_set(&config, lbrace, e.unwrap_or_default(), rbrace)
+                make_set(config, lbrace, e.unwrap_or_default(), rbrace)
                     .map(Expression::Set)
                     .map_err(|_| "set")
             }
 
         rule setcomp() -> Expression<'a>
             = lbrace:lit("{") elt:named_expression() comp:for_if_clauses() rbrace:lit("}") {?
-                make_set_comp(&config, lbrace, elt, comp, rbrace)
+                make_set_comp(config, lbrace, elt, comp, rbrace)
                     .map(Expression::SetComp)
                     .map_err(|_| "setcomp")
             }
 
         rule dict() -> Expression<'a>
             = lbrace:lit("{") els:double_starred_keypairs()? rbrace:lit("}") {?
-                make_dict(&config, lbrace, els.unwrap_or_default(), rbrace)
+                make_dict(config, lbrace, els.unwrap_or_default(), rbrace)
                     .map(Expression::Dict)
                     .map_err(|_| "dict")
             }
 
         rule dictcomp() -> Expression<'a>
             = lbrace:lit("{") elt:kvpair() comp:for_if_clauses() rbrace:lit("}") {?
-                make_dict_comp(&config, lbrace, elt, comp, rbrace)
+                make_dict_comp(config, lbrace, elt, comp, rbrace)
                     .map(Expression::DictComp)
                     .map_err(|_| "dictcomp")
             }
@@ -486,18 +486,18 @@ parser! {
 
         rule double_starred_kvpair() -> DictElement<'a>
             = s:lit("**") e:bitwise_or() {?
-                make_double_starred_element(&config, s, e)
+                make_double_starred_element(config, s, e)
                     .map(DictElement::Starred)
                     .map_err(|_| "double_starred_element")
             }
-            / k:kvpair() {? make_dict_element(&config, k).map_err(|_| "dict_element")}
+            / k:kvpair() {? make_dict_element(config, k).map_err(|_| "dict_element")}
 
         rule kvpair() -> (Expression<'a>, Token<'a>, Expression<'a>)
             = k:expression() colon:lit(":") v:expression() { (k, colon, v) }
 
         rule genexp() -> GeneratorExp<'a>
             = lpar:lit("(") elt:named_expression() comp:for_if_clauses() rpar:lit(")") {?
-                make_genexp(&config, lpar, elt, comp, rpar).map_err(|_| "genexp")
+                make_genexp(config, lpar, elt, comp, rpar).map_err(|_| "genexp")
             }
 
         rule for_if_clauses() -> CompFor<'a>
@@ -506,18 +506,18 @@ parser! {
         rule for_if_clause() -> CompFor<'a>
             = asy:_async() f:lit("for") tgt:star_targets() i:lit("in")
                 iter:disjunction() ifs:_comp_if()* {?
-                    make_for_if(&config, Some(asy), f, tgt, i, iter, ifs)
+                    make_for_if(config, Some(asy), f, tgt, i, iter, ifs)
                         .map_err(|_| "for_in")
             }
             / f:lit("for") tgt:star_targets() i:lit("in")
             iter:disjunction() ifs:_comp_if()* {?
-                make_for_if(&config, None, f, tgt, i, iter, ifs)
+                make_for_if(config, None, f, tgt, i, iter, ifs)
                     .map_err(|_| "for_in")
             }
 
         rule _comp_if() -> CompIf<'a>
             = kw:lit("if") cond:disjunction() {?
-                make_comp_if(&config, kw, cond).map_err(|_| "comp_if")
+                make_comp_if(config, kw, cond).map_err(|_| "comp_if")
             }
 
         rule arguments() -> Vec<Arg<'a>>
@@ -533,7 +533,7 @@ parser! {
                 !"=" { a }
 
         rule starred_expression() -> Arg<'a>
-            = star:lit("*") e:expression() {? make_star_arg(&config, star, e).map_err(|_| "star_arg") }
+            = star:lit("*") e:expression() {? make_star_arg(config, star, e).map_err(|_| "star_arg") }
 
         rule kwargs() -> Vec<Arg<'a>>
             = s:(a:kwarg_or_starred() c:comma() { a.with_comma(c) })+
@@ -549,11 +549,11 @@ parser! {
 
         rule kwarg_or_double_starred() -> Arg<'a>
             = _kwarg()
-            / star:lit("**") e:expression() {? make_star_arg(&config, star, e).map_err(|_| "star_arg") }
+            / star:lit("**") e:expression() {? make_star_arg(config, star, e).map_err(|_| "star_arg") }
 
         rule _kwarg() -> Arg<'a>
             = n:name() eq:lit("=") v:expression() {?
-                make_kwarg(&config, n, eq, v).map_err(|_| "kwarg")
+                make_kwarg(config, n, eq, v).map_err(|_| "kwarg")
             }
 
         rule atom() -> Expression<'a>
@@ -562,7 +562,7 @@ parser! {
             / n:lit("False") { Expression::Name(make_name(n)) }
             / n:lit("None") { Expression::Name(make_name(n)) }
             / &tok(String, "STRING") s:strings() {s}
-            / n:tok(Number, "NUMBER") {? make_number(&config, n).map_err(|e| "expected number")}
+            / n:tok(Number, "NUMBER") {? make_number(config, n).map_err(|e| "expected number")}
             / &"(" e:(tuple() / group() / (g:genexp() {Expression::GeneratorExp(g)})) {e}
             / &"[" e:(list() / listcomp()) {e}
             / &"{" e:(dict() / set() / dictcomp() / setcomp()) {e}
@@ -577,14 +577,14 @@ parser! {
             = lpar:lit("(") first:star_named_expression() &","
                 rest:(c:comma() e:star_named_expression() {(c, e)})*
                 trailing_comma:comma()? rpar:lit(")") {?
-                    make_tuple(&config, first, rest, trailing_comma, Some(lpar), Some(rpar))
+                    make_tuple(config, first, rest, trailing_comma, Some(lpar), Some(rpar))
                         .map(Expression::Tuple)
                         .map_err(|e| "tuple")
             }
 
         rule group() -> Expression<'a>
             = lpar:lit("(") e:(yield_expr() / named_expression()) rpar:lit(")") {?
-                add_expr_parens(&config, e, lpar, rpar)
+                add_expr_parens(config, e, lpar, rpar)
                     .map_err(|e| "group")
             }
 
@@ -593,11 +593,11 @@ parser! {
             / function_def_raw()
 
         rule decorators() -> Vec<Decorator<'a>>
-            = (at:lit("@") name:name() tok(NL, "NEWLINE") {? make_decorator(&config, at, name).map_err(|e| "expected decorator")} )+
+            = (at:lit("@") name:name() tok(NL, "NEWLINE") {? make_decorator(config, at, name).map_err(|e| "expected decorator")} )+
 
         rule function_def_raw() -> FunctionDef<'a>
             = def:lit("def") n:name() op:lit("(") params:params()? cp:lit(")") c:lit(":") b:block() {?
-                make_function_def(&config, def, n, op, params, cp, c, b).map_err(|e| "function def" )
+                make_function_def(config, def, n, op, params, cp, c, b).map_err(|e| "function def" )
             }
 
         rule params() -> Parameters<'a>
@@ -605,27 +605,27 @@ parser! {
 
         rule parameters() -> Parameters<'a>
             = a:slash_no_default() b:param_no_default()* c:param_with_default()*  d:star_etc()?
-            {? make_parameters(&config, Some(a), concat(b, c), d).map_err(|e| "parameters") }
+            {? make_parameters(config, Some(a), concat(b, c), d).map_err(|e| "parameters") }
             / a:slash_with_default() b:param_with_default()* d:star_etc()? {?
-                make_parameters(&config, Some(a), b, d)
+                make_parameters(config, Some(a), b, d)
                     .map_err(|e| "parameters")
             }
             / a:param_no_default()+ b:param_with_default()* d:star_etc()? {?
-                make_parameters(&config, None, concat(a, b), d)
+                make_parameters(config, None, concat(a, b), d)
                     .map_err(|e| "parameters")
             }
             / a:param_with_default()+ d:star_etc()? {?
-                make_parameters(&config, None, a, d)
+                make_parameters(config, None, a, d)
                     .map_err(|e| "parameters")
             }
             / d:star_etc() {?
-                make_parameters(&config, None, vec![], Some(d))
+                make_parameters(config, None, vec![], Some(d))
                     .map_err(|e| "parameters")
             }
 
         rule slash_no_default() -> (Vec<Param<'a>>, ParamSlash<'a>)
             = a:param_no_default()+ slash:lit("/") com:lit(",") {?
-                make_comma(&config, com)
+                make_comma(config, com)
                     .map(|c| (a, ParamSlash { comma: Some(c)}))
                     .map_err(|e| "slash_no_default")
             }
@@ -635,7 +635,7 @@ parser! {
 
         rule slash_with_default() -> (Vec<Param<'a>>, ParamSlash<'a>)
             = a:param_no_default()* b:param_with_default()+ slash:lit("/") com:lit(",") {?
-                make_comma(&config, com)
+                make_comma(config, com)
                     .map(|c| (concat(a, b), ParamSlash { comma: Some(c) }))
                     .map_err(|e| "slash_with_default")
             }
@@ -645,12 +645,12 @@ parser! {
 
         rule star_etc() -> StarEtc<'a>
             = star:lit("*") a:param_no_default() b:param_maybe_default()* kw:kwds()? {?
-                add_param_star(&config, a, star)
+                add_param_star(config, a, star)
                     .map(|p| StarEtc(Some(StarArg::Param(Box::new(p))), b, kw))
                     .map_err(|e| "star_etc")
             }
             / star:lit("*") com:lit(",") b:param_maybe_default()+ kw:kwds()? {?
-                make_comma(&config, com)
+                make_comma(config, com)
                     .map(|comma| StarEtc(Some(StarArg::Star(ParamStar {comma})), b, kw))
                     .map_err(|e| "star_etc")
             }
@@ -658,31 +658,31 @@ parser! {
 
         rule kwds() -> Param<'a>
             = star:lit("**") a:param_no_default() {?
-                add_param_star(&config, a, star)
+                add_param_star(config, a, star)
                     .map_err(|e| "kwds")
             }
 
         rule param_no_default() -> Param<'a>
-            = a:param() c:lit(",") {? add_param_default(&config, a, None, Some(c)).map_err(|e| "param_no_default") }
+            = a:param() c:lit(",") {? add_param_default(config, a, None, Some(c)).map_err(|e| "param_no_default") }
             / a:param() &")" {a}
 
         rule param_with_default() -> Param<'a>
             = a:param() def:default() c:lit(",") {?
-                add_param_default(&config, a, Some(def), Some(c))
+                add_param_default(config, a, Some(def), Some(c))
                     .map_err(|e| "param_with_default")
             }
             / a:param() def:default() &")" {?
-                add_param_default(&config, a, Some(def), None)
+                add_param_default(config, a, Some(def), None)
                     .map_err(|e| "param_with_default")
             }
 
         rule param_maybe_default() -> Param<'a>
             = a:param() def:default()? c:lit(",") {?
-                add_param_default(&config, a, def, Some(c))
+                add_param_default(config, a, def, Some(c))
                     .map_err(|e| "param_maybe_default")
             }
             / a:param() def:default()? &")" {?
-                add_param_default(&config, a, def, None)
+                add_param_default(config, a, def, None)
                 .map_err(|e| "param_maybe_default")
             }
 
@@ -691,32 +691,32 @@ parser! {
 
         rule default() -> (AssignEqual<'a>, Expression<'a>)
             = eq:lit("=") ex:expression() {?
-                Ok((make_assign_equal(&config, eq).map_err(|e| "=")?, ex))
+                Ok((make_assign_equal(config, eq).map_err(|e| "=")?, ex))
             }
 
         rule if_stmt() -> If<'a>
             = i:lit("if") a:named_expression() col:lit(":") b:block() elif:elif_stmt() {?
-                make_if(&config, i, a, col, b, Some(OrElse::Elif(elif)), false)
+                make_if(config, i, a, col, b, Some(OrElse::Elif(elif)), false)
                     .map_err(|e| "if statement")
             }
             / i:lit("if") a:named_expression() col:lit(":") b:block() el:else_block()? {?
-                make_if(&config, i, a, col, b, el.map(OrElse::Else), false)
+                make_if(config, i, a, col, b, el.map(OrElse::Else), false)
                     .map_err(|e| "if statement")
             }
 
         rule elif_stmt() -> If<'a>
             = i:lit("elif") a:named_expression() col:lit(":") b:block() elif:elif_stmt() {?
-                make_if(&config, i, a, col, b, Some(OrElse::Elif(elif)), true)
+                make_if(config, i, a, col, b, Some(OrElse::Elif(elif)), true)
                     .map_err(|e| "elif statement")
             }
             / i:lit("elif") a:named_expression() col:lit(":") b:block() el:else_block()? {?
-                make_if(&config, i, a, col, b, el.map(OrElse::Else), true)
+                make_if(config, i, a, col, b, el.map(OrElse::Else), true)
                     .map_err(|e| "elif statement")
             }
 
         rule else_block() -> Else<'a>
             = el:lit("else") col:lit(":") b:block() {?
-                make_else(&config, el, col, b)
+                make_else(config, el, col, b)
                     .map_err(|e| "else block")
             }
 
@@ -726,19 +726,19 @@ parser! {
 
         rule import_name() -> Import<'a>
             = kw:lit("import") a:dotted_as_names() {?
-                make_import(&config, kw, a)
+                make_import(config, kw, a)
                     .map_err(|e| "import")
             }
 
         rule import_from() -> ImportFrom<'a>
             = from:lit("from") dots:lit(".")* m:dotted_name()
                 import:lit("import") als:import_from_targets() {?
-                    make_import_from(&config, from, dots, Some(m), import, als)
+                    make_import_from(config, from, dots, Some(m), import, als)
                         .map_err(|e| "import_from")
             }
             / from:lit("from") dots:lit(".")+
                 import:lit("import") als:import_from_targets() {?
-                    make_import_from(&config, from, dots, None, import, als)
+                    make_import_from(config, from, dots, None, import, als)
                         .map_err(|e| "import_from")
             }
 
@@ -760,7 +760,7 @@ parser! {
 
         rule import_from_as_name() -> ImportAlias<'a>
             = n:name() asname:(kw:lit("as") z:name() {(kw, z)})? {?
-                make_import_alias(&config, NameOrAttribute::N(n), asname)
+                make_import_alias(config, NameOrAttribute::N(n), asname)
                     .map_err(|e| "import_from_as_name")
             }
 
@@ -772,13 +772,13 @@ parser! {
 
         rule dotted_as_name() -> ImportAlias<'a>
             = n:dotted_name() asname:(kw:lit("as") z:name() {(kw, z)})? {?
-                make_import_alias(&config, n, asname)
+                make_import_alias(config, n, asname)
                     .map_err(|e| "dotted_as_name")
             }
 
         rule dotted_name() -> NameOrAttribute<'a>
             = first:name() tail:(dot:lit(".") n:name() {(dot, n)})* {?
-                make_name_or_attr(&config, first, tail)
+                make_name_or_attr(config, first, tail)
                     .map_err(|e| "dotted_name")
             }
 
@@ -789,7 +789,7 @@ parser! {
                               })?
 
         rule comma() -> Comma<'a>
-            = c:lit(",") {? make_comma(&config, c).map_err(|e| ",") }
+            = c:lit(",") {? make_comma(config, c).map_err(|e| ",") }
 
         /// matches any token, not just whitespace
         rule _() -> Token<'a>
