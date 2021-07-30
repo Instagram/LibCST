@@ -1,0 +1,8 @@
+[workspace]
+
+members = [
+    "libcst",
+    "libcst_nodes",
+    "libcst_parser",
+    "libcst_tokenize",
+]
