@@ -8,6 +8,7 @@ use super::{
     List, Name, NameOrAttribute, Parameters, ParenthesizableWhitespace, RightParen, Semicolon,
     SimpleWhitespace, StarredElement, Subscript, TrailingWhitespace, Tuple,
 };
+use crate::{traits::WithComma, ParenthesizedNode};
 
 #[allow(clippy::large_enum_variant)]
 #[derive(Debug, Eq, PartialEq)]
@@ -286,6 +287,41 @@ impl<'a> Codegen<'a> for AssignTargetExpression<'a> {
     }
 }
 
+impl<'a> ParenthesizedNode<'a> for AssignTargetExpression<'a> {
+    fn lpar(&self) -> &Vec<LeftParen<'a>> {
+        match self {
+            Self::Name(n) => n.lpar(),
+            Self::Attribute(n) => n.lpar(),
+            Self::StarredElement(n) => n.lpar(),
+            Self::Tuple(n) => n.lpar(),
+            Self::List(n) => n.lpar(),
+            Self::Subscript(n) => n.lpar(),
+        }
+    }
+
+    fn rpar(&self) -> &Vec<RightParen<'a>> {
+        match self {
+            Self::Name(n) => n.rpar(),
+            Self::Attribute(n) => n.rpar(),
+            Self::StarredElement(n) => n.rpar(),
+            Self::Tuple(n) => n.rpar(),
+            Self::List(n) => n.rpar(),
+            Self::Subscript(n) => n.rpar(),
+        }
+    }
+
+    fn with_parens(self, left: LeftParen<'a>, right: RightParen<'a>) -> Self {
+        match self {
+            Self::Name(n) => Self::Name(n.with_parens(left, right)),
+            Self::Attribute(n) => Self::Attribute(n.with_parens(left, right)),
+            Self::StarredElement(n) => Self::StarredElement(n.with_parens(left, right)),
+            Self::Tuple(n) => Self::Tuple(n.with_parens(left, right)),
+            Self::List(n) => Self::List(n.with_parens(left, right)),
+            Self::Subscript(n) => Self::Subscript(n.with_parens(left, right)),
+        }
+    }
+}
+
 #[derive(Debug, PartialEq, Eq)]
 pub struct Import<'a> {
     pub names: Vec<ImportAlias<'a>>,
@@ -356,8 +392,8 @@ pub struct ImportAlias<'a> {
     pub comma: Option<Comma<'a>>,
 }
 
-impl<'a> ImportAlias<'a> {
-    pub fn with_comma(self, comma: Comma<'a>) -> ImportAlias<'a> {
+impl<'a> WithComma<'a> for ImportAlias<'a> {
+    fn with_comma(self, comma: Comma<'a>) -> ImportAlias<'a> {
         let comma = Some(comma);
         Self { comma, ..self }
     }

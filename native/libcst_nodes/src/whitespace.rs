@@ -141,3 +141,9 @@ impl<'a> Codegen<'a> for ParenthesizableWhitespace<'a> {
         }
     }
 }
+
+impl<'a> Default for ParenthesizableWhitespace<'a> {
+    fn default() -> Self {
+        Self::SimpleWhitespace(SimpleWhitespace(""))
+    }
+}

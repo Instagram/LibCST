@@ -53,7 +53,7 @@ flags & ~ select.EPOLLIN and waiters.write_task is not None
 {"2.7", "3.6", "3.7", "3.8", "3.9",}
 # {"2.7", "3.6", "3.7", "3.8", "3.9", ("4.0" if gilectomy else "3.10")}
 ({"a": "b"}, (True or False), (+value), "string", b"bytes") or None
-# ()
+()
 (1,)
 (1, 2)
 (1, 2, 3)

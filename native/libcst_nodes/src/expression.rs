@@ -4,8 +4,10 @@
 // LICENSE file in the root directory of this source tree.
 
 use crate::{
-    whitespace::ParenthesizableWhitespace, AssignEqual, AssignTargetExpression, BinaryOp,
-    BooleanOp, Codegen, CodegenState, Colon, Comma, CompOp, Dot, UnaryOp,
+    traits::{ParenthesizedNode, WithComma},
+    whitespace::ParenthesizableWhitespace,
+    AssignEqual, AssignTargetExpression, BinaryOp, BooleanOp, Codegen, CodegenState, Colon, Comma,
+    CompOp, Dot, UnaryOp,
 };
 #[derive(Debug, Eq, PartialEq, Default, Clone)]
 pub struct Parameters<'a> {
@@ -239,8 +241,8 @@ impl<'a> Codegen<'a> for Arg<'a> {
     }
 }
 
-impl<'a> Arg<'a> {
-    pub fn with_comma(self, c: Comma<'a>) -> Self {
+impl<'a> WithComma<'a> for Arg<'a> {
+    fn with_comma(self, c: Comma<'a>) -> Self {
         Self {
             comma: Some(c),
             ..self
@@ -659,26 +661,6 @@ impl<'a> Codegen<'a> for ComparisonTarget<'a> {
     }
 }
 
-pub trait ParenthesizedNode<'a> {
-    fn lpar(&self) -> &Vec<LeftParen<'a>>;
-    fn rpar(&self) -> &Vec<RightParen<'a>>;
-
-    fn parenthesize<F>(&'a self, state: &mut CodegenState<'a>, f: F)
-    where
-        F: FnOnce(&mut CodegenState<'a>),
-    {
-        for lpar in self.lpar() {
-            lpar.codegen(state);
-        }
-        f(state);
-        for rpar in self.rpar() {
-            rpar.codegen(state);
-        }
-    }
-
-    fn with_parens(self, left: LeftParen<'a>, right: RightParen<'a>) -> Self;
-}
-
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct StarredElement<'a> {
     pub value: Expression<'a>,
@@ -752,8 +734,10 @@ impl<'a> Element<'a> {
             state.add_token(if default_comma_whitespace { ", " } else { "," });
         }
     }
+}
 
-    pub fn with_comma(self, comma: Comma<'a>) -> Self {
+impl<'a> WithComma<'a> for Element<'a> {
+    fn with_comma(self, comma: Comma<'a>) -> Self {
         let comma = Some(comma);
         match self {
             Self::Simple { value, .. } => Self::Simple { comma, value },
@@ -762,7 +746,7 @@ impl<'a> Element<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, Default)]
 pub struct Tuple<'a> {
     pub elements: Vec<Element<'a>>,
     pub lpar: Vec<LeftParen<'a>>,
@@ -782,7 +766,14 @@ impl<'a> ParenthesizedNode<'a> for Tuple<'a> {
         let mut lpar = self.lpar;
         lpar.push(left);
         let mut rpar = self.rpar;
-        rpar.push(right);
+        // HACK: for empty tuples the left parenthesis owns the whitespace.
+        if self.elements.is_empty() {
+            rpar.push(RightParen {
+                whitespace_before: Default::default(),
+            });
+        } else {
+            rpar.push(right);
+        }
         Self { lpar, rpar, ..self }
     }
 }
@@ -1231,8 +1222,10 @@ impl<'a> DictElement<'a> {
             state.add_token(if default_comma_whitespace { ", " } else { "," });
         }
     }
+}
 
-    pub fn with_comma(self, comma: Comma<'a>) -> Self {
+impl<'a> WithComma<'a> for DictElement<'a> {
+    fn with_comma(self, comma: Comma<'a>) -> Self {
         let comma = Some(comma);
         match self {
             Self::Starred(s) => Self::Starred(DoubleStarredElement { comma, ..s }),
@@ -1271,6 +1264,7 @@ impl<'a> Codegen<'a> for DoubleStarredElement<'a> {
     }
 }
 
+#[allow(clippy::large_enum_variant)]
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum BaseSlice<'a> {
     Index(Index<'a>),

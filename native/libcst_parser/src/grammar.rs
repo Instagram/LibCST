@@ -251,10 +251,10 @@ parser! {
 
         rule star_targets() -> AssignTargetExpression<'a>
             = a:star_target() !lit(",") {a}
-            / first:star_target()
+            / first:(t:star_target() {assign_target_to_element(t)})
                 rest:(comma:comma() t:star_target() {(comma, assign_target_to_element(t))})*
                 comma:comma()? {?
-                    make_tuple(config, assign_target_to_element(first), rest, comma, None, None)
+                    make_tuple(config, first, rest, comma, None, None)
                         .map(AssignTargetExpression::Tuple)
                         .map_err(|e| "star_targets")
             }
@@ -267,19 +267,48 @@ parser! {
             }
             / target_with_star_atom()
 
+        // This differs from star_targets above because it requires at least two items
+        // in the tuple
+        rule star_targets_tuple_seq() -> Tuple<'a>
+            = first:(t:star_target() {assign_target_to_element(t)})
+                rest:(c:comma() t:star_target() {(c, assign_target_to_element(t))})+
+                trail:comma()? {?
+                    make_tuple(config, first, rest, trail, None, None)
+                        .map_err(|_| "star_target_tuple_seq")
+            }
+            / t:star_target() trail:comma()? {?
+                make_tuple(config, assign_target_to_element(t), vec![], trail, None, None)
+                    .map_err(|_| "star_target_tuple_seq")
+            }
+
         rule target_with_star_atom() -> AssignTargetExpression<'a>
             = a:t_primary() dot:lit(".") n:name() !t_lookahead() {?
                 make_attribute(config, a, dot, n)
                     .map(AssignTargetExpression::Attribute)
                     .map_err(|e| "target_with_star_atom")
             }
-            // make_slice
+            / a:t_primary() lbrak:lit("[") s:slices() rbrak:lit("]") {?
+                make_subscript(config, a, lbrak, s, rbrak)
+                    .map(AssignTargetExpression::Subscript)
+                    .map_err(|_| "target_with_star_atom")
+            }
             / a:star_atom() {a}
 
         rule star_atom() -> AssignTargetExpression<'a>
             = a:name() { AssignTargetExpression::Name(a) }
-            / lpar:lit("(") a:target_with_star_atom() rpar:lit(")") { a } // TODO parens
-            // TODO: tuple, List
+            / lpar:lpar() a:target_with_star_atom() rpar:rpar() { a.with_parens(lpar, rpar) }
+            / lpar:lpar() a:star_targets_tuple_seq()? rpar:rpar() {
+               AssignTargetExpression::Tuple(
+                   a.unwrap_or_default().with_parens(lpar, rpar)
+               )
+            }
+            // TODO: List
+
+        rule lpar() -> LeftParen<'a>
+            = a:lit("(") {? make_lpar(config, a).map_err(|_| "lpar")}
+
+        rule rpar() -> RightParen<'a>
+            = a:lit(")") {? make_rpar(config, a).map_err(|_| "rpar")}
 
         #[cache_left_rec]
         rule t_primary() -> Expression<'a>
@@ -581,6 +610,10 @@ parser! {
                         .map(Expression::Tuple)
                         .map_err(|e| "tuple")
             }
+            / lpar:lpar() lit(")") {
+                Expression::Tuple(Tuple::default().with_parens(
+                    lpar, RightParen { whitespace_before: Default::default() }
+                ))}
 
         rule group() -> Expression<'a>
             = lpar:lit("(") e:(yield_expr() / named_expression()) rpar:lit(")") {?
@@ -2012,11 +2045,14 @@ fn make_set<'a>(
     })
 }
 
-fn make_star_named_expressions<'a>(
-    first: Element<'a>,
-    rest: Vec<(Comma<'a>, Element<'a>)>,
+fn comma_separate<'a, T>(
+    first: T,
+    rest: Vec<(Comma<'a>, T)>,
     trailing_comma: Option<Comma<'a>>,
-) -> Vec<Element<'a>> {
+) -> Vec<T>
+where
+    T: WithComma<'a>,
+{
     let mut elements = vec![];
     let mut current = first;
     for (comma, next) in rest {
@@ -2030,6 +2066,14 @@ fn make_star_named_expressions<'a>(
     }
     elements.push(current);
     elements
+}
+
+fn make_star_named_expressions<'a>(
+    first: Element<'a>,
+    rest: Vec<(Comma<'a>, Element<'a>)>,
+    trailing_comma: Option<Comma<'a>>,
+) -> Vec<Element<'a>> {
+    comma_separate(first, rest, trailing_comma)
 }
 
 fn make_dict<'a>(

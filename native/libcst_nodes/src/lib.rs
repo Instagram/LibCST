@@ -15,9 +15,8 @@ pub use expression::{
     Arg, Asynchronous, Attribute, BaseSlice, Call, CompFor, CompIf, ComparisonTarget, Dict,
     DictComp, DictElement, DoubleStarredElement, Element, Expression, GeneratorExp, Index,
     LeftCurlyBrace, LeftParen, LeftSquareBracket, List, ListComp, Name, NameOrAttribute, Param,
-    ParamSlash, ParamStar, Parameters, ParenthesizedNode, RightCurlyBrace, RightParen,
-    RightSquareBracket, Set, SetComp, Slice, StarArg, StarredElement, Subscript, SubscriptElement,
-    Tuple,
+    ParamSlash, ParamStar, Parameters, RightCurlyBrace, RightParen, RightSquareBracket, Set,
+    SetComp, Slice, StarArg, StarredElement, Subscript, SubscriptElement, Tuple,
 };
 
 mod op;
@@ -30,3 +29,6 @@ pub use module::Module;
 
 mod codegen;
 pub use codegen::{Codegen, CodegenState};
+
+mod traits;
+pub use traits::{ParenthesizedNode, WithComma};
