@@ -4,6 +4,9 @@
 # alright here we go.
 
 ()
+( # evil >:)
+  # evil >:(
+) # ...
 (1,)
 ( *  1 , *  2 ,)
 *_ = (l,)
