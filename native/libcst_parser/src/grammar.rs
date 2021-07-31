@@ -339,69 +339,63 @@ parser! {
             = lit("yield") lit("from") a:expression() { panic!("yield from not implemented") }
             / lit("yield") a:star_expressions()? { panic!("yield not implemented") }
 
-        #[cache]
+        #[cache_left_rec]
         rule bitwise_or() -> Expression<'a>
-            // TODO left-recursive grammar
-            = a:bitwise_xor() tail:(op:lit("|") b:bitwise_xor() {(op, b)})+ {?
-                make_binary_op(config, a, tail).map_err(|e| "expected bitwise_or")
+            = a:bitwise_or() op:lit("|") b:bitwise_xor() {?
+                make_binary_op(config, a, op, b).map_err(|e| "expected bitwise_or")
             }
             / bitwise_xor()
 
-        #[cache]
+        #[cache_left_rec]
         rule bitwise_xor() -> Expression<'a>
-            // TODO left-recursive grammar
-            = a:bitwise_and() tail:(op:lit("^") b:bitwise_and() {(op, b)})+ {?
-                make_binary_op(config, a, tail).map_err(|e| "expected bitwise_xor")
+            = a:bitwise_xor() op:lit("^") b:bitwise_and() {?
+                make_binary_op(config, a, op, b).map_err(|e| "expected bitwise_xor")
             }
             / bitwise_and()
 
-        #[cache]
+        #[cache_left_rec]
         rule bitwise_and() -> Expression<'a>
-            // TODO left-recursive grammar
-            = a:shift_expr() tail:(op:lit("&") b:shift_expr() {(op, b)})+ {?
-                make_binary_op(config, a, tail).map_err(|e| "expected bitwise_and")
+            = a:bitwise_and() op:lit("&") b:shift_expr() {?
+                make_binary_op(config, a, op, b).map_err(|e| "expected bitwise_and")
             }
             / shift_expr()
 
-        #[cache]
+        #[cache_left_rec]
         rule shift_expr() -> Expression<'a>
-            // TODO left-recursive grammar
-            = a:sum() tail:(op:lit("<<") b:shift_expr() {(op, b)})+ {?
-                make_binary_op(config, a, tail).map_err(|e| "expected shift_expr")
+            = a:shift_expr() op:lit("<<") b:sum() {?
+                make_binary_op(config, a, op, b).map_err(|e| "expected shift_expr")
             }
-            / a:sum() tail:(op:lit(">>") b:shift_expr() {(op, b)})+ {?
-                make_binary_op(config, a, tail).map_err(|e| "expected shift_expr")
+            / a:shift_expr() op:lit(">>") b:sum() {?
+                make_binary_op(config, a, op, b).map_err(|e| "expected shift_expr")
             }
             / sum()
 
-        #[cache]
+        #[cache_left_rec]
         rule sum() -> Expression<'a>
-            // TODO left-recursive grammar
-            = a:term() tail:(op:lit("+") b:term() {(op, b)})+ {?
-                make_binary_op(config, a, tail).map_err(|e| "expected sum")
+            = a:sum() op:lit("+") b:term() {?
+                make_binary_op(config, a, op, b).map_err(|e| "expected sum")
             }
-            / a:term() tail:(op:lit("-") b:term() {(op, b)})+ {?
-                make_binary_op(config, a, tail).map_err(|e| "expected sum")
+            / a:sum() op:lit("-") b:term() {?
+                make_binary_op(config, a, op, b).map_err(|e| "expected sum")
             }
             / term()
 
-        #[cache]
+        #[cache_left_rec]
         rule term() -> Expression<'a>
-            // TODO left-recursive grammar
-            = a:factor() tail:(op:lit("*") b:factor() {(op, b)})+ {?
-                make_binary_op(config, a, tail).map_err(|e| "expected term")
+            = a:term() op:lit("*") b:factor() {?
+                make_binary_op(config, a, op, b).map_err(|e| "expected term")
             }
-            / a:factor() tail:(op:lit("/") b:factor() {(op, b)})+ {?
-                make_binary_op(config, a, tail).map_err(|e| "expected term")
+            / a:term() op:lit("/") b:factor() {?
+                make_binary_op(config, a, op, b).map_err(|e| "expected term")
             }
-            / a:factor() tail:(op:lit("//") b:factor() {(op, b)})+ {?
-                make_binary_op(config, a, tail).map_err(|e| "expected term")
+            / a:term() op:lit("//") b:factor() {?
+                make_binary_op(config, a, op, b).map_err(|e| "expected term")
             }
-            / a:factor() tail:(op:lit("%") b:factor() {(op, b)})+ {?
-                make_binary_op(config, a, tail).map_err(|e| "expected term")
+            / a:term() op:lit("%") b:factor() {?
+                make_binary_op(config, a, op, b).map_err(|e| "expected term")
             }
-            / a:factor() tail:(op:lit("@") b:factor() {(op, b)})+ {?
-                make_binary_op(config, a, tail).map_err(|e| "expected term")
+            / a:term() op:lit("@") b:factor() {?
+                make_binary_op(config, a, op, b).map_err(|e| "expected term")
             }
             / factor()
 
@@ -420,7 +414,7 @@ parser! {
 
         rule power() -> Expression<'a>
             = a:await_primary() op:lit("**") b:factor() {?
-                make_binary_op(config, a, vec![(op, b)]).map_err(|e| "expected power")
+                make_binary_op(config, a, op, b).map_err(|e| "expected power")
             }
             / await_primary()
 
@@ -1030,24 +1024,18 @@ fn make_boolean_operator<'a>(config: &Config<'a>, mut tok: Token<'a>) -> Result<
 
 fn make_binary_op<'a>(
     config: &Config<'a>,
-    head: Expression<'a>,
-    tail: Vec<(Token<'a>, Expression<'a>)>,
+    left: Expression<'a>,
+    op: Token<'a>,
+    right: Expression<'a>,
 ) -> Result<'a, Expression<'a>> {
-    if tail.is_empty() {
-        return Ok(head);
-    }
-
-    let mut expr = head;
-    for (tok, right) in tail {
-        expr = Expression::BinaryOperation {
-            left: Box::new(expr),
-            operator: make_binary_operator(config, tok)?,
-            right: Box::new(right),
-            lpar: vec![],
-            rpar: vec![],
-        }
-    }
-    Ok(expr)
+    let operator = make_binary_operator(config, op)?;
+    Ok(Expression::BinaryOperation {
+        left: Box::new(left),
+        operator,
+        right: Box::new(right),
+        lpar: vec![],
+        rpar: vec![],
+    })
 }
 
 fn make_binary_operator<'a>(config: &Config<'a>, mut tok: Token<'a>) -> Result<'a, BinaryOp<'a>> {

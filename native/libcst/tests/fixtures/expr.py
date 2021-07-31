@@ -23,7 +23,7 @@ Name1 or Name2 and Name3 or Name4
 v1 << 2
 1 >> v2
 1 % finished
-# 1 + v2 - v3 * 4 ^ 5 ** v6 / 7 // 8
+1 + v2 - v3 * 4 ^ 5 ** v6 / 7 // 8
 ((1 + v2) - (v3 * 4)) ^ (((5 ** v6) / 7) // 8)
 not great
 ~great
@@ -246,7 +246,7 @@ mapping = {
 #     await some.complicated[0].call(with_args=(True or (1 is not 1)))
 
 
-# print(*[] or [1])
+print(*[] or [1])
 # print(**{1: 3} if False else {x: x for x in range(3)})
 # print(*lambda x: x)
 # assert not Test, "Short message"
@@ -347,12 +347,12 @@ a = (
 #     >> aaaaaaaaaaaaaaaa.l ** aaaaaaaaaaaaaaaa.m // aaaaaaaaaaaaaaaa.n
 # ):
 #     return True
-# aaaaaaaaaaaaaaaa + aaaaaaaaaaaaaaaa - aaaaaaaaaaaaaaaa * (
-#     aaaaaaaaaaaaaaaa + aaaaaaaaaaaaaaaa
-# ) / (aaaaaaaaaaaaaaaa + aaaaaaaaaaaaaaaa + aaaaaaaaaaaaaaaa)
-# aaaaaaaaaaaaaaaa + aaaaaaaaaaaaaaaa
-# aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa >> aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa << aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-# bbbb >> bbbb * bbbb
-# aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa ^ bbbb.a & aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa ^ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaa + aaaaaaaaaaaaaaaa - aaaaaaaaaaaaaaaa * (
+    aaaaaaaaaaaaaaaa + aaaaaaaaaaaaaaaa
+) / (aaaaaaaaaaaaaaaa + aaaaaaaaaaaaaaaa + aaaaaaaaaaaaaaaa)
+aaaaaaaaaaaaaaaa + aaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa >> aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa << aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+bbbb >> bbbb * bbbb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa ^ bbbb.a & aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa ^ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 last_call()
 # standalone comment at ENDMARKER
