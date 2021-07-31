@@ -27,6 +27,7 @@ type Result<T> = std::result::Result<T, WhitespaceError>;
 pub struct State<'a> {
     pub line: usize,   // one-indexed (to match parso's behavior)
     pub column: usize, // zero-indexed (to match parso's behavior)
+    pub column_byte: usize,
     pub absolute_indent: &'a str,
     pub is_parenthesized: bool,
     pub byte_offset: usize,
@@ -37,6 +38,7 @@ impl<'a> Default for State<'a> {
         Self {
             line: 1,
             column: 0,
+            column_byte: 0,
             absolute_indent: "",
             is_parenthesized: false,
             byte_offset: 0,
@@ -144,10 +146,15 @@ pub fn parse_empty_lines<'a>(
 
 pub fn parse_comment<'a>(config: &Config<'a>, state: &mut State) -> Result<Option<Comment<'a>>> {
     if let Some(comment_match) =
-        COMMENT_RE.find(config.get_line_after_column(state.line, state.column)?)
+        COMMENT_RE.find(config.get_line_after_column(state.line, state.column_byte)?)
     {
         let comment_str = comment_match.as_str();
-        advance_this_line(config, state, comment_str.len())?;
+        advance_this_line(
+            config,
+            state,
+            comment_str.chars().count(),
+            comment_str.len(),
+        )?;
         return Ok(Some(Comment(comment_str)));
     }
     Ok(None)
@@ -155,11 +162,16 @@ pub fn parse_comment<'a>(config: &Config<'a>, state: &mut State) -> Result<Optio
 
 pub fn parse_newline<'a>(config: &Config<'a>, state: &mut State) -> Result<Option<Newline<'a>>> {
     if let Some(newline_match) =
-        NEWLINE_RE.find(config.get_line_after_column(state.line, state.column)?)
+        NEWLINE_RE.find(config.get_line_after_column(state.line, state.column_byte)?)
     {
         let newline_str = newline_match.as_str();
-        advance_this_line(config, state, newline_str.len())?;
-        if state.column != config.get_line(state.line)?.len() {
+        advance_this_line(
+            config,
+            state,
+            newline_str.chars().count(),
+            newline_str.len(),
+        )?;
+        if state.column_byte != config.get_line(state.line)?.len() {
             return Err(WhitespaceError::InternalError(format!(
                 "Found newline at ({}, {}) but it's not EOL",
                 state.line, state.column
@@ -180,7 +192,7 @@ pub fn parse_newline<'a>(config: &Config<'a>, state: &mut State) -> Result<Optio
 
     // If we're at the end of the file but not on BOL, that means this is the fake
     // newline inserted by the tokenizer.
-    if state.byte_offset == config.input.len() && state.column != 0 {
+    if state.byte_offset == config.input.len() && state.column_byte != 0 {
         return Ok(Some(Newline(None, Fakeness::Fake)));
     }
     Ok(None)
@@ -221,8 +233,10 @@ fn parse_indent<'a>(
     override_absolute_indent: Option<&'a str>,
 ) -> Result<bool> {
     let absolute_indent = override_absolute_indent.unwrap_or(state.absolute_indent);
-    if state.column != 0 {
-        if state.column == config.get_line(state.line)?.len() && state.line == config.lines.len() {
+    if state.column_byte != 0 {
+        if state.column_byte == config.get_line(state.line)?.len()
+            && state.line == config.lines.len()
+        {
             Ok(false)
         } else {
             Err(WhitespaceError::InternalError(
@@ -232,10 +246,11 @@ fn parse_indent<'a>(
     } else {
         Ok(
             if config
-                .get_line_after_column(state.line, state.column)?
+                .get_line_after_column(state.line, state.column_byte)?
                 .starts_with(absolute_indent)
             {
-                state.column += absolute_indent.len();
+                state.column_byte += absolute_indent.len();
+                state.column += absolute_indent.chars().count();
                 true
             } else {
                 false
@@ -246,21 +261,28 @@ fn parse_indent<'a>(
 
 fn advance_to_next_line<'a>(config: &Config<'a>, state: &mut State) -> Result<()> {
     let cur_line = config.get_line(state.line)?;
-    state.byte_offset += cur_line.len() - state.column;
+    state.byte_offset += cur_line.len() - state.column_byte;
     state.column = 0;
+    state.column_byte = 0;
     state.line += 1;
     Ok(())
 }
 
-fn advance_this_line<'a>(config: &Config<'a>, state: &mut State, offset: usize) -> Result<()> {
+fn advance_this_line<'a>(
+    config: &Config<'a>,
+    state: &mut State,
+    char_count: usize,
+    offset: usize,
+) -> Result<()> {
     let cur_line = config.get_line(state.line)?;
-    if cur_line.len() < state.column + offset {
+    if cur_line.len() < state.column_byte + offset {
         return Err(WhitespaceError::InternalError(format!(
             "Tried to advance past line {}'s end",
             state.line
         )));
     }
-    state.column += offset;
+    state.column += char_count;
+    state.column_byte += offset;
     state.byte_offset += offset;
     Ok(())
 }
@@ -270,21 +292,23 @@ pub fn parse_simple_whitespace<'a>(
     state: &mut State,
 ) -> Result<SimpleWhitespace<'a>> {
     let capture_ws = |line, col| -> Result<&'a str> {
+        let x = config.get_line_after_column(line, col);
+        let x = x?;
         Ok(SIMPLE_WHITESPACE_RE
-            .find(config.get_line_after_column(line, col)?)
+            .find(x)
             .expect("SIMPLE_WHITESPACE_RE supports 0-length matches, so it must always match")
             .as_str())
     };
     let start_offset = state.byte_offset;
     let mut prev_line: &str;
     loop {
-        prev_line = capture_ws(state.line, state.column)?;
+        prev_line = capture_ws(state.line, state.column_byte)?;
         if !prev_line.contains('\\') {
             break;
         }
         advance_to_next_line(config, state)?;
     }
-    advance_this_line(config, state, prev_line.len())?;
+    advance_this_line(config, state, prev_line.chars().count(), prev_line.len())?;
 
     Ok(SimpleWhitespace(
         &config.input[start_offset..state.byte_offset],

@@ -224,8 +224,8 @@ what_is_up_with_those_new_coord_names = (coord_names | set(vars_to_create)) - se
 #     )
 #     .all()
 # )
-# Ø = set()
-# authors.łukasz.say_thanks()
+Ø = set()
+authors.łukasz.say_thanks()
 authors.lukasz.say_thanks()
 mapping = {
     A: 0.25 * (10.0 / 12),

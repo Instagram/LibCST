@@ -1101,6 +1101,7 @@ impl<'a> Iterator for TokenIterator<'a> {
                 _ => WhitespaceState {
                     line: text_pos.line_number(),
                     column: text_pos.char_column_number(),
+                    column_byte: text_pos.byte_column_number(),
                     byte_offset: text_pos.byte_idx(),
                     absolute_indent: self.absolute_indents.last().unwrap_or(&""),
                     is_parenthesized: self.core_state.is_parenthesized(),

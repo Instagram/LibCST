@@ -44,6 +44,7 @@ pub struct TextPosition<'t> {
     char_widths: NewlineNormalizedCharWidths<'t>,
     inner_byte_idx: usize,
     inner_char_column_number: usize,
+    inner_byte_column_number: usize,
     inner_line_number: usize,
 }
 
@@ -54,6 +55,7 @@ impl<'t> TextPosition<'t> {
             char_widths: NewlineNormalizedCharWidths::new(text),
             inner_byte_idx: 0,
             inner_char_column_number: 0,
+            inner_byte_column_number: 0,
             inner_line_number: 1,
         }
     }
@@ -149,6 +151,10 @@ impl<'t> TextPosition<'t> {
         self.inner_char_column_number
     }
 
+    pub fn byte_column_number(&self) -> usize {
+        self.inner_byte_column_number
+    }
+
     /// Returns the one-indexed line number.
     pub fn line_number(&self) -> usize {
         self.inner_line_number
@@ -167,9 +173,11 @@ impl Iterator for TextPosition<'_> {
                 '\n' => {
                     self.inner_line_number += 1;
                     self.inner_char_column_number = 0;
+                    self.inner_byte_column_number = 0;
                 }
                 _ => {
                     self.inner_char_column_number += cw.char_width;
+                    self.inner_byte_column_number += cw.byte_width;
                 }
             }
             Some(cw.character)

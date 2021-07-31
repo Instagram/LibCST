@@ -62,7 +62,7 @@ impl<'a> Parse for TokVec<'a> {
     }
 
     fn position_repr(&self, pos: usize) -> Self::PositionRepr {
-        let tok = &self.0.get(pos).unwrap_or_else(|| self.0.last().unwrap());
+        let tok = self.0.get(pos).unwrap_or_else(|| self.0.last().unwrap());
         ParseLoc {
             start_pos: LineCol {
                 line: tok.start_pos.line_number(),
@@ -1215,7 +1215,6 @@ fn make_simple_statement_line<'a>(
     parts: SimpleStatementParts<'a>,
 ) -> Result<'a, SimpleStatementLine<'a>> {
     let (mut first, body, trailing_whitespace) = _make_simple_statement(config, parts)?;
-
     let leading_lines = parse_empty_lines(config, &mut first.whitespace_before, None)?;
     Ok(SimpleStatementLine {
         body,
