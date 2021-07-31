@@ -174,8 +174,12 @@ parser! {
 
         #[cache]
         rule star_expression() -> Expression<'a>
-            = // TODO lit!("*") bitwise_or()
-            expression()
+            = star:lit("*") e:bitwise_or() {?
+                make_starred_element(config, star, expr_to_element(e))
+                    .map(Expression::StarredElement)
+                    .map_err(|_| "star_expression")
+            }
+            / expression()
 
         rule star_named_expressions() -> Vec<Element<'a>>
             = first:star_named_expression()
@@ -1557,7 +1561,7 @@ fn make_starred_element<'a>(
     let whitespace_before_value =
         parse_parenthesizable_whitespace(config, &mut star.whitespace_after)?;
     Ok(StarredElement {
-        value,
+        value: Box::new(value),
         whitespace_before_value,
         lpar: Default::default(),
         rpar: Default::default(),

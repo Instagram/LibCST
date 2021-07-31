@@ -356,6 +356,7 @@ pub enum Expression<'a> {
     Set(Set<'a>),
     Dict(Dict<'a>),
     Subscript(Subscript<'a>),
+    StarredElement(StarredElement<'a>),
     // TODO: FormattedString, ConcatenatedString, Lambda, Await, IfExp, Yield
 }
 
@@ -415,6 +416,7 @@ impl<'a> Codegen<'a> for Expression<'a> {
             Self::Set(s) => s.codegen(state),
             Self::Dict(d) => d.codegen(state),
             Self::Subscript(s) => s.codegen(state),
+            Self::StarredElement(e) => e.codegen(state),
             _ => panic!("codegen not implemented for {:#?}", self),
         }
     }
@@ -663,7 +665,7 @@ impl<'a> Codegen<'a> for ComparisonTarget<'a> {
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct StarredElement<'a> {
-    pub value: Expression<'a>,
+    pub value: Box<Expression<'a>>,
     pub comma: Option<Comma<'a>>,
     pub lpar: Vec<LeftParen<'a>>,
     pub rpar: Vec<RightParen<'a>>,
