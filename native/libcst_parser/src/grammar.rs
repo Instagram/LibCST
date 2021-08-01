@@ -32,7 +32,7 @@ pub type Result<'a, T> = std::result::Result<T, ParserError<'a>>;
 #[derive(Debug)]
 pub struct TokVec<'a>(Vec<Token<'a>>);
 
-impl<'a> From<Vec<Token<'a>>> for TokVec<'a> {
+impl<'a> std::convert::From<Vec<Token<'a>>> for TokVec<'a> {
     fn from(vec: Vec<Token<'a>>) -> Self {
         TokVec(vec)
     }
@@ -141,6 +141,7 @@ parser! {
             / &"import" i:import_name() { SmallStatement::Import(i) }
             / &"from" i:import_from() { SmallStatement::ImportFrom(i) }
             / "pass" { SmallStatement::Pass { semicolon: None } }
+            / &"yield" s:yield_stmt() { SmallStatement::Expr { value: s, semicolon: None } }
 
         rule assignment() -> SmallStatement<'a>
             = a:name() col:lit(":") ann:expression()
@@ -469,8 +470,16 @@ parser! {
             = "(" / "[" / "."
 
         rule yield_expr() -> Expression<'a>
-            = lit("yield") lit("from") a:expression() { panic!("yield from not implemented") }
-            / lit("yield") a:star_expressions()? { panic!("yield not implemented") }
+            = y:lit("yield") f:lit("from") a:expression() {?
+                make_yield(config, y, Some(f), Some(a))
+                    .map(Expression::Yield)
+                    .map_err(|_| "yield from")
+            }
+            / y:lit("yield") a:star_expressions()? {?
+                make_yield(config, y, None, a)
+                    .map(Expression::Yield)
+                    .map_err(|_| "yield")
+            }
 
         #[cache_left_rec]
         rule bitwise_or() -> Expression<'a>
@@ -889,6 +898,9 @@ parser! {
 
         rule annotated_rhs() -> Expression<'a>
             = yield_expr() / star_expressions()
+
+        rule yield_stmt() -> Expression<'a>
+            = yield_expr()
 
         rule import_name() -> Import<'a>
             = kw:lit("import") a:dotted_as_names() {?
@@ -2504,6 +2516,52 @@ fn make_ann_assignment<'a>(
         value,
         equal,
         semicolon: None,
+    })
+}
+
+fn make_yield<'a>(
+    config: &Config<'a>,
+    mut y: Token<'a>,
+    f: Option<Token<'a>>,
+    e: Option<Expression<'a>>,
+) -> Result<'a, Yield<'a>> {
+    let value = match (f, e) {
+        (None, None) => None,
+        (Some(f), Some(e)) => Some(YieldValue::From(make_from(config, f, e, false)?)),
+        (None, Some(e)) => Some(YieldValue::Expression(e)),
+        _ => panic!("yield from without expression"),
+    };
+    let whitespace_after_yield = Some(parse_parenthesizable_whitespace(
+        config,
+        &mut y.whitespace_after,
+    )?);
+    Ok(Yield {
+        value: value.map(Box::new),
+        lpar: Default::default(),
+        rpar: Default::default(),
+        whitespace_after_yield,
+    })
+}
+
+fn make_from<'a>(
+    config: &Config<'a>,
+    mut f: Token<'a>,
+    e: Expression<'a>,
+    eat_whitespace_before_from: bool,
+) -> Result<'a, From<'a>> {
+    let whitespace_before_from = if eat_whitespace_before_from {
+        Some(parse_parenthesizable_whitespace(
+            config,
+            &mut f.whitespace_before,
+        )?)
+    } else {
+        None
+    };
+    let whitespace_after_from = parse_parenthesizable_whitespace(config, &mut f.whitespace_after)?;
+    Ok(From {
+        item: e,
+        whitespace_before_from,
+        whitespace_after_from,
     })
 }
 

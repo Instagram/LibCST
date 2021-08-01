@@ -359,7 +359,8 @@ pub enum Expression<'a> {
     StarredElement(StarredElement<'a>),
     IfExp(IfExp<'a>),
     Lambda(Lambda<'a>),
-    // TODO: FormattedString, ConcatenatedString, Await, Yield
+    Yield(Yield<'a>),
+    // TODO: FormattedString, ConcatenatedString, Await
 }
 
 impl<'a> Codegen<'a> for Expression<'a> {
@@ -421,6 +422,7 @@ impl<'a> Codegen<'a> for Expression<'a> {
             Self::StarredElement(e) => e.codegen(state),
             Self::IfExp(e) => e.codegen(state),
             Self::Lambda(l) => l.codegen(state),
+            Self::Yield(y) => y.codegen(state),
             _ => panic!("codegen not implemented for {:#?}", self),
         }
     }
@@ -650,7 +652,7 @@ impl<'a> Codegen<'a> for NameOrAttribute<'a> {
     }
 }
 
-impl<'a> From<NameOrAttribute<'a>> for Expression<'a> {
+impl<'a> std::convert::From<NameOrAttribute<'a>> for Expression<'a> {
     fn from(x: NameOrAttribute<'a>) -> Self {
         match x {
             NameOrAttribute::N(n) => Self::Name(n),
@@ -1486,6 +1488,85 @@ impl<'a> Codegen<'a> for Lambda<'a> {
             self.params.codegen(state);
             self.colon.codegen(state);
             self.body.codegen(state);
+        })
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct From<'a> {
+    pub item: Expression<'a>,
+    pub whitespace_before_from: Option<ParenthesizableWhitespace<'a>>,
+    pub whitespace_after_from: ParenthesizableWhitespace<'a>,
+}
+
+impl<'a> From<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>, default_space: &'a str) {
+        if let Some(ws) = &self.whitespace_before_from {
+            ws.codegen(state);
+        } else {
+            state.add_token(default_space);
+        }
+        state.add_token("from");
+        self.whitespace_after_from.codegen(state);
+        self.item.codegen(state);
+    }
+}
+
+#[allow(clippy::large_enum_variant)]
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub enum YieldValue<'a> {
+    Expression(Expression<'a>),
+    From(From<'a>),
+}
+
+impl<'a> YieldValue<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>, default_space: &'a str) {
+        match self {
+            Self::Expression(e) => e.codegen(state),
+            Self::From(f) => f.codegen(state, default_space),
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct Yield<'a> {
+    pub value: Option<Box<YieldValue<'a>>>,
+    pub lpar: Vec<LeftParen<'a>>,
+    pub rpar: Vec<RightParen<'a>>,
+    pub whitespace_after_yield: Option<ParenthesizableWhitespace<'a>>,
+}
+
+impl<'a> ParenthesizedNode<'a> for Yield<'a> {
+    fn lpar(&self) -> &Vec<LeftParen<'a>> {
+        &self.lpar
+    }
+
+    fn rpar(&self) -> &Vec<RightParen<'a>> {
+        &self.rpar
+    }
+
+    fn with_parens(self, left: LeftParen<'a>, right: RightParen<'a>) -> Self {
+        let mut lpar = self.lpar;
+        lpar.push(left);
+        let mut rpar = self.rpar;
+        rpar.push(right);
+        Self { lpar, rpar, ..self }
+    }
+}
+
+impl<'a> Codegen<'a> for Yield<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+        self.parenthesize(state, |state| {
+            state.add_token("yield");
+            if let Some(ws) = &self.whitespace_after_yield {
+                ws.codegen(state);
+            } else if self.value.is_some() {
+                state.add_token(" ");
+            }
+
+            if let Some(val) = &self.value {
+                val.codegen(state, "")
+            }
         })
     }
 }

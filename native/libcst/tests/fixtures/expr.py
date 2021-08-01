@@ -245,11 +245,11 @@ mapping = {
     ]
 ]
 
-# def gen():
-#     yield from outside_of_generator
-#     a = yield
-#     b = yield
-#     c = yield
+def gen():
+    yield from outside_of_generator
+    a = yield
+    b = yield
+    c = yield
 
 
 # async def f():
