@@ -133,6 +133,7 @@ parser! {
             }
             / &"if" f:if_stmt() { CompoundStatement::If(f) }
 
+        #[cache]
         rule small_stmt() -> SmallStatement<'a>
             = a:assignment() { SmallStatement::Assign(a) }
             / e:star_expressions() { SmallStatement::Expr { value: e, semicolon: None } }
@@ -147,6 +148,7 @@ parser! {
                     .map_err(|e| "assignment")
             }
 
+        #[cache]
         rule block() -> Suite<'a>
             = n:tok(NL, "NEWLINE") ind:tok(Indent, "INDENT") s:statements() ded:tok(Dedent, "DEDENT") {?
                 make_indented_block(config, n, ind, s, ded)
@@ -263,6 +265,7 @@ parser! {
                         .map_err(|e| "star_targets")
             }
 
+        #[cache]
         rule star_target() -> AssignTargetExpression<'a>
             = star:lit("*") !lit("*") t:star_target() {?
                 make_starred_element(config, star, assign_target_to_element(t))
@@ -292,6 +295,7 @@ parser! {
                     comma_separate(first, rest, trail)
             }
 
+        #[cache]
         rule target_with_star_atom() -> AssignTargetExpression<'a>
             = a:t_primary() dot:lit(".") n:name() !t_lookahead() {?
                 make_attribute(config, a, dot, n)

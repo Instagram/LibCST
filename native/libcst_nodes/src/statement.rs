@@ -11,7 +11,7 @@ use super::{
 use crate::{traits::WithComma, ParenthesizedNode};
 
 #[allow(clippy::large_enum_variant)]
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Eq, PartialEq, Clone)]
 pub enum Statement<'a> {
     Simple(SimpleStatementLine<'a>),
     Compound(CompoundStatement<'a>),
@@ -26,7 +26,7 @@ impl<'a> Codegen<'a> for Statement<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum CompoundStatement<'a> {
     FunctionDef(FunctionDef<'a>),
     If(If<'a>),
@@ -41,7 +41,7 @@ impl<'a> Codegen<'a> for CompoundStatement<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Suite<'a> {
     IndentedBlock(IndentedBlock<'a>),
     SimpleStatementSuite(SimpleStatementSuite<'a>),
@@ -56,7 +56,7 @@ impl<'a> Codegen<'a> for Suite<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct IndentedBlock<'a> {
     /// Sequence of statements belonging to this indented block.
     pub body: Vec<Statement<'a>>,
@@ -109,7 +109,7 @@ impl<'a> Codegen<'a> for IndentedBlock<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct SimpleStatementSuite<'a> {
     /// Sequence of small statements. All but the last statement are required to have
     /// a semicolon.
@@ -155,7 +155,7 @@ impl<'a> Codegen<'a> for SimpleStatementSuite<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct SimpleStatementLine<'a> {
     /// Sequence of small statements. All but the last statement are required to have
     /// a semicolon.
@@ -178,7 +178,7 @@ impl<'a> Codegen<'a> for SimpleStatementLine<'a> {
 }
 
 #[allow(dead_code, clippy::large_enum_variant)]
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Eq, PartialEq, Clone)]
 pub enum SmallStatement<'a> {
     Pass {
         semicolon: Option<Semicolon<'a>>,
@@ -322,7 +322,7 @@ impl<'a> ParenthesizedNode<'a> for AssignTargetExpression<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Import<'a> {
     pub names: Vec<ImportAlias<'a>>,
     pub semicolon: Option<Semicolon<'a>>,
@@ -345,7 +345,7 @@ impl<'a> Codegen<'a> for Import<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct ImportFrom<'a> {
     pub module: Option<NameOrAttribute<'a>>,
     pub names: ImportNames<'a>,
@@ -385,7 +385,7 @@ impl<'a> Codegen<'a> for ImportFrom<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct ImportAlias<'a> {
     pub name: NameOrAttribute<'a>,
     pub asname: Option<AsName<'a>>,
@@ -411,7 +411,7 @@ impl<'a> Codegen<'a> for ImportAlias<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct AsName<'a> {
     pub name: NameOrAttribute<'a>,
     pub whitespace_before_as: ParenthesizableWhitespace<'a>,
@@ -427,7 +427,7 @@ impl<'a> Codegen<'a> for AsName<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum ImportNames<'a> {
     Star(ImportStar),
     Aliases(Vec<ImportAlias<'a>>),
@@ -449,7 +449,7 @@ impl<'a> Codegen<'a> for ImportNames<'a> {
     }
 }
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Eq, PartialEq, Clone)]
 pub struct FunctionDef<'a> {
     pub name: Name<'a>,
     pub params: Parameters<'a>,
@@ -510,7 +510,7 @@ impl<'a> Codegen<'a> for FunctionDef<'a> {
     }
 }
 
-#[derive(Debug, Eq, PartialEq, Default)]
+#[derive(Debug, Eq, PartialEq, Clone, Default)]
 pub struct Decorator<'a> {
     pub decorator: Name<'a>,
     pub leading_lines: Vec<EmptyLine<'a>>,
@@ -531,7 +531,7 @@ impl<'a> Codegen<'a> for Decorator<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct If<'a> {
     /// The expression that, when evaluated, should give us a truthy value
     pub test: Expression<'a>,
@@ -574,7 +574,7 @@ impl<'a> Codegen<'a> for If<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum OrElse<'a> {
     Elif(If<'a>),
     Else(Else<'a>),
@@ -589,7 +589,7 @@ impl<'a> Codegen<'a> for OrElse<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Else<'a> {
     pub body: Suite<'a>,
     /// Sequence of empty lines appearing before this compound statement line.
