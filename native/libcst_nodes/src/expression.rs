@@ -543,6 +543,7 @@ impl<'a> ParenthesizedNode<'a> for Expression<'a> {
             Self::Attribute(a) => Self::Attribute(a.with_parens(leftpar, rightpar)),
             Self::Subscript(s) => Self::Subscript(s.with_parens(leftpar, rightpar)),
             Self::IfExp(e) => Self::IfExp(e.with_parens(leftpar, rightpar)),
+            Self::Call(c) => Self::Call(c.with_parens(leftpar, rightpar)),
             _ => panic!("with_parens not implemented for {:#?}", self),
         }
     }

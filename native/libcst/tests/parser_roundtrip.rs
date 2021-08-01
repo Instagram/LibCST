@@ -1,4 +1,5 @@
 use difference::assert_diff;
+use itertools::Itertools;
 use libcst::{parse_module, prettify_error, Codegen};
 use std::{
     iter::once,
@@ -34,6 +35,14 @@ fn roundtrip_fixtures() {
         let mut state = Default::default();
         m.codegen(&mut state);
         let generated = state.to_string();
-        assert_diff!(input.as_ref(), generated.as_ref(), "", 0);
+        if generated != input {
+            let got = visualize(generated);
+            let expected = visualize(input);
+            assert_diff!(expected.as_ref(), got.as_ref(), "", 0);
+        }
     }
+}
+
+fn visualize(s: String) -> String {
+    s.replace(' ', "▩").lines().join("↩\n")
 }

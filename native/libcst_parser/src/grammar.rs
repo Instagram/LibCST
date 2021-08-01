@@ -187,7 +187,7 @@ parser! {
             = first:star_named_expression()
                 rest:(c:comma() e:star_named_expression() { (c, e) })*
                 trail:comma()? {
-                    comma_separate(first, rest, trail)
+                    comma_separate(first, rest, trail, false)
             }
 
         rule star_named_expression() -> Element<'a>
@@ -297,7 +297,7 @@ parser! {
             = first:(t:star_target() { assign_target_to_element(t) })
                 rest:(c:comma() t:star_target() {(c, assign_target_to_element(t))})*
                 trail:comma()? {
-                    comma_separate(first, rest, trail)
+                    comma_separate(first, rest, trail, false)
             }
 
         #[cache]
@@ -568,11 +568,18 @@ parser! {
             }
 
         rule arguments() -> Vec<Arg<'a>>
-            = a:args() &")" {a} // trailing comma already included
+            = a:args() trail:comma()? &")" {add_arguments_trailing_comma(a, trail)}
 
         rule args() -> Vec<Arg<'a>>
-            = pos:(a:_posarg() c:comma() {a.with_comma(c)})+ kw:kwargs()? { concat(pos, kw.unwrap_or_default()) }
-            / pos:(a:_posarg() c:comma() {a.with_comma(c)})* last:_posarg() {concat(pos, vec![last])}
+            = first:_posarg()
+                rest:(c:comma() a:_posarg() {(c, a)})*
+                kw:(c:comma() k:kwargs() {(c, k)})? {
+                    let (trail, kw) = kw.map(|(x,y)| (Some(x), Some(y))).unwrap_or((None, None));
+                    concat(
+                        comma_separate(first, rest, trail, true),
+                        kw.unwrap_or_default(),
+                    )
+            }
             / kwargs()
 
         rule _posarg() -> Arg<'a>
@@ -1654,7 +1661,7 @@ fn make_tuple<'a>(
 ) -> Result<'a, Tuple<'a>> {
     let mut lpar: Vec<LeftParen<'a>> = Default::default();
     let mut rpar: Vec<RightParen<'a>> = Default::default();
-    let elements = comma_separate(first, rest, trailing_comma);
+    let elements = comma_separate(first, rest, trailing_comma, false);
 
     if let Some(lpar_tok) = lpar_tok {
         lpar.push(make_lpar(config, lpar_tok)?);
@@ -2060,6 +2067,7 @@ fn comma_separate<'a, T>(
     first: T,
     rest: Vec<(Comma<'a>, T)>,
     trailing_comma: Option<Comma<'a>>,
+    keep_trailing_whitespace: bool,
 ) -> Vec<T>
 where
     T: WithComma<'a>,
@@ -2071,8 +2079,11 @@ where
         current = next;
     }
     if let Some(mut comma) = trailing_comma {
-        // don't consume trailing whitespace for trailing comma
-        comma.whitespace_after = ParenthesizableWhitespace::SimpleWhitespace(SimpleWhitespace(""));
+        if !keep_trailing_whitespace {
+            // don't consume trailing whitespace for trailing comma
+            comma.whitespace_after =
+                ParenthesizableWhitespace::SimpleWhitespace(SimpleWhitespace(""));
+        }
         current = current.with_comma(comma);
     }
     elements.push(current);
@@ -2310,6 +2321,17 @@ fn make_ifexp<'a>(
         whitespace_before_else,
         whitespace_after_else,
     })
+}
+
+fn add_arguments_trailing_comma<'a>(
+    mut args: Vec<Arg<'a>>,
+    trailing_comma: Option<Comma<'a>>,
+) -> Vec<Arg<'a>> {
+    if let Some(comma) = trailing_comma {
+        let last = args.pop().unwrap();
+        args.push(last.with_comma(comma));
+    }
+    args
 }
 
 #[cfg(test)]
