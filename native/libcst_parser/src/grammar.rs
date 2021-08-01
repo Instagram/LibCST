@@ -206,6 +206,108 @@ parser! {
                     .map_err(|_| "ifexp")
             }
             / disjunction()
+            / lambdef()
+
+        rule lambdef() -> Expression<'a>
+            = kw:lit("lambda") p:lambda_params() c:lit(":") b:expression() {?
+                make_lambda(config, kw, p, c, b)
+                    .map(Expression::Lambda)
+                    .map_err(|_| "lambda")
+            }
+
+        rule lambda_params() -> Parameters<'a>
+            = lambda_parameters()
+
+        // lambda_parameters etc. duplicates parameters but without annotations or type
+        // comments, and if there's no comma after a parameter, we expect a colon, not a
+        // close parenthesis. Note: this grammar shares the param() rule, instead of
+        // duplicating it as lambda_param()
+
+        rule lambda_parameters() -> Parameters<'a>
+            = a:lambda_slash_no_default() b:lambda_param_no_default()*
+                c:lambda_param_with_default()* d:lambda_star_etc()? {?
+                    make_parameters(config, Some(a), concat(b, c), d)
+                        .map_err(|_| "parameters")
+            }
+            / a:lambda_slash_with_default() b:lambda_param_with_default()*
+                d:lambda_star_etc()? {?
+                    make_parameters(config, Some(a), b, d)
+                        .map_err(|_| "parameters")
+            }
+            / a:lambda_param_no_default()+ b:lambda_param_with_default()*
+                d:lambda_star_etc()? {?
+                    make_parameters(config, None, concat(a, b), d)
+                        .map_err(|_| "parameters")
+            }
+            / a:lambda_param_with_default()+ d:lambda_star_etc()? {?
+                make_parameters(config, None, a, d)
+                    .map_err(|_| "parameters")
+            }
+            / d:lambda_star_etc() {?
+                make_parameters(config, None, vec![], Some(d))
+                    .map_err(|_| "parameters")
+            }
+
+        rule lambda_slash_no_default() -> (Vec<Param<'a>>, ParamSlash<'a>)
+            = a:lambda_param_no_default()+ slash:lit("/") com:comma() {
+                (a, ParamSlash { comma: Some(com) } )
+            }
+            / a:lambda_param_no_default()+ slash:lit("/") &":" {
+                (a, ParamSlash { comma: None })
+            }
+
+        rule lambda_slash_with_default() -> (Vec<Param<'a>>, ParamSlash<'a>)
+            = a:lambda_param_no_default()* b:lambda_param_with_default()+ slash:lit("/") c:comma(){
+                (concat(a, b), ParamSlash { comma: Some(c) })
+            }
+            / a:lambda_param_no_default()* b:lambda_param_with_default()+ slash:lit("/") &":" {
+                (concat(a, b), ParamSlash { comma: None })
+            }
+
+        rule lambda_star_etc() -> StarEtc<'a>
+            = star:lit("*") a:lambda_param_no_default()
+                b:lambda_param_maybe_default()* kw:lambda_kwds()? {?
+                    add_param_star(config, a, star)
+                        .map(|p| StarEtc(Some(StarArg::Param(Box::new(p))), b, kw))
+                        .map_err(|_| "star_etc")
+            }
+            / "*" c:comma() b:lambda_param_maybe_default()+ kw:lambda_kwds()? {
+                StarEtc(Some(StarArg::Star(ParamStar {comma: c})), b, kw)
+            }
+            / kw:lambda_kwds() { StarEtc(None, vec![], Some(kw)) }
+
+        rule lambda_kwds() -> Param<'a>
+            = star:lit("**") a:lambda_param_no_default() {?
+                add_param_star(config, a, star)
+                    .map_err(|_| "kwds")
+            }
+
+        rule lambda_param_no_default() -> Param<'a>
+            = a:param() c:lit(",") {?
+                add_param_default(config, a, None, Some(c))
+                    .map_err(|_| "param_no_default")
+            }
+            / a:param() &":" {a}
+
+        rule lambda_param_with_default() -> Param<'a>
+            = a:param() def:default() c:lit(",") {?
+                add_param_default(config, a, Some(def), Some(c))
+                    .map_err(|_| "param_with_default")
+            }
+            / a:param() def:default() &":" {?
+                add_param_default(config, a, Some(def), None)
+                    .map_err(|_| "param_with_default")
+            }
+
+        rule lambda_param_maybe_default() -> Param<'a>
+            = a:param() def:default()? c:lit(",") {?
+                add_param_default(config, a, def, Some(c))
+                    .map_err(|_| "param_maybe_default")
+            }
+            / a:param() def:default()? &":" {?
+                add_param_default(config, a, def, None)
+                    .map_err(|_| "param_maybe_default")
+            }
 
         #[cache]
         rule disjunction() -> Expression<'a>
@@ -662,8 +764,10 @@ parser! {
             = parameters()
 
         rule parameters() -> Parameters<'a>
-            = a:slash_no_default() b:param_no_default()* c:param_with_default()*  d:star_etc()?
-            {? make_parameters(config, Some(a), concat(b, c), d).map_err(|e| "parameters") }
+            = a:slash_no_default() b:param_no_default()* c:param_with_default()*  d:star_etc()? {?
+                make_parameters(config, Some(a), concat(b, c), d)
+                    .map_err(|e| "parameters")
+            }
             / a:slash_with_default() b:param_with_default()* d:star_etc()? {?
                 make_parameters(config, Some(a), b, d)
                     .map_err(|e| "parameters")
@@ -682,20 +786,16 @@ parser! {
             }
 
         rule slash_no_default() -> (Vec<Param<'a>>, ParamSlash<'a>)
-            = a:param_no_default()+ slash:lit("/") com:lit(",") {?
-                make_comma(config, com)
-                    .map(|c| (a, ParamSlash { comma: Some(c)}))
-                    .map_err(|e| "slash_no_default")
+            = a:param_no_default()+ slash:lit("/") com:comma() {
+                    (a, ParamSlash { comma: Some(com)})
             }
             / a:param_no_default()+ slash:lit("/") &")" {
                 (a, ParamSlash { comma: None })
             }
 
         rule slash_with_default() -> (Vec<Param<'a>>, ParamSlash<'a>)
-            = a:param_no_default()* b:param_with_default()+ slash:lit("/") com:lit(",") {?
-                make_comma(config, com)
-                    .map(|c| (concat(a, b), ParamSlash { comma: Some(c) }))
-                    .map_err(|e| "slash_with_default")
+            = a:param_no_default()* b:param_with_default()+ slash:lit("/") c:comma() {
+                (concat(a, b), ParamSlash { comma: Some(c) })
             }
             / a:param_no_default()* b:param_with_default()+ slash:lit("/") &")" {
                 (concat(a, b), ParamSlash { comma: None })
@@ -707,10 +807,8 @@ parser! {
                     .map(|p| StarEtc(Some(StarArg::Param(Box::new(p))), b, kw))
                     .map_err(|e| "star_etc")
             }
-            / star:lit("*") com:lit(",") b:param_maybe_default()+ kw:kwds()? {?
-                make_comma(config, com)
-                    .map(|comma| StarEtc(Some(StarArg::Star(ParamStar {comma})), b, kw))
-                    .map_err(|e| "star_etc")
+            / "*" c:comma() b:param_maybe_default()+ kw:kwds()? {
+                    StarEtc(Some(StarArg::Star(ParamStar {comma:c })), b, kw)
             }
             / kw:kwds() { StarEtc(None, vec![], Some(kw)) }
 
@@ -741,7 +839,7 @@ parser! {
             }
             / a:param() def:default()? &")" {?
                 add_param_default(config, a, def, None)
-                .map_err(|e| "param_maybe_default")
+                    .map_err(|e| "param_maybe_default")
             }
 
         rule param() -> Param<'a>
@@ -2332,6 +2430,28 @@ fn add_arguments_trailing_comma<'a>(
         args.push(last.with_comma(comma));
     }
     args
+}
+
+fn make_lambda<'a>(
+    config: &Config<'a>,
+    mut kw: Token<'a>,
+    params: Parameters<'a>,
+    colon: Token<'a>,
+    expr: Expression<'a>,
+) -> Result<'a, Lambda<'a>> {
+    let whitespace_after_lambda = Some(parse_parenthesizable_whitespace(
+        config,
+        &mut kw.whitespace_after,
+    )?);
+    let colon = make_colon(config, colon)?;
+    Ok(Lambda {
+        params: Box::new(params),
+        body: Box::new(expr),
+        colon,
+        lpar: Default::default(),
+        rpar: Default::default(),
+        whitespace_after_lambda,
+    })
 }
 
 #[cfg(test)]

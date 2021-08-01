@@ -358,7 +358,8 @@ pub enum Expression<'a> {
     Subscript(Subscript<'a>),
     StarredElement(StarredElement<'a>),
     IfExp(IfExp<'a>),
-    // TODO: FormattedString, ConcatenatedString, Lambda, Await, Yield
+    Lambda(Lambda<'a>),
+    // TODO: FormattedString, ConcatenatedString, Await, Yield
 }
 
 impl<'a> Codegen<'a> for Expression<'a> {
@@ -419,6 +420,7 @@ impl<'a> Codegen<'a> for Expression<'a> {
             Self::Subscript(s) => s.codegen(state),
             Self::StarredElement(e) => e.codegen(state),
             Self::IfExp(e) => e.codegen(state),
+            Self::Lambda(l) => l.codegen(state),
             _ => panic!("codegen not implemented for {:#?}", self),
         }
     }
@@ -544,6 +546,7 @@ impl<'a> ParenthesizedNode<'a> for Expression<'a> {
             Self::Subscript(s) => Self::Subscript(s.with_parens(leftpar, rightpar)),
             Self::IfExp(e) => Self::IfExp(e.with_parens(leftpar, rightpar)),
             Self::Call(c) => Self::Call(c.with_parens(leftpar, rightpar)),
+            Self::Lambda(l) => Self::Lambda(l.with_parens(leftpar, rightpar)),
             _ => panic!("with_parens not implemented for {:#?}", self),
         }
     }
@@ -1433,6 +1436,56 @@ impl<'a> Codegen<'a> for IfExp<'a> {
             state.add_token("else");
             self.whitespace_after_else.codegen(state);
             self.orelse.codegen(state);
+        })
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct Lambda<'a> {
+    pub params: Box<Parameters<'a>>,
+    pub body: Box<Expression<'a>>,
+    pub colon: Colon<'a>,
+    pub lpar: Vec<LeftParen<'a>>,
+    pub rpar: Vec<RightParen<'a>>,
+    pub whitespace_after_lambda: Option<ParenthesizableWhitespace<'a>>,
+}
+
+impl<'a> ParenthesizedNode<'a> for Lambda<'a> {
+    fn lpar(&self) -> &Vec<LeftParen<'a>> {
+        &self.lpar
+    }
+
+    fn rpar(&self) -> &Vec<RightParen<'a>> {
+        &self.rpar
+    }
+
+    fn with_parens(self, left: LeftParen<'a>, right: RightParen<'a>) -> Self {
+        let mut lpar = self.lpar;
+        lpar.push(left);
+        let mut rpar = self.rpar;
+        rpar.push(right);
+        Self { lpar, rpar, ..self }
+    }
+}
+
+impl<'a> Codegen<'a> for Lambda<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+        self.parenthesize(state, |state| {
+            state.add_token("lambda");
+            if let Some(ws) = &self.whitespace_after_lambda {
+                ws.codegen(state);
+            } else if self.params.posonly_params.is_empty()
+                && self.params.params.is_empty()
+                && self.params.kwonly_params.is_empty()
+                && self.params.star_kwarg.is_none()
+                && self.params.star_arg.is_none()
+            {
+                // there's one or more params, add a space
+                state.add_token(" ")
+            }
+            self.params.codegen(state);
+            self.colon.codegen(state);
+            self.body.codegen(state);
         })
     }
 }
