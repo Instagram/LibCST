@@ -233,7 +233,17 @@ mapping = {
     C: 0.1 * (10.0 / 12),
     D: 0.1 * (10.0 / 12),
 }
-
+[
+    a
+    for
+    [
+        a ,
+    ]
+    in
+    [
+        [ 1 ]
+    ]
+]
 
 # def gen():
 #     yield from outside_of_generator
