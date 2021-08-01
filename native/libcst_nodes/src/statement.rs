@@ -8,7 +8,7 @@ use super::{
     List, Name, NameOrAttribute, Parameters, ParenthesizableWhitespace, RightParen, Semicolon,
     SimpleWhitespace, StarredElement, Subscript, TrailingWhitespace, Tuple,
 };
-use crate::{traits::WithComma, ParenthesizedNode};
+use crate::{traits::WithComma, AssignEqual, ParenthesizedNode};
 
 #[allow(clippy::large_enum_variant)]
 #[derive(Debug, Eq, PartialEq, Clone)]
@@ -208,7 +208,7 @@ pub enum SmallStatement<'a> {
     Import(Import<'a>),
     ImportFrom(ImportFrom<'a>),
     Assign(Assign<'a>),
-    // TODO Assign, AnnAssign
+    AnnAssign(AnnAssign<'a>),
     // TODO Raise
     // TODO Global, Nonlocal
 }
@@ -223,6 +223,7 @@ impl<'a> Codegen<'a> for SmallStatement<'a> {
             Self::Import(i) => i.codegen(state),
             Self::ImportFrom(i) => i.codegen(state),
             Self::Assign(a) => a.codegen(state),
+            Self::AnnAssign(a) => a.codegen(state),
             _ => panic!("No codegen implemented for {:#?}", self),
         }
     }
@@ -609,5 +610,56 @@ impl<'a> Codegen<'a> for Else<'a> {
         self.whitespace_before_colon.codegen(state);
         state.add_token(":");
         self.body.codegen(state);
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct Annotation<'a> {
+    pub annotation: Expression<'a>,
+    pub whitespace_before_indicator: Option<ParenthesizableWhitespace<'a>>,
+    pub whitespace_after_indicator: ParenthesizableWhitespace<'a>,
+}
+
+impl<'a> Annotation<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>, default_indicator: &'a str) {
+        if let Some(ws) = &self.whitespace_before_indicator {
+            ws.codegen(state);
+        } else if default_indicator == "->" {
+            state.add_token(" ");
+        } else {
+            panic!("this should never happen");
+        }
+
+        state.add_token(default_indicator);
+        self.whitespace_after_indicator.codegen(state);
+        self.annotation.codegen(state);
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct AnnAssign<'a> {
+    pub target: AssignTargetExpression<'a>,
+    pub annotation: Annotation<'a>,
+    pub value: Option<Expression<'a>>,
+    pub equal: Option<AssignEqual<'a>>,
+    pub semicolon: Option<Semicolon<'a>>,
+}
+
+impl<'a> Codegen<'a> for AnnAssign<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+        self.target.codegen(state);
+        self.annotation.codegen(state, ":");
+        if let Some(eq) = &self.equal {
+            eq.codegen(state);
+        } else if self.value.is_some() {
+            state.add_token(" = ");
+        }
+        if let Some(value) = &self.value {
+            value.codegen(state);
+        }
+
+        if let Some(semi) = &self.semicolon {
+            semi.codegen(state);
+        }
     }
 }

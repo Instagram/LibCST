@@ -134,18 +134,18 @@ tuple[
     float,
     dict[str, int],
 ]
-# very_long_variable_name_filters: t.List[
-#     t.Tuple[str, t.Union[str, t.List[t.Optional[str]]]],
-# ]
-# xxxx_xxxxx_xxxx_xxx: Callable[..., List[SomeClass]] = classmethod(  # type: ignore
-#     sync(async_xxxx_xxx_xxxx_xxxxx_xxxx_xxx.__func__)
-# )
-# xxxx_xxx_xxxx_xxxxx_xxxx_xxx: Callable[..., List[SomeClass]] = classmethod(  # type: ignore
-#     sync(async_xxxx_xxx_xxxx_xxxxx_xxxx_xxx.__func__)
-# )
-# xxxx_xxx_xxxx_xxxxx_xxxx_xxx: Callable[..., List[SomeClass]] = classmethod(
-#     sync(async_xxxx_xxx_xxxx_xxxxx_xxxx_xxx.__func__)
-# )  # type: ignore
+very_long_variable_name_filters: t.List[
+    t.Tuple[str, t.Union[str, t.List[t.Optional[str]]]],
+]
+xxxx_xxxxx_xxxx_xxx: Callable[..., List[SomeClass]] = classmethod(  # type: ignore
+    sync(async_xxxx_xxx_xxxx_xxxxx_xxxx_xxx.__func__)
+)
+xxxx_xxx_xxxx_xxxxx_xxxx_xxx: Callable[..., List[SomeClass]] = classmethod(  # type: ignore
+    sync(async_xxxx_xxx_xxxx_xxxxx_xxxx_xxx.__func__)
+)
+xxxx_xxx_xxxx_xxxxx_xxxx_xxx: Callable[..., List[SomeClass]] = classmethod(
+    sync(async_xxxx_xxx_xxxx_xxxxx_xxxx_xxx.__func__)
+)  # type: ignore
 slice[0]
 slice[0:1]
 slice[0:1:2]

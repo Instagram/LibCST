@@ -135,16 +135,23 @@ parser! {
 
         #[cache]
         rule small_stmt() -> SmallStatement<'a>
-            = a:assignment() { SmallStatement::Assign(a) }
+            = assignment()
             / e:star_expressions() { SmallStatement::Expr { value: e, semicolon: None } }
             // this is expanded from the original grammar's import_stmt rule
             / &"import" i:import_name() { SmallStatement::Import(i) }
             / &"from" i:import_from() { SmallStatement::ImportFrom(i) }
             / "pass" { SmallStatement::Pass { semicolon: None } }
 
-        rule assignment() -> Assign<'a>
-            = lhs:(t:star_targets() eq:lit("=") {(t, eq)})+ rhs:(yield_expr() / star_expressions()) !lit("=") {?
+        rule assignment() -> SmallStatement<'a>
+            = a:name() col:lit(":") ann:expression()
+                rhs:(eq:lit("=") d:annotated_rhs() {(eq, d)})? {?
+                    make_ann_assignment(config, a, col, ann, rhs)
+                        .map(SmallStatement::AnnAssign)
+                        .map_err(|_| "assignment")
+            }
+            / lhs:(t:star_targets() eq:lit("=") {(t, eq)})+ rhs:(yield_expr() / star_expressions()) !lit("=") {?
                 make_assignment(config, lhs, rhs)
+                    .map(SmallStatement::Assign)
                     .map_err(|e| "assignment")
             }
 
@@ -879,6 +886,9 @@ parser! {
         rule named_expression() -> Expression<'a>
             = a:name() op:lit(":=") b:expression() { todo!() }
             / e:expression() !lit(":=") { e }
+
+        rule annotated_rhs() -> Expression<'a>
+            = yield_expr() / star_expressions()
 
         rule import_name() -> Import<'a>
             = kw:lit("import") a:dotted_as_names() {?
@@ -2451,6 +2461,49 @@ fn make_lambda<'a>(
         lpar: Default::default(),
         rpar: Default::default(),
         whitespace_after_lambda,
+    })
+}
+
+fn make_annotation<'a>(
+    config: &Config<'a>,
+    mut indicator: Token<'a>,
+    ann: Expression<'a>,
+) -> Result<'a, Annotation<'a>> {
+    let whitespace_before_indicator = Some(parse_parenthesizable_whitespace(
+        config,
+        &mut indicator.whitespace_before,
+    )?);
+    let whitespace_after_indicator =
+        parse_parenthesizable_whitespace(config, &mut indicator.whitespace_after)?;
+
+    Ok(Annotation {
+        annotation: ann,
+        whitespace_before_indicator,
+        whitespace_after_indicator,
+    })
+}
+
+fn make_ann_assignment<'a>(
+    config: &Config<'a>,
+    n: Name<'a>,
+    col: Token<'a>,
+    ann: Expression<'a>,
+    rhs: Option<(Token<'a>, Expression<'a>)>,
+) -> Result<'a, AnnAssign<'a>> {
+    let annotation = make_annotation(config, col, ann)?;
+    let target = AssignTargetExpression::Name(n);
+    let (eq, value) = rhs.map(|(x, y)| (Some(x), Some(y))).unwrap_or((None, None));
+    let equal = if let Some(eq) = eq {
+        Some(make_assign_equal(config, eq)?)
+    } else {
+        None
+    };
+    Ok(AnnAssign {
+        target,
+        annotation,
+        value,
+        equal,
+        semicolon: None,
     })
 }
 

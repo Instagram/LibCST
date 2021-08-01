@@ -5,9 +5,9 @@ pub use whitespace::{
 };
 mod statement;
 pub use statement::{
-    AsName, Assign, AssignTarget, AssignTargetExpression, CompoundStatement, Decorator, Else,
-    FunctionDef, If, Import, ImportAlias, ImportFrom, ImportNames, IndentedBlock, OrElse,
-    SimpleStatementLine, SimpleStatementSuite, SmallStatement, Statement, Suite,
+    AnnAssign, Annotation, AsName, Assign, AssignTarget, AssignTargetExpression, CompoundStatement,
+    Decorator, Else, FunctionDef, If, Import, ImportAlias, ImportFrom, ImportNames, IndentedBlock,
+    OrElse, SimpleStatementLine, SimpleStatementSuite, SmallStatement, Statement, Suite,
 };
 
 mod expression;
