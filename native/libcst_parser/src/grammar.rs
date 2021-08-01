@@ -200,7 +200,12 @@ parser! {
 
         #[cache]
         rule expression() -> Expression<'a>
-            = disjunction()
+            = body:disjunction() i:lit("if") test:disjunction() e:lit("else") oe:expression() {?
+                make_ifexp(config, body, i, test, e, oe)
+                    .map(Expression::IfExp)
+                    .map_err(|_| "ifexp")
+            }
+            / disjunction()
 
         #[cache]
         rule disjunction() -> Expression<'a>
@@ -2274,6 +2279,36 @@ fn make_subscript<'a>(
         lpar: Default::default(),
         rpar: Default::default(),
         whitespace_after_value,
+    })
+}
+
+fn make_ifexp<'a>(
+    config: &Config<'a>,
+    body: Expression<'a>,
+    mut if_tok: Token<'a>,
+    test: Expression<'a>,
+    mut else_tok: Token<'a>,
+    orelse: Expression<'a>,
+) -> Result<'a, IfExp<'a>> {
+    let whitespace_before_if =
+        parse_parenthesizable_whitespace(config, &mut if_tok.whitespace_before)?;
+    let whitespace_after_if =
+        parse_parenthesizable_whitespace(config, &mut if_tok.whitespace_after)?;
+    let whitespace_before_else =
+        parse_parenthesizable_whitespace(config, &mut else_tok.whitespace_before)?;
+    let whitespace_after_else =
+        parse_parenthesizable_whitespace(config, &mut else_tok.whitespace_after)?;
+
+    Ok(IfExp {
+        test: Box::new(test),
+        body: Box::new(body),
+        orelse: Box::new(orelse),
+        lpar: Default::default(),
+        rpar: Default::default(),
+        whitespace_before_if,
+        whitespace_after_if,
+        whitespace_before_else,
+        whitespace_after_else,
     })
 }
 

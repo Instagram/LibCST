@@ -357,7 +357,8 @@ pub enum Expression<'a> {
     Dict(Dict<'a>),
     Subscript(Subscript<'a>),
     StarredElement(StarredElement<'a>),
-    // TODO: FormattedString, ConcatenatedString, Lambda, Await, IfExp, Yield
+    IfExp(IfExp<'a>),
+    // TODO: FormattedString, ConcatenatedString, Lambda, Await, Yield
 }
 
 impl<'a> Codegen<'a> for Expression<'a> {
@@ -417,6 +418,7 @@ impl<'a> Codegen<'a> for Expression<'a> {
             Self::Dict(d) => d.codegen(state),
             Self::Subscript(s) => s.codegen(state),
             Self::StarredElement(e) => e.codegen(state),
+            Self::IfExp(e) => e.codegen(state),
             _ => panic!("codegen not implemented for {:#?}", self),
         }
     }
@@ -431,6 +433,7 @@ impl<'a> ParenthesizedNode<'a> for Expression<'a> {
             Self::Comparison { lpar, .. } => lpar,
             Self::BooleanOperation { lpar, .. } => lpar,
             Self::SimpleString { lpar, .. } => lpar,
+            Self::IfExp(e) => e.lpar(),
             _ => panic!("lpar not implemented for {:#?}", self),
         }
     }
@@ -443,6 +446,7 @@ impl<'a> ParenthesizedNode<'a> for Expression<'a> {
             Self::Comparison { rpar, .. } => rpar,
             Self::BooleanOperation { rpar, .. } => rpar,
             Self::SimpleString { rpar, .. } => rpar,
+            Self::IfExp(e) => e.rpar(),
             _ => panic!("rpar not implemented for {:#?}", self),
         }
     }
@@ -538,6 +542,7 @@ impl<'a> ParenthesizedNode<'a> for Expression<'a> {
             Self::Name(n) => Self::Name(n.with_parens(leftpar, rightpar)),
             Self::Attribute(a) => Self::Attribute(a.with_parens(leftpar, rightpar)),
             Self::Subscript(s) => Self::Subscript(s.with_parens(leftpar, rightpar)),
+            Self::IfExp(e) => Self::IfExp(e.with_parens(leftpar, rightpar)),
             _ => panic!("with_parens not implemented for {:#?}", self),
         }
     }
@@ -1380,6 +1385,53 @@ impl<'a> Codegen<'a> for Subscript<'a> {
                 }
             }
             self.rbracket.codegen(state);
+        })
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct IfExp<'a> {
+    pub test: Box<Expression<'a>>,
+    pub body: Box<Expression<'a>>,
+    pub orelse: Box<Expression<'a>>,
+    pub lpar: Vec<LeftParen<'a>>,
+    pub rpar: Vec<RightParen<'a>>,
+    pub whitespace_before_if: ParenthesizableWhitespace<'a>,
+    pub whitespace_after_if: ParenthesizableWhitespace<'a>,
+    pub whitespace_before_else: ParenthesizableWhitespace<'a>,
+    pub whitespace_after_else: ParenthesizableWhitespace<'a>,
+}
+
+impl<'a> ParenthesizedNode<'a> for IfExp<'a> {
+    fn lpar(&self) -> &Vec<LeftParen<'a>> {
+        &self.lpar
+    }
+
+    fn rpar(&self) -> &Vec<RightParen<'a>> {
+        &self.rpar
+    }
+
+    fn with_parens(self, left: LeftParen<'a>, right: RightParen<'a>) -> Self {
+        let mut lpar = self.lpar;
+        lpar.push(left);
+        let mut rpar = self.rpar;
+        rpar.push(right);
+        Self { lpar, rpar, ..self }
+    }
+}
+
+impl<'a> Codegen<'a> for IfExp<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+        self.parenthesize(state, |state| {
+            self.body.codegen(state);
+            self.whitespace_before_if.codegen(state);
+            state.add_token("if");
+            self.whitespace_after_if.codegen(state);
+            self.test.codegen(state);
+            self.whitespace_before_else.codegen(state);
+            state.add_token("else");
+            self.whitespace_after_else.codegen(state);
+            self.orelse.codegen(state);
         })
     }
 }

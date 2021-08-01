@@ -40,18 +40,18 @@ flags & ~ select.EPOLLIN and waiters.write_task is not None
 # lambda a, b, c=True, *vararg, d=(v1 << 2), e='str', **kwargs: a + b
 # manylambdas = lambda x=lambda y=lambda z=1: z: y(): x()
 # foo = (lambda port_id, ignore_missing: {"port1": port1_resource, "port2": port2_resource}[port_id])
-# 1 if True else 2
-# str or None if True else str or bytes or None
-# (str or None) if True else (str or bytes or None)
-# str or None if (1 if True else 2) else str or bytes or None
-# (str or None) if (1 if True else 2) else (str or bytes or None)
-# ((super_long_variable_name or None) if (1 if super_long_test_name else 2) else (str or bytes or None))
+1 if True else 2
+str or None if True else str or bytes or None
+(str or None) if True else (str or bytes or None)
+str or None if (1 if True else 2) else str or bytes or None
+(str or None) if (1 if True else 2) else (str or bytes or None)
+((super_long_variable_name or None) if (1 if super_long_test_name else 2) else (str or bytes or None))
 {'2.7': dead, '3.7': (long_live or die_hard)}
 {'2.7': dead, '3.7': (long_live or die_hard), **{'3.6': verygood}}
 {**a, **b, **c}
 {"2.7", "3.6", "3.7", "3.8", "3.9"}
 {"2.7", "3.6", "3.7", "3.8", "3.9",}
-# {"2.7", "3.6", "3.7", "3.8", "3.9", ("4.0" if gilectomy else "3.10")}
+{"2.7", "3.6", "3.7", "3.8", "3.9", ("4.0" if gilectomy else "3.10")}
 ({"a": "b"}, (True or False), (+value), "string", b"bytes") or None
 ()
 (1,)
@@ -172,9 +172,9 @@ numpy[-(c + 1) :, d]
 numpy[:, l[-2]]
 numpy[:, ::-1]
 numpy[np.newaxis, :]
-# (str or None) if (sys.version_info[0] > (3,)) else (str or bytes or None)
+(str or None) if (sys.version_info[0] > (3,)) else (str or bytes or None)
 {"2.7": dead, "3.7": long_live or die_hard}
-# {"2.7", "3.6", "3.7", "3.8", "3.9", "4.0" if gilectomy else "3.10"}
+{"2.7", "3.6", "3.7", "3.8", "3.9", "4.0" if gilectomy else "3.10"}
 [1, 2, 3, 4, 5, 6, 7, 8, 9, 10 or A, 11 or B, 12 or C]
 (SomeName)
 SomeName
@@ -257,7 +257,7 @@ mapping = {
 
 
 print(*[] or [1])
-# print(**{1: 3} if False else {x: x for x in range(3)})
+print(**{1: 3} if False else {x: x for x in range(3)})
 # print(*lambda x: x)
 # assert not Test, "Short message"
 # assert this is ComplexTest and not requirements.fit_in_a_single_line(
