@@ -6,8 +6,8 @@
 use crate::{
     traits::{ParenthesizedNode, WithComma},
     whitespace::ParenthesizableWhitespace,
-    AssignEqual, AssignTargetExpression, BinaryOp, BooleanOp, Codegen, CodegenState, Colon, Comma,
-    CompOp, Dot, UnaryOp,
+    Annotation, AssignEqual, AssignTargetExpression, BinaryOp, BooleanOp, Codegen, CodegenState,
+    Colon, Comma, CompOp, Dot, UnaryOp,
 };
 #[derive(Debug, Eq, PartialEq, Default, Clone)]
 pub struct Parameters<'a> {
@@ -143,7 +143,7 @@ impl<'a> ParenthesizedNode<'a> for Name<'a> {
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Param<'a> {
     pub name: Name<'a>,
-    // TODO: annotation
+    pub annotation: Option<Annotation<'a>>,
     pub equal: Option<AssignEqual<'a>>,
     pub default: Option<Expression<'a>>,
 
@@ -159,6 +159,7 @@ impl<'a> Default for Param<'a> {
     fn default() -> Self {
         Self {
             name: Default::default(),
+            annotation: None,
             equal: None,
             default: None,
             comma: None,
@@ -184,7 +185,9 @@ impl<'a> Param<'a> {
         self.whitespace_after_star.codegen(state);
         self.name.codegen(state);
 
-        // TODO: annotation here
+        if let Some(ann) = &self.annotation {
+            ann.codegen(state, ":");
+        }
 
         match (&self.equal, &self.default) {
             (Some(equal), Some(def)) => {

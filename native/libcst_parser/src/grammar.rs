@@ -238,8 +238,7 @@ parser! {
 
         // lambda_parameters etc. duplicates parameters but without annotations or type
         // comments, and if there's no comma after a parameter, we expect a colon, not a
-        // close parenthesis. Note: this grammar shares the param() rule, instead of
-        // duplicating it as lambda_param()
+        // close parenthesis.
 
         rule lambda_parameters() -> Parameters<'a>
             = a:lambda_slash_no_default() b:lambda_param_no_default()*
@@ -301,31 +300,34 @@ parser! {
             }
 
         rule lambda_param_no_default() -> Param<'a>
-            = a:param() c:lit(",") {?
+            = a:lambda_param() c:lit(",") {?
                 add_param_default(config, a, None, Some(c))
                     .map_err(|_| "param_no_default")
             }
-            / a:param() &":" {a}
+            / a:lambda_param() &":" {a}
 
         rule lambda_param_with_default() -> Param<'a>
-            = a:param() def:default() c:lit(",") {?
+            = a:lambda_param() def:default() c:lit(",") {?
                 add_param_default(config, a, Some(def), Some(c))
                     .map_err(|_| "param_with_default")
             }
-            / a:param() def:default() &":" {?
+            / a:lambda_param() def:default() &":" {?
                 add_param_default(config, a, Some(def), None)
                     .map_err(|_| "param_with_default")
             }
 
         rule lambda_param_maybe_default() -> Param<'a>
-            = a:param() def:default()? c:lit(",") {?
+            = a:lambda_param() def:default()? c:lit(",") {?
                 add_param_default(config, a, def, Some(c))
                     .map_err(|_| "param_maybe_default")
             }
-            / a:param() def:default()? &":" {?
+            / a:lambda_param() def:default()? &":" {?
                 add_param_default(config, a, def, None)
                     .map_err(|_| "param_maybe_default")
             }
+
+        rule lambda_param() -> Param<'a>
+            = name:name() { Param { name, ..Default::default() } }
 
         #[cache]
         rule disjunction() -> Expression<'a>
@@ -802,15 +804,21 @@ parser! {
         rule decorators() -> Vec<Decorator<'a>>
             = (at:lit("@") name:name() tok(NL, "NEWLINE") {? make_decorator(config, at, name).map_err(|e| "expected decorator")} )+
 
+        rule _returns() -> Annotation<'a>
+            = l:lit("->") e:expression() {?
+                make_annotation(config, l, e).map_err(|_| "type")
+            }
+
         rule function_def_raw() -> FunctionDef<'a>
-            = def:lit("def") n:name() op:lit("(") params:params()? cp:lit(")") c:lit(":") b:block() {?
-                make_function_def(config, None, def, n, op, params, cp, c, b)
-                    .map_err(|e| "function def" )
+            = def:lit("def") n:name() op:lit("(") params:params()?
+                cp:lit(")") ty:_returns()? c:lit(":") b:block() {?
+                    make_function_def(config, None, def, n, op, params, cp, ty, c, b)
+                     .map_err(|e| "function def" )
             }
             / asy:tok(Async, "ASYNC") def:lit("def") n:name() op:lit("(") params:params()?
-                cp:lit(")") c:lit(":") b:block() {?
-                make_function_def(config, Some(asy), def, n, op, params, cp, c, b)
-                    .map_err(|e| "function def" )
+                cp:lit(")") ty:_returns()? c:lit(":") b:block() {?
+                    make_function_def(config, Some(asy), def, n, op, params, cp, ty, c, b)
+                        .map_err(|e| "function def" )
             }
 
         rule params() -> Parameters<'a>
@@ -896,7 +904,15 @@ parser! {
             }
 
         rule param() -> Param<'a>
-            = n:name() { Param {name: n, ..Default::default() } }
+            = n:name() a:annotation()? {
+                Param {name: n, annotation: a, ..Default::default() }
+            }
+
+        rule annotation() -> Annotation<'a>
+            = col:lit(":") e:expression() {?
+                make_annotation(config, col, e)
+                    .map_err(|_| "annotation")
+            }
 
         rule default() -> (AssignEqual<'a>, Expression<'a>)
             = eq:lit("=") ex:expression() {?
@@ -1090,8 +1106,9 @@ fn make_function_def<'a>(
     mut def: Token<'a>,
     name: Name<'a>,
     mut open_paren: Token<'a>,
-    params: Option<Parameters<'a>>,
-    _close_paren: Token<'a>,
+    mut params: Option<Parameters<'a>>,
+    close_paren: Token<'a>,
+    returns: Option<Annotation<'a>>,
     mut colon: Token<'a>,
     body: Suite<'a>,
 ) -> Result<'a, FunctionDef<'a>> {
@@ -1111,11 +1128,16 @@ fn make_function_def<'a>(
         parse_empty_lines(config, &mut def.whitespace_before, None)?
     };
 
+    if let Some(parameters) = params.as_mut() {
+        adjust_parameters_trailing_whitespace(config, parameters, close_paren)?;
+    }
+
     Ok(FunctionDef {
         name,
         params: params.unwrap_or_default(),
         body,
         decorators: Default::default(),
+        returns,
         asynchronous,
         leading_lines,
         lines_after_decorators: vec![],
@@ -1501,6 +1523,33 @@ fn make_else<'a>(
 }
 
 struct StarEtc<'a>(Option<StarArg<'a>>, Vec<Param<'a>>, Option<Param<'a>>);
+
+fn adjust_parameters_trailing_whitespace<'a>(
+    config: &Config<'a>,
+    parameters: &mut Parameters<'a>,
+    mut next_tok: Token<'a>,
+) -> Result<'a, ()> {
+    let whitespace_after =
+        parse_parenthesizable_whitespace(config, &mut next_tok.whitespace_before)?;
+    if let Some(param) = &mut parameters.star_kwarg {
+        if param.comma.is_none() {
+            param.whitespace_after_param = whitespace_after;
+        }
+    } else if let Some(param) = parameters.kwonly_params.last_mut() {
+        if param.comma.is_none() {
+            param.whitespace_after_param = whitespace_after;
+        }
+    } else if let Some(StarArg::Param(param)) = parameters.star_arg.as_mut() {
+        if param.comma.is_none() {
+            param.whitespace_after_param = whitespace_after;
+        }
+    } else if let Some(param) = parameters.params.last_mut() {
+        if param.comma.is_none() {
+            param.whitespace_after_param = whitespace_after;
+        }
+    }
+    Ok(())
+}
 
 fn make_parameters<'a>(
     _config: &Config<'a>,

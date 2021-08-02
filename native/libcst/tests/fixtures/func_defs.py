@@ -76,3 +76,44 @@ def f(
     **kwargs,
 ):
     pass
+
+
+async   def  foo (
+    bar  :  Baz ,
+)   ->   zooooooooom  : ...
+
+
+async def foo(bar  :  Baz  = 0 ) : ...
+
+async def foo() -> Bar: ...
+
+async def outer(
+    foo
+) -> Bar :
+    def   inner(lol: Lol) -> None:
+        async def core ():
+            await lol
+    def second(inner):
+        pass
+
+def stars (
+    yes :  bool  =  True  ,
+    /  ,
+    noes   : List[bool]   =  [ * falses ],
+    * all : The[Rest],
+    but : Wait[Theres[More]] ,
+    ** it : ends[now]   ,
+
+)  -> ret:
+    pass
+
+def stars (
+    yes :  bool  =  True  ,
+    /  ,
+    noes   : List[bool]   =  [ * falses ],
+    * all : The[Rest],
+    but : Wait[Theres[More]] ,
+    ** it : ends[now[without_a_comma]]   
+
+) -> ret  :
+    pass

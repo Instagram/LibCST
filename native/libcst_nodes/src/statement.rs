@@ -455,7 +455,7 @@ pub struct FunctionDef<'a> {
     pub params: Parameters<'a>,
     pub body: Suite<'a>,
     pub decorators: Vec<Decorator<'a>>,
-
+    pub returns: Option<Annotation<'a>>,
     pub asynchronous: Option<Asynchronous<'a>>,
     pub leading_lines: Vec<EmptyLine<'a>>,
     pub lines_after_decorators: Vec<EmptyLine<'a>>,
@@ -506,7 +506,11 @@ impl<'a> Codegen<'a> for FunctionDef<'a> {
         self.whitespace_before_params.codegen(state);
         self.params.codegen(state);
         state.add_token(")");
-        // TODO: returns
+
+        if let Some(ann) = &self.returns {
+            ann.codegen(state, "->");
+        }
+
         self.whitespace_before_colon.codegen(state);
         state.add_token(":");
         self.body.codegen(state);
@@ -623,7 +627,7 @@ pub struct Annotation<'a> {
 }
 
 impl<'a> Annotation<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>, default_indicator: &'a str) {
+    pub fn codegen(&'a self, state: &mut CodegenState<'a>, default_indicator: &'a str) {
         if let Some(ws) = &self.whitespace_before_indicator {
             ws.codegen(state);
         } else if default_indicator == "->" {
