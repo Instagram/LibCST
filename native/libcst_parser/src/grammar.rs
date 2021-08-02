@@ -143,6 +143,7 @@ parser! {
             / &"from" i:import_from() { SmallStatement::ImportFrom(i) }
             / "pass" { SmallStatement::Pass { semicolon: None } }
             / &"yield" s:yield_stmt() { SmallStatement::Expr { value: s, semicolon: None } }
+            / &"assert" s:assert_stmt() {SmallStatement::Assert(s)}
 
         rule assignment() -> SmallStatement<'a>
             = a:name() col:lit(":") ann:expression()
@@ -908,6 +909,12 @@ parser! {
 
         rule yield_stmt() -> Expression<'a>
             = yield_expr()
+
+        rule assert_stmt() -> Assert<'a>
+            = kw:lit("assert") test:expression() rest:(c:comma() msg:expression() {(c, msg)})? {?
+                make_assert(config, kw, test, rest)
+                    .map_err(|_| "assert")
+            }
 
         rule import_name() -> Import<'a>
             = kw:lit("import") a:dotted_as_names() {?
@@ -2581,6 +2588,28 @@ fn make_return<'a>(
     Ok(Return {
         value,
         whitespace_after_return,
+        semicolon: Default::default(),
+    })
+}
+
+fn make_assert<'a>(
+    config: &Config<'a>,
+    mut kw: Token<'a>,
+    test: Expression<'a>,
+    rest: Option<(Comma<'a>, Expression<'a>)>,
+) -> Result<'a, Assert<'a>> {
+    let whitespace_after_assert = parse_simple_whitespace(config, &mut kw.whitespace_after)?;
+    let (comma, msg) = if let Some((c, msg)) = rest {
+        (Some(c), Some(msg))
+    } else {
+        (None, None)
+    };
+
+    Ok(Assert {
+        test,
+        msg,
+        comma,
+        whitespace_after_assert,
         semicolon: Default::default(),
     })
 }

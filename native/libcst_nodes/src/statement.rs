@@ -194,13 +194,7 @@ pub enum SmallStatement<'a> {
         value: Expression<'a>,
         semicolon: Option<Semicolon<'a>>,
     },
-    Assert {
-        test: &'a str,        // TODO
-        msg: Option<&'a str>, // TODO
-        comma: Option<Comma<'a>>,
-        whitespace_after_assert: SimpleWhitespace<'a>,
-        semicolon: Option<Semicolon<'a>>,
-    },
+    Assert(Assert<'a>),
     Import(Import<'a>),
     ImportFrom(ImportFrom<'a>),
     Assign(Assign<'a>),
@@ -221,6 +215,7 @@ impl<'a> Codegen<'a> for SmallStatement<'a> {
             Self::Assign(a) => a.codegen(state),
             Self::AnnAssign(a) => a.codegen(state),
             Self::Return(r) => r.codegen(state),
+            Self::Assert(a) => a.codegen(state),
             _ => panic!("No codegen implemented for {:#?}", self),
         }
     }
@@ -679,6 +674,37 @@ impl<'a> Codegen<'a> for Return<'a> {
 
         if let Some(val) = &self.value {
             val.codegen(state);
+        }
+        if let Some(semi) = &self.semicolon {
+            semi.codegen(state);
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct Assert<'a> {
+    pub test: Expression<'a>,
+    pub msg: Option<Expression<'a>>,
+    pub comma: Option<Comma<'a>>,
+    pub whitespace_after_assert: SimpleWhitespace<'a>,
+    pub semicolon: Option<Semicolon<'a>>,
+}
+
+impl<'a> Codegen<'a> for Assert<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+        state.add_token("assert");
+        self.whitespace_after_assert.codegen(state);
+        self.test.codegen(state);
+        if let Some(comma) = &self.comma {
+            comma.codegen(state);
+        } else if self.msg.is_some() {
+            state.add_token(", ");
+        }
+        if let Some(msg) = &self.msg {
+            msg.codegen(state);
+        }
+        if let Some(semi) = &self.semicolon {
+            semi.codegen(state);
         }
     }
 }
