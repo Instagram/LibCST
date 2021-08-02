@@ -132,6 +132,7 @@ parser! {
                 CompoundStatement::FunctionDef(f)
             }
             / &"if" f:if_stmt() { CompoundStatement::If(f) }
+            / &("for" / tok(Async, "ASYNC")) f:for_stmt() { CompoundStatement::For(f) }
 
         #[cache]
         rule small_stmt() -> SmallStatement<'a>
@@ -912,6 +913,19 @@ parser! {
             = el:lit("else") col:lit(":") b:block() {?
                 make_else(config, el, col, b)
                     .map_err(|e| "else block")
+            }
+
+        rule for_stmt() -> For<'a>
+            = f:lit("for") t:star_targets() i:lit("in") it:star_expressions()
+                c:lit(":") b:block() el:else_block()? {?
+                    make_for(config, None, f, t, i, it, c, b, el)
+                        .map_err(|_| "for")
+            }
+            / asy:tok(Async, "ASYNC") f:lit("for") t:star_targets() i:lit("in")
+                it:star_expressions()
+                c:lit(":") b:block() el:else_block()? {?
+                    make_for(config, Some(asy), f, t, i, it, c, b, el)
+                        .map_err(|_| "for")
             }
 
         rule named_expression() -> Expression<'a>
@@ -2708,6 +2722,52 @@ fn make_nonlocal<'a>(
         names,
         whitespace_after_nonlocal,
         semicolon: Default::default(),
+    })
+}
+
+#[allow(clippy::too_many_arguments)]
+fn make_for<'a>(
+    config: &Config<'a>,
+    asy: Option<Token<'a>>,
+    mut for_: Token<'a>,
+    target: AssignTargetExpression<'a>,
+    mut in_: Token<'a>,
+    iter: Expression<'a>,
+    mut col: Token<'a>,
+    body: Suite<'a>,
+    orelse: Option<Else<'a>>,
+) -> Result<'a, For<'a>> {
+    let (asynchronous, leading_lines) = if let Some(mut asy) = asy {
+        let whitespace_after = parse_parenthesizable_whitespace(config, &mut asy.whitespace_after)?;
+        (
+            Some(Asynchronous { whitespace_after }),
+            Some(parse_empty_lines(config, &mut asy.whitespace_before, None)?),
+        )
+    } else {
+        (None, None)
+    };
+    let whitespace_after_for = parse_simple_whitespace(config, &mut for_.whitespace_after)?;
+    let whitespace_before_in = parse_simple_whitespace(config, &mut in_.whitespace_before)?;
+    let whitespace_after_in = parse_simple_whitespace(config, &mut in_.whitespace_after)?;
+    let whitespace_before_colon = parse_simple_whitespace(config, &mut col.whitespace_before)?;
+
+    let leading_lines = if let Some(ll) = leading_lines {
+        ll
+    } else {
+        parse_empty_lines(config, &mut for_.whitespace_before, None)?
+    };
+
+    Ok(For {
+        target,
+        iter,
+        body,
+        orelse,
+        asynchronous,
+        leading_lines,
+        whitespace_after_for,
+        whitespace_before_in,
+        whitespace_after_in,
+        whitespace_before_colon,
     })
 }
 

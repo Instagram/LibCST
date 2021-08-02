@@ -264,26 +264,28 @@ assert this is ComplexTest and not requirements.fit_in_a_single_line(
     force=False
 ), "Short message"
 assert parens is TooMany
-# for (x,) in (1,), (2,), (3,):
-#     ...
-# for y in ():
-#     ...
-# for z in (i for i in (1, 2, 3)):
-#     ...
-# for i in call():
-#     ...
-# for j in 1 + (2 + 3):
-#     ...
+for (x,) in (1,), (2,), (3,):
+    ...
+for y in ():
+    ...
+for z in (i for i in (1, 2, 3)):
+    ...
+for i in call():
+    ...
+for j in 1 + (2 + 3):
+    ...
+else:
+    ...
 # while this and that:
 #     ...
-# for (
-#     addr_family,
-#     addr_type,
-#     addr_proto,
-#     addr_canonname,
-#     addr_sockaddr,
-# ) in socket.getaddrinfo("google.com", "http"):
-#     pass
+for (
+    addr_family,
+    addr_type,
+    addr_proto,
+    addr_canonname,
+    addr_sockaddr,
+) in socket.getaddrinfo("google.com", "http"):
+    pass
 a = (
     aaaa.bbbb.cccc.dddd.eeee.ffff.gggg.hhhh.iiii.jjjj.kkkk.llll.mmmm.nnnn.oooo.pppp
     in qqqq.rrrr.ssss.tttt.uuuu.vvvv.xxxx.yyyy.zzzz

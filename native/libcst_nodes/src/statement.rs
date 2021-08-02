@@ -8,7 +8,7 @@ use super::{
     LeftParen, List, Name, NameOrAttribute, Parameters, ParenthesizableWhitespace, RightParen,
     Semicolon, SimpleWhitespace, StarredElement, Subscript, TrailingWhitespace, Tuple,
 };
-use crate::{traits::WithComma, AssignEqual, ParenthesizedNode};
+use crate::{traits::WithComma, AssignEqual, Asynchronous, ParenthesizedNode};
 
 #[allow(clippy::large_enum_variant)]
 #[derive(Debug, Eq, PartialEq, Clone)]
@@ -30,6 +30,7 @@ impl<'a> Codegen<'a> for Statement<'a> {
 pub enum CompoundStatement<'a> {
     FunctionDef(FunctionDef<'a>),
     If(If<'a>),
+    For(For<'a>),
 }
 
 impl<'a> Codegen<'a> for CompoundStatement<'a> {
@@ -37,6 +38,7 @@ impl<'a> Codegen<'a> for CompoundStatement<'a> {
         match self {
             Self::FunctionDef(f) => f.codegen(state),
             Self::If(f) => f.codegen(state),
+            Self::For(f) => f.codegen(state),
         }
     }
 }
@@ -800,6 +802,47 @@ impl<'a> Codegen<'a> for Nonlocal<'a> {
 
         if let Some(semicolon) = &self.semicolon {
             semicolon.codegen(state);
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct For<'a> {
+    pub target: AssignTargetExpression<'a>,
+    pub iter: Expression<'a>,
+    pub body: Suite<'a>,
+    pub orelse: Option<Else<'a>>,
+    pub asynchronous: Option<Asynchronous<'a>>,
+
+    pub leading_lines: Vec<EmptyLine<'a>>,
+    pub whitespace_after_for: SimpleWhitespace<'a>,
+    pub whitespace_before_in: SimpleWhitespace<'a>,
+    pub whitespace_after_in: SimpleWhitespace<'a>,
+    pub whitespace_before_colon: SimpleWhitespace<'a>,
+}
+
+impl<'a> Codegen<'a> for For<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+        for ll in &self.leading_lines {
+            ll.codegen(state);
+        }
+        state.add_indent();
+
+        if let Some(asy) = &self.asynchronous {
+            asy.codegen(state);
+        }
+        state.add_token("for");
+        self.whitespace_after_for.codegen(state);
+        self.target.codegen(state);
+        self.whitespace_before_in.codegen(state);
+        state.add_token("in");
+        self.whitespace_after_in.codegen(state);
+        self.iter.codegen(state);
+        self.whitespace_before_colon.codegen(state);
+        state.add_token(":");
+        self.body.codegen(state);
+        if let Some(e) = &self.orelse {
+            e.codegen(state);
         }
     }
 }
