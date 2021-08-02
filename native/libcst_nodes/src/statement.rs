@@ -31,6 +31,7 @@ pub enum CompoundStatement<'a> {
     FunctionDef(FunctionDef<'a>),
     If(If<'a>),
     For(For<'a>),
+    While(While<'a>),
 }
 
 impl<'a> Codegen<'a> for CompoundStatement<'a> {
@@ -39,6 +40,7 @@ impl<'a> Codegen<'a> for CompoundStatement<'a> {
             Self::FunctionDef(f) => f.codegen(state),
             Self::If(f) => f.codegen(state),
             Self::For(f) => f.codegen(state),
+            Self::While(f) => f.codegen(state),
         }
     }
 }
@@ -843,6 +845,35 @@ impl<'a> Codegen<'a> for For<'a> {
         self.body.codegen(state);
         if let Some(e) = &self.orelse {
             e.codegen(state);
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct While<'a> {
+    pub test: Expression<'a>,
+    pub body: Suite<'a>,
+    pub orelse: Option<Else<'a>>,
+    pub leading_lines: Vec<EmptyLine<'a>>,
+    pub whitespace_after_while: SimpleWhitespace<'a>,
+    pub whitespace_before_colon: SimpleWhitespace<'a>,
+}
+
+impl<'a> Codegen<'a> for While<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+        for ll in &self.leading_lines {
+            ll.codegen(state);
+        }
+        state.add_indent();
+
+        state.add_token("while");
+        self.whitespace_after_while.codegen(state);
+        self.test.codegen(state);
+        self.whitespace_before_colon.codegen(state);
+        state.add_token(":");
+        self.body.codegen(state);
+        if let Some(orelse) = &self.orelse {
+            orelse.codegen(state);
         }
     }
 }

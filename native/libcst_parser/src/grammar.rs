@@ -133,6 +133,7 @@ parser! {
             }
             / &"if" f:if_stmt() { CompoundStatement::If(f) }
             / &("for" / tok(Async, "ASYNC")) f:for_stmt() { CompoundStatement::For(f) }
+            / &"while" w:while_stmt() { CompoundStatement::While(w) }
 
         #[cache]
         rule small_stmt() -> SmallStatement<'a>
@@ -913,6 +914,12 @@ parser! {
             = el:lit("else") col:lit(":") b:block() {?
                 make_else(config, el, col, b)
                     .map_err(|e| "else block")
+            }
+
+        rule while_stmt() -> While<'a>
+            = kw:lit("while") test:named_expression() col:lit(":") b:block() el:else_block()? {?
+                make_while(config, kw, test, col, b, el)
+                    .map_err(|_| "while")
             }
 
         rule for_stmt() -> For<'a>
@@ -2767,6 +2774,27 @@ fn make_for<'a>(
         whitespace_after_for,
         whitespace_before_in,
         whitespace_after_in,
+        whitespace_before_colon,
+    })
+}
+
+fn make_while<'a>(
+    config: &Config<'a>,
+    mut kw: Token<'a>,
+    test: Expression<'a>,
+    mut col: Token<'a>,
+    body: Suite<'a>,
+    orelse: Option<Else<'a>>,
+) -> Result<'a, While<'a>> {
+    let whitespace_after_while = parse_simple_whitespace(config, &mut kw.whitespace_after)?;
+    let whitespace_before_colon = parse_simple_whitespace(config, &mut col.whitespace_before)?;
+    let leading_lines = parse_empty_lines(config, &mut kw.whitespace_before, None)?;
+    Ok(While {
+        test,
+        body,
+        orelse,
+        leading_lines,
+        whitespace_after_while,
         whitespace_before_colon,
     })
 }
