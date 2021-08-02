@@ -141,6 +141,7 @@ parser! {
             // this is expanded from the original grammar's import_stmt rule
             / &"import" i:import_name() { SmallStatement::Import(i) }
             / &"from" i:import_from() { SmallStatement::ImportFrom(i) }
+            / &"raise" r:raise_stmt() { SmallStatement::Raise(r) }
             / "pass" { SmallStatement::Pass { semicolon: None } }
             / &"yield" s:yield_stmt() { SmallStatement::Expr { value: s, semicolon: None } }
             / &"assert" s:assert_stmt() {SmallStatement::Assert(s)}
@@ -770,6 +771,17 @@ parser! {
             = kw:lit("return") a:star_expressions()? {?
                 make_return(config, kw, a)
                     .map_err(|_| "return")
+            }
+
+        rule raise_stmt() -> Raise<'a>
+            = kw:lit("raise") exc:expression()
+                rest:(f:lit("from") cau:expression() {(f, cau)})? {?
+                    make_raise(config, kw, Some(exc), rest)
+                        .map_err(|_| "raise")
+            }
+            / kw:lit("raise") {?
+                make_raise(config, kw, None, None)
+                    .map_err(|_| "raise")
             }
 
         rule function_def() -> FunctionDef<'a>
@@ -2610,6 +2622,27 @@ fn make_assert<'a>(
         msg,
         comma,
         whitespace_after_assert,
+        semicolon: Default::default(),
+    })
+}
+
+fn make_raise<'a>(
+    config: &Config<'a>,
+    mut kw: Token<'a>,
+    exc: Option<Expression<'a>>,
+    rest: Option<(Token<'a>, Expression<'a>)>,
+) -> Result<'a, Raise<'a>> {
+    let whitespace_after_raise = Some(parse_simple_whitespace(config, &mut kw.whitespace_after)?);
+    let cause = if let Some((t, e)) = rest {
+        Some(make_from(config, t, e, true)?)
+    } else {
+        None
+    };
+
+    Ok(Raise {
+        exc,
+        cause,
+        whitespace_after_raise,
         semicolon: Default::default(),
     })
 }

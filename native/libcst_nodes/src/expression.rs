@@ -1500,7 +1500,7 @@ pub struct From<'a> {
 }
 
 impl<'a> From<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>, default_space: &'a str) {
+    pub fn codegen(&'a self, state: &mut CodegenState<'a>, default_space: &'a str) {
         if let Some(ws) = &self.whitespace_before_from {
             ws.codegen(state);
         } else {

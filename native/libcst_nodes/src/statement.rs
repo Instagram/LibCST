@@ -4,9 +4,9 @@
 // LICENSE file in the root directory of this source tree.
 
 use super::{
-    Attribute, Codegen, CodegenState, Comma, Dot, EmptyLine, Expression, ImportStar, LeftParen,
-    List, Name, NameOrAttribute, Parameters, ParenthesizableWhitespace, RightParen, Semicolon,
-    SimpleWhitespace, StarredElement, Subscript, TrailingWhitespace, Tuple,
+    Attribute, Codegen, CodegenState, Comma, Dot, EmptyLine, Expression, From, ImportStar,
+    LeftParen, List, Name, NameOrAttribute, Parameters, ParenthesizableWhitespace, RightParen,
+    Semicolon, SimpleWhitespace, StarredElement, Subscript, TrailingWhitespace, Tuple,
 };
 use crate::{traits::WithComma, AssignEqual, ParenthesizedNode};
 
@@ -199,7 +199,7 @@ pub enum SmallStatement<'a> {
     ImportFrom(ImportFrom<'a>),
     Assign(Assign<'a>),
     AnnAssign(AnnAssign<'a>),
-    // TODO Raise
+    Raise(Raise<'a>),
     // TODO Global, Nonlocal
 }
 
@@ -216,7 +216,7 @@ impl<'a> Codegen<'a> for SmallStatement<'a> {
             Self::AnnAssign(a) => a.codegen(state),
             Self::Return(r) => r.codegen(state),
             Self::Assert(a) => a.codegen(state),
-            _ => panic!("No codegen implemented for {:#?}", self),
+            Self::Raise(r) => r.codegen(state),
         }
     }
 }
@@ -703,6 +703,37 @@ impl<'a> Codegen<'a> for Assert<'a> {
         if let Some(msg) = &self.msg {
             msg.codegen(state);
         }
+        if let Some(semi) = &self.semicolon {
+            semi.codegen(state);
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct Raise<'a> {
+    pub exc: Option<Expression<'a>>,
+    pub cause: Option<From<'a>>,
+    pub whitespace_after_raise: Option<SimpleWhitespace<'a>>,
+    pub semicolon: Option<Semicolon<'a>>,
+}
+
+impl<'a> Codegen<'a> for Raise<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+        state.add_token("raise");
+        if let Some(ws) = &self.whitespace_after_raise {
+            ws.codegen(state);
+        } else if self.exc.is_some() {
+            state.add_token(" ");
+        }
+
+        if let Some(exc) = &self.exc {
+            exc.codegen(state);
+        }
+
+        if let Some(cause) = &self.cause {
+            cause.codegen(state, " ");
+        }
+
         if let Some(semi) = &self.semicolon {
             semi.codegen(state);
         }
