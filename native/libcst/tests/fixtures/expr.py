@@ -34,10 +34,13 @@ not great
 +(really ** -(confusing ** ~(operator ** -precedence)))
 flags & ~ select.EPOLLIN and waiters.write_task is not None
 lambda arg: None
+lambda arg : None
 lambda a=True: a
+lambda a=True : a
 lambda a, b, c=True: a
 lambda a, b, c=True, *, d=(1 << v2), e='str': a
 lambda a, b, c=True, *vararg, d=(v1 << 2), e='str', **kwargs: a + b
+lambda a, b, c=True, *vararg, d=(v1 << 2), e='str', **kwargs : a + b
 manylambdas = lambda x=lambda y=lambda z=1: z: y(): x()
 foo = (lambda port_id, ignore_missing: {"port1": port1_resource, "port2": port2_resource}[port_id])
 1 if True else 2

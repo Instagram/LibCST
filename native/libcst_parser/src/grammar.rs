@@ -1528,27 +1528,26 @@ fn adjust_parameters_trailing_whitespace<'a>(
     config: &Config<'a>,
     parameters: &mut Parameters<'a>,
     mut next_tok: Token<'a>,
-) -> Result<'a, ()> {
-    let whitespace_after =
-        parse_parenthesizable_whitespace(config, &mut next_tok.whitespace_before)?;
+) -> Result<'a, Token<'a>> {
+    let mut do_adjust = |param: &mut Param<'a>| -> Result<'a, ()> {
+        let whitespace_after =
+            parse_parenthesizable_whitespace(config, &mut next_tok.whitespace_before)?;
+        if param.comma.is_none() {
+            param.whitespace_after_param = whitespace_after;
+        }
+        Ok(())
+    };
+
     if let Some(param) = &mut parameters.star_kwarg {
-        if param.comma.is_none() {
-            param.whitespace_after_param = whitespace_after;
-        }
+        do_adjust(param)?;
     } else if let Some(param) = parameters.kwonly_params.last_mut() {
-        if param.comma.is_none() {
-            param.whitespace_after_param = whitespace_after;
-        }
+        do_adjust(param)?;
     } else if let Some(StarArg::Param(param)) = parameters.star_arg.as_mut() {
-        if param.comma.is_none() {
-            param.whitespace_after_param = whitespace_after;
-        }
+        do_adjust(param)?;
     } else if let Some(param) = parameters.params.last_mut() {
-        if param.comma.is_none() {
-            param.whitespace_after_param = whitespace_after;
-        }
+        do_adjust(param)?;
     }
-    Ok(())
+    Ok(next_tok)
 }
 
 fn make_parameters<'a>(
@@ -2598,15 +2597,16 @@ fn add_arguments_trailing_comma<'a>(
 fn make_lambda<'a>(
     config: &Config<'a>,
     mut kw: Token<'a>,
-    params: Parameters<'a>,
-    colon: Token<'a>,
+    mut params: Parameters<'a>,
+    colon_tok: Token<'a>,
     expr: Expression<'a>,
 ) -> Result<'a, Lambda<'a>> {
     let whitespace_after_lambda = Some(parse_parenthesizable_whitespace(
         config,
         &mut kw.whitespace_after,
     )?);
-    let colon = make_colon(config, colon)?;
+    let colon_tok = adjust_parameters_trailing_whitespace(config, &mut params, colon_tok)?;
+    let colon = make_colon(config, colon_tok)?;
     Ok(Lambda {
         params: Box::new(params),
         body: Box::new(expr),
