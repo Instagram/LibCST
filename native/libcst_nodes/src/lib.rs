@@ -7,7 +7,7 @@ mod statement;
 pub use statement::{
     AnnAssign, Annotation, AsName, Assign, AssignTarget, AssignTargetExpression, CompoundStatement,
     Decorator, Else, FunctionDef, If, Import, ImportAlias, ImportFrom, ImportNames, IndentedBlock,
-    OrElse, SimpleStatementLine, SimpleStatementSuite, SmallStatement, Statement, Suite,
+    OrElse, Return, SimpleStatementLine, SimpleStatementSuite, SmallStatement, Statement, Suite,
 };
 
 mod expression;

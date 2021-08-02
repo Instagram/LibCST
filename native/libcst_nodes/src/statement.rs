@@ -189,11 +189,7 @@ pub enum SmallStatement<'a> {
     Continue {
         semicolon: Option<Semicolon<'a>>,
     },
-    Return {
-        value: Option<&'a str>, // TODO
-        whitespace_after_return: SimpleWhitespace<'a>,
-        semicolon: Option<Semicolon<'a>>,
-    },
+    Return(Return<'a>),
     Expr {
         value: Expression<'a>,
         semicolon: Option<Semicolon<'a>>,
@@ -224,6 +220,7 @@ impl<'a> Codegen<'a> for SmallStatement<'a> {
             Self::ImportFrom(i) => i.codegen(state),
             Self::Assign(a) => a.codegen(state),
             Self::AnnAssign(a) => a.codegen(state),
+            Self::Return(r) => r.codegen(state),
             _ => panic!("No codegen implemented for {:#?}", self),
         }
     }
@@ -660,6 +657,28 @@ impl<'a> Codegen<'a> for AnnAssign<'a> {
 
         if let Some(semi) = &self.semicolon {
             semi.codegen(state);
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct Return<'a> {
+    pub value: Option<Expression<'a>>,
+    pub whitespace_after_return: Option<SimpleWhitespace<'a>>,
+    pub semicolon: Option<Semicolon<'a>>,
+}
+
+impl<'a> Codegen<'a> for Return<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+        state.add_token("return");
+        if let Some(ws) = &self.whitespace_after_return {
+            ws.codegen(state);
+        } else if self.value.is_some() {
+            state.add_token(" ");
+        }
+
+        if let Some(val) = &self.value {
+            val.codegen(state);
         }
     }
 }

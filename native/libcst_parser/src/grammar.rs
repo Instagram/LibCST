@@ -137,6 +137,7 @@ parser! {
         rule small_stmt() -> SmallStatement<'a>
             = assignment()
             / e:star_expressions() { SmallStatement::Expr { value: e, semicolon: None } }
+            / &"return" s:return_stmt() { SmallStatement::Return(s) }
             // this is expanded from the original grammar's import_stmt rule
             / &"import" i:import_name() { SmallStatement::Import(i) }
             / &"from" i:import_from() { SmallStatement::ImportFrom(i) }
@@ -762,6 +763,12 @@ parser! {
             = lpar:lit("(") e:(yield_expr() / named_expression()) rpar:lit(")") {?
                 add_expr_parens(config, e, lpar, rpar)
                     .map_err(|e| "group")
+            }
+
+        rule return_stmt() -> Return<'a>
+            = kw:lit("return") a:star_expressions()? {?
+                make_return(config, kw, a)
+                    .map_err(|_| "return")
             }
 
         rule function_def() -> FunctionDef<'a>
@@ -2562,6 +2569,19 @@ fn make_from<'a>(
         item: e,
         whitespace_before_from,
         whitespace_after_from,
+    })
+}
+
+fn make_return<'a>(
+    config: &Config<'a>,
+    mut kw: Token<'a>,
+    value: Option<Expression<'a>>,
+) -> Result<'a, Return<'a>> {
+    let whitespace_after_return = Some(parse_simple_whitespace(config, &mut kw.whitespace_after)?);
+    Ok(Return {
+        value,
+        whitespace_after_return,
+        semicolon: Default::default(),
     })
 }
 
