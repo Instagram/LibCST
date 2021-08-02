@@ -454,10 +454,11 @@ pub struct FunctionDef<'a> {
     pub name: Name<'a>,
     pub params: Parameters<'a>,
     pub body: Suite<'a>,
+    pub decorators: Vec<Decorator<'a>>,
 
+    pub asynchronous: Option<Asynchronous<'a>>,
     pub leading_lines: Vec<EmptyLine<'a>>,
     pub lines_after_decorators: Vec<EmptyLine<'a>>,
-    pub decorators: Vec<Decorator<'a>>,
     pub whitespace_after_def: SimpleWhitespace<'a>,
     pub whitespace_after_name: SimpleWhitespace<'a>,
     pub whitespace_before_params: ParenthesizableWhitespace<'a>,
@@ -494,7 +495,9 @@ impl<'a> Codegen<'a> for FunctionDef<'a> {
         }
         state.add_indent();
 
-        // TODO: async
+        if let Some(asy) = &self.asynchronous {
+            asy.codegen(state);
+        }
         state.add_token("def");
         self.whitespace_after_def.codegen(state);
         self.name.codegen(state);

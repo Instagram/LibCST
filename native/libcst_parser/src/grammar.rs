@@ -13,7 +13,10 @@ use peg::str::LineCol;
 use peg::{parser, Parse, ParseElem, ParseLiteral, RuleResult};
 use std::mem::swap;
 use thiserror::Error;
-use TokType::{Async, Dedent, EndMarker, Indent, Name as NameTok, Newline as NL, Number, String};
+use TokType::{
+    Async, Await as AWAIT, Dedent, EndMarker, Indent, Name as NameTok, Newline as NL, Number,
+    String,
+};
 
 #[derive(Debug, Error, PartialEq, Eq)]
 pub enum ParserError<'a> {
@@ -568,8 +571,12 @@ parser! {
             / await_primary()
 
         rule await_primary() -> Expression<'a>
-            // TODO: await expressions
-            = primary()
+            = aw:tok(AWAIT, "AWAIT") e:primary() {?
+                make_await(config, aw, e)
+                    .map(Expression::Await)
+                    .map_err(|_| "await")
+            }
+            / primary()
 
         #[cache_left_rec]
         rule primary() -> Expression<'a>
@@ -797,7 +804,13 @@ parser! {
 
         rule function_def_raw() -> FunctionDef<'a>
             = def:lit("def") n:name() op:lit("(") params:params()? cp:lit(")") c:lit(":") b:block() {?
-                make_function_def(config, def, n, op, params, cp, c, b).map_err(|e| "function def" )
+                make_function_def(config, None, def, n, op, params, cp, c, b)
+                    .map_err(|e| "function def" )
+            }
+            / asy:tok(Async, "ASYNC") def:lit("def") n:name() op:lit("(") params:params()?
+                cp:lit(")") c:lit(":") b:block() {?
+                make_function_def(config, Some(asy), def, n, op, params, cp, c, b)
+                    .map_err(|e| "function def" )
             }
 
         rule params() -> Parameters<'a>
@@ -1073,6 +1086,7 @@ parser! {
 #[allow(clippy::too_many_arguments)]
 fn make_function_def<'a>(
     config: &Config<'a>,
+    asy: Option<Token<'a>>,
     mut def: Token<'a>,
     name: Name<'a>,
     mut open_paren: Token<'a>,
@@ -1081,12 +1095,29 @@ fn make_function_def<'a>(
     mut colon: Token<'a>,
     body: Suite<'a>,
 ) -> Result<'a, FunctionDef<'a>> {
+    let (asynchronous, leading_lines) = if let Some(mut asy) = asy {
+        let whitespace_after = parse_parenthesizable_whitespace(config, &mut asy.whitespace_after)?;
+        (
+            Some(Asynchronous { whitespace_after }),
+            Some(parse_empty_lines(config, &mut asy.whitespace_before, None)?),
+        )
+    } else {
+        (None, None)
+    };
+
+    let leading_lines = if let Some(ll) = leading_lines {
+        ll
+    } else {
+        parse_empty_lines(config, &mut def.whitespace_before, None)?
+    };
+
     Ok(FunctionDef {
         name,
         params: params.unwrap_or_default(),
-        decorators: Default::default(),
         body,
-        leading_lines: parse_empty_lines(config, &mut def.whitespace_before, None)?,
+        decorators: Default::default(),
+        asynchronous,
+        leading_lines,
         lines_after_decorators: vec![],
         whitespace_after_def: parse_simple_whitespace(config, &mut def.whitespace_after)?,
         whitespace_after_name: parse_simple_whitespace(config, &mut open_paren.whitespace_before)?,
@@ -2796,6 +2827,22 @@ fn make_while<'a>(
         leading_lines,
         whitespace_after_while,
         whitespace_before_colon,
+    })
+}
+
+fn make_await<'a>(
+    config: &Config<'a>,
+    mut aw: Token<'a>,
+    expression: Expression<'a>,
+) -> Result<'a, Await<'a>> {
+    let whitespace_after_await =
+        parse_parenthesizable_whitespace(config, &mut aw.whitespace_after)?;
+
+    Ok(Await {
+        expression: Box::new(expression),
+        lpar: Default::default(),
+        rpar: Default::default(),
+        whitespace_after_await,
     })
 }
 

@@ -13,7 +13,7 @@ pub use statement::{
 
 mod expression;
 pub use expression::{
-    Arg, Asynchronous, Attribute, BaseSlice, Call, CompFor, CompIf, ComparisonTarget, Dict,
+    Arg, Asynchronous, Attribute, Await, BaseSlice, Call, CompFor, CompIf, ComparisonTarget, Dict,
     DictComp, DictElement, DoubleStarredElement, Element, Expression, From, GeneratorExp, IfExp,
     Index, Lambda, LeftCurlyBrace, LeftParen, LeftSquareBracket, List, ListComp, Name,
     NameOrAttribute, Param, ParamSlash, ParamStar, Parameters, RightCurlyBrace, RightParen,

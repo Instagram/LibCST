@@ -360,7 +360,8 @@ pub enum Expression<'a> {
     IfExp(IfExp<'a>),
     Lambda(Lambda<'a>),
     Yield(Yield<'a>),
-    // TODO: FormattedString, ConcatenatedString, Await
+    Await(Await<'a>),
+    // TODO: FormattedString, ConcatenatedString
 }
 
 impl<'a> Codegen<'a> for Expression<'a> {
@@ -423,6 +424,7 @@ impl<'a> Codegen<'a> for Expression<'a> {
             Self::IfExp(e) => e.codegen(state),
             Self::Lambda(l) => l.codegen(state),
             Self::Yield(y) => y.codegen(state),
+            Self::Await(a) => a.codegen(state),
             _ => panic!("codegen not implemented for {:#?}", self),
         }
     }
@@ -1567,6 +1569,42 @@ impl<'a> Codegen<'a> for Yield<'a> {
             if let Some(val) = &self.value {
                 val.codegen(state, "")
             }
+        })
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct Await<'a> {
+    pub expression: Box<Expression<'a>>,
+    pub lpar: Vec<LeftParen<'a>>,
+    pub rpar: Vec<RightParen<'a>>,
+    pub whitespace_after_await: ParenthesizableWhitespace<'a>,
+}
+
+impl<'a> ParenthesizedNode<'a> for Await<'a> {
+    fn lpar(&self) -> &Vec<LeftParen<'a>> {
+        &self.lpar
+    }
+
+    fn rpar(&self) -> &Vec<RightParen<'a>> {
+        &self.rpar
+    }
+
+    fn with_parens(self, left: LeftParen<'a>, right: RightParen<'a>) -> Self {
+        let mut lpar = self.lpar;
+        lpar.push(left);
+        let mut rpar = self.rpar;
+        rpar.push(right);
+        Self { lpar, rpar, ..self }
+    }
+}
+
+impl<'a> Codegen<'a> for Await<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+        self.parenthesize(state, |state| {
+            state.add_token("await");
+            self.whitespace_after_await.codegen(state);
+            self.expression.codegen(state);
         })
     }
 }

@@ -252,8 +252,8 @@ def gen():
     c = yield
 
 
-# async def f():
-#     await some.complicated[0].call(with_args=(True or (1 is not 1)))
+async def f():
+    await some.complicated[0].call(with_args=(True or (1 is not 1)))
 
 
 print(*[] or [1])

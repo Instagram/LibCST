@@ -123,6 +123,7 @@ mod test {
                             },
                             ..Default::default()
                         }),
+                        asynchronous: None,
                         params: Default::default(),
                         decorators: vec![],
                         leading_lines: vec![],
@@ -168,6 +169,7 @@ mod test {
                             ..Default::default()
                         }),
                         params: Default::default(),
+                        asynchronous: None,
                         decorators: vec![Decorator {
                             decorator: Name {
                                 value: "hello",
@@ -224,6 +226,7 @@ mod test {
                             },
                             ..Default::default()
                         }),
+                        asynchronous: None,
                         params: Parameters {
                             params: vec![
                                 Param {
