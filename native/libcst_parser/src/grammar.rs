@@ -145,6 +145,8 @@ parser! {
             / "pass" { SmallStatement::Pass { semicolon: None } }
             / &"yield" s:yield_stmt() { SmallStatement::Expr { value: s, semicolon: None } }
             / &"assert" s:assert_stmt() {SmallStatement::Assert(s)}
+            / &"global" s:global_stmt() {SmallStatement::Global(s)}
+            / &"nonlocal" s:nonlocal_stmt() {SmallStatement::Nonlocal(s)}
 
         rule assignment() -> SmallStatement<'a>
             = a:name() col:lit(":") ann:expression()
@@ -918,6 +920,18 @@ parser! {
 
         rule annotated_rhs() -> Expression<'a>
             = yield_expr() / star_expressions()
+
+        rule global_stmt() -> Global<'a>
+            = kw:lit("global") init:(n:name() c:comma() {(n, c)})* last:name() {?
+                make_global(config, kw, init, last)
+                    .map_err(|_| "global")
+            }
+
+        rule nonlocal_stmt() -> Nonlocal<'a>
+            = kw:lit("nonlocal") init:(n:name() c:comma() {(n, c)})* last:name() {?
+                make_nonlocal(config, kw, init, last)
+                    .map_err(|_| "nonlocal")
+            }
 
         rule yield_stmt() -> Expression<'a>
             = yield_expr()
@@ -2643,6 +2657,56 @@ fn make_raise<'a>(
         exc,
         cause,
         whitespace_after_raise,
+        semicolon: Default::default(),
+    })
+}
+
+fn make_global<'a>(
+    config: &Config<'a>,
+    mut kw: Token<'a>,
+    init: Vec<(Name<'a>, Comma<'a>)>,
+    last: Name<'a>,
+) -> Result<'a, Global<'a>> {
+    let whitespace_after_global = parse_simple_whitespace(config, &mut kw.whitespace_after)?;
+    let mut names: Vec<NameItem<'a>> = init
+        .into_iter()
+        .map(|(name, c)| NameItem {
+            name,
+            comma: Some(c),
+        })
+        .collect();
+    names.push(NameItem {
+        name: last,
+        comma: None,
+    });
+    Ok(Global {
+        names,
+        whitespace_after_global,
+        semicolon: Default::default(),
+    })
+}
+
+fn make_nonlocal<'a>(
+    config: &Config<'a>,
+    mut kw: Token<'a>,
+    init: Vec<(Name<'a>, Comma<'a>)>,
+    last: Name<'a>,
+) -> Result<'a, Nonlocal<'a>> {
+    let whitespace_after_nonlocal = parse_simple_whitespace(config, &mut kw.whitespace_after)?;
+    let mut names: Vec<NameItem<'a>> = init
+        .into_iter()
+        .map(|(name, c)| NameItem {
+            name,
+            comma: Some(c),
+        })
+        .collect();
+    names.push(NameItem {
+        name: last,
+        comma: None,
+    });
+    Ok(Nonlocal {
+        names,
+        whitespace_after_nonlocal,
         semicolon: Default::default(),
     })
 }

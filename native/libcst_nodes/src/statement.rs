@@ -200,7 +200,8 @@ pub enum SmallStatement<'a> {
     Assign(Assign<'a>),
     AnnAssign(AnnAssign<'a>),
     Raise(Raise<'a>),
-    // TODO Global, Nonlocal
+    Global(Global<'a>),
+    Nonlocal(Nonlocal<'a>),
 }
 
 impl<'a> Codegen<'a> for SmallStatement<'a> {
@@ -217,6 +218,8 @@ impl<'a> Codegen<'a> for SmallStatement<'a> {
             Self::Return(r) => r.codegen(state),
             Self::Assert(a) => a.codegen(state),
             Self::Raise(r) => r.codegen(state),
+            Self::Global(g) => g.codegen(state),
+            Self::Nonlocal(l) => l.codegen(state),
         }
     }
 }
@@ -736,6 +739,67 @@ impl<'a> Codegen<'a> for Raise<'a> {
 
         if let Some(semi) = &self.semicolon {
             semi.codegen(state);
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct NameItem<'a> {
+    pub name: Name<'a>,
+    pub comma: Option<Comma<'a>>,
+}
+
+impl<'a> NameItem<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>, default_comma: bool) {
+        self.name.codegen(state);
+        if let Some(comma) = &self.comma {
+            comma.codegen(state);
+        } else if default_comma {
+            state.add_token(", ");
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct Global<'a> {
+    pub names: Vec<NameItem<'a>>,
+    pub whitespace_after_global: SimpleWhitespace<'a>,
+    pub semicolon: Option<Semicolon<'a>>,
+}
+
+impl<'a> Codegen<'a> for Global<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+        state.add_token("global");
+        self.whitespace_after_global.codegen(state);
+        let len = self.names.len();
+        for (i, name) in self.names.iter().enumerate() {
+            name.codegen(state, i + 1 != len);
+        }
+
+        if let Some(semicolon) = &self.semicolon {
+            semicolon.codegen(state);
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct Nonlocal<'a> {
+    pub names: Vec<NameItem<'a>>,
+    pub whitespace_after_nonlocal: SimpleWhitespace<'a>,
+    pub semicolon: Option<Semicolon<'a>>,
+}
+
+impl<'a> Codegen<'a> for Nonlocal<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+        state.add_token("nonlocal");
+        self.whitespace_after_nonlocal.codegen(state);
+        let len = self.names.len();
+        for (i, name) in self.names.iter().enumerate() {
+            name.codegen(state, i + 1 != len);
+        }
+
+        if let Some(semicolon) = &self.semicolon {
+            semicolon.codegen(state);
         }
     }
 }
