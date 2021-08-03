@@ -307,14 +307,6 @@ pub enum Expression<'a> {
         lpar: Vec<LeftParen<'a>>,
         rpar: Vec<RightParen<'a>>,
     },
-    SimpleString {
-        /// The texual representation of the string, including quotes, prefix
-        /// characters, and any escape characters present in the original source code,
-        /// such as ``r"my string\n"``.
-        value: &'a str,
-        lpar: Vec<LeftParen<'a>>,
-        rpar: Vec<RightParen<'a>>,
-    },
     Comparison {
         left: Box<Expression<'a>>,
         comparisons: Vec<ComparisonTarget<'a>>,
@@ -342,14 +334,6 @@ pub enum Expression<'a> {
         rpar: Vec<RightParen<'a>>,
     },
     Attribute(Attribute<'a>),
-    NamedExpr {
-        target: Box<Expression<'a>>,
-        value: Box<Expression<'a>>,
-        lpar: Vec<LeftParen<'a>>,
-        rpar: Vec<RightParen<'a>>,
-        whitespace_before_walrus: ParenthesizableWhitespace<'a>,
-        whitespace_after_walrus: ParenthesizableWhitespace<'a>,
-    },
     Tuple(Tuple<'a>),
     Call(Call<'a>),
     GeneratorExp(GeneratorExp<'a>),
@@ -365,7 +349,9 @@ pub enum Expression<'a> {
     Lambda(Lambda<'a>),
     Yield(Yield<'a>),
     Await(Await<'a>),
-    // TODO: FormattedString, ConcatenatedString
+    SimpleString(SimpleString<'a>),
+    ConcatenatedString(ConcatenatedString<'a>),
+    // TODO: FormattedString, NamedExpr
 }
 
 impl<'a> Codegen<'a> for Expression<'a> {
@@ -382,7 +368,11 @@ impl<'a> Codegen<'a> for Expression<'a> {
                 operator.codegen(state);
                 right.codegen(state);
             }),
-            Self::Integer { value, .. } => self.parenthesize(state, |state| state.add_token(value)),
+            Self::Integer { value, .. }
+            | Self::Float { value, .. }
+            | Self::Imaginary { value, .. } => {
+                self.parenthesize(state, |state| state.add_token(value))
+            }
             Self::Attribute(a) => a.codegen(state),
             Self::UnaryOperation {
                 expression,
@@ -411,9 +401,7 @@ impl<'a> Codegen<'a> for Expression<'a> {
                 operator.codegen(state);
                 right.codegen(state);
             }),
-            Self::SimpleString { value, .. } => self.parenthesize(state, |state| {
-                state.add_token(value);
-            }),
+            Self::SimpleString(s) => s.codegen(state),
             Self::Tuple(t) => t.codegen(state),
             Self::Call(c) => c.codegen(state),
             Self::GeneratorExp(g) => g.codegen(state),
@@ -429,7 +417,7 @@ impl<'a> Codegen<'a> for Expression<'a> {
             Self::Lambda(l) => l.codegen(state),
             Self::Yield(y) => y.codegen(state),
             Self::Await(a) => a.codegen(state),
-            _ => panic!("codegen not implemented for {:#?}", self),
+            Self::ConcatenatedString(s) => s.codegen(state),
         }
     }
 }
@@ -442,7 +430,6 @@ impl<'a> ParenthesizedNode<'a> for Expression<'a> {
             Self::UnaryOperation { lpar, .. } => lpar,
             Self::Comparison { lpar, .. } => lpar,
             Self::BooleanOperation { lpar, .. } => lpar,
-            Self::SimpleString { lpar, .. } => lpar,
             Self::IfExp(e) => e.lpar(),
             _ => panic!("lpar not implemented for {:#?}", self),
         }
@@ -455,7 +442,6 @@ impl<'a> ParenthesizedNode<'a> for Expression<'a> {
             Self::UnaryOperation { rpar, .. } => rpar,
             Self::Comparison { rpar, .. } => rpar,
             Self::BooleanOperation { rpar, .. } => rpar,
-            Self::SimpleString { rpar, .. } => rpar,
             Self::IfExp(e) => e.rpar(),
             _ => panic!("rpar not implemented for {:#?}", self),
         }
@@ -488,6 +474,20 @@ impl<'a> ParenthesizedNode<'a> for Expression<'a> {
                 lpar.push(leftpar);
                 rpar.push(rightpar);
                 Self::Integer { rpar, lpar, value }
+            }
+            Self::Float { rpar, lpar, value } => {
+                let mut lpar = lpar;
+                let mut rpar = rpar;
+                lpar.push(leftpar);
+                rpar.push(rightpar);
+                Self::Float { rpar, lpar, value }
+            }
+            Self::Imaginary { rpar, lpar, value } => {
+                let mut lpar = lpar;
+                let mut rpar = rpar;
+                lpar.push(leftpar);
+                rpar.push(rightpar);
+                Self::Imaginary { rpar, lpar, value }
             }
             Self::UnaryOperation {
                 rpar,
@@ -542,19 +542,23 @@ impl<'a> ParenthesizedNode<'a> for Expression<'a> {
                     right,
                 }
             }
-            Self::SimpleString { lpar, rpar, value } => {
-                let mut lpar = lpar;
-                let mut rpar = rpar;
-                lpar.push(leftpar);
-                rpar.push(rightpar);
-                Self::SimpleString { lpar, rpar, value }
-            }
+            Self::SimpleString(s) => Self::SimpleString(s.with_parens(leftpar, rightpar)),
             Self::Name(n) => Self::Name(n.with_parens(leftpar, rightpar)),
             Self::Attribute(a) => Self::Attribute(a.with_parens(leftpar, rightpar)),
             Self::Subscript(s) => Self::Subscript(s.with_parens(leftpar, rightpar)),
             Self::IfExp(e) => Self::IfExp(e.with_parens(leftpar, rightpar)),
             Self::Call(c) => Self::Call(c.with_parens(leftpar, rightpar)),
             Self::Lambda(l) => Self::Lambda(l.with_parens(leftpar, rightpar)),
+            Self::ConcatenatedString(s) => {
+                Self::ConcatenatedString(s.with_parens(leftpar, rightpar))
+            }
+            Self::Ellipsis { lpar, rpar } => {
+                let mut lpar = lpar;
+                let mut rpar = rpar;
+                lpar.push(leftpar);
+                rpar.push(rightpar);
+                Self::Ellipsis { rpar, lpar }
+            }
             _ => panic!("with_parens not implemented for {:#?}", self),
         }
     }
@@ -1607,5 +1611,100 @@ impl<'a> Codegen<'a> for Await<'a> {
             self.whitespace_after_await.codegen(state);
             self.expression.codegen(state);
         })
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub enum String<'a> {
+    Simple(SimpleString<'a>),
+    Concatenated(ConcatenatedString<'a>),
+}
+
+impl<'a> std::convert::From<String<'a>> for Expression<'a> {
+    fn from(s: String<'a>) -> Self {
+        match s {
+            String::Simple(s) => Self::SimpleString(s),
+            String::Concatenated(s) => Self::ConcatenatedString(s),
+        }
+    }
+}
+
+impl<'a> Codegen<'a> for String<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+        match self {
+            Self::Simple(s) => s.codegen(state),
+            Self::Concatenated(s) => s.codegen(state),
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct ConcatenatedString<'a> {
+    pub left: Box<String<'a>>,
+    pub right: Box<String<'a>>,
+    pub lpar: Vec<LeftParen<'a>>,
+    pub rpar: Vec<RightParen<'a>>,
+    pub whitespace_between: ParenthesizableWhitespace<'a>,
+}
+
+impl<'a> ParenthesizedNode<'a> for ConcatenatedString<'a> {
+    fn lpar(&self) -> &Vec<LeftParen<'a>> {
+        &self.lpar
+    }
+
+    fn rpar(&self) -> &Vec<RightParen<'a>> {
+        &self.rpar
+    }
+
+    fn with_parens(self, left: LeftParen<'a>, right: RightParen<'a>) -> Self {
+        let mut lpar = self.lpar;
+        lpar.push(left);
+        let mut rpar = self.rpar;
+        rpar.push(right);
+        Self { lpar, rpar, ..self }
+    }
+}
+
+impl<'a> Codegen<'a> for ConcatenatedString<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+        self.parenthesize(state, |state| {
+            self.left.codegen(state);
+            self.whitespace_between.codegen(state);
+            self.right.codegen(state);
+        })
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, Default)]
+pub struct SimpleString<'a> {
+    /// The texual representation of the string, including quotes, prefix
+    /// characters, and any escape characters present in the original source code,
+    /// such as ``r"my string\n"``.
+    pub value: &'a str,
+    pub lpar: Vec<LeftParen<'a>>,
+    pub rpar: Vec<RightParen<'a>>,
+}
+
+impl<'a> ParenthesizedNode<'a> for SimpleString<'a> {
+    fn lpar(&self) -> &Vec<LeftParen<'a>> {
+        &self.lpar
+    }
+
+    fn rpar(&self) -> &Vec<RightParen<'a>> {
+        &self.rpar
+    }
+
+    fn with_parens(self, left: LeftParen<'a>, right: RightParen<'a>) -> Self {
+        let mut lpar = self.lpar;
+        lpar.push(left);
+        let mut rpar = self.rpar;
+        rpar.push(right);
+        Self { lpar, rpar, ..self }
+    }
+}
+
+impl<'a> Codegen<'a> for SimpleString<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+        self.parenthesize(state, |state| state.add_token(self.value))
     }
 }

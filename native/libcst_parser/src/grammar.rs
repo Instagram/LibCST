@@ -15,7 +15,7 @@ use std::mem::swap;
 use thiserror::Error;
 use TokType::{
     Async, Await as AWAIT, Dedent, EndMarker, Indent, Name as NameTok, Newline as NL, Number,
-    String,
+    String as STRING,
 };
 
 #[derive(Debug, Error, PartialEq, Eq)]
@@ -761,7 +761,7 @@ parser! {
             / n:lit("True") { Expression::Name(make_name(n)) }
             / n:lit("False") { Expression::Name(make_name(n)) }
             / n:lit("None") { Expression::Name(make_name(n)) }
-            / &tok(String, "STRING") s:strings() {s}
+            / &tok(STRING, "STRING") s:strings() {s}
             / n:tok(Number, "NUMBER") {? make_number(config, n).map_err(|e| "expected number")}
             / &"(" e:(tuple() / group() / (g:genexp() {Expression::GeneratorExp(g)})) {e}
             / &"[" e:(list() / listcomp()) {e}
@@ -769,8 +769,9 @@ parser! {
             / lit("...") { Expression::Ellipsis {lpar: vec![], rpar: vec![]}}
 
         rule strings() -> Expression<'a>
-            = s:tok(String, "STRING") {
-                Expression::SimpleString { value: s.string, lpar: vec![], rpar: vec![]}
+            = s:tok(STRING, "STRING")+ {?
+                make_strings(config, s)
+                    .map_err(|_| "STRING")
             }
 
         rule tuple() -> Expression<'a>
@@ -2979,6 +2980,31 @@ fn make_class_def<'a>(
             whitespace_before_colon,
         })
     }
+}
+
+fn make_string(tok: Token) -> String {
+    String::Simple(SimpleString {
+        value: tok.string,
+        ..Default::default()
+    })
+}
+
+fn make_strings<'a>(config: &Config<'a>, s: Vec<Token<'a>>) -> Result<'a, Expression<'a>> {
+    let mut toks = s.into_iter().rev();
+    let first = make_string(toks.next().expect("no strings to make a string of"));
+    let ret = toks.try_fold(first, |acc, mut tok| {
+        let whitespace_between =
+            parse_parenthesizable_whitespace(config, &mut tok.whitespace_after)?;
+        let ret: Result<'a, String<'a>> = Ok(String::Concatenated(ConcatenatedString {
+            left: Box::new(make_string(tok)),
+            right: Box::new(acc),
+            whitespace_between,
+            lpar: Default::default(),
+            rpar: Default::default(),
+        }));
+        ret
+    })?;
+    Ok(ret.into())
 }
 
 #[cfg(test)]

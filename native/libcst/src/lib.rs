@@ -46,7 +46,11 @@ fn bol_offset(source: &str, n: i32) -> usize {
         .unwrap_or_else(|| source.len())
 }
 
-pub fn prettify_error<'a>(module_text: &'a str, err: ParserError<'a>, label: &str) -> String {
+pub fn prettify_error<'a>(
+    module_text: &'a str,
+    err: ParserError<'a>,
+    label: &str,
+) -> std::string::String {
     match err {
         ParserError::ParserError(e) => {
             let loc = e.location;

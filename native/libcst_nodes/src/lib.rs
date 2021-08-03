@@ -13,12 +13,12 @@ pub use statement::{
 
 mod expression;
 pub use expression::{
-    Arg, Asynchronous, Attribute, Await, BaseSlice, Call, CompFor, CompIf, ComparisonTarget, Dict,
-    DictComp, DictElement, DoubleStarredElement, Element, Expression, From, GeneratorExp, IfExp,
-    Index, Lambda, LeftCurlyBrace, LeftParen, LeftSquareBracket, List, ListComp, Name,
-    NameOrAttribute, Param, ParamSlash, ParamStar, Parameters, RightCurlyBrace, RightParen,
-    RightSquareBracket, Set, SetComp, Slice, StarArg, StarredElement, Subscript, SubscriptElement,
-    Tuple, Yield, YieldValue,
+    Arg, Asynchronous, Attribute, Await, BaseSlice, Call, CompFor, CompIf, ComparisonTarget,
+    ConcatenatedString, Dict, DictComp, DictElement, DoubleStarredElement, Element, Expression,
+    From, GeneratorExp, IfExp, Index, Lambda, LeftCurlyBrace, LeftParen, LeftSquareBracket, List,
+    ListComp, Name, NameOrAttribute, Param, ParamSlash, ParamStar, Parameters, RightCurlyBrace,
+    RightParen, RightSquareBracket, Set, SetComp, SimpleString, Slice, StarArg, StarredElement,
+    String, Subscript, SubscriptElement, Tuple, Yield, YieldValue,
 };
 
 mod op;
