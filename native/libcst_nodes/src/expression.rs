@@ -221,9 +221,8 @@ pub struct Arg<'a> {
     pub whitespace_after_star: ParenthesizableWhitespace<'a>,
     pub whitespace_after_arg: ParenthesizableWhitespace<'a>,
 }
-
-impl<'a> Codegen<'a> for Arg<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+impl<'a> Arg<'a> {
+    pub fn codegen(&'a self, state: &mut CodegenState<'a>, default_comma: bool) {
         state.add_token(self.star);
         self.whitespace_after_star.codegen(state);
         if let Some(kw) = &self.keyword {
@@ -238,6 +237,8 @@ impl<'a> Codegen<'a> for Arg<'a> {
 
         if let Some(comma) = &self.comma {
             comma.codegen(state);
+        } else if default_comma {
+            state.add_token(", ");
         }
 
         self.whitespace_after_arg.codegen(state);
@@ -578,10 +579,7 @@ impl<'a> Codegen<'a> for Call<'a> {
             self.whitespace_before_args.codegen(state);
             let arg_len = self.args.len();
             for (i, arg) in self.args.iter().enumerate() {
-                arg.codegen(state);
-                if arg.comma.is_none() && i + 1 < arg_len {
-                    state.add_token(", ");
-                }
+                arg.codegen(state, i + 1 < arg_len);
             }
             state.add_token(")");
         })

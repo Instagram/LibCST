@@ -135,6 +135,7 @@ parser! {
                 CompoundStatement::FunctionDef(f)
             }
             / &"if" f:if_stmt() { CompoundStatement::If(f) }
+            / &("class" / "@") c:class_def() { CompoundStatement::ClassDef(c) }
             / &("for" / tok(Async, "ASYNC")) f:for_stmt() { CompoundStatement::For(f) }
             / &"while" w:while_stmt() { CompoundStatement::While(w) }
 
@@ -164,6 +165,17 @@ parser! {
                 make_assignment(config, lhs, rhs)
                     .map(SmallStatement::Assign)
                     .map_err(|e| "assignment")
+            }
+
+        rule class_def() -> ClassDef<'a>
+            = d:decorators() c:class_def_raw() { c.with_decorators(d) }
+            / class_def_raw()
+
+        rule class_def_raw() -> ClassDef<'a>
+            = kw:lit("class") n:name() arg:(l:lit("(") a:arguments()? r:lit(")") {(l, a, r)})?
+                col:lit(":") b:block() {?
+                    make_class_def(config, kw, n, arg, col, b)
+                        .map_err(|_| "class")
             }
 
         #[cache]
@@ -2893,6 +2905,80 @@ fn make_await<'a>(
         rpar: Default::default(),
         whitespace_after_await,
     })
+}
+
+fn make_class_def<'a>(
+    config: &Config<'a>,
+    mut kw: Token<'a>,
+    name: Name<'a>,
+    args: Option<(Token<'a>, Option<Vec<Arg<'a>>>, Token<'a>)>,
+    mut col: Token<'a>,
+    body: Suite<'a>,
+) -> Result<'a, ClassDef<'a>> {
+    let leading_lines = parse_empty_lines(config, &mut kw.whitespace_before, None)?;
+    let whitespace_after_class = parse_simple_whitespace(config, &mut kw.whitespace_after)?;
+    let lines_after_decorators = vec![];
+
+    if let Some((mut lpar, args, rpar)) = args {
+        let whitespace_after_name = parse_simple_whitespace(config, &mut lpar.whitespace_before)?;
+        let whitespace_before_colon = parse_simple_whitespace(config, &mut col.whitespace_before)?;
+        let lpar = Some(make_lpar(config, lpar)?);
+        let mut rpar = Some(make_rpar(config, rpar)?);
+        let mut bases = vec![];
+        let mut keywords = vec![];
+
+        if let Some(args) = args {
+            let mut current_arg = &mut bases;
+            let mut has_trailing_comma_or_empty = true;
+            for arg in args {
+                if arg.star == "**" || arg.keyword.is_some() {
+                    current_arg = &mut keywords;
+                }
+                // TODO: libcst-python does validation here
+
+                has_trailing_comma_or_empty = arg.comma.is_some();
+                current_arg.push(arg);
+            }
+
+            if has_trailing_comma_or_empty {
+                if let Some(rpar) = rpar.as_mut() {
+                    rpar.whitespace_before = Default::default();
+                }
+            }
+        }
+
+        Ok(ClassDef {
+            name,
+            body,
+            bases,
+            keywords,
+            decorators: vec![],
+            lpar,
+            rpar,
+            leading_lines,
+            lines_after_decorators,
+            whitespace_after_class,
+            whitespace_after_name,
+            whitespace_before_colon,
+        })
+    } else {
+        let whitespace_after_name = parse_simple_whitespace(config, &mut col.whitespace_before)?;
+        let whitespace_before_colon = SimpleWhitespace("");
+        Ok(ClassDef {
+            name,
+            body,
+            bases: vec![],
+            keywords: vec![],
+            decorators: vec![],
+            lpar: None,
+            rpar: None,
+            leading_lines,
+            lines_after_decorators,
+            whitespace_after_class,
+            whitespace_after_name,
+            whitespace_before_colon,
+        })
+    }
 }
 
 #[cfg(test)]

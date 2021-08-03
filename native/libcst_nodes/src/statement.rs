@@ -8,7 +8,7 @@ use super::{
     LeftParen, List, Name, NameOrAttribute, Parameters, ParenthesizableWhitespace, RightParen,
     Semicolon, SimpleWhitespace, StarredElement, Subscript, TrailingWhitespace, Tuple,
 };
-use crate::{traits::WithComma, AssignEqual, Asynchronous, ParenthesizedNode};
+use crate::{traits::WithComma, Arg, AssignEqual, Asynchronous, ParenthesizedNode};
 
 #[allow(clippy::large_enum_variant)]
 #[derive(Debug, Eq, PartialEq, Clone)]
@@ -32,6 +32,7 @@ pub enum CompoundStatement<'a> {
     If(If<'a>),
     For(For<'a>),
     While(While<'a>),
+    ClassDef(ClassDef<'a>),
 }
 
 impl<'a> Codegen<'a> for CompoundStatement<'a> {
@@ -41,6 +42,7 @@ impl<'a> Codegen<'a> for CompoundStatement<'a> {
             Self::If(f) => f.codegen(state),
             Self::For(f) => f.codegen(state),
             Self::While(f) => f.codegen(state),
+            Self::ClassDef(c) => c.codegen(state),
         }
     }
 }
@@ -882,5 +884,70 @@ impl<'a> Codegen<'a> for While<'a> {
         if let Some(orelse) = &self.orelse {
             orelse.codegen(state);
         }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct ClassDef<'a> {
+    pub name: Name<'a>,
+    pub body: Suite<'a>,
+    pub bases: Vec<Arg<'a>>,
+    pub keywords: Vec<Arg<'a>>,
+    pub decorators: Vec<Decorator<'a>>,
+    pub lpar: Option<LeftParen<'a>>,
+    pub rpar: Option<RightParen<'a>>,
+    pub leading_lines: Vec<EmptyLine<'a>>,
+    pub lines_after_decorators: Vec<EmptyLine<'a>>,
+    pub whitespace_after_class: SimpleWhitespace<'a>,
+    pub whitespace_after_name: SimpleWhitespace<'a>,
+    pub whitespace_before_colon: SimpleWhitespace<'a>,
+}
+
+impl<'a> Codegen<'a> for ClassDef<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+        for ll in &self.leading_lines {
+            ll.codegen(state);
+        }
+        for dec in &self.decorators {
+            dec.codegen(state);
+        }
+        for lad in &self.lines_after_decorators {
+            lad.codegen(state);
+        }
+        state.add_indent();
+
+        state.add_token("class");
+        self.whitespace_after_class.codegen(state);
+        self.name.codegen(state);
+        self.whitespace_after_name.codegen(state);
+
+        let need_parens = !self.bases.is_empty() || !self.keywords.is_empty();
+
+        if let Some(lpar) = &self.lpar {
+            lpar.codegen(state);
+        } else if need_parens {
+            state.add_token("(");
+        }
+        let args = self.bases.iter().chain(self.keywords.iter());
+        let len = self.bases.len() + self.keywords.len();
+        for (i, arg) in args.enumerate() {
+            arg.codegen(state, i + 1 < len);
+        }
+
+        if let Some(rpar) = &self.rpar {
+            rpar.codegen(state);
+        } else if need_parens {
+            state.add_token(")");
+        }
+
+        self.whitespace_before_colon.codegen(state);
+        state.add_token(":");
+        self.body.codegen(state);
+    }
+}
+
+impl<'a> ClassDef<'a> {
+    pub fn with_decorators(self, decorators: Vec<Decorator<'a>>) -> Self {
+        Self { decorators, ..self }
     }
 }
