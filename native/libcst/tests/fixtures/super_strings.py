@@ -16,3 +16,11 @@ b"string "
     """
     
 )
+
+_ = f"string"
+
+f"string" "bonanza" f'starts' b"""here"""
+
+_ = f"something {{**not** an expression}} {but(this._is)} {{and this isn't.}} end"
+
+_(f"ok { expr = !r: aosidjhoi } end")

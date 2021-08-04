@@ -351,7 +351,8 @@ pub enum Expression<'a> {
     Await(Await<'a>),
     SimpleString(SimpleString<'a>),
     ConcatenatedString(ConcatenatedString<'a>),
-    // TODO: FormattedString, NamedExpr
+    FormattedString(FormattedString<'a>),
+    // TODO: NamedExpr
 }
 
 impl<'a> Codegen<'a> for Expression<'a> {
@@ -418,6 +419,7 @@ impl<'a> Codegen<'a> for Expression<'a> {
             Self::Yield(y) => y.codegen(state),
             Self::Await(a) => a.codegen(state),
             Self::ConcatenatedString(s) => s.codegen(state),
+            Self::FormattedString(s) => s.codegen(state),
         }
     }
 }
@@ -1618,6 +1620,7 @@ impl<'a> Codegen<'a> for Await<'a> {
 pub enum String<'a> {
     Simple(SimpleString<'a>),
     Concatenated(ConcatenatedString<'a>),
+    Formatted(FormattedString<'a>),
 }
 
 impl<'a> std::convert::From<String<'a>> for Expression<'a> {
@@ -1625,6 +1628,7 @@ impl<'a> std::convert::From<String<'a>> for Expression<'a> {
         match s {
             String::Simple(s) => Self::SimpleString(s),
             String::Concatenated(s) => Self::ConcatenatedString(s),
+            String::Formatted(s) => Self::FormattedString(s),
         }
     }
 }
@@ -1634,6 +1638,7 @@ impl<'a> Codegen<'a> for String<'a> {
         match self {
             Self::Simple(s) => s.codegen(state),
             Self::Concatenated(s) => s.codegen(state),
+            Self::Formatted(s) => s.codegen(state),
         }
     }
 }
@@ -1706,5 +1711,104 @@ impl<'a> ParenthesizedNode<'a> for SimpleString<'a> {
 impl<'a> Codegen<'a> for SimpleString<'a> {
     fn codegen(&'a self, state: &mut CodegenState<'a>) {
         self.parenthesize(state, |state| state.add_token(self.value))
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct FormattedStringText<'a> {
+    pub value: &'a str,
+}
+
+impl<'a> Codegen<'a> for FormattedStringText<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+        state.add_token(self.value);
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct FormattedStringExpression<'a> {
+    pub expression: Expression<'a>,
+    pub conversion: Option<&'a str>,
+    pub format_spec: Option<Vec<FormattedStringContent<'a>>>,
+    pub whitespace_before_expression: ParenthesizableWhitespace<'a>,
+    pub whitespace_after_expression: ParenthesizableWhitespace<'a>,
+    pub equal: Option<AssignEqual<'a>>,
+}
+
+impl<'a> Codegen<'a> for FormattedStringExpression<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+        state.add_token("{");
+        self.whitespace_before_expression.codegen(state);
+        self.expression.codegen(state);
+        if let Some(eq) = &self.equal {
+            eq.codegen(state);
+        }
+        self.whitespace_after_expression.codegen(state);
+        if let Some(conv) = &self.conversion {
+            state.add_token("!");
+            state.add_token(conv);
+        }
+        if let Some(specs) = &self.format_spec {
+            state.add_token(":");
+            for spec in specs {
+                spec.codegen(state);
+            }
+        }
+        state.add_token("}");
+    }
+}
+
+#[allow(clippy::large_enum_variant)]
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub enum FormattedStringContent<'a> {
+    Text(FormattedStringText<'a>),
+    Expression(FormattedStringExpression<'a>),
+}
+
+impl<'a> Codegen<'a> for FormattedStringContent<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+        match self {
+            Self::Text(t) => t.codegen(state),
+            Self::Expression(e) => e.codegen(state),
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct FormattedString<'a> {
+    pub parts: Vec<FormattedStringContent<'a>>,
+    pub start: &'a str,
+    pub end: &'a str,
+    pub lpar: Vec<LeftParen<'a>>,
+    pub rpar: Vec<RightParen<'a>>,
+}
+
+impl<'a> ParenthesizedNode<'a> for FormattedString<'a> {
+    fn lpar(&self) -> &Vec<LeftParen<'a>> {
+        &self.lpar
+    }
+
+    fn rpar(&self) -> &Vec<RightParen<'a>> {
+        &self.rpar
+    }
+
+    fn with_parens(self, left: LeftParen<'a>, right: RightParen<'a>) -> Self {
+        let mut lpar = self.lpar;
+        lpar.push(left);
+        let mut rpar = self.rpar;
+        rpar.push(right);
+        Self { lpar, rpar, ..self }
+    }
+}
+
+impl<'a> Codegen<'a> for FormattedString<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+        self.parenthesize(state, |state| {
+            state.add_token(self.start);
+            for part in &self.parts {
+                part.codegen(state);
+            }
+            state.add_token(self.end);
+        })
     }
 }

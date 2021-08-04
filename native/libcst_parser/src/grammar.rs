@@ -14,8 +14,8 @@ use peg::{parser, Parse, ParseElem, ParseLiteral, RuleResult};
 use std::mem::swap;
 use thiserror::Error;
 use TokType::{
-    Async, Await as AWAIT, Dedent, EndMarker, Indent, Name as NameTok, Newline as NL, Number,
-    String as STRING,
+    Async, Await as AWAIT, Dedent, EndMarker, FStringEnd, FStringStart, FStringString, Indent,
+    Name as NameTok, Newline as NL, Number, String as STRING,
 };
 
 #[derive(Debug, Error, PartialEq, Eq)]
@@ -230,13 +230,16 @@ parser! {
 
         #[cache]
         rule expression() -> Expression<'a>
+            = _conditional_expression()
+            / lambdef()
+
+        rule _conditional_expression() -> Expression<'a>
             = body:disjunction() i:lit("if") test:disjunction() e:lit("else") oe:expression() {?
                 make_ifexp(config, body, i, test, e, oe)
                     .map(Expression::IfExp)
                     .map_err(|_| "ifexp")
             }
             / disjunction()
-            / lambdef()
 
         rule lambdef() -> Expression<'a>
             = kw:lit("lambda") p:lambda_params() c:lit(":") b:expression() {?
@@ -761,15 +764,18 @@ parser! {
             / n:lit("True") { Expression::Name(make_name(n)) }
             / n:lit("False") { Expression::Name(make_name(n)) }
             / n:lit("None") { Expression::Name(make_name(n)) }
-            / &tok(STRING, "STRING") s:strings() {s}
+            / &(tok(STRING, "") / tok(FStringStart, "")) s:strings() {s.into()}
             / n:tok(Number, "NUMBER") {? make_number(config, n).map_err(|e| "expected number")}
             / &"(" e:(tuple() / group() / (g:genexp() {Expression::GeneratorExp(g)})) {e}
             / &"[" e:(list() / listcomp()) {e}
             / &"{" e:(dict() / set() / dictcomp() / setcomp()) {e}
             / lit("...") { Expression::Ellipsis {lpar: vec![], rpar: vec![]}}
 
-        rule strings() -> Expression<'a>
-            = s:tok(STRING, "STRING")+ {?
+        rule strings() -> String<'a>
+            // we capture the next token after each string piece so make_strings can
+            // extract the whitespace between individual pieces
+            = s:(str:tok(STRING, "STRING") t:&_ {(make_string(str), t)}
+                / str:fstring() t:&_ {(String::Formatted(str), t)})+ {?
                 make_strings(config, s)
                     .map_err(|_| "STRING")
             }
@@ -1093,6 +1099,39 @@ parser! {
 
         rule _async() -> Token<'a>
             = tok(Async, "ASYNC")
+
+        rule fstring() -> FormattedString<'a>
+            = start:tok(FStringStart, "f\"")
+                parts:(_f_string() / _f_replacement())*
+                end:tok(FStringEnd, "\"") {
+                    make_fstring(start.string, parts, end.string)
+            }
+
+        rule _f_string() -> FormattedStringContent<'a>
+            = t:tok(FStringString, "f-string contents") {
+                FormattedStringContent::Text(FormattedStringText { value: t.string })
+            }
+
+        rule _f_replacement() -> FormattedStringContent<'a>
+            = lb:lit("{") e:_f_expr() eq:lit("=")?
+                conv:(t:lit("!") c:_f_conversion() {(t,c)})?
+                spec:(t:lit(":") s:_f_spec() {(t,s)})?
+                rb:lit("}") {?
+                    make_fstring_expression(config, lb, e, eq, conv, spec, rb)
+                        .map(FormattedStringContent::Expression)
+                        .map_err(|_| "f-string expression")
+            }
+
+        rule _f_expr() -> Expression<'a>
+            = annotated_rhs()
+
+        rule _f_conversion() -> &'a str
+            = "r" {"r"} / "s" {"s"} / "a" {"a"}
+
+        rule _f_spec() -> FormattedStringText<'a>
+            = t:tok(FStringString, "format specifier") {
+                FormattedStringText { value: t.string }
+            }
 
         rule traced<T>(e: rule<T>) -> T =
             &(input:(_)* {
@@ -2989,14 +3028,17 @@ fn make_string(tok: Token) -> String {
     })
 }
 
-fn make_strings<'a>(config: &Config<'a>, s: Vec<Token<'a>>) -> Result<'a, Expression<'a>> {
-    let mut toks = s.into_iter().rev();
-    let first = make_string(toks.next().expect("no strings to make a string of"));
-    let ret = toks.try_fold(first, |acc, mut tok| {
+fn make_strings<'a>(
+    config: &Config<'a>,
+    s: Vec<(String<'a>, Token<'a>)>,
+) -> Result<'a, String<'a>> {
+    let mut strings = s.into_iter().rev();
+    let (first, _) = strings.next().expect("no strings to make a string of");
+    let ret = strings.try_fold(first, |acc, (str, mut tok)| {
         let whitespace_between =
-            parse_parenthesizable_whitespace(config, &mut tok.whitespace_after)?;
+            parse_parenthesizable_whitespace(config, &mut tok.whitespace_before)?;
         let ret: Result<'a, String<'a>> = Ok(String::Concatenated(ConcatenatedString {
-            left: Box::new(make_string(tok)),
+            left: Box::new(str),
             right: Box::new(acc),
             whitespace_between,
             lpar: Default::default(),
@@ -3004,7 +3046,67 @@ fn make_strings<'a>(config: &Config<'a>, s: Vec<Token<'a>>) -> Result<'a, Expres
         }));
         ret
     })?;
-    Ok(ret.into())
+    Ok(ret)
+}
+
+fn make_fstring_expression<'a>(
+    config: &Config<'a>,
+    mut lbrace: Token<'a>,
+    expression: Expression<'a>,
+    eq: Option<Token<'a>>,
+    conversion_pair: Option<(Token<'a>, &'a str)>,
+    format_pair: Option<(Token<'a>, FormattedStringText<'a>)>,
+    mut rbrace: Token<'a>,
+) -> Result<'a, FormattedStringExpression<'a>> {
+    let whitespace_before_expression =
+        parse_parenthesizable_whitespace(config, &mut lbrace.whitespace_after)?;
+    let equal = if let Some(eq) = eq {
+        Some(make_assign_equal(config, eq)?)
+    } else {
+        None
+    };
+    let (conversion_tok, conversion) = if let Some((t, c)) = conversion_pair {
+        (Some(t), Some(c))
+    } else {
+        (None, None)
+    };
+    let (format_tok, format_spec) = if let Some((t, f)) = format_pair {
+        (Some(t), Some(vec![FormattedStringContent::Text(f)]))
+    } else {
+        (None, None)
+    };
+    let whitespace_after_expression = if equal.is_some() {
+        Default::default()
+    } else if let Some(mut tok) = conversion_tok {
+        parse_parenthesizable_whitespace(config, &mut tok.whitespace_before)?
+    } else if let Some(mut tok) = format_tok {
+        parse_parenthesizable_whitespace(config, &mut tok.whitespace_before)?
+    } else {
+        parse_parenthesizable_whitespace(config, &mut rbrace.whitespace_before)?
+    };
+
+    Ok(FormattedStringExpression {
+        expression,
+        conversion,
+        format_spec,
+        whitespace_before_expression,
+        whitespace_after_expression,
+        equal,
+    })
+}
+
+fn make_fstring<'a>(
+    start: &'a str,
+    parts: Vec<FormattedStringContent<'a>>,
+    end: &'a str,
+) -> FormattedString<'a> {
+    FormattedString {
+        start,
+        parts,
+        end,
+        lpar: Default::default(),
+        rpar: Default::default(),
+    }
 }
 
 #[cfg(test)]
