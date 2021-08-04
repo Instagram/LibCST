@@ -669,6 +669,31 @@ class TestApplyAnnotationsVisitor(CodemodTest):
                     def foo(self, atticus, b: Optional[int] = None, c: bool = False): ...
                 """,
             ),
+            # Make sure we handle string annotations well
+            (
+                """
+                def f(x: "typing.Union[int, str]") -> "typing.Union[int, str]": ...
+
+                class A:
+                    def f(self: "A") -> "A": ...
+                """,
+                """
+                def f(x):
+                    return x
+
+                class A:
+                    def f(self):
+                        return self
+                """,
+                """
+                def f(x: "typing.Union[int, str]") -> "typing.Union[int, str]":
+                    return x
+
+                class A:
+                    def f(self: "A") -> "A":
+                        return self
+                """,
+            ),
         )
     )
     def test_annotate_functions(self, stub: str, before: str, after: str) -> None:
