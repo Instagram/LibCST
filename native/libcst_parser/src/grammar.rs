@@ -1765,7 +1765,18 @@ fn make_import_from<'a>(
     };
     let rpar = match rpar_tok {
         None => None,
-        Some(tok) => Some(make_rpar(config, tok)?),
+        Some(tok) => {
+            let mut rpar = make_rpar(config, tok)?;
+            if let ImportNames::Aliases(als) = &names {
+                if let Some(last) = als.last() {
+                    if last.comma.is_some() {
+                        // there's a trailing comma, it owns the whitespace before rpar
+                        rpar.whitespace_before = Default::default();
+                    }
+                }
+            }
+            Some(rpar)
+        }
     };
 
     let mut relative = vec![];

@@ -8,3 +8,6 @@ from sys import path, argv
 from sys import (path, argv)
 from sys import (path, argv,)
 from sys import *
+
+
+from a import (b, )
