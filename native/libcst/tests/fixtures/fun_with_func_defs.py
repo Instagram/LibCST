@@ -124,3 +124,8 @@ def foo(bar: (yield)) -> (yield): something: (yield another)
 def foo( bar: (yield)) -> (yield) :
     something: (yield another)
     return 3
+
+
+def f():
+    for (yield 1)[1] in [1]:
+        pass
