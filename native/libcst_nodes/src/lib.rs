@@ -5,11 +5,11 @@ pub use whitespace::{
 };
 mod statement;
 pub use statement::{
-    AnnAssign, Annotation, AsName, Assert, Assign, AssignTarget, AssignTargetExpression, ClassDef,
-    CompoundStatement, Decorator, Else, ExceptHandler, Finally, For, FunctionDef, Global, If,
-    Import, ImportAlias, ImportFrom, ImportNames, IndentedBlock, NameItem, Nonlocal, OrElse, Raise,
-    Return, SimpleStatementLine, SimpleStatementSuite, SmallStatement, Statement, Suite, Try,
-    While,
+    AnnAssign, Annotation, AsName, Assert, Assign, AssignTarget, AssignTargetExpression, AugAssign,
+    ClassDef, CompoundStatement, Decorator, Else, ExceptHandler, Finally, For, FunctionDef, Global,
+    If, Import, ImportAlias, ImportFrom, ImportNames, IndentedBlock, NameItem, Nonlocal, OrElse,
+    Raise, Return, SimpleStatementLine, SimpleStatementSuite, SmallStatement, Statement, Suite,
+    Try, While,
 };
 
 mod expression;
@@ -25,7 +25,8 @@ pub use expression::{
 
 mod op;
 pub use op::{
-    AssignEqual, BinaryOp, BooleanOp, Colon, Comma, CompOp, Dot, ImportStar, Semicolon, UnaryOp,
+    AssignEqual, AugOp, BinaryOp, BooleanOp, Colon, Comma, CompOp, Dot, ImportStar, Semicolon,
+    UnaryOp,
 };
 
 mod module;

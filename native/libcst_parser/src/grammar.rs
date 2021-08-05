@@ -167,6 +167,15 @@ parser! {
                     .map(SmallStatement::Assign)
                     .map_err(|e| "assignment")
             }
+            / t:single_target() op:augassign() rhs:(yield_expr() / star_expressions()) {
+                SmallStatement::AugAssign(make_aug_assign(t, op, rhs))
+            }
+
+        rule augassign() -> AugOp<'a>
+            = &("+=" / "-=" / "*=" / "@=" /  "/=" / "%=" / "&=" / "|=" / "^=" / "<<="
+                / ">>=" / "**=" / "//=") tok:_ {?
+                    make_aug_op(config, tok).map_err(|_| "aug_op")
+            }
 
         rule class_def() -> ClassDef<'a>
             = d:decorators() c:class_def_raw() { c.with_decorators(d) }
@@ -464,6 +473,23 @@ parser! {
                 make_list(config, lbrak, a.unwrap_or_default(), rbrak)
                     .map(AssignTargetExpression::List)
                     .map_err(|_| "star_atom")
+            }
+
+        rule single_target() -> AssignTargetExpression<'a>
+            = single_subscript_attribute_target()
+            / n:name() { AssignTargetExpression::Name(n) }
+            / lpar:lpar() t:single_target() rpar:rpar() { t.with_parens(lpar, rpar) }
+
+        rule single_subscript_attribute_target() -> AssignTargetExpression<'a>
+            = a:t_primary() dot:lit(".") n:name() !t_lookahead() {?
+                make_attribute(config, a, dot, n)
+                    .map(AssignTargetExpression::Attribute)
+                    .map_err(|_| "single_target")
+            }
+            / a:t_primary() lbrak:lit("[") s:slices() rbrak:lit("]") !t_lookahead() {?
+                make_subscript(config, a, lbrak, s, rbrak)
+                    .map(AssignTargetExpression::Subscript)
+                    .map_err(|_| "single_target")
             }
 
         rule lpar() -> LeftParen<'a>
@@ -3221,6 +3247,79 @@ fn make_try<'a>(
         leading_lines,
         whitespace_before_colon,
     })
+}
+
+fn make_aug_op<'a>(config: &Config<'a>, mut tok: Token<'a>) -> Result<'a, AugOp<'a>> {
+    let whitespace_before = parse_parenthesizable_whitespace(config, &mut tok.whitespace_before)?;
+    let whitespace_after = parse_parenthesizable_whitespace(config, &mut tok.whitespace_after)?;
+    Ok(match tok.string {
+        "+=" => AugOp::AddAssign {
+            whitespace_before,
+            whitespace_after,
+        },
+        "-=" => AugOp::SubtractAssign {
+            whitespace_before,
+            whitespace_after,
+        },
+        "*=" => AugOp::MultiplyAssign {
+            whitespace_before,
+            whitespace_after,
+        },
+        "@=" => AugOp::MatrixMultiplyAssign {
+            whitespace_before,
+            whitespace_after,
+        },
+        "/=" => AugOp::DivideAssign {
+            whitespace_before,
+            whitespace_after,
+        },
+        "%=" => AugOp::ModuloAssign {
+            whitespace_before,
+            whitespace_after,
+        },
+        "&=" => AugOp::BitAndAssign {
+            whitespace_before,
+            whitespace_after,
+        },
+        "|=" => AugOp::BitOrAssign {
+            whitespace_before,
+            whitespace_after,
+        },
+        "^=" => AugOp::BitXorAssign {
+            whitespace_before,
+            whitespace_after,
+        },
+        "<<=" => AugOp::LeftShiftAssign {
+            whitespace_before,
+            whitespace_after,
+        },
+        ">>=" => AugOp::RightShiftAssign {
+            whitespace_before,
+            whitespace_after,
+        },
+        "**=" => AugOp::PowerAssign {
+            whitespace_before,
+            whitespace_after,
+        },
+        "//=" => AugOp::FloorDivideAssign {
+            whitespace_before,
+            whitespace_after,
+        },
+        _ => return Err(ParserError::OperatorError),
+    })
+}
+
+fn make_aug_assign<'a>(
+    target: AssignTargetExpression<'a>,
+    operator: AugOp<'a>,
+    value: Expression<'a>,
+) -> AugAssign<'a> {
+    AugAssign {
+        target,
+        operator,
+        value,
+        semicolon: Default::default(),
+    }
 }
 
 #[cfg(test)]

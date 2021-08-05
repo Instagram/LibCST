@@ -372,3 +372,121 @@ impl<'a> Codegen<'a> for Colon<'a> {
         self.whitespace_after.codegen(state);
     }
 }
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub enum AugOp<'a> {
+    AddAssign {
+        whitespace_before: ParenthesizableWhitespace<'a>,
+        whitespace_after: ParenthesizableWhitespace<'a>,
+    },
+    SubtractAssign {
+        whitespace_before: ParenthesizableWhitespace<'a>,
+        whitespace_after: ParenthesizableWhitespace<'a>,
+    },
+    MultiplyAssign {
+        whitespace_before: ParenthesizableWhitespace<'a>,
+        whitespace_after: ParenthesizableWhitespace<'a>,
+    },
+    MatrixMultiplyAssign {
+        whitespace_before: ParenthesizableWhitespace<'a>,
+        whitespace_after: ParenthesizableWhitespace<'a>,
+    },
+    DivideAssign {
+        whitespace_before: ParenthesizableWhitespace<'a>,
+        whitespace_after: ParenthesizableWhitespace<'a>,
+    },
+    ModuloAssign {
+        whitespace_before: ParenthesizableWhitespace<'a>,
+        whitespace_after: ParenthesizableWhitespace<'a>,
+    },
+    BitAndAssign {
+        whitespace_before: ParenthesizableWhitespace<'a>,
+        whitespace_after: ParenthesizableWhitespace<'a>,
+    },
+    BitOrAssign {
+        whitespace_before: ParenthesizableWhitespace<'a>,
+        whitespace_after: ParenthesizableWhitespace<'a>,
+    },
+    BitXorAssign {
+        whitespace_before: ParenthesizableWhitespace<'a>,
+        whitespace_after: ParenthesizableWhitespace<'a>,
+    },
+    LeftShiftAssign {
+        whitespace_before: ParenthesizableWhitespace<'a>,
+        whitespace_after: ParenthesizableWhitespace<'a>,
+    },
+    RightShiftAssign {
+        whitespace_before: ParenthesizableWhitespace<'a>,
+        whitespace_after: ParenthesizableWhitespace<'a>,
+    },
+    PowerAssign {
+        whitespace_before: ParenthesizableWhitespace<'a>,
+        whitespace_after: ParenthesizableWhitespace<'a>,
+    },
+    FloorDivideAssign {
+        whitespace_before: ParenthesizableWhitespace<'a>,
+        whitespace_after: ParenthesizableWhitespace<'a>,
+    },
+}
+
+impl<'a> Codegen<'a> for AugOp<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+        let (tok, bef, aft) = match self {
+            Self::AddAssign {
+                whitespace_before,
+                whitespace_after,
+            } => ("+=", whitespace_before, whitespace_after),
+            Self::SubtractAssign {
+                whitespace_before,
+                whitespace_after,
+            } => ("-=", whitespace_before, whitespace_after),
+            Self::MultiplyAssign {
+                whitespace_before,
+                whitespace_after,
+            } => ("*=", whitespace_before, whitespace_after),
+            Self::MatrixMultiplyAssign {
+                whitespace_before,
+                whitespace_after,
+            } => ("@=", whitespace_before, whitespace_after),
+            Self::DivideAssign {
+                whitespace_before,
+                whitespace_after,
+            } => ("/=", whitespace_before, whitespace_after),
+            Self::ModuloAssign {
+                whitespace_before,
+                whitespace_after,
+            } => ("%=", whitespace_before, whitespace_after),
+            Self::BitAndAssign {
+                whitespace_before,
+                whitespace_after,
+            } => ("&=", whitespace_before, whitespace_after),
+            Self::BitOrAssign {
+                whitespace_before,
+                whitespace_after,
+            } => ("|=", whitespace_before, whitespace_after),
+            Self::BitXorAssign {
+                whitespace_before,
+                whitespace_after,
+            } => ("^=", whitespace_before, whitespace_after),
+            Self::LeftShiftAssign {
+                whitespace_before,
+                whitespace_after,
+            } => ("<<=", whitespace_before, whitespace_after),
+            Self::RightShiftAssign {
+                whitespace_before,
+                whitespace_after,
+            } => (">>=", whitespace_before, whitespace_after),
+            Self::PowerAssign {
+                whitespace_before,
+                whitespace_after,
+            } => ("**=", whitespace_before, whitespace_after),
+            Self::FloorDivideAssign {
+                whitespace_before,
+                whitespace_after,
+            } => ("//=", whitespace_before, whitespace_after),
+        };
+        bef.codegen(state);
+        state.add_token(tok);
+        aft.codegen(state);
+    }
+}

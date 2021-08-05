@@ -8,7 +8,7 @@ use super::{
     LeftParen, List, Name, NameOrAttribute, Parameters, ParenthesizableWhitespace, RightParen,
     Semicolon, SimpleWhitespace, StarredElement, Subscript, TrailingWhitespace, Tuple,
 };
-use crate::{traits::WithComma, Arg, AssignEqual, Asynchronous, ParenthesizedNode};
+use crate::{traits::WithComma, Arg, AssignEqual, Asynchronous, AugOp, ParenthesizedNode};
 
 #[allow(clippy::large_enum_variant)]
 #[derive(Debug, Eq, PartialEq, Clone)]
@@ -210,6 +210,7 @@ pub enum SmallStatement<'a> {
     Raise(Raise<'a>),
     Global(Global<'a>),
     Nonlocal(Nonlocal<'a>),
+    AugAssign(AugAssign<'a>),
 }
 
 impl<'a> Codegen<'a> for SmallStatement<'a> {
@@ -228,6 +229,7 @@ impl<'a> Codegen<'a> for SmallStatement<'a> {
             Self::Raise(r) => r.codegen(state),
             Self::Global(g) => g.codegen(state),
             Self::Nonlocal(l) => l.codegen(state),
+            Self::AugAssign(a) => a.codegen(state),
         }
     }
 }
@@ -1034,6 +1036,26 @@ impl<'a> Codegen<'a> for Try<'a> {
         }
         if let Some(f) = &self.finalbody {
             f.codegen(state);
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct AugAssign<'a> {
+    pub target: AssignTargetExpression<'a>,
+    pub operator: AugOp<'a>,
+    pub value: Expression<'a>,
+    pub semicolon: Option<Semicolon<'a>>,
+}
+
+impl<'a> Codegen<'a> for AugAssign<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+        self.target.codegen(state);
+        self.operator.codegen(state);
+        self.value.codegen(state);
+
+        if let Some(s) = &self.semicolon {
+            s.codegen(state);
         }
     }
 }
