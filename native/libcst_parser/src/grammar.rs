@@ -444,7 +444,7 @@ parser! {
                     .map(AssignTargetExpression::Attribute)
                     .map_err(|e| "target_with_star_atom")
             }
-            / a:t_primary() lbrak:lit("[") s:slices() rbrak:lit("]") {?
+            / a:t_primary() lbrak:lit("[") s:slices() rbrak:lit("]") !t_lookahead() {?
                 make_subscript(config, a, lbrak, s, rbrak)
                     .map(AssignTargetExpression::Subscript)
                     .map_err(|_| "target_with_star_atom")
@@ -478,7 +478,7 @@ parser! {
                     .map(Expression::Attribute)
                     .map_err(|e| "t_primary")
             }
-            / v:t_primary() lpar:lit("[") s:slices() rpar:lit("]") !t_lookahead() {?
+            / v:t_primary() lpar:lit("[") s:slices() rpar:lit("]") &t_lookahead() {?
                 make_subscript(config, v, lpar, s, rpar)
                     .map(Expression::Subscript)
                     .map_err(|_| "list")
