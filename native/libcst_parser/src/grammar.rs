@@ -137,6 +137,7 @@ parser! {
             / &"if" f:if_stmt() { CompoundStatement::If(f) }
             / &("class" / "@") c:class_def() { CompoundStatement::ClassDef(c) }
             / &("for" / tok(Async, "ASYNC")) f:for_stmt() { CompoundStatement::For(f) }
+            / &"try" t:try_stmt() { CompoundStatement::Try(t) }
             / &"while" w:while_stmt() { CompoundStatement::While(w) }
 
         #[cache]
@@ -797,6 +798,34 @@ parser! {
             = lpar:lit("(") e:(yield_expr() / named_expression()) rpar:lit(")") {?
                 add_expr_parens(config, e, lpar, rpar)
                     .map_err(|e| "group")
+            }
+
+        rule try_stmt() -> Try<'a>
+            = kw:lit("try") col:lit(":") b:block() f:finally_block() {?
+                make_try(config, kw, col, b, vec![], None, Some(f))
+                    .map_err(|_| "try")
+            }
+            / kw:lit("try") col:lit(":") b:block() ex:except_block()+ el:else_block()?
+                f:finally_block()? {?
+                    make_try(config, kw, col, b, ex, el, f)
+                        .map_err(|_| "try")
+            }
+
+        rule except_block() -> ExceptHandler<'a>
+            = kw:lit("except") e:expression() a:(k:lit("as") n:name() {(k, n)})?
+                col:lit(":") b:block() {?
+                    make_except(config, kw, Some(e), a, col, b)
+                        .map_err(|_| "except")
+            }
+            / kw:lit("except") col:lit(":") b:block() {?
+                make_except(config, kw, None, None, col, b)
+                    .map_err(|_| "except")
+            }
+
+        rule finally_block() -> Finally<'a>
+            = kw:lit("finally") col:lit(":") b:block() {?
+                make_finally(config, kw, col, b)
+                    .map_err(|_| "finally")
             }
 
         rule return_stmt() -> Return<'a>
@@ -3118,6 +3147,80 @@ fn make_fstring<'a>(
         lpar: Default::default(),
         rpar: Default::default(),
     }
+}
+
+fn make_finally<'a>(
+    config: &Config<'a>,
+    mut kw: Token<'a>,
+    mut col: Token<'a>,
+    body: Suite<'a>,
+) -> Result<'a, Finally<'a>> {
+    let leading_lines = parse_empty_lines(config, &mut kw.whitespace_before, None)?;
+    let whitespace_before_colon = parse_simple_whitespace(config, &mut col.whitespace_before)?;
+    Ok(Finally {
+        body,
+        leading_lines,
+        whitespace_before_colon,
+    })
+}
+
+fn make_except<'a>(
+    config: &Config<'a>,
+    mut kw: Token<'a>,
+    exp: Option<Expression<'a>>,
+    as_: Option<(Token<'a>, Name<'a>)>,
+    mut col: Token<'a>,
+    body: Suite<'a>,
+) -> Result<'a, ExceptHandler<'a>> {
+    let leading_lines = parse_empty_lines(config, &mut kw.whitespace_before, None)?;
+    let whitespace_after_except = parse_simple_whitespace(config, &mut kw.whitespace_after)?;
+    let (name, whitespace_before_colon) = if let Some((mut as_tok, name)) = as_ {
+        let whitespace_before_as = ParenthesizableWhitespace::SimpleWhitespace(
+            parse_simple_whitespace(config, &mut as_tok.whitespace_before)?,
+        );
+        let whitespace_after_as = ParenthesizableWhitespace::SimpleWhitespace(
+            parse_simple_whitespace(config, &mut as_tok.whitespace_after)?,
+        );
+        (
+            Some(AsName {
+                name: NameOrAttribute::N(name),
+                whitespace_after_as,
+                whitespace_before_as,
+            }),
+            parse_simple_whitespace(config, &mut col.whitespace_before)?,
+        )
+    } else {
+        (None, Default::default())
+    };
+    Ok(ExceptHandler {
+        body,
+        r#type: exp,
+        name,
+        leading_lines,
+        whitespace_after_except,
+        whitespace_before_colon,
+    })
+}
+
+fn make_try<'a>(
+    config: &Config<'a>,
+    mut kw: Token<'a>,
+    _col: Token<'a>,
+    body: Suite<'a>,
+    handlers: Vec<ExceptHandler<'a>>,
+    orelse: Option<Else<'a>>,
+    finalbody: Option<Finally<'a>>,
+) -> Result<'a, Try<'a>> {
+    let leading_lines = parse_empty_lines(config, &mut kw.whitespace_before, None)?;
+    let whitespace_before_colon = parse_simple_whitespace(config, &mut kw.whitespace_after)?;
+    Ok(Try {
+        body,
+        handlers,
+        orelse,
+        finalbody,
+        leading_lines,
+        whitespace_before_colon,
+    })
 }
 
 #[cfg(test)]

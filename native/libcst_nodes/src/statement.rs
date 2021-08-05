@@ -33,6 +33,7 @@ pub enum CompoundStatement<'a> {
     For(For<'a>),
     While(While<'a>),
     ClassDef(ClassDef<'a>),
+    Try(Try<'a>),
 }
 
 impl<'a> Codegen<'a> for CompoundStatement<'a> {
@@ -43,6 +44,7 @@ impl<'a> Codegen<'a> for CompoundStatement<'a> {
             Self::For(f) => f.codegen(state),
             Self::While(f) => f.codegen(state),
             Self::ClassDef(c) => c.codegen(state),
+            Self::Try(t) => t.codegen(state),
         }
     }
 }
@@ -949,5 +951,89 @@ impl<'a> Codegen<'a> for ClassDef<'a> {
 impl<'a> ClassDef<'a> {
     pub fn with_decorators(self, decorators: Vec<Decorator<'a>>) -> Self {
         Self { decorators, ..self }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct Finally<'a> {
+    pub body: Suite<'a>,
+    pub leading_lines: Vec<EmptyLine<'a>>,
+    pub whitespace_before_colon: SimpleWhitespace<'a>,
+}
+
+impl<'a> Codegen<'a> for Finally<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+        for ll in &self.leading_lines {
+            ll.codegen(state);
+        }
+        state.add_indent();
+
+        state.add_token("finally");
+        self.whitespace_before_colon.codegen(state);
+        state.add_token(":");
+        self.body.codegen(state);
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct ExceptHandler<'a> {
+    pub body: Suite<'a>,
+    pub r#type: Option<Expression<'a>>,
+    pub name: Option<AsName<'a>>,
+    pub leading_lines: Vec<EmptyLine<'a>>,
+    pub whitespace_after_except: SimpleWhitespace<'a>,
+    pub whitespace_before_colon: SimpleWhitespace<'a>,
+}
+
+impl<'a> Codegen<'a> for ExceptHandler<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+        for ll in &self.leading_lines {
+            ll.codegen(state);
+        }
+        state.add_indent();
+
+        state.add_token("except");
+        self.whitespace_after_except.codegen(state);
+        if let Some(t) = &self.r#type {
+            t.codegen(state);
+        }
+        if let Some(n) = &self.name {
+            n.codegen(state);
+        }
+        self.whitespace_before_colon.codegen(state);
+        state.add_token(":");
+        self.body.codegen(state);
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct Try<'a> {
+    pub body: Suite<'a>,
+    pub handlers: Vec<ExceptHandler<'a>>,
+    pub orelse: Option<Else<'a>>,
+    pub finalbody: Option<Finally<'a>>,
+    pub leading_lines: Vec<EmptyLine<'a>>,
+    pub whitespace_before_colon: SimpleWhitespace<'a>,
+}
+
+impl<'a> Codegen<'a> for Try<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+        for ll in &self.leading_lines {
+            ll.codegen(state);
+        }
+        state.add_indent();
+        state.add_token("try");
+        self.whitespace_before_colon.codegen(state);
+        state.add_token(":");
+        self.body.codegen(state);
+        for h in &self.handlers {
+            h.codegen(state);
+        }
+        if let Some(e) = &self.orelse {
+            e.codegen(state);
+        }
+        if let Some(f) = &self.finalbody {
+            f.codegen(state);
+        }
     }
 }
