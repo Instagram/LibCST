@@ -561,7 +561,18 @@ impl<'a> ParenthesizedNode<'a> for Expression<'a> {
                 rpar.push(rightpar);
                 Self::Ellipsis { rpar, lpar }
             }
-            _ => panic!("with_parens not implemented for {:#?}", self),
+            Self::Yield(y) => Self::Yield(y.with_parens(leftpar, rightpar)),
+            Self::Tuple(t) => Self::Tuple(t.with_parens(leftpar, rightpar)),
+            Self::GeneratorExp(g) => Self::GeneratorExp(g.with_parens(leftpar, rightpar)),
+            Self::ListComp(e) => Self::ListComp(e.with_parens(leftpar, rightpar)),
+            Self::SetComp(e) => Self::SetComp(e.with_parens(leftpar, rightpar)),
+            Self::DictComp(e) => Self::DictComp(e.with_parens(leftpar, rightpar)),
+            Self::List(e) => Self::List(e.with_parens(leftpar, rightpar)),
+            Self::Set(e) => Self::Set(e.with_parens(leftpar, rightpar)),
+            Self::Dict(e) => Self::Dict(e.with_parens(leftpar, rightpar)),
+            Self::Await(e) => Self::Await(e.with_parens(leftpar, rightpar)),
+            Self::StarredElement(e) => Self::StarredElement(e.with_parens(leftpar, rightpar)),
+            Self::FormattedString(e) => Self::FormattedString(e.with_parens(leftpar, rightpar)),
         }
     }
 }

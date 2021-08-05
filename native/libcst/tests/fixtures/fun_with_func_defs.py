@@ -117,3 +117,10 @@ def stars (
 
 ) -> ret  :
     pass
+
+
+def foo(bar: (yield)) -> (yield): something: (yield another)
+
+def foo( bar: (yield)) -> (yield) :
+    something: (yield another)
+    return 3
