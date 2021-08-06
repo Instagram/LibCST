@@ -876,7 +876,10 @@ parser! {
             / function_def_raw()
 
         rule decorators() -> Vec<Decorator<'a>>
-            = (at:lit("@") name:name() tok(NL, "NEWLINE") {? make_decorator(config, at, name).map_err(|e| "expected decorator")} )+
+            = (at:lit("@") e:named_expression() nl:tok(NL, "NEWLINE") {?
+                make_decorator(config, at, e, nl)
+                    .map_err(|_| "decorator")
+                } )+
 
         rule _returns() -> Annotation<'a>
             = l:lit("->") e:expression() {?
@@ -1264,14 +1267,14 @@ fn make_function_def<'a>(
 fn make_decorator<'a>(
     config: &Config<'a>,
     mut at: Token<'a>,
-    name: Name<'a>,
-    // mut newline: Token<'a>,
+    name: Expression<'a>,
+    mut newline: Token<'a>,
 ) -> Result<'a, Decorator<'a>> {
     Ok(Decorator {
         decorator: name,
         leading_lines: parse_empty_lines(config, &mut at.whitespace_before, None)?,
         whitespace_after_at: parse_simple_whitespace(config, &mut at.whitespace_after)?,
-        trailing_whitespace: Default::default(), //parse_trailing_whitespace(config, &mut newline.whitespace_before)?,
+        trailing_whitespace: parse_trailing_whitespace(config, &mut newline.whitespace_before)?,
     })
 }
 

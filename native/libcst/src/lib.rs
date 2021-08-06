@@ -147,66 +147,6 @@ mod test {
     }
 
     #[test]
-    fn test_decorated_funcdef() {
-        let text = "@hello\ndef f(): ...";
-        let m = parse_module(text).expect("parse failed");
-        assert_eq!(
-            m,
-            Module {
-                body: vec![Statement::Compound(CompoundStatement::FunctionDef(
-                    FunctionDef {
-                        name: Name {
-                            value: "f",
-                            ..Default::default()
-                        },
-                        body: Suite::SimpleStatementSuite(SimpleStatementSuite {
-                            body: vec![SmallStatement::Expr {
-                                value: Expression::Ellipsis {
-                                    lpar: vec![],
-                                    rpar: vec![]
-                                },
-                                semicolon: None,
-                            }],
-                            trailing_whitespace: TrailingWhitespace {
-                                newline: Newline(None, Fakeness::Fake),
-                                ..Default::default()
-                            },
-                            ..Default::default()
-                        }),
-                        params: Default::default(),
-                        asynchronous: None,
-                        returns: None,
-                        decorators: vec![Decorator {
-                            decorator: Name {
-                                value: "hello",
-                                ..Default::default()
-                            },
-                            ..Default::default()
-                        }],
-                        leading_lines: vec![],
-                        lines_after_decorators: vec![],
-                        whitespace_after_def: SimpleWhitespace(" "),
-                        whitespace_after_name: Default::default(),
-                        whitespace_before_colon: Default::default(),
-                        whitespace_before_params: ParenthesizableWhitespace::SimpleWhitespace(
-                            Default::default()
-                        ),
-                    }
-                ))],
-                footer: vec![],
-            }
-        );
-        let mut state = CodegenState {
-            default_newline: "\n",
-            ..Default::default()
-        };
-        if let Statement::Compound(f) = &m.body[0] {
-            f.codegen(&mut state)
-        }
-        assert_eq!(state.to_string().trim_end(), text);
-    }
-
-    #[test]
     fn test_funcdef_params() {
         let m = parse_module("def g(a, b): ...");
         assert_eq!(

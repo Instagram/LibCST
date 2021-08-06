@@ -129,3 +129,17 @@ def foo( bar: (yield)) -> (yield) :
 def f():
     for (yield 1)[1] in [1]:
         pass
+
+
+@decorators
+# foo
+@woohoo
+def f():
+    pass
+
+@getattr(None, '', lambda a: lambda b: a(b+1))
+def f(): ...
+
+
+@a(now_this = lol)
+def f(): ...

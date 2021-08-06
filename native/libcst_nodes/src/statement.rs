@@ -523,9 +523,9 @@ impl<'a> Codegen<'a> for FunctionDef<'a> {
     }
 }
 
-#[derive(Debug, Eq, PartialEq, Clone, Default)]
+#[derive(Debug, Eq, PartialEq, Clone)]
 pub struct Decorator<'a> {
-    pub decorator: Name<'a>,
+    pub decorator: Expression<'a>,
     pub leading_lines: Vec<EmptyLine<'a>>,
     pub whitespace_after_at: SimpleWhitespace<'a>,
     pub trailing_whitespace: TrailingWhitespace<'a>,
