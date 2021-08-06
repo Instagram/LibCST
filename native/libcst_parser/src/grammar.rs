@@ -153,6 +153,8 @@ parser! {
             / "pass" { SmallStatement::Pass { semicolon: None } }
             / &"yield" s:yield_stmt() { SmallStatement::Expr { value: s, semicolon: None } }
             / &"assert" s:assert_stmt() {SmallStatement::Assert(s)}
+            / "break" { SmallStatement::Break { semicolon: None }}
+            / "continue" { SmallStatement::Continue { semicolon: None }}
             / &"global" s:global_stmt() {SmallStatement::Global(s)}
             / &"nonlocal" s:nonlocal_stmt() {SmallStatement::Nonlocal(s)}
 

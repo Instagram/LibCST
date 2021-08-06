@@ -290,6 +290,7 @@ fn parse_indent<'a>(
             {
                 state.column_byte += absolute_indent.len();
                 state.column += absolute_indent.chars().count();
+                state.byte_offset += absolute_indent.len();
                 true
             } else {
                 false

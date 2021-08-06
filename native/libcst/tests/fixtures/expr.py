@@ -249,6 +249,16 @@ mapping = {
 ]
 
 def gen():
+    if 1:
+        if 2:
+            if 3:
+                if not is_value_of_type(
+                    subkey,
+                    type_args[0],
+                    # key type is always invariant
+                    invariant_check=True,
+                ):
+                    return False
     yield from outside_of_generator
     a = yield
     b = yield
