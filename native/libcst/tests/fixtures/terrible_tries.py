@@ -10,7 +10,11 @@ finally  :
 try   :
     pass
 
+    # foo
+
 except :
+
+    # foo
 
     pass
 
@@ -35,9 +39,32 @@ finally:
 
 
 try:
+
+    # 1
+
     try:
+
+        #  2
+
         pass
+
+        # 3
+
+    # 4
+
     finally:
+
+        # 5
+
         pass
+
+    
+    # 7
+
 except foo:
+
+    #8
+
     pass
+
+    #9

@@ -5,8 +5,8 @@
 
 use libcst_nodes::*;
 use libcst_tokenize::whitespace_parser::{
-    parse_empty_lines, parse_parenthesizable_whitespace, parse_simple_whitespace,
-    parse_trailing_whitespace, Config, WhitespaceError,
+    parse_empty_lines, parse_empty_lines_from_end, parse_parenthesizable_whitespace,
+    parse_simple_whitespace, parse_trailing_whitespace, Config, WhitespaceError,
 };
 use libcst_tokenize::{TokError, TokType, Token};
 use peg::str::LineCol;
@@ -1223,7 +1223,10 @@ fn make_function_def<'a>(
         let whitespace_after = parse_parenthesizable_whitespace(config, &mut asy.whitespace_after)?;
         (
             Some(Asynchronous { whitespace_after }),
-            Some(parse_empty_lines(config, &mut asy.whitespace_before, None)?),
+            Some(parse_empty_lines_from_end(
+                config,
+                &mut asy.whitespace_before,
+            )?),
         )
     } else {
         (None, None)
@@ -1232,7 +1235,7 @@ fn make_function_def<'a>(
     let leading_lines = if let Some(ll) = leading_lines {
         ll
     } else {
-        parse_empty_lines(config, &mut def.whitespace_before, None)?
+        parse_empty_lines_from_end(config, &mut def.whitespace_before)?
     };
 
     if let Some(parameters) = params.as_mut() {
@@ -1583,7 +1586,7 @@ fn make_simple_statement_line<'a>(
     parts: SimpleStatementParts<'a>,
 ) -> Result<'a, SimpleStatementLine<'a>> {
     let (mut first, body, trailing_whitespace) = _make_simple_statement(config, parts)?;
-    let leading_lines = parse_empty_lines(config, &mut first.whitespace_before, None)?;
+    let leading_lines = parse_empty_lines_from_end(config, &mut first.whitespace_before)?;
     Ok(SimpleStatementLine {
         body,
         leading_lines,
@@ -1600,7 +1603,7 @@ fn make_if<'a>(
     orelse: Option<OrElse<'a>>,
     is_elif: bool,
 ) -> Result<'a, If<'a>> {
-    let leading_lines = parse_empty_lines(config, &mut keyword.whitespace_before, None)?;
+    let leading_lines = parse_empty_lines_from_end(config, &mut keyword.whitespace_before)?;
     let whitespace_before_test = parse_simple_whitespace(config, &mut keyword.whitespace_after)?;
     let whitespace_after_test = parse_simple_whitespace(config, &mut colon.whitespace_before)?;
     Ok(If {
@@ -1620,7 +1623,7 @@ fn make_else<'a>(
     mut colon: Token<'a>,
     block: Suite<'a>,
 ) -> Result<'a, Else<'a>> {
-    let leading_lines = parse_empty_lines(config, &mut keyword.whitespace_before, None)?;
+    let leading_lines = parse_empty_lines_from_end(config, &mut keyword.whitespace_before)?;
     let whitespace_before_colon = parse_simple_whitespace(config, &mut colon.whitespace_before)?;
     Ok(Else {
         leading_lines,
@@ -2946,7 +2949,10 @@ fn make_for<'a>(
         let whitespace_after = parse_parenthesizable_whitespace(config, &mut asy.whitespace_after)?;
         (
             Some(Asynchronous { whitespace_after }),
-            Some(parse_empty_lines(config, &mut asy.whitespace_before, None)?),
+            Some(parse_empty_lines_from_end(
+                config,
+                &mut asy.whitespace_before,
+            )?),
         )
     } else {
         (None, None)
@@ -2959,7 +2965,7 @@ fn make_for<'a>(
     let leading_lines = if let Some(ll) = leading_lines {
         ll
     } else {
-        parse_empty_lines(config, &mut for_.whitespace_before, None)?
+        parse_empty_lines_from_end(config, &mut for_.whitespace_before)?
     };
 
     Ok(For {
@@ -2986,7 +2992,7 @@ fn make_while<'a>(
 ) -> Result<'a, While<'a>> {
     let whitespace_after_while = parse_simple_whitespace(config, &mut kw.whitespace_after)?;
     let whitespace_before_colon = parse_simple_whitespace(config, &mut col.whitespace_before)?;
-    let leading_lines = parse_empty_lines(config, &mut kw.whitespace_before, None)?;
+    let leading_lines = parse_empty_lines_from_end(config, &mut kw.whitespace_before)?;
     Ok(While {
         test,
         body,
@@ -3021,7 +3027,7 @@ fn make_class_def<'a>(
     mut col: Token<'a>,
     body: Suite<'a>,
 ) -> Result<'a, ClassDef<'a>> {
-    let leading_lines = parse_empty_lines(config, &mut kw.whitespace_before, None)?;
+    let leading_lines = parse_empty_lines_from_end(config, &mut kw.whitespace_before)?;
     let whitespace_after_class = parse_simple_whitespace(config, &mut kw.whitespace_after)?;
     let lines_after_decorators = vec![];
 
@@ -3181,7 +3187,7 @@ fn make_finally<'a>(
     mut col: Token<'a>,
     body: Suite<'a>,
 ) -> Result<'a, Finally<'a>> {
-    let leading_lines = parse_empty_lines(config, &mut kw.whitespace_before, None)?;
+    let leading_lines = parse_empty_lines_from_end(config, &mut kw.whitespace_before)?;
     let whitespace_before_colon = parse_simple_whitespace(config, &mut col.whitespace_before)?;
     Ok(Finally {
         body,
@@ -3198,7 +3204,7 @@ fn make_except<'a>(
     mut col: Token<'a>,
     body: Suite<'a>,
 ) -> Result<'a, ExceptHandler<'a>> {
-    let leading_lines = parse_empty_lines(config, &mut kw.whitespace_before, None)?;
+    let leading_lines = parse_empty_lines_from_end(config, &mut kw.whitespace_before)?;
     let whitespace_after_except = parse_simple_whitespace(config, &mut kw.whitespace_after)?;
     let (name, whitespace_before_colon) = if let Some((mut as_tok, name)) = as_ {
         let whitespace_before_as = ParenthesizableWhitespace::SimpleWhitespace(
@@ -3237,7 +3243,7 @@ fn make_try<'a>(
     orelse: Option<Else<'a>>,
     finalbody: Option<Finally<'a>>,
 ) -> Result<'a, Try<'a>> {
-    let leading_lines = parse_empty_lines(config, &mut kw.whitespace_before, None)?;
+    let leading_lines = parse_empty_lines_from_end(config, &mut kw.whitespace_before)?;
     let whitespace_before_colon = parse_simple_whitespace(config, &mut kw.whitespace_after)?;
     Ok(Try {
         body,

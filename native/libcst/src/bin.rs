@@ -10,7 +10,7 @@ pub fn main() {
     match parse_module(str.as_ref()) {
         Err(e) => eprintln!("{}", prettify_error(str.as_ref(), e, "stdin")),
         Ok(m) => {
-            let first_arg = env::args().next().unwrap_or_else(|| "".to_string());
+            let first_arg = env::args().nth(1).unwrap_or_else(|| "".to_string());
             if first_arg == "-d" {
                 println!("{:#?}", m);
             }

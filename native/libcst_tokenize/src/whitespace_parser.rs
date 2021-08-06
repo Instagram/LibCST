@@ -144,6 +144,45 @@ pub fn parse_empty_lines<'a>(
     Ok(lines.into_iter().map(|(_, e)| e).collect())
 }
 
+pub fn parse_empty_lines_from_end<'a>(
+    config: &Config<'a>,
+    state: &mut State,
+) -> Result<Vec<EmptyLine<'a>>> {
+    let mut speculative_state = state.clone();
+    let mut lines = vec![];
+    while let Some(empty_line) = parse_empty_line(config, &mut speculative_state, None)? {
+        lines.push((speculative_state.clone(), empty_line));
+    }
+
+    // find last non-empty line not on our indentation level
+    let mut last_droppable_line = None;
+    for (ind, (s, empty_line)) in lines.iter().enumerate() {
+        let raw_line = config.get_line(s.line.saturating_sub(1))?;
+        if empty_line.comment.is_none() && empty_line.whitespace.0.is_empty() {
+            // this line is empty
+            continue;
+        }
+
+        if raw_line.starts_with(s.absolute_indent) {
+            // this line is at least on our indentation level
+            match raw_line.as_bytes()[s.absolute_indent.len()] {
+                b' ' | b'\t' => {
+                    // there is still more indentation
+                    last_droppable_line = Some(ind);
+                }
+                _ => {}
+            }
+        }
+    }
+
+    *state = speculative_state;
+    Ok(lines
+        .into_iter()
+        .skip(last_droppable_line.map(|x| x + 1).unwrap_or(0))
+        .map(|(_, l)| l)
+        .collect())
+}
+
 pub fn parse_comment<'a>(config: &Config<'a>, state: &mut State) -> Result<Option<Comment<'a>>> {
     if let Some(comment_match) =
         COMMENT_RE.find(config.get_line_after_column(state.line, state.column_byte)?)
