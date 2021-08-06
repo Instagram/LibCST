@@ -23,3 +23,6 @@ class OOPSI ( Foo, * Bar , metaclass =
 
 class OOPSIE ( list , *args, kw = arg , ** kwargs ) :
     what : does_this_even = mean
+
+    def __init__(self) -> None:
+        self.foo: Bar = Bar()

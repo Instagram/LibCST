@@ -161,6 +161,13 @@ parser! {
         rule assignment() -> SmallStatement<'a>
             = a:name() col:lit(":") ann:expression()
                 rhs:(eq:lit("=") d:annotated_rhs() {(eq, d)})? {?
+                    make_ann_assignment(config, AssignTargetExpression::Name(a), col, ann, rhs)
+                        .map(SmallStatement::AnnAssign)
+                        .map_err(|_| "assignment")
+            }
+            // TODO: there's an extra '(' single_target ')' clause here in upstream
+            / a:single_subscript_attribute_target() col:lit(":") ann:expression()
+                rhs:(eq:lit("=") d:annotated_rhs() {(eq, d)})? {?
                     make_ann_assignment(config, a, col, ann, rhs)
                         .map(SmallStatement::AnnAssign)
                         .map_err(|_| "assignment")
@@ -2785,13 +2792,12 @@ fn make_annotation<'a>(
 
 fn make_ann_assignment<'a>(
     config: &Config<'a>,
-    n: Name<'a>,
+    target: AssignTargetExpression<'a>,
     col: Token<'a>,
     ann: Expression<'a>,
     rhs: Option<(Token<'a>, Expression<'a>)>,
 ) -> Result<'a, AnnAssign<'a>> {
     let annotation = make_annotation(config, col, ann)?;
-    let target = AssignTargetExpression::Name(n);
     let (eq, value) = rhs.map(|(x, y)| (Some(x), Some(y))).unwrap_or((None, None));
     let equal = if let Some(eq) = eq {
         Some(make_assign_equal(config, eq)?)
