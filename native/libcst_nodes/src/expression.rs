@@ -19,6 +19,17 @@ pub struct Parameters<'a> {
     pub posonly_ind: Option<ParamSlash<'a>>,
 }
 
+impl<'a> Parameters<'a> {
+    pub fn is_empty(&self) -> bool {
+        self.params.is_empty()
+            && self.star_arg.is_none()
+            && self.kwonly_params.is_empty()
+            && self.star_kwarg.is_none()
+            && self.posonly_params.is_empty()
+            && self.posonly_ind.is_none()
+    }
+}
+
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum StarArg<'a> {
     Star(ParamStar<'a>),
@@ -1504,12 +1515,7 @@ impl<'a> Codegen<'a> for Lambda<'a> {
             state.add_token("lambda");
             if let Some(ws) = &self.whitespace_after_lambda {
                 ws.codegen(state);
-            } else if self.params.posonly_params.is_empty()
-                && self.params.params.is_empty()
-                && self.params.kwonly_params.is_empty()
-                && self.params.star_kwarg.is_none()
-                && self.params.star_arg.is_none()
-            {
+            } else if !self.params.is_empty() {
                 // there's one or more params, add a space
                 state.add_token(" ")
             }

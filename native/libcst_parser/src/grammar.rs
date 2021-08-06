@@ -263,8 +263,8 @@ parser! {
             / disjunction()
 
         rule lambdef() -> Expression<'a>
-            = kw:lit("lambda") p:lambda_params() c:lit(":") b:expression() {?
-                make_lambda(config, kw, p, c, b)
+            = kw:lit("lambda") p:lambda_params()? c:lit(":") b:expression() {?
+                make_lambda(config, kw, p.unwrap_or_default(), c, b)
                     .map(Expression::Lambda)
                     .map_err(|_| "lambda")
             }
@@ -2796,10 +2796,14 @@ fn make_lambda<'a>(
     colon_tok: Token<'a>,
     expr: Expression<'a>,
 ) -> Result<'a, Lambda<'a>> {
-    let whitespace_after_lambda = Some(parse_parenthesizable_whitespace(
-        config,
-        &mut kw.whitespace_after,
-    )?);
+    let whitespace_after_lambda = if params.is_empty() {
+        None
+    } else {
+        Some(parse_parenthesizable_whitespace(
+            config,
+            &mut kw.whitespace_after,
+        )?)
+    };
     let colon_tok = adjust_parameters_trailing_whitespace(config, &mut params, colon_tok)?;
     let colon = make_colon(config, colon_tok)?;
     Ok(Lambda {
