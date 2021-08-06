@@ -22,6 +22,76 @@ class TestApplyAnnotationsVisitor(CodemodTest):
         (
             (
                 """
+                from __future__ import annotations
+                from foo import Foo
+                from baz import Baz
+                """,
+                """
+                from foo import Bar
+                import bar
+                """,
+                """
+                from __future__ import annotations
+                from foo import Foo, Bar
+                import bar
+                from baz import Baz
+                """,
+            ),
+            (
+                # Missing feature: ignore aliased imports
+                """
+                from Foo import foo as bar
+                """,
+                """
+                from Foo import bar
+                """,
+                """
+                from Foo import bar
+                """,
+            ),
+            (
+                # Missing feature: ignore bare imports
+                """
+                import foo
+                """,
+                """
+                """,
+                """
+                """,
+            ),
+            (
+                # Missing feature: ignore relative imports
+                """
+                from .. import foo
+                """,
+                """
+                """,
+                """
+                """,
+            ),
+            (
+                # Missing feature: ignore star imports
+                """
+                from foo import *
+                """,
+                """
+                """,
+                """
+                """,
+            ),
+        )
+    )
+    def test_merge_module_imports(self, stub: str, before: str, after: str) -> None:
+        context = CodemodContext()
+        ApplyTypeAnnotationsVisitor.store_stub_in_context(
+            context, parse_module(textwrap.dedent(stub.rstrip()))
+        )
+        self.assertCodemod(before, after, context_override=context)
+
+    @data_provider(
+        (
+            (
+                """
                 def foo() -> int: ...
                 """,
                 """
@@ -608,22 +678,6 @@ class TestApplyAnnotationsVisitor(CodemodTest):
                     pass
                 """,
             ),
-            # Sanity check that we don't fail when the stub has relative imports.
-            # We don't do anything with those imports, though.
-            (
-                """
-                from .. import hello
-                def foo() -> typing.Sequence[int]: ...
-                """,
-                """
-                def foo():
-                  return []
-                """,
-                """
-                def foo() -> typing.Sequence[int]:
-                  return []
-                """,
-            ),
             (
                 """
                 from typing import Dict
@@ -667,6 +721,31 @@ class TestApplyAnnotationsVisitor(CodemodTest):
 
                 class A:
                     def foo(self, atticus, b: Optional[int] = None, c: bool = False): ...
+                """,
+            ),
+            # Make sure we handle string annotations well
+            (
+                """
+                def f(x: "typing.Union[int, str]") -> "typing.Union[int, str]": ...
+
+                class A:
+                    def f(self: "A") -> "A": ...
+                """,
+                """
+                def f(x):
+                    return x
+
+                class A:
+                    def f(self):
+                        return self
+                """,
+                """
+                def f(x: "typing.Union[int, str]") -> "typing.Union[int, str]":
+                    return x
+
+                class A:
+                    def f(self: "A") -> "A":
+                        return self
                 """,
             ),
         )
