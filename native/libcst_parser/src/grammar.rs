@@ -109,8 +109,8 @@ parser! {
             = traced(<_file()>)
 
         rule _file() -> Module<'a>
-            = s:statements() eof:tok(EndMarker, "EOF") {?
-                make_module(config, s, eof)
+            = s:statements()? eof:tok(EndMarker, "EOF") {?
+                make_module(config, s.unwrap_or_default(), eof)
                     .map_err(|e| "module")
             }
 
