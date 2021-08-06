@@ -6,10 +6,10 @@ pub use whitespace::{
 mod statement;
 pub use statement::{
     AnnAssign, Annotation, AsName, Assert, Assign, AssignTarget, AssignTargetExpression, AugAssign,
-    ClassDef, CompoundStatement, Decorator, Else, ExceptHandler, Finally, For, FunctionDef, Global,
-    If, Import, ImportAlias, ImportFrom, ImportNames, IndentedBlock, NameItem, Nonlocal, OrElse,
-    Raise, Return, SimpleStatementLine, SimpleStatementSuite, SmallStatement, Statement, Suite,
-    Try, While, With, WithItem,
+    ClassDef, CompoundStatement, Decorator, Del, DelTargetExpression, Else, ExceptHandler, Finally,
+    For, FunctionDef, Global, If, Import, ImportAlias, ImportFrom, ImportNames, IndentedBlock,
+    NameItem, Nonlocal, OrElse, Raise, Return, SimpleStatementLine, SimpleStatementSuite,
+    SmallStatement, Statement, Suite, Try, While, With, WithItem,
 };
 
 mod expression;

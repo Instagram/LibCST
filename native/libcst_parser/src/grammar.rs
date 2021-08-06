@@ -151,6 +151,7 @@ parser! {
             / &"from" i:import_from() { SmallStatement::ImportFrom(i) }
             / &"raise" r:raise_stmt() { SmallStatement::Raise(r) }
             / "pass" { SmallStatement::Pass { semicolon: None } }
+            / &"del" s:del_stmt() { SmallStatement::Del(s) }
             / &"yield" s:yield_stmt() { SmallStatement::Expr { value: s, semicolon: None } }
             / &"assert" s:assert_stmt() {SmallStatement::Assert(s)}
             / "break" { SmallStatement::Break { semicolon: None }}
@@ -500,6 +501,36 @@ parser! {
                 make_subscript(config, a, lbrak, s, rbrak)
                     .map(AssignTargetExpression::Subscript)
                     .map_err(|_| "single_target")
+            }
+
+        rule del_targets() -> Vec<Element<'a>>
+            = first:del_target() rest:(c:comma() t:del_target() {(c,t.into())})* trail:comma()? {
+                comma_separate(first.into(), rest, trail, false)
+            }
+
+        rule del_target() -> DelTargetExpression<'a>
+            = a:t_primary() d:lit(".") n:name() !t_lookahead() {?
+                make_attribute(config, a, d, n)
+                    .map(DelTargetExpression::Attribute)
+                    .map_err(|_| "del")
+            }
+            / a:t_primary() lbrak:lit("[") s:slices() rbrak:lit("]") !t_lookahead() {?
+                make_subscript(config, a, lbrak, s, rbrak)
+                    .map(DelTargetExpression::Subscript)
+                    .map_err(|_| "del")
+            }
+            / del_t_atom()
+
+        rule del_t_atom() -> DelTargetExpression<'a>
+            = n:name() { DelTargetExpression::Name(n) }
+            / l:lpar() d:del_target() r:rpar() { d.with_parens(l, r) }
+            / l:lpar() d:del_targets()? r:rpar() {
+                make_del_tuple(Some(l), d.unwrap_or_default(), Some(r))
+            }
+            / l:lit("[") d:del_targets()? r:lit("]") {?
+                make_list(config, l, d.unwrap_or_default(), r)
+                    .map(DelTargetExpression::List)
+                    .map_err(|_| "del")
             }
 
         rule lpar() -> LeftParen<'a>
@@ -1097,6 +1128,16 @@ parser! {
             = kw:lit("assert") test:expression() rest:(c:comma() msg:expression() {(c, msg)})? {?
                 make_assert(config, kw, test, rest)
                     .map_err(|_| "assert")
+            }
+
+        rule del_stmt() -> Del<'a>
+            = kw:lit("del") t:del_target() &(";" / tok(NL, "NEWLINE")) {?
+                make_del(config, kw, t)
+                    .map_err(|_| "del")
+            }
+            / kw:lit("del") t:del_targets() &(";" / tok(NL, "NEWLINE")) {?
+                make_del(config, kw, make_del_tuple(None, t, None))
+                    .map_err(|_| "del")
             }
 
         rule import_name() -> Import<'a>
@@ -3425,6 +3466,31 @@ fn make_with<'a>(
         leading_lines,
         whitespace_after_with,
         whitespace_before_colon,
+    })
+}
+
+fn make_del<'a>(
+    config: &Config<'a>,
+    mut kw: Token<'a>,
+    target: DelTargetExpression<'a>,
+) -> Result<'a, Del<'a>> {
+    let whitespace_after_del = parse_simple_whitespace(config, &mut kw.whitespace_after)?;
+    Ok(Del {
+        target,
+        whitespace_after_del,
+        semicolon: Default::default(),
+    })
+}
+
+fn make_del_tuple<'a>(
+    lpar: Option<LeftParen<'a>>,
+    elements: Vec<Element<'a>>,
+    rpar: Option<RightParen<'a>>,
+) -> DelTargetExpression<'a> {
+    DelTargetExpression::Tuple(Tuple {
+        elements,
+        lpar: lpar.map(|x| vec![x]).unwrap_or_default(),
+        rpar: rpar.map(|x| vec![x]).unwrap_or_default(),
     })
 }
 

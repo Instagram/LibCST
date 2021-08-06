@@ -778,6 +778,14 @@ impl<'a> WithComma<'a> for Element<'a> {
         }
     }
 }
+impl<'a> std::convert::From<Expression<'a>> for Element<'a> {
+    fn from(e: Expression<'a>) -> Self {
+        match e {
+            Expression::StarredElement(e) => Element::Starred(e),
+            value => Element::Simple { value, comma: None },
+        }
+    }
+}
 
 #[derive(Debug, PartialEq, Eq, Clone, Default)]
 pub struct Tuple<'a> {

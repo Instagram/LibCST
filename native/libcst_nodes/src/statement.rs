@@ -8,7 +8,7 @@ use super::{
     LeftParen, List, Name, NameOrAttribute, Parameters, ParenthesizableWhitespace, RightParen,
     Semicolon, SimpleWhitespace, StarredElement, Subscript, TrailingWhitespace, Tuple,
 };
-use crate::{traits::WithComma, Arg, AssignEqual, Asynchronous, AugOp, ParenthesizedNode};
+use crate::{traits::WithComma, Arg, AssignEqual, Asynchronous, AugOp, Element, ParenthesizedNode};
 
 #[allow(clippy::large_enum_variant)]
 #[derive(Debug, Eq, PartialEq, Clone)]
@@ -213,6 +213,7 @@ pub enum SmallStatement<'a> {
     Global(Global<'a>),
     Nonlocal(Nonlocal<'a>),
     AugAssign(AugAssign<'a>),
+    Del(Del<'a>),
 }
 
 impl<'a> Codegen<'a> for SmallStatement<'a> {
@@ -232,6 +233,7 @@ impl<'a> Codegen<'a> for SmallStatement<'a> {
             Self::Global(g) => g.codegen(state),
             Self::Nonlocal(l) => l.codegen(state),
             Self::AugAssign(a) => a.codegen(state),
+            Self::Del(d) => d.codegen(state),
         }
     }
 }
@@ -1122,5 +1124,97 @@ impl<'a> Codegen<'a> for With<'a> {
         self.whitespace_before_colon.codegen(state);
         state.add_token(":");
         self.body.codegen(state);
+    }
+}
+
+#[allow(clippy::large_enum_variant)]
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub enum DelTargetExpression<'a> {
+    Name(Name<'a>),
+    Attribute(Attribute<'a>),
+    Tuple(Tuple<'a>),
+    List(List<'a>),
+    Subscript(Subscript<'a>),
+}
+
+impl<'a> Codegen<'a> for DelTargetExpression<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+        match self {
+            Self::Name(n) => n.codegen(state),
+            Self::Attribute(a) => a.codegen(state),
+            Self::Tuple(t) => t.codegen(state),
+            Self::List(l) => l.codegen(state),
+            Self::Subscript(s) => s.codegen(state),
+        }
+    }
+}
+
+impl<'a> ParenthesizedNode<'a> for DelTargetExpression<'a> {
+    fn lpar(&self) -> &Vec<LeftParen<'a>> {
+        match self {
+            Self::Name(n) => n.lpar(),
+            Self::Attribute(n) => n.lpar(),
+            Self::Tuple(n) => n.lpar(),
+            Self::List(n) => n.lpar(),
+            Self::Subscript(n) => n.lpar(),
+        }
+    }
+
+    fn rpar(&self) -> &Vec<RightParen<'a>> {
+        match self {
+            Self::Name(n) => n.rpar(),
+            Self::Attribute(n) => n.rpar(),
+            Self::Tuple(n) => n.rpar(),
+            Self::List(n) => n.rpar(),
+            Self::Subscript(n) => n.rpar(),
+        }
+    }
+
+    fn with_parens(self, left: LeftParen<'a>, right: RightParen<'a>) -> Self {
+        match self {
+            Self::Name(n) => Self::Name(n.with_parens(left, right)),
+            Self::Attribute(n) => Self::Attribute(n.with_parens(left, right)),
+            Self::Tuple(n) => Self::Tuple(n.with_parens(left, right)),
+            Self::List(n) => Self::List(n.with_parens(left, right)),
+            Self::Subscript(n) => Self::Subscript(n.with_parens(left, right)),
+        }
+    }
+}
+
+impl<'a> std::convert::From<DelTargetExpression<'a>> for Expression<'a> {
+    fn from(d: DelTargetExpression<'a>) -> Self {
+        match d {
+            DelTargetExpression::Attribute(a) => Expression::Attribute(a),
+            DelTargetExpression::List(l) => Expression::List(l),
+            DelTargetExpression::Name(n) => Expression::Name(n),
+            DelTargetExpression::Subscript(s) => Expression::Subscript(s),
+            DelTargetExpression::Tuple(t) => Expression::Tuple(t),
+        }
+    }
+}
+impl<'a> std::convert::From<DelTargetExpression<'a>> for Element<'a> {
+    fn from(d: DelTargetExpression<'a>) -> Element {
+        Element::Simple {
+            value: d.into(),
+            comma: None,
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct Del<'a> {
+    pub target: DelTargetExpression<'a>,
+    pub whitespace_after_del: SimpleWhitespace<'a>,
+    pub semicolon: Option<Semicolon<'a>>,
+}
+
+impl<'a> Codegen<'a> for Del<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+        state.add_token("del");
+        self.whitespace_after_del.codegen(state);
+        self.target.codegen(state);
+        if let Some(semi) = &self.semicolon {
+            semi.codegen(state);
+        }
     }
 }
