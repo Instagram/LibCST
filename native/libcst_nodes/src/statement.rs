@@ -34,6 +34,7 @@ pub enum CompoundStatement<'a> {
     While(While<'a>),
     ClassDef(ClassDef<'a>),
     Try(Try<'a>),
+    With(With<'a>),
 }
 
 impl<'a> Codegen<'a> for CompoundStatement<'a> {
@@ -45,6 +46,7 @@ impl<'a> Codegen<'a> for CompoundStatement<'a> {
             Self::While(f) => f.codegen(state),
             Self::ClassDef(c) => c.codegen(state),
             Self::Try(t) => t.codegen(state),
+            Self::With(w) => w.codegen(state),
         }
     }
 }
@@ -419,7 +421,7 @@ impl<'a> Codegen<'a> for ImportAlias<'a> {
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct AsName<'a> {
-    pub name: NameOrAttribute<'a>,
+    pub name: AssignTargetExpression<'a>,
     pub whitespace_before_as: ParenthesizableWhitespace<'a>,
     pub whitespace_after_as: ParenthesizableWhitespace<'a>,
 }
@@ -1057,5 +1059,68 @@ impl<'a> Codegen<'a> for AugAssign<'a> {
         if let Some(s) = &self.semicolon {
             s.codegen(state);
         }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct WithItem<'a> {
+    pub item: Expression<'a>,
+    pub asname: Option<AsName<'a>>,
+    pub comma: Option<Comma<'a>>,
+}
+
+impl<'a> Codegen<'a> for WithItem<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+        self.item.codegen(state);
+        if let Some(n) = &self.asname {
+            n.codegen(state);
+        }
+        if let Some(c) = &self.comma {
+            c.codegen(state);
+        }
+    }
+}
+
+impl<'a> WithComma<'a> for WithItem<'a> {
+    fn with_comma(self, comma: Comma<'a>) -> Self {
+        Self {
+            comma: Some(comma),
+            ..self
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct With<'a> {
+    pub items: Vec<WithItem<'a>>,
+    pub body: Suite<'a>,
+    pub asynchronous: Option<Asynchronous<'a>>,
+    pub leading_lines: Vec<EmptyLine<'a>>,
+    pub whitespace_after_with: SimpleWhitespace<'a>,
+    pub whitespace_before_colon: SimpleWhitespace<'a>,
+}
+
+impl<'a> Codegen<'a> for With<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+        for ll in &self.leading_lines {
+            ll.codegen(state);
+        }
+        state.add_indent();
+
+        if let Some(asy) = &self.asynchronous {
+            asy.codegen(state);
+        }
+        state.add_token("with");
+        self.whitespace_after_with.codegen(state);
+        let len = self.items.len();
+        for (i, item) in self.items.iter().enumerate() {
+            item.codegen(state);
+            if item.comma.is_none() && i + 1 < len {
+                state.add_token(", ");
+            }
+        }
+        self.whitespace_before_colon.codegen(state);
+        state.add_token(":");
+        self.body.codegen(state);
     }
 }

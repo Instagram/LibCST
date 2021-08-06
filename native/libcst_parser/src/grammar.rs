@@ -136,6 +136,7 @@ parser! {
             }
             / &"if" f:if_stmt() { CompoundStatement::If(f) }
             / &("class" / "@") c:class_def() { CompoundStatement::ClassDef(c) }
+            / &("with" / tok(Async, "ASYNC")) w:with_stmt() { CompoundStatement::With(w) }
             / &("for" / tok(Async, "ASYNC")) f:for_stmt() { CompoundStatement::For(f) }
             / &"try" t:try_stmt() { CompoundStatement::Try(t) }
             / &"while" w:while_stmt() { CompoundStatement::While(w) }
@@ -1041,6 +1042,26 @@ parser! {
                         .map_err(|_| "for")
             }
 
+        rule with_stmt() -> With<'a>
+            = kw:lit("with") first:with_item() rest:(c:comma() i:with_item() {(c,i)})*
+                col:lit(":") b:block() {?
+                    make_with(config, None, kw, comma_separate(first, rest, None, false), col, b)
+                        .map_err(|_| "with")
+            }
+            / asy:tok(Async, "ASYNC") kw:lit("with") first:with_item()
+                rest:(c:comma() i:with_item() {(c,i)})* col:lit(":") b:block() {?
+                    make_with(config, Some(asy), kw, comma_separate(first, rest, None, false), col, b)
+                        .map_err(|_| "async with")
+            }
+
+        rule with_item() -> WithItem<'a>
+            = e:expression() a:lit("as") t:star_target() &("," / ":") {?
+                make_with_item(config, e, Some(a), Some(t)).map_err(|_| "with_item")
+            }
+            / e:expression() {?
+                make_with_item(config, e, None, None).map_err(|_| "with_item")
+            }
+
         rule named_expression() -> Expression<'a>
             = a:name() op:lit(":=") b:expression() { todo!() }
             / e:expression() !lit(":=") { e }
@@ -1796,7 +1817,7 @@ fn make_import_alias<'a>(
                 let whitespace_after_as =
                     parse_parenthesizable_whitespace(config, &mut kw.whitespace_after)?;
                 Some(AsName {
-                    name: NameOrAttribute::N(n),
+                    name: AssignTargetExpression::Name(n),
                     whitespace_after_as,
                     whitespace_before_as,
                 })
@@ -3218,7 +3239,7 @@ fn make_except<'a>(
         );
         (
             Some(AsName {
-                name: NameOrAttribute::N(name),
+                name: AssignTargetExpression::Name(name),
                 whitespace_after_as,
                 whitespace_before_as,
             }),
@@ -3329,6 +3350,74 @@ fn make_aug_assign<'a>(
         value,
         semicolon: Default::default(),
     }
+}
+
+fn make_with_item<'a>(
+    config: &Config<'a>,
+    item: Expression<'a>,
+    as_: Option<Token<'a>>,
+    n: Option<AssignTargetExpression<'a>>,
+) -> Result<'a, WithItem<'a>> {
+    let asname = match (as_, n) {
+        (Some(mut as_), Some(n)) => {
+            let whitespace_before_as =
+                parse_parenthesizable_whitespace(config, &mut as_.whitespace_before)?;
+            let whitespace_after_as =
+                parse_parenthesizable_whitespace(config, &mut as_.whitespace_after)?;
+            Some(AsName {
+                name: n,
+                whitespace_before_as,
+                whitespace_after_as,
+            })
+        }
+        (None, None) => None,
+        _ => panic!("as and name should be present or missing together"),
+    };
+    Ok(WithItem {
+        item,
+        asname,
+        comma: Default::default(),
+    })
+}
+
+fn make_with<'a>(
+    config: &Config<'a>,
+    asy: Option<Token<'a>>,
+    mut kw: Token<'a>,
+    items: Vec<WithItem<'a>>,
+    mut col: Token<'a>,
+    body: Suite<'a>,
+) -> Result<'a, With<'a>> {
+    let (asynchronous, leading_lines) = if let Some(mut asy) = asy {
+        let whitespace_after = parse_parenthesizable_whitespace(config, &mut asy.whitespace_after)?;
+        (
+            Some(Asynchronous { whitespace_after }),
+            Some(parse_empty_lines_from_end(
+                config,
+                &mut asy.whitespace_before,
+            )?),
+        )
+    } else {
+        (None, None)
+    };
+
+    let leading_lines = if let Some(ll) = leading_lines {
+        ll
+    } else {
+        parse_empty_lines_from_end(config, &mut kw.whitespace_before)?
+    };
+
+    let whitespace_after_with = parse_simple_whitespace(config, &mut kw.whitespace_after)?;
+    let whitespace_before_colon = parse_simple_whitespace(config, &mut col.whitespace_before)?;
+
+    Ok(With {
+        items,
+        body,
+        asynchronous,
+        leading_lines,
+        whitespace_after_with,
+        whitespace_before_colon,
+    })
 }
 
 #[cfg(test)]

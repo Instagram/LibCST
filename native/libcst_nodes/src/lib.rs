@@ -9,7 +9,7 @@ pub use statement::{
     ClassDef, CompoundStatement, Decorator, Else, ExceptHandler, Finally, For, FunctionDef, Global,
     If, Import, ImportAlias, ImportFrom, ImportNames, IndentedBlock, NameItem, Nonlocal, OrElse,
     Raise, Return, SimpleStatementLine, SimpleStatementSuite, SmallStatement, Statement, Suite,
-    Try, While,
+    Try, While, With, WithItem,
 };
 
 mod expression;
