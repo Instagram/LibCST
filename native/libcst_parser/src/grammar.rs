@@ -1257,10 +1257,8 @@ parser! {
         rule _f_conversion() -> &'a str
             = "r" {"r"} / "s" {"s"} / "a" {"a"}
 
-        rule _f_spec() -> FormattedStringText<'a>
-            = t:tok(FStringString, "format specifier") {
-                FormattedStringText { value: t.string }
-            }
+        rule _f_spec() -> Vec<FormattedStringContent<'a>>
+            = (_f_string() / _f_replacement())+
 
         rule traced<T>(e: rule<T>) -> T =
             &(input:(_)* {
@@ -3214,7 +3212,7 @@ fn make_fstring_expression<'a>(
     expression: Expression<'a>,
     eq: Option<Token<'a>>,
     conversion_pair: Option<(Token<'a>, &'a str)>,
-    format_pair: Option<(Token<'a>, FormattedStringText<'a>)>,
+    format_pair: Option<(Token<'a>, Vec<FormattedStringContent<'a>>)>,
     mut rbrace: Token<'a>,
 ) -> Result<'a, FormattedStringExpression<'a>> {
     let whitespace_before_expression =
@@ -3230,7 +3228,7 @@ fn make_fstring_expression<'a>(
         (None, None)
     };
     let (format_tok, format_spec) = if let Some((t, f)) = format_pair {
-        (Some(t), Some(vec![FormattedStringContent::Text(f)]))
+        (Some(t), Some(f))
     } else {
         (None, None)
     };
