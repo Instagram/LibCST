@@ -2,13 +2,17 @@ use libcst::*;
 use std::{
     env,
     io::{self, Read},
+    process::exit,
 };
 
 pub fn main() {
     let mut str = std::string::String::new();
     io::stdin().read_to_string(&mut str).unwrap();
     match parse_module(str.as_ref()) {
-        Err(e) => eprintln!("{}", prettify_error(str.as_ref(), e, "stdin")),
+        Err(e) => {
+            eprintln!("{}", prettify_error(str.as_ref(), e, "stdin"));
+            exit(1);
+        }
         Ok(m) => {
             let first_arg = env::args().nth(1).unwrap_or_else(|| "".to_string());
             if first_arg == "-d" {
