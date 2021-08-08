@@ -15,7 +15,7 @@ fn default_config() -> TokConfig {
     }
 }
 
-fn tokenize_all<'t>(
+fn tokenize_with_end_marker<'t>(
     text: &'t str,
     config: &TokConfig,
 ) -> Result<Vec<(TokType, &'t str)>, TokError<'t>> {
@@ -27,6 +27,14 @@ fn tokenize_all<'t>(
             state.text_pos.slice_from_start_pos(&state.start_pos),
         ));
     }
+    Ok(result)
+}
+
+fn tokenize_all<'t>(
+    text: &'t str,
+    config: &TokConfig,
+) -> Result<Vec<(TokType, &'t str)>, TokError<'t>> {
+    let mut result = tokenize_with_end_marker(text, config)?;
     // Remove the EndMarker, since it's on every non-error token stream.
     assert_eq!(result.pop().expect("EndMarker").0, TokType::EndMarker);
     // Also remove fake newline at the end
@@ -625,5 +633,57 @@ fn test_operator() {
             (TokType::Op, "."),
             (TokType::Op, "...")
         ]),
+    );
+}
+
+#[test]
+fn test_fake_newline() {
+    assert_eq!(
+        tokenize_with_end_marker("foo", &default_config()),
+        Ok(vec![
+            (TokType::Name, "foo"),
+            (TokType::Newline, ""),
+            (TokType::EndMarker, "")
+        ])
+    );
+}
+
+#[test]
+fn test_no_fake_newline_for_empty_input() {
+    assert_eq!(
+        tokenize_with_end_marker("", &default_config()),
+        Ok(vec![(TokType::EndMarker, "")])
+    );
+}
+
+#[test]
+fn test_no_fake_newline_for_only_whitespaces() {
+    assert_eq!(
+        tokenize_with_end_marker("   ", &default_config()),
+        Ok(vec![(TokType::EndMarker, "")])
+    );
+}
+
+#[test]
+fn test_add_dedents_after_fake_newline() {
+    assert_eq!(
+        tokenize_with_end_marker("if 1:\n  if 2:\n    foo", &default_config()),
+        Ok(vec![
+            (TokType::Name, "if"),
+            (TokType::Number, "1"),
+            (TokType::Op, ":"),
+            (TokType::Newline, "\n"),
+            (TokType::Indent, ""),
+            (TokType::Name, "if"),
+            (TokType::Number, "2"),
+            (TokType::Op, ":"),
+            (TokType::Newline, "\n"),
+            (TokType::Indent, ""),
+            (TokType::Name, "foo"),
+            (TokType::Newline, ""),
+            (TokType::Dedent, ""),
+            (TokType::Dedent, ""),
+            (TokType::EndMarker, "")
+        ])
     );
 }
