@@ -36,4 +36,4 @@ mod codegen;
 pub use codegen::{Codegen, CodegenState};
 
 mod traits;
-pub use traits::{ParenthesizedNode, WithComma};
+pub use traits::{ParenthesizedNode, WithComma, WithLeadingLines};

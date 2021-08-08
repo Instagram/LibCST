@@ -91,9 +91,7 @@ fn parse_empty_line<'a>(
     ) {
         let whitespace = parse_simple_whitespace(config, &mut speculative_state)?;
         let comment = parse_comment(config, &mut speculative_state)?;
-        if let Some(newline @ Newline(_, Fakeness::Real)) =
-            parse_newline(config, &mut speculative_state)?
-        {
+        if let Some(newline) = parse_newline(config, &mut speculative_state)? {
             *state = speculative_state;
             return Ok(Some(EmptyLine {
                 indent,
@@ -124,6 +122,16 @@ pub fn parse_empty_lines<'a>(
         parse_empty_line(config, &mut speculative_state, override_absolute_indent)?
     {
         lines.push((speculative_state.clone(), empty_line));
+        if let Some((
+            _,
+            EmptyLine {
+                newline: Newline(_, Fakeness::Fake),
+                ..
+            },
+        )) = lines.last()
+        {
+            break;
+        }
     }
 
     if override_absolute_indent.is_some() {

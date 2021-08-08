@@ -1,4 +1,4 @@
-use crate::{Codegen, CodegenState, Comma, LeftParen, RightParen};
+use crate::{Codegen, CodegenState, Comma, EmptyLine, LeftParen, RightParen};
 
 pub trait WithComma<'a> {
     fn with_comma(self, comma: Comma<'a>) -> Self;
@@ -22,4 +22,8 @@ pub trait ParenthesizedNode<'a> {
     }
 
     fn with_parens(self, left: LeftParen<'a>, right: RightParen<'a>) -> Self;
+}
+
+pub trait WithLeadingLines<'a> {
+    fn leading_lines(&self) -> &Vec<EmptyLine<'a>>;
 }

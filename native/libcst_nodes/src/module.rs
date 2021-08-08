@@ -10,11 +10,15 @@ use crate::whitespace::EmptyLine;
 #[derive(Debug, Eq, PartialEq)]
 pub struct Module<'a> {
     pub body: Vec<Statement<'a>>,
+    pub header: Vec<EmptyLine<'a>>,
     pub footer: Vec<EmptyLine<'a>>,
 }
 
 impl<'a> Codegen<'a> for Module<'a> {
     fn codegen(&'a self, state: &mut CodegenState<'a>) {
+        for h in &self.header {
+            h.codegen(state);
+        }
         for s in &self.body {
             s.codegen(state);
         }

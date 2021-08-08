@@ -142,6 +142,7 @@ mod test {
                     }
                 ))],
                 footer: vec![],
+                header: vec![],
             })
         );
     }
@@ -215,6 +216,7 @@ mod test {
                     }
                 ))],
                 footer: vec![],
+                header: vec![],
             })
         );
     }

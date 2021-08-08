@@ -8,13 +8,25 @@ use super::{
     LeftParen, List, Name, NameOrAttribute, Parameters, ParenthesizableWhitespace, RightParen,
     Semicolon, SimpleWhitespace, StarredElement, Subscript, TrailingWhitespace, Tuple,
 };
-use crate::{traits::WithComma, Arg, AssignEqual, Asynchronous, AugOp, Element, ParenthesizedNode};
+use crate::{
+    traits::{WithComma, WithLeadingLines},
+    Arg, AssignEqual, Asynchronous, AugOp, Element, ParenthesizedNode,
+};
 
 #[allow(clippy::large_enum_variant)]
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub enum Statement<'a> {
     Simple(SimpleStatementLine<'a>),
     Compound(CompoundStatement<'a>),
+}
+
+impl<'a> WithLeadingLines<'a> for Statement<'a> {
+    fn leading_lines(&self) -> &Vec<EmptyLine<'a>> {
+        match self {
+            Self::Simple(s) => &s.leading_lines,
+            Self::Compound(c) => c.leading_lines(),
+        }
+    }
 }
 
 impl<'a> Codegen<'a> for Statement<'a> {
@@ -47,6 +59,20 @@ impl<'a> Codegen<'a> for CompoundStatement<'a> {
             Self::ClassDef(c) => c.codegen(state),
             Self::Try(t) => t.codegen(state),
             Self::With(w) => w.codegen(state),
+        }
+    }
+}
+
+impl<'a> WithLeadingLines<'a> for CompoundStatement<'a> {
+    fn leading_lines(&self) -> &Vec<EmptyLine<'a>> {
+        match self {
+            Self::FunctionDef(f) => &f.leading_lines,
+            Self::If(f) => &f.leading_lines,
+            Self::For(f) => &f.leading_lines,
+            Self::While(f) => &f.leading_lines,
+            Self::ClassDef(c) => &c.leading_lines,
+            Self::Try(t) => &t.leading_lines,
+            Self::With(w) => &w.leading_lines,
         }
     }
 }

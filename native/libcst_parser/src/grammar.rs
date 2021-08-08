@@ -1989,29 +1989,39 @@ fn make_rpar<'a>(config: &Config<'a>, mut tok: Token<'a>) -> Result<'a, RightPar
 
 fn make_module<'a>(
     config: &Config<'a>,
-    body: Vec<Statement<'a>>,
+    mut body: Vec<Statement<'a>>,
     mut tok: Token<'a>,
 ) -> Result<'a, Module<'a>> {
     let mut footer = parse_empty_lines(config, &mut tok.whitespace_before, Some(""))?;
-    let mut last_indented = None;
-    for (num, line) in footer.iter().enumerate() {
-        if !line.whitespace.0.is_empty() {
-            last_indented = Some(num);
-        } else if line.comment.is_some() {
-            // This is a non-indented comment. Everything from here should belong in the
-            // footer.
-            break;
+    let mut header = vec![];
+    if let Some(stmt) = body.first_mut() {
+        swap(&mut stmt.leading_lines(), &mut &header);
+        let mut last_indented = None;
+        for (num, line) in footer.iter().enumerate() {
+            if !line.whitespace.0.is_empty() {
+                last_indented = Some(num);
+            } else if line.comment.is_some() {
+                // This is a non-indented comment. Everything from here should belong in the
+                // footer.
+                break;
+            }
         }
-    }
-    if let Some(num) = last_indented {
-        if num + 1 == footer.len() {
-            footer = vec![];
-        } else {
-            let (_, rest) = footer.split_at(num + 1);
-            footer = rest.to_vec();
+        if let Some(num) = last_indented {
+            if num + 1 == footer.len() {
+                footer = vec![];
+            } else {
+                let (_, rest) = footer.split_at(num + 1);
+                footer = rest.to_vec();
+            }
         }
+    } else {
+        swap(&mut header, &mut footer);
     }
-    Ok(Module { body, footer })
+    Ok(Module {
+        body,
+        header,
+        footer,
+    })
 }
 
 fn make_attribute<'a>(
@@ -3496,34 +3506,4 @@ fn make_del_tuple<'a>(
         lpar: lpar.map(|x| vec![x]).unwrap_or_default(),
         rpar: rpar.map(|x| vec![x]).unwrap_or_default(),
     })
-}
-
-#[cfg(test)]
-mod test {
-    use itertools::Itertools;
-    use libcst_tokenize::{TokConfig, TokenIterator};
-
-    use super::*;
-
-    #[test]
-    fn make_module_strips_whitespace() {
-        let input = "  # no\n\n  # no\n# yes\n  # yes\n# yes\n";
-        let c = Config {
-            input,
-            lines: input.split_inclusive('\n').collect(),
-            default_newline: "\n",
-        };
-        let toks: Vec<_> = TokenIterator::new(
-            input,
-            &TokConfig {
-                async_hacks: false,
-                split_fstring: true,
-            },
-        )
-        .try_collect()
-        .expect("tokenization error");
-        let last_tok = toks.last().unwrap().clone();
-        let m = make_module(&c, vec![], last_tok).expect("parse error");
-        assert_eq!(m.footer.len(), 3);
-    }
 }
