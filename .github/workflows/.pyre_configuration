@@ -1,0 +1,9 @@
+{
+    "source_directories": [
+        "."
+    ],
+    "search_path": [
+        "stubs", "~/cache/tox/pyre/lib/python3.8/site-packages/"
+    ],
+    "strict": true
+}

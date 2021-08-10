@@ -3,6 +3,7 @@
 *.pyc
 *.pyo
 *.egg-info/
+.eggs/
 .pyre/
 __pycache__/
 .tox/
@@ -10,6 +11,7 @@ docs/build/
 dist/
 docs/source/.ipynb_checkpoints/
 build/
+libcst/_version.py
 .coverage
 .hypothesis/
 .pyre_configuration
