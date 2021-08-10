@@ -16,7 +16,7 @@ import time
 import traceback
 from dataclasses import dataclass, replace
 from multiprocessing import Pool, cpu_count
-from pathlib import Path
+from pathlib import Path, PurePath
 from typing import Any, AnyStr, Dict, List, Optional, Sequence, Union, cast
 
 from libcst import PartialParserConfig, parse_module
@@ -192,26 +192,21 @@ def _calculate_module(repo_root: Optional[str], filename: str) -> Optional[str]:
         # We don't have a repo root, so this is impossible to calculate.
         return None
 
-    # Make sure the absolute path for the root ends in a separator.
-    if repo_root[-1] != os.path.sep:
-        repo_root = repo_root + os.path.sep
-
-    if not filename.startswith(repo_root):
+    try:
+        relative_filename = PurePath(filename).relative_to(repo_root)
+    except ValueError:
         # This file seems to be out of the repo root.
         return None
 
-    # Get the relative path, get rid of any special cases and extensions.
-    relative_filename = filename[len(repo_root) :]
-    for ending in [
-        f"{os.path.sep}__init__.py",
-        f"{os.path.sep}__main__.py",
-        ".py",
-    ]:
-        if relative_filename.endswith(ending):
-            relative_filename = relative_filename[: -len(ending)]
+    # get rid of extension
+    relative_filename = relative_filename.with_suffix("")
 
-    # Now, convert all line separators to dots to represent the python module.
-    return relative_filename.replace(os.path.sep, ".")
+    # get rid of any special cases
+    if relative_filename.stem in ["__init__", "__main__"]:
+        relative_filename = relative_filename.parent
+
+    # Now, convert to dots to represent the python module.
+    return ".".join(relative_filename.parts)
 
 
 @dataclass(frozen=True)

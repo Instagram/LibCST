@@ -37,6 +37,27 @@ class TestPackageCalculation(UnitTest):
                 "/home/username/root/some/dir/__main__.py",
                 "some.dir",
             ),
+            # some windows tests
+            (
+                "c:/Program Files/",
+                "d:/Program Files/some/dir/file.py",
+                None,
+            ),
+            (
+                "c:/Program Files/other/",
+                "c:/Program Files/some/dir/file.py",
+                None,
+            ),
+            (
+                "c:/Program Files/",
+                "c:/Program Files/some/dir/file.py",
+                "some.dir.file",
+            ),
+            (
+                "c:/Program Files/",
+                "c:/Program Files/some/dir/__main__.py",
+                "some.dir",
+            ),
         ),
     )
     def test_calculate_module(
