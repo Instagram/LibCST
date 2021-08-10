@@ -1,3 +1,10 @@
+# 0.3.20 - 2021-08-09
+
+## Fixed
+- Don't reset subprocess environment to fix codemodding on windows [#495](https://github.com/Instagram/LibCST/pull/495)
+- TypeAnnotationsVisitor: don't truncate function return type [#499](https://github.com/Instagram/LibCST/pull/499)
+- Docs: Fix typo [#492](https://github.com/Instagram/LibCST/pull/492)
+
 # 0.3.19 - 2021-05-12
 
 # Updated

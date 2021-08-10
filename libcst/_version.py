@@ -4,4 +4,4 @@
 # LICENSE file in the root directory of this source tree.
 
 
-LIBCST_VERSION: str = "0.3.19"
+LIBCST_VERSION: str = "0.3.20"
