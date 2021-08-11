@@ -4,15 +4,15 @@
 
 A Concrete Syntax Tree (CST) parser and serializer library for Python
 
-|readthedocs-badge| |circleci-badge| |codecov-badge| |pypi-badge| |pypi-download| |notebook-badge|
+|readthedocs-badge| |ci-badge| |codecov-badge| |pypi-badge| |pypi-download| |notebook-badge|
 
 .. |readthedocs-badge| image:: https://readthedocs.org/projects/pip/badge/?version=latest&style=flat
    :target: https://libcst.readthedocs.io/en/latest/
    :alt: Documentation
 
-.. |circleci-badge| image:: https://circleci.com/gh/Instagram/LibCST/tree/master.svg?style=shield&circle-token=f89ff46c689cf53116308db295a492d687bf5732
-   :target: https://circleci.com/gh/Instagram/LibCST/tree/master
-   :alt: CircleCI
+.. |ci-badge| image:: https://github.com/Instagram/LibCST/actions/workflows/build.yml/badge.svg
+   :target: https://github.com/Instagram/LibCST/actions/workflows/build.yml?query=branch%3Amaster
+   :alt: Github Actions
 
 .. |codecov-badge| image:: https://codecov.io/gh/Instagram/LibCST/branch/master/graph/badge.svg
    :target: https://codecov.io/gh/Instagram/LibCST/branch/master
