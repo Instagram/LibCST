@@ -3,7 +3,7 @@
         "."
     ],
     "search_path": [
-        "stubs", "~/cache/tox/pyre/lib/python3.9/site-packages/"
+        "stubs", "{{ .python_site_packages }}"
     ],
     "strict": true
 }
