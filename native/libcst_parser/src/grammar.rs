@@ -20,7 +20,7 @@ use TokType::{
 
 #[derive(Debug, Error, PartialEq, Eq)]
 pub enum ParserError<'a> {
-    #[error("tokenizer error")]
+    #[error("tokenizer error: {0}")]
     TokenizerError(TokError<'a>),
     #[error(transparent)]
     ParserError(#[from] peg::error::ParseError<<TokVec<'a> as Parse>::PositionRepr>),
