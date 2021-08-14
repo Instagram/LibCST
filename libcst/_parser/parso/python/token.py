@@ -30,5 +30,5 @@ try:
 except ImportError:
     from libcst._parser.parso.python.py_token import (
         PythonTokenTypes,  # noqa F401
-        TokenType,
+        TokenType,  # noqa F401
     )
