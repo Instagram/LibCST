@@ -807,12 +807,23 @@ parser! {
             = star:lit("*") e:expression() {? make_star_arg(config, star, e).map_err(|_| "star_arg") }
 
         rule kwargs() -> Vec<Arg<'a>>
-            = s:(a:kwarg_or_starred() c:comma() { a.with_comma(c) })+
-                d:(a:kwarg_or_double_starred() c:comma() { a.with_comma(c)})*
-                last:kwarg_or_double_starred()? { make_kwargs(s, d, last) }
-            / s:(a:kwarg_or_starred() c:comma() { a.with_comma(c) })* last:kwarg_or_starred() { make_kwargs(s, vec![], Some(last)) }
-            / d:(a:kwarg_or_double_starred() c:comma() { a.with_comma(c) })*
-                last:kwarg_or_double_starred()? { make_kwargs(vec![], d, last) }
+            = sfirst:kwarg_or_starred() srest:(c:comma() a:kwarg_or_starred() {(c,a)})*
+                scomma:comma()
+                dfirst:kwarg_or_double_starred()
+                drest:(c:comma() a:kwarg_or_double_starred() {(c,a)})* {
+                    concat(
+                        comma_separate(sfirst, srest, Some(scomma), true),
+                        comma_separate(dfirst, drest, None, false),
+                    )
+            }
+            / first:kwarg_or_starred()
+                rest:(c:comma() a:kwarg_or_starred() {(c, a)})* {
+                    comma_separate(first, rest, None, false)
+            }
+            / first:kwarg_or_double_starred()
+                rest:(c:comma() a:kwarg_or_double_starred() {(c,a)})* {
+                    comma_separate(first, rest, None, false)
+            }
 
         rule kwarg_or_starred() -> Arg<'a>
             = _kwarg()
@@ -2169,17 +2180,6 @@ fn make_kwarg<'a>(
     })
 }
 
-fn make_kwargs<'a>(
-    starred: Vec<Arg<'a>>,
-    mut double_starred: Vec<Arg<'a>>,
-    last: Option<Arg<'a>>,
-) -> Vec<Arg<'a>> {
-    if let Some(last) = last {
-        double_starred.push(last);
-    }
-    concat(starred, double_starred)
-}
-
 fn make_star_arg<'a>(
     config: &Config<'a>,
     mut star: Token<'a>,
@@ -3123,10 +3123,10 @@ fn make_class_def<'a>(
         let mut rpar = Some(make_rpar(config, rpar)?);
         let mut bases = vec![];
         let mut keywords = vec![];
+        let mut has_trailing_comma_or_empty = true;
 
         if let Some(args) = args {
             let mut current_arg = &mut bases;
-            let mut has_trailing_comma_or_empty = true;
             for arg in args {
                 if arg.star == "**" || arg.keyword.is_some() {
                     current_arg = &mut keywords;
@@ -3136,11 +3136,10 @@ fn make_class_def<'a>(
                 has_trailing_comma_or_empty = arg.comma.is_some();
                 current_arg.push(arg);
             }
-
-            if has_trailing_comma_or_empty {
-                if let Some(rpar) = rpar.as_mut() {
-                    rpar.whitespace_before = Default::default();
-                }
+        }
+        if has_trailing_comma_or_empty {
+            if let Some(rpar) = rpar.as_mut() {
+                rpar.whitespace_before = Default::default();
             }
         }
 

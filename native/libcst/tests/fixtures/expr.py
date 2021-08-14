@@ -122,6 +122,10 @@ call(b, **screen_kwargs)
 call()()()()()()
 call(**self.screen_kwargs)
 call(b, **self.screen_kwargs)
+call(a=a, *args)
+call(a=a, *args,)
+call(a=a, **kwargs)
+call(a=a, **kwargs,)
 lukasz.langa.pl
 call.me(maybe)
 1 .real
