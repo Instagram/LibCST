@@ -1,6 +1,6 @@
 {
     "exclude": [
-        "native/.*"
+        "native\/.*"
     ],
     "source_directories": [
         "."
