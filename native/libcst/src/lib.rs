@@ -11,7 +11,11 @@ pub use libcst_nodes::*;
 use libcst_parser as grammar;
 use libcst_parser::{ParserError, Result};
 
-pub fn parse_module<'a>(module_text: &'a str) -> Result<'a, Module> {
+pub fn parse_module<'a>(mut module_text: &'a str) -> Result<'a, Module> {
+    // Strip UTF-8 BOM
+    if let Some(stripped) = module_text.strip_prefix('\u{feff}') {
+        module_text = stripped;
+    }
     let iter = TokenIterator::new(
         module_text,
         &TokConfig {

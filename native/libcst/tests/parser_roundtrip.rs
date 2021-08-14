@@ -25,24 +25,29 @@ fn all_fixtures() -> impl Iterator<Item = (PathBuf, String)> {
 #[test]
 fn roundtrip_fixtures() {
     for (path, input) in all_fixtures() {
-        let m = match parse_module(&input) {
+        let input = if let Some(stripped) = input.strip_prefix('\u{feff}') {
+            stripped
+        } else {
+            &input
+        };
+        let m = match parse_module(input) {
             Ok(m) => m,
             Err(e) => panic!(
                 "{}",
-                prettify_error(&input, e, format!("{:#?}", path).as_ref())
+                prettify_error(input, e, format!("{:#?}", path).as_ref())
             ),
         };
         let mut state = Default::default();
         m.codegen(&mut state);
         let generated = state.to_string();
         if generated != input {
-            let got = visualize(generated);
+            let got = visualize(&generated);
             let expected = visualize(input);
             assert_diff!(expected.as_ref(), got.as_ref(), "", 0);
         }
     }
 }
 
-fn visualize(s: String) -> String {
+fn visualize(s: &str) -> String {
     s.replace(' ', "▩").lines().join("↩\n")
 }
