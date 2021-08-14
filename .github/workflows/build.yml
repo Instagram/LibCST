@@ -209,11 +209,12 @@ jobs:
         os: [ubuntu-latest, macos-latest, windows-latest]
     steps:
       - uses: actions/checkout@v2
-      - name: test
-        uses: actions-rs/toolchain@v1
+      - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
           components: rustfmt, clippy
+      - name: test
+        uses: actions-rs/cargo@v1
           command: test
           args: --manifest-path=native/Cargo.toml
       - name: clippy
@@ -221,3 +222,19 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           args: --manifest-path=native/Cargo.toml --all-features
+  
+  rustfmt:
+    name: Rustfmt
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+      - run: rustup component add rustfmt
+      - uses: actions-rs/cargo@v1
+        with:
+          command: fmt
+          args: --all --manifest-path=native/Cargo.toml -- --check
