@@ -15,7 +15,6 @@ from libcst._nodes.whitespace import (
 from libcst._parser.types.config import BaseWhitespaceParserConfig as Config
 from libcst._parser.types.whitespace_state import WhitespaceState as State
 
-
 def parse_simple_whitespace(config: Config, state: State) -> SimpleWhitespace: ...
 def parse_empty_lines(
     config: Config,

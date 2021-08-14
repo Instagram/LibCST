@@ -7,7 +7,6 @@ from typing import Any, FrozenSet, Mapping, Sequence
 
 from libcst._parser.parso.utils import PythonVersionInfo
 
-
 class BaseWhitespaceParserConfig:
     def __new__(
         cls,

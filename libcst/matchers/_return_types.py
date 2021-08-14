@@ -176,7 +176,6 @@ from libcst._nodes.whitespace import (
 )
 from libcst._removal_sentinel import RemovalSentinel
 
-
 TYPED_FUNCTION_RETURN_MAPPING: TypingDict[Type[CSTNode], object] = {
     Add: BaseBinaryOp,
     AddAssign: BaseAugOp,
