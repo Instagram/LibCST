@@ -106,6 +106,7 @@ exclude =
   .pyre,
   __pycache__,
   .tox,
+  native,
 
 max-complexity = 12
 
