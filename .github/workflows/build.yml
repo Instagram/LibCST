@@ -215,6 +215,7 @@ jobs:
           components: rustfmt, clippy
       - name: test
         uses: actions-rs/cargo@v1
+        with:
           command: test
           args: --manifest-path=native/Cargo.toml
       - name: clippy
