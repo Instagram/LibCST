@@ -6,6 +6,7 @@
 
 try:
     from libcst_native import tokenize
+
     Token = tokenize.Token
 except ImportError:
-    from libcst._parser.types.py_token import Token
+    from libcst._parser.types.py_token import Token  # noqa F401

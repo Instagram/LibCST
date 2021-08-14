@@ -3,11 +3,9 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from dataclasses import dataclass
-
-
 try:
     from libcst_native import token_type as native_token_type
+
     TokenType = native_token_type.TokenType
 
     class PythonTokenTypes:
@@ -27,5 +25,10 @@ try:
         # unused dummy tokens for backwards compat with the parso tokenizer
         ERRORTOKEN: TokenType = native_token_type.ERRORTOKEN
         ERROR_DEDENT: TokenType = native_token_type.ERROR_DEDENT
+
+
 except ImportError:
-    from libcst._parser.parso.python.py_token import PythonTokenTypes, TokenType
+    from libcst._parser.parso.python.py_token import (
+        PythonTokenTypes,  # noqa F401
+        TokenType,
+    )
