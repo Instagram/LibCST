@@ -3,6 +3,12 @@
 // This source code is licensed under the MIT license found in the
 // LICENSE file in the root directory of this source tree.
 
+use std::{
+    cell::RefCell,
+    collections::BTreeSet,
+    rc::{Rc, Weak},
+};
+
 use super::{Codegen, CodegenState};
 
 #[derive(Debug, Eq, PartialEq, Default, Clone)]
@@ -74,13 +80,27 @@ impl<'a> Codegen<'a> for TrailingWhitespace<'a> {
     }
 }
 
-#[derive(Debug, Eq, PartialEq, Clone)]
+#[derive(Debug, Clone)]
 pub struct EmptyLine<'a> {
     pub indent: bool,
     pub whitespace: SimpleWhitespace<'a>,
     pub comment: Option<Comment<'a>>,
     pub newline: Newline<'a>,
+    pub line_num: usize,
+    line_owners: Weak<RefCell<BTreeSet<usize>>>,
 }
+
+impl<'a> PartialEq for EmptyLine<'a> {
+    fn eq(&self, other: &Self) -> bool {
+        self.indent.eq(&other.indent)
+            && self.whitespace.eq(&other.whitespace)
+            && self.comment.eq(&other.comment)
+            && self.newline.eq(&other.newline)
+            && self.line_num.eq(&other.line_num)
+    }
+}
+
+impl<'a> Eq for EmptyLine<'a> {}
 
 impl<'a> Codegen<'a> for EmptyLine<'a> {
     fn codegen(&'a self, state: &mut CodegenState<'a>) {
@@ -102,6 +122,42 @@ impl<'a> Default for EmptyLine<'a> {
             whitespace: Default::default(),
             comment: Default::default(),
             newline: Default::default(),
+            line_num: 0,
+            line_owners: Weak::<_>::new(),
+        }
+    }
+}
+
+impl<'a> EmptyLine<'a> {
+    pub fn new(
+        indent: bool,
+        whitespace: SimpleWhitespace<'a>,
+        comment: Option<Comment<'a>>,
+        newline: Newline<'a>,
+        line_num: usize,
+        newline_owners: &Rc<RefCell<BTreeSet<usize>>>,
+    ) -> Option<Self> {
+        let mut owners = newline_owners.borrow_mut();
+        if owners.contains(&line_num) {
+            return None;
+        }
+        owners.insert(line_num);
+        drop(owners);
+        Some(Self {
+            indent,
+            whitespace,
+            comment,
+            newline,
+            line_num,
+            line_owners: Rc::downgrade(newline_owners),
+        })
+    }
+}
+
+impl<'a> Drop for EmptyLine<'a> {
+    fn drop(&mut self) {
+        if let Some(nls) = self.line_owners.upgrade() {
+            nls.borrow_mut().remove(&self.line_num);
         }
     }
 }

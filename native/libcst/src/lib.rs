@@ -30,11 +30,7 @@ pub fn parse_module<'a>(mut module_text: &'a str) -> Result<'a, Module> {
         .into();
 
     // eprintln!("{:#?}", result);
-    let conf = whitespace_parser::Config {
-        default_newline: "\n",
-        input: module_text,
-        lines: module_text.split_inclusive('\n').collect(),
-    };
+    let conf = whitespace_parser::Config::new(module_text);
     grammar::python::file(&result, &conf).map_err(ParserError::ParserError)
 }
 

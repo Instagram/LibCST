@@ -1,3 +1,5 @@
+use std::{cell::RefCell, collections::BTreeSet, rc::Rc};
+
 use libcst_nodes::{
     Comment, EmptyLine, Fakeness, Newline, ParenthesizableWhitespace, ParenthesizedWhitespace,
     SimpleWhitespace, TrailingWhitespace,
@@ -50,9 +52,18 @@ pub struct Config<'a> {
     pub input: &'a str,
     pub lines: Vec<&'a str>,
     pub default_newline: &'a str,
+    pub newline_owners: Rc<RefCell<BTreeSet<usize>>>,
 }
 
 impl<'a> Config<'a> {
+    pub fn new(input: &'a str) -> Self {
+        Self {
+            input,
+            lines: input.split_inclusive('\n').collect(),
+            default_newline: "\n",
+            newline_owners: Rc::new(Default::default()),
+        }
+    }
     fn get_line(&self, line_number: usize) -> Result<&'a str> {
         let err_fn = || {
             WhitespaceError::InternalError(format!(
@@ -78,11 +89,18 @@ impl<'a> Config<'a> {
     }
 }
 
+#[derive(Debug)]
+enum ParsedEmptyLine<'a> {
+    NoIndent,
+    AlreadyOwned,
+    Line(EmptyLine<'a>),
+}
+
 fn parse_empty_line<'a>(
     config: &Config<'a>,
     state: &mut State,
     override_absolute_indent: Option<&'a str>,
-) -> Result<Option<EmptyLine<'a>>> {
+) -> Result<ParsedEmptyLine<'a>> {
     let mut speculative_state = state.clone();
     if let Ok(indent) = parse_indent(
         config,
@@ -92,21 +110,50 @@ fn parse_empty_line<'a>(
         let whitespace = parse_simple_whitespace(config, &mut speculative_state)?;
         let comment = parse_comment(config, &mut speculative_state)?;
         if let Some(newline) = parse_newline(config, &mut speculative_state)? {
+            let line_num = state.line;
             *state = speculative_state;
-            return Ok(Some(EmptyLine {
-                indent,
-                whitespace,
-                comment,
-                newline,
-            }));
+            return Ok(
+                match EmptyLine::new(
+                    indent,
+                    whitespace,
+                    comment,
+                    newline,
+                    line_num,
+                    &config.newline_owners,
+                ) {
+                    Some(x) => ParsedEmptyLine::Line(x),
+                    None => ParsedEmptyLine::AlreadyOwned,
+                },
+            );
         }
     }
-    Ok(None)
+    Ok(ParsedEmptyLine::NoIndent)
+}
+
+fn parse_unowned_empty_lines<'a>(
+    config: &Config<'a>,
+    state: &mut State<'a>,
+    override_absolute_indent: Option<&'a str>,
+) -> Result<Vec<(State<'a>, EmptyLine<'a>)>> {
+    let mut lines = vec![];
+    loop {
+        let last_state = state.clone();
+        let parsed_line = parse_empty_line(config, state, override_absolute_indent)?;
+        if *state == last_state {
+            break;
+        }
+        match parsed_line {
+            ParsedEmptyLine::NoIndent => break,
+            ParsedEmptyLine::AlreadyOwned => continue,
+            ParsedEmptyLine::Line(l) => lines.push((state.clone(), l)),
+        }
+    }
+    Ok(lines)
 }
 
 pub fn parse_empty_lines<'a>(
     config: &Config<'a>,
-    state: &mut State,
+    state: &mut State<'a>,
     override_absolute_indent: Option<&'a str>,
 ) -> Result<Vec<EmptyLine<'a>>> {
     // If override_absolute_indent is Some, then we need to parse all lines up to and including the
@@ -117,22 +164,8 @@ pub fn parse_empty_lines<'a>(
     // interspersed with indent=True lines, so we need to speculatively parse all possible empty
     // lines, and then unwind to find the last empty line with indent=True.
     let mut speculative_state = state.clone();
-    let mut lines = Vec::new();
-    while let Some(empty_line) =
-        parse_empty_line(config, &mut speculative_state, override_absolute_indent)?
-    {
-        lines.push((speculative_state.clone(), empty_line));
-        if let Some((
-            _,
-            EmptyLine {
-                newline: Newline(_, Fakeness::Fake),
-                ..
-            },
-        )) = lines.last()
-        {
-            break;
-        }
-    }
+    let mut lines =
+        parse_unowned_empty_lines(config, &mut speculative_state, override_absolute_indent)?;
 
     if override_absolute_indent.is_some() {
         // Remove elements from the end until we find an indented line.
@@ -154,13 +187,10 @@ pub fn parse_empty_lines<'a>(
 
 pub fn parse_empty_lines_from_end<'a>(
     config: &Config<'a>,
-    state: &mut State,
+    state: &mut State<'a>,
 ) -> Result<Vec<EmptyLine<'a>>> {
     let mut speculative_state = state.clone();
-    let mut lines = vec![];
-    while let Some(empty_line) = parse_empty_line(config, &mut speculative_state, None)? {
-        lines.push((speculative_state.clone(), empty_line));
-    }
+    let lines = parse_unowned_empty_lines(config, &mut speculative_state, None)?;
 
     // find last non-empty line not on our indentation level
     let mut last_droppable_line = None;
@@ -365,7 +395,7 @@ pub fn parse_simple_whitespace<'a>(
 
 pub fn parse_parenthesizable_whitespace<'a>(
     config: &Config<'a>,
-    state: &mut State,
+    state: &mut State<'a>,
 ) -> Result<ParenthesizableWhitespace<'a>> {
     if state.is_parenthesized {
         if let Some(ws) = parse_parenthesized_whitespace(config, state)? {
@@ -377,13 +407,13 @@ pub fn parse_parenthesizable_whitespace<'a>(
 
 pub fn parse_parenthesized_whitespace<'a>(
     config: &Config<'a>,
-    state: &mut State,
+    state: &mut State<'a>,
 ) -> Result<Option<ParenthesizedWhitespace<'a>>> {
     if let Some(first_line) = parse_optional_trailing_whitespace(config, state)? {
-        let mut empty_lines = Vec::new();
-        while let Some(empty_line) = parse_empty_line(config, state, None)? {
-            empty_lines.push(empty_line);
-        }
+        let empty_lines = parse_unowned_empty_lines(config, state, None)?
+            .into_iter()
+            .map(|(_, line)| line)
+            .collect();
         let indent = parse_indent(config, state, None)?;
         let last_line = parse_simple_whitespace(config, state)?;
         Ok(Some(ParenthesizedWhitespace {
