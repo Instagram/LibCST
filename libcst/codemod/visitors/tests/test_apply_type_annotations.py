@@ -7,7 +7,7 @@
 import sys
 import textwrap
 import unittest
-from typing import Type
+from typing import Dict, Type
 
 from libcst import parse_module
 from libcst.codemod import Codemod, CodemodContext, CodemodTest
@@ -17,6 +17,41 @@ from libcst.testing.utils import data_provider
 
 class TestApplyAnnotationsVisitor(CodemodTest):
     TRANSFORM: Type[Codemod] = ApplyTypeAnnotationsVisitor
+
+    def run_simple_test_case(
+        self,
+        stub: str,
+        before: str,
+        after: str,
+    ) -> None:
+        context = CodemodContext()
+        ApplyTypeAnnotationsVisitor.store_stub_in_context(
+            context, parse_module(textwrap.dedent(stub.rstrip()))
+        )
+        self.assertCodemod(before, after, context_override=context)
+
+    def run_test_case_with_flags(
+        self,
+        stub: str,
+        before: str,
+        after: str,
+        **kwargs: Dict[str, bool],
+    ) -> None:
+        context = CodemodContext()
+        ApplyTypeAnnotationsVisitor.store_stub_in_context(
+            context, parse_module(textwrap.dedent(stub.rstrip()))
+        )
+        # Test setting the flag on the codemod instance.
+        self.assertCodemod(before, after, context_override=context, **kwargs)
+
+        # Test setting the flag when storing the stub in the context.
+        context = CodemodContext()
+        ApplyTypeAnnotationsVisitor.store_stub_in_context(
+            context,
+            parse_module(textwrap.dedent(stub.rstrip())),
+            **kwargs,
+        )
+        self.assertCodemod(before, after, context_override=context)
 
     @data_provider(
         (
@@ -82,11 +117,7 @@ class TestApplyAnnotationsVisitor(CodemodTest):
         )
     )
     def test_merge_module_imports(self, stub: str, before: str, after: str) -> None:
-        context = CodemodContext()
-        ApplyTypeAnnotationsVisitor.store_stub_in_context(
-            context, parse_module(textwrap.dedent(stub.rstrip()))
-        )
-        self.assertCodemod(before, after, context_override=context)
+        self.run_simple_test_case(stub=stub, before=before, after=after)
 
     @data_provider(
         (
@@ -751,11 +782,7 @@ class TestApplyAnnotationsVisitor(CodemodTest):
         )
     )
     def test_annotate_functions(self, stub: str, before: str, after: str) -> None:
-        context = CodemodContext()
-        ApplyTypeAnnotationsVisitor.store_stub_in_context(
-            context, parse_module(textwrap.dedent(stub.rstrip()))
-        )
-        self.assertCodemod(before, after, context_override=context)
+        self.run_simple_test_case(stub=stub, before=before, after=after)
 
     @data_provider(
         (
@@ -801,11 +828,7 @@ class TestApplyAnnotationsVisitor(CodemodTest):
     )
     @unittest.skipIf(sys.version_info < (3, 8), "Unsupported Python version")
     def test_annotate_functions_py38(self, stub: str, before: str, after: str) -> None:
-        context = CodemodContext()
-        ApplyTypeAnnotationsVisitor.store_stub_in_context(
-            context, parse_module(textwrap.dedent(stub.rstrip()))
-        )
-        self.assertCodemod(before, after, context_override=context)
+        self.run_simple_test_case(stub=stub, before=before, after=after)
 
     @data_provider(
         (
@@ -827,23 +850,12 @@ class TestApplyAnnotationsVisitor(CodemodTest):
     def test_annotate_functions_with_existing_annotations(
         self, stub: str, before: str, after: str
     ) -> None:
-        context = CodemodContext()
-        ApplyTypeAnnotationsVisitor.store_stub_in_context(
-            context, parse_module(textwrap.dedent(stub.rstrip()))
-        )
-        # Test setting the overwrite flag on the codemod instance.
-        self.assertCodemod(
-            before, after, context_override=context, overwrite_existing_annotations=True
-        )
-
-        # Test setting the flag when storing the stub in the context.
-        context = CodemodContext()
-        ApplyTypeAnnotationsVisitor.store_stub_in_context(
-            context,
-            parse_module(textwrap.dedent(stub.rstrip())),
+        self.run_test_case_with_flags(
+            stub=stub,
+            before=before,
+            after=after,
             overwrite_existing_annotations=True,
         )
-        self.assertCodemod(before, after, context_override=context)
 
     @data_provider(
         (
@@ -908,20 +920,14 @@ class TestApplyAnnotationsVisitor(CodemodTest):
     def test_annotate_using_incomplete_stubs(
         self, stub: str, before: str, after: str
     ) -> None:
-        context = CodemodContext()
-        ApplyTypeAnnotationsVisitor.store_stub_in_context(
-            context, parse_module(textwrap.dedent(stub.rstrip()))
-        )
-        # Test setting the overwrite flag on the codemod instance.
-        self.assertCodemod(
-            before, after, context_override=context, overwrite_existing_annotations=True
-        )
-
-        # Test setting the flag when storing the stub in the context.
-        context = CodemodContext()
-        ApplyTypeAnnotationsVisitor.store_stub_in_context(
-            context,
-            parse_module(textwrap.dedent(stub.rstrip())),
+        """
+        Ensure that when the stubs are missing annotations where the existing
+        code has them, we won't remove the existing annotations even when
+        `overwrite_existing_annotations` is set to `True`.
+        """
+        self.run_test_case_with_flags(
+            stub=stub,
+            before=before,
+            after=after,
             overwrite_existing_annotations=True,
         )
-        self.assertCodemod(before, after, context_override=context)
