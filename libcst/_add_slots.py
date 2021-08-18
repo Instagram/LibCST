@@ -5,7 +5,6 @@
 import dataclasses
 from typing import Any, Mapping, Type, TypeVar
 
-
 _T = TypeVar("_T")
 
 

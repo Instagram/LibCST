@@ -35,7 +35,6 @@ from libcst._parser.parso.utils import PythonVersionInfo, split_lines
 from libcst._parser.types.token import Token
 from libcst._parser.types.whitespace_state import WhitespaceState
 
-
 _ERRORTOKEN: TokenType = PythonTokenTypes.ERRORTOKEN
 _ERROR_DEDENT: TokenType = PythonTokenTypes.ERROR_DEDENT
 

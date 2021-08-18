@@ -31,7 +31,6 @@ from libcst._nodes.whitespace import (
 from libcst._parser.types.config import BaseWhitespaceParserConfig
 from libcst._parser.types.whitespace_state import WhitespaceState as State
 
-
 # BEGIN PARSER ENTRYPOINTS
 
 

@@ -23,7 +23,6 @@ from ast import literal_eval
 from dataclasses import dataclass
 from typing import Optional, Sequence, Tuple, Union
 
-
 # The following is a list in Python that are line breaks in str.splitlines, but
 # not in Python. In Python only \r (Carriage Return, 0xD) and \n (Line Feed,
 # 0xA) are allowed to split lines.

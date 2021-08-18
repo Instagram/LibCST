@@ -11,7 +11,6 @@ from libcst.codemod._context import CodemodContext
 from libcst.codemod._visitor import ContextAwareVisitor
 from libcst.metadata import MetadataWrapper, QualifiedNameProvider
 
-
 FUNCS_CONSIDERED_AS_STRING_ANNOTATIONS = {"typing.TypeVar"}
 
 

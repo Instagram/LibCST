@@ -17,7 +17,6 @@ from libcst.codemod.visitors._gather_string_annotation_names import (
 from libcst.metadata import ProviderT, ScopeProvider
 from libcst.metadata.scope_provider import _gen_dotted_names
 
-
 MODULES_IGNORED_BY_DEFAULT = {"__future__"}
 
 

@@ -13,7 +13,6 @@ from libcst._parser.types.whitespace_state import WhitespaceState
 from libcst._parser.wrapped_tokenize import Token, tokenize
 from libcst.testing.utils import UnitTest, data_provider
 
-
 _PY38 = parse_version_string("3.8.0")
 _PY37 = parse_version_string("3.7.0")
 _PY36 = parse_version_string("3.6.0")

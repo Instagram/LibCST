@@ -11,7 +11,6 @@ import libcst as cst
 from libcst import ensure_type, parse_expression
 from libcst.codegen.gather import all_libcst_nodes, typeclasses
 
-
 CST_DIR: Set[str] = set(dir(cst))
 CLASS_RE = r"<class \'(.*?)\'>"
 OPTIONAL_RE = r"typing\.Union\[([^,]*?), NoneType]"

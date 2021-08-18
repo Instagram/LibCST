@@ -40,7 +40,6 @@ from libcst.codemod import (
     parallel_exec_transform_with_prettyprint,
 )
 
-
 _DEFAULT_INDENT: str = "  "
 
 

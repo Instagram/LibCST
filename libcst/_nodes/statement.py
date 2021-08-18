@@ -49,7 +49,6 @@ from libcst._nodes.whitespace import (
 )
 from libcst._visitors import CSTVisitorT
 
-
 _INDENT_WHITESPACE_RE: Pattern[str] = re.compile(r"[ \f\t]+", re.UNICODE)
 
 

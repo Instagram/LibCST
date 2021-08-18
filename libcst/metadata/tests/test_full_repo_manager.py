@@ -12,7 +12,6 @@ from libcst.metadata.tests.test_type_inference_provider import _test_simple_clas
 from libcst.metadata.type_inference_provider import TypeInferenceProvider
 from libcst.testing.utils import UnitTest
 
-
 REPO_ROOT_DIR: str = str(Path(__file__).parent.parent.parent.resolve())
 
 

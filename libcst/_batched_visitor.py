@@ -19,7 +19,6 @@ from libcst._metadata_dependent import MetadataDependent
 from libcst._typed_visitor import CSTTypedVisitorFunctions
 from libcst._visitors import CSTNodeT, CSTVisitor
 
-
 if TYPE_CHECKING:
     from libcst._nodes.base import CSTNode  # noqa: F401
 

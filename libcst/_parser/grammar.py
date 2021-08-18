@@ -141,7 +141,6 @@ from libcst._parser.types.config import AutoConfig
 from libcst._parser.types.conversions import NonterminalConversion, TerminalConversion
 from libcst._parser.types.production import Production
 
-
 # Keep this sorted alphabetically
 _TERMINAL_CONVERSIONS_SEQUENCE: Tuple[TerminalConversion, ...] = (
     convert_DEDENT,

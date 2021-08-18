@@ -150,8 +150,8 @@ Start by setting up and activating a virtualenv:
     # If you're done with the virtualenv, you can leave it by running:
     deactivate
 
-We use `isort <https://isort.readthedocs.io/en/stable/>`_ and `black <https://black.readthedocs.io/en/stable/>`_
-to format code. To format changes to be conformant, run the following in the root:
+We use `ufmt <https://ufmt.omnilib.dev/en/stable/>`_ to format code. To format
+changes to be conformant, run the following in the root:
 
 .. code-block:: shell
 

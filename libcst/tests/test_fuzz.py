@@ -20,7 +20,6 @@ from hypothesmith import from_grammar
 
 import libcst
 
-
 # If in doubt, you should use these "unit test" settings.  They tune the timeouts
 # and example-reproduction behaviour for these tests' unusually large inputs.
 hypothesis.settings.register_profile(

@@ -13,7 +13,6 @@ from libcst._parser.parso.python.token import PythonTokenTypes, TokenType
 from libcst._parser.types.token import Token
 from libcst._tabs import expand_tabs
 
-
 _EOF_STR: str = "end of file (EOF)"
 _INDENT_STR: str = "an indent"
 _DEDENT_STR: str = "a dedent"

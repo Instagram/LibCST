@@ -15,7 +15,6 @@ from libcst._type_enforce import is_value_of_type
 from libcst._types import CSTNodeT
 from libcst._visitors import CSTTransformer, CSTVisitor, CSTVisitorT
 
-
 _CSTNodeSelfT = TypeVar("_CSTNodeSelfT", bound="CSTNode")
 _EMPTY_SEQUENCE: Sequence["CSTNode"] = ()
 

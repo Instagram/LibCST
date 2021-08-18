@@ -39,7 +39,6 @@ from typing import Any, Generic, Mapping, Sequence, Set, TypeVar, Union
 
 from libcst._parser.parso.pgen2.grammar_parser import GrammarParser, NFAState
 
-
 _TokenTypeT = TypeVar("_TokenTypeT")
 
 

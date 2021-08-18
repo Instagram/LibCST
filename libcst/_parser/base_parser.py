@@ -36,7 +36,6 @@ from libcst._parser.parso.pgen2.generator import DFAState, Grammar, ReservedStri
 from libcst._parser.parso.python.token import TokenType
 from libcst._parser.types.token import Token
 
-
 _NodeT = TypeVar("_NodeT")
 _TokenTypeT = TypeVar("_TokenTypeT", bound=TokenType)
 _TokenT = TypeVar("_TokenT", bound=Token)

@@ -22,7 +22,6 @@ from typing import (
 )
 from unittest import TestCase
 
-
 DATA_PROVIDER_DATA_ATTR_NAME = "__data_provider_data"
 DATA_PROVIDER_DESCRIPTION_PREFIX = "_data_provider_"
 PROVIDER_TEST_LIMIT_ATTR_NAME = "__provider_test_limit"

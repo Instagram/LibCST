@@ -16,7 +16,6 @@ from libcst._nodes.module import Module
 from libcst._position import CodePosition, CodeRange
 from libcst.metadata.base_provider import BaseMetadataProvider
 
-
 NEWLINE_RE: Pattern[str] = re.compile(r"\r\n?|\n")
 
 

@@ -26,7 +26,6 @@ from libcst._metadata_dependent import (
 )
 from libcst._visitors import CSTVisitor
 
-
 if TYPE_CHECKING:
     from libcst._nodes.base import CSTNode
     from libcst._nodes.module import Module, _ModuleSelfT as _ModuleT

@@ -11,7 +11,6 @@ from libcst._removal_sentinel import RemovalSentinel
 from libcst._typed_visitor import CSTTypedTransformerFunctions, CSTTypedVisitorFunctions
 from libcst._types import CSTNodeT
 
-
 if TYPE_CHECKING:
     # Circular dependency for typing reasons only
     from libcst._nodes.base import CSTNode  # noqa: F401

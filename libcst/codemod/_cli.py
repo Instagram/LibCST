@@ -34,7 +34,6 @@ from libcst.codemod._runner import (
 )
 from libcst.metadata import FullRepoManager
 
-
 _DEFAULT_GENERATED_CODE_MARKER: str = f"@gen{''}erated"
 
 

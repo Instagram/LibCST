@@ -17,7 +17,6 @@ from typing import (
     cast,
 )
 
-
 if TYPE_CHECKING:
     # Circular dependency for typing reasons only
     from libcst._nodes.base import CSTNode  # noqa: F401

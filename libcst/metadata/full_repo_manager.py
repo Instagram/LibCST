@@ -10,7 +10,6 @@ from typing import TYPE_CHECKING, Collection, Dict, List, Mapping
 import libcst as cst
 from libcst.metadata.wrapper import MetadataWrapper
 
-
 if TYPE_CHECKING:
     from libcst.metadata.base_provider import ProviderT  # noqa: F401
 

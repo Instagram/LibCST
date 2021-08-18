@@ -50,7 +50,6 @@ from libcst.metadata.span_provider import ByteSpanPositionProvider, CodeSpan
 from libcst.metadata.type_inference_provider import TypeInferenceProvider
 from libcst.metadata.wrapper import MetadataWrapper
 
-
 __all__ = [
     "CodePosition",
     "CodeRange",
