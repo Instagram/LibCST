@@ -2484,12 +2484,18 @@ fn make_list<'a>(
                 whitespace_after: ws,
             }
         })?;
-    let rbracket =
+    let rbracket = if elements.is_empty() {
+        // lbracket owns all the whitespace if there are no elements
+        RightSquareBracket {
+            whitespace_before: Default::default(),
+        }
+    } else {
         parse_parenthesizable_whitespace(config, &mut rbrak.whitespace_before).map(|ws| {
             RightSquareBracket {
                 whitespace_before: ws,
             }
-        })?;
+        })?
+    };
     Ok(List {
         elements,
         lbracket,
@@ -2511,12 +2517,18 @@ fn make_set<'a>(
                 whitespace_after: ws,
             }
         })?;
-    let rbrace =
+    let rbrace = if elements.is_empty() {
+        // lbrace owns all the whitespace if there are no elements
+        RightCurlyBrace {
+            whitespace_before: Default::default(),
+        }
+    } else {
         parse_parenthesizable_whitespace(config, &mut rbrace.whitespace_before).map(|ws| {
             RightCurlyBrace {
                 whitespace_before: ws,
             }
-        })?;
+        })?
+    };
     Ok(Set {
         elements,
         lbrace,
@@ -2565,12 +2577,18 @@ fn make_dict<'a>(
                 whitespace_after: ws,
             }
         })?;
-    let rbrace =
+    let rbrace = if elements.is_empty() {
+        // lbrace owns all whitespace if there are no elements
+        RightCurlyBrace {
+            whitespace_before: Default::default(),
+        }
+    } else {
         parse_parenthesizable_whitespace(config, &mut rbrace.whitespace_before).map(|ws| {
             RightCurlyBrace {
                 whitespace_before: ws,
             }
-        })?;
+        })?
+    };
     Ok(Dict {
         elements,
         lbrace,

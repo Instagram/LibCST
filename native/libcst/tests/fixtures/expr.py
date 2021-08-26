@@ -61,6 +61,8 @@ str or None if (1 if True else 2) else str or bytes or None
 (1, 2)
 (1, 2, 3)
 []
+[   ]
+[  1  ,  ]
 [1, 2, 3, 4, 5, 6, 7, 8, 9, (10 or A), (11 or B), (12 or C)]
 [
     1,
@@ -85,6 +87,9 @@ str or None if (1 if True else 2) else str or bytes or None
     another,
     *more,
 ]
+{   }
+{  1  ,  }
+{  1  :  2  ,  }
 {i for i in (1, 2, 3)}
 {(i ** 2) for i in (1, 2, 3)}
 {(i ** 2) for i, _ in ((1, "a"), (2, "b"), (3, "c"))}
