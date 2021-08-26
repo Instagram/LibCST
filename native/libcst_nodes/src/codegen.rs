@@ -36,6 +36,17 @@ pub trait Codegen<'a> {
     fn codegen(&'a self, state: &mut CodegenState<'a>);
 }
 
+impl<'a, T> Codegen<'a> for Option<T>
+where
+    T: Codegen<'a>,
+{
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+        if let Some(s) = &self {
+            s.codegen(state);
+        }
+    }
+}
+
 #[cfg(windows)]
 const LINE_ENDING: &str = "\r\n";
 #[cfg(not(windows))]

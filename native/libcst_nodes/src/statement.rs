@@ -245,10 +245,25 @@ pub enum SmallStatement<'a> {
 impl<'a> Codegen<'a> for SmallStatement<'a> {
     fn codegen(&'a self, state: &mut CodegenState<'a>) {
         match self {
-            Self::Pass { .. } => state.add_token("pass"),
-            Self::Break { .. } => state.add_token("break"),
-            Self::Continue { .. } => state.add_token("continue"),
-            Self::Expr { value: e, .. } => e.codegen(state),
+            Self::Pass { semicolon } => {
+                state.add_token("pass");
+                semicolon.codegen(state)
+            }
+            Self::Break { semicolon } => {
+                state.add_token("break");
+                semicolon.codegen(state)
+            }
+            Self::Continue { semicolon } => {
+                state.add_token("continue");
+                semicolon.codegen(state)
+            }
+            Self::Expr {
+                value: e,
+                semicolon,
+            } => {
+                e.codegen(state);
+                semicolon.codegen(state)
+            }
             Self::Import(i) => i.codegen(state),
             Self::ImportFrom(i) => i.codegen(state),
             Self::Assign(a) => a.codegen(state),
@@ -260,6 +275,28 @@ impl<'a> Codegen<'a> for SmallStatement<'a> {
             Self::Nonlocal(l) => l.codegen(state),
             Self::AugAssign(a) => a.codegen(state),
             Self::Del(d) => d.codegen(state),
+        }
+    }
+}
+
+impl<'a> SmallStatement<'a> {
+    pub fn with_semicolon(self, semicolon: Option<Semicolon<'a>>) -> Self {
+        match self {
+            Self::Pass { .. } => Self::Pass { semicolon },
+            Self::Break { .. } => Self::Break { semicolon },
+            Self::Continue { .. } => Self::Continue { semicolon },
+            Self::Expr { value, .. } => Self::Expr { value, semicolon },
+            Self::Import(i) => Self::Import(i.with_semicolon(semicolon)),
+            Self::ImportFrom(i) => Self::ImportFrom(i.with_semicolon(semicolon)),
+            Self::Assign(a) => Self::Assign(a.with_semicolon(semicolon)),
+            Self::AnnAssign(a) => Self::AnnAssign(a.with_semicolon(semicolon)),
+            Self::Return(r) => Self::Return(r.with_semicolon(semicolon)),
+            Self::Assert(a) => Self::Assert(a.with_semicolon(semicolon)),
+            Self::Raise(r) => Self::Raise(r.with_semicolon(semicolon)),
+            Self::Global(g) => Self::Global(g.with_semicolon(semicolon)),
+            Self::Nonlocal(l) => Self::Nonlocal(l.with_semicolon(semicolon)),
+            Self::AugAssign(a) => Self::AugAssign(a.with_semicolon(semicolon)),
+            Self::Del(d) => Self::Del(d.with_semicolon(semicolon)),
         }
     }
 }
@@ -280,6 +317,12 @@ impl<'a> Codegen<'a> for Assign<'a> {
         if let Some(semi) = &self.semicolon {
             semi.codegen(state);
         }
+    }
+}
+
+impl<'a> Assign<'a> {
+    pub fn with_semicolon(self, semicolon: Option<Semicolon<'a>>) -> Self {
+        Self { semicolon, ..self }
     }
 }
 
@@ -381,6 +424,12 @@ impl<'a> Codegen<'a> for Import<'a> {
     }
 }
 
+impl<'a> Import<'a> {
+    pub fn with_semicolon(self, semicolon: Option<Semicolon<'a>>) -> Self {
+        Self { semicolon, ..self }
+    }
+}
+
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct ImportFrom<'a> {
     pub module: Option<NameOrAttribute<'a>>,
@@ -418,6 +467,12 @@ impl<'a> Codegen<'a> for ImportFrom<'a> {
         if let Some(semi) = &self.semicolon {
             semi.codegen(state);
         }
+    }
+}
+
+impl<'a> ImportFrom<'a> {
+    pub fn with_semicolon(self, semicolon: Option<Semicolon<'a>>) -> Self {
+        Self { semicolon, ..self }
     }
 }
 
@@ -706,6 +761,12 @@ impl<'a> Codegen<'a> for AnnAssign<'a> {
     }
 }
 
+impl<'a> AnnAssign<'a> {
+    pub fn with_semicolon(self, semicolon: Option<Semicolon<'a>>) -> Self {
+        Self { semicolon, ..self }
+    }
+}
+
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Return<'a> {
     pub value: Option<Expression<'a>>,
@@ -728,6 +789,12 @@ impl<'a> Codegen<'a> for Return<'a> {
         if let Some(semi) = &self.semicolon {
             semi.codegen(state);
         }
+    }
+}
+
+impl<'a> Return<'a> {
+    pub fn with_semicolon(self, semicolon: Option<Semicolon<'a>>) -> Self {
+        Self { semicolon, ..self }
     }
 }
 
@@ -759,6 +826,12 @@ impl<'a> Codegen<'a> for Assert<'a> {
     }
 }
 
+impl<'a> Assert<'a> {
+    pub fn with_semicolon(self, semicolon: Option<Semicolon<'a>>) -> Self {
+        Self { semicolon, ..self }
+    }
+}
+
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Raise<'a> {
     pub exc: Option<Expression<'a>>,
@@ -787,6 +860,12 @@ impl<'a> Codegen<'a> for Raise<'a> {
         if let Some(semi) = &self.semicolon {
             semi.codegen(state);
         }
+    }
+}
+
+impl<'a> Raise<'a> {
+    pub fn with_semicolon(self, semicolon: Option<Semicolon<'a>>) -> Self {
+        Self { semicolon, ..self }
     }
 }
 
@@ -829,6 +908,12 @@ impl<'a> Codegen<'a> for Global<'a> {
     }
 }
 
+impl<'a> Global<'a> {
+    pub fn with_semicolon(self, semicolon: Option<Semicolon<'a>>) -> Self {
+        Self { semicolon, ..self }
+    }
+}
+
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Nonlocal<'a> {
     pub names: Vec<NameItem<'a>>,
@@ -848,6 +933,12 @@ impl<'a> Codegen<'a> for Nonlocal<'a> {
         if let Some(semicolon) = &self.semicolon {
             semicolon.codegen(state);
         }
+    }
+}
+
+impl<'a> Nonlocal<'a> {
+    pub fn with_semicolon(self, semicolon: Option<Semicolon<'a>>) -> Self {
+        Self { semicolon, ..self }
     }
 }
 
@@ -1090,6 +1181,12 @@ impl<'a> Codegen<'a> for AugAssign<'a> {
     }
 }
 
+impl<'a> AugAssign<'a> {
+    pub fn with_semicolon(self, semicolon: Option<Semicolon<'a>>) -> Self {
+        Self { semicolon, ..self }
+    }
+}
+
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct WithItem<'a> {
     pub item: Expression<'a>,
@@ -1242,5 +1339,11 @@ impl<'a> Codegen<'a> for Del<'a> {
         if let Some(semi) = &self.semicolon {
             semi.codegen(state);
         }
+    }
+}
+
+impl<'a> Del<'a> {
+    pub fn with_semicolon(self, semicolon: Option<Semicolon<'a>>) -> Self {
+        Self { semicolon, ..self }
     }
 }

@@ -1636,16 +1636,32 @@ fn _make_simple_statement<'a>(
     mut parts: SimpleStatementParts<'a>,
 ) -> Result<'a, (Token<'a>, Vec<SmallStatement<'a>>, TrailingWhitespace<'a>)> {
     let mut body = vec![];
-    for (statement, _semi) in parts.statements {
-        // TODO: parse whitespace before and after semi and attach it to a semicolon
-        // inside statement
-        body.push(statement);
+    for (statement, mut semi) in parts.statements {
+        let whitespace_before = ParenthesizableWhitespace::SimpleWhitespace(
+            parse_simple_whitespace(config, &mut semi.whitespace_before)?,
+        );
+        let whitespace_after = ParenthesizableWhitespace::SimpleWhitespace(
+            parse_simple_whitespace(config, &mut semi.whitespace_after)?,
+        );
+        dbg!(&body);
+        body.push(statement.with_semicolon(Some(Semicolon {
+            whitespace_before,
+            whitespace_after,
+        })));
     }
-    // TODO: parse whitespace before last semi and attach it to a semicolon inside
-    // last_statement
-    body.push(parts.last_statement);
+    let mut last_statement = parts.last_statement;
+    if let Some(mut semi) = parts.last_semi {
+        // last semi only owns whitespace before
+        let whitespace_before = ParenthesizableWhitespace::SimpleWhitespace(
+            parse_simple_whitespace(config, &mut semi.whitespace_before)?,
+        );
+        last_statement = last_statement.with_semicolon(Some(Semicolon {
+            whitespace_before,
+            whitespace_after: Default::default(),
+        }));
+    }
+    body.push(last_statement);
 
-    // TODO: is this correct?
     let trailing_whitespace = parse_trailing_whitespace(config, &mut parts.nl.whitespace_before)?;
 
     Ok((parts.first, body, trailing_whitespace))
