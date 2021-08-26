@@ -37,7 +37,7 @@
           "column": 16
         }
       },
-      "annotation": "typing.Callable(libcst.tests.pyre.simple_class.Item.__init__)[[Named(self, unknown), Named(n, int)], None]"
+      "annotation": "typing.Callable(libcst.tests.pyre.simple_class.Item.__init__)[[Named(self, libcst.tests.pyre.simple_class.Item), Named(n, int)], None]"
     },
     {
       "location": {
@@ -167,7 +167,7 @@
           "column": 17
         }
       },
-      "annotation": "typing.Callable(libcst.tests.pyre.simple_class.ItemCollector.get_items)[[Named(self, unknown), Named(n, int)], typing.Sequence[libcst.tests.pyre.simple_class.Item]]"
+      "annotation": "typing.Callable(libcst.tests.pyre.simple_class.ItemCollector.get_items)[[Named(self, libcst.tests.pyre.simple_class.ItemCollector), Named(n, int)], typing.Sequence[libcst.tests.pyre.simple_class.Item]]"
     },
     {
       "location": {
@@ -219,7 +219,7 @@
           "column": 43
         }
       },
-      "annotation": "typing.Callable(typing.GenericMeta.__getitem__)[[typing.Type[Variable[typing._T_co](covariant)]], typing.Type[typing.Sequence[Variable[typing._T_co](covariant)]]]"
+      "annotation": "BoundMethod[typing.Callable(typing.GenericMeta.__getitem__)[[Named(self, unknown), typing.Type[Variable[typing._T_co](covariant)]], typing.Type[typing.Sequence[Variable[typing._T_co](covariant)]]], typing.Type[typing.Sequence]]"
     },
     {
       "location": {
@@ -427,7 +427,7 @@
           "column": 43
         }
       },
-      "annotation": "typing.Callable(libcst.tests.pyre.simple_class.ItemCollector.get_items)[[Named(n, int)], typing.Sequence[libcst.tests.pyre.simple_class.Item]]"
+      "annotation": "BoundMethod[typing.Callable(libcst.tests.pyre.simple_class.ItemCollector.get_items)[[Named(self, libcst.tests.pyre.simple_class.ItemCollector), Named(n, int)], typing.Sequence[libcst.tests.pyre.simple_class.Item]], libcst.tests.pyre.simple_class.ItemCollector]"
     },
     {
       "location": {
