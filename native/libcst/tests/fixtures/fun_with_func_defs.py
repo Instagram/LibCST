@@ -123,7 +123,8 @@ def foo(bar: (yield)) -> (yield): something: (yield another)
 
 def foo( bar: (yield)) -> (yield) :
     something: (yield another)
-    return 3
+    return 3  # no
+    return  # yes
 
 
 def f():

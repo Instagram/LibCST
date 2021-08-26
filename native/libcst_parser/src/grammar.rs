@@ -2935,7 +2935,12 @@ fn make_return<'a>(
     mut kw: Token<'a>,
     value: Option<Expression<'a>>,
 ) -> Result<'a, Return<'a>> {
-    let whitespace_after_return = Some(parse_simple_whitespace(config, &mut kw.whitespace_after)?);
+    let whitespace_after_return = if value.is_some() {
+        Some(parse_simple_whitespace(config, &mut kw.whitespace_after)?)
+    } else {
+        // trailing space is owned by semicolon or small statement
+        None
+    };
     Ok(Return {
         value,
         whitespace_after_return,
