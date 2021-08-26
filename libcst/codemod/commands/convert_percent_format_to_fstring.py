@@ -10,7 +10,6 @@ import libcst as cst
 import libcst.matchers as m
 from libcst.codemod import VisitorBasedCodemodCommand
 
-
 USE_FSTRING_SIMPLE_EXPRESSION_MAX_LENGTH = 30
 
 

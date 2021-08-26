@@ -9,7 +9,6 @@ from typing import Dict, Mapping, Optional, Set, Union
 import libcst as cst
 from libcst.helpers.common import ensure_type
 
-
 TEMPLATE_PREFIX: str = "__LIBCST_MANGLED_NAME_"
 TEMPLATE_SUFFIX: str = "_EMAN_DELGNAM_TSCBIL__"
 

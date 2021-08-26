@@ -22,7 +22,6 @@ from libcst._parser.parso.python.tokenize import PythonToken, tokenize
 from libcst._parser.parso.utils import parse_version_string, split_lines
 from libcst.testing.utils import UnitTest, data_provider
 
-
 # To make it easier to access some of the token types, just put them here.
 NAME = PythonTokenTypes.NAME
 NEWLINE = PythonTokenTypes.NEWLINE

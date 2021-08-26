@@ -34,7 +34,6 @@ from libcst.metadata.expression_context_provider import (
     ExpressionContextProvider,
 )
 
-
 # Comprehensions are handled separately in _visit_comp_alike due to
 # the complexity of the semantics
 _ASSIGNMENT_LIKE_NODES = (

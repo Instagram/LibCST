@@ -121,7 +121,6 @@ from libcst._parser.types.partials import (
 from libcst._parser.types.token import Token
 from libcst._parser.whitespace_parser import parse_parenthesizable_whitespace
 
-
 BINOP_TOKEN_LUT: typing.Dict[str, typing.Type[BaseBinaryOp]] = {
     "*": Multiply,
     "@": MatrixMultiply,

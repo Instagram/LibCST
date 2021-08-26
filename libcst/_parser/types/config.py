@@ -16,7 +16,6 @@ from libcst._add_slots import add_slots
 from libcst._nodes.whitespace import NEWLINE_RE
 from libcst._parser.parso.utils import PythonVersionInfo, parse_version_string
 
-
 _INDENT_RE: Pattern[str] = re.compile(r"[ \t]+")
 
 

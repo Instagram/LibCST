@@ -18,7 +18,6 @@ from libcst._parser.types.config import AutoConfig, ParserConfig, PartialParserC
 from libcst._parser.types.token import Token
 from libcst._parser.wrapped_tokenize import tokenize_lines
 
-
 _INDENT: TokenType = PythonTokenTypes.INDENT
 _NAME: TokenType = PythonTokenTypes.NAME
 _NEWLINE: TokenType = PythonTokenTypes.NEWLINE

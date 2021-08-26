@@ -20,7 +20,6 @@ from libcst._parser.grammar import get_grammar, validate_grammar
 from libcst._parser.python_parser import PythonCSTParser
 from libcst._parser.types.config import PartialParserConfig
 
-
 _DEFAULT_PARTIAL_PARSER_CONFIG: PartialParserConfig = PartialParserConfig()
 
 

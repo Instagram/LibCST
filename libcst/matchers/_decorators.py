@@ -7,7 +7,6 @@ from typing import Callable, TypeVar
 
 from libcst.matchers._matcher_base import BaseMatcherNode
 
-
 _CSTVisitFuncT = TypeVar("_CSTVisitFuncT")
 
 

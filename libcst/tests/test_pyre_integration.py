@@ -17,7 +17,6 @@ from libcst.metadata.type_inference_provider import (
 )
 from libcst.testing.utils import UnitTest, data_provider
 
-
 TEST_SUITE_PATH: Path = Path(__file__).parent / "pyre"
 
 

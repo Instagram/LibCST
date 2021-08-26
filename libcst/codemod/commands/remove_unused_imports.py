@@ -12,7 +12,6 @@ from libcst.codemod.visitors import GatherCommentsVisitor, RemoveImportsVisitor
 from libcst.helpers import get_absolute_module_for_import
 from libcst.metadata import PositionProvider, ProviderT
 
-
 DEFAULT_SUPPRESS_COMMENT_REGEX = (
     r".*\W(noqa|lint-ignore: ?unused-import|lint-ignore: ?F401)(\W.*)?$"
 )

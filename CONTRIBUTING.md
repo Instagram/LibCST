@@ -31,7 +31,7 @@ disclosure of security bugs. In those cases, please go through the process
 outlined on that page and do not file a public issue.
 
 ## Coding Style  
-We use flake8, isort and black to enforce coding style.
+We use flake8 and ufmt to enforce coding style.
 
 ## License
 By contributing to LibCST, you agree that your contributions will be licensed

@@ -12,7 +12,6 @@ from libcst._types import CSTNodeT
 from libcst._visitors import CSTTransformer
 from libcst.testing.utils import UnitTest, data_provider, none_throws
 
-
 _EMPTY_SIMPLE_WHITESPACE = cst.SimpleWhitespace("")
 
 

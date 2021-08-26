@@ -8,7 +8,6 @@ from typing import Any, Callable, Sequence
 from libcst._parser.types.config import ParserConfig
 from libcst._parser.types.token import Token
 
-
 # pyre-fixme[33]: Aliased annotation cannot contain `Any`.
 NonterminalConversion = Callable[[ParserConfig, Sequence[Any]], Any]
 # pyre-fixme[33]: Aliased annotation cannot contain `Any`.

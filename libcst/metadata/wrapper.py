@@ -25,7 +25,6 @@ from libcst._batched_visitor import BatchableCSTVisitor, VisitorMethod, visit_ba
 from libcst._exceptions import MetadataException
 from libcst.metadata.base_provider import BatchableMetadataProvider
 
-
 if TYPE_CHECKING:
     from libcst._nodes.base import CSTNode  # noqa: F401
     from libcst._nodes.module import Module  # noqa: F401

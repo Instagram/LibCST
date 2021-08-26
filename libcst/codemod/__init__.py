@@ -30,7 +30,6 @@ from libcst.codemod._runner import (
 from libcst.codemod._testing import CodemodTest
 from libcst.codemod._visitor import ContextAwareTransformer, ContextAwareVisitor
 
-
 __all__ = [
     "Codemod",
     "CodemodContext",

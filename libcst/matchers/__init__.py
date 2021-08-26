@@ -11,25 +11,25 @@ from typing import Callable, Optional, Sequence, Union
 from typing_extensions import Literal
 
 import libcst as cst
-from libcst.matchers._decorators import call_if_inside, call_if_not_inside, leave, visit
+from libcst.matchers._decorators import call_if_inside, call_if_not_inside, visit, leave
 from libcst.matchers._matcher_base import (
     AbstractBaseMatcherNodeMeta,
-    AllOf,
-    AtLeastN,
-    AtMostN,
     BaseMatcherNode,
-    DoesNotMatch,
-    DoNotCare,
     DoNotCareSentinel,
+    DoNotCare,
+    TypeOf,
+    OneOf,
+    AllOf,
+    DoesNotMatch,
     MatchIfTrue,
+    MatchRegex,
     MatchMetadata,
     MatchMetadataIfTrue,
-    MatchRegex,
-    OneOf,
-    SaveMatchedNode,
-    TypeOf,
     ZeroOrMore,
+    AtLeastN,
     ZeroOrOne,
+    AtMostN,
+    SaveMatchedNode,
     extract,
     extractall,
     findall,

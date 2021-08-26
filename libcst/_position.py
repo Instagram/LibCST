@@ -17,7 +17,6 @@ from typing import Tuple, Union, cast, overload
 
 from libcst._add_slots import add_slots
 
-
 _CodePositionT = Union[Tuple[int, int], "CodePosition"]
 
 

@@ -29,7 +29,6 @@ from libcst._nodes.statement import AsName, BaseSmallStatement, Decorator, Impor
 from libcst._nodes.whitespace import EmptyLine, SimpleWhitespace, TrailingWhitespace
 from libcst._parser.types.whitespace_state import WhitespaceState
 
-
 _T = TypeVar("_T")
 
 

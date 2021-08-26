@@ -18,7 +18,6 @@ from libcst._nodes.whitespace import EmptyLine
 from libcst._removal_sentinel import RemovalSentinel
 from libcst._visitors import CSTVisitorT
 
-
 if TYPE_CHECKING:
     # This is circular, so import the type only in type checking
     from libcst._parser.types.config import PartialParserConfig

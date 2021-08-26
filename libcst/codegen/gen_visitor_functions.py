@@ -8,7 +8,6 @@ from typing import List
 
 from libcst.codegen.gather import imports, nodebases, nodeuses
 
-
 generated_code: List[str] = []
 generated_code.append("# Copyright (c) Facebook, Inc. and its affiliates.")
 generated_code.append("#")

@@ -14,7 +14,6 @@ from libcst._maybe_sentinel import MaybeSentinel
 from libcst._removal_sentinel import RemovalSentinel
 from libcst._types import CSTNodeT
 
-
 if TYPE_CHECKING:
     # These are circular dependencies only used for typing purposes
     from libcst._nodes.base import CSTNode  # noqa: F401

@@ -6,7 +6,6 @@
 from types import TracebackType
 from typing import Callable, Generator, Iterable, Optional, Type, TypeVar
 
-
 RetT = TypeVar("RetT")
 ArgT = TypeVar("ArgT")
 

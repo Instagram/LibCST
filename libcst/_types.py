@@ -6,7 +6,6 @@
 
 from typing import TYPE_CHECKING, TypeVar
 
-
 if TYPE_CHECKING:
     from libcst._nodes.base import CSTNode  # noqa: F401
 

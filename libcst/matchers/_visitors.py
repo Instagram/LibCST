@@ -45,7 +45,6 @@ from libcst.matchers._matcher_base import (
 )
 from libcst.matchers._return_types import TYPED_FUNCTION_RETURN_MAPPING
 
-
 CONCRETE_METHODS: Set[str] = {
     *{f"visit_{cls.__name__}" for cls in TYPED_FUNCTION_RETURN_MAPPING},
     *{f"leave_{cls.__name__}" for cls in TYPED_FUNCTION_RETURN_MAPPING},

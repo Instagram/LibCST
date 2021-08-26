@@ -16,7 +16,6 @@ from typing import Optional, Sequence, Union
 from libcst import PartialParserConfig, parse_module
 from libcst.codemod._codemod import Codemod
 
-
 # All datastructures defined in this class are pickleable so that they can be used
 # as a return value with the multiprocessing module.
 

@@ -8,7 +8,6 @@ from typing import Callable, Optional, Sequence, TypeVar
 from libcst._parser.types.conversions import NonterminalConversion
 from libcst._parser.types.production import Production
 
-
 _NonterminalConversionT = TypeVar(
     "_NonterminalConversionT", bound=NonterminalConversion
 )

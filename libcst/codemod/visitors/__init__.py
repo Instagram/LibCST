@@ -14,7 +14,6 @@ from libcst.codemod.visitors._gather_string_annotation_names import (
 from libcst.codemod.visitors._gather_unused_imports import GatherUnusedImportsVisitor
 from libcst.codemod.visitors._remove_imports import RemoveImportsVisitor
 
-
 __all__ = [
     "AddImportsVisitor",
     "ApplyTypeAnnotationsVisitor",

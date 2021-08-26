@@ -101,7 +101,6 @@ from libcst._parser.whitespace_parser import (
     parse_simple_whitespace,
 )
 
-
 AUGOP_TOKEN_LUT: Dict[str, Type[BaseAugOp]] = {
     "+=": AddAssign,
     "-=": SubtractAssign,

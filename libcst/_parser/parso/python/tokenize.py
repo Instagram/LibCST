@@ -39,7 +39,6 @@ from typing import Dict, Generator, Iterable, Optional, Pattern, Set, Tuple
 from libcst._parser.parso.python.token import PythonTokenTypes
 from libcst._parser.parso.utils import PythonVersionInfo, split_lines
 
-
 # Maximum code point of Unicode 6.0: 0x10ffff (1,114,111)
 MAX_UNICODE = "\U0010ffff"
 BOM_UTF8_STRING = BOM_UTF8.decode("utf-8")

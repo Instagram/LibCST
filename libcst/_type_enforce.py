@@ -8,7 +8,6 @@ from typing import Any, Iterable, Mapping, MutableMapping, MutableSequence, Tupl
 from typing_extensions import Literal
 from typing_inspect import get_args, get_origin, is_classvar, is_typevar, is_union_type
 
-
 try:  # py37+
     from typing import ForwardRef
 except ImportError:  # py36

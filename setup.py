@@ -8,7 +8,6 @@ from os import path
 
 import setuptools
 
-
 # Grab the readme so that our package stays in sync with github.
 this_directory: str = path.abspath(path.dirname(__file__))
 with open(path.join(this_directory, "README.rst"), encoding="utf-8") as f:

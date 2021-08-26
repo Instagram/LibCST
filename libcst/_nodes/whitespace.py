@@ -19,7 +19,6 @@ from libcst._nodes.internal import (
 )
 from libcst._visitors import CSTVisitorT
 
-
 # SimpleWhitespace includes continuation characters, which must be followed immediately
 # by a newline. SimpleWhitespace does not include other kinds of newlines, because those
 # may have semantic significance.

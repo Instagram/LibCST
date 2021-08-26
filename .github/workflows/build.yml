@@ -69,8 +69,7 @@ jobs:
       if: steps.cache.outputs.cache-hit != 'true'
       run: exit 1
     - run: flake8
-    - run: isort --check-only .
-    - run: black --check libcst/
+    - run: ufmt check .
     - run: python3 -m fixit.cli.run_rules
 
 # Run pyre typechecker

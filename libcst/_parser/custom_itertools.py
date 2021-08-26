@@ -6,7 +6,6 @@
 from itertools import zip_longest
 from typing import Iterable, Iterator, TypeVar
 
-
 _T = TypeVar("_T")
 
 
