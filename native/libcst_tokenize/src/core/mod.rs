@@ -58,6 +58,7 @@
 /// [RustPython's parser]: https://crates.io/crates/rustpython-parser
 mod string_types;
 
+use libcst_nodes::text_position::{TextPositionSnapshot, TokenPosition};
 use once_cell::sync::Lazy;
 use regex::Regex;
 use std::cmp::Ordering;
@@ -67,7 +68,7 @@ use std::fmt::Formatter;
 
 use crate::core::string_types::{FStringNode, StringQuoteChar, StringQuoteSize};
 use crate::operators::OPERATOR_RE;
-use crate::text_position::{TextPosition, TextPositionSnapshot};
+use crate::text_position::TextPosition;
 use crate::whitespace_parser::State as WhitespaceState;
 
 /// The maximum number of indentation levels at any given point in time. CPython's tokenizer.c caps
@@ -1031,6 +1032,18 @@ impl<'a> Debug for Token<'a> {
             "Token({:?}, {}, start={:?}, end={:?}, relative_indent={:?}",
             self.r#type, self.string, self.start_pos, self.end_pos, self.relative_indent
         )
+    }
+}
+
+impl<'a> From<Token<'a>> for TokenPosition<'a> {
+    fn from(t: Token<'a>) -> Self {
+        Self {
+            start_pos: t.start_pos,
+            end_pos: t.end_pos,
+            whitespace_after: t.whitespace_after,
+            whitespace_before: t.whitespace_before,
+            relative_indent: t.relative_indent,
+        }
     }
 }
 

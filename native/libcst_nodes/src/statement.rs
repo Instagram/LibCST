@@ -9,6 +9,7 @@ use super::{
     Semicolon, SimpleWhitespace, StarredElement, Subscript, TrailingWhitespace, Tuple,
 };
 use crate::{
+    text_position::TokenPosition,
     traits::{WithComma, WithLeadingLines},
     Arg, AssignEqual, Asynchronous, AugOp, Element, ParenthesizedNode,
 };
@@ -110,6 +111,10 @@ pub struct IndentedBlock<'a> {
     /// :class:`IndentedBlock` will own the comments and lines that are indented
     /// further.
     pub footer: Vec<EmptyLine<'a>>,
+
+    pub newline_tok: TokenPosition<'a>,
+    pub indent_tok: TokenPosition<'a>,
+    pub dedent_tok: TokenPosition<'a>,
 }
 
 impl<'a> Codegen<'a> for IndentedBlock<'a> {

@@ -9,7 +9,7 @@ use libcst_tokenize::{whitespace_parser, TokConfig, TokenIterator};
 
 pub use libcst_nodes::*;
 use libcst_parser as grammar;
-use libcst_parser::{ParserError, Result};
+use libcst_parser::{inflate::Inflate, ParserError, Result};
 
 pub fn parse_module<'a>(mut module_text: &'a str) -> Result<'a, Module> {
     // Strip UTF-8 BOM
@@ -31,7 +31,9 @@ pub fn parse_module<'a>(mut module_text: &'a str) -> Result<'a, Module> {
 
     // eprintln!("{:#?}", result);
     let conf = whitespace_parser::Config::new(module_text);
-    grammar::python::file(&result, &conf).map_err(ParserError::ParserError)
+    let mut m = grammar::python::file(&result, &conf).map_err(ParserError::ParserError)?;
+    m.inflate(&conf)?;
+    Ok(m)
 }
 
 // n starts from 1
@@ -103,10 +105,10 @@ mod test {
 
     #[test]
     fn test_bare_minimum_funcdef() {
-        let m = parse_module("def f(): ...");
+        let m = parse_module("def f(): ...").expect("parse error");
         assert_eq!(
             m,
-            Ok(Module {
+            Module {
                 body: vec![Statement::Compound(CompoundStatement::FunctionDef(
                     FunctionDef {
                         name: Name {
@@ -143,16 +145,17 @@ mod test {
                 ))],
                 footer: vec![],
                 header: vec![],
-            })
+                eof_tok: m.eof_tok.clone(),
+            }
         );
     }
 
     #[test]
     fn test_funcdef_params() {
-        let m = parse_module("def g(a, b): ...");
+        let m = parse_module("def g(a, b): ...").expect("parse error");
         assert_eq!(
             m,
-            Ok(Module {
+            Module {
                 body: vec![Statement::Compound(CompoundStatement::FunctionDef(
                     FunctionDef {
                         name: Name {
@@ -217,7 +220,8 @@ mod test {
                 ))],
                 footer: vec![],
                 header: vec![],
-            })
+                eof_tok: m.eof_tok.clone(),
+            }
         );
     }
 

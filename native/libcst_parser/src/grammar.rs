@@ -109,9 +109,8 @@ parser! {
             = traced(<_file()>)
 
         rule _file() -> Module<'a>
-            = s:statements()? eof:tok(EndMarker, "EOF") {?
-                make_module(config, s.unwrap_or_default(), eof)
-                    .map_err(|e| "module")
+            = s:statements()? eof:tok(EndMarker, "EOF") {
+                make_module(s.unwrap_or_default(), eof)
             }
 
         pub rule statements() -> Vec<Statement<'a>>
@@ -201,9 +200,8 @@ parser! {
 
         #[cache]
         rule block() -> Suite<'a>
-            = n:tok(NL, "NEWLINE") ind:tok(Indent, "INDENT") s:statements() ded:tok(Dedent, "DEDENT") {?
-                make_indented_block(config, n, ind, s, ded)
-                    .map_err(|e| "indented block")
+            = n:tok(NL, "NEWLINE") ind:tok(Indent, "INDENT") s:statements() ded:tok(Dedent, "DEDENT") {
+                make_indented_block(n, ind, s, ded)
             }
             / s:simple_stmt() {?
                 make_simple_statement_suite(config, s)
@@ -1591,35 +1589,20 @@ fn make_number<'a>(_config: &Config<'a>, num: Token<'a>) -> Result<'a, Expressio
 }
 
 fn make_indented_block<'a>(
-    config: &Config<'a>,
-    mut nl: Token<'a>,
+    nl: Token<'a>,
     indent: Token<'a>,
     statements: Vec<Statement<'a>>,
-    mut dedent: Token<'a>,
-) -> Result<'a, Suite<'a>> {
-    // We want to be able to only keep comments in the footer that are actually for
-    // this IndentedBlock. We do so by assuming that lines which are indented to the
-    // same level as the block itself are comments that go at the footer of the
-    // block. Comments that are indented to less than this indent are assumed to
-    // belong to the next line of code. We override the indent here because the
-    // dedent node's absolute indent is the resulting indentation after the dedent
-    // is performed. Its this way because the whitespace state for both the dedent's
-    // whitespace_after and the next BaseCompoundStatement's whitespace_before is
-    // shared. This allows us to partially parse here and parse the rest of the
-    // whitespace and comments on the next line, effectively making sure that
-    // comments are attached to the correct node.
-    let footer = parse_empty_lines(
-        config,
-        &mut dedent.whitespace_after,
-        Some(indent.whitespace_before.absolute_indent),
-    )?;
-    let header = parse_trailing_whitespace(config, &mut nl.whitespace_before)?;
-    Ok(Suite::IndentedBlock(IndentedBlock {
+    dedent: Token<'a>,
+) -> Suite<'a> {
+    Suite::IndentedBlock(IndentedBlock {
         body: statements,
-        header,
-        indent: indent.relative_indent,
-        footer,
-    }))
+        header: Default::default(),
+        indent: Default::default(),
+        footer: Default::default(),
+        newline_tok: nl.into(),
+        indent_tok: indent.into(),
+        dedent_tok: dedent.into(),
+    })
 }
 
 struct SimpleStatementParts<'a> {
@@ -2012,41 +1995,13 @@ fn make_rpar<'a>(config: &Config<'a>, mut tok: Token<'a>) -> Result<'a, RightPar
     Ok(RightParen { whitespace_before })
 }
 
-fn make_module<'a>(
-    config: &Config<'a>,
-    mut body: Vec<Statement<'a>>,
-    mut tok: Token<'a>,
-) -> Result<'a, Module<'a>> {
-    let mut footer = parse_empty_lines(config, &mut tok.whitespace_before, Some(""))?;
-    let mut header = vec![];
-    if let Some(stmt) = body.first_mut() {
-        swap(&mut stmt.leading_lines(), &mut &header);
-        let mut last_indented = None;
-        for (num, line) in footer.iter().enumerate() {
-            if !line.whitespace.0.is_empty() {
-                last_indented = Some(num);
-            } else if line.comment.is_some() {
-                // This is a non-indented comment. Everything from here should belong in the
-                // footer.
-                break;
-            }
-        }
-        if let Some(num) = last_indented {
-            if num + 1 == footer.len() {
-                footer = vec![];
-            } else {
-                let (_, rest) = footer.split_at(num + 1);
-                footer = rest.to_vec();
-            }
-        }
-    } else {
-        swap(&mut header, &mut footer);
-    }
-    Ok(Module {
+fn make_module<'a>(body: Vec<Statement<'a>>, tok: Token<'a>) -> Module<'a> {
+    Module {
         body,
-        header,
-        footer,
-    })
+        header: Default::default(),
+        footer: Default::default(),
+        eof_tok: tok.into(),
+    }
 }
 
 fn make_attribute<'a>(

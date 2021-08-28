@@ -5,6 +5,7 @@
 
 mod char_width;
 
+use libcst_nodes::text_position::TextPositionSnapshot;
 use once_cell::sync::Lazy;
 use regex::Regex;
 use std::fmt;
@@ -196,29 +197,6 @@ impl fmt::Debug for TextPosition<'_> {
             .field("inner_char_column_number", &self.inner_char_column_number)
             .field("inner_line_number", &self.inner_line_number)
             .finish()
-    }
-}
-
-/// A lightweight immutable version of TextPosition that's slightly cheaper to construct/store. Used
-/// for storing the start position of tokens.
-#[derive(Clone, Debug)]
-pub struct TextPositionSnapshot {
-    inner_byte_idx: usize,
-    inner_char_column_number: usize,
-    inner_line_number: usize,
-}
-
-impl TextPositionSnapshot {
-    pub fn byte_idx(&self) -> usize {
-        self.inner_byte_idx
-    }
-
-    pub fn char_column_number(&self) -> usize {
-        self.inner_char_column_number
-    }
-
-    pub fn line_number(&self) -> usize {
-        self.inner_line_number
     }
 }
 
