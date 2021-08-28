@@ -8,10 +8,12 @@ use super::{
     LeftParen, List, Name, NameOrAttribute, Parameters, ParenthesizableWhitespace, RightParen,
     Semicolon, SimpleWhitespace, StarredElement, Subscript, TrailingWhitespace, Tuple,
 };
-use crate::nodes::{
-    text_position::TokenPosition,
-    traits::{WithComma, WithLeadingLines},
-    Arg, AssignEqual, Asynchronous, AugOp, Element, ParenthesizedNode,
+use crate::{
+    nodes::{
+        traits::{WithComma, WithLeadingLines},
+        Arg, AssignEqual, Asynchronous, AugOp, Element, ParenthesizedNode,
+    },
+    tokenizer::Token,
 };
 
 #[allow(clippy::large_enum_variant)]
@@ -112,9 +114,9 @@ pub struct IndentedBlock<'a> {
     /// further.
     pub footer: Vec<EmptyLine<'a>>,
 
-    pub newline_tok: TokenPosition<'a>,
-    pub indent_tok: TokenPosition<'a>,
-    pub dedent_tok: TokenPosition<'a>,
+    pub(crate) newline_tok: Token<'a>,
+    pub(crate) indent_tok: Token<'a>,
+    pub(crate) dedent_tok: Token<'a>,
 }
 
 impl<'a> Codegen<'a> for IndentedBlock<'a> {

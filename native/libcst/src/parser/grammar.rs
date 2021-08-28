@@ -1599,9 +1599,9 @@ fn make_indented_block<'a>(
         header: Default::default(),
         indent: Default::default(),
         footer: Default::default(),
-        newline_tok: nl.into(),
-        indent_tok: indent.into(),
-        dedent_tok: dedent.into(),
+        newline_tok: nl,
+        indent_tok: indent,
+        dedent_tok: dedent,
     })
 }
 
@@ -2000,7 +2000,7 @@ fn make_module<'a>(body: Vec<Statement<'a>>, tok: Token<'a>) -> Module<'a> {
         body,
         header: Default::default(),
         footer: Default::default(),
-        eof_tok: tok.into(),
+        eof_tok: tok,
     }
 }
 

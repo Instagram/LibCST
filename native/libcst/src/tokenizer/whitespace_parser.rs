@@ -1,6 +1,5 @@
 use std::{cell::RefCell, collections::BTreeSet, rc::Rc};
 
-pub use crate::nodes::text_position::WhitespacePosition as State;
 use crate::nodes::{
     Comment, EmptyLine, Fakeness, Newline, ParenthesizableWhitespace, ParenthesizedWhitespace,
     SimpleWhitespace, TrailingWhitespace,
@@ -25,6 +24,29 @@ pub enum WhitespaceError {
 }
 
 type Result<T> = std::result::Result<T, WhitespaceError>;
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct State<'a> {
+    pub line: usize,   // one-indexed (to match parso's behavior)
+    pub column: usize, // zero-indexed (to match parso's behavior)
+    pub column_byte: usize,
+    pub absolute_indent: &'a str,
+    pub is_parenthesized: bool,
+    pub byte_offset: usize,
+}
+
+impl<'a> Default for State<'a> {
+    fn default() -> Self {
+        Self {
+            line: 1,
+            column: 0,
+            column_byte: 0,
+            absolute_indent: "",
+            is_parenthesized: false,
+            byte_offset: 0,
+        }
+    }
+}
 
 // TODO
 pub struct Config<'a> {

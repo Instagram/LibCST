@@ -6,9 +6,9 @@
 use crate::nodes::{
     codegen::{Codegen, CodegenState},
     statement::Statement,
-    text_position::TokenPosition,
     whitespace::EmptyLine,
 };
+use crate::tokenizer::Token;
 
 #[derive(Debug, Eq, PartialEq)]
 pub struct Module<'a> {
@@ -16,7 +16,7 @@ pub struct Module<'a> {
     pub header: Vec<EmptyLine<'a>>,
     pub footer: Vec<EmptyLine<'a>>,
 
-    pub eof_tok: TokenPosition<'a>,
+    pub(crate) eof_tok: Token<'a>,
 }
 
 impl<'a> Codegen<'a> for Module<'a> {

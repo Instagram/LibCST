@@ -5,7 +5,6 @@
 
 mod char_width;
 
-use crate::nodes::text_position::TextPositionSnapshot;
 use once_cell::sync::Lazy;
 use regex::Regex;
 use std::fmt;
@@ -47,6 +46,29 @@ pub struct TextPosition<'t> {
     inner_char_column_number: usize,
     inner_byte_column_number: usize,
     inner_line_number: usize,
+}
+
+/// A lightweight immutable version of TextPosition that's slightly
+/// cheaper to construct/store. Used for storing the start position of tokens.
+#[derive(Clone, PartialEq, Eq, Debug)]
+pub struct TextPositionSnapshot {
+    pub inner_byte_idx: usize,
+    pub inner_char_column_number: usize,
+    pub inner_line_number: usize,
+}
+
+impl TextPositionSnapshot {
+    pub fn byte_idx(&self) -> usize {
+        self.inner_byte_idx
+    }
+
+    pub fn char_column_number(&self) -> usize {
+        self.inner_char_column_number
+    }
+
+    pub fn line_number(&self) -> usize {
+        self.inner_line_number
+    }
 }
 
 impl<'t> TextPosition<'t> {

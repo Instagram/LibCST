@@ -58,7 +58,6 @@
 /// [RustPython's parser]: https://crates.io/crates/rustpython-parser
 mod string_types;
 
-use crate::nodes::text_position::{TextPositionSnapshot, TokenPosition};
 use once_cell::sync::Lazy;
 use regex::Regex;
 use std::cmp::Ordering;
@@ -69,7 +68,7 @@ use std::fmt::Formatter;
 use crate::tokenizer::{
     core::string_types::{FStringNode, StringQuoteChar, StringQuoteSize},
     operators::OPERATOR_RE,
-    text_position::TextPosition,
+    text_position::{TextPosition, TextPositionSnapshot},
     whitespace_parser::State as WhitespaceState,
 };
 
@@ -1037,17 +1036,14 @@ impl<'a> Debug for Token<'a> {
     }
 }
 
-impl<'a> From<Token<'a>> for TokenPosition<'a> {
-    fn from(t: Token<'a>) -> Self {
-        Self {
-            start_pos: t.start_pos,
-            end_pos: t.end_pos,
-            whitespace_after: t.whitespace_after,
-            whitespace_before: t.whitespace_before,
-            relative_indent: t.relative_indent,
-        }
+// Dummy Eq implementation. We never compare Tokens like this
+impl<'a> PartialEq for Token<'a> {
+    fn eq(&self, _other: &Self) -> bool {
+        true
     }
 }
+
+impl<'a> Eq for Token<'a> {}
 
 pub struct TokenIterator<'a> {
     previous_whitespace: Option<WhitespaceState<'a>>,
