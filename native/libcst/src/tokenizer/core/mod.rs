@@ -58,7 +58,7 @@
 /// [RustPython's parser]: https://crates.io/crates/rustpython-parser
 mod string_types;
 
-use libcst_nodes::text_position::{TextPositionSnapshot, TokenPosition};
+use crate::nodes::text_position::{TextPositionSnapshot, TokenPosition};
 use once_cell::sync::Lazy;
 use regex::Regex;
 use std::cmp::Ordering;
@@ -66,10 +66,12 @@ use std::convert::TryInto;
 use std::fmt::Debug;
 use std::fmt::Formatter;
 
-use crate::core::string_types::{FStringNode, StringQuoteChar, StringQuoteSize};
-use crate::operators::OPERATOR_RE;
-use crate::text_position::TextPosition;
-use crate::whitespace_parser::State as WhitespaceState;
+use crate::tokenizer::{
+    core::string_types::{FStringNode, StringQuoteChar, StringQuoteSize},
+    operators::OPERATOR_RE,
+    text_position::TextPosition,
+    whitespace_parser::State as WhitespaceState,
+};
 
 /// The maximum number of indentation levels at any given point in time. CPython's tokenizer.c caps
 /// this to avoid the complexity of allocating a dynamic array, but we're using a Vec, so it's not

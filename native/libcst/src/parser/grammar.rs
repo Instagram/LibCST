@@ -3,12 +3,12 @@
 // This source code is licensed under the MIT license found in the
 // LICENSE file in the root directory of this source tree.
 
-use libcst_nodes::*;
-use libcst_tokenize::whitespace_parser::{
+use crate::nodes::*;
+use crate::tokenizer::whitespace_parser::{
     parse_empty_lines, parse_empty_lines_from_end, parse_parenthesizable_whitespace,
     parse_simple_whitespace, parse_trailing_whitespace, Config, WhitespaceError,
 };
-use libcst_tokenize::{TokError, TokType, Token};
+use crate::tokenizer::{TokError, TokType, Token};
 use peg::str::LineCol;
 use peg::{parser, Parse, ParseElem, ParseLiteral, RuleResult};
 use std::mem::swap;

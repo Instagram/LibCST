@@ -5,11 +5,15 @@
 
 use std::cmp::{max, min};
 
-use libcst_tokenize::{whitespace_parser, TokConfig, TokenIterator};
+mod tokenizer;
 
-pub use libcst_nodes::*;
-use libcst_parser as grammar;
-use libcst_parser::{inflate::Inflate, ParserError, Result};
+use tokenizer::{whitespace_parser, TokConfig, TokenIterator};
+
+mod nodes;
+pub use nodes::*;
+
+mod parser;
+use parser::{inflate::Inflate, ParserError, Result};
 
 pub fn parse_module<'a>(mut module_text: &'a str) -> Result<'a, Module> {
     // Strip UTF-8 BOM
@@ -31,7 +35,7 @@ pub fn parse_module<'a>(mut module_text: &'a str) -> Result<'a, Module> {
 
     // eprintln!("{:#?}", result);
     let conf = whitespace_parser::Config::new(module_text);
-    let mut m = grammar::python::file(&result, &conf).map_err(ParserError::ParserError)?;
+    let mut m = parser::python::file(&result, &conf).map_err(ParserError::ParserError)?;
     m.inflate(&conf)?;
     Ok(m)
 }
@@ -92,7 +96,7 @@ pub fn prettify_error<'a>(
 #[cfg(test)]
 mod test {
     use super::*;
-    use libcst_tokenize::TokError;
+    use tokenizer::TokError;
 
     #[test]
     fn test_simple() {

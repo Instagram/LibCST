@@ -1,7 +1,7 @@
 use std::{cell::RefCell, collections::BTreeSet, rc::Rc};
 
-pub use libcst_nodes::text_position::WhitespacePosition as State;
-use libcst_nodes::{
+pub use crate::nodes::text_position::WhitespacePosition as State;
+use crate::nodes::{
     Comment, EmptyLine, Fakeness, Newline, ParenthesizableWhitespace, ParenthesizedWhitespace,
     SimpleWhitespace, TrailingWhitespace,
 };

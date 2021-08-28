@@ -9,7 +9,7 @@ mod operators;
 mod text_position;
 pub mod whitespace_parser;
 
-pub use crate::core::*;
+pub use self::core::*;
 
 #[cfg(test)]
 mod tests;

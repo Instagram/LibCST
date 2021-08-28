@@ -3,10 +3,12 @@
 // This source code is licensed under the MIT license found in the
 // LICENSE file in the root directory of this source tree.
 
-use crate::codegen::{Codegen, CodegenState};
-use crate::statement::Statement;
-use crate::text_position::TokenPosition;
-use crate::whitespace::EmptyLine;
+use crate::nodes::{
+    codegen::{Codegen, CodegenState},
+    statement::Statement,
+    text_position::TokenPosition,
+    whitespace::EmptyLine,
+};
 
 #[derive(Debug, Eq, PartialEq)]
 pub struct Module<'a> {

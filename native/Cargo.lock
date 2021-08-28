@@ -370,38 +370,10 @@ dependencies = [
  "difference",
  "indoc 1.0.3",
  "itertools 0.10.1",
- "libcst_nodes",
- "libcst_parser",
- "libcst_tokenize",
+ "once_cell",
  "paste 1.0.5",
- "peg 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "peg",
  "pyo3",
- "thiserror",
-]
-
-[[package]]
-name = "libcst_nodes"
-version = "0.1.0"
-
-[[package]]
-name = "libcst_parser"
-version = "0.1.0"
-dependencies = [
- "itertools 0.10.1",
- "libcst_nodes",
- "libcst_tokenize",
- "once_cell",
- "peg 0.7.0 (git+https://github.com/kevinmehall/rust-peg)",
- "regex",
- "thiserror",
-]
-
-[[package]]
-name = "libcst_tokenize"
-version = "0.1.0"
-dependencies = [
- "libcst_nodes",
- "once_cell",
  "regex",
  "thiserror",
 ]
@@ -523,31 +495,10 @@ dependencies = [
 [[package]]
 name = "peg"
 version = "0.7.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "07c0b841ea54f523f7aa556956fbd293bcbe06f2e67d2eb732b7278aaf1d166a"
-dependencies = [
- "peg-macros 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "peg-runtime 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
-name = "peg"
-version = "0.7.0"
 source = "git+https://github.com/kevinmehall/rust-peg#4b146b4b78a80c07e43d7ace2d97f65bfde279a8"
 dependencies = [
- "peg-macros 0.7.0 (git+https://github.com/kevinmehall/rust-peg)",
- "peg-runtime 0.7.0 (git+https://github.com/kevinmehall/rust-peg)",
-]
-
-[[package]]
-name = "peg-macros"
-version = "0.7.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b5aa52829b8decbef693af90202711348ab001456803ba2a98eb4ec8fb70844c"
-dependencies = [
- "peg-runtime 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "proc-macro2",
- "quote",
+ "peg-macros",
+ "peg-runtime",
 ]
 
 [[package]]
@@ -555,16 +506,10 @@ name = "peg-macros"
 version = "0.7.0"
 source = "git+https://github.com/kevinmehall/rust-peg#4b146b4b78a80c07e43d7ace2d97f65bfde279a8"
 dependencies = [
- "peg-runtime 0.7.0 (git+https://github.com/kevinmehall/rust-peg)",
+ "peg-runtime",
  "proc-macro2",
  "quote",
 ]
-
-[[package]]
-name = "peg-runtime"
-version = "0.7.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c719dcf55f09a3a7e764c6649ab594c18a177e3599c467983cdf644bfc0a4088"
 
 [[package]]
 name = "peg-runtime"

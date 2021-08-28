@@ -5,12 +5,12 @@
 
 mod char_width;
 
-use libcst_nodes::text_position::TextPositionSnapshot;
+use crate::nodes::text_position::TextPositionSnapshot;
 use once_cell::sync::Lazy;
 use regex::Regex;
 use std::fmt;
 
-use crate::debug_utils::EllipsisDebug;
+use crate::tokenizer::debug_utils::EllipsisDebug;
 use char_width::NewlineNormalizedCharWidths;
 
 static CR_OR_LF_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"[\r\n]").expect("regex"));

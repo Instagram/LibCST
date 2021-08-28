@@ -1,10 +1,10 @@
 use std::mem::swap;
 
-use libcst_nodes::{
+use crate::nodes::{
     ClassDef, CompoundStatement, Else, ExceptHandler, Finally, For, FunctionDef, If, IndentedBlock,
     Module, OrElse, SimpleStatementLine, Statement, Suite, Try, While, With, WithLeadingLines,
 };
-use libcst_tokenize::whitespace_parser::{
+use crate::tokenizer::whitespace_parser::{
     parse_empty_lines, parse_trailing_whitespace, Config, WhitespaceError,
 };
 
