@@ -1590,7 +1590,6 @@ fn _make_simple_statement<'a>(
         let whitespace_after = ParenthesizableWhitespace::SimpleWhitespace(
             parse_simple_whitespace(config, &mut semi.whitespace_after)?,
         );
-        dbg!(&body);
         body.push(statement.with_semicolon(Some(Semicolon {
             whitespace_before,
             whitespace_after,
