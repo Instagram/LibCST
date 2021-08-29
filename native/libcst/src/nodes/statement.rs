@@ -768,6 +768,9 @@ pub struct If<'a> {
 
     /// Signifies if this instance represents an ``elif`` or an ``if`` block.
     pub is_elif: bool,
+
+    pub(crate) if_tok: Token<'a>,
+    pub(crate) colon_tok: Token<'a>,
 }
 
 impl<'a> Codegen<'a> for If<'a> {
@@ -792,7 +795,16 @@ impl<'a> Codegen<'a> for If<'a> {
 impl<'a> Inflate<'a> for If<'a> {
     fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
         self.body.inflate(config)?;
-        self.orelse.inflate(config)
+        self.orelse.inflate(config)?;
+
+        self.leading_lines =
+            parse_empty_lines_from_end(config, &mut self.if_tok.whitespace_before)?;
+        self.whitespace_before_test =
+            parse_simple_whitespace(config, &mut self.if_tok.whitespace_after)?;
+        self.whitespace_after_test =
+            parse_simple_whitespace(config, &mut self.colon_tok.whitespace_before)?;
+
+        Ok(())
     }
 }
 
@@ -818,6 +830,9 @@ pub struct Else<'a> {
     pub leading_lines: Vec<EmptyLine<'a>>,
     /// The whitespace appearing after the ``else`` keyword but before the colon.
     pub whitespace_before_colon: SimpleWhitespace<'a>,
+
+    pub(crate) else_tok: Token<'a>,
+    pub(crate) colon_tok: Token<'a>,
 }
 
 impl<'a> Codegen<'a> for Else<'a> {
@@ -836,7 +851,14 @@ impl<'a> Codegen<'a> for Else<'a> {
 
 impl<'a> Inflate<'a> for Else<'a> {
     fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        self.body.inflate(config)
+        self.body.inflate(config)?;
+
+        self.leading_lines =
+            parse_empty_lines_from_end(config, &mut self.else_tok.whitespace_before)?;
+        self.whitespace_before_colon =
+            parse_simple_whitespace(config, &mut self.colon_tok.whitespace_before)?;
+
+        Ok(())
     }
 }
 

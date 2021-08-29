@@ -1045,29 +1045,24 @@ parser! {
             }
 
         rule if_stmt() -> If<'a>
-            = i:lit("if") a:named_expression() col:lit(":") b:block() elif:elif_stmt() {?
-                make_if(config, i, a, col, b, Some(OrElse::Elif(elif)), false)
-                    .map_err(|e| "if statement")
+            = i:lit("if") a:named_expression() col:lit(":") b:block() elif:elif_stmt() {
+                make_if(i, a, col, b, Some(OrElse::Elif(elif)), false)
             }
-            / i:lit("if") a:named_expression() col:lit(":") b:block() el:else_block()? {?
-                make_if(config, i, a, col, b, el.map(OrElse::Else), false)
-                    .map_err(|e| "if statement")
+            / i:lit("if") a:named_expression() col:lit(":") b:block() el:else_block()? {
+                make_if(i, a, col, b, el.map(OrElse::Else), false)
             }
 
         rule elif_stmt() -> If<'a>
-            = i:lit("elif") a:named_expression() col:lit(":") b:block() elif:elif_stmt() {?
-                make_if(config, i, a, col, b, Some(OrElse::Elif(elif)), true)
-                    .map_err(|e| "elif statement")
+            = i:lit("elif") a:named_expression() col:lit(":") b:block() elif:elif_stmt() {
+                make_if(i, a, col, b, Some(OrElse::Elif(elif)), true)
             }
-            / i:lit("elif") a:named_expression() col:lit(":") b:block() el:else_block()? {?
-                make_if(config, i, a, col, b, el.map(OrElse::Else), true)
-                    .map_err(|e| "elif statement")
+            / i:lit("elif") a:named_expression() col:lit(":") b:block() el:else_block()? {
+                make_if(i, a, col, b, el.map(OrElse::Else), true)
             }
 
         rule else_block() -> Else<'a>
-            = el:lit("else") col:lit(":") b:block() {?
-                make_else(config, el, col, b)
-                    .map_err(|e| "else block")
+            = el:lit("else") col:lit(":") b:block() {
+                make_else(el, col, b)
             }
 
         rule while_stmt() -> While<'a>
@@ -1657,41 +1652,34 @@ fn make_simple_statement_line<'a>(
 }
 
 fn make_if<'a>(
-    config: &Config<'a>,
-    mut keyword: Token<'a>,
+    if_tok: Token<'a>,
     cond: Expression<'a>,
-    mut colon: Token<'a>,
+    colon_tok: Token<'a>,
     block: Suite<'a>,
     orelse: Option<OrElse<'a>>,
     is_elif: bool,
-) -> Result<'a, If<'a>> {
-    let leading_lines = parse_empty_lines_from_end(config, &mut keyword.whitespace_before)?;
-    let whitespace_before_test = parse_simple_whitespace(config, &mut keyword.whitespace_after)?;
-    let whitespace_after_test = parse_simple_whitespace(config, &mut colon.whitespace_before)?;
-    Ok(If {
-        leading_lines,
-        whitespace_before_test,
+) -> If<'a> {
+    If {
+        leading_lines: Default::default(),
+        whitespace_before_test: Default::default(),
         test: cond,
-        whitespace_after_test,
+        whitespace_after_test: Default::default(),
         body: block,
         orelse: orelse.map(Box::new),
         is_elif,
-    })
+        if_tok,
+        colon_tok,
+    }
 }
 
-fn make_else<'a>(
-    config: &Config<'a>,
-    mut keyword: Token<'a>,
-    mut colon: Token<'a>,
-    block: Suite<'a>,
-) -> Result<'a, Else<'a>> {
-    let leading_lines = parse_empty_lines_from_end(config, &mut keyword.whitespace_before)?;
-    let whitespace_before_colon = parse_simple_whitespace(config, &mut colon.whitespace_before)?;
-    Ok(Else {
-        leading_lines,
-        whitespace_before_colon,
+fn make_else<'a>(else_tok: Token<'a>, colon_tok: Token<'a>, block: Suite<'a>) -> Else<'a> {
+    Else {
+        leading_lines: Default::default(),
+        whitespace_before_colon: Default::default(),
         body: block,
-    })
+        else_tok,
+        colon_tok,
+    }
 }
 
 struct StarEtc<'a>(Option<StarArg<'a>>, Vec<Param<'a>>, Option<Param<'a>>);
