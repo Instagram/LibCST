@@ -10,11 +10,13 @@ use super::{
 };
 use crate::{
     nodes::{
-        traits::{WithComma, WithLeadingLines},
+        traits::{Inflate, Result, WithComma, WithLeadingLines},
         Arg, AssignEqual, Asynchronous, AugOp, Element, ParenthesizedNode,
     },
-    tokenizer::Token,
-    Inflate,
+    tokenizer::{
+        whitespace_parser::{parse_empty_lines, parse_trailing_whitespace, Config},
+        Token,
+    },
 };
 use libcst_derive::Inflate;
 
@@ -154,6 +156,35 @@ impl<'a> Codegen<'a> for IndentedBlock<'a> {
     }
 }
 
+impl<'a> Inflate<'a> for IndentedBlock<'a> {
+    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
+        for stat in &mut self.body {
+            stat.inflate(config)?;
+        }
+        // We want to be able to only keep comments in the footer that are actually for
+        // this IndentedBlock. We do so by assuming that lines which are indented to the
+        // same level as the block itself are comments that go at the footer of the
+        // block. Comments that are indented to less than this indent are assumed to
+        // belong to the next line of code. We override the indent here because the
+        // dedent node's absolute indent is the resulting indentation after the dedent
+        // is performed. Its this way because the whitespace state for both the dedent's
+        // whitespace_after and the next BaseCompoundStatement's whitespace_before is
+        // shared. This allows us to partially parse here and parse the rest of the
+        // whitespace and comments on the next line, effectively making sure that
+        // comments are attached to the correct node.
+        let footer = parse_empty_lines(
+            config,
+            &mut self.dedent_tok.whitespace_after,
+            Some(self.indent_tok.whitespace_before.absolute_indent),
+        )?;
+        let header = parse_trailing_whitespace(config, &mut self.newline_tok.whitespace_before)?;
+        self.footer = footer;
+        self.header = header;
+        self.indent = self.indent_tok.relative_indent;
+        Ok(())
+    }
+}
+
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct SimpleStatementSuite<'a> {
     /// Sequence of small statements. All but the last statement are required to have
@@ -200,6 +231,13 @@ impl<'a> Codegen<'a> for SimpleStatementSuite<'a> {
     }
 }
 
+impl<'a> Inflate<'a> for SimpleStatementSuite<'a> {
+    fn inflate(&mut self, _config: &Config<'a>) -> Result<()> {
+        // TODO
+        Ok(())
+    }
+}
+
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct SimpleStatementLine<'a> {
     /// Sequence of small statements. All but the last statement are required to have
@@ -219,6 +257,12 @@ impl<'a> Codegen<'a> for SimpleStatementLine<'a> {
         }
         state.add_indent();
         _simple_statement_codegen(&self.body, &self.trailing_whitespace, state);
+    }
+}
+
+impl<'a> Inflate<'a> for SimpleStatementLine<'a> {
+    fn inflate(&mut self, _config: &Config<'a>) -> Result<()> {
+        Ok(())
     }
 }
 
@@ -617,6 +661,13 @@ impl<'a> Codegen<'a> for FunctionDef<'a> {
     }
 }
 
+impl<'a> Inflate<'a> for FunctionDef<'a> {
+    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
+        // TODO
+        self.body.inflate(config)
+    }
+}
+
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub struct Decorator<'a> {
     pub decorator: Expression<'a>,
@@ -681,6 +732,13 @@ impl<'a> Codegen<'a> for If<'a> {
     }
 }
 
+impl<'a> Inflate<'a> for If<'a> {
+    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
+        self.body.inflate(config)?;
+        self.orelse.inflate(config)
+    }
+}
+
 #[derive(Debug, PartialEq, Eq, Clone, Inflate)]
 pub enum OrElse<'a> {
     Elif(If<'a>),
@@ -716,6 +774,12 @@ impl<'a> Codegen<'a> for Else<'a> {
         self.whitespace_before_colon.codegen(state);
         state.add_token(":");
         self.body.codegen(state);
+    }
+}
+
+impl<'a> Inflate<'a> for Else<'a> {
+    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
+        self.body.inflate(config)
     }
 }
 
@@ -992,6 +1056,13 @@ impl<'a> Codegen<'a> for For<'a> {
     }
 }
 
+impl<'a> Inflate<'a> for For<'a> {
+    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
+        self.body.inflate(config)?;
+        self.orelse.inflate(config)
+    }
+}
+
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct While<'a> {
     pub test: Expression<'a>,
@@ -1018,6 +1089,13 @@ impl<'a> Codegen<'a> for While<'a> {
         if let Some(orelse) = &self.orelse {
             orelse.codegen(state);
         }
+    }
+}
+
+impl<'a> Inflate<'a> for While<'a> {
+    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
+        self.body.inflate(config)?;
+        self.orelse.inflate(config)
     }
 }
 
@@ -1080,6 +1158,12 @@ impl<'a> Codegen<'a> for ClassDef<'a> {
     }
 }
 
+impl<'a> Inflate<'a> for ClassDef<'a> {
+    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
+        self.body.inflate(config)
+    }
+}
+
 impl<'a> ClassDef<'a> {
     pub fn with_decorators(self, decorators: Vec<Decorator<'a>>) -> Self {
         Self { decorators, ..self }
@@ -1104,6 +1188,12 @@ impl<'a> Codegen<'a> for Finally<'a> {
         self.whitespace_before_colon.codegen(state);
         state.add_token(":");
         self.body.codegen(state);
+    }
+}
+
+impl<'a> Inflate<'a> for Finally<'a> {
+    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
+        self.body.inflate(config)
     }
 }
 
@@ -1138,6 +1228,12 @@ impl<'a> Codegen<'a> for ExceptHandler<'a> {
     }
 }
 
+impl<'a> Inflate<'a> for ExceptHandler<'a> {
+    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
+        self.body.inflate(config)
+    }
+}
+
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Try<'a> {
     pub body: Suite<'a>,
@@ -1167,6 +1263,17 @@ impl<'a> Codegen<'a> for Try<'a> {
         if let Some(f) = &self.finalbody {
             f.codegen(state);
         }
+    }
+}
+
+impl<'a> Inflate<'a> for Try<'a> {
+    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
+        self.body.inflate(config)?;
+        for h in &mut self.handlers {
+            h.inflate(config)?;
+        }
+        self.orelse.inflate(config)?;
+        self.finalbody.inflate(config)
     }
 }
 
@@ -1256,6 +1363,12 @@ impl<'a> Codegen<'a> for With<'a> {
         self.whitespace_before_colon.codegen(state);
         state.add_token(":");
         self.body.codegen(state);
+    }
+}
+
+impl<'a> Inflate<'a> for With<'a> {
+    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
+        self.body.inflate(config)
     }
 }
 

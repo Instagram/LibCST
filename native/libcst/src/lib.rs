@@ -13,7 +13,7 @@ mod nodes;
 pub use nodes::*;
 
 mod parser;
-use parser::{inflate::Inflate, ParserError, Result};
+use parser::{ParserError, Result};
 
 pub fn parse_module<'a>(mut module_text: &'a str) -> Result<'a, Module> {
     // Strip UTF-8 BOM

@@ -3,12 +3,20 @@
 // This source code is licensed under the MIT license found in the
 // LICENSE file in the root directory of this source tree.
 
-use crate::nodes::{
-    codegen::{Codegen, CodegenState},
-    statement::Statement,
-    whitespace::EmptyLine,
-};
+use std::mem::swap;
+
+use crate::tokenizer::whitespace_parser::parse_empty_lines;
 use crate::tokenizer::Token;
+use crate::{
+    nodes::{
+        codegen::{Codegen, CodegenState},
+        statement::Statement,
+        whitespace::EmptyLine,
+    },
+    tokenizer::whitespace_parser::Config,
+};
+
+use super::traits::{Inflate, Result, WithLeadingLines};
 
 #[derive(Debug, Eq, PartialEq)]
 pub struct Module<'a> {
@@ -30,5 +38,41 @@ impl<'a> Codegen<'a> for Module<'a> {
         for nl in &self.footer {
             nl.codegen(state);
         }
+    }
+}
+
+impl<'a> Inflate<'a> for Module<'a> {
+    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
+        for stat in &mut self.body {
+            stat.inflate(config)?;
+        }
+        let mut footer = parse_empty_lines(config, &mut self.eof_tok.whitespace_before, Some(""))?;
+        let mut header = vec![];
+        if let Some(stmt) = self.body.first_mut() {
+            swap(&mut stmt.leading_lines(), &mut &header);
+            let mut last_indented = None;
+            for (num, line) in footer.iter().enumerate() {
+                if !line.whitespace.0.is_empty() {
+                    last_indented = Some(num);
+                } else if line.comment.is_some() {
+                    // This is a non-indented comment. Everything from here should belong in the
+                    // footer.
+                    break;
+                }
+            }
+            if let Some(num) = last_indented {
+                if num + 1 == footer.len() {
+                    footer = vec![];
+                } else {
+                    let (_, rest) = footer.split_at(num + 1);
+                    footer = rest.to_vec();
+                }
+            }
+        } else {
+            swap(&mut header, &mut footer);
+        }
+        self.footer = footer;
+        self.header = header;
+        Ok(())
     }
 }
