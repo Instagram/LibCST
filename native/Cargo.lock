@@ -370,12 +370,21 @@ dependencies = [
  "difference",
  "indoc 1.0.3",
  "itertools 0.10.1",
+ "libcst_derive",
  "once_cell",
  "paste 1.0.5",
  "peg",
  "pyo3",
  "regex",
  "thiserror",
+]
+
+[[package]]
+name = "libcst_derive"
+version = "0.1.0"
+dependencies = [
+ "quote",
+ "syn",
 ]
 
 [[package]]

@@ -14,10 +14,12 @@ use crate::{
         Arg, AssignEqual, Asynchronous, AugOp, Element, ParenthesizedNode,
     },
     tokenizer::Token,
+    Inflate,
 };
+use libcst_derive::Inflate;
 
 #[allow(clippy::large_enum_variant)]
-#[derive(Debug, Eq, PartialEq, Clone)]
+#[derive(Debug, Eq, PartialEq, Clone, Inflate)]
 pub enum Statement<'a> {
     Simple(SimpleStatementLine<'a>),
     Compound(CompoundStatement<'a>),
@@ -41,7 +43,7 @@ impl<'a> Codegen<'a> for Statement<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, Inflate)]
 pub enum CompoundStatement<'a> {
     FunctionDef(FunctionDef<'a>),
     If(If<'a>),
@@ -80,7 +82,7 @@ impl<'a> WithLeadingLines<'a> for CompoundStatement<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, Inflate)]
 pub enum Suite<'a> {
     IndentedBlock(IndentedBlock<'a>),
     SimpleStatementSuite(SimpleStatementSuite<'a>),
@@ -679,7 +681,7 @@ impl<'a> Codegen<'a> for If<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, Inflate)]
 pub enum OrElse<'a> {
     Elif(If<'a>),
     Else(Else<'a>),

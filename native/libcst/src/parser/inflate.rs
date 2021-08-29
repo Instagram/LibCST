@@ -1,12 +1,13 @@
 use std::mem::swap;
 
 use crate::nodes::{
-    ClassDef, CompoundStatement, Else, ExceptHandler, Finally, For, FunctionDef, If, IndentedBlock,
-    Module, OrElse, SimpleStatementLine, Statement, Suite, Try, While, With, WithLeadingLines,
+    ClassDef, Else, ExceptHandler, Finally, For, FunctionDef, If, IndentedBlock, Module,
+    SimpleStatementLine, Try, While, With, WithLeadingLines,
 };
 use crate::tokenizer::whitespace_parser::{
     parse_empty_lines, parse_trailing_whitespace, Config, WhitespaceError,
 };
+use crate::SimpleStatementSuite;
 
 pub type Result<T> = std::result::Result<T, WhitespaceError>;
 
@@ -79,32 +80,9 @@ impl<'a> Inflate<'a> for Module<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for Statement<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        match self {
-            Self::Compound(s) => s.inflate(config),
-            Self::Simple(s) => s.inflate(config),
-        }
-    }
-}
-
 impl<'a> Inflate<'a> for SimpleStatementLine<'a> {
     fn inflate(&mut self, _config: &Config<'a>) -> Result<()> {
         Ok(())
-    }
-}
-
-impl<'a> Inflate<'a> for CompoundStatement<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        match self {
-            Self::FunctionDef(f) => f.inflate(config),
-            Self::If(f) => f.inflate(config),
-            Self::For(f) => f.inflate(config),
-            Self::While(f) => f.inflate(config),
-            Self::ClassDef(f) => f.inflate(config),
-            Self::Try(f) => f.inflate(config),
-            Self::With(f) => f.inflate(config),
-        }
     }
 }
 
@@ -165,24 +143,6 @@ impl<'a> Inflate<'a> for ExceptHandler<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for Suite<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        match self {
-            Self::IndentedBlock(b) => b.inflate(config),
-            _ => Ok(()),
-        }
-    }
-}
-
-impl<'a> Inflate<'a> for OrElse<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        match self {
-            Self::Elif(e) => e.inflate(config),
-            Self::Else(e) => e.inflate(config),
-        }
-    }
-}
-
 impl<'a> Inflate<'a> for Else<'a> {
     fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
         self.body.inflate(config)
@@ -192,6 +152,13 @@ impl<'a> Inflate<'a> for Else<'a> {
 impl<'a> Inflate<'a> for Finally<'a> {
     fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
         self.body.inflate(config)
+    }
+}
+
+impl<'a> Inflate<'a> for SimpleStatementSuite<'a> {
+    fn inflate(&mut self, _config: &Config<'a>) -> Result<()> {
+        // TODO
+        Ok(())
     }
 }
 
