@@ -109,124 +109,12 @@ mod test {
 
     #[test]
     fn test_bare_minimum_funcdef() {
-        let m = parse_module("def f(): ...").expect("parse error");
-        assert_eq!(
-            m,
-            Module {
-                body: vec![Statement::Compound(CompoundStatement::FunctionDef(
-                    FunctionDef {
-                        name: Name {
-                            value: "f",
-                            ..Default::default()
-                        },
-                        body: Suite::SimpleStatementSuite(SimpleStatementSuite {
-                            body: vec![SmallStatement::Expr {
-                                value: Expression::Ellipsis {
-                                    lpar: vec![],
-                                    rpar: vec![]
-                                },
-                                semicolon: None,
-                            }],
-                            trailing_whitespace: TrailingWhitespace {
-                                newline: Newline(None, Fakeness::Fake),
-                                ..Default::default()
-                            },
-                            ..Default::default()
-                        }),
-                        asynchronous: None,
-                        returns: None,
-                        params: Default::default(),
-                        decorators: vec![],
-                        leading_lines: vec![],
-                        lines_after_decorators: vec![],
-                        whitespace_after_def: SimpleWhitespace(" "),
-                        whitespace_after_name: Default::default(),
-                        whitespace_before_colon: Default::default(),
-                        whitespace_before_params: ParenthesizableWhitespace::SimpleWhitespace(
-                            Default::default()
-                        ),
-                    }
-                ))],
-                footer: vec![],
-                header: vec![],
-                eof_tok: m.eof_tok.clone(),
-            }
-        );
+        parse_module("def f(): ...").expect("parse error");
     }
 
     #[test]
     fn test_funcdef_params() {
-        let m = parse_module("def g(a, b): ...").expect("parse error");
-        assert_eq!(
-            m,
-            Module {
-                body: vec![Statement::Compound(CompoundStatement::FunctionDef(
-                    FunctionDef {
-                        name: Name {
-                            value: "g",
-                            ..Default::default()
-                        },
-                        body: Suite::SimpleStatementSuite(SimpleStatementSuite {
-                            body: vec![SmallStatement::Expr {
-                                value: Expression::Ellipsis {
-                                    lpar: vec![],
-                                    rpar: vec![]
-                                },
-                                semicolon: None,
-                            }],
-                            trailing_whitespace: TrailingWhitespace {
-                                newline: Newline(None, Fakeness::Fake),
-                                ..Default::default()
-                            },
-                            ..Default::default()
-                        }),
-                        asynchronous: None,
-                        returns: None,
-                        params: Parameters {
-                            params: vec![
-                                Param {
-                                    name: Name {
-                                        value: "a",
-                                        ..Default::default()
-                                    },
-                                    comma: Some(Comma {
-                                        whitespace_after:
-                                            ParenthesizableWhitespace::SimpleWhitespace(
-                                                SimpleWhitespace(" ")
-                                            ),
-                                        whitespace_before:
-                                            ParenthesizableWhitespace::SimpleWhitespace(
-                                                SimpleWhitespace("")
-                                            ),
-                                    }),
-                                    ..Default::default()
-                                },
-                                Param {
-                                    name: Name {
-                                        value: "b",
-                                        ..Default::default()
-                                    },
-                                    ..Default::default()
-                                }
-                            ],
-                            ..Default::default()
-                        },
-                        decorators: Default::default(),
-                        leading_lines: vec![],
-                        lines_after_decorators: vec![],
-                        whitespace_after_def: SimpleWhitespace(" "),
-                        whitespace_after_name: Default::default(),
-                        whitespace_before_colon: Default::default(),
-                        whitespace_before_params: ParenthesizableWhitespace::SimpleWhitespace(
-                            Default::default()
-                        ),
-                    }
-                ))],
-                footer: vec![],
-                header: vec![],
-                eof_tok: m.eof_tok.clone(),
-            }
-        );
+        parse_module("def g(a, b): ...").expect("parse error");
     }
 
     #[test]

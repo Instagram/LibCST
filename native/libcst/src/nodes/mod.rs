@@ -37,3 +37,5 @@ pub use codegen::{Codegen, CodegenState};
 
 mod traits;
 pub use traits::{Inflate, ParenthesizedNode, WithComma, WithLeadingLines};
+
+pub(crate) mod inflate_helpers;

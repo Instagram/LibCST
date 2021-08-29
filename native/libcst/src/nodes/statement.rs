@@ -3,10 +3,13 @@
 // This source code is licensed under the MIT license found in the
 // LICENSE file in the root directory of this source tree.
 
+use std::mem::swap;
+
 use super::{
-    Attribute, Codegen, CodegenState, Comma, Dot, EmptyLine, Expression, From, ImportStar,
-    LeftParen, List, Name, NameOrAttribute, Parameters, ParenthesizableWhitespace, RightParen,
-    Semicolon, SimpleWhitespace, StarredElement, Subscript, TrailingWhitespace, Tuple,
+    inflate_helpers::adjust_parameters_trailing_whitespace, Attribute, Codegen, CodegenState,
+    Comma, Dot, EmptyLine, Expression, From, ImportStar, LeftParen, List, Name, NameOrAttribute,
+    Parameters, ParenthesizableWhitespace, RightParen, Semicolon, SimpleWhitespace, StarredElement,
+    Subscript, TrailingWhitespace, Tuple,
 };
 use crate::{
     nodes::{
@@ -14,7 +17,10 @@ use crate::{
         Arg, AssignEqual, Asynchronous, AugOp, Element, ParenthesizedNode,
     },
     tokenizer::{
-        whitespace_parser::{parse_empty_lines, parse_trailing_whitespace, Config},
+        whitespace_parser::{
+            parse_empty_lines, parse_empty_lines_from_end, parse_parenthesizable_whitespace,
+            parse_simple_whitespace, parse_trailing_whitespace, Config,
+        },
         Token,
     },
 };
@@ -607,22 +613,17 @@ pub struct FunctionDef<'a> {
     pub whitespace_after_name: SimpleWhitespace<'a>,
     pub whitespace_before_params: ParenthesizableWhitespace<'a>,
     pub whitespace_before_colon: SimpleWhitespace<'a>,
+
+    pub(crate) async_tok: Option<Token<'a>>,
+    pub(crate) def_tok: Token<'a>,
+    pub(crate) open_paren_tok: Token<'a>,
+    pub(crate) close_paren_tok: Token<'a>,
+    pub(crate) colon_tok: Token<'a>,
 }
 
 impl<'a> FunctionDef<'a> {
-    pub fn with_decorators(self, mut decs: Vec<Decorator<'a>>) -> Self {
-        let mut lines_before_decorators = vec![];
-        let lines_after_decorators = self.leading_lines;
-
-        if let Some(first_dec) = decs.first_mut() {
-            std::mem::swap(&mut first_dec.leading_lines, &mut lines_before_decorators);
-        }
-        Self {
-            decorators: decs,
-            leading_lines: lines_before_decorators,
-            lines_after_decorators,
-            ..self
-        }
+    pub fn with_decorators(self, decorators: Vec<Decorator<'a>>) -> Self {
+        Self { decorators, ..self }
     }
 }
 
@@ -663,8 +664,50 @@ impl<'a> Codegen<'a> for FunctionDef<'a> {
 
 impl<'a> Inflate<'a> for FunctionDef<'a> {
     fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        // TODO
-        self.body.inflate(config)
+        for dec in &mut self.decorators {
+            dec.inflate(config)?;
+        }
+        self.body.inflate(config)?;
+
+        let (asynchronous, leading_lines) = if let Some(asy) = self.async_tok.as_mut() {
+            let whitespace_after =
+                parse_parenthesizable_whitespace(config, &mut asy.whitespace_after)?;
+            (
+                Some(Asynchronous { whitespace_after }),
+                Some(parse_empty_lines_from_end(
+                    config,
+                    &mut asy.whitespace_before,
+                )?),
+            )
+        } else {
+            (None, None)
+        };
+
+        self.asynchronous = asynchronous;
+
+        let leading_lines = if let Some(ll) = leading_lines {
+            ll
+        } else {
+            parse_empty_lines_from_end(config, &mut self.def_tok.whitespace_before)?
+        };
+
+        self.leading_lines = leading_lines;
+        if let Some(dec) = self.decorators.first_mut() {
+            swap(&mut self.lines_after_decorators, &mut self.leading_lines);
+            swap(&mut dec.leading_lines, &mut self.leading_lines);
+        }
+
+        adjust_parameters_trailing_whitespace(config, &mut self.params, &mut self.close_paren_tok)?;
+
+        self.whitespace_after_def =
+            parse_simple_whitespace(config, &mut self.def_tok.whitespace_after)?;
+        self.whitespace_after_name =
+            parse_simple_whitespace(config, &mut self.open_paren_tok.whitespace_before)?;
+        self.whitespace_before_colon =
+            parse_simple_whitespace(config, &mut self.colon_tok.whitespace_before)?;
+        self.whitespace_before_params =
+            parse_parenthesizable_whitespace(config, &mut self.open_paren_tok.whitespace_after)?;
+        Ok(())
     }
 }
 
@@ -674,6 +717,9 @@ pub struct Decorator<'a> {
     pub leading_lines: Vec<EmptyLine<'a>>,
     pub whitespace_after_at: SimpleWhitespace<'a>,
     pub trailing_whitespace: TrailingWhitespace<'a>,
+
+    pub(crate) at_tok: Token<'a>,
+    pub(crate) newline_tok: Token<'a>,
 }
 
 impl<'a> Codegen<'a> for Decorator<'a> {
@@ -686,6 +732,17 @@ impl<'a> Codegen<'a> for Decorator<'a> {
         self.whitespace_after_at.codegen(state);
         self.decorator.codegen(state);
         self.trailing_whitespace.codegen(state);
+    }
+}
+
+impl<'a> Inflate<'a> for Decorator<'a> {
+    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
+        self.leading_lines = parse_empty_lines(config, &mut self.at_tok.whitespace_before, None)?;
+        self.whitespace_after_at =
+            parse_simple_whitespace(config, &mut self.at_tok.whitespace_after)?;
+        self.trailing_whitespace =
+            parse_trailing_whitespace(config, &mut self.newline_tok.whitespace_before)?;
+        Ok(())
     }
 }
 

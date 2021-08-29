@@ -3,10 +3,11 @@
 // This source code is licensed under the MIT license found in the
 // LICENSE file in the root directory of this source tree.
 
+use crate::nodes::inflate_helpers::adjust_parameters_trailing_whitespace;
 use crate::nodes::*;
 use crate::tokenizer::whitespace_parser::{
-    parse_empty_lines, parse_empty_lines_from_end, parse_parenthesizable_whitespace,
-    parse_simple_whitespace, parse_trailing_whitespace, Config, WhitespaceError,
+    parse_empty_lines_from_end, parse_parenthesizable_whitespace, parse_simple_whitespace,
+    parse_trailing_whitespace, Config, WhitespaceError,
 };
 use crate::tokenizer::{TokError, TokType, Token};
 use peg::str::LineCol;
@@ -926,9 +927,8 @@ parser! {
             / function_def_raw()
 
         rule decorators() -> Vec<Decorator<'a>>
-            = (at:lit("@") e:named_expression() nl:tok(NL, "NEWLINE") {?
-                make_decorator(config, at, e, nl)
-                    .map_err(|_| "decorator")
+            = (at:lit("@") e:named_expression() nl:tok(NL, "NEWLINE") {
+                make_decorator(at, e, nl)
                 } )+
 
         rule _returns() -> Annotation<'a>
@@ -938,14 +938,12 @@ parser! {
 
         rule function_def_raw() -> FunctionDef<'a>
             = def:lit("def") n:name() op:lit("(") params:params()?
-                cp:lit(")") ty:_returns()? c:lit(":") b:block() {?
-                    make_function_def(config, None, def, n, op, params, cp, ty, c, b)
-                     .map_err(|e| "function def" )
+                cp:lit(")") ty:_returns()? c:lit(":") b:block() {
+                    make_function_def(None, def, n, op, params, cp, ty, c, b)
             }
             / asy:tok(Async, "ASYNC") def:lit("def") n:name() op:lit("(") params:params()?
-                cp:lit(")") ty:_returns()? c:lit(":") b:block() {?
-                    make_function_def(config, Some(asy), def, n, op, params, cp, ty, c, b)
-                        .map_err(|e| "function def" )
+                cp:lit(")") ty:_returns()? c:lit(":") b:block() {
+                    make_function_def(Some(asy), def, n, op, params, cp, ty, c, b)
             }
 
         rule params() -> Parameters<'a>
@@ -1289,71 +1287,53 @@ parser! {
 
 #[allow(clippy::too_many_arguments)]
 fn make_function_def<'a>(
-    config: &Config<'a>,
-    asy: Option<Token<'a>>,
-    mut def: Token<'a>,
+    async_tok: Option<Token<'a>>,
+    def_tok: Token<'a>,
     name: Name<'a>,
-    mut open_paren: Token<'a>,
-    mut params: Option<Parameters<'a>>,
-    close_paren: Token<'a>,
+    open_paren_tok: Token<'a>,
+    params: Option<Parameters<'a>>,
+    close_paren_tok: Token<'a>,
     returns: Option<Annotation<'a>>,
-    mut colon: Token<'a>,
+    colon_tok: Token<'a>,
     body: Suite<'a>,
-) -> Result<'a, FunctionDef<'a>> {
-    let (asynchronous, leading_lines) = if let Some(mut asy) = asy {
-        let whitespace_after = parse_parenthesizable_whitespace(config, &mut asy.whitespace_after)?;
-        (
-            Some(Asynchronous { whitespace_after }),
-            Some(parse_empty_lines_from_end(
-                config,
-                &mut asy.whitespace_before,
-            )?),
-        )
-    } else {
-        (None, None)
-    };
-
-    let leading_lines = if let Some(ll) = leading_lines {
-        ll
-    } else {
-        parse_empty_lines_from_end(config, &mut def.whitespace_before)?
-    };
-
-    if let Some(parameters) = params.as_mut() {
-        adjust_parameters_trailing_whitespace(config, parameters, close_paren)?;
-    }
-
-    Ok(FunctionDef {
+) -> FunctionDef<'a> {
+    let asynchronous = async_tok.as_ref().map(|_| Asynchronous {
+        whitespace_after: Default::default(),
+    });
+    FunctionDef {
         name,
         params: params.unwrap_or_default(),
         body,
         decorators: Default::default(),
         returns,
         asynchronous,
-        leading_lines,
+        leading_lines: Default::default(),
         lines_after_decorators: vec![],
-        whitespace_after_def: parse_simple_whitespace(config, &mut def.whitespace_after)?,
-        whitespace_after_name: parse_simple_whitespace(config, &mut open_paren.whitespace_before)?,
-        whitespace_before_colon: parse_simple_whitespace(config, &mut colon.whitespace_before)?,
-        whitespace_before_params: parse_parenthesizable_whitespace(
-            config,
-            &mut open_paren.whitespace_after,
-        )?,
-    })
+        whitespace_after_def: Default::default(),
+        whitespace_after_name: Default::default(),
+        whitespace_before_colon: Default::default(),
+        whitespace_before_params: Default::default(),
+        async_tok,
+        def_tok,
+        open_paren_tok,
+        close_paren_tok,
+        colon_tok,
+    }
 }
 
 fn make_decorator<'a>(
-    config: &Config<'a>,
-    mut at: Token<'a>,
+    at_tok: Token<'a>,
     name: Expression<'a>,
-    mut newline: Token<'a>,
-) -> Result<'a, Decorator<'a>> {
-    Ok(Decorator {
+    newline_tok: Token<'a>,
+) -> Decorator<'a> {
+    Decorator {
         decorator: name,
-        leading_lines: parse_empty_lines(config, &mut at.whitespace_before, None)?,
-        whitespace_after_at: parse_simple_whitespace(config, &mut at.whitespace_after)?,
-        trailing_whitespace: parse_trailing_whitespace(config, &mut newline.whitespace_before)?,
-    })
+        leading_lines: Default::default(),
+        whitespace_after_at: Default::default(),
+        trailing_whitespace: Default::default(),
+        newline_tok,
+        at_tok,
+    }
 }
 
 fn make_comparison<'a>(
@@ -1715,32 +1695,6 @@ fn make_else<'a>(
 }
 
 struct StarEtc<'a>(Option<StarArg<'a>>, Vec<Param<'a>>, Option<Param<'a>>);
-
-fn adjust_parameters_trailing_whitespace<'a>(
-    config: &Config<'a>,
-    parameters: &mut Parameters<'a>,
-    mut next_tok: Token<'a>,
-) -> Result<'a, Token<'a>> {
-    let mut do_adjust = |param: &mut Param<'a>| -> Result<'a, ()> {
-        let whitespace_after =
-            parse_parenthesizable_whitespace(config, &mut next_tok.whitespace_before)?;
-        if param.comma.is_none() {
-            param.whitespace_after_param = whitespace_after;
-        }
-        Ok(())
-    };
-
-    if let Some(param) = &mut parameters.star_kwarg {
-        do_adjust(param)?;
-    } else if let Some(param) = parameters.kwonly_params.last_mut() {
-        do_adjust(param)?;
-    } else if let Some(StarArg::Param(param)) = parameters.star_arg.as_mut() {
-        do_adjust(param)?;
-    } else if let Some(param) = parameters.params.last_mut() {
-        do_adjust(param)?;
-    }
-    Ok(next_tok)
-}
 
 fn make_parameters<'a>(
     _config: &Config<'a>,
@@ -2790,7 +2744,7 @@ fn make_lambda<'a>(
     config: &Config<'a>,
     mut kw: Token<'a>,
     mut params: Parameters<'a>,
-    colon_tok: Token<'a>,
+    mut colon_tok: Token<'a>,
     expr: Expression<'a>,
 ) -> Result<'a, Lambda<'a>> {
     let whitespace_after_lambda = if params.is_empty() {
@@ -2801,7 +2755,7 @@ fn make_lambda<'a>(
             &mut kw.whitespace_after,
         )?)
     };
-    let colon_tok = adjust_parameters_trailing_whitespace(config, &mut params, colon_tok)?;
+    adjust_parameters_trailing_whitespace(config, &mut params, &mut colon_tok)?;
     let colon = make_colon(config, colon_tok)?;
     Ok(Lambda {
         params: Box::new(params),
