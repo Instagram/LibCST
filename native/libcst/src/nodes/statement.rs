@@ -1107,6 +1107,11 @@ pub struct For<'a> {
     pub whitespace_before_in: SimpleWhitespace<'a>,
     pub whitespace_after_in: SimpleWhitespace<'a>,
     pub whitespace_before_colon: SimpleWhitespace<'a>,
+
+    pub(crate) async_tok: Option<Token<'a>>,
+    pub(crate) for_tok: Token<'a>,
+    pub(crate) in_tok: Token<'a>,
+    pub(crate) colon_tok: Token<'a>,
 }
 
 impl<'a> Codegen<'a> for For<'a> {
@@ -1138,7 +1143,38 @@ impl<'a> Codegen<'a> for For<'a> {
 impl<'a> Inflate<'a> for For<'a> {
     fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
         self.body.inflate(config)?;
-        self.orelse.inflate(config)
+        self.orelse.inflate(config)?;
+
+        let (asynchronous, leading_lines) = if let Some(asy) = self.async_tok.as_mut() {
+            let whitespace_after =
+                parse_parenthesizable_whitespace(config, &mut asy.whitespace_after)?;
+            (
+                Some(Asynchronous { whitespace_after }),
+                Some(parse_empty_lines_from_end(
+                    config,
+                    &mut asy.whitespace_before,
+                )?),
+            )
+        } else {
+            (None, None)
+        };
+        self.asynchronous = asynchronous;
+        self.whitespace_after_for =
+            parse_simple_whitespace(config, &mut self.for_tok.whitespace_after)?;
+        self.whitespace_before_in =
+            parse_simple_whitespace(config, &mut self.in_tok.whitespace_before)?;
+        self.whitespace_after_in =
+            parse_simple_whitespace(config, &mut self.in_tok.whitespace_after)?;
+        self.whitespace_before_colon =
+            parse_simple_whitespace(config, &mut self.colon_tok.whitespace_before)?;
+
+        self.leading_lines = if let Some(ll) = leading_lines {
+            ll
+        } else {
+            parse_empty_lines_from_end(config, &mut self.for_tok.whitespace_before)?
+        };
+
+        Ok(())
     }
 }
 
@@ -1150,6 +1186,9 @@ pub struct While<'a> {
     pub leading_lines: Vec<EmptyLine<'a>>,
     pub whitespace_after_while: SimpleWhitespace<'a>,
     pub whitespace_before_colon: SimpleWhitespace<'a>,
+
+    pub(crate) while_tok: Token<'a>,
+    pub(crate) colon_tok: Token<'a>,
 }
 
 impl<'a> Codegen<'a> for While<'a> {
@@ -1174,7 +1213,15 @@ impl<'a> Codegen<'a> for While<'a> {
 impl<'a> Inflate<'a> for While<'a> {
     fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
         self.body.inflate(config)?;
-        self.orelse.inflate(config)
+        self.orelse.inflate(config)?;
+        self.whitespace_after_while =
+            parse_simple_whitespace(config, &mut self.while_tok.whitespace_after)?;
+        self.whitespace_before_colon =
+            parse_simple_whitespace(config, &mut self.colon_tok.whitespace_before)?;
+        self.leading_lines =
+            parse_empty_lines_from_end(config, &mut self.while_tok.whitespace_before)?;
+
+        Ok(())
     }
 }
 
@@ -1192,6 +1239,10 @@ pub struct ClassDef<'a> {
     pub whitespace_after_class: SimpleWhitespace<'a>,
     pub whitespace_after_name: SimpleWhitespace<'a>,
     pub whitespace_before_colon: SimpleWhitespace<'a>,
+
+    pub(crate) class_tok: Token<'a>,
+    pub(crate) parens_tok: Option<(Token<'a>, Token<'a>)>,
+    pub(crate) colon_tok: Token<'a>,
 }
 
 impl<'a> Codegen<'a> for ClassDef<'a> {
@@ -1239,7 +1290,47 @@ impl<'a> Codegen<'a> for ClassDef<'a> {
 
 impl<'a> Inflate<'a> for ClassDef<'a> {
     fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        self.body.inflate(config)
+        self.body.inflate(config)?;
+
+        self.leading_lines =
+            parse_empty_lines_from_end(config, &mut self.class_tok.whitespace_before)?;
+        self.whitespace_after_class =
+            parse_simple_whitespace(config, &mut self.class_tok.whitespace_after)?;
+        self.whitespace_before_colon =
+            parse_simple_whitespace(config, &mut self.colon_tok.whitespace_before)?;
+
+        if let Some(dec) = self.decorators.first_mut() {
+            swap(&mut self.lines_after_decorators, &mut self.leading_lines);
+            swap(&mut dec.leading_lines, &mut self.leading_lines);
+        }
+
+        if let (Some((lpar_tok, _)), Some(lpar), Some(rpar)) = (
+            self.parens_tok.as_mut(),
+            self.lpar.as_mut(),
+            self.rpar.as_mut(),
+        ) {
+            self.whitespace_after_name =
+                parse_simple_whitespace(config, &mut lpar_tok.whitespace_before)?;
+            lpar.inflate(config)?;
+            rpar.inflate(config)?;
+
+            let has_trailing_comma = |args: &Vec<Arg>| {
+                args.last()
+                    .as_ref()
+                    .map(|arg| arg.comma.is_some())
+                    .unwrap_or(false)
+            };
+
+            // TODO: this should go away when Tokens are stored as references
+            if (self.bases.is_empty() && self.keywords.is_empty())
+                || has_trailing_comma(&self.keywords)
+                || (self.keywords.is_empty() && has_trailing_comma(&self.bases))
+            {
+                rpar.whitespace_before = Default::default();
+            }
+        }
+
+        Ok(())
     }
 }
 
@@ -1254,6 +1345,9 @@ pub struct Finally<'a> {
     pub body: Suite<'a>,
     pub leading_lines: Vec<EmptyLine<'a>>,
     pub whitespace_before_colon: SimpleWhitespace<'a>,
+
+    pub(crate) finally_tok: Token<'a>,
+    pub(crate) colon_tok: Token<'a>,
 }
 
 impl<'a> Codegen<'a> for Finally<'a> {
@@ -1272,7 +1366,12 @@ impl<'a> Codegen<'a> for Finally<'a> {
 
 impl<'a> Inflate<'a> for Finally<'a> {
     fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        self.body.inflate(config)
+        self.leading_lines =
+            parse_empty_lines_from_end(config, &mut self.finally_tok.whitespace_before)?;
+        self.whitespace_before_colon =
+            parse_simple_whitespace(config, &mut self.colon_tok.whitespace_before)?;
+        self.body.inflate(config)?;
+        Ok(())
     }
 }
 
@@ -1284,6 +1383,10 @@ pub struct ExceptHandler<'a> {
     pub leading_lines: Vec<EmptyLine<'a>>,
     pub whitespace_after_except: SimpleWhitespace<'a>,
     pub whitespace_before_colon: SimpleWhitespace<'a>,
+
+    pub(crate) except_tok: Token<'a>,
+    pub(crate) as_tok: Option<Token<'a>>,
+    pub(crate) colon_tok: Token<'a>,
 }
 
 impl<'a> Codegen<'a> for ExceptHandler<'a> {
@@ -1309,7 +1412,27 @@ impl<'a> Codegen<'a> for ExceptHandler<'a> {
 
 impl<'a> Inflate<'a> for ExceptHandler<'a> {
     fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        self.body.inflate(config)
+        self.leading_lines =
+            parse_empty_lines_from_end(config, &mut self.except_tok.whitespace_before)?;
+        self.whitespace_after_except =
+            parse_simple_whitespace(config, &mut self.except_tok.whitespace_after)?;
+
+        // TODO: this is self.name.inflate()?;
+        if let (Some(as_tok), Some(name)) = (self.as_tok.as_mut(), self.name.as_mut()) {
+            name.whitespace_before_as = ParenthesizableWhitespace::SimpleWhitespace(
+                parse_simple_whitespace(config, &mut as_tok.whitespace_before)?,
+            );
+            name.whitespace_after_as = ParenthesizableWhitespace::SimpleWhitespace(
+                parse_simple_whitespace(config, &mut as_tok.whitespace_after)?,
+            );
+
+            // except for this
+            self.whitespace_before_colon =
+                parse_simple_whitespace(config, &mut self.colon_tok.whitespace_before)?;
+        }
+
+        self.body.inflate(config)?;
+        Ok(())
     }
 }
 
@@ -1321,6 +1444,9 @@ pub struct Try<'a> {
     pub finalbody: Option<Finally<'a>>,
     pub leading_lines: Vec<EmptyLine<'a>>,
     pub whitespace_before_colon: SimpleWhitespace<'a>,
+
+    pub(crate) try_tok: Token<'a>,
+    // colon_tok unnecessary
 }
 
 impl<'a> Codegen<'a> for Try<'a> {
@@ -1347,12 +1473,17 @@ impl<'a> Codegen<'a> for Try<'a> {
 
 impl<'a> Inflate<'a> for Try<'a> {
     fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
+        self.leading_lines =
+            parse_empty_lines_from_end(config, &mut self.try_tok.whitespace_before)?;
+        self.whitespace_before_colon =
+            parse_simple_whitespace(config, &mut self.try_tok.whitespace_after)?;
         self.body.inflate(config)?;
         for h in &mut self.handlers {
             h.inflate(config)?;
         }
         self.orelse.inflate(config)?;
-        self.finalbody.inflate(config)
+        self.finalbody.inflate(config)?;
+        Ok(())
     }
 }
 
@@ -1418,6 +1549,10 @@ pub struct With<'a> {
     pub leading_lines: Vec<EmptyLine<'a>>,
     pub whitespace_after_with: SimpleWhitespace<'a>,
     pub whitespace_before_colon: SimpleWhitespace<'a>,
+
+    pub(crate) async_tok: Option<Token<'a>>,
+    pub(crate) with_tok: Token<'a>,
+    pub(crate) colon_tok: Token<'a>,
 }
 
 impl<'a> Codegen<'a> for With<'a> {
@@ -1447,7 +1582,35 @@ impl<'a> Codegen<'a> for With<'a> {
 
 impl<'a> Inflate<'a> for With<'a> {
     fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        self.body.inflate(config)
+        self.body.inflate(config)?;
+        let (asynchronous, leading_lines) = if let Some(asy) = self.async_tok.as_mut() {
+            let whitespace_after =
+                parse_parenthesizable_whitespace(config, &mut asy.whitespace_after)?;
+            (
+                Some(Asynchronous { whitespace_after }),
+                Some(parse_empty_lines_from_end(
+                    config,
+                    &mut asy.whitespace_before,
+                )?),
+            )
+        } else {
+            (None, None)
+        };
+
+        self.asynchronous = asynchronous;
+
+        self.leading_lines = if let Some(ll) = leading_lines {
+            ll
+        } else {
+            parse_empty_lines_from_end(config, &mut self.with_tok.whitespace_before)?
+        };
+
+        self.whitespace_after_with =
+            parse_simple_whitespace(config, &mut self.with_tok.whitespace_after)?;
+        self.whitespace_before_colon =
+            parse_simple_whitespace(config, &mut self.colon_tok.whitespace_before)?;
+
+        Ok(())
     }
 }
 

@@ -3,11 +3,17 @@
 // This source code is licensed under the MIT license found in the
 // LICENSE file in the root directory of this source tree.
 
-use crate::nodes::{
-    traits::{ParenthesizedNode, WithComma},
-    whitespace::ParenthesizableWhitespace,
-    Annotation, AssignEqual, AssignTargetExpression, BinaryOp, BooleanOp, Codegen, CodegenState,
-    Colon, Comma, CompOp, Dot, UnaryOp,
+use crate::{
+    nodes::{
+        traits::{Inflate, ParenthesizedNode, Result, WithComma},
+        whitespace::ParenthesizableWhitespace,
+        Annotation, AssignEqual, AssignTargetExpression, BinaryOp, BooleanOp, Codegen,
+        CodegenState, Colon, Comma, CompOp, Dot, UnaryOp,
+    },
+    tokenizer::{
+        whitespace_parser::{parse_parenthesizable_whitespace, Config},
+        Token,
+    },
 };
 #[derive(Debug, Eq, PartialEq, Default, Clone)]
 pub struct Parameters<'a> {
@@ -269,6 +275,8 @@ impl<'a> WithComma<'a> for Arg<'a> {
 pub struct LeftParen<'a> {
     /// Any space that appears directly after this left parenthesis.
     pub whitespace_after: ParenthesizableWhitespace<'a>,
+
+    pub(crate) lpar_tok: Token<'a>,
 }
 
 impl<'a> Codegen<'a> for LeftParen<'a> {
@@ -278,16 +286,34 @@ impl<'a> Codegen<'a> for LeftParen<'a> {
     }
 }
 
+impl<'a> Inflate<'a> for LeftParen<'a> {
+    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
+        self.whitespace_after =
+            parse_parenthesizable_whitespace(config, &mut self.lpar_tok.whitespace_after)?;
+        Ok(())
+    }
+}
+
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub struct RightParen<'a> {
     /// Any space that appears directly before this right parenthesis.
     pub whitespace_before: ParenthesizableWhitespace<'a>,
+
+    pub(crate) rpar_tok: Token<'a>,
 }
 
 impl<'a> Codegen<'a> for RightParen<'a> {
     fn codegen(&'a self, state: &mut CodegenState<'a>) {
         self.whitespace_before.codegen(state);
         state.add_token(")");
+    }
+}
+
+impl<'a> Inflate<'a> for RightParen<'a> {
+    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
+        self.whitespace_before =
+            parse_parenthesizable_whitespace(config, &mut self.rpar_tok.whitespace_before)?;
+        Ok(())
     }
 }
 
@@ -822,6 +848,7 @@ impl<'a> ParenthesizedNode<'a> for Tuple<'a> {
         if self.elements.is_empty() {
             rpar.push(RightParen {
                 whitespace_before: Default::default(),
+                ..right
             });
         } else {
             rpar.push(right);

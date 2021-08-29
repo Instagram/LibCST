@@ -194,9 +194,8 @@ parser! {
 
         rule class_def_raw() -> ClassDef<'a>
             = kw:lit("class") n:name() arg:(l:lit("(") a:arguments()? r:lit(")") {(l, a, r)})?
-                col:lit(":") b:block() {?
-                    make_class_def(config, kw, n, arg, col, b)
-                        .map_err(|_| "class")
+                col:lit(":") b:block() {
+                    make_class_def(kw, n, arg, col, b)
             }
 
         #[cache]
@@ -866,9 +865,9 @@ parser! {
                         .map(Expression::Tuple)
                         .map_err(|e| "tuple")
             }
-            / lpar:lpar() lit(")") {
+            / lpar:lpar() rpar:lit(")") {
                 Expression::Tuple(Tuple::default().with_parens(
-                    lpar, RightParen { whitespace_before: Default::default() }
+                    lpar, RightParen { whitespace_before: Default::default(), rpar_tok: rpar }
                 ))}
 
         rule group() -> Expression<'a>
@@ -878,31 +877,26 @@ parser! {
             }
 
         rule try_stmt() -> Try<'a>
-            = kw:lit("try") col:lit(":") b:block() f:finally_block() {?
-                make_try(config, kw, col, b, vec![], None, Some(f))
-                    .map_err(|_| "try")
+            = kw:lit("try") lit(":") b:block() f:finally_block() {
+                make_try(kw, b, vec![], None, Some(f))
             }
-            / kw:lit("try") col:lit(":") b:block() ex:except_block()+ el:else_block()?
-                f:finally_block()? {?
-                    make_try(config, kw, col, b, ex, el, f)
-                        .map_err(|_| "try")
+            / kw:lit("try") lit(":") b:block() ex:except_block()+ el:else_block()?
+                f:finally_block()? {
+                    make_try(kw, b, ex, el, f)
             }
 
         rule except_block() -> ExceptHandler<'a>
             = kw:lit("except") e:expression() a:(k:lit("as") n:name() {(k, n)})?
-                col:lit(":") b:block() {?
-                    make_except(config, kw, Some(e), a, col, b)
-                        .map_err(|_| "except")
+                col:lit(":") b:block() {
+                    make_except(kw, Some(e), a, col, b)
             }
-            / kw:lit("except") col:lit(":") b:block() {?
-                make_except(config, kw, None, None, col, b)
-                    .map_err(|_| "except")
+            / kw:lit("except") col:lit(":") b:block() {
+                make_except(kw, None, None, col, b)
             }
 
         rule finally_block() -> Finally<'a>
-            = kw:lit("finally") col:lit(":") b:block() {?
-                make_finally(config, kw, col, b)
-                    .map_err(|_| "finally")
+            = kw:lit("finally") col:lit(":") b:block() {
+                make_finally(kw, col, b)
             }
 
         rule return_stmt() -> Return<'a>
@@ -1066,34 +1060,29 @@ parser! {
             }
 
         rule while_stmt() -> While<'a>
-            = kw:lit("while") test:named_expression() col:lit(":") b:block() el:else_block()? {?
-                make_while(config, kw, test, col, b, el)
-                    .map_err(|_| "while")
+            = kw:lit("while") test:named_expression() col:lit(":") b:block() el:else_block()? {
+                make_while(kw, test, col, b, el)
             }
 
         rule for_stmt() -> For<'a>
             = f:lit("for") t:star_targets() i:lit("in") it:star_expressions()
-                c:lit(":") b:block() el:else_block()? {?
-                    make_for(config, None, f, t, i, it, c, b, el)
-                        .map_err(|_| "for")
+                c:lit(":") b:block() el:else_block()? {
+                    make_for(None, f, t, i, it, c, b, el)
             }
             / asy:tok(Async, "ASYNC") f:lit("for") t:star_targets() i:lit("in")
                 it:star_expressions()
-                c:lit(":") b:block() el:else_block()? {?
-                    make_for(config, Some(asy), f, t, i, it, c, b, el)
-                        .map_err(|_| "for")
+                c:lit(":") b:block() el:else_block()? {
+                    make_for(Some(asy), f, t, i, it, c, b, el)
             }
 
         rule with_stmt() -> With<'a>
             = kw:lit("with") first:with_item() rest:(c:comma() i:with_item() {(c,i)})*
-                col:lit(":") b:block() {?
-                    make_with(config, None, kw, comma_separate(first, rest, None, false), col, b)
-                        .map_err(|_| "with")
+                col:lit(":") b:block() {
+                    make_with(None, kw, comma_separate(first, rest, None, false), col, b)
             }
             / asy:tok(Async, "ASYNC") kw:lit("with") first:with_item()
-                rest:(c:comma() i:with_item() {(c,i)})* col:lit(":") b:block() {?
-                    make_with(config, Some(asy), kw, comma_separate(first, rest, None, false), col, b)
-                        .map_err(|_| "async with")
+                rest:(c:comma() i:with_item() {(c,i)})* col:lit(":") b:block() {
+                    make_with(Some(asy), kw, comma_separate(first, rest, None, false), col, b)
             }
 
         rule with_item() -> WithItem<'a>
@@ -1929,12 +1918,18 @@ fn make_import_from_as_names<'a>(
 
 fn make_lpar<'a>(config: &Config<'a>, mut tok: Token<'a>) -> Result<'a, LeftParen<'a>> {
     let whitespace_after = parse_parenthesizable_whitespace(config, &mut tok.whitespace_after)?;
-    Ok(LeftParen { whitespace_after })
+    Ok(LeftParen {
+        whitespace_after,
+        lpar_tok: tok,
+    })
 }
 
 fn make_rpar<'a>(config: &Config<'a>, mut tok: Token<'a>) -> Result<'a, RightParen<'a>> {
     let whitespace_before = parse_parenthesizable_whitespace(config, &mut tok.whitespace_before)?;
-    Ok(RightParen { whitespace_before })
+    Ok(RightParen {
+        whitespace_before,
+        rpar_tok: tok,
+    })
 }
 
 fn make_module<'a>(body: Vec<Statement<'a>>, tok: Token<'a>) -> Module<'a> {
@@ -2956,72 +2951,54 @@ fn make_nonlocal<'a>(
 
 #[allow(clippy::too_many_arguments)]
 fn make_for<'a>(
-    config: &Config<'a>,
-    asy: Option<Token<'a>>,
-    mut for_: Token<'a>,
+    async_tok: Option<Token<'a>>,
+    for_tok: Token<'a>,
     target: AssignTargetExpression<'a>,
-    mut in_: Token<'a>,
+    in_tok: Token<'a>,
     iter: Expression<'a>,
-    mut col: Token<'a>,
+    colon_tok: Token<'a>,
     body: Suite<'a>,
     orelse: Option<Else<'a>>,
-) -> Result<'a, For<'a>> {
-    let (asynchronous, leading_lines) = if let Some(mut asy) = asy {
-        let whitespace_after = parse_parenthesizable_whitespace(config, &mut asy.whitespace_after)?;
-        (
-            Some(Asynchronous { whitespace_after }),
-            Some(parse_empty_lines_from_end(
-                config,
-                &mut asy.whitespace_before,
-            )?),
-        )
-    } else {
-        (None, None)
-    };
-    let whitespace_after_for = parse_simple_whitespace(config, &mut for_.whitespace_after)?;
-    let whitespace_before_in = parse_simple_whitespace(config, &mut in_.whitespace_before)?;
-    let whitespace_after_in = parse_simple_whitespace(config, &mut in_.whitespace_after)?;
-    let whitespace_before_colon = parse_simple_whitespace(config, &mut col.whitespace_before)?;
+) -> For<'a> {
+    let asynchronous = async_tok.as_ref().map(|_| Asynchronous {
+        whitespace_after: Default::default(),
+    });
 
-    let leading_lines = if let Some(ll) = leading_lines {
-        ll
-    } else {
-        parse_empty_lines_from_end(config, &mut for_.whitespace_before)?
-    };
-
-    Ok(For {
+    For {
         target,
         iter,
         body,
         orelse,
         asynchronous,
-        leading_lines,
-        whitespace_after_for,
-        whitespace_before_in,
-        whitespace_after_in,
-        whitespace_before_colon,
-    })
+        leading_lines: Default::default(),
+        whitespace_after_for: Default::default(),
+        whitespace_before_in: Default::default(),
+        whitespace_after_in: Default::default(),
+        whitespace_before_colon: Default::default(),
+        async_tok,
+        for_tok,
+        in_tok,
+        colon_tok,
+    }
 }
 
 fn make_while<'a>(
-    config: &Config<'a>,
-    mut kw: Token<'a>,
+    while_tok: Token<'a>,
     test: Expression<'a>,
-    mut col: Token<'a>,
+    colon_tok: Token<'a>,
     body: Suite<'a>,
     orelse: Option<Else<'a>>,
-) -> Result<'a, While<'a>> {
-    let whitespace_after_while = parse_simple_whitespace(config, &mut kw.whitespace_after)?;
-    let whitespace_before_colon = parse_simple_whitespace(config, &mut col.whitespace_before)?;
-    let leading_lines = parse_empty_lines_from_end(config, &mut kw.whitespace_before)?;
-    Ok(While {
+) -> While<'a> {
+    While {
         test,
         body,
         orelse,
-        leading_lines,
-        whitespace_after_while,
-        whitespace_before_colon,
-    })
+        leading_lines: Default::default(),
+        whitespace_after_while: Default::default(),
+        whitespace_before_colon: Default::default(),
+        while_tok,
+        colon_tok,
+    }
 }
 
 fn make_await<'a>(
@@ -3041,26 +3018,29 @@ fn make_await<'a>(
 }
 
 fn make_class_def<'a>(
-    config: &Config<'a>,
-    mut kw: Token<'a>,
+    class_tok: Token<'a>,
     name: Name<'a>,
     args: Option<(Token<'a>, Option<Vec<Arg<'a>>>, Token<'a>)>,
-    mut col: Token<'a>,
+    colon_tok: Token<'a>,
     body: Suite<'a>,
-) -> Result<'a, ClassDef<'a>> {
-    let leading_lines = parse_empty_lines_from_end(config, &mut kw.whitespace_before)?;
-    let whitespace_after_class = parse_simple_whitespace(config, &mut kw.whitespace_after)?;
-    let lines_after_decorators = vec![];
+) -> ClassDef<'a> {
+    let mut bases = vec![];
+    let mut keywords = vec![];
+    let mut parens_tok = None;
+    let mut lpar = None;
+    let mut rpar = None;
 
-    if let Some((mut lpar, args, rpar)) = args {
-        let whitespace_after_name = parse_simple_whitespace(config, &mut lpar.whitespace_before)?;
-        let whitespace_before_colon = parse_simple_whitespace(config, &mut col.whitespace_before)?;
-        let lpar = Some(make_lpar(config, lpar)?);
-        let mut rpar = Some(make_rpar(config, rpar)?);
-        let mut bases = vec![];
-        let mut keywords = vec![];
-        let mut has_trailing_comma_or_empty = true;
-
+    if let Some((lpar_tok, args, rpar_tok)) = args {
+        parens_tok = Some((lpar_tok.clone(), rpar_tok.clone()));
+        // TODO: lpar/rpar should be constructed outside
+        lpar = Some(LeftParen {
+            whitespace_after: Default::default(),
+            lpar_tok,
+        });
+        rpar = Some(RightParen {
+            whitespace_before: Default::default(),
+            rpar_tok,
+        });
         if let Some(args) = args {
             let mut current_arg = &mut bases;
             for arg in args {
@@ -3068,48 +3048,26 @@ fn make_class_def<'a>(
                     current_arg = &mut keywords;
                 }
                 // TODO: libcst-python does validation here
-
-                has_trailing_comma_or_empty = arg.comma.is_some();
                 current_arg.push(arg);
             }
         }
-        if has_trailing_comma_or_empty {
-            if let Some(rpar) = rpar.as_mut() {
-                rpar.whitespace_before = Default::default();
-            }
-        }
-
-        Ok(ClassDef {
-            name,
-            body,
-            bases,
-            keywords,
-            decorators: vec![],
-            lpar,
-            rpar,
-            leading_lines,
-            lines_after_decorators,
-            whitespace_after_class,
-            whitespace_after_name,
-            whitespace_before_colon,
-        })
-    } else {
-        let whitespace_after_name = parse_simple_whitespace(config, &mut col.whitespace_before)?;
-        let whitespace_before_colon = SimpleWhitespace("");
-        Ok(ClassDef {
-            name,
-            body,
-            bases: vec![],
-            keywords: vec![],
-            decorators: vec![],
-            lpar: None,
-            rpar: None,
-            leading_lines,
-            lines_after_decorators,
-            whitespace_after_class,
-            whitespace_after_name,
-            whitespace_before_colon,
-        })
+    }
+    ClassDef {
+        name,
+        body,
+        bases,
+        keywords,
+        decorators: vec![],
+        lpar,
+        rpar,
+        leading_lines: Default::default(),
+        lines_after_decorators: Default::default(),
+        whitespace_after_class: Default::default(),
+        whitespace_after_name: Default::default(),
+        whitespace_before_colon: Default::default(),
+        class_tok,
+        parens_tok,
+        colon_tok,
     }
 }
 
@@ -3201,78 +3159,65 @@ fn make_fstring<'a>(
     }
 }
 
-fn make_finally<'a>(
-    config: &Config<'a>,
-    mut kw: Token<'a>,
-    mut col: Token<'a>,
-    body: Suite<'a>,
-) -> Result<'a, Finally<'a>> {
-    let leading_lines = parse_empty_lines_from_end(config, &mut kw.whitespace_before)?;
-    let whitespace_before_colon = parse_simple_whitespace(config, &mut col.whitespace_before)?;
-    Ok(Finally {
+fn make_finally<'a>(finally_tok: Token<'a>, colon_tok: Token<'a>, body: Suite<'a>) -> Finally<'a> {
+    Finally {
         body,
-        leading_lines,
-        whitespace_before_colon,
-    })
+        leading_lines: Default::default(),
+        whitespace_before_colon: Default::default(),
+        finally_tok,
+        colon_tok,
+    }
 }
 
 fn make_except<'a>(
-    config: &Config<'a>,
-    mut kw: Token<'a>,
+    except_tok: Token<'a>,
     exp: Option<Expression<'a>>,
     as_: Option<(Token<'a>, Name<'a>)>,
-    mut col: Token<'a>,
+    colon_tok: Token<'a>,
     body: Suite<'a>,
-) -> Result<'a, ExceptHandler<'a>> {
-    let leading_lines = parse_empty_lines_from_end(config, &mut kw.whitespace_before)?;
-    let whitespace_after_except = parse_simple_whitespace(config, &mut kw.whitespace_after)?;
-    let (name, whitespace_before_colon) = if let Some((mut as_tok, name)) = as_ {
-        let whitespace_before_as = ParenthesizableWhitespace::SimpleWhitespace(
-            parse_simple_whitespace(config, &mut as_tok.whitespace_before)?,
-        );
-        let whitespace_after_as = ParenthesizableWhitespace::SimpleWhitespace(
-            parse_simple_whitespace(config, &mut as_tok.whitespace_after)?,
-        );
+) -> ExceptHandler<'a> {
+    // TODO: AsName should come from outside
+    let (name, as_tok) = if let Some((as_tok, name)) = as_ {
         (
             Some(AsName {
                 name: AssignTargetExpression::Name(name),
-                whitespace_after_as,
-                whitespace_before_as,
+                whitespace_after_as: Default::default(),
+                whitespace_before_as: Default::default(),
             }),
-            parse_simple_whitespace(config, &mut col.whitespace_before)?,
+            Some(as_tok),
         )
     } else {
-        (None, Default::default())
+        (None, None)
     };
-    Ok(ExceptHandler {
+    ExceptHandler {
         body,
         r#type: exp,
         name,
-        leading_lines,
-        whitespace_after_except,
-        whitespace_before_colon,
-    })
+        leading_lines: Default::default(),
+        whitespace_after_except: Default::default(),
+        whitespace_before_colon: Default::default(),
+        except_tok,
+        as_tok,
+        colon_tok,
+    }
 }
 
 fn make_try<'a>(
-    config: &Config<'a>,
-    mut kw: Token<'a>,
-    _col: Token<'a>,
+    try_tok: Token<'a>,
     body: Suite<'a>,
     handlers: Vec<ExceptHandler<'a>>,
     orelse: Option<Else<'a>>,
     finalbody: Option<Finally<'a>>,
-) -> Result<'a, Try<'a>> {
-    let leading_lines = parse_empty_lines_from_end(config, &mut kw.whitespace_before)?;
-    let whitespace_before_colon = parse_simple_whitespace(config, &mut kw.whitespace_after)?;
-    Ok(Try {
+) -> Try<'a> {
+    Try {
         body,
         handlers,
         orelse,
         finalbody,
-        leading_lines,
-        whitespace_before_colon,
-    })
+        leading_lines: Default::default(),
+        whitespace_before_colon: Default::default(),
+        try_tok,
+    }
 }
 
 fn make_aug_op<'a>(config: &Config<'a>, mut tok: Token<'a>) -> Result<'a, AugOp<'a>> {
@@ -3377,43 +3322,26 @@ fn make_with_item<'a>(
 }
 
 fn make_with<'a>(
-    config: &Config<'a>,
-    asy: Option<Token<'a>>,
-    mut kw: Token<'a>,
+    async_tok: Option<Token<'a>>,
+    with_tok: Token<'a>,
     items: Vec<WithItem<'a>>,
-    mut col: Token<'a>,
+    colon_tok: Token<'a>,
     body: Suite<'a>,
-) -> Result<'a, With<'a>> {
-    let (asynchronous, leading_lines) = if let Some(mut asy) = asy {
-        let whitespace_after = parse_parenthesizable_whitespace(config, &mut asy.whitespace_after)?;
-        (
-            Some(Asynchronous { whitespace_after }),
-            Some(parse_empty_lines_from_end(
-                config,
-                &mut asy.whitespace_before,
-            )?),
-        )
-    } else {
-        (None, None)
-    };
-
-    let leading_lines = if let Some(ll) = leading_lines {
-        ll
-    } else {
-        parse_empty_lines_from_end(config, &mut kw.whitespace_before)?
-    };
-
-    let whitespace_after_with = parse_simple_whitespace(config, &mut kw.whitespace_after)?;
-    let whitespace_before_colon = parse_simple_whitespace(config, &mut col.whitespace_before)?;
-
-    Ok(With {
+) -> With<'a> {
+    let asynchronous = async_tok.as_ref().map(|_| Asynchronous {
+        whitespace_after: Default::default(),
+    });
+    With {
         items,
         body,
         asynchronous,
-        leading_lines,
-        whitespace_after_with,
-        whitespace_before_colon,
-    })
+        leading_lines: Default::default(),
+        whitespace_after_with: Default::default(),
+        whitespace_before_colon: Default::default(),
+        async_tok,
+        with_tok,
+        colon_tok,
+    }
 }
 
 fn make_del<'a>(
