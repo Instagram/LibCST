@@ -275,20 +275,11 @@ impl<'a> Inflate<'a> for SimpleStatementLine<'a> {
 #[allow(dead_code, clippy::large_enum_variant)]
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub enum SmallStatement<'a> {
-    Pass {
-        semicolon: Option<Semicolon<'a>>,
-    },
-    Break {
-        semicolon: Option<Semicolon<'a>>,
-    },
-    Continue {
-        semicolon: Option<Semicolon<'a>>,
-    },
+    Pass(Pass<'a>),
+    Break(Break<'a>),
+    Continue(Continue<'a>),
     Return(Return<'a>),
-    Expr {
-        value: Expression<'a>,
-        semicolon: Option<Semicolon<'a>>,
-    },
+    Expr(Expr<'a>),
     Assert(Assert<'a>),
     Import(Import<'a>),
     ImportFrom(ImportFrom<'a>),
@@ -304,25 +295,10 @@ pub enum SmallStatement<'a> {
 impl<'a> Codegen<'a> for SmallStatement<'a> {
     fn codegen(&'a self, state: &mut CodegenState<'a>) {
         match self {
-            Self::Pass { semicolon } => {
-                state.add_token("pass");
-                semicolon.codegen(state)
-            }
-            Self::Break { semicolon } => {
-                state.add_token("break");
-                semicolon.codegen(state)
-            }
-            Self::Continue { semicolon } => {
-                state.add_token("continue");
-                semicolon.codegen(state)
-            }
-            Self::Expr {
-                value: e,
-                semicolon,
-            } => {
-                e.codegen(state);
-                semicolon.codegen(state)
-            }
+            Self::Pass(p) => p.codegen(state),
+            Self::Break(p) => p.codegen(state),
+            Self::Continue(p) => p.codegen(state),
+            Self::Expr(p) => p.codegen(state),
             Self::Import(i) => i.codegen(state),
             Self::ImportFrom(i) => i.codegen(state),
             Self::Assign(a) => a.codegen(state),
@@ -341,10 +317,10 @@ impl<'a> Codegen<'a> for SmallStatement<'a> {
 impl<'a> SmallStatement<'a> {
     pub fn with_semicolon(self, semicolon: Option<Semicolon<'a>>) -> Self {
         match self {
-            Self::Pass { .. } => Self::Pass { semicolon },
-            Self::Break { .. } => Self::Break { semicolon },
-            Self::Continue { .. } => Self::Continue { semicolon },
-            Self::Expr { value, .. } => Self::Expr { value, semicolon },
+            Self::Pass(p) => Self::Pass(p.with_semicolon(semicolon)),
+            Self::Break(p) => Self::Break(p.with_semicolon(semicolon)),
+            Self::Continue(p) => Self::Continue(p.with_semicolon(semicolon)),
+            Self::Expr(p) => Self::Expr(p.with_semicolon(semicolon)),
             Self::Import(i) => Self::Import(i.with_semicolon(semicolon)),
             Self::ImportFrom(i) => Self::ImportFrom(i.with_semicolon(semicolon)),
             Self::Assign(a) => Self::Assign(a.with_semicolon(semicolon)),
@@ -357,6 +333,71 @@ impl<'a> SmallStatement<'a> {
             Self::AugAssign(a) => Self::AugAssign(a.with_semicolon(semicolon)),
             Self::Del(d) => Self::Del(d.with_semicolon(semicolon)),
         }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct Pass<'a> {
+    pub semicolon: Option<Semicolon<'a>>,
+}
+impl<'a> Pass<'a> {
+    pub fn with_semicolon(self, semicolon: Option<Semicolon<'a>>) -> Self {
+        Self { semicolon }
+    }
+}
+impl<'a> Codegen<'a> for Pass<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+        state.add_token("pass");
+        self.semicolon.codegen(state);
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct Break<'a> {
+    pub semicolon: Option<Semicolon<'a>>,
+}
+impl<'a> Break<'a> {
+    pub fn with_semicolon(self, semicolon: Option<Semicolon<'a>>) -> Self {
+        Self { semicolon }
+    }
+}
+impl<'a> Codegen<'a> for Break<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+        state.add_token("break");
+        self.semicolon.codegen(state);
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct Continue<'a> {
+    pub semicolon: Option<Semicolon<'a>>,
+}
+impl<'a> Continue<'a> {
+    pub fn with_semicolon(self, semicolon: Option<Semicolon<'a>>) -> Self {
+        Self { semicolon }
+    }
+}
+impl<'a> Codegen<'a> for Continue<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+        state.add_token("continue");
+        self.semicolon.codegen(state);
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct Expr<'a> {
+    pub value: Expression<'a>,
+    pub semicolon: Option<Semicolon<'a>>,
+}
+impl<'a> Expr<'a> {
+    pub fn with_semicolon(self, semicolon: Option<Semicolon<'a>>) -> Self {
+        Self { semicolon, ..self }
+    }
+}
+impl<'a> Codegen<'a> for Expr<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+        self.value.codegen(state);
+        self.semicolon.codegen(state);
     }
 }
 

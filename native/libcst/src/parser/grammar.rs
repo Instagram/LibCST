@@ -144,18 +144,18 @@ parser! {
         #[cache]
         rule small_stmt() -> SmallStatement<'a>
             = assignment()
-            / e:star_expressions() { SmallStatement::Expr { value: e, semicolon: None } }
+            / e:star_expressions() { SmallStatement::Expr(Expr { value: e, semicolon: None }) }
             / &"return" s:return_stmt() { SmallStatement::Return(s) }
             // this is expanded from the original grammar's import_stmt rule
             / &"import" i:import_name() { SmallStatement::Import(i) }
             / &"from" i:import_from() { SmallStatement::ImportFrom(i) }
             / &"raise" r:raise_stmt() { SmallStatement::Raise(r) }
-            / "pass" { SmallStatement::Pass { semicolon: None } }
+            / "pass" { SmallStatement::Pass(Pass { semicolon: None }) }
             / &"del" s:del_stmt() { SmallStatement::Del(s) }
-            / &"yield" s:yield_stmt() { SmallStatement::Expr { value: s, semicolon: None } }
+            / &"yield" s:yield_stmt() { SmallStatement::Expr(Expr { value: s, semicolon: None }) }
             / &"assert" s:assert_stmt() {SmallStatement::Assert(s)}
-            / "break" { SmallStatement::Break { semicolon: None }}
-            / "continue" { SmallStatement::Continue { semicolon: None }}
+            / "break" { SmallStatement::Break(Break { semicolon: None })}
+            / "continue" { SmallStatement::Continue(Continue { semicolon: None })}
             / &"global" s:global_stmt() {SmallStatement::Global(s)}
             / &"nonlocal" s:nonlocal_stmt() {SmallStatement::Nonlocal(s)}
 
