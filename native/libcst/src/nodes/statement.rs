@@ -24,10 +24,10 @@ use crate::{
         Token,
     },
 };
-use libcst_derive::Inflate;
+use libcst_derive::{Codegen, Inflate, ParenthesizedNode};
 
 #[allow(clippy::large_enum_variant)]
-#[derive(Debug, Eq, PartialEq, Clone, Inflate)]
+#[derive(Debug, Eq, PartialEq, Clone, Inflate, Codegen)]
 pub enum Statement<'a> {
     Simple(SimpleStatementLine<'a>),
     Compound(CompoundStatement<'a>),
@@ -42,16 +42,7 @@ impl<'a> WithLeadingLines<'a> for Statement<'a> {
     }
 }
 
-impl<'a> Codegen<'a> for Statement<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
-        match self {
-            Self::Simple(s) => s.codegen(state),
-            Self::Compound(f) => f.codegen(state),
-        }
-    }
-}
-
-#[derive(Debug, PartialEq, Eq, Clone, Inflate)]
+#[derive(Debug, PartialEq, Eq, Clone, Inflate, Codegen)]
 pub enum CompoundStatement<'a> {
     FunctionDef(FunctionDef<'a>),
     If(If<'a>),
@@ -60,20 +51,6 @@ pub enum CompoundStatement<'a> {
     ClassDef(ClassDef<'a>),
     Try(Try<'a>),
     With(With<'a>),
-}
-
-impl<'a> Codegen<'a> for CompoundStatement<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
-        match self {
-            Self::FunctionDef(f) => f.codegen(state),
-            Self::If(f) => f.codegen(state),
-            Self::For(f) => f.codegen(state),
-            Self::While(f) => f.codegen(state),
-            Self::ClassDef(c) => c.codegen(state),
-            Self::Try(t) => t.codegen(state),
-            Self::With(w) => w.codegen(state),
-        }
-    }
 }
 
 impl<'a> WithLeadingLines<'a> for CompoundStatement<'a> {
@@ -90,19 +67,10 @@ impl<'a> WithLeadingLines<'a> for CompoundStatement<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Inflate)]
+#[derive(Debug, PartialEq, Eq, Clone, Inflate, Codegen)]
 pub enum Suite<'a> {
     IndentedBlock(IndentedBlock<'a>),
     SimpleStatementSuite(SimpleStatementSuite<'a>),
-}
-
-impl<'a> Codegen<'a> for Suite<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
-        match self {
-            Self::IndentedBlock(b) => b.codegen(state),
-            Self::SimpleStatementSuite(s) => s.codegen(state),
-        }
-    }
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -273,7 +241,7 @@ impl<'a> Inflate<'a> for SimpleStatementLine<'a> {
 }
 
 #[allow(dead_code, clippy::large_enum_variant)]
-#[derive(Debug, Eq, PartialEq, Clone)]
+#[derive(Debug, Eq, PartialEq, Clone, Codegen)]
 pub enum SmallStatement<'a> {
     Pass(Pass<'a>),
     Break(Break<'a>),
@@ -290,28 +258,6 @@ pub enum SmallStatement<'a> {
     Nonlocal(Nonlocal<'a>),
     AugAssign(AugAssign<'a>),
     Del(Del<'a>),
-}
-
-impl<'a> Codegen<'a> for SmallStatement<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
-        match self {
-            Self::Pass(p) => p.codegen(state),
-            Self::Break(p) => p.codegen(state),
-            Self::Continue(p) => p.codegen(state),
-            Self::Expr(p) => p.codegen(state),
-            Self::Import(i) => i.codegen(state),
-            Self::ImportFrom(i) => i.codegen(state),
-            Self::Assign(a) => a.codegen(state),
-            Self::AnnAssign(a) => a.codegen(state),
-            Self::Return(r) => r.codegen(state),
-            Self::Assert(a) => a.codegen(state),
-            Self::Raise(r) => r.codegen(state),
-            Self::Global(g) => g.codegen(state),
-            Self::Nonlocal(l) => l.codegen(state),
-            Self::AugAssign(a) => a.codegen(state),
-            Self::Del(d) => d.codegen(state),
-        }
-    }
 }
 
 impl<'a> SmallStatement<'a> {
@@ -443,7 +389,7 @@ impl<'a> Codegen<'a> for AssignTarget<'a> {
 }
 
 #[allow(clippy::large_enum_variant)]
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, Codegen, ParenthesizedNode)]
 pub enum AssignTargetExpression<'a> {
     Name(Name<'a>),
     Attribute(Attribute<'a>),
@@ -451,54 +397,6 @@ pub enum AssignTargetExpression<'a> {
     Tuple(Tuple<'a>),
     List(List<'a>),
     Subscript(Subscript<'a>),
-}
-
-impl<'a> Codegen<'a> for AssignTargetExpression<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
-        match self {
-            Self::Name(n) => n.codegen(state),
-            Self::Attribute(a) => a.codegen(state),
-            Self::StarredElement(e) => e.codegen(state),
-            Self::Tuple(t) => t.codegen(state),
-            Self::List(l) => l.codegen(state),
-            Self::Subscript(s) => s.codegen(state),
-        }
-    }
-}
-
-impl<'a> ParenthesizedNode<'a> for AssignTargetExpression<'a> {
-    fn lpar(&self) -> &Vec<LeftParen<'a>> {
-        match self {
-            Self::Name(n) => n.lpar(),
-            Self::Attribute(n) => n.lpar(),
-            Self::StarredElement(n) => n.lpar(),
-            Self::Tuple(n) => n.lpar(),
-            Self::List(n) => n.lpar(),
-            Self::Subscript(n) => n.lpar(),
-        }
-    }
-
-    fn rpar(&self) -> &Vec<RightParen<'a>> {
-        match self {
-            Self::Name(n) => n.rpar(),
-            Self::Attribute(n) => n.rpar(),
-            Self::StarredElement(n) => n.rpar(),
-            Self::Tuple(n) => n.rpar(),
-            Self::List(n) => n.rpar(),
-            Self::Subscript(n) => n.rpar(),
-        }
-    }
-
-    fn with_parens(self, left: LeftParen<'a>, right: RightParen<'a>) -> Self {
-        match self {
-            Self::Name(n) => Self::Name(n.with_parens(left, right)),
-            Self::Attribute(n) => Self::Attribute(n.with_parens(left, right)),
-            Self::StarredElement(n) => Self::StarredElement(n.with_parens(left, right)),
-            Self::Tuple(n) => Self::Tuple(n.with_parens(left, right)),
-            Self::List(n) => Self::List(n.with_parens(left, right)),
-            Self::Subscript(n) => Self::Subscript(n.with_parens(left, right)),
-        }
-    }
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -849,19 +747,10 @@ impl<'a> Inflate<'a> for If<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Inflate)]
+#[derive(Debug, PartialEq, Eq, Clone, Inflate, Codegen)]
 pub enum OrElse<'a> {
     Elif(If<'a>),
     Else(Else<'a>),
-}
-
-impl<'a> Codegen<'a> for OrElse<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
-        match self {
-            Self::Elif(f) => f.codegen(state),
-            Self::Else(f) => f.codegen(state),
-        }
-    }
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -1656,57 +1545,13 @@ impl<'a> Inflate<'a> for With<'a> {
 }
 
 #[allow(clippy::large_enum_variant)]
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, Codegen, ParenthesizedNode)]
 pub enum DelTargetExpression<'a> {
     Name(Name<'a>),
     Attribute(Attribute<'a>),
     Tuple(Tuple<'a>),
     List(List<'a>),
     Subscript(Subscript<'a>),
-}
-
-impl<'a> Codegen<'a> for DelTargetExpression<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
-        match self {
-            Self::Name(n) => n.codegen(state),
-            Self::Attribute(a) => a.codegen(state),
-            Self::Tuple(t) => t.codegen(state),
-            Self::List(l) => l.codegen(state),
-            Self::Subscript(s) => s.codegen(state),
-        }
-    }
-}
-
-impl<'a> ParenthesizedNode<'a> for DelTargetExpression<'a> {
-    fn lpar(&self) -> &Vec<LeftParen<'a>> {
-        match self {
-            Self::Name(n) => n.lpar(),
-            Self::Attribute(n) => n.lpar(),
-            Self::Tuple(n) => n.lpar(),
-            Self::List(n) => n.lpar(),
-            Self::Subscript(n) => n.lpar(),
-        }
-    }
-
-    fn rpar(&self) -> &Vec<RightParen<'a>> {
-        match self {
-            Self::Name(n) => n.rpar(),
-            Self::Attribute(n) => n.rpar(),
-            Self::Tuple(n) => n.rpar(),
-            Self::List(n) => n.rpar(),
-            Self::Subscript(n) => n.rpar(),
-        }
-    }
-
-    fn with_parens(self, left: LeftParen<'a>, right: RightParen<'a>) -> Self {
-        match self {
-            Self::Name(n) => Self::Name(n.with_parens(left, right)),
-            Self::Attribute(n) => Self::Attribute(n.with_parens(left, right)),
-            Self::Tuple(n) => Self::Tuple(n.with_parens(left, right)),
-            Self::List(n) => Self::List(n.with_parens(left, right)),
-            Self::Subscript(n) => Self::Subscript(n.with_parens(left, right)),
-        }
-    }
 }
 
 impl<'a> std::convert::From<DelTargetExpression<'a>> for Expression<'a> {
