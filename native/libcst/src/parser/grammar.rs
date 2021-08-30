@@ -846,7 +846,7 @@ parser! {
             / &"(" e:(tuple() / group() / (g:genexp() {Expression::GeneratorExp(g)})) {e}
             / &"[" e:(list() / listcomp()) {e}
             / &"{" e:(dict() / set() / dictcomp() / setcomp()) {e}
-            / lit("...") { Expression::Ellipsis {lpar: vec![], rpar: vec![]}}
+            / lit("...") { Expression::Ellipsis(Ellipsis {lpar: vec![], rpar: vec![]})}
 
         rule strings() -> String<'a>
             // we capture the next token after each string piece so make_strings can
@@ -1331,12 +1331,12 @@ fn make_comparison<'a>(
             comparator: e,
         });
     }
-    Expression::Comparison {
+    Expression::Comparison(Comparison {
         left: Box::new(head),
         comparisons,
         lpar: vec![],
         rpar: vec![],
-    }
+    })
 }
 
 fn make_comparison_operator<'a>(config: &Config<'a>, mut tok: Token<'a>) -> Result<'a, CompOp<'a>> {
@@ -1415,13 +1415,13 @@ fn make_boolean_op<'a>(
 
     let mut expr = head;
     for (tok, right) in tail {
-        expr = Expression::BooleanOperation {
+        expr = Expression::BooleanOperation(BooleanOperation {
             left: Box::new(expr),
             operator: make_boolean_operator(config, tok)?,
             right: Box::new(right),
             lpar: vec![],
             rpar: vec![],
-        }
+        })
     }
     Ok(expr)
 }
@@ -1449,13 +1449,13 @@ fn make_binary_op<'a>(
     right: Expression<'a>,
 ) -> Result<'a, Expression<'a>> {
     let operator = make_binary_operator(config, op)?;
-    Ok(Expression::BinaryOperation {
+    Ok(Expression::BinaryOperation(BinaryOperation {
         left: Box::new(left),
         operator,
         right: Box::new(right),
         lpar: vec![],
         rpar: vec![],
-    })
+    }))
 }
 
 fn make_binary_operator<'a>(config: &Config<'a>, mut tok: Token<'a>) -> Result<'a, BinaryOp<'a>> {
@@ -1525,12 +1525,12 @@ fn make_unary_op<'a>(
     tail: Expression<'a>,
 ) -> Result<'a, Expression<'a>> {
     let operator = make_unary_operator(config, op)?;
-    Ok(Expression::UnaryOperation {
+    Ok(Expression::UnaryOperation(UnaryOperation {
         operator,
         expression: Box::new(tail),
         lpar: vec![],
         rpar: vec![],
-    })
+    }))
 }
 
 fn make_unary_operator<'a>(config: &Config<'a>, mut tok: Token<'a>) -> Result<'a, UnaryOp<'a>> {
@@ -1545,11 +1545,11 @@ fn make_unary_operator<'a>(config: &Config<'a>, mut tok: Token<'a>) -> Result<'a
 }
 
 fn make_number<'a>(_config: &Config<'a>, num: Token<'a>) -> Result<'a, Expression<'a>> {
-    Ok(Expression::Integer {
+    Ok(Expression::Integer(Integer {
         value: num.string,
         lpar: vec![],
         rpar: vec![],
-    })
+    }))
 }
 
 fn make_indented_block<'a>(

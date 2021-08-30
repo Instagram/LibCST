@@ -15,6 +15,8 @@ use crate::{
         Token,
     },
 };
+use libcst_derive::{Codegen, ParenthesizedNode};
+
 #[derive(Debug, Eq, PartialEq, Default, Clone)]
 pub struct Parameters<'a> {
     pub params: Vec<Param<'a>>,
@@ -317,59 +319,17 @@ impl<'a> Inflate<'a> for RightParen<'a> {
     }
 }
 
-#[derive(Debug, Eq, PartialEq, Clone)]
+#[derive(Debug, Eq, PartialEq, Clone, ParenthesizedNode, Codegen)]
 pub enum Expression<'a> {
     Name(Name<'a>),
-    Ellipsis {
-        lpar: Vec<LeftParen<'a>>,
-        rpar: Vec<RightParen<'a>>,
-    },
-    Integer {
-        /// A string representation of the integer, such as ``"100000"`` or
-        /// ``"100_000"``.
-        value: &'a str,
-        lpar: Vec<LeftParen<'a>>,
-        rpar: Vec<RightParen<'a>>,
-    },
-    Float {
-        /// A string representation of the floating point number, such as ```"0.05"``,
-        /// ``".050"``, or ``"5e-2"``.
-        value: &'a str,
-        lpar: Vec<LeftParen<'a>>,
-        rpar: Vec<RightParen<'a>>,
-    },
-    Imaginary {
-        /// A string representation of the complex number, such as ``"2j"``
-        value: &'a str,
-        lpar: Vec<LeftParen<'a>>,
-        rpar: Vec<RightParen<'a>>,
-    },
-    Comparison {
-        left: Box<Expression<'a>>,
-        comparisons: Vec<ComparisonTarget<'a>>,
-        lpar: Vec<LeftParen<'a>>,
-        rpar: Vec<RightParen<'a>>,
-    },
-    UnaryOperation {
-        operator: UnaryOp<'a>,
-        expression: Box<Expression<'a>>,
-        lpar: Vec<LeftParen<'a>>,
-        rpar: Vec<RightParen<'a>>,
-    },
-    BinaryOperation {
-        left: Box<Expression<'a>>,
-        operator: BinaryOp<'a>,
-        right: Box<Expression<'a>>,
-        lpar: Vec<LeftParen<'a>>,
-        rpar: Vec<RightParen<'a>>,
-    },
-    BooleanOperation {
-        left: Box<Expression<'a>>,
-        operator: BooleanOp<'a>,
-        right: Box<Expression<'a>>,
-        lpar: Vec<LeftParen<'a>>,
-        rpar: Vec<RightParen<'a>>,
-    },
+    Ellipsis(Ellipsis<'a>),
+    Integer(Integer<'a>),
+    Float(Float<'a>),
+    Imaginary(Imaginary<'a>),
+    Comparison(Comparison<'a>),
+    UnaryOperation(UnaryOperation<'a>),
+    BinaryOperation(BinaryOperation<'a>),
+    BooleanOperation(BooleanOperation<'a>),
     Attribute(Attribute<'a>),
     Tuple(Tuple<'a>),
     Call(Call<'a>),
@@ -392,225 +352,141 @@ pub enum Expression<'a> {
     // TODO: NamedExpr
 }
 
-impl<'a> Codegen<'a> for Expression<'a> {
+#[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode)]
+pub struct Ellipsis<'a> {
+    pub lpar: Vec<LeftParen<'a>>,
+    pub rpar: Vec<RightParen<'a>>,
+}
+
+impl<'a> Codegen<'a> for Ellipsis<'a> {
     fn codegen(&'a self, state: &mut CodegenState<'a>) {
-        match self {
-            Self::Ellipsis { .. } => state.add_token("..."),
-            Self::BinaryOperation {
-                left,
-                operator,
-                right,
-                ..
-            } => self.parenthesize(state, |state| {
-                left.codegen(state);
-                operator.codegen(state);
-                right.codegen(state);
-            }),
-            Self::Integer { value, .. }
-            | Self::Float { value, .. }
-            | Self::Imaginary { value, .. } => {
-                self.parenthesize(state, |state| state.add_token(value))
-            }
-            Self::Attribute(a) => a.codegen(state),
-            Self::UnaryOperation {
-                expression,
-                operator,
-                ..
-            } => self.parenthesize(state, |state| {
-                operator.codegen(state);
-                expression.codegen(state);
-            }),
-            Self::Name(n) => n.codegen(state),
-            Self::Comparison {
-                left, comparisons, ..
-            } => self.parenthesize(state, |state| {
-                left.codegen(state);
-                for comp in comparisons {
-                    comp.codegen(state);
-                }
-            }),
-            Self::BooleanOperation {
-                left,
-                operator,
-                right,
-                ..
-            } => self.parenthesize(state, |state| {
-                left.codegen(state);
-                operator.codegen(state);
-                right.codegen(state);
-            }),
-            Self::SimpleString(s) => s.codegen(state),
-            Self::Tuple(t) => t.codegen(state),
-            Self::Call(c) => c.codegen(state),
-            Self::GeneratorExp(g) => g.codegen(state),
-            Self::ListComp(l) => l.codegen(state),
-            Self::SetComp(s) => s.codegen(state),
-            Self::DictComp(d) => d.codegen(state),
-            Self::List(l) => l.codegen(state),
-            Self::Set(s) => s.codegen(state),
-            Self::Dict(d) => d.codegen(state),
-            Self::Subscript(s) => s.codegen(state),
-            Self::StarredElement(e) => e.codegen(state),
-            Self::IfExp(e) => e.codegen(state),
-            Self::Lambda(l) => l.codegen(state),
-            Self::Yield(y) => y.codegen(state),
-            Self::Await(a) => a.codegen(state),
-            Self::ConcatenatedString(s) => s.codegen(state),
-            Self::FormattedString(s) => s.codegen(state),
-        }
+        self.parenthesize(state, |state| {
+            state.add_token("...");
+        })
     }
 }
 
-impl<'a> ParenthesizedNode<'a> for Expression<'a> {
-    fn lpar(&self) -> &Vec<LeftParen<'a>> {
-        match self {
-            Self::BinaryOperation { lpar, .. } => lpar,
-            Self::Integer { lpar, .. } => lpar,
-            Self::UnaryOperation { lpar, .. } => lpar,
-            Self::Comparison { lpar, .. } => lpar,
-            Self::BooleanOperation { lpar, .. } => lpar,
-            Self::IfExp(e) => e.lpar(),
-            _ => panic!("lpar not implemented for {:#?}", self),
-        }
-    }
+#[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode)]
+pub struct Integer<'a> {
+    /// A string representation of the integer, such as ``"100000"`` or
+    /// ``"100_000"``.
+    pub value: &'a str,
+    pub lpar: Vec<LeftParen<'a>>,
+    pub rpar: Vec<RightParen<'a>>,
+}
 
-    fn rpar(&self) -> &Vec<RightParen<'a>> {
-        match self {
-            Self::BinaryOperation { rpar, .. } => rpar,
-            Self::Integer { rpar, .. } => rpar,
-            Self::UnaryOperation { rpar, .. } => rpar,
-            Self::Comparison { rpar, .. } => rpar,
-            Self::BooleanOperation { rpar, .. } => rpar,
-            Self::IfExp(e) => e.rpar(),
-            _ => panic!("rpar not implemented for {:#?}", self),
-        }
+impl<'a> Codegen<'a> for Integer<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+        self.parenthesize(state, |state| {
+            state.add_token(self.value);
+        })
     }
+}
 
-    fn with_parens(self, leftpar: LeftParen<'a>, rightpar: RightParen<'a>) -> Self {
-        match self {
-            Self::BinaryOperation {
-                lpar,
-                rpar,
-                left,
-                right,
-                operator,
-            } => {
-                let mut lpar = lpar;
-                let mut rpar = rpar;
-                lpar.push(leftpar);
-                rpar.push(rightpar);
-                Self::BinaryOperation {
-                    lpar,
-                    rpar,
-                    left,
-                    right,
-                    operator,
-                }
+#[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode)]
+pub struct Float<'a> {
+    /// A string representation of the floating point number, such as ```"0.05"``,
+    /// ``".050"``, or ``"5e-2"``.
+    pub value: &'a str,
+    pub lpar: Vec<LeftParen<'a>>,
+    pub rpar: Vec<RightParen<'a>>,
+}
+
+impl<'a> Codegen<'a> for Float<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+        self.parenthesize(state, |state| {
+            state.add_token(self.value);
+        })
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode)]
+pub struct Imaginary<'a> {
+    /// A string representation of the complex number, such as ``"2j"``
+    pub value: &'a str,
+    pub lpar: Vec<LeftParen<'a>>,
+    pub rpar: Vec<RightParen<'a>>,
+}
+
+impl<'a> Codegen<'a> for Imaginary<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+        self.parenthesize(state, |state| {
+            state.add_token(self.value);
+        })
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode)]
+pub struct Comparison<'a> {
+    pub left: Box<Expression<'a>>,
+    pub comparisons: Vec<ComparisonTarget<'a>>,
+    pub lpar: Vec<LeftParen<'a>>,
+    pub rpar: Vec<RightParen<'a>>,
+}
+
+impl<'a> Codegen<'a> for Comparison<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+        self.parenthesize(state, |state| {
+            self.left.codegen(state);
+            for comp in &self.comparisons {
+                comp.codegen(state);
             }
-            Self::Integer { rpar, lpar, value } => {
-                let mut lpar = lpar;
-                let mut rpar = rpar;
-                lpar.push(leftpar);
-                rpar.push(rightpar);
-                Self::Integer { rpar, lpar, value }
-            }
-            Self::Float { rpar, lpar, value } => {
-                let mut lpar = lpar;
-                let mut rpar = rpar;
-                lpar.push(leftpar);
-                rpar.push(rightpar);
-                Self::Float { rpar, lpar, value }
-            }
-            Self::Imaginary { rpar, lpar, value } => {
-                let mut lpar = lpar;
-                let mut rpar = rpar;
-                lpar.push(leftpar);
-                rpar.push(rightpar);
-                Self::Imaginary { rpar, lpar, value }
-            }
-            Self::UnaryOperation {
-                rpar,
-                lpar,
-                expression,
-                operator,
-            } => {
-                let mut lpar = lpar;
-                let mut rpar = rpar;
-                lpar.push(leftpar);
-                rpar.push(rightpar);
-                Self::UnaryOperation {
-                    rpar,
-                    lpar,
-                    expression,
-                    operator,
-                }
-            }
-            Self::Comparison {
-                lpar,
-                rpar,
-                left,
-                comparisons,
-            } => {
-                let mut lpar = lpar;
-                let mut rpar = rpar;
-                lpar.push(leftpar);
-                rpar.push(rightpar);
-                Self::Comparison {
-                    lpar,
-                    rpar,
-                    left,
-                    comparisons,
-                }
-            }
-            Self::BooleanOperation {
-                lpar,
-                rpar,
-                left,
-                operator,
-                right,
-            } => {
-                let mut lpar = lpar;
-                let mut rpar = rpar;
-                lpar.push(leftpar);
-                rpar.push(rightpar);
-                Self::BooleanOperation {
-                    lpar,
-                    rpar,
-                    left,
-                    operator,
-                    right,
-                }
-            }
-            Self::SimpleString(s) => Self::SimpleString(s.with_parens(leftpar, rightpar)),
-            Self::Name(n) => Self::Name(n.with_parens(leftpar, rightpar)),
-            Self::Attribute(a) => Self::Attribute(a.with_parens(leftpar, rightpar)),
-            Self::Subscript(s) => Self::Subscript(s.with_parens(leftpar, rightpar)),
-            Self::IfExp(e) => Self::IfExp(e.with_parens(leftpar, rightpar)),
-            Self::Call(c) => Self::Call(c.with_parens(leftpar, rightpar)),
-            Self::Lambda(l) => Self::Lambda(l.with_parens(leftpar, rightpar)),
-            Self::ConcatenatedString(s) => {
-                Self::ConcatenatedString(s.with_parens(leftpar, rightpar))
-            }
-            Self::Ellipsis { lpar, rpar } => {
-                let mut lpar = lpar;
-                let mut rpar = rpar;
-                lpar.push(leftpar);
-                rpar.push(rightpar);
-                Self::Ellipsis { rpar, lpar }
-            }
-            Self::Yield(y) => Self::Yield(y.with_parens(leftpar, rightpar)),
-            Self::Tuple(t) => Self::Tuple(t.with_parens(leftpar, rightpar)),
-            Self::GeneratorExp(g) => Self::GeneratorExp(g.with_parens(leftpar, rightpar)),
-            Self::ListComp(e) => Self::ListComp(e.with_parens(leftpar, rightpar)),
-            Self::SetComp(e) => Self::SetComp(e.with_parens(leftpar, rightpar)),
-            Self::DictComp(e) => Self::DictComp(e.with_parens(leftpar, rightpar)),
-            Self::List(e) => Self::List(e.with_parens(leftpar, rightpar)),
-            Self::Set(e) => Self::Set(e.with_parens(leftpar, rightpar)),
-            Self::Dict(e) => Self::Dict(e.with_parens(leftpar, rightpar)),
-            Self::Await(e) => Self::Await(e.with_parens(leftpar, rightpar)),
-            Self::StarredElement(e) => Self::StarredElement(e.with_parens(leftpar, rightpar)),
-            Self::FormattedString(e) => Self::FormattedString(e.with_parens(leftpar, rightpar)),
-        }
+        })
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode)]
+pub struct UnaryOperation<'a> {
+    pub operator: UnaryOp<'a>,
+    pub expression: Box<Expression<'a>>,
+    pub lpar: Vec<LeftParen<'a>>,
+    pub rpar: Vec<RightParen<'a>>,
+}
+
+impl<'a> Codegen<'a> for UnaryOperation<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+        self.parenthesize(state, |state| {
+            self.operator.codegen(state);
+            self.expression.codegen(state);
+        })
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode)]
+pub struct BinaryOperation<'a> {
+    pub left: Box<Expression<'a>>,
+    pub operator: BinaryOp<'a>,
+    pub right: Box<Expression<'a>>,
+    pub lpar: Vec<LeftParen<'a>>,
+    pub rpar: Vec<RightParen<'a>>,
+}
+
+impl<'a> Codegen<'a> for BinaryOperation<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+        self.parenthesize(state, |state| {
+            self.left.codegen(state);
+            self.operator.codegen(state);
+            self.right.codegen(state);
+        })
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode)]
+pub struct BooleanOperation<'a> {
+    pub left: Box<Expression<'a>>,
+    pub operator: BooleanOp<'a>,
+    pub right: Box<Expression<'a>>,
+    pub lpar: Vec<LeftParen<'a>>,
+    pub rpar: Vec<RightParen<'a>>,
+}
+
+impl<'a> Codegen<'a> for BooleanOperation<'a> {
+    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+        self.parenthesize(state, |state| {
+            self.left.codegen(state);
+            self.operator.codegen(state);
+            self.right.codegen(state);
+        })
     }
 }
 
@@ -694,19 +570,10 @@ impl<'a> ParenthesizedNode<'a> for Attribute<'a> {
 }
 
 #[allow(clippy::large_enum_variant)]
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, Codegen)]
 pub enum NameOrAttribute<'a> {
     N(Name<'a>),
     A(Attribute<'a>),
-}
-
-impl<'a> Codegen<'a> for NameOrAttribute<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
-        match self {
-            Self::N(n) => n.codegen(state),
-            Self::A(a) => a.codegen(state),
-        }
-    }
 }
 
 impl<'a> std::convert::From<NameOrAttribute<'a>> for Expression<'a> {
@@ -1344,19 +1211,10 @@ impl<'a> Codegen<'a> for DoubleStarredElement<'a> {
 }
 
 #[allow(clippy::large_enum_variant)]
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, Codegen)]
 pub enum BaseSlice<'a> {
     Index(Index<'a>),
     Slice(Slice<'a>),
-}
-
-impl<'a> Codegen<'a> for BaseSlice<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
-        match self {
-            Self::Index(i) => i.codegen(state),
-            Self::Slice(s) => s.codegen(state),
-        }
-    }
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -1668,7 +1526,7 @@ impl<'a> Codegen<'a> for Await<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, Codegen)]
 pub enum String<'a> {
     Simple(SimpleString<'a>),
     Concatenated(ConcatenatedString<'a>),
@@ -1681,16 +1539,6 @@ impl<'a> std::convert::From<String<'a>> for Expression<'a> {
             String::Simple(s) => Self::SimpleString(s),
             String::Concatenated(s) => Self::ConcatenatedString(s),
             String::Formatted(s) => Self::FormattedString(s),
-        }
-    }
-}
-
-impl<'a> Codegen<'a> for String<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
-        match self {
-            Self::Simple(s) => s.codegen(state),
-            Self::Concatenated(s) => s.codegen(state),
-            Self::Formatted(s) => s.codegen(state),
         }
     }
 }
@@ -1811,19 +1659,10 @@ impl<'a> Codegen<'a> for FormattedStringExpression<'a> {
 }
 
 #[allow(clippy::large_enum_variant)]
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, Codegen)]
 pub enum FormattedStringContent<'a> {
     Text(FormattedStringText<'a>),
     Expression(FormattedStringExpression<'a>),
-}
-
-impl<'a> Codegen<'a> for FormattedStringContent<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
-        match self {
-            Self::Text(t) => t.codegen(state),
-            Self::Expression(e) => e.codegen(state),
-        }
-    }
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
