@@ -428,40 +428,47 @@ class TestApplyAnnotationsVisitor(CodemodTest):
                     return A
                 """,
             ),
-            "with_async": (
+            # The following two tests verify that we can annotate functions
+            # with async and decorator information, regardless of whether this
+            # is part of the stub file.
+            "async_with_decorators__full_stub": (
                 """
-                async def a(r: Request, z=None) -> django.http.response.HttpResponse: ...
-                async def b(r: Request, z=None) -> django.http.response.HttpResponse: ...
-                async def c(r: Request, z=None) -> django.http.response.HttpResponse: ...
+                @second_decorator
+                @first_decorator(5)
+                async def async_with_decorators(r: Request, b: bool) -> django.http.response.HttpResponse: ...
                 """,
                 """
-                async def a(r: Request, z=None): ...
-                async def b(r: Request, z=None): ...
-                async def c(r: Request, z=None): ...
+                @second_decorator
+                @first_decorator(5)
+                async def async_with_decorators(r, b):
+                    return respond(r, b)
                 """,
                 """
                 from django.http.response import HttpResponse
 
-                async def a(r: Request, z=None) -> HttpResponse: ...
-                async def b(r: Request, z=None) -> HttpResponse: ...
-                async def c(r: Request, z=None) -> HttpResponse: ...
+                @second_decorator
+                @first_decorator(5)
+                async def async_with_decorators(r: Request, b: bool) -> HttpResponse:
+                    return respond(r, b)
                 """,
             ),
-            "async_with_decorators": (
+            "async_with_decorators__bare_stub": (
                 """
-                def async_with_decorators(a: bool, b: bool) -> str: ...
+                def async_with_decorators(r: Request, b: bool) -> django.http.response.HttpResponse: ...
                 """,
                 """
                 @second_decorator
                 @first_decorator(5)
-                async def async_with_decorators(a, b):
-                    return "hello"
+                async def async_with_decorators(r, b):
+                    return respond(r, b)
                 """,
                 """
+                from django.http.response import HttpResponse
+
                 @second_decorator
                 @first_decorator(5)
-                async def async_with_decorators(a: bool, b: bool) -> str:
-                    return "hello"
+                async def async_with_decorators(r: Request, b: bool) -> HttpResponse:
+                    return respond(r, b)
                 """,
             ),
             # test cases named with the REQUIRES_PREEXISTING prefix are verifying
