@@ -3,16 +3,11 @@
 // This source code is licensed under the MIT license found in the
 // LICENSE file in the root directory of this source tree.
 
-use crate::nodes::inflate_helpers::adjust_parameters_trailing_whitespace;
 use crate::nodes::*;
-use crate::tokenizer::whitespace_parser::{
-    parse_empty_lines_from_end, parse_parenthesizable_whitespace, parse_simple_whitespace,
-    parse_trailing_whitespace, Config, WhitespaceError,
-};
+use crate::tokenizer::whitespace_parser::{Config, WhitespaceError};
 use crate::tokenizer::{TokError, TokType, Token};
 use peg::str::LineCol;
 use peg::{parser, Parse, ParseElem, ParseLiteral, RuleResult};
-use std::mem::swap;
 use thiserror::Error;
 use TokType::{
     Async, Await as AWAIT, Dedent, EndMarker, FStringEnd, FStringStart, FStringString, Indent,
@@ -119,9 +114,8 @@ parser! {
 
         pub rule statement() -> Statement<'a>
             = c:compound_stmt() { Statement::Compound(c) }
-            / s:simple_stmt() {?
-                    Ok(Statement::Simple(make_simple_statement_line(config, s)
-                        .map_err(|e| "simple_stmt")?))
+            / s:simple_stmt() {
+                    Statement::Simple(make_simple_statement_line(s))
             }
 
         rule simple_stmt() -> SimpleStatementParts<'a>
@@ -161,22 +155,17 @@ parser! {
 
         rule assignment() -> SmallStatement<'a>
             = a:name() col:lit(":") ann:expression()
-                rhs:(eq:lit("=") d:annotated_rhs() {(eq, d)})? {?
-                    make_ann_assignment(config, AssignTargetExpression::Name(a), col, ann, rhs)
-                        .map(SmallStatement::AnnAssign)
-                        .map_err(|_| "assignment")
+                rhs:(eq:lit("=") d:annotated_rhs() {(eq, d)})? {
+                    SmallStatement::AnnAssign(
+                        make_ann_assignment(AssignTargetExpression::Name(a), col, ann, rhs))
             }
             // TODO: there's an extra '(' single_target ')' clause here in upstream
             / a:single_subscript_attribute_target() col:lit(":") ann:expression()
-                rhs:(eq:lit("=") d:annotated_rhs() {(eq, d)})? {?
-                    make_ann_assignment(config, a, col, ann, rhs)
-                        .map(SmallStatement::AnnAssign)
-                        .map_err(|_| "assignment")
+                rhs:(eq:lit("=") d:annotated_rhs() {(eq, d)})? {
+                    SmallStatement::AnnAssign(make_ann_assignment(a, col, ann, rhs))
             }
-            / lhs:(t:star_targets() eq:lit("=") {(t, eq)})+ rhs:(yield_expr() / star_expressions()) !lit("=") {?
-                make_assignment(config, lhs, rhs)
-                    .map(SmallStatement::Assign)
-                    .map_err(|e| "assignment")
+            / lhs:(t:star_targets() eq:lit("=") {(t, eq)})+ rhs:(yield_expr() / star_expressions()) !lit("=") {
+                SmallStatement::Assign(make_assignment(lhs, rhs))
             }
             / t:single_target() op:augassign() rhs:(yield_expr() / star_expressions()) {
                 SmallStatement::AugAssign(make_aug_assign(t, op, rhs))
@@ -185,7 +174,7 @@ parser! {
         rule augassign() -> AugOp<'a>
             = &("+=" / "-=" / "*=" / "@=" /  "/=" / "%=" / "&=" / "|=" / "^=" / "<<="
                 / ">>=" / "**=" / "//=") tok:_ {?
-                    make_aug_op(config, tok).map_err(|_| "aug_op")
+                    make_aug_op(tok).map_err(|_| "aug_op")
             }
 
         rule class_def() -> ClassDef<'a>
@@ -203,32 +192,25 @@ parser! {
             = n:tok(NL, "NEWLINE") ind:tok(Indent, "INDENT") s:statements() ded:tok(Dedent, "DEDENT") {
                 make_indented_block(n, ind, s, ded)
             }
-            / s:simple_stmt() {?
-                make_simple_statement_suite(config, s)
-                    .map_err(|e| "simple_stmt suite")
+            / s:simple_stmt() {
+                make_simple_statement_suite(s)
             }
 
         rule star_expressions() -> Expression<'a>
             = first:star_expression()
                 rest:(comma:comma() e:star_expression() { (comma, expr_to_element(e)) })+
-                comma:comma()? {?
-                    make_tuple(config, expr_to_element(first), rest, comma, None, None)
-                        .map(Expression::Tuple)
-                        .map_err(|e| "star_expressions")
+                comma:comma()? {
+                    Expression::Tuple(make_tuple(expr_to_element(first), rest, comma, None, None))
             }
-            / e:star_expression() comma:comma() {?
-                make_tuple(config, expr_to_element(e), vec![], Some(comma), None, None)
-                    .map(Expression::Tuple)
-                    .map_err(|e| "star_expressions")
+            / e:star_expression() comma:comma() {
+                Expression::Tuple(make_tuple(expr_to_element(e), vec![], Some(comma), None, None))
             }
             / star_expression()
 
         #[cache]
         rule star_expression() -> Expression<'a>
-            = star:lit("*") e:bitwise_or() {?
-                make_starred_element(config, star, expr_to_element(e))
-                    .map(Expression::StarredElement)
-                    .map_err(|_| "star_expression")
+            = star:lit("*") e:bitwise_or() {
+                Expression::StarredElement(make_starred_element(star, expr_to_element(e)))
             }
             / expression()
 
@@ -236,14 +218,12 @@ parser! {
             = first:star_named_expression()
                 rest:(c:comma() e:star_named_expression() { (c, e) })*
                 trail:comma()? {
-                    comma_separate(first, rest, trail, false)
+                    comma_separate(first, rest, trail)
             }
 
         rule star_named_expression() -> Element<'a>
-            = star:lit("*") e:bitwise_or() {?
-                make_starred_element(config, star, expr_to_element(e))
-                    .map(Element::Starred)
-                    .map_err(|e| "star_named_expression")
+            = star:lit("*") e:bitwise_or() {
+                Element::Starred(make_starred_element(star, expr_to_element(e)))
             }
             / e:named_expression() { expr_to_element(e) }
 
@@ -253,18 +233,14 @@ parser! {
             / lambdef()
 
         rule _conditional_expression() -> Expression<'a>
-            = body:disjunction() i:lit("if") test:disjunction() e:lit("else") oe:expression() {?
-                make_ifexp(config, body, i, test, e, oe)
-                    .map(Expression::IfExp)
-                    .map_err(|_| "ifexp")
+            = body:disjunction() i:lit("if") test:disjunction() e:lit("else") oe:expression() {
+                Expression::IfExp(make_ifexp(body, i, test, e, oe))
             }
             / disjunction()
 
         rule lambdef() -> Expression<'a>
-            = kw:lit("lambda") p:lambda_params()? c:lit(":") b:expression() {?
-                make_lambda(config, kw, p.unwrap_or_default(), c, b)
-                    .map(Expression::Lambda)
-                    .map_err(|_| "lambda")
+            = kw:lit("lambda") p:lambda_params()? c:lit(":") b:expression() {
+                Expression::Lambda(make_lambda(kw, p.unwrap_or_default(), c, b))
             }
 
         rule lambda_params() -> Parameters<'a>
@@ -276,27 +252,22 @@ parser! {
 
         rule lambda_parameters() -> Parameters<'a>
             = a:lambda_slash_no_default() b:lambda_param_no_default()*
-                c:lambda_param_with_default()* d:lambda_star_etc()? {?
-                    make_parameters(config, Some(a), concat(b, c), d)
-                        .map_err(|_| "parameters")
+                c:lambda_param_with_default()* d:lambda_star_etc()? {
+                    make_parameters(Some(a), concat(b, c), d)
             }
             / a:lambda_slash_with_default() b:lambda_param_with_default()*
-                d:lambda_star_etc()? {?
-                    make_parameters(config, Some(a), b, d)
-                        .map_err(|_| "parameters")
+                d:lambda_star_etc()? {
+                    make_parameters(Some(a), b, d)
             }
             / a:lambda_param_no_default()+ b:lambda_param_with_default()*
-                d:lambda_star_etc()? {?
-                    make_parameters(config, None, concat(a, b), d)
-                        .map_err(|_| "parameters")
+                d:lambda_star_etc()? {
+                    make_parameters(None, concat(a, b), d)
             }
-            / a:lambda_param_with_default()+ d:lambda_star_etc()? {?
-                make_parameters(config, None, a, d)
-                    .map_err(|_| "parameters")
+            / a:lambda_param_with_default()+ d:lambda_star_etc()? {
+                make_parameters(None, a, d)
             }
-            / d:lambda_star_etc() {?
-                make_parameters(config, None, vec![], Some(d))
-                    .map_err(|_| "parameters")
+            / d:lambda_star_etc() {
+                make_parameters(None, vec![], Some(d))
             }
 
         rule lambda_slash_no_default() -> (Vec<Param<'a>>, ParamSlash<'a>)
@@ -317,10 +288,10 @@ parser! {
 
         rule lambda_star_etc() -> StarEtc<'a>
             = star:lit("*") a:lambda_param_no_default()
-                b:lambda_param_maybe_default()* kw:lambda_kwds()? {?
-                    add_param_star(config, a, star)
-                        .map(|p| StarEtc(Some(StarArg::Param(Box::new(p))), b, kw))
-                        .map_err(|_| "star_etc")
+                b:lambda_param_maybe_default()* kw:lambda_kwds()? {
+                    StarEtc(Some(StarArg::Param(
+                        Box::new(add_param_star(a, star))
+                    )), b, kw)
             }
             / "*" c:comma() b:lambda_param_maybe_default()+ kw:lambda_kwds()? {
                 StarEtc(Some(StarArg::Star(ParamStar {comma: c})), b, kw)
@@ -328,36 +299,30 @@ parser! {
             / kw:lambda_kwds() { StarEtc(None, vec![], Some(kw)) }
 
         rule lambda_kwds() -> Param<'a>
-            = star:lit("**") a:lambda_param_no_default() {?
-                add_param_star(config, a, star)
-                    .map_err(|_| "kwds")
+            = star:lit("**") a:lambda_param_no_default() {
+                add_param_star(a, star)
             }
 
         rule lambda_param_no_default() -> Param<'a>
-            = a:lambda_param() c:lit(",") {?
-                add_param_default(config, a, None, Some(c))
-                    .map_err(|_| "param_no_default")
+            = a:lambda_param() c:lit(",") {
+                add_param_default(a, None, Some(c))
             }
             / a:lambda_param() &":" {a}
 
         rule lambda_param_with_default() -> Param<'a>
-            = a:lambda_param() def:default() c:lit(",") {?
-                add_param_default(config, a, Some(def), Some(c))
-                    .map_err(|_| "param_with_default")
+            = a:lambda_param() def:default() c:lit(",") {
+                add_param_default(a, Some(def), Some(c))
             }
-            / a:lambda_param() def:default() &":" {?
-                add_param_default(config, a, Some(def), None)
-                    .map_err(|_| "param_with_default")
+            / a:lambda_param() def:default() &":" {
+                add_param_default(a, Some(def), None)
             }
 
         rule lambda_param_maybe_default() -> Param<'a>
-            = a:lambda_param() def:default()? c:lit(",") {?
-                add_param_default(config, a, def, Some(c))
-                    .map_err(|_| "param_maybe_default")
+            = a:lambda_param() def:default()? c:lit(",") {
+                add_param_default(a, def, Some(c))
             }
-            / a:lambda_param() def:default()? &":" {?
-                add_param_default(config, a, def, None)
-                    .map_err(|_| "param_maybe_default")
+            / a:lambda_param() def:default()? &":" {
+                add_param_default(a, def, None)
             }
 
         rule lambda_param() -> Param<'a>
@@ -366,21 +331,21 @@ parser! {
         #[cache]
         rule disjunction() -> Expression<'a>
             = a:conjunction() b:(or:lit("or") inner:conjunction() { (or, inner) })+ {?
-                make_boolean_op(config, a, b).map_err(|e| "expected disjunction")
+                make_boolean_op(a, b).map_err(|e| "expected disjunction")
             }
             / conjunction()
 
         #[cache]
         rule conjunction() -> Expression<'a>
             = a:inversion() b:(and:lit("and") inner:inversion() { (and, inner) })+ {?
-                make_boolean_op(config, a, b).map_err(|e| "expected conjunction")
+                make_boolean_op(a, b).map_err(|e| "expected conjunction")
             }
             / inversion()
 
         #[cache]
         rule inversion() -> Expression<'a>
             = not:lit("not") a:inversion() {?
-                make_unary_op(config, not, a).map_err(|e| "expected inversion")
+                make_unary_op(not, a).map_err(|e| "expected inversion")
             }
             / comparison()
 
@@ -404,14 +369,14 @@ parser! {
 
         rule _op_bitwise_or(o: &'static str) -> (CompOp<'a>, Expression<'a>)
             = op:lit(o) e:bitwise_or() {?
-                make_comparison_operator(config, op)
+                make_comparison_operator(op)
                     .map(|op| (op, e))
                     .map_err(|_| "comparison")
             }
 
         rule _op_bitwise_or2(first: &'static str, second: &'static str) -> (CompOp<'a>, Expression<'a>)
             = f:lit(first) s:lit(second) e:bitwise_or() {?
-                make_comparison_operator_2(config, f, s)
+                make_comparison_operator_2(f, s)
                     .map(|op| (op, e))
                     .map_err(|_| "comparison")
             }
@@ -420,18 +385,16 @@ parser! {
             = a:star_target() !lit(",") {a}
             / first:(t:star_target() {assign_target_to_element(t)})
                 rest:(comma:comma() t:star_target() {(comma, assign_target_to_element(t))})*
-                comma:comma()? {?
-                    make_tuple(config, first, rest, comma, None, None)
-                        .map(AssignTargetExpression::Tuple)
-                        .map_err(|e| "star_targets")
+                comma:comma()? {
+                    AssignTargetExpression::Tuple(make_tuple(first, rest, comma, None, None))
             }
 
         #[cache]
         rule star_target() -> AssignTargetExpression<'a>
-            = star:lit("*") !lit("*") t:star_target() {?
-                make_starred_element(config, star, assign_target_to_element(t))
-                    .map(AssignTargetExpression::StarredElement)
-                    .map_err(|e| "star_target")
+            = star:lit("*") !lit("*") t:star_target() {
+                AssignTargetExpression::StarredElement(
+                    make_starred_element(star, assign_target_to_element(t))
+                )
             }
             / target_with_star_atom()
 
@@ -440,33 +403,29 @@ parser! {
         rule star_targets_tuple_seq() -> Tuple<'a>
             = first:(t:star_target() {assign_target_to_element(t)})
                 rest:(c:comma() t:star_target() {(c, assign_target_to_element(t))})+
-                trail:comma()? {?
-                    make_tuple(config, first, rest, trail, None, None)
-                        .map_err(|_| "star_target_tuple_seq")
+                trail:comma()? {
+                    make_tuple(first, rest, trail, None, None)
             }
-            / t:star_target() trail:comma()? {?
-                make_tuple(config, assign_target_to_element(t), vec![], trail, None, None)
-                    .map_err(|_| "star_target_tuple_seq")
+            / t:star_target() trail:comma()? {
+                make_tuple(assign_target_to_element(t), vec![], trail, None, None)
             }
 
         rule star_targets_list_seq() -> Vec<Element<'a>>
             = first:(t:star_target() { assign_target_to_element(t) })
                 rest:(c:comma() t:star_target() {(c, assign_target_to_element(t))})*
                 trail:comma()? {
-                    comma_separate(first, rest, trail, false)
+                    comma_separate(first, rest, trail)
             }
 
         #[cache]
         rule target_with_star_atom() -> AssignTargetExpression<'a>
-            = a:t_primary() dot:lit(".") n:name() !t_lookahead() {?
-                make_attribute(config, a, dot, n)
-                    .map(AssignTargetExpression::Attribute)
-                    .map_err(|e| "target_with_star_atom")
+            = a:t_primary() dot:lit(".") n:name() !t_lookahead() {
+                AssignTargetExpression::Attribute(make_attribute(a, dot, n))
             }
-            / a:t_primary() lbrak:lit("[") s:slices() rbrak:lit("]") !t_lookahead() {?
-                make_subscript(config, a, lbrak, s, rbrak)
-                    .map(AssignTargetExpression::Subscript)
-                    .map_err(|_| "target_with_star_atom")
+            / a:t_primary() lbrak:lbrak() s:slices() rbrak:rbrak() !t_lookahead() {
+                AssignTargetExpression::Subscript(
+                    make_subscript(a, lbrak, s, rbrak)
+                )
             }
             / a:star_atom() {a}
 
@@ -478,10 +437,10 @@ parser! {
                    a.unwrap_or_default().with_parens(lpar, rpar)
                )
             }
-            / lbrak:lit("[") a:star_targets_list_seq()? rbrak:lit("]") {?
-                make_list(config, lbrak, a.unwrap_or_default(), rbrak)
-                    .map(AssignTargetExpression::List)
-                    .map_err(|_| "star_atom")
+            / lbrak:lbrak() a:star_targets_list_seq()? rbrak:rbrak() {
+                AssignTargetExpression::List(
+                    make_list(lbrak, a.unwrap_or_default(), rbrak)
+                )
             }
 
         rule single_target() -> AssignTargetExpression<'a>
@@ -490,32 +449,28 @@ parser! {
             / lpar:lpar() t:single_target() rpar:rpar() { t.with_parens(lpar, rpar) }
 
         rule single_subscript_attribute_target() -> AssignTargetExpression<'a>
-            = a:t_primary() dot:lit(".") n:name() !t_lookahead() {?
-                make_attribute(config, a, dot, n)
-                    .map(AssignTargetExpression::Attribute)
-                    .map_err(|_| "single_target")
+            = a:t_primary() dot:lit(".") n:name() !t_lookahead() {
+                AssignTargetExpression::Attribute(make_attribute(a, dot, n))
             }
-            / a:t_primary() lbrak:lit("[") s:slices() rbrak:lit("]") !t_lookahead() {?
-                make_subscript(config, a, lbrak, s, rbrak)
-                    .map(AssignTargetExpression::Subscript)
-                    .map_err(|_| "single_target")
+            / a:t_primary() lbrak:lbrak() s:slices() rbrak:rbrak() !t_lookahead() {
+                AssignTargetExpression::Subscript(
+                    make_subscript(a, lbrak, s, rbrak)
+                )
             }
 
         rule del_targets() -> Vec<Element<'a>>
             = first:del_target() rest:(c:comma() t:del_target() {(c,t.into())})* trail:comma()? {
-                comma_separate(first.into(), rest, trail, false)
+                comma_separate(first.into(), rest, trail)
             }
 
         rule del_target() -> DelTargetExpression<'a>
-            = a:t_primary() d:lit(".") n:name() !t_lookahead() {?
-                make_attribute(config, a, d, n)
-                    .map(DelTargetExpression::Attribute)
-                    .map_err(|_| "del")
+            = a:t_primary() d:lit(".") n:name() !t_lookahead() {
+                DelTargetExpression::Attribute(make_attribute(a, d, n))
             }
-            / a:t_primary() lbrak:lit("[") s:slices() rbrak:lit("]") !t_lookahead() {?
-                make_subscript(config, a, lbrak, s, rbrak)
-                    .map(DelTargetExpression::Subscript)
-                    .map_err(|_| "del")
+            / a:t_primary() lbrak:lbrak() s:slices() rbrak:rbrak() !t_lookahead() {
+                DelTargetExpression::Subscript(
+                    make_subscript(a, lbrak, s, rbrak)
+                )
             }
             / del_t_atom()
 
@@ -525,37 +480,25 @@ parser! {
             / l:lpar() d:del_targets()? r:rpar() {
                 make_del_tuple(Some(l), d.unwrap_or_default(), Some(r))
             }
-            / l:lit("[") d:del_targets()? r:lit("]") {?
-                make_list(config, l, d.unwrap_or_default(), r)
-                    .map(DelTargetExpression::List)
-                    .map_err(|_| "del")
+            / l:lbrak() d:del_targets()? r:rbrak() {
+                DelTargetExpression::List(
+                    make_list(l, d.unwrap_or_default(), r)
+                )
             }
-
-        rule lpar() -> LeftParen<'a>
-            = a:lit("(") {? make_lpar(config, a).map_err(|_| "lpar")}
-
-        rule rpar() -> RightParen<'a>
-            = a:lit(")") {? make_rpar(config, a).map_err(|_| "rpar")}
 
         #[cache_left_rec]
         rule t_primary() -> Expression<'a>
-            = value:t_primary() dot:lit(".") attr:name() &t_lookahead() {?
-                make_attribute(config, value, dot, attr)
-                    .map(Expression::Attribute)
-                    .map_err(|e| "t_primary")
+            = value:t_primary() dot:lit(".") attr:name() &t_lookahead() {
+                Expression::Attribute(make_attribute(value, dot, attr))
             }
-            / v:t_primary() lpar:lit("[") s:slices() rpar:lit("]") &t_lookahead() {?
-                make_subscript(config, v, lpar, s, rpar)
-                    .map(Expression::Subscript)
-                    .map_err(|_| "list")
+            / v:t_primary() l:lbrak() s:slices() r:rbrak() &t_lookahead() {
+                Expression::Subscript(make_subscript(v, l, s, r))
             }
-            / f:t_primary() lpar:&lit("(") gen:genexp() &t_lookahead() {
-                Expression::Call(make_genexp_call(config, f, lpar, gen))
+            / f:t_primary() gen:genexp() &t_lookahead() {
+                Expression::Call(make_genexp_call(f, gen))
             }
-            / f:t_primary() lpar:lit("(") arg:arguments()? rpar:lit(")") &t_lookahead() {?
-                make_call(config, f, lpar, arg.unwrap_or_default(), rpar)
-                    .map(Expression::Call)
-                    .map_err(|_| "call")
+            / f:t_primary() lpar:lit("(") arg:arguments()? rpar:lit(")") &t_lookahead() {
+                Expression::Call(make_call(f, lpar, arg.unwrap_or_default(), rpar))
             }
             / a:atom() &t_lookahead() {a}
 
@@ -563,131 +506,119 @@ parser! {
             = "(" / "[" / "."
 
         rule yield_expr() -> Expression<'a>
-            = y:lit("yield") f:lit("from") a:expression() {?
-                make_yield(config, y, Some(f), Some(a))
-                    .map(Expression::Yield)
-                    .map_err(|_| "yield from")
+            = y:lit("yield") f:lit("from") a:expression() {
+                Expression::Yield(make_yield(y, Some(f), Some(a)))
             }
-            / y:lit("yield") a:star_expressions()? {?
-                make_yield(config, y, None, a)
-                    .map(Expression::Yield)
-                    .map_err(|_| "yield")
+            / y:lit("yield") a:star_expressions()? {
+                Expression::Yield(make_yield(y, None, a))
             }
 
         #[cache_left_rec]
         rule bitwise_or() -> Expression<'a>
             = a:bitwise_or() op:lit("|") b:bitwise_xor() {?
-                make_binary_op(config, a, op, b).map_err(|e| "expected bitwise_or")
+                make_binary_op(a, op, b).map_err(|e| "expected bitwise_or")
             }
             / bitwise_xor()
 
         #[cache_left_rec]
         rule bitwise_xor() -> Expression<'a>
             = a:bitwise_xor() op:lit("^") b:bitwise_and() {?
-                make_binary_op(config, a, op, b).map_err(|e| "expected bitwise_xor")
+                make_binary_op(a, op, b).map_err(|e| "expected bitwise_xor")
             }
             / bitwise_and()
 
         #[cache_left_rec]
         rule bitwise_and() -> Expression<'a>
             = a:bitwise_and() op:lit("&") b:shift_expr() {?
-                make_binary_op(config, a, op, b).map_err(|e| "expected bitwise_and")
+                make_binary_op(a, op, b).map_err(|e| "expected bitwise_and")
             }
             / shift_expr()
 
         #[cache_left_rec]
         rule shift_expr() -> Expression<'a>
             = a:shift_expr() op:lit("<<") b:sum() {?
-                make_binary_op(config, a, op, b).map_err(|e| "expected shift_expr")
+                make_binary_op(a, op, b).map_err(|e| "expected shift_expr")
             }
             / a:shift_expr() op:lit(">>") b:sum() {?
-                make_binary_op(config, a, op, b).map_err(|e| "expected shift_expr")
+                make_binary_op(a, op, b).map_err(|e| "expected shift_expr")
             }
             / sum()
 
         #[cache_left_rec]
         rule sum() -> Expression<'a>
             = a:sum() op:lit("+") b:term() {?
-                make_binary_op(config, a, op, b).map_err(|e| "expected sum")
+                make_binary_op(a, op, b).map_err(|e| "expected sum")
             }
             / a:sum() op:lit("-") b:term() {?
-                make_binary_op(config, a, op, b).map_err(|e| "expected sum")
+                make_binary_op(a, op, b).map_err(|e| "expected sum")
             }
             / term()
 
         #[cache_left_rec]
         rule term() -> Expression<'a>
             = a:term() op:lit("*") b:factor() {?
-                make_binary_op(config, a, op, b).map_err(|e| "expected term")
+                make_binary_op(a, op, b).map_err(|e| "expected term")
             }
             / a:term() op:lit("/") b:factor() {?
-                make_binary_op(config, a, op, b).map_err(|e| "expected term")
+                make_binary_op(a, op, b).map_err(|e| "expected term")
             }
             / a:term() op:lit("//") b:factor() {?
-                make_binary_op(config, a, op, b).map_err(|e| "expected term")
+                make_binary_op(a, op, b).map_err(|e| "expected term")
             }
             / a:term() op:lit("%") b:factor() {?
-                make_binary_op(config, a, op, b).map_err(|e| "expected term")
+                make_binary_op(a, op, b).map_err(|e| "expected term")
             }
             / a:term() op:lit("@") b:factor() {?
-                make_binary_op(config, a, op, b).map_err(|e| "expected term")
+                make_binary_op(a, op, b).map_err(|e| "expected term")
             }
             / factor()
 
         #[cache]
         rule factor() -> Expression<'a>
             = op:lit("+") a:factor() {?
-                make_unary_op(config, op, a).map_err(|e| "expected factor")
+                make_unary_op(op, a).map_err(|e| "expected factor")
             }
             / op:lit("-") a:factor() {?
-                make_unary_op(config, op, a).map_err(|e| "expected factor")
+                make_unary_op(op, a).map_err(|e| "expected factor")
             }
             / op:lit("~") a:factor() {?
-                make_unary_op(config, op, a).map_err(|e| "expected factor")
+                make_unary_op(op, a).map_err(|e| "expected factor")
             }
             / power()
 
         rule power() -> Expression<'a>
             = a:await_primary() op:lit("**") b:factor() {?
-                make_binary_op(config, a, op, b).map_err(|e| "expected power")
+                make_binary_op(a, op, b).map_err(|e| "expected power")
             }
             / await_primary()
 
         rule await_primary() -> Expression<'a>
-            = aw:tok(AWAIT, "AWAIT") e:primary() {?
-                make_await(config, aw, e)
-                    .map(Expression::Await)
-                    .map_err(|_| "await")
+            = aw:tok(AWAIT, "AWAIT") e:primary() {
+                Expression::Await(make_await(aw, e))
             }
             / primary()
 
         #[cache_left_rec]
         rule primary() -> Expression<'a>
-            = v:primary() dot:lit(".") attr:name() {?
-                make_attribute(config, v, dot, attr)
-                    .map(Expression::Attribute)
-                    .map_err(|_| "attribute")
+            = v:primary() dot:lit(".") attr:name() {
+                Expression::Attribute(make_attribute(v, dot, attr))
             }
-            / a:primary() lpar:&lit("(") b:genexp() {
-                Expression::Call(make_genexp_call(config, a, lpar, b))
+            / a:primary() b:genexp() {
+                Expression::Call(make_genexp_call(a, b))
             }
-            / f:primary() lpar:lit("(") arg:arguments()? rpar:lit(")") {?
-                make_call(config, f, lpar, arg.unwrap_or_default(), rpar)
-                    .map(Expression::Call)
-                    .map_err(|_| "call")
+            / f:primary() lpar:lit("(") arg:arguments()? rpar:lit(")") {
+                Expression::Call(make_call(f, lpar, arg.unwrap_or_default(), rpar))
             }
-            / v:primary() lbrak:lit("[") s:slices() rbrak:lit("]") {?
-                make_subscript(config, v, lbrak, s, rbrak)
-                    .map(Expression::Subscript)
-                    .map_err(|_| "subscript")
+            / v:primary() lbrak:lbrak() s:slices() rbrak:rbrak() {
+                Expression::Subscript(make_subscript(v, lbrak, s, rbrak))
             }
             / atom()
 
         rule list() -> Expression<'a>
-            = lbrak:lit("[") e:star_named_expressions()? rbrak:lit("]") {?
-                make_list(config, lbrak, e.unwrap_or_default(), rbrak)
-                    .map(Expression::List)
-                    .map_err(|_| "list")
+            = lbrak:lbrak() e:star_named_expressions()? rbrak:rbrak() {
+                Expression::List(
+                    make_list(lbrak, e.unwrap_or_default(), rbrak)
+                )
             }
 
         rule slices() -> Vec<SubscriptElement<'a>>
@@ -698,45 +629,34 @@ parser! {
 
         rule slice() -> BaseSlice<'a>
             = l:expression()? col:lit(":") u:expression()?
-                rest:(c:lit(":") s:expression()? {(c, s)})? {?
-                    make_slice(config, l, col, u, rest)
-                        .map_err(|_| "slice")
+                rest:(c:lit(":") s:expression()? {(c, s)})? {
+                    make_slice(l, col, u, rest)
             }
             / v:expression() { make_index(v) }
 
         rule listcomp() -> Expression<'a>
-            = lbrak:lit("[") elt:named_expression() comp:for_if_clauses() rbrak:lit("]") {?
-                make_list_comp(config, lbrak, elt, comp, rbrak)
-                    .map(Expression::ListComp)
-                    .map_err(|_| "listcomp")
+            = lbrak:lbrak() elt:named_expression() comp:for_if_clauses() rbrak:rbrak() {
+                Expression::ListComp(make_list_comp(lbrak, elt, comp, rbrak))
             }
 
         rule set() -> Expression<'a>
-            = lbrace:lit("{") e:star_named_expressions()? rbrace:lit("}") {?
-                make_set(config, lbrace, e.unwrap_or_default(), rbrace)
-                    .map(Expression::Set)
-                    .map_err(|_| "set")
+            = lbrace:lbrace() e:star_named_expressions()? rbrace:rbrace() {
+                Expression::Set(make_set(lbrace, e.unwrap_or_default(), rbrace))
             }
 
         rule setcomp() -> Expression<'a>
-            = lbrace:lit("{") elt:named_expression() comp:for_if_clauses() rbrace:lit("}") {?
-                make_set_comp(config, lbrace, elt, comp, rbrace)
-                    .map(Expression::SetComp)
-                    .map_err(|_| "setcomp")
+            = l:lbrace() elt:named_expression() comp:for_if_clauses() r:rbrace() {
+                Expression::SetComp(make_set_comp(l, elt, comp, r))
             }
 
         rule dict() -> Expression<'a>
-            = lbrace:lit("{") els:double_starred_keypairs()? rbrace:lit("}") {?
-                make_dict(config, lbrace, els.unwrap_or_default(), rbrace)
-                    .map(Expression::Dict)
-                    .map_err(|_| "dict")
+            = lbrace:lbrace() els:double_starred_keypairs()? rbrace:rbrace() {
+                Expression::Dict(make_dict(lbrace, els.unwrap_or_default(), rbrace))
             }
 
         rule dictcomp() -> Expression<'a>
-            = lbrace:lit("{") elt:kvpair() comp:for_if_clauses() rbrace:lit("}") {?
-                make_dict_comp(config, lbrace, elt, comp, rbrace)
-                    .map(Expression::DictComp)
-                    .map_err(|_| "dictcomp")
+            = lbrace:lbrace() elt:kvpair() comp:for_if_clauses() rbrace:rbrace() {
+                Expression::DictComp(make_dict_comp(lbrace, elt, comp, rbrace))
             }
 
         rule double_starred_keypairs() -> Vec<DictElement<'a>>
@@ -747,19 +667,17 @@ parser! {
             }
 
         rule double_starred_kvpair() -> DictElement<'a>
-            = s:lit("**") e:bitwise_or() {?
-                make_double_starred_element(config, s, e)
-                    .map(DictElement::Starred)
-                    .map_err(|_| "double_starred_element")
+            = s:lit("**") e:bitwise_or() {
+                DictElement::Starred(make_double_starred_element(s, e))
             }
-            / k:kvpair() {? make_dict_element(config, k).map_err(|_| "dict_element")}
+            / k:kvpair() { make_dict_element(k) }
 
         rule kvpair() -> (Expression<'a>, Token<'a>, Expression<'a>)
             = k:expression() colon:lit(":") v:expression() { (k, colon, v) }
 
         rule genexp() -> GeneratorExp<'a>
-            = lpar:lit("(") elt:named_expression() comp:for_if_clauses() rpar:lit(")") {?
-                make_genexp(config, lpar, elt, comp, rpar).map_err(|_| "genexp")
+            = lpar:lpar() elt:named_expression() comp:for_if_clauses() rpar:rpar() {
+                make_genexp(lpar, elt, comp, rpar)
             }
 
         rule for_if_clauses() -> CompFor<'a>
@@ -767,19 +685,17 @@ parser! {
 
         rule for_if_clause() -> CompFor<'a>
             = asy:_async() f:lit("for") tgt:star_targets() i:lit("in")
-                iter:disjunction() ifs:_comp_if()* {?
-                    make_for_if(config, Some(asy), f, tgt, i, iter, ifs)
-                        .map_err(|_| "for_in")
+                iter:disjunction() ifs:_comp_if()* {
+                    make_for_if(Some(asy), f, tgt, i, iter, ifs)
             }
             / f:lit("for") tgt:star_targets() i:lit("in")
-            iter:disjunction() ifs:_comp_if()* {?
-                make_for_if(config, None, f, tgt, i, iter, ifs)
-                    .map_err(|_| "for_in")
+            iter:disjunction() ifs:_comp_if()* {
+                make_for_if(None, f, tgt, i, iter, ifs)
             }
 
         rule _comp_if() -> CompIf<'a>
-            = kw:lit("if") cond:disjunction() {?
-                make_comp_if(config, kw, cond).map_err(|_| "comp_if")
+            = kw:lit("if") cond:disjunction() {
+                make_comp_if(kw, cond)
             }
 
         rule arguments() -> Vec<Arg<'a>>
@@ -791,7 +707,7 @@ parser! {
                 kw:(c:comma() k:kwargs() {(c, k)})? {
                     let (trail, kw) = kw.map(|(x,y)| (Some(x), Some(y))).unwrap_or((None, None));
                     concat(
-                        comma_separate(first, rest, trail, true),
+                        comma_separate(first, rest, trail),
                         kw.unwrap_or_default(),
                     )
             }
@@ -802,7 +718,7 @@ parser! {
                 !"=" { a }
 
         rule starred_expression() -> Arg<'a>
-            = star:lit("*") e:expression() {? make_star_arg(config, star, e).map_err(|_| "star_arg") }
+            = star:lit("*") e:expression() { make_star_arg(star, e) }
 
         rule kwargs() -> Vec<Arg<'a>>
             = sfirst:kwarg_or_starred() srest:(c:comma() a:kwarg_or_starred() {(c,a)})*
@@ -810,17 +726,17 @@ parser! {
                 dfirst:kwarg_or_double_starred()
                 drest:(c:comma() a:kwarg_or_double_starred() {(c,a)})* {
                     concat(
-                        comma_separate(sfirst, srest, Some(scomma), true),
-                        comma_separate(dfirst, drest, None, false),
+                        comma_separate(sfirst, srest, Some(scomma)),
+                        comma_separate(dfirst, drest, None),
                     )
             }
             / first:kwarg_or_starred()
                 rest:(c:comma() a:kwarg_or_starred() {(c, a)})* {
-                    comma_separate(first, rest, None, false)
+                    comma_separate(first, rest, None)
             }
             / first:kwarg_or_double_starred()
                 rest:(c:comma() a:kwarg_or_double_starred() {(c,a)})* {
-                    comma_separate(first, rest, None, false)
+                    comma_separate(first, rest, None)
             }
 
         rule kwarg_or_starred() -> Arg<'a>
@@ -829,11 +745,11 @@ parser! {
 
         rule kwarg_or_double_starred() -> Arg<'a>
             = _kwarg()
-            / star:lit("**") e:expression() {? make_star_arg(config, star, e).map_err(|_| "star_arg") }
+            / star:lit("**") e:expression() { make_star_arg(star, e) }
 
         rule _kwarg() -> Arg<'a>
-            = n:name() eq:lit("=") v:expression() {?
-                make_kwarg(config, n, eq, v).map_err(|_| "kwarg")
+            = n:name() eq:lit("=") v:expression() {
+                make_kwarg(n, eq, v)
             }
 
         rule atom() -> Expression<'a>
@@ -842,28 +758,25 @@ parser! {
             / n:lit("False") { Expression::Name(make_name(n)) }
             / n:lit("None") { Expression::Name(make_name(n)) }
             / &(tok(STRING, "") / tok(FStringStart, "")) s:strings() {s.into()}
-            / n:tok(Number, "NUMBER") {? make_number(config, n).map_err(|e| "expected number")}
+            / n:tok(Number, "NUMBER") { make_number(n) }
             / &"(" e:(tuple() / group() / (g:genexp() {Expression::GeneratorExp(g)})) {e}
             / &"[" e:(list() / listcomp()) {e}
             / &"{" e:(dict() / set() / dictcomp() / setcomp()) {e}
             / lit("...") { Expression::Ellipsis(Ellipsis {lpar: vec![], rpar: vec![]})}
 
         rule strings() -> String<'a>
-            // we capture the next token after each string piece so make_strings can
-            // extract the whitespace between individual pieces
             = s:(str:tok(STRING, "STRING") t:&_ {(make_string(str), t)}
-                / str:fstring() t:&_ {(String::Formatted(str), t)})+ {?
-                make_strings(config, s)
-                    .map_err(|_| "STRING")
+                / str:fstring() t:&_ {(String::Formatted(str), t)})+ {
+                make_strings(s)
             }
 
         rule tuple() -> Expression<'a>
-            = lpar:lit("(") first:star_named_expression() &","
+            = lpar:lpar() first:star_named_expression() &","
                 rest:(c:comma() e:star_named_expression() {(c, e)})*
-                trailing_comma:comma()? rpar:lit(")") {?
-                    make_tuple(config, first, rest, trailing_comma, Some(lpar), Some(rpar))
-                        .map(Expression::Tuple)
-                        .map_err(|e| "tuple")
+                trailing_comma:comma()? rpar:rpar() {
+                    Expression::Tuple(
+                        make_tuple(first, rest, trailing_comma, Some(lpar), Some(rpar))
+                    )
             }
             / lpar:lpar() rpar:lit(")") {
                 Expression::Tuple(Tuple::default().with_parens(
@@ -871,9 +784,8 @@ parser! {
                 ))}
 
         rule group() -> Expression<'a>
-            = lpar:lit("(") e:(yield_expr() / named_expression()) rpar:lit(")") {?
-                add_expr_parens(config, e, lpar, rpar)
-                    .map_err(|e| "group")
+            = lpar:lpar() e:(yield_expr() / named_expression()) rpar:rpar() {
+                e.with_parens(lpar, rpar)
             }
 
         rule try_stmt() -> Try<'a>
@@ -900,20 +812,17 @@ parser! {
             }
 
         rule return_stmt() -> Return<'a>
-            = kw:lit("return") a:star_expressions()? {?
-                make_return(config, kw, a)
-                    .map_err(|_| "return")
+            = kw:lit("return") a:star_expressions()? {
+                make_return(kw, a)
             }
 
         rule raise_stmt() -> Raise<'a>
             = kw:lit("raise") exc:expression()
-                rest:(f:lit("from") cau:expression() {(f, cau)})? {?
-                    make_raise(config, kw, Some(exc), rest)
-                        .map_err(|_| "raise")
+                rest:(f:lit("from") cau:expression() {(f, cau)})? {
+                    make_raise(kw, Some(exc), rest)
             }
-            / kw:lit("raise") {?
-                make_raise(config, kw, None, None)
-                    .map_err(|_| "raise")
+            / kw:lit("raise") {
+                make_raise(kw, None, None)
             }
 
         rule function_def() -> FunctionDef<'a>
@@ -926,8 +835,8 @@ parser! {
                 } )+
 
         rule _returns() -> Annotation<'a>
-            = l:lit("->") e:expression() {?
-                make_annotation(config, l, e).map_err(|_| "type")
+            = l:lit("->") e:expression() {
+                make_annotation(l, e)
             }
 
         rule function_def_raw() -> FunctionDef<'a>
@@ -944,25 +853,20 @@ parser! {
             = parameters()
 
         rule parameters() -> Parameters<'a>
-            = a:slash_no_default() b:param_no_default()* c:param_with_default()*  d:star_etc()? {?
-                make_parameters(config, Some(a), concat(b, c), d)
-                    .map_err(|e| "parameters")
+            = a:slash_no_default() b:param_no_default()* c:param_with_default()*  d:star_etc()? {
+                make_parameters(Some(a), concat(b, c), d)
             }
-            / a:slash_with_default() b:param_with_default()* d:star_etc()? {?
-                make_parameters(config, Some(a), b, d)
-                    .map_err(|e| "parameters")
+            / a:slash_with_default() b:param_with_default()* d:star_etc()? {
+                make_parameters(Some(a), b, d)
             }
-            / a:param_no_default()+ b:param_with_default()* d:star_etc()? {?
-                make_parameters(config, None, concat(a, b), d)
-                    .map_err(|e| "parameters")
+            / a:param_no_default()+ b:param_with_default()* d:star_etc()? {
+                make_parameters(None, concat(a, b), d)
             }
-            / a:param_with_default()+ d:star_etc()? {?
-                make_parameters(config, None, a, d)
-                    .map_err(|e| "parameters")
+            / a:param_with_default()+ d:star_etc()? {
+                make_parameters(None, a, d)
             }
-            / d:star_etc() {?
-                make_parameters(config, None, vec![], Some(d))
-                    .map_err(|e| "parameters")
+            / d:star_etc() {
+                make_parameters(None, vec![], Some(d))
             }
 
         rule slash_no_default() -> (Vec<Param<'a>>, ParamSlash<'a>)
@@ -982,10 +886,9 @@ parser! {
             }
 
         rule star_etc() -> StarEtc<'a>
-            = star:lit("*") a:param_no_default() b:param_maybe_default()* kw:kwds()? {?
-                add_param_star(config, a, star)
-                    .map(|p| StarEtc(Some(StarArg::Param(Box::new(p))), b, kw))
-                    .map_err(|e| "star_etc")
+            = star:lit("*") a:param_no_default() b:param_maybe_default()* kw:kwds()? {
+                StarEtc(Some(StarArg::Param(Box::new(
+                    add_param_star(a, star)))), b, kw)
             }
             / "*" c:comma() b:param_maybe_default()+ kw:kwds()? {
                     StarEtc(Some(StarArg::Star(ParamStar {comma:c })), b, kw)
@@ -993,33 +896,28 @@ parser! {
             / kw:kwds() { StarEtc(None, vec![], Some(kw)) }
 
         rule kwds() -> Param<'a>
-            = star:lit("**") a:param_no_default() {?
-                add_param_star(config, a, star)
-                    .map_err(|e| "kwds")
+            = star:lit("**") a:param_no_default() {
+                add_param_star(a, star)
             }
 
         rule param_no_default() -> Param<'a>
-            = a:param() c:lit(",") {? add_param_default(config, a, None, Some(c)).map_err(|e| "param_no_default") }
+            = a:param() c:lit(",") { add_param_default(a, None, Some(c)) }
             / a:param() &")" {a}
 
         rule param_with_default() -> Param<'a>
-            = a:param() def:default() c:lit(",") {?
-                add_param_default(config, a, Some(def), Some(c))
-                    .map_err(|e| "param_with_default")
+            = a:param() def:default() c:lit(",") {
+                add_param_default(a, Some(def), Some(c))
             }
-            / a:param() def:default() &")" {?
-                add_param_default(config, a, Some(def), None)
-                    .map_err(|e| "param_with_default")
+            / a:param() def:default() &")" {
+                add_param_default(a, Some(def), None)
             }
 
         rule param_maybe_default() -> Param<'a>
-            = a:param() def:default()? c:lit(",") {?
-                add_param_default(config, a, def, Some(c))
-                    .map_err(|e| "param_maybe_default")
+            = a:param() def:default()? c:lit(",") {
+                add_param_default(a, def, Some(c))
             }
-            / a:param() def:default()? &")" {?
-                add_param_default(config, a, def, None)
-                    .map_err(|e| "param_maybe_default")
+            / a:param() def:default()? &")" {
+                add_param_default(a, def, None)
             }
 
         rule param() -> Param<'a>
@@ -1028,14 +926,13 @@ parser! {
             }
 
         rule annotation() -> Annotation<'a>
-            = col:lit(":") e:expression() {?
-                make_annotation(config, col, e)
-                    .map_err(|_| "annotation")
+            = col:lit(":") e:expression() {
+                make_annotation(col, e)
             }
 
         rule default() -> (AssignEqual<'a>, Expression<'a>)
-            = eq:lit("=") ex:expression() {?
-                Ok((make_assign_equal(config, eq).map_err(|e| "=")?, ex))
+            = eq:lit("=") ex:expression() {
+                (make_assign_equal(eq), ex)
             }
 
         rule if_stmt() -> If<'a>
@@ -1078,19 +975,19 @@ parser! {
         rule with_stmt() -> With<'a>
             = kw:lit("with") first:with_item() rest:(c:comma() i:with_item() {(c,i)})*
                 col:lit(":") b:block() {
-                    make_with(None, kw, comma_separate(first, rest, None, false), col, b)
+                    make_with(None, kw, comma_separate(first, rest, None), col, b)
             }
             / asy:tok(Async, "ASYNC") kw:lit("with") first:with_item()
                 rest:(c:comma() i:with_item() {(c,i)})* col:lit(":") b:block() {
-                    make_with(Some(asy), kw, comma_separate(first, rest, None, false), col, b)
+                    make_with(Some(asy), kw, comma_separate(first, rest, None), col, b)
             }
 
         rule with_item() -> WithItem<'a>
-            = e:expression() a:lit("as") t:star_target() &("," / ":") {?
-                make_with_item(config, e, Some(a), Some(t)).map_err(|_| "with_item")
+            = e:expression() a:lit("as") t:star_target() &("," / ":") {
+                make_with_item(e, Some(a), Some(t))
             }
-            / e:expression() {?
-                make_with_item(config, e, None, None).map_err(|_| "with_item")
+            / e:expression() {
+                make_with_item(e, None, None)
             }
 
         rule named_expression() -> Expression<'a>
@@ -1101,56 +998,48 @@ parser! {
             = yield_expr() / star_expressions()
 
         rule global_stmt() -> Global<'a>
-            = kw:lit("global") init:(n:name() c:comma() {(n, c)})* last:name() {?
-                make_global(config, kw, init, last)
-                    .map_err(|_| "global")
+            = kw:lit("global") init:(n:name() c:comma() {(n, c)})* last:name() {
+                make_global(kw, init, last)
             }
 
         rule nonlocal_stmt() -> Nonlocal<'a>
-            = kw:lit("nonlocal") init:(n:name() c:comma() {(n, c)})* last:name() {?
-                make_nonlocal(config, kw, init, last)
-                    .map_err(|_| "nonlocal")
+            = kw:lit("nonlocal") init:(n:name() c:comma() {(n, c)})* last:name() {
+                make_nonlocal(kw, init, last)
             }
 
         rule yield_stmt() -> Expression<'a>
             = yield_expr()
 
         rule assert_stmt() -> Assert<'a>
-            = kw:lit("assert") test:expression() rest:(c:comma() msg:expression() {(c, msg)})? {?
-                make_assert(config, kw, test, rest)
-                    .map_err(|_| "assert")
+            = kw:lit("assert") test:expression() rest:(c:comma() msg:expression() {(c, msg)})? {
+                make_assert(kw, test, rest)
             }
 
         rule del_stmt() -> Del<'a>
-            = kw:lit("del") t:del_target() &(";" / tok(NL, "NEWLINE")) {?
-                make_del(config, kw, t)
-                    .map_err(|_| "del")
+            = kw:lit("del") t:del_target() &(";" / tok(NL, "NEWLINE")) {
+                make_del(kw, t)
             }
-            / kw:lit("del") t:del_targets() &(";" / tok(NL, "NEWLINE")) {?
-                make_del(config, kw, make_del_tuple(None, t, None))
-                    .map_err(|_| "del")
+            / kw:lit("del") t:del_targets() &(";" / tok(NL, "NEWLINE")) {
+                make_del(kw, make_del_tuple(None, t, None))
             }
 
         rule import_name() -> Import<'a>
-            = kw:lit("import") a:dotted_as_names() {?
-                make_import(config, kw, a)
-                    .map_err(|e| "import")
+            = kw:lit("import") a:dotted_as_names() {
+                make_import(kw, a)
             }
 
         rule import_from() -> ImportFrom<'a>
-            = from:lit("from") dots:lit(".")* m:dotted_name()
-                import:lit("import") als:import_from_targets() {?
-                    make_import_from(config, from, dots, Some(m), import, als)
-                        .map_err(|e| "import_from")
+            = from:lit("from") dots:dot()* m:dotted_name()
+                import:lit("import") als:import_from_targets() {
+                    make_import_from(from, dots, Some(m), import, als)
             }
-            / from:lit("from") dots:lit(".")+
-                import:lit("import") als:import_from_targets() {?
-                    make_import_from(config, from, dots, None, import, als)
-                        .map_err(|e| "import_from")
+            / from:lit("from") dots:dot()+
+                import:lit("import") als:import_from_targets() {
+                    make_import_from(from, dots, None, import, als)
             }
 
         rule import_from_targets() -> ParenthesizedImportNames<'a>
-            = lpar:lit("(") als:import_from_as_names() c:comma()? rpar:lit(")") {
+            = lpar:lpar() als:import_from_as_names() c:comma()? rpar:rpar() {
                 let mut als = als;
                 if let (comma@Some(_), Some(mut last)) = (c, als.last_mut()) {
                     last.comma = comma;
@@ -1166,9 +1055,8 @@ parser! {
             }
 
         rule import_from_as_name() -> ImportAlias<'a>
-            = n:name() asname:(kw:lit("as") z:name() {(kw, z)})? {?
-                make_import_alias(config, NameOrAttribute::N(n), asname)
-                    .map_err(|e| "import_from_as_name")
+            = n:name() asname:(kw:lit("as") z:name() {(kw, z)})? {
+                make_import_alias(NameOrAttribute::N(n), asname)
             }
 
         rule dotted_as_names() -> Vec<ImportAlias<'a>>
@@ -1178,15 +1066,13 @@ parser! {
             }
 
         rule dotted_as_name() -> ImportAlias<'a>
-            = n:dotted_name() asname:(kw:lit("as") z:name() {(kw, z)})? {?
-                make_import_alias(config, n, asname)
-                    .map_err(|e| "dotted_as_name")
+            = n:dotted_name() asname:(kw:lit("as") z:name() {(kw, z)})? {
+                make_import_alias(n, asname)
             }
 
         rule dotted_name() -> NameOrAttribute<'a>
-            = first:name() tail:(dot:lit(".") n:name() {(dot, n)})* {?
-                make_name_or_attr(config, first, tail)
-                    .map_err(|e| "dotted_name")
+            = first:name() tail:(dot:lit(".") n:name() {(dot, n)})* {
+                make_name_or_attr(first, tail)
             }
 
         rule mb_lit(lit: &str) -> Option<Token<'a>>
@@ -1196,7 +1082,28 @@ parser! {
                               })?
 
         rule comma() -> Comma<'a>
-            = c:lit(",") {? make_comma(config, c).map_err(|e| ",") }
+            = c:lit(",") { make_comma(c) }
+
+        rule dot() -> Dot<'a>
+            = tok:lit(".") { make_dot(tok) }
+
+        rule lpar() -> LeftParen<'a>
+            = a:lit("(") { make_lpar(a) }
+
+        rule rpar() -> RightParen<'a>
+            = a:lit(")") { make_rpar(a) }
+
+        rule lbrak() -> LeftSquareBracket<'a>
+            = tok:lit("[") { make_left_bracket(tok) }
+
+        rule rbrak() -> RightSquareBracket<'a>
+            = tok:lit("]") { make_right_bracket(tok) }
+
+        rule lbrace() -> LeftCurlyBrace<'a>
+            = tok:lit("{") { make_left_brace(tok) }
+
+        rule rbrace() -> RightCurlyBrace<'a>
+            = tok:lit("}") { make_right_brace(tok) }
 
         /// matches any token, not just whitespace
         rule _() -> Token<'a>
@@ -1236,10 +1143,10 @@ parser! {
             = lb:lit("{") e:_f_expr() eq:lit("=")?
                 conv:(t:lit("!") c:_f_conversion() {(t,c)})?
                 spec:(t:lit(":") s:_f_spec() {(t,s)})?
-                rb:lit("}") {?
-                    make_fstring_expression(config, lb, e, eq, conv, spec, rb)
-                        .map(FormattedStringContent::Expression)
-                        .map_err(|_| "f-string expression")
+                rb:lit("}") {
+                    FormattedStringContent::Expression(
+                        make_fstring_expression(lb, e, eq, conv, spec, rb)
+                    )
             }
 
         rule _f_expr() -> Expression<'a>
@@ -1339,73 +1246,80 @@ fn make_comparison<'a>(
     })
 }
 
-fn make_comparison_operator<'a>(config: &Config<'a>, mut tok: Token<'a>) -> Result<'a, CompOp<'a>> {
-    let whitespace_before = parse_parenthesizable_whitespace(config, &mut tok.whitespace_before)?;
-    let whitespace_after = parse_parenthesizable_whitespace(config, &mut tok.whitespace_after)?;
+fn make_comparison_operator(tok: Token) -> Result<CompOp> {
+    let whitespace_before = Default::default();
+    let whitespace_after = Default::default();
 
     match tok.string {
         "<" => Ok(CompOp::LessThan {
             whitespace_after,
             whitespace_before,
+            tok,
         }),
         ">" => Ok(CompOp::GreaterThan {
             whitespace_after,
             whitespace_before,
+            tok,
         }),
         "<=" => Ok(CompOp::LessThanEqual {
             whitespace_after,
             whitespace_before,
+            tok,
         }),
         ">=" => Ok(CompOp::GreaterThanEqual {
             whitespace_after,
             whitespace_before,
+            tok,
         }),
         "==" => Ok(CompOp::Equal {
             whitespace_after,
             whitespace_before,
+            tok,
         }),
         "!=" => Ok(CompOp::NotEqual {
             whitespace_after,
             whitespace_before,
+            tok,
         }),
         "in" => Ok(CompOp::In {
             whitespace_after,
             whitespace_before,
+            tok,
         }),
         "is" => Ok(CompOp::Is {
             whitespace_after,
             whitespace_before,
+            tok,
         }),
         _ => Err(ParserError::OperatorError),
     }
 }
 
-fn make_comparison_operator_2<'a>(
-    config: &Config<'a>,
-    mut first: Token<'a>,
-    mut second: Token<'a>,
-) -> Result<'a, CompOp<'a>> {
-    let whitespace_before = parse_parenthesizable_whitespace(config, &mut first.whitespace_before)?;
-    let whitespace_between = parse_parenthesizable_whitespace(config, &mut first.whitespace_after)?;
-    let whitespace_after = parse_parenthesizable_whitespace(config, &mut second.whitespace_after)?;
+fn make_comparison_operator_2<'a>(first: Token<'a>, second: Token<'a>) -> Result<'a, CompOp<'a>> {
+    let whitespace_before = Default::default();
+    let whitespace_between = Default::default();
+    let whitespace_after = Default::default();
 
     match (first.string, second.string) {
         ("is", "not") => Ok(CompOp::IsNot {
             whitespace_before,
             whitespace_between,
             whitespace_after,
+            is_tok: first,
+            not_tok: second,
         }),
         ("not", "in") => Ok(CompOp::NotIn {
             whitespace_before,
             whitespace_between,
             whitespace_after,
+            not_tok: first,
+            in_tok: second,
         }),
         _ => Err(ParserError::OperatorError),
     }
 }
 
 fn make_boolean_op<'a>(
-    config: &Config<'a>,
     head: Expression<'a>,
     tail: Vec<(Token<'a>, Expression<'a>)>,
 ) -> Result<'a, Expression<'a>> {
@@ -1417,7 +1331,7 @@ fn make_boolean_op<'a>(
     for (tok, right) in tail {
         expr = Expression::BooleanOperation(BooleanOperation {
             left: Box::new(expr),
-            operator: make_boolean_operator(config, tok)?,
+            operator: make_boolean_operator(tok)?,
             right: Box::new(right),
             lpar: vec![],
             rpar: vec![],
@@ -1426,29 +1340,30 @@ fn make_boolean_op<'a>(
     Ok(expr)
 }
 
-fn make_boolean_operator<'a>(config: &Config<'a>, mut tok: Token<'a>) -> Result<'a, BooleanOp<'a>> {
-    let whitespace_before = parse_parenthesizable_whitespace(config, &mut tok.whitespace_before)?;
-    let whitespace_after = parse_parenthesizable_whitespace(config, &mut tok.whitespace_after)?;
+fn make_boolean_operator(tok: Token) -> Result<BooleanOp> {
+    let whitespace_before = Default::default();
+    let whitespace_after = Default::default();
     match tok.string {
         "and" => Ok(BooleanOp::And {
             whitespace_after,
             whitespace_before,
+            tok,
         }),
         "or" => Ok(BooleanOp::Or {
             whitespace_after,
             whitespace_before,
+            tok,
         }),
         _ => Err(ParserError::OperatorError),
     }
 }
 
 fn make_binary_op<'a>(
-    config: &Config<'a>,
     left: Expression<'a>,
     op: Token<'a>,
     right: Expression<'a>,
 ) -> Result<'a, Expression<'a>> {
-    let operator = make_binary_operator(config, op)?;
+    let operator = make_binary_operator(op)?;
     Ok(Expression::BinaryOperation(BinaryOperation {
         left: Box::new(left),
         operator,
@@ -1458,73 +1373,81 @@ fn make_binary_op<'a>(
     }))
 }
 
-fn make_binary_operator<'a>(config: &Config<'a>, mut tok: Token<'a>) -> Result<'a, BinaryOp<'a>> {
-    let whitespace_before = parse_parenthesizable_whitespace(config, &mut tok.whitespace_before)?;
-    let whitespace_after = parse_parenthesizable_whitespace(config, &mut tok.whitespace_after)?;
-
+fn make_binary_operator(tok: Token) -> Result<BinaryOp> {
+    let whitespace_before = Default::default();
+    let whitespace_after = Default::default();
     match tok.string {
         "+" => Ok(BinaryOp::Add {
             whitespace_after,
             whitespace_before,
+            tok,
         }),
         "-" => Ok(BinaryOp::Subtract {
             whitespace_after,
             whitespace_before,
+            tok,
         }),
         "*" => Ok(BinaryOp::Multiply {
             whitespace_after,
             whitespace_before,
+            tok,
         }),
         "/" => Ok(BinaryOp::Divide {
             whitespace_after,
             whitespace_before,
+            tok,
         }),
         "//" => Ok(BinaryOp::FloorDivide {
             whitespace_after,
             whitespace_before,
+            tok,
         }),
         "%" => Ok(BinaryOp::Modulo {
             whitespace_after,
             whitespace_before,
+            tok,
         }),
         "**" => Ok(BinaryOp::Power {
             whitespace_after,
             whitespace_before,
+            tok,
         }),
         "<<" => Ok(BinaryOp::LeftShift {
             whitespace_after,
             whitespace_before,
+            tok,
         }),
         ">>" => Ok(BinaryOp::RightShift {
             whitespace_after,
             whitespace_before,
+            tok,
         }),
         "|" => Ok(BinaryOp::BitOr {
             whitespace_after,
             whitespace_before,
+            tok,
         }),
         "&" => Ok(BinaryOp::BitAnd {
             whitespace_after,
             whitespace_before,
+            tok,
         }),
         "^" => Ok(BinaryOp::BitXor {
             whitespace_after,
             whitespace_before,
+            tok,
         }),
         "@" => Ok(BinaryOp::MatrixMultiply {
             whitespace_after,
             whitespace_before,
+            tok,
         }),
         _ => Err(ParserError::OperatorError),
     }
 }
 
-fn make_unary_op<'a>(
-    config: &Config<'a>,
-    op: Token<'a>,
-    tail: Expression<'a>,
-) -> Result<'a, Expression<'a>> {
-    let operator = make_unary_operator(config, op)?;
+fn make_unary_op<'a>(op: Token<'a>, tail: Expression<'a>) -> Result<'a, Expression<'a>> {
+    let operator = make_unary_operator(op)?;
     Ok(Expression::UnaryOperation(UnaryOperation {
         operator,
         expression: Box::new(tail),
@@ -1533,23 +1456,22 @@ fn make_unary_op<'a>(
     }))
 }
 
-fn make_unary_operator<'a>(config: &Config<'a>, mut tok: Token<'a>) -> Result<'a, UnaryOp<'a>> {
-    let whitespace_after = parse_parenthesizable_whitespace(config, &mut tok.whitespace_after)?;
+fn make_unary_operator(tok: Token) -> Result<UnaryOp> {
     match tok.string {
-        "+" => Ok(UnaryOp::Plus(whitespace_after)),
-        "-" => Ok(UnaryOp::Minus(whitespace_after)),
-        "~" => Ok(UnaryOp::BitInvert(whitespace_after)),
-        "not" => Ok(UnaryOp::Not(whitespace_after)),
+        "+" => Ok(UnaryOp::Plus(Default::default(), tok)),
+        "-" => Ok(UnaryOp::Minus(Default::default(), tok)),
+        "~" => Ok(UnaryOp::BitInvert(Default::default(), tok)),
+        "not" => Ok(UnaryOp::Not(Default::default(), tok)),
         _ => Err(ParserError::OperatorError),
     }
 }
 
-fn make_number<'a>(_config: &Config<'a>, num: Token<'a>) -> Result<'a, Expression<'a>> {
-    Ok(Expression::Integer(Integer {
+fn make_number(num: Token) -> Expression {
+    Expression::Integer(Integer {
         value: num.string,
         lpar: vec![],
         rpar: vec![],
-    }))
+    })
 }
 
 fn make_indented_block<'a>(
@@ -1578,65 +1500,50 @@ struct SimpleStatementParts<'a> {
     nl: Token<'a>,
 }
 
-fn _make_simple_statement<'a>(
-    config: &Config<'a>,
-    mut parts: SimpleStatementParts<'a>,
-) -> Result<'a, (Token<'a>, Vec<SmallStatement<'a>>, TrailingWhitespace<'a>)> {
+fn make_semicolon(tok: Token) -> Semicolon {
+    Semicolon {
+        whitespace_before: Default::default(),
+        whitespace_after: Default::default(),
+        tok,
+    }
+}
+
+fn _make_simple_statement(parts: SimpleStatementParts) -> (Token, Vec<SmallStatement>, Token) {
     let mut body = vec![];
-    for (statement, mut semi) in parts.statements {
-        let whitespace_before = ParenthesizableWhitespace::SimpleWhitespace(
-            parse_simple_whitespace(config, &mut semi.whitespace_before)?,
-        );
-        let whitespace_after = ParenthesizableWhitespace::SimpleWhitespace(
-            parse_simple_whitespace(config, &mut semi.whitespace_after)?,
-        );
-        body.push(statement.with_semicolon(Some(Semicolon {
-            whitespace_before,
-            whitespace_after,
-        })));
+    for (statement, semi) in parts.statements {
+        body.push(statement.with_semicolon(Some(make_semicolon(semi))));
     }
     let mut last_statement = parts.last_statement;
-    if let Some(mut semi) = parts.last_semi {
-        // last semi only owns whitespace before
-        let whitespace_before = ParenthesizableWhitespace::SimpleWhitespace(
-            parse_simple_whitespace(config, &mut semi.whitespace_before)?,
-        );
-        last_statement = last_statement.with_semicolon(Some(Semicolon {
-            whitespace_before,
-            whitespace_after: Default::default(),
-        }));
+    if let Some(semi) = parts.last_semi {
+        // TODO: last semi only owns whitespace before
+        last_statement = last_statement.with_semicolon(Some(make_semicolon(semi)));
     }
     body.push(last_statement);
 
-    let trailing_whitespace = parse_trailing_whitespace(config, &mut parts.nl.whitespace_before)?;
-
-    Ok((parts.first, body, trailing_whitespace))
+    (parts.first, body, parts.nl)
 }
 
-fn make_simple_statement_suite<'a>(
-    config: &Config<'a>,
-    parts: SimpleStatementParts<'a>,
-) -> Result<'a, Suite<'a>> {
-    let (mut first, body, trailing_whitespace) = _make_simple_statement(config, parts)?;
-    let leading_whitespace = parse_simple_whitespace(config, &mut first.whitespace_before)?;
-    Ok(Suite::SimpleStatementSuite(SimpleStatementSuite {
-        body,
-        leading_whitespace,
-        trailing_whitespace,
-    }))
-}
+fn make_simple_statement_suite(parts: SimpleStatementParts) -> Suite {
+    let (first_tok, body, newline_tok) = _make_simple_statement(parts);
 
-fn make_simple_statement_line<'a>(
-    config: &Config<'a>,
-    parts: SimpleStatementParts<'a>,
-) -> Result<'a, SimpleStatementLine<'a>> {
-    let (mut first, body, trailing_whitespace) = _make_simple_statement(config, parts)?;
-    let leading_lines = parse_empty_lines_from_end(config, &mut first.whitespace_before)?;
-    Ok(SimpleStatementLine {
+    Suite::SimpleStatementSuite(SimpleStatementSuite {
         body,
-        leading_lines,
-        trailing_whitespace,
+        leading_whitespace: Default::default(),
+        trailing_whitespace: Default::default(),
+        first_tok,
+        newline_tok,
     })
+}
+
+fn make_simple_statement_line(parts: SimpleStatementParts) -> SimpleStatementLine {
+    let (first_tok, body, newline_tok) = _make_simple_statement(parts);
+    SimpleStatementLine {
+        body,
+        leading_lines: Default::default(),
+        trailing_whitespace: Default::default(),
+        first_tok,
+        newline_tok,
+    }
 }
 
 fn make_if<'a>(
@@ -1673,11 +1580,10 @@ fn make_else<'a>(else_tok: Token<'a>, colon_tok: Token<'a>, block: Suite<'a>) ->
 struct StarEtc<'a>(Option<StarArg<'a>>, Vec<Param<'a>>, Option<Param<'a>>);
 
 fn make_parameters<'a>(
-    _config: &Config<'a>,
     posonly: Option<(Vec<Param<'a>>, ParamSlash<'a>)>,
     params: Vec<Param<'a>>,
     star_etc: Option<StarEtc<'a>>,
-) -> Result<'a, Parameters<'a>> {
+) -> Parameters<'a> {
     let (posonly_params, posonly_ind) = match posonly {
         Some((a, b)) => (a, Some(b)),
         None => (vec![], None),
@@ -1686,69 +1592,57 @@ fn make_parameters<'a>(
         None => (None, vec![], None),
         Some(StarEtc(a, b, c)) => (a, b, c),
     };
-    Ok(Parameters {
+    Parameters {
         params,
         star_arg,
         kwonly_params,
         star_kwarg,
         posonly_params,
         posonly_ind,
-    })
+    }
 }
 
 fn add_param_default<'a>(
-    config: &Config<'a>,
     param: Param<'a>,
     def: Option<(AssignEqual<'a>, Expression<'a>)>,
     comma_tok: Option<Token<'a>>,
-) -> Result<'a, Param<'a>> {
-    let comma = match comma_tok {
-        None => None,
-        Some(c) => Some(make_comma(config, c)?),
-    };
+) -> Param<'a> {
+    let comma = comma_tok.map(make_comma);
 
     let (equal, default) = match def {
         Some((a, b)) => (Some(a), Some(b)),
         None => (None, None),
     };
-    Ok(Param {
+    Param {
         equal,
         default,
         comma,
         ..param
-    })
+    }
 }
 
-fn add_param_star<'a>(
-    config: &Config<'a>,
-    param: Param<'a>,
-    mut star: Token<'a>,
-) -> Result<'a, Param<'a>> {
-    let whitespace_after_star =
-        parse_parenthesizable_whitespace(config, &mut star.whitespace_after)?;
-    Ok(Param {
+fn add_param_star<'a>(param: Param<'a>, star: Token<'a>) -> Param<'a> {
+    Param {
         star: Some(star.string),
-        whitespace_after_star,
+        star_tok: Some(star),
         ..param
-    })
+    }
 }
 
-fn make_assign_equal<'a>(config: &Config<'a>, mut eq: Token<'a>) -> Result<'a, AssignEqual<'a>> {
-    let whitespace_before = parse_parenthesizable_whitespace(config, &mut eq.whitespace_before)?;
-    let whitespace_after = parse_parenthesizable_whitespace(config, &mut eq.whitespace_after)?;
-    Ok(AssignEqual {
-        whitespace_before,
-        whitespace_after,
-    })
+fn make_assign_equal(tok: Token) -> AssignEqual {
+    AssignEqual {
+        whitespace_before: Default::default(),
+        whitespace_after: Default::default(),
+        tok,
+    }
 }
 
-fn make_comma<'a>(config: &Config<'a>, mut tok: Token<'a>) -> Result<'a, Comma<'a>> {
-    let whitespace_before = parse_parenthesizable_whitespace(config, &mut tok.whitespace_before)?;
-    let whitespace_after = parse_parenthesizable_whitespace(config, &mut tok.whitespace_after)?;
-    Ok(Comma {
-        whitespace_before,
-        whitespace_after,
-    })
+fn make_comma(tok: Token) -> Comma {
+    Comma {
+        whitespace_before: Default::default(),
+        whitespace_after: Default::default(),
+        tok,
+    }
 }
 
 fn concat<T>(a: Vec<T>, b: Vec<T>) -> Vec<T> {
@@ -1756,21 +1650,20 @@ fn concat<T>(a: Vec<T>, b: Vec<T>) -> Vec<T> {
 }
 
 fn make_name_or_attr<'a>(
-    config: &Config<'a>,
     first_tok: Name<'a>,
     mut tail: Vec<(Token<'a>, Name<'a>)>,
-) -> Result<'a, NameOrAttribute<'a>> {
+) -> NameOrAttribute<'a> {
     if let Some((dot, name)) = tail.pop() {
-        let dot = make_dot(config, dot)?;
-        return Ok(NameOrAttribute::A(Attribute {
+        let dot = make_dot(dot);
+        return NameOrAttribute::A(Attribute {
             attr: name,
             dot,
             lpar: Default::default(),
             rpar: Default::default(),
-            value: Box::new(make_name_or_attr(config, first_tok, tail)?.into()),
-        }));
+            value: Box::new(make_name_or_attr(first_tok, tail).into()),
+        });
     } else {
-        Ok(NameOrAttribute::N(first_tok))
+        NameOrAttribute::N(first_tok)
     }
 }
 
@@ -1781,124 +1674,72 @@ fn make_name(tok: Token) -> Name {
     }
 }
 
-fn make_dot<'a>(config: &Config<'a>, mut tok: Token<'a>) -> Result<'a, Dot<'a>> {
-    let whitespace_before = parse_parenthesizable_whitespace(config, &mut tok.whitespace_before)?;
-    let whitespace_after = parse_parenthesizable_whitespace(config, &mut tok.whitespace_after)?;
-    Ok(Dot {
-        whitespace_before,
-        whitespace_after,
-    })
+fn make_dot(tok: Token) -> Dot {
+    Dot {
+        whitespace_before: Default::default(),
+        whitespace_after: Default::default(),
+        tok,
+    }
 }
 
 fn make_import_alias<'a>(
-    config: &Config<'a>,
     name: NameOrAttribute<'a>,
     asname: Option<(Token<'a>, Name<'a>)>,
-) -> Result<'a, ImportAlias<'a>> {
-    Ok(ImportAlias {
+) -> ImportAlias<'a> {
+    ImportAlias {
         name,
-        asname: match asname {
-            None => None,
-            Some((mut kw, n)) => {
-                let whitespace_before_as =
-                    parse_parenthesizable_whitespace(config, &mut kw.whitespace_before)?;
-                let whitespace_after_as =
-                    parse_parenthesizable_whitespace(config, &mut kw.whitespace_after)?;
-                Some(AsName {
-                    name: AssignTargetExpression::Name(n),
-                    whitespace_after_as,
-                    whitespace_before_as,
-                })
-            }
-        },
+        asname: asname.map(|(x, y)| make_as_name(x, AssignTargetExpression::Name(y))),
         comma: None,
-    })
+    }
 }
 
-type ParenthesizedImportNames<'a> = (Option<Token<'a>>, ImportNames<'a>, Option<Token<'a>>);
+fn make_as_name<'a>(as_tok: Token<'a>, name: AssignTargetExpression<'a>) -> AsName<'a> {
+    AsName {
+        name,
+        whitespace_before_as: Default::default(),
+        whitespace_after_as: Default::default(),
+        as_tok,
+    }
+}
+
+type ParenthesizedImportNames<'a> = (
+    Option<LeftParen<'a>>,
+    ImportNames<'a>,
+    Option<RightParen<'a>>,
+);
 
 fn make_import_from<'a>(
-    config: &Config<'a>,
-    mut from: Token<'a>,
-    dots: Vec<Token<'a>>,
+    from_tok: Token<'a>,
+    dots: Vec<Dot<'a>>,
     module: Option<NameOrAttribute<'a>>,
-    mut import: Token<'a>,
+    import_tok: Token<'a>,
     aliases: ParenthesizedImportNames<'a>,
-) -> Result<'a, ImportFrom<'a>> {
-    let whitespace_after_from = parse_simple_whitespace(config, &mut from.whitespace_after)?;
-    let whitespace_after_import = parse_simple_whitespace(config, &mut import.whitespace_after)?;
-    let (lpar_tok, names, rpar_tok) = aliases;
+) -> ImportFrom<'a> {
+    // TODO parens should come from outside
+    let (lpar, names, rpar) = aliases;
 
-    let lpar = match lpar_tok {
-        None => None,
-        Some(tok) => Some(make_lpar(config, tok)?),
-    };
-    let rpar = match rpar_tok {
-        None => None,
-        Some(tok) => {
-            let mut rpar = make_rpar(config, tok)?;
-            if let ImportNames::Aliases(als) = &names {
-                if let Some(last) = als.last() {
-                    if last.comma.is_some() {
-                        // there's a trailing comma, it owns the whitespace before rpar
-                        rpar.whitespace_before = Default::default();
-                    }
-                }
-            }
-            Some(rpar)
-        }
-    };
-
-    let mut relative = vec![];
-    for mut dot_tok in dots {
-        let dot = Dot {
-            whitespace_after: ParenthesizableWhitespace::SimpleWhitespace(parse_simple_whitespace(
-                config,
-                &mut dot_tok.whitespace_after,
-            )?),
-            whitespace_before: ParenthesizableWhitespace::SimpleWhitespace(SimpleWhitespace("")),
-        };
-        relative.push(dot);
-    }
-    let mut whitespace_before_import = SimpleWhitespace("");
-    if !relative.is_empty() && module.is_none() {
-        // For relative-only imports relocate the space after the final dot to be owned
-        // by the import token.
-        if let Some(Dot {
-            whitespace_after: ParenthesizableWhitespace::SimpleWhitespace(dot_ws),
-            ..
-        }) = relative.last_mut()
-        {
-            swap(dot_ws, &mut whitespace_before_import);
-        }
-    } else {
-        whitespace_before_import = parse_simple_whitespace(config, &mut import.whitespace_before)?;
-    }
-
-    Ok(ImportFrom {
+    ImportFrom {
         module,
         names,
-        relative,
+        relative: dots,
         lpar,
         rpar,
         semicolon: None,
-        whitespace_after_from,
-        whitespace_after_import,
-        whitespace_before_import,
-    })
+        whitespace_after_from: Default::default(),
+        whitespace_after_import: Default::default(),
+        whitespace_before_import: Default::default(),
+        from_tok,
+        import_tok,
+    }
 }
 
-fn make_import<'a>(
-    config: &Config<'a>,
-    mut import: Token<'a>,
-    names: Vec<ImportAlias<'a>>,
-) -> Result<'a, Import<'a>> {
-    let whitespace_after_import = parse_simple_whitespace(config, &mut import.whitespace_after)?;
-    Ok(Import {
+fn make_import<'a>(import_tok: Token<'a>, names: Vec<ImportAlias<'a>>) -> Import<'a> {
+    Import {
         names,
-        whitespace_after_import,
+        whitespace_after_import: Default::default(),
         semicolon: None,
-    })
+        import_tok,
+    }
 }
 
 fn make_import_from_as_names<'a>(
@@ -1915,20 +1756,18 @@ fn make_import_from_as_names<'a>(
     ret
 }
 
-fn make_lpar<'a>(config: &Config<'a>, mut tok: Token<'a>) -> Result<'a, LeftParen<'a>> {
-    let whitespace_after = parse_parenthesizable_whitespace(config, &mut tok.whitespace_after)?;
-    Ok(LeftParen {
-        whitespace_after,
+fn make_lpar(tok: Token) -> LeftParen {
+    LeftParen {
+        whitespace_after: Default::default(),
         lpar_tok: tok,
-    })
+    }
 }
 
-fn make_rpar<'a>(config: &Config<'a>, mut tok: Token<'a>) -> Result<'a, RightParen<'a>> {
-    let whitespace_before = parse_parenthesizable_whitespace(config, &mut tok.whitespace_before)?;
-    Ok(RightParen {
-        whitespace_before,
+fn make_rpar(tok: Token) -> RightParen {
+    RightParen {
+        whitespace_before: Default::default(),
         rpar_tok: tok,
-    })
+    }
 }
 
 fn make_module<'a>(body: Vec<Statement<'a>>, tok: Token<'a>) -> Module<'a> {
@@ -1940,40 +1779,30 @@ fn make_module<'a>(body: Vec<Statement<'a>>, tok: Token<'a>) -> Module<'a> {
     }
 }
 
-fn make_attribute<'a>(
-    config: &Config<'a>,
-    value: Expression<'a>,
-    dot: Token<'a>,
-    attr: Name<'a>,
-) -> Result<'a, Attribute<'a>> {
-    let dot = make_dot(config, dot)?;
-    Ok(Attribute {
+fn make_attribute<'a>(value: Expression<'a>, dot: Token<'a>, attr: Name<'a>) -> Attribute<'a> {
+    let dot = make_dot(dot);
+    Attribute {
         attr,
         dot,
         lpar: Default::default(),
         rpar: Default::default(),
         value: Box::new(value),
-    })
+    }
 }
 
-fn make_starred_element<'a>(
-    config: &Config<'a>,
-    mut star: Token<'a>,
-    rest: Element<'a>,
-) -> Result<'a, StarredElement<'a>> {
+fn make_starred_element<'a>(star_tok: Token<'a>, rest: Element<'a>) -> StarredElement<'a> {
     let value = match rest {
         Element::Simple { value, .. } => value,
         _ => panic!("Internal error while making starred element"),
     };
-    let whitespace_before_value =
-        parse_parenthesizable_whitespace(config, &mut star.whitespace_after)?;
-    Ok(StarredElement {
+    StarredElement {
         value: Box::new(value),
-        whitespace_before_value,
+        whitespace_before_value: Default::default(),
         lpar: Default::default(),
         rpar: Default::default(),
         comma: Default::default(),
-    })
+        star_tok,
+    }
 }
 
 fn assign_target_to_element(expr: AssignTargetExpression) -> Element {
@@ -2003,26 +1832,23 @@ fn assign_target_to_element(expr: AssignTargetExpression) -> Element {
 }
 
 fn make_assignment<'a>(
-    config: &Config<'a>,
     lhs: Vec<(AssignTargetExpression<'a>, Token<'a>)>,
     rhs: Expression<'a>,
-) -> Result<'a, Assign<'a>> {
+) -> Assign<'a> {
     let mut targets = vec![];
-    for (target, mut equal) in lhs {
-        let whitespace_before_equal =
-            parse_simple_whitespace(config, &mut equal.whitespace_before)?;
-        let whitespace_after_equal = parse_simple_whitespace(config, &mut equal.whitespace_after)?;
+    for (target, equal_tok) in lhs {
         targets.push(AssignTarget {
             target,
-            whitespace_before_equal,
-            whitespace_after_equal,
+            whitespace_before_equal: Default::default(),
+            whitespace_after_equal: Default::default(),
+            equal_tok,
         });
     }
-    Ok(Assign {
+    Assign {
         targets,
         value: rhs,
         semicolon: Default::default(),
-    })
+    }
 }
 
 fn expr_to_element(expr: Expression) -> Element {
@@ -2033,116 +1859,75 @@ fn expr_to_element(expr: Expression) -> Element {
 }
 
 fn make_tuple<'a>(
-    config: &Config<'a>,
     first: Element<'a>,
     rest: Vec<(Comma<'a>, Element<'a>)>,
     trailing_comma: Option<Comma<'a>>,
-    lpar_tok: Option<Token<'a>>,
-    rpar_tok: Option<Token<'a>>,
-) -> Result<'a, Tuple<'a>> {
-    let mut lpar: Vec<LeftParen<'a>> = Default::default();
-    let mut rpar: Vec<RightParen<'a>> = Default::default();
-    let elements = comma_separate(first, rest, trailing_comma, false);
+    lpar: Option<LeftParen<'a>>,
+    rpar: Option<RightParen<'a>>,
+) -> Tuple<'a> {
+    let elements = comma_separate(first, rest, trailing_comma);
 
-    if let Some(lpar_tok) = lpar_tok {
-        lpar.push(make_lpar(config, lpar_tok)?);
-    }
+    let lpar = lpar.map(|l| vec![l]).unwrap_or_default();
+    let rpar = rpar.map(|r| vec![r]).unwrap_or_default();
 
-    if let Some(rpar_tok) = rpar_tok {
-        rpar.push(make_rpar(config, rpar_tok)?);
-    }
-
-    Ok(Tuple {
+    Tuple {
         elements,
         lpar,
         rpar,
-    })
+    }
 }
 
-fn add_expr_parens<'a>(
-    config: &Config<'a>,
-    e: Expression<'a>,
-    lpar: Token<'a>,
-    rpar: Token<'a>,
-) -> Result<'a, Expression<'a>> {
-    Ok(e.with_parens(make_lpar(config, lpar)?, make_rpar(config, rpar)?))
-}
-
-fn make_kwarg<'a>(
-    config: &Config<'a>,
-    name: Name<'a>,
-    eq: Token<'a>,
-    value: Expression<'a>,
-) -> Result<'a, Arg<'a>> {
-    let equal = Some(make_assign_equal(config, eq)?);
+fn make_kwarg<'a>(name: Name<'a>, eq: Token<'a>, value: Expression<'a>) -> Arg<'a> {
+    let equal = Some(make_assign_equal(eq));
     let keyword = Some(name);
-    Ok(Arg {
+    Arg {
         value,
         keyword,
         equal,
         comma: None,
         star: "",
-        whitespace_after_star: ParenthesizableWhitespace::SimpleWhitespace(SimpleWhitespace("")),
-        whitespace_after_arg: ParenthesizableWhitespace::SimpleWhitespace(SimpleWhitespace("")),
-    })
+        whitespace_after_star: Default::default(),
+        whitespace_after_arg: Default::default(),
+        star_tok: None,
+    }
 }
 
-fn make_star_arg<'a>(
-    config: &Config<'a>,
-    mut star: Token<'a>,
-    expr: Expression<'a>,
-) -> Result<'a, Arg<'a>> {
-    let whitespace_after_star =
-        parse_parenthesizable_whitespace(config, &mut star.whitespace_after)?;
-    Ok(Arg {
+fn make_star_arg<'a>(star: Token<'a>, expr: Expression<'a>) -> Arg<'a> {
+    Arg {
         value: expr,
         keyword: None,
         equal: None,
         comma: None,
         star: star.string,
-        whitespace_after_star,
-        whitespace_after_arg: ParenthesizableWhitespace::SimpleWhitespace(SimpleWhitespace("")),
-    })
+        whitespace_after_star: Default::default(),
+        whitespace_after_arg: Default::default(),
+        star_tok: Some(star),
+    }
 }
 
 fn make_call<'a>(
-    config: &Config<'a>,
     func: Expression<'a>,
-    mut lpar: Token<'a>,
-    mut args: Vec<Arg<'a>>,
-    mut rpar: Token<'a>,
-) -> Result<'a, Call<'a>> {
-    let whitespace_after_func =
-        parse_parenthesizable_whitespace(config, &mut lpar.whitespace_before)?;
-    let whitespace_before_args =
-        parse_parenthesizable_whitespace(config, &mut lpar.whitespace_after)?;
-    if let Some(arg) = args.last_mut() {
-        if arg.comma.is_none() {
-            arg.whitespace_after_arg =
-                parse_parenthesizable_whitespace(config, &mut rpar.whitespace_before)?;
-        }
-    }
-
+    lpar_tok: Token<'a>,
+    args: Vec<Arg<'a>>,
+    rpar_tok: Token<'a>,
+) -> Call<'a> {
     let lpar = vec![];
     let rpar = vec![];
     let func = Box::new(func);
 
-    Ok(Call {
+    Call {
         func,
         args,
         lpar,
         rpar,
-        whitespace_after_func,
-        whitespace_before_args,
-    })
+        whitespace_after_func: Default::default(),
+        whitespace_before_args: Default::default(),
+        lpar_tok,
+        rpar_tok,
+    }
 }
 
-fn make_genexp_call<'a>(
-    config: &Config<'a>,
-    func: Expression<'a>,
-    mut lpar_tok: Token<'a>,
-    mut genexp: GeneratorExp<'a>,
-) -> Call<'a> {
+fn make_genexp_call<'a>(func: Expression<'a>, mut genexp: GeneratorExp<'a>) -> Call<'a> {
     // func ( (genexp) )
     //      ^
     //   lpar_tok
@@ -2150,18 +1935,12 @@ fn make_genexp_call<'a>(
     // lpar_tok is the same token that was used to parse genexp's first lpar.
     // Nothing owns the whitespace before lpar_tok, so the same token is passed in here
     // again, to be converted into whitespace_after_func. We then split off a pair of
-    // parenthesis from genexp, since now Call will own them, and shuffle around
-    // whitespace accordingly.
+    // parenthesis from genexp, since now Call will own them.
 
     let mut lpars = genexp.lpar.into_iter();
-    let first_lpar = lpars.next().expect("genexp without lpar");
+    let lpar_tok = lpars.next().expect("genexp without lpar").lpar_tok;
     genexp.lpar = lpars.collect();
-    let last_rpar = genexp.rpar.pop().expect("genexp without rpar");
-
-    let whitespace_before_args = first_lpar.whitespace_after;
-    let whitespace_after_func =
-        parse_parenthesizable_whitespace(config, &mut lpar_tok.whitespace_before)
-            .expect("This whitespace was parsed once already, it should never fail");
+    let rpar_tok = genexp.rpar.pop().expect("genexp without rpar").rpar_tok;
 
     Call {
         func: Box::new(func),
@@ -2171,15 +1950,16 @@ fn make_genexp_call<'a>(
             equal: None,
             comma: None,
             star: "",
-            whitespace_after_star: ParenthesizableWhitespace::SimpleWhitespace(SimpleWhitespace(
-                "",
-            )),
-            whitespace_after_arg: last_rpar.whitespace_before,
+            whitespace_after_star: Default::default(),
+            whitespace_after_arg: Default::default(),
+            star_tok: None,
         }],
         lpar: vec![],
         rpar: vec![],
-        whitespace_after_func,
-        whitespace_before_args,
+        whitespace_after_func: Default::default(),
+        whitespace_before_args: Default::default(),
+        lpar_tok,
+        rpar_tok,
     }
 }
 
@@ -2190,84 +1970,65 @@ fn make_arg(expr: Expression) -> Arg {
         equal: Default::default(),
         comma: Default::default(),
         star: Default::default(),
-        whitespace_after_star: ParenthesizableWhitespace::SimpleWhitespace(SimpleWhitespace("")),
-        whitespace_after_arg: ParenthesizableWhitespace::SimpleWhitespace(SimpleWhitespace("")),
+        whitespace_after_star: Default::default(),
+        whitespace_after_arg: Default::default(),
+        star_tok: None,
     }
 }
 
-fn make_comp_if<'a>(
-    config: &Config<'a>,
-    mut kw: Token<'a>,
-    test: Expression<'a>,
-) -> Result<'a, CompIf<'a>> {
-    let whitespace_before = parse_parenthesizable_whitespace(config, &mut kw.whitespace_before)?;
-    let whitespace_before_test =
-        parse_parenthesizable_whitespace(config, &mut kw.whitespace_after)?;
-    Ok(CompIf {
+fn make_comp_if<'a>(if_tok: Token<'a>, test: Expression<'a>) -> CompIf<'a> {
+    CompIf {
         test,
-        whitespace_before,
-        whitespace_before_test,
-    })
+        whitespace_before: Default::default(),
+        whitespace_before_test: Default::default(),
+        if_tok,
+    }
 }
 
 fn make_for_if<'a>(
-    config: &Config<'a>,
-    mut async_tok: Option<Token<'a>>,
-    mut for_: Token<'a>,
+    async_tok: Option<Token<'a>>,
+    for_tok: Token<'a>,
     target: AssignTargetExpression<'a>,
-    mut in_: Token<'a>,
+    in_tok: Token<'a>,
     iter: Expression<'a>,
     ifs: Vec<CompIf<'a>>,
-) -> Result<'a, CompFor<'a>> {
-    let mut whitespace_before =
-        parse_parenthesizable_whitespace(config, &mut for_.whitespace_before)?;
-    let whitespace_after_for =
-        parse_parenthesizable_whitespace(config, &mut for_.whitespace_after)?;
-    let whitespace_before_in =
-        parse_parenthesizable_whitespace(config, &mut in_.whitespace_before)?;
-    let whitespace_after_in = parse_parenthesizable_whitespace(config, &mut in_.whitespace_after)?;
+) -> CompFor<'a> {
     let inner_for_in = None;
+    let asynchronous = async_tok.as_ref().map(|_| Asynchronous {
+        whitespace_after: Default::default(),
+    });
 
-    // If there is an async keyword, the start of the CompFor expression is considered
-    // to be this keyword, so whitespace_before needs to adjust but Asynchronous will
-    // own the whitespace before the for token.
-    let asynchronous = if let Some(asy) = async_tok.as_mut() {
-        let whitespace_after = whitespace_before;
-        whitespace_before = parse_parenthesizable_whitespace(config, &mut asy.whitespace_before)?;
-        Some(Asynchronous { whitespace_after })
-    } else {
-        None
-    };
-
-    Ok(CompFor {
+    CompFor {
         target,
         iter,
         ifs,
         inner_for_in,
         asynchronous,
-        whitespace_before,
-        whitespace_after_for,
-        whitespace_before_in,
-        whitespace_after_in,
-    })
+        whitespace_before: Default::default(),
+        whitespace_after_for: Default::default(),
+        whitespace_before_in: Default::default(),
+        whitespace_after_in: Default::default(),
+        async_tok,
+        for_tok,
+        in_tok,
+    }
 }
 
 fn make_genexp<'a>(
-    config: &Config<'a>,
-    lpar: Token<'a>,
+    lpar: LeftParen<'a>,
     elt: Expression<'a>,
     for_in: CompFor<'a>,
-    rpar: Token<'a>,
-) -> Result<'a, GeneratorExp<'a>> {
-    let lpar = vec![make_lpar(config, lpar)?];
-    let rpar = vec![make_rpar(config, rpar)?];
+    rpar: RightParen<'a>,
+) -> GeneratorExp<'a> {
+    let lpar = vec![lpar];
+    let rpar = vec![rpar];
 
-    Ok(GeneratorExp {
+    GeneratorExp {
         elt: Box::new(elt),
         for_in: Box::new(for_in),
         lpar,
         rpar,
-    })
+    }
 }
 
 fn merge_comp_fors(comp_fors: Vec<CompFor>) -> CompFor {
@@ -2280,93 +2041,75 @@ fn merge_comp_fors(comp_fors: Vec<CompFor>) -> CompFor {
     })
 }
 
+fn make_left_bracket(tok: Token) -> LeftSquareBracket {
+    LeftSquareBracket {
+        whitespace_after: Default::default(),
+        tok,
+    }
+}
+
+fn make_right_bracket(tok: Token) -> RightSquareBracket {
+    RightSquareBracket {
+        whitespace_before: Default::default(),
+        tok,
+    }
+}
+
+fn make_left_brace(tok: Token) -> LeftCurlyBrace {
+    LeftCurlyBrace {
+        whitespace_after: Default::default(),
+        tok,
+    }
+}
+
+fn make_right_brace(tok: Token) -> RightCurlyBrace {
+    RightCurlyBrace {
+        whitespace_before: Default::default(),
+        tok,
+    }
+}
+
 fn make_list_comp<'a>(
-    config: &Config<'a>,
-    mut lbrak: Token<'a>,
+    lbracket: LeftSquareBracket<'a>,
     elt: Expression<'a>,
     for_in: CompFor<'a>,
-    mut rbrak: Token<'a>,
-) -> Result<'a, ListComp<'a>> {
-    let lbracket =
-        parse_parenthesizable_whitespace(config, &mut lbrak.whitespace_after).map(|ws| {
-            LeftSquareBracket {
-                whitespace_after: ws,
-            }
-        })?;
-    let rbracket =
-        parse_parenthesizable_whitespace(config, &mut rbrak.whitespace_before).map(|ws| {
-            RightSquareBracket {
-                whitespace_before: ws,
-            }
-        })?;
-
-    Ok(ListComp {
+    rbracket: RightSquareBracket<'a>,
+) -> ListComp<'a> {
+    ListComp {
         elt: Box::new(elt),
         for_in: Box::new(for_in),
         lbracket,
         rbracket,
         lpar: Default::default(),
         rpar: Default::default(),
-    })
+    }
 }
 
 fn make_set_comp<'a>(
-    config: &Config<'a>,
-    mut lbrace: Token<'a>,
+    lbrace: LeftCurlyBrace<'a>,
     elt: Expression<'a>,
     for_in: CompFor<'a>,
-    mut rbrace: Token<'a>,
-) -> Result<'a, SetComp<'a>> {
-    let lbrace =
-        parse_parenthesizable_whitespace(config, &mut lbrace.whitespace_after).map(|ws| {
-            LeftCurlyBrace {
-                whitespace_after: ws,
-            }
-        })?;
-    let rbrace =
-        parse_parenthesizable_whitespace(config, &mut rbrace.whitespace_before).map(|ws| {
-            RightCurlyBrace {
-                whitespace_before: ws,
-            }
-        })?;
-
-    Ok(SetComp {
+    rbrace: RightCurlyBrace<'a>,
+) -> SetComp<'a> {
+    SetComp {
         elt: Box::new(elt),
         for_in: Box::new(for_in),
         lbrace,
         rbrace,
         lpar: Default::default(),
         rpar: Default::default(),
-    })
+    }
 }
 
 fn make_dict_comp<'a>(
-    config: &Config<'a>,
-    mut lbrace: Token<'a>,
+    lbrace: LeftCurlyBrace<'a>,
     kvpair: (Expression<'a>, Token<'a>, Expression<'a>),
     for_in: CompFor<'a>,
-    mut rbrace: Token<'a>,
-) -> Result<'a, DictComp<'a>> {
-    let lbrace =
-        parse_parenthesizable_whitespace(config, &mut lbrace.whitespace_after).map(|ws| {
-            LeftCurlyBrace {
-                whitespace_after: ws,
-            }
-        })?;
-    let rbrace =
-        parse_parenthesizable_whitespace(config, &mut rbrace.whitespace_before).map(|ws| {
-            RightCurlyBrace {
-                whitespace_before: ws,
-            }
-        })?;
+    rbrace: RightCurlyBrace<'a>,
+) -> DictComp<'a> {
+    let (key, colon_tok, value) = kvpair;
 
-    let (key, mut colon, value) = kvpair;
-    let whitespace_before_colon =
-        parse_parenthesizable_whitespace(config, &mut colon.whitespace_before)?;
-    let whitespace_after_colon =
-        parse_parenthesizable_whitespace(config, &mut colon.whitespace_after)?;
-
-    Ok(DictComp {
+    DictComp {
         key: Box::new(key),
         value: Box::new(value),
         for_in: Box::new(for_in),
@@ -2374,82 +2117,44 @@ fn make_dict_comp<'a>(
         rbrace,
         lpar: vec![],
         rpar: vec![],
-        whitespace_before_colon,
-        whitespace_after_colon,
-    })
+        whitespace_before_colon: Default::default(),
+        whitespace_after_colon: Default::default(),
+        colon_tok,
+    }
 }
 
 fn make_list<'a>(
-    config: &Config<'a>,
-    mut lbrak: Token<'a>,
+    lbracket: LeftSquareBracket<'a>,
     elements: Vec<Element<'a>>,
-    mut rbrak: Token<'a>,
-) -> Result<'a, List<'a>> {
-    let lbracket =
-        parse_parenthesizable_whitespace(config, &mut lbrak.whitespace_after).map(|ws| {
-            LeftSquareBracket {
-                whitespace_after: ws,
-            }
-        })?;
-    let rbracket = if elements.is_empty() {
-        // lbracket owns all the whitespace if there are no elements
-        RightSquareBracket {
-            whitespace_before: Default::default(),
-        }
-    } else {
-        parse_parenthesizable_whitespace(config, &mut rbrak.whitespace_before).map(|ws| {
-            RightSquareBracket {
-                whitespace_before: ws,
-            }
-        })?
-    };
-    Ok(List {
+    rbracket: RightSquareBracket<'a>,
+) -> List<'a> {
+    List {
         elements,
         lbracket,
         rbracket,
         lpar: Default::default(),
         rpar: Default::default(),
-    })
+    }
 }
 
 fn make_set<'a>(
-    config: &Config<'a>,
-    mut lbrace: Token<'a>,
+    lbrace: LeftCurlyBrace<'a>,
     elements: Vec<Element<'a>>,
-    mut rbrace: Token<'a>,
-) -> Result<'a, Set<'a>> {
-    let lbrace =
-        parse_parenthesizable_whitespace(config, &mut lbrace.whitespace_after).map(|ws| {
-            LeftCurlyBrace {
-                whitespace_after: ws,
-            }
-        })?;
-    let rbrace = if elements.is_empty() {
-        // lbrace owns all the whitespace if there are no elements
-        RightCurlyBrace {
-            whitespace_before: Default::default(),
-        }
-    } else {
-        parse_parenthesizable_whitespace(config, &mut rbrace.whitespace_before).map(|ws| {
-            RightCurlyBrace {
-                whitespace_before: ws,
-            }
-        })?
-    };
-    Ok(Set {
+    rbrace: RightCurlyBrace<'a>,
+) -> Set<'a> {
+    Set {
         elements,
         lbrace,
         rbrace,
         lpar: Default::default(),
         rpar: Default::default(),
-    })
+    }
 }
 
 fn comma_separate<'a, T>(
     first: T,
     rest: Vec<(Comma<'a>, T)>,
     trailing_comma: Option<Comma<'a>>,
-    keep_trailing_whitespace: bool,
 ) -> Vec<T>
 where
     T: WithComma<'a>,
@@ -2460,12 +2165,7 @@ where
         elements.push(current.with_comma(comma));
         current = next;
     }
-    if let Some(mut comma) = trailing_comma {
-        if !keep_trailing_whitespace {
-            // don't consume trailing whitespace for trailing comma
-            comma.whitespace_after =
-                ParenthesizableWhitespace::SimpleWhitespace(SimpleWhitespace(""));
-        }
+    if let Some(comma) = trailing_comma {
         current = current.with_comma(comma);
     }
     elements.push(current);
@@ -2473,36 +2173,17 @@ where
 }
 
 fn make_dict<'a>(
-    config: &Config<'a>,
-    mut lbrace: Token<'a>,
+    lbrace: LeftCurlyBrace<'a>,
     elements: Vec<DictElement<'a>>,
-    mut rbrace: Token<'a>,
-) -> Result<'a, Dict<'a>> {
-    let lbrace =
-        parse_parenthesizable_whitespace(config, &mut lbrace.whitespace_after).map(|ws| {
-            LeftCurlyBrace {
-                whitespace_after: ws,
-            }
-        })?;
-    let rbrace = if elements.is_empty() {
-        // lbrace owns all whitespace if there are no elements
-        RightCurlyBrace {
-            whitespace_before: Default::default(),
-        }
-    } else {
-        parse_parenthesizable_whitespace(config, &mut rbrace.whitespace_before).map(|ws| {
-            RightCurlyBrace {
-                whitespace_before: ws,
-            }
-        })?
-    };
-    Ok(Dict {
+    rbrace: RightCurlyBrace<'a>,
+) -> Dict<'a> {
+    Dict {
         elements,
         lbrace,
         rbrace,
         lpar: Default::default(),
         rpar: Default::default(),
-    })
+    }
 }
 
 fn make_double_starred_keypairs<'a>(
@@ -2525,115 +2206,78 @@ fn make_double_starred_keypairs<'a>(
     elements
 }
 
-fn make_dict_element<'a>(
-    config: &Config<'a>,
-    el: (Expression<'a>, Token<'a>, Expression<'a>),
-) -> Result<'a, DictElement<'a>> {
-    let (key, mut colon, value) = el;
-    let whitespace_before_colon =
-        parse_parenthesizable_whitespace(config, &mut colon.whitespace_before)?;
-    let whitespace_after_colon =
-        parse_parenthesizable_whitespace(config, &mut colon.whitespace_after)?;
-
-    Ok(DictElement::Simple {
+fn make_dict_element<'a>(el: (Expression<'a>, Token<'a>, Expression<'a>)) -> DictElement<'a> {
+    let (key, colon_tok, value) = el;
+    DictElement::Simple {
         key,
         value,
         comma: Default::default(),
-        whitespace_before_colon,
-        whitespace_after_colon,
-    })
+        whitespace_before_colon: Default::default(),
+        whitespace_after_colon: Default::default(),
+        colon_tok,
+    }
 }
 
 fn make_double_starred_element<'a>(
-    config: &Config<'a>,
-    mut star: Token<'a>,
+    star_tok: Token<'a>,
     value: Expression<'a>,
-) -> Result<'a, DoubleStarredElement<'a>> {
-    let whitespace_before_value =
-        parse_parenthesizable_whitespace(config, &mut star.whitespace_after)?;
-    Ok(DoubleStarredElement {
+) -> DoubleStarredElement<'a> {
+    DoubleStarredElement {
         value,
         comma: Default::default(),
-        whitespace_before_value,
-    })
+        whitespace_before_value: Default::default(),
+        star_tok,
+    }
 }
 
 fn make_index(value: Expression) -> BaseSlice {
     BaseSlice::Index(Index { value })
 }
 
-fn make_colon<'a>(config: &Config<'a>, mut tok: Token<'a>) -> Result<'a, Colon<'a>> {
-    let whitespace_before = parse_parenthesizable_whitespace(config, &mut tok.whitespace_before)?;
-    let whitespace_after = parse_parenthesizable_whitespace(config, &mut tok.whitespace_after)?;
-    Ok(Colon {
+fn make_colon(tok: Token) -> Colon {
+    let whitespace_before = Default::default();
+    let whitespace_after = Default::default();
+    Colon {
         whitespace_before,
         whitespace_after,
-    })
+        tok,
+    }
 }
 
 fn make_slice<'a>(
-    config: &Config<'a>,
     lower: Option<Expression<'a>>,
     first_colon: Token<'a>,
     upper: Option<Expression<'a>>,
     rest: Option<(Token<'a>, Option<Expression<'a>>)>,
-) -> Result<'a, BaseSlice<'a>> {
-    let first_colon = make_colon(config, first_colon)?;
+) -> BaseSlice<'a> {
+    let first_colon = make_colon(first_colon);
     let (second_colon, step) = if let Some((tok, step)) = rest {
-        (Some(make_colon(config, tok)?), step)
+        (Some(make_colon(tok)), step)
     } else {
         (None, None)
     };
-    Ok(BaseSlice::Slice(Slice {
+    BaseSlice::Slice(Slice {
         lower,
         upper,
         step,
         first_colon,
         second_colon,
-    }))
-}
-
-// HACK: in slices if there is a colon directly before or after the comma, the colon
-// owns the whitespace. Not sure if this is by design or accident.
-fn ltrim_comma(before: &BaseSlice, comma: &mut Comma) {
-    if let BaseSlice::Slice(s) = &before {
-        let trailing_second_colon = s.step.is_none() && s.second_colon.is_some();
-        let trailing_first_colon = s.upper.is_none() && s.step.is_none();
-        if trailing_first_colon || trailing_second_colon {
-            comma.whitespace_before =
-                ParenthesizableWhitespace::SimpleWhitespace(SimpleWhitespace(""));
-        }
-    }
-}
-
-fn rtrim_comma(comma: &mut Comma, after: &BaseSlice) {
-    if let BaseSlice::Slice(s) = &after {
-        let leading_first_colon = s.lower.is_none();
-        if leading_first_colon {
-            comma.whitespace_after =
-                ParenthesizableWhitespace::SimpleWhitespace(SimpleWhitespace(""));
-        }
-    }
+    })
 }
 
 fn make_slices<'a>(
     first: BaseSlice<'a>,
     rest: Vec<(Comma<'a>, BaseSlice<'a>)>,
-    mut trailing_comma: Option<Comma<'a>>,
+    trailing_comma: Option<Comma<'a>>,
 ) -> Vec<SubscriptElement<'a>> {
     let mut elements = vec![];
     let mut current = first;
-    for (mut comma, next) in rest {
-        ltrim_comma(&current, &mut comma);
-        rtrim_comma(&mut comma, &next);
+    for (comma, next) in rest {
         elements.push(SubscriptElement {
             slice: current,
             comma: Some(comma),
         });
         current = next;
-    }
-    if let Some(comma) = trailing_comma.as_mut() {
-        ltrim_comma(&current, comma);
     }
     elements.push(SubscriptElement {
         slice: current,
@@ -2643,72 +2287,44 @@ fn make_slices<'a>(
 }
 
 fn make_subscript<'a>(
-    config: &Config<'a>,
     value: Expression<'a>,
-    mut lbrak: Token<'a>,
+    lbracket: LeftSquareBracket<'a>,
     slice: Vec<SubscriptElement<'a>>,
-    mut rbrak: Token<'a>,
-) -> Result<'a, Subscript<'a>> {
-    let lbracket =
-        parse_parenthesizable_whitespace(config, &mut lbrak.whitespace_after).map(|ws| {
-            LeftSquareBracket {
-                whitespace_after: ws,
-            }
-        })?;
-
-    // if there is a trailing comma, it owns the whitespace before right bracket
-    let rbracket = if let Some(SubscriptElement { comma: Some(_), .. }) = slice.last() {
-        Ok(ParenthesizableWhitespace::SimpleWhitespace(
-            SimpleWhitespace(""),
-        ))
-    } else {
-        parse_parenthesizable_whitespace(config, &mut rbrak.whitespace_before)
-    }
-    .map(|ws| RightSquareBracket {
-        whitespace_before: ws,
-    })?;
-
-    let whitespace_after_value =
-        parse_parenthesizable_whitespace(config, &mut lbrak.whitespace_before)?;
-    Ok(Subscript {
+    rbracket: RightSquareBracket<'a>,
+) -> Subscript<'a> {
+    let lbracket_tok = lbracket.tok.clone();
+    Subscript {
         value: Box::new(value),
         slice,
         lbracket,
         rbracket,
         lpar: Default::default(),
         rpar: Default::default(),
-        whitespace_after_value,
-    })
+        whitespace_after_value: Default::default(),
+        lbracket_tok,
+    }
 }
 
 fn make_ifexp<'a>(
-    config: &Config<'a>,
     body: Expression<'a>,
-    mut if_tok: Token<'a>,
+    if_tok: Token<'a>,
     test: Expression<'a>,
-    mut else_tok: Token<'a>,
+    else_tok: Token<'a>,
     orelse: Expression<'a>,
-) -> Result<'a, IfExp<'a>> {
-    let whitespace_before_if =
-        parse_parenthesizable_whitespace(config, &mut if_tok.whitespace_before)?;
-    let whitespace_after_if =
-        parse_parenthesizable_whitespace(config, &mut if_tok.whitespace_after)?;
-    let whitespace_before_else =
-        parse_parenthesizable_whitespace(config, &mut else_tok.whitespace_before)?;
-    let whitespace_after_else =
-        parse_parenthesizable_whitespace(config, &mut else_tok.whitespace_after)?;
-
-    Ok(IfExp {
+) -> IfExp<'a> {
+    IfExp {
         test: Box::new(test),
         body: Box::new(body),
         orelse: Box::new(orelse),
         lpar: Default::default(),
         rpar: Default::default(),
-        whitespace_before_if,
-        whitespace_after_if,
-        whitespace_before_else,
-        whitespace_after_else,
-    })
+        whitespace_before_if: Default::default(),
+        whitespace_after_if: Default::default(),
+        whitespace_before_else: Default::default(),
+        whitespace_after_else: Default::default(),
+        if_tok,
+        else_tok,
+    }
 }
 
 fn add_arguments_trailing_comma<'a>(
@@ -2723,188 +2339,126 @@ fn add_arguments_trailing_comma<'a>(
 }
 
 fn make_lambda<'a>(
-    config: &Config<'a>,
-    mut kw: Token<'a>,
-    mut params: Parameters<'a>,
-    mut colon_tok: Token<'a>,
+    lambda_tok: Token<'a>,
+    params: Parameters<'a>,
+    colon_tok: Token<'a>,
     expr: Expression<'a>,
-) -> Result<'a, Lambda<'a>> {
-    let whitespace_after_lambda = if params.is_empty() {
-        None
-    } else {
-        Some(parse_parenthesizable_whitespace(
-            config,
-            &mut kw.whitespace_after,
-        )?)
-    };
-    adjust_parameters_trailing_whitespace(config, &mut params, &mut colon_tok)?;
-    let colon = make_colon(config, colon_tok)?;
-    Ok(Lambda {
+) -> Lambda<'a> {
+    let colon = make_colon(colon_tok);
+    Lambda {
         params: Box::new(params),
         body: Box::new(expr),
         colon,
         lpar: Default::default(),
         rpar: Default::default(),
-        whitespace_after_lambda,
-    })
+        whitespace_after_lambda: Default::default(),
+        lambda_tok,
+    }
 }
 
-fn make_annotation<'a>(
-    config: &Config<'a>,
-    mut indicator: Token<'a>,
-    ann: Expression<'a>,
-) -> Result<'a, Annotation<'a>> {
-    let whitespace_before_indicator = Some(parse_parenthesizable_whitespace(
-        config,
-        &mut indicator.whitespace_before,
-    )?);
-    let whitespace_after_indicator =
-        parse_parenthesizable_whitespace(config, &mut indicator.whitespace_after)?;
-
-    Ok(Annotation {
+fn make_annotation<'a>(tok: Token<'a>, ann: Expression<'a>) -> Annotation<'a> {
+    Annotation {
         annotation: ann,
-        whitespace_before_indicator,
-        whitespace_after_indicator,
-    })
+        whitespace_before_indicator: Default::default(),
+        whitespace_after_indicator: Default::default(),
+        tok,
+    }
 }
 
 fn make_ann_assignment<'a>(
-    config: &Config<'a>,
     target: AssignTargetExpression<'a>,
     col: Token<'a>,
     ann: Expression<'a>,
     rhs: Option<(Token<'a>, Expression<'a>)>,
-) -> Result<'a, AnnAssign<'a>> {
-    let annotation = make_annotation(config, col, ann)?;
+) -> AnnAssign<'a> {
+    let annotation = make_annotation(col, ann);
     let (eq, value) = rhs.map(|(x, y)| (Some(x), Some(y))).unwrap_or((None, None));
-    let equal = if let Some(eq) = eq {
-        Some(make_assign_equal(config, eq)?)
-    } else {
-        None
-    };
-    Ok(AnnAssign {
+    let equal = eq.map(make_assign_equal);
+    AnnAssign {
         target,
         annotation,
         value,
         equal,
         semicolon: None,
-    })
+    }
 }
 
 fn make_yield<'a>(
-    config: &Config<'a>,
-    mut y: Token<'a>,
+    yield_tok: Token<'a>,
     f: Option<Token<'a>>,
     e: Option<Expression<'a>>,
-) -> Result<'a, Yield<'a>> {
+) -> Yield<'a> {
     let value = match (f, e) {
         (None, None) => None,
-        (Some(f), Some(e)) => Some(YieldValue::From(make_from(config, f, e, false)?)),
+        (Some(f), Some(e)) => Some(YieldValue::From(make_from(f, e))),
         (None, Some(e)) => Some(YieldValue::Expression(e)),
         _ => panic!("yield from without expression"),
     };
-    let whitespace_after_yield = Some(parse_parenthesizable_whitespace(
-        config,
-        &mut y.whitespace_after,
-    )?);
-    Ok(Yield {
+    Yield {
         value: value.map(Box::new),
         lpar: Default::default(),
         rpar: Default::default(),
-        whitespace_after_yield,
-    })
+        whitespace_after_yield: Default::default(),
+        yield_tok,
+    }
 }
 
-fn make_from<'a>(
-    config: &Config<'a>,
-    mut f: Token<'a>,
-    e: Expression<'a>,
-    eat_whitespace_before_from: bool,
-) -> Result<'a, From<'a>> {
-    let whitespace_before_from = if eat_whitespace_before_from {
-        Some(parse_parenthesizable_whitespace(
-            config,
-            &mut f.whitespace_before,
-        )?)
-    } else {
-        None
-    };
-    let whitespace_after_from = parse_parenthesizable_whitespace(config, &mut f.whitespace_after)?;
-    Ok(From {
+fn make_from<'a>(tok: Token<'a>, e: Expression<'a>) -> From<'a> {
+    From {
         item: e,
-        whitespace_before_from,
-        whitespace_after_from,
-    })
+        whitespace_before_from: Default::default(),
+        whitespace_after_from: Default::default(),
+        tok,
+    }
 }
 
-fn make_return<'a>(
-    config: &Config<'a>,
-    mut kw: Token<'a>,
-    value: Option<Expression<'a>>,
-) -> Result<'a, Return<'a>> {
-    let whitespace_after_return = if value.is_some() {
-        Some(parse_simple_whitespace(config, &mut kw.whitespace_after)?)
-    } else {
-        // trailing space is owned by semicolon or small statement
-        None
-    };
-    Ok(Return {
+fn make_return<'a>(return_tok: Token<'a>, value: Option<Expression<'a>>) -> Return<'a> {
+    Return {
         value,
-        whitespace_after_return,
+        whitespace_after_return: Default::default(),
         semicolon: Default::default(),
-    })
+        return_tok,
+    }
 }
 
 fn make_assert<'a>(
-    config: &Config<'a>,
-    mut kw: Token<'a>,
+    assert_tok: Token<'a>,
     test: Expression<'a>,
     rest: Option<(Comma<'a>, Expression<'a>)>,
-) -> Result<'a, Assert<'a>> {
-    let whitespace_after_assert = parse_simple_whitespace(config, &mut kw.whitespace_after)?;
+) -> Assert<'a> {
     let (comma, msg) = if let Some((c, msg)) = rest {
         (Some(c), Some(msg))
     } else {
         (None, None)
     };
 
-    Ok(Assert {
+    Assert {
         test,
         msg,
         comma,
-        whitespace_after_assert,
+        whitespace_after_assert: Default::default(),
         semicolon: Default::default(),
-    })
+        assert_tok,
+    }
 }
 
 fn make_raise<'a>(
-    config: &Config<'a>,
-    mut kw: Token<'a>,
+    raise_tok: Token<'a>,
     exc: Option<Expression<'a>>,
     rest: Option<(Token<'a>, Expression<'a>)>,
-) -> Result<'a, Raise<'a>> {
-    let whitespace_after_raise = Some(parse_simple_whitespace(config, &mut kw.whitespace_after)?);
-    let cause = if let Some((t, e)) = rest {
-        Some(make_from(config, t, e, true)?)
-    } else {
-        None
-    };
+) -> Raise<'a> {
+    let cause = rest.map(|(t, e)| make_from(t, e));
 
-    Ok(Raise {
+    Raise {
         exc,
         cause,
-        whitespace_after_raise,
+        whitespace_after_raise: Default::default(),
         semicolon: Default::default(),
-    })
+        raise_tok,
+    }
 }
 
-fn make_global<'a>(
-    config: &Config<'a>,
-    mut kw: Token<'a>,
-    init: Vec<(Name<'a>, Comma<'a>)>,
-    last: Name<'a>,
-) -> Result<'a, Global<'a>> {
-    let whitespace_after_global = parse_simple_whitespace(config, &mut kw.whitespace_after)?;
+fn make_global<'a>(tok: Token<'a>, init: Vec<(Name<'a>, Comma<'a>)>, last: Name<'a>) -> Global<'a> {
     let mut names: Vec<NameItem<'a>> = init
         .into_iter()
         .map(|(name, c)| NameItem {
@@ -2916,20 +2470,19 @@ fn make_global<'a>(
         name: last,
         comma: None,
     });
-    Ok(Global {
+    Global {
         names,
-        whitespace_after_global,
+        whitespace_after_global: Default::default(),
         semicolon: Default::default(),
-    })
+        tok,
+    }
 }
 
 fn make_nonlocal<'a>(
-    config: &Config<'a>,
-    mut kw: Token<'a>,
+    tok: Token<'a>,
     init: Vec<(Name<'a>, Comma<'a>)>,
     last: Name<'a>,
-) -> Result<'a, Nonlocal<'a>> {
-    let whitespace_after_nonlocal = parse_simple_whitespace(config, &mut kw.whitespace_after)?;
+) -> Nonlocal<'a> {
     let mut names: Vec<NameItem<'a>> = init
         .into_iter()
         .map(|(name, c)| NameItem {
@@ -2941,11 +2494,12 @@ fn make_nonlocal<'a>(
         name: last,
         comma: None,
     });
-    Ok(Nonlocal {
+    Nonlocal {
         names,
-        whitespace_after_nonlocal,
+        whitespace_after_nonlocal: Default::default(),
         semicolon: Default::default(),
-    })
+        tok,
+    }
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -3000,20 +2554,14 @@ fn make_while<'a>(
     }
 }
 
-fn make_await<'a>(
-    config: &Config<'a>,
-    mut aw: Token<'a>,
-    expression: Expression<'a>,
-) -> Result<'a, Await<'a>> {
-    let whitespace_after_await =
-        parse_parenthesizable_whitespace(config, &mut aw.whitespace_after)?;
-
-    Ok(Await {
+fn make_await<'a>(await_tok: Token<'a>, expression: Expression<'a>) -> Await<'a> {
+    Await {
         expression: Box::new(expression),
         lpar: Default::default(),
         rpar: Default::default(),
-        whitespace_after_await,
-    })
+        whitespace_after_await: Default::default(),
+        await_tok,
+    }
 }
 
 fn make_class_def<'a>(
@@ -3077,43 +2625,31 @@ fn make_string(tok: Token) -> String {
     })
 }
 
-fn make_strings<'a>(
-    config: &Config<'a>,
-    s: Vec<(String<'a>, Token<'a>)>,
-) -> Result<'a, String<'a>> {
+fn make_strings<'a>(s: Vec<(String<'a>, Token<'a>)>) -> String<'a> {
     let mut strings = s.into_iter().rev();
     let (first, _) = strings.next().expect("no strings to make a string of");
-    let ret = strings.try_fold(first, |acc, (str, mut tok)| {
-        let whitespace_between =
-            parse_parenthesizable_whitespace(config, &mut tok.whitespace_before)?;
-        let ret: Result<'a, String<'a>> = Ok(String::Concatenated(ConcatenatedString {
+    strings.fold(first, |acc, (str, tok)| {
+        let ret: String<'a> = String::Concatenated(ConcatenatedString {
             left: Box::new(str),
             right: Box::new(acc),
-            whitespace_between,
+            whitespace_between: Default::default(),
             lpar: Default::default(),
             rpar: Default::default(),
-        }));
+            right_tok: tok,
+        });
         ret
-    })?;
-    Ok(ret)
+    })
 }
 
 fn make_fstring_expression<'a>(
-    config: &Config<'a>,
-    mut lbrace: Token<'a>,
+    lbrace_tok: Token<'a>,
     expression: Expression<'a>,
     eq: Option<Token<'a>>,
     conversion_pair: Option<(Token<'a>, &'a str)>,
     format_pair: Option<(Token<'a>, Vec<FormattedStringContent<'a>>)>,
-    mut rbrace: Token<'a>,
-) -> Result<'a, FormattedStringExpression<'a>> {
-    let whitespace_before_expression =
-        parse_parenthesizable_whitespace(config, &mut lbrace.whitespace_after)?;
-    let equal = if let Some(eq) = eq {
-        Some(make_assign_equal(config, eq)?)
-    } else {
-        None
-    };
+    rbrace_tok: Token<'a>,
+) -> FormattedStringExpression<'a> {
+    let equal = eq.map(make_assign_equal);
     let (conversion_tok, conversion) = if let Some((t, c)) = conversion_pair {
         (Some(t), Some(c))
     } else {
@@ -3124,24 +2660,26 @@ fn make_fstring_expression<'a>(
     } else {
         (None, None)
     };
-    let whitespace_after_expression = if equal.is_some() {
-        Default::default()
-    } else if let Some(mut tok) = conversion_tok {
-        parse_parenthesizable_whitespace(config, &mut tok.whitespace_before)?
-    } else if let Some(mut tok) = format_tok {
-        parse_parenthesizable_whitespace(config, &mut tok.whitespace_before)?
+    let after_expr_tok = if equal.is_some() {
+        None
+    } else if let Some(tok) = conversion_tok {
+        Some(tok)
+    } else if let Some(tok) = format_tok {
+        Some(tok)
     } else {
-        parse_parenthesizable_whitespace(config, &mut rbrace.whitespace_before)?
+        Some(rbrace_tok)
     };
 
-    Ok(FormattedStringExpression {
+    FormattedStringExpression {
         expression,
         conversion,
         format_spec,
-        whitespace_before_expression,
-        whitespace_after_expression,
+        whitespace_before_expression: Default::default(),
+        whitespace_after_expression: Default::default(),
         equal,
-    })
+        lbrace_tok,
+        after_expr_tok,
+    }
 }
 
 fn make_fstring<'a>(
@@ -3176,18 +2714,7 @@ fn make_except<'a>(
     body: Suite<'a>,
 ) -> ExceptHandler<'a> {
     // TODO: AsName should come from outside
-    let (name, as_tok) = if let Some((as_tok, name)) = as_ {
-        (
-            Some(AsName {
-                name: AssignTargetExpression::Name(name),
-                whitespace_after_as: Default::default(),
-                whitespace_before_as: Default::default(),
-            }),
-            Some(as_tok),
-        )
-    } else {
-        (None, None)
-    };
+    let name = as_.map(|(x, y)| make_as_name(x, AssignTargetExpression::Name(y)));
     ExceptHandler {
         body,
         r#type: exp,
@@ -3196,7 +2723,6 @@ fn make_except<'a>(
         whitespace_after_except: Default::default(),
         whitespace_before_colon: Default::default(),
         except_tok,
-        as_tok,
         colon_tok,
     }
 }
@@ -3219,61 +2745,74 @@ fn make_try<'a>(
     }
 }
 
-fn make_aug_op<'a>(config: &Config<'a>, mut tok: Token<'a>) -> Result<'a, AugOp<'a>> {
-    let whitespace_before = parse_parenthesizable_whitespace(config, &mut tok.whitespace_before)?;
-    let whitespace_after = parse_parenthesizable_whitespace(config, &mut tok.whitespace_after)?;
+fn make_aug_op(tok: Token) -> Result<AugOp> {
+    let whitespace_before = Default::default();
+    let whitespace_after = Default::default();
     Ok(match tok.string {
         "+=" => AugOp::AddAssign {
             whitespace_before,
             whitespace_after,
+            tok,
         },
         "-=" => AugOp::SubtractAssign {
             whitespace_before,
             whitespace_after,
+            tok,
         },
         "*=" => AugOp::MultiplyAssign {
             whitespace_before,
             whitespace_after,
+            tok,
         },
         "@=" => AugOp::MatrixMultiplyAssign {
             whitespace_before,
             whitespace_after,
+            tok,
         },
         "/=" => AugOp::DivideAssign {
             whitespace_before,
             whitespace_after,
+            tok,
         },
         "%=" => AugOp::ModuloAssign {
             whitespace_before,
             whitespace_after,
+            tok,
         },
         "&=" => AugOp::BitAndAssign {
             whitespace_before,
             whitespace_after,
+            tok,
         },
         "|=" => AugOp::BitOrAssign {
             whitespace_before,
             whitespace_after,
+            tok,
         },
         "^=" => AugOp::BitXorAssign {
             whitespace_before,
             whitespace_after,
+            tok,
         },
         "<<=" => AugOp::LeftShiftAssign {
             whitespace_before,
             whitespace_after,
+            tok,
         },
         ">>=" => AugOp::RightShiftAssign {
             whitespace_before,
             whitespace_after,
+            tok,
         },
         "**=" => AugOp::PowerAssign {
             whitespace_before,
             whitespace_after,
+            tok,
         },
         "//=" => AugOp::FloorDivideAssign {
             whitespace_before,
             whitespace_after,
+            tok,
         },
         _ => return Err(ParserError::OperatorError),
     })
@@ -3293,31 +2832,20 @@ fn make_aug_assign<'a>(
 }
 
 fn make_with_item<'a>(
-    config: &Config<'a>,
     item: Expression<'a>,
     as_: Option<Token<'a>>,
     n: Option<AssignTargetExpression<'a>>,
-) -> Result<'a, WithItem<'a>> {
+) -> WithItem<'a> {
     let asname = match (as_, n) {
-        (Some(mut as_), Some(n)) => {
-            let whitespace_before_as =
-                parse_parenthesizable_whitespace(config, &mut as_.whitespace_before)?;
-            let whitespace_after_as =
-                parse_parenthesizable_whitespace(config, &mut as_.whitespace_after)?;
-            Some(AsName {
-                name: n,
-                whitespace_before_as,
-                whitespace_after_as,
-            })
-        }
+        (Some(as_), Some(n)) => Some(make_as_name(as_, n)),
         (None, None) => None,
         _ => panic!("as and name should be present or missing together"),
     };
-    Ok(WithItem {
+    WithItem {
         item,
         asname,
         comma: Default::default(),
-    })
+    }
 }
 
 fn make_with<'a>(
@@ -3343,17 +2871,13 @@ fn make_with<'a>(
     }
 }
 
-fn make_del<'a>(
-    config: &Config<'a>,
-    mut kw: Token<'a>,
-    target: DelTargetExpression<'a>,
-) -> Result<'a, Del<'a>> {
-    let whitespace_after_del = parse_simple_whitespace(config, &mut kw.whitespace_after)?;
-    Ok(Del {
+fn make_del<'a>(tok: Token<'a>, target: DelTargetExpression<'a>) -> Del<'a> {
+    Del {
         target,
-        whitespace_after_del,
+        whitespace_after_del: Default::default(),
         semicolon: Default::default(),
-    })
+        tok,
+    }
 }
 
 fn make_del_tuple<'a>(

@@ -52,3 +52,12 @@ impl<'a, T: Inflate<'a> + ?Sized> Inflate<'a> for Box<T> {
         (**self).inflate(config)
     }
 }
+
+impl<'a, T: Inflate<'a>> Inflate<'a> for Vec<T> {
+    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
+        for item in self.iter_mut() {
+            item.inflate(config)?;
+        }
+        Ok(())
+    }
+}
