@@ -1625,7 +1625,7 @@ impl<'a> Inflate<'a> for Subscript<'a> {
         } else {
             self.rbracket.inflate(config)?;
         }
-        self.lpar.inflate(config)?;
+        self.rpar.inflate(config)?;
         Ok(())
     }
 }
