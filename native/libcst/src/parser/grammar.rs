@@ -182,7 +182,7 @@ parser! {
             / class_def_raw()
 
         rule class_def_raw() -> ClassDef<'a>
-            = kw:lit("class") n:name() arg:(l:lit("(") a:arguments()? r:lit(")") {(l, a, r)})?
+            = kw:lit("class") n:name() arg:(l:lpar() a:arguments()? r:rpar() {(l, a, r)})?
                 col:lit(":") b:block() {
                     make_class_def(kw, n, arg, col, b)
             }
@@ -1715,7 +1715,6 @@ fn make_import_from<'a>(
     import_tok: Token<'a>,
     aliases: ParenthesizedImportNames<'a>,
 ) -> ImportFrom<'a> {
-    // TODO parens should come from outside
     let (lpar, names, rpar) = aliases;
 
     ImportFrom {
@@ -2567,7 +2566,7 @@ fn make_await<'a>(await_tok: Token<'a>, expression: Expression<'a>) -> Await<'a>
 fn make_class_def<'a>(
     class_tok: Token<'a>,
     name: Name<'a>,
-    args: Option<(Token<'a>, Option<Vec<Arg<'a>>>, Token<'a>)>,
+    args: Option<(LeftParen<'a>, Option<Vec<Arg<'a>>>, RightParen<'a>)>,
     colon_tok: Token<'a>,
     body: Suite<'a>,
 ) -> ClassDef<'a> {
@@ -2577,17 +2576,10 @@ fn make_class_def<'a>(
     let mut lpar = None;
     let mut rpar = None;
 
-    if let Some((lpar_tok, args, rpar_tok)) = args {
-        parens_tok = Some((lpar_tok.clone(), rpar_tok.clone()));
-        // TODO: lpar/rpar should be constructed outside
-        lpar = Some(LeftParen {
-            whitespace_after: Default::default(),
-            lpar_tok,
-        });
-        rpar = Some(RightParen {
-            whitespace_before: Default::default(),
-            rpar_tok,
-        });
+    if let Some((lpar_, args, rpar_)) = args {
+        parens_tok = Some((lpar_.lpar_tok.clone(), rpar_.rpar_tok.clone()));
+        lpar = Some(lpar_);
+        rpar = Some(rpar_);
         if let Some(args) = args {
             let mut current_arg = &mut bases;
             for arg in args {
