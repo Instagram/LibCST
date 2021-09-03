@@ -625,18 +625,6 @@ impl<'a> Inflate<'a> for ImportFrom<'a> {
         self.names = self.names.inflate(config)?;
         self.rpar = self.rpar.inflate(config)?;
 
-        // TODO: this should go away once Tokens are references
-        if let ImportNames::Aliases(als) = &self.names {
-            if let Some(last) = als.last() {
-                if let Some(rpar) = self.rpar.as_mut() {
-                    if last.comma.is_some() {
-                        // there's a trailing comma, it owns the whitespace before rpar
-                        rpar.whitespace_before = Default::default();
-                    }
-                }
-            }
-        }
-
         self.semicolon = self.semicolon.inflate(config)?;
 
         Ok(self)
@@ -1660,15 +1648,7 @@ impl<'a> Inflate<'a> for ClassDef<'a> {
             self.lpar = self.lpar.map(|lpar| lpar.inflate(config)).transpose()?;
             self.bases = self.bases.inflate(config)?;
             self.keywords = self.keywords.inflate(config)?;
-
-            let args = self.bases.iter().chain(self.keywords.iter());
-            if args
-                .last()
-                .map(|last| last.comma.is_none())
-                .unwrap_or(false)
-            {
-                self.rpar = self.rpar.map(|rpar| rpar.inflate(config)).transpose()?;
-            }
+            self.rpar = self.rpar.map(|lpar| lpar.inflate(config)).transpose()?;
             // TODO: set whitespace_after_arg for last arg?
         }
 
