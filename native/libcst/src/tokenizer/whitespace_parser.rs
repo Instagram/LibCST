@@ -1,5 +1,3 @@
-use std::{cell::RefCell, collections::BTreeSet, rc::Rc};
-
 use crate::nodes::{
     Comment, EmptyLine, Fakeness, Newline, ParenthesizableWhitespace, ParenthesizedWhitespace,
     SimpleWhitespace, TrailingWhitespace,
@@ -53,7 +51,6 @@ pub struct Config<'a> {
     pub input: &'a str,
     pub lines: Vec<&'a str>,
     pub default_newline: &'a str,
-    pub newline_owners: Rc<RefCell<BTreeSet<usize>>>,
 }
 
 impl<'a> Config<'a> {
@@ -62,7 +59,6 @@ impl<'a> Config<'a> {
             input,
             lines: input.split_inclusive('\n').collect(),
             default_newline: "\n",
-            newline_owners: Rc::new(Default::default()),
         }
     }
     fn get_line(&self, line_number: usize) -> Result<&'a str> {
@@ -93,7 +89,6 @@ impl<'a> Config<'a> {
 #[derive(Debug)]
 enum ParsedEmptyLine<'a> {
     NoIndent,
-    AlreadyOwned,
     Line(EmptyLine<'a>),
 }
 
@@ -111,27 +106,19 @@ fn parse_empty_line<'a>(
         let whitespace = parse_simple_whitespace(config, &mut speculative_state)?;
         let comment = parse_comment(config, &mut speculative_state)?;
         if let Some(newline) = parse_newline(config, &mut speculative_state)? {
-            let line_num = state.line;
             *state = speculative_state;
-            return Ok(
-                match EmptyLine::new(
-                    indent,
-                    whitespace,
-                    comment,
-                    newline,
-                    line_num,
-                    &config.newline_owners,
-                ) {
-                    Some(x) => ParsedEmptyLine::Line(x),
-                    None => ParsedEmptyLine::AlreadyOwned,
-                },
-            );
+            return Ok(ParsedEmptyLine::Line(EmptyLine {
+                indent,
+                whitespace,
+                comment,
+                newline,
+            }));
         }
     }
     Ok(ParsedEmptyLine::NoIndent)
 }
 
-fn parse_unowned_empty_lines<'a>(
+fn _parse_empty_lines<'a>(
     config: &Config<'a>,
     state: &mut State<'a>,
     override_absolute_indent: Option<&'a str>,
@@ -145,7 +132,6 @@ fn parse_unowned_empty_lines<'a>(
         }
         match parsed_line {
             ParsedEmptyLine::NoIndent => break,
-            ParsedEmptyLine::AlreadyOwned => continue,
             ParsedEmptyLine::Line(l) => lines.push((state.clone(), l)),
         }
     }
@@ -165,8 +151,7 @@ pub fn parse_empty_lines<'a>(
     // interspersed with indent=True lines, so we need to speculatively parse all possible empty
     // lines, and then unwind to find the last empty line with indent=True.
     let mut speculative_state = state.clone();
-    let mut lines =
-        parse_unowned_empty_lines(config, &mut speculative_state, override_absolute_indent)?;
+    let mut lines = _parse_empty_lines(config, &mut speculative_state, override_absolute_indent)?;
 
     if override_absolute_indent.is_some() {
         // Remove elements from the end until we find an indented line.
@@ -375,7 +360,7 @@ pub fn parse_parenthesized_whitespace<'a>(
     state: &mut State<'a>,
 ) -> Result<Option<ParenthesizedWhitespace<'a>>> {
     if let Some(first_line) = parse_optional_trailing_whitespace(config, state)? {
-        let empty_lines = parse_unowned_empty_lines(config, state, None)?
+        let empty_lines = _parse_empty_lines(config, state, None)?
             .into_iter()
             .map(|(_, line)| line)
             .collect();
