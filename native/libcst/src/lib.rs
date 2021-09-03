@@ -15,7 +15,7 @@ pub use nodes::*;
 mod parser;
 use parser::{ParserError, Result};
 
-pub fn parse_module<'a>(mut module_text: &'a str) -> Result<'a, Module<'a>> {
+pub fn parse_module(mut module_text: &str) -> Result<Module> {
     // Strip UTF-8 BOM
     if let Some(stripped) = module_text.strip_prefix('\u{feff}') {
         module_text = stripped;

@@ -1259,7 +1259,7 @@ fn make_comparison<'a>(
     })
 }
 
-fn make_comparison_operator<'a>(tok: TokenRef<'a>) -> Result<'a, CompOp<'a>> {
+fn make_comparison_operator(tok: TokenRef) -> Result<CompOp> {
     let whitespace_before = Default::default();
     let whitespace_after = Default::default();
     let op = match tok.borrow().string {
@@ -1373,7 +1373,7 @@ fn make_boolean_op<'a>(
     Ok(expr)
 }
 
-fn make_boolean_operator<'a>(tok: TokenRef<'a>) -> Result<'a, BooleanOp<'a>> {
+fn make_boolean_operator(tok: TokenRef) -> Result<BooleanOp> {
     let whitespace_before = Default::default();
     let whitespace_after = Default::default();
     let str = match tok.borrow().string {
@@ -1411,7 +1411,7 @@ fn make_binary_op<'a>(
     }))
 }
 
-fn make_binary_operator<'a>(tok: TokenRef<'a>) -> Result<'a, BinaryOp<'a>> {
+fn make_binary_operator(tok: TokenRef) -> Result<BinaryOp> {
     let whitespace_before = Default::default();
     let whitespace_after = Default::default();
 
@@ -1512,7 +1512,7 @@ fn make_unary_op<'a>(op: TokenRef<'a>, tail: Expression<'a>) -> Result<'a, Expre
     }))
 }
 
-fn make_unary_operator<'a>(tok: TokenRef<'a>) -> Result<'a, UnaryOp<'a>> {
+fn make_unary_operator(tok: TokenRef) -> Result<UnaryOp> {
     let str = match tok.borrow().string {
         "+" => "+",
         "-" => "-",
@@ -1530,7 +1530,7 @@ fn make_unary_operator<'a>(tok: TokenRef<'a>) -> Result<'a, UnaryOp<'a>> {
     }
 }
 
-fn make_number<'a>(num: TokenRef<'a>) -> Expression<'a> {
+fn make_number(num: TokenRef) -> Expression {
     Expression::Integer(Integer {
         value: num.borrow().string,
         lpar: vec![],
@@ -1564,7 +1564,7 @@ struct SimpleStatementParts<'a> {
     nl: TokenRef<'a>,
 }
 
-fn make_semicolon<'a>(tok: TokenRef<'a>) -> Semicolon<'a> {
+fn make_semicolon(tok: TokenRef) -> Semicolon {
     Semicolon {
         whitespace_before: Default::default(),
         whitespace_after: Default::default(),
@@ -1572,9 +1572,9 @@ fn make_semicolon<'a>(tok: TokenRef<'a>) -> Semicolon<'a> {
     }
 }
 
-fn _make_simple_statement<'a>(
-    parts: SimpleStatementParts<'a>,
-) -> (TokenRef<'a>, Vec<SmallStatement<'a>>, TokenRef<'a>) {
+fn _make_simple_statement(
+    parts: SimpleStatementParts,
+) -> (TokenRef, Vec<SmallStatement>, TokenRef) {
     let mut body = vec![];
     for (statement, semi) in parts.statements {
         body.push(statement.with_semicolon(Some(make_semicolon(semi))));
@@ -1589,7 +1589,7 @@ fn _make_simple_statement<'a>(
     (parts.first, body, parts.nl)
 }
 
-fn make_simple_statement_suite<'a>(parts: SimpleStatementParts<'a>) -> Suite<'a> {
+fn make_simple_statement_suite(parts: SimpleStatementParts) -> Suite {
     let (first_tok, body, newline_tok) = _make_simple_statement(parts);
 
     Suite::SimpleStatementSuite(SimpleStatementSuite {
@@ -1601,7 +1601,7 @@ fn make_simple_statement_suite<'a>(parts: SimpleStatementParts<'a>) -> Suite<'a>
     })
 }
 
-fn make_simple_statement_line<'a>(parts: SimpleStatementParts<'a>) -> SimpleStatementLine<'a> {
+fn make_simple_statement_line(parts: SimpleStatementParts) -> SimpleStatementLine {
     let (first_tok, body, newline_tok) = _make_simple_statement(parts);
     SimpleStatementLine {
         body,
@@ -1696,7 +1696,7 @@ fn add_param_star<'a>(param: Param<'a>, star: TokenRef<'a>) -> Param<'a> {
     }
 }
 
-fn make_assign_equal<'a>(tok: TokenRef<'a>) -> AssignEqual<'a> {
+fn make_assign_equal(tok: TokenRef) -> AssignEqual {
     AssignEqual {
         whitespace_before: Default::default(),
         whitespace_after: Default::default(),
@@ -1704,7 +1704,7 @@ fn make_assign_equal<'a>(tok: TokenRef<'a>) -> AssignEqual<'a> {
     }
 }
 
-fn make_comma<'a>(tok: TokenRef<'a>) -> Comma<'a> {
+fn make_comma(tok: TokenRef) -> Comma {
     Comma {
         whitespace_before: Default::default(),
         whitespace_after: Default::default(),
@@ -1734,14 +1734,14 @@ fn make_name_or_attr<'a>(
     }
 }
 
-fn make_name<'a>(tok: TokenRef<'a>) -> Name<'a> {
+fn make_name(tok: TokenRef) -> Name {
     Name {
         value: tok.borrow().string,
         ..Default::default()
     }
 }
 
-fn make_dot<'a>(tok: TokenRef<'a>) -> Dot<'a> {
+fn make_dot(tok: TokenRef) -> Dot {
     Dot {
         whitespace_before: Default::default(),
         whitespace_after: Default::default(),
@@ -1822,14 +1822,14 @@ fn make_import_from_as_names<'a>(
     ret
 }
 
-fn make_lpar<'a>(tok: TokenRef<'a>) -> LeftParen<'a> {
+fn make_lpar(tok: TokenRef) -> LeftParen {
     LeftParen {
         whitespace_after: Default::default(),
         lpar_tok: tok,
     }
 }
 
-fn make_rpar<'a>(tok: TokenRef<'a>) -> RightParen<'a> {
+fn make_rpar(tok: TokenRef) -> RightParen {
     RightParen {
         whitespace_before: Default::default(),
         rpar_tok: tok,
@@ -2108,28 +2108,28 @@ fn merge_comp_fors(comp_fors: Vec<CompFor>) -> CompFor {
     })
 }
 
-fn make_left_bracket<'a>(tok: TokenRef<'a>) -> LeftSquareBracket<'a> {
+fn make_left_bracket(tok: TokenRef) -> LeftSquareBracket {
     LeftSquareBracket {
         whitespace_after: Default::default(),
         tok,
     }
 }
 
-fn make_right_bracket<'a>(tok: TokenRef<'a>) -> RightSquareBracket<'a> {
+fn make_right_bracket(tok: TokenRef) -> RightSquareBracket {
     RightSquareBracket {
         whitespace_before: Default::default(),
         tok,
     }
 }
 
-fn make_left_brace<'a>(tok: TokenRef<'a>) -> LeftCurlyBrace<'a> {
+fn make_left_brace(tok: TokenRef) -> LeftCurlyBrace {
     LeftCurlyBrace {
         whitespace_after: Default::default(),
         tok,
     }
 }
 
-fn make_right_brace<'a>(tok: TokenRef<'a>) -> RightCurlyBrace<'a> {
+fn make_right_brace(tok: TokenRef) -> RightCurlyBrace {
     RightCurlyBrace {
         whitespace_before: Default::default(),
         tok,
@@ -2301,7 +2301,7 @@ fn make_index(value: Expression) -> BaseSlice {
     BaseSlice::Index(Index { value })
 }
 
-fn make_colon<'a>(tok: TokenRef<'a>) -> Colon<'a> {
+fn make_colon(tok: TokenRef) -> Colon {
     let whitespace_before = Default::default();
     let whitespace_after = Default::default();
     Colon {
@@ -2682,7 +2682,7 @@ fn make_class_def<'a>(
     }
 }
 
-fn make_string<'a>(tok: TokenRef<'a>) -> String<'a> {
+fn make_string(tok: TokenRef) -> String {
     String::Simple(SimpleString {
         value: tok.borrow().string,
         ..Default::default()
@@ -2813,7 +2813,7 @@ fn make_try<'a>(
     }
 }
 
-fn make_aug_op<'a>(tok: TokenRef<'a>) -> Result<'a, AugOp<'a>> {
+fn make_aug_op(tok: TokenRef) -> Result<AugOp> {
     let whitespace_before = Default::default();
     let whitespace_after = Default::default();
     let str = tok.borrow().string;
