@@ -217,7 +217,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: test
-          args: --manifest-path=native/Cargo.toml --release
+          args: --manifest-path=native/Cargo.toml
       - name: clippy
         uses: actions-rs/clippy-check@v1
         with:
