@@ -18,8 +18,8 @@ use crate::{
     },
     tokenizer::{
         whitespace_parser::{
-            parse_empty_lines, parse_empty_lines_from_end, parse_parenthesizable_whitespace,
-            parse_simple_whitespace, parse_trailing_whitespace, Config,
+            parse_empty_lines, parse_parenthesizable_whitespace, parse_simple_whitespace,
+            parse_trailing_whitespace, Config,
         },
         Token,
     },
@@ -261,12 +261,13 @@ impl<'a> Codegen<'a> for SimpleStatementLine<'a> {
 
 impl<'a> Inflate<'a> for SimpleStatementLine<'a> {
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
-        self.leading_lines = parse_empty_lines_from_end(
+        self.leading_lines = parse_empty_lines(
             config,
             &mut (*self.first_tok)
                 .borrow_mut()
                 .whitespace_before
                 .borrow_mut(),
+            None,
         )?;
         self.body = self.body.inflate(config)?;
         self.trailing_whitespace = parse_trailing_whitespace(
@@ -800,9 +801,10 @@ impl<'a> Inflate<'a> for FunctionDef<'a> {
             )?;
             (
                 Some(Asynchronous { whitespace_after }),
-                Some(parse_empty_lines_from_end(
+                Some(parse_empty_lines(
                     config,
                     &mut asy.borrow_mut().whitespace_before.borrow_mut(),
+                    None,
                 )?),
             )
         } else {
@@ -813,9 +815,10 @@ impl<'a> Inflate<'a> for FunctionDef<'a> {
         let leading_lines = if let Some(ll) = leading_lines {
             ll
         } else {
-            parse_empty_lines_from_end(
+            parse_empty_lines(
                 config,
                 &mut (*self.def_tok).borrow_mut().whitespace_before.borrow_mut(),
+                None,
             )?
         };
 
@@ -962,9 +965,10 @@ impl<'a> Codegen<'a> for If<'a> {
 
 impl<'a> Inflate<'a> for If<'a> {
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
-        self.leading_lines = parse_empty_lines_from_end(
+        self.leading_lines = parse_empty_lines(
             config,
             &mut (*self.if_tok).borrow_mut().whitespace_before.borrow_mut(),
+            None,
         )?;
         self.whitespace_before_test = parse_simple_whitespace(
             config,
@@ -1019,9 +1023,10 @@ impl<'a> Codegen<'a> for Else<'a> {
 
 impl<'a> Inflate<'a> for Else<'a> {
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
-        self.leading_lines = parse_empty_lines_from_end(
+        self.leading_lines = parse_empty_lines(
             config,
             &mut (*self.else_tok).borrow_mut().whitespace_before.borrow_mut(),
+            None,
         )?;
         self.whitespace_before_colon = parse_simple_whitespace(
             config,
@@ -1450,9 +1455,10 @@ impl<'a> Inflate<'a> for For<'a> {
             )?;
             (
                 Some(Asynchronous { whitespace_after }),
-                Some(parse_empty_lines_from_end(
+                Some(parse_empty_lines(
                     config,
                     &mut asy.borrow_mut().whitespace_before.borrow_mut(),
+                    None,
                 )?),
             )
         } else {
@@ -1461,9 +1467,10 @@ impl<'a> Inflate<'a> for For<'a> {
         self.leading_lines = if let Some(ll) = leading_lines {
             ll
         } else {
-            parse_empty_lines_from_end(
+            parse_empty_lines(
                 config,
                 &mut (*self.for_tok).borrow_mut().whitespace_before.borrow_mut(),
+                None,
             )?
         };
         self.asynchronous = asynchronous;
@@ -1530,12 +1537,13 @@ impl<'a> Codegen<'a> for While<'a> {
 
 impl<'a> Inflate<'a> for While<'a> {
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
-        self.leading_lines = parse_empty_lines_from_end(
+        self.leading_lines = parse_empty_lines(
             config,
             &mut (*self.while_tok)
                 .borrow_mut()
                 .whitespace_before
                 .borrow_mut(),
+            None,
         )?;
         self.whitespace_after_while = parse_simple_whitespace(
             config,
@@ -1621,12 +1629,13 @@ impl<'a> Codegen<'a> for ClassDef<'a> {
 
 impl<'a> Inflate<'a> for ClassDef<'a> {
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
-        self.leading_lines = parse_empty_lines_from_end(
+        self.leading_lines = parse_empty_lines(
             config,
             &mut (*self.class_tok)
                 .borrow_mut()
                 .whitespace_before
                 .borrow_mut(),
+            None,
         )?;
         self.decorators = self.decorators.inflate(config)?;
         if let Some(dec) = self.decorators.first_mut() {
@@ -1697,12 +1706,13 @@ impl<'a> Codegen<'a> for Finally<'a> {
 
 impl<'a> Inflate<'a> for Finally<'a> {
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
-        self.leading_lines = parse_empty_lines_from_end(
+        self.leading_lines = parse_empty_lines(
             config,
             &mut (*self.finally_tok)
                 .borrow_mut()
                 .whitespace_before
                 .borrow_mut(),
+            None,
         )?;
         self.whitespace_before_colon = parse_simple_whitespace(
             config,
@@ -1752,12 +1762,13 @@ impl<'a> Codegen<'a> for ExceptHandler<'a> {
 
 impl<'a> Inflate<'a> for ExceptHandler<'a> {
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
-        self.leading_lines = parse_empty_lines_from_end(
+        self.leading_lines = parse_empty_lines(
             config,
             &mut (*self.except_tok)
                 .borrow_mut()
                 .whitespace_before
                 .borrow_mut(),
+            None,
         )?;
         self.whitespace_after_except = parse_simple_whitespace(
             config,
@@ -1821,9 +1832,10 @@ impl<'a> Codegen<'a> for Try<'a> {
 
 impl<'a> Inflate<'a> for Try<'a> {
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
-        self.leading_lines = parse_empty_lines_from_end(
+        self.leading_lines = parse_empty_lines(
             config,
             &mut (*self.try_tok).borrow_mut().whitespace_before.borrow_mut(),
+            None,
         )?;
         self.whitespace_before_colon = parse_simple_whitespace(
             config,
@@ -1958,9 +1970,10 @@ impl<'a> Inflate<'a> for With<'a> {
             )?;
             (
                 Some(Asynchronous { whitespace_after }),
-                Some(parse_empty_lines_from_end(
+                Some(parse_empty_lines(
                     config,
                     &mut asy.borrow_mut().whitespace_before.borrow_mut(),
+                    None,
                 )?),
             )
         } else {
@@ -1972,9 +1985,10 @@ impl<'a> Inflate<'a> for With<'a> {
         self.leading_lines = if let Some(ll) = leading_lines {
             ll
         } else {
-            parse_empty_lines_from_end(
+            parse_empty_lines(
                 config,
                 &mut (*self.with_tok).borrow_mut().whitespace_before.borrow_mut(),
+                None,
             )?
         };
 
