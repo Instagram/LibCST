@@ -3,7 +3,7 @@
 // This source code is licensed under the MIT license found in the
 // LICENSE file in the root directory of this source tree.
 
-use std::{cell::RefCell, mem::swap, rc::Rc};
+use std::{mem::swap, rc::Rc};
 
 use crate::{
     inflate_helpers::adjust_parameters_trailing_whitespace,
@@ -20,7 +20,7 @@ use crate::{
 };
 use libcst_derive::{Codegen, Inflate, ParenthesizedNode};
 
-type TokenRef<'a> = Rc<RefCell<Token<'a>>>;
+type TokenRef<'a> = Rc<Token<'a>>;
 
 #[derive(Debug, Eq, PartialEq, Default, Clone)]
 pub struct Parameters<'a> {
@@ -208,7 +208,7 @@ impl<'a> Inflate<'a> for Param<'a> {
         if let Some(star_tok) = self.star_tok.as_mut() {
             self.whitespace_after_star = parse_parenthesizable_whitespace(
                 config,
-                &mut star_tok.borrow_mut().whitespace_after.borrow_mut(),
+                &mut star_tok.whitespace_after.borrow_mut(),
             )?;
         }
         Ok(self)
@@ -290,7 +290,7 @@ impl<'a> Inflate<'a> for Arg<'a> {
         if let Some(star_tok) = self.star_tok.as_mut() {
             self.whitespace_after_star = parse_parenthesizable_whitespace(
                 config,
-                &mut star_tok.borrow_mut().whitespace_after.borrow_mut(),
+                &mut star_tok.whitespace_after.borrow_mut(),
             )?;
         }
         self.keyword = self.keyword.inflate(config)?;
@@ -354,7 +354,7 @@ impl<'a> Inflate<'a> for LeftParen<'a> {
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.whitespace_after = parse_parenthesizable_whitespace(
             config,
-            &mut (*self.lpar_tok).borrow_mut().whitespace_after.borrow_mut(),
+            &mut (*self.lpar_tok).whitespace_after.borrow_mut(),
         )?;
         Ok(self)
     }
@@ -379,7 +379,7 @@ impl<'a> Inflate<'a> for RightParen<'a> {
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.whitespace_before = parse_parenthesizable_whitespace(
             config,
-            &mut (*self.rpar_tok).borrow_mut().whitespace_before.borrow_mut(),
+            &mut (*self.rpar_tok).whitespace_before.borrow_mut(),
         )?;
         Ok(self)
     }
@@ -648,11 +648,11 @@ impl<'a> Inflate<'a> for Call<'a> {
         self.func = self.func.inflate(config)?;
         self.whitespace_after_func = parse_parenthesizable_whitespace(
             config,
-            &mut (*self.lpar_tok).borrow_mut().whitespace_before.borrow_mut(),
+            &mut (*self.lpar_tok).whitespace_before.borrow_mut(),
         )?;
         self.whitespace_before_args = parse_parenthesizable_whitespace(
             config,
-            &mut (*self.lpar_tok).borrow_mut().whitespace_after.borrow_mut(),
+            &mut (*self.lpar_tok).whitespace_after.borrow_mut(),
         )?;
         self.args = self.args.inflate(config)?;
 
@@ -660,7 +660,7 @@ impl<'a> Inflate<'a> for Call<'a> {
             if arg.comma.is_none() {
                 arg.whitespace_after_arg = parse_parenthesizable_whitespace(
                     config,
-                    &mut (*self.rpar_tok).borrow_mut().whitespace_before.borrow_mut(),
+                    &mut (*self.rpar_tok).whitespace_before.borrow_mut(),
                 )?;
             }
         }
@@ -769,7 +769,7 @@ impl<'a> Inflate<'a> for StarredElement<'a> {
         self.lpar = self.lpar.inflate(config)?;
         self.whitespace_before_value = parse_parenthesizable_whitespace(
             config,
-            &mut (*self.star_tok).borrow_mut().whitespace_after.borrow_mut(),
+            &mut (*self.star_tok).whitespace_after.borrow_mut(),
         )?;
         self.value = self.value.inflate(config)?;
         self.comma = self.comma.inflate(config)?;
@@ -979,7 +979,7 @@ impl<'a> Inflate<'a> for LeftSquareBracket<'a> {
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.whitespace_after = parse_parenthesizable_whitespace(
             config,
-            &mut (*self.tok).borrow_mut().whitespace_after.borrow_mut(),
+            &mut (*self.tok).whitespace_after.borrow_mut(),
         )?;
         Ok(self)
     }
@@ -1002,7 +1002,7 @@ impl<'a> Inflate<'a> for RightSquareBracket<'a> {
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.whitespace_before = parse_parenthesizable_whitespace(
             config,
-            &mut (*self.tok).borrow_mut().whitespace_before.borrow_mut(),
+            &mut (*self.tok).whitespace_before.borrow_mut(),
         )?;
         Ok(self)
     }
@@ -1063,14 +1063,11 @@ impl<'a> Inflate<'a> for DictComp<'a> {
         self.key = self.key.inflate(config)?;
         self.whitespace_before_colon = parse_parenthesizable_whitespace(
             config,
-            &mut (*self.colon_tok)
-                .borrow_mut()
-                .whitespace_before
-                .borrow_mut(),
+            &mut (*self.colon_tok).whitespace_before.borrow_mut(),
         )?;
         self.whitespace_after_colon = parse_parenthesizable_whitespace(
             config,
-            &mut (*self.colon_tok).borrow_mut().whitespace_after.borrow_mut(),
+            &mut (*self.colon_tok).whitespace_after.borrow_mut(),
         )?;
         self.value = self.value.inflate(config)?;
         self.for_in = self.for_in.inflate(config)?;
@@ -1105,7 +1102,7 @@ impl<'a> Inflate<'a> for LeftCurlyBrace<'a> {
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.whitespace_after = parse_parenthesizable_whitespace(
             config,
-            &mut (*self.tok).borrow_mut().whitespace_after.borrow_mut(),
+            &mut (*self.tok).whitespace_after.borrow_mut(),
         )?;
         Ok(self)
     }
@@ -1128,7 +1125,7 @@ impl<'a> Inflate<'a> for RightCurlyBrace<'a> {
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.whitespace_before = parse_parenthesizable_whitespace(
             config,
-            &mut (*self.tok).borrow_mut().whitespace_before.borrow_mut(),
+            &mut (*self.tok).whitespace_before.borrow_mut(),
         )?;
         Ok(self)
     }
@@ -1184,7 +1181,7 @@ impl<'a> Inflate<'a> for CompFor<'a> {
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.whitespace_before = parse_parenthesizable_whitespace(
             config,
-            &mut (*self.for_tok).borrow_mut().whitespace_before.borrow_mut(),
+            &mut (*self.for_tok).whitespace_before.borrow_mut(),
         )?;
         if let (Some(asy_tok), Some(asy)) = (self.async_tok.as_mut(), self.asynchronous.as_mut()) {
             // If there is an async keyword, the start of the CompFor expression is
@@ -1192,22 +1189,22 @@ impl<'a> Inflate<'a> for CompFor<'a> {
             // Asynchronous will own the whitespace before the for token.
             asy.whitespace_after = parse_parenthesizable_whitespace(
                 config,
-                &mut asy_tok.borrow_mut().whitespace_before.borrow_mut(),
+                &mut asy_tok.whitespace_before.borrow_mut(),
             )?;
             swap(&mut asy.whitespace_after, &mut self.whitespace_before);
         }
         self.whitespace_after_for = parse_parenthesizable_whitespace(
             config,
-            &mut (*self.for_tok).borrow_mut().whitespace_after.borrow_mut(),
+            &mut (*self.for_tok).whitespace_after.borrow_mut(),
         )?;
         self.target = self.target.inflate(config)?;
         self.whitespace_before_in = parse_parenthesizable_whitespace(
             config,
-            &mut (*self.in_tok).borrow_mut().whitespace_before.borrow_mut(),
+            &mut (*self.in_tok).whitespace_before.borrow_mut(),
         )?;
         self.whitespace_after_in = parse_parenthesizable_whitespace(
             config,
-            &mut (*self.in_tok).borrow_mut().whitespace_after.borrow_mut(),
+            &mut (*self.in_tok).whitespace_after.borrow_mut(),
         )?;
         self.iter = self.iter.inflate(config)?;
         self.ifs = self.ifs.inflate(config)?;
@@ -1250,11 +1247,11 @@ impl<'a> Inflate<'a> for CompIf<'a> {
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.whitespace_before = parse_parenthesizable_whitespace(
             config,
-            &mut (*self.if_tok).borrow_mut().whitespace_before.borrow_mut(),
+            &mut (*self.if_tok).whitespace_before.borrow_mut(),
         )?;
         self.whitespace_before_test = parse_parenthesizable_whitespace(
             config,
-            &mut (*self.if_tok).borrow_mut().whitespace_after.borrow_mut(),
+            &mut (*self.if_tok).whitespace_after.borrow_mut(),
         )?;
         self.test = self.test.inflate(config)?;
         Ok(self)
@@ -1405,11 +1402,11 @@ impl<'a> Inflate<'a> for DictElement<'a> {
             } => {
                 let whitespace_before_colon = parse_parenthesizable_whitespace(
                     config,
-                    &mut colon_tok.borrow_mut().whitespace_before.borrow_mut(),
+                    &mut colon_tok.whitespace_before.borrow_mut(),
                 )?;
                 let whitespace_after_colon = parse_parenthesizable_whitespace(
                     config,
-                    &mut colon_tok.borrow_mut().whitespace_after.borrow_mut(),
+                    &mut colon_tok.whitespace_after.borrow_mut(),
                 )?;
                 Self::Simple {
                     key: key.inflate(config)?,
@@ -1505,7 +1502,7 @@ impl<'a> Inflate<'a> for DoubleStarredElement<'a> {
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.whitespace_before_value = parse_parenthesizable_whitespace(
             config,
-            &mut (*self.star_tok).borrow_mut().whitespace_after.borrow_mut(),
+            &mut (*self.star_tok).whitespace_after.borrow_mut(),
         )?;
         self.value = self.value.inflate(config)?;
         self.comma = self.comma.inflate(config)?;
@@ -1631,13 +1628,9 @@ impl<'a> Inflate<'a> for Subscript<'a> {
         self.value = self.value.inflate(config)?;
         self.whitespace_after_value = parse_parenthesizable_whitespace(
             config,
-            &mut (*self.lbracket_tok)
-                .borrow_mut()
-                .whitespace_before
-                .borrow_mut(),
+            &mut (*self.lbracket_tok).whitespace_before.borrow_mut(),
         )?;
         self.lbracket = self.lbracket.inflate(config)?;
-        // TODO: trailing comma fucks with the generic vec implementation
         self.slice = self.slice.inflate(config)?;
         self.rbracket = self.rbracket.inflate(config)?;
         self.rpar = self.rpar.inflate(config)?;
@@ -1685,20 +1678,20 @@ impl<'a> Inflate<'a> for IfExp<'a> {
         self.body = self.body.inflate(config)?;
         self.whitespace_before_if = parse_parenthesizable_whitespace(
             config,
-            &mut (*self.if_tok).borrow_mut().whitespace_before.borrow_mut(),
+            &mut (*self.if_tok).whitespace_before.borrow_mut(),
         )?;
         self.whitespace_after_if = parse_parenthesizable_whitespace(
             config,
-            &mut (*self.if_tok).borrow_mut().whitespace_after.borrow_mut(),
+            &mut (*self.if_tok).whitespace_after.borrow_mut(),
         )?;
         self.test = self.test.inflate(config)?;
         self.whitespace_before_else = parse_parenthesizable_whitespace(
             config,
-            &mut (*self.else_tok).borrow_mut().whitespace_before.borrow_mut(),
+            &mut (*self.else_tok).whitespace_before.borrow_mut(),
         )?;
         self.whitespace_after_else = parse_parenthesizable_whitespace(
             config,
-            &mut (*self.else_tok).borrow_mut().whitespace_after.borrow_mut(),
+            &mut (*self.else_tok).whitespace_after.borrow_mut(),
         )?;
         self.orelse = self.orelse.inflate(config)?;
         self.rpar = self.rpar.inflate(config)?;
@@ -1740,18 +1733,11 @@ impl<'a> Inflate<'a> for Lambda<'a> {
         if !self.params.is_empty() {
             self.whitespace_after_lambda = Some(parse_parenthesizable_whitespace(
                 config,
-                &mut (*self.lambda_tok)
-                    .borrow_mut()
-                    .whitespace_after
-                    .borrow_mut(),
+                &mut (*self.lambda_tok).whitespace_after.borrow_mut(),
             )?);
         }
         self.params = self.params.inflate(config)?;
-        adjust_parameters_trailing_whitespace(
-            config,
-            &mut self.params,
-            &mut self.colon.tok.borrow_mut(),
-        )?;
+        adjust_parameters_trailing_whitespace(config, &mut self.params, &self.colon.tok)?;
         self.colon = self.colon.inflate(config)?;
         self.body = self.body.inflate(config)?;
         self.rpar = self.rpar.inflate(config)?;
@@ -1802,11 +1788,11 @@ impl<'a> Inflate<'a> for From<'a> {
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.whitespace_before_from = Some(parse_parenthesizable_whitespace(
             config,
-            &mut (*self.tok).borrow_mut().whitespace_before.borrow_mut(),
+            &mut (*self.tok).whitespace_before.borrow_mut(),
         )?);
         self.whitespace_after_from = parse_parenthesizable_whitespace(
             config,
-            &mut (*self.tok).borrow_mut().whitespace_after.borrow_mut(),
+            &mut (*self.tok).whitespace_after.borrow_mut(),
         )?;
         self.item = self.item.inflate(config)?;
         Ok(self)
@@ -1858,7 +1844,7 @@ impl<'a> Inflate<'a> for Yield<'a> {
         if self.value.is_some() {
             self.whitespace_after_yield = Some(parse_parenthesizable_whitespace(
                 config,
-                &mut (*self.yield_tok).borrow_mut().whitespace_after.borrow_mut(),
+                &mut (*self.yield_tok).whitespace_after.borrow_mut(),
             )?);
         }
         self.value = self.value.inflate(config)?;
@@ -1899,7 +1885,7 @@ impl<'a> Inflate<'a> for Await<'a> {
         self.lpar = self.lpar.inflate(config)?;
         self.whitespace_after_await = parse_parenthesizable_whitespace(
             config,
-            &mut (*self.await_tok).borrow_mut().whitespace_after.borrow_mut(),
+            &mut (*self.await_tok).whitespace_after.borrow_mut(),
         )?;
         self.expression = self.expression.inflate(config)?;
         self.rpar = self.rpar.inflate(config)?;
@@ -1954,10 +1940,7 @@ impl<'a> Inflate<'a> for ConcatenatedString<'a> {
         self.left = self.left.inflate(config)?;
         self.whitespace_between = parse_parenthesizable_whitespace(
             config,
-            &mut (*self.right_tok)
-                .borrow_mut()
-                .whitespace_before
-                .borrow_mut(),
+            &mut (*self.right_tok).whitespace_before.borrow_mut(),
         )?;
         self.right = self.right.inflate(config)?;
         self.rpar = self.rpar.inflate(config)?;
@@ -2035,17 +2018,14 @@ impl<'a> Inflate<'a> for FormattedStringExpression<'a> {
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.whitespace_before_expression = parse_parenthesizable_whitespace(
             config,
-            &mut (*self.lbrace_tok)
-                .borrow_mut()
-                .whitespace_after
-                .borrow_mut(),
+            &mut (*self.lbrace_tok).whitespace_after.borrow_mut(),
         )?;
         self.expression = self.expression.inflate(config)?;
         self.equal = self.equal.inflate(config)?;
         if let Some(after_expr_tok) = self.after_expr_tok.as_mut() {
             self.whitespace_after_expression = parse_parenthesizable_whitespace(
                 config,
-                &mut after_expr_tok.borrow_mut().whitespace_before.borrow_mut(),
+                &mut after_expr_tok.whitespace_before.borrow_mut(),
             )?;
         }
         self.format_spec = self.format_spec.inflate(config)?;

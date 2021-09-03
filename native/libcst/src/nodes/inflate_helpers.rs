@@ -10,7 +10,7 @@ use crate::{
 pub(crate) fn adjust_parameters_trailing_whitespace<'a>(
     config: &Config<'a>,
     parameters: &mut Parameters<'a>,
-    next_tok: &mut Token<'a>,
+    next_tok: &Token<'a>,
 ) -> Result<()> {
     let do_adjust = |param: &mut Param<'a>| -> Result<()> {
         let whitespace_after =

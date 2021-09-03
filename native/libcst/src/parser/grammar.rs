@@ -3,7 +3,6 @@
 // This source code is licensed under the MIT license found in the
 // LICENSE file in the root directory of this source tree.
 
-use std::cell::RefCell;
 use std::rc::Rc;
 
 use crate::nodes::*;
@@ -32,11 +31,11 @@ pub enum ParserError<'a> {
 pub type Result<'a, T> = std::result::Result<T, ParserError<'a>>;
 
 #[derive(Debug)]
-pub struct TokVec<'a>(Vec<Rc<RefCell<Token<'a>>>>);
+pub struct TokVec<'a>(Vec<Rc<Token<'a>>>);
 
 impl<'a> std::convert::From<Vec<Token<'a>>> for TokVec<'a> {
     fn from(vec: Vec<Token<'a>>) -> Self {
-        TokVec(vec.into_iter().map(|x| Rc::new(RefCell::new(x))).collect())
+        TokVec(vec.into_iter().map(Rc::new).collect())
     }
 }
 
@@ -64,11 +63,7 @@ impl<'a> Parse for TokVec<'a> {
     }
 
     fn position_repr(&self, pos: usize) -> Self::PositionRepr {
-        let tok = self
-            .0
-            .get(pos)
-            .unwrap_or_else(|| self.0.last().unwrap())
-            .borrow();
+        let tok = self.0.get(pos).unwrap_or_else(|| self.0.last().unwrap());
         ParseLoc {
             start_pos: LineCol {
                 line: tok.start_pos.line_number(),
@@ -84,7 +79,7 @@ impl<'a> Parse for TokVec<'a> {
     }
 }
 
-type TokenRef<'a> = Rc<RefCell<Token<'a>>>;
+type TokenRef<'a> = Rc<Token<'a>>;
 
 impl<'a> ParseElem for TokVec<'a> {
     type Element = TokenRef<'a>;
@@ -100,7 +95,7 @@ impl<'a> ParseElem for TokVec<'a> {
 // impl<'a> ParseLiteral for TokVec<'a> {
 //     fn parse_string_literal(&self, pos: usize, literal: &str) -> RuleResult<()> {
 //         match self.parse_elem(pos) {
-//             RuleResult::Matched(p, tok) if tok.borrow().string == literal => {
+//             RuleResult::Matched(p, tok) if tok.string == literal => {
 //                 RuleResult::Matched(p, ())
 //             }
 //             _ => RuleResult::Failed,
@@ -114,7 +109,7 @@ parser! {
             = a:lit("(") { make_lpar(a) }
 
         rule lit(lit: &'static str) -> TokenRef<'a>
-            = [t] {? if t.borrow().string == lit { Ok(t) } else { Err(lit) } }
+            = [t] {? if t.string == lit { Ok(t) } else { Err(lit) } }
     }
 }
 
@@ -1123,10 +1118,10 @@ parser! {
             = [t] { t }
 
         rule lit(lit: &'static str) -> TokenRef<'a>
-            = [t] {? if t.borrow().string == lit { Ok(t) } else { Err(lit) } }
+            = [t] {? if t.string == lit { Ok(t) } else { Err(lit) } }
 
         rule tok(tok: TokType, err: &'static str) -> TokenRef<'a>
-            = [t] {? if t.borrow().r#type == tok { Ok(t) } else { Err(err) } }
+            = [t] {? if t.r#type == tok { Ok(t) } else { Err(err) } }
 
         rule name() -> Name<'a>
             = !( lit("False") / lit("None") / lit("True") / lit("and") / lit("as") / lit("assert") / lit("async") / lit("await")
@@ -1144,12 +1139,12 @@ parser! {
             = start:tok(FStringStart, "f\"")
                 parts:(_f_string() / _f_replacement())*
                 end:tok(FStringEnd, "\"") {
-                    make_fstring(start.borrow().string, parts, end.borrow().string)
+                    make_fstring(start.string, parts, end.string)
             }
 
         rule _f_string() -> FormattedStringContent<'a>
             = t:tok(FStringString, "f-string contents") {
-                FormattedStringContent::Text(FormattedStringText { value: t.borrow().string })
+                FormattedStringContent::Text(FormattedStringText { value: t.string })
             }
 
         rule _f_replacement() -> FormattedStringContent<'a>
@@ -1262,19 +1257,7 @@ fn make_comparison<'a>(
 fn make_comparison_operator(tok: TokenRef) -> Result<CompOp> {
     let whitespace_before = Default::default();
     let whitespace_after = Default::default();
-    let op = match tok.borrow().string {
-        "<" => "<",
-        ">" => ">",
-        "<=" => "<=",
-        ">=" => ">=",
-        "==" => "==",
-        "!=" => "!=",
-        "in" => "in",
-        "is" => "is",
-        _ => return Err(ParserError::OperatorError),
-    };
-
-    match op {
+    match tok.string {
         "<" => Ok(CompOp::LessThan {
             whitespace_after,
             whitespace_before,
@@ -1327,13 +1310,7 @@ fn make_comparison_operator_2<'a>(
     let whitespace_between = Default::default();
     let whitespace_after = Default::default();
 
-    let strs = match (first.borrow().string, second.borrow().string) {
-        ("is", "not") => ("is", "not"),
-        ("not", "in") => ("not", "in"),
-        _ => return Err(ParserError::OperatorError),
-    };
-
-    match strs {
+    match (first.string, second.string) {
         ("is", "not") => Ok(CompOp::IsNot {
             whitespace_before,
             whitespace_between,
@@ -1376,12 +1353,7 @@ fn make_boolean_op<'a>(
 fn make_boolean_operator(tok: TokenRef) -> Result<BooleanOp> {
     let whitespace_before = Default::default();
     let whitespace_after = Default::default();
-    let str = match tok.borrow().string {
-        "and" => "and",
-        "or" => "or",
-        _ => return Err(ParserError::OperatorError),
-    };
-    match str {
+    match tok.string {
         "and" => Ok(BooleanOp::And {
             whitespace_after,
             whitespace_before,
@@ -1415,24 +1387,7 @@ fn make_binary_operator(tok: TokenRef) -> Result<BinaryOp> {
     let whitespace_before = Default::default();
     let whitespace_after = Default::default();
 
-    let str = match tok.borrow().string {
-        "+" => "+",
-        "-" => "-",
-        "*" => "*",
-        "/" => "/",
-        "//" => "//",
-        "%" => "%",
-        "**" => "**",
-        "<<" => "<<",
-        ">>" => ">>",
-        "|" => "|",
-        "&" => "&",
-        "^" => "^",
-        "@" => "@",
-        _ => return Err(ParserError::OperatorError),
-    };
-
-    match str {
+    match tok.string {
         "+" => Ok(BinaryOp::Add {
             whitespace_after,
             whitespace_before,
@@ -1513,15 +1468,7 @@ fn make_unary_op<'a>(op: TokenRef<'a>, tail: Expression<'a>) -> Result<'a, Expre
 }
 
 fn make_unary_operator(tok: TokenRef) -> Result<UnaryOp> {
-    let str = match tok.borrow().string {
-        "+" => "+",
-        "-" => "-",
-        "~" => "~",
-        "not" => "not",
-        _ => return Err(ParserError::OperatorError),
-    };
-
-    match str {
+    match tok.string {
         "+" => Ok(UnaryOp::Plus(Default::default(), tok)),
         "-" => Ok(UnaryOp::Minus(Default::default(), tok)),
         "~" => Ok(UnaryOp::BitInvert(Default::default(), tok)),
@@ -1532,7 +1479,7 @@ fn make_unary_operator(tok: TokenRef) -> Result<UnaryOp> {
 
 fn make_number(num: TokenRef) -> Expression {
     Expression::Integer(Integer {
-        value: num.borrow().string,
+        value: num.string,
         lpar: vec![],
         rpar: vec![],
     })
@@ -1688,7 +1635,7 @@ fn add_param_default<'a>(
 }
 
 fn add_param_star<'a>(param: Param<'a>, star: TokenRef<'a>) -> Param<'a> {
-    let str = star.borrow().string;
+    let str = star.string;
     Param {
         star: Some(str),
         star_tok: Some(star),
@@ -1736,7 +1683,7 @@ fn make_name_or_attr<'a>(
 
 fn make_name(tok: TokenRef) -> Name {
     Name {
-        value: tok.borrow().string,
+        value: tok.string,
         ..Default::default()
     }
 }
@@ -1959,7 +1906,7 @@ fn make_kwarg<'a>(name: Name<'a>, eq: TokenRef<'a>, value: Expression<'a>) -> Ar
 }
 
 fn make_star_arg<'a>(star: TokenRef<'a>, expr: Expression<'a>) -> Arg<'a> {
-    let str = star.borrow().string;
+    let str = star.string;
     Arg {
         value: expr,
         keyword: None,
@@ -2684,7 +2631,7 @@ fn make_class_def<'a>(
 
 fn make_string(tok: TokenRef) -> String {
     String::Simple(SimpleString {
-        value: tok.borrow().string,
+        value: tok.string,
         ..Default::default()
     })
 }
@@ -2816,9 +2763,8 @@ fn make_try<'a>(
 fn make_aug_op(tok: TokenRef) -> Result<AugOp> {
     let whitespace_before = Default::default();
     let whitespace_after = Default::default();
-    let str = tok.borrow().string;
 
-    Ok(match str {
+    Ok(match tok.string {
         "+=" => AugOp::AddAssign {
             whitespace_before,
             whitespace_after,
