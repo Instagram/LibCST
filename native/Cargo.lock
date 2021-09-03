@@ -263,15 +263,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "indoc"
-version = "1.0.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e5a75aeaaef0ce18b58056d306c27b07436fbb34b8816c53094b76dd81803136"
-dependencies = [
- "unindent",
-]
-
-[[package]]
 name = "indoc-impl"
 version = "0.3.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -368,7 +359,6 @@ dependencies = [
  "criterion",
  "criterion-cycles-per-byte",
  "difference",
- "indoc 1.0.3",
  "itertools 0.10.1",
  "libcst_derive",
  "once_cell",
@@ -576,7 +566,7 @@ checksum = "4837b8e8e18a102c23f79d1e9a110b597ea3b684c95e874eb1ad88f8683109c3"
 dependencies = [
  "cfg-if",
  "ctor",
- "indoc 0.3.6",
+ "indoc",
  "inventory",
  "libc",
  "parking_lot",
