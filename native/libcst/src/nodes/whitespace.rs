@@ -15,7 +15,7 @@ use super::{Codegen, CodegenState};
 pub struct SimpleWhitespace<'a>(pub &'a str);
 
 impl<'a> Codegen<'a> for SimpleWhitespace<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         state.add_token(self.0);
     }
 }
@@ -30,7 +30,7 @@ impl<'a> Default for Comment<'a> {
 }
 
 impl<'a> Codegen<'a> for Comment<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         state.add_token(self.0);
     }
 }
@@ -51,7 +51,7 @@ impl Default for Fakeness {
 }
 
 impl<'a> Codegen<'a> for Newline<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         if let Fakeness::Fake = self.1 {
             return;
         }
@@ -71,7 +71,7 @@ pub struct TrailingWhitespace<'a> {
 }
 
 impl<'a> Codegen<'a> for TrailingWhitespace<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         self.whitespace.codegen(state);
         if let Some(comment) = &self.comment {
             comment.codegen(state);
@@ -103,7 +103,7 @@ impl<'a> PartialEq for EmptyLine<'a> {
 impl<'a> Eq for EmptyLine<'a> {}
 
 impl<'a> Codegen<'a> for EmptyLine<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         if self.indent {
             state.add_indent()
         }
@@ -171,7 +171,7 @@ pub struct ParenthesizedWhitespace<'a> {
 }
 
 impl<'a> Codegen<'a> for ParenthesizedWhitespace<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         self.first_line.codegen(state);
         for line in &self.empty_lines {
             line.codegen(state);
@@ -190,7 +190,7 @@ pub enum ParenthesizableWhitespace<'a> {
 }
 
 impl<'a> Codegen<'a> for ParenthesizableWhitespace<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         match self {
             Self::SimpleWhitespace(w) => w.codegen(state),
             Self::ParenthesizedWhitespace(w) => w.codegen(state),

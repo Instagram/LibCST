@@ -3,7 +3,9 @@
 // This source code is licensed under the MIT license found in the
 // LICENSE file in the root directory of this source tree.
 
+use std::cell::RefCell;
 use std::mem::swap;
+use std::rc::Rc;
 
 use crate::tokenizer::whitespace_parser::parse_empty_lines;
 use crate::tokenizer::Token;
@@ -17,6 +19,7 @@ use crate::{
 };
 
 use super::traits::{Inflate, Result, WithLeadingLines};
+type TokenRef<'a> = Rc<RefCell<Token<'a>>>;
 
 #[derive(Debug, Eq, PartialEq)]
 pub struct Module<'a> {
@@ -24,11 +27,11 @@ pub struct Module<'a> {
     pub header: Vec<EmptyLine<'a>>,
     pub footer: Vec<EmptyLine<'a>>,
 
-    pub(crate) eof_tok: Token<'a>,
+    pub(crate) eof_tok: TokenRef<'a>,
 }
 
 impl<'a> Codegen<'a> for Module<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         for h in &self.header {
             h.codegen(state);
         }
@@ -42,11 +45,13 @@ impl<'a> Codegen<'a> for Module<'a> {
 }
 
 impl<'a> Inflate<'a> for Module<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        for stat in &mut self.body {
-            stat.inflate(config)?;
-        }
-        let mut footer = parse_empty_lines(config, &mut self.eof_tok.whitespace_before, Some(""))?;
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.body = self.body.inflate(config)?;
+        let mut footer = parse_empty_lines(
+            config,
+            &mut (*self.eof_tok).borrow_mut().whitespace_before.borrow_mut(),
+            Some(""),
+        )?;
         let mut header = vec![];
         if let Some(stmt) = self.body.first_mut() {
             swap(&mut stmt.leading_lines(), &mut &header);
@@ -73,6 +78,6 @@ impl<'a> Inflate<'a> for Module<'a> {
         }
         self.footer = footer;
         self.header = header;
-        Ok(())
+        Ok(self)
     }
 }

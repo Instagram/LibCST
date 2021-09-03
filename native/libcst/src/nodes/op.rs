@@ -3,6 +3,8 @@
 // This source code is licensed under the MIT license found in the
 // LICENSE file in the root directory of this source tree.
 
+use std::{cell::RefCell, rc::Rc};
+
 use super::{whitespace::ParenthesizableWhitespace, Codegen, CodegenState};
 use crate::{
     nodes::traits::{Inflate, Result},
@@ -12,6 +14,8 @@ use crate::{
     },
 };
 
+type TokenRef<'a> = Rc<RefCell<Token<'a>>>;
+
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub struct Semicolon<'a> {
     /// Any space that appears directly before this semicolon.
@@ -19,11 +23,11 @@ pub struct Semicolon<'a> {
     /// Any space that appears directly after this semicolon.
     pub whitespace_after: ParenthesizableWhitespace<'a>,
 
-    pub(crate) tok: Token<'a>,
+    pub(crate) tok: TokenRef<'a>,
 }
 
 impl<'a> Codegen<'a> for Semicolon<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         self.whitespace_before.codegen(state);
         state.add_token(";");
         self.whitespace_after.codegen(state);
@@ -31,14 +35,18 @@ impl<'a> Codegen<'a> for Semicolon<'a> {
 }
 
 impl<'a> Inflate<'a> for Semicolon<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        self.whitespace_before = ParenthesizableWhitespace::SimpleWhitespace(
-            parse_simple_whitespace(config, &mut self.tok.whitespace_before)?,
-        );
-        self.whitespace_after = ParenthesizableWhitespace::SimpleWhitespace(
-            parse_simple_whitespace(config, &mut self.tok.whitespace_after)?,
-        );
-        Ok(())
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.whitespace_before =
+            ParenthesizableWhitespace::SimpleWhitespace(parse_simple_whitespace(
+                config,
+                &mut (*self.tok).borrow_mut().whitespace_before.borrow_mut(),
+            )?);
+        self.whitespace_after =
+            ParenthesizableWhitespace::SimpleWhitespace(parse_simple_whitespace(
+                config,
+                &mut (*self.tok).borrow_mut().whitespace_after.borrow_mut(),
+            )?);
+        Ok(self)
     }
 }
 
@@ -49,11 +57,11 @@ pub struct Comma<'a> {
     /// Any space that appears directly after this comma.
     pub whitespace_after: ParenthesizableWhitespace<'a>,
 
-    pub(crate) tok: Token<'a>,
+    pub(crate) tok: TokenRef<'a>,
 }
 
 impl<'a> Codegen<'a> for Comma<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         self.whitespace_before.codegen(state);
         state.add_token(",");
         self.whitespace_after.codegen(state);
@@ -61,12 +69,16 @@ impl<'a> Codegen<'a> for Comma<'a> {
 }
 
 impl<'a> Inflate<'a> for Comma<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        self.whitespace_before =
-            parse_parenthesizable_whitespace(config, &mut self.tok.whitespace_before)?;
-        self.whitespace_after =
-            parse_parenthesizable_whitespace(config, &mut self.tok.whitespace_after)?;
-        Ok(())
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.whitespace_before = parse_parenthesizable_whitespace(
+            config,
+            &mut (*self.tok).borrow_mut().whitespace_before.borrow_mut(),
+        )?;
+        self.whitespace_after = parse_parenthesizable_whitespace(
+            config,
+            &mut (*self.tok).borrow_mut().whitespace_after.borrow_mut(),
+        )?;
+        Ok(self)
     }
 }
 
@@ -77,11 +89,11 @@ pub struct AssignEqual<'a> {
     /// Any space that appears directly after this equal sign.
     pub whitespace_after: ParenthesizableWhitespace<'a>,
 
-    pub(crate) tok: Token<'a>,
+    pub(crate) tok: TokenRef<'a>,
 }
 
 impl<'a> Codegen<'a> for AssignEqual<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         self.whitespace_before.codegen(state);
         state.add_token("=");
         self.whitespace_after.codegen(state);
@@ -89,12 +101,16 @@ impl<'a> Codegen<'a> for AssignEqual<'a> {
 }
 
 impl<'a> Inflate<'a> for AssignEqual<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        self.whitespace_before =
-            parse_parenthesizable_whitespace(config, &mut self.tok.whitespace_before)?;
-        self.whitespace_after =
-            parse_parenthesizable_whitespace(config, &mut self.tok.whitespace_after)?;
-        Ok(())
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.whitespace_before = parse_parenthesizable_whitespace(
+            config,
+            &mut (*self.tok).borrow_mut().whitespace_before.borrow_mut(),
+        )?;
+        self.whitespace_after = parse_parenthesizable_whitespace(
+            config,
+            &mut (*self.tok).borrow_mut().whitespace_after.borrow_mut(),
+        )?;
+        Ok(self)
     }
 }
 
@@ -105,11 +121,11 @@ pub struct Dot<'a> {
     /// Any space that appears directly after this dot.
     pub whitespace_after: ParenthesizableWhitespace<'a>,
 
-    pub(crate) tok: Token<'a>,
+    pub(crate) tok: TokenRef<'a>,
 }
 
 impl<'a> Codegen<'a> for Dot<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         self.whitespace_before.codegen(state);
         state.add_token(".");
         self.whitespace_after.codegen(state);
@@ -117,12 +133,16 @@ impl<'a> Codegen<'a> for Dot<'a> {
 }
 
 impl<'a> Inflate<'a> for Dot<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        self.whitespace_before =
-            parse_parenthesizable_whitespace(config, &mut self.tok.whitespace_before)?;
-        self.whitespace_after =
-            parse_parenthesizable_whitespace(config, &mut self.tok.whitespace_after)?;
-        Ok(())
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.whitespace_before = parse_parenthesizable_whitespace(
+            config,
+            &mut (*self.tok).borrow_mut().whitespace_before.borrow_mut(),
+        )?;
+        self.whitespace_after = parse_parenthesizable_whitespace(
+            config,
+            &mut (*self.tok).borrow_mut().whitespace_after.borrow_mut(),
+        )?;
+        Ok(self)
     }
 }
 
@@ -130,27 +150,27 @@ impl<'a> Inflate<'a> for Dot<'a> {
 pub struct ImportStar {}
 
 impl<'a> Codegen<'a> for ImportStar {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         state.add_token("*");
     }
 }
 
 impl<'a> Inflate<'a> for ImportStar {
-    fn inflate(&mut self, _config: &Config<'a>) -> Result<()> {
-        Ok(())
+    fn inflate(self, _config: &Config<'a>) -> Result<Self> {
+        Ok(self)
     }
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum UnaryOp<'a> {
-    Plus(ParenthesizableWhitespace<'a>, Token<'a>),
-    Minus(ParenthesizableWhitespace<'a>, Token<'a>),
-    BitInvert(ParenthesizableWhitespace<'a>, Token<'a>),
-    Not(ParenthesizableWhitespace<'a>, Token<'a>),
+    Plus(ParenthesizableWhitespace<'a>, TokenRef<'a>),
+    Minus(ParenthesizableWhitespace<'a>, TokenRef<'a>),
+    BitInvert(ParenthesizableWhitespace<'a>, TokenRef<'a>),
+    Not(ParenthesizableWhitespace<'a>, TokenRef<'a>),
 }
 
 impl<'a> Codegen<'a> for UnaryOp<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         let (tok, whitespace_after) = match self {
             Self::Plus(ws, ..) => ("+", ws),
             Self::Minus(ws, ..) => ("-", ws),
@@ -163,14 +183,37 @@ impl<'a> Codegen<'a> for UnaryOp<'a> {
 }
 
 impl<'a> Inflate<'a> for UnaryOp<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        let (whitespace_after, tok) = match self {
-            Self::Plus(a, b) | Self::Minus(a, b) | Self::BitInvert(a, b) | Self::Not(a, b) => {
-                (a, b)
+    fn inflate(self, config: &Config<'a>) -> Result<Self> {
+        Ok(match self {
+            Self::Plus(_, tok) => {
+                let ws = parse_parenthesizable_whitespace(
+                    config,
+                    &mut (*tok).borrow_mut().whitespace_after.borrow_mut(),
+                )?;
+                Self::Plus(ws, tok)
             }
-        };
-        *whitespace_after = parse_parenthesizable_whitespace(config, &mut tok.whitespace_after)?;
-        Ok(())
+            Self::Minus(_, tok) => {
+                let ws = parse_parenthesizable_whitespace(
+                    config,
+                    &mut (*tok).borrow_mut().whitespace_after.borrow_mut(),
+                )?;
+                Self::Minus(ws, tok)
+            }
+            Self::BitInvert(_, tok) => {
+                let ws = parse_parenthesizable_whitespace(
+                    config,
+                    &mut (*tok).borrow_mut().whitespace_after.borrow_mut(),
+                )?;
+                Self::BitInvert(ws, tok)
+            }
+            Self::Not(_, tok) => {
+                let ws = parse_parenthesizable_whitespace(
+                    config,
+                    &mut (*tok).borrow_mut().whitespace_after.borrow_mut(),
+                )?;
+                Self::Not(ws, tok)
+            }
+        })
     }
 }
 
@@ -179,17 +222,17 @@ pub enum BooleanOp<'a> {
     And {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
-        tok: Token<'a>,
+        tok: TokenRef<'a>,
     },
     Or {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
-        tok: Token<'a>,
+        tok: TokenRef<'a>,
     },
 }
 
 impl<'a> Codegen<'a> for BooleanOp<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         let (tok, ws_bef, ws_aft) = match self {
             Self::And {
                 whitespace_after,
@@ -209,22 +252,39 @@ impl<'a> Codegen<'a> for BooleanOp<'a> {
 }
 
 impl<'a> Inflate<'a> for BooleanOp<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        let (whitespace_before, whitespace_after, tok) = match self {
-            Self::And {
-                whitespace_before,
-                whitespace_after,
-                tok,
+    fn inflate(self, config: &Config<'a>) -> Result<Self> {
+        Ok(match self {
+            Self::And { tok, .. } => {
+                let whitespace_before = parse_parenthesizable_whitespace(
+                    config,
+                    &mut (*tok).borrow_mut().whitespace_before.borrow_mut(),
+                )?;
+                let whitespace_after = parse_parenthesizable_whitespace(
+                    config,
+                    &mut (*tok).borrow_mut().whitespace_after.borrow_mut(),
+                )?;
+                Self::And {
+                    whitespace_before,
+                    whitespace_after,
+                    tok,
+                }
             }
-            | Self::Or {
-                whitespace_before,
-                whitespace_after,
-                tok,
-            } => (whitespace_before, whitespace_after, tok),
-        };
-        *whitespace_before = parse_parenthesizable_whitespace(config, &mut tok.whitespace_before)?;
-        *whitespace_after = parse_parenthesizable_whitespace(config, &mut tok.whitespace_after)?;
-        Ok(())
+            Self::Or { tok, .. } => {
+                let whitespace_before = parse_parenthesizable_whitespace(
+                    config,
+                    &mut (*tok).borrow_mut().whitespace_before.borrow_mut(),
+                )?;
+                let whitespace_after = parse_parenthesizable_whitespace(
+                    config,
+                    &mut (*tok).borrow_mut().whitespace_after.borrow_mut(),
+                )?;
+                Self::Or {
+                    whitespace_before,
+                    whitespace_after,
+                    tok,
+                }
+            }
+        })
     }
 }
 
@@ -233,72 +293,72 @@ pub enum BinaryOp<'a> {
     Add {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
-        tok: Token<'a>,
+        tok: TokenRef<'a>,
     },
     Subtract {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
-        tok: Token<'a>,
+        tok: TokenRef<'a>,
     },
     Multiply {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
-        tok: Token<'a>,
+        tok: TokenRef<'a>,
     },
     Divide {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
-        tok: Token<'a>,
+        tok: TokenRef<'a>,
     },
     FloorDivide {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
-        tok: Token<'a>,
+        tok: TokenRef<'a>,
     },
     Modulo {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
-        tok: Token<'a>,
+        tok: TokenRef<'a>,
     },
     Power {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
-        tok: Token<'a>,
+        tok: TokenRef<'a>,
     },
     LeftShift {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
-        tok: Token<'a>,
+        tok: TokenRef<'a>,
     },
     RightShift {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
-        tok: Token<'a>,
+        tok: TokenRef<'a>,
     },
     BitOr {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
-        tok: Token<'a>,
+        tok: TokenRef<'a>,
     },
     BitAnd {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
-        tok: Token<'a>,
+        tok: TokenRef<'a>,
     },
     BitXor {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
-        tok: Token<'a>,
+        tok: TokenRef<'a>,
     },
     MatrixMultiply {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
-        tok: Token<'a>,
+        tok: TokenRef<'a>,
     },
 }
 
 impl<'a> Codegen<'a> for BinaryOp<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         let (whitespace_before, whitespace_after, tok) = match self {
             Self::Add {
                 whitespace_before,
@@ -367,84 +427,210 @@ impl<'a> Codegen<'a> for BinaryOp<'a> {
             } => (whitespace_before, whitespace_after, tok),
         };
         whitespace_before.codegen(state);
-        state.add_token(tok.string);
+        state.add_token(tok.borrow().string);
         whitespace_after.codegen(state);
     }
 }
 
 impl<'a> Inflate<'a> for BinaryOp<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        let (whitespace_before, whitespace_after, tok) = match self {
-            Self::Add {
-                whitespace_before,
-                whitespace_after,
-                tok,
+    fn inflate(self, config: &Config<'a>) -> Result<Self> {
+        Ok(match self {
+            Self::Add { tok, .. } => {
+                let whitespace_before = parse_parenthesizable_whitespace(
+                    config,
+                    &mut (*tok).borrow_mut().whitespace_before.borrow_mut(),
+                )?;
+                let whitespace_after = parse_parenthesizable_whitespace(
+                    config,
+                    &mut (*tok).borrow_mut().whitespace_after.borrow_mut(),
+                )?;
+                Self::Add {
+                    whitespace_before,
+                    whitespace_after,
+                    tok,
+                }
             }
-            | Self::Subtract {
-                whitespace_before,
-                whitespace_after,
-                tok,
+            Self::Subtract { tok, .. } => {
+                let whitespace_before = parse_parenthesizable_whitespace(
+                    config,
+                    &mut (*tok).borrow_mut().whitespace_before.borrow_mut(),
+                )?;
+                let whitespace_after = parse_parenthesizable_whitespace(
+                    config,
+                    &mut (*tok).borrow_mut().whitespace_after.borrow_mut(),
+                )?;
+                Self::Subtract {
+                    whitespace_before,
+                    whitespace_after,
+                    tok,
+                }
             }
-            | Self::Multiply {
-                whitespace_before,
-                whitespace_after,
-                tok,
+            Self::Multiply { tok, .. } => {
+                let whitespace_before = parse_parenthesizable_whitespace(
+                    config,
+                    &mut (*tok).borrow_mut().whitespace_before.borrow_mut(),
+                )?;
+                let whitespace_after = parse_parenthesizable_whitespace(
+                    config,
+                    &mut (*tok).borrow_mut().whitespace_after.borrow_mut(),
+                )?;
+                Self::Multiply {
+                    whitespace_before,
+                    whitespace_after,
+                    tok,
+                }
             }
-            | Self::Divide {
-                whitespace_before,
-                whitespace_after,
-                tok,
+            Self::Divide { tok, .. } => {
+                let whitespace_before = parse_parenthesizable_whitespace(
+                    config,
+                    &mut (*tok).borrow_mut().whitespace_before.borrow_mut(),
+                )?;
+                let whitespace_after = parse_parenthesizable_whitespace(
+                    config,
+                    &mut (*tok).borrow_mut().whitespace_after.borrow_mut(),
+                )?;
+                Self::Divide {
+                    whitespace_before,
+                    whitespace_after,
+                    tok,
+                }
             }
-            | Self::FloorDivide {
-                whitespace_before,
-                whitespace_after,
-                tok,
+            Self::FloorDivide { tok, .. } => {
+                let whitespace_before = parse_parenthesizable_whitespace(
+                    config,
+                    &mut (*tok).borrow_mut().whitespace_before.borrow_mut(),
+                )?;
+                let whitespace_after = parse_parenthesizable_whitespace(
+                    config,
+                    &mut (*tok).borrow_mut().whitespace_after.borrow_mut(),
+                )?;
+                Self::FloorDivide {
+                    whitespace_before,
+                    whitespace_after,
+                    tok,
+                }
             }
-            | Self::Modulo {
-                whitespace_before,
-                whitespace_after,
-                tok,
+            Self::Modulo { tok, .. } => {
+                let whitespace_before = parse_parenthesizable_whitespace(
+                    config,
+                    &mut (*tok).borrow_mut().whitespace_before.borrow_mut(),
+                )?;
+                let whitespace_after = parse_parenthesizable_whitespace(
+                    config,
+                    &mut (*tok).borrow_mut().whitespace_after.borrow_mut(),
+                )?;
+                Self::Modulo {
+                    whitespace_before,
+                    whitespace_after,
+                    tok,
+                }
             }
-            | Self::Power {
-                whitespace_before,
-                whitespace_after,
-                tok,
+            Self::Power { tok, .. } => {
+                let whitespace_before = parse_parenthesizable_whitespace(
+                    config,
+                    &mut (*tok).borrow_mut().whitespace_before.borrow_mut(),
+                )?;
+                let whitespace_after = parse_parenthesizable_whitespace(
+                    config,
+                    &mut (*tok).borrow_mut().whitespace_after.borrow_mut(),
+                )?;
+                Self::Power {
+                    whitespace_before,
+                    whitespace_after,
+                    tok,
+                }
             }
-            | Self::LeftShift {
-                whitespace_before,
-                whitespace_after,
-                tok,
+            Self::LeftShift { tok, .. } => {
+                let whitespace_before = parse_parenthesizable_whitespace(
+                    config,
+                    &mut (*tok).borrow_mut().whitespace_before.borrow_mut(),
+                )?;
+                let whitespace_after = parse_parenthesizable_whitespace(
+                    config,
+                    &mut (*tok).borrow_mut().whitespace_after.borrow_mut(),
+                )?;
+                Self::LeftShift {
+                    whitespace_before,
+                    whitespace_after,
+                    tok,
+                }
             }
-            | Self::RightShift {
-                whitespace_before,
-                whitespace_after,
-                tok,
+            Self::RightShift { tok, .. } => {
+                let whitespace_before = parse_parenthesizable_whitespace(
+                    config,
+                    &mut (*tok).borrow_mut().whitespace_before.borrow_mut(),
+                )?;
+                let whitespace_after = parse_parenthesizable_whitespace(
+                    config,
+                    &mut (*tok).borrow_mut().whitespace_after.borrow_mut(),
+                )?;
+                Self::RightShift {
+                    whitespace_before,
+                    whitespace_after,
+                    tok,
+                }
             }
-            | Self::BitOr {
-                whitespace_before,
-                whitespace_after,
-                tok,
+            Self::BitOr { tok, .. } => {
+                let whitespace_before = parse_parenthesizable_whitespace(
+                    config,
+                    &mut (*tok).borrow_mut().whitespace_before.borrow_mut(),
+                )?;
+                let whitespace_after = parse_parenthesizable_whitespace(
+                    config,
+                    &mut (*tok).borrow_mut().whitespace_after.borrow_mut(),
+                )?;
+                Self::BitOr {
+                    whitespace_before,
+                    whitespace_after,
+                    tok,
+                }
             }
-            | Self::BitAnd {
-                whitespace_before,
-                whitespace_after,
-                tok,
+            Self::BitAnd { tok, .. } => {
+                let whitespace_before = parse_parenthesizable_whitespace(
+                    config,
+                    &mut (*tok).borrow_mut().whitespace_before.borrow_mut(),
+                )?;
+                let whitespace_after = parse_parenthesizable_whitespace(
+                    config,
+                    &mut (*tok).borrow_mut().whitespace_after.borrow_mut(),
+                )?;
+                Self::BitAnd {
+                    whitespace_before,
+                    whitespace_after,
+                    tok,
+                }
             }
-            | Self::BitXor {
-                whitespace_before,
-                whitespace_after,
-                tok,
+            Self::BitXor { tok, .. } => {
+                let whitespace_before = parse_parenthesizable_whitespace(
+                    config,
+                    &mut (*tok).borrow_mut().whitespace_before.borrow_mut(),
+                )?;
+                let whitespace_after = parse_parenthesizable_whitespace(
+                    config,
+                    &mut (*tok).borrow_mut().whitespace_after.borrow_mut(),
+                )?;
+                Self::BitXor {
+                    whitespace_before,
+                    whitespace_after,
+                    tok,
+                }
             }
-            | Self::MatrixMultiply {
-                whitespace_before,
-                whitespace_after,
-                tok,
-            } => (whitespace_before, whitespace_after, tok),
-        };
-        *whitespace_before = parse_parenthesizable_whitespace(config, &mut tok.whitespace_before)?;
-        *whitespace_after = parse_parenthesizable_whitespace(config, &mut tok.whitespace_after)?;
-
-        Ok(())
+            Self::MatrixMultiply { tok, .. } => {
+                let whitespace_before = parse_parenthesizable_whitespace(
+                    config,
+                    &mut (*tok).borrow_mut().whitespace_before.borrow_mut(),
+                )?;
+                let whitespace_after = parse_parenthesizable_whitespace(
+                    config,
+                    &mut (*tok).borrow_mut().whitespace_after.borrow_mut(),
+                )?;
+                Self::MatrixMultiply {
+                    whitespace_before,
+                    whitespace_after,
+                    tok,
+                }
+            }
+        })
     }
 }
 
@@ -453,61 +639,61 @@ pub enum CompOp<'a> {
     LessThan {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
-        tok: Token<'a>,
+        tok: TokenRef<'a>,
     },
     GreaterThan {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
-        tok: Token<'a>,
+        tok: TokenRef<'a>,
     },
     LessThanEqual {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
-        tok: Token<'a>,
+        tok: TokenRef<'a>,
     },
     GreaterThanEqual {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
-        tok: Token<'a>,
+        tok: TokenRef<'a>,
     },
     Equal {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
-        tok: Token<'a>,
+        tok: TokenRef<'a>,
     },
     NotEqual {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
-        tok: Token<'a>,
+        tok: TokenRef<'a>,
     },
     In {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
-        tok: Token<'a>,
+        tok: TokenRef<'a>,
     },
     NotIn {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_between: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
-        not_tok: Token<'a>,
-        in_tok: Token<'a>,
+        not_tok: TokenRef<'a>,
+        in_tok: TokenRef<'a>,
     },
     Is {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
-        tok: Token<'a>,
+        tok: TokenRef<'a>,
     },
     IsNot {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_between: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
-        is_tok: Token<'a>,
-        not_tok: Token<'a>,
+        is_tok: TokenRef<'a>,
+        not_tok: TokenRef<'a>,
     },
 }
 
 impl<'a> Codegen<'a> for CompOp<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         let (bef, aft, first_tok, between) = match self {
             Self::LessThan {
                 whitespace_before,
@@ -575,95 +761,185 @@ impl<'a> Codegen<'a> for CompOp<'a> {
             ),
         };
         bef.codegen(state);
-        state.add_token(first_tok.string);
+        state.add_token(first_tok.borrow().string);
         if let Some((btw, second_tok)) = between {
             btw.codegen(state);
-            state.add_token(second_tok.string);
+            state.add_token(second_tok.borrow().string);
         }
         aft.codegen(state);
     }
 }
 
 impl<'a> Inflate<'a> for CompOp<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        let (whitespace_before, whitespace_after, first_tok, between) = match self {
-            Self::LessThan {
-                whitespace_before,
-                whitespace_after,
-                tok,
+    fn inflate(self, config: &Config<'a>) -> Result<Self> {
+        Ok(match self {
+            Self::LessThan { tok, .. } => {
+                let whitespace_before = parse_parenthesizable_whitespace(
+                    config,
+                    &mut (*tok).borrow_mut().whitespace_before.borrow_mut(),
+                )?;
+                let whitespace_after = parse_parenthesizable_whitespace(
+                    config,
+                    &mut (*tok).borrow_mut().whitespace_after.borrow_mut(),
+                )?;
+                Self::LessThan {
+                    whitespace_before,
+                    whitespace_after,
+                    tok,
+                }
             }
-            | Self::GreaterThan {
-                whitespace_before,
-                whitespace_after,
-                tok,
+            Self::GreaterThan { tok, .. } => {
+                let whitespace_before = parse_parenthesizable_whitespace(
+                    config,
+                    &mut (*tok).borrow_mut().whitespace_before.borrow_mut(),
+                )?;
+                let whitespace_after = parse_parenthesizable_whitespace(
+                    config,
+                    &mut (*tok).borrow_mut().whitespace_after.borrow_mut(),
+                )?;
+                Self::GreaterThan {
+                    whitespace_before,
+                    whitespace_after,
+                    tok,
+                }
             }
-            | Self::LessThanEqual {
-                whitespace_before,
-                whitespace_after,
-                tok,
+            Self::LessThanEqual { tok, .. } => {
+                let whitespace_before = parse_parenthesizable_whitespace(
+                    config,
+                    &mut (*tok).borrow_mut().whitespace_before.borrow_mut(),
+                )?;
+                let whitespace_after = parse_parenthesizable_whitespace(
+                    config,
+                    &mut (*tok).borrow_mut().whitespace_after.borrow_mut(),
+                )?;
+                Self::LessThanEqual {
+                    whitespace_before,
+                    whitespace_after,
+                    tok,
+                }
             }
-            | Self::GreaterThanEqual {
-                whitespace_before,
-                whitespace_after,
-                tok,
+            Self::GreaterThanEqual { tok, .. } => {
+                let whitespace_before = parse_parenthesizable_whitespace(
+                    config,
+                    &mut (*tok).borrow_mut().whitespace_before.borrow_mut(),
+                )?;
+                let whitespace_after = parse_parenthesizable_whitespace(
+                    config,
+                    &mut (*tok).borrow_mut().whitespace_after.borrow_mut(),
+                )?;
+                Self::GreaterThanEqual {
+                    whitespace_before,
+                    whitespace_after,
+                    tok,
+                }
             }
-            | Self::Equal {
-                whitespace_before,
-                whitespace_after,
-                tok,
+            Self::Equal { tok, .. } => {
+                let whitespace_before = parse_parenthesizable_whitespace(
+                    config,
+                    &mut (*tok).borrow_mut().whitespace_before.borrow_mut(),
+                )?;
+                let whitespace_after = parse_parenthesizable_whitespace(
+                    config,
+                    &mut (*tok).borrow_mut().whitespace_after.borrow_mut(),
+                )?;
+                Self::Equal {
+                    whitespace_before,
+                    whitespace_after,
+                    tok,
+                }
             }
-            | Self::NotEqual {
-                whitespace_before,
-                whitespace_after,
-                tok,
+            Self::NotEqual { tok, .. } => {
+                let whitespace_before = parse_parenthesizable_whitespace(
+                    config,
+                    &mut (*tok).borrow_mut().whitespace_before.borrow_mut(),
+                )?;
+                let whitespace_after = parse_parenthesizable_whitespace(
+                    config,
+                    &mut (*tok).borrow_mut().whitespace_after.borrow_mut(),
+                )?;
+                Self::NotEqual {
+                    whitespace_before,
+                    whitespace_after,
+                    tok,
+                }
             }
-            | Self::In {
-                whitespace_before,
-                whitespace_after,
-                tok,
+            Self::In { tok, .. } => {
+                let whitespace_before = parse_parenthesizable_whitespace(
+                    config,
+                    &mut (*tok).borrow_mut().whitespace_before.borrow_mut(),
+                )?;
+                let whitespace_after = parse_parenthesizable_whitespace(
+                    config,
+                    &mut (*tok).borrow_mut().whitespace_after.borrow_mut(),
+                )?;
+                Self::In {
+                    whitespace_before,
+                    whitespace_after,
+                    tok,
+                }
             }
-            | Self::Is {
-                whitespace_before,
-                whitespace_after,
-                tok,
-            } => (whitespace_before, whitespace_after, tok, None),
+            Self::Is { tok, .. } => {
+                let whitespace_before = parse_parenthesizable_whitespace(
+                    config,
+                    &mut (*tok).borrow_mut().whitespace_before.borrow_mut(),
+                )?;
+                let whitespace_after = parse_parenthesizable_whitespace(
+                    config,
+                    &mut (*tok).borrow_mut().whitespace_after.borrow_mut(),
+                )?;
+                Self::Is {
+                    whitespace_before,
+                    whitespace_after,
+                    tok,
+                }
+            }
             Self::IsNot {
-                whitespace_before,
-                whitespace_between,
-                whitespace_after,
-                is_tok,
-                not_tok,
-            } => (
-                whitespace_before,
-                whitespace_after,
-                is_tok,
-                Some((whitespace_between, not_tok)),
-            ),
+                is_tok, not_tok, ..
+            } => {
+                let whitespace_before = parse_parenthesizable_whitespace(
+                    config,
+                    &mut (*is_tok).borrow_mut().whitespace_before.borrow_mut(),
+                )?;
+                let whitespace_between = parse_parenthesizable_whitespace(
+                    config,
+                    &mut (*is_tok).borrow_mut().whitespace_after.borrow_mut(),
+                )?;
+                let whitespace_after = parse_parenthesizable_whitespace(
+                    config,
+                    &mut (*not_tok).borrow_mut().whitespace_after.borrow_mut(),
+                )?;
+                Self::IsNot {
+                    whitespace_before,
+                    whitespace_between,
+                    whitespace_after,
+                    is_tok,
+                    not_tok,
+                }
+            }
             Self::NotIn {
-                whitespace_before,
-                whitespace_between,
-                whitespace_after,
-                not_tok,
-                in_tok,
-            } => (
-                whitespace_before,
-                whitespace_after,
-                not_tok,
-                Some((whitespace_between, in_tok)),
-            ),
-        };
-        *whitespace_before =
-            parse_parenthesizable_whitespace(config, &mut first_tok.whitespace_before)?;
-        if let Some((whitespace_between, second_tok)) = between {
-            *whitespace_between =
-                parse_parenthesizable_whitespace(config, &mut first_tok.whitespace_after)?;
-            *whitespace_after =
-                parse_parenthesizable_whitespace(config, &mut second_tok.whitespace_after)?;
-        } else {
-            *whitespace_after =
-                parse_parenthesizable_whitespace(config, &mut first_tok.whitespace_after)?;
-        }
-        Ok(())
+                not_tok, in_tok, ..
+            } => {
+                let whitespace_before = parse_parenthesizable_whitespace(
+                    config,
+                    &mut (*not_tok).borrow_mut().whitespace_before.borrow_mut(),
+                )?;
+                let whitespace_between = parse_parenthesizable_whitespace(
+                    config,
+                    &mut (*not_tok).borrow_mut().whitespace_after.borrow_mut(),
+                )?;
+                let whitespace_after = parse_parenthesizable_whitespace(
+                    config,
+                    &mut (*in_tok).borrow_mut().whitespace_after.borrow_mut(),
+                )?;
+                Self::NotIn {
+                    whitespace_before,
+                    whitespace_between,
+                    whitespace_after,
+                    not_tok,
+                    in_tok,
+                }
+            }
+        })
     }
 }
 
@@ -672,21 +948,25 @@ pub struct Colon<'a> {
     pub whitespace_before: ParenthesizableWhitespace<'a>,
     pub whitespace_after: ParenthesizableWhitespace<'a>,
 
-    pub(crate) tok: Token<'a>,
+    pub(crate) tok: TokenRef<'a>,
 }
 
 impl<'a> Inflate<'a> for Colon<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        self.whitespace_before =
-            parse_parenthesizable_whitespace(config, &mut self.tok.whitespace_before)?;
-        self.whitespace_after =
-            parse_parenthesizable_whitespace(config, &mut self.tok.whitespace_after)?;
-        Ok(())
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.whitespace_before = parse_parenthesizable_whitespace(
+            config,
+            &mut (*self.tok).borrow_mut().whitespace_before.borrow_mut(),
+        )?;
+        self.whitespace_after = parse_parenthesizable_whitespace(
+            config,
+            &mut (*self.tok).borrow_mut().whitespace_after.borrow_mut(),
+        )?;
+        Ok(self)
     }
 }
 
 impl<'a> Codegen<'a> for Colon<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         self.whitespace_before.codegen(state);
         state.add_token(":");
         self.whitespace_after.codegen(state);
@@ -698,147 +978,274 @@ pub enum AugOp<'a> {
     AddAssign {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
-        tok: Token<'a>,
+        tok: TokenRef<'a>,
     },
     SubtractAssign {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
-        tok: Token<'a>,
+        tok: TokenRef<'a>,
     },
     MultiplyAssign {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
-        tok: Token<'a>,
+        tok: TokenRef<'a>,
     },
     MatrixMultiplyAssign {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
-        tok: Token<'a>,
+        tok: TokenRef<'a>,
     },
     DivideAssign {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
-        tok: Token<'a>,
+        tok: TokenRef<'a>,
     },
     ModuloAssign {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
-        tok: Token<'a>,
+        tok: TokenRef<'a>,
     },
     BitAndAssign {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
-        tok: Token<'a>,
+        tok: TokenRef<'a>,
     },
     BitOrAssign {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
-        tok: Token<'a>,
+        tok: TokenRef<'a>,
     },
     BitXorAssign {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
-        tok: Token<'a>,
+        tok: TokenRef<'a>,
     },
     LeftShiftAssign {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
-        tok: Token<'a>,
+        tok: TokenRef<'a>,
     },
     RightShiftAssign {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
-        tok: Token<'a>,
+        tok: TokenRef<'a>,
     },
     PowerAssign {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
-        tok: Token<'a>,
+        tok: TokenRef<'a>,
     },
     FloorDivideAssign {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
-        tok: Token<'a>,
+        tok: TokenRef<'a>,
     },
 }
 
 impl<'a> Inflate<'a> for AugOp<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        let (tok, whitespace_before, whitespace_after) = match self {
-            Self::AddAssign {
-                whitespace_before,
-                whitespace_after,
-                tok,
-            } => (tok, whitespace_before, whitespace_after),
-            Self::SubtractAssign {
-                whitespace_before,
-                whitespace_after,
-                tok,
-            } => (tok, whitespace_before, whitespace_after),
-            Self::MultiplyAssign {
-                whitespace_before,
-                whitespace_after,
-                tok,
-            } => (tok, whitespace_before, whitespace_after),
-            Self::MatrixMultiplyAssign {
-                whitespace_before,
-                whitespace_after,
-                tok,
-            } => (tok, whitespace_before, whitespace_after),
-            Self::DivideAssign {
-                whitespace_before,
-                whitespace_after,
-                tok,
-            } => (tok, whitespace_before, whitespace_after),
-            Self::ModuloAssign {
-                whitespace_before,
-                whitespace_after,
-                tok,
-            } => (tok, whitespace_before, whitespace_after),
-            Self::BitAndAssign {
-                whitespace_before,
-                whitespace_after,
-                tok,
-            } => (tok, whitespace_before, whitespace_after),
-            Self::BitOrAssign {
-                whitespace_before,
-                whitespace_after,
-                tok,
-            } => (tok, whitespace_before, whitespace_after),
-            Self::BitXorAssign {
-                whitespace_before,
-                whitespace_after,
-                tok,
-            } => (tok, whitespace_before, whitespace_after),
-            Self::LeftShiftAssign {
-                whitespace_before,
-                whitespace_after,
-                tok,
-            } => (tok, whitespace_before, whitespace_after),
-            Self::RightShiftAssign {
-                whitespace_before,
-                whitespace_after,
-                tok,
-            } => (tok, whitespace_before, whitespace_after),
-            Self::PowerAssign {
-                whitespace_before,
-                whitespace_after,
-                tok,
-            } => (tok, whitespace_before, whitespace_after),
-            Self::FloorDivideAssign {
-                whitespace_before,
-                whitespace_after,
-                tok,
-            } => (tok, whitespace_before, whitespace_after),
-        };
-        *whitespace_before = parse_parenthesizable_whitespace(config, &mut tok.whitespace_before)?;
-        *whitespace_after = parse_parenthesizable_whitespace(config, &mut tok.whitespace_after)?;
-        Ok(())
+    fn inflate(self, config: &Config<'a>) -> Result<Self> {
+        Ok(match self {
+            Self::AddAssign { tok, .. } => {
+                let whitespace_before = parse_parenthesizable_whitespace(
+                    config,
+                    &mut (*tok).borrow_mut().whitespace_before.borrow_mut(),
+                )?;
+                let whitespace_after = parse_parenthesizable_whitespace(
+                    config,
+                    &mut (*tok).borrow_mut().whitespace_after.borrow_mut(),
+                )?;
+                Self::AddAssign {
+                    whitespace_before,
+                    whitespace_after,
+                    tok,
+                }
+            }
+            Self::SubtractAssign { tok, .. } => {
+                let whitespace_before = parse_parenthesizable_whitespace(
+                    config,
+                    &mut (*tok).borrow_mut().whitespace_before.borrow_mut(),
+                )?;
+                let whitespace_after = parse_parenthesizable_whitespace(
+                    config,
+                    &mut (*tok).borrow_mut().whitespace_after.borrow_mut(),
+                )?;
+                Self::SubtractAssign {
+                    whitespace_before,
+                    whitespace_after,
+                    tok,
+                }
+            }
+            Self::MultiplyAssign { tok, .. } => {
+                let whitespace_before = parse_parenthesizable_whitespace(
+                    config,
+                    &mut (*tok).borrow_mut().whitespace_before.borrow_mut(),
+                )?;
+                let whitespace_after = parse_parenthesizable_whitespace(
+                    config,
+                    &mut (*tok).borrow_mut().whitespace_after.borrow_mut(),
+                )?;
+                Self::MultiplyAssign {
+                    whitespace_before,
+                    whitespace_after,
+                    tok,
+                }
+            }
+            Self::MatrixMultiplyAssign { tok, .. } => {
+                let whitespace_before = parse_parenthesizable_whitespace(
+                    config,
+                    &mut (*tok).borrow_mut().whitespace_before.borrow_mut(),
+                )?;
+                let whitespace_after = parse_parenthesizable_whitespace(
+                    config,
+                    &mut (*tok).borrow_mut().whitespace_after.borrow_mut(),
+                )?;
+                Self::MatrixMultiplyAssign {
+                    whitespace_before,
+                    whitespace_after,
+                    tok,
+                }
+            }
+            Self::DivideAssign { tok, .. } => {
+                let whitespace_before = parse_parenthesizable_whitespace(
+                    config,
+                    &mut (*tok).borrow_mut().whitespace_before.borrow_mut(),
+                )?;
+                let whitespace_after = parse_parenthesizable_whitespace(
+                    config,
+                    &mut (*tok).borrow_mut().whitespace_after.borrow_mut(),
+                )?;
+                Self::DivideAssign {
+                    whitespace_before,
+                    whitespace_after,
+                    tok,
+                }
+            }
+            Self::ModuloAssign { tok, .. } => {
+                let whitespace_before = parse_parenthesizable_whitespace(
+                    config,
+                    &mut (*tok).borrow_mut().whitespace_before.borrow_mut(),
+                )?;
+                let whitespace_after = parse_parenthesizable_whitespace(
+                    config,
+                    &mut (*tok).borrow_mut().whitespace_after.borrow_mut(),
+                )?;
+                Self::ModuloAssign {
+                    whitespace_before,
+                    whitespace_after,
+                    tok,
+                }
+            }
+            Self::BitAndAssign { tok, .. } => {
+                let whitespace_before = parse_parenthesizable_whitespace(
+                    config,
+                    &mut (*tok).borrow_mut().whitespace_before.borrow_mut(),
+                )?;
+                let whitespace_after = parse_parenthesizable_whitespace(
+                    config,
+                    &mut (*tok).borrow_mut().whitespace_after.borrow_mut(),
+                )?;
+                Self::BitAndAssign {
+                    whitespace_before,
+                    whitespace_after,
+                    tok,
+                }
+            }
+            Self::BitOrAssign { tok, .. } => {
+                let whitespace_before = parse_parenthesizable_whitespace(
+                    config,
+                    &mut (*tok).borrow_mut().whitespace_before.borrow_mut(),
+                )?;
+                let whitespace_after = parse_parenthesizable_whitespace(
+                    config,
+                    &mut (*tok).borrow_mut().whitespace_after.borrow_mut(),
+                )?;
+                Self::BitOrAssign {
+                    whitespace_before,
+                    whitespace_after,
+                    tok,
+                }
+            }
+            Self::BitXorAssign { tok, .. } => {
+                let whitespace_before = parse_parenthesizable_whitespace(
+                    config,
+                    &mut (*tok).borrow_mut().whitespace_before.borrow_mut(),
+                )?;
+                let whitespace_after = parse_parenthesizable_whitespace(
+                    config,
+                    &mut (*tok).borrow_mut().whitespace_after.borrow_mut(),
+                )?;
+                Self::BitXorAssign {
+                    whitespace_before,
+                    whitespace_after,
+                    tok,
+                }
+            }
+            Self::LeftShiftAssign { tok, .. } => {
+                let whitespace_before = parse_parenthesizable_whitespace(
+                    config,
+                    &mut (*tok).borrow_mut().whitespace_before.borrow_mut(),
+                )?;
+                let whitespace_after = parse_parenthesizable_whitespace(
+                    config,
+                    &mut (*tok).borrow_mut().whitespace_after.borrow_mut(),
+                )?;
+                Self::LeftShiftAssign {
+                    whitespace_before,
+                    whitespace_after,
+                    tok,
+                }
+            }
+            Self::RightShiftAssign { tok, .. } => {
+                let whitespace_before = parse_parenthesizable_whitespace(
+                    config,
+                    &mut (*tok).borrow_mut().whitespace_before.borrow_mut(),
+                )?;
+                let whitespace_after = parse_parenthesizable_whitespace(
+                    config,
+                    &mut (*tok).borrow_mut().whitespace_after.borrow_mut(),
+                )?;
+                Self::RightShiftAssign {
+                    whitespace_before,
+                    whitespace_after,
+                    tok,
+                }
+            }
+            Self::PowerAssign { tok, .. } => {
+                let whitespace_before = parse_parenthesizable_whitespace(
+                    config,
+                    &mut (*tok).borrow_mut().whitespace_before.borrow_mut(),
+                )?;
+                let whitespace_after = parse_parenthesizable_whitespace(
+                    config,
+                    &mut (*tok).borrow_mut().whitespace_after.borrow_mut(),
+                )?;
+                Self::PowerAssign {
+                    whitespace_before,
+                    whitespace_after,
+                    tok,
+                }
+            }
+            Self::FloorDivideAssign { tok, .. } => {
+                let whitespace_before = parse_parenthesizable_whitespace(
+                    config,
+                    &mut (*tok).borrow_mut().whitespace_before.borrow_mut(),
+                )?;
+                let whitespace_after = parse_parenthesizable_whitespace(
+                    config,
+                    &mut (*tok).borrow_mut().whitespace_after.borrow_mut(),
+                )?;
+                Self::FloorDivideAssign {
+                    whitespace_before,
+                    whitespace_after,
+                    tok,
+                }
+            }
+        })
     }
 }
 
 impl<'a> Codegen<'a> for AugOp<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         let (tok, bef, aft) = match self {
             Self::AddAssign {
                 whitespace_before,

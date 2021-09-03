@@ -60,10 +60,12 @@ mod string_types;
 
 use once_cell::sync::Lazy;
 use regex::Regex;
+use std::cell::RefCell;
 use std::cmp::Ordering;
 use std::convert::TryInto;
 use std::fmt::Debug;
 use std::fmt::Formatter;
+use std::rc::Rc;
 
 use crate::tokenizer::{
     core::string_types::{FStringNode, StringQuoteChar, StringQuoteSize},
@@ -1021,8 +1023,8 @@ pub struct Token<'a> {
     pub string: &'a str,
     pub start_pos: TextPositionSnapshot,
     pub end_pos: TextPositionSnapshot,
-    pub whitespace_before: WhitespaceState<'a>,
-    pub whitespace_after: WhitespaceState<'a>,
+    pub whitespace_before: Rc<RefCell<WhitespaceState<'a>>>,
+    pub whitespace_after: Rc<RefCell<WhitespaceState<'a>>>,
     pub relative_indent: Option<&'a str>,
 }
 
@@ -1030,8 +1032,8 @@ impl<'a> Debug for Token<'a> {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), std::fmt::Error> {
         write!(
             f,
-            "Token({:?}, {}, start={:?}, end={:?}, relative_indent={:?}",
-            self.r#type, self.string, self.start_pos, self.end_pos, self.relative_indent
+            "Token({:?}, {}, start={:?}, end={:?}, relative_indent={:?}, ws_before={:?}, ws_after={:?}",
+            self.r#type, self.string, self.start_pos, self.end_pos, self.relative_indent, self.whitespace_before, self.whitespace_after
         )
     }
 }
@@ -1046,7 +1048,7 @@ impl<'a> PartialEq for Token<'a> {
 impl<'a> Eq for Token<'a> {}
 
 pub struct TokenIterator<'a> {
-    previous_whitespace: Option<WhitespaceState<'a>>,
+    previous_whitespace: Option<Rc<RefCell<WhitespaceState<'a>>>>,
     core_state: TokState<'a>,
     absolute_indents: Vec<&'a str>,
 }
@@ -1089,7 +1091,7 @@ impl<'a> Iterator for TokenIterator<'a> {
                     self.absolute_indents.push(absolute_indent);
                     // HACKY: mutate and fixup the previous whitespace state
                     if let Some(ws) = self.previous_whitespace.as_mut() {
-                        ws.absolute_indent = absolute_indent;
+                        ws.borrow_mut().absolute_indent = absolute_indent;
                     }
                     Some(relative_indent)
                 }
@@ -1097,7 +1099,8 @@ impl<'a> Iterator for TokenIterator<'a> {
                     self.absolute_indents.pop();
                     // HACKY: mutate and fixup the previous whitespace state
                     if let Some(ws) = self.previous_whitespace.as_mut() {
-                        ws.absolute_indent = self.absolute_indents.last().unwrap_or(&"");
+                        ws.borrow_mut().absolute_indent =
+                            self.absolute_indents.last().unwrap_or(&"");
                     }
                     None
                 }
@@ -1107,14 +1110,14 @@ impl<'a> Iterator for TokenIterator<'a> {
             let whitespace_before = self.previous_whitespace.clone().unwrap_or_default();
             let whitespace_after = match tok_type {
                 TokType::Indent | TokType::Dedent | TokType::EndMarker => whitespace_before.clone(),
-                _ => WhitespaceState {
+                _ => Rc::new(RefCell::new(WhitespaceState {
                     line: text_pos.line_number(),
                     column: text_pos.char_column_number(),
                     column_byte: text_pos.byte_column_number(),
                     byte_offset: text_pos.byte_idx(),
                     absolute_indent: self.absolute_indents.last().unwrap_or(&""),
                     is_parenthesized: self.core_state.is_parenthesized(),
-                },
+                })),
             };
             self.previous_whitespace = Some(whitespace_after.clone());
 

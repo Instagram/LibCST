@@ -3,7 +3,7 @@
 // This source code is licensed under the MIT license found in the
 // LICENSE file in the root directory of this source tree.
 
-use std::mem::swap;
+use std::{cell::RefCell, mem::swap, rc::Rc};
 
 use super::{
     inflate_helpers::adjust_parameters_trailing_whitespace, Attribute, Codegen, CodegenState,
@@ -25,6 +25,8 @@ use crate::{
     },
 };
 use libcst_derive::{Codegen, Inflate, ParenthesizedNode};
+
+type TokenRef<'a> = Rc<RefCell<Token<'a>>>;
 
 #[allow(clippy::large_enum_variant)]
 #[derive(Debug, Eq, PartialEq, Clone, Inflate, Codegen)]
@@ -92,13 +94,13 @@ pub struct IndentedBlock<'a> {
     /// further.
     pub footer: Vec<EmptyLine<'a>>,
 
-    pub(crate) newline_tok: Token<'a>,
-    pub(crate) indent_tok: Token<'a>,
-    pub(crate) dedent_tok: Token<'a>,
+    pub(crate) newline_tok: TokenRef<'a>,
+    pub(crate) indent_tok: TokenRef<'a>,
+    pub(crate) dedent_tok: TokenRef<'a>,
 }
 
 impl<'a> Codegen<'a> for IndentedBlock<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         self.header.codegen(state);
 
         let indent = match self.indent {
@@ -131,10 +133,8 @@ impl<'a> Codegen<'a> for IndentedBlock<'a> {
 }
 
 impl<'a> Inflate<'a> for IndentedBlock<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        for stat in &mut self.body {
-            stat.inflate(config)?;
-        }
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.body = self.body.inflate(config)?;
         // We want to be able to only keep comments in the footer that are actually for
         // this IndentedBlock. We do so by assuming that lines which are indented to the
         // same level as the block itself are comments that go at the footer of the
@@ -148,14 +148,29 @@ impl<'a> Inflate<'a> for IndentedBlock<'a> {
         // comments are attached to the correct node.
         let footer = parse_empty_lines(
             config,
-            &mut self.dedent_tok.whitespace_after,
-            Some(self.indent_tok.whitespace_before.absolute_indent),
+            &mut (*self.dedent_tok)
+                .borrow_mut()
+                .whitespace_after
+                .borrow_mut(),
+            Some(
+                self.indent_tok
+                    .borrow()
+                    .whitespace_before
+                    .borrow()
+                    .absolute_indent,
+            ),
         )?;
-        let header = parse_trailing_whitespace(config, &mut self.newline_tok.whitespace_before)?;
+        let header = parse_trailing_whitespace(
+            config,
+            &mut (*self.newline_tok)
+                .borrow_mut()
+                .whitespace_before
+                .borrow_mut(),
+        )?;
         self.footer = footer;
         self.header = header;
-        self.indent = self.indent_tok.relative_indent;
-        Ok(())
+        self.indent = self.indent_tok.borrow().relative_indent;
+        Ok(self)
     }
 }
 
@@ -170,24 +185,34 @@ pub struct SimpleStatementSuite<'a> {
     /// Any optional trailing comment and the final ``NEWLINE`` at the end of the line.
     pub trailing_whitespace: TrailingWhitespace<'a>,
 
-    pub(crate) first_tok: Token<'a>,
-    pub(crate) newline_tok: Token<'a>,
+    pub(crate) first_tok: TokenRef<'a>,
+    pub(crate) newline_tok: TokenRef<'a>,
 }
 
 impl<'a> Inflate<'a> for SimpleStatementSuite<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        self.leading_whitespace =
-            parse_simple_whitespace(config, &mut self.first_tok.whitespace_before)?;
-        self.body.inflate(config)?;
-        self.trailing_whitespace =
-            parse_trailing_whitespace(config, &mut self.newline_tok.whitespace_before)?;
-        Ok(())
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.leading_whitespace = parse_simple_whitespace(
+            config,
+            &mut (*self.first_tok)
+                .borrow_mut()
+                .whitespace_before
+                .borrow_mut(),
+        )?;
+        self.body = self.body.inflate(config)?;
+        self.trailing_whitespace = parse_trailing_whitespace(
+            config,
+            &mut (*self.newline_tok)
+                .borrow_mut()
+                .whitespace_before
+                .borrow_mut(),
+        )?;
+        Ok(self)
     }
 }
 
 fn _simple_statement_codegen<'a>(
-    body: &'a [SmallStatement<'a>],
-    trailing_whitespace: &'a TrailingWhitespace<'a>,
+    body: &[SmallStatement<'a>],
+    trailing_whitespace: &TrailingWhitespace<'a>,
     state: &mut CodegenState<'a>,
 ) {
     for stmt in body {
@@ -203,7 +228,7 @@ fn _simple_statement_codegen<'a>(
 }
 
 impl<'a> Codegen<'a> for SimpleStatementSuite<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         self.leading_whitespace.codegen(state);
         _simple_statement_codegen(&self.body, &self.trailing_whitespace, state);
     }
@@ -220,12 +245,12 @@ pub struct SimpleStatementLine<'a> {
     /// Any optional trailing comment and the final ``NEWLINE`` at the end of the line.
     pub trailing_whitespace: TrailingWhitespace<'a>,
 
-    pub(crate) first_tok: Token<'a>,
-    pub(crate) newline_tok: Token<'a>,
+    pub(crate) first_tok: TokenRef<'a>,
+    pub(crate) newline_tok: TokenRef<'a>,
 }
 
 impl<'a> Codegen<'a> for SimpleStatementLine<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         for line in &self.leading_lines {
             line.codegen(state);
         }
@@ -235,13 +260,23 @@ impl<'a> Codegen<'a> for SimpleStatementLine<'a> {
 }
 
 impl<'a> Inflate<'a> for SimpleStatementLine<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        self.leading_lines =
-            parse_empty_lines_from_end(config, &mut self.first_tok.whitespace_before)?;
-        self.body.inflate(config)?;
-        self.trailing_whitespace =
-            parse_trailing_whitespace(config, &mut self.newline_tok.whitespace_before)?;
-        Ok(())
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.leading_lines = parse_empty_lines_from_end(
+            config,
+            &mut (*self.first_tok)
+                .borrow_mut()
+                .whitespace_before
+                .borrow_mut(),
+        )?;
+        self.body = self.body.inflate(config)?;
+        self.trailing_whitespace = parse_trailing_whitespace(
+            config,
+            &mut (*self.newline_tok)
+                .borrow_mut()
+                .whitespace_before
+                .borrow_mut(),
+        )?;
+        Ok(self)
     }
 }
 
@@ -297,14 +332,15 @@ impl<'a> Pass<'a> {
     }
 }
 impl<'a> Codegen<'a> for Pass<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         state.add_token("pass");
         self.semicolon.codegen(state);
     }
 }
 impl<'a> Inflate<'a> for Pass<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        self.semicolon.inflate(config)
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.semicolon = self.semicolon.inflate(config)?;
+        Ok(self)
     }
 }
 
@@ -318,14 +354,15 @@ impl<'a> Break<'a> {
     }
 }
 impl<'a> Codegen<'a> for Break<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         state.add_token("break");
         self.semicolon.codegen(state);
     }
 }
 impl<'a> Inflate<'a> for Break<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        self.semicolon.inflate(config)
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.semicolon = self.semicolon.inflate(config)?;
+        Ok(self)
     }
 }
 
@@ -339,14 +376,15 @@ impl<'a> Continue<'a> {
     }
 }
 impl<'a> Codegen<'a> for Continue<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         state.add_token("continue");
         self.semicolon.codegen(state);
     }
 }
 impl<'a> Inflate<'a> for Continue<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        self.semicolon.inflate(config)
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.semicolon = self.semicolon.inflate(config)?;
+        Ok(self)
     }
 }
 
@@ -361,16 +399,16 @@ impl<'a> Expr<'a> {
     }
 }
 impl<'a> Codegen<'a> for Expr<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         self.value.codegen(state);
         self.semicolon.codegen(state);
     }
 }
 impl<'a> Inflate<'a> for Expr<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        self.value.inflate(config)?;
-        self.semicolon.inflate(config)?;
-        Ok(())
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.value = self.value.inflate(config)?;
+        self.semicolon = self.semicolon.inflate(config)?;
+        Ok(self)
     }
 }
 
@@ -382,7 +420,7 @@ pub struct Assign<'a> {
 }
 
 impl<'a> Codegen<'a> for Assign<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         for target in &self.targets {
             target.codegen(state);
         }
@@ -394,13 +432,11 @@ impl<'a> Codegen<'a> for Assign<'a> {
 }
 
 impl<'a> Inflate<'a> for Assign<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        for t in &mut self.targets {
-            t.inflate(config)?;
-        }
-        self.value.inflate(config)?;
-        self.semicolon.inflate(config)?;
-        Ok(())
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.targets = self.targets.inflate(config)?;
+        self.value = self.value.inflate(config)?;
+        self.semicolon = self.semicolon.inflate(config)?;
+        Ok(self)
     }
 }
 
@@ -416,11 +452,11 @@ pub struct AssignTarget<'a> {
     pub whitespace_before_equal: SimpleWhitespace<'a>,
     pub whitespace_after_equal: SimpleWhitespace<'a>,
 
-    pub(crate) equal_tok: Token<'a>,
+    pub(crate) equal_tok: TokenRef<'a>,
 }
 
 impl<'a> Codegen<'a> for AssignTarget<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         self.target.codegen(state);
         self.whitespace_before_equal.codegen(state);
         state.add_token("=");
@@ -429,13 +465,20 @@ impl<'a> Codegen<'a> for AssignTarget<'a> {
 }
 
 impl<'a> Inflate<'a> for AssignTarget<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        self.target.inflate(config)?;
-        self.whitespace_before_equal =
-            parse_simple_whitespace(config, &mut self.equal_tok.whitespace_before)?;
-        self.whitespace_after_equal =
-            parse_simple_whitespace(config, &mut self.equal_tok.whitespace_after)?;
-        Ok(())
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.target = self.target.inflate(config)?;
+        self.whitespace_before_equal = parse_simple_whitespace(
+            config,
+            &mut (*self.equal_tok)
+                .borrow_mut()
+                .whitespace_before
+                .borrow_mut(),
+        )?;
+        self.whitespace_after_equal = parse_simple_whitespace(
+            config,
+            &mut (*self.equal_tok).borrow_mut().whitespace_after.borrow_mut(),
+        )?;
+        Ok(self)
     }
 }
 
@@ -456,11 +499,11 @@ pub struct Import<'a> {
     pub semicolon: Option<Semicolon<'a>>,
     pub whitespace_after_import: SimpleWhitespace<'a>,
 
-    pub(crate) import_tok: Token<'a>,
+    pub(crate) import_tok: TokenRef<'a>,
 }
 
 impl<'a> Codegen<'a> for Import<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         state.add_token("import");
         self.whitespace_after_import.codegen(state);
         for (i, name) in self.names.iter().enumerate() {
@@ -476,14 +519,17 @@ impl<'a> Codegen<'a> for Import<'a> {
 }
 
 impl<'a> Inflate<'a> for Import<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        self.whitespace_after_import =
-            parse_simple_whitespace(config, &mut self.import_tok.whitespace_after)?;
-        for a in &mut self.names {
-            a.inflate(config)?;
-        }
-        self.semicolon.inflate(config)?;
-        Ok(())
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.whitespace_after_import = parse_simple_whitespace(
+            config,
+            &mut (*self.import_tok)
+                .borrow_mut()
+                .whitespace_after
+                .borrow_mut(),
+        )?;
+        self.names = self.names.inflate(config)?;
+        self.semicolon = self.semicolon.inflate(config)?;
+        Ok(self)
     }
 }
 
@@ -505,12 +551,12 @@ pub struct ImportFrom<'a> {
     pub whitespace_before_import: SimpleWhitespace<'a>,
     pub whitespace_after_import: SimpleWhitespace<'a>,
 
-    pub(crate) from_tok: Token<'a>,
-    pub(crate) import_tok: Token<'a>,
+    pub(crate) from_tok: TokenRef<'a>,
+    pub(crate) import_tok: TokenRef<'a>,
 }
 
 impl<'a> Codegen<'a> for ImportFrom<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         state.add_token("from");
         self.whitespace_after_from.codegen(state);
         for dot in &self.relative {
@@ -537,22 +583,23 @@ impl<'a> Codegen<'a> for ImportFrom<'a> {
 }
 
 impl<'a> Inflate<'a> for ImportFrom<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        self.whitespace_after_from =
-            parse_simple_whitespace(config, &mut self.from_tok.whitespace_after)?;
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.whitespace_after_from = parse_simple_whitespace(
+            config,
+            &mut (*self.from_tok).borrow_mut().whitespace_after.borrow_mut(),
+        )?;
 
-        self.module.inflate(config)?;
+        self.module = self.module.inflate(config)?;
 
-        self.whitespace_after_import =
-            parse_simple_whitespace(config, &mut self.import_tok.whitespace_after)?;
+        self.whitespace_after_import = parse_simple_whitespace(
+            config,
+            &mut (*self.import_tok)
+                .borrow_mut()
+                .whitespace_after
+                .borrow_mut(),
+        )?;
 
-        for dot in &mut self.relative {
-            dot.inflate(config)?;
-            // TODO: this should go away once Tokens are references
-            // whitespace_before is owned by the preceding token (dot, module, or
-            // `from`)
-            dot.whitespace_before = Default::default();
-        }
+        self.relative = self.relative.inflate(config)?;
 
         if !self.relative.is_empty() && self.module.is_none() {
             // For relative-only imports relocate the space after the final dot to be owned
@@ -565,13 +612,18 @@ impl<'a> Inflate<'a> for ImportFrom<'a> {
                 swap(dot_ws, &mut self.whitespace_before_import);
             }
         } else {
-            self.whitespace_before_import =
-                parse_simple_whitespace(config, &mut self.import_tok.whitespace_before)?;
+            self.whitespace_before_import = parse_simple_whitespace(
+                config,
+                &mut (*self.import_tok)
+                    .borrow_mut()
+                    .whitespace_before
+                    .borrow_mut(),
+            )?;
         }
 
-        self.lpar.inflate(config)?;
-        self.names.inflate(config)?;
-        self.rpar.inflate(config)?;
+        self.lpar = self.lpar.inflate(config)?;
+        self.names = self.names.inflate(config)?;
+        self.rpar = self.rpar.inflate(config)?;
 
         // TODO: this should go away once Tokens are references
         if let ImportNames::Aliases(als) = &self.names {
@@ -585,9 +637,9 @@ impl<'a> Inflate<'a> for ImportFrom<'a> {
             }
         }
 
-        self.semicolon.inflate(config)?;
+        self.semicolon = self.semicolon.inflate(config)?;
 
-        Ok(())
+        Ok(self)
     }
 }
 
@@ -605,11 +657,11 @@ pub struct ImportAlias<'a> {
 }
 
 impl<'a> Inflate<'a> for ImportAlias<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        self.name.inflate(config)?;
-        self.asname.inflate(config)?;
-        self.comma.inflate(config)?;
-        Ok(())
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.name = self.name.inflate(config)?;
+        self.asname = self.asname.inflate(config)?;
+        self.comma = self.comma.inflate(config)?;
+        Ok(self)
     }
 }
 
@@ -621,7 +673,7 @@ impl<'a> WithComma<'a> for ImportAlias<'a> {
 }
 
 impl<'a> Codegen<'a> for ImportAlias<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         self.name.codegen(state);
         if let Some(asname) = &self.asname {
             asname.codegen(state);
@@ -638,11 +690,11 @@ pub struct AsName<'a> {
     pub whitespace_before_as: ParenthesizableWhitespace<'a>,
     pub whitespace_after_as: ParenthesizableWhitespace<'a>,
 
-    pub(crate) as_tok: Token<'a>,
+    pub(crate) as_tok: TokenRef<'a>,
 }
 
 impl<'a> Codegen<'a> for AsName<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         self.whitespace_before_as.codegen(state);
         state.add_token("as");
         self.whitespace_after_as.codegen(state);
@@ -651,13 +703,17 @@ impl<'a> Codegen<'a> for AsName<'a> {
 }
 
 impl<'a> Inflate<'a> for AsName<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        self.whitespace_before_as =
-            parse_parenthesizable_whitespace(config, &mut self.as_tok.whitespace_before)?;
-        self.whitespace_after_as =
-            parse_parenthesizable_whitespace(config, &mut self.as_tok.whitespace_after)?;
-        self.name.inflate(config)?;
-        Ok(())
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.whitespace_before_as = parse_parenthesizable_whitespace(
+            config,
+            &mut (*self.as_tok).borrow_mut().whitespace_before.borrow_mut(),
+        )?;
+        self.whitespace_after_as = parse_parenthesizable_whitespace(
+            config,
+            &mut (*self.as_tok).borrow_mut().whitespace_after.borrow_mut(),
+        )?;
+        self.name = self.name.inflate(config)?;
+        Ok(self)
     }
 }
 
@@ -668,7 +724,7 @@ pub enum ImportNames<'a> {
 }
 
 impl<'a> Codegen<'a> for ImportNames<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         match self {
             Self::Star(s) => s.codegen(state),
             Self::Aliases(aliases) => {
@@ -698,11 +754,11 @@ pub struct FunctionDef<'a> {
     pub whitespace_before_params: ParenthesizableWhitespace<'a>,
     pub whitespace_before_colon: SimpleWhitespace<'a>,
 
-    pub(crate) async_tok: Option<Token<'a>>,
-    pub(crate) def_tok: Token<'a>,
-    pub(crate) open_paren_tok: Token<'a>,
-    pub(crate) close_paren_tok: Token<'a>,
-    pub(crate) colon_tok: Token<'a>,
+    pub(crate) async_tok: Option<TokenRef<'a>>,
+    pub(crate) def_tok: TokenRef<'a>,
+    pub(crate) open_paren_tok: TokenRef<'a>,
+    pub(crate) close_paren_tok: TokenRef<'a>,
+    pub(crate) colon_tok: TokenRef<'a>,
 }
 
 impl<'a> FunctionDef<'a> {
@@ -712,7 +768,7 @@ impl<'a> FunctionDef<'a> {
 }
 
 impl<'a> Codegen<'a> for FunctionDef<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         for l in &self.leading_lines {
             l.codegen(state);
         }
@@ -747,16 +803,18 @@ impl<'a> Codegen<'a> for FunctionDef<'a> {
 }
 
 impl<'a> Inflate<'a> for FunctionDef<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        self.decorators.inflate(config)?;
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.decorators = self.decorators.inflate(config)?;
         let (asynchronous, leading_lines) = if let Some(asy) = self.async_tok.as_mut() {
-            let whitespace_after =
-                parse_parenthesizable_whitespace(config, &mut asy.whitespace_after)?;
+            let whitespace_after = parse_parenthesizable_whitespace(
+                config,
+                &mut asy.borrow_mut().whitespace_after.borrow_mut(),
+            )?;
             (
                 Some(Asynchronous { whitespace_after }),
                 Some(parse_empty_lines_from_end(
                     config,
-                    &mut asy.whitespace_before,
+                    &mut asy.borrow_mut().whitespace_before.borrow_mut(),
                 )?),
             )
         } else {
@@ -767,7 +825,10 @@ impl<'a> Inflate<'a> for FunctionDef<'a> {
         let leading_lines = if let Some(ll) = leading_lines {
             ll
         } else {
-            parse_empty_lines_from_end(config, &mut self.def_tok.whitespace_before)?
+            parse_empty_lines_from_end(
+                config,
+                &mut (*self.def_tok).borrow_mut().whitespace_before.borrow_mut(),
+            )?
         };
 
         self.leading_lines = leading_lines;
@@ -776,24 +837,45 @@ impl<'a> Inflate<'a> for FunctionDef<'a> {
             swap(&mut dec.leading_lines, &mut self.leading_lines);
         }
 
-        self.whitespace_after_def =
-            parse_simple_whitespace(config, &mut self.def_tok.whitespace_after)?;
+        self.whitespace_after_def = parse_simple_whitespace(
+            config,
+            &mut (*self.def_tok).borrow_mut().whitespace_after.borrow_mut(),
+        )?;
 
-        self.name.inflate(config)?;
-        self.whitespace_after_name =
-            parse_simple_whitespace(config, &mut self.open_paren_tok.whitespace_before)?;
+        self.name = self.name.inflate(config)?;
+        self.whitespace_after_name = parse_simple_whitespace(
+            config,
+            &mut (*self.open_paren_tok)
+                .borrow_mut()
+                .whitespace_before
+                .borrow_mut(),
+        )?;
 
-        self.whitespace_before_params =
-            parse_parenthesizable_whitespace(config, &mut self.open_paren_tok.whitespace_after)?;
-        self.params.inflate(config)?;
-        adjust_parameters_trailing_whitespace(config, &mut self.params, &mut self.close_paren_tok)?;
+        self.whitespace_before_params = parse_parenthesizable_whitespace(
+            config,
+            &mut (*self.open_paren_tok)
+                .borrow_mut()
+                .whitespace_after
+                .borrow_mut(),
+        )?;
+        self.params = self.params.inflate(config)?;
+        adjust_parameters_trailing_whitespace(
+            config,
+            &mut self.params,
+            &mut self.close_paren_tok.borrow_mut(),
+        )?;
 
-        self.returns.inflate(config)?;
-        self.whitespace_before_colon =
-            parse_simple_whitespace(config, &mut self.colon_tok.whitespace_before)?;
+        self.returns = self.returns.inflate(config)?;
+        self.whitespace_before_colon = parse_simple_whitespace(
+            config,
+            &mut (*self.colon_tok)
+                .borrow_mut()
+                .whitespace_before
+                .borrow_mut(),
+        )?;
 
-        self.body.inflate(config)?;
-        Ok(())
+        self.body = self.body.inflate(config)?;
+        Ok(self)
     }
 }
 
@@ -804,12 +886,12 @@ pub struct Decorator<'a> {
     pub whitespace_after_at: SimpleWhitespace<'a>,
     pub trailing_whitespace: TrailingWhitespace<'a>,
 
-    pub(crate) at_tok: Token<'a>,
-    pub(crate) newline_tok: Token<'a>,
+    pub(crate) at_tok: TokenRef<'a>,
+    pub(crate) newline_tok: TokenRef<'a>,
 }
 
 impl<'a> Codegen<'a> for Decorator<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         for ll in self.leading_lines.iter() {
             ll.codegen(state);
         }
@@ -822,14 +904,25 @@ impl<'a> Codegen<'a> for Decorator<'a> {
 }
 
 impl<'a> Inflate<'a> for Decorator<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        self.leading_lines = parse_empty_lines(config, &mut self.at_tok.whitespace_before, None)?;
-        self.whitespace_after_at =
-            parse_simple_whitespace(config, &mut self.at_tok.whitespace_after)?;
-        self.decorator.inflate(config)?;
-        self.trailing_whitespace =
-            parse_trailing_whitespace(config, &mut self.newline_tok.whitespace_before)?;
-        Ok(())
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.leading_lines = parse_empty_lines(
+            config,
+            &mut (*self.at_tok).borrow_mut().whitespace_before.borrow_mut(),
+            None,
+        )?;
+        self.whitespace_after_at = parse_simple_whitespace(
+            config,
+            &mut (*self.at_tok).borrow_mut().whitespace_after.borrow_mut(),
+        )?;
+        self.decorator = self.decorator.inflate(config)?;
+        self.trailing_whitespace = parse_trailing_whitespace(
+            config,
+            &mut (*self.newline_tok)
+                .borrow_mut()
+                .whitespace_before
+                .borrow_mut(),
+        )?;
+        Ok(self)
     }
 }
 
@@ -856,12 +949,12 @@ pub struct If<'a> {
     /// Signifies if this instance represents an ``elif`` or an ``if`` block.
     pub is_elif: bool,
 
-    pub(crate) if_tok: Token<'a>,
-    pub(crate) colon_tok: Token<'a>,
+    pub(crate) if_tok: TokenRef<'a>,
+    pub(crate) colon_tok: TokenRef<'a>,
 }
 
 impl<'a> Codegen<'a> for If<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         for l in &self.leading_lines {
             l.codegen(state);
         }
@@ -880,18 +973,27 @@ impl<'a> Codegen<'a> for If<'a> {
 }
 
 impl<'a> Inflate<'a> for If<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        self.leading_lines =
-            parse_empty_lines_from_end(config, &mut self.if_tok.whitespace_before)?;
-        self.whitespace_before_test =
-            parse_simple_whitespace(config, &mut self.if_tok.whitespace_after)?;
-        self.test.inflate(config)?;
-        self.whitespace_after_test =
-            parse_simple_whitespace(config, &mut self.colon_tok.whitespace_before)?;
-        self.body.inflate(config)?;
-        self.orelse.inflate(config)?;
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.leading_lines = parse_empty_lines_from_end(
+            config,
+            &mut (*self.if_tok).borrow_mut().whitespace_before.borrow_mut(),
+        )?;
+        self.whitespace_before_test = parse_simple_whitespace(
+            config,
+            &mut (*self.if_tok).borrow_mut().whitespace_after.borrow_mut(),
+        )?;
+        self.test = self.test.inflate(config)?;
+        self.whitespace_after_test = parse_simple_whitespace(
+            config,
+            &mut (*self.colon_tok)
+                .borrow_mut()
+                .whitespace_before
+                .borrow_mut(),
+        )?;
+        self.body = self.body.inflate(config)?;
+        self.orelse = self.orelse.inflate(config)?;
 
-        Ok(())
+        Ok(self)
     }
 }
 
@@ -909,12 +1011,12 @@ pub struct Else<'a> {
     /// The whitespace appearing after the ``else`` keyword but before the colon.
     pub whitespace_before_colon: SimpleWhitespace<'a>,
 
-    pub(crate) else_tok: Token<'a>,
-    pub(crate) colon_tok: Token<'a>,
+    pub(crate) else_tok: TokenRef<'a>,
+    pub(crate) colon_tok: TokenRef<'a>,
 }
 
 impl<'a> Codegen<'a> for Else<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         for l in &self.leading_lines {
             l.codegen(state);
         }
@@ -928,14 +1030,21 @@ impl<'a> Codegen<'a> for Else<'a> {
 }
 
 impl<'a> Inflate<'a> for Else<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        self.leading_lines =
-            parse_empty_lines_from_end(config, &mut self.else_tok.whitespace_before)?;
-        self.whitespace_before_colon =
-            parse_simple_whitespace(config, &mut self.colon_tok.whitespace_before)?;
-        self.body.inflate(config)?;
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.leading_lines = parse_empty_lines_from_end(
+            config,
+            &mut (*self.else_tok).borrow_mut().whitespace_before.borrow_mut(),
+        )?;
+        self.whitespace_before_colon = parse_simple_whitespace(
+            config,
+            &mut (*self.colon_tok)
+                .borrow_mut()
+                .whitespace_before
+                .borrow_mut(),
+        )?;
+        self.body = self.body.inflate(config)?;
 
-        Ok(())
+        Ok(self)
     }
 }
 
@@ -945,11 +1054,11 @@ pub struct Annotation<'a> {
     pub whitespace_before_indicator: Option<ParenthesizableWhitespace<'a>>,
     pub whitespace_after_indicator: ParenthesizableWhitespace<'a>,
 
-    pub(crate) tok: Token<'a>,
+    pub(crate) tok: TokenRef<'a>,
 }
 
 impl<'a> Annotation<'a> {
-    pub fn codegen(&'a self, state: &mut CodegenState<'a>, default_indicator: &'a str) {
+    pub fn codegen(&self, state: &mut CodegenState<'a>, default_indicator: &'a str) {
         if let Some(ws) = &self.whitespace_before_indicator {
             ws.codegen(state);
         } else if default_indicator == "->" {
@@ -965,15 +1074,17 @@ impl<'a> Annotation<'a> {
 }
 
 impl<'a> Inflate<'a> for Annotation<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.whitespace_before_indicator = Some(parse_parenthesizable_whitespace(
             config,
-            &mut self.tok.whitespace_before,
+            &mut (*self.tok).borrow_mut().whitespace_before.borrow_mut(),
         )?);
-        self.whitespace_after_indicator =
-            parse_parenthesizable_whitespace(config, &mut self.tok.whitespace_after)?;
-        self.annotation.inflate(config)?;
-        Ok(())
+        self.whitespace_after_indicator = parse_parenthesizable_whitespace(
+            config,
+            &mut (*self.tok).borrow_mut().whitespace_after.borrow_mut(),
+        )?;
+        self.annotation = self.annotation.inflate(config)?;
+        Ok(self)
     }
 }
 
@@ -987,7 +1098,7 @@ pub struct AnnAssign<'a> {
 }
 
 impl<'a> Codegen<'a> for AnnAssign<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         self.target.codegen(state);
         self.annotation.codegen(state, ":");
         if let Some(eq) = &self.equal {
@@ -1006,13 +1117,13 @@ impl<'a> Codegen<'a> for AnnAssign<'a> {
 }
 
 impl<'a> Inflate<'a> for AnnAssign<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        self.target.inflate(config)?;
-        self.annotation.inflate(config)?;
-        self.value.inflate(config)?;
-        self.equal.inflate(config)?;
-        self.semicolon.inflate(config)?;
-        Ok(())
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.target = self.target.inflate(config)?;
+        self.annotation = self.annotation.inflate(config)?;
+        self.value = self.value.inflate(config)?;
+        self.equal = self.equal.inflate(config)?;
+        self.semicolon = self.semicolon.inflate(config)?;
+        Ok(self)
     }
 }
 
@@ -1028,11 +1139,11 @@ pub struct Return<'a> {
     pub whitespace_after_return: Option<SimpleWhitespace<'a>>,
     pub semicolon: Option<Semicolon<'a>>,
 
-    pub(crate) return_tok: Token<'a>,
+    pub(crate) return_tok: TokenRef<'a>,
 }
 
 impl<'a> Codegen<'a> for Return<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         state.add_token("return");
         if let Some(ws) = &self.whitespace_after_return {
             ws.codegen(state);
@@ -1050,17 +1161,20 @@ impl<'a> Codegen<'a> for Return<'a> {
 }
 
 impl<'a> Inflate<'a> for Return<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         if self.value.is_some() {
             self.whitespace_after_return = Some(parse_simple_whitespace(
                 config,
-                &mut self.return_tok.whitespace_after,
+                &mut (*self.return_tok)
+                    .borrow_mut()
+                    .whitespace_after
+                    .borrow_mut(),
             )?);
         } // otherwise space is owned by semicolon or small statement
 
-        self.value.inflate(config)?;
-        self.semicolon.inflate(config)?;
-        Ok(())
+        self.value = self.value.inflate(config)?;
+        self.semicolon = self.semicolon.inflate(config)?;
+        Ok(self)
     }
 }
 
@@ -1078,11 +1192,11 @@ pub struct Assert<'a> {
     pub whitespace_after_assert: SimpleWhitespace<'a>,
     pub semicolon: Option<Semicolon<'a>>,
 
-    pub(crate) assert_tok: Token<'a>,
+    pub(crate) assert_tok: TokenRef<'a>,
 }
 
 impl<'a> Codegen<'a> for Assert<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         state.add_token("assert");
         self.whitespace_after_assert.codegen(state);
         self.test.codegen(state);
@@ -1100,16 +1214,21 @@ impl<'a> Codegen<'a> for Assert<'a> {
     }
 }
 impl<'a> Inflate<'a> for Assert<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        self.whitespace_after_assert =
-            parse_simple_whitespace(config, &mut self.assert_tok.whitespace_after)?;
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.whitespace_after_assert = parse_simple_whitespace(
+            config,
+            &mut (*self.assert_tok)
+                .borrow_mut()
+                .whitespace_after
+                .borrow_mut(),
+        )?;
 
-        self.test.inflate(config)?;
-        self.comma.inflate(config)?;
-        self.msg.inflate(config)?;
+        self.test = self.test.inflate(config)?;
+        self.comma = self.comma.inflate(config)?;
+        self.msg = self.msg.inflate(config)?;
 
-        self.semicolon.inflate(config)?;
-        Ok(())
+        self.semicolon = self.semicolon.inflate(config)?;
+        Ok(self)
     }
 }
 
@@ -1126,32 +1245,32 @@ pub struct Raise<'a> {
     pub whitespace_after_raise: Option<SimpleWhitespace<'a>>,
     pub semicolon: Option<Semicolon<'a>>,
 
-    pub(crate) raise_tok: Token<'a>,
+    pub(crate) raise_tok: TokenRef<'a>,
 }
 
 impl<'a> Inflate<'a> for Raise<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.whitespace_after_raise = Some(parse_simple_whitespace(
             config,
-            &mut self.raise_tok.whitespace_after,
+            &mut (*self.raise_tok).borrow_mut().whitespace_after.borrow_mut(),
         )?);
 
-        self.exc.inflate(config)?;
-        self.cause.inflate(config)?;
+        self.exc = self.exc.inflate(config)?;
+        self.cause = self.cause.inflate(config)?;
         if self.exc.is_none() {
             if let Some(cause) = self.cause.as_mut() {
                 // in `raise from`, `raise` owns the shared whitespace
                 cause.whitespace_before_from = None;
             }
         }
-        self.semicolon.inflate(config)?;
+        self.semicolon = self.semicolon.inflate(config)?;
 
-        Ok(())
+        Ok(self)
     }
 }
 
 impl<'a> Codegen<'a> for Raise<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         state.add_token("raise");
         if let Some(ws) = &self.whitespace_after_raise {
             ws.codegen(state);
@@ -1186,15 +1305,15 @@ pub struct NameItem<'a> {
 }
 
 impl<'a> Inflate<'a> for NameItem<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        self.name.inflate(config)?;
-        self.comma.inflate(config)?;
-        Ok(())
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.name = self.name.inflate(config)?;
+        self.comma = self.comma.inflate(config)?;
+        Ok(self)
     }
 }
 
 impl<'a> NameItem<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>, default_comma: bool) {
+    fn codegen(&self, state: &mut CodegenState<'a>, default_comma: bool) {
         self.name.codegen(state);
         if let Some(comma) = &self.comma {
             comma.codegen(state);
@@ -1210,21 +1329,23 @@ pub struct Global<'a> {
     pub whitespace_after_global: SimpleWhitespace<'a>,
     pub semicolon: Option<Semicolon<'a>>,
 
-    pub(crate) tok: Token<'a>,
+    pub(crate) tok: TokenRef<'a>,
 }
 
 impl<'a> Inflate<'a> for Global<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        self.whitespace_after_global =
-            parse_simple_whitespace(config, &mut self.tok.whitespace_after)?;
-        self.names.inflate(config)?;
-        self.semicolon.inflate(config)?;
-        Ok(())
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.whitespace_after_global = parse_simple_whitespace(
+            config,
+            &mut (*self.tok).borrow_mut().whitespace_after.borrow_mut(),
+        )?;
+        self.names = self.names.inflate(config)?;
+        self.semicolon = self.semicolon.inflate(config)?;
+        Ok(self)
     }
 }
 
 impl<'a> Codegen<'a> for Global<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         state.add_token("global");
         self.whitespace_after_global.codegen(state);
         let len = self.names.len();
@@ -1250,21 +1371,23 @@ pub struct Nonlocal<'a> {
     pub whitespace_after_nonlocal: SimpleWhitespace<'a>,
     pub semicolon: Option<Semicolon<'a>>,
 
-    pub(crate) tok: Token<'a>,
+    pub(crate) tok: TokenRef<'a>,
 }
 
 impl<'a> Inflate<'a> for Nonlocal<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        self.whitespace_after_nonlocal =
-            parse_simple_whitespace(config, &mut self.tok.whitespace_after)?;
-        self.names.inflate(config)?;
-        self.semicolon.inflate(config)?;
-        Ok(())
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.whitespace_after_nonlocal = parse_simple_whitespace(
+            config,
+            &mut (*self.tok).borrow_mut().whitespace_after.borrow_mut(),
+        )?;
+        self.names = self.names.inflate(config)?;
+        self.semicolon = self.semicolon.inflate(config)?;
+        Ok(self)
     }
 }
 
 impl<'a> Codegen<'a> for Nonlocal<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         state.add_token("nonlocal");
         self.whitespace_after_nonlocal.codegen(state);
         let len = self.names.len();
@@ -1298,14 +1421,14 @@ pub struct For<'a> {
     pub whitespace_after_in: SimpleWhitespace<'a>,
     pub whitespace_before_colon: SimpleWhitespace<'a>,
 
-    pub(crate) async_tok: Option<Token<'a>>,
-    pub(crate) for_tok: Token<'a>,
-    pub(crate) in_tok: Token<'a>,
-    pub(crate) colon_tok: Token<'a>,
+    pub(crate) async_tok: Option<TokenRef<'a>>,
+    pub(crate) for_tok: TokenRef<'a>,
+    pub(crate) in_tok: TokenRef<'a>,
+    pub(crate) colon_tok: TokenRef<'a>,
 }
 
 impl<'a> Codegen<'a> for For<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         for ll in &self.leading_lines {
             ll.codegen(state);
         }
@@ -1331,15 +1454,17 @@ impl<'a> Codegen<'a> for For<'a> {
 }
 
 impl<'a> Inflate<'a> for For<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         let (asynchronous, leading_lines) = if let Some(asy) = self.async_tok.as_mut() {
-            let whitespace_after =
-                parse_parenthesizable_whitespace(config, &mut asy.whitespace_after)?;
+            let whitespace_after = parse_parenthesizable_whitespace(
+                config,
+                &mut asy.borrow_mut().whitespace_after.borrow_mut(),
+            )?;
             (
                 Some(Asynchronous { whitespace_after }),
                 Some(parse_empty_lines_from_end(
                     config,
-                    &mut asy.whitespace_before,
+                    &mut asy.borrow_mut().whitespace_before.borrow_mut(),
                 )?),
             )
         } else {
@@ -1348,24 +1473,38 @@ impl<'a> Inflate<'a> for For<'a> {
         self.leading_lines = if let Some(ll) = leading_lines {
             ll
         } else {
-            parse_empty_lines_from_end(config, &mut self.for_tok.whitespace_before)?
+            parse_empty_lines_from_end(
+                config,
+                &mut (*self.for_tok).borrow_mut().whitespace_before.borrow_mut(),
+            )?
         };
         self.asynchronous = asynchronous;
-        self.whitespace_after_for =
-            parse_simple_whitespace(config, &mut self.for_tok.whitespace_after)?;
-        self.target.inflate(config)?;
-        self.whitespace_before_in =
-            parse_simple_whitespace(config, &mut self.in_tok.whitespace_before)?;
-        self.whitespace_after_in =
-            parse_simple_whitespace(config, &mut self.in_tok.whitespace_after)?;
-        self.iter.inflate(config)?;
-        self.whitespace_before_colon =
-            parse_simple_whitespace(config, &mut self.colon_tok.whitespace_before)?;
+        self.whitespace_after_for = parse_simple_whitespace(
+            config,
+            &mut (*self.for_tok).borrow_mut().whitespace_after.borrow_mut(),
+        )?;
+        self.target = self.target.inflate(config)?;
+        self.whitespace_before_in = parse_simple_whitespace(
+            config,
+            &mut (*self.in_tok).borrow_mut().whitespace_before.borrow_mut(),
+        )?;
+        self.whitespace_after_in = parse_simple_whitespace(
+            config,
+            &mut (*self.in_tok).borrow_mut().whitespace_after.borrow_mut(),
+        )?;
+        self.iter = self.iter.inflate(config)?;
+        self.whitespace_before_colon = parse_simple_whitespace(
+            config,
+            &mut (*self.colon_tok)
+                .borrow_mut()
+                .whitespace_before
+                .borrow_mut(),
+        )?;
 
-        self.body.inflate(config)?;
-        self.orelse.inflate(config)?;
+        self.body = self.body.inflate(config)?;
+        self.orelse = self.orelse.inflate(config)?;
 
-        Ok(())
+        Ok(self)
     }
 }
 
@@ -1378,12 +1517,12 @@ pub struct While<'a> {
     pub whitespace_after_while: SimpleWhitespace<'a>,
     pub whitespace_before_colon: SimpleWhitespace<'a>,
 
-    pub(crate) while_tok: Token<'a>,
-    pub(crate) colon_tok: Token<'a>,
+    pub(crate) while_tok: TokenRef<'a>,
+    pub(crate) colon_tok: TokenRef<'a>,
 }
 
 impl<'a> Codegen<'a> for While<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         for ll in &self.leading_lines {
             ll.codegen(state);
         }
@@ -1402,18 +1541,30 @@ impl<'a> Codegen<'a> for While<'a> {
 }
 
 impl<'a> Inflate<'a> for While<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        self.leading_lines =
-            parse_empty_lines_from_end(config, &mut self.while_tok.whitespace_before)?;
-        self.whitespace_after_while =
-            parse_simple_whitespace(config, &mut self.while_tok.whitespace_after)?;
-        self.test.inflate(config)?;
-        self.whitespace_before_colon =
-            parse_simple_whitespace(config, &mut self.colon_tok.whitespace_before)?;
-        self.body.inflate(config)?;
-        self.orelse.inflate(config)?;
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.leading_lines = parse_empty_lines_from_end(
+            config,
+            &mut (*self.while_tok)
+                .borrow_mut()
+                .whitespace_before
+                .borrow_mut(),
+        )?;
+        self.whitespace_after_while = parse_simple_whitespace(
+            config,
+            &mut (*self.while_tok).borrow_mut().whitespace_after.borrow_mut(),
+        )?;
+        self.test = self.test.inflate(config)?;
+        self.whitespace_before_colon = parse_simple_whitespace(
+            config,
+            &mut (*self.colon_tok)
+                .borrow_mut()
+                .whitespace_before
+                .borrow_mut(),
+        )?;
+        self.body = self.body.inflate(config)?;
+        self.orelse = self.orelse.inflate(config)?;
 
-        Ok(())
+        Ok(self)
     }
 }
 
@@ -1432,13 +1583,13 @@ pub struct ClassDef<'a> {
     pub whitespace_after_name: SimpleWhitespace<'a>,
     pub whitespace_before_colon: SimpleWhitespace<'a>,
 
-    pub(crate) class_tok: Token<'a>,
-    pub(crate) parens_tok: Option<(Token<'a>, Token<'a>)>,
-    pub(crate) colon_tok: Token<'a>,
+    pub(crate) class_tok: TokenRef<'a>,
+    pub(crate) parens_tok: Option<(TokenRef<'a>, TokenRef<'a>)>,
+    pub(crate) colon_tok: TokenRef<'a>,
 }
 
 impl<'a> Codegen<'a> for ClassDef<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         for ll in &self.leading_lines {
             ll.codegen(state);
         }
@@ -1481,54 +1632,56 @@ impl<'a> Codegen<'a> for ClassDef<'a> {
 }
 
 impl<'a> Inflate<'a> for ClassDef<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        self.leading_lines =
-            parse_empty_lines_from_end(config, &mut self.class_tok.whitespace_before)?;
-        self.decorators.inflate(config)?;
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.leading_lines = parse_empty_lines_from_end(
+            config,
+            &mut (*self.class_tok)
+                .borrow_mut()
+                .whitespace_before
+                .borrow_mut(),
+        )?;
+        self.decorators = self.decorators.inflate(config)?;
         if let Some(dec) = self.decorators.first_mut() {
             swap(&mut self.lines_after_decorators, &mut self.leading_lines);
             swap(&mut dec.leading_lines, &mut self.leading_lines);
         }
 
-        self.whitespace_after_class =
-            parse_simple_whitespace(config, &mut self.class_tok.whitespace_after)?;
-        self.name.inflate(config)?;
+        self.whitespace_after_class = parse_simple_whitespace(
+            config,
+            &mut (*self.class_tok).borrow_mut().whitespace_after.borrow_mut(),
+        )?;
+        self.name = self.name.inflate(config)?;
 
-        if let (Some((lpar_tok, _)), Some(lpar), Some(rpar)) = (
-            self.parens_tok.as_mut(),
-            self.lpar.as_mut(),
-            self.rpar.as_mut(),
-        ) {
-            self.whitespace_after_name =
-                parse_simple_whitespace(config, &mut lpar_tok.whitespace_before)?;
-            lpar.inflate(config)?;
-            self.bases.inflate(config)?;
-            self.keywords.inflate(config)?;
-            rpar.inflate(config)?;
+        if let Some((lpar_tok, _)) = self.parens_tok.as_mut() {
+            self.whitespace_after_name = parse_simple_whitespace(
+                config,
+                &mut lpar_tok.borrow_mut().whitespace_before.borrow_mut(),
+            )?;
+            self.lpar = self.lpar.map(|lpar| lpar.inflate(config)).transpose()?;
+            self.bases = self.bases.inflate(config)?;
+            self.keywords = self.keywords.inflate(config)?;
 
-            let has_trailing_comma = |args: &Vec<Arg>| {
-                args.last()
-                    .as_ref()
-                    .map(|arg| arg.comma.is_some())
-                    .unwrap_or(false)
-            };
-
-            // TODO: set whitespace_after_arg for last arg?
-
-            // TODO: this should go away when Tokens are stored as references
-            if (self.bases.is_empty() && self.keywords.is_empty())
-                || has_trailing_comma(&self.keywords)
-                || (self.keywords.is_empty() && has_trailing_comma(&self.bases))
+            let args = self.bases.iter().chain(self.keywords.iter());
+            if args
+                .last()
+                .map(|last| last.comma.is_none())
+                .unwrap_or(false)
             {
-                rpar.whitespace_before = Default::default();
+                self.rpar = self.rpar.map(|rpar| rpar.inflate(config)).transpose()?;
             }
+            // TODO: set whitespace_after_arg for last arg?
         }
 
-        self.whitespace_before_colon =
-            parse_simple_whitespace(config, &mut self.colon_tok.whitespace_before)?;
-        self.body.inflate(config)?;
+        self.whitespace_before_colon = parse_simple_whitespace(
+            config,
+            &mut (*self.colon_tok)
+                .borrow_mut()
+                .whitespace_before
+                .borrow_mut(),
+        )?;
+        self.body = self.body.inflate(config)?;
 
-        Ok(())
+        Ok(self)
     }
 }
 
@@ -1544,12 +1697,12 @@ pub struct Finally<'a> {
     pub leading_lines: Vec<EmptyLine<'a>>,
     pub whitespace_before_colon: SimpleWhitespace<'a>,
 
-    pub(crate) finally_tok: Token<'a>,
-    pub(crate) colon_tok: Token<'a>,
+    pub(crate) finally_tok: TokenRef<'a>,
+    pub(crate) colon_tok: TokenRef<'a>,
 }
 
 impl<'a> Codegen<'a> for Finally<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         for ll in &self.leading_lines {
             ll.codegen(state);
         }
@@ -1563,13 +1716,23 @@ impl<'a> Codegen<'a> for Finally<'a> {
 }
 
 impl<'a> Inflate<'a> for Finally<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        self.leading_lines =
-            parse_empty_lines_from_end(config, &mut self.finally_tok.whitespace_before)?;
-        self.whitespace_before_colon =
-            parse_simple_whitespace(config, &mut self.colon_tok.whitespace_before)?;
-        self.body.inflate(config)?;
-        Ok(())
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.leading_lines = parse_empty_lines_from_end(
+            config,
+            &mut (*self.finally_tok)
+                .borrow_mut()
+                .whitespace_before
+                .borrow_mut(),
+        )?;
+        self.whitespace_before_colon = parse_simple_whitespace(
+            config,
+            &mut (*self.colon_tok)
+                .borrow_mut()
+                .whitespace_before
+                .borrow_mut(),
+        )?;
+        self.body = self.body.inflate(config)?;
+        Ok(self)
     }
 }
 
@@ -1582,12 +1745,12 @@ pub struct ExceptHandler<'a> {
     pub whitespace_after_except: SimpleWhitespace<'a>,
     pub whitespace_before_colon: SimpleWhitespace<'a>,
 
-    pub(crate) except_tok: Token<'a>,
-    pub(crate) colon_tok: Token<'a>,
+    pub(crate) except_tok: TokenRef<'a>,
+    pub(crate) colon_tok: TokenRef<'a>,
 }
 
 impl<'a> Codegen<'a> for ExceptHandler<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         for ll in &self.leading_lines {
             ll.codegen(state);
         }
@@ -1608,21 +1771,36 @@ impl<'a> Codegen<'a> for ExceptHandler<'a> {
 }
 
 impl<'a> Inflate<'a> for ExceptHandler<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        self.leading_lines =
-            parse_empty_lines_from_end(config, &mut self.except_tok.whitespace_before)?;
-        self.whitespace_after_except =
-            parse_simple_whitespace(config, &mut self.except_tok.whitespace_after)?;
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.leading_lines = parse_empty_lines_from_end(
+            config,
+            &mut (*self.except_tok)
+                .borrow_mut()
+                .whitespace_before
+                .borrow_mut(),
+        )?;
+        self.whitespace_after_except = parse_simple_whitespace(
+            config,
+            &mut (*self.except_tok)
+                .borrow_mut()
+                .whitespace_after
+                .borrow_mut(),
+        )?;
 
-        self.r#type.inflate(config)?;
-        self.name.inflate(config)?;
+        self.r#type = self.r#type.inflate(config)?;
+        self.name = self.name.inflate(config)?;
         if self.name.is_some() {
-            self.whitespace_before_colon =
-                parse_simple_whitespace(config, &mut self.colon_tok.whitespace_before)?;
+            self.whitespace_before_colon = parse_simple_whitespace(
+                config,
+                &mut (*self.colon_tok)
+                    .borrow_mut()
+                    .whitespace_before
+                    .borrow_mut(),
+            )?;
         }
 
-        self.body.inflate(config)?;
-        Ok(())
+        self.body = self.body.inflate(config)?;
+        Ok(self)
     }
 }
 
@@ -1635,12 +1813,12 @@ pub struct Try<'a> {
     pub leading_lines: Vec<EmptyLine<'a>>,
     pub whitespace_before_colon: SimpleWhitespace<'a>,
 
-    pub(crate) try_tok: Token<'a>,
+    pub(crate) try_tok: TokenRef<'a>,
     // colon_tok unnecessary
 }
 
 impl<'a> Codegen<'a> for Try<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         for ll in &self.leading_lines {
             ll.codegen(state);
         }
@@ -1662,16 +1840,20 @@ impl<'a> Codegen<'a> for Try<'a> {
 }
 
 impl<'a> Inflate<'a> for Try<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        self.leading_lines =
-            parse_empty_lines_from_end(config, &mut self.try_tok.whitespace_before)?;
-        self.whitespace_before_colon =
-            parse_simple_whitespace(config, &mut self.try_tok.whitespace_after)?;
-        self.body.inflate(config)?;
-        self.handlers.inflate(config)?;
-        self.orelse.inflate(config)?;
-        self.finalbody.inflate(config)?;
-        Ok(())
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.leading_lines = parse_empty_lines_from_end(
+            config,
+            &mut (*self.try_tok).borrow_mut().whitespace_before.borrow_mut(),
+        )?;
+        self.whitespace_before_colon = parse_simple_whitespace(
+            config,
+            &mut (*self.try_tok).borrow_mut().whitespace_after.borrow_mut(),
+        )?;
+        self.body = self.body.inflate(config)?;
+        self.handlers = self.handlers.inflate(config)?;
+        self.orelse = self.orelse.inflate(config)?;
+        self.finalbody = self.finalbody.inflate(config)?;
+        Ok(self)
     }
 }
 
@@ -1684,17 +1866,17 @@ pub struct AugAssign<'a> {
 }
 
 impl<'a> Inflate<'a> for AugAssign<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        self.target.inflate(config)?;
-        self.operator.inflate(config)?;
-        self.value.inflate(config)?;
-        self.semicolon.inflate(config)?;
-        Ok(())
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.target = self.target.inflate(config)?;
+        self.operator = self.operator.inflate(config)?;
+        self.value = self.value.inflate(config)?;
+        self.semicolon = self.semicolon.inflate(config)?;
+        Ok(self)
     }
 }
 
 impl<'a> Codegen<'a> for AugAssign<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         self.target.codegen(state);
         self.operator.codegen(state);
         self.value.codegen(state);
@@ -1719,7 +1901,7 @@ pub struct WithItem<'a> {
 }
 
 impl<'a> Codegen<'a> for WithItem<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         self.item.codegen(state);
         if let Some(n) = &self.asname {
             n.codegen(state);
@@ -1740,11 +1922,11 @@ impl<'a> WithComma<'a> for WithItem<'a> {
 }
 
 impl<'a> Inflate<'a> for WithItem<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        self.item.inflate(config)?;
-        self.asname.inflate(config)?;
-        self.comma.inflate(config)?;
-        Ok(())
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.item = self.item.inflate(config)?;
+        self.asname = self.asname.inflate(config)?;
+        self.comma = self.comma.inflate(config)?;
+        Ok(self)
     }
 }
 
@@ -1757,13 +1939,13 @@ pub struct With<'a> {
     pub whitespace_after_with: SimpleWhitespace<'a>,
     pub whitespace_before_colon: SimpleWhitespace<'a>,
 
-    pub(crate) async_tok: Option<Token<'a>>,
-    pub(crate) with_tok: Token<'a>,
-    pub(crate) colon_tok: Token<'a>,
+    pub(crate) async_tok: Option<TokenRef<'a>>,
+    pub(crate) with_tok: TokenRef<'a>,
+    pub(crate) colon_tok: TokenRef<'a>,
 }
 
 impl<'a> Codegen<'a> for With<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         for ll in &self.leading_lines {
             ll.codegen(state);
         }
@@ -1788,15 +1970,17 @@ impl<'a> Codegen<'a> for With<'a> {
 }
 
 impl<'a> Inflate<'a> for With<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         let (asynchronous, leading_lines) = if let Some(asy) = self.async_tok.as_mut() {
-            let whitespace_after =
-                parse_parenthesizable_whitespace(config, &mut asy.whitespace_after)?;
+            let whitespace_after = parse_parenthesizable_whitespace(
+                config,
+                &mut asy.borrow_mut().whitespace_after.borrow_mut(),
+            )?;
             (
                 Some(Asynchronous { whitespace_after }),
                 Some(parse_empty_lines_from_end(
                     config,
-                    &mut asy.whitespace_before,
+                    &mut asy.borrow_mut().whitespace_before.borrow_mut(),
                 )?),
             )
         } else {
@@ -1808,17 +1992,27 @@ impl<'a> Inflate<'a> for With<'a> {
         self.leading_lines = if let Some(ll) = leading_lines {
             ll
         } else {
-            parse_empty_lines_from_end(config, &mut self.with_tok.whitespace_before)?
+            parse_empty_lines_from_end(
+                config,
+                &mut (*self.with_tok).borrow_mut().whitespace_before.borrow_mut(),
+            )?
         };
 
-        self.whitespace_after_with =
-            parse_simple_whitespace(config, &mut self.with_tok.whitespace_after)?;
-        self.items.inflate(config)?;
-        self.whitespace_before_colon =
-            parse_simple_whitespace(config, &mut self.colon_tok.whitespace_before)?;
-        self.body.inflate(config)?;
+        self.whitespace_after_with = parse_simple_whitespace(
+            config,
+            &mut (*self.with_tok).borrow_mut().whitespace_after.borrow_mut(),
+        )?;
+        self.items = self.items.inflate(config)?;
+        self.whitespace_before_colon = parse_simple_whitespace(
+            config,
+            &mut (*self.colon_tok)
+                .borrow_mut()
+                .whitespace_before
+                .borrow_mut(),
+        )?;
+        self.body = self.body.inflate(config)?;
 
-        Ok(())
+        Ok(self)
     }
 }
 
@@ -1858,21 +2052,23 @@ pub struct Del<'a> {
     pub whitespace_after_del: SimpleWhitespace<'a>,
     pub semicolon: Option<Semicolon<'a>>,
 
-    pub(crate) tok: Token<'a>,
+    pub(crate) tok: TokenRef<'a>,
 }
 
 impl<'a> Inflate<'a> for Del<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        self.whitespace_after_del =
-            parse_simple_whitespace(config, &mut self.tok.whitespace_after)?;
-        self.target.inflate(config)?;
-        self.semicolon.inflate(config)?;
-        Ok(())
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.whitespace_after_del = parse_simple_whitespace(
+            config,
+            &mut (*self.tok).borrow_mut().whitespace_after.borrow_mut(),
+        )?;
+        self.target = self.target.inflate(config)?;
+        self.semicolon = self.semicolon.inflate(config)?;
+        Ok(self)
     }
 }
 
 impl<'a> Codegen<'a> for Del<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         state.add_token("del");
         self.whitespace_after_del.codegen(state);
         self.target.codegen(state);

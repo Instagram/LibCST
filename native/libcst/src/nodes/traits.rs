@@ -11,7 +11,7 @@ pub trait ParenthesizedNode<'a> {
     fn lpar(&self) -> &Vec<LeftParen<'a>>;
     fn rpar(&self) -> &Vec<RightParen<'a>>;
 
-    fn parenthesize<F>(&'a self, state: &mut CodegenState<'a>, f: F)
+    fn parenthesize<F>(&self, state: &mut CodegenState<'a>, f: F)
     where
         F: FnOnce(&mut CodegenState<'a>),
     {
@@ -33,31 +33,30 @@ pub trait WithLeadingLines<'a> {
 
 pub type Result<T> = std::result::Result<T, WhitespaceError>;
 
-pub trait Inflate<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()>;
+pub trait Inflate<'a>
+where
+    Self: Sized,
+{
+    fn inflate(self, config: &Config<'a>) -> Result<Self>;
 }
 
 impl<'a, T: Inflate<'a>> Inflate<'a> for Option<T> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        if let Some(t) = self {
-            t.inflate(config)
-        } else {
-            Ok(())
-        }
+    fn inflate(self, config: &Config<'a>) -> Result<Self> {
+        self.map(|x| x.inflate(config)).transpose()
     }
 }
 
 impl<'a, T: Inflate<'a> + ?Sized> Inflate<'a> for Box<T> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        (**self).inflate(config)
+    fn inflate(self, config: &Config<'a>) -> Result<Self> {
+        match (*self).inflate(config) {
+            Ok(a) => Ok(Box::new(a)),
+            Err(e) => Err(e),
+        }
     }
 }
 
 impl<'a, T: Inflate<'a>> Inflate<'a> for Vec<T> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        for item in self.iter_mut() {
-            item.inflate(config)?;
-        }
-        Ok(())
+    fn inflate(self, config: &Config<'a>) -> Result<Self> {
+        self.into_iter().map(|item| item.inflate(config)).collect()
     }
 }

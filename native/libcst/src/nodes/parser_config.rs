@@ -133,5 +133,5 @@ pub fn init_module(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<ParserConfig>()?;
     m.add_function(wrap_pyfunction!(parser_config_asdict, m)?)
         .unwrap();
-    Ok(())
+    Ok(self)
 }

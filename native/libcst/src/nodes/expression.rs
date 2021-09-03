@@ -3,7 +3,7 @@
 // This source code is licensed under the MIT license found in the
 // LICENSE file in the root directory of this source tree.
 
-use std::mem::swap;
+use std::{cell::RefCell, mem::swap, rc::Rc};
 
 use crate::{
     inflate_helpers::adjust_parameters_trailing_whitespace,
@@ -19,6 +19,8 @@ use crate::{
     },
 };
 use libcst_derive::{Codegen, Inflate, ParenthesizedNode};
+
+type TokenRef<'a> = Rc<RefCell<Token<'a>>>;
 
 #[derive(Debug, Eq, PartialEq, Default, Clone)]
 pub struct Parameters<'a> {
@@ -42,20 +44,14 @@ impl<'a> Parameters<'a> {
 }
 
 impl<'a> Inflate<'a> for Parameters<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        for p in &mut self.posonly_params {
-            p.inflate(config)?;
-        }
-        self.posonly_ind.inflate(config)?;
-        for p in &mut self.params {
-            p.inflate(config)?;
-        }
-        self.star_arg.inflate(config)?;
-        for p in &mut self.kwonly_params {
-            p.inflate(config)?;
-        }
-        self.star_kwarg.inflate(config)?;
-        Ok(())
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.posonly_params = self.posonly_params.inflate(config)?;
+        self.posonly_ind = self.posonly_ind.inflate(config)?;
+        self.params = self.params.inflate(config)?;
+        self.star_arg = self.star_arg.inflate(config)?;
+        self.kwonly_params = self.kwonly_params.inflate(config)?;
+        self.star_kwarg = self.star_kwarg.inflate(config)?;
+        Ok(self)
     }
 }
 
@@ -66,7 +62,7 @@ pub enum StarArg<'a> {
 }
 
 impl<'a> Codegen<'a> for Parameters<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         let params_after_kwonly = self.star_kwarg.is_some();
         let params_after_regular = !self.kwonly_params.is_empty() || params_after_kwonly;
         let params_after_posonly = !self.params.is_empty() || params_after_regular;
@@ -125,7 +121,7 @@ pub struct ParamSlash<'a> {
 }
 
 impl<'a> ParamSlash<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>, default_comma: bool) {
+    fn codegen(&self, state: &mut CodegenState<'a>, default_comma: bool) {
         state.add_token("/");
         match (&self.comma, default_comma) {
             (Some(comma), _) => comma.codegen(state),
@@ -136,8 +132,9 @@ impl<'a> ParamSlash<'a> {
 }
 
 impl<'a> Inflate<'a> for ParamSlash<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        self.comma.inflate(config)
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.comma = self.comma.inflate(config)?;
+        Ok(self)
     }
 }
 
@@ -147,15 +144,16 @@ pub struct ParamStar<'a> {
 }
 
 impl<'a> Codegen<'a> for ParamStar<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         state.add_token("*");
         self.comma.codegen(state);
     }
 }
 
 impl<'a> Inflate<'a> for ParamStar<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        self.comma.inflate(config)
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.comma = self.comma.inflate(config)?;
+        Ok(self)
     }
 }
 
@@ -167,15 +165,15 @@ pub struct Name<'a> {
 }
 
 impl<'a> Inflate<'a> for Name<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        self.lpar.inflate(config)?;
-        self.rpar.inflate(config)?;
-        Ok(())
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.lpar = self.lpar.inflate(config)?;
+        self.rpar = self.rpar.inflate(config)?;
+        Ok(self)
     }
 }
 
 impl<'a> Codegen<'a> for Name<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         self.parenthesize(state, |state| {
             state.add_token(self.value);
         });
@@ -196,22 +194,24 @@ pub struct Param<'a> {
     pub whitespace_after_star: ParenthesizableWhitespace<'a>,
     pub whitespace_after_param: ParenthesizableWhitespace<'a>,
 
-    pub(crate) star_tok: Option<Token<'a>>,
+    pub(crate) star_tok: Option<TokenRef<'a>>,
 }
 
 impl<'a> Inflate<'a> for Param<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         // TODO: whitespace_after_param missing?
-        self.name.inflate(config)?;
-        self.annotation.inflate(config)?;
-        self.equal.inflate(config)?;
-        self.default.inflate(config)?;
-        self.comma.inflate(config)?;
+        self.name = self.name.inflate(config)?;
+        self.annotation = self.annotation.inflate(config)?;
+        self.equal = self.equal.inflate(config)?;
+        self.default = self.default.inflate(config)?;
+        self.comma = self.comma.inflate(config)?;
         if let Some(star_tok) = self.star_tok.as_mut() {
-            self.whitespace_after_star =
-                parse_parenthesizable_whitespace(config, &mut star_tok.whitespace_after)?;
+            self.whitespace_after_star = parse_parenthesizable_whitespace(
+                config,
+                &mut star_tok.borrow_mut().whitespace_after.borrow_mut(),
+            )?;
         }
-        Ok(())
+        Ok(self)
     }
 }
 
@@ -233,7 +233,7 @@ impl<'a> Default for Param<'a> {
 
 impl<'a> Param<'a> {
     fn codegen(
-        &'a self,
+        &self,
         state: &mut CodegenState<'a>,
         default_star: Option<&'a str>,
         default_comma: bool,
@@ -282,26 +282,28 @@ pub struct Arg<'a> {
     pub whitespace_after_star: ParenthesizableWhitespace<'a>,
     pub whitespace_after_arg: ParenthesizableWhitespace<'a>,
 
-    pub(crate) star_tok: Option<Token<'a>>,
+    pub(crate) star_tok: Option<TokenRef<'a>>,
 }
 
 impl<'a> Inflate<'a> for Arg<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         if let Some(star_tok) = self.star_tok.as_mut() {
-            self.whitespace_after_star =
-                parse_parenthesizable_whitespace(config, &mut star_tok.whitespace_after)?;
+            self.whitespace_after_star = parse_parenthesizable_whitespace(
+                config,
+                &mut star_tok.borrow_mut().whitespace_after.borrow_mut(),
+            )?;
         }
-        self.keyword.inflate(config)?;
-        self.equal.inflate(config)?;
-        self.value.inflate(config)?;
-        self.comma.inflate(config)?;
+        self.keyword = self.keyword.inflate(config)?;
+        self.equal = self.equal.inflate(config)?;
+        self.value = self.value.inflate(config)?;
+        self.comma = self.comma.inflate(config)?;
         // whitespace_after_arg is handled in Call
-        Ok(())
+        Ok(self)
     }
 }
 
 impl<'a> Arg<'a> {
-    pub fn codegen(&'a self, state: &mut CodegenState<'a>, default_comma: bool) {
+    pub fn codegen(&self, state: &mut CodegenState<'a>, default_comma: bool) {
         state.add_token(self.star);
         self.whitespace_after_star.codegen(state);
         if let Some(kw) = &self.keyword {
@@ -338,21 +340,23 @@ pub struct LeftParen<'a> {
     /// Any space that appears directly after this left parenthesis.
     pub whitespace_after: ParenthesizableWhitespace<'a>,
 
-    pub(crate) lpar_tok: Token<'a>,
+    pub(crate) lpar_tok: TokenRef<'a>,
 }
 
 impl<'a> Codegen<'a> for LeftParen<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         state.add_token("(");
         self.whitespace_after.codegen(state);
     }
 }
 
 impl<'a> Inflate<'a> for LeftParen<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        self.whitespace_after =
-            parse_parenthesizable_whitespace(config, &mut self.lpar_tok.whitespace_after)?;
-        Ok(())
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.whitespace_after = parse_parenthesizable_whitespace(
+            config,
+            &mut (*self.lpar_tok).borrow_mut().whitespace_after.borrow_mut(),
+        )?;
+        Ok(self)
     }
 }
 
@@ -361,21 +365,23 @@ pub struct RightParen<'a> {
     /// Any space that appears directly before this right parenthesis.
     pub whitespace_before: ParenthesizableWhitespace<'a>,
 
-    pub(crate) rpar_tok: Token<'a>,
+    pub(crate) rpar_tok: TokenRef<'a>,
 }
 
 impl<'a> Codegen<'a> for RightParen<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         self.whitespace_before.codegen(state);
         state.add_token(")");
     }
 }
 
 impl<'a> Inflate<'a> for RightParen<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        self.whitespace_before =
-            parse_parenthesizable_whitespace(config, &mut self.rpar_tok.whitespace_before)?;
-        Ok(())
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.whitespace_before = parse_parenthesizable_whitespace(
+            config,
+            &mut (*self.rpar_tok).borrow_mut().whitespace_before.borrow_mut(),
+        )?;
+        Ok(self)
     }
 }
 
@@ -420,17 +426,17 @@ pub struct Ellipsis<'a> {
 }
 
 impl<'a> Codegen<'a> for Ellipsis<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         self.parenthesize(state, |state| {
             state.add_token("...");
         })
     }
 }
 impl<'a> Inflate<'a> for Ellipsis<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        self.lpar.inflate(config)?;
-        self.rpar.inflate(config)?;
-        Ok(())
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.lpar = self.lpar.inflate(config)?;
+        self.rpar = self.rpar.inflate(config)?;
+        Ok(self)
     }
 }
 
@@ -444,7 +450,7 @@ pub struct Integer<'a> {
 }
 
 impl<'a> Codegen<'a> for Integer<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         self.parenthesize(state, |state| {
             state.add_token(self.value);
         })
@@ -452,10 +458,10 @@ impl<'a> Codegen<'a> for Integer<'a> {
 }
 
 impl<'a> Inflate<'a> for Integer<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        self.lpar.inflate(config)?;
-        self.rpar.inflate(config)?;
-        Ok(())
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.lpar = self.lpar.inflate(config)?;
+        self.rpar = self.rpar.inflate(config)?;
+        Ok(self)
     }
 }
 
@@ -469,7 +475,7 @@ pub struct Float<'a> {
 }
 
 impl<'a> Codegen<'a> for Float<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         self.parenthesize(state, |state| {
             state.add_token(self.value);
         })
@@ -477,10 +483,10 @@ impl<'a> Codegen<'a> for Float<'a> {
 }
 
 impl<'a> Inflate<'a> for Float<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        self.lpar.inflate(config)?;
-        self.rpar.inflate(config)?;
-        Ok(())
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.lpar = self.lpar.inflate(config)?;
+        self.rpar = self.rpar.inflate(config)?;
+        Ok(self)
     }
 }
 
@@ -493,7 +499,7 @@ pub struct Imaginary<'a> {
 }
 
 impl<'a> Codegen<'a> for Imaginary<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         self.parenthesize(state, |state| {
             state.add_token(self.value);
         })
@@ -501,10 +507,10 @@ impl<'a> Codegen<'a> for Imaginary<'a> {
 }
 
 impl<'a> Inflate<'a> for Imaginary<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        self.lpar.inflate(config)?;
-        self.rpar.inflate(config)?;
-        Ok(())
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.lpar = self.lpar.inflate(config)?;
+        self.rpar = self.rpar.inflate(config)?;
+        Ok(self)
     }
 }
 
@@ -517,7 +523,7 @@ pub struct Comparison<'a> {
 }
 
 impl<'a> Codegen<'a> for Comparison<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         self.parenthesize(state, |state| {
             self.left.codegen(state);
             for comp in &self.comparisons {
@@ -527,12 +533,12 @@ impl<'a> Codegen<'a> for Comparison<'a> {
     }
 }
 impl<'a> Inflate<'a> for Comparison<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        self.lpar.inflate(config)?;
-        self.left.inflate(config)?;
-        self.comparisons.inflate(config)?;
-        self.rpar.inflate(config)?;
-        Ok(())
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.lpar = self.lpar.inflate(config)?;
+        self.left = self.left.inflate(config)?;
+        self.comparisons = self.comparisons.inflate(config)?;
+        self.rpar = self.rpar.inflate(config)?;
+        Ok(self)
     }
 }
 
@@ -545,7 +551,7 @@ pub struct UnaryOperation<'a> {
 }
 
 impl<'a> Codegen<'a> for UnaryOperation<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         self.parenthesize(state, |state| {
             self.operator.codegen(state);
             self.expression.codegen(state);
@@ -554,12 +560,12 @@ impl<'a> Codegen<'a> for UnaryOperation<'a> {
 }
 
 impl<'a> Inflate<'a> for UnaryOperation<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        self.lpar.inflate(config)?;
-        self.operator.inflate(config)?;
-        self.expression.inflate(config)?;
-        self.rpar.inflate(config)?;
-        Ok(())
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.lpar = self.lpar.inflate(config)?;
+        self.operator = self.operator.inflate(config)?;
+        self.expression = self.expression.inflate(config)?;
+        self.rpar = self.rpar.inflate(config)?;
+        Ok(self)
     }
 }
 
@@ -573,7 +579,7 @@ pub struct BinaryOperation<'a> {
 }
 
 impl<'a> Codegen<'a> for BinaryOperation<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         self.parenthesize(state, |state| {
             self.left.codegen(state);
             self.operator.codegen(state);
@@ -583,13 +589,13 @@ impl<'a> Codegen<'a> for BinaryOperation<'a> {
 }
 
 impl<'a> Inflate<'a> for BinaryOperation<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        self.lpar.inflate(config)?;
-        self.left.inflate(config)?;
-        self.operator.inflate(config)?;
-        self.right.inflate(config)?;
-        self.rpar.inflate(config)?;
-        Ok(())
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.lpar = self.lpar.inflate(config)?;
+        self.left = self.left.inflate(config)?;
+        self.operator = self.operator.inflate(config)?;
+        self.right = self.right.inflate(config)?;
+        self.rpar = self.rpar.inflate(config)?;
+        Ok(self)
     }
 }
 
@@ -603,7 +609,7 @@ pub struct BooleanOperation<'a> {
 }
 
 impl<'a> Codegen<'a> for BooleanOperation<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         self.parenthesize(state, |state| {
             self.left.codegen(state);
             self.operator.codegen(state);
@@ -613,13 +619,13 @@ impl<'a> Codegen<'a> for BooleanOperation<'a> {
 }
 
 impl<'a> Inflate<'a> for BooleanOperation<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        self.lpar.inflate(config)?;
-        self.left.inflate(config)?;
-        self.operator.inflate(config)?;
-        self.right.inflate(config)?;
-        self.rpar.inflate(config)?;
-        Ok(())
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.lpar = self.lpar.inflate(config)?;
+        self.left = self.left.inflate(config)?;
+        self.operator = self.operator.inflate(config)?;
+        self.right = self.right.inflate(config)?;
+        self.rpar = self.rpar.inflate(config)?;
+        Ok(self)
     }
 }
 
@@ -632,34 +638,40 @@ pub struct Call<'a> {
     pub whitespace_after_func: ParenthesizableWhitespace<'a>,
     pub whitespace_before_args: ParenthesizableWhitespace<'a>,
 
-    pub(crate) lpar_tok: Token<'a>,
-    pub(crate) rpar_tok: Token<'a>,
+    pub(crate) lpar_tok: TokenRef<'a>,
+    pub(crate) rpar_tok: TokenRef<'a>,
 }
 
 impl<'a> Inflate<'a> for Call<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        self.lpar.inflate(config)?;
-        self.func.inflate(config)?;
-        self.whitespace_after_func =
-            parse_parenthesizable_whitespace(config, &mut self.lpar_tok.whitespace_before)?;
-        self.whitespace_before_args =
-            parse_parenthesizable_whitespace(config, &mut self.lpar_tok.whitespace_after)?;
-        self.args.inflate(config)?;
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.lpar = self.lpar.inflate(config)?;
+        self.func = self.func.inflate(config)?;
+        self.whitespace_after_func = parse_parenthesizable_whitespace(
+            config,
+            &mut (*self.lpar_tok).borrow_mut().whitespace_before.borrow_mut(),
+        )?;
+        self.whitespace_before_args = parse_parenthesizable_whitespace(
+            config,
+            &mut (*self.lpar_tok).borrow_mut().whitespace_after.borrow_mut(),
+        )?;
+        self.args = self.args.inflate(config)?;
 
         if let Some(arg) = self.args.last_mut() {
             if arg.comma.is_none() {
-                arg.whitespace_after_arg =
-                    parse_parenthesizable_whitespace(config, &mut self.rpar_tok.whitespace_before)?;
+                arg.whitespace_after_arg = parse_parenthesizable_whitespace(
+                    config,
+                    &mut (*self.rpar_tok).borrow_mut().whitespace_before.borrow_mut(),
+                )?;
             }
         }
-        self.rpar.inflate(config)?;
+        self.rpar = self.rpar.inflate(config)?;
 
-        Ok(())
+        Ok(self)
     }
 }
 
 impl<'a> Codegen<'a> for Call<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         self.parenthesize(state, |state| {
             self.func.codegen(state);
             self.whitespace_after_func.codegen(state);
@@ -684,18 +696,18 @@ pub struct Attribute<'a> {
 }
 
 impl<'a> Inflate<'a> for Attribute<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        self.lpar.inflate(config)?;
-        self.value.inflate(config)?;
-        self.dot.inflate(config)?;
-        self.attr.inflate(config)?;
-        self.rpar.inflate(config)?;
-        Ok(())
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.lpar = self.lpar.inflate(config)?;
+        self.value = self.value.inflate(config)?;
+        self.dot = self.dot.inflate(config)?;
+        self.attr = self.attr.inflate(config)?;
+        self.rpar = self.rpar.inflate(config)?;
+        Ok(self)
     }
 }
 
 impl<'a> Codegen<'a> for Attribute<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         self.parenthesize(state, |state| {
             self.value.codegen(state);
             self.dot.codegen(state);
@@ -705,17 +717,10 @@ impl<'a> Codegen<'a> for Attribute<'a> {
 }
 
 #[allow(clippy::large_enum_variant)]
-#[derive(Debug, PartialEq, Eq, Clone, Codegen)]
+#[derive(Debug, PartialEq, Eq, Clone, Codegen, Inflate)]
 pub enum NameOrAttribute<'a> {
     N(Name<'a>),
     A(Attribute<'a>),
-}
-
-impl<'a> Inflate<'a> for NameOrAttribute<'a> {
-    fn inflate(&mut self, _config: &Config<'a>) -> Result<()> {
-        // TODO
-        Ok(())
-    }
 }
 
 impl<'a> std::convert::From<NameOrAttribute<'a>> for Expression<'a> {
@@ -734,17 +739,17 @@ pub struct ComparisonTarget<'a> {
 }
 
 impl<'a> Codegen<'a> for ComparisonTarget<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         self.operator.codegen(state);
         self.comparator.codegen(state);
     }
 }
 
 impl<'a> Inflate<'a> for ComparisonTarget<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        self.operator.inflate(config)?;
-        self.comparator.inflate(config)?;
-        Ok(())
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.operator = self.operator.inflate(config)?;
+        self.comparator = self.comparator.inflate(config)?;
+        Ok(self)
     }
 }
 
@@ -756,22 +761,24 @@ pub struct StarredElement<'a> {
     pub rpar: Vec<RightParen<'a>>,
     pub whitespace_before_value: ParenthesizableWhitespace<'a>,
 
-    pub(crate) star_tok: Token<'a>,
+    pub(crate) star_tok: TokenRef<'a>,
 }
 
 impl<'a> Inflate<'a> for StarredElement<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        self.lpar.inflate(config)?;
-        self.whitespace_before_value =
-            parse_parenthesizable_whitespace(config, &mut self.star_tok.whitespace_after)?;
-        self.value.inflate(config)?;
-        self.comma.inflate(config)?;
-        Ok(())
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.lpar = self.lpar.inflate(config)?;
+        self.whitespace_before_value = parse_parenthesizable_whitespace(
+            config,
+            &mut (*self.star_tok).borrow_mut().whitespace_after.borrow_mut(),
+        )?;
+        self.value = self.value.inflate(config)?;
+        self.comma = self.comma.inflate(config)?;
+        Ok(self)
     }
 }
 
 impl<'a> Codegen<'a> for StarredElement<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         self.parenthesize(state, |state| {
             state.add_token("*");
             self.whitespace_before_value.codegen(state);
@@ -793,21 +800,20 @@ pub enum Element<'a> {
 }
 
 impl<'a> Inflate<'a> for Element<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        match self {
-            Self::Starred(s) => s.inflate(config)?,
-            Self::Simple { value, comma } => {
-                value.inflate(config)?;
-                comma.inflate(config)?;
-            }
-        }
-        Ok(())
+    fn inflate(self, config: &Config<'a>) -> Result<Self> {
+        Ok(match self {
+            Self::Starred(s) => Self::Starred(s.inflate(config)?),
+            Self::Simple { value, comma } => Self::Simple {
+                value: value.inflate(config)?,
+                comma: comma.inflate(config)?,
+            },
+        })
     }
 }
 
 impl<'a> Element<'a> {
     fn codegen(
-        &'a self,
+        &self,
         state: &mut CodegenState<'a>,
         default_comma: bool,
         default_comma_whitespace: bool,
@@ -830,7 +836,7 @@ impl<'a> Element<'a> {
         }
     }
 
-    fn comma(&self) -> Option<&Comma> {
+    fn comma(&self) -> Option<&Comma<'a>> {
         match self {
             Self::Starred(s) => s.comma.as_ref(),
             Self::Simple { comma, .. } => comma.as_ref(),
@@ -864,24 +870,25 @@ pub struct Tuple<'a> {
 }
 
 impl<'a> Inflate<'a> for Tuple<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        self.lpar.inflate(config)?;
-        self.elements.inflate(config)?;
-        if !self.elements.is_empty() {
-            if let Some(last) = self.elements.last() {
-                if last.comma().is_none() {
-                    // rpar only has whitespace if elements is non empty without a
-                    // trailing comma
-                    self.rpar.inflate(config)?;
-                }
-            }
+    fn inflate(mut self, config: &Config<'a>) -> Result<Tuple<'a>> {
+        self.lpar = self.lpar.inflate(config)?;
+        self.elements = self.elements.inflate(config)?;
+        if self
+            .elements
+            .last()
+            .map(|x| x.comma().is_none())
+            .unwrap_or(false)
+        {
+            // rpar only has whitespace if elements is non empty without a
+            // trailing comma
+            self.rpar = self.rpar.inflate(config)?;
         }
-        Ok(())
+        Ok(self)
     }
 }
 
 impl<'a> Codegen<'a> for Tuple<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         self.parenthesize(state, |state| {
             let len = self.elements.len();
             if len == 1 {
@@ -904,7 +911,7 @@ pub struct GeneratorExp<'a> {
 }
 
 impl<'a> Codegen<'a> for GeneratorExp<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         self.parenthesize(state, |state| {
             self.elt.codegen(state);
             self.for_in.codegen(state);
@@ -913,12 +920,12 @@ impl<'a> Codegen<'a> for GeneratorExp<'a> {
 }
 
 impl<'a> Inflate<'a> for GeneratorExp<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        self.lpar.inflate(config)?;
-        self.elt.inflate(config)?;
-        self.for_in.inflate(config)?;
-        self.rpar.inflate(config)?;
-        Ok(())
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.lpar = self.lpar.inflate(config)?;
+        self.elt = self.elt.inflate(config)?;
+        self.for_in = self.for_in.inflate(config)?;
+        self.rpar = self.rpar.inflate(config)?;
+        Ok(self)
     }
 }
 
@@ -933,7 +940,7 @@ pub struct ListComp<'a> {
 }
 
 impl<'a> Codegen<'a> for ListComp<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         self.parenthesize(state, |state| {
             self.lbracket.codegen(state);
             self.elt.codegen(state);
@@ -944,56 +951,60 @@ impl<'a> Codegen<'a> for ListComp<'a> {
 }
 
 impl<'a> Inflate<'a> for ListComp<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        self.lpar.inflate(config)?;
-        self.lbracket.inflate(config)?;
-        self.elt.inflate(config)?;
-        self.for_in.inflate(config)?;
-        self.rbracket.inflate(config)?;
-        self.rpar.inflate(config)?;
-        Ok(())
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.lpar = self.lpar.inflate(config)?;
+        self.lbracket = self.lbracket.inflate(config)?;
+        self.elt = self.elt.inflate(config)?;
+        self.for_in = self.for_in.inflate(config)?;
+        self.rbracket = self.rbracket.inflate(config)?;
+        self.rpar = self.rpar.inflate(config)?;
+        Ok(self)
     }
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct LeftSquareBracket<'a> {
     pub whitespace_after: ParenthesizableWhitespace<'a>,
-    pub(crate) tok: Token<'a>,
+    pub(crate) tok: TokenRef<'a>,
 }
 
 impl<'a> Codegen<'a> for LeftSquareBracket<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         state.add_token("[");
         self.whitespace_after.codegen(state);
     }
 }
 
 impl<'a> Inflate<'a> for LeftSquareBracket<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        self.whitespace_after =
-            parse_parenthesizable_whitespace(config, &mut self.tok.whitespace_after)?;
-        Ok(())
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.whitespace_after = parse_parenthesizable_whitespace(
+            config,
+            &mut (*self.tok).borrow_mut().whitespace_after.borrow_mut(),
+        )?;
+        Ok(self)
     }
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct RightSquareBracket<'a> {
     pub whitespace_before: ParenthesizableWhitespace<'a>,
-    pub(crate) tok: Token<'a>,
+    pub(crate) tok: TokenRef<'a>,
 }
 
 impl<'a> Codegen<'a> for RightSquareBracket<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         self.whitespace_before.codegen(state);
         state.add_token("]");
     }
 }
 
 impl<'a> Inflate<'a> for RightSquareBracket<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        self.whitespace_before =
-            parse_parenthesizable_whitespace(config, &mut self.tok.whitespace_before)?;
-        Ok(())
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.whitespace_before = parse_parenthesizable_whitespace(
+            config,
+            &mut (*self.tok).borrow_mut().whitespace_before.borrow_mut(),
+        )?;
+        Ok(self)
     }
 }
 
@@ -1008,19 +1019,19 @@ pub struct SetComp<'a> {
 }
 
 impl<'a> Inflate<'a> for SetComp<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        self.lpar.inflate(config)?;
-        self.lbrace.inflate(config)?;
-        self.elt.inflate(config)?;
-        self.for_in.inflate(config)?;
-        self.rbrace.inflate(config)?;
-        self.rpar.inflate(config)?;
-        Ok(())
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.lpar = self.lpar.inflate(config)?;
+        self.lbrace = self.lbrace.inflate(config)?;
+        self.elt = self.elt.inflate(config)?;
+        self.for_in = self.for_in.inflate(config)?;
+        self.rbrace = self.rbrace.inflate(config)?;
+        self.rpar = self.rpar.inflate(config)?;
+        Ok(self)
     }
 }
 
 impl<'a> Codegen<'a> for SetComp<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         self.parenthesize(state, |state| {
             self.lbrace.codegen(state);
             self.elt.codegen(state);
@@ -1042,28 +1053,35 @@ pub struct DictComp<'a> {
     pub whitespace_before_colon: ParenthesizableWhitespace<'a>,
     pub whitespace_after_colon: ParenthesizableWhitespace<'a>,
 
-    pub(crate) colon_tok: Token<'a>,
+    pub(crate) colon_tok: TokenRef<'a>,
 }
 
 impl<'a> Inflate<'a> for DictComp<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        self.lpar.inflate(config)?;
-        self.lbrace.inflate(config)?;
-        self.key.inflate(config)?;
-        self.whitespace_before_colon =
-            parse_parenthesizable_whitespace(config, &mut self.colon_tok.whitespace_before)?;
-        self.whitespace_after_colon =
-            parse_parenthesizable_whitespace(config, &mut self.colon_tok.whitespace_after)?;
-        self.value.inflate(config)?;
-        self.for_in.inflate(config)?;
-        self.rbrace.inflate(config)?;
-        self.rpar.inflate(config)?;
-        Ok(())
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.lpar = self.lpar.inflate(config)?;
+        self.lbrace = self.lbrace.inflate(config)?;
+        self.key = self.key.inflate(config)?;
+        self.whitespace_before_colon = parse_parenthesizable_whitespace(
+            config,
+            &mut (*self.colon_tok)
+                .borrow_mut()
+                .whitespace_before
+                .borrow_mut(),
+        )?;
+        self.whitespace_after_colon = parse_parenthesizable_whitespace(
+            config,
+            &mut (*self.colon_tok).borrow_mut().whitespace_after.borrow_mut(),
+        )?;
+        self.value = self.value.inflate(config)?;
+        self.for_in = self.for_in.inflate(config)?;
+        self.rbrace = self.rbrace.inflate(config)?;
+        self.rpar = self.rpar.inflate(config)?;
+        Ok(self)
     }
 }
 
 impl<'a> Codegen<'a> for DictComp<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         self.parenthesize(state, |state| {
             self.lbrace.codegen(state);
             self.key.codegen(state);
@@ -1080,19 +1098,21 @@ impl<'a> Codegen<'a> for DictComp<'a> {
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct LeftCurlyBrace<'a> {
     pub whitespace_after: ParenthesizableWhitespace<'a>,
-    pub(crate) tok: Token<'a>,
+    pub(crate) tok: TokenRef<'a>,
 }
 
 impl<'a> Inflate<'a> for LeftCurlyBrace<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        self.whitespace_after =
-            parse_parenthesizable_whitespace(config, &mut self.tok.whitespace_after)?;
-        Ok(())
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.whitespace_after = parse_parenthesizable_whitespace(
+            config,
+            &mut (*self.tok).borrow_mut().whitespace_after.borrow_mut(),
+        )?;
+        Ok(self)
     }
 }
 
 impl<'a> Codegen<'a> for LeftCurlyBrace<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         state.add_token("{");
         self.whitespace_after.codegen(state);
     }
@@ -1101,19 +1121,21 @@ impl<'a> Codegen<'a> for LeftCurlyBrace<'a> {
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct RightCurlyBrace<'a> {
     pub whitespace_before: ParenthesizableWhitespace<'a>,
-    pub(crate) tok: Token<'a>,
+    pub(crate) tok: TokenRef<'a>,
 }
 
 impl<'a> Inflate<'a> for RightCurlyBrace<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        self.whitespace_before =
-            parse_parenthesizable_whitespace(config, &mut self.tok.whitespace_before)?;
-        Ok(())
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.whitespace_before = parse_parenthesizable_whitespace(
+            config,
+            &mut (*self.tok).borrow_mut().whitespace_before.borrow_mut(),
+        )?;
+        Ok(self)
     }
 }
 
 impl<'a> Codegen<'a> for RightCurlyBrace<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         self.whitespace_before.codegen(state);
         state.add_token("}");
     }
@@ -1131,13 +1153,13 @@ pub struct CompFor<'a> {
     pub whitespace_before_in: ParenthesizableWhitespace<'a>,
     pub whitespace_after_in: ParenthesizableWhitespace<'a>,
 
-    pub(crate) async_tok: Option<Token<'a>>,
-    pub(crate) for_tok: Token<'a>,
-    pub(crate) in_tok: Token<'a>,
+    pub(crate) async_tok: Option<TokenRef<'a>>,
+    pub(crate) for_tok: TokenRef<'a>,
+    pub(crate) in_tok: TokenRef<'a>,
 }
 
 impl<'a> Codegen<'a> for CompFor<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         self.whitespace_before.codegen(state);
         if let Some(asynchronous) = &self.asynchronous {
             asynchronous.codegen(state);
@@ -1159,28 +1181,38 @@ impl<'a> Codegen<'a> for CompFor<'a> {
 }
 
 impl<'a> Inflate<'a> for CompFor<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        self.whitespace_before =
-            parse_parenthesizable_whitespace(config, &mut self.for_tok.whitespace_before)?;
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.whitespace_before = parse_parenthesizable_whitespace(
+            config,
+            &mut (*self.for_tok).borrow_mut().whitespace_before.borrow_mut(),
+        )?;
         if let (Some(asy_tok), Some(asy)) = (self.async_tok.as_mut(), self.asynchronous.as_mut()) {
             // If there is an async keyword, the start of the CompFor expression is
             // considered to be this keyword, so whitespace_before needs to adjust but
             // Asynchronous will own the whitespace before the for token.
-            asy.whitespace_after =
-                parse_parenthesizable_whitespace(config, &mut asy_tok.whitespace_before)?;
+            asy.whitespace_after = parse_parenthesizable_whitespace(
+                config,
+                &mut asy_tok.borrow_mut().whitespace_before.borrow_mut(),
+            )?;
             swap(&mut asy.whitespace_after, &mut self.whitespace_before);
         }
-        self.whitespace_after_for =
-            parse_parenthesizable_whitespace(config, &mut self.for_tok.whitespace_after)?;
-        self.target.inflate(config)?;
-        self.whitespace_before_in =
-            parse_parenthesizable_whitespace(config, &mut self.in_tok.whitespace_before)?;
-        self.whitespace_after_in =
-            parse_parenthesizable_whitespace(config, &mut self.in_tok.whitespace_after)?;
-        self.iter.inflate(config)?;
-        self.ifs.inflate(config)?;
-        self.inner_for_in.inflate(config)?;
-        Ok(())
+        self.whitespace_after_for = parse_parenthesizable_whitespace(
+            config,
+            &mut (*self.for_tok).borrow_mut().whitespace_after.borrow_mut(),
+        )?;
+        self.target = self.target.inflate(config)?;
+        self.whitespace_before_in = parse_parenthesizable_whitespace(
+            config,
+            &mut (*self.in_tok).borrow_mut().whitespace_before.borrow_mut(),
+        )?;
+        self.whitespace_after_in = parse_parenthesizable_whitespace(
+            config,
+            &mut (*self.in_tok).borrow_mut().whitespace_after.borrow_mut(),
+        )?;
+        self.iter = self.iter.inflate(config)?;
+        self.ifs = self.ifs.inflate(config)?;
+        self.inner_for_in = self.inner_for_in.inflate(config)?;
+        Ok(self)
     }
 }
 
@@ -1190,7 +1222,7 @@ pub struct Asynchronous<'a> {
 }
 
 impl<'a> Codegen<'a> for Asynchronous<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         state.add_token("async");
         self.whitespace_after.codegen(state);
     }
@@ -1202,11 +1234,11 @@ pub struct CompIf<'a> {
     pub whitespace_before: ParenthesizableWhitespace<'a>,
     pub whitespace_before_test: ParenthesizableWhitespace<'a>,
 
-    pub(crate) if_tok: Token<'a>,
+    pub(crate) if_tok: TokenRef<'a>,
 }
 
 impl<'a> Codegen<'a> for CompIf<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         self.whitespace_before.codegen(state);
         state.add_token("if");
         self.whitespace_before_test.codegen(state);
@@ -1215,13 +1247,17 @@ impl<'a> Codegen<'a> for CompIf<'a> {
 }
 
 impl<'a> Inflate<'a> for CompIf<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        self.whitespace_before =
-            parse_parenthesizable_whitespace(config, &mut self.if_tok.whitespace_before)?;
-        self.whitespace_before_test =
-            parse_parenthesizable_whitespace(config, &mut self.if_tok.whitespace_after)?;
-        self.test.inflate(config)?;
-        Ok(())
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.whitespace_before = parse_parenthesizable_whitespace(
+            config,
+            &mut (*self.if_tok).borrow_mut().whitespace_before.borrow_mut(),
+        )?;
+        self.whitespace_before_test = parse_parenthesizable_whitespace(
+            config,
+            &mut (*self.if_tok).borrow_mut().whitespace_after.borrow_mut(),
+        )?;
+        self.test = self.test.inflate(config)?;
+        Ok(self)
     }
 }
 
@@ -1235,25 +1271,25 @@ pub struct List<'a> {
 }
 
 impl<'a> Inflate<'a> for List<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        self.lpar.inflate(config)?;
-        self.lbracket.inflate(config)?;
-        self.elements.inflate(config)?;
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.lpar = self.lpar.inflate(config)?;
+        self.lbracket = self.lbracket.inflate(config)?;
+        self.elements = self.elements.inflate(config)?;
         if !self.elements.is_empty() {
             if let Some(last) = self.elements.last() {
                 if last.comma().is_none() {
                     // lbracket owns all the whitespace if there are no elements
-                    self.rbracket.inflate(config)?;
+                    self.rbracket = self.rbracket.inflate(config)?;
                 }
             }
         }
-        self.rpar.inflate(config)?;
-        Ok(())
+        self.rpar = self.rpar.inflate(config)?;
+        Ok(self)
     }
 }
 
 impl<'a> Codegen<'a> for List<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         self.parenthesize(state, |state| {
             self.lbracket.codegen(state);
             let len = self.elements.len();
@@ -1275,24 +1311,24 @@ pub struct Set<'a> {
 }
 
 impl<'a> Inflate<'a> for Set<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        self.lpar.inflate(config)?;
-        self.lbrace.inflate(config)?;
-        self.elements.inflate(config)?;
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.lpar = self.lpar.inflate(config)?;
+        self.lbrace = self.lbrace.inflate(config)?;
+        self.elements = self.elements.inflate(config)?;
         if !self.elements.is_empty() {
             if let Some(last) = self.elements.last() {
                 if last.comma().is_none() {
-                    self.rbrace.inflate(config)?;
+                    self.rbrace = self.rbrace.inflate(config)?;
                 }
             }
         }
-        self.rpar.inflate(config)?;
-        Ok(())
+        self.rpar = self.rpar.inflate(config)?;
+        Ok(self)
     }
 }
 
 impl<'a> Codegen<'a> for Set<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         self.parenthesize(state, |state| {
             self.lbrace.codegen(state);
             let len = self.elements.len();
@@ -1314,24 +1350,24 @@ pub struct Dict<'a> {
 }
 
 impl<'a> Inflate<'a> for Dict<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        self.lpar.inflate(config)?;
-        self.lbrace.inflate(config)?;
-        self.elements.inflate(config)?;
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.lpar = self.lpar.inflate(config)?;
+        self.lbrace = self.lbrace.inflate(config)?;
+        self.elements = self.elements.inflate(config)?;
         if !self.elements.is_empty() {
             if let Some(last) = self.elements.last() {
                 if last.comma().is_none() {
-                    self.rbrace.inflate(config)?;
+                    self.rbrace = self.rbrace.inflate(config)?;
                 }
             }
         }
-        self.rpar.inflate(config)?;
-        Ok(())
+        self.rpar = self.rpar.inflate(config)?;
+        Ok(self)
     }
 }
 
 impl<'a> Codegen<'a> for Dict<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         self.parenthesize(state, |state| {
             self.lbrace.codegen(state);
             let len = self.elements.len();
@@ -1351,39 +1387,46 @@ pub enum DictElement<'a> {
         comma: Option<Comma<'a>>,
         whitespace_before_colon: ParenthesizableWhitespace<'a>,
         whitespace_after_colon: ParenthesizableWhitespace<'a>,
-        colon_tok: Token<'a>,
+        colon_tok: TokenRef<'a>,
     },
     Starred(DoubleStarredElement<'a>),
 }
 
 impl<'a> Inflate<'a> for DictElement<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        match self {
-            Self::Starred(s) => s.inflate(config)?,
+    fn inflate(self, config: &Config<'a>) -> Result<Self> {
+        Ok(match self {
+            Self::Starred(s) => Self::Starred(s.inflate(config)?),
             Self::Simple {
                 key,
                 value,
                 comma,
-                whitespace_before_colon,
-                whitespace_after_colon,
                 colon_tok,
+                ..
             } => {
-                key.inflate(config)?;
-                *whitespace_before_colon =
-                    parse_parenthesizable_whitespace(config, &mut colon_tok.whitespace_before)?;
-                *whitespace_after_colon =
-                    parse_parenthesizable_whitespace(config, &mut colon_tok.whitespace_after)?;
-                value.inflate(config)?;
-                comma.inflate(config)?;
+                let whitespace_before_colon = parse_parenthesizable_whitespace(
+                    config,
+                    &mut colon_tok.borrow_mut().whitespace_before.borrow_mut(),
+                )?;
+                let whitespace_after_colon = parse_parenthesizable_whitespace(
+                    config,
+                    &mut colon_tok.borrow_mut().whitespace_after.borrow_mut(),
+                )?;
+                Self::Simple {
+                    key: key.inflate(config)?,
+                    whitespace_before_colon,
+                    whitespace_after_colon,
+                    value: value.inflate(config)?,
+                    comma: comma.inflate(config)?,
+                    colon_tok,
+                }
             }
-        }
-        Ok(())
+        })
     }
 }
 
 impl<'a> DictElement<'a> {
     fn codegen(
-        &'a self,
+        &self,
         state: &mut CodegenState<'a>,
         default_comma: bool,
         default_comma_whitespace: bool,
@@ -1417,7 +1460,7 @@ impl<'a> DictElement<'a> {
         }
     }
 
-    fn comma(&self) -> Option<&Comma> {
+    fn comma(&self) -> Option<&Comma<'a>> {
         match self {
             Self::Simple { comma, .. } => comma.as_ref(),
             Self::Starred(s) => s.comma.as_ref(),
@@ -1455,21 +1498,23 @@ pub struct DoubleStarredElement<'a> {
     pub comma: Option<Comma<'a>>,
     pub whitespace_before_value: ParenthesizableWhitespace<'a>,
 
-    pub(crate) star_tok: Token<'a>,
+    pub(crate) star_tok: TokenRef<'a>,
 }
 
 impl<'a> Inflate<'a> for DoubleStarredElement<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        self.whitespace_before_value =
-            parse_parenthesizable_whitespace(config, &mut self.star_tok.whitespace_after)?;
-        self.value.inflate(config)?;
-        self.comma.inflate(config)?;
-        Ok(())
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.whitespace_before_value = parse_parenthesizable_whitespace(
+            config,
+            &mut (*self.star_tok).borrow_mut().whitespace_after.borrow_mut(),
+        )?;
+        self.value = self.value.inflate(config)?;
+        self.comma = self.comma.inflate(config)?;
+        Ok(self)
     }
 }
 
 impl<'a> Codegen<'a> for DoubleStarredElement<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         state.add_token("**");
         self.whitespace_before_value.codegen(state);
         self.value.codegen(state);
@@ -1492,13 +1537,14 @@ pub struct Index<'a> {
 }
 
 impl<'a> Inflate<'a> for Index<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        self.value.inflate(config)
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.value = self.value.inflate(config)?;
+        Ok(self)
     }
 }
 
 impl<'a> Codegen<'a> for Index<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         self.value.codegen(state);
     }
 }
@@ -1513,18 +1559,18 @@ pub struct Slice<'a> {
 }
 
 impl<'a> Inflate<'a> for Slice<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        self.lower.inflate(config)?;
-        self.first_colon.inflate(config)?;
-        self.upper.inflate(config)?;
-        self.second_colon.inflate(config)?;
-        self.step.inflate(config)?;
-        Ok(())
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.lower = self.lower.inflate(config)?;
+        self.first_colon = self.first_colon.inflate(config)?;
+        self.upper = self.upper.inflate(config)?;
+        self.second_colon = self.second_colon.inflate(config)?;
+        self.step = self.step.inflate(config)?;
+        Ok(self)
     }
 }
 
 impl<'a> Codegen<'a> for Slice<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         if let Some(lower) = &self.lower {
             lower.codegen(state);
         }
@@ -1550,15 +1596,15 @@ pub struct SubscriptElement<'a> {
 }
 
 impl<'a> Inflate<'a> for SubscriptElement<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        self.slice.inflate(config)?;
-        self.comma.inflate(config)?;
-        Ok(())
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.slice = self.slice.inflate(config)?;
+        self.comma = self.comma.inflate(config)?;
+        Ok(self)
     }
 }
 
 impl<'a> Codegen<'a> for SubscriptElement<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         self.slice.codegen(state);
         if let Some(comma) = &self.comma {
             comma.codegen(state);
@@ -1576,62 +1622,31 @@ pub struct Subscript<'a> {
     pub rpar: Vec<RightParen<'a>>,
     pub whitespace_after_value: ParenthesizableWhitespace<'a>,
 
-    pub(crate) lbracket_tok: Token<'a>,
-}
-
-// HACK: in slices if there is a colon directly before or after the comma, the colon
-// owns the whitespace. Not sure if this is by design or accident.
-fn ltrim_comma(before: &BaseSlice, comma: &mut Comma) {
-    if let BaseSlice::Slice(s) = &before {
-        let trailing_second_colon = s.step.is_none() && s.second_colon.is_some();
-        let trailing_first_colon = s.upper.is_none() && s.step.is_none();
-        if trailing_first_colon || trailing_second_colon {
-            comma.whitespace_before = Default::default();
-        }
-    }
-}
-
-fn rtrim_comma(comma: &mut Comma, after: &BaseSlice) {
-    if let BaseSlice::Slice(s) = &after {
-        let leading_first_colon = s.lower.is_none();
-        if leading_first_colon {
-            comma.whitespace_after = Default::default();
-        }
-    }
+    pub(crate) lbracket_tok: TokenRef<'a>,
 }
 
 impl<'a> Inflate<'a> for Subscript<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        self.lpar.inflate(config)?;
-        self.value.inflate(config)?;
-        self.whitespace_after_value =
-            parse_parenthesizable_whitespace(config, &mut self.lbracket_tok.whitespace_before)?;
-        self.lbracket.inflate(config)?;
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.lpar = self.lpar.inflate(config)?;
+        self.value = self.value.inflate(config)?;
+        self.whitespace_after_value = parse_parenthesizable_whitespace(
+            config,
+            &mut (*self.lbracket_tok)
+                .borrow_mut()
+                .whitespace_before
+                .borrow_mut(),
+        )?;
+        self.lbracket = self.lbracket.inflate(config)?;
         // TODO: trailing comma fucks with the generic vec implementation
-        self.slice.inflate(config)?;
-        let mut prev_comma = None;
-        for el in self.slice.iter_mut() {
-            if let Some(comma) = el.comma.as_mut() {
-                ltrim_comma(&el.slice, comma);
-            }
-            if let Some(comma) = prev_comma {
-                rtrim_comma(comma, &el.slice);
-            }
-            prev_comma = el.comma.as_mut();
-        }
-        // TODO: This should go away once Tokens are references
-        // if there is a trailing comma, it owns the whitespace before right bracket
-        if let Some(SubscriptElement { comma: Some(_), .. }) = self.slice.last() {
-        } else {
-            self.rbracket.inflate(config)?;
-        }
-        self.rpar.inflate(config)?;
-        Ok(())
+        self.slice = self.slice.inflate(config)?;
+        self.rbracket = self.rbracket.inflate(config)?;
+        self.rpar = self.rpar.inflate(config)?;
+        Ok(self)
     }
 }
 
 impl<'a> Codegen<'a> for Subscript<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         self.parenthesize(state, |state| {
             self.value.codegen(state);
             self.whitespace_after_value.codegen(state);
@@ -1660,31 +1675,39 @@ pub struct IfExp<'a> {
     pub whitespace_before_else: ParenthesizableWhitespace<'a>,
     pub whitespace_after_else: ParenthesizableWhitespace<'a>,
 
-    pub(crate) if_tok: Token<'a>,
-    pub(crate) else_tok: Token<'a>,
+    pub(crate) if_tok: TokenRef<'a>,
+    pub(crate) else_tok: TokenRef<'a>,
 }
 
 impl<'a> Inflate<'a> for IfExp<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        self.lpar.inflate(config)?;
-        self.body.inflate(config)?;
-        self.whitespace_before_if =
-            parse_parenthesizable_whitespace(config, &mut self.if_tok.whitespace_before)?;
-        self.whitespace_after_if =
-            parse_parenthesizable_whitespace(config, &mut self.if_tok.whitespace_after)?;
-        self.test.inflate(config)?;
-        self.whitespace_before_else =
-            parse_parenthesizable_whitespace(config, &mut self.else_tok.whitespace_before)?;
-        self.whitespace_after_else =
-            parse_parenthesizable_whitespace(config, &mut self.else_tok.whitespace_after)?;
-        self.orelse.inflate(config)?;
-        self.rpar.inflate(config)?;
-        Ok(())
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.lpar = self.lpar.inflate(config)?;
+        self.body = self.body.inflate(config)?;
+        self.whitespace_before_if = parse_parenthesizable_whitespace(
+            config,
+            &mut (*self.if_tok).borrow_mut().whitespace_before.borrow_mut(),
+        )?;
+        self.whitespace_after_if = parse_parenthesizable_whitespace(
+            config,
+            &mut (*self.if_tok).borrow_mut().whitespace_after.borrow_mut(),
+        )?;
+        self.test = self.test.inflate(config)?;
+        self.whitespace_before_else = parse_parenthesizable_whitespace(
+            config,
+            &mut (*self.else_tok).borrow_mut().whitespace_before.borrow_mut(),
+        )?;
+        self.whitespace_after_else = parse_parenthesizable_whitespace(
+            config,
+            &mut (*self.else_tok).borrow_mut().whitespace_after.borrow_mut(),
+        )?;
+        self.orelse = self.orelse.inflate(config)?;
+        self.rpar = self.rpar.inflate(config)?;
+        Ok(self)
     }
 }
 
 impl<'a> Codegen<'a> for IfExp<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         self.parenthesize(state, |state| {
             self.body.codegen(state);
             self.whitespace_before_if.codegen(state);
@@ -1708,29 +1731,36 @@ pub struct Lambda<'a> {
     pub rpar: Vec<RightParen<'a>>,
     pub whitespace_after_lambda: Option<ParenthesizableWhitespace<'a>>,
 
-    pub(crate) lambda_tok: Token<'a>,
+    pub(crate) lambda_tok: TokenRef<'a>,
 }
 
 impl<'a> Inflate<'a> for Lambda<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        self.lpar.inflate(config)?;
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.lpar = self.lpar.inflate(config)?;
         if !self.params.is_empty() {
             self.whitespace_after_lambda = Some(parse_parenthesizable_whitespace(
                 config,
-                &mut self.lambda_tok.whitespace_after,
+                &mut (*self.lambda_tok)
+                    .borrow_mut()
+                    .whitespace_after
+                    .borrow_mut(),
             )?);
         }
-        self.params.inflate(config)?;
-        adjust_parameters_trailing_whitespace(config, &mut self.params, &mut self.colon.tok)?;
-        self.colon.inflate(config)?;
-        self.body.inflate(config)?;
-        self.rpar.inflate(config)?;
-        Ok(())
+        self.params = self.params.inflate(config)?;
+        adjust_parameters_trailing_whitespace(
+            config,
+            &mut self.params,
+            &mut self.colon.tok.borrow_mut(),
+        )?;
+        self.colon = self.colon.inflate(config)?;
+        self.body = self.body.inflate(config)?;
+        self.rpar = self.rpar.inflate(config)?;
+        Ok(self)
     }
 }
 
 impl<'a> Codegen<'a> for Lambda<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         self.parenthesize(state, |state| {
             state.add_token("lambda");
             if let Some(ws) = &self.whitespace_after_lambda {
@@ -1752,11 +1782,11 @@ pub struct From<'a> {
     pub whitespace_before_from: Option<ParenthesizableWhitespace<'a>>,
     pub whitespace_after_from: ParenthesizableWhitespace<'a>,
 
-    pub(crate) tok: Token<'a>,
+    pub(crate) tok: TokenRef<'a>,
 }
 
 impl<'a> From<'a> {
-    pub fn codegen(&'a self, state: &mut CodegenState<'a>, default_space: &'a str) {
+    pub fn codegen(&self, state: &mut CodegenState<'a>, default_space: &'a str) {
         if let Some(ws) = &self.whitespace_before_from {
             ws.codegen(state);
         } else {
@@ -1769,15 +1799,17 @@ impl<'a> From<'a> {
 }
 
 impl<'a> Inflate<'a> for From<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.whitespace_before_from = Some(parse_parenthesizable_whitespace(
             config,
-            &mut self.tok.whitespace_before,
+            &mut (*self.tok).borrow_mut().whitespace_before.borrow_mut(),
         )?);
-        self.whitespace_after_from =
-            parse_parenthesizable_whitespace(config, &mut self.tok.whitespace_after)?;
-        self.item.inflate(config)?;
-        Ok(())
+        self.whitespace_after_from = parse_parenthesizable_whitespace(
+            config,
+            &mut (*self.tok).borrow_mut().whitespace_after.borrow_mut(),
+        )?;
+        self.item = self.item.inflate(config)?;
+        Ok(self)
     }
 }
 
@@ -1789,20 +1821,20 @@ pub enum YieldValue<'a> {
 }
 
 impl<'a> Inflate<'a> for YieldValue<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        match self {
-            Self::Expression(e) => e.inflate(config),
+    fn inflate(self, config: &Config<'a>) -> Result<Self> {
+        Ok(match self {
+            Self::Expression(e) => Self::Expression(e.inflate(config)?),
             Self::From(e) => {
-                e.inflate(config)?;
+                let mut e = e.inflate(config)?;
                 e.whitespace_before_from = None;
-                Ok(())
+                Self::From(e)
             }
-        }
+        })
     }
 }
 
 impl<'a> YieldValue<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>, default_space: &'a str) {
+    fn codegen(&self, state: &mut CodegenState<'a>, default_space: &'a str) {
         match self {
             Self::Expression(e) => e.codegen(state),
             Self::From(f) => f.codegen(state, default_space),
@@ -1817,26 +1849,26 @@ pub struct Yield<'a> {
     pub rpar: Vec<RightParen<'a>>,
     pub whitespace_after_yield: Option<ParenthesizableWhitespace<'a>>,
 
-    pub(crate) yield_tok: Token<'a>,
+    pub(crate) yield_tok: TokenRef<'a>,
 }
 
 impl<'a> Inflate<'a> for Yield<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        self.lpar.inflate(config)?;
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.lpar = self.lpar.inflate(config)?;
         if self.value.is_some() {
             self.whitespace_after_yield = Some(parse_parenthesizable_whitespace(
                 config,
-                &mut self.yield_tok.whitespace_after,
+                &mut (*self.yield_tok).borrow_mut().whitespace_after.borrow_mut(),
             )?);
         }
-        self.value.inflate(config)?;
-        self.rpar.inflate(config)?;
-        Ok(())
+        self.value = self.value.inflate(config)?;
+        self.rpar = self.rpar.inflate(config)?;
+        Ok(self)
     }
 }
 
 impl<'a> Codegen<'a> for Yield<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         self.parenthesize(state, |state| {
             state.add_token("yield");
             if let Some(ws) = &self.whitespace_after_yield {
@@ -1859,22 +1891,24 @@ pub struct Await<'a> {
     pub rpar: Vec<RightParen<'a>>,
     pub whitespace_after_await: ParenthesizableWhitespace<'a>,
 
-    pub(crate) await_tok: Token<'a>,
+    pub(crate) await_tok: TokenRef<'a>,
 }
 
 impl<'a> Inflate<'a> for Await<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        self.lpar.inflate(config)?;
-        self.whitespace_after_await =
-            parse_parenthesizable_whitespace(config, &mut self.await_tok.whitespace_after)?;
-        self.expression.inflate(config)?;
-        self.rpar.inflate(config)?;
-        Ok(())
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.lpar = self.lpar.inflate(config)?;
+        self.whitespace_after_await = parse_parenthesizable_whitespace(
+            config,
+            &mut (*self.await_tok).borrow_mut().whitespace_after.borrow_mut(),
+        )?;
+        self.expression = self.expression.inflate(config)?;
+        self.rpar = self.rpar.inflate(config)?;
+        Ok(self)
     }
 }
 
 impl<'a> Codegen<'a> for Await<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         self.parenthesize(state, |state| {
             state.add_token("await");
             self.whitespace_after_await.codegen(state);
@@ -1911,23 +1945,28 @@ pub struct ConcatenatedString<'a> {
 
     // we capture the next token after each string piece so Inflate can extract the
     // whitespace between individual pieces
-    pub(crate) right_tok: Token<'a>,
+    pub(crate) right_tok: TokenRef<'a>,
 }
 
 impl<'a> Inflate<'a> for ConcatenatedString<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        self.lpar.inflate(config)?;
-        self.left.inflate(config)?;
-        self.whitespace_between =
-            parse_parenthesizable_whitespace(config, &mut self.right_tok.whitespace_before)?;
-        self.right.inflate(config)?;
-        self.rpar.inflate(config)?;
-        Ok(())
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.lpar = self.lpar.inflate(config)?;
+        self.left = self.left.inflate(config)?;
+        self.whitespace_between = parse_parenthesizable_whitespace(
+            config,
+            &mut (*self.right_tok)
+                .borrow_mut()
+                .whitespace_before
+                .borrow_mut(),
+        )?;
+        self.right = self.right.inflate(config)?;
+        self.rpar = self.rpar.inflate(config)?;
+        Ok(self)
     }
 }
 
 impl<'a> Codegen<'a> for ConcatenatedString<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         self.parenthesize(state, |state| {
             self.left.codegen(state);
             self.whitespace_between.codegen(state);
@@ -1947,15 +1986,15 @@ pub struct SimpleString<'a> {
 }
 
 impl<'a> Inflate<'a> for SimpleString<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        self.lpar.inflate(config)?;
-        self.rpar.inflate(config)?;
-        Ok(())
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.lpar = self.lpar.inflate(config)?;
+        self.rpar = self.rpar.inflate(config)?;
+        Ok(self)
     }
 }
 
 impl<'a> Codegen<'a> for SimpleString<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         self.parenthesize(state, |state| state.add_token(self.value))
     }
 }
@@ -1966,13 +2005,13 @@ pub struct FormattedStringText<'a> {
 }
 
 impl<'a> Inflate<'a> for FormattedStringText<'a> {
-    fn inflate(&mut self, _config: &Config<'a>) -> Result<()> {
-        Ok(())
+    fn inflate(self, _config: &Config<'a>) -> Result<Self> {
+        Ok(self)
     }
 }
 
 impl<'a> Codegen<'a> for FormattedStringText<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         state.add_token(self.value);
     }
 }
@@ -1986,29 +2025,36 @@ pub struct FormattedStringExpression<'a> {
     pub whitespace_after_expression: ParenthesizableWhitespace<'a>,
     pub equal: Option<AssignEqual<'a>>,
 
-    pub(crate) lbrace_tok: Token<'a>,
+    pub(crate) lbrace_tok: TokenRef<'a>,
     // This is None if there's an equal sign, otherwise it's the first token of
     // (conversion, format spec, right brace) in that order
-    pub(crate) after_expr_tok: Option<Token<'a>>,
+    pub(crate) after_expr_tok: Option<TokenRef<'a>>,
 }
 
 impl<'a> Inflate<'a> for FormattedStringExpression<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        self.whitespace_before_expression =
-            parse_parenthesizable_whitespace(config, &mut self.lbrace_tok.whitespace_after)?;
-        self.expression.inflate(config)?;
-        self.equal.inflate(config)?;
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.whitespace_before_expression = parse_parenthesizable_whitespace(
+            config,
+            &mut (*self.lbrace_tok)
+                .borrow_mut()
+                .whitespace_after
+                .borrow_mut(),
+        )?;
+        self.expression = self.expression.inflate(config)?;
+        self.equal = self.equal.inflate(config)?;
         if let Some(after_expr_tok) = self.after_expr_tok.as_mut() {
-            self.whitespace_after_expression =
-                parse_parenthesizable_whitespace(config, &mut after_expr_tok.whitespace_before)?;
+            self.whitespace_after_expression = parse_parenthesizable_whitespace(
+                config,
+                &mut after_expr_tok.borrow_mut().whitespace_before.borrow_mut(),
+            )?;
         }
-        self.format_spec.inflate(config)?;
-        Ok(())
+        self.format_spec = self.format_spec.inflate(config)?;
+        Ok(self)
     }
 }
 
 impl<'a> Codegen<'a> for FormattedStringExpression<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         state.add_token("{");
         self.whitespace_before_expression.codegen(state);
         self.expression.codegen(state);
@@ -2047,16 +2093,16 @@ pub struct FormattedString<'a> {
 }
 
 impl<'a> Inflate<'a> for FormattedString<'a> {
-    fn inflate(&mut self, config: &Config<'a>) -> Result<()> {
-        self.lpar.inflate(config)?;
-        self.parts.inflate(config)?;
-        self.rpar.inflate(config)?;
-        Ok(())
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.lpar = self.lpar.inflate(config)?;
+        self.parts = self.parts.inflate(config)?;
+        self.rpar = self.rpar.inflate(config)?;
+        Ok(self)
     }
 }
 
 impl<'a> Codegen<'a> for FormattedString<'a> {
-    fn codegen(&'a self, state: &mut CodegenState<'a>) {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
         self.parenthesize(state, |state| {
             state.add_token(self.start);
             for part in &self.parts {

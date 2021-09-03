@@ -14,7 +14,7 @@ pub(crate) fn adjust_parameters_trailing_whitespace<'a>(
 ) -> Result<()> {
     let mut do_adjust = |param: &mut Param<'a>| -> Result<()> {
         let whitespace_after =
-            parse_parenthesizable_whitespace(config, &mut next_tok.whitespace_before)?;
+            parse_parenthesizable_whitespace(config, &mut next_tok.whitespace_before.borrow_mut())?;
         if param.comma.is_none() {
             param.whitespace_after_param = whitespace_after;
         }

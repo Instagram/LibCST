@@ -15,7 +15,7 @@ pub use nodes::*;
 mod parser;
 use parser::{ParserError, Result};
 
-pub fn parse_module<'a>(mut module_text: &'a str) -> Result<'a, Module> {
+pub fn parse_module<'a>(mut module_text: &'a str) -> Result<'a, Module<'a>> {
     // Strip UTF-8 BOM
     if let Some(stripped) = module_text.strip_prefix('\u{feff}') {
         module_text = stripped;
@@ -35,9 +35,8 @@ pub fn parse_module<'a>(mut module_text: &'a str) -> Result<'a, Module> {
 
     // eprintln!("{:#?}", result);
     let conf = whitespace_parser::Config::new(module_text);
-    let mut m = parser::python::file(&result, &conf).map_err(ParserError::ParserError)?;
-    m.inflate(&conf)?;
-    Ok(m)
+    let m = parser::python::file(&result, &conf).map_err(ParserError::ParserError)?;
+    Ok(m.inflate(&conf)?)
 }
 
 // n starts from 1

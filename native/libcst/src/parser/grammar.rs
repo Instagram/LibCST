@@ -3,11 +3,14 @@
 // This source code is licensed under the MIT license found in the
 // LICENSE file in the root directory of this source tree.
 
+use std::cell::RefCell;
+use std::rc::Rc;
+
 use crate::nodes::*;
 use crate::tokenizer::whitespace_parser::{Config, WhitespaceError};
 use crate::tokenizer::{TokError, TokType, Token};
 use peg::str::LineCol;
-use peg::{parser, Parse, ParseElem, ParseLiteral, RuleResult};
+use peg::{parser, Parse, ParseElem, RuleResult};
 use thiserror::Error;
 use TokType::{
     Async, Await as AWAIT, Dedent, EndMarker, FStringEnd, FStringStart, FStringString, Indent,
@@ -29,11 +32,11 @@ pub enum ParserError<'a> {
 pub type Result<'a, T> = std::result::Result<T, ParserError<'a>>;
 
 #[derive(Debug)]
-pub struct TokVec<'a>(Vec<Token<'a>>);
+pub struct TokVec<'a>(Vec<Rc<RefCell<Token<'a>>>>);
 
 impl<'a> std::convert::From<Vec<Token<'a>>> for TokVec<'a> {
     fn from(vec: Vec<Token<'a>>) -> Self {
-        TokVec(vec)
+        TokVec(vec.into_iter().map(|x| Rc::new(RefCell::new(x))).collect())
     }
 }
 
@@ -61,7 +64,11 @@ impl<'a> Parse for TokVec<'a> {
     }
 
     fn position_repr(&self, pos: usize) -> Self::PositionRepr {
-        let tok = self.0.get(pos).unwrap_or_else(|| self.0.last().unwrap());
+        let tok = self
+            .0
+            .get(pos)
+            .unwrap_or_else(|| self.0.last().unwrap())
+            .borrow();
         ParseLoc {
             start_pos: LineCol {
                 line: tok.start_pos.line_number(),
@@ -77,8 +84,10 @@ impl<'a> Parse for TokVec<'a> {
     }
 }
 
+type TokenRef<'a> = Rc<RefCell<Token<'a>>>;
+
 impl<'a> ParseElem for TokVec<'a> {
-    type Element = Token<'a>;
+    type Element = TokenRef<'a>;
 
     fn parse_elem(&self, pos: usize) -> RuleResult<Self::Element> {
         match self.0.get(pos) {
@@ -88,14 +97,24 @@ impl<'a> ParseElem for TokVec<'a> {
     }
 }
 
-impl<'a> ParseLiteral for TokVec<'a> {
-    fn parse_string_literal(&self, pos: usize, literal: &str) -> RuleResult<()> {
-        match self.parse_elem(pos) {
-            RuleResult::Matched(p, Token { string: lit, .. }) if lit == literal => {
-                RuleResult::Matched(p, ())
-            }
-            _ => RuleResult::Failed,
-        }
+// impl<'a> ParseLiteral for TokVec<'a> {
+//     fn parse_string_literal(&self, pos: usize, literal: &str) -> RuleResult<()> {
+//         match self.parse_elem(pos) {
+//             RuleResult::Matched(p, tok) if tok.borrow().string == literal => {
+//                 RuleResult::Matched(p, ())
+//             }
+//             _ => RuleResult::Failed,
+//         }
+//     }
+// }
+
+parser! {
+    pub grammar toy<'a>(config: &Config<'a>) for TokVec<'a> {
+        pub rule lpar() -> LeftParen<'a>
+            = a:lit("(") { make_lpar(a) }
+
+        rule lit(lit: &'static str) -> TokenRef<'a>
+            = [t] {? if t.borrow().string == lit { Ok(t) } else { Err(lit) } }
     }
 }
 
@@ -125,33 +144,33 @@ parser! {
             }
 
         rule compound_stmt() -> CompoundStatement<'a>
-            = &("def" / "@" / tok(Async, "ASYNC")) f:function_def() {
+            = &(lit("def") / lit("@") / tok(Async, "ASYNC")) f:function_def() {
                 CompoundStatement::FunctionDef(f)
             }
-            / &"if" f:if_stmt() { CompoundStatement::If(f) }
-            / &("class" / "@") c:class_def() { CompoundStatement::ClassDef(c) }
-            / &("with" / tok(Async, "ASYNC")) w:with_stmt() { CompoundStatement::With(w) }
-            / &("for" / tok(Async, "ASYNC")) f:for_stmt() { CompoundStatement::For(f) }
-            / &"try" t:try_stmt() { CompoundStatement::Try(t) }
-            / &"while" w:while_stmt() { CompoundStatement::While(w) }
+            / &lit("if") f:if_stmt() { CompoundStatement::If(f) }
+            / &(lit("class") / lit("@")) c:class_def() { CompoundStatement::ClassDef(c) }
+            / &(lit("with") / tok(Async, "ASYNC")) w:with_stmt() { CompoundStatement::With(w) }
+            / &(lit("for") / tok(Async, "ASYNC")) f:for_stmt() { CompoundStatement::For(f) }
+            / &lit("try") t:try_stmt() { CompoundStatement::Try(t) }
+            / &lit("while") w:while_stmt() { CompoundStatement::While(w) }
 
         #[cache]
         rule small_stmt() -> SmallStatement<'a>
             = assignment()
             / e:star_expressions() { SmallStatement::Expr(Expr { value: e, semicolon: None }) }
-            / &"return" s:return_stmt() { SmallStatement::Return(s) }
+            / &lit("return") s:return_stmt() { SmallStatement::Return(s) }
             // this is expanded from the original grammar's import_stmt rule
-            / &"import" i:import_name() { SmallStatement::Import(i) }
-            / &"from" i:import_from() { SmallStatement::ImportFrom(i) }
-            / &"raise" r:raise_stmt() { SmallStatement::Raise(r) }
-            / "pass" { SmallStatement::Pass(Pass { semicolon: None }) }
-            / &"del" s:del_stmt() { SmallStatement::Del(s) }
-            / &"yield" s:yield_stmt() { SmallStatement::Expr(Expr { value: s, semicolon: None }) }
-            / &"assert" s:assert_stmt() {SmallStatement::Assert(s)}
-            / "break" { SmallStatement::Break(Break { semicolon: None })}
-            / "continue" { SmallStatement::Continue(Continue { semicolon: None })}
-            / &"global" s:global_stmt() {SmallStatement::Global(s)}
-            / &"nonlocal" s:nonlocal_stmt() {SmallStatement::Nonlocal(s)}
+            / &lit("import") i:import_name() { SmallStatement::Import(i) }
+            / &lit("from") i:import_from() { SmallStatement::ImportFrom(i) }
+            / &lit("raise") r:raise_stmt() { SmallStatement::Raise(r) }
+            / lit("pass") { SmallStatement::Pass(Pass { semicolon: None }) }
+            / &lit("del") s:del_stmt() { SmallStatement::Del(s) }
+            / &lit("yield") s:yield_stmt() { SmallStatement::Expr(Expr { value: s, semicolon: None }) }
+            / &lit("assert") s:assert_stmt() {SmallStatement::Assert(s)}
+            / lit("break") { SmallStatement::Break(Break { semicolon: None })}
+            / lit("continue") { SmallStatement::Continue(Continue { semicolon: None })}
+            / &lit("global") s:global_stmt() {SmallStatement::Global(s)}
+            / &lit("nonlocal") s:nonlocal_stmt() {SmallStatement::Nonlocal(s)}
 
         rule assignment() -> SmallStatement<'a>
             = a:name() col:lit(":") ann:expression()
@@ -172,8 +191,8 @@ parser! {
             }
 
         rule augassign() -> AugOp<'a>
-            = &("+=" / "-=" / "*=" / "@=" /  "/=" / "%=" / "&=" / "|=" / "^=" / "<<="
-                / ">>=" / "**=" / "//=") tok:_ {?
+            = &(lit("+=") / lit("-=") / lit("*=") / lit("@=") /  lit("/=") / lit("%=") / lit("&=") / lit("|=") / lit("^=") / lit("<<=")
+                / lit(">>=") / lit("**=") / lit("//=")) tok:_ {?
                     make_aug_op(tok).map_err(|_| "aug_op")
             }
 
@@ -274,7 +293,7 @@ parser! {
             = a:lambda_param_no_default()+ slash:lit("/") com:comma() {
                 (a, ParamSlash { comma: Some(com) } )
             }
-            / a:lambda_param_no_default()+ slash:lit("/") &":" {
+            / a:lambda_param_no_default()+ slash:lit("/") &lit(":") {
                 (a, ParamSlash { comma: None })
             }
 
@@ -282,7 +301,7 @@ parser! {
             = a:lambda_param_no_default()* b:lambda_param_with_default()+ slash:lit("/") c:comma(){
                 (concat(a, b), ParamSlash { comma: Some(c) })
             }
-            / a:lambda_param_no_default()* b:lambda_param_with_default()+ slash:lit("/") &":" {
+            / a:lambda_param_no_default()* b:lambda_param_with_default()+ slash:lit("/") &lit(":") {
                 (concat(a, b), ParamSlash { comma: None })
             }
 
@@ -293,7 +312,7 @@ parser! {
                         Box::new(add_param_star(a, star))
                     )), b, kw)
             }
-            / "*" c:comma() b:lambda_param_maybe_default()+ kw:lambda_kwds()? {
+            / lit("*") c:comma() b:lambda_param_maybe_default()+ kw:lambda_kwds()? {
                 StarEtc(Some(StarArg::Star(ParamStar {comma: c})), b, kw)
             }
             / kw:lambda_kwds() { StarEtc(None, vec![], Some(kw)) }
@@ -307,13 +326,13 @@ parser! {
             = a:lambda_param() c:lit(",") {
                 add_param_default(a, None, Some(c))
             }
-            / a:lambda_param() &":" {a}
+            / a:lambda_param() &lit(":") {a}
 
         rule lambda_param_with_default() -> Param<'a>
             = a:lambda_param() def:default() c:lit(",") {
                 add_param_default(a, Some(def), Some(c))
             }
-            / a:lambda_param() def:default() &":" {
+            / a:lambda_param() def:default() &lit(":") {
                 add_param_default(a, Some(def), None)
             }
 
@@ -321,7 +340,7 @@ parser! {
             = a:lambda_param() def:default()? c:lit(",") {
                 add_param_default(a, def, Some(c))
             }
-            / a:lambda_param() def:default()? &":" {
+            / a:lambda_param() def:default()? &lit(":") {
                 add_param_default(a, def, None)
             }
 
@@ -503,7 +522,7 @@ parser! {
             / a:atom() &t_lookahead() {a}
 
         rule t_lookahead() -> ()
-            = "(" / "[" / "."
+            = (lit("(") / lit("[") / lit(".")) {}
 
         rule yield_expr() -> Expression<'a>
             = y:lit("yield") f:lit("from") a:expression() {
@@ -622,7 +641,7 @@ parser! {
             }
 
         rule slices() -> Vec<SubscriptElement<'a>>
-            = s:slice() !"," { vec![SubscriptElement { slice: s, comma: None }] }
+            = s:slice() !lit(",") { vec![SubscriptElement { slice: s, comma: None }] }
             / first:slice() rest:(c:comma() s:slice() {(c, s)})* trail:comma()? {
                 make_slices(first, rest, trail)
             }
@@ -672,7 +691,7 @@ parser! {
             }
             / k:kvpair() { make_dict_element(k) }
 
-        rule kvpair() -> (Expression<'a>, Token<'a>, Expression<'a>)
+        rule kvpair() -> (Expression<'a>, TokenRef<'a>, Expression<'a>)
             = k:expression() colon:lit(":") v:expression() { (k, colon, v) }
 
         rule genexp() -> GeneratorExp<'a>
@@ -699,7 +718,7 @@ parser! {
             }
 
         rule arguments() -> Vec<Arg<'a>>
-            = a:args() trail:comma()? &")" {add_arguments_trailing_comma(a, trail)}
+            = a:args() trail:comma()? &lit(")") {add_arguments_trailing_comma(a, trail)}
 
         rule args() -> Vec<Arg<'a>>
             = first:_posarg()
@@ -715,7 +734,7 @@ parser! {
 
         rule _posarg() -> Arg<'a>
             = a:(starred_expression() / e:named_expression() { make_arg(e) })
-                !"=" { a }
+                !lit("=") { a }
 
         rule starred_expression() -> Arg<'a>
             = star:lit("*") e:expression() { make_star_arg(star, e) }
@@ -759,9 +778,9 @@ parser! {
             / n:lit("None") { Expression::Name(make_name(n)) }
             / &(tok(STRING, "") / tok(FStringStart, "")) s:strings() {s.into()}
             / n:tok(Number, "NUMBER") { make_number(n) }
-            / &"(" e:(tuple() / group() / (g:genexp() {Expression::GeneratorExp(g)})) {e}
-            / &"[" e:(list() / listcomp()) {e}
-            / &"{" e:(dict() / set() / dictcomp() / setcomp()) {e}
+            / &lit("(") e:(tuple() / group() / (g:genexp() {Expression::GeneratorExp(g)})) {e}
+            / &lit("[") e:(list() / listcomp()) {e}
+            / &lit("{") e:(dict() / set() / dictcomp() / setcomp()) {e}
             / lit("...") { Expression::Ellipsis(Ellipsis {lpar: vec![], rpar: vec![]})}
 
         rule strings() -> String<'a>
@@ -771,7 +790,7 @@ parser! {
             }
 
         rule tuple() -> Expression<'a>
-            = lpar:lpar() first:star_named_expression() &","
+            = lpar:lpar() first:star_named_expression() &lit(",")
                 rest:(c:comma() e:star_named_expression() {(c, e)})*
                 trailing_comma:comma()? rpar:rpar() {
                     Expression::Tuple(
@@ -873,7 +892,7 @@ parser! {
             = a:param_no_default()+ slash:lit("/") com:comma() {
                     (a, ParamSlash { comma: Some(com)})
             }
-            / a:param_no_default()+ slash:lit("/") &")" {
+            / a:param_no_default()+ slash:lit("/") &lit(")") {
                 (a, ParamSlash { comma: None })
             }
 
@@ -881,7 +900,7 @@ parser! {
             = a:param_no_default()* b:param_with_default()+ slash:lit("/") c:comma() {
                 (concat(a, b), ParamSlash { comma: Some(c) })
             }
-            / a:param_no_default()* b:param_with_default()+ slash:lit("/") &")" {
+            / a:param_no_default()* b:param_with_default()+ slash:lit("/") &lit(")") {
                 (concat(a, b), ParamSlash { comma: None })
             }
 
@@ -890,7 +909,7 @@ parser! {
                 StarEtc(Some(StarArg::Param(Box::new(
                     add_param_star(a, star)))), b, kw)
             }
-            / "*" c:comma() b:param_maybe_default()+ kw:kwds()? {
+            / lit("*") c:comma() b:param_maybe_default()+ kw:kwds()? {
                     StarEtc(Some(StarArg::Star(ParamStar {comma:c })), b, kw)
             }
             / kw:kwds() { StarEtc(None, vec![], Some(kw)) }
@@ -902,13 +921,13 @@ parser! {
 
         rule param_no_default() -> Param<'a>
             = a:param() c:lit(",") { add_param_default(a, None, Some(c)) }
-            / a:param() &")" {a}
+            / a:param() &lit(")") {a}
 
         rule param_with_default() -> Param<'a>
             = a:param() def:default() c:lit(",") {
                 add_param_default(a, Some(def), Some(c))
             }
-            / a:param() def:default() &")" {
+            / a:param() def:default() &lit(")") {
                 add_param_default(a, Some(def), None)
             }
 
@@ -916,7 +935,7 @@ parser! {
             = a:param() def:default()? c:lit(",") {
                 add_param_default(a, def, Some(c))
             }
-            / a:param() def:default()? &")" {
+            / a:param() def:default()? &lit(")") {
                 add_param_default(a, def, None)
             }
 
@@ -983,7 +1002,7 @@ parser! {
             }
 
         rule with_item() -> WithItem<'a>
-            = e:expression() a:lit("as") t:star_target() &("," / ":") {
+            = e:expression() a:lit("as") t:star_target() &(lit(",") / lit(":")) {
                 make_with_item(e, Some(a), Some(t))
             }
             / e:expression() {
@@ -1016,10 +1035,10 @@ parser! {
             }
 
         rule del_stmt() -> Del<'a>
-            = kw:lit("del") t:del_target() &(";" / tok(NL, "NEWLINE")) {
+            = kw:lit("del") t:del_target() &(lit(";") / tok(NL, "NEWLINE")) {
                 make_del(kw, t)
             }
-            / kw:lit("del") t:del_targets() &(";" / tok(NL, "NEWLINE")) {
+            / kw:lit("del") t:del_targets() &(lit(";") / tok(NL, "NEWLINE")) {
                 make_del(kw, make_del_tuple(None, t, None))
             }
 
@@ -1075,12 +1094,6 @@ parser! {
                 make_name_or_attr(first, tail)
             }
 
-        rule mb_lit(lit: &str) -> Option<Token<'a>>
-            = ([t@Token {..}] {? if t.string == lit {
-                                    Ok(t)
-                                } else { Err("optional semicolon") }
-                              })?
-
         rule comma() -> Comma<'a>
             = c:lit(",") { make_comma(c) }
 
@@ -1106,37 +1119,37 @@ parser! {
             = tok:lit("}") { make_right_brace(tok) }
 
         /// matches any token, not just whitespace
-        rule _() -> Token<'a>
+        rule _() -> TokenRef<'a>
             = [t] { t }
 
-        rule lit(lit: &'static str) -> Token<'a>
-            = [t@Token {..}] {? if t.string == lit { Ok(t) } else { Err(lit) } }
+        rule lit(lit: &'static str) -> TokenRef<'a>
+            = [t] {? if t.borrow().string == lit { Ok(t) } else { Err(lit) } }
 
-        rule tok(tok: TokType, err: &'static str) -> Token<'a>
-            = [t@Token {..}] {? if t.r#type == tok { Ok(t) } else { Err(err) } }
+        rule tok(tok: TokType, err: &'static str) -> TokenRef<'a>
+            = [t] {? if t.borrow().r#type == tok { Ok(t) } else { Err(err) } }
 
         rule name() -> Name<'a>
-            = !("False" / "None" / "True" / "and" / "as" / "assert" / "async" / "await"
-                / "break" / "class" / "continue" / "def" / "del" / "elif" / "else"
-                / "except" / "finally" / "for" / "from" / "global" / "if" / "import"
-                / "in" / "is" / "lambda" / "nonlocal" / "not" / "or" / "pass" / "raise"
-                / "return" / "try" / "while" / "with" / "yield"
+            = !( lit("False") / lit("None") / lit("True") / lit("and") / lit("as") / lit("assert") / lit("async") / lit("await")
+                / lit("break") / lit("class") / lit("continue") / lit("def") / lit("del") / lit("elif") / lit("else")
+                / lit("except") / lit("finally") / lit("for") / lit("from") / lit("global") / lit("if") / lit("import")
+                / lit("in") / lit("is") / lit("lambda") / lit("nonlocal") / lit("not") / lit("or") / lit("pass") / lit("raise")
+                / lit("return") / lit("try") / lit("while") / lit("with") / lit("yield")
             )
             t:tok(NameTok, "NAME") {make_name(t)}
 
-        rule _async() -> Token<'a>
+        rule _async() -> TokenRef<'a>
             = tok(Async, "ASYNC")
 
         rule fstring() -> FormattedString<'a>
             = start:tok(FStringStart, "f\"")
                 parts:(_f_string() / _f_replacement())*
                 end:tok(FStringEnd, "\"") {
-                    make_fstring(start.string, parts, end.string)
+                    make_fstring(start.borrow().string, parts, end.borrow().string)
             }
 
         rule _f_string() -> FormattedStringContent<'a>
             = t:tok(FStringString, "f-string contents") {
-                FormattedStringContent::Text(FormattedStringText { value: t.string })
+                FormattedStringContent::Text(FormattedStringText { value: t.borrow().string })
             }
 
         rule _f_replacement() -> FormattedStringContent<'a>
@@ -1153,7 +1166,7 @@ parser! {
             = annotated_rhs()
 
         rule _f_conversion() -> &'a str
-            = "r" {"r"} / "s" {"s"} / "a" {"a"}
+            = lit("r") {"r"} / lit("s") {"s"} / lit("a") {"a"}
 
         rule _f_spec() -> Vec<FormattedStringContent<'a>>
             = (_f_string() / _f_replacement())+
@@ -1178,14 +1191,14 @@ parser! {
 
 #[allow(clippy::too_many_arguments)]
 fn make_function_def<'a>(
-    async_tok: Option<Token<'a>>,
-    def_tok: Token<'a>,
+    async_tok: Option<TokenRef<'a>>,
+    def_tok: TokenRef<'a>,
     name: Name<'a>,
-    open_paren_tok: Token<'a>,
+    open_paren_tok: TokenRef<'a>,
     params: Option<Parameters<'a>>,
-    close_paren_tok: Token<'a>,
+    close_paren_tok: TokenRef<'a>,
     returns: Option<Annotation<'a>>,
-    colon_tok: Token<'a>,
+    colon_tok: TokenRef<'a>,
     body: Suite<'a>,
 ) -> FunctionDef<'a> {
     let asynchronous = async_tok.as_ref().map(|_| Asynchronous {
@@ -1213,9 +1226,9 @@ fn make_function_def<'a>(
 }
 
 fn make_decorator<'a>(
-    at_tok: Token<'a>,
+    at_tok: TokenRef<'a>,
     name: Expression<'a>,
-    newline_tok: Token<'a>,
+    newline_tok: TokenRef<'a>,
 ) -> Decorator<'a> {
     Decorator {
         decorator: name,
@@ -1246,11 +1259,22 @@ fn make_comparison<'a>(
     })
 }
 
-fn make_comparison_operator(tok: Token) -> Result<CompOp> {
+fn make_comparison_operator<'a>(tok: TokenRef<'a>) -> Result<'a, CompOp<'a>> {
     let whitespace_before = Default::default();
     let whitespace_after = Default::default();
+    let op = match tok.borrow().string {
+        "<" => "<",
+        ">" => ">",
+        "<=" => "<=",
+        ">=" => ">=",
+        "==" => "==",
+        "!=" => "!=",
+        "in" => "in",
+        "is" => "is",
+        _ => return Err(ParserError::OperatorError),
+    };
 
-    match tok.string {
+    match op {
         "<" => Ok(CompOp::LessThan {
             whitespace_after,
             whitespace_before,
@@ -1295,12 +1319,21 @@ fn make_comparison_operator(tok: Token) -> Result<CompOp> {
     }
 }
 
-fn make_comparison_operator_2<'a>(first: Token<'a>, second: Token<'a>) -> Result<'a, CompOp<'a>> {
+fn make_comparison_operator_2<'a>(
+    first: TokenRef<'a>,
+    second: TokenRef<'a>,
+) -> Result<'a, CompOp<'a>> {
     let whitespace_before = Default::default();
     let whitespace_between = Default::default();
     let whitespace_after = Default::default();
 
-    match (first.string, second.string) {
+    let strs = match (first.borrow().string, second.borrow().string) {
+        ("is", "not") => ("is", "not"),
+        ("not", "in") => ("not", "in"),
+        _ => return Err(ParserError::OperatorError),
+    };
+
+    match strs {
         ("is", "not") => Ok(CompOp::IsNot {
             whitespace_before,
             whitespace_between,
@@ -1321,7 +1354,7 @@ fn make_comparison_operator_2<'a>(first: Token<'a>, second: Token<'a>) -> Result
 
 fn make_boolean_op<'a>(
     head: Expression<'a>,
-    tail: Vec<(Token<'a>, Expression<'a>)>,
+    tail: Vec<(TokenRef<'a>, Expression<'a>)>,
 ) -> Result<'a, Expression<'a>> {
     if tail.is_empty() {
         return Ok(head);
@@ -1340,10 +1373,15 @@ fn make_boolean_op<'a>(
     Ok(expr)
 }
 
-fn make_boolean_operator(tok: Token) -> Result<BooleanOp> {
+fn make_boolean_operator<'a>(tok: TokenRef<'a>) -> Result<'a, BooleanOp<'a>> {
     let whitespace_before = Default::default();
     let whitespace_after = Default::default();
-    match tok.string {
+    let str = match tok.borrow().string {
+        "and" => "and",
+        "or" => "or",
+        _ => return Err(ParserError::OperatorError),
+    };
+    match str {
         "and" => Ok(BooleanOp::And {
             whitespace_after,
             whitespace_before,
@@ -1360,7 +1398,7 @@ fn make_boolean_operator(tok: Token) -> Result<BooleanOp> {
 
 fn make_binary_op<'a>(
     left: Expression<'a>,
-    op: Token<'a>,
+    op: TokenRef<'a>,
     right: Expression<'a>,
 ) -> Result<'a, Expression<'a>> {
     let operator = make_binary_operator(op)?;
@@ -1373,10 +1411,28 @@ fn make_binary_op<'a>(
     }))
 }
 
-fn make_binary_operator(tok: Token) -> Result<BinaryOp> {
+fn make_binary_operator<'a>(tok: TokenRef<'a>) -> Result<'a, BinaryOp<'a>> {
     let whitespace_before = Default::default();
     let whitespace_after = Default::default();
-    match tok.string {
+
+    let str = match tok.borrow().string {
+        "+" => "+",
+        "-" => "-",
+        "*" => "*",
+        "/" => "/",
+        "//" => "//",
+        "%" => "%",
+        "**" => "**",
+        "<<" => "<<",
+        ">>" => ">>",
+        "|" => "|",
+        "&" => "&",
+        "^" => "^",
+        "@" => "@",
+        _ => return Err(ParserError::OperatorError),
+    };
+
+    match str {
         "+" => Ok(BinaryOp::Add {
             whitespace_after,
             whitespace_before,
@@ -1446,7 +1502,7 @@ fn make_binary_operator(tok: Token) -> Result<BinaryOp> {
     }
 }
 
-fn make_unary_op<'a>(op: Token<'a>, tail: Expression<'a>) -> Result<'a, Expression<'a>> {
+fn make_unary_op<'a>(op: TokenRef<'a>, tail: Expression<'a>) -> Result<'a, Expression<'a>> {
     let operator = make_unary_operator(op)?;
     Ok(Expression::UnaryOperation(UnaryOperation {
         operator,
@@ -1456,8 +1512,16 @@ fn make_unary_op<'a>(op: Token<'a>, tail: Expression<'a>) -> Result<'a, Expressi
     }))
 }
 
-fn make_unary_operator(tok: Token) -> Result<UnaryOp> {
-    match tok.string {
+fn make_unary_operator<'a>(tok: TokenRef<'a>) -> Result<'a, UnaryOp<'a>> {
+    let str = match tok.borrow().string {
+        "+" => "+",
+        "-" => "-",
+        "~" => "~",
+        "not" => "not",
+        _ => return Err(ParserError::OperatorError),
+    };
+
+    match str {
         "+" => Ok(UnaryOp::Plus(Default::default(), tok)),
         "-" => Ok(UnaryOp::Minus(Default::default(), tok)),
         "~" => Ok(UnaryOp::BitInvert(Default::default(), tok)),
@@ -1466,19 +1530,19 @@ fn make_unary_operator(tok: Token) -> Result<UnaryOp> {
     }
 }
 
-fn make_number(num: Token) -> Expression {
+fn make_number<'a>(num: TokenRef<'a>) -> Expression<'a> {
     Expression::Integer(Integer {
-        value: num.string,
+        value: num.borrow().string,
         lpar: vec![],
         rpar: vec![],
     })
 }
 
 fn make_indented_block<'a>(
-    nl: Token<'a>,
-    indent: Token<'a>,
+    nl: TokenRef<'a>,
+    indent: TokenRef<'a>,
     statements: Vec<Statement<'a>>,
-    dedent: Token<'a>,
+    dedent: TokenRef<'a>,
 ) -> Suite<'a> {
     Suite::IndentedBlock(IndentedBlock {
         body: statements,
@@ -1492,15 +1556,15 @@ fn make_indented_block<'a>(
 }
 
 struct SimpleStatementParts<'a> {
-    first: Token<'a>, // The first token of the first statement. Used for its whitespace
-    statements: Vec<(SmallStatement<'a>, Token<'a>)>, // statement, semicolon pairs
+    first: TokenRef<'a>, // The first token of the first statement. Used for its whitespace
+    statements: Vec<(SmallStatement<'a>, TokenRef<'a>)>, // statement, semicolon pairs
     last_statement: SmallStatement<'a>,
     #[allow(dead_code)]
-    last_semi: Option<Token<'a>>,
-    nl: Token<'a>,
+    last_semi: Option<TokenRef<'a>>,
+    nl: TokenRef<'a>,
 }
 
-fn make_semicolon(tok: Token) -> Semicolon {
+fn make_semicolon<'a>(tok: TokenRef<'a>) -> Semicolon<'a> {
     Semicolon {
         whitespace_before: Default::default(),
         whitespace_after: Default::default(),
@@ -1508,7 +1572,9 @@ fn make_semicolon(tok: Token) -> Semicolon {
     }
 }
 
-fn _make_simple_statement(parts: SimpleStatementParts) -> (Token, Vec<SmallStatement>, Token) {
+fn _make_simple_statement<'a>(
+    parts: SimpleStatementParts<'a>,
+) -> (TokenRef<'a>, Vec<SmallStatement<'a>>, TokenRef<'a>) {
     let mut body = vec![];
     for (statement, semi) in parts.statements {
         body.push(statement.with_semicolon(Some(make_semicolon(semi))));
@@ -1523,7 +1589,7 @@ fn _make_simple_statement(parts: SimpleStatementParts) -> (Token, Vec<SmallState
     (parts.first, body, parts.nl)
 }
 
-fn make_simple_statement_suite(parts: SimpleStatementParts) -> Suite {
+fn make_simple_statement_suite<'a>(parts: SimpleStatementParts<'a>) -> Suite<'a> {
     let (first_tok, body, newline_tok) = _make_simple_statement(parts);
 
     Suite::SimpleStatementSuite(SimpleStatementSuite {
@@ -1535,7 +1601,7 @@ fn make_simple_statement_suite(parts: SimpleStatementParts) -> Suite {
     })
 }
 
-fn make_simple_statement_line(parts: SimpleStatementParts) -> SimpleStatementLine {
+fn make_simple_statement_line<'a>(parts: SimpleStatementParts<'a>) -> SimpleStatementLine<'a> {
     let (first_tok, body, newline_tok) = _make_simple_statement(parts);
     SimpleStatementLine {
         body,
@@ -1547,9 +1613,9 @@ fn make_simple_statement_line(parts: SimpleStatementParts) -> SimpleStatementLin
 }
 
 fn make_if<'a>(
-    if_tok: Token<'a>,
+    if_tok: TokenRef<'a>,
     cond: Expression<'a>,
-    colon_tok: Token<'a>,
+    colon_tok: TokenRef<'a>,
     block: Suite<'a>,
     orelse: Option<OrElse<'a>>,
     is_elif: bool,
@@ -1567,7 +1633,7 @@ fn make_if<'a>(
     }
 }
 
-fn make_else<'a>(else_tok: Token<'a>, colon_tok: Token<'a>, block: Suite<'a>) -> Else<'a> {
+fn make_else<'a>(else_tok: TokenRef<'a>, colon_tok: TokenRef<'a>, block: Suite<'a>) -> Else<'a> {
     Else {
         leading_lines: Default::default(),
         whitespace_before_colon: Default::default(),
@@ -1605,7 +1671,7 @@ fn make_parameters<'a>(
 fn add_param_default<'a>(
     param: Param<'a>,
     def: Option<(AssignEqual<'a>, Expression<'a>)>,
-    comma_tok: Option<Token<'a>>,
+    comma_tok: Option<TokenRef<'a>>,
 ) -> Param<'a> {
     let comma = comma_tok.map(make_comma);
 
@@ -1621,15 +1687,16 @@ fn add_param_default<'a>(
     }
 }
 
-fn add_param_star<'a>(param: Param<'a>, star: Token<'a>) -> Param<'a> {
+fn add_param_star<'a>(param: Param<'a>, star: TokenRef<'a>) -> Param<'a> {
+    let str = star.borrow().string;
     Param {
-        star: Some(star.string),
+        star: Some(str),
         star_tok: Some(star),
         ..param
     }
 }
 
-fn make_assign_equal(tok: Token) -> AssignEqual {
+fn make_assign_equal<'a>(tok: TokenRef<'a>) -> AssignEqual<'a> {
     AssignEqual {
         whitespace_before: Default::default(),
         whitespace_after: Default::default(),
@@ -1637,7 +1704,7 @@ fn make_assign_equal(tok: Token) -> AssignEqual {
     }
 }
 
-fn make_comma(tok: Token) -> Comma {
+fn make_comma<'a>(tok: TokenRef<'a>) -> Comma<'a> {
     Comma {
         whitespace_before: Default::default(),
         whitespace_after: Default::default(),
@@ -1651,7 +1718,7 @@ fn concat<T>(a: Vec<T>, b: Vec<T>) -> Vec<T> {
 
 fn make_name_or_attr<'a>(
     first_tok: Name<'a>,
-    mut tail: Vec<(Token<'a>, Name<'a>)>,
+    mut tail: Vec<(TokenRef<'a>, Name<'a>)>,
 ) -> NameOrAttribute<'a> {
     if let Some((dot, name)) = tail.pop() {
         let dot = make_dot(dot);
@@ -1667,14 +1734,14 @@ fn make_name_or_attr<'a>(
     }
 }
 
-fn make_name(tok: Token) -> Name {
+fn make_name<'a>(tok: TokenRef<'a>) -> Name<'a> {
     Name {
-        value: tok.string,
+        value: tok.borrow().string,
         ..Default::default()
     }
 }
 
-fn make_dot(tok: Token) -> Dot {
+fn make_dot<'a>(tok: TokenRef<'a>) -> Dot<'a> {
     Dot {
         whitespace_before: Default::default(),
         whitespace_after: Default::default(),
@@ -1684,7 +1751,7 @@ fn make_dot(tok: Token) -> Dot {
 
 fn make_import_alias<'a>(
     name: NameOrAttribute<'a>,
-    asname: Option<(Token<'a>, Name<'a>)>,
+    asname: Option<(TokenRef<'a>, Name<'a>)>,
 ) -> ImportAlias<'a> {
     ImportAlias {
         name,
@@ -1693,7 +1760,7 @@ fn make_import_alias<'a>(
     }
 }
 
-fn make_as_name<'a>(as_tok: Token<'a>, name: AssignTargetExpression<'a>) -> AsName<'a> {
+fn make_as_name<'a>(as_tok: TokenRef<'a>, name: AssignTargetExpression<'a>) -> AsName<'a> {
     AsName {
         name,
         whitespace_before_as: Default::default(),
@@ -1709,10 +1776,10 @@ type ParenthesizedImportNames<'a> = (
 );
 
 fn make_import_from<'a>(
-    from_tok: Token<'a>,
+    from_tok: TokenRef<'a>,
     dots: Vec<Dot<'a>>,
     module: Option<NameOrAttribute<'a>>,
-    import_tok: Token<'a>,
+    import_tok: TokenRef<'a>,
     aliases: ParenthesizedImportNames<'a>,
 ) -> ImportFrom<'a> {
     let (lpar, names, rpar) = aliases;
@@ -1732,7 +1799,7 @@ fn make_import_from<'a>(
     }
 }
 
-fn make_import<'a>(import_tok: Token<'a>, names: Vec<ImportAlias<'a>>) -> Import<'a> {
+fn make_import<'a>(import_tok: TokenRef<'a>, names: Vec<ImportAlias<'a>>) -> Import<'a> {
     Import {
         names,
         whitespace_after_import: Default::default(),
@@ -1755,21 +1822,21 @@ fn make_import_from_as_names<'a>(
     ret
 }
 
-fn make_lpar(tok: Token) -> LeftParen {
+fn make_lpar<'a>(tok: TokenRef<'a>) -> LeftParen<'a> {
     LeftParen {
         whitespace_after: Default::default(),
         lpar_tok: tok,
     }
 }
 
-fn make_rpar(tok: Token) -> RightParen {
+fn make_rpar<'a>(tok: TokenRef<'a>) -> RightParen<'a> {
     RightParen {
         whitespace_before: Default::default(),
         rpar_tok: tok,
     }
 }
 
-fn make_module<'a>(body: Vec<Statement<'a>>, tok: Token<'a>) -> Module<'a> {
+fn make_module<'a>(body: Vec<Statement<'a>>, tok: TokenRef<'a>) -> Module<'a> {
     Module {
         body,
         header: Default::default(),
@@ -1778,7 +1845,7 @@ fn make_module<'a>(body: Vec<Statement<'a>>, tok: Token<'a>) -> Module<'a> {
     }
 }
 
-fn make_attribute<'a>(value: Expression<'a>, dot: Token<'a>, attr: Name<'a>) -> Attribute<'a> {
+fn make_attribute<'a>(value: Expression<'a>, dot: TokenRef<'a>, attr: Name<'a>) -> Attribute<'a> {
     let dot = make_dot(dot);
     Attribute {
         attr,
@@ -1789,7 +1856,7 @@ fn make_attribute<'a>(value: Expression<'a>, dot: Token<'a>, attr: Name<'a>) -> 
     }
 }
 
-fn make_starred_element<'a>(star_tok: Token<'a>, rest: Element<'a>) -> StarredElement<'a> {
+fn make_starred_element<'a>(star_tok: TokenRef<'a>, rest: Element<'a>) -> StarredElement<'a> {
     let value = match rest {
         Element::Simple { value, .. } => value,
         _ => panic!("Internal error while making starred element"),
@@ -1831,7 +1898,7 @@ fn assign_target_to_element(expr: AssignTargetExpression) -> Element {
 }
 
 fn make_assignment<'a>(
-    lhs: Vec<(AssignTargetExpression<'a>, Token<'a>)>,
+    lhs: Vec<(AssignTargetExpression<'a>, TokenRef<'a>)>,
     rhs: Expression<'a>,
 ) -> Assign<'a> {
     let mut targets = vec![];
@@ -1876,7 +1943,7 @@ fn make_tuple<'a>(
     }
 }
 
-fn make_kwarg<'a>(name: Name<'a>, eq: Token<'a>, value: Expression<'a>) -> Arg<'a> {
+fn make_kwarg<'a>(name: Name<'a>, eq: TokenRef<'a>, value: Expression<'a>) -> Arg<'a> {
     let equal = Some(make_assign_equal(eq));
     let keyword = Some(name);
     Arg {
@@ -1891,13 +1958,14 @@ fn make_kwarg<'a>(name: Name<'a>, eq: Token<'a>, value: Expression<'a>) -> Arg<'
     }
 }
 
-fn make_star_arg<'a>(star: Token<'a>, expr: Expression<'a>) -> Arg<'a> {
+fn make_star_arg<'a>(star: TokenRef<'a>, expr: Expression<'a>) -> Arg<'a> {
+    let str = star.borrow().string;
     Arg {
         value: expr,
         keyword: None,
         equal: None,
         comma: None,
-        star: star.string,
+        star: str,
         whitespace_after_star: Default::default(),
         whitespace_after_arg: Default::default(),
         star_tok: Some(star),
@@ -1906,9 +1974,9 @@ fn make_star_arg<'a>(star: Token<'a>, expr: Expression<'a>) -> Arg<'a> {
 
 fn make_call<'a>(
     func: Expression<'a>,
-    lpar_tok: Token<'a>,
+    lpar_tok: TokenRef<'a>,
     args: Vec<Arg<'a>>,
-    rpar_tok: Token<'a>,
+    rpar_tok: TokenRef<'a>,
 ) -> Call<'a> {
     let lpar = vec![];
     let rpar = vec![];
@@ -1975,7 +2043,7 @@ fn make_arg(expr: Expression) -> Arg {
     }
 }
 
-fn make_comp_if<'a>(if_tok: Token<'a>, test: Expression<'a>) -> CompIf<'a> {
+fn make_comp_if<'a>(if_tok: TokenRef<'a>, test: Expression<'a>) -> CompIf<'a> {
     CompIf {
         test,
         whitespace_before: Default::default(),
@@ -1985,10 +2053,10 @@ fn make_comp_if<'a>(if_tok: Token<'a>, test: Expression<'a>) -> CompIf<'a> {
 }
 
 fn make_for_if<'a>(
-    async_tok: Option<Token<'a>>,
-    for_tok: Token<'a>,
+    async_tok: Option<TokenRef<'a>>,
+    for_tok: TokenRef<'a>,
     target: AssignTargetExpression<'a>,
-    in_tok: Token<'a>,
+    in_tok: TokenRef<'a>,
     iter: Expression<'a>,
     ifs: Vec<CompIf<'a>>,
 ) -> CompFor<'a> {
@@ -2040,28 +2108,28 @@ fn merge_comp_fors(comp_fors: Vec<CompFor>) -> CompFor {
     })
 }
 
-fn make_left_bracket(tok: Token) -> LeftSquareBracket {
+fn make_left_bracket<'a>(tok: TokenRef<'a>) -> LeftSquareBracket<'a> {
     LeftSquareBracket {
         whitespace_after: Default::default(),
         tok,
     }
 }
 
-fn make_right_bracket(tok: Token) -> RightSquareBracket {
+fn make_right_bracket<'a>(tok: TokenRef<'a>) -> RightSquareBracket<'a> {
     RightSquareBracket {
         whitespace_before: Default::default(),
         tok,
     }
 }
 
-fn make_left_brace(tok: Token) -> LeftCurlyBrace {
+fn make_left_brace<'a>(tok: TokenRef<'a>) -> LeftCurlyBrace<'a> {
     LeftCurlyBrace {
         whitespace_after: Default::default(),
         tok,
     }
 }
 
-fn make_right_brace(tok: Token) -> RightCurlyBrace {
+fn make_right_brace<'a>(tok: TokenRef<'a>) -> RightCurlyBrace<'a> {
     RightCurlyBrace {
         whitespace_before: Default::default(),
         tok,
@@ -2102,7 +2170,7 @@ fn make_set_comp<'a>(
 
 fn make_dict_comp<'a>(
     lbrace: LeftCurlyBrace<'a>,
-    kvpair: (Expression<'a>, Token<'a>, Expression<'a>),
+    kvpair: (Expression<'a>, TokenRef<'a>, Expression<'a>),
     for_in: CompFor<'a>,
     rbrace: RightCurlyBrace<'a>,
 ) -> DictComp<'a> {
@@ -2205,7 +2273,7 @@ fn make_double_starred_keypairs<'a>(
     elements
 }
 
-fn make_dict_element<'a>(el: (Expression<'a>, Token<'a>, Expression<'a>)) -> DictElement<'a> {
+fn make_dict_element<'a>(el: (Expression<'a>, TokenRef<'a>, Expression<'a>)) -> DictElement<'a> {
     let (key, colon_tok, value) = el;
     DictElement::Simple {
         key,
@@ -2218,7 +2286,7 @@ fn make_dict_element<'a>(el: (Expression<'a>, Token<'a>, Expression<'a>)) -> Dic
 }
 
 fn make_double_starred_element<'a>(
-    star_tok: Token<'a>,
+    star_tok: TokenRef<'a>,
     value: Expression<'a>,
 ) -> DoubleStarredElement<'a> {
     DoubleStarredElement {
@@ -2233,7 +2301,7 @@ fn make_index(value: Expression) -> BaseSlice {
     BaseSlice::Index(Index { value })
 }
 
-fn make_colon(tok: Token) -> Colon {
+fn make_colon<'a>(tok: TokenRef<'a>) -> Colon<'a> {
     let whitespace_before = Default::default();
     let whitespace_after = Default::default();
     Colon {
@@ -2245,9 +2313,9 @@ fn make_colon(tok: Token) -> Colon {
 
 fn make_slice<'a>(
     lower: Option<Expression<'a>>,
-    first_colon: Token<'a>,
+    first_colon: TokenRef<'a>,
     upper: Option<Expression<'a>>,
-    rest: Option<(Token<'a>, Option<Expression<'a>>)>,
+    rest: Option<(TokenRef<'a>, Option<Expression<'a>>)>,
 ) -> BaseSlice<'a> {
     let first_colon = make_colon(first_colon);
     let (second_colon, step) = if let Some((tok, step)) = rest {
@@ -2306,9 +2374,9 @@ fn make_subscript<'a>(
 
 fn make_ifexp<'a>(
     body: Expression<'a>,
-    if_tok: Token<'a>,
+    if_tok: TokenRef<'a>,
     test: Expression<'a>,
-    else_tok: Token<'a>,
+    else_tok: TokenRef<'a>,
     orelse: Expression<'a>,
 ) -> IfExp<'a> {
     IfExp {
@@ -2338,9 +2406,9 @@ fn add_arguments_trailing_comma<'a>(
 }
 
 fn make_lambda<'a>(
-    lambda_tok: Token<'a>,
+    lambda_tok: TokenRef<'a>,
     params: Parameters<'a>,
-    colon_tok: Token<'a>,
+    colon_tok: TokenRef<'a>,
     expr: Expression<'a>,
 ) -> Lambda<'a> {
     let colon = make_colon(colon_tok);
@@ -2355,7 +2423,7 @@ fn make_lambda<'a>(
     }
 }
 
-fn make_annotation<'a>(tok: Token<'a>, ann: Expression<'a>) -> Annotation<'a> {
+fn make_annotation<'a>(tok: TokenRef<'a>, ann: Expression<'a>) -> Annotation<'a> {
     Annotation {
         annotation: ann,
         whitespace_before_indicator: Default::default(),
@@ -2366,9 +2434,9 @@ fn make_annotation<'a>(tok: Token<'a>, ann: Expression<'a>) -> Annotation<'a> {
 
 fn make_ann_assignment<'a>(
     target: AssignTargetExpression<'a>,
-    col: Token<'a>,
+    col: TokenRef<'a>,
     ann: Expression<'a>,
-    rhs: Option<(Token<'a>, Expression<'a>)>,
+    rhs: Option<(TokenRef<'a>, Expression<'a>)>,
 ) -> AnnAssign<'a> {
     let annotation = make_annotation(col, ann);
     let (eq, value) = rhs.map(|(x, y)| (Some(x), Some(y))).unwrap_or((None, None));
@@ -2383,8 +2451,8 @@ fn make_ann_assignment<'a>(
 }
 
 fn make_yield<'a>(
-    yield_tok: Token<'a>,
-    f: Option<Token<'a>>,
+    yield_tok: TokenRef<'a>,
+    f: Option<TokenRef<'a>>,
     e: Option<Expression<'a>>,
 ) -> Yield<'a> {
     let value = match (f, e) {
@@ -2402,7 +2470,7 @@ fn make_yield<'a>(
     }
 }
 
-fn make_from<'a>(tok: Token<'a>, e: Expression<'a>) -> From<'a> {
+fn make_from<'a>(tok: TokenRef<'a>, e: Expression<'a>) -> From<'a> {
     From {
         item: e,
         whitespace_before_from: Default::default(),
@@ -2411,7 +2479,7 @@ fn make_from<'a>(tok: Token<'a>, e: Expression<'a>) -> From<'a> {
     }
 }
 
-fn make_return<'a>(return_tok: Token<'a>, value: Option<Expression<'a>>) -> Return<'a> {
+fn make_return<'a>(return_tok: TokenRef<'a>, value: Option<Expression<'a>>) -> Return<'a> {
     Return {
         value,
         whitespace_after_return: Default::default(),
@@ -2421,7 +2489,7 @@ fn make_return<'a>(return_tok: Token<'a>, value: Option<Expression<'a>>) -> Retu
 }
 
 fn make_assert<'a>(
-    assert_tok: Token<'a>,
+    assert_tok: TokenRef<'a>,
     test: Expression<'a>,
     rest: Option<(Comma<'a>, Expression<'a>)>,
 ) -> Assert<'a> {
@@ -2442,9 +2510,9 @@ fn make_assert<'a>(
 }
 
 fn make_raise<'a>(
-    raise_tok: Token<'a>,
+    raise_tok: TokenRef<'a>,
     exc: Option<Expression<'a>>,
-    rest: Option<(Token<'a>, Expression<'a>)>,
+    rest: Option<(TokenRef<'a>, Expression<'a>)>,
 ) -> Raise<'a> {
     let cause = rest.map(|(t, e)| make_from(t, e));
 
@@ -2457,7 +2525,11 @@ fn make_raise<'a>(
     }
 }
 
-fn make_global<'a>(tok: Token<'a>, init: Vec<(Name<'a>, Comma<'a>)>, last: Name<'a>) -> Global<'a> {
+fn make_global<'a>(
+    tok: TokenRef<'a>,
+    init: Vec<(Name<'a>, Comma<'a>)>,
+    last: Name<'a>,
+) -> Global<'a> {
     let mut names: Vec<NameItem<'a>> = init
         .into_iter()
         .map(|(name, c)| NameItem {
@@ -2478,7 +2550,7 @@ fn make_global<'a>(tok: Token<'a>, init: Vec<(Name<'a>, Comma<'a>)>, last: Name<
 }
 
 fn make_nonlocal<'a>(
-    tok: Token<'a>,
+    tok: TokenRef<'a>,
     init: Vec<(Name<'a>, Comma<'a>)>,
     last: Name<'a>,
 ) -> Nonlocal<'a> {
@@ -2503,12 +2575,12 @@ fn make_nonlocal<'a>(
 
 #[allow(clippy::too_many_arguments)]
 fn make_for<'a>(
-    async_tok: Option<Token<'a>>,
-    for_tok: Token<'a>,
+    async_tok: Option<TokenRef<'a>>,
+    for_tok: TokenRef<'a>,
     target: AssignTargetExpression<'a>,
-    in_tok: Token<'a>,
+    in_tok: TokenRef<'a>,
     iter: Expression<'a>,
-    colon_tok: Token<'a>,
+    colon_tok: TokenRef<'a>,
     body: Suite<'a>,
     orelse: Option<Else<'a>>,
 ) -> For<'a> {
@@ -2535,9 +2607,9 @@ fn make_for<'a>(
 }
 
 fn make_while<'a>(
-    while_tok: Token<'a>,
+    while_tok: TokenRef<'a>,
     test: Expression<'a>,
-    colon_tok: Token<'a>,
+    colon_tok: TokenRef<'a>,
     body: Suite<'a>,
     orelse: Option<Else<'a>>,
 ) -> While<'a> {
@@ -2553,7 +2625,7 @@ fn make_while<'a>(
     }
 }
 
-fn make_await<'a>(await_tok: Token<'a>, expression: Expression<'a>) -> Await<'a> {
+fn make_await<'a>(await_tok: TokenRef<'a>, expression: Expression<'a>) -> Await<'a> {
     Await {
         expression: Box::new(expression),
         lpar: Default::default(),
@@ -2564,10 +2636,10 @@ fn make_await<'a>(await_tok: Token<'a>, expression: Expression<'a>) -> Await<'a>
 }
 
 fn make_class_def<'a>(
-    class_tok: Token<'a>,
+    class_tok: TokenRef<'a>,
     name: Name<'a>,
     args: Option<(LeftParen<'a>, Option<Vec<Arg<'a>>>, RightParen<'a>)>,
-    colon_tok: Token<'a>,
+    colon_tok: TokenRef<'a>,
     body: Suite<'a>,
 ) -> ClassDef<'a> {
     let mut bases = vec![];
@@ -2610,14 +2682,14 @@ fn make_class_def<'a>(
     }
 }
 
-fn make_string(tok: Token) -> String {
+fn make_string<'a>(tok: TokenRef<'a>) -> String<'a> {
     String::Simple(SimpleString {
-        value: tok.string,
+        value: tok.borrow().string,
         ..Default::default()
     })
 }
 
-fn make_strings<'a>(s: Vec<(String<'a>, Token<'a>)>) -> String<'a> {
+fn make_strings<'a>(s: Vec<(String<'a>, TokenRef<'a>)>) -> String<'a> {
     let mut strings = s.into_iter().rev();
     let (first, _) = strings.next().expect("no strings to make a string of");
     strings.fold(first, |acc, (str, tok)| {
@@ -2634,12 +2706,12 @@ fn make_strings<'a>(s: Vec<(String<'a>, Token<'a>)>) -> String<'a> {
 }
 
 fn make_fstring_expression<'a>(
-    lbrace_tok: Token<'a>,
+    lbrace_tok: TokenRef<'a>,
     expression: Expression<'a>,
-    eq: Option<Token<'a>>,
-    conversion_pair: Option<(Token<'a>, &'a str)>,
-    format_pair: Option<(Token<'a>, Vec<FormattedStringContent<'a>>)>,
-    rbrace_tok: Token<'a>,
+    eq: Option<TokenRef<'a>>,
+    conversion_pair: Option<(TokenRef<'a>, &'a str)>,
+    format_pair: Option<(TokenRef<'a>, Vec<FormattedStringContent<'a>>)>,
+    rbrace_tok: TokenRef<'a>,
 ) -> FormattedStringExpression<'a> {
     let equal = eq.map(make_assign_equal);
     let (conversion_tok, conversion) = if let Some((t, c)) = conversion_pair {
@@ -2688,7 +2760,11 @@ fn make_fstring<'a>(
     }
 }
 
-fn make_finally<'a>(finally_tok: Token<'a>, colon_tok: Token<'a>, body: Suite<'a>) -> Finally<'a> {
+fn make_finally<'a>(
+    finally_tok: TokenRef<'a>,
+    colon_tok: TokenRef<'a>,
+    body: Suite<'a>,
+) -> Finally<'a> {
     Finally {
         body,
         leading_lines: Default::default(),
@@ -2699,10 +2775,10 @@ fn make_finally<'a>(finally_tok: Token<'a>, colon_tok: Token<'a>, body: Suite<'a
 }
 
 fn make_except<'a>(
-    except_tok: Token<'a>,
+    except_tok: TokenRef<'a>,
     exp: Option<Expression<'a>>,
-    as_: Option<(Token<'a>, Name<'a>)>,
-    colon_tok: Token<'a>,
+    as_: Option<(TokenRef<'a>, Name<'a>)>,
+    colon_tok: TokenRef<'a>,
     body: Suite<'a>,
 ) -> ExceptHandler<'a> {
     // TODO: AsName should come from outside
@@ -2720,7 +2796,7 @@ fn make_except<'a>(
 }
 
 fn make_try<'a>(
-    try_tok: Token<'a>,
+    try_tok: TokenRef<'a>,
     body: Suite<'a>,
     handlers: Vec<ExceptHandler<'a>>,
     orelse: Option<Else<'a>>,
@@ -2737,10 +2813,12 @@ fn make_try<'a>(
     }
 }
 
-fn make_aug_op(tok: Token) -> Result<AugOp> {
+fn make_aug_op<'a>(tok: TokenRef<'a>) -> Result<'a, AugOp<'a>> {
     let whitespace_before = Default::default();
     let whitespace_after = Default::default();
-    Ok(match tok.string {
+    let str = tok.borrow().string;
+
+    Ok(match str {
         "+=" => AugOp::AddAssign {
             whitespace_before,
             whitespace_after,
@@ -2825,7 +2903,7 @@ fn make_aug_assign<'a>(
 
 fn make_with_item<'a>(
     item: Expression<'a>,
-    as_: Option<Token<'a>>,
+    as_: Option<TokenRef<'a>>,
     n: Option<AssignTargetExpression<'a>>,
 ) -> WithItem<'a> {
     let asname = match (as_, n) {
@@ -2841,10 +2919,10 @@ fn make_with_item<'a>(
 }
 
 fn make_with<'a>(
-    async_tok: Option<Token<'a>>,
-    with_tok: Token<'a>,
+    async_tok: Option<TokenRef<'a>>,
+    with_tok: TokenRef<'a>,
     items: Vec<WithItem<'a>>,
-    colon_tok: Token<'a>,
+    colon_tok: TokenRef<'a>,
     body: Suite<'a>,
 ) -> With<'a> {
     let asynchronous = async_tok.as_ref().map(|_| Asynchronous {
@@ -2863,7 +2941,7 @@ fn make_with<'a>(
     }
 }
 
-fn make_del<'a>(tok: Token<'a>, target: DelTargetExpression<'a>) -> Del<'a> {
+fn make_del<'a>(tok: TokenRef<'a>, target: DelTargetExpression<'a>) -> Del<'a> {
     Del {
         target,
         whitespace_after_del: Default::default(),
