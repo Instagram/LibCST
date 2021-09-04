@@ -3,10 +3,12 @@ use std::{
     time::Duration,
 };
 
-use criterion::{black_box, criterion_group, criterion_main, measurement::Measurement, Criterion};
+use criterion::{
+    black_box, criterion_group, criterion_main, measurement::Measurement, BatchSize, Criterion,
+};
 use criterion_cycles_per_byte::CyclesPerByte;
 use itertools::Itertools;
-use libcst::{parse_module, Codegen};
+use libcst::{parse_module, parse_tokens_without_whitespace, parse_whitespace, tokenize, Codegen};
 
 fn load_all_fixtures() -> String {
     let mut path = PathBuf::from(file!());
@@ -32,12 +34,33 @@ fn load_all_fixtures() -> String {
         .join("\n")
 }
 
+pub fn inflate_benchmarks<T: Measurement>(c: &mut Criterion<T>) {
+    let fixture = load_all_fixtures();
+    let tokens = tokenize(fixture.as_str()).expect("tokenize failed");
+    let mut group = c.benchmark_group("inflate");
+    group.bench_function("all", |b| {
+        b.iter_batched(
+            || {
+                parse_tokens_without_whitespace(tokens.clone(), fixture.as_str())
+                    .expect("parse failed")
+            },
+            |m| black_box(parse_whitespace(m, fixture.as_str())),
+            BatchSize::SmallInput,
+        )
+    });
+    group.finish();
+}
+
 pub fn parser_benchmarks<T: Measurement>(c: &mut Criterion<T>) {
-    let input = load_all_fixtures();
-    let mut group = c.benchmark_group("parser");
+    let fixture = load_all_fixtures();
+    let mut group = c.benchmark_group("parse");
     group.measurement_time(Duration::from_secs(15));
-    group.bench_function("decorated-function", |b| {
-        b.iter(|| parse_module(black_box(&input)))
+    group.bench_function("all", |b| {
+        b.iter_batched(
+            || tokenize(fixture.as_str()).expect("tokenize failed"),
+            |tokens| black_box(parse_tokens_without_whitespace(tokens, fixture.as_str())),
+            BatchSize::SmallInput,
+        )
     });
     group.finish();
 }
@@ -46,18 +69,27 @@ pub fn codegen_benchmarks<T: Measurement>(c: &mut Criterion<T>) {
     let input = load_all_fixtures();
     let m = parse_module(&input).expect("parse failed");
     let mut group = c.benchmark_group("codegen");
-    group.bench_function("roundtrip", |b| {
+    group.bench_function("all", |b| {
         b.iter(|| {
             let mut state = Default::default();
-            m.codegen(&mut state);
+            #[allow(clippy::unit_arg)]
+            black_box(m.codegen(&mut state));
         })
     });
+    group.finish();
+}
+
+pub fn tokenize_benchmarks<T: Measurement>(c: &mut Criterion<T>) {
+    let input = load_all_fixtures();
+    let mut group = c.benchmark_group("tokenize");
+    group.measurement_time(Duration::from_secs(15));
+    group.bench_function("all", |b| b.iter(|| black_box(tokenize(input.as_str()))));
     group.finish();
 }
 
 criterion_group!(
     name=benches;
     config = Criterion::default().with_measurement(CyclesPerByte);
-    targets=parser_benchmarks, codegen_benchmarks
+    targets=parser_benchmarks, codegen_benchmarks, inflate_benchmarks, tokenize_benchmarks
 );
 criterion_main!(benches);

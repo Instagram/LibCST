@@ -7,7 +7,7 @@ use std::cmp::{max, min};
 
 mod tokenizer;
 
-use tokenizer::{whitespace_parser, TokConfig, TokenIterator};
+use tokenizer::{whitespace_parser, TokConfig, Token, TokenIterator};
 
 mod nodes;
 pub use nodes::*;
@@ -15,28 +15,40 @@ pub use nodes::*;
 mod parser;
 use parser::{ParserError, Result};
 
-pub fn parse_module(mut module_text: &str) -> Result<Module> {
-    // Strip UTF-8 BOM
-    if let Some(stripped) = module_text.strip_prefix('\u{feff}') {
-        module_text = stripped;
-    }
+pub fn tokenize(text: &str) -> Result<Vec<Token>> {
     let iter = TokenIterator::new(
-        module_text,
+        text,
         &TokConfig {
             async_hacks: false,
             split_fstring: true,
         },
     );
 
-    let result = iter
-        .collect::<std::result::Result<Vec<_>, _>>()
-        .map_err(ParserError::TokenizerError)?
-        .into();
+    iter.collect::<std::result::Result<Vec<_>, _>>()
+        .map_err(ParserError::TokenizerError)
+}
 
-    // eprintln!("{:#?}", result);
+pub fn parse_tokens_without_whitespace<'a>(
+    tokens: Vec<Token<'a>>,
+    module_text: &'a str,
+) -> Result<'a, Module<'a>> {
+    parser::python::file(&tokens.into(), module_text).map_err(ParserError::ParserError)
+}
+
+pub fn parse_whitespace<'a>(m: Module<'a>, module_text: &'a str) -> Result<'a, Module<'a>> {
     let conf = whitespace_parser::Config::new(module_text);
-    let m = parser::python::file(&result, module_text).map_err(ParserError::ParserError)?;
     Ok(m.inflate(&conf)?)
+}
+
+pub fn parse_module(mut module_text: &str) -> Result<Module> {
+    // Strip UTF-8 BOM
+    if let Some(stripped) = module_text.strip_prefix('\u{feff}') {
+        module_text = stripped;
+    }
+    // eprintln!("{:#?}", result);
+    let tokens = tokenize(module_text)?;
+    let m = parse_tokens_without_whitespace(tokens, module_text)?;
+    parse_whitespace(m, module_text)
 }
 
 // n starts from 1
