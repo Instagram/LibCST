@@ -6,7 +6,7 @@
 use std::rc::Rc;
 
 use crate::nodes::*;
-use crate::tokenizer::whitespace_parser::{Config, WhitespaceError};
+use crate::tokenizer::whitespace_parser::WhitespaceError;
 use crate::tokenizer::{TokError, TokType, Token};
 use peg::str::LineCol;
 use peg::{parser, Parse, ParseElem, RuleResult};
@@ -104,17 +104,7 @@ impl<'a> ParseElem for TokVec<'a> {
 // }
 
 parser! {
-    pub grammar toy<'a>(config: &Config<'a>) for TokVec<'a> {
-        pub rule lpar() -> LeftParen<'a>
-            = a:lit("(") { make_lpar(a) }
-
-        rule lit(lit: &'static str) -> TokenRef<'a>
-            = [t] {? if t.string == lit { Ok(t) } else { Err(lit) } }
-    }
-}
-
-parser! {
-    pub grammar python<'a>(config: &Config<'a>) for TokVec<'a> {
+    pub grammar python<'a>(input: &'a str) for TokVec<'a> {
         pub rule file() -> Module<'a>
             = traced(<_file()>)
 
@@ -1167,11 +1157,11 @@ parser! {
             = (_f_string() / _f_replacement())+
 
         rule traced<T>(e: rule<T>) -> T =
-            &(input:(_)* {
+            &(_* {
                 #[cfg(feature = "trace")]
                 {
                     println!("[PEG_INPUT_START]");
-                    println!("{}", config.input);
+                    println!("{}", input);
                     println!("[PEG_TRACE_START]");
                 }
             })

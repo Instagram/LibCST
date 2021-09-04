@@ -35,7 +35,7 @@ pub fn parse_module(mut module_text: &str) -> Result<Module> {
 
     // eprintln!("{:#?}", result);
     let conf = whitespace_parser::Config::new(module_text);
-    let m = parser::python::file(&result, &conf).map_err(ParserError::ParserError)?;
+    let m = parser::python::file(&result, module_text).map_err(ParserError::ParserError)?;
     Ok(m.inflate(&conf)?)
 }
 
