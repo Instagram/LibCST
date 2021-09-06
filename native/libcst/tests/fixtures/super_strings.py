@@ -6,7 +6,7 @@ _ = ''''''
 _ = 'a'   "string" 'that'   r"is" 'concatenated ' 
 
 b"string "
-"and non f" r'string'
+b"and non f" rb'string'
 
 (
     "parenthesized"
@@ -19,7 +19,7 @@ b"string "
 
 _ = f"string"
 
-f"string" "bonanza" f'starts' b"""here"""
+f"string" "bonanza" f'starts' r"""here"""
 
 _ = f"something {{**not** an expression}} {but(this._is)} {{and this isn't.}} end"
 
