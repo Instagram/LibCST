@@ -1403,7 +1403,7 @@ impl<'a> Codegen<'a> for Dict<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum DictElement<'a> {
     Simple {
         key: Expression<'a>,
@@ -1414,6 +1414,42 @@ pub enum DictElement<'a> {
         colon_tok: TokenRef<'a>,
     },
     Starred(DoubleStarredElement<'a>),
+}
+
+// TODO: this could be a derive helper attribute to override the python class name
+impl<'a> IntoPy<pyo3::PyObject> for DictElement<'a> {
+    fn into_py(self, py: pyo3::Python) -> pyo3::PyObject {
+        match self {
+            Self::Starred(s) => s.into_py(py),
+            Self::Simple {
+                key,
+                value,
+                comma,
+                whitespace_after_colon,
+                whitespace_before_colon,
+                ..
+            } => {
+                let libcst = PyModule::import(py, "libcst").expect("libcst cannot be imported");
+                let kwargs = [
+                    ("key", key.into_py(py)),
+                    ("value", value.into_py(py)),
+                    ("comma", comma.into_py(py)),
+                    (
+                        "whitespace_before_colon",
+                        whitespace_before_colon.into_py(py),
+                    ),
+                    ("whitespace_after_colon", whitespace_after_colon.into_py(py)),
+                ]
+                .into_py_dict(py);
+                libcst
+                    .getattr("DictElement")
+                    .expect("no Element found in libcst")
+                    .call((), Some(kwargs))
+                    .expect("conversion failed")
+                    .into()
+            }
+        }
+    }
 }
 
 impl<'a> Inflate<'a> for DictElement<'a> {
