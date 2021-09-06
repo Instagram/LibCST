@@ -1,8 +1,8 @@
 use proc_macro::TokenStream;
-use quote::{format_ident, quote, quote_spanned};
+use quote::{format_ident, quote, quote_spanned, ToTokens};
 use syn::{
-    spanned::Spanned, Data, DataEnum, DataStruct, DeriveInput, Fields, FieldsNamed, FieldsUnnamed,
-    Visibility,
+    spanned::Spanned, Attribute, Data, DataEnum, DataStruct, DeriveInput, Fields, FieldsNamed,
+    FieldsUnnamed, Type, TypePath, Visibility,
 };
 
 pub(crate) fn impl_into_py(ast: &DeriveInput) -> TokenStream {
@@ -25,7 +25,7 @@ fn impl_into_py_enum(ast: &DeriveInput, e: &DataEnum) -> TokenStream {
             Fields::Named(n) => {
                 let mut fieldnames = vec![];
                 for field in n.named.iter() {
-                    if field.attrs.iter().any(|attr| attr.path.is_ident("skip_py")) {
+                    if has_attr(&field.attrs, "skip_py") {
                         continue;
                     }
                     fieldnames.push(field.ident.as_ref().unwrap());
@@ -99,41 +99,70 @@ fn impl_into_py_struct(ast: &DeriveInput, e: &DataStruct) -> TokenStream {
 
 fn fields_to_kwargs(fields: &Fields) -> quote::__private::TokenStream {
     let mut empty_kwargs = false;
-    let kwargs_pairs = match &fields {
+    let mut py_varnames = vec![];
+    let mut rust_varnames = vec![];
+    let mut optional_py_varnames = vec![];
+    let mut optional_rust_varnames = vec![];
+    match &fields {
         Fields::Named(FieldsNamed { named, .. }) => {
-            let mut py_varnames = vec![];
-            let mut rust_varnames = vec![];
             for field in named.iter() {
-                if field.attrs.iter().any(|attr| attr.path.is_ident("skip_py")) {
+                if has_attr(&field.attrs, "skip_py") {
                     continue;
                 }
                 if let Some(ident) = field.ident.as_ref() {
                     if let Visibility::Public(_) = field.vis {
-                        py_varnames.push(format_ident!("{}", ident));
-                        rust_varnames.push(ident);
+                        let pyname = format_ident!("{}", ident);
+                        let rustname = ident.to_token_stream();
+                        if !has_attr(&field.attrs, "no_py_default") {
+                            if let Type::Path(TypePath { path, .. }) = &field.ty {
+                                if let Some(first) = path.segments.first() {
+                                    if first.ident == "Option" {
+                                        optional_py_varnames.push(pyname);
+                                        optional_rust_varnames.push(rustname);
+                                        continue;
+                                    }
+                                }
+                            }
+                        }
+                        py_varnames.push(pyname);
+                        rust_varnames.push(rustname);
                     }
                 }
             }
             empty_kwargs = py_varnames.is_empty();
-            quote! {
-                #((stringify!(#py_varnames), self.#rust_varnames.into_py(py)),)*
-            }
         }
         Fields::Unnamed(FieldsUnnamed { unnamed, .. }) => {
             if unnamed.first().is_some() {
-                quote! {
-                    ("value", self.0.into_py(py)),
-                }
+                py_varnames.push(format_ident!("value"));
+                rust_varnames.push(quote! { 0 });
             } else {
                 empty_kwargs = true;
-                quote! {}
             }
         }
-        Fields::Unit => quote! {},
+        Fields::Unit => {
+            empty_kwargs = true;
+        }
+    };
+    let kwargs_pairs = quote! {
+        #(Some((stringify!(#py_varnames), self.#rust_varnames.into_py(py))),)*
+    };
+    let optional_pairs = quote! {
+        #(self.#optional_rust_varnames.map(|x| (stringify!(#optional_py_varnames), x.into_py(py))),)*
     };
     if empty_kwargs {
         quote! { pyo3::types::PyDict::new(py) }
     } else {
-        quote! { [ #kwargs_pairs ].into_py_dict(py) }
+        quote! {
+            [ #kwargs_pairs #optional_pairs ]
+                .iter()
+                .filter(|x| x.is_some())
+                .map(|x| x.as_ref().unwrap())
+                .collect::<Vec<_>>()
+                .into_py_dict(py)
+        }
     }
+}
+
+fn has_attr(attrs: &[Attribute], name: &'static str) -> bool {
+    attrs.iter().any(|attr| attr.path.is_ident(name))
 }

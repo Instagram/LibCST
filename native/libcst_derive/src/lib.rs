@@ -25,7 +25,7 @@ pub fn parenthesized_node_codegen(input: TokenStream) -> TokenStream {
     impl_codegen(&syn::parse(input).unwrap())
 }
 
-#[proc_macro_derive(IntoPy, attributes(skip_py))]
+#[proc_macro_derive(IntoPy, attributes(skip_py, no_py_default))]
 pub fn into_py(input: TokenStream) -> TokenStream {
     impl_into_py(&syn::parse(input).unwrap())
 }

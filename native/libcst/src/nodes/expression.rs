@@ -1575,7 +1575,9 @@ impl<'a> Codegen<'a> for Index<'a> {
 
 #[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
 pub struct Slice<'a> {
+    #[no_py_default]
     pub lower: Option<Expression<'a>>,
+    #[no_py_default]
     pub upper: Option<Expression<'a>>,
     pub step: Option<Expression<'a>>,
     pub first_colon: Colon<'a>,
