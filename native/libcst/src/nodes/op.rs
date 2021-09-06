@@ -13,10 +13,11 @@ use crate::{
         Token,
     },
 };
+use libcst_derive::IntoPy;
 
 type TokenRef<'a> = Rc<Token<'a>>;
 
-#[derive(Debug, Eq, PartialEq, Clone)]
+#[derive(Debug, Eq, PartialEq, Clone, IntoPy)]
 pub struct Semicolon<'a> {
     /// Any space that appears directly before this semicolon.
     pub whitespace_before: ParenthesizableWhitespace<'a>,
@@ -46,7 +47,7 @@ impl<'a> Inflate<'a> for Semicolon<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
 pub struct Comma<'a> {
     /// Any space that appears directly before this comma.
     pub whitespace_before: ParenthesizableWhitespace<'a>,
@@ -78,7 +79,7 @@ impl<'a> Inflate<'a> for Comma<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
 pub struct AssignEqual<'a> {
     /// Any space that appears directly before this equal sign.
     pub whitespace_before: ParenthesizableWhitespace<'a>,
@@ -110,7 +111,7 @@ impl<'a> Inflate<'a> for AssignEqual<'a> {
     }
 }
 
-#[derive(Debug, Eq, PartialEq, Clone)]
+#[derive(Debug, Eq, PartialEq, Clone, IntoPy)]
 pub struct Dot<'a> {
     /// Any space that appears directly before this dot.
     pub whitespace_before: ParenthesizableWhitespace<'a>,
@@ -142,7 +143,7 @@ impl<'a> Inflate<'a> for Dot<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
 pub struct ImportStar {}
 
 impl<'a> Codegen<'a> for ImportStar {
@@ -157,7 +158,7 @@ impl<'a> Inflate<'a> for ImportStar {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
 pub enum UnaryOp<'a> {
     Plus(ParenthesizableWhitespace<'a>, TokenRef<'a>),
     Minus(ParenthesizableWhitespace<'a>, TokenRef<'a>),
@@ -213,7 +214,7 @@ impl<'a> Inflate<'a> for UnaryOp<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
 pub enum BooleanOp<'a> {
     And {
         whitespace_before: ParenthesizableWhitespace<'a>,
@@ -284,7 +285,7 @@ impl<'a> Inflate<'a> for BooleanOp<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
 pub enum BinaryOp<'a> {
     Add {
         whitespace_before: ParenthesizableWhitespace<'a>,
@@ -630,7 +631,7 @@ impl<'a> Inflate<'a> for BinaryOp<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
 pub enum CompOp<'a> {
     LessThan {
         whitespace_before: ParenthesizableWhitespace<'a>,
@@ -939,7 +940,7 @@ impl<'a> Inflate<'a> for CompOp<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
 pub struct Colon<'a> {
     pub whitespace_before: ParenthesizableWhitespace<'a>,
     pub whitespace_after: ParenthesizableWhitespace<'a>,
@@ -969,7 +970,7 @@ impl<'a> Codegen<'a> for Colon<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
 pub enum AugOp<'a> {
     AddAssign {
         whitespace_before: ParenthesizableWhitespace<'a>,

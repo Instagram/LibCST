@@ -427,7 +427,7 @@ class Integer(BaseNumber):
     def _validate(self) -> None:
         super(Integer, self)._validate()
         if not re.fullmatch(INTNUMBER_RE, self.value):
-            raise CSTValidationError("Number is not a valid integer.")
+            raise CSTValidationError(f"Number is not a valid integer ({self.value}).")
 
     def _codegen_impl(self, state: CodegenState) -> None:
         with self._parenthesize(state):

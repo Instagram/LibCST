@@ -10,7 +10,7 @@ authors = ["LibCST Developers"]
 edition = "2018"
 
 [lib]
-name = "libcst"
+name = "libcst_native"
 crate-type = ["cdylib", "rlib"]
 
 [[bin]]
@@ -28,7 +28,7 @@ trace = ["peg/trace"]
 
 [dependencies]
 paste = "1.0.4"
-pyo3 = "0.13.2"
+pyo3 = "0.14.4"
 thiserror = "1.0.23"
 peg = { git = "https://github.com/kevinmehall/rust-peg" }
 chic = "1.2.2"

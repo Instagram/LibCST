@@ -8,7 +8,9 @@ use criterion::{
 };
 use criterion_cycles_per_byte::CyclesPerByte;
 use itertools::Itertools;
-use libcst::{parse_module, parse_tokens_without_whitespace, parse_whitespace, tokenize, Codegen};
+use libcst_native::{
+    parse_module, parse_tokens_without_whitespace, parse_whitespace, tokenize, Codegen,
+};
 
 fn load_all_fixtures() -> String {
     let mut path = PathBuf::from(file!());

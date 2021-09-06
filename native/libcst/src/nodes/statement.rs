@@ -24,12 +24,12 @@ use crate::{
         Token,
     },
 };
-use libcst_derive::{Codegen, Inflate, ParenthesizedNode};
+use libcst_derive::{Codegen, Inflate, IntoPy, ParenthesizedNode};
 
 type TokenRef<'a> = Rc<Token<'a>>;
 
 #[allow(clippy::large_enum_variant)]
-#[derive(Debug, Eq, PartialEq, Clone, Inflate, Codegen)]
+#[derive(Debug, Eq, PartialEq, Clone, Inflate, Codegen, IntoPy)]
 pub enum Statement<'a> {
     Simple(SimpleStatementLine<'a>),
     Compound(CompoundStatement<'a>),
@@ -44,7 +44,7 @@ impl<'a> WithLeadingLines<'a> for Statement<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Inflate, Codegen)]
+#[derive(Debug, PartialEq, Eq, Clone, Inflate, Codegen, IntoPy)]
 pub enum CompoundStatement<'a> {
     FunctionDef(FunctionDef<'a>),
     If(If<'a>),
@@ -69,13 +69,13 @@ impl<'a> WithLeadingLines<'a> for CompoundStatement<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Inflate, Codegen)]
+#[derive(Debug, PartialEq, Eq, Clone, Inflate, Codegen, IntoPy)]
 pub enum Suite<'a> {
     IndentedBlock(IndentedBlock<'a>),
     SimpleStatementSuite(SimpleStatementSuite<'a>),
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
 pub struct IndentedBlock<'a> {
     /// Sequence of statements belonging to this indented block.
     pub body: Vec<Statement<'a>>,
@@ -162,7 +162,7 @@ impl<'a> Inflate<'a> for IndentedBlock<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
 pub struct SimpleStatementSuite<'a> {
     /// Sequence of small statements. All but the last statement are required to have
     /// a semicolon.
@@ -216,7 +216,7 @@ impl<'a> Codegen<'a> for SimpleStatementSuite<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
 pub struct SimpleStatementLine<'a> {
     /// Sequence of small statements. All but the last statement are required to have
     /// a semicolon.
@@ -258,7 +258,7 @@ impl<'a> Inflate<'a> for SimpleStatementLine<'a> {
 }
 
 #[allow(dead_code, clippy::large_enum_variant)]
-#[derive(Debug, Eq, PartialEq, Clone, Codegen, Inflate)]
+#[derive(Debug, Eq, PartialEq, Clone, Codegen, Inflate, IntoPy)]
 pub enum SmallStatement<'a> {
     Pass(Pass<'a>),
     Break(Break<'a>),
@@ -299,7 +299,7 @@ impl<'a> SmallStatement<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
 pub struct Pass<'a> {
     pub semicolon: Option<Semicolon<'a>>,
 }
@@ -321,7 +321,7 @@ impl<'a> Inflate<'a> for Pass<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
 pub struct Break<'a> {
     pub semicolon: Option<Semicolon<'a>>,
 }
@@ -343,7 +343,7 @@ impl<'a> Inflate<'a> for Break<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
 pub struct Continue<'a> {
     pub semicolon: Option<Semicolon<'a>>,
 }
@@ -365,7 +365,7 @@ impl<'a> Inflate<'a> for Continue<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
 pub struct Expr<'a> {
     pub value: Expression<'a>,
     pub semicolon: Option<Semicolon<'a>>,
@@ -389,7 +389,7 @@ impl<'a> Inflate<'a> for Expr<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
 pub struct Assign<'a> {
     pub targets: Vec<AssignTarget<'a>>,
     pub value: Expression<'a>,
@@ -423,7 +423,7 @@ impl<'a> Assign<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
 pub struct AssignTarget<'a> {
     pub target: AssignTargetExpression<'a>,
     pub whitespace_before_equal: SimpleWhitespace<'a>,
@@ -455,7 +455,7 @@ impl<'a> Inflate<'a> for AssignTarget<'a> {
 }
 
 #[allow(clippy::large_enum_variant)]
-#[derive(Debug, PartialEq, Eq, Clone, Codegen, ParenthesizedNode, Inflate)]
+#[derive(Debug, PartialEq, Eq, Clone, Codegen, ParenthesizedNode, Inflate, IntoPy)]
 pub enum AssignTargetExpression<'a> {
     Name(Name<'a>),
     Attribute(Attribute<'a>),
@@ -465,7 +465,7 @@ pub enum AssignTargetExpression<'a> {
     Subscript(Subscript<'a>),
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
 pub struct Import<'a> {
     pub names: Vec<ImportAlias<'a>>,
     pub semicolon: Option<Semicolon<'a>>,
@@ -508,7 +508,7 @@ impl<'a> Import<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
 pub struct ImportFrom<'a> {
     pub module: Option<NameOrAttribute<'a>>,
     pub names: ImportNames<'a>,
@@ -598,7 +598,7 @@ impl<'a> ImportFrom<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
 pub struct ImportAlias<'a> {
     pub name: NameOrAttribute<'a>,
     pub asname: Option<AsName<'a>>,
@@ -633,7 +633,7 @@ impl<'a> Codegen<'a> for ImportAlias<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
 pub struct AsName<'a> {
     pub name: AssignTargetExpression<'a>,
     pub whitespace_before_as: ParenthesizableWhitespace<'a>,
@@ -666,7 +666,7 @@ impl<'a> Inflate<'a> for AsName<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Inflate)]
+#[derive(Debug, PartialEq, Eq, Clone, Inflate, IntoPy)]
 pub enum ImportNames<'a> {
     Star(ImportStar),
     Aliases(Vec<ImportAlias<'a>>),
@@ -688,7 +688,7 @@ impl<'a> Codegen<'a> for ImportNames<'a> {
     }
 }
 
-#[derive(Debug, Eq, PartialEq, Clone)]
+#[derive(Debug, Eq, PartialEq, Clone, IntoPy)]
 pub struct FunctionDef<'a> {
     pub name: Name<'a>,
     pub params: Parameters<'a>,
@@ -813,7 +813,7 @@ impl<'a> Inflate<'a> for FunctionDef<'a> {
     }
 }
 
-#[derive(Debug, Eq, PartialEq, Clone)]
+#[derive(Debug, Eq, PartialEq, Clone, IntoPy)]
 pub struct Decorator<'a> {
     pub decorator: Expression<'a>,
     pub leading_lines: Vec<EmptyLine<'a>>,
@@ -855,7 +855,13 @@ impl<'a> Inflate<'a> for Decorator<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+impl<'a> pyo3::conversion::IntoPy<pyo3::PyObject> for Box<OrElse<'a>> {
+    fn into_py(self, py: pyo3::Python) -> pyo3::PyObject {
+        (*self).into_py(py)
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
 pub struct If<'a> {
     /// The expression that, when evaluated, should give us a truthy value
     pub test: Expression<'a>,
@@ -876,6 +882,7 @@ pub struct If<'a> {
     pub whitespace_after_test: SimpleWhitespace<'a>,
 
     /// Signifies if this instance represents an ``elif`` or an ``if`` block.
+    #[skip_py]
     pub is_elif: bool,
 
     pub(crate) if_tok: TokenRef<'a>,
@@ -922,13 +929,13 @@ impl<'a> Inflate<'a> for If<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Inflate, Codegen)]
+#[derive(Debug, PartialEq, Eq, Clone, Inflate, Codegen, IntoPy)]
 pub enum OrElse<'a> {
     Elif(If<'a>),
     Else(Else<'a>),
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
 pub struct Else<'a> {
     pub body: Suite<'a>,
     /// Sequence of empty lines appearing before this compound statement line.
@@ -971,7 +978,7 @@ impl<'a> Inflate<'a> for Else<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
 pub struct Annotation<'a> {
     pub annotation: Expression<'a>,
     pub whitespace_before_indicator: Option<ParenthesizableWhitespace<'a>>,
@@ -1011,7 +1018,7 @@ impl<'a> Inflate<'a> for Annotation<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
 pub struct AnnAssign<'a> {
     pub target: AssignTargetExpression<'a>,
     pub annotation: Annotation<'a>,
@@ -1056,7 +1063,7 @@ impl<'a> AnnAssign<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
 pub struct Return<'a> {
     pub value: Option<Expression<'a>>,
     pub whitespace_after_return: Option<SimpleWhitespace<'a>>,
@@ -1104,7 +1111,7 @@ impl<'a> Return<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
 pub struct Assert<'a> {
     pub test: Expression<'a>,
     pub msg: Option<Expression<'a>>,
@@ -1155,7 +1162,7 @@ impl<'a> Assert<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
 pub struct Raise<'a> {
     pub exc: Option<Expression<'a>>,
     pub cause: Option<From<'a>>,
@@ -1215,7 +1222,7 @@ impl<'a> Raise<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
 pub struct NameItem<'a> {
     pub name: Name<'a>,
     pub comma: Option<Comma<'a>>,
@@ -1240,7 +1247,7 @@ impl<'a> NameItem<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
 pub struct Global<'a> {
     pub names: Vec<NameItem<'a>>,
     pub whitespace_after_global: SimpleWhitespace<'a>,
@@ -1280,7 +1287,7 @@ impl<'a> Global<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
 pub struct Nonlocal<'a> {
     pub names: Vec<NameItem<'a>>,
     pub whitespace_after_nonlocal: SimpleWhitespace<'a>,
@@ -1320,7 +1327,7 @@ impl<'a> Nonlocal<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
 pub struct For<'a> {
     pub target: AssignTargetExpression<'a>,
     pub iter: Expression<'a>,
@@ -1412,7 +1419,7 @@ impl<'a> Inflate<'a> for For<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
 pub struct While<'a> {
     pub test: Expression<'a>,
     pub body: Suite<'a>,
@@ -1465,7 +1472,7 @@ impl<'a> Inflate<'a> for While<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
 pub struct ClassDef<'a> {
     pub name: Name<'a>,
     pub body: Suite<'a>,
@@ -1571,7 +1578,7 @@ impl<'a> ClassDef<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
 pub struct Finally<'a> {
     pub body: Suite<'a>,
     pub leading_lines: Vec<EmptyLine<'a>>,
@@ -1611,7 +1618,7 @@ impl<'a> Inflate<'a> for Finally<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
 pub struct ExceptHandler<'a> {
     pub body: Suite<'a>,
     pub r#type: Option<Expression<'a>>,
@@ -1671,7 +1678,7 @@ impl<'a> Inflate<'a> for ExceptHandler<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
 pub struct Try<'a> {
     pub body: Suite<'a>,
     pub handlers: Vec<ExceptHandler<'a>>,
@@ -1723,7 +1730,7 @@ impl<'a> Inflate<'a> for Try<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
 pub struct AugAssign<'a> {
     pub target: AssignTargetExpression<'a>,
     pub operator: AugOp<'a>,
@@ -1759,7 +1766,7 @@ impl<'a> AugAssign<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
 pub struct WithItem<'a> {
     pub item: Expression<'a>,
     pub asname: Option<AsName<'a>>,
@@ -1796,7 +1803,7 @@ impl<'a> Inflate<'a> for WithItem<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
 pub struct With<'a> {
     pub items: Vec<WithItem<'a>>,
     pub body: Suite<'a>,
@@ -1878,7 +1885,7 @@ impl<'a> Inflate<'a> for With<'a> {
 }
 
 #[allow(clippy::large_enum_variant)]
-#[derive(Debug, PartialEq, Eq, Clone, Codegen, ParenthesizedNode, Inflate)]
+#[derive(Debug, PartialEq, Eq, Clone, Codegen, ParenthesizedNode, Inflate, IntoPy)]
 pub enum DelTargetExpression<'a> {
     Name(Name<'a>),
     Attribute(Attribute<'a>),
@@ -1907,7 +1914,7 @@ impl<'a> std::convert::From<DelTargetExpression<'a>> for Element<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
 pub struct Del<'a> {
     pub target: DelTargetExpression<'a>,
     pub whitespace_after_del: SimpleWhitespace<'a>,

@@ -1,6 +1,6 @@
 use difference::assert_diff;
 use itertools::Itertools;
-use libcst::{parse_module, prettify_error, Codegen};
+use libcst_native::{parse_module, prettify_error, Codegen};
 use std::{
     iter::once,
     path::{Component, PathBuf},

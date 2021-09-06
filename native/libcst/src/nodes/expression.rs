@@ -18,11 +18,12 @@ use crate::{
         Token,
     },
 };
-use libcst_derive::{Codegen, Inflate, ParenthesizedNode};
+use libcst_derive::{Codegen, Inflate, IntoPy, ParenthesizedNode};
+use pyo3::{types::PyModule, IntoPy};
 
 type TokenRef<'a> = Rc<Token<'a>>;
 
-#[derive(Debug, Eq, PartialEq, Default, Clone)]
+#[derive(Debug, Eq, PartialEq, Default, Clone, IntoPy)]
 pub struct Parameters<'a> {
     pub params: Vec<Param<'a>>,
     pub star_arg: Option<StarArg<'a>>,
@@ -55,7 +56,7 @@ impl<'a> Inflate<'a> for Parameters<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Inflate)]
+#[derive(Debug, PartialEq, Eq, Clone, Inflate, IntoPy)]
 pub enum StarArg<'a> {
     Star(ParamStar<'a>),
     Param(Box<Param<'a>>),
@@ -115,7 +116,7 @@ impl<'a> Codegen<'a> for Parameters<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
 pub struct ParamSlash<'a> {
     pub comma: Option<Comma<'a>>,
 }
@@ -138,7 +139,7 @@ impl<'a> Inflate<'a> for ParamSlash<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
 pub struct ParamStar<'a> {
     pub comma: Comma<'a>,
 }
@@ -157,7 +158,7 @@ impl<'a> Inflate<'a> for ParamStar<'a> {
     }
 }
 
-#[derive(Debug, Eq, PartialEq, Default, Clone, ParenthesizedNode)]
+#[derive(Debug, Eq, PartialEq, Default, Clone, ParenthesizedNode, IntoPy)]
 pub struct Name<'a> {
     pub value: &'a str,
     pub lpar: Vec<LeftParen<'a>>,
@@ -180,7 +181,7 @@ impl<'a> Codegen<'a> for Name<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
 pub struct Param<'a> {
     pub name: Name<'a>,
     pub annotation: Option<Annotation<'a>>,
@@ -272,7 +273,7 @@ impl<'a> Param<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
 pub struct Arg<'a> {
     pub value: Expression<'a>,
     pub keyword: Option<Name<'a>>,
@@ -335,7 +336,7 @@ impl<'a> WithComma<'a> for Arg<'a> {
     }
 }
 
-#[derive(Debug, Eq, PartialEq, Clone)]
+#[derive(Debug, Eq, PartialEq, Clone, IntoPy)]
 pub struct LeftParen<'a> {
     /// Any space that appears directly after this left parenthesis.
     pub whitespace_after: ParenthesizableWhitespace<'a>,
@@ -360,7 +361,7 @@ impl<'a> Inflate<'a> for LeftParen<'a> {
     }
 }
 
-#[derive(Debug, Eq, PartialEq, Clone)]
+#[derive(Debug, Eq, PartialEq, Clone, IntoPy)]
 pub struct RightParen<'a> {
     /// Any space that appears directly before this right parenthesis.
     pub whitespace_before: ParenthesizableWhitespace<'a>,
@@ -386,7 +387,7 @@ impl<'a> Inflate<'a> for RightParen<'a> {
 }
 
 #[allow(clippy::large_enum_variant)]
-#[derive(Debug, Eq, PartialEq, Clone, ParenthesizedNode, Codegen, Inflate)]
+#[derive(Debug, Eq, PartialEq, Clone, ParenthesizedNode, Codegen, Inflate, IntoPy)]
 pub enum Expression<'a> {
     Name(Name<'a>),
     Ellipsis(Ellipsis<'a>),
@@ -419,7 +420,7 @@ pub enum Expression<'a> {
     // TODO: NamedExpr
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode)]
+#[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode, IntoPy)]
 pub struct Ellipsis<'a> {
     pub lpar: Vec<LeftParen<'a>>,
     pub rpar: Vec<RightParen<'a>>,
@@ -440,7 +441,7 @@ impl<'a> Inflate<'a> for Ellipsis<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode)]
+#[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode, IntoPy)]
 pub struct Integer<'a> {
     /// A string representation of the integer, such as ``"100000"`` or
     /// ``"100_000"``.
@@ -465,7 +466,7 @@ impl<'a> Inflate<'a> for Integer<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode)]
+#[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode, IntoPy)]
 pub struct Float<'a> {
     /// A string representation of the floating point number, such as ```"0.05"``,
     /// ``".050"``, or ``"5e-2"``.
@@ -490,7 +491,7 @@ impl<'a> Inflate<'a> for Float<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode)]
+#[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode, IntoPy)]
 pub struct Imaginary<'a> {
     /// A string representation of the complex number, such as ``"2j"``
     pub value: &'a str,
@@ -514,7 +515,7 @@ impl<'a> Inflate<'a> for Imaginary<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode)]
+#[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode, IntoPy)]
 pub struct Comparison<'a> {
     pub left: Box<Expression<'a>>,
     pub comparisons: Vec<ComparisonTarget<'a>>,
@@ -542,7 +543,7 @@ impl<'a> Inflate<'a> for Comparison<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode)]
+#[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode, IntoPy)]
 pub struct UnaryOperation<'a> {
     pub operator: UnaryOp<'a>,
     pub expression: Box<Expression<'a>>,
@@ -569,7 +570,7 @@ impl<'a> Inflate<'a> for UnaryOperation<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode)]
+#[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode, IntoPy)]
 pub struct BinaryOperation<'a> {
     pub left: Box<Expression<'a>>,
     pub operator: BinaryOp<'a>,
@@ -599,7 +600,7 @@ impl<'a> Inflate<'a> for BinaryOperation<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode)]
+#[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode, IntoPy)]
 pub struct BooleanOperation<'a> {
     pub left: Box<Expression<'a>>,
     pub operator: BooleanOp<'a>,
@@ -629,7 +630,7 @@ impl<'a> Inflate<'a> for BooleanOperation<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode)]
+#[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode, IntoPy)]
 pub struct Call<'a> {
     pub func: Box<Expression<'a>>,
     pub args: Vec<Arg<'a>>,
@@ -686,7 +687,7 @@ impl<'a> Codegen<'a> for Call<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode)]
+#[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode, IntoPy)]
 pub struct Attribute<'a> {
     pub value: Box<Expression<'a>>,
     pub attr: Name<'a>,
@@ -717,7 +718,7 @@ impl<'a> Codegen<'a> for Attribute<'a> {
 }
 
 #[allow(clippy::large_enum_variant)]
-#[derive(Debug, PartialEq, Eq, Clone, Codegen, Inflate)]
+#[derive(Debug, PartialEq, Eq, Clone, Codegen, Inflate, IntoPy)]
 pub enum NameOrAttribute<'a> {
     N(Name<'a>),
     A(Attribute<'a>),
@@ -732,7 +733,7 @@ impl<'a> std::convert::From<NameOrAttribute<'a>> for Expression<'a> {
     }
 }
 
-#[derive(Debug, Eq, PartialEq, Clone)]
+#[derive(Debug, Eq, PartialEq, Clone, IntoPy)]
 pub struct ComparisonTarget<'a> {
     pub operator: CompOp<'a>,
     pub comparator: Expression<'a>,
@@ -753,7 +754,7 @@ impl<'a> Inflate<'a> for ComparisonTarget<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode)]
+#[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode, IntoPy)]
 pub struct StarredElement<'a> {
     pub value: Box<Expression<'a>>,
     pub comma: Option<Comma<'a>>,
@@ -811,6 +812,26 @@ impl<'a> Inflate<'a> for Element<'a> {
     }
 }
 
+// TODO: this could be a derive helper attribute to override the python class name
+impl<'a> IntoPy<pyo3::PyObject> for Element<'a> {
+    fn into_py(self, py: pyo3::Python) -> pyo3::PyObject {
+        match self {
+            Self::Starred(s) => s.into_py(py),
+            Self::Simple { value, comma } => {
+                let libcst = PyModule::import(py, "libcst").expect("libcst cannot be imported");
+                let kwargs =
+                    [("value", value.into_py(py)), ("comma", comma.into_py(py))].into_py_dict(py);
+                libcst
+                    .getattr("Element")
+                    .expect("no Element found in libcst")
+                    .call((), Some(kwargs))
+                    .expect("conversion failed")
+                    .into()
+            }
+        }
+    }
+}
+
 impl<'a> Element<'a> {
     fn codegen(
         &self,
@@ -862,7 +883,7 @@ impl<'a> std::convert::From<Expression<'a>> for Element<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Default, ParenthesizedNode)]
+#[derive(Debug, PartialEq, Eq, Clone, Default, ParenthesizedNode, IntoPy)]
 pub struct Tuple<'a> {
     pub elements: Vec<Element<'a>>,
     pub lpar: Vec<LeftParen<'a>>,
@@ -902,7 +923,7 @@ impl<'a> Codegen<'a> for Tuple<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode)]
+#[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode, IntoPy)]
 pub struct GeneratorExp<'a> {
     pub elt: Box<Expression<'a>>,
     pub for_in: Box<CompFor<'a>>,
@@ -929,7 +950,7 @@ impl<'a> Inflate<'a> for GeneratorExp<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode)]
+#[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode, IntoPy)]
 pub struct ListComp<'a> {
     pub elt: Box<Expression<'a>>,
     pub for_in: Box<CompFor<'a>>,
@@ -962,7 +983,7 @@ impl<'a> Inflate<'a> for ListComp<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
 pub struct LeftSquareBracket<'a> {
     pub whitespace_after: ParenthesizableWhitespace<'a>,
     pub(crate) tok: TokenRef<'a>,
@@ -985,7 +1006,7 @@ impl<'a> Inflate<'a> for LeftSquareBracket<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
 pub struct RightSquareBracket<'a> {
     pub whitespace_before: ParenthesizableWhitespace<'a>,
     pub(crate) tok: TokenRef<'a>,
@@ -1008,7 +1029,7 @@ impl<'a> Inflate<'a> for RightSquareBracket<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode)]
+#[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode, IntoPy)]
 pub struct SetComp<'a> {
     pub elt: Box<Expression<'a>>,
     pub for_in: Box<CompFor<'a>>,
@@ -1041,7 +1062,7 @@ impl<'a> Codegen<'a> for SetComp<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode)]
+#[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode, IntoPy)]
 pub struct DictComp<'a> {
     pub key: Box<Expression<'a>>,
     pub value: Box<Expression<'a>>,
@@ -1092,7 +1113,7 @@ impl<'a> Codegen<'a> for DictComp<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
 pub struct LeftCurlyBrace<'a> {
     pub whitespace_after: ParenthesizableWhitespace<'a>,
     pub(crate) tok: TokenRef<'a>,
@@ -1115,7 +1136,7 @@ impl<'a> Codegen<'a> for LeftCurlyBrace<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
 pub struct RightCurlyBrace<'a> {
     pub whitespace_before: ParenthesizableWhitespace<'a>,
     pub(crate) tok: TokenRef<'a>,
@@ -1138,7 +1159,13 @@ impl<'a> Codegen<'a> for RightCurlyBrace<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+impl<'a> pyo3::conversion::IntoPy<pyo3::PyObject> for Box<CompFor<'a>> {
+    fn into_py(self, py: pyo3::Python) -> pyo3::PyObject {
+        (*self).into_py(py)
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
 pub struct CompFor<'a> {
     pub target: AssignTargetExpression<'a>,
     pub iter: Expression<'a>,
@@ -1213,7 +1240,7 @@ impl<'a> Inflate<'a> for CompFor<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
 pub struct Asynchronous<'a> {
     pub whitespace_after: ParenthesizableWhitespace<'a>,
 }
@@ -1225,7 +1252,7 @@ impl<'a> Codegen<'a> for Asynchronous<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
 pub struct CompIf<'a> {
     pub test: Expression<'a>,
     pub whitespace_before: ParenthesizableWhitespace<'a>,
@@ -1258,7 +1285,7 @@ impl<'a> Inflate<'a> for CompIf<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode)]
+#[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode, IntoPy)]
 pub struct List<'a> {
     pub elements: Vec<Element<'a>>,
     pub lbracket: LeftSquareBracket<'a>,
@@ -1298,7 +1325,7 @@ impl<'a> Codegen<'a> for List<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode)]
+#[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode, IntoPy)]
 pub struct Set<'a> {
     pub elements: Vec<Element<'a>>,
     pub lbrace: LeftCurlyBrace<'a>,
@@ -1337,7 +1364,7 @@ impl<'a> Codegen<'a> for Set<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode)]
+#[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode, IntoPy)]
 pub struct Dict<'a> {
     pub elements: Vec<DictElement<'a>>,
     pub lbrace: LeftCurlyBrace<'a>,
@@ -1376,7 +1403,7 @@ impl<'a> Codegen<'a> for Dict<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
 pub enum DictElement<'a> {
     Simple {
         key: Expression<'a>,
@@ -1489,7 +1516,7 @@ impl<'a> WithComma<'a> for DictElement<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
 pub struct DoubleStarredElement<'a> {
     pub value: Expression<'a>,
     pub comma: Option<Comma<'a>>,
@@ -1522,13 +1549,13 @@ impl<'a> Codegen<'a> for DoubleStarredElement<'a> {
 }
 
 #[allow(clippy::large_enum_variant)]
-#[derive(Debug, PartialEq, Eq, Clone, Codegen, Inflate)]
+#[derive(Debug, PartialEq, Eq, Clone, Codegen, Inflate, IntoPy)]
 pub enum BaseSlice<'a> {
     Index(Index<'a>),
     Slice(Slice<'a>),
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
 pub struct Index<'a> {
     pub value: Expression<'a>,
 }
@@ -1546,7 +1573,7 @@ impl<'a> Codegen<'a> for Index<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
 pub struct Slice<'a> {
     pub lower: Option<Expression<'a>>,
     pub upper: Option<Expression<'a>>,
@@ -1586,7 +1613,7 @@ impl<'a> Codegen<'a> for Slice<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
 pub struct SubscriptElement<'a> {
     pub slice: BaseSlice<'a>,
     pub comma: Option<Comma<'a>>,
@@ -1609,7 +1636,7 @@ impl<'a> Codegen<'a> for SubscriptElement<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode)]
+#[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode, IntoPy)]
 pub struct Subscript<'a> {
     pub value: Box<Expression<'a>>,
     pub slice: Vec<SubscriptElement<'a>>,
@@ -1656,7 +1683,7 @@ impl<'a> Codegen<'a> for Subscript<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode)]
+#[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode, IntoPy)]
 pub struct IfExp<'a> {
     pub test: Box<Expression<'a>>,
     pub body: Box<Expression<'a>>,
@@ -1715,7 +1742,7 @@ impl<'a> Codegen<'a> for IfExp<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode)]
+#[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode, IntoPy)]
 pub struct Lambda<'a> {
     pub params: Box<Parameters<'a>>,
     pub body: Box<Expression<'a>>,
@@ -1762,7 +1789,7 @@ impl<'a> Codegen<'a> for Lambda<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
 pub struct From<'a> {
     pub item: Expression<'a>,
     pub whitespace_before_from: Option<ParenthesizableWhitespace<'a>>,
@@ -1800,7 +1827,7 @@ impl<'a> Inflate<'a> for From<'a> {
 }
 
 #[allow(clippy::large_enum_variant)]
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
 pub enum YieldValue<'a> {
     Expression(Expression<'a>),
     From(From<'a>),
@@ -1828,7 +1855,13 @@ impl<'a> YieldValue<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode)]
+impl<'a> pyo3::conversion::IntoPy<pyo3::PyObject> for Box<YieldValue<'a>> {
+    fn into_py(self, py: pyo3::Python) -> pyo3::PyObject {
+        (*self).into_py(py)
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode, IntoPy)]
 pub struct Yield<'a> {
     pub value: Option<Box<YieldValue<'a>>>,
     pub lpar: Vec<LeftParen<'a>>,
@@ -1870,7 +1903,7 @@ impl<'a> Codegen<'a> for Yield<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode)]
+#[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode, IntoPy)]
 pub struct Await<'a> {
     pub expression: Box<Expression<'a>>,
     pub lpar: Vec<LeftParen<'a>>,
@@ -1904,7 +1937,7 @@ impl<'a> Codegen<'a> for Await<'a> {
 }
 
 #[allow(clippy::large_enum_variant)]
-#[derive(Debug, PartialEq, Eq, Clone, Codegen, Inflate)]
+#[derive(Debug, PartialEq, Eq, Clone, Codegen, Inflate, IntoPy)]
 pub enum String<'a> {
     Simple(SimpleString<'a>),
     Concatenated(ConcatenatedString<'a>),
@@ -1921,7 +1954,7 @@ impl<'a> std::convert::From<String<'a>> for Expression<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode)]
+#[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode, IntoPy)]
 pub struct ConcatenatedString<'a> {
     pub left: Box<String<'a>>,
     pub right: Box<String<'a>>,
@@ -1958,7 +1991,7 @@ impl<'a> Codegen<'a> for ConcatenatedString<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Default, ParenthesizedNode)]
+#[derive(Debug, PartialEq, Eq, Clone, Default, ParenthesizedNode, IntoPy)]
 pub struct SimpleString<'a> {
     /// The texual representation of the string, including quotes, prefix
     /// characters, and any escape characters present in the original source code,
@@ -1982,7 +2015,7 @@ impl<'a> Codegen<'a> for SimpleString<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
 pub struct FormattedStringText<'a> {
     pub value: &'a str,
 }
@@ -1999,7 +2032,7 @@ impl<'a> Codegen<'a> for FormattedStringText<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
 pub struct FormattedStringExpression<'a> {
     pub expression: Expression<'a>,
     pub conversion: Option<&'a str>,
@@ -2057,13 +2090,13 @@ impl<'a> Codegen<'a> for FormattedStringExpression<'a> {
 }
 
 #[allow(clippy::large_enum_variant)]
-#[derive(Debug, PartialEq, Eq, Clone, Codegen, Inflate)]
+#[derive(Debug, PartialEq, Eq, Clone, Codegen, Inflate, IntoPy)]
 pub enum FormattedStringContent<'a> {
     Text(FormattedStringText<'a>),
     Expression(FormattedStringExpression<'a>),
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode)]
+#[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode, IntoPy)]
 pub struct FormattedString<'a> {
     pub parts: Vec<FormattedStringContent<'a>>,
     pub start: &'a str,

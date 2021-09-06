@@ -15,6 +15,8 @@ pub use nodes::*;
 mod parser;
 use parser::{ParserError, Result};
 
+pub mod py;
+
 pub fn tokenize(text: &str) -> Result<Vec<Token>> {
     let iter = TokenIterator::new(
         text,

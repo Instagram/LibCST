@@ -12,13 +12,13 @@ try   :
 
     # foo
 
-except :
-
-    # foo
+except  lol  as  LOL  :
 
     pass
 
-except  lol  as  LOL  :
+except :
+
+    # foo
 
     pass
 

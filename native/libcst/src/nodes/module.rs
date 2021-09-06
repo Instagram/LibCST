@@ -18,9 +18,11 @@ use crate::{
 };
 
 use super::traits::{Inflate, Result, WithLeadingLines};
+use libcst_derive::IntoPy;
+
 type TokenRef<'a> = Rc<Token<'a>>;
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Eq, PartialEq, IntoPy)]
 pub struct Module<'a> {
     pub body: Vec<Statement<'a>>,
     pub header: Vec<EmptyLine<'a>>,

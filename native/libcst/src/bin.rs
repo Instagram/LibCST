@@ -1,4 +1,4 @@
-use libcst::*;
+use libcst_native::*;
 use std::{
     env,
     io::{self, Read},
