@@ -56,6 +56,16 @@ class TypeInferenceProviderTest(UnitTest):
     @data_provider(
         ((TEST_SUITE_PATH / "simple_class.py", TEST_SUITE_PATH / "simple_class.json"),)
     )
+    def test_gen_cache(self, source_path: Path, data_path: Path) -> None:
+        cache = TypeInferenceProvider.gen_cache(
+            root_path=source_path.parent, paths=[source_path.name], timeout=None
+        )
+        data: PyreData = json.loads(data_path.read_text())
+        self.assertEqual(cache[source_path.name], data)
+
+    @data_provider(
+        ((TEST_SUITE_PATH / "simple_class.py", TEST_SUITE_PATH / "simple_class.json"),)
+    )
     def test_simple_class_types(self, source_path: Path, data_path: Path) -> None:
         data: PyreData = json.loads(data_path.read_text())
         wrapper = MetadataWrapper(
