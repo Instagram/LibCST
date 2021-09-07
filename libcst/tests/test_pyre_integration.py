@@ -122,7 +122,7 @@ if __name__ == "__main__":
     stdout: str
     stderr: str
     return_code: int
-    stdout, stderr, return_code = run_command(["pyre", "start"])
+    stdout, stderr, return_code = run_command(["pyre", "start", "--no-watchman"])
     if return_code != 0:
         print(stdout)
         print(stderr)
