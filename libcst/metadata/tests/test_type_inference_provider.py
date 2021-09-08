@@ -5,6 +5,7 @@
 
 
 import json
+import subprocess
 from pathlib import Path
 
 import libcst as cst
@@ -53,6 +54,19 @@ def _test_simple_class_helper(test: UnitTest, wrapper: MetadataWrapper) -> None:
 
 
 class TypeInferenceProviderTest(UnitTest):
+    def setUp(self):
+        try:
+            subprocess.run(["pyre", "start", "--no-watchman"])
+        except subprocess.TimeoutExpired as exc:
+            raise exc
+
+    def tearDown(self):
+        try:
+            subprocess.run(["pyre", "stop"])
+        except subprocess.TimeoutExpired as exc:
+            raise exc
+
+
     @data_provider(
         ((TEST_SUITE_PATH / "simple_class.py", TEST_SUITE_PATH / "simple_class.json"),)
     )
