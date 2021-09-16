@@ -71,7 +71,7 @@ class TypeInferenceProviderTest(UnitTest):
         ((TEST_SUITE_PATH / "simple_class.py", TEST_SUITE_PATH / "simple_class.json"),)
     )
     def test_gen_cache(self, source_path: Path, data_path: Path) -> None:
-        if sys.version < (3, 7):
+        if sys.version_info < (3, 7):
             self.skipTest()
         cache = TypeInferenceProvider.gen_cache(
             root_path=source_path.parent, paths=[source_path.name], timeout=None
