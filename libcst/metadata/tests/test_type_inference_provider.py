@@ -72,7 +72,7 @@ class TypeInferenceProviderTest(UnitTest):
     )
     def test_gen_cache(self, source_path: Path, data_path: Path) -> None:
         if sys.version_info < (3, 7):
-            self.skipTest()
+            self.skipTest("this test doesnt support 3.6 and below")
         cache = TypeInferenceProvider.gen_cache(
             root_path=source_path.parent, paths=[source_path.name], timeout=None
         )
