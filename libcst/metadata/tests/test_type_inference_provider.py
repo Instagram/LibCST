@@ -5,7 +5,11 @@
 
 
 import json
+import os
+import subprocess
+import sys
 from pathlib import Path
+from unittest import skipIf
 
 import libcst as cst
 from libcst import MetadataWrapper
@@ -35,24 +39,49 @@ def _test_simple_class_helper(test: UnitTest, wrapper: MetadataWrapper) -> None:
         test.assertEqual(types[value], "int")
 
     # self
-    test.assertEqual(
-        types[self_number_attr.value], "libcst.tests.pyre.simple_class.Item"
-    )
+    test.assertEqual(types[self_number_attr.value], "simple_class.Item")
     collector_assign = cst.ensure_type(
         cst.ensure_type(m.body[3], cst.SimpleStatementLine).body[0], cst.Assign
     )
     collector = collector_assign.targets[0].target
-    test.assertEqual(types[collector], "libcst.tests.pyre.simple_class.ItemCollector")
+    test.assertEqual(types[collector], "simple_class.ItemCollector")
     items_assign = cst.ensure_type(
         cst.ensure_type(m.body[4], cst.SimpleStatementLine).body[0], cst.AnnAssign
     )
     items = items_assign.target
-    test.assertEqual(
-        types[items], "typing.Sequence[libcst.tests.pyre.simple_class.Item]"
-    )
+    test.assertEqual(types[items], "typing.Sequence[simple_class.Item]")
 
 
+@skipIf(
+    sys.version_info < (3, 7), "TypeInferenceProvider doesn't support 3.6 and below"
+)
+@skipIf(sys.platform == "win32", "TypeInferenceProvider doesn't support windows")
 class TypeInferenceProviderTest(UnitTest):
+    @classmethod
+    def setUpClass(cls):
+        os.chdir(TEST_SUITE_PATH)
+        try:
+            subprocess.run(["pyre", "-n", "start", "--no-watchman"])
+        except subprocess.TimeoutExpired as exc:
+            raise exc
+
+    @classmethod
+    def tearDownClass(cls):
+        try:
+            subprocess.run(["pyre", "-n", "stop"], cwd=TEST_SUITE_PATH)
+        except subprocess.TimeoutExpired as exc:
+            raise exc
+
+    @data_provider(
+        ((TEST_SUITE_PATH / "simple_class.py", TEST_SUITE_PATH / "simple_class.json"),)
+    )
+    def test_gen_cache(self, source_path: Path, data_path: Path) -> None:
+        cache = TypeInferenceProvider.gen_cache(
+            root_path=source_path.parent, paths=[source_path.name], timeout=None
+        )
+        data: PyreData = json.loads(data_path.read_text())
+        self.assertEqual(cache[source_path.name], data)
+
     @data_provider(
         ((TEST_SUITE_PATH / "simple_class.py", TEST_SUITE_PATH / "simple_class.json"),)
     )

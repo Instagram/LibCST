@@ -5,6 +5,7 @@
 
 
 import json
+import os
 from pathlib import Path
 from typing import Dict, List, Mapping, Optional, Tuple, Union
 
@@ -122,6 +123,7 @@ if __name__ == "__main__":
     stdout: str
     stderr: str
     return_code: int
+    os.chdir(TEST_SUITE_PATH)
     stdout, stderr, return_code = run_command(["pyre", "start", "--no-watchman"])
     if return_code != 0:
         print(stdout)
