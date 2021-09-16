@@ -9,6 +9,7 @@ import os
 import subprocess
 import sys
 from pathlib import Path
+from unittest import skipIf
 
 import libcst as cst
 from libcst import MetadataWrapper
@@ -51,6 +52,10 @@ def _test_simple_class_helper(test: UnitTest, wrapper: MetadataWrapper) -> None:
     test.assertEqual(types[items], "typing.Sequence[simple_class.Item]")
 
 
+@skipIf(
+    sys.version_info < (3, 7), "TypeInferenceProvider doesn't support 3.6 and below"
+)
+@skipIf(sys.platform == "win32", "TypeInferenceProvider doesn't support windows")
 class TypeInferenceProviderTest(UnitTest):
     @classmethod
     def setUpClass(cls):
@@ -71,8 +76,6 @@ class TypeInferenceProviderTest(UnitTest):
         ((TEST_SUITE_PATH / "simple_class.py", TEST_SUITE_PATH / "simple_class.json"),)
     )
     def test_gen_cache(self, source_path: Path, data_path: Path) -> None:
-        if sys.version_info < (3, 7):
-            self.skipTest("this test doesnt support 3.6 and below")
         cache = TypeInferenceProvider.gen_cache(
             root_path=source_path.parent, paths=[source_path.name], timeout=None
         )
