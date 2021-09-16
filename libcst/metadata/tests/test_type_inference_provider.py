@@ -5,6 +5,7 @@
 
 
 import json
+import os
 import subprocess
 from pathlib import Path
 
@@ -36,36 +37,34 @@ def _test_simple_class_helper(test: UnitTest, wrapper: MetadataWrapper) -> None:
         test.assertEqual(types[value], "int")
 
     # self
-    test.assertEqual(
-        types[self_number_attr.value], "libcst.tests.pyre.simple_class.Item"
-    )
+    test.assertEqual(types[self_number_attr.value], "simple_class.Item")
     collector_assign = cst.ensure_type(
         cst.ensure_type(m.body[3], cst.SimpleStatementLine).body[0], cst.Assign
     )
     collector = collector_assign.targets[0].target
-    test.assertEqual(types[collector], "libcst.tests.pyre.simple_class.ItemCollector")
+    test.assertEqual(types[collector], "simple_class.ItemCollector")
     items_assign = cst.ensure_type(
         cst.ensure_type(m.body[4], cst.SimpleStatementLine).body[0], cst.AnnAssign
     )
     items = items_assign.target
-    test.assertEqual(
-        types[items], "typing.Sequence[libcst.tests.pyre.simple_class.Item]"
-    )
+    test.assertEqual(types[items], "typing.Sequence[simple_class.Item]")
 
 
 class TypeInferenceProviderTest(UnitTest):
-    def setUp(self):
+    @classmethod
+    def setUpClass(cls):
+        os.chdir(TEST_SUITE_PATH)
         try:
-            subprocess.run(["pyre", "start", "--no-watchman"])
+            subprocess.run(["pyre", "-n", "start", "--no-watchman"])
         except subprocess.TimeoutExpired as exc:
             raise exc
 
-    def tearDown(self):
+    @classmethod
+    def tearDownClass(cls):
         try:
-            subprocess.run(["pyre", "stop"])
+            subprocess.run(["pyre", "-n", "stop"], cwd=TEST_SUITE_PATH)
         except subprocess.TimeoutExpired as exc:
             raise exc
-
 
     @data_provider(
         ((TEST_SUITE_PATH / "simple_class.py", TEST_SUITE_PATH / "simple_class.json"),)

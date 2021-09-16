@@ -1,0 +1,7 @@
+{
+  "source_directories": [
+    "."
+  ],
+  "search_path": [],
+  "workers": 1
+}

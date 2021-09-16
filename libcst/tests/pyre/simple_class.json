@@ -24,7 +24,7 @@
           "column": 10
         }
       },
-      "annotation": "typing.Type[libcst.tests.pyre.simple_class.Item]"
+      "annotation": "typing.Type[simple_class.Item]"
     },
     {
       "location": {
@@ -37,7 +37,7 @@
           "column": 16
         }
       },
-      "annotation": "typing.Callable(libcst.tests.pyre.simple_class.Item.__init__)[[Named(self, libcst.tests.pyre.simple_class.Item), Named(n, int)], None]"
+      "annotation": "typing.Callable(simple_class.Item.__init__)[[Named(self, simple_class.Item), Named(n, int)], None]"
     },
     {
       "location": {
@@ -50,7 +50,7 @@
           "column": 21
         }
       },
-      "annotation": "libcst.tests.pyre.simple_class.Item"
+      "annotation": "simple_class.Item"
     },
     {
       "location": {
@@ -102,7 +102,7 @@
           "column": 12
         }
       },
-      "annotation": "libcst.tests.pyre.simple_class.Item"
+      "annotation": "simple_class.Item"
     },
     {
       "location": {
@@ -154,7 +154,7 @@
           "column": 19
         }
       },
-      "annotation": "typing.Type[libcst.tests.pyre.simple_class.ItemCollector]"
+      "annotation": "typing.Type[simple_class.ItemCollector]"
     },
     {
       "location": {
@@ -167,7 +167,7 @@
           "column": 17
         }
       },
-      "annotation": "typing.Callable(libcst.tests.pyre.simple_class.ItemCollector.get_items)[[Named(self, libcst.tests.pyre.simple_class.ItemCollector), Named(n, int)], typing.Sequence[libcst.tests.pyre.simple_class.Item]]"
+      "annotation": "typing.Callable(simple_class.ItemCollector.get_items)[[Named(self, simple_class.ItemCollector), Named(n, int)], typing.Sequence[simple_class.Item]]"
     },
     {
       "location": {
@@ -180,7 +180,7 @@
           "column": 22
         }
       },
-      "annotation": "libcst.tests.pyre.simple_class.ItemCollector"
+      "annotation": "simple_class.ItemCollector"
     },
     {
       "location": {
@@ -232,7 +232,7 @@
           "column": 49
         }
       },
-      "annotation": "typing.Type[typing.Sequence[libcst.tests.pyre.simple_class.Item]]"
+      "annotation": "typing.Type[typing.Sequence[simple_class.Item]]"
     },
     {
       "location": {
@@ -245,7 +245,7 @@
           "column": 48
         }
       },
-      "annotation": "typing.Type[libcst.tests.pyre.simple_class.Item]"
+      "annotation": "typing.Type[simple_class.Item]"
     },
     {
       "location": {
@@ -258,7 +258,7 @@
           "column": 42
         }
       },
-      "annotation": "typing.List[libcst.tests.pyre.simple_class.Item]"
+      "annotation": "typing.List[simple_class.Item]"
     },
     {
       "location": {
@@ -271,7 +271,7 @@
           "column": 20
         }
       },
-      "annotation": "typing.Type[libcst.tests.pyre.simple_class.Item]"
+      "annotation": "typing.Type[simple_class.Item]"
     },
     {
       "location": {
@@ -284,7 +284,7 @@
           "column": 23
         }
       },
-      "annotation": "libcst.tests.pyre.simple_class.Item"
+      "annotation": "simple_class.Item"
     },
     {
       "location": {
@@ -349,7 +349,7 @@
           "column": 9
         }
       },
-      "annotation": "libcst.tests.pyre.simple_class.ItemCollector"
+      "annotation": "simple_class.ItemCollector"
     },
     {
       "location": {
@@ -362,7 +362,7 @@
           "column": 25
         }
       },
-      "annotation": "typing.Type[libcst.tests.pyre.simple_class.ItemCollector]"
+      "annotation": "typing.Type[simple_class.ItemCollector]"
     },
     {
       "location": {
@@ -375,7 +375,7 @@
           "column": 27
         }
       },
-      "annotation": "libcst.tests.pyre.simple_class.ItemCollector"
+      "annotation": "simple_class.ItemCollector"
     },
     {
       "location": {
@@ -388,7 +388,7 @@
           "column": 5
         }
       },
-      "annotation": "typing.Sequence[libcst.tests.pyre.simple_class.Item]"
+      "annotation": "typing.Sequence[simple_class.Item]"
     },
     {
       "location": {
@@ -401,7 +401,7 @@
           "column": 21
         }
       },
-      "annotation": "typing.Type[typing.Sequence[libcst.tests.pyre.simple_class.Item]]"
+      "annotation": "typing.Type[typing.Sequence[simple_class.Item]]"
     },
     {
       "location": {
@@ -414,7 +414,7 @@
           "column": 33
         }
       },
-      "annotation": "libcst.tests.pyre.simple_class.ItemCollector"
+      "annotation": "simple_class.ItemCollector"
     },
     {
       "location": {
@@ -427,7 +427,7 @@
           "column": 43
         }
       },
-      "annotation": "BoundMethod[typing.Callable(libcst.tests.pyre.simple_class.ItemCollector.get_items)[[Named(self, libcst.tests.pyre.simple_class.ItemCollector), Named(n, int)], typing.Sequence[libcst.tests.pyre.simple_class.Item]], libcst.tests.pyre.simple_class.ItemCollector]"
+      "annotation": "BoundMethod[typing.Callable(simple_class.ItemCollector.get_items)[[Named(self, simple_class.ItemCollector), Named(n, int)], typing.Sequence[simple_class.Item]], simple_class.ItemCollector]"
     },
     {
       "location": {
@@ -440,7 +440,7 @@
           "column": 46
         }
       },
-      "annotation": "typing.Sequence[libcst.tests.pyre.simple_class.Item]"
+      "annotation": "typing.Sequence[simple_class.Item]"
     },
     {
       "location": {
@@ -466,7 +466,7 @@
           "column": 8
         }
       },
-      "annotation": "libcst.tests.pyre.simple_class.Item"
+      "annotation": "simple_class.Item"
     },
     {
       "location": {
@@ -479,7 +479,7 @@
           "column": 17
         }
       },
-      "annotation": "typing.Sequence[libcst.tests.pyre.simple_class.Item]"
+      "annotation": "typing.Sequence[simple_class.Item]"
     },
     {
       "location": {
@@ -492,7 +492,7 @@
           "column": 8
         }
       },
-      "annotation": "libcst.tests.pyre.simple_class.Item"
+      "annotation": "simple_class.Item"
     },
     {
       "location": {
