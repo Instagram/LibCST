@@ -570,7 +570,7 @@ class MatcherDecoratableTransformer(CSTTransformer):
         tree: Union[cst.MaybeSentinel, cst.RemovalSentinel, cst.CSTNode],
         matcher: Union[
             BaseMatcherNode,
-            MatchIfTrue[Callable[..., bool]],
+            MatchIfTrue[cst.CSTNode],
             MatchMetadata,
             MatchMetadataIfTrue,
         ],
@@ -603,7 +603,7 @@ class MatcherDecoratableTransformer(CSTTransformer):
         tree: Union[cst.MaybeSentinel, cst.RemovalSentinel, cst.CSTNode],
         matcher: Union[
             BaseMatcherNode,
-            MatchIfTrue[Callable[..., bool]],
+            MatchIfTrue[cst.CSTNode],
             MatchMetadata,
             MatchMetadataIfTrue,
         ],
@@ -622,7 +622,7 @@ class MatcherDecoratableTransformer(CSTTransformer):
         tree: Union[cst.MaybeSentinel, cst.RemovalSentinel, cst.CSTNode],
         matcher: Union[
             BaseMatcherNode,
-            MatchIfTrue[Callable[..., bool]],
+            MatchIfTrue[cst.CSTNode],
             MatchMetadata,
             MatchMetadataIfTrue,
         ],
@@ -765,7 +765,7 @@ class MatcherDecoratableVisitor(CSTVisitor):
         tree: Union[cst.MaybeSentinel, cst.RemovalSentinel, cst.CSTNode],
         matcher: Union[
             BaseMatcherNode,
-            MatchIfTrue[Callable[..., bool]],
+            MatchIfTrue[cst.CSTNode],
             MatchMetadata,
             MatchMetadataIfTrue,
         ],
@@ -798,7 +798,7 @@ class MatcherDecoratableVisitor(CSTVisitor):
         tree: Union[cst.MaybeSentinel, cst.RemovalSentinel, cst.CSTNode],
         matcher: Union[
             BaseMatcherNode,
-            MatchIfTrue[Callable[..., bool]],
+            MatchIfTrue[cst.CSTNode],
             MatchMetadata,
             MatchMetadataIfTrue,
         ],
@@ -817,7 +817,7 @@ class MatcherDecoratableVisitor(CSTVisitor):
         tree: Union[cst.MaybeSentinel, cst.RemovalSentinel, cst.CSTNode],
         matcher: Union[
             BaseMatcherNode,
-            MatchIfTrue[Callable[..., bool]],
+            MatchIfTrue[cst.CSTNode],
             MatchMetadata,
             MatchMetadataIfTrue,
         ],

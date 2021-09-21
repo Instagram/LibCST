@@ -49,7 +49,7 @@ class DoNotCareSentinel(Enum):
 
 
 _MatcherT = TypeVar("_MatcherT", covariant=True)
-_CallableT = TypeVar("_CallableT", bound="Callable", covariant=True)
+_MatchIfTrueT = TypeVar("_MatchIfTrueT", covariant=True)
 _BaseMatcherNodeSelfT = TypeVar("_BaseMatcherNodeSelfT", bound="BaseMatcherNode")
 _OtherNodeT = TypeVar("_OtherNodeT")
 _MetadataValueT = TypeVar("_MetadataValueT")
@@ -472,7 +472,7 @@ class _ExtractMatchingNode(Generic[_MatcherT]):
         )
 
 
-class MatchIfTrue(Generic[_CallableT]):
+class MatchIfTrue(Generic[_MatchIfTrueT]):
     """
     Matcher that matches if its child callable returns ``True``. The child callable
     should take one argument which is the attribute on the LibCST node we are
@@ -491,13 +491,13 @@ class MatchIfTrue(Generic[_CallableT]):
     you are passing to :func:`matches`.
     """
 
-    def __init__(self, func: _CallableT) -> None:
-        # Without a cast, pyre thinks that self.func is not a function, even though
-        # it recognizes that it is a _CallableT bound to Callable.
-        self._func: Callable[[object], bool] = cast(Callable[[object], bool], func)
+    _func: Callable[[_MatchIfTrueT], bool]
+
+    def __init__(self, func: Callable[[_MatchIfTrueT], bool]) -> None:
+        self._func = func
 
     @property
-    def func(self) -> Callable[[object], bool]:
+    def func(self) -> Callable[[_MatchIfTrueT], bool]:
         """
         The function that we will call with a LibCST node in order to determine
         if we match. If the function returns ``True`` then we consider ourselves
@@ -507,33 +507,33 @@ class MatchIfTrue(Generic[_CallableT]):
 
     def __or__(
         self, other: _OtherNodeT
-    ) -> "OneOf[Union[MatchIfTrue[_CallableT], _OtherNodeT]]":
+    ) -> "OneOf[Union[MatchIfTrue[_MatchIfTrueT], _OtherNodeT]]":
         # Without a cast, pyre thinks that the below OneOf is type OneOf[object]
         # even though it has the types passed into it.
         return cast(
-            OneOf[Union[MatchIfTrue[_CallableT], _OtherNodeT]], OneOf(self, other)
+            OneOf[Union[MatchIfTrue[_MatchIfTrueT], _OtherNodeT]], OneOf(self, other)
         )
 
     def __and__(
         self, other: _OtherNodeT
-    ) -> "AllOf[Union[MatchIfTrue[_CallableT], _OtherNodeT]]":
+    ) -> "AllOf[Union[MatchIfTrue[_MatchIfTrueT], _OtherNodeT]]":
         # Without a cast, pyre thinks that the below AllOf is type AllOf[object]
         # even though it has the types passed into it.
         return cast(
-            AllOf[Union[MatchIfTrue[_CallableT], _OtherNodeT]], AllOf(self, other)
+            AllOf[Union[MatchIfTrue[_MatchIfTrueT], _OtherNodeT]], AllOf(self, other)
         )
 
-    def __invert__(self) -> "MatchIfTrue[_CallableT]":
+    def __invert__(self) -> "MatchIfTrue[_MatchIfTrueT]":
         # Construct a wrapped version of MatchIfTrue for typing simplicity.
         # Without the cast, pyre doesn't seem to think the lambda is valid.
-        return MatchIfTrue(cast(_CallableT, lambda val: not self._func(val)))
+        return MatchIfTrue(lambda val: not self._func(val))
 
     def __repr__(self) -> str:
         # pyre-ignore Pyre doesn't believe that functions have a repr.
         return f"MatchIfTrue({repr(self._func)})"
 
 
-def MatchRegex(regex: Union[str, Pattern[str]]) -> MatchIfTrue[Callable[[str], bool]]:
+def MatchRegex(regex: Union[str, Pattern[str]]) -> MatchIfTrue[str]:
     """
     Used as a convenience wrapper to :class:`MatchIfTrue` which allows for
     matching a string attribute against a regex. ``regex`` can be any regular
@@ -1032,7 +1032,7 @@ def _matches_zero_nodes(
     matcher: Union[
         BaseMatcherNode,
         _BaseWildcardNode,
-        MatchIfTrue[Callable[[object], bool]],
+        MatchIfTrue[libcst.CSTNode],
         _BaseMetadataMatcher,
         DoNotCareSentinel,
     ]
@@ -1062,7 +1062,7 @@ def _sequence_matches(  # noqa: C901
         Union[
             BaseMatcherNode,
             _BaseWildcardNode,
-            MatchIfTrue[Callable[[object], bool]],
+            MatchIfTrue[libcst.CSTNode],
             _BaseMetadataMatcher,
             DoNotCareSentinel,
         ]
@@ -1288,7 +1288,7 @@ def _attribute_matches(  # noqa: C901
                         Union[
                             BaseMatcherNode,
                             _BaseWildcardNode,
-                            MatchIfTrue[Callable[[object], bool]],
+                            MatchIfTrue[libcst.CSTNode],
                             DoNotCareSentinel,
                         ]
                     ],
@@ -1371,19 +1371,19 @@ def _node_matches(  # noqa: C901
     node: libcst.CSTNode,
     matcher: Union[
         BaseMatcherNode,
-        MatchIfTrue[Callable[[object], bool]],
+        MatchIfTrue[libcst.CSTNode],
         _BaseMetadataMatcher,
         _InverseOf[
             Union[
                 BaseMatcherNode,
-                MatchIfTrue[Callable[[object], bool]],
+                MatchIfTrue[libcst.CSTNode],
                 _BaseMetadataMatcher,
             ]
         ],
         _ExtractMatchingNode[
             Union[
                 BaseMatcherNode,
-                MatchIfTrue[Callable[[object], bool]],
+                MatchIfTrue[libcst.CSTNode],
                 _BaseMetadataMatcher,
             ]
         ],
@@ -1454,19 +1454,19 @@ def _matches(
     node: Union[MaybeSentinel, libcst.CSTNode],
     matcher: Union[
         BaseMatcherNode,
-        MatchIfTrue[Callable[[object], bool]],
+        MatchIfTrue[libcst.CSTNode],
         _BaseMetadataMatcher,
         _InverseOf[
             Union[
                 BaseMatcherNode,
-                MatchIfTrue[Callable[[object], bool]],
+                MatchIfTrue[libcst.CSTNode],
                 _BaseMetadataMatcher,
             ]
         ],
         _ExtractMatchingNode[
             Union[
                 BaseMatcherNode,
-                MatchIfTrue[Callable[[object], bool]],
+                MatchIfTrue[libcst.CSTNode],
                 _BaseMetadataMatcher,
             ]
         ],
@@ -1605,12 +1605,12 @@ class _FindAllVisitor(libcst.CSTVisitor):
         self,
         matcher: Union[
             BaseMatcherNode,
-            MatchIfTrue[Callable[[object], bool]],
+            MatchIfTrue[libcst.CSTNode],
             _BaseMetadataMatcher,
             _InverseOf[
                 Union[
                     BaseMatcherNode,
-                    MatchIfTrue[Callable[[object], bool]],
+                    MatchIfTrue[libcst.CSTNode],
                     _BaseMetadataMatcher,
                 ]
             ],
@@ -1636,7 +1636,7 @@ def _find_or_extract_all(
     tree: Union[MaybeSentinel, RemovalSentinel, libcst.CSTNode, meta.MetadataWrapper],
     matcher: Union[
         BaseMatcherNode,
-        MatchIfTrue[Callable[[object], bool]],
+        MatchIfTrue[libcst.CSTNode],
         _BaseMetadataMatcher,
         # The inverse clause is left off of the public functions `findall` and
         # `extractall` because we play a dirty trick. We lie to the typechecker
@@ -1647,7 +1647,7 @@ def _find_or_extract_all(
         _InverseOf[
             Union[
                 BaseMatcherNode,
-                MatchIfTrue[Callable[[object], bool]],
+                MatchIfTrue[libcst.CSTNode],
                 _BaseMetadataMatcher,
             ]
         ],
@@ -1687,9 +1687,7 @@ def _find_or_extract_all(
 
 def findall(
     tree: Union[MaybeSentinel, RemovalSentinel, libcst.CSTNode, meta.MetadataWrapper],
-    matcher: Union[
-        BaseMatcherNode, MatchIfTrue[Callable[[object], bool]], _BaseMetadataMatcher
-    ],
+    matcher: Union[BaseMatcherNode, MatchIfTrue[libcst.CSTNode], _BaseMetadataMatcher],
     *,
     metadata_resolver: Optional[
         Union[libcst.MetadataDependent, libcst.MetadataWrapper]
@@ -1722,9 +1720,7 @@ def findall(
 
 def extractall(
     tree: Union[MaybeSentinel, RemovalSentinel, libcst.CSTNode, meta.MetadataWrapper],
-    matcher: Union[
-        BaseMatcherNode, MatchIfTrue[Callable[[object], bool]], _BaseMetadataMatcher
-    ],
+    matcher: Union[BaseMatcherNode, MatchIfTrue[libcst.CSTNode], _BaseMetadataMatcher],
     *,
     metadata_resolver: Optional[
         Union[libcst.MetadataDependent, libcst.MetadataWrapper]
@@ -1764,12 +1760,12 @@ class _ReplaceTransformer(libcst.CSTTransformer):
         self,
         matcher: Union[
             BaseMatcherNode,
-            MatchIfTrue[Callable[[object], bool]],
+            MatchIfTrue[libcst.CSTNode],
             _BaseMetadataMatcher,
             _InverseOf[
                 Union[
                     BaseMatcherNode,
-                    MatchIfTrue[Callable[[object], bool]],
+                    MatchIfTrue[libcst.CSTNode],
                     _BaseMetadataMatcher,
                 ]
             ],
@@ -1866,9 +1862,7 @@ class _ReplaceTransformer(libcst.CSTTransformer):
 
 def replace(
     tree: Union[MaybeSentinel, RemovalSentinel, libcst.CSTNode, meta.MetadataWrapper],
-    matcher: Union[
-        BaseMatcherNode, MatchIfTrue[Callable[[object], bool]], _BaseMetadataMatcher
-    ],
+    matcher: Union[BaseMatcherNode, MatchIfTrue[libcst.CSTNode], _BaseMetadataMatcher],
     replacement: Union[
         MaybeSentinel,
         RemovalSentinel,
