@@ -1,3 +1,14 @@
+# 0.3.21 - 2021-09-21
+
+## Fixed
+- Fix pyre command for type inference provider [#523](https://github.com/Instagram/LibCST/pull/523)
+
+## Updated
+- Change codegen to treat typing.Union[Foo, NoneType] and typing.Optional[Foo] as the same [#508]((https://github.com/Instagram/LibCST/pull/508)
+- Rewrite the MatchIfTrue type to be generic on _MatchIfTrueT [#512](https://github.com/Instagram/LibCST/pull/512)
+- Add python3.9 to the CI [#506](https://github.com/Instagram/LibCST/pull/506)
+- Various CI changes [#471](https://github.com/Instagram/LibCST/pull/471) [#510](https://github.com/Instagram/LibCST/pull/510) [#505](https://github.com/Instagram/LibCST/pull/505) [#515](https://github.com/Instagram/LibCST/pull/515) [#516](https://github.com/Instagram/LibCST/pull/516)
+
 # 0.3.20 - 2021-08-09
 
 ## Fixed
