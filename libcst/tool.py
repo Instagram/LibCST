@@ -136,6 +136,7 @@ def _node_repr_recursive(  # noqa: C901
                     child_tokens.extend(
                         _node_repr_recursive(
                             value,
+                            indent=indent,
                             show_whitespace=show_whitespace,
                             show_defaults=show_defaults,
                             show_syntax=show_syntax,
@@ -152,6 +153,7 @@ def _node_repr_recursive(  # noqa: C901
                             list_tokens.extend(
                                 _node_repr_recursive(
                                     v,
+                                    indent=indent,
                                     show_whitespace=show_whitespace,
                                     show_defaults=show_defaults,
                                     show_syntax=show_syntax,
@@ -248,6 +250,11 @@ def _print_tree_impl(proc_name: str, command_args: List[str]) -> int:
         help="Show values that exist only for syntax, like commas or semicolons",
     )
     parser.add_argument(
+        "--indent-string",
+        default=_DEFAULT_INDENT,
+        help=f"String to use for indenting levels, defaults to {_DEFAULT_INDENT!r}",
+    )
+    parser.add_argument(
         "-p",
         "--python-version",
         metavar="VERSION",
@@ -279,6 +286,7 @@ def _print_tree_impl(proc_name: str, command_args: List[str]) -> int:
     print(
         dump(
             tree,
+            indent=args.indent_string,
             show_defaults=args.show_defaults,
             show_syntax=args.show_syntax,
             show_whitespace=args.show_whitespace,
