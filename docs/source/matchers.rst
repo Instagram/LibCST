@@ -13,7 +13,7 @@ defining what attributes on a node matter when matching against predefined patte
 
 To accomplish this, a matcher has been created which corresponds to each LibCST
 node documented in :ref:`libcst-nodes`. Matchers default each of their attributes
-to the special sentinal matcher :func:`~libcst.matchers.DoNotCare`. When constructing
+to the special sentinel matcher :func:`~libcst.matchers.DoNotCare`. When constructing
 a matcher, you can initialize the node with only the values of attributes that
 you are concerned with, leaving the rest of the attributes set to
 :func:`~libcst.matchers.DoNotCare` in order to skip comparing against them.
@@ -79,7 +79,7 @@ Traversal Order
 ^^^^^^^^^^^^^^^
 
 Visit and leave functions created using :func:`~libcst.matchers.visit` or
-:func:`~libcst.matchers.leave` follow the traveral order rules laid out in
+:func:`~libcst.matchers.leave` follow the traversal order rules laid out in
 LibCST's visitor :ref:`libcst-visitor-traversal` with one additional rule. Any
 visit function created using the :func:`~libcst.matchers.visit` decorator will be
 called **before** a ``visit_<Node>`` function if it is defined for your visitor.

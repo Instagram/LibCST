@@ -1711,7 +1711,7 @@ def findall(
     or a :class:`OneOf`/:class:`AllOf` special matcher. Unlike :func:`matches`, it can
     also be a :class:`MatchIfTrue` or :func:`DoesNotMatch` matcher, since we are
     traversing the tree looking for matches. It cannot be a :class:`AtLeastN` or
-    :class:`AtMostN` matcher because these types are wildcards which can only be usedi
+    :class:`AtMostN` matcher because these types are wildcards which can only be used
     inside sequences.
     """
     nodes, _ = _find_or_extract_all(tree, matcher, metadata_resolver=metadata_resolver)
