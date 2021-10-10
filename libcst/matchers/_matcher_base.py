@@ -210,17 +210,6 @@ class OneOf(Generic[_MatcherT], BaseMatcherNode):
 
         m.Name("True") | m.Name("False")
 
-    Note that a :class:`OneOf` matcher can be used anywhere you are defining
-    a matcher attribute. So, an alternate form to the first example looks like::
-
-        m.Name(m.OneOf("True", "False"))
-
-    A downside to the alternate form is that you can no longer use Python's
-    bitwise or operator to construct the :class:`OneOf` since it is not defined
-    for strings. However, the upside is that it is more concise. We do not
-    recommend any one form over the other, and leave it up to you to decide what
-    is best for your use case.
-
     """
 
     def __init__(self, *options: Union[_MatcherT, "OneOf[_MatcherT]"]) -> None:
