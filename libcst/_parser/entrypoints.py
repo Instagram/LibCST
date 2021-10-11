@@ -9,6 +9,7 @@ parser. A parser entrypoint should take the source code and some configuration
 information
 """
 
+import os
 from typing import Union
 
 from libcst._nodes.base import CSTNode
@@ -24,6 +25,36 @@ _DEFAULT_PARTIAL_PARSER_CONFIG: PartialParserConfig = PartialParserConfig()
 
 
 def _parse(
+    entrypoint: str,
+    source: Union[str, bytes],
+    config: PartialParserConfig,
+    *,
+    detect_trailing_newline: bool,
+    detect_default_newline: bool,
+) -> CSTNode:
+    typ = os.environ.get("LIBCST_PARSER_TYPE", None)
+    if typ == "native":
+        from libcst.native import parse_module, parse_expression, parse_statement
+
+        if entrypoint == "file_input":
+            parse = parse_module
+        elif entrypoint == "stmt_input":
+            parse = parse_statement
+        elif entrypoint == "expression_input":
+            parse = parse_expression
+        else:
+            raise ValueError(f"Unknown parser entry point: {entrypoint}")
+        return parse(source)
+    return _pure_parse(
+        entrypoint,
+        source,
+        config,
+        detect_trailing_newline=detect_trailing_newline,
+        detect_default_newline=detect_default_newline,
+    )
+
+
+def _pure_parse(
     entrypoint: str,
     source: Union[str, bytes],
     config: PartialParserConfig,

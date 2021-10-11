@@ -15,3 +15,4 @@ sphinx-rtd-theme>=0.4.3
 tox>=3.18.1
 ufmt==1.2
 usort==0.6.3
+setuptools-rust>=0.12.1

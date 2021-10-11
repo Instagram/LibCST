@@ -240,7 +240,7 @@ parser! {
             / e:named_expression() { expr_to_element(e) }
 
         #[cache]
-        rule expression() -> Expression<'a>
+        pub rule expression() -> Expression<'a>
             = _conditional_expression()
             / lambdef()
 

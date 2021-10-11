@@ -7,6 +7,8 @@
 from os import path, environ
 
 import setuptools
+from setuptools_rust import Binding, RustExtension
+
 
 # Grab the readme so that our package stays in sync with github.
 this_directory: str = path.abspath(path.dirname(__file__))
@@ -49,8 +51,12 @@ setuptools.setup(
             for dep in open("requirements-dev.txt").readlines()
             if "=" in dep
         ],
-        "native": ["libcst_native==0.1.0"],
     },
+    rust_extensions=[
+        RustExtension(
+            "libcst.native", path="native/libcst/Cargo.toml", binding=Binding.PyO3
+        )
+    ],
     classifiers=[
         "License :: OSI Approved :: MIT License",
         "Topic :: Software Development :: Libraries",
