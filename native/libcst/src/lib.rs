@@ -7,6 +7,7 @@ use std::cmp::{max, min};
 
 mod tokenizer;
 
+pub use tokenizer::whitespace_parser::Config;
 use tokenizer::{whitespace_parser, TokConfig, Token, TokenIterator};
 
 mod nodes;
@@ -37,11 +38,6 @@ pub fn parse_tokens_without_whitespace<'a>(
     parser::python::file(&tokens.into(), module_text).map_err(ParserError::ParserError)
 }
 
-pub fn parse_whitespace<'a, T: Inflate<'a>>(m: T, module_text: &'a str) -> Result<'a, T> {
-    let conf = whitespace_parser::Config::new(module_text);
-    Ok(m.inflate(&conf)?)
-}
-
 pub fn parse_module(mut module_text: &str) -> Result<Module> {
     // Strip UTF-8 BOM
     if let Some(stripped) = module_text.strip_prefix('\u{feff}') {
@@ -49,16 +45,18 @@ pub fn parse_module(mut module_text: &str) -> Result<Module> {
     }
     // eprintln!("{:#?}", result);
     let tokens = tokenize(module_text)?;
+    let conf = whitespace_parser::Config::new(module_text, &tokens);
     let m = parse_tokens_without_whitespace(tokens, module_text)?;
-    parse_whitespace(m, module_text)
+    Ok(m.inflate(&conf)?)
 }
 
 pub fn parse_statement(text: &str) -> Result<Statement> {
     let mut tokens = tokenize(text)?;
     // HACK: we don't need an EOF token for this term
     tokens.pop();
+    let conf = whitespace_parser::Config::new(text, &tokens);
     let stm = parser::python::statement(&tokens.into(), text).map_err(ParserError::ParserError)?;
-    parse_whitespace(stm, text)
+    Ok(stm.inflate(&conf)?)
 }
 
 pub fn parse_expression(text: &str) -> Result<Expression> {
@@ -66,9 +64,10 @@ pub fn parse_expression(text: &str) -> Result<Expression> {
     // HACK: we don't need an EOF and EOL token for this term
     tokens.pop(); // EOF
     tokens.pop(); // EOL
+    let conf = whitespace_parser::Config::new(text, &tokens);
     let expr =
         parser::python::expression(&tokens.into(), text).map_err(ParserError::ParserError)?;
-    parse_whitespace(expr, text)
+    Ok(expr.inflate(&conf)?)
 }
 
 // n starts from 1

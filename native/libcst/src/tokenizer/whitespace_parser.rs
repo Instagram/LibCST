@@ -6,6 +6,10 @@ use once_cell::sync::Lazy;
 use regex::Regex;
 use thiserror::Error;
 
+use crate::Token;
+
+use super::TokType;
+
 static SIMPLE_WHITESPACE_RE: Lazy<Regex> =
     Lazy::new(|| Regex::new(r"\A([ \f\t]|\\(\r\n?|\n))*").expect("regex"));
 static NEWLINE_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"\A(\r\n?|\n)").expect("regex"));
@@ -51,16 +55,26 @@ pub struct Config<'a> {
     pub input: &'a str,
     pub lines: Vec<&'a str>,
     pub default_newline: &'a str,
+    pub default_indent: &'a str,
 }
 
 impl<'a> Config<'a> {
-    pub fn new(input: &'a str) -> Self {
+    pub fn new(input: &'a str, tokens: &[Token<'a>]) -> Self {
+        let mut default_indent = "    ";
+        for tok in tokens {
+            if tok.r#type == TokType::Indent {
+                default_indent = tok.relative_indent.unwrap();
+                break;
+            }
+        }
         Self {
             input,
             lines: input.split_inclusive('\n').collect(),
             default_newline: "\n",
+            default_indent,
         }
     }
+
     fn get_line(&self, line_number: usize) -> Result<&'a str> {
         let err_fn = || {
             WhitespaceError::InternalError(format!(

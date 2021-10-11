@@ -9,7 +9,7 @@ use criterion::{
 use criterion_cycles_per_byte::CyclesPerByte;
 use itertools::Itertools;
 use libcst_native::{
-    parse_module, parse_tokens_without_whitespace, parse_whitespace, tokenize, Codegen,
+    parse_module, parse_tokens_without_whitespace, tokenize, Codegen, Config, Inflate,
 };
 
 fn load_all_fixtures() -> String {
@@ -43,10 +43,12 @@ pub fn inflate_benchmarks<T: Measurement>(c: &mut Criterion<T>) {
     group.bench_function("all", |b| {
         b.iter_batched(
             || {
-                parse_tokens_without_whitespace(tokens.clone(), fixture.as_str())
-                    .expect("parse failed")
+                let conf = Config::new(fixture.as_str(), &tokens);
+                let m = parse_tokens_without_whitespace(tokens.clone(), fixture.as_str())
+                    .expect("parse failed");
+                (conf, m)
             },
-            |m| black_box(parse_whitespace(m, fixture.as_str())),
+            |(conf, m)| black_box(m.inflate(&conf)),
             BatchSize::SmallInput,
         )
     });

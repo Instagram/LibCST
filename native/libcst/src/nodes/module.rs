@@ -28,6 +28,9 @@ pub struct Module<'a> {
     pub header: Vec<EmptyLine<'a>>,
     pub footer: Vec<EmptyLine<'a>>,
 
+    pub default_indent: &'a str,
+    pub default_newline: &'a str,
+
     pub(crate) eof_tok: TokenRef<'a>,
 }
 
@@ -47,6 +50,8 @@ impl<'a> Codegen<'a> for Module<'a> {
 
 impl<'a> Inflate<'a> for Module<'a> {
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.default_indent = config.default_indent;
+        self.default_newline = config.default_newline;
         self.body = self.body.inflate(config)?;
         let mut footer = parse_empty_lines(
             config,

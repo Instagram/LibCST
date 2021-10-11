@@ -9,6 +9,7 @@ pub struct CodegenState<'a> {
     pub tokens: String,
     pub indent_tokens: Vec<&'a str>,
     pub default_newline: &'a str,
+    pub default_indent: &'a str,
 }
 
 impl<'a> CodegenState<'a> {
@@ -56,6 +57,7 @@ impl<'a> Default for CodegenState<'a> {
     fn default() -> Self {
         Self {
             default_newline: LINE_ENDING,
+            default_indent: "    ",
             indent_tokens: Default::default(),
             tokens: Default::default(),
         }

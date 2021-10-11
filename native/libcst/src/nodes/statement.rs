@@ -105,7 +105,7 @@ impl<'a> Codegen<'a> for IndentedBlock<'a> {
 
         let indent = match self.indent {
             Some(i) => i,
-            None => todo!(),
+            None => state.default_indent,
         };
         state.indent(indent);
 
@@ -158,6 +158,9 @@ impl<'a> Inflate<'a> for IndentedBlock<'a> {
         self.footer = footer;
         self.header = header;
         self.indent = self.indent_tok.relative_indent;
+        if self.indent == Some(config.default_indent) {
+            self.indent = None;
+        }
         Ok(self)
     }
 }

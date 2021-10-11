@@ -1787,6 +1787,8 @@ fn make_module<'a>(body: Vec<Statement<'a>>, tok: TokenRef<'a>) -> Module<'a> {
         header: Default::default(),
         footer: Default::default(),
         eof_tok: tok,
+        default_indent: "    ",
+        default_newline: "\n",
     }
 }
 
