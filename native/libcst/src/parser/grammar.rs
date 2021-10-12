@@ -1789,6 +1789,7 @@ fn make_module<'a>(body: Vec<Statement<'a>>, tok: TokenRef<'a>) -> Module<'a> {
         eof_tok: tok,
         default_indent: "    ",
         default_newline: "\n",
+        has_trailing_newline: false,
     }
 }
 

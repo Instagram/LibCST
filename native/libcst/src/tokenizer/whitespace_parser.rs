@@ -75,6 +75,12 @@ impl<'a> Config<'a> {
         }
     }
 
+    pub fn has_trailing_newline(&self) -> bool {
+        self.input.ends_with('\n')
+            && !self.input.ends_with("\\\n")
+            && !self.input.ends_with("\\\r\n")
+    }
+
     fn get_line(&self, line_number: usize) -> Result<&'a str> {
         let err_fn = || {
             WhitespaceError::InternalError(format!(

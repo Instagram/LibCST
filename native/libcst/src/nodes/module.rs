@@ -16,9 +16,9 @@ use crate::{
     },
     tokenizer::whitespace_parser::Config,
 };
+use libcst_derive::IntoPy;
 
 use super::traits::{Inflate, Result, WithLeadingLines};
-use libcst_derive::IntoPy;
 
 type TokenRef<'a> = Rc<Token<'a>>;
 
@@ -30,6 +30,7 @@ pub struct Module<'a> {
 
     pub default_indent: &'a str,
     pub default_newline: &'a str,
+    pub has_trailing_newline: bool,
 
     pub(crate) eof_tok: TokenRef<'a>,
 }
@@ -52,6 +53,7 @@ impl<'a> Inflate<'a> for Module<'a> {
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.default_indent = config.default_indent;
         self.default_newline = config.default_newline;
+        self.has_trailing_newline = config.has_trailing_newline();
         self.body = self.body.inflate(config)?;
         let mut footer = parse_empty_lines(
             config,
