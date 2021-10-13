@@ -54,7 +54,9 @@ setuptools.setup(
     },
     rust_extensions=[
         RustExtension(
-            "libcst.native", path="native/libcst/Cargo.toml", binding=Binding.PyO3
+            "libcst.native",
+            path="native/libcst/Cargo.toml",
+            binding=Binding.PyO3,
         )
     ],
     classifiers=[

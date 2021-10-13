@@ -116,15 +116,21 @@ parser! {
         pub rule file() -> Module<'a>
             = traced(<_file()>)
 
+        pub rule expression_input() -> Expression<'a>
+            = traced(<e:expression() tok(NL, "NEWLINE") tok(EndMarker, "EOF") {e}>)
+
+        pub rule statement_input() -> Statement<'a>
+            = traced(<s:statement() tok(EndMarker, "EOF") {s}>)
+
         rule _file() -> Module<'a>
             = s:statements()? eof:tok(EndMarker, "EOF") {
                 make_module(s.unwrap_or_default(), eof)
             }
 
-        pub rule statements() -> Vec<Statement<'a>>
+        rule statements() -> Vec<Statement<'a>>
             = statement()+
 
-        pub rule statement() -> Statement<'a>
+        rule statement() -> Statement<'a>
             = c:compound_stmt() { Statement::Compound(c) }
             / s:simple_stmt() {
                     Statement::Simple(make_simple_statement_line(s))
@@ -240,7 +246,7 @@ parser! {
             / e:named_expression() { expr_to_element(e) }
 
         #[cache]
-        pub rule expression() -> Expression<'a>
+        rule expression() -> Expression<'a>
             = _conditional_expression()
             / lambdef()
 

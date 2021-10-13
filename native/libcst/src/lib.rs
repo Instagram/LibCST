@@ -51,22 +51,18 @@ pub fn parse_module(mut module_text: &str) -> Result<Module> {
 }
 
 pub fn parse_statement(text: &str) -> Result<Statement> {
-    let mut tokens = tokenize(text)?;
-    // HACK: we don't need an EOF token for this term
-    tokens.pop();
+    let tokens = tokenize(text)?;
     let conf = whitespace_parser::Config::new(text, &tokens);
-    let stm = parser::python::statement(&tokens.into(), text).map_err(ParserError::ParserError)?;
+    let stm =
+        parser::python::statement_input(&tokens.into(), text).map_err(ParserError::ParserError)?;
     Ok(stm.inflate(&conf)?)
 }
 
 pub fn parse_expression(text: &str) -> Result<Expression> {
-    let mut tokens = tokenize(text)?;
-    // HACK: we don't need an EOF and EOL token for this term
-    tokens.pop(); // EOF
-    tokens.pop(); // EOL
+    let tokens = tokenize(text)?;
     let conf = whitespace_parser::Config::new(text, &tokens);
     let expr =
-        parser::python::expression(&tokens.into(), text).map_err(ParserError::ParserError)?;
+        parser::python::expression_input(&tokens.into(), text).map_err(ParserError::ParserError)?;
     Ok(expr.inflate(&conf)?)
 }
 
