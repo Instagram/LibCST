@@ -1476,11 +1476,7 @@ fn make_unary_operator(tok: TokenRef) -> Result<UnaryOp> {
 }
 
 fn make_number(num: TokenRef) -> Expression {
-    Expression::Integer(Integer {
-        value: num.string,
-        lpar: vec![],
-        rpar: vec![],
-    })
+    super::numbers::parse_number(num.string)
 }
 
 fn make_indented_block<'a>(
