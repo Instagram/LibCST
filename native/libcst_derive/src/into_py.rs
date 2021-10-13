@@ -30,7 +30,7 @@ fn impl_into_py_enum(ast: &DeriveInput, e: &DataEnum) -> TokenStream {
                     }
                     fieldnames.push(field.ident.as_ref().unwrap());
                 }
-                let kwargs_toks = fields_to_kwargs(&var.fields);
+                let kwargs_toks = fields_to_kwargs(&var.fields, true);
                 toks.push(quote! {
                     Self::#varname { #(#fieldnames,)* .. } => {
                         let libcst = pyo3::types::PyModule::import(py, "libcst").expect("libcst couldn't be imported");
@@ -75,7 +75,7 @@ fn impl_into_py_enum(ast: &DeriveInput, e: &DataEnum) -> TokenStream {
 }
 
 fn impl_into_py_struct(ast: &DeriveInput, e: &DataStruct) -> TokenStream {
-    let kwargs_toks = fields_to_kwargs(&e.fields);
+    let kwargs_toks = fields_to_kwargs(&e.fields, false);
     let ident = &ast.ident;
     let generics = &ast.generics;
     let gen = quote! {
@@ -97,7 +97,7 @@ fn impl_into_py_struct(ast: &DeriveInput, e: &DataStruct) -> TokenStream {
     gen.into()
 }
 
-fn fields_to_kwargs(fields: &Fields) -> quote::__private::TokenStream {
+fn fields_to_kwargs(fields: &Fields, is_enum: bool) -> quote::__private::TokenStream {
     let mut empty_kwargs = false;
     let mut py_varnames = vec![];
     let mut rust_varnames = vec![];
@@ -110,9 +110,18 @@ fn fields_to_kwargs(fields: &Fields) -> quote::__private::TokenStream {
                     continue;
                 }
                 if let Some(ident) = field.ident.as_ref() {
-                    if let Visibility::Public(_) = field.vis {
+                    let include = if let Visibility::Public(_) = field.vis {
+                        true
+                    } else {
+                        is_enum
+                    };
+                    if include {
                         let pyname = format_ident!("{}", ident);
-                        let rustname = ident.to_token_stream();
+                        let rustname = if is_enum {
+                            ident.to_token_stream()
+                        } else {
+                            quote! { self.#ident }
+                        };
                         if !has_attr(&field.attrs, "no_py_default") {
                             if let Type::Path(TypePath { path, .. }) = &field.ty {
                                 if let Some(first) = path.segments.first() {
@@ -134,7 +143,7 @@ fn fields_to_kwargs(fields: &Fields) -> quote::__private::TokenStream {
         Fields::Unnamed(FieldsUnnamed { unnamed, .. }) => {
             if unnamed.first().is_some() {
                 py_varnames.push(format_ident!("value"));
-                rust_varnames.push(quote! { 0 });
+                rust_varnames.push(quote! { self.0 });
             } else {
                 empty_kwargs = true;
             }
@@ -144,10 +153,10 @@ fn fields_to_kwargs(fields: &Fields) -> quote::__private::TokenStream {
         }
     };
     let kwargs_pairs = quote! {
-        #(Some((stringify!(#py_varnames), self.#rust_varnames.into_py(py))),)*
+        #(Some((stringify!(#py_varnames), #rust_varnames.into_py(py))),)*
     };
     let optional_pairs = quote! {
-        #(self.#optional_rust_varnames.map(|x| (stringify!(#optional_py_varnames), x.into_py(py))),)*
+        #(#optional_rust_varnames.map(|x| (stringify!(#optional_py_varnames), x.into_py(py))),)*
     };
     if empty_kwargs {
         quote! { pyo3::types::PyDict::new(py) }

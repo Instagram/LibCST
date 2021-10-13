@@ -24,6 +24,7 @@ pub struct Semicolon<'a> {
     /// Any space that appears directly after this semicolon.
     pub whitespace_after: ParenthesizableWhitespace<'a>,
 
+    #[skip_py]
     pub(crate) tok: TokenRef<'a>,
 }
 
@@ -54,6 +55,7 @@ pub struct Comma<'a> {
     /// Any space that appears directly after this comma.
     pub whitespace_after: ParenthesizableWhitespace<'a>,
 
+    #[skip_py]
     pub(crate) tok: TokenRef<'a>,
 }
 
@@ -86,6 +88,7 @@ pub struct AssignEqual<'a> {
     /// Any space that appears directly after this equal sign.
     pub whitespace_after: ParenthesizableWhitespace<'a>,
 
+    #[skip_py]
     pub(crate) tok: TokenRef<'a>,
 }
 
@@ -118,6 +121,7 @@ pub struct Dot<'a> {
     /// Any space that appears directly after this dot.
     pub whitespace_after: ParenthesizableWhitespace<'a>,
 
+    #[skip_py]
     pub(crate) tok: TokenRef<'a>,
 }
 
@@ -219,11 +223,13 @@ pub enum BooleanOp<'a> {
     And {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
+        #[skip_py]
         tok: TokenRef<'a>,
     },
     Or {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
+        #[skip_py]
         tok: TokenRef<'a>,
     },
 }
@@ -290,66 +296,79 @@ pub enum BinaryOp<'a> {
     Add {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
+        #[skip_py]
         tok: TokenRef<'a>,
     },
     Subtract {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
+        #[skip_py]
         tok: TokenRef<'a>,
     },
     Multiply {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
+        #[skip_py]
         tok: TokenRef<'a>,
     },
     Divide {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
+        #[skip_py]
         tok: TokenRef<'a>,
     },
     FloorDivide {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
+        #[skip_py]
         tok: TokenRef<'a>,
     },
     Modulo {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
+        #[skip_py]
         tok: TokenRef<'a>,
     },
     Power {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
+        #[skip_py]
         tok: TokenRef<'a>,
     },
     LeftShift {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
+        #[skip_py]
         tok: TokenRef<'a>,
     },
     RightShift {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
+        #[skip_py]
         tok: TokenRef<'a>,
     },
     BitOr {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
+        #[skip_py]
         tok: TokenRef<'a>,
     },
     BitAnd {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
+        #[skip_py]
         tok: TokenRef<'a>,
     },
     BitXor {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
+        #[skip_py]
         tok: TokenRef<'a>,
     },
     MatrixMultiply {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
+        #[skip_py]
         tok: TokenRef<'a>,
     },
 }
@@ -636,55 +655,67 @@ pub enum CompOp<'a> {
     LessThan {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
+        #[skip_py]
         tok: TokenRef<'a>,
     },
     GreaterThan {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
+        #[skip_py]
         tok: TokenRef<'a>,
     },
     LessThanEqual {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
+        #[skip_py]
         tok: TokenRef<'a>,
     },
     GreaterThanEqual {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
+        #[skip_py]
         tok: TokenRef<'a>,
     },
     Equal {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
+        #[skip_py]
         tok: TokenRef<'a>,
     },
     NotEqual {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
+        #[skip_py]
         tok: TokenRef<'a>,
     },
     In {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
+        #[skip_py]
         tok: TokenRef<'a>,
     },
     NotIn {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_between: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
+        #[skip_py]
         not_tok: TokenRef<'a>,
+        #[skip_py]
         in_tok: TokenRef<'a>,
     },
     Is {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
+        #[skip_py]
         tok: TokenRef<'a>,
     },
     IsNot {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_between: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
+        #[skip_py]
         is_tok: TokenRef<'a>,
+        #[skip_py]
         not_tok: TokenRef<'a>,
     },
 }
@@ -945,6 +976,7 @@ pub struct Colon<'a> {
     pub whitespace_before: ParenthesizableWhitespace<'a>,
     pub whitespace_after: ParenthesizableWhitespace<'a>,
 
+    #[skip_py]
     pub(crate) tok: TokenRef<'a>,
 }
 
@@ -975,66 +1007,79 @@ pub enum AugOp<'a> {
     AddAssign {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
+        #[skip_py]
         tok: TokenRef<'a>,
     },
     SubtractAssign {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
+        #[skip_py]
         tok: TokenRef<'a>,
     },
     MultiplyAssign {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
+        #[skip_py]
         tok: TokenRef<'a>,
     },
     MatrixMultiplyAssign {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
+        #[skip_py]
         tok: TokenRef<'a>,
     },
     DivideAssign {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
+        #[skip_py]
         tok: TokenRef<'a>,
     },
     ModuloAssign {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
+        #[skip_py]
         tok: TokenRef<'a>,
     },
     BitAndAssign {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
+        #[skip_py]
         tok: TokenRef<'a>,
     },
     BitOrAssign {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
+        #[skip_py]
         tok: TokenRef<'a>,
     },
     BitXorAssign {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
+        #[skip_py]
         tok: TokenRef<'a>,
     },
     LeftShiftAssign {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
+        #[skip_py]
         tok: TokenRef<'a>,
     },
     RightShiftAssign {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
+        #[skip_py]
         tok: TokenRef<'a>,
     },
     PowerAssign {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
+        #[skip_py]
         tok: TokenRef<'a>,
     },
     FloorDivideAssign {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
+        #[skip_py]
         tok: TokenRef<'a>,
     },
 }
