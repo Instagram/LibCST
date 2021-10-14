@@ -1168,7 +1168,7 @@ parser! {
             = lit("r") {"r"} / lit("s") {"s"} / lit("a") {"a"}
 
         rule _f_spec() -> Vec<FormattedStringContent<'a>>
-            = (_f_string() / _f_replacement())+
+            = (_f_string() / _f_replacement())*
 
         rule traced<T>(e: rule<T>) -> T =
             &(_* {
