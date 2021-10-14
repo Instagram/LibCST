@@ -24,6 +24,11 @@ from libcst._parser.types.config import PartialParserConfig
 _DEFAULT_PARTIAL_PARSER_CONFIG: PartialParserConfig = PartialParserConfig()
 
 
+def is_native() -> bool:
+    typ = os.environ.get("LIBCST_PARSER_TYPE", None)
+    return typ == "native"
+
+
 def _parse(
     entrypoint: str,
     source: Union[str, bytes],
@@ -32,8 +37,7 @@ def _parse(
     detect_trailing_newline: bool,
     detect_default_newline: bool,
 ) -> CSTNode:
-    typ = os.environ.get("LIBCST_PARSER_TYPE", None)
-    if typ == "native":
+    if is_native():
         from libcst.native import parse_module, parse_expression, parse_statement
 
         if entrypoint == "file_input":
