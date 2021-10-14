@@ -1167,7 +1167,9 @@ parser! {
             }
 
         rule _f_expr() -> Expression<'a>
-            = (g:_bare_genexp() {Expression::GeneratorExp(g)}) / _conditional_expression()
+            = (g:_bare_genexp() {Expression::GeneratorExp(g)})
+            / _conditional_expression()
+            / yield_expr()
 
         rule _f_conversion() -> &'a str
             = lit("r") {"r"} / lit("s") {"s"} / lit("a") {"a"}
