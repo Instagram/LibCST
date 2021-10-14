@@ -293,7 +293,10 @@ impl<'t> TokState<'t> {
                 if !tos.is_in_expr() {
                     self.start_pos = (&self.text_pos).into();
                     let is_in_format_spec = tos.is_in_format_spec();
-                    if let Some(tok) = self.maybe_consume_fstring_string(is_in_format_spec)? {
+                    let is_raw_string = tos.is_raw_string;
+                    if let Some(tok) =
+                        self.maybe_consume_fstring_string(is_in_format_spec, is_raw_string)?
+                    {
                         return Ok(tok);
                     }
                     if let Some(tok) = self.maybe_consume_fstring_end() {
@@ -866,14 +869,19 @@ impl<'t> TokState<'t> {
 
     fn consume_fstring_start(&mut self) -> Result<TokType, TokError<'t>> {
         let (quote_char, quote_size) = self.consume_open_quote();
+        let is_raw_string = self
+            .text_pos
+            .slice_from_start_pos(&self.start_pos)
+            .contains(&['r', 'R'][..]);
         self.fstring_stack
-            .push(FStringNode::new(quote_char, quote_size));
+            .push(FStringNode::new(quote_char, quote_size, is_raw_string));
         Ok(TokType::FStringStart)
     }
 
     fn maybe_consume_fstring_string(
         &mut self,
         is_in_format_spec: bool,
+        is_raw_string: bool,
     ) -> Result<Option<TokType>, TokError<'t>> {
         let allow_multiline = self.fstring_stack.iter().all(|node| node.allow_multiline());
         let mut in_named_unicode: bool = false;
@@ -904,7 +912,7 @@ impl<'t> TokState<'t> {
                     }
                     self.text_pos.next();
                 }
-                (Some('\\'), _) => {
+                (Some('\\'), _) if !is_raw_string => {
                     self.text_pos.next();
                     if is_in_format_spec {
                         if let Some('{') | Some('}') = self.text_pos.peek() {

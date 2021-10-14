@@ -74,16 +74,22 @@ pub struct FStringNode {
     pub string_start: Option<TextPositionSnapshot>,
     // In the syntax there can be multiple format_spec's nested: {x:{y:3}}
     pub format_spec_count: usize,
+    pub is_raw_string: bool,
 }
 
 impl FStringNode {
-    pub fn new(quote_char: StringQuoteChar, quote_size: StringQuoteSize) -> Self {
+    pub fn new(
+        quote_char: StringQuoteChar,
+        quote_size: StringQuoteSize,
+        is_raw_string: bool,
+    ) -> Self {
         Self {
             quote_char,
             quote_size,
             parentheses_count: 0,
             string_start: None,
             format_spec_count: 0,
+            is_raw_string,
         }
     }
 
