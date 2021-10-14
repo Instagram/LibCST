@@ -694,8 +694,13 @@ parser! {
             = k:expression() colon:lit(":") v:expression() { (k, colon, v) }
 
         rule genexp() -> GeneratorExp<'a>
-            = lpar:lpar() elt:named_expression() comp:for_if_clauses() rpar:rpar() {
-                make_genexp(lpar, elt, comp, rpar)
+            = lpar:lpar() g:_bare_genexp() rpar:rpar() {
+                g.with_parens(lpar, rpar)
+            }
+
+        rule _bare_genexp() -> GeneratorExp<'a>
+            = elt:named_expression() comp:for_if_clauses() {
+                make_bare_genexp(elt, comp)
             }
 
         rule for_if_clauses() -> CompFor<'a>
@@ -1162,7 +1167,7 @@ parser! {
             }
 
         rule _f_expr() -> Expression<'a>
-            = annotated_rhs()
+            = (g:_bare_genexp() {Expression::GeneratorExp(g)}) / _conditional_expression()
 
         rule _f_conversion() -> &'a str
             = lit("r") {"r"} / lit("s") {"s"} / lit("a") {"a"}
@@ -2031,20 +2036,12 @@ fn make_for_if<'a>(
     }
 }
 
-fn make_genexp<'a>(
-    lpar: LeftParen<'a>,
-    elt: Expression<'a>,
-    for_in: CompFor<'a>,
-    rpar: RightParen<'a>,
-) -> GeneratorExp<'a> {
-    let lpar = vec![lpar];
-    let rpar = vec![rpar];
-
+fn make_bare_genexp<'a>(elt: Expression<'a>, for_in: CompFor<'a>) -> GeneratorExp<'a> {
     GeneratorExp {
         elt: Box::new(elt),
         for_in: Box::new(for_in),
-        lpar,
-        rpar,
+        lpar: Default::default(),
+        rpar: Default::default(),
     }
 }
 
