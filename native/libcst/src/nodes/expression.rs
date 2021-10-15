@@ -1413,7 +1413,7 @@ pub enum DictElement<'a> {
         whitespace_after_colon: ParenthesizableWhitespace<'a>,
         colon_tok: TokenRef<'a>,
     },
-    Starred(DoubleStarredElement<'a>),
+    Starred(StarredDictElement<'a>),
 }
 
 // TODO: this could be a derive helper attribute to override the python class name
@@ -1536,7 +1536,7 @@ impl<'a> WithComma<'a> for DictElement<'a> {
     fn with_comma(self, comma: Comma<'a>) -> Self {
         let comma = Some(comma);
         match self {
-            Self::Starred(s) => Self::Starred(DoubleStarredElement { comma, ..s }),
+            Self::Starred(s) => Self::Starred(StarredDictElement { comma, ..s }),
             Self::Simple {
                 key,
                 value,
@@ -1557,7 +1557,7 @@ impl<'a> WithComma<'a> for DictElement<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
-pub struct DoubleStarredElement<'a> {
+pub struct StarredDictElement<'a> {
     pub value: Expression<'a>,
     pub comma: Option<Comma<'a>>,
     pub whitespace_before_value: ParenthesizableWhitespace<'a>,
@@ -1565,7 +1565,7 @@ pub struct DoubleStarredElement<'a> {
     pub(crate) star_tok: TokenRef<'a>,
 }
 
-impl<'a> Inflate<'a> for DoubleStarredElement<'a> {
+impl<'a> Inflate<'a> for StarredDictElement<'a> {
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.whitespace_before_value = parse_parenthesizable_whitespace(
             config,
@@ -1577,7 +1577,7 @@ impl<'a> Inflate<'a> for DoubleStarredElement<'a> {
     }
 }
 
-impl<'a> Codegen<'a> for DoubleStarredElement<'a> {
+impl<'a> Codegen<'a> for StarredDictElement<'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         state.add_token("**");
         self.whitespace_before_value.codegen(state);

@@ -2237,8 +2237,8 @@ fn make_dict_element<'a>(el: (Expression<'a>, TokenRef<'a>, Expression<'a>)) -> 
 fn make_double_starred_element<'a>(
     star_tok: TokenRef<'a>,
     value: Expression<'a>,
-) -> DoubleStarredElement<'a> {
-    DoubleStarredElement {
+) -> StarredDictElement<'a> {
+    StarredDictElement {
         value,
         comma: Default::default(),
         whitespace_before_value: Default::default(),

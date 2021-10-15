@@ -17,12 +17,12 @@ mod expression;
 pub use expression::{
     Arg, Asynchronous, Attribute, Await, BaseSlice, BinaryOperation, BooleanOperation, Call,
     CompFor, CompIf, Comparison, ComparisonTarget, ConcatenatedString, Dict, DictComp, DictElement,
-    DoubleStarredElement, Element, Ellipsis, Expression, Float, FormattedString,
-    FormattedStringContent, FormattedStringExpression, FormattedStringText, From, GeneratorExp,
-    IfExp, Imaginary, Index, Integer, Lambda, LeftCurlyBrace, LeftParen, LeftSquareBracket, List,
-    ListComp, Name, NameOrAttribute, Param, ParamSlash, ParamStar, Parameters, RightCurlyBrace,
-    RightParen, RightSquareBracket, Set, SetComp, SimpleString, Slice, StarArg, StarredElement,
-    String, Subscript, SubscriptElement, Tuple, UnaryOperation, Yield, YieldValue,
+    Element, Ellipsis, Expression, Float, FormattedString, FormattedStringContent,
+    FormattedStringExpression, FormattedStringText, From, GeneratorExp, IfExp, Imaginary, Index,
+    Integer, Lambda, LeftCurlyBrace, LeftParen, LeftSquareBracket, List, ListComp, Name,
+    NameOrAttribute, Param, ParamSlash, ParamStar, Parameters, RightCurlyBrace, RightParen,
+    RightSquareBracket, Set, SetComp, SimpleString, Slice, StarArg, StarredDictElement,
+    StarredElement, String, Subscript, SubscriptElement, Tuple, UnaryOperation, Yield, YieldValue,
 };
 
 mod op;
