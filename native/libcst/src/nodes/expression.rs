@@ -224,7 +224,7 @@ impl<'a> Default for Param<'a> {
             equal: None,
             default: None,
             comma: None,
-            star: None,
+            star: Some(""), // Note: this preserves a quirk of the pure python parser
             whitespace_after_param: Default::default(),
             whitespace_after_star: Default::default(),
             star_tok: None,

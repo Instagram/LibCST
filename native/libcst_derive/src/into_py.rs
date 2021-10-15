@@ -138,7 +138,7 @@ fn fields_to_kwargs(fields: &Fields, is_enum: bool) -> quote::__private::TokenSt
                     }
                 }
             }
-            empty_kwargs = py_varnames.is_empty();
+            empty_kwargs = py_varnames.is_empty() && optional_py_varnames.is_empty();
         }
         Fields::Unnamed(FieldsUnnamed { unnamed, .. }) => {
             if unnamed.first().is_some() {
