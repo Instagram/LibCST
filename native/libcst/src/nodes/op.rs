@@ -164,19 +164,43 @@ impl<'a> Inflate<'a> for ImportStar {
 
 #[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
 pub enum UnaryOp<'a> {
-    Plus(ParenthesizableWhitespace<'a>, TokenRef<'a>),
-    Minus(ParenthesizableWhitespace<'a>, TokenRef<'a>),
-    BitInvert(ParenthesizableWhitespace<'a>, TokenRef<'a>),
-    Not(ParenthesizableWhitespace<'a>, TokenRef<'a>),
+    Plus {
+        whitespace_after: ParenthesizableWhitespace<'a>,
+        #[skip_py]
+        tok: TokenRef<'a>,
+    },
+    Minus {
+        whitespace_after: ParenthesizableWhitespace<'a>,
+        #[skip_py]
+        tok: TokenRef<'a>,
+    },
+    BitInvert {
+        whitespace_after: ParenthesizableWhitespace<'a>,
+        #[skip_py]
+        tok: TokenRef<'a>,
+    },
+    Not {
+        whitespace_after: ParenthesizableWhitespace<'a>,
+        #[skip_py]
+        tok: TokenRef<'a>,
+    },
 }
 
 impl<'a> Codegen<'a> for UnaryOp<'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         let (tok, whitespace_after) = match self {
-            Self::Plus(ws, ..) => ("+", ws),
-            Self::Minus(ws, ..) => ("-", ws),
-            Self::BitInvert(ws, ..) => ("~", ws),
-            Self::Not(ws, ..) => ("not", ws),
+            Self::Plus {
+                whitespace_after, ..
+            } => ("+", whitespace_after),
+            Self::Minus {
+                whitespace_after, ..
+            } => ("-", whitespace_after),
+            Self::BitInvert {
+                whitespace_after, ..
+            } => ("~", whitespace_after),
+            Self::Not {
+                whitespace_after, ..
+            } => ("not", whitespace_after),
         };
         state.add_token(tok);
         whitespace_after.codegen(state);
@@ -186,33 +210,45 @@ impl<'a> Codegen<'a> for UnaryOp<'a> {
 impl<'a> Inflate<'a> for UnaryOp<'a> {
     fn inflate(self, config: &Config<'a>) -> Result<Self> {
         Ok(match self {
-            Self::Plus(_, tok) => {
-                let ws = parse_parenthesizable_whitespace(
+            Self::Plus { tok, .. } => {
+                let whitespace_after = parse_parenthesizable_whitespace(
                     config,
                     &mut (*tok).whitespace_after.borrow_mut(),
                 )?;
-                Self::Plus(ws, tok)
+                Self::Plus {
+                    whitespace_after,
+                    tok,
+                }
             }
-            Self::Minus(_, tok) => {
-                let ws = parse_parenthesizable_whitespace(
+            Self::Minus { tok, .. } => {
+                let whitespace_after = parse_parenthesizable_whitespace(
                     config,
                     &mut (*tok).whitespace_after.borrow_mut(),
                 )?;
-                Self::Minus(ws, tok)
+                Self::Minus {
+                    whitespace_after,
+                    tok,
+                }
             }
-            Self::BitInvert(_, tok) => {
-                let ws = parse_parenthesizable_whitespace(
+            Self::BitInvert { tok, .. } => {
+                let whitespace_after = parse_parenthesizable_whitespace(
                     config,
                     &mut (*tok).whitespace_after.borrow_mut(),
                 )?;
-                Self::BitInvert(ws, tok)
+                Self::BitInvert {
+                    whitespace_after,
+                    tok,
+                }
             }
-            Self::Not(_, tok) => {
-                let ws = parse_parenthesizable_whitespace(
+            Self::Not { tok, .. } => {
+                let whitespace_after = parse_parenthesizable_whitespace(
                     config,
                     &mut (*tok).whitespace_after.borrow_mut(),
                 )?;
-                Self::Not(ws, tok)
+                Self::Not {
+                    whitespace_after,
+                    tok,
+                }
             }
         })
     }

@@ -1479,11 +1479,24 @@ fn make_unary_op<'a>(op: TokenRef<'a>, tail: Expression<'a>) -> Result<'a, Expre
 }
 
 fn make_unary_operator(tok: TokenRef) -> Result<UnaryOp> {
+    let whitespace_after = Default::default();
     match tok.string {
-        "+" => Ok(UnaryOp::Plus(Default::default(), tok)),
-        "-" => Ok(UnaryOp::Minus(Default::default(), tok)),
-        "~" => Ok(UnaryOp::BitInvert(Default::default(), tok)),
-        "not" => Ok(UnaryOp::Not(Default::default(), tok)),
+        "+" => Ok(UnaryOp::Plus {
+            whitespace_after,
+            tok,
+        }),
+        "-" => Ok(UnaryOp::Minus {
+            whitespace_after,
+            tok,
+        }),
+        "~" => Ok(UnaryOp::BitInvert {
+            whitespace_after,
+            tok,
+        }),
+        "not" => Ok(UnaryOp::Not {
+            whitespace_after,
+            tok,
+        }),
         _ => Err(ParserError::OperatorError),
     }
 }
