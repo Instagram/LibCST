@@ -1431,15 +1431,19 @@ impl<'a> IntoPy<pyo3::PyObject> for DictElement<'a> {
             } => {
                 let libcst = PyModule::import(py, "libcst").expect("libcst cannot be imported");
                 let kwargs = [
-                    ("key", key.into_py(py)),
-                    ("value", value.into_py(py)),
-                    ("comma", comma.into_py(py)),
-                    (
+                    Some(("key", key.into_py(py))),
+                    Some(("value", value.into_py(py))),
+                    Some((
                         "whitespace_before_colon",
                         whitespace_before_colon.into_py(py),
-                    ),
-                    ("whitespace_after_colon", whitespace_after_colon.into_py(py)),
+                    )),
+                    Some(("whitespace_after_colon", whitespace_after_colon.into_py(py))),
+                    comma.map(|x| ("comma", x.into_py(py))),
                 ]
+                .iter()
+                .filter(|x| x.is_some())
+                .map(|x| x.as_ref().unwrap())
+                .collect::<Vec<_>>()
                 .into_py_dict(py);
                 libcst
                     .getattr("DictElement")
