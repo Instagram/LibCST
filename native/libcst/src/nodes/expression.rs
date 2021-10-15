@@ -819,8 +819,15 @@ impl<'a> IntoPy<pyo3::PyObject> for Element<'a> {
             Self::Starred(s) => s.into_py(py),
             Self::Simple { value, comma } => {
                 let libcst = PyModule::import(py, "libcst").expect("libcst cannot be imported");
-                let kwargs =
-                    [("value", value.into_py(py)), ("comma", comma.into_py(py))].into_py_dict(py);
+                let kwargs = [
+                    Some(("value", value.into_py(py))),
+                    comma.map(|x| ("comma", x.into_py(py))),
+                ]
+                .iter()
+                .filter(|x| x.is_some())
+                .map(|x| x.as_ref().unwrap())
+                .collect::<Vec<_>>()
+                .into_py_dict(py);
                 libcst
                     .getattr("Element")
                     .expect("no Element found in libcst")
