@@ -336,6 +336,7 @@ impl<'t> TokState<'t> {
                 None => {
                     if self.missing_nl_before_eof
                         && self.text_pos.byte_column_number() != self.bol_width
+                        && !self.blank_line
                     {
                         self.at_bol = true;
                         self.missing_nl_before_eof = false;

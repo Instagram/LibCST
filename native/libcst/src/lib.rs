@@ -43,7 +43,6 @@ pub fn parse_module(mut module_text: &str) -> Result<Module> {
     if let Some(stripped) = module_text.strip_prefix('\u{feff}') {
         module_text = stripped;
     }
-    // eprintln!("{:#?}", result);
     let tokens = tokenize(module_text)?;
     let conf = whitespace_parser::Config::new(module_text, &tokens);
     let m = parse_tokens_without_whitespace(tokens, module_text)?;
