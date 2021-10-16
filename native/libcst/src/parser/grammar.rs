@@ -137,10 +137,14 @@ parser! {
             }
 
         rule simple_stmt() -> SimpleStatementParts<'a>
-            = first_tok:&_ first_statement:small_stmt()
-                rest:(semi:lit(";") s:small_stmt()  { (semi, s) })*
-                last_semi:lit(";")? nl:tok(NL, "NEWLINE") {
-                SimpleStatementParts {first_tok, first_statement, rest, last_semi, nl}
+            = first_tok:&_ stmts:separated_trailer(<small_stmt()>, <lit(";")>) nl:tok(NL, "NEWLINE") {
+                SimpleStatementParts {
+                    first_tok,
+                    first_statement: stmts.0,
+                    rest: stmts.1,
+                    last_semi: stmts.2,
+                    nl,
+                }
             }
 
         rule compound_stmt() -> CompoundStatement<'a>
@@ -234,10 +238,8 @@ parser! {
             / expression()
 
         rule star_named_expressions() -> Vec<Element<'a>>
-            = first:star_named_expression()
-                rest:(c:comma() e:star_named_expression() { (c, e) })*
-                trail:comma()? {
-                    comma_separate(first, rest, trail)
+            = exps:separated_trailer(<star_named_expression()>, <comma()>) {
+                    comma_separate(exps.0, exps.1, exps.2)
             }
 
         rule star_named_expression() -> Element<'a>
@@ -402,10 +404,10 @@ parser! {
 
         rule star_targets() -> AssignTargetExpression<'a>
             = a:star_target() !lit(",") {a}
-            / first:(t:star_target() {assign_target_to_element(t)})
-                rest:(comma:comma() t:star_target() {(comma, assign_target_to_element(t))})*
-                comma:comma()? {
-                    AssignTargetExpression::Tuple(make_tuple(first, rest, comma, None, None))
+            / targets:separated_trailer(<t:star_target() {assign_target_to_element(t)}>, <comma()>) {
+                AssignTargetExpression::Tuple(
+                    make_tuple(targets.0, targets.1, targets.2, None, None)
+                )
             }
 
         #[cache]
@@ -430,10 +432,8 @@ parser! {
             }
 
         rule star_targets_list_seq() -> Vec<Element<'a>>
-            = first:(t:star_target() { assign_target_to_element(t) })
-                rest:(c:comma() t:star_target() {(c, assign_target_to_element(t))})*
-                trail:comma()? {
-                    comma_separate(first, rest, trail)
+            = targets:separated_trailer(<t:star_target() { assign_target_to_element(t) }>, <comma()>) {
+                comma_separate(targets.0, targets.1, targets.2)
             }
 
         #[cache]
@@ -478,8 +478,8 @@ parser! {
             }
 
         rule del_targets() -> Vec<Element<'a>>
-            = first:del_target() rest:(c:comma() t:del_target() {(c,t.into())})* trail:comma()? {
-                comma_separate(first.into(), rest, trail)
+            = t:separated_trailer(<u:del_target() {u.into()}>, <comma()>) {
+                comma_separate(t.0, t.1, t.2)
             }
 
         rule del_target() -> DelTargetExpression<'a>
@@ -642,8 +642,8 @@ parser! {
 
         rule slices() -> Vec<SubscriptElement<'a>>
             = s:slice() !lit(",") { vec![SubscriptElement { slice: s, comma: None }] }
-            / first:slice() rest:(c:comma() s:slice() {(c, s)})* trail:comma()? {
-                make_slices(first, rest, trail)
+            / slices:separated_trailer(<slice()>, <comma()>) {
+                make_slices(slices.0, slices.1, slices.2)
             }
 
         rule slice() -> BaseSlice<'a>
@@ -679,10 +679,8 @@ parser! {
             }
 
         rule double_starred_keypairs() -> Vec<DictElement<'a>>
-            = first:double_starred_kvpair()
-                rest:(c:comma() e:double_starred_kvpair() {(c, e)})*
-                trail:comma()? {
-                    make_double_starred_keypairs(first, rest, trail)
+            = pairs:separated_trailer(<double_starred_kvpair()>, <comma()>) {
+                    make_double_starred_keypairs(pairs.0, pairs.1, pairs.2)
             }
 
         rule double_starred_kvpair() -> DictElement<'a>
@@ -745,22 +743,19 @@ parser! {
             = star:lit("*") e:expression() { make_star_arg(star, e) }
 
         rule kwargs() -> Vec<Arg<'a>>
-            = sfirst:kwarg_or_starred() srest:(c:comma() a:kwarg_or_starred() {(c,a)})*
+            = sitems:separated(<kwarg_or_starred()>, <comma()>)
                 scomma:comma()
-                dfirst:kwarg_or_double_starred()
-                drest:(c:comma() a:kwarg_or_double_starred() {(c,a)})* {
+                ditems:separated(<kwarg_or_double_starred()>, <comma()>) {
                     concat(
-                        comma_separate(sfirst, srest, Some(scomma)),
-                        comma_separate(dfirst, drest, None),
+                        comma_separate(sitems.0, sitems.1, Some(scomma)),
+                        comma_separate(ditems.0, ditems.1, None),
                     )
             }
-            / first:kwarg_or_starred()
-                rest:(c:comma() a:kwarg_or_starred() {(c, a)})* {
-                    comma_separate(first, rest, None)
+            / items:separated(<kwarg_or_starred()>, <comma()>) {
+                    comma_separate(items.0, items.1, None)
             }
-            / first:kwarg_or_double_starred()
-                rest:(c:comma() a:kwarg_or_double_starred() {(c,a)})* {
-                    comma_separate(first, rest, None)
+            / items:separated(<kwarg_or_double_starred()>, <comma()>) {
+                    comma_separate(items.0, items.1, None)
             }
 
         rule kwarg_or_starred() -> Arg<'a>
@@ -997,13 +992,13 @@ parser! {
             }
 
         rule with_stmt() -> With<'a>
-            = kw:lit("with") first:with_item() rest:(c:comma() i:with_item() {(c,i)})*
+            = kw:lit("with") items:separated(<with_item()>, <comma()>)
                 col:lit(":") b:block() {
-                    make_with(None, kw, comma_separate(first, rest, None), col, b)
+                    make_with(None, kw, comma_separate(items.0, items.1, None), col, b)
             }
-            / asy:tok(Async, "ASYNC") kw:lit("with") first:with_item()
-                rest:(c:comma() i:with_item() {(c,i)})* col:lit(":") b:block() {
-                    make_with(Some(asy), kw, comma_separate(first, rest, None), col, b)
+            / asy:tok(Async, "ASYNC") kw:lit("with") items:separated(<with_item()>, <comma()>)
+                col:lit(":") b:block() {
+                    make_with(Some(asy), kw, comma_separate(items.0, items.1, None), col, b)
             }
 
         rule with_item() -> WithItem<'a>
@@ -1074,8 +1069,8 @@ parser! {
             / star:lit("*") { (None, ImportNames::Star(ImportStar {}), None) }
 
         rule import_from_as_names() -> Vec<ImportAlias<'a>>
-            = first:import_from_as_name() tail:(c:comma() al:import_from_as_name() {(c, al)})* {
-                make_import_from_as_names(first, tail)
+            = items:separated(<import_from_as_name()>, <comma()>) {
+                make_import_from_as_names(items.0, items.1)
             }
 
         rule import_from_as_name() -> ImportAlias<'a>
@@ -1177,6 +1172,12 @@ parser! {
 
         rule _f_spec() -> Vec<FormattedStringContent<'a>>
             = (_f_string() / _f_replacement())*
+
+        rule separated_trailer<El, Sep>(el: rule<El>, sep: rule<Sep>) -> (El, Vec<(Sep, El)>, Option<Sep>)
+            = e:el() rest:(s:sep() e:el() {(s, e)})* trailer:sep()? {(e, rest, trailer)}
+
+        rule separated<El, Sep>(el: rule<El>, sep: rule<Sep>) -> (El, Vec<(Sep, El)>)
+            = e:el() rest:(s:sep() e:el() {(s, e)})* {(e, rest)}
 
         rule traced<T>(e: rule<T>) -> T =
             &(_* {
