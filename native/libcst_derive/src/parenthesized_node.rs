@@ -28,7 +28,7 @@ fn impl_struct(ast: &DeriveInput) -> TokenStream {
             fn with_parens(self, left: LeftParen<'a>, right: RightParen<'a>) -> Self {
                 let mut lpar = self.lpar;
                 let mut rpar = self.rpar;
-                lpar.push(left);
+                lpar.insert(0, left);
                 rpar.push(right);
                 #[allow(clippy::needless_update)]
                 Self { lpar, rpar, ..self }
