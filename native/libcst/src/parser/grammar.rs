@@ -137,9 +137,10 @@ parser! {
             }
 
         rule simple_stmt() -> SimpleStatementParts<'a>
-            = first:&_ statements:(s:small_stmt() semi:lit(";") { (s, semi) })*
-            last_statement:small_stmt() last_semi:lit(";")? nl:tok(NL, "NEWLINE") {
-                SimpleStatementParts {first, statements, last_statement, last_semi, nl}
+            = first_tok:&_ first_statement:small_stmt()
+                rest:(semi:lit(";") s:small_stmt()  { (semi, s) })*
+                last_semi:lit(";")? nl:tok(NL, "NEWLINE") {
+                SimpleStatementParts {first_tok, first_statement, rest, last_semi, nl}
             }
 
         rule compound_stmt() -> CompoundStatement<'a>
@@ -1523,10 +1524,9 @@ fn make_indented_block<'a>(
 }
 
 struct SimpleStatementParts<'a> {
-    first: TokenRef<'a>, // The first token of the first statement. Used for its whitespace
-    statements: Vec<(SmallStatement<'a>, TokenRef<'a>)>, // statement, semicolon pairs
-    last_statement: SmallStatement<'a>,
-    #[allow(dead_code)]
+    first_tok: TokenRef<'a>, // The first token of the first statement. Used for its whitespace
+    first_statement: SmallStatement<'a>,
+    rest: Vec<(TokenRef<'a>, SmallStatement<'a>)>, // semicolon, statement pairs
     last_semi: Option<TokenRef<'a>>,
     nl: TokenRef<'a>,
 }
@@ -1543,17 +1543,18 @@ fn _make_simple_statement(
     parts: SimpleStatementParts,
 ) -> (TokenRef, Vec<SmallStatement>, TokenRef) {
     let mut body = vec![];
-    for (statement, semi) in parts.statements {
-        body.push(statement.with_semicolon(Some(make_semicolon(semi))));
-    }
-    let mut last_statement = parts.last_statement;
-    if let Some(semi) = parts.last_semi {
-        // TODO: last semi only owns whitespace before
-        last_statement = last_statement.with_semicolon(Some(make_semicolon(semi)));
-    }
-    body.push(last_statement);
 
-    (parts.first, body, parts.nl)
+    let mut current = parts.first_statement;
+    for (semi, next) in parts.rest {
+        body.push(current.with_semicolon(Some(make_semicolon(semi))));
+        current = next;
+    }
+    if let Some(semi) = parts.last_semi {
+        current = current.with_semicolon(Some(make_semicolon(semi)));
+    }
+    body.push(current);
+
+    (parts.first_tok, body, parts.nl)
 }
 
 fn make_simple_statement_suite(parts: SimpleStatementParts) -> Suite {
