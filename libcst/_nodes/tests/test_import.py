@@ -397,9 +397,11 @@ class ImportFromCreateTest(CSTNodeTest):
                         cst.ImportAlias(cst.Name("bar"), comma=cst.Comma()),
                         cst.ImportAlias(cst.Name("baz"), comma=cst.Comma()),
                     ),
+                    lpar=cst.LeftParen(),
+                    rpar=cst.RightParen(),
                 ),
-                "code": "from foo import bar,baz,",
-                "expected_position": CodeRange((1, 0), (1, 23)),
+                "code": "from foo import (bar,baz,)",
+                "expected_position": CodeRange((1, 0), (1, 26)),
             },
             # Star import statement
             {
@@ -617,8 +619,10 @@ class ImportFromParseTest(CSTNodeTest):
                         ),
                         cst.ImportAlias(cst.Name("baz"), comma=cst.Comma()),
                     ),
+                    lpar=cst.LeftParen(),
+                    rpar=cst.RightParen(),
                 ),
-                "code": "from foo import bar, baz,",
+                "code": "from foo import (bar, baz,)",
             },
             # Star import statement
             {
