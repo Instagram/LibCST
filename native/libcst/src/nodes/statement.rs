@@ -1101,8 +1101,11 @@ impl<'a> Inflate<'a> for Return<'a> {
                 config,
                 &mut (*self.return_tok).whitespace_after.borrow_mut(),
             )?);
-        } // otherwise space is owned by semicolon or small statement
-
+        } else {
+            // otherwise space is owned by semicolon or small statement
+            // whitespace is not None to preserve a quirk of the pure python parser
+            self.whitespace_after_return = Some(Default::default())
+        }
         self.value = self.value.inflate(config)?;
         self.semicolon = self.semicolon.inflate(config)?;
         Ok(self)
