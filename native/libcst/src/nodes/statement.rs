@@ -1178,10 +1178,12 @@ pub struct Raise<'a> {
 
 impl<'a> Inflate<'a> for Raise<'a> {
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
-        self.whitespace_after_raise = Some(parse_simple_whitespace(
-            config,
-            &mut (*self.raise_tok).whitespace_after.borrow_mut(),
-        )?);
+        if self.exc.is_some() {
+            self.whitespace_after_raise = Some(parse_simple_whitespace(
+                config,
+                &mut (*self.raise_tok).whitespace_after.borrow_mut(),
+            )?);
+        }
 
         self.exc = self.exc.inflate(config)?;
         self.cause = self.cause.inflate(config)?;
