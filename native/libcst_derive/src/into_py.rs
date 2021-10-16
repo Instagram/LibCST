@@ -39,7 +39,7 @@ fn impl_into_py_enum(ast: &DeriveInput, e: &DataEnum) -> TokenStream {
                             .getattr(stringify!(#varname))
                             .expect(stringify!(no #varname found in libcst))
                             .call((), Some(kwargs))
-                            .expect("conversion failed")
+                            .expect(stringify!(conversion failed for #varname))
                             .into()
                     }
                 })
@@ -89,7 +89,7 @@ fn impl_into_py_struct(ast: &DeriveInput, e: &DataStruct) -> TokenStream {
                     .getattr(stringify!(#ident))
                     .expect(stringify!(no #ident found in libcst))
                     .call((), Some(kwargs))
-                    .expect("conversion failed")
+                    .expect(stringify!(conversion failed for #ident))
                     .into()
             }
         }

@@ -513,6 +513,7 @@ impl<'a> Import<'a> {
 
 #[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
 pub struct ImportFrom<'a> {
+    #[no_py_default]
     pub module: Option<NameOrAttribute<'a>>,
     pub names: ImportNames<'a>,
     pub relative: Vec<Dot<'a>>,
