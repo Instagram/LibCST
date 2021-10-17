@@ -67,10 +67,16 @@ impl<'a> Config<'a> {
                 break;
             }
         }
+        let default_newline = Regex::new(r"\r\n?|\n")
+            .expect("regex")
+            .find(input)
+            .map(|m| m.as_str())
+            .unwrap_or("\n");
+
         Self {
             input,
-            lines: input.split_inclusive('\n').collect(),
-            default_newline: "\n",
+            lines: input.split_inclusive(default_newline).collect(),
+            default_newline,
             default_indent,
         }
     }
