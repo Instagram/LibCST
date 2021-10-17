@@ -36,9 +36,9 @@ pub enum Statement<'a> {
 }
 
 impl<'a> WithLeadingLines<'a> for Statement<'a> {
-    fn leading_lines(&self) -> &Vec<EmptyLine<'a>> {
+    fn leading_lines(&mut self) -> &mut Vec<EmptyLine<'a>> {
         match self {
-            Self::Simple(s) => &s.leading_lines,
+            Self::Simple(s) => &mut s.leading_lines,
             Self::Compound(c) => c.leading_lines(),
         }
     }
@@ -56,15 +56,15 @@ pub enum CompoundStatement<'a> {
 }
 
 impl<'a> WithLeadingLines<'a> for CompoundStatement<'a> {
-    fn leading_lines(&self) -> &Vec<EmptyLine<'a>> {
+    fn leading_lines(&mut self) -> &mut Vec<EmptyLine<'a>> {
         match self {
-            Self::FunctionDef(f) => &f.leading_lines,
-            Self::If(f) => &f.leading_lines,
-            Self::For(f) => &f.leading_lines,
-            Self::While(f) => &f.leading_lines,
-            Self::ClassDef(c) => &c.leading_lines,
-            Self::Try(t) => &t.leading_lines,
-            Self::With(w) => &w.leading_lines,
+            Self::FunctionDef(f) => &mut f.leading_lines,
+            Self::If(f) => &mut f.leading_lines,
+            Self::For(f) => &mut f.leading_lines,
+            Self::While(f) => &mut f.leading_lines,
+            Self::ClassDef(c) => &mut c.leading_lines,
+            Self::Try(t) => &mut t.leading_lines,
+            Self::With(w) => &mut w.leading_lines,
         }
     }
 }

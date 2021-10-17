@@ -62,7 +62,7 @@ impl<'a> Inflate<'a> for Module<'a> {
         )?;
         let mut header = vec![];
         if let Some(stmt) = self.body.first_mut() {
-            swap(&mut stmt.leading_lines(), &mut &header);
+            swap(stmt.leading_lines(), &mut header);
             let mut last_indented = None;
             for (num, line) in footer.iter().enumerate() {
                 if !line.whitespace.0.is_empty() {

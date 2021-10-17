@@ -28,7 +28,7 @@ pub trait ParenthesizedNode<'a> {
 }
 
 pub trait WithLeadingLines<'a> {
-    fn leading_lines(&self) -> &Vec<EmptyLine<'a>>;
+    fn leading_lines(&mut self) -> &mut Vec<EmptyLine<'a>>;
 }
 
 pub type Result<T> = std::result::Result<T, WhitespaceError>;
