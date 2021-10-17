@@ -1010,7 +1010,9 @@ parser! {
             }
 
         rule named_expression() -> Expression<'a>
-            = a:name() op:lit(":=") b:expression() { todo!() }
+            = a:name() op:lit(":=") b:expression() {
+                Expression::NamedExpr(make_named_expr(a, op, b))
+            }
             / e:expression() !lit(":=") { e }
 
         rule annotated_rhs() -> Expression<'a>
@@ -2923,4 +2925,16 @@ fn make_del_tuple<'a>(
         lpar: lpar.map(|x| vec![x]).unwrap_or_default(),
         rpar: rpar.map(|x| vec![x]).unwrap_or_default(),
     })
+}
+
+fn make_named_expr<'a>(name: Name<'a>, tok: TokenRef<'a>, expr: Expression<'a>) -> NamedExpr<'a> {
+    NamedExpr {
+        target: Box::new(Expression::Name(name)),
+        value: Box::new(expr),
+        lpar: Default::default(),
+        rpar: Default::default(),
+        whitespace_before_walrus: Default::default(),
+        whitespace_after_walrus: Default::default(),
+        walrus_tok: tok,
+    }
 }

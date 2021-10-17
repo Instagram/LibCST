@@ -417,7 +417,7 @@ pub enum Expression<'a> {
     SimpleString(SimpleString<'a>),
     ConcatenatedString(ConcatenatedString<'a>),
     FormattedString(FormattedString<'a>),
-    // TODO: NamedExpr
+    NamedExpr(NamedExpr<'a>),
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode, IntoPy)]
@@ -2184,5 +2184,48 @@ impl<'a> Codegen<'a> for FormattedString<'a> {
             }
             state.add_token(self.end);
         })
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode, IntoPy)]
+pub struct NamedExpr<'a> {
+    pub target: Box<Expression<'a>>,
+    pub value: Box<Expression<'a>>,
+    pub lpar: Vec<LeftParen<'a>>,
+    pub rpar: Vec<RightParen<'a>>,
+
+    pub whitespace_before_walrus: ParenthesizableWhitespace<'a>,
+    pub whitespace_after_walrus: ParenthesizableWhitespace<'a>,
+
+    pub(crate) walrus_tok: TokenRef<'a>,
+}
+
+impl<'a> Codegen<'a> for NamedExpr<'a> {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
+        self.parenthesize(state, |state| {
+            self.target.codegen(state);
+            self.whitespace_before_walrus.codegen(state);
+            state.add_token(":=");
+            self.whitespace_after_walrus.codegen(state);
+            self.value.codegen(state);
+        })
+    }
+}
+
+impl<'a> Inflate<'a> for NamedExpr<'a> {
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.lpar = self.lpar.inflate(config)?;
+        self.target = self.target.inflate(config)?;
+        self.whitespace_before_walrus = parse_parenthesizable_whitespace(
+            config,
+            &mut self.walrus_tok.whitespace_before.borrow_mut(),
+        )?;
+        self.whitespace_after_walrus = parse_parenthesizable_whitespace(
+            config,
+            &mut self.walrus_tok.whitespace_after.borrow_mut(),
+        )?;
+        self.value = self.value.inflate(config)?;
+        self.rpar = self.rpar.inflate(config)?;
+        Ok(self)
     }
 }

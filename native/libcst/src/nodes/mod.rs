@@ -20,8 +20,8 @@ pub use expression::{
     Element, Ellipsis, Expression, Float, FormattedString, FormattedStringContent,
     FormattedStringExpression, FormattedStringText, From, GeneratorExp, IfExp, Imaginary, Index,
     Integer, Lambda, LeftCurlyBrace, LeftParen, LeftSquareBracket, List, ListComp, Name,
-    NameOrAttribute, Param, ParamSlash, ParamStar, Parameters, RightCurlyBrace, RightParen,
-    RightSquareBracket, Set, SetComp, SimpleString, Slice, StarArg, StarredDictElement,
+    NameOrAttribute, NamedExpr, Param, ParamSlash, ParamStar, Parameters, RightCurlyBrace,
+    RightParen, RightSquareBracket, Set, SetComp, SimpleString, Slice, StarArg, StarredDictElement,
     StarredElement, String, Subscript, SubscriptElement, Tuple, UnaryOperation, Yield, YieldValue,
 };
 
