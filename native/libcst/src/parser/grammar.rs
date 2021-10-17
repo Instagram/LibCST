@@ -1050,11 +1050,11 @@ parser! {
             }
 
         rule import_from() -> ImportFrom<'a>
-            = from:lit("from") dots:dot()* m:dotted_name()
+            = from:lit("from") dots:dots()? m:dotted_name()
                 import:lit("import") als:import_from_targets() {
-                    make_import_from(from, dots, Some(m), import, als)
+                    make_import_from(from, dots.unwrap_or_default(), Some(m), import, als)
             }
-            / from:lit("from") dots:dot()+
+            / from:lit("from") dots:dots()
                 import:lit("import") als:import_from_targets() {
                     make_import_from(from, dots, None, import, als)
             }
@@ -1099,8 +1099,11 @@ parser! {
         rule comma() -> Comma<'a>
             = c:lit(",") { make_comma(c) }
 
-        rule dot() -> Dot<'a>
-            = tok:lit(".") { make_dot(tok) }
+        rule dots() -> Vec<Dot<'a>>
+            = ds:((dot:lit(".") { make_dot(dot) })+
+                / tok:lit("...") {
+                    vec![make_dot(tok.clone()), make_dot(tok.clone()), make_dot(tok.clone())]}
+            )+ { ds.into_iter().flatten().collect() }
 
         rule lpar() -> LeftParen<'a>
             = a:lit("(") { make_lpar(a) }

@@ -11,3 +11,9 @@ from sys import *
 
 
 from a import (b, )
+from . import a
+from .a import b
+from ... import a
+from ...a import b
+from .... import a
+from ...... import a

@@ -567,7 +567,7 @@ impl<'a> Inflate<'a> for ImportFrom<'a> {
             &mut (*self.import_tok).whitespace_after.borrow_mut(),
         )?;
 
-        self.relative = self.relative.inflate(config)?;
+        self.relative = inflate_dots(self.relative, config)?;
 
         if !self.relative.is_empty() && self.module.is_none() {
             // For relative-only imports relocate the space after the final dot to be owned
@@ -594,6 +594,30 @@ impl<'a> Inflate<'a> for ImportFrom<'a> {
 
         Ok(self)
     }
+}
+
+fn inflate_dots<'a>(dots: Vec<Dot<'a>>, config: &Config<'a>) -> Result<Vec<Dot<'a>>> {
+    let mut ret: Vec<Dot<'a>> = vec![];
+    let mut last_tok: Option<TokenRef<'a>> = None;
+    for mut dot in dots {
+        if let Some(last_tokref) = &last_tok {
+            // Consecutive dots having the same Token can only happen if `...` was
+            // parsed as a single ELLIPSIS token. In this case the token's
+            // whitespace_before belongs to the first dot, but the whitespace_after is
+            // moved to the 3rd dot (by swapping it twice)
+            if last_tokref.start_pos == dot.tok.start_pos {
+                swap(
+                    &mut ret.last_mut().unwrap().whitespace_after,
+                    &mut dot.whitespace_after,
+                );
+                ret.push(dot);
+                continue;
+            }
+        }
+        last_tok = Some(dot.tok.clone());
+        ret.push(dot.inflate(config)?);
+    }
+    Ok(ret)
 }
 
 impl<'a> ImportFrom<'a> {

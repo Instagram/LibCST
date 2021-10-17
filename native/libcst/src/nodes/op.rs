@@ -145,15 +145,27 @@ impl<'a> Codegen<'a> for Dot<'a> {
 
 impl<'a> Inflate<'a> for Dot<'a> {
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.inflate_before(config)?;
+        self.inflate_after(config)?;
+        Ok(self)
+    }
+}
+
+impl<'a> Dot<'a> {
+    fn inflate_before(&mut self, config: &Config<'a>) -> Result<()> {
         self.whitespace_before = parse_parenthesizable_whitespace(
             config,
             &mut (*self.tok).whitespace_before.borrow_mut(),
         )?;
+        Ok(())
+    }
+
+    fn inflate_after(&mut self, config: &Config<'a>) -> Result<()> {
         self.whitespace_after = parse_parenthesizable_whitespace(
             config,
             &mut (*self.tok).whitespace_after.borrow_mut(),
         )?;
-        Ok(self)
+        Ok(())
     }
 }
 
