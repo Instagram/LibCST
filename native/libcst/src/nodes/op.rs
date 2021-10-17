@@ -81,6 +81,16 @@ impl<'a> Inflate<'a> for Comma<'a> {
     }
 }
 
+impl<'a> Comma<'a> {
+    pub fn inflate_before(mut self, config: &Config<'a>) -> Result<Self> {
+        self.whitespace_before = parse_parenthesizable_whitespace(
+            config,
+            &mut (*self.tok).whitespace_before.borrow_mut(),
+        )?;
+        Ok(self)
+    }
+}
+
 #[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
 pub struct AssignEqual<'a> {
     /// Any space that appears directly before this equal sign.

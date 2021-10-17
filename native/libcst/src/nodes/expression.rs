@@ -765,16 +765,26 @@ pub struct StarredElement<'a> {
     pub(crate) star_tok: TokenRef<'a>,
 }
 
-impl<'a> Inflate<'a> for StarredElement<'a> {
-    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+impl<'a> StarredElement<'a> {
+    pub fn inflate_element(mut self, config: &Config<'a>, is_last: bool) -> Result<Self> {
         self.lpar = self.lpar.inflate(config)?;
         self.whitespace_before_value = parse_parenthesizable_whitespace(
             config,
             &mut (*self.star_tok).whitespace_after.borrow_mut(),
         )?;
         self.value = self.value.inflate(config)?;
-        self.comma = self.comma.inflate(config)?;
+        self.comma = if is_last {
+            self.comma.map(|c| c.inflate_before(config)).transpose()
+        } else {
+            self.comma.inflate(config)
+        }?;
         Ok(self)
+    }
+}
+
+impl<'a> Inflate<'a> for StarredElement<'a> {
+    fn inflate(self, config: &Config<'a>) -> Result<Self> {
+        self.inflate_element(config, false)
     }
 }
 
@@ -798,18 +808,6 @@ pub enum Element<'a> {
         comma: Option<Comma<'a>>,
     },
     Starred(StarredElement<'a>),
-}
-
-impl<'a> Inflate<'a> for Element<'a> {
-    fn inflate(self, config: &Config<'a>) -> Result<Self> {
-        Ok(match self {
-            Self::Starred(s) => Self::Starred(s.inflate(config)?),
-            Self::Simple { value, comma } => Self::Simple {
-                value: value.inflate(config)?,
-                comma: comma.inflate(config)?,
-            },
-        })
-    }
 }
 
 // TODO: this could be a derive helper attribute to override the python class name
@@ -864,11 +862,18 @@ impl<'a> Element<'a> {
         }
     }
 
-    fn comma(&self) -> Option<&Comma<'a>> {
-        match self {
-            Self::Starred(s) => s.comma.as_ref(),
-            Self::Simple { comma, .. } => comma.as_ref(),
-        }
+    pub fn inflate_element(self, config: &Config<'a>, is_last: bool) -> Result<Self> {
+        Ok(match self {
+            Self::Starred(s) => Self::Starred(s.inflate_element(config, is_last)?),
+            Self::Simple { value, comma } => Self::Simple {
+                value: value.inflate(config)?,
+                comma: if is_last {
+                    comma.map(|c| c.inflate_before(config)).transpose()?
+                } else {
+                    comma.inflate(config)?
+                },
+            },
+        })
     }
 }
 
@@ -900,15 +905,15 @@ pub struct Tuple<'a> {
 impl<'a> Inflate<'a> for Tuple<'a> {
     fn inflate(mut self, config: &Config<'a>) -> Result<Tuple<'a>> {
         self.lpar = self.lpar.inflate(config)?;
-        self.elements = self.elements.inflate(config)?;
-        if self
+        let len = self.elements.len();
+        self.elements = self
             .elements
-            .last()
-            .map(|x| x.comma().is_none())
-            .unwrap_or(false)
-        {
-            // rpar only has whitespace if elements is non empty without a
-            // trailing comma
+            .into_iter()
+            .enumerate()
+            .map(|(idx, el)| el.inflate_element(config, idx + 1 == len))
+            .collect::<Result<Vec<_>>>()?;
+        if !self.elements.is_empty() {
+            // rpar only has whitespace if elements is non empty
             self.rpar = self.rpar.inflate(config)?;
         }
         Ok(self)
@@ -1305,14 +1310,16 @@ impl<'a> Inflate<'a> for List<'a> {
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.lpar = self.lpar.inflate(config)?;
         self.lbracket = self.lbracket.inflate(config)?;
-        self.elements = self.elements.inflate(config)?;
+        let len = self.elements.len();
+        self.elements = self
+            .elements
+            .into_iter()
+            .enumerate()
+            .map(|(idx, el)| el.inflate_element(config, idx + 1 == len))
+            .collect::<Result<_>>()?;
         if !self.elements.is_empty() {
-            if let Some(last) = self.elements.last() {
-                if last.comma().is_none() {
-                    // lbracket owns all the whitespace if there are no elements
-                    self.rbracket = self.rbracket.inflate(config)?;
-                }
-            }
+            // lbracket owns all the whitespace if there are no elements
+            self.rbracket = self.rbracket.inflate(config)?;
         }
         self.rpar = self.rpar.inflate(config)?;
         Ok(self)
@@ -1345,13 +1352,15 @@ impl<'a> Inflate<'a> for Set<'a> {
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.lpar = self.lpar.inflate(config)?;
         self.lbrace = self.lbrace.inflate(config)?;
-        self.elements = self.elements.inflate(config)?;
+        let len = self.elements.len();
+        self.elements = self
+            .elements
+            .into_iter()
+            .enumerate()
+            .map(|(idx, el)| el.inflate_element(config, idx + 1 == len))
+            .collect::<Result<_>>()?;
         if !self.elements.is_empty() {
-            if let Some(last) = self.elements.last() {
-                if last.comma().is_none() {
-                    self.rbrace = self.rbrace.inflate(config)?;
-                }
-            }
+            self.rbrace = self.rbrace.inflate(config)?;
         }
         self.rpar = self.rpar.inflate(config)?;
         Ok(self)
@@ -1384,13 +1393,15 @@ impl<'a> Inflate<'a> for Dict<'a> {
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.lpar = self.lpar.inflate(config)?;
         self.lbrace = self.lbrace.inflate(config)?;
-        self.elements = self.elements.inflate(config)?;
+        let len = self.elements.len();
+        self.elements = self
+            .elements
+            .into_iter()
+            .enumerate()
+            .map(|(idx, el)| el.inflate_element(config, idx + 1 == len))
+            .collect::<Result<_>>()?;
         if !self.elements.is_empty() {
-            if let Some(last) = self.elements.last() {
-                if last.comma().is_none() {
-                    self.rbrace = self.rbrace.inflate(config)?;
-                }
-            }
+            self.rbrace = self.rbrace.inflate(config)?;
         }
         self.rpar = self.rpar.inflate(config)?;
         Ok(self)
@@ -1463,10 +1474,10 @@ impl<'a> IntoPy<pyo3::PyObject> for DictElement<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for DictElement<'a> {
-    fn inflate(self, config: &Config<'a>) -> Result<Self> {
+impl<'a> DictElement<'a> {
+    pub fn inflate_element(self, config: &Config<'a>, last_element: bool) -> Result<Self> {
         Ok(match self {
-            Self::Starred(s) => Self::Starred(s.inflate(config)?),
+            Self::Starred(s) => Self::Starred(s.inflate_element(config, last_element)?),
             Self::Simple {
                 key,
                 value,
@@ -1487,7 +1498,11 @@ impl<'a> Inflate<'a> for DictElement<'a> {
                     whitespace_before_colon,
                     whitespace_after_colon,
                     value: value.inflate(config)?,
-                    comma: comma.inflate(config)?,
+                    comma: if last_element {
+                        comma.map(|c| c.inflate_before(config)).transpose()
+                    } else {
+                        comma.inflate(config)
+                    }?,
                     colon_tok,
                 }
             }
@@ -1530,13 +1545,6 @@ impl<'a> DictElement<'a> {
             state.add_token(if default_comma_whitespace { ", " } else { "," });
         }
     }
-
-    fn comma(&self) -> Option<&Comma<'a>> {
-        match self {
-            Self::Simple { comma, .. } => comma.as_ref(),
-            Self::Starred(s) => s.comma.as_ref(),
-        }
-    }
 }
 
 impl<'a> WithComma<'a> for DictElement<'a> {
@@ -1572,14 +1580,18 @@ pub struct StarredDictElement<'a> {
     pub(crate) star_tok: TokenRef<'a>,
 }
 
-impl<'a> Inflate<'a> for StarredDictElement<'a> {
-    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+impl<'a> StarredDictElement<'a> {
+    fn inflate_element(mut self, config: &Config<'a>, last_element: bool) -> Result<Self> {
         self.whitespace_before_value = parse_parenthesizable_whitespace(
             config,
             &mut (*self.star_tok).whitespace_after.borrow_mut(),
         )?;
         self.value = self.value.inflate(config)?;
-        self.comma = self.comma.inflate(config)?;
+        self.comma = if last_element {
+            self.comma.map(|c| c.inflate_before(config)).transpose()
+        } else {
+            self.comma.inflate(config)
+        }?;
         Ok(self)
     }
 }

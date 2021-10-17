@@ -90,41 +90,6 @@ class TupleTest(CSTNodeTest):
                 "parser": parse_expression,
                 "expected_position": CodeRange((1, 1), (1, 11)),
             },
-            # custom parenthesis on StarredElement
-            {
-                "node": cst.Tuple(
-                    [
-                        cst.StarredElement(
-                            cst.Name("abc"),
-                            lpar=[cst.LeftParen()],
-                            rpar=[cst.RightParen()],
-                            comma=cst.Comma(),
-                        )
-                    ]
-                ),
-                "code": "((*abc),)",
-                "parser": parse_expression,
-                "expected_position": CodeRange((1, 1), (1, 8)),
-            },
-            # custom whitespace on StarredElement
-            {
-                "node": cst.Tuple(
-                    [
-                        cst.Element(cst.Name("one"), comma=cst.Comma()),
-                        cst.StarredElement(
-                            cst.Name("two"),
-                            whitespace_before_value=cst.SimpleWhitespace("  "),
-                            lpar=[cst.LeftParen()],
-                            rpar=[cst.RightParen()],
-                        ),
-                    ],
-                    lpar=[],
-                    rpar=[],  # rpar can't own the trailing whitespace if it's not there
-                ),
-                "code": "one,(*  two)",
-                "parser": parse_expression,
-                "expected_position": CodeRange((1, 0), (1, 12)),
-            },
             # missing spaces around tuple, okay with parenthesis
             {
                 "node": cst.For(
