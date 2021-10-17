@@ -117,7 +117,7 @@ parser! {
             = traced(<_file()>)
 
         pub rule expression_input() -> Expression<'a>
-            = traced(<e:expression() tok(NL, "NEWLINE") tok(EndMarker, "EOF") {e}>)
+            = traced(<e:star_expressions() tok(NL, "NEWLINE") tok(EndMarker, "EOF") {e}>)
 
         pub rule statement_input() -> Statement<'a>
             = traced(<s:statement() tok(EndMarker, "EOF") {s}>)
