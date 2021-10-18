@@ -6,35 +6,14 @@
 use std::rc::Rc;
 
 use crate::nodes::*;
-use crate::tokenizer::whitespace_parser::WhitespaceError;
-use crate::tokenizer::{TokError, TokType, Token};
+use crate::parser::ParserError;
+use crate::tokenizer::{TokType, Token};
 use peg::str::LineCol;
 use peg::{parser, Parse, ParseElem, RuleResult};
-use pyo3::exceptions::PyValueError;
-use pyo3::PyErr;
-use thiserror::Error;
 use TokType::{
     Async, Await as AWAIT, Dedent, EndMarker, FStringEnd, FStringStart, FStringString, Indent,
     Name as NameTok, Newline as NL, Number, String as STRING,
 };
-
-#[derive(Debug, Error, PartialEq, Eq)]
-pub enum ParserError<'a> {
-    #[error("tokenizer error: {0}")]
-    TokenizerError(TokError<'a>),
-    #[error(transparent)]
-    ParserError(#[from] peg::error::ParseError<<TokVec<'a> as Parse>::PositionRepr>),
-    #[error(transparent)]
-    WhitespaceError(#[from] WhitespaceError),
-    #[error("invalid operator")]
-    OperatorError,
-}
-
-impl<'a> std::convert::From<ParserError<'a>> for PyErr {
-    fn from(e: ParserError) -> Self {
-        PyValueError::new_err(format!("{}", e))
-    }
-}
 
 pub type Result<'a, T> = std::result::Result<T, ParserError<'a>>;
 
