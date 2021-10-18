@@ -10,9 +10,12 @@ use thiserror::Error;
 #[derive(Debug, Error, PartialEq, Eq)]
 pub enum ParserError<'a> {
     #[error("tokenizer error: {0}")]
-    TokenizerError(TokError<'a>),
-    #[error(transparent)]
-    ParserError(#[from] peg::error::ParseError<<TokVec<'a> as Parse>::PositionRepr>),
+    TokenizerError(TokError<'a>, &'a str),
+    #[error("parser error: {0}")]
+    ParserError(
+        peg::error::ParseError<<TokVec<'a> as Parse>::PositionRepr>,
+        &'a str,
+    ),
     #[error(transparent)]
     WhitespaceError(#[from] WhitespaceError),
     #[error("invalid operator")]
@@ -22,11 +25,23 @@ pub enum ParserError<'a> {
 impl<'a> From<ParserError<'a>> for PyErr {
     fn from(e: ParserError) -> Self {
         Python::with_gil(|py| {
+            let lines = match &e {
+                ParserError::TokenizerError(_, text) | ParserError::ParserError(_, text) => {
+                    text.lines().collect::<Vec<_>>()
+                }
+                _ => vec![""],
+            };
+            let (line, col) = match &e {
+                ParserError::ParserError(err, ..) => {
+                    (err.location.start_pos.line, err.location.start_pos.column)
+                }
+                _ => (0, 0),
+            };
             let kwargs = [
                 ("message", e.to_string().into_py(py)),
-                ("lines", vec![""].into_py(py)),
-                ("raw_line", 0.into_py(py)),
-                ("raw_column", 0.into_py(py)),
+                ("lines", lines.into_py(py)),
+                ("raw_line", line.into_py(py)),
+                ("raw_column", col.into_py(py)),
             ]
             .into_py_dict(py);
             let libcst = PyModule::import(py, "libcst").expect("libcst cannot be imported");

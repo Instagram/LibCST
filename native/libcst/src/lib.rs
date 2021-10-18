@@ -28,14 +28,15 @@ pub fn tokenize(text: &str) -> Result<Vec<Token>> {
     );
 
     iter.collect::<std::result::Result<Vec<_>, _>>()
-        .map_err(ParserError::TokenizerError)
+        .map_err(|err| ParserError::TokenizerError(err, text))
 }
 
 pub fn parse_tokens_without_whitespace<'a>(
     tokens: Vec<Token<'a>>,
     module_text: &'a str,
 ) -> Result<'a, Module<'a>> {
-    parser::python::file(&tokens.into(), module_text).map_err(ParserError::ParserError)
+    parser::python::file(&tokens.into(), module_text)
+        .map_err(|err| ParserError::ParserError(err, module_text))
 }
 
 pub fn parse_module(mut module_text: &str) -> Result<Module> {
@@ -52,16 +53,16 @@ pub fn parse_module(mut module_text: &str) -> Result<Module> {
 pub fn parse_statement(text: &str) -> Result<Statement> {
     let tokens = tokenize(text)?;
     let conf = whitespace_parser::Config::new(text, &tokens);
-    let stm =
-        parser::python::statement_input(&tokens.into(), text).map_err(ParserError::ParserError)?;
+    let stm = parser::python::statement_input(&tokens.into(), text)
+        .map_err(|err| ParserError::ParserError(err, text))?;
     Ok(stm.inflate(&conf)?)
 }
 
 pub fn parse_expression(text: &str) -> Result<Expression> {
     let tokens = tokenize(text)?;
     let conf = whitespace_parser::Config::new(text, &tokens);
-    let expr =
-        parser::python::expression_input(&tokens.into(), text).map_err(ParserError::ParserError)?;
+    let expr = parser::python::expression_input(&tokens.into(), text)
+        .map_err(|err| ParserError::ParserError(err, text))?;
     Ok(expr.inflate(&conf)?)
 }
 
@@ -77,13 +78,9 @@ fn bol_offset(source: &str, n: i32) -> usize {
         .unwrap_or_else(|| source.len())
 }
 
-pub fn prettify_error<'a>(
-    module_text: &'a str,
-    err: ParserError<'a>,
-    label: &str,
-) -> std::string::String {
+pub fn prettify_error(err: ParserError, label: &str) -> std::string::String {
     match err {
-        ParserError::ParserError(e) => {
+        ParserError::ParserError(e, module_text) => {
             let loc = e.location;
             let context = 1;
             let start_offset = bol_offset(module_text, loc.start_pos.line as i32 - context);
@@ -128,7 +125,7 @@ mod test {
         let n = parse_module("1_");
         assert_eq!(
             n.err().unwrap(),
-            ParserError::TokenizerError(TokError::BadDecimal)
+            ParserError::TokenizerError(TokError::BadDecimal, "1_")
         );
     }
 

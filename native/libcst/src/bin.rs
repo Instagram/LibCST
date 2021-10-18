@@ -10,7 +10,7 @@ pub fn main() {
     io::stdin().read_to_string(&mut str).unwrap();
     match parse_module(str.as_ref()) {
         Err(e) => {
-            eprintln!("{}", prettify_error(str.as_ref(), e, "stdin"));
+            eprintln!("{}", prettify_error(e, "stdin"));
             exit(1);
         }
         Ok(m) => {

@@ -32,10 +32,7 @@ fn roundtrip_fixtures() {
         };
         let m = match parse_module(input) {
             Ok(m) => m,
-            Err(e) => panic!(
-                "{}",
-                prettify_error(input, e, format!("{:#?}", path).as_ref())
-            ),
+            Err(e) => panic!("{}", prettify_error(e, format!("{:#?}", path).as_ref())),
         };
         let mut state = Default::default();
         m.codegen(&mut state);
