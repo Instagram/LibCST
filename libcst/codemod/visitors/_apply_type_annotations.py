@@ -263,17 +263,6 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
         stub: cst.Module,
         overwrite_existing_annotations: bool = False,
     ) -> None:
-        # deprecated, should be removed in 0.4 release.
-        ApplyTypeAnnotationsVisitor.store_stub_in_context(
-            context, stub, overwrite_existing_annotations
-        )
-
-    @staticmethod
-    def store_stub_in_context(
-        context: CodemodContext,
-        stub: cst.Module,
-        overwrite_existing_annotations: bool = False,
-    ) -> None:
         """
         Store a stub module in the :class:`~libcst.codemod.CodemodContext` so
         that type annotations from the stub can be applied in a later
