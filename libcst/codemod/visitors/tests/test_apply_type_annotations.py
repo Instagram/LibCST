@@ -55,45 +55,6 @@ class TestApplyAnnotationsVisitor(CodemodTest):
 
     @data_provider(
         {
-            "supported_cases": (
-                """
-                from __future__ import annotations
-                from foo import Foo
-                from baz import Baz
-                """,
-                """
-                from foo import Bar
-                import bar
-                """,
-                """
-                from __future__ import annotations
-                from foo import Foo, Bar
-                import bar
-                from baz import Baz
-                """,
-            ),
-            "unsupported_cases": (
-                """
-                from Foo import foo as bar
-                import foo
-                from .. import baz
-                from boo import *
-                """,
-                """
-                """,
-                # This is a bug, it would be better to just ignor aliased
-                # imports than to add them incorrectly.
-                """
-                from Foo import bar
-                """,
-            ),
-        }
-    )
-    def test_merge_module_imports(self, stub: str, before: str, after: str) -> None:
-        self.run_simple_test_case(stub=stub, before=before, after=after)
-
-    @data_provider(
-        {
             "simple": (
                 """
                 bar: int = ...
@@ -358,7 +319,7 @@ class TestApplyAnnotationsVisitor(CodemodTest):
                     pass
                 """,
             ),
-            "UNSUPPORTED_add_imports_for_generics": (
+            "add_imports_for_generics": (
                 """
                 def foo(x: int) -> typing.Optional[Example]: ...
                 """,
@@ -367,7 +328,9 @@ class TestApplyAnnotationsVisitor(CodemodTest):
                     pass
                 """,
                 """
-                def foo(x: int) -> typing.Optional[Example]:
+                from typing import Optional
+
+                def foo(x: int) -> Optional[Example]:
                     pass
                 """,
             ),
