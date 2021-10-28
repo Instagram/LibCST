@@ -266,7 +266,7 @@ class AnnotationCounts:
     return_annotations: int = 0
     classes_added: int = 0
 
-    def applied_changes(self):
+    def any_changes(self):
         return (
             self.global_annotations
             + self.attribute_annotations
@@ -385,7 +385,13 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
             self.annotations.class_definitions.update(visitor.class_definitions)
 
         tree_with_imports = AddImportsVisitor(self.context).transform_module(tree)
-        return tree_with_imports.visit(self)
+        tree_with_changes = tree_with_imports.visit(self)
+
+        # don't modify the imports if we didn't actually add any type information
+        if self.annotation_counts.any_changes():
+            return tree_with_changes
+        else:
+            return tree
 
     # smart constructors: all applied annotations happen via one of these
 
