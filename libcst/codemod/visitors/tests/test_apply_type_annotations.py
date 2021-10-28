@@ -1012,11 +1012,7 @@ class TestApplyAnnotationsVisitor(CodemodTest):
                     def __init__(self):
                         self.attr_will_not_be_found = None
                 """,
-                # TODO: use the annotation counts to avoid adding
-                # the import in this case.
                 """
-                from bar import X
-
                 class C:
                     def __init__(self):
                         self.attr_will_not_be_found = None
@@ -1032,7 +1028,7 @@ class TestApplyAnnotationsVisitor(CodemodTest):
         before: str,
         after: str,
         annotation_counts: AnnotationCounts,
-        applied_changes: False,
+        any_changes: False,
     ):
         stub = self.make_fixture_data(stub)
         before = self.make_fixture_data(before)
@@ -1048,4 +1044,4 @@ class TestApplyAnnotationsVisitor(CodemodTest):
 
         self.assertEqual(after, output_code)
         self.assertEqual(str(annotation_counts), str(visitor.annotation_counts))
-        self.assertEqual(applied_changes, visitor.annotation_counts.applied_changes())
+        self.assertEqual(any_changes, visitor.annotation_counts.any_changes())
