@@ -145,15 +145,28 @@ class TypeCollector(cst.CSTVisitor):
         dequalified_node = node.attr if isinstance(node, cst.Attribute) else node
         return qualified_name, dequalified_node
 
+    def _module_and_target(self, qualified_name: str) -> Tuple[str, str]:
+        relative_prefix = ""
+        while qualified_name.startswith("."):
+            relative_prefix += "."
+            qualified_name = qualified_name[1:]
+        split = qualified_name.rsplit(".", 1)
+        if len(split) == 1:
+            qualifier, target = "", split[0]
+        else:
+            qualifier, target = split
+        return (relative_prefix + qualifier, target)
+
     def _handle_qualification_and_should_qualify(self, qualified_name: str) -> bool:
         """
         Basd on a qualified name and the existing module imports, record that
         we need to add an import if necessary and return whether or not we
         should use the qualified name due to a preexisting import.
         """
-        split_name = qualified_name.split(".")
-        if len(split_name) > 1 and qualified_name not in self.existing_imports:
-            module, target = ".".join(split_name[:-1]), split_name[-1]
+        module, target = self._module_and_target(qualified_name)
+        if module in ("", "builtins"):
+            return False
+        elif qualified_name not in self.existing_imports:
             if module == "builtins":
                 return False
             elif module in self.existing_imports:

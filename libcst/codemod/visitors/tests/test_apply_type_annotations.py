@@ -123,6 +123,32 @@ class TestApplyAnnotationsVisitor(CodemodTest):
                 FOO: Union[Example, int] = bar()
                 """,
             ),
+            "with_relative_imports": (
+                """
+                from .relative0 import T0
+                from ..relative1 import T1
+                from . import relative2
+
+                x0: typing.Optional[T0]
+                x1: typing.Optional[T1]
+                x2: typing.Optional[relative2.T2]
+                """,
+                """
+                x0 = None
+                x1 = None
+                x2 = None
+                """,
+                """
+                from ..relative1 import T1
+                from .relative0 import T0
+                from .relative2 import T2
+                from typing import Optional
+
+                x0: Optional[T0] = None
+                x1: Optional[T1] = None
+                x2: Optional[T2] = None
+                """,
+            ),
         }
     )
     def test_annotate_globals(self, stub: str, before: str, after: str) -> None:
