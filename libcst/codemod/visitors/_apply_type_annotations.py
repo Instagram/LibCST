@@ -266,7 +266,7 @@ class AnnotationCounts:
     return_annotations: int = 0
     classes_added: int = 0
 
-    def any_changes(self):
+    def any_changes_applied(self):
         return (
             self.global_annotations
             + self.attribute_annotations
@@ -318,6 +318,7 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
         context: CodemodContext,
         annotations: Optional[Annotations] = None,
         overwrite_existing_annotations: bool = False,
+        use_future_annotations: bool = False,
     ) -> None:
         super().__init__(context)
         # Qualifier for storing the canonical name of the current function.
@@ -328,6 +329,7 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
         self.toplevel_annotations: Dict[str, cst.Annotation] = {}
         self.visited_classes: Set[str] = set()
         self.overwrite_existing_annotations = overwrite_existing_annotations
+        self.use_future_annotations = use_future_annotations
 
         # We use this to determine the end of the import block so that we can
         # insert top-level annotations.
@@ -343,6 +345,7 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
         context: CodemodContext,
         stub: cst.Module,
         overwrite_existing_annotations: bool = False,
+        use_future_annotations: bool = False,
     ) -> None:
         """
         Store a stub module in the :class:`~libcst.codemod.CodemodContext` so
@@ -358,6 +361,7 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
         context.scratch[ApplyTypeAnnotationsVisitor.CONTEXT_KEY] = (
             stub,
             overwrite_existing_annotations,
+            use_future_annotations,
         )
 
     def transform_module_impl(self, tree: cst.Module) -> cst.Module:
@@ -374,9 +378,16 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
             ApplyTypeAnnotationsVisitor.CONTEXT_KEY
         )
         if context_contents is not None:
-            stub, overwrite_existing_annotations = context_contents
+            (
+                stub,
+                overwrite_existing_annotations,
+                use_future_annotations,
+            ) = context_contents
             self.overwrite_existing_annotations = (
                 self.overwrite_existing_annotations or overwrite_existing_annotations
+            )
+            self.use_future_annotations = (
+                self.use_future_annotations or use_future_annotations
             )
             visitor = TypeCollector(existing_import_names, self.context)
             cst.MetadataWrapper(stub).visit(visitor)
@@ -384,11 +395,18 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
             self.annotations.attribute_annotations.update(visitor.attribute_annotations)
             self.annotations.class_definitions.update(visitor.class_definitions)
 
-        tree_with_imports = AddImportsVisitor(self.context).transform_module(tree)
+        tree_with_imports = AddImportsVisitor(
+            context=self.context,
+            imports=(
+                [("__future__", "annotations", None)]
+                if self.use_future_annotations
+                else ()
+            ),
+        ).transform_module(tree)
         tree_with_changes = tree_with_imports.visit(self)
 
         # don't modify the imports if we didn't actually add any type information
-        if self.annotation_counts.any_changes():
+        if self.annotation_counts.any_changes_applied():
             return tree_with_changes
         else:
             return tree

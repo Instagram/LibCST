@@ -923,6 +923,46 @@ class TestApplyAnnotationsVisitor(CodemodTest):
 
     @data_provider(
         {
+            "basic_example_using_future_annotations": (
+                """
+                def f() -> bool: ...
+                """,
+                """
+                def f():
+                    return True
+                """,
+                """
+                from __future__ import annotations
+
+                def f() -> bool:
+                    return True
+                """,
+            ),
+            "no_use_future_if_no_changes": (
+                """
+                def f() -> bool: ...
+                """,
+                """
+                def f() -> bool:
+                    return True
+                """,
+                """
+                def f() -> bool:
+                    return True
+                """,
+            ),
+        }
+    )
+    def test_use_future_annotations(self, stub: str, before: str, after: str) -> None:
+        self.run_test_case_with_flags(
+            stub=stub,
+            before=before,
+            after=after,
+            use_future_annotations=True,
+        )
+
+    @data_provider(
+        {
             "test_counting_parameters_and_returns": (
                 """
                 def f(counted: int, not_counted) -> Counted: ...
@@ -1028,7 +1068,7 @@ class TestApplyAnnotationsVisitor(CodemodTest):
         before: str,
         after: str,
         annotation_counts: AnnotationCounts,
-        any_changes: False,
+        any_changes_applied: False,
     ):
         stub = self.make_fixture_data(stub)
         before = self.make_fixture_data(before)
@@ -1044,4 +1084,6 @@ class TestApplyAnnotationsVisitor(CodemodTest):
 
         self.assertEqual(after, output_code)
         self.assertEqual(str(annotation_counts), str(visitor.annotation_counts))
-        self.assertEqual(any_changes, visitor.annotation_counts.any_changes())
+        self.assertEqual(
+            any_changes_applied, visitor.annotation_counts.any_changes_applied()
+        )
