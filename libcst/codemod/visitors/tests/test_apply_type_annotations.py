@@ -11,7 +11,10 @@ from typing import Dict, Type
 
 from libcst import parse_module
 from libcst.codemod import Codemod, CodemodContext, CodemodTest
-from libcst.codemod.visitors._apply_type_annotations import ApplyTypeAnnotationsVisitor
+from libcst.codemod.visitors._apply_type_annotations import (
+    ApplyTypeAnnotationsVisitor,
+    AnnotationCounts,
+)
 from libcst.testing.utils import data_provider
 
 
@@ -954,3 +957,132 @@ class TestApplyAnnotationsVisitor(CodemodTest):
             after=after,
             overwrite_existing_annotations=True,
         )
+
+    @data_provider(
+        {
+            "test_counting_parameters_and_returns": (
+                """
+                def f(counted: int, not_counted) -> Counted: ...
+
+                def g(not_counted: int, counted: str) -> Counted: ...
+
+                def h(counted: int) -> NotCounted: ...
+
+                def not_in_module(x: int, y: int) -> str: ...
+                """,
+                """
+                def f(counted, not_counted):
+                    return Counted()
+
+                def g(not_counted: int, counted):
+                    return Counted()
+
+                def h(counted) -> NotCounted:
+                    return Counted()
+                """,
+                """
+                def f(counted: int, not_counted) -> Counted:
+                    return Counted()
+
+                def g(not_counted: int, counted: str) -> Counted:
+                    return Counted()
+
+                def h(counted: int) -> NotCounted:
+                    return Counted()
+                """,
+                AnnotationCounts(
+                    parameter_annotations=3,
+                    return_annotations=2,
+                ),
+                True,
+            ),
+            "test_counting_globals_classes_and_attributes": (
+                """
+                global0: int = ...
+                global1: int
+
+                class InModule:
+                    attr_will_be_found: int
+                    attr_will_not_be_found: int
+
+                class NotInModule:
+                    attr: int
+                """,
+                """
+                global0 = 1
+                global1, global2 = (1, 1)
+
+                class InModule:
+                    attr_will_be_found = 0
+                    def __init__(self):
+                        self.attr_will_not_be_found = 1
+                """,
+                """
+                global1: int
+
+                class NotInModule:
+                    attr: int
+
+                global0: int = 1
+                global1, global2 = (1, 1)
+
+                class InModule:
+                    attr_will_be_found: int = 0
+                    def __init__(self):
+                        self.attr_will_not_be_found = 1
+
+                """,
+                AnnotationCounts(
+                    global_annotations=2,
+                    attribute_annotations=1,
+                    classes_added=1,
+                ),
+                True,
+            ),
+            "test_counting_no_changes": (
+                """
+                class C:
+                    attr_will_not_be_found: bar.X
+                """,
+                """
+                class C:
+                    def __init__(self):
+                        self.attr_will_not_be_found = None
+                """,
+                # TODO: use the annotation counts to avoid adding
+                # the import in this case.
+                """
+                from bar import X
+
+                class C:
+                    def __init__(self):
+                        self.attr_will_not_be_found = None
+                """,
+                AnnotationCounts(),
+                False,
+            ),
+        }
+    )
+    def test_count_annotations(
+        self,
+        stub: str,
+        before: str,
+        after: str,
+        annotation_counts: AnnotationCounts,
+        applied_changes: False,
+    ):
+        stub = self.make_fixture_data(stub)
+        before = self.make_fixture_data(before)
+        after = self.make_fixture_data(after)
+
+        context = CodemodContext()
+        ApplyTypeAnnotationsVisitor.store_stub_in_context(
+            context=context, stub=parse_module(stub)
+        )
+        visitor = ApplyTypeAnnotationsVisitor(context=context)
+
+        output_code = visitor.transform_module(parse_module(before)).code
+
+        self.assertEqual(after, output_code)
+        self.assertEqual(str(annotation_counts), str(visitor.annotation_counts))
+        self.assertEqual(applied_changes, visitor.annotation_counts.applied_changes())

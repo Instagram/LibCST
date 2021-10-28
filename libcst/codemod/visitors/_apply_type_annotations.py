@@ -200,6 +200,24 @@ class Annotations:
     class_definitions: Dict[str, cst.ClassDef] = field(default_factory=dict)
 
 
+@dataclass
+class AnnotationCounts:
+    global_annotations: int = 0
+    attribute_annotations: int = 0
+    parameter_annotations: int = 0
+    return_annotations: int = 0
+    classes_added: int = 0
+
+    def applied_changes(self):
+        return (
+            self.global_annotations
+            + self.attribute_annotations
+            + self.parameter_annotations
+            + self.return_annotations
+            + self.classes_added
+        ) > 0
+
+
 class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
     """
     Apply type annotations to a source module using the given stub mdules.
@@ -257,6 +275,11 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
         # insert top-level annotations.
         self.import_statements: List[cst.ImportFrom] = []
 
+        # We use this to report annotations added, as well as to determine
+        # whether to abandon the codemod in edge cases where we may have
+        # only made changes to the imports.
+        self.annotation_counts: AnnotationCounts = AnnotationCounts()
+
     @staticmethod
     def store_stub_in_context(
         context: CodemodContext,
@@ -306,6 +329,40 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
         tree_with_imports = AddImportsVisitor(self.context).transform_module(tree)
         return tree_with_imports.visit(self)
 
+    # smart constructors: all applied annotations happen via one of these
+
+    def _apply_annotation_to_attribute_or_global(
+        self,
+        name: str,
+        annotation: cst.Annotation,
+        value: Optional[cst.BaseExpression],
+    ) -> cst.AnnAssign:
+        if len(self.qualifier) == 0:
+            self.annotation_counts.global_annotations += 1
+        else:
+            self.annotation_counts.attribute_annotations += 1
+        return cst.AnnAssign(cst.Name(name), annotation, value)
+
+    def _apply_annotation_to_parameter(
+        self,
+        parameter: cst.Param,
+        annotation: cst.Annotation,
+    ) -> cst.Param:
+        self.annotation_counts.parameter_annotations += 1
+        return parameter.with_changes(
+            annotation=annotation,
+        )
+
+    def _apply_annotation_to_return(
+        self,
+        function_def: cst.FunctionDef,
+        annotation: cst.Annotation,
+    ) -> cst.FunctionDef:
+        self.annotation_counts.return_annotations += 1
+        return function_def.with_changes(returns=annotation)
+
+    # private methods used in the visit and leave methods
+
     def _qualifier_name(self) -> str:
         return ".".join(self.qualifier)
 
@@ -333,7 +390,11 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
                         self._qualifier_name()
                     ]
                     self.qualifier.pop()
-                    return cst.AnnAssign(cst.Name(name), annotation, node.value)
+                    return self._apply_annotation_to_attribute_or_global(
+                        name=name,
+                        annotation=annotation,
+                        value=node.value,
+                    )
                 else:
                     self.qualifier.pop()
         return updated_node
@@ -388,8 +449,9 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
                 if key in parameter_annotations and (
                     self.overwrite_existing_annotations or not parameter.annotation
                 ):
-                    parameter = parameter.with_changes(
-                        annotation=parameter_annotations[key]
+                    parameter = self._apply_annotation_to_parameter(
+                        parameter=parameter,
+                        annotation=parameter_annotations[key],
                     )
                 annotated_parameters.append(parameter)
             return annotated_parameters
@@ -431,6 +493,8 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
             *statements[1:],
         ]
 
+    # transform API methods
+
     def visit_ClassDef(self, node: cst.ClassDef) -> None:
         self.qualifier.append(node.name.value)
         self.visited_classes.add(node.name.value)
@@ -459,8 +523,8 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
                 self.overwrite_existing_annotations and function_annotation.returns
             )
             if set_return_annotation:
-                updated_node = updated_node.with_changes(
-                    returns=function_annotation.returns
+                updated_node = self._apply_annotation_to_return(
+                    function_def=updated_node, annotation=function_annotation.returns
                 )
             # Don't override default values when annotating functions
             new_parameters = self._update_parameters(function_annotation, updated_node)
@@ -510,9 +574,14 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
         statements_after_imports = self._insert_empty_line(statements_after_imports)
 
         for name, annotation in self.toplevel_annotations.items():
-            annotated_assign = cst.AnnAssign(cst.Name(name), annotation, None)
+            annotated_assign = self._apply_annotation_to_attribute_or_global(
+                name=name,
+                annotation=annotation,
+                value=None,
+            )
             toplevel_statements.append(cst.SimpleStatementLine([annotated_assign]))
 
+        self.annotation_counts.classes_added = len(fresh_class_definitions)
         toplevel_statements.extend(fresh_class_definitions)
 
         return updated_node.with_changes(
