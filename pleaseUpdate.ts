@@ -6,6 +6,7 @@
 const me = "chxllxus"
 const assistance = false
 
+
 while (true) {
     if (me === "chxllxus" && assistance === false) {
         console.log("Mark is an Asshole")
