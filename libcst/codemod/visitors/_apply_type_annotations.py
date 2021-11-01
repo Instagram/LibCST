@@ -76,7 +76,7 @@ class TypeCollector(cst.CSTVisitor):
             value = base.value
             if isinstance(value, NAME_OR_ATTRIBUTE):
                 new_value = self._handle_NameOrAttribute(value)
-            elif isinstance(base.value, cst.Subscript):
+            elif isinstance(value, cst.Subscript):
                 new_value = self._handle_Subscript(value)
             else:
                 start = self.get_metadata(PositionProvider, node).start
@@ -121,21 +121,23 @@ class TypeCollector(cst.CSTVisitor):
         self.qualifier.pop()
 
     def _get_unique_qualified_name(self, node: cst.CSTNode) -> str:
+        name = None
         names = [q.name for q in self.get_metadata(QualifiedNameProvider, node)]
         if len(names) == 0:
             # we hit this branch if the stub is directly using a fully
             # qualified name, which is not technically valid python but is
             # convenient to allow.
-            return get_full_name_for_node(node)
-        elif len(names) == 1:
-            return names[0]
-        else:
+            name = get_full_name_for_node(node)
+        elif len(names) == 1 and isinstance(names[0], str):
+            name = names[0]
+        if name is None:
             start = self.get_metadata(PositionProvider, node).start
             raise ValueError(
                 "Could not resolve a unique qualified name for type "
                 + f"{get_full_name_for_node(node)} at {start.line}:{start.column}. "
                 + f"Candidate names were: {names!r}"
             )
+        return name
 
     def _get_qualified_name_and_dequalified_node(
         self,
@@ -161,6 +163,7 @@ class TypeCollector(cst.CSTVisitor):
             else:
                 AddImportsVisitor.add_needed_import(self.context, module, target)
                 return False
+        return False
 
     # Handler functions.
     #
@@ -183,7 +186,7 @@ class TypeCollector(cst.CSTVisitor):
         else:
             return dequalified_node
 
-    def _handle_Index(self, slice: cst.Index, node: cst.Subscript) -> cst.Subscript:
+    def _handle_Index(self, slice: cst.Index, node: cst.Subscript) -> cst.Index:
         value = slice.value
         if isinstance(value, cst.Subscript):
             return slice.with_changes(value=self._handle_Subscript(value))
@@ -233,8 +236,10 @@ class TypeCollector(cst.CSTVisitor):
             return annotation
         elif isinstance(node, cst.Subscript):
             return cst.Annotation(annotation=self._handle_Subscript(node))
-        else:
+        elif isinstance(node, NAME_OR_ATTRIBUTE):
             return cst.Annotation(annotation=self._handle_NameOrAttribute(node))
+        else:
+            raise ValueError(f"Unexpected annotation node: {node}")
 
     def _handle_Parameters(self, parameters: cst.Parameters) -> cst.Parameters:
         def update_annotations(parameters: Sequence[cst.Param]) -> List[cst.Param]:
@@ -266,7 +271,7 @@ class AnnotationCounts:
     return_annotations: int = 0
     classes_added: int = 0
 
-    def any_changes_applied(self):
+    def any_changes_applied(self) -> bool:
         return (
             self.global_annotations
             + self.attribute_annotations
@@ -601,12 +606,13 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
             function_annotation = self.annotations.function_annotations[key]
             # Only add new annotation if explicitly told to overwrite existing
             # annotations or if one doesn't already exist.
-            set_return_annotation = not updated_node.returns or (
-                self.overwrite_existing_annotations and function_annotation.returns
+            set_return_annotation = (
+                self.overwrite_existing_annotations or updated_node.returns is None
             )
-            if set_return_annotation:
+            if set_return_annotation and function_annotation.returns is not None:
                 updated_node = self._apply_annotation_to_return(
-                    function_def=updated_node, annotation=function_annotation.returns
+                    function_def=updated_node,
+                    annotation=function_annotation.returns,
                 )
             # Don't override default values when annotating functions
             new_parameters = self._update_parameters(function_annotation, updated_node)
