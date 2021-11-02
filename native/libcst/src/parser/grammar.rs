@@ -185,7 +185,7 @@ parser! {
 
         rule class_def_raw() -> ClassDef<'a>
             = kw:lit("class") n:name() arg:(l:lpar() a:arguments()? r:rpar() {(l, a, r)})?
-                col:lit(":") b:block() {
+                col:lit(":") b:block() {?
                     make_class_def(kw, n, arg, col, b)
             }
 
@@ -2589,7 +2589,7 @@ fn make_class_def<'a>(
     args: Option<(LeftParen<'a>, Option<Vec<Arg<'a>>>, RightParen<'a>)>,
     colon_tok: TokenRef<'a>,
     body: Suite<'a>,
-) -> ClassDef<'a> {
+) -> std::result::Result<ClassDef<'a>, &'static str> {
     let mut bases = vec![];
     let mut keywords = vec![];
     let mut parens_tok = None;
@@ -2602,16 +2602,23 @@ fn make_class_def<'a>(
         rpar = Some(rpar_);
         if let Some(args) = args {
             let mut current_arg = &mut bases;
+            let mut seen_keyword = false;
             for arg in args {
                 if arg.star == "**" || arg.keyword.is_some() {
                     current_arg = &mut keywords;
+                    seen_keyword = true;
+                }
+                if seen_keyword
+                    && (arg.star == "*" || (arg.star.is_empty() && arg.keyword.is_none()))
+                {
+                    return Err("Positional argument follows keyword argument");
                 }
                 // TODO: libcst-python does validation here
                 current_arg.push(arg);
             }
         }
     }
-    ClassDef {
+    Ok(ClassDef {
         name,
         body,
         bases,
@@ -2627,7 +2634,7 @@ fn make_class_def<'a>(
         class_tok,
         parens_tok,
         colon_tok,
-    }
+    })
 }
 
 fn make_string(tok: TokenRef) -> String {
