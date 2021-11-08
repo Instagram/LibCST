@@ -123,3 +123,7 @@ class MetadataWrapperTest(UnitTest):
         wrapper.resolve(ProviderB)
         mock.visited_a.assert_called_once()
         mock.visited_b.assert_called_once()
+
+        wrapper.resolve(ProviderA)
+        mock.visited_a.assert_called_once()
+        mock.visited_b.assert_called_once()
