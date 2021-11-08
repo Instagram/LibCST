@@ -74,7 +74,7 @@ def _resolve_impl(
     as well as their dependencies.
     """
     completed = set(wrapper._metadata.keys())
-    remaining = _gather_providers(providers, set()) - completed
+    remaining = _gather_providers(set(providers), set()) - completed
 
     while len(remaining) > 0:
         batchable = set()
