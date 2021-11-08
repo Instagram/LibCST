@@ -5,9 +5,14 @@
 
 
 from typing import Optional
+from unittest.mock import Mock
 
 import libcst as cst
-from libcst.metadata import BatchableMetadataProvider, MetadataWrapper
+from libcst.metadata import (
+    BatchableMetadataProvider,
+    MetadataWrapper,
+    VisitorMetadataProvider,
+)
 from libcst.testing.utils import UnitTest
 
 
@@ -73,3 +78,48 @@ class MetadataWrapperTest(UnitTest):
         self.assertEqual(
             mw.resolve(SimpleCacheMetadataProvider)[pass_node], cached_data
         )
+
+    def test_resolve_provider_twice(self) -> None:
+        """
+        Tests that resolving the same provider twice is a no-op
+        """
+        mock = Mock()
+
+        class ProviderA(VisitorMetadataProvider[bool]):
+            def visit_Pass(self, node: cst.Pass) -> None:
+                mock.visited_a()
+
+        module = cst.parse_module("pass")
+        wrapper = MetadataWrapper(module)
+
+        wrapper.resolve(ProviderA)
+        mock.visited_a.assert_called_once()
+
+        wrapper.resolve(ProviderA)
+        mock.visited_a.assert_called_once()
+
+    def test_resolve_dependent_provider_twice(self) -> None:
+        """
+        Tests that resolving the same provider twice is a no-op
+        """
+        mock = Mock()
+
+        class ProviderA(VisitorMetadataProvider[bool]):
+            def visit_Pass(self, node: cst.Pass) -> None:
+                mock.visited_a()
+
+        class ProviderB(VisitorMetadataProvider[bool]):
+            METADATA_DEPENDENCIES = (ProviderA,)
+
+            def visit_Pass(self, node: cst.Pass) -> None:
+                mock.visited_b()
+
+        module = cst.parse_module("pass")
+        wrapper = MetadataWrapper(module)
+
+        wrapper.resolve(ProviderA)
+        mock.visited_a.assert_called_once()
+
+        wrapper.resolve(ProviderB)
+        mock.visited_a.assert_called_once()
+        mock.visited_b.assert_called_once()
