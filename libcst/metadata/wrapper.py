@@ -73,10 +73,9 @@ def _resolve_impl(
     Updates the _metadata map on wrapper with metadata from the given providers
     as well as their dependencies.
     """
-    providers = set(providers) - set(wrapper._metadata.keys())
-    remaining = _gather_providers(providers, set())
+    completed = set(wrapper._metadata.keys())
+    remaining = _gather_providers(set(providers), set()) - completed
 
-    completed = set()
     while len(remaining) > 0:
         batchable = set()
 
