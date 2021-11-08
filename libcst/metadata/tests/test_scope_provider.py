@@ -1826,3 +1826,6 @@ class ScopeProviderTest(UnitTest):
 
         global_pow_accesses = list(global_pow_assignment.references)
         self.assertEqual(len(global_pow_accesses), 2)
+
+    def test_unparseable_string(self) -> None:
+        m, scopes = get_scope_metadata_provider('a: "{hello{foo}}"')
