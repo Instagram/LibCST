@@ -1191,7 +1191,7 @@ class ScopeProviderTest(UnitTest):
     def test_insane_annotation_access(self) -> None:
         m, scopes = get_scope_metadata_provider(
             r"""
-                from typing import TypeVar
+                from typing import TypeVar, Optional
                 from a import G
                 TypeVar("G2", bound="Optional[\"G\"]")
             """
@@ -1828,4 +1828,4 @@ class ScopeProviderTest(UnitTest):
         self.assertEqual(len(global_pow_accesses), 2)
 
     def test_unparseable_string(self) -> None:
-        m, scopes = get_scope_metadata_provider('a: "{hello{foo}}"')
+        m, scopes = get_scope_metadata_provider('a: Optional[func("{hello{foo}}")]')
