@@ -1,4 +1,4 @@
-black==20.8b1
+black==21.10b0
 coverage>=4.5.4
 fixit==0.1.1
 flake8>=3.7.8
