@@ -854,8 +854,7 @@ class ScopeVisitor(cst.CSTVisitor):
         qnames = {qn.name for qn in self.scope.get_qualified_names_for(node)}
         if "typing.NewType" in qnames or "typing.TypeVar" in qnames:
             node.func.visit(self)
-            self.__in_type_hint_stack.pop()
-            self.__in_type_hint_stack.append(True)
+            self.__in_type_hint_stack[-1] = True
             for arg in node.args[1:]:
                 arg.visit(self)
             return False
