@@ -1191,7 +1191,7 @@ class ScopeProviderTest(UnitTest):
     def test_insane_annotation_access(self) -> None:
         m, scopes = get_scope_metadata_provider(
             r"""
-                from typing import TypeVar
+                from typing import TypeVar, Optional
                 from a import G
                 TypeVar("G2", bound="Optional[\"G\"]")
             """
@@ -1758,6 +1758,30 @@ class ScopeProviderTest(UnitTest):
             cast("int", "foo")
             """,
             mock.call("int"),
+        )
+
+        assert_parsed(
+            """
+            from typing import TypeVar
+            TypeVar("Name", func("int"))
+        """,
+        )
+
+        assert_parsed(
+            """
+            from typing import Literal
+            Literal[\"G\"]
+        """,
+        )
+
+        assert_parsed(
+            r"""
+            from typing import TypeVar, Optional
+            from a import G
+            TypeVar("G2", bound="Optional[\"G\"]")
+            """,
+            mock.call('Optional["G"]'),
+            mock.call("G"),
         )
 
     def test_builtin_scope(self) -> None:

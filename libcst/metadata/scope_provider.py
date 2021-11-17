@@ -789,10 +789,8 @@ class ScopeVisitor(cst.CSTVisitor):
         self.scope: Scope = GlobalScope()
         self.__deferred_accesses: List[DeferredAccess] = []
         self.__top_level_attribute_stack: List[Optional[cst.Attribute]] = [None]
-        self.__in_annotation: Set[
-            Union[cst.Call, cst.Annotation, cst.Subscript]
-        ] = set()
-        self.__in_type_hint: Set[Union[cst.Call, cst.Annotation, cst.Subscript]] = set()
+        self.__in_annotation_stack: List[bool] = [False]
+        self.__in_type_hint_stack: List[bool] = [False]
         self.__in_ignored_subscript: Set[cst.Subscript] = set()
         self.__last_string_annotation: Optional[cst.BaseString] = None
         self.__ignore_annotation: int = 0
@@ -851,19 +849,21 @@ class ScopeVisitor(cst.CSTVisitor):
 
     def visit_Call(self, node: cst.Call) -> Optional[bool]:
         self.__top_level_attribute_stack.append(None)
+        self.__in_type_hint_stack.append(False)
+        self.__in_annotation_stack.append(False)
         qnames = {qn.name for qn in self.scope.get_qualified_names_for(node)}
         if "typing.NewType" in qnames or "typing.TypeVar" in qnames:
             node.func.visit(self)
-            self.__in_type_hint.add(node)
+            self.__in_type_hint_stack[-1] = True
             for arg in node.args[1:]:
                 arg.visit(self)
             return False
         if "typing.cast" in qnames:
             node.func.visit(self)
             if len(node.args) > 0:
-                self.__in_type_hint.add(node)
+                self.__in_type_hint_stack.append(True)
                 node.args[0].visit(self)
-                self.__in_type_hint.discard(node)
+                self.__in_type_hint_stack.pop()
                 for arg in node.args[1:]:
                     arg.visit(self)
             return False
@@ -871,13 +871,14 @@ class ScopeVisitor(cst.CSTVisitor):
 
     def leave_Call(self, original_node: cst.Call) -> None:
         self.__top_level_attribute_stack.pop()
-        self.__in_type_hint.discard(original_node)
+        self.__in_type_hint_stack.pop()
+        self.__in_annotation_stack.pop()
 
     def visit_Annotation(self, node: cst.Annotation) -> Optional[bool]:
-        self.__in_annotation.add(node)
+        self.__in_annotation_stack.append(True)
 
     def leave_Annotation(self, original_node: cst.Annotation) -> None:
-        self.__in_annotation.discard(original_node)
+        self.__in_annotation_stack.pop()
 
     def visit_SimpleString(self, node: cst.SimpleString) -> Optional[bool]:
         self._handle_string_annotation(node)
@@ -891,7 +892,7 @@ class ScopeVisitor(cst.CSTVisitor):
     ) -> bool:
         """Returns whether it successfully handled the string annotation"""
         if (
-            self.__in_type_hint or self.__in_annotation
+            self.__in_type_hint_stack[-1] or self.__in_annotation_stack[-1]
         ) and not self.__in_ignored_subscript:
             value = node.evaluated_value
             if value:
@@ -911,16 +912,19 @@ class ScopeVisitor(cst.CSTVisitor):
         return False
 
     def visit_Subscript(self, node: cst.Subscript) -> Optional[bool]:
+        in_type_hint = False
         if isinstance(node.value, cst.Name):
             qnames = {qn.name for qn in self.scope.get_qualified_names_for(node.value)}
             if any(qn.startswith(("typing.", "typing_extensions.")) for qn in qnames):
-                self.__in_type_hint.add(node)
+                in_type_hint = True
             if "typing.Literal" in qnames or "typing_extensions.Literal" in qnames:
                 self.__in_ignored_subscript.add(node)
+
+        self.__in_type_hint_stack.append(in_type_hint)
         return True
 
     def leave_Subscript(self, original_node: cst.Subscript) -> None:
-        self.__in_type_hint.discard(original_node)
+        self.__in_type_hint_stack.pop()
         self.__in_ignored_subscript.discard(original_node)
 
     def visit_Name(self, node: cst.Name) -> Optional[bool]:
@@ -933,9 +937,9 @@ class ScopeVisitor(cst.CSTVisitor):
                 node,
                 self.scope,
                 is_annotation=bool(
-                    self.__in_annotation and not self.__ignore_annotation
+                    self.__in_annotation_stack[-1] and not self.__ignore_annotation
                 ),
-                is_type_hint=bool(self.__in_type_hint),
+                is_type_hint=bool(self.__in_type_hint_stack[-1]),
             )
             self.__deferred_accesses.append(
                 DeferredAccess(
