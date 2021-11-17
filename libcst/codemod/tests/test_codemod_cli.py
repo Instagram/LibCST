@@ -7,6 +7,7 @@
 
 import subprocess
 import sys
+from pathlib import Path
 
 from libcst.testing.utils import UnitTest
 
@@ -20,7 +21,7 @@ class TestCodemodCLI(UnitTest):
                 "libcst.tool",
                 "codemod",
                 "remove_unused_imports.RemoveUnusedImportsCommand",
-                "libcst/codemod/tests/codemod_formatter_error_input.py.txt",
+                str(Path(__file__).parent / "codemod_formatter_error_input.py.txt"),
             ],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
