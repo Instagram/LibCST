@@ -7,6 +7,7 @@
 import sys
 from textwrap import dedent
 from typing import Mapping, Tuple, cast
+from unittest import mock
 
 import libcst as cst
 from libcst import ensure_type
@@ -1711,61 +1712,53 @@ class ScopeProviderTest(UnitTest):
                 )
 
     def test_cast(self) -> None:
-        with self.assertRaises(cst.ParserSyntaxError):
-            m, scopes = get_scope_metadata_provider(
-                """
-                from typing import TypeVar
-                TypeVar("Name", "3rr0r")
-                """
-            )
+        def assert_parsed(code, *calls):
+            parse = cst.parse_module
+            with mock.patch("libcst.parse_module") as parse_mock:
+                parse_mock.side_effect = lambda s: parse(s)
+                get_scope_metadata_provider(dedent(code))
+                calls = [mock.call(dedent(code))] + list(calls)
+                self.assertEqual(parse_mock.call_count, len(calls))
+                parse_mock.assert_has_calls(calls)
 
-        try:
-            m, scopes = get_scope_metadata_provider(
-                """
-                from typing import TypeVar
-                TypeVar("3rr0r", "int")
-                """
-            )
-        except cst.ParserSyntaxError:
-            self.fail(
-                "First string argument of NewType and TypeVar should not be parsed"
-            )
+        assert_parsed(
+            """
+            from typing import TypeVar
+            TypeVar("Name", "int")
+        """,
+            mock.call("int"),
+        )
 
-        with self.assertRaises(cst.ParserSyntaxError):
-            m, scopes = get_scope_metadata_provider(
-                """
-                from typing import Dict
-                Dict["str", "3rr0r"]
-                """
-            )
+        assert_parsed(
+            """
+            from typing import Dict
+            Dict["str", "int"]
+            """,
+            mock.call("str"),
+            mock.call("int"),
+        )
 
-        try:
-            m, scopes = get_scope_metadata_provider(
-                """
-                from typing import Dict, cast
-                cast(Dict[str, str], {})["3rr0r"]
-                """
-            )
-        except cst.ParserSyntaxError:
-            self.fail("Subscript of function calls should not be parsed")
+        assert_parsed(
+            """
+            from typing import Dict, cast
+            cast(Dict[str, str], {})["3rr0r"]
+            """
+        )
 
-        try:
-            m, scopes = get_scope_metadata_provider(
-                """
-                from typing import cast
-                cast(str, "3rr0r")
-                """
-            )
-        except cst.ParserSyntaxError:
-            self.fail("String arguments of cast should not be parsed")
+        assert_parsed(
+            """
+            from typing import cast
+            cast(str, "foo")
+            """,
+        )
 
-        with self.assertRaises(cst.ParserSyntaxError):
-            m, scopes = get_scope_metadata_provider(
-                """
-                from typing import cast
-                cast("3rr0r", "")
-                """
-            )
+        assert_parsed(
+            """
+            from typing import cast
+            cast("int", "foo")
+            """,
+            mock.call("int"),
+        )
 
     def test_builtin_scope(self) -> None:
         m, scopes = get_scope_metadata_provider(

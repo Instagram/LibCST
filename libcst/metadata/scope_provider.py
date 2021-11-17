@@ -898,8 +898,13 @@ class ScopeVisitor(cst.CSTVisitor):
                 top_level_annotation = self.__last_string_annotation is None
                 if top_level_annotation:
                     self.__last_string_annotation = node
-                mod = cst.parse_module(value)
-                mod.visit(self)
+                try:
+                    mod = cst.parse_module(value)
+                    mod.visit(self)
+                except cst.ParserSyntaxError:
+                    # swallow string annotation parsing errors
+                    # this is the same behavior as cPython
+                    pass
                 if top_level_annotation:
                     self.__last_string_annotation = None
                 return True
