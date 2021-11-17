@@ -1760,6 +1760,30 @@ class ScopeProviderTest(UnitTest):
             mock.call("int"),
         )
 
+        assert_parsed(
+            """
+            from typing import TypeVar
+            TypeVar("Name", func("int"))
+        """,
+        )
+
+        assert_parsed(
+            """
+            from typing import Literal
+            Literal[\"G\"]
+        """,
+        )
+
+        assert_parsed(
+            r"""
+            from typing import TypeVar, Optional
+            from a import G
+            TypeVar("G2", bound="Optional[\"G\"]")
+            """,
+            mock.call('Optional["G"]'),
+            mock.call("G"),
+        )
+
     def test_builtin_scope(self) -> None:
         m, scopes = get_scope_metadata_provider(
             """
@@ -1826,6 +1850,3 @@ class ScopeProviderTest(UnitTest):
 
         global_pow_accesses = list(global_pow_assignment.references)
         self.assertEqual(len(global_pow_accesses), 2)
-
-    def test_unparseable_string(self) -> None:
-        m, scopes = get_scope_metadata_provider('a: Optional[func("{hello{foo}}")]')
