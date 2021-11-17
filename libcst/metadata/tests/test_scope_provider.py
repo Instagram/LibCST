@@ -1715,7 +1715,7 @@ class ScopeProviderTest(UnitTest):
         def assert_parsed(code, *calls):
             parse = cst.parse_module
             with mock.patch("libcst.parse_module") as parse_mock:
-                parse_mock.side_effect = lambda s: parse(s)
+                parse_mock.side_effect = parse
                 get_scope_metadata_provider(dedent(code))
                 calls = [mock.call(dedent(code))] + list(calls)
                 self.assertEqual(parse_mock.call_count, len(calls))
