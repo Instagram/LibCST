@@ -181,6 +181,9 @@ jobs:
     - name: Validate Dependencies
       if: steps.cache.outputs.cache-hit != 'true'
       run: exit 1
+    - name: Disable scmtools local scheme
+      run: >-
+        echo LIBCST_NO_LOCAL_SCHEME=1 >> $GITHUB_ENV
     - name: Build a binary wheel and a source tarball
       run: >-
         python -m
