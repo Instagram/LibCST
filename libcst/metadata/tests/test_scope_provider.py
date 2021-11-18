@@ -14,6 +14,7 @@ from libcst import ensure_type
 from libcst.metadata import MetadataWrapper
 from libcst.metadata.scope_provider import (
     Assignment,
+    ImportAssignment,
     BuiltinAssignment,
     BuiltinScope,
     ClassScope,
@@ -192,17 +193,24 @@ class ScopeProviderTest(UnitTest):
                     len(scope_of_module[in_scope]), 1, f"{in_scope} should be in scope."
                 )
 
-                assignment = cast(Assignment, list(scope_of_module[in_scope])[0])
+                assignment = cast(ImportAssignment, list(scope_of_module[in_scope])[0])
                 self.assertEqual(
                     assignment.name,
                     in_scope,
-                    f"Assignment name {assignment.name} should equal to {in_scope}.",
+                    f"ImportAssignment name {assignment.name} should equal to {in_scope}.",
                 )
                 import_node = ensure_type(m.body[idx], cst.SimpleStatementLine).body[0]
                 self.assertEqual(
                     assignment.node,
                     import_node,
-                    f"The node of Assignment {assignment.node} should equal to {import_node}",
+                    f"The node of ImportAssignment {assignment.node} should equal to {import_node}",
+                )
+                alias = import_node.names[0]
+                as_name = alias.asname.name if alias.asname else alias.name
+                self.assertEqual(
+                    assignment.as_name,
+                    as_name,
+                    f"The alias name of ImportAssignment {assignment.as_name} should equal to {as_name}",
                 )
 
     def test_dotted_import_access(self) -> None:
@@ -221,7 +229,7 @@ class ScopeProviderTest(UnitTest):
         self.assertTrue("a" in scope_of_module)
         self.assertEqual(scope_of_module.accesses["a"], set())
 
-        a_b_c_assignment = cast(Assignment, list(scope_of_module["a.b.c"])[0])
+        a_b_c_assignment = cast(ImportAssignment, list(scope_of_module["a.b.c"])[0])
         a_b_c_access = list(a_b_c_assignment.references)[0]
         self.assertEqual(scope_of_module.accesses["a.b.c"], {a_b_c_access})
         self.assertEqual(a_b_c_access.node, call.func)
@@ -261,7 +269,9 @@ class ScopeProviderTest(UnitTest):
         self.assertTrue("os.path" in scope_of_module)
         self.assertTrue("os" in scope_of_module)
 
-        os_path_join_assignment = cast(Assignment, list(scope_of_module["os.path"])[0])
+        os_path_join_assignment = cast(
+            ImportAssignment, list(scope_of_module["os.path"])[0]
+        )
         os_path_join_assignment_references = list(os_path_join_assignment.references)
         self.assertNotEqual(len(os_path_join_assignment_references), 0)
         os_path_join_access = os_path_join_assignment_references[0]
@@ -289,21 +299,36 @@ class ScopeProviderTest(UnitTest):
             for alias in import_aliases:
                 self.assertEqual(scopes[alias], scope_of_module)
 
-        for idx, in_scope in [(0, "a"), (0, "b_renamed"), (1, "c"), (2, "d")]:
+        for idx, in_scope, imported_object_idx in [
+            (0, "a", 0),
+            (0, "b_renamed", 1),
+            (1, "c", 0),
+            (2, "d", 0),
+        ]:
             self.assertEqual(
                 len(scope_of_module[in_scope]), 1, f"{in_scope} should be in scope."
             )
-            import_assignment = cast(Assignment, list(scope_of_module[in_scope])[0])
+            import_assignment = cast(
+                ImportAssignment, list(scope_of_module[in_scope])[0]
+            )
             self.assertEqual(
                 import_assignment.name,
                 in_scope,
-                f"The name of Assignment {import_assignment.name} should equal to {in_scope}.",
+                f"The name of ImportAssignment {import_assignment.name} should equal to {in_scope}.",
             )
             import_node = ensure_type(m.body[idx], cst.SimpleStatementLine).body[0]
             self.assertEqual(
                 import_assignment.node,
                 import_node,
-                f"The node of Assignment {import_assignment.node} should equal to {import_node}",
+                f"The node of ImportAssignment {import_assignment.node} should equal to {import_node}",
+            )
+
+            alias = import_node.names[imported_object_idx]
+            as_name = alias.asname.name if alias.asname else alias.name
+            self.assertEqual(
+                import_assignment.as_name,
+                as_name,
+                f"The alias name of ImportAssignment {import_assignment.as_name} should equal to {as_name}",
             )
 
         for not_in_scope in ["foo", "bar", "foo.bar", "b"]:

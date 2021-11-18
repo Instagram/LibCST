@@ -208,6 +208,23 @@ class BuiltinAssignment(BaseAssignment):
     pass
 
 
+class ImportAssignment(Assignment):
+    """An assignment records the import node and it's alias"""
+
+    as_name: cst.CSTNode
+
+    def __init__(
+        self,
+        name: str,
+        scope: "Scope",
+        node: cst.CSTNode,
+        index: int,
+        as_name: cst.CSTNode,
+    ):
+        super().__init__(name, scope, node, index)
+        self.as_name = as_name
+
+
 class Assignments:
     """A container to provide all assignments in a scope."""
 
@@ -403,6 +420,19 @@ class Scope(abc.ABC):
     def record_assignment(self, name: str, node: cst.CSTNode) -> None:
         self._assignments[name].add(
             Assignment(name=name, scope=self, node=node, index=self._assignment_count)
+        )
+
+    def record_import_assignment(
+        self, name: str, node: cst.CSTNode, as_name: cst.CSTNode
+    ) -> None:
+        self._assignments[name].add(
+            ImportAssignment(
+                name=name,
+                scope=self,
+                node=node,
+                as_name=as_name,
+                index=self._assignment_count,
+            )
         )
 
     def record_access(self, name: str, access: Access) -> None:
@@ -826,11 +856,13 @@ class ScopeVisitor(cst.CSTVisitor):
             asname = name.asname
             if asname is not None:
                 name_values = _gen_dotted_names(cst.ensure_type(asname.name, cst.Name))
+                import_node_asname = asname.name
             else:
                 name_values = _gen_dotted_names(name.name)
+                import_node_asname = name.name
 
             for name_value, _ in name_values:
-                self.scope.record_assignment(name_value, node)
+                self.scope.record_import_assignment(name_value, node, import_node_asname)
         return False
 
     def visit_Import(self, node: cst.Import) -> Optional[bool]:
