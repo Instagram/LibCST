@@ -182,6 +182,7 @@ jobs:
       if: steps.cache.outputs.cache-hit != 'true'
       run: exit 1
     - name: Disable scmtools local scheme
+      if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
       run: >-
         echo LIBCST_NO_LOCAL_SCHEME=1 >> $GITHUB_ENV
     - name: Build a binary wheel and a source tarball
