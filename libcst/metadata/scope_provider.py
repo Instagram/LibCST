@@ -418,14 +418,14 @@ class Scope(abc.ABC):
         self._assignment_count = 0
 
     def record_assignment(self, name: str, node: cst.CSTNode) -> None:
-        self._assignments[name].add(
+        self._add_assignment(
             Assignment(name=name, scope=self, node=node, index=self._assignment_count)
         )
 
     def record_import_assignment(
         self, name: str, node: cst.CSTNode, as_name: cst.CSTNode
     ) -> None:
-        self._assignments[name].add(
+        self._add_assignment(
             ImportAssignment(
                 name=name,
                 scope=self,
@@ -446,15 +446,12 @@ class Scope(abc.ABC):
         """Overridden by ClassScope to hide it's assignments from child scopes."""
         return name in self
 
-    def _record_assignment_as_parent(self, name: str, node: cst.CSTNode) -> None:
-        """Overridden by ClassScope to forward 'nonlocal' assignments from child scopes."""
-        self.record_assignment(name, node)
+    def _add_assignment(self, assignment: "BaseAssignment") -> None:
+        self._assignments[assignment.name].add(assignment)
 
-    def _record_import_assignment_as_parent(
-        self, name: str, node: cst.CSTNode, as_name: cst.CSTNode
-    ) -> None:
+    def _add_assignment_as_parent(self, assignment):
         """Overridden by ClassScope to forward 'nonlocal' assignments from child scopes."""
-        self.record_import_assignment(name, node, as_name)
+        self._add_assignment(assignment)
 
     @abc.abstractmethod
     def __contains__(self, name: str) -> bool:
@@ -611,14 +608,14 @@ class BuiltinScope(Scope):
             return self._assignments[name]
         return set()
 
-    def record_assignment(self, name: str, node: cst.CSTNode) -> None:
-        raise NotImplementedError("assignments in builtin scope are not allowed")
-
     def record_global_overwrite(self, name: str) -> None:
         raise NotImplementedError("global overwrite in builtin scope are not allowed")
 
     def record_nonlocal_overwrite(self, name: str) -> None:
         raise NotImplementedError("declarations in builtin scope are not allowed")
+
+    def _add_assignment(self, assignment: "BaseAssignment") -> None:
+        raise NotImplementedError("assignments in builtin scope are not allowed")
 
 
 class GlobalScope(Scope):
@@ -670,21 +667,13 @@ class LocalScope(Scope, abc.ABC):
     def record_nonlocal_overwrite(self, name: str) -> None:
         self._scope_overwrites[name] = self.parent
 
-    def record_assignment(self, name: str, node: cst.CSTNode) -> None:
-        if name in self._scope_overwrites:
-            self._scope_overwrites[name]._record_assignment_as_parent(name, node)
-        else:
-            super().record_assignment(name, node)
-
-    def record_import_assignment(
-        self, name: str, node: cst.CSTNode, as_name: cst.CSTNode
-    ) -> None:
-        if name in self._scope_overwrites:
-            self._scope_overwrites[name]._record_import_assignment_as_parent(
-                name, node, as_name
+    def _add_assignment(self, assignment: "BaseAssignment") -> None:
+        if assignment.name in self._scope_overwrites:
+            self._scope_overwrites[assignment.name]._add_assignment_as_parent(
+                assignment
             )
         else:
-            super().record_import_assignment(name, node, as_name)
+            super()._add_assignment(assignment)
 
     def __contains__(self, name: str) -> bool:
         if name in self._scope_overwrites:
@@ -717,7 +706,7 @@ class ClassScope(LocalScope):
     When a class is defined, it creates a ClassScope.
     """
 
-    def _record_assignment_as_parent(self, name: str, node: cst.CSTNode) -> None:
+    def _add_assignment_as_parent(self, assignment: "BaseAssignment") -> None:
         """
         Forward the assignment to parent.
 
@@ -732,12 +721,7 @@ class ClassScope(LocalScope):
                                  # hidden from its children.
 
         """
-        self.parent._record_assignment_as_parent(name, node)
-
-    def _record_import_assignment_as_parent(
-        self, name: str, node: cst.CSTNode, as_name: cst.CSTNode
-    ) -> None:
-        self.parent._record_import_assignment_as_parent(name, node, as_name)
+        self.parent._add_assignment_as_parent(assignment)
 
     def _getitem_from_self_or_parent(self, name: str) -> Set[BaseAssignment]:
         """
