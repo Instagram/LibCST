@@ -450,6 +450,12 @@ class Scope(abc.ABC):
         """Overridden by ClassScope to forward 'nonlocal' assignments from child scopes."""
         self.record_assignment(name, node)
 
+    def _record_import_assignment_as_parent(
+        self, name: str, node: cst.CSTNode, as_name: cst.CSTNode
+    ) -> None:
+        """Overridden by ClassScope to forward 'nonlocal' assignments from child scopes."""
+        self.record_import_assignment(name, node, as_name)
+
     @abc.abstractmethod
     def __contains__(self, name: str) -> bool:
         """Check if the name str exist in current scope by ``name in scope``."""
@@ -670,6 +676,16 @@ class LocalScope(Scope, abc.ABC):
         else:
             super().record_assignment(name, node)
 
+    def record_import_assignment(
+        self, name: str, node: cst.CSTNode, as_name: cst.CSTNode
+    ) -> None:
+        if name in self._scope_overwrites:
+            self._scope_overwrites[name]._record_import_assignment_as_parent(
+                name, node, as_name
+            )
+        else:
+            super().record_import_assignment(name, node, as_name)
+
     def __contains__(self, name: str) -> bool:
         if name in self._scope_overwrites:
             return name in self._scope_overwrites[name]
@@ -717,6 +733,11 @@ class ClassScope(LocalScope):
 
         """
         self.parent._record_assignment_as_parent(name, node)
+
+    def _record_import_assignment_as_parent(
+        self, name: str, node: cst.CSTNode, as_name: cst.CSTNode
+    ) -> None:
+        self.parent._record_import_assignment_as_parent(name, node, as_name)
 
     def _getitem_from_self_or_parent(self, name: str) -> Set[BaseAssignment]:
         """
@@ -862,7 +883,9 @@ class ScopeVisitor(cst.CSTVisitor):
                 import_node_asname = name.name
 
             for name_value, _ in name_values:
-                self.scope.record_import_assignment(name_value, node, import_node_asname)
+                self.scope.record_import_assignment(
+                    name_value, node, import_node_asname
+                )
         return False
 
     def visit_Import(self, node: cst.Import) -> Optional[bool]:
