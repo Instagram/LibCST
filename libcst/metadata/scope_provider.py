@@ -449,7 +449,7 @@ class Scope(abc.ABC):
     def _add_assignment(self, assignment: "BaseAssignment") -> None:
         self._assignments[assignment.name].add(assignment)
 
-    def _add_assignment_as_parent(self, assignment):
+    def _add_assignment_as_parent(self, assignment: "BaseAssignment") -> None:
         """Overridden by ClassScope to forward 'nonlocal' assignments from child scopes."""
         self._add_assignment(assignment)
 
