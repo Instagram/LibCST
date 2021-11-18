@@ -14,7 +14,7 @@ with open(path.join(this_directory, "README.rst"), encoding="utf-8") as f:
     long_description: str = f.read()
 
 
-def no_local_scheme(version):
+def no_local_scheme(version: str) -> str:
     return ""
 
 
