@@ -4,7 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 
-from os import path
+from os import path, environ
 
 import setuptools
 
@@ -13,9 +13,19 @@ this_directory: str = path.abspath(path.dirname(__file__))
 with open(path.join(this_directory, "README.rst"), encoding="utf-8") as f:
     long_description: str = f.read()
 
+
+def no_local_scheme(version):
+    return ""
+
+
 setuptools.setup(
     use_scm_version={
         "write_to": "libcst/_version.py",
+        **(
+            {"local_scheme": no_local_scheme}
+            if "LIBCST_NO_LOCAL_SCHEME" in environ
+            else {}
+        ),
     },
     name="libcst",
     description="A concrete syntax tree with AST-like properties for Python 3.5, 3.6, 3.7 and 3.8 programs.",
