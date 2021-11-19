@@ -14,5 +14,4 @@ build/
 libcst/_version.py
 .coverage
 .hypothesis/
-.pyre_configuration
 .python-version

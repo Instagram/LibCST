@@ -1,9 +1,0 @@
-{
-    "source_directories": [
-        "."
-    ],
-    "search_path": [
-        "stubs", "{{ .python_site_packages }}"
-    ],
-    "strict": true
-}

@@ -89,19 +89,6 @@ jobs:
     - name: Validate Dependencies
       if: steps.cache.outputs.cache-hit != 'true'
       run: exit 1
-    - name: Get Python site-packages
-      id: python-info
-      run: |
-        echo "::set-output name=SITE_PACKAGES::$(python -c 'import sysconfig; print(sysconfig.get_paths()["purelib"])')"
-    - name: Configure Pyre
-      id: pyre_template
-      uses: chuhlomin/render-template@v1.2
-      with:
-          template: .github/workflows/.pyre_configuration.template
-          vars: |
-            python_site_packages: ${{ steps.python-info.outputs.SITE_PACKAGES }}
-    - name: Write Pyre Config
-      run: echo '${{ steps.pyre_template.outputs.result }}' > .pyre_configuration
     - run: pyre --version
     - run: pyre check
     - run: python libcst/tests/test_pyre_integration.py
