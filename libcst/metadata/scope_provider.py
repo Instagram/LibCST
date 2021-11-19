@@ -447,6 +447,7 @@ class Scope(abc.ABC):
         return name in self
 
     def _add_assignment(self, assignment: "BaseAssignment") -> None:
+        assignment.scope = self
         self._assignments[assignment.name].add(assignment)
 
     def _add_assignment_as_parent(self, assignment: "BaseAssignment") -> None:
