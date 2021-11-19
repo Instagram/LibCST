@@ -134,8 +134,7 @@ class GatherUnusedImportsVisitor(ContextAwareVisitor):
 
             for assignment in scope[name_or_alias]:
                 if (
-                    isinstance(assignment, cst.metadata.Assignment)
-                    and isinstance(assignment.node, (cst.ImportFrom, cst.Import))
+                    isinstance(assignment, cst.metadata.ImportAssignment)
                     and len(assignment.references) > 0
                 ):
                     return True
