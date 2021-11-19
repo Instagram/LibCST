@@ -192,12 +192,11 @@ class BaseAssignment(abc.ABC):
         """Return an integer that represents the order of assignments in `scope`"""
         return -1
 
+    @abc.abstractmethod
     def get_qualified_names_for(
-        self, get_qualified_names_for: str
+        self, full_name: str
     ) -> Set[QualifiedName]:
-        raise NotImplementedError(
-            "get_qualified_names_for needs to be implemented by sub classes."
-        )
+        ...
 
 
 class Assignment(BaseAssignment):
@@ -249,7 +248,10 @@ class BuiltinAssignment(BaseAssignment):
     `types <https://docs.python.org/3/library/stdtypes.html>`_.
     """
 
-    pass
+    def get_qualified_names_for(
+        self, full_name: str
+    ) -> Set[QualifiedName]:
+        return {QualifiedName(f"builtins.{self.name}", QualifiedNameSource.BUILTIN)}
 
 
 class ImportAssignment(Assignment):
@@ -553,18 +555,14 @@ class Scope(abc.ABC):
                 assignments = self[prefix]
                 break
         for assignment in assignments:
-            if isinstance(assignment, Assignment):
-                names = assignment.get_qualified_names_for(full_name)
-                if not isinstance(node, str) and _is_assignment(node, assignment.node):
-                    return names
-                else:
-                    results |= names
-            elif isinstance(assignment, BuiltinAssignment):
-                results.add(
-                    QualifiedName(
-                        f"builtins.{assignment.name}", QualifiedNameSource.BUILTIN
-                    )
-                )
+            names = assignment.get_qualified_names_for(full_name)
+            if (
+                isinstance(assignment, Assignment)
+                and not isinstance(node, str)
+                and _is_assignment(node, assignment.node)
+            ):
+                return names
+            results |= names
         return results
 
     @property
