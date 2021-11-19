@@ -193,9 +193,7 @@ class BaseAssignment(abc.ABC):
         return -1
 
     @abc.abstractmethod
-    def get_qualified_names_for(
-        self, full_name: str
-    ) -> Set[QualifiedName]:
+    def get_qualified_names_for(self, full_name: str) -> Set[QualifiedName]:
         ...
 
 
@@ -248,9 +246,7 @@ class BuiltinAssignment(BaseAssignment):
     `types <https://docs.python.org/3/library/stdtypes.html>`_.
     """
 
-    def get_qualified_names_for(
-        self, full_name: str
-    ) -> Set[QualifiedName]:
+    def get_qualified_names_for(self, full_name: str) -> Set[QualifiedName]:
         return {QualifiedName(f"builtins.{self.name}", QualifiedNameSource.BUILTIN)}
 
 
