@@ -192,7 +192,9 @@ class BaseAssignment(abc.ABC):
         """Return an integer that represents the order of assignments in `scope`"""
         return -1
 
-    def get_qualified_names_for(self, get_qualified_names_for: str) -> Set[QualifiedName]:
+    def get_qualified_names_for(
+        self, get_qualified_names_for: str
+    ) -> Set[QualifiedName]:
         raise NotImplementedError(
             "get_qualified_names_for needs to be implemented by sub classes."
         )
