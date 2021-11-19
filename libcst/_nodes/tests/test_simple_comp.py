@@ -13,6 +13,7 @@ from libcst.testing.utils import data_provider
 
 
 class SimpleCompTest(CSTNodeTest):
+    # pyre-fixme[56]: Pyre was not able to infer the type of argument `[{ "node":libc...
     @data_provider(
         [
             # simple GeneratorExp
@@ -338,6 +339,7 @@ class SimpleCompTest(CSTNodeTest):
     def test_valid(self, **kwargs: Any) -> None:
         self.validate_node(**kwargs)
 
+    # pyre-fixme[56]: Pyre was not able to infer the type of argument `((lambda () (l...
     @data_provider(
         (
             (

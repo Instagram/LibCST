@@ -10,6 +10,7 @@ from libcst.testing.utils import UnitTest, data_provider
 
 
 class TestPackageCalculation(UnitTest):
+    # pyre-fixme[56]: Pyre was not able to infer the type of argument `((None, "/some...
     @data_provider(
         (
             # Providing no root should give back no module.

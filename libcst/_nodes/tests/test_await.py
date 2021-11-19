@@ -13,6 +13,7 @@ from libcst.testing.utils import data_provider
 
 
 class AwaitTest(CSTNodeTest):
+    # pyre-fixme[56]: Pyre was not able to infer the type of argument `({ "node":libc...
     @data_provider(
         (
             # Some simple calls
@@ -53,6 +54,7 @@ class AwaitTest(CSTNodeTest):
         # can be parsed identically to their creation.
         self.validate_node(**kwargs)
 
+    # pyre-fixme[56]: Pyre was not able to infer the type of argument `({ "node":libc...
     @data_provider(
         (
             # Some simple calls
@@ -144,6 +146,7 @@ class AwaitTest(CSTNodeTest):
         # can be parsed identically to their creation.
         self.validate_node(**kwargs)
 
+    # pyre-fixme[56]: Pyre was not able to infer the type of argument `({ "get_node":...
     @data_provider(
         (
             # Expression wrapping parenthesis rules

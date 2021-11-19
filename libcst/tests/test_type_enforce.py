@@ -59,6 +59,7 @@ class NamedTupleSubclass(NamedTuple):
 
 
 class TypeEnforcementTest(UnitTest):
+    # pyre-fixme[56]: Pyre was not able to infer the type of argument `[("foo", str),...
     @data_provider(
         [
             # basic types and Optionals
@@ -141,6 +142,7 @@ class TypeEnforcementTest(UnitTest):
             f"value {value!r} was supposed to be of type {expected_type!r}",
         )
 
+    # pyre-fixme[56]: Pyre was not able to infer the type of argument `[("foo", int),...
     @data_provider(
         [
             # basic types and Optionals

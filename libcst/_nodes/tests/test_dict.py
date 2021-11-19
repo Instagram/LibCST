@@ -13,6 +13,7 @@ from libcst.testing.utils import data_provider
 
 
 class DictTest(CSTNodeTest):
+    # pyre-fixme[56]: Pyre was not able to infer the type of argument `[{ "node":libc...
     @data_provider(
         [
             # zero-element dict
@@ -160,6 +161,10 @@ class DictTest(CSTNodeTest):
     def test_valid(self, **kwargs: Any) -> None:
         self.validate_node(**kwargs)
 
+    # pyre-fixme[56]: Pyre was not able to infer the type of argument `[{
+    #  "get_node":lambda () (libcst.Dict([], $parameter$lpar =
+    #  [libcst.LeftParen()])),"expected_re":"left paren without right paren" }]` to
+    #  decorator factory `libcst.testing.utils.data_provider`.
     @data_provider(
         [
             # unbalanced Dict
@@ -172,6 +177,7 @@ class DictTest(CSTNodeTest):
     def test_invalid(self, **kwargs: Any) -> None:
         self.assert_invalid(**kwargs)
 
+    # pyre-fixme[56]: Pyre was not able to infer the type of argument `({ "code":"{**...
     @data_provider(
         (
             {

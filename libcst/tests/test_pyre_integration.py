@@ -95,6 +95,10 @@ class TypeVerificationVisitor(cst.CSTVisitor):
 
 
 class PyreIntegrationTest(UnitTest):
+    # pyre-fixme[56]: Pyre was not able to infer the type of argument
+    #  `comprehension((source_path, data_path) for generators(generator((source_path,
+    #  data_path) in zip(TEST_SUITE_PATH.glob("*.py"), TEST_SUITE_PATH.glob("*.json"))
+    #  if )))` to decorator factory `libcst.testing.utils.data_provider`.
     @data_provider(
         (
             (source_path, data_path)

@@ -15,6 +15,7 @@ from libcst.testing.utils import UnitTest, data_provider
 
 
 class StatementTest(UnitTest):
+    # pyre-fixme[56]: Pyre was not able to infer the type of argument `((None, "from ...
     @data_provider(
         (
             # Simple imports that are already absolute.
@@ -53,6 +54,7 @@ class StatementTest(UnitTest):
                 get_absolute_module_for_import_or_raise(module, import_node), output
             )
 
+    # pyre-fixme[56]: Pyre was not able to infer the type of argument `((libcst.Impor...
     @data_provider(
         (
             # Nodes without an asname

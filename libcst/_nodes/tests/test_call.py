@@ -13,6 +13,7 @@ from libcst.testing.utils import data_provider
 
 
 class CallTest(CSTNodeTest):
+    # pyre-fixme[56]: Pyre was not able to infer the type of argument `({ "node":libc...
     @data_provider(
         (
             # Simple call
@@ -457,6 +458,7 @@ class CallTest(CSTNodeTest):
     def test_valid(self, **kwargs: Any) -> None:
         self.validate_node(**kwargs)
 
+    # pyre-fixme[56]: Pyre was not able to infer the type of argument `({ "get_node":...
     @data_provider(
         (
             # Basic expression parenthesizing tests.

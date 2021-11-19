@@ -98,6 +98,7 @@ class _CodemodTest:
         """
 
         context = context_override if context_override is not None else CodemodContext()
+        # pyre-fixme[45]: Cannot instantiate abstract class `Codemod`.
         transform_instance = self.TRANSFORM(context, *args, **kwargs)
         input_tree = parse_module(
             CodemodTest.make_fixture_data(before),

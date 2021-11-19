@@ -133,6 +133,7 @@ def validate_provider_tests(dct: Dict[str, Any]) -> None:
                         + "these combinations."
                     )
 
+                # pyre-fixme[16]: Anonymous callable has no attribute `__name__`.
                 test_replacement.__name__ = member_name
                 members_to_replace[member_name] = test_replacement
 
@@ -140,21 +141,22 @@ def validate_provider_tests(dct: Dict[str, Any]) -> None:
         dct[member_name] = new_member
 
 
-TestCaseType = Union[Sequence[object], Mapping[str, object]]
+TestCaseType = Union[Sequence[Any], Mapping[str, Any]]
 # Can't use Sequence[TestCaseType] here as some clients may pass in a Generator[TestCaseType]
 StaticDataType = Union[Iterable[TestCaseType], Mapping[str, TestCaseType]]
 
 
 def data_provider(
     static_data: StaticDataType, *, test_limit: int = DEFAULT_TEST_LIMIT
-) -> Callable[[Callable], Callable]:
+# pyre-fixme[34]: `Variable[T]` isn't present in the function's parameters.
+) -> Callable[[T], T]:
     # We need to be able to iterate over static_data more than once
     # (for validation), so if we weren't passed in a dict, list, or tuple
     # then we'll just create a list from the data
     if not isinstance(static_data, (dict, list, tuple)):
         static_data = list(static_data)
 
-    def test_decorator(test_method: Callable) -> Callable:
+    def test_decorator(test_method: T) -> T:
         update_test_limit(test_method, test_limit)
 
         setattr(test_method, DATA_PROVIDER_DATA_ATTR_NAME, static_data)

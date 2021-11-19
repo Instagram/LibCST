@@ -702,6 +702,7 @@ class FunctionDefCreationTest(CSTNodeTest):
     def test_valid(self, **kwargs: Any) -> None:
         self.validate_node(**kwargs)
 
+    # pyre-fixme[56]: Pyre was not able to infer the type of argument `((lambda () (l...
     @data_provider(
         (
             (
@@ -2016,6 +2017,7 @@ class FunctionDefParserTest(CSTNodeTest):
     def test_valid_38(self, node: cst.CSTNode, code: str) -> None:
         self.validate_node(node, code, _parse_statement_force_38)
 
+    # pyre-fixme[56]: Pyre was not able to infer the type of argument `({ "code":"asy...
     @data_provider(
         (
             {

@@ -13,6 +13,8 @@ from libcst.testing.utils import UnitTest, data_provider
 
 
 class DocstringTest(UnitTest):
+    # pyre-fixme[56]: Pyre was not able to infer the type of argument `(("", None),
+    #  ("""", ""), ("# comment is not docstring", None), ("
     @data_provider(
         (
             ("", None),
@@ -41,6 +43,7 @@ class DocstringTest(UnitTest):
     def test_module_docstring(self, code: str, docstring: Optional[str]) -> None:
         self.assertEqual(cst.parse_module(dedent(code)).get_docstring(), docstring)
 
+    # pyre-fixme[56]: Pyre was not able to infer the type of argument `(("
     @data_provider(
         (
             (
@@ -89,6 +92,7 @@ class DocstringTest(UnitTest):
             docstring,
         )
 
+    # pyre-fixme[56]: Pyre was not able to infer the type of argument `(("
     @data_provider(
         (
             (

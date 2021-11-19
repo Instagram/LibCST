@@ -16,6 +16,7 @@ class ListTest(CSTNodeTest):
 
     # A lot of Element/StarredElement tests are provided by the tests for Tuple, so we
     # we don't need to duplicate them here.
+    # pyre-fixme[56]: Pyre was not able to infer the type of argument `[{ "node":libc...
     @data_provider(
         [
             # zero-element list
@@ -94,6 +95,7 @@ class ListTest(CSTNodeTest):
     def test_valid(self, **kwargs: Any) -> None:
         self.validate_node(**kwargs)
 
+    # pyre-fixme[56]: Pyre was not able to infer the type of argument `((lambda () (l...
     @data_provider(
         (
             (
@@ -111,6 +113,7 @@ class ListTest(CSTNodeTest):
     ) -> None:
         self.assert_invalid(get_node, expected_re)
 
+    # pyre-fixme[56]: Pyre was not able to infer the type of argument `({ "code":"[a,...
     @data_provider(
         (
             {

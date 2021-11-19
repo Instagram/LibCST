@@ -37,11 +37,6 @@ def get_qualified_names(module_str: str) -> Set[QualifiedName]:
 def get_fully_qualified_names(file_path: str, module_str: str) -> Set[QualifiedName]:
     wrapper = cst.MetadataWrapper(
         cst.parse_module(dedent(module_str)),
-        # pyre-fixme[6]: Incompatible parameter type [6]: Expected
-        # `typing.Mapping[typing.Type[cst.metadata.base_provider.BaseMetadataProvider[
-        # object]], object]` for 2nd parameter `cache` to call
-        # `cst.metadata.wrapper.MetadataWrapper.__init__` but got
-        # `typing.Dict[typing.Type[FullyQualifiedNameProvider], object]`
         cache={
             FullyQualifiedNameProvider: FullyQualifiedNameProvider.gen_cache(
                 Path(""), [file_path], None

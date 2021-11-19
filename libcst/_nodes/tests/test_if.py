@@ -13,6 +13,7 @@ from libcst.testing.utils import data_provider
 
 
 class IfTest(CSTNodeTest):
+    # pyre-fixme[56]: Pyre was not able to infer the type of argument `({ "node":libc...
     @data_provider(
         (
             # Simple if without elif or else

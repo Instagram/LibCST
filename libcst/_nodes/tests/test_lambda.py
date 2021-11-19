@@ -243,6 +243,7 @@ class LambdaCreationTest(CSTNodeTest):
     ) -> None:
         self.validate_node(node, code, expected_position=position)
 
+    # pyre-fixme[56]: Pyre was not able to infer the type of argument `((lambda () (l...
     @data_provider(
         (
             (

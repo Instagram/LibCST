@@ -13,6 +13,7 @@ from libcst.testing.utils import data_provider
 
 
 class NumberTest(CSTNodeTest):
+    # pyre-fixme[56]: Pyre was not able to infer the type of argument `((libcst.Integ...
     @data_provider(
         (
             # Simple number
@@ -97,6 +98,7 @@ class NumberTest(CSTNodeTest):
     ) -> None:
         self.validate_node(node, code, parser, expected_position=position)
 
+    # pyre-fixme[56]: Pyre was not able to infer the type of argument `((lambda () (l...
     @data_provider(
         (
             (

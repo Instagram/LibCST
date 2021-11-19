@@ -223,6 +223,8 @@ class ConvertFormatStringCommand(VisitorBasedCodemodCommand):
     DESCRIPTION: str = "Converts instances of str.format() to f-string."
 
     @staticmethod
+    # pyre-fixme[14]: `add_args` overrides method defined in `CodemodCommand`
+    #  inconsistently.
     def add_args(parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
             "--allow-strip-comments",

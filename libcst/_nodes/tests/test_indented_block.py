@@ -12,6 +12,7 @@ from libcst.testing.utils import data_provider
 
 
 class IndentedBlockTest(CSTNodeTest):
+    # pyre-fixme[56]: Pyre was not able to infer the type of argument `((libcst.Inden...
     @data_provider(
         (
             # Standard render
@@ -133,6 +134,7 @@ class IndentedBlockTest(CSTNodeTest):
     ) -> None:
         self.validate_node(node, code, parser)
 
+    # pyre-fixme[56]: Pyre was not able to infer the type of argument `((lambda () (l...
     @data_provider(
         (
             (

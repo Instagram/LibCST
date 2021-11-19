@@ -10,6 +10,7 @@ from libcst.testing.utils import UnitTest, data_provider
 
 
 class TestConfig(UnitTest):
+    # pyre-fixme[56]: Pyre was not able to infer the type of argument `{ "empty":(lib...
     @data_provider(
         {
             "empty": (PartialParserConfig,),
@@ -25,6 +26,7 @@ class TestConfig(UnitTest):
     ) -> None:
         self.assertIsInstance(factory(), PartialParserConfig)
 
+    # pyre-fixme[56]: Pyre was not able to infer the type of argument `{ "python_vers...
     @data_provider(
         {
             "python_version": (

@@ -13,6 +13,7 @@ from libcst.testing.utils import UnitTest, data_provider
 
 
 class TestDetectConfig(UnitTest):
+    # pyre-fixme[56]: Pyre was not able to infer the type of argument `{ "empty_input...
     @data_provider(
         {
             "empty_input": {

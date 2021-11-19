@@ -45,6 +45,7 @@ class TestApplyAnnotationsVisitor(CodemodTest):
             context, parse_module(textwrap.dedent(stub.rstrip()))
         )
         # Test setting the flag on the codemod instance.
+        # pyre-fixme[6]: Expected `bool` for 4th param but got `Dict[str, bool]`.
         self.assertCodemod(before, after, context_override=context, **kwargs)
 
         # Test setting the flag when storing the stub in the context.
@@ -52,6 +53,7 @@ class TestApplyAnnotationsVisitor(CodemodTest):
         ApplyTypeAnnotationsVisitor.store_stub_in_context(
             context,
             parse_module(textwrap.dedent(stub.rstrip())),
+            # pyre-fixme[6]: Expected `bool` for 3rd param but got `Dict[str, bool]`.
             **kwargs,
         )
         self.assertCodemod(before, after, context_override=context)
@@ -858,6 +860,8 @@ class TestApplyAnnotationsVisitor(CodemodTest):
             ),
         }
     )
+    # pyre-fixme[56]: Pyre was not able to infer the type of argument
+    #  `sys.version_info < (3, 8)` to decorator factory `unittest.skipIf`.
     @unittest.skipIf(sys.version_info < (3, 8), "Unsupported Python version")
     def test_annotate_functions_py38(self, stub: str, before: str, after: str) -> None:
         self.run_simple_test_case(stub=stub, before=before, after=after)
@@ -886,6 +890,7 @@ class TestApplyAnnotationsVisitor(CodemodTest):
             stub=stub,
             before=before,
             after=after,
+            # pyre-fixme[6]: Expected `Dict[str, bool]` for 4th param but got `bool`.
             overwrite_existing_annotations=True,
         )
 
@@ -944,6 +949,7 @@ class TestApplyAnnotationsVisitor(CodemodTest):
             stub=stub,
             before=before,
             after=after,
+            # pyre-fixme[6]: Expected `Dict[str, bool]` for 4th param but got `bool`.
             overwrite_existing_annotations=True,
         )
 
@@ -984,6 +990,7 @@ class TestApplyAnnotationsVisitor(CodemodTest):
             stub=stub,
             before=before,
             after=after,
+            # pyre-fixme[6]: Expected `Dict[str, bool]` for 4th param but got `bool`.
             use_future_annotations=True,
         )
 
@@ -1088,12 +1095,14 @@ class TestApplyAnnotationsVisitor(CodemodTest):
             ),
         }
     )
+    # pyre-fixme[3]: Return type must be annotated.
     def test_count_annotations(
         self,
         stub: str,
         before: str,
         after: str,
         annotation_counts: AnnotationCounts,
+        # pyre-fixme[31]: Expression `False` is not a valid type.
         any_changes_applied: False,
     ):
         stub = self.make_fixture_data(stub)

@@ -21,6 +21,7 @@ class CommentTest(CSTNodeTest):
     def test_valid(self, node: cst.CSTNode, code: str) -> None:
         self.validate_node(node, code)
 
+    # pyre-fixme[56]: Pyre was not able to infer the type of argument `((lambda () (l...
     @data_provider(
         (
             (lambda: cst.Comment(" bad input"), "non-comment"),

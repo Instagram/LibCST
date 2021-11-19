@@ -16,6 +16,7 @@ from libcst.testing.utils import UnitTest, data_provider
 
 
 class ExpressionTest(UnitTest):
+    # pyre-fixme[56]: Pyre was not able to infer the type of argument `(("a string", ...
     @data_provider(
         (
             ("a string", "a string"),

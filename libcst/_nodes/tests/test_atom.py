@@ -20,6 +20,7 @@ def _parse_expression_force_38(code: str) -> cst.BaseExpression:
 
 
 class AtomTest(CSTNodeTest):
+    # pyre-fixme[56]: Pyre was not able to infer the type of argument `({ "node":libc...
     @data_provider(
         (
             # Simple identifier
@@ -810,6 +811,7 @@ class AtomTest(CSTNodeTest):
         # can be parsed identically to their creation.
         self.validate_node(**kwargs)
 
+    # pyre-fixme[56]: Pyre was not able to infer the type of argument `({ "node":libc...
     @data_provider(
         (
             {
@@ -827,6 +829,7 @@ class AtomTest(CSTNodeTest):
         # Test some nodes that aren't valid source code by themselves
         self.validate_node(**kwargs)
 
+    # pyre-fixme[56]: Pyre was not able to infer the type of argument `({ "get_node":...
     @data_provider(
         (
             # Expression wrapping parenthesis rules
@@ -1105,6 +1108,7 @@ class AtomTest(CSTNodeTest):
     def test_invalid(self, **kwargs: Any) -> None:
         self.assert_invalid(**kwargs)
 
+    # pyre-fixme[56]: Pyre was not able to infer the type of argument `({ "code":"u'x...
     @data_provider(
         (
             {

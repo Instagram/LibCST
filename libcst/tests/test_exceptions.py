@@ -12,6 +12,9 @@ from libcst.testing.utils import UnitTest, data_provider
 
 
 class ExceptionsTest(UnitTest):
+    # pyre-fixme[56]: Pyre was not able to infer the type of argument `{
+    #  "simple":(libcst.ParserSyntaxError("some message", $parameter$lines = ["abcd"],
+    #  $parameter$raw_line = 1, $parameter$raw_column = 0), textwrap.dedent("
     @data_provider(
         {
             "simple": (

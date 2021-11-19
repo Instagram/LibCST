@@ -176,11 +176,15 @@ class TypeOf(Generic[_MatcherTypeT], BaseMatcherNode):
         self._call_items = (args, kwargs)
         return self
 
+    # pyre-fixme[14]: `__or__` overrides method defined in `BaseMatcherNode`
+    #  inconsistently.
     def __or__(
         self, other: _OtherNodeMatcherTypeT
     ) -> "TypeOf[Union[_MatcherTypeT, _OtherNodeMatcherTypeT]]":
         return TypeOf[Union[_MatcherTypeT, _OtherNodeMatcherTypeT]](self, other)
 
+    # pyre-fixme[14]: `__and__` overrides method defined in `BaseMatcherNode`
+    #  inconsistently.
     def __and__(self, other: _OtherNodeMatcherTypeT) -> NoReturn:
         left, right = type(self).__name__, other.__name__
         raise TypeError(
@@ -518,7 +522,6 @@ class MatchIfTrue(Generic[_MatchIfTrueT]):
         return MatchIfTrue(lambda val: not self._func(val))
 
     def __repr__(self) -> str:
-        # pyre-ignore Pyre doesn't believe that functions have a repr.
         return f"MatchIfTrue({repr(self._func)})"
 
 
@@ -719,7 +722,6 @@ class MatchMetadataIfTrue(_BaseMetadataMatcher):
         return MatchMetadataIfTrue(self._key, lambda val: not self._func(val))
 
     def __repr__(self) -> str:
-        # pyre-ignore Pyre doesn't believe that functions have a repr.
         return f"MatchMetadataIfTrue(key={repr(self._key)}, func={repr(self._func)})"
 
 
@@ -980,7 +982,6 @@ def DoesNotMatch(obj: _OtherNodeT) -> _OtherNodeT:
     ):
         # We can use the overridden __invert__ in this case. Pyre doesn't think
         # we can though, and casting doesn't fix the issue.
-        # pyre-ignore All three types above have overridden __invert__.
         inverse = ~obj
     else:
         # We must wrap in a _InverseOf.
@@ -1065,6 +1066,7 @@ def _sequence_matches(  # noqa: C901
         # Base case, we have one or more matcher that wasn't matched
         if all(_matches_zero_nodes(m) for m in matchers):
             return _SequenceMatchesResult(
+                # pyre-fixme[16]: `MatchIfTrue` has no attribute `name`.
                 {m.name: () for m in matchers if isinstance(m, _ExtractMatchingNode)},
                 (),
             )
@@ -1102,6 +1104,10 @@ def _sequence_matches(  # noqa: C901
                     if result.sequence_capture is not None:
                         return _SequenceMatchesResult(
                             {**attribute_capture, **result.sequence_capture},
+                            # pyre-fixme[6]: Expected `Union[None, Sequence[libcst._n...
+                            # pyre-fixme[60]: Expected to unpack an iterable, but
+                            #  got `Union[None, Sequence[libcst._nodes.base.CSTNode],
+                            #  MaybeSentinel, CSTNode]`.
                             (node, *result.matched_nodes),
                         )
             # Finally, assume that this does not match the current node.
@@ -1128,6 +1134,10 @@ def _sequence_matches(  # noqa: C901
                     if result.sequence_capture is not None:
                         return _SequenceMatchesResult(
                             {**attribute_capture, **result.sequence_capture},
+                            # pyre-fixme[6]: Expected `Union[None, Sequence[libcst._n...
+                            # pyre-fixme[60]: Expected to unpack an iterable, but
+                            #  got `Union[None, Sequence[libcst._nodes.base.CSTNode],
+                            #  MaybeSentinel, CSTNode]`.
                             (node, *result.matched_nodes),
                         )
                 return _SequenceMatchesResult(None, None)
@@ -1142,6 +1152,10 @@ def _sequence_matches(  # noqa: C901
                     if result.sequence_capture is not None:
                         return _SequenceMatchesResult(
                             {**attribute_capture, **result.sequence_capture},
+                            # pyre-fixme[6]: Expected `Union[None, Sequence[libcst._n...
+                            # pyre-fixme[60]: Expected to unpack an iterable, but
+                            #  got `Union[None, Sequence[libcst._nodes.base.CSTNode],
+                            #  MaybeSentinel, CSTNode]`.
                             (node, *result.matched_nodes),
                         )
                 # Now, assume that this does not match the current node.
@@ -1226,6 +1240,7 @@ def _attribute_matches(  # noqa: C901
 
     if isinstance(matcher, str):
         # Should exactly match matcher text
+        # pyre-fixme[6]: Expected `_CSTNodeSelfT` for 1st param but got `str`.
         return {} if node == matcher else None
 
     if isinstance(matcher, bool):
@@ -1244,10 +1259,12 @@ def _attribute_matches(  # noqa: C901
             for m in matcher.options:
                 if isinstance(m, collections.abc.Sequence):
                     # Should match the sequence of requested nodes
+                    # pyre-fixme[6]: Expected `Sequence[Union[libcst._maybe_sentinel....
                     result = _sequence_matches(node, m, metadata_lookup)
                     if result.sequence_capture is not None:
                         return result.sequence_capture
                 elif isinstance(m, MatchIfTrue):
+                    # pyre-fixme[16]: `OneOf` has no attribute `func`.
                     return {} if matcher.func(node) else None
         elif isinstance(matcher, AllOf):
             # We should compare against each of the sequences in the AllOf
@@ -1255,11 +1272,13 @@ def _attribute_matches(  # noqa: C901
             for m in matcher.options:
                 if isinstance(m, collections.abc.Sequence):
                     # Should match the sequence of requested nodes
+                    # pyre-fixme[6]: Expected `Sequence[Union[libcst._maybe_sentinel....
                     result = _sequence_matches(node, m, metadata_lookup)
                     if result.sequence_capture is None:
                         return None
                     all_captures = {**all_captures, **result.sequence_capture}
                 elif isinstance(m, MatchIfTrue):
+                    # pyre-fixme[16]: `AllOf` has no attribute `func`.
                     return {} if matcher.func(node) else None
                 else:
                     # The value in the AllOf wasn't a sequence, it can't match.
@@ -1271,6 +1290,7 @@ def _attribute_matches(  # noqa: C901
             # the way we generate match classes, this should be true unless the
             # match is badly constructed and types were ignored.
             return _sequence_matches(
+                # pyre-fixme[6]: Expected `Sequence[Union[libcst._maybe_sentinel.Mayb...
                 node,
                 cast(
                     Sequence[
@@ -1294,7 +1314,12 @@ def _attribute_matches(  # noqa: C901
     # so the only way it is wrong is if the node was badly constructed and
     # types were ignored.
     return _matches(
+        # pyre-fixme[6]: Expected `Union[libcst._maybe_sentinel.MaybeSentinel,
+        #  libcst._nodes.base.CSTNode]` for 1st param but got
+        #  `Union[libcst._maybe_sentinel.MaybeSentinel, libcst._nodes.base.CSTNode,
+        #  libcst._removal_sentinel.RemovalSentinel]`.
         cast(Union[MaybeSentinel, RemovalSentinel, libcst.CSTNode], node),
+        # pyre-fixme[24]: Generic type `MatchIfTrue` expects 1 type parameter.
         cast(Union[BaseMatcherNode, MatchIfTrue, _BaseMetadataMatcher], matcher),
         metadata_lookup,
     )

@@ -21,6 +21,10 @@ def with_production(
     *,
     version: Optional[str] = None,
     future: Optional[str] = None,
+# pyre-fixme[34]: `Variable[_NonterminalConversionT (bound to
+#  typing.Callable[[libcst._parser.types.config.ParserConfig,
+#  typing.Sequence[typing.Any]], typing.Any])]` isn't present in the function's
+#  parameters.
 ) -> Callable[[_NonterminalConversionT], _NonterminalConversionT]:
     """
     Attaches a bit of grammar to a conversion function. The parser extracts all of these

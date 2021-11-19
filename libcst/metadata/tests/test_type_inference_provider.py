@@ -58,6 +58,7 @@ def _test_simple_class_helper(test: UnitTest, wrapper: MetadataWrapper) -> None:
 @skipIf(sys.platform == "win32", "TypeInferenceProvider doesn't support windows")
 class TypeInferenceProviderTest(UnitTest):
     @classmethod
+    # pyre-fixme[3]: Return type must be annotated.
     def setUpClass(cls):
         os.chdir(TEST_SUITE_PATH)
         try:
@@ -66,12 +67,14 @@ class TypeInferenceProviderTest(UnitTest):
             raise exc
 
     @classmethod
+    # pyre-fixme[3]: Return type must be annotated.
     def tearDownClass(cls):
         try:
             subprocess.run(["pyre", "-n", "stop"], cwd=TEST_SUITE_PATH)
         except subprocess.TimeoutExpired as exc:
             raise exc
 
+    # pyre-fixme[56]: Pyre was not able to infer the type of argument `((libcst.tests...
     @data_provider(
         ((TEST_SUITE_PATH / "simple_class.py", TEST_SUITE_PATH / "simple_class.json"),)
     )
@@ -82,6 +85,7 @@ class TypeInferenceProviderTest(UnitTest):
         data: PyreData = json.loads(data_path.read_text())
         self.assertEqual(cache[source_path.name], data)
 
+    # pyre-fixme[56]: Pyre was not able to infer the type of argument `((libcst.tests...
     @data_provider(
         ((TEST_SUITE_PATH / "simple_class.py", TEST_SUITE_PATH / "simple_class.json"),)
     )
@@ -89,9 +93,6 @@ class TypeInferenceProviderTest(UnitTest):
         data: PyreData = json.loads(data_path.read_text())
         wrapper = MetadataWrapper(
             cst.parse_module(source_path.read_text()),
-            # pyre-fixme[6]: Expected `Mapping[Type[BaseMetadataProvider[object]],
-            #  Any]` for 2nd param but got `Dict[Type[TypeInferenceProvider],
-            #  Sequence[InferredType]]`.
             cache={TypeInferenceProvider: data},
         )
         _test_simple_class_helper(self, wrapper)

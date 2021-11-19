@@ -178,7 +178,6 @@ class MetadataWrapper:
         else:
             metadata = self.resolve_many([provider])[provider]
 
-        # pyre-ignore Pyre doesn't recognize "CSTNode" in this contxt.
         return cast(Mapping["CSTNode", _T], metadata)
 
     def resolve_many(

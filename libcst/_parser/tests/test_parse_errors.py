@@ -12,6 +12,9 @@ from libcst.testing.utils import UnitTest, data_provider
 
 
 class ParseErrorsTest(UnitTest):
+    # pyre-fixme[56]: Pyre was not able to infer the type of argument `{
+    #  "wrapped_tokenize__invalid_token":(lambda () (libcst.parse_module("'")),
+    #  textwrap.dedent("
     @data_provider(
         {
             # _wrapped_tokenize raises these exceptions

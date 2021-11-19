@@ -12,6 +12,7 @@ from libcst.testing.utils import UnitTest, data_provider
 
 
 class FooterBehaviorTest(UnitTest):
+    # pyre-fixme[56]: Pyre was not able to infer the type of argument `{ "simple_modu...
     @data_provider(
         {
             # Literally the most basic example

@@ -27,6 +27,7 @@ class Config(BaseWhitespaceParserConfig):
 
 
 class WhitespaceParserTest(UnitTest):
+    # pyre-fixme[56]: Pyre was not able to infer the type of argument `{ "simple_whit...
     @data_provider(
         {
             "simple_whitespace_empty": {

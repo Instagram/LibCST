@@ -1712,6 +1712,8 @@ class ScopeProviderTest(UnitTest):
                 )
 
     def test_cast(self) -> None:
+        # pyre-fixme[3]: Return type must be annotated.
+        # pyre-fixme[2]: Parameter must be annotated.
         def assert_parsed(code, *calls):
             parse = cst.parse_module
             with mock.patch("libcst.parse_module") as parse_mock:

@@ -86,6 +86,7 @@ class CSTNodeTest(UnitTest):
         self.assertEqual(hash(sw1), hash(sw1))
         self.assertEqual(hash(sw2), hash(sw2))
 
+    # pyre-fixme[56]: Pyre was not able to infer the type of argument `{ "simple":(li...
     @data_provider(
         {
             "simple": (cst.SimpleWhitespace(""), cst.SimpleWhitespace("")),

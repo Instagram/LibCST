@@ -73,6 +73,7 @@ class ConvertPercentFormatStringCommand(VisitorBasedCodemodCommand):
         extracts = m.extract(
             original_node,
             m.BinaryOperation(
+                # pyre-fixme[6]: Expected `Union[m._matcher_base.AllOf[typing.Union[m...
                 left=m.MatchIfTrue(_match_simple_string),
                 operator=m.Modulo(),
                 right=m.SaveMatchedNode(
@@ -107,6 +108,7 @@ class ConvertPercentFormatStringCommand(VisitorBasedCodemodCommand):
                         cst.FormattedStringExpression(
                             expression=cast(
                                 cst.BaseExpression,
+                                # pyre-fixme[16]: `Sequence` has no attribute `visit`.
                                 expressions[i - 1].visit(escape_transformer),
                             )
                         )

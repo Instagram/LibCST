@@ -13,6 +13,8 @@ from libcst.testing.utils import UnitTest, data_provider
 
 
 class ExperimentalReentrantCodegenProviderTest(UnitTest):
+    # pyre-fixme[56]: Pyre was not able to infer the type of argument `{
+    #  "simple_top_level_statement":{ "old_module":"\
     @data_provider(
         {
             "simple_top_level_statement": {

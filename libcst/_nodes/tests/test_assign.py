@@ -13,6 +13,7 @@ from libcst.testing.utils import data_provider
 
 
 class AssignTest(CSTNodeTest):
+    # pyre-fixme[56]: Pyre was not able to infer the type of argument `({ "node":libc...
     @data_provider(
         (
             # Simple assignment creation case.
@@ -108,6 +109,10 @@ class AssignTest(CSTNodeTest):
     def test_valid(self, **kwargs: Any) -> None:
         self.validate_node(**kwargs)
 
+    # pyre-fixme[56]: Pyre was not able to infer the type of argument `({
+    #  "get_node":lambda () (libcst.Assign($parameter$targets = (), $parameter$value =
+    #  libcst.Integer("5"))),"expected_re":"at least one AssignTarget" })` to decorator
+    #  factory `libcst.testing.utils.data_provider`.
     @data_provider(
         (
             {
@@ -119,6 +124,7 @@ class AssignTest(CSTNodeTest):
     def test_invalid(self, **kwargs: Any) -> None:
         self.assert_invalid(**kwargs)
 
+    # pyre-fixme[56]: Pyre was not able to infer the type of argument `({ "get_node":...
     @data_provider(
         (
             {
@@ -144,6 +150,7 @@ class AssignTest(CSTNodeTest):
 
 
 class AnnAssignTest(CSTNodeTest):
+    # pyre-fixme[56]: Pyre was not able to infer the type of argument `({ "node":libc...
     @data_provider(
         (
             # Simple assignment creation case.
@@ -289,6 +296,7 @@ class AnnAssignTest(CSTNodeTest):
     def test_valid(self, **kwargs: Any) -> None:
         self.validate_node(**kwargs)
 
+    # pyre-fixme[56]: Pyre was not able to infer the type of argument `({ "get_node":...
     @data_provider(
         (
             {
@@ -307,6 +315,7 @@ class AnnAssignTest(CSTNodeTest):
     def test_invalid(self, **kwargs: Any) -> None:
         self.assert_invalid(**kwargs)
 
+    # pyre-fixme[56]: Pyre was not able to infer the type of argument `({ "get_node":...
     @data_provider(
         (
             {
@@ -334,6 +343,7 @@ class AnnAssignTest(CSTNodeTest):
 
 
 class AugAssignTest(CSTNodeTest):
+    # pyre-fixme[56]: Pyre was not able to infer the type of argument `({ "node":libc...
     @data_provider(
         (
             # Simple assignment constructor case.
@@ -411,6 +421,7 @@ class AugAssignTest(CSTNodeTest):
     def test_valid(self, **kwargs: Any) -> None:
         self.validate_node(**kwargs)
 
+    # pyre-fixme[56]: Pyre was not able to infer the type of argument `({ "get_node":...
     @data_provider(
         (
             {

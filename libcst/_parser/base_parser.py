@@ -204,7 +204,6 @@ class BaseParser(Generic[_TokenT, _TokenTypeT, _NodeT]):
                 )
 
         # Logically, `plan` is always defined, but pyre can't reasonably determine that.
-        # pyre-fixme[18]: Global name `plan` is undefined.
         stack[-1].dfa = plan.next_dfa
 
         for push in plan.dfa_pushes:

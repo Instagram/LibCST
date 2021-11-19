@@ -8,6 +8,7 @@ from libcst.testing.utils import UnitTest, data_provider
 
 
 class ExpandTabsTest(UnitTest):
+    # pyre-fixme[56]: Pyre was not able to infer the type of argument `[("\t", " ".__...
     @data_provider(
         [
             ("\t", " " * 8),
