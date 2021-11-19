@@ -234,7 +234,7 @@ class Assignment(BaseAssignment):
 
         parts = [*reversed(name_prefixes)]
         if full_name:
-            parts.append(remaining_name)
+            parts.append(full_name)
         return {QualifiedName(".".join(parts), QualifiedNameSource.LOCAL)}
 
 
