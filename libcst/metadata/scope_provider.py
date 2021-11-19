@@ -128,6 +128,23 @@ class Access:
         self.__assignments |= previous_assignments
 
 
+class QualifiedNameSource(Enum):
+    IMPORT = auto()
+    BUILTIN = auto()
+    LOCAL = auto()
+
+
+@add_slots
+@dataclass(frozen=True)
+class QualifiedName:
+    #: Qualified name, e.g. ``a.b.c`` or ``fn.<locals>.var``.
+    name: str
+
+    #: Source of the name, either :attr:`QualifiedNameSource.IMPORT`, :attr:`QualifiedNameSource.BUILTIN`
+    #: or :attr:`QualifiedNameSource.LOCAL`.
+    source: QualifiedNameSource
+
+
 class BaseAssignment(abc.ABC):
     """Abstract base class of :class:`Assignment` and :class:`BuitinAssignment`."""
 
@@ -175,6 +192,11 @@ class BaseAssignment(abc.ABC):
         """Return an integer that represents the order of assignments in `scope`"""
         return -1
 
+    def get_qualified_names_for(self, get_qualified_names_for: str) -> Set[QualifiedName]:
+        raise NotImplementedError(
+            "get_qualified_names_for needs to be implemented by sub classes."
+        )
+
 
 class Assignment(BaseAssignment):
     """An assignment records the name, CSTNode and its accesses."""
@@ -194,6 +216,26 @@ class Assignment(BaseAssignment):
     @property
     def _index(self) -> int:
         return self.__index
+
+    def get_qualified_names_for(self, full_name: str) -> Set[QualifiedName]:
+        scope = self.scope
+        name_prefixes = []
+        while scope:
+            if isinstance(scope, ClassScope):
+                name_prefixes.append(scope.name)
+            elif isinstance(scope, FunctionScope):
+                name_prefixes.append(f"{scope.name}.<locals>")
+            elif isinstance(scope, ComprehensionScope):
+                name_prefixes.append("<comprehension>")
+            elif not isinstance(scope, (GlobalScope, BuiltinScope)):
+                raise Exception(f"Unexpected Scope: {scope}")
+
+            scope = scope.parent if scope.parent != scope else None
+
+        parts = [*reversed(name_prefixes)]
+        if full_name:
+            parts.append(remaining_name)
+        return {QualifiedName(".".join(parts), QualifiedNameSource.LOCAL)}
 
 
 # even though we don't override the constructor.
@@ -223,6 +265,55 @@ class ImportAssignment(Assignment):
     ):
         super().__init__(name, scope, node, index)
         self.as_name = as_name
+
+    def get_module_name_for_import(self) -> str:
+        module = ""
+        if isinstance(self.node, cst.ImportFrom):
+            module_attr = self.node.module
+            relative = self.node.relative
+            if module_attr:
+                module = get_full_name_for_node(module_attr) or ""
+            if relative:
+                module = "." * len(relative) + module
+        return module
+
+    def get_qualified_names_for(self, full_name: str) -> Set[QualifiedName]:
+        module = self.get_module_name_for_import()
+        results = set()
+        import_names = self.node.names
+        if not isinstance(import_names, cst.ImportStar):
+            for name in import_names:
+                real_name = get_full_name_for_node(name.name)
+                if not real_name:
+                    continue
+                # real_name can contain `.` for dotted imports
+                # for these we want to find the longest prefix that matches full_name
+                parts = real_name.split(".")
+                real_names = [".".join(parts[:i]) for i in range(len(parts), 0, -1)]
+                for real_name in real_names:
+                    as_name = real_name
+                    if module and module.endswith("."):
+                        # from . import a
+                        # real_name should be ".a"
+                        real_name = f"{module}{real_name}"
+                    elif module:
+                        real_name = f"{module}.{real_name}"
+                    if name and name.asname:
+                        eval_alias = name.evaluated_alias
+                        if eval_alias is not None:
+                            as_name = eval_alias
+                    if full_name.startswith(as_name):
+                        remaining_name = full_name.split(as_name, 1)[1].lstrip(".")
+                        results.add(
+                            QualifiedName(
+                                f"{real_name}.{remaining_name}"
+                                if remaining_name
+                                else real_name,
+                                QualifiedNameSource.IMPORT,
+                            )
+                        )
+                        break
+        return results
 
 
 class Assignments:
@@ -269,23 +360,6 @@ class Accesses:
         return len(self[node]) > 0
 
 
-class QualifiedNameSource(Enum):
-    IMPORT = auto()
-    BUILTIN = auto()
-    LOCAL = auto()
-
-
-@add_slots
-@dataclass(frozen=True)
-class QualifiedName:
-    #: Qualified name, e.g. ``a.b.c`` or ``fn.<locals>.var``.
-    name: str
-
-    #: Source of the name, either :attr:`QualifiedNameSource.IMPORT`, :attr:`QualifiedNameSource.BUILTIN`
-    #: or :attr:`QualifiedNameSource.LOCAL`.
-    source: QualifiedNameSource
-
-
 class _NameUtil:
     @staticmethod
     def get_name_for(node: Union[str, cst.CSTNode]) -> Optional[str]:
@@ -301,84 +375,6 @@ class _NameUtil:
         elif isinstance(node, (cst.FunctionDef, cst.ClassDef)):
             return _NameUtil.get_name_for(node.name)
         return None
-
-    @staticmethod
-    def get_module_name_for_import_alike(
-        assignment_node: Union[cst.Import, cst.ImportFrom]
-    ) -> str:
-        module = ""
-        if isinstance(assignment_node, cst.ImportFrom):
-            module_attr = assignment_node.module
-            relative = assignment_node.relative
-            if module_attr:
-                module = get_full_name_for_node(module_attr) or ""
-            if relative:
-                module = "." * len(relative) + module
-        return module
-
-    @staticmethod
-    def find_qualified_name_for_import_alike(
-        assignment_node: Union[cst.Import, cst.ImportFrom], full_name: str
-    ) -> Set[QualifiedName]:
-        module = _NameUtil.get_module_name_for_import_alike(assignment_node)
-        results = set()
-        import_names = assignment_node.names
-        if not isinstance(import_names, cst.ImportStar):
-            for name in import_names:
-                real_name = get_full_name_for_node(name.name)
-                if not real_name:
-                    continue
-                # real_name can contain `.` for dotted imports
-                # for these we want to find the longest prefix that matches full_name
-                parts = real_name.split(".")
-                real_names = [".".join(parts[:i]) for i in range(len(parts), 0, -1)]
-                for real_name in real_names:
-                    as_name = real_name
-                    if module and module.endswith("."):
-                        # from . import a
-                        # real_name should be ".a"
-                        real_name = f"{module}{real_name}"
-                    elif module:
-                        real_name = f"{module}.{real_name}"
-                    if name and name.asname:
-                        eval_alias = name.evaluated_alias
-                        if eval_alias is not None:
-                            as_name = eval_alias
-                    if full_name.startswith(as_name):
-                        remaining_name = full_name.split(as_name, 1)[1].lstrip(".")
-                        results.add(
-                            QualifiedName(
-                                f"{real_name}.{remaining_name}"
-                                if remaining_name
-                                else real_name,
-                                QualifiedNameSource.IMPORT,
-                            )
-                        )
-                        break
-        return results
-
-    @staticmethod
-    def find_qualified_name_for_non_import(
-        assignment: Assignment, remaining_name: str
-    ) -> Set[QualifiedName]:
-        scope = assignment.scope
-        name_prefixes = []
-        while scope:
-            if isinstance(scope, ClassScope):
-                name_prefixes.append(scope.name)
-            elif isinstance(scope, FunctionScope):
-                name_prefixes.append(f"{scope.name}.<locals>")
-            elif isinstance(scope, ComprehensionScope):
-                name_prefixes.append("<comprehension>")
-            elif not isinstance(scope, (GlobalScope, BuiltinScope)):
-                raise Exception(f"Unexpected Scope: {scope}")
-
-            scope = scope.parent if scope.parent != scope else None
-
-        parts = [*reversed(name_prefixes)]
-        if remaining_name:
-            parts.append(remaining_name)
-        return {QualifiedName(".".join(parts), QualifiedNameSource.LOCAL)}
 
 
 class Scope(abc.ABC):
@@ -556,16 +552,8 @@ class Scope(abc.ABC):
                 break
         for assignment in assignments:
             if isinstance(assignment, Assignment):
-                assignment_node = assignment.node
-                if isinstance(assignment_node, (cst.Import, cst.ImportFrom)):
-                    names = _NameUtil.find_qualified_name_for_import_alike(
-                        assignment_node, full_name
-                    )
-                else:
-                    names = _NameUtil.find_qualified_name_for_non_import(
-                        assignment, full_name
-                    )
-                if not isinstance(node, str) and _is_assignment(node, assignment_node):
+                names = assignment.get_qualified_names_for(full_name)
+                if not isinstance(node, str) and _is_assignment(node, assignment.node):
                     return names
                 else:
                     results |= names
