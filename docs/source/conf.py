@@ -26,7 +26,7 @@
 # -- Project information -----------------------------------------------------
 
 project = "LibCST"
-copyright = "2019, Meta"
+copyright = "Meta"
 author = "Benjamin Woodruff, Jennifer Taylor, Carl Meyer, Jimmy Lai, Ray Zeng"
 
 # The short X.Y version
