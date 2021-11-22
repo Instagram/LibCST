@@ -1,3 +1,21 @@
+# 0.3.22 - 2021-11-22
+
+## Added
+- Add --indent-string option to `libcst.tool print` [#525](https://github.com/Instagram/LibCST/pull/525)
+- Publish pre-release packages to test.pypi.org [#550](https://github.com/Instagram/LibCST/pull/550)
+- Add ImportAssignment class extending Assignment to record assignments for import statements [#554](https://github.com/Instagram/LibCST/pull/554)
+
+## Fixed
+- Various documentation fixes [#527](https://github.com/Instagram/LibCST/pull/527), [#529](https://github.com/Instagram/LibCST/pull/529)
+- Do not add imports if we added no type info in ApplyTypeAnnotationVisitor [(commit)](https://github.com/Instagram/LibCST/commit/87625d02b6cb321c9c29ba1c67d81ce954a1a396)
+- Support relative imports in ApplyTypeAnnotationVisitor qualifier handling [#538](https://github.com/Instagram/LibCST/pull/538)
+- Don't gather metadata if the wrapper already contains it [#545](https://github.com/Instagram/LibCST/pull/545)
+- Swallow parsing errors in string annotations [#548](https://github.com/Instagram/LibCST/pull/548)
+- Stop parsing string annotations when no longer in a typing call [#546](https://github.com/Instagram/LibCST/pull/546)
+
+## Updated
+- Move find_qualified_names_for in the Assignment class [#557](https://github.com/Instagram/LibCST/pull/557)
+
 # 0.3.21 - 2021-09-21
 
 ## Fixed
