@@ -141,6 +141,36 @@ class BinaryOperationTest(CSTNodeTest):
                 "parser": parse_expression,
                 "expected_position": CodeRange((1, 2), (1, 13)),
             },
+            # Make sure operators are left associative
+            {
+                "node": cst.BinaryOperation(
+                    left=cst.BinaryOperation(
+                        left=cst.Name("foo"),
+                        operator=cst.Add(),
+                        right=cst.Name("bar"),
+                    ),
+                    operator=cst.Add(),
+                    right=cst.Name("baz"),
+                ),
+                "code": "foo + bar + baz",
+                "parser": parse_expression,
+                "expected_position": None,
+            },
+            # Except for Power which is right associative
+            {
+                "node": cst.BinaryOperation(
+                    left=cst.Name("foo"),
+                    operator=cst.Power(),
+                    right=cst.BinaryOperation(
+                        left=cst.Name("bar"),
+                        operator=cst.Power(),
+                        right=cst.Name("baz"),
+                    ),
+                ),
+                "code": "foo ** bar ** baz",
+                "parser": parse_expression,
+                "expected_position": None,
+            },
         )
     )
     def test_valid(self, **kwargs: Any) -> None:
@@ -174,3 +204,36 @@ class BinaryOperationTest(CSTNodeTest):
     )
     def test_invalid(self, **kwargs: Any) -> None:
         self.assert_invalid(**kwargs)
+
+    @data_provider(
+        (
+            # Make sure operands are implicitly parenthesized
+            {
+                "node": cst.BinaryOperation(
+                    left=cst.Name("foo"),
+                    operator=cst.Multiply(),
+                    right=cst.BinaryOperation(
+                        left=cst.Name("bar"),
+                        operator=cst.Multiply(),
+                        right=cst.Name("baz"),
+                    ),
+                ),
+                "code": "foo * (bar * baz)",
+            },
+            # But only when necessary
+            {
+                "node": cst.BinaryOperation(
+                    left=cst.Name("foo"),
+                    operator=cst.Add(),
+                    right=cst.BinaryOperation(
+                        left=cst.Name("bar"),
+                        operator=cst.Multiply(),
+                        right=cst.Name("baz"),
+                    ),
+                ),
+                "code": "foo + bar * baz",
+            },
+        )
+    )
+    def test_implicit_parens(self, node: cst.CSTNode, code: str) -> None:
+        self.assertEqual(cst.Module([]).code_for_node(node), code)

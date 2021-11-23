@@ -1452,7 +1452,7 @@ class Decorator(CSTNode):
 
     def _validate(self) -> None:
         decorator = self.decorator
-        if len(decorator.lpar) > 0 or len(decorator.rpar) > 0:
+        if decorator._is_parenthesized:
             raise CSTValidationError(
                 "Cannot have parens around decorator in a Decorator."
             )
@@ -1578,7 +1578,7 @@ class FunctionDef(BaseCompoundStatement):
     whitespace_before_colon: SimpleWhitespace = SimpleWhitespace.field("")
 
     def _validate(self) -> None:
-        if len(self.name.lpar) > 0 or len(self.name.rpar) > 0:
+        if self.name._is_parenthesized:
             raise CSTValidationError("Cannot have parens around Name in a FunctionDef.")
         if self.whitespace_after_def.empty:
             raise CSTValidationError(
@@ -1708,7 +1708,7 @@ class ClassDef(BaseCompoundStatement):
             )
 
     def _validate_parens(self) -> None:
-        if len(self.name.lpar) > 0 or len(self.name.rpar) > 0:
+        if self.name._is_parenthesized:
             raise CSTValidationError("Cannot have parens around Name in a ClassDef.")
         if isinstance(self.lpar, MaybeSentinel) and isinstance(self.rpar, RightParen):
             raise CSTValidationError(
@@ -2282,7 +2282,7 @@ class NameItem(CSTNode):
 
     def _validate(self) -> None:
         # No parens around names here
-        if len(self.name.lpar) > 0 or len(self.name.rpar) > 0:
+        if self.name._is_parenthesized:
             raise CSTValidationError("Cannot have parens around names in NameItem.")
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "NameItem":
