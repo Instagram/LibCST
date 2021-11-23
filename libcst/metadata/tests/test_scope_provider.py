@@ -1917,7 +1917,7 @@ class ScopeProviderTest(UnitTest):
         global_pow_accesses = list(global_pow_assignment.references)
         self.assertEqual(len(global_pow_accesses), 2)
 
-    def test_annotation_access_regression(self) -> None:
+    def test_annotation_access_in_typevar_bound(self) -> None:
         m, scopes = get_scope_metadata_provider(
             """
                 from typing import TypeVar
