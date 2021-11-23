@@ -1,3 +1,8 @@
+# 0.3.23 - 2021-11-23
+
+## Fixed
+- Fix missing string annotation references [#561](https://github.com/Instagram/LibCST/pull/561)
+
 # 0.3.22 - 2021-11-22
 
 ## Added
