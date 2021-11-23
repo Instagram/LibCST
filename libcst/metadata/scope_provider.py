@@ -874,7 +874,6 @@ class ScopeVisitor(cst.CSTVisitor):
     def visit_Call(self, node: cst.Call) -> Optional[bool]:
         self.__top_level_attribute_stack.append(None)
         self.__in_type_hint_stack.append(False)
-        self.__in_annotation_stack.append(False)
         qnames = {qn.name for qn in self.scope.get_qualified_names_for(node)}
         if "typing.NewType" in qnames or "typing.TypeVar" in qnames:
             node.func.visit(self)
@@ -896,7 +895,6 @@ class ScopeVisitor(cst.CSTVisitor):
     def leave_Call(self, original_node: cst.Call) -> None:
         self.__top_level_attribute_stack.pop()
         self.__in_type_hint_stack.pop()
-        self.__in_annotation_stack.pop()
 
     def visit_Annotation(self, node: cst.Annotation) -> Optional[bool]:
         self.__in_annotation_stack.append(True)
