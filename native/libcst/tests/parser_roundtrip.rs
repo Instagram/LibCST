@@ -30,7 +30,7 @@ fn roundtrip_fixtures() {
         } else {
             &input
         };
-        let m = match parse_module(input) {
+        let m = match parse_module(input, None) {
             Ok(m) => m,
             Err(e) => panic!("{}", prettify_error(e, format!("{:#?}", path).as_ref())),
         };

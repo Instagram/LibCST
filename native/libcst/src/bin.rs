@@ -8,7 +8,7 @@ use std::{
 pub fn main() {
     let mut str = std::string::String::new();
     io::stdin().read_to_string(&mut str).unwrap();
-    match parse_module(str.as_ref()) {
+    match parse_module(str.as_ref(), None) {
         Err(e) => {
             eprintln!("{}", prettify_error(e, "stdin"));
             exit(1);

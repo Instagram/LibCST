@@ -44,7 +44,7 @@ pub fn inflate_benchmarks<T: Measurement>(c: &mut Criterion<T>) {
         b.iter_batched(
             || {
                 let conf = Config::new(fixture.as_str(), &tokens);
-                let m = parse_tokens_without_whitespace(tokens.clone(), fixture.as_str())
+                let m = parse_tokens_without_whitespace(tokens.clone(), fixture.as_str(), None)
                     .expect("parse failed");
                 (conf, m)
             },
@@ -62,7 +62,13 @@ pub fn parser_benchmarks<T: Measurement>(c: &mut Criterion<T>) {
     group.bench_function("all", |b| {
         b.iter_batched(
             || tokenize(fixture.as_str()).expect("tokenize failed"),
-            |tokens| black_box(parse_tokens_without_whitespace(tokens, fixture.as_str())),
+            |tokens| {
+                black_box(parse_tokens_without_whitespace(
+                    tokens,
+                    fixture.as_str(),
+                    None,
+                ))
+            },
             BatchSize::SmallInput,
         )
     });
@@ -71,7 +77,7 @@ pub fn parser_benchmarks<T: Measurement>(c: &mut Criterion<T>) {
 
 pub fn codegen_benchmarks<T: Measurement>(c: &mut Criterion<T>) {
     let input = load_all_fixtures();
-    let m = parse_module(&input).expect("parse failed");
+    let m = parse_module(&input, None).expect("parse failed");
     let mut group = c.benchmark_group("codegen");
     group.bench_function("all", |b| {
         b.iter(|| {

@@ -92,8 +92,8 @@ impl<'a> ParseElem for TokVec<'a> {
 
 parser! {
     pub grammar python<'a>(input: &'a str) for TokVec<'a> {
-        pub rule file() -> Module<'a>
-            = traced(<_file()>)
+        pub rule file(encoding: Option<&str>) -> Module<'a>
+            = traced(<_file(encoding.unwrap_or_else(|| "utf-8"))>)
 
         pub rule expression_input() -> Expression<'a>
             = traced(<e:star_expressions() tok(NL, "NEWLINE") tok(EndMarker, "EOF") {e}>)
@@ -101,9 +101,9 @@ parser! {
         pub rule statement_input() -> Statement<'a>
             = traced(<s:statement() tok(EndMarker, "EOF") {s}>)
 
-        rule _file() -> Module<'a>
+        rule _file(encoding: &str) -> Module<'a>
             = s:statements()? eof:tok(EndMarker, "EOF") {
-                make_module(s.unwrap_or_default(), eof)
+                make_module(s.unwrap_or_default(), eof, encoding)
             }
 
         rule statements() -> Vec<Statement<'a>>
@@ -1789,7 +1789,7 @@ fn make_rpar(tok: TokenRef) -> RightParen {
     }
 }
 
-fn make_module<'a>(body: Vec<Statement<'a>>, tok: TokenRef<'a>) -> Module<'a> {
+fn make_module<'a>(body: Vec<Statement<'a>>, tok: TokenRef<'a>, encoding: &str) -> Module<'a> {
     Module {
         body,
         header: Default::default(),
@@ -1798,6 +1798,7 @@ fn make_module<'a>(body: Vec<Statement<'a>>, tok: TokenRef<'a>) -> Module<'a> {
         default_indent: "    ",
         default_newline: "\n",
         has_trailing_newline: false,
+        encoding: encoding.to_string(),
     }
 }
 

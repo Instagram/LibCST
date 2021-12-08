@@ -34,19 +34,23 @@ pub fn tokenize(text: &str) -> Result<Vec<Token>> {
 pub fn parse_tokens_without_whitespace<'a>(
     tokens: Vec<Token<'a>>,
     module_text: &'a str,
+    encoding: Option<&str>,
 ) -> Result<'a, Module<'a>> {
-    parser::python::file(&tokens.into(), module_text)
+    parser::python::file(&tokens.into(), module_text, encoding)
         .map_err(|err| ParserError::ParserError(err, module_text))
 }
 
-pub fn parse_module(mut module_text: &str) -> Result<Module> {
+pub fn parse_module<'a>(
+    mut module_text: &'a str,
+    encoding: Option<&str>,
+) -> Result<'a, Module<'a>> {
     // Strip UTF-8 BOM
     if let Some(stripped) = module_text.strip_prefix('\u{feff}') {
         module_text = stripped;
     }
     let tokens = tokenize(module_text)?;
     let conf = whitespace_parser::Config::new(module_text, &tokens);
-    let m = parse_tokens_without_whitespace(tokens, module_text)?;
+    let m = parse_tokens_without_whitespace(tokens, module_text, encoding)?;
     Ok(m.inflate(&conf)?)
 }
 
@@ -122,7 +126,7 @@ mod test {
 
     #[test]
     fn test_simple() {
-        let n = parse_module("1_");
+        let n = parse_module("1_", None);
         assert_eq!(
             n.err().unwrap(),
             ParserError::TokenizerError(TokError::BadDecimal, "1_")
@@ -131,12 +135,12 @@ mod test {
 
     #[test]
     fn test_bare_minimum_funcdef() {
-        parse_module("def f(): ...").expect("parse error");
+        parse_module("def f(): ...", None).expect("parse error");
     }
 
     #[test]
     fn test_funcdef_params() {
-        parse_module("def g(a, b): ...").expect("parse error");
+        parse_module("def g(a, b): ...", None).expect("parse error");
     }
 
     #[test]

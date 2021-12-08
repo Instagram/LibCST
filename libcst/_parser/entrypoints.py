@@ -10,6 +10,7 @@ information
 """
 
 import os
+from functools import partial
 from typing import Union
 
 from libcst._nodes.base import CSTNode
@@ -40,16 +41,16 @@ def _parse(
     if is_native():
         from libcst.native import parse_module, parse_expression, parse_statement
 
+        encoding, source_str = convert_to_utf8(source, partial=config)
+
         if entrypoint == "file_input":
-            parse = parse_module
+            parse = partial(parse_module, encoding=encoding)
         elif entrypoint == "stmt_input":
             parse = parse_statement
         elif entrypoint == "expression_input":
             parse = parse_expression
         else:
             raise ValueError(f"Unknown parser entry point: {entrypoint}")
-
-        _, source_str = convert_to_utf8(source, partial=config)
 
         return parse(source_str)
     return _pure_parse(

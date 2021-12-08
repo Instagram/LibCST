@@ -4,8 +4,8 @@ use pyo3::prelude::*;
 #[pyo3(name = "native")]
 pub fn libcst_native(_py: Python, m: &PyModule) -> PyResult<()> {
     #[pyfn(m)]
-    fn parse_module(source: String) -> PyResult<PyObject> {
-        let m = crate::parse_module(source.as_str())?;
+    fn parse_module(source: String, encoding: Option<&str>) -> PyResult<PyObject> {
+        let m = crate::parse_module(source.as_str(), encoding)?;
         Python::with_gil(|py| Ok(m.into_py(py)))
     }
 
