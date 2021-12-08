@@ -16,7 +16,7 @@ from libcst._nodes.base import CSTNode
 from libcst._nodes.expression import BaseExpression
 from libcst._nodes.module import Module
 from libcst._nodes.statement import BaseCompoundStatement, SimpleStatementLine
-from libcst._parser.detect_config import detect_config
+from libcst._parser.detect_config import convert_to_utf8, detect_config
 from libcst._parser.grammar import get_grammar, validate_grammar
 from libcst._parser.python_parser import PythonCSTParser
 from libcst._parser.types.config import PartialParserConfig
@@ -48,7 +48,10 @@ def _parse(
             parse = parse_expression
         else:
             raise ValueError(f"Unknown parser entry point: {entrypoint}")
-        return parse(source)
+
+        _, source_str = convert_to_utf8(source, partial=config)
+
+        return parse(source_str)
     return _pure_parse(
         entrypoint,
         source,
