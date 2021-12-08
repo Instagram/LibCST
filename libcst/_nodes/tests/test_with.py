@@ -8,6 +8,7 @@ from typing import Any
 import libcst as cst
 from libcst import PartialParserConfig, parse_statement
 from libcst._nodes.tests.base import CSTNodeTest, DummyIndentedBlock, parse_statement_as
+from libcst._parser.entrypoints import is_native
 from libcst.metadata import CodeRange
 from libcst.testing.utils import data_provider
 
@@ -230,4 +231,6 @@ class WithTest(CSTNodeTest):
         )
     )
     def test_versions(self, **kwargs: Any) -> None:
+        if is_native() and not kwargs.get("expect_success", True):
+            self.skipTest("parse errors are disabled for native parser")
         self.assert_parses(**kwargs)
