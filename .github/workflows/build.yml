@@ -35,6 +35,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
         python-version: [3.6, 3.7, 3.8, 3.9]
+        parser: [pure, native]
     steps:
     - uses: actions/checkout@v1
     - uses: actions/setup-python@v2
@@ -48,8 +49,14 @@ jobs:
     - name: Validate Dependencies
       if: steps.cache.outputs.cache-hit != 'true'
       run: exit 1
+    - if: ${{ matrix.parser == 'native' }}
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+    - run: >-
+        echo LIBCST_PARSER_TYPE=${{ matrix.parser }} >> $GITHUB_ENV
     - name: Run Tests
-      run: python -m unittest
+      run: python setup.py test
 
 # Run linters
   lint:
@@ -213,6 +220,9 @@ jobs:
         with:
           toolchain: stable
           components: rustfmt, clippy
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
       - name: test
         uses: actions-rs/cargo@v1
         with:
