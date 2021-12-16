@@ -2,5 +2,8 @@
 target-version = ["py36"]
 exclude = "native/.*"
 
+[tool.ufmt]
+excludes = ["native/", "stubs/"]
+
 [build-system]
 requires = ["setuptools", "wheel", "setuptools-rust"]

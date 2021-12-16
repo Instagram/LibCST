@@ -22,7 +22,7 @@ class TestCodegenClean(UnitTest):
         """
         new_code = clean_generated_code("\n".join(visitor_codegen.generated_code))
         new_file = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)), "visitor_codegen.py.deleteme"
+            os.path.dirname(os.path.abspath(__file__)), "visitor_codegen.deleteme.py"
         )
         with open(new_file, "w") as fp:
             fp.write(new_code)
@@ -56,7 +56,7 @@ class TestCodegenClean(UnitTest):
         """
         new_code = clean_generated_code("\n".join(matcher_codegen.generated_code))
         new_file = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)), "matcher_codegen.py.deleteme"
+            os.path.dirname(os.path.abspath(__file__)), "matcher_codegen.deleteme.py"
         )
         with open(new_file, "w") as fp:
             fp.write(new_code)
@@ -90,7 +90,7 @@ class TestCodegenClean(UnitTest):
         """
         new_code = clean_generated_code("\n".join(type_codegen.generated_code))
         new_file = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)), "type_codegen.py.deleteme"
+            os.path.dirname(os.path.abspath(__file__)), "type_codegen.deleteme.py"
         )
         with open(new_file, "w") as fp:
             fp.write(new_code)
