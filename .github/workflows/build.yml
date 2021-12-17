@@ -241,9 +241,10 @@ jobs:
 
 # Test rust parts
   native:
-    name: Native parser
+    name: Rust unit tests
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
     steps:
