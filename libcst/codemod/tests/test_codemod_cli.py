@@ -9,6 +9,7 @@ import subprocess
 import sys
 from pathlib import Path
 
+from libcst._parser.entrypoints import is_native
 from libcst.testing.utils import UnitTest
 
 
@@ -27,7 +28,7 @@ class TestCodemodCLI(UnitTest):
             stderr=subprocess.PIPE,
         )
         version = sys.version_info
-        if version[0] == 3 and version[1] == 6:
+        if version[0] == 3 and version[1] == 6 and not is_native():
             self.assertIn(
                 "ParserSyntaxError: Syntax Error @ 14:11.",
                 rlt.stderr.decode("utf-8"),
