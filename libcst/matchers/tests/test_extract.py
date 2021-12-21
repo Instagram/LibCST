@@ -408,9 +408,11 @@ class MatchersExtractTest(UnitTest):
                 ]
             ),
         )
-        extracted_seq = cst.ensure_type(
-            cst.ensure_type(expression, cst.Tuple).elements[1].value, cst.Call
-        ).args
+        extracted_seq = tuple(
+            cst.ensure_type(
+                cst.ensure_type(expression, cst.Tuple).elements[1].value, cst.Call
+            ).args
+        )
         self.assertEqual(nodes, {"args": extracted_seq})
 
         # Verify false behavior

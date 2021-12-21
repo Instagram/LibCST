@@ -35,6 +35,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
         python-version: [3.6, 3.7, 3.8, 3.9]
+        parser: [pure, native]
     steps:
     - uses: actions/checkout@v1
     - uses: actions/setup-python@v2
@@ -48,8 +49,14 @@ jobs:
     - name: Validate Dependencies
       if: steps.cache.outputs.cache-hit != 'true'
       run: exit 1
+    - if: ${{ matrix.parser == 'native' }}
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+    - run: >-
+        echo LIBCST_PARSER_TYPE=${{ matrix.parser }} >> $GITHUB_ENV
     - name: Run Tests
-      run: python -m unittest
+      run: python setup.py test
 
 # Run linters
   lint:
@@ -166,10 +173,37 @@ jobs:
 
 # Build python package
   build:
+    name: Build wheels on ${{ matrix.os }}/${{ matrix.vers }}
     needs: setup
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - vers: i686
+            os: ubuntu-20.04
+          # aarch64 seems to be stuck
+          # - vers: aarch64
+          #   os: ubuntu-20.04
+          - vers: auto64
+            os: ubuntu-20.04
+          - vers: arm64
+            os: macos-10.15
+          - vers: auto64
+            os: macos-10.15
+          - vers: auto64
+            os: windows-2019
+    env:
+      SCCACHE_VERSION: 0.2.13
+      CIBW_BEFORE_ALL_LINUX: "curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain stable -y"
+      CIBW_BEFORE_ALL_MACOS: "rustup target add aarch64-apple-darwin x86_64-apple-darwin"
+      CIBW_BEFORE_ALL_WINDOWS: "rustup target add x86_64-pc-windows-msvc i686-pc-windows-msvc"
+      CIBW_ENVIRONMENT: 'PATH="$PATH:$HOME/.cargo/bin"'
+      CIBW_SKIP: "cp27-* cp34-* cp35-* pp* *-win32 *-win_arm64 *-musllinux_*"
+      CIBW_ARCHS: ${{ matrix.vers }}
+      CIBW_BUILD_VERBOSITY: 1
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - uses: actions/setup-python@v2
       with:
         python-version: 3.9
@@ -185,13 +219,17 @@ jobs:
       if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
       run: >-
         echo LIBCST_NO_LOCAL_SCHEME=1 >> $GITHUB_ENV
-    - name: Build a binary wheel and a source tarball
+    - name: Build wheels
+      uses: pypa/cibuildwheel@v2.3.1
+    - uses: actions/upload-artifact@v2
+      with:
+        path: wheelhouse/*.whl
+    - name: Build a source tarball
       run: >-
         python -m
         build
         --sdist
-        --wheel
-        --outdir dist/
+        --outdir wheelhouse/
     - if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
       name: Publish distribution 📦 to Test PyPI
       uses: pypa/gh-action-pypi-publish@release/v1
@@ -199,3 +237,48 @@ jobs:
         user: __token__
         password: ${{ secrets.TEST_PYPI_API_TOKEN }}
         repository_url: https://test.pypi.org/legacy/
+        packages_dir: wheelhouse/
+
+# Test rust parts
+  native:
+    name: Rust unit tests
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          components: rustfmt, clippy
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+      - name: test
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --manifest-path=native/Cargo.toml
+      - name: clippy
+        uses: actions-rs/clippy-check@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          args: --manifest-path=native/Cargo.toml --all-features
+  
+  rustfmt:
+    name: Rustfmt
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+      - run: rustup component add rustfmt
+      - uses: actions-rs/cargo@v1
+        with:
+          command: fmt
+          args: --all --manifest-path=native/Cargo.toml -- --check

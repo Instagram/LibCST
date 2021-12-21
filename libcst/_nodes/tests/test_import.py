@@ -617,8 +617,10 @@ class ImportFromParseTest(CSTNodeTest):
                         ),
                         cst.ImportAlias(cst.Name("baz"), comma=cst.Comma()),
                     ),
+                    lpar=cst.LeftParen(),
+                    rpar=cst.RightParen(),
                 ),
-                "code": "from foo import bar, baz,",
+                "code": "from foo import (bar, baz,)",
             },
             # Star import statement
             {

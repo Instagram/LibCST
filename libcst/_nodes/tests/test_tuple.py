@@ -8,6 +8,7 @@ from typing import Any, Callable
 import libcst as cst
 from libcst import parse_expression, parse_statement
 from libcst._nodes.tests.base import CSTNodeTest, parse_expression_as
+from libcst._parser.entrypoints import is_native
 from libcst.metadata import CodeRange
 from libcst.testing.utils import data_provider
 
@@ -89,41 +90,6 @@ class TupleTest(CSTNodeTest):
                 "code": "(*one,*two,)",
                 "parser": parse_expression,
                 "expected_position": CodeRange((1, 1), (1, 11)),
-            },
-            # custom parenthesis on StarredElement
-            {
-                "node": cst.Tuple(
-                    [
-                        cst.StarredElement(
-                            cst.Name("abc"),
-                            lpar=[cst.LeftParen()],
-                            rpar=[cst.RightParen()],
-                            comma=cst.Comma(),
-                        )
-                    ]
-                ),
-                "code": "((*abc),)",
-                "parser": parse_expression,
-                "expected_position": CodeRange((1, 1), (1, 8)),
-            },
-            # custom whitespace on StarredElement
-            {
-                "node": cst.Tuple(
-                    [
-                        cst.Element(cst.Name("one"), comma=cst.Comma()),
-                        cst.StarredElement(
-                            cst.Name("two"),
-                            whitespace_before_value=cst.SimpleWhitespace("  "),
-                            lpar=[cst.LeftParen()],
-                            rpar=[cst.RightParen()],
-                        ),
-                    ],
-                    lpar=[],
-                    rpar=[],  # rpar can't own the trailing whitespace if it's not there
-                ),
-                "code": "one,(*  two)",
-                "parser": parse_expression,
-                "expected_position": CodeRange((1, 0), (1, 12)),
             },
             # missing spaces around tuple, okay with parenthesis
             {
@@ -279,4 +245,6 @@ class TupleTest(CSTNodeTest):
         )
     )
     def test_versions(self, **kwargs: Any) -> None:
+        if is_native() and not kwargs.get("expect_success", True):
+            self.skipTest("parse errors are disabled for native parser")
         self.assert_parses(**kwargs)

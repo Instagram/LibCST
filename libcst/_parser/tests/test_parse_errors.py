@@ -8,6 +8,7 @@ from textwrap import dedent
 from typing import Callable
 
 import libcst as cst
+from libcst._parser.entrypoints import is_native
 from libcst.testing.utils import UnitTest, data_provider
 
 
@@ -169,4 +170,5 @@ class ParseErrorsTest(UnitTest):
     ) -> None:
         with self.assertRaises(cst.ParserSyntaxError) as cm:
             parse_fn()
-        self.assertEqual(str(cm.exception), expected)
+        if not is_native():
+            self.assertEqual(str(cm.exception), expected)

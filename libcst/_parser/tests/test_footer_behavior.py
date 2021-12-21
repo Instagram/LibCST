@@ -15,7 +15,10 @@ class FooterBehaviorTest(UnitTest):
     @data_provider(
         {
             # Literally the most basic example
-            "simple_module": {"code": "\n", "expected_module": cst.Module(body=())},
+            "simple_module": {
+                "code": "",
+                "expected_module": cst.Module(body=(), has_trailing_newline=False),
+            },
             # A module with a header comment
             "header_only_module": {
                 "code": "# This is a header comment\n",

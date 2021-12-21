@@ -59,6 +59,8 @@ class ToolE2ETest(TestCase):
                 hide_progress=True,
             )
 
+            print(result)
+
             # Check results
             self.assertEqual(2, result.successes)
             self.assertEqual(0, result.skips)

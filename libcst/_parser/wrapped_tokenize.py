@@ -22,7 +22,7 @@ tokenize module, instead of as a wrapper.
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Generator, List, Optional, Sequence
+from typing import Generator, Iterator, List, Optional, Sequence
 
 from libcst._add_slots import add_slots
 from libcst._exceptions import ParserSyntaxError
@@ -76,15 +76,30 @@ class _TokenizeState:
     )
 
 
-def tokenize(
-    code: str, version_info: PythonVersionInfo
-) -> Generator[Token, None, None]:
-    lines = split_lines(code, keepends=True)
-    return tokenize_lines(lines, version_info)
+def tokenize(code: str, version_info: PythonVersionInfo) -> Iterator[Token]:
+    try:
+        from libcst_native import tokenize as native_tokenize
+
+        return native_tokenize.tokenize(code)
+    except ImportError:
+        lines = split_lines(code, keepends=True)
+        return tokenize_lines(code, lines, version_info)
 
 
 def tokenize_lines(
-    lines: Sequence[str], version_info: PythonVersionInfo
+    code: str, lines: Sequence[str], version_info: PythonVersionInfo
+) -> Iterator[Token]:
+    try:
+        from libcst_native import tokenize as native_tokenize
+
+        # TODO: pass through version_info
+        return native_tokenize.tokenize(code)
+    except ImportError:
+        return tokenize_lines_py(code, lines, version_info)
+
+
+def tokenize_lines_py(
+    code: str, lines: Sequence[str], version_info: PythonVersionInfo
 ) -> Generator[Token, None, None]:
     state = _TokenizeState(lines)
     orig_tokens_iter = iter(orig_tokenize_lines(lines, version_info))

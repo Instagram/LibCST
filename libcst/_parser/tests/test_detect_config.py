@@ -3,12 +3,15 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-import dataclasses
 from typing import Union
 
 from libcst._parser.detect_config import detect_config
 from libcst._parser.parso.utils import PythonVersionInfo
-from libcst._parser.types.config import ParserConfig, PartialParserConfig
+from libcst._parser.types.config import (
+    ParserConfig,
+    PartialParserConfig,
+    parser_config_asdict,
+)
 from libcst.testing.utils import UnitTest, data_provider
 
 
@@ -316,7 +319,7 @@ class TestDetectConfig(UnitTest):
         expected_config: ParserConfig,
     ) -> None:
         self.assertEqual(
-            dataclasses.asdict(
+            parser_config_asdict(
                 detect_config(
                     source,
                     partial=partial,
@@ -324,5 +327,5 @@ class TestDetectConfig(UnitTest):
                     detect_default_newline=detect_default_newline,
                 ).config
             ),
-            dataclasses.asdict(expected_config),
+            parser_config_asdict(expected_config),
         )

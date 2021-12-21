@@ -995,7 +995,14 @@ def _tokenize_lines_py37_or_above(  # noqa: C901
                                 indents.append(indent)
                                 break
                 if str.isidentifier(token):
-                    yield PythonToken(NAME, token, spos, prefix)
+                    # py37 doesn't need special tokens for async/await, and we could
+                    # emit NAME, but then we'd need different grammar for py36 and py37.
+                    if token == "async":
+                        yield PythonToken(ASYNC, token, spos, prefix)
+                    elif token == "await":
+                        yield PythonToken(AWAIT, token, spos, prefix)
+                    else:
+                        yield PythonToken(NAME, token, spos, prefix)
                 else:
                     for t in _split_illegal_unicode_name(token, spos, prefix):
                         yield t  # yield from Python 2

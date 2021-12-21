@@ -1,1 +1,4 @@
 include README.rst LICENSE CODE_OF_CONDUCT.md CONTRIBUTING.md requirements.txt requirements-dev.txt docs/source/*.rst libcst/py.typed
+
+include native/Cargo.toml
+recursive-include native *

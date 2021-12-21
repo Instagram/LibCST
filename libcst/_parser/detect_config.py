@@ -9,7 +9,7 @@ import re
 from dataclasses import dataclass
 from io import BytesIO
 from tokenize import detect_encoding as py_tokenize_detect_encoding
-from typing import FrozenSet, Iterable, Iterator, Pattern, Set, Union
+from typing import FrozenSet, Iterable, Iterator, Pattern, Set, Tuple, Union
 
 from libcst._nodes.whitespace import NEWLINE_RE
 from libcst._parser.parso.python.token import PythonTokenTypes, TokenType
@@ -114,6 +114,23 @@ def _detect_future_imports(tokens: Iterable[Token]) -> FrozenSet[str]:
     return frozenset(future_imports)
 
 
+def convert_to_utf8(
+    source: Union[str, bytes], *, partial: PartialParserConfig
+) -> Tuple[str, str]:
+    """
+    Returns an (original encoding, converted source) tuple.
+    """
+    partial_encoding = partial.encoding
+    encoding = (
+        _detect_encoding(source)
+        if isinstance(partial_encoding, AutoConfig)
+        else partial_encoding
+    )
+
+    source_str = source if isinstance(source, str) else source.decode(encoding)
+    return (encoding, source_str)
+
+
 def detect_config(
     source: Union[str, bytes],
     *,
@@ -128,14 +145,7 @@ def detect_config(
 
     python_version = partial.parsed_python_version
 
-    partial_encoding = partial.encoding
-    encoding = (
-        _detect_encoding(source)
-        if isinstance(partial_encoding, AutoConfig)
-        else partial_encoding
-    )
-
-    source_str = source if isinstance(source, str) else source.decode(encoding)
+    encoding, source_str = convert_to_utf8(source, partial=partial)
 
     partial_default_newline = partial.default_newline
     default_newline = (
@@ -162,7 +172,7 @@ def detect_config(
 
     lines = split_lines(source_str, keepends=True)
 
-    tokens = tokenize_lines(lines, python_version)
+    tokens = tokenize_lines(source_str, lines, python_version)
 
     partial_default_indent = partial.default_indent
     if isinstance(partial_default_indent, AutoConfig):

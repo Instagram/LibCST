@@ -1,6 +1,6 @@
 All contributions towards LibCST are MIT licensed.
 
-Some Python files have been taken from the standard library and are therefore
+Some Python files have been derived from the standard library and are therefore
 PSF licensed. Modifications on these files are dual licensed (both MIT and
 PSF). These files are:
 
@@ -8,11 +8,13 @@ PSF). These files are:
 - libcst/_parser/parso/utils.py
 - libcst/_parser/parso/pgen2/generator.py
 - libcst/_parser/parso/pgen2/grammar_parser.py
-- libcst/_parser/parso/python/token.py
+- libcst/_parser/parso/python/py_token.py
 - libcst/_parser/parso/python/tokenize.py
 - libcst/_parser/parso/tests/test_fstring.py
 - libcst/_parser/parso/tests/test_tokenize.py
 - libcst/_parser/parso/tests/test_utils.py
+- libcst_native/src/tokenize/core/mod.rs
+- libcst_native/src/tokenize/core/string_types.rs
 
 Some Python files have been taken from dataclasses and are therefore Apache
 licensed. Modifications on these files are licensed under Apache 2.0 license.
