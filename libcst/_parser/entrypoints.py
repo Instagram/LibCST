@@ -53,7 +53,7 @@ def _parse(
             raise ValueError(f"Unknown parser entry point: {entrypoint}")
 
         return parse(source_str)
-    return _pure_parse(
+    return _pure_python_parse(
         entrypoint,
         source,
         config,
@@ -62,7 +62,7 @@ def _parse(
     )
 
 
-def _pure_parse(
+def _pure_python_parse(
     entrypoint: str,
     source: Union[str, bytes],
     config: PartialParserConfig,
