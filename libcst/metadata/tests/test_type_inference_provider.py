@@ -14,7 +14,7 @@ from unittest import skipIf
 import libcst as cst
 from libcst import MetadataWrapper
 from libcst.metadata.type_inference_provider import PyreData, TypeInferenceProvider
-from libcst.testing.utils import UnitTest, data_provider
+from libcst.testing.utils import data_provider, UnitTest
 from libcst.tests.test_pyre_integration import TEST_SUITE_PATH
 
 

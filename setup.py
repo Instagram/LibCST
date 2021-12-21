@@ -4,7 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 
-from os import path, environ
+from os import environ, path
 
 import setuptools
 from setuptools_rust import Binding, RustExtension

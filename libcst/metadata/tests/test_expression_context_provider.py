@@ -5,7 +5,7 @@
 
 
 from textwrap import dedent
-from typing import Dict, Optional, cast
+from typing import cast, Dict, Optional
 
 import libcst as cst
 from libcst import parse_module

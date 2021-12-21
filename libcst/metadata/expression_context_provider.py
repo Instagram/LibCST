@@ -4,7 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 
-from enum import Enum, auto
+from enum import auto, Enum
 from typing import Optional, Sequence
 
 import libcst as cst

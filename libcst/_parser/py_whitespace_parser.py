@@ -6,13 +6,13 @@
 from typing import List, Optional, Sequence, Tuple, Union
 
 from libcst._nodes.whitespace import (
-    COMMENT_RE,
-    NEWLINE_RE,
-    SIMPLE_WHITESPACE_RE,
     Comment,
+    COMMENT_RE,
     EmptyLine,
     Newline,
+    NEWLINE_RE,
     ParenthesizedWhitespace,
+    SIMPLE_WHITESPACE_RE,
     SimpleWhitespace,
     TrailingWhitespace,
 )

@@ -8,7 +8,7 @@ from textwrap import dedent
 
 import libcst as cst
 from libcst.metadata import MetadataWrapper, ParentNodeProvider
-from libcst.testing.utils import UnitTest, data_provider
+from libcst.testing.utils import data_provider, UnitTest
 
 
 class DependentVisitor(cst.CSTVisitor):

@@ -6,7 +6,7 @@
 from typing import Any
 
 import libcst as cst
-from libcst import PartialParserConfig, parse_statement
+from libcst import parse_statement, PartialParserConfig
 from libcst._nodes.tests.base import CSTNodeTest, DummyIndentedBlock, parse_statement_as
 from libcst._parser.entrypoints import is_native
 from libcst.metadata import CodeRange

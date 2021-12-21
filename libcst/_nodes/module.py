@@ -4,15 +4,15 @@
 # LICENSE file in the root directory of this source tree.
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Optional, Sequence, TypeVar, Union, cast
+from typing import cast, Optional, Sequence, TYPE_CHECKING, TypeVar, Union
 
 from libcst._add_slots import add_slots
 from libcst._nodes.base import CSTNode
 from libcst._nodes.internal import CodegenState, visit_body_sequence, visit_sequence
 from libcst._nodes.statement import (
     BaseCompoundStatement,
-    SimpleStatementLine,
     get_docstring_impl,
+    SimpleStatementLine,
 )
 from libcst._nodes.whitespace import EmptyLine
 from libcst._removal_sentinel import RemovalSentinel

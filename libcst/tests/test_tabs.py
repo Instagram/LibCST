@@ -4,7 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 from libcst._tabs import expand_tabs
-from libcst.testing.utils import UnitTest, data_provider
+from libcst.testing.utils import data_provider, UnitTest
 
 
 class ExpandTabsTest(UnitTest):

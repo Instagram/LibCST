@@ -12,8 +12,8 @@ from typing import Dict, Type
 from libcst import parse_module
 from libcst.codemod import Codemod, CodemodContext, CodemodTest
 from libcst.codemod.visitors._apply_type_annotations import (
-    ApplyTypeAnnotationsVisitor,
     AnnotationCounts,
+    ApplyTypeAnnotationsVisitor,
 )
 from libcst.testing.utils import data_provider
 

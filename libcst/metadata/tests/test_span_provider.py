@@ -6,10 +6,10 @@
 
 import libcst as cst
 from libcst.metadata.span_provider import (
+    byte_length_in_utf8,
     ByteSpanPositionProvider,
     CodeSpan,
     SpanProvidingCodegenState,
-    byte_length_in_utf8,
 )
 from libcst.testing.utils import UnitTest
 

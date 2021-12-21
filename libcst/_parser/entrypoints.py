@@ -39,7 +39,7 @@ def _parse(
     detect_default_newline: bool,
 ) -> CSTNode:
     if is_native():
-        from libcst.native import parse_module, parse_expression, parse_statement
+        from libcst.native import parse_expression, parse_module, parse_statement
 
         encoding, source_str = convert_to_utf8(source, partial=config)
 

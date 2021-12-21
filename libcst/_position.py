@@ -13,7 +13,7 @@ locations.
 """
 
 from dataclasses import dataclass
-from typing import Tuple, Union, cast, overload
+from typing import cast, overload, Tuple, Union
 
 from libcst._add_slots import add_slots
 

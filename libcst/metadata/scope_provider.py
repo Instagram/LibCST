@@ -9,7 +9,7 @@ import builtins
 from collections import defaultdict
 from contextlib import contextmanager
 from dataclasses import dataclass
-from enum import Enum, auto
+from enum import auto, Enum
 from typing import (
     Collection,
     Dict,

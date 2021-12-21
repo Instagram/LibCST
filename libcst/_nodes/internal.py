@@ -6,7 +6,7 @@
 
 from contextlib import contextmanager
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Iterable, Iterator, List, Optional, Sequence, Union
+from typing import Iterable, Iterator, List, Optional, Sequence, TYPE_CHECKING, Union
 
 from libcst._add_slots import add_slots
 from libcst._flatten_sentinel import FlattenSentinel

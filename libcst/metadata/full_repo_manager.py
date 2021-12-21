@@ -5,7 +5,7 @@
 
 
 from pathlib import Path
-from typing import TYPE_CHECKING, Collection, Dict, List, Mapping
+from typing import Collection, Dict, List, Mapping, TYPE_CHECKING
 
 import libcst as cst
 from libcst.metadata.wrapper import MetadataWrapper

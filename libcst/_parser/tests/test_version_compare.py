@@ -5,7 +5,7 @@
 
 from libcst._parser.grammar import _should_include
 from libcst._parser.parso.utils import PythonVersionInfo
-from libcst.testing.utils import UnitTest, data_provider
+from libcst.testing.utils import data_provider, UnitTest
 
 
 class VersionCompareTest(UnitTest):

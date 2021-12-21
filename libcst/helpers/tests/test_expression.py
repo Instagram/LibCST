@@ -12,7 +12,7 @@ from libcst.helpers import (
     get_full_name_for_node,
     get_full_name_for_node_or_raise,
 )
-from libcst.testing.utils import UnitTest, data_provider
+from libcst.testing.utils import data_provider, UnitTest
 
 
 class ExpressionTest(UnitTest):

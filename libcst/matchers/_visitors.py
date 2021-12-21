@@ -7,7 +7,9 @@ from inspect import ismethod, signature
 from typing import (
     Any,
     Callable,
+    cast,
     Dict,
+    get_type_hints,
     List,
     Optional,
     Sequence,
@@ -15,8 +17,6 @@ from typing import (
     Tuple,
     Type,
     Union,
-    cast,
-    get_type_hints,
 )
 
 import libcst as cst
@@ -33,14 +33,14 @@ from libcst.matchers._matcher_base import (
     AtLeastN,
     AtMostN,
     BaseMatcherNode,
-    MatchIfTrue,
-    MatchMetadata,
-    MatchMetadataIfTrue,
-    OneOf,
     extract,
     extractall,
     findall,
     matches,
+    MatchIfTrue,
+    MatchMetadata,
+    MatchMetadataIfTrue,
+    OneOf,
     replace,
 )
 from libcst.matchers._return_types import TYPED_FUNCTION_RETURN_MAPPING

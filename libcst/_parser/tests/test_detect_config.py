@@ -8,11 +8,11 @@ from typing import Union
 from libcst._parser.detect_config import detect_config
 from libcst._parser.parso.utils import PythonVersionInfo
 from libcst._parser.types.config import (
+    parser_config_asdict,
     ParserConfig,
     PartialParserConfig,
-    parser_config_asdict,
 )
-from libcst.testing.utils import UnitTest, data_provider
+from libcst.testing.utils import data_provider, UnitTest
 
 
 class TestDetectConfig(UnitTest):

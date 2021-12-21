@@ -23,10 +23,10 @@ from libcst._nodes.expression import (
     BinaryOperation,
     BooleanOperation,
     Call,
-    CompFor,
-    CompIf,
     Comparison,
     ComparisonTarget,
+    CompFor,
+    CompIf,
     ConcatenatedString,
     Dict,
     DictComp,
@@ -52,9 +52,9 @@ from libcst._nodes.expression import (
     Name,
     NamedExpr,
     Param,
+    Parameters,
     ParamSlash,
     ParamStar,
-    Parameters,
     RightCurlyBrace,
     RightParen,
     RightSquareBracket,
@@ -71,6 +71,7 @@ from libcst._nodes.expression import (
     Yield,
 )
 from libcst._nodes.module import Module
+
 from libcst._nodes.op import (
     Add,
     AddAssign,

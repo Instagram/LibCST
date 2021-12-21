@@ -9,7 +9,7 @@ from typing import Callable
 
 import libcst as cst
 from libcst._parser.entrypoints import is_native
-from libcst.testing.utils import UnitTest, data_provider
+from libcst.testing.utils import data_provider, UnitTest
 
 
 class ParseErrorsTest(UnitTest):

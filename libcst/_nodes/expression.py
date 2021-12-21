@@ -9,7 +9,7 @@ from abc import ABC, abstractmethod
 from ast import literal_eval
 from contextlib import contextmanager
 from dataclasses import dataclass, field
-from enum import Enum, auto
+from enum import auto, Enum
 from tokenize import (
     Floatnumber as FLOATNUMBER_RE,
     Imagnumber as IMAGNUMBER_RE,
