@@ -8,9 +8,11 @@ pub use statement::{
     AnnAssign, Annotation, AsName, Assert, Assign, AssignTarget, AssignTargetExpression, AugAssign,
     Break, ClassDef, CompoundStatement, Continue, Decorator, Del, DelTargetExpression, Else,
     ExceptHandler, Expr, Finally, For, FunctionDef, Global, If, Import, ImportAlias, ImportFrom,
-    ImportNames, IndentedBlock, NameItem, Nonlocal, OrElse, Pass, Raise, Return,
-    SimpleStatementLine, SimpleStatementSuite, SmallStatement, Statement, Suite, Try, While, With,
-    WithItem,
+    ImportNames, IndentedBlock, Match, MatchAs, MatchCase, MatchClass, MatchKeywordElement,
+    MatchList, MatchMapping, MatchMappingElement, MatchOr, MatchOrElement, MatchPattern,
+    MatchSequence, MatchSequenceElement, MatchSingleton, MatchStar, MatchTuple, MatchValue,
+    NameItem, Nonlocal, OrElse, Pass, Raise, Return, SimpleStatementLine, SimpleStatementSuite,
+    SmallStatement, StarrableMatchSequenceElement, Statement, Suite, Try, While, With, WithItem,
 };
 
 mod expression;
@@ -27,8 +29,8 @@ pub use expression::{
 
 mod op;
 pub use op::{
-    AssignEqual, AugOp, BinaryOp, BooleanOp, Colon, Comma, CompOp, Dot, ImportStar, Semicolon,
-    UnaryOp,
+    AssignEqual, AugOp, BinaryOp, BitOr, BooleanOp, Colon, Comma, CompOp, Dot, ImportStar,
+    Semicolon, UnaryOp,
 };
 
 mod module;

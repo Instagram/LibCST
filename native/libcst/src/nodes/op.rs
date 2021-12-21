@@ -1418,3 +1418,33 @@ impl<'a> Codegen<'a> for AugOp<'a> {
         aft.codegen(state);
     }
 }
+
+#[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
+pub struct BitOr<'a> {
+    pub whitespace_before: ParenthesizableWhitespace<'a>,
+    pub whitespace_after: ParenthesizableWhitespace<'a>,
+
+    pub(crate) tok: TokenRef<'a>,
+}
+
+impl<'a> Inflate<'a> for BitOr<'a> {
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.whitespace_before = parse_parenthesizable_whitespace(
+            config,
+            &mut (*self.tok).whitespace_before.borrow_mut(),
+        )?;
+        self.whitespace_after = parse_parenthesizable_whitespace(
+            config,
+            &mut (*self.tok).whitespace_after.borrow_mut(),
+        )?;
+        Ok(self)
+    }
+}
+
+impl<'a> Codegen<'a> for BitOr<'a> {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
+        self.whitespace_before.codegen(state);
+        state.add_token("|");
+        self.whitespace_after.codegen(state);
+    }
+}
