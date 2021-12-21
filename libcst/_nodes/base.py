@@ -6,7 +6,7 @@
 from abc import ABC, abstractmethod
 from copy import deepcopy
 from dataclasses import dataclass, field, fields, replace
-from typing import Any, Dict, List, Mapping, Sequence, TypeVar, Union, cast
+from typing import Any, cast, Dict, List, Mapping, Sequence, TypeVar, Union
 
 from libcst._flatten_sentinel import FlattenSentinel
 from libcst._nodes.internal import CodegenState

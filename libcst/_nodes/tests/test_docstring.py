@@ -9,7 +9,7 @@ from typing import Optional
 
 import libcst as cst
 from libcst.helpers import ensure_type
-from libcst.testing.utils import UnitTest, data_provider
+from libcst.testing.utils import data_provider, UnitTest
 
 
 class DocstringTest(UnitTest):

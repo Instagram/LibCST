@@ -8,8 +8,8 @@ import textwrap
 from contextlib import ExitStack
 from types import MappingProxyType
 from typing import (
-    TYPE_CHECKING,
     Any,
+    cast,
     Collection,
     Iterable,
     Mapping,
@@ -17,11 +17,11 @@ from typing import (
     MutableSet,
     Optional,
     Type,
+    TYPE_CHECKING,
     TypeVar,
-    cast,
 )
 
-from libcst._batched_visitor import BatchableCSTVisitor, VisitorMethod, visit_batched
+from libcst._batched_visitor import BatchableCSTVisitor, visit_batched, VisitorMethod
 from libcst._exceptions import MetadataException
 from libcst.metadata.base_provider import BatchableMetadataProvider
 

@@ -7,14 +7,14 @@ import inspect
 from abc import ABC
 from contextlib import contextmanager
 from typing import (
-    TYPE_CHECKING,
+    cast,
     ClassVar,
     Collection,
     Iterator,
     Mapping,
     Type,
+    TYPE_CHECKING,
     TypeVar,
-    cast,
 )
 
 if TYPE_CHECKING:

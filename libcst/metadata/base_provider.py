@@ -6,16 +6,16 @@
 from pathlib import Path
 from types import MappingProxyType
 from typing import (
-    TYPE_CHECKING,
     Callable,
+    cast,
     Generic,
     List,
     Mapping,
     MutableMapping,
     Optional,
     Type,
+    TYPE_CHECKING,
     TypeVar,
-    cast,
 )
 
 from libcst._batched_visitor import BatchableCSTVisitor
@@ -28,7 +28,7 @@ from libcst._visitors import CSTVisitor
 
 if TYPE_CHECKING:
     from libcst._nodes.base import CSTNode
-    from libcst._nodes.module import Module, _ModuleSelfT as _ModuleT
+    from libcst._nodes.module import _ModuleSelfT as _ModuleT, Module
     from libcst.metadata.wrapper import MetadataWrapper
 
 

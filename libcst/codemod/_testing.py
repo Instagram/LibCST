@@ -6,7 +6,7 @@
 from textwrap import dedent
 from typing import Optional, Sequence, Type
 
-from libcst import PartialParserConfig, parse_module
+from libcst import parse_module, PartialParserConfig
 from libcst.codemod._codemod import Codemod
 from libcst.codemod._context import CodemodContext
 from libcst.codemod._runner import SkipFile

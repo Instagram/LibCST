@@ -9,10 +9,10 @@ from typing import Union
 import libcst as cst
 import libcst.matchers as m
 from libcst.matchers import (
+    leave,
     MatchDecoratorMismatch,
     MatcherDecoratableTransformer,
     MatcherDecoratableVisitor,
-    leave,
     visit,
 )
 from libcst.testing.utils import UnitTest

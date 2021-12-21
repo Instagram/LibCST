@@ -9,9 +9,10 @@ import inspect
 import re
 from abc import ABCMeta
 from dataclasses import dataclass, fields
-from enum import Enum, auto
+from enum import auto, Enum
 from typing import (
     Callable,
+    cast,
     Dict,
     Generic,
     Iterator,
@@ -25,7 +26,6 @@ from typing import (
     Type,
     TypeVar,
     Union,
-    cast,
 )
 
 import libcst

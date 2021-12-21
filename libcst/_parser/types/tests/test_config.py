@@ -6,7 +6,7 @@
 from typing import Callable
 
 from libcst._parser.types.config import PartialParserConfig
-from libcst.testing.utils import UnitTest, data_provider
+from libcst.testing.utils import data_provider, UnitTest
 
 
 class TestConfig(UnitTest):

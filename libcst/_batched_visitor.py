@@ -5,14 +5,14 @@
 
 import inspect
 from typing import (
-    TYPE_CHECKING,
     Callable,
+    cast,
     Iterable,
     List,
     Mapping,
     MutableMapping,
     Optional,
-    cast,
+    TYPE_CHECKING,
 )
 
 from libcst._metadata_dependent import MetadataDependent

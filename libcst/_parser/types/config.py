@@ -12,7 +12,7 @@ from typing import Any, Callable, FrozenSet, List, Mapping, Optional, Pattern, U
 
 from libcst._add_slots import add_slots
 from libcst._nodes.whitespace import NEWLINE_RE
-from libcst._parser.parso.utils import PythonVersionInfo, parse_version_string
+from libcst._parser.parso.utils import parse_version_string, PythonVersionInfo
 
 _INDENT_RE: Pattern[str] = re.compile(r"[ \t]+")
 

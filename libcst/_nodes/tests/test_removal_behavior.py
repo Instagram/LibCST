@@ -6,7 +6,7 @@
 from typing import Type, Union
 
 import libcst as cst
-from libcst import RemovalSentinel, parse_module
+from libcst import parse_module, RemovalSentinel
 from libcst._nodes.tests.base import CSTNodeTest
 from libcst._types import CSTNodeT
 from libcst._visitors import CSTTransformer

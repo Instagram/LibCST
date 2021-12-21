@@ -3,7 +3,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from typing import Tuple, cast
+from typing import cast, Tuple
 
 import libcst as cst
 from libcst import parse_module, parse_statement

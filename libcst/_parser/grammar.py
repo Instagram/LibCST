@@ -133,9 +133,9 @@ from libcst._parser.conversions.terminals import (
     convert_OP,
     convert_STRING,
 )
-from libcst._parser.parso.pgen2.generator import Grammar, generate_grammar
+from libcst._parser.parso.pgen2.generator import generate_grammar, Grammar
 from libcst._parser.parso.python.token import PythonTokenTypes, TokenType
-from libcst._parser.parso.utils import PythonVersionInfo, parse_version_string
+from libcst._parser.parso.utils import parse_version_string, PythonVersionInfo
 from libcst._parser.production_decorator import get_productions
 from libcst._parser.types.config import AutoConfig
 from libcst._parser.types.conversions import NonterminalConversion, TerminalConversion

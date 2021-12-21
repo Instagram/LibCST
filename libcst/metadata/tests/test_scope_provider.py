@@ -6,29 +6,29 @@
 
 import sys
 from textwrap import dedent
-from typing import Mapping, Tuple, cast, Sequence
+from typing import cast, Mapping, Sequence, Tuple
 from unittest import mock
 
 import libcst as cst
 from libcst import ensure_type
 from libcst.metadata import MetadataWrapper
 from libcst.metadata.scope_provider import (
+    _gen_dotted_names,
     Assignment,
-    ImportAssignment,
     BuiltinAssignment,
     BuiltinScope,
     ClassScope,
     ComprehensionScope,
     FunctionScope,
     GlobalScope,
+    ImportAssignment,
     LocalScope,
     QualifiedName,
     QualifiedNameSource,
     Scope,
     ScopeProvider,
-    _gen_dotted_names,
 )
-from libcst.testing.utils import UnitTest, data_provider
+from libcst.testing.utils import data_provider, UnitTest
 
 
 class DependentVisitor(cst.CSTVisitor):

@@ -12,11 +12,11 @@ from typing import Dict, List, Mapping, Optional, Tuple, Union
 import libcst as cst
 from libcst.metadata import MetadataWrapper, PositionProvider
 from libcst.metadata.type_inference_provider import (
-    PyreData,
     _process_pyre_data,
+    PyreData,
     run_command,
 )
-from libcst.testing.utils import UnitTest, data_provider
+from libcst.testing.utils import data_provider, UnitTest
 
 TEST_SUITE_PATH: Path = Path(__file__).parent / "pyre"
 

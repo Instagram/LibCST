@@ -23,12 +23,12 @@ from typing import Any, Callable, Dict, List, Sequence, Tuple, Type
 import yaml
 
 from libcst import (
-    LIBCST_VERSION,
     CSTNode,
     IndentedBlock,
+    LIBCST_VERSION,
     Module,
-    PartialParserConfig,
     parse_module,
+    PartialParserConfig,
 )
 from libcst._nodes.deep_equals import deep_equals
 from libcst.codemod import (

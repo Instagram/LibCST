@@ -6,7 +6,7 @@
 from typing import Optional
 
 from libcst.codemod._cli import _calculate_module
-from libcst.testing.utils import UnitTest, data_provider
+from libcst.testing.utils import data_provider, UnitTest
 
 
 class TestPackageCalculation(UnitTest):

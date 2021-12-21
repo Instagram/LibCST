@@ -11,7 +11,7 @@ from libcst.helpers import (
     get_absolute_module_for_import,
     get_absolute_module_for_import_or_raise,
 )
-from libcst.testing.utils import UnitTest, data_provider
+from libcst.testing.utils import data_provider, UnitTest
 
 
 class StatementTest(UnitTest):

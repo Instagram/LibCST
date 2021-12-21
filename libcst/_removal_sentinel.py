@@ -8,7 +8,7 @@ Used by visitors. This is hoisted into a separate module to avoid some circular
 dependencies in the definition of CSTNode.
 """
 
-from enum import Enum, auto
+from enum import auto, Enum
 
 
 class RemovalSentinel(Enum):

@@ -28,9 +28,9 @@ from typing import Generic, Iterable, List, Sequence, TypeVar, Union
 
 from libcst._exceptions import (
     EOFSentinel,
+    get_expected_str,
     ParserSyntaxError,
     PartialParserSyntaxError,
-    get_expected_str,
 )
 from libcst._parser.parso.pgen2.generator import DFAState, Grammar, ReservedString
 from libcst._parser.parso.python.token import TokenType

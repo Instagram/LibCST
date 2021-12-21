@@ -5,7 +5,6 @@
 
 from types import MappingProxyType
 from typing import (
-    TYPE_CHECKING,
     Any,
     AsyncGenerator,
     ClassVar,
@@ -20,13 +19,14 @@ from typing import (
     Set,
     Tuple,
     Type,
+    TYPE_CHECKING,
     Union,
 )
 
 from typing_extensions import Literal
 
 from libcst._type_enforce import is_value_of_type
-from libcst.testing.utils import UnitTest, data_provider
+from libcst.testing.utils import data_provider, UnitTest
 
 if TYPE_CHECKING:
     from collections import Counter  # noqa: F401

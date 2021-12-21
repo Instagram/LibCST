@@ -4,11 +4,11 @@
 # LICENSE file in the root directory of this source tree.
 #
 from libcst.codemod._cli import (
-    ParallelTransformResult,
     diff_code,
     exec_transform_with_prettyprint,
     gather_files,
     parallel_exec_transform_with_prettyprint,
+    ParallelTransformResult,
 )
 from libcst.codemod._codemod import Codemod
 from libcst.codemod._command import (
@@ -20,12 +20,12 @@ from libcst.codemod._context import CodemodContext
 from libcst.codemod._runner import (
     SkipFile,
     SkipReason,
+    transform_module,
     TransformExit,
     TransformFailure,
     TransformResult,
     TransformSkip,
     TransformSuccess,
-    transform_module,
 )
 from libcst.codemod._testing import CodemodTest
 from libcst.codemod._visitor import ContextAwareTransformer, ContextAwareVisitor

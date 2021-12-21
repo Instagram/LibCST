@@ -14,7 +14,7 @@ from libcst._parser.whitespace_parser import (
     parse_simple_whitespace,
     parse_trailing_whitespace,
 )
-from libcst.testing.utils import UnitTest, data_provider
+from libcst.testing.utils import data_provider, UnitTest
 
 _T = TypeVar("_T")
 

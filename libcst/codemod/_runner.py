@@ -13,7 +13,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Optional, Sequence, Union
 
-from libcst import PartialParserConfig, parse_module
+from libcst import parse_module, PartialParserConfig
 from libcst.codemod._codemod import Codemod
 
 # All datastructures defined in this class are pickleable so that they can be used

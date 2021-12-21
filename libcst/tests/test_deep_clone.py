@@ -6,7 +6,7 @@ from textwrap import dedent
 from typing import Set
 
 import libcst as cst
-from libcst.testing.utils import UnitTest, data_provider
+from libcst.testing.utils import data_provider, UnitTest
 
 
 class DeepCloneTest(UnitTest):
