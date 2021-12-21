@@ -56,6 +56,7 @@ impl<'a> Inflate<'a> for Parameters<'a> {
     }
 }
 
+#[allow(clippy::large_enum_variant)]
 #[derive(Debug, PartialEq, Eq, Clone, Inflate, IntoPy)]
 pub enum StarArg<'a> {
     Star(ParamStar<'a>),
@@ -801,6 +802,7 @@ impl<'a> Codegen<'a> for StarredElement<'a> {
     }
 }
 
+#[allow(clippy::large_enum_variant)]
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Element<'a> {
     Simple {
@@ -1421,6 +1423,7 @@ impl<'a> Codegen<'a> for Dict<'a> {
     }
 }
 
+#[allow(clippy::large_enum_variant)]
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum DictElement<'a> {
     Simple {

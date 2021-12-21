@@ -15,6 +15,7 @@ static SIMPLE_WHITESPACE_RE: Lazy<Regex> =
 static NEWLINE_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"\A(\r\n?|\n)").expect("regex"));
 static COMMENT_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"\A#[^\r\n]*").expect("regex"));
 
+#[allow(clippy::upper_case_acronyms, clippy::enum_variant_names)]
 #[derive(Error, Debug, PartialEq, Eq)]
 pub enum WhitespaceError {
     #[error("WTF")]
@@ -124,11 +125,7 @@ fn parse_empty_line<'a>(
     override_absolute_indent: Option<&'a str>,
 ) -> Result<ParsedEmptyLine<'a>> {
     let mut speculative_state = state.clone();
-    if let Ok(indent) = parse_indent(
-        config,
-        &mut &mut speculative_state,
-        override_absolute_indent,
-    ) {
+    if let Ok(indent) = parse_indent(config, &mut speculative_state, override_absolute_indent) {
         let whitespace = parse_simple_whitespace(config, &mut speculative_state)?;
         let comment = parse_comment(config, &mut speculative_state)?;
         if let Some(newline) = parse_newline(config, &mut speculative_state)? {

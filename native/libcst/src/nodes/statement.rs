@@ -45,6 +45,7 @@ impl<'a> WithLeadingLines<'a> for Statement<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Inflate, Codegen, IntoPy)]
+#[allow(clippy::large_enum_variant)]
 pub enum CompoundStatement<'a> {
     FunctionDef(FunctionDef<'a>),
     If(If<'a>),
@@ -957,6 +958,7 @@ impl<'a> Inflate<'a> for If<'a> {
     }
 }
 
+#[allow(clippy::large_enum_variant)]
 #[derive(Debug, PartialEq, Eq, Clone, Inflate, Codegen, IntoPy)]
 pub enum OrElse<'a> {
     Elif(If<'a>),

@@ -7,6 +7,7 @@ use crate::tokenizer::TokError;
 use peg::Parse;
 use thiserror::Error;
 
+#[allow(clippy::enum_variant_names)]
 #[derive(Debug, Error, PartialEq, Eq)]
 pub enum ParserError<'a> {
     #[error("tokenizer error: {0}")]

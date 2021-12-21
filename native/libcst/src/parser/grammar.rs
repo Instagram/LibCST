@@ -85,7 +85,7 @@ parser! {
         // Starting Rules
 
         pub rule file(encoding: Option<&str>) -> Module<'a>
-            = traced(<_file(encoding.unwrap_or_else(|| "utf-8"))>)
+            = traced(<_file(encoding.unwrap_or("utf-8"))>)
 
         pub rule expression_input() -> Expression<'a>
             = traced(<e:star_expressions() tok(NL, "NEWLINE") tok(EndMarker, "EOF") {e}>)
