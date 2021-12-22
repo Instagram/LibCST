@@ -2,6 +2,7 @@
 *.swo
 *.pyc
 *.pyo
+*.so
 *.egg-info/
 .eggs/
 .pyre/
