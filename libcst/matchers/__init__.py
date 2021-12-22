@@ -8262,6 +8262,2368 @@ class ListComp(BaseComp, BaseExpression, BaseList, BaseSimpleComp, BaseMatcherNo
     ] = DoNotCare()
 
 
+MatchCaseMatchType = Union["MatchCase", MetadataMatchType, MatchIfTrue[cst.MatchCase]]
+
+
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
+class Match(BaseCompoundStatement, BaseStatement, BaseMatcherNode):
+    subject: Union[
+        BaseExpressionMatchType,
+        DoNotCareSentinel,
+        OneOf[BaseExpressionMatchType],
+        AllOf[BaseExpressionMatchType],
+    ] = DoNotCare()
+    cases: Union[
+        Sequence[
+            Union[
+                MatchCaseMatchType,
+                DoNotCareSentinel,
+                OneOf[MatchCaseMatchType],
+                AllOf[MatchCaseMatchType],
+                AtLeastN[
+                    Union[
+                        MatchCaseMatchType,
+                        DoNotCareSentinel,
+                        OneOf[MatchCaseMatchType],
+                        AllOf[MatchCaseMatchType],
+                    ]
+                ],
+                AtMostN[
+                    Union[
+                        MatchCaseMatchType,
+                        DoNotCareSentinel,
+                        OneOf[MatchCaseMatchType],
+                        AllOf[MatchCaseMatchType],
+                    ]
+                ],
+            ]
+        ],
+        DoNotCareSentinel,
+        MatchIfTrue[Sequence[cst.MatchCase]],
+        OneOf[
+            Union[
+                Sequence[
+                    Union[
+                        MatchCaseMatchType,
+                        OneOf[MatchCaseMatchType],
+                        AllOf[MatchCaseMatchType],
+                        AtLeastN[
+                            Union[
+                                MatchCaseMatchType,
+                                OneOf[MatchCaseMatchType],
+                                AllOf[MatchCaseMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                MatchCaseMatchType,
+                                OneOf[MatchCaseMatchType],
+                                AllOf[MatchCaseMatchType],
+                            ]
+                        ],
+                    ]
+                ],
+                MatchIfTrue[Sequence[cst.MatchCase]],
+            ]
+        ],
+        AllOf[
+            Union[
+                Sequence[
+                    Union[
+                        MatchCaseMatchType,
+                        OneOf[MatchCaseMatchType],
+                        AllOf[MatchCaseMatchType],
+                        AtLeastN[
+                            Union[
+                                MatchCaseMatchType,
+                                OneOf[MatchCaseMatchType],
+                                AllOf[MatchCaseMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                MatchCaseMatchType,
+                                OneOf[MatchCaseMatchType],
+                                AllOf[MatchCaseMatchType],
+                            ]
+                        ],
+                    ]
+                ],
+                MatchIfTrue[Sequence[cst.MatchCase]],
+            ]
+        ],
+    ] = DoNotCare()
+    leading_lines: Union[
+        Sequence[
+            Union[
+                EmptyLineMatchType,
+                DoNotCareSentinel,
+                OneOf[EmptyLineMatchType],
+                AllOf[EmptyLineMatchType],
+                AtLeastN[
+                    Union[
+                        EmptyLineMatchType,
+                        DoNotCareSentinel,
+                        OneOf[EmptyLineMatchType],
+                        AllOf[EmptyLineMatchType],
+                    ]
+                ],
+                AtMostN[
+                    Union[
+                        EmptyLineMatchType,
+                        DoNotCareSentinel,
+                        OneOf[EmptyLineMatchType],
+                        AllOf[EmptyLineMatchType],
+                    ]
+                ],
+            ]
+        ],
+        DoNotCareSentinel,
+        MatchIfTrue[Sequence[cst.EmptyLine]],
+        OneOf[
+            Union[
+                Sequence[
+                    Union[
+                        EmptyLineMatchType,
+                        OneOf[EmptyLineMatchType],
+                        AllOf[EmptyLineMatchType],
+                        AtLeastN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
+                    ]
+                ],
+                MatchIfTrue[Sequence[cst.EmptyLine]],
+            ]
+        ],
+        AllOf[
+            Union[
+                Sequence[
+                    Union[
+                        EmptyLineMatchType,
+                        OneOf[EmptyLineMatchType],
+                        AllOf[EmptyLineMatchType],
+                        AtLeastN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
+                    ]
+                ],
+                MatchIfTrue[Sequence[cst.EmptyLine]],
+            ]
+        ],
+    ] = DoNotCare()
+    whitespace_after_match: Union[
+        SimpleWhitespaceMatchType,
+        DoNotCareSentinel,
+        OneOf[SimpleWhitespaceMatchType],
+        AllOf[SimpleWhitespaceMatchType],
+    ] = DoNotCare()
+    whitespace_before_colon: Union[
+        SimpleWhitespaceMatchType,
+        DoNotCareSentinel,
+        OneOf[SimpleWhitespaceMatchType],
+        AllOf[SimpleWhitespaceMatchType],
+    ] = DoNotCare()
+    whitespace_after_colon: Union[
+        TrailingWhitespaceMatchType,
+        DoNotCareSentinel,
+        OneOf[TrailingWhitespaceMatchType],
+        AllOf[TrailingWhitespaceMatchType],
+    ] = DoNotCare()
+    indent: Union[
+        Optional[str],
+        MetadataMatchType,
+        MatchIfTrue[Optional[str]],
+        DoNotCareSentinel,
+        OneOf[Union[Optional[str], MetadataMatchType, MatchIfTrue[Optional[str]]]],
+        AllOf[Union[Optional[str], MetadataMatchType, MatchIfTrue[Optional[str]]]],
+    ] = DoNotCare()
+    footer: Union[
+        Sequence[
+            Union[
+                EmptyLineMatchType,
+                DoNotCareSentinel,
+                OneOf[EmptyLineMatchType],
+                AllOf[EmptyLineMatchType],
+                AtLeastN[
+                    Union[
+                        EmptyLineMatchType,
+                        DoNotCareSentinel,
+                        OneOf[EmptyLineMatchType],
+                        AllOf[EmptyLineMatchType],
+                    ]
+                ],
+                AtMostN[
+                    Union[
+                        EmptyLineMatchType,
+                        DoNotCareSentinel,
+                        OneOf[EmptyLineMatchType],
+                        AllOf[EmptyLineMatchType],
+                    ]
+                ],
+            ]
+        ],
+        DoNotCareSentinel,
+        MatchIfTrue[Sequence[cst.EmptyLine]],
+        OneOf[
+            Union[
+                Sequence[
+                    Union[
+                        EmptyLineMatchType,
+                        OneOf[EmptyLineMatchType],
+                        AllOf[EmptyLineMatchType],
+                        AtLeastN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
+                    ]
+                ],
+                MatchIfTrue[Sequence[cst.EmptyLine]],
+            ]
+        ],
+        AllOf[
+            Union[
+                Sequence[
+                    Union[
+                        EmptyLineMatchType,
+                        OneOf[EmptyLineMatchType],
+                        AllOf[EmptyLineMatchType],
+                        AtLeastN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
+                    ]
+                ],
+                MatchIfTrue[Sequence[cst.EmptyLine]],
+            ]
+        ],
+    ] = DoNotCare()
+    metadata: Union[
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
+    ] = DoNotCare()
+
+
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
+class MatchAs(BaseMatcherNode):
+    pattern: Union[
+        Optional["MatchPattern"],
+        MetadataMatchType,
+        MatchIfTrue[Optional[cst.MatchPattern]],
+        DoNotCareSentinel,
+        OneOf[
+            Union[
+                Optional["MatchPattern"],
+                MetadataMatchType,
+                MatchIfTrue[Optional[cst.MatchPattern]],
+            ]
+        ],
+        AllOf[
+            Union[
+                Optional["MatchPattern"],
+                MetadataMatchType,
+                MatchIfTrue[Optional[cst.MatchPattern]],
+            ]
+        ],
+    ] = DoNotCare()
+    name: Union[
+        Optional["Name"],
+        MetadataMatchType,
+        MatchIfTrue[Optional[cst.Name]],
+        DoNotCareSentinel,
+        OneOf[
+            Union[Optional["Name"], MetadataMatchType, MatchIfTrue[Optional[cst.Name]]]
+        ],
+        AllOf[
+            Union[Optional["Name"], MetadataMatchType, MatchIfTrue[Optional[cst.Name]]]
+        ],
+    ] = DoNotCare()
+    whitespace_before_as: Union[
+        BaseParenthesizableWhitespaceMatchType,
+        DoNotCareSentinel,
+        OneOf[BaseParenthesizableWhitespaceMatchType],
+        AllOf[BaseParenthesizableWhitespaceMatchType],
+    ] = DoNotCare()
+    whitespace_after_as: Union[
+        BaseParenthesizableWhitespaceMatchType,
+        DoNotCareSentinel,
+        OneOf[BaseParenthesizableWhitespaceMatchType],
+        AllOf[BaseParenthesizableWhitespaceMatchType],
+    ] = DoNotCare()
+    lpar: Union[
+        Sequence[
+            Union[
+                LeftParenMatchType,
+                DoNotCareSentinel,
+                OneOf[LeftParenMatchType],
+                AllOf[LeftParenMatchType],
+                AtLeastN[
+                    Union[
+                        LeftParenMatchType,
+                        DoNotCareSentinel,
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                    ]
+                ],
+                AtMostN[
+                    Union[
+                        LeftParenMatchType,
+                        DoNotCareSentinel,
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                    ]
+                ],
+            ]
+        ],
+        DoNotCareSentinel,
+        MatchIfTrue[Sequence[cst.LeftParen]],
+        OneOf[
+            Union[
+                Sequence[
+                    Union[
+                        LeftParenMatchType,
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                        AtLeastN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                    ]
+                ],
+                MatchIfTrue[Sequence[cst.LeftParen]],
+            ]
+        ],
+        AllOf[
+            Union[
+                Sequence[
+                    Union[
+                        LeftParenMatchType,
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                        AtLeastN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                    ]
+                ],
+                MatchIfTrue[Sequence[cst.LeftParen]],
+            ]
+        ],
+    ] = DoNotCare()
+    rpar: Union[
+        Sequence[
+            Union[
+                RightParenMatchType,
+                DoNotCareSentinel,
+                OneOf[RightParenMatchType],
+                AllOf[RightParenMatchType],
+                AtLeastN[
+                    Union[
+                        RightParenMatchType,
+                        DoNotCareSentinel,
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                    ]
+                ],
+                AtMostN[
+                    Union[
+                        RightParenMatchType,
+                        DoNotCareSentinel,
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                    ]
+                ],
+            ]
+        ],
+        DoNotCareSentinel,
+        MatchIfTrue[Sequence[cst.RightParen]],
+        OneOf[
+            Union[
+                Sequence[
+                    Union[
+                        RightParenMatchType,
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                        AtLeastN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                    ]
+                ],
+                MatchIfTrue[Sequence[cst.RightParen]],
+            ]
+        ],
+        AllOf[
+            Union[
+                Sequence[
+                    Union[
+                        RightParenMatchType,
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                        AtLeastN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                    ]
+                ],
+                MatchIfTrue[Sequence[cst.RightParen]],
+            ]
+        ],
+    ] = DoNotCare()
+    metadata: Union[
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
+    ] = DoNotCare()
+
+
+MatchPatternMatchType = Union[
+    "MatchPattern", MetadataMatchType, MatchIfTrue[cst.MatchPattern]
+]
+
+
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
+class MatchCase(BaseMatcherNode):
+    pattern: Union[
+        MatchPatternMatchType,
+        DoNotCareSentinel,
+        OneOf[MatchPatternMatchType],
+        AllOf[MatchPatternMatchType],
+    ] = DoNotCare()
+    body: Union[
+        BaseSuiteMatchType,
+        DoNotCareSentinel,
+        OneOf[BaseSuiteMatchType],
+        AllOf[BaseSuiteMatchType],
+    ] = DoNotCare()
+    guard: Union[
+        Optional["BaseExpression"],
+        MetadataMatchType,
+        MatchIfTrue[Optional[cst.BaseExpression]],
+        DoNotCareSentinel,
+        OneOf[
+            Union[
+                Optional["BaseExpression"],
+                MetadataMatchType,
+                MatchIfTrue[Optional[cst.BaseExpression]],
+            ]
+        ],
+        AllOf[
+            Union[
+                Optional["BaseExpression"],
+                MetadataMatchType,
+                MatchIfTrue[Optional[cst.BaseExpression]],
+            ]
+        ],
+    ] = DoNotCare()
+    leading_lines: Union[
+        Sequence[
+            Union[
+                EmptyLineMatchType,
+                DoNotCareSentinel,
+                OneOf[EmptyLineMatchType],
+                AllOf[EmptyLineMatchType],
+                AtLeastN[
+                    Union[
+                        EmptyLineMatchType,
+                        DoNotCareSentinel,
+                        OneOf[EmptyLineMatchType],
+                        AllOf[EmptyLineMatchType],
+                    ]
+                ],
+                AtMostN[
+                    Union[
+                        EmptyLineMatchType,
+                        DoNotCareSentinel,
+                        OneOf[EmptyLineMatchType],
+                        AllOf[EmptyLineMatchType],
+                    ]
+                ],
+            ]
+        ],
+        DoNotCareSentinel,
+        MatchIfTrue[Sequence[cst.EmptyLine]],
+        OneOf[
+            Union[
+                Sequence[
+                    Union[
+                        EmptyLineMatchType,
+                        OneOf[EmptyLineMatchType],
+                        AllOf[EmptyLineMatchType],
+                        AtLeastN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
+                    ]
+                ],
+                MatchIfTrue[Sequence[cst.EmptyLine]],
+            ]
+        ],
+        AllOf[
+            Union[
+                Sequence[
+                    Union[
+                        EmptyLineMatchType,
+                        OneOf[EmptyLineMatchType],
+                        AllOf[EmptyLineMatchType],
+                        AtLeastN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
+                    ]
+                ],
+                MatchIfTrue[Sequence[cst.EmptyLine]],
+            ]
+        ],
+    ] = DoNotCare()
+    whitespace_after_case: Union[
+        SimpleWhitespaceMatchType,
+        DoNotCareSentinel,
+        OneOf[SimpleWhitespaceMatchType],
+        AllOf[SimpleWhitespaceMatchType],
+    ] = DoNotCare()
+    whitespace_before_if: Union[
+        SimpleWhitespaceMatchType,
+        DoNotCareSentinel,
+        OneOf[SimpleWhitespaceMatchType],
+        AllOf[SimpleWhitespaceMatchType],
+    ] = DoNotCare()
+    whitespace_after_if: Union[
+        SimpleWhitespaceMatchType,
+        DoNotCareSentinel,
+        OneOf[SimpleWhitespaceMatchType],
+        AllOf[SimpleWhitespaceMatchType],
+    ] = DoNotCare()
+    whitespace_before_colon: Union[
+        SimpleWhitespaceMatchType,
+        DoNotCareSentinel,
+        OneOf[SimpleWhitespaceMatchType],
+        AllOf[SimpleWhitespaceMatchType],
+    ] = DoNotCare()
+    metadata: Union[
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
+    ] = DoNotCare()
+
+
+MatchSequenceElementMatchType = Union[
+    "MatchSequenceElement", MetadataMatchType, MatchIfTrue[cst.MatchSequenceElement]
+]
+MatchKeywordElementMatchType = Union[
+    "MatchKeywordElement", MetadataMatchType, MatchIfTrue[cst.MatchKeywordElement]
+]
+
+
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
+class MatchClass(BaseMatcherNode):
+    cls: Union[
+        BaseExpressionMatchType,
+        DoNotCareSentinel,
+        OneOf[BaseExpressionMatchType],
+        AllOf[BaseExpressionMatchType],
+    ] = DoNotCare()
+    patterns: Union[
+        Sequence[
+            Union[
+                MatchSequenceElementMatchType,
+                DoNotCareSentinel,
+                OneOf[MatchSequenceElementMatchType],
+                AllOf[MatchSequenceElementMatchType],
+                AtLeastN[
+                    Union[
+                        MatchSequenceElementMatchType,
+                        DoNotCareSentinel,
+                        OneOf[MatchSequenceElementMatchType],
+                        AllOf[MatchSequenceElementMatchType],
+                    ]
+                ],
+                AtMostN[
+                    Union[
+                        MatchSequenceElementMatchType,
+                        DoNotCareSentinel,
+                        OneOf[MatchSequenceElementMatchType],
+                        AllOf[MatchSequenceElementMatchType],
+                    ]
+                ],
+            ]
+        ],
+        DoNotCareSentinel,
+        MatchIfTrue[Sequence[cst.MatchSequenceElement]],
+        OneOf[
+            Union[
+                Sequence[
+                    Union[
+                        MatchSequenceElementMatchType,
+                        OneOf[MatchSequenceElementMatchType],
+                        AllOf[MatchSequenceElementMatchType],
+                        AtLeastN[
+                            Union[
+                                MatchSequenceElementMatchType,
+                                OneOf[MatchSequenceElementMatchType],
+                                AllOf[MatchSequenceElementMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                MatchSequenceElementMatchType,
+                                OneOf[MatchSequenceElementMatchType],
+                                AllOf[MatchSequenceElementMatchType],
+                            ]
+                        ],
+                    ]
+                ],
+                MatchIfTrue[Sequence[cst.MatchSequenceElement]],
+            ]
+        ],
+        AllOf[
+            Union[
+                Sequence[
+                    Union[
+                        MatchSequenceElementMatchType,
+                        OneOf[MatchSequenceElementMatchType],
+                        AllOf[MatchSequenceElementMatchType],
+                        AtLeastN[
+                            Union[
+                                MatchSequenceElementMatchType,
+                                OneOf[MatchSequenceElementMatchType],
+                                AllOf[MatchSequenceElementMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                MatchSequenceElementMatchType,
+                                OneOf[MatchSequenceElementMatchType],
+                                AllOf[MatchSequenceElementMatchType],
+                            ]
+                        ],
+                    ]
+                ],
+                MatchIfTrue[Sequence[cst.MatchSequenceElement]],
+            ]
+        ],
+    ] = DoNotCare()
+    kwds: Union[
+        Sequence[
+            Union[
+                MatchKeywordElementMatchType,
+                DoNotCareSentinel,
+                OneOf[MatchKeywordElementMatchType],
+                AllOf[MatchKeywordElementMatchType],
+                AtLeastN[
+                    Union[
+                        MatchKeywordElementMatchType,
+                        DoNotCareSentinel,
+                        OneOf[MatchKeywordElementMatchType],
+                        AllOf[MatchKeywordElementMatchType],
+                    ]
+                ],
+                AtMostN[
+                    Union[
+                        MatchKeywordElementMatchType,
+                        DoNotCareSentinel,
+                        OneOf[MatchKeywordElementMatchType],
+                        AllOf[MatchKeywordElementMatchType],
+                    ]
+                ],
+            ]
+        ],
+        DoNotCareSentinel,
+        MatchIfTrue[Sequence[cst.MatchKeywordElement]],
+        OneOf[
+            Union[
+                Sequence[
+                    Union[
+                        MatchKeywordElementMatchType,
+                        OneOf[MatchKeywordElementMatchType],
+                        AllOf[MatchKeywordElementMatchType],
+                        AtLeastN[
+                            Union[
+                                MatchKeywordElementMatchType,
+                                OneOf[MatchKeywordElementMatchType],
+                                AllOf[MatchKeywordElementMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                MatchKeywordElementMatchType,
+                                OneOf[MatchKeywordElementMatchType],
+                                AllOf[MatchKeywordElementMatchType],
+                            ]
+                        ],
+                    ]
+                ],
+                MatchIfTrue[Sequence[cst.MatchKeywordElement]],
+            ]
+        ],
+        AllOf[
+            Union[
+                Sequence[
+                    Union[
+                        MatchKeywordElementMatchType,
+                        OneOf[MatchKeywordElementMatchType],
+                        AllOf[MatchKeywordElementMatchType],
+                        AtLeastN[
+                            Union[
+                                MatchKeywordElementMatchType,
+                                OneOf[MatchKeywordElementMatchType],
+                                AllOf[MatchKeywordElementMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                MatchKeywordElementMatchType,
+                                OneOf[MatchKeywordElementMatchType],
+                                AllOf[MatchKeywordElementMatchType],
+                            ]
+                        ],
+                    ]
+                ],
+                MatchIfTrue[Sequence[cst.MatchKeywordElement]],
+            ]
+        ],
+    ] = DoNotCare()
+    whitespace_after_cls: Union[
+        BaseParenthesizableWhitespaceMatchType,
+        DoNotCareSentinel,
+        OneOf[BaseParenthesizableWhitespaceMatchType],
+        AllOf[BaseParenthesizableWhitespaceMatchType],
+    ] = DoNotCare()
+    whitespace_before_patterns: Union[
+        BaseParenthesizableWhitespaceMatchType,
+        DoNotCareSentinel,
+        OneOf[BaseParenthesizableWhitespaceMatchType],
+        AllOf[BaseParenthesizableWhitespaceMatchType],
+    ] = DoNotCare()
+    whitespace_after_kwds: Union[
+        BaseParenthesizableWhitespaceMatchType,
+        DoNotCareSentinel,
+        OneOf[BaseParenthesizableWhitespaceMatchType],
+        AllOf[BaseParenthesizableWhitespaceMatchType],
+    ] = DoNotCare()
+    lpar: Union[
+        Sequence[
+            Union[
+                LeftParenMatchType,
+                DoNotCareSentinel,
+                OneOf[LeftParenMatchType],
+                AllOf[LeftParenMatchType],
+                AtLeastN[
+                    Union[
+                        LeftParenMatchType,
+                        DoNotCareSentinel,
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                    ]
+                ],
+                AtMostN[
+                    Union[
+                        LeftParenMatchType,
+                        DoNotCareSentinel,
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                    ]
+                ],
+            ]
+        ],
+        DoNotCareSentinel,
+        MatchIfTrue[Sequence[cst.LeftParen]],
+        OneOf[
+            Union[
+                Sequence[
+                    Union[
+                        LeftParenMatchType,
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                        AtLeastN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                    ]
+                ],
+                MatchIfTrue[Sequence[cst.LeftParen]],
+            ]
+        ],
+        AllOf[
+            Union[
+                Sequence[
+                    Union[
+                        LeftParenMatchType,
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                        AtLeastN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                    ]
+                ],
+                MatchIfTrue[Sequence[cst.LeftParen]],
+            ]
+        ],
+    ] = DoNotCare()
+    rpar: Union[
+        Sequence[
+            Union[
+                RightParenMatchType,
+                DoNotCareSentinel,
+                OneOf[RightParenMatchType],
+                AllOf[RightParenMatchType],
+                AtLeastN[
+                    Union[
+                        RightParenMatchType,
+                        DoNotCareSentinel,
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                    ]
+                ],
+                AtMostN[
+                    Union[
+                        RightParenMatchType,
+                        DoNotCareSentinel,
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                    ]
+                ],
+            ]
+        ],
+        DoNotCareSentinel,
+        MatchIfTrue[Sequence[cst.RightParen]],
+        OneOf[
+            Union[
+                Sequence[
+                    Union[
+                        RightParenMatchType,
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                        AtLeastN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                    ]
+                ],
+                MatchIfTrue[Sequence[cst.RightParen]],
+            ]
+        ],
+        AllOf[
+            Union[
+                Sequence[
+                    Union[
+                        RightParenMatchType,
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                        AtLeastN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                    ]
+                ],
+                MatchIfTrue[Sequence[cst.RightParen]],
+            ]
+        ],
+    ] = DoNotCare()
+    metadata: Union[
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
+    ] = DoNotCare()
+
+
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
+class MatchKeywordElement(BaseMatcherNode):
+    key: Union[
+        NameMatchType, DoNotCareSentinel, OneOf[NameMatchType], AllOf[NameMatchType]
+    ] = DoNotCare()
+    pattern: Union[
+        MatchPatternMatchType,
+        DoNotCareSentinel,
+        OneOf[MatchPatternMatchType],
+        AllOf[MatchPatternMatchType],
+    ] = DoNotCare()
+    comma: Union[
+        CommaMatchType, DoNotCareSentinel, OneOf[CommaMatchType], AllOf[CommaMatchType]
+    ] = DoNotCare()
+    whitespace_before_equal: Union[
+        BaseParenthesizableWhitespaceMatchType,
+        DoNotCareSentinel,
+        OneOf[BaseParenthesizableWhitespaceMatchType],
+        AllOf[BaseParenthesizableWhitespaceMatchType],
+    ] = DoNotCare()
+    whitespace_after_equal: Union[
+        BaseParenthesizableWhitespaceMatchType,
+        DoNotCareSentinel,
+        OneOf[BaseParenthesizableWhitespaceMatchType],
+        AllOf[BaseParenthesizableWhitespaceMatchType],
+    ] = DoNotCare()
+    metadata: Union[
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
+    ] = DoNotCare()
+
+
+MatchSequenceElementOrMatchStarMatchType = Union[
+    "MatchSequenceElement",
+    "MatchStar",
+    MetadataMatchType,
+    MatchIfTrue[Union[cst.MatchSequenceElement, cst.MatchStar]],
+]
+
+
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
+class MatchList(BaseMatcherNode):
+    patterns: Union[
+        Sequence[
+            Union[
+                MatchSequenceElementOrMatchStarMatchType,
+                DoNotCareSentinel,
+                OneOf[MatchSequenceElementOrMatchStarMatchType],
+                AllOf[MatchSequenceElementOrMatchStarMatchType],
+                AtLeastN[
+                    Union[
+                        MatchSequenceElementOrMatchStarMatchType,
+                        DoNotCareSentinel,
+                        OneOf[MatchSequenceElementOrMatchStarMatchType],
+                        AllOf[MatchSequenceElementOrMatchStarMatchType],
+                    ]
+                ],
+                AtMostN[
+                    Union[
+                        MatchSequenceElementOrMatchStarMatchType,
+                        DoNotCareSentinel,
+                        OneOf[MatchSequenceElementOrMatchStarMatchType],
+                        AllOf[MatchSequenceElementOrMatchStarMatchType],
+                    ]
+                ],
+            ]
+        ],
+        DoNotCareSentinel,
+        MatchIfTrue[
+            Sequence[
+                Union[
+                    cst.MatchSequenceElement,
+                    cst.MatchStar,
+                    OneOf[Union[cst.MatchSequenceElement, cst.MatchStar]],
+                    AllOf[Union[cst.MatchSequenceElement, cst.MatchStar]],
+                ]
+            ]
+        ],
+        OneOf[
+            Union[
+                Sequence[
+                    Union[
+                        MatchSequenceElementOrMatchStarMatchType,
+                        OneOf[MatchSequenceElementOrMatchStarMatchType],
+                        AllOf[MatchSequenceElementOrMatchStarMatchType],
+                        AtLeastN[
+                            Union[
+                                MatchSequenceElementOrMatchStarMatchType,
+                                OneOf[MatchSequenceElementOrMatchStarMatchType],
+                                AllOf[MatchSequenceElementOrMatchStarMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                MatchSequenceElementOrMatchStarMatchType,
+                                OneOf[MatchSequenceElementOrMatchStarMatchType],
+                                AllOf[MatchSequenceElementOrMatchStarMatchType],
+                            ]
+                        ],
+                    ]
+                ],
+                MatchIfTrue[
+                    Sequence[
+                        Union[
+                            cst.MatchSequenceElement,
+                            cst.MatchStar,
+                            OneOf[Union[cst.MatchSequenceElement, cst.MatchStar]],
+                            AllOf[Union[cst.MatchSequenceElement, cst.MatchStar]],
+                        ]
+                    ]
+                ],
+            ]
+        ],
+        AllOf[
+            Union[
+                Sequence[
+                    Union[
+                        MatchSequenceElementOrMatchStarMatchType,
+                        OneOf[MatchSequenceElementOrMatchStarMatchType],
+                        AllOf[MatchSequenceElementOrMatchStarMatchType],
+                        AtLeastN[
+                            Union[
+                                MatchSequenceElementOrMatchStarMatchType,
+                                OneOf[MatchSequenceElementOrMatchStarMatchType],
+                                AllOf[MatchSequenceElementOrMatchStarMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                MatchSequenceElementOrMatchStarMatchType,
+                                OneOf[MatchSequenceElementOrMatchStarMatchType],
+                                AllOf[MatchSequenceElementOrMatchStarMatchType],
+                            ]
+                        ],
+                    ]
+                ],
+                MatchIfTrue[
+                    Sequence[
+                        Union[
+                            cst.MatchSequenceElement,
+                            cst.MatchStar,
+                            OneOf[Union[cst.MatchSequenceElement, cst.MatchStar]],
+                            AllOf[Union[cst.MatchSequenceElement, cst.MatchStar]],
+                        ]
+                    ]
+                ],
+            ]
+        ],
+    ] = DoNotCare()
+    lbracket: Union[
+        Optional["LeftSquareBracket"],
+        MetadataMatchType,
+        MatchIfTrue[Optional[cst.LeftSquareBracket]],
+        DoNotCareSentinel,
+        OneOf[
+            Union[
+                Optional["LeftSquareBracket"],
+                MetadataMatchType,
+                MatchIfTrue[Optional[cst.LeftSquareBracket]],
+            ]
+        ],
+        AllOf[
+            Union[
+                Optional["LeftSquareBracket"],
+                MetadataMatchType,
+                MatchIfTrue[Optional[cst.LeftSquareBracket]],
+            ]
+        ],
+    ] = DoNotCare()
+    rbracket: Union[
+        Optional["RightSquareBracket"],
+        MetadataMatchType,
+        MatchIfTrue[Optional[cst.RightSquareBracket]],
+        DoNotCareSentinel,
+        OneOf[
+            Union[
+                Optional["RightSquareBracket"],
+                MetadataMatchType,
+                MatchIfTrue[Optional[cst.RightSquareBracket]],
+            ]
+        ],
+        AllOf[
+            Union[
+                Optional["RightSquareBracket"],
+                MetadataMatchType,
+                MatchIfTrue[Optional[cst.RightSquareBracket]],
+            ]
+        ],
+    ] = DoNotCare()
+    lpar: Union[
+        Sequence[
+            Union[
+                LeftParenMatchType,
+                DoNotCareSentinel,
+                OneOf[LeftParenMatchType],
+                AllOf[LeftParenMatchType],
+                AtLeastN[
+                    Union[
+                        LeftParenMatchType,
+                        DoNotCareSentinel,
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                    ]
+                ],
+                AtMostN[
+                    Union[
+                        LeftParenMatchType,
+                        DoNotCareSentinel,
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                    ]
+                ],
+            ]
+        ],
+        DoNotCareSentinel,
+        MatchIfTrue[Sequence[cst.LeftParen]],
+        OneOf[
+            Union[
+                Sequence[
+                    Union[
+                        LeftParenMatchType,
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                        AtLeastN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                    ]
+                ],
+                MatchIfTrue[Sequence[cst.LeftParen]],
+            ]
+        ],
+        AllOf[
+            Union[
+                Sequence[
+                    Union[
+                        LeftParenMatchType,
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                        AtLeastN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                    ]
+                ],
+                MatchIfTrue[Sequence[cst.LeftParen]],
+            ]
+        ],
+    ] = DoNotCare()
+    rpar: Union[
+        Sequence[
+            Union[
+                RightParenMatchType,
+                DoNotCareSentinel,
+                OneOf[RightParenMatchType],
+                AllOf[RightParenMatchType],
+                AtLeastN[
+                    Union[
+                        RightParenMatchType,
+                        DoNotCareSentinel,
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                    ]
+                ],
+                AtMostN[
+                    Union[
+                        RightParenMatchType,
+                        DoNotCareSentinel,
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                    ]
+                ],
+            ]
+        ],
+        DoNotCareSentinel,
+        MatchIfTrue[Sequence[cst.RightParen]],
+        OneOf[
+            Union[
+                Sequence[
+                    Union[
+                        RightParenMatchType,
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                        AtLeastN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                    ]
+                ],
+                MatchIfTrue[Sequence[cst.RightParen]],
+            ]
+        ],
+        AllOf[
+            Union[
+                Sequence[
+                    Union[
+                        RightParenMatchType,
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                        AtLeastN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                    ]
+                ],
+                MatchIfTrue[Sequence[cst.RightParen]],
+            ]
+        ],
+    ] = DoNotCare()
+    metadata: Union[
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
+    ] = DoNotCare()
+
+
+MatchMappingElementMatchType = Union[
+    "MatchMappingElement", MetadataMatchType, MatchIfTrue[cst.MatchMappingElement]
+]
+
+
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
+class MatchMapping(BaseMatcherNode):
+    elements: Union[
+        Sequence[
+            Union[
+                MatchMappingElementMatchType,
+                DoNotCareSentinel,
+                OneOf[MatchMappingElementMatchType],
+                AllOf[MatchMappingElementMatchType],
+                AtLeastN[
+                    Union[
+                        MatchMappingElementMatchType,
+                        DoNotCareSentinel,
+                        OneOf[MatchMappingElementMatchType],
+                        AllOf[MatchMappingElementMatchType],
+                    ]
+                ],
+                AtMostN[
+                    Union[
+                        MatchMappingElementMatchType,
+                        DoNotCareSentinel,
+                        OneOf[MatchMappingElementMatchType],
+                        AllOf[MatchMappingElementMatchType],
+                    ]
+                ],
+            ]
+        ],
+        DoNotCareSentinel,
+        MatchIfTrue[Sequence[cst.MatchMappingElement]],
+        OneOf[
+            Union[
+                Sequence[
+                    Union[
+                        MatchMappingElementMatchType,
+                        OneOf[MatchMappingElementMatchType],
+                        AllOf[MatchMappingElementMatchType],
+                        AtLeastN[
+                            Union[
+                                MatchMappingElementMatchType,
+                                OneOf[MatchMappingElementMatchType],
+                                AllOf[MatchMappingElementMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                MatchMappingElementMatchType,
+                                OneOf[MatchMappingElementMatchType],
+                                AllOf[MatchMappingElementMatchType],
+                            ]
+                        ],
+                    ]
+                ],
+                MatchIfTrue[Sequence[cst.MatchMappingElement]],
+            ]
+        ],
+        AllOf[
+            Union[
+                Sequence[
+                    Union[
+                        MatchMappingElementMatchType,
+                        OneOf[MatchMappingElementMatchType],
+                        AllOf[MatchMappingElementMatchType],
+                        AtLeastN[
+                            Union[
+                                MatchMappingElementMatchType,
+                                OneOf[MatchMappingElementMatchType],
+                                AllOf[MatchMappingElementMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                MatchMappingElementMatchType,
+                                OneOf[MatchMappingElementMatchType],
+                                AllOf[MatchMappingElementMatchType],
+                            ]
+                        ],
+                    ]
+                ],
+                MatchIfTrue[Sequence[cst.MatchMappingElement]],
+            ]
+        ],
+    ] = DoNotCare()
+    lbrace: Union[
+        LeftCurlyBraceMatchType,
+        DoNotCareSentinel,
+        OneOf[LeftCurlyBraceMatchType],
+        AllOf[LeftCurlyBraceMatchType],
+    ] = DoNotCare()
+    rbrace: Union[
+        RightCurlyBraceMatchType,
+        DoNotCareSentinel,
+        OneOf[RightCurlyBraceMatchType],
+        AllOf[RightCurlyBraceMatchType],
+    ] = DoNotCare()
+    rest: Union[
+        Optional["Name"],
+        MetadataMatchType,
+        MatchIfTrue[Optional[cst.Name]],
+        DoNotCareSentinel,
+        OneOf[
+            Union[Optional["Name"], MetadataMatchType, MatchIfTrue[Optional[cst.Name]]]
+        ],
+        AllOf[
+            Union[Optional["Name"], MetadataMatchType, MatchIfTrue[Optional[cst.Name]]]
+        ],
+    ] = DoNotCare()
+    whitespace_before_rest: Union[
+        SimpleWhitespaceMatchType,
+        DoNotCareSentinel,
+        OneOf[SimpleWhitespaceMatchType],
+        AllOf[SimpleWhitespaceMatchType],
+    ] = DoNotCare()
+    trailing_comma: Union[
+        Optional["Comma"],
+        MetadataMatchType,
+        MatchIfTrue[Optional[cst.Comma]],
+        DoNotCareSentinel,
+        OneOf[
+            Union[
+                Optional["Comma"], MetadataMatchType, MatchIfTrue[Optional[cst.Comma]]
+            ]
+        ],
+        AllOf[
+            Union[
+                Optional["Comma"], MetadataMatchType, MatchIfTrue[Optional[cst.Comma]]
+            ]
+        ],
+    ] = DoNotCare()
+    lpar: Union[
+        Sequence[
+            Union[
+                LeftParenMatchType,
+                DoNotCareSentinel,
+                OneOf[LeftParenMatchType],
+                AllOf[LeftParenMatchType],
+                AtLeastN[
+                    Union[
+                        LeftParenMatchType,
+                        DoNotCareSentinel,
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                    ]
+                ],
+                AtMostN[
+                    Union[
+                        LeftParenMatchType,
+                        DoNotCareSentinel,
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                    ]
+                ],
+            ]
+        ],
+        DoNotCareSentinel,
+        MatchIfTrue[Sequence[cst.LeftParen]],
+        OneOf[
+            Union[
+                Sequence[
+                    Union[
+                        LeftParenMatchType,
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                        AtLeastN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                    ]
+                ],
+                MatchIfTrue[Sequence[cst.LeftParen]],
+            ]
+        ],
+        AllOf[
+            Union[
+                Sequence[
+                    Union[
+                        LeftParenMatchType,
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                        AtLeastN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                    ]
+                ],
+                MatchIfTrue[Sequence[cst.LeftParen]],
+            ]
+        ],
+    ] = DoNotCare()
+    rpar: Union[
+        Sequence[
+            Union[
+                RightParenMatchType,
+                DoNotCareSentinel,
+                OneOf[RightParenMatchType],
+                AllOf[RightParenMatchType],
+                AtLeastN[
+                    Union[
+                        RightParenMatchType,
+                        DoNotCareSentinel,
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                    ]
+                ],
+                AtMostN[
+                    Union[
+                        RightParenMatchType,
+                        DoNotCareSentinel,
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                    ]
+                ],
+            ]
+        ],
+        DoNotCareSentinel,
+        MatchIfTrue[Sequence[cst.RightParen]],
+        OneOf[
+            Union[
+                Sequence[
+                    Union[
+                        RightParenMatchType,
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                        AtLeastN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                    ]
+                ],
+                MatchIfTrue[Sequence[cst.RightParen]],
+            ]
+        ],
+        AllOf[
+            Union[
+                Sequence[
+                    Union[
+                        RightParenMatchType,
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                        AtLeastN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                    ]
+                ],
+                MatchIfTrue[Sequence[cst.RightParen]],
+            ]
+        ],
+    ] = DoNotCare()
+    metadata: Union[
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
+    ] = DoNotCare()
+
+
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
+class MatchMappingElement(BaseMatcherNode):
+    key: Union[
+        BaseExpressionMatchType,
+        DoNotCareSentinel,
+        OneOf[BaseExpressionMatchType],
+        AllOf[BaseExpressionMatchType],
+    ] = DoNotCare()
+    pattern: Union[
+        MatchPatternMatchType,
+        DoNotCareSentinel,
+        OneOf[MatchPatternMatchType],
+        AllOf[MatchPatternMatchType],
+    ] = DoNotCare()
+    comma: Union[
+        CommaMatchType, DoNotCareSentinel, OneOf[CommaMatchType], AllOf[CommaMatchType]
+    ] = DoNotCare()
+    whitespace_before_colon: Union[
+        BaseParenthesizableWhitespaceMatchType,
+        DoNotCareSentinel,
+        OneOf[BaseParenthesizableWhitespaceMatchType],
+        AllOf[BaseParenthesizableWhitespaceMatchType],
+    ] = DoNotCare()
+    whitespace_after_colon: Union[
+        BaseParenthesizableWhitespaceMatchType,
+        DoNotCareSentinel,
+        OneOf[BaseParenthesizableWhitespaceMatchType],
+        AllOf[BaseParenthesizableWhitespaceMatchType],
+    ] = DoNotCare()
+    metadata: Union[
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
+    ] = DoNotCare()
+
+
+MatchOrElementMatchType = Union[
+    "MatchOrElement", MetadataMatchType, MatchIfTrue[cst.MatchOrElement]
+]
+
+
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
+class MatchOr(BaseMatcherNode):
+    patterns: Union[
+        Sequence[
+            Union[
+                MatchOrElementMatchType,
+                DoNotCareSentinel,
+                OneOf[MatchOrElementMatchType],
+                AllOf[MatchOrElementMatchType],
+                AtLeastN[
+                    Union[
+                        MatchOrElementMatchType,
+                        DoNotCareSentinel,
+                        OneOf[MatchOrElementMatchType],
+                        AllOf[MatchOrElementMatchType],
+                    ]
+                ],
+                AtMostN[
+                    Union[
+                        MatchOrElementMatchType,
+                        DoNotCareSentinel,
+                        OneOf[MatchOrElementMatchType],
+                        AllOf[MatchOrElementMatchType],
+                    ]
+                ],
+            ]
+        ],
+        DoNotCareSentinel,
+        MatchIfTrue[Sequence[cst.MatchOrElement]],
+        OneOf[
+            Union[
+                Sequence[
+                    Union[
+                        MatchOrElementMatchType,
+                        OneOf[MatchOrElementMatchType],
+                        AllOf[MatchOrElementMatchType],
+                        AtLeastN[
+                            Union[
+                                MatchOrElementMatchType,
+                                OneOf[MatchOrElementMatchType],
+                                AllOf[MatchOrElementMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                MatchOrElementMatchType,
+                                OneOf[MatchOrElementMatchType],
+                                AllOf[MatchOrElementMatchType],
+                            ]
+                        ],
+                    ]
+                ],
+                MatchIfTrue[Sequence[cst.MatchOrElement]],
+            ]
+        ],
+        AllOf[
+            Union[
+                Sequence[
+                    Union[
+                        MatchOrElementMatchType,
+                        OneOf[MatchOrElementMatchType],
+                        AllOf[MatchOrElementMatchType],
+                        AtLeastN[
+                            Union[
+                                MatchOrElementMatchType,
+                                OneOf[MatchOrElementMatchType],
+                                AllOf[MatchOrElementMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                MatchOrElementMatchType,
+                                OneOf[MatchOrElementMatchType],
+                                AllOf[MatchOrElementMatchType],
+                            ]
+                        ],
+                    ]
+                ],
+                MatchIfTrue[Sequence[cst.MatchOrElement]],
+            ]
+        ],
+    ] = DoNotCare()
+    lpar: Union[
+        Sequence[
+            Union[
+                LeftParenMatchType,
+                DoNotCareSentinel,
+                OneOf[LeftParenMatchType],
+                AllOf[LeftParenMatchType],
+                AtLeastN[
+                    Union[
+                        LeftParenMatchType,
+                        DoNotCareSentinel,
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                    ]
+                ],
+                AtMostN[
+                    Union[
+                        LeftParenMatchType,
+                        DoNotCareSentinel,
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                    ]
+                ],
+            ]
+        ],
+        DoNotCareSentinel,
+        MatchIfTrue[Sequence[cst.LeftParen]],
+        OneOf[
+            Union[
+                Sequence[
+                    Union[
+                        LeftParenMatchType,
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                        AtLeastN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                    ]
+                ],
+                MatchIfTrue[Sequence[cst.LeftParen]],
+            ]
+        ],
+        AllOf[
+            Union[
+                Sequence[
+                    Union[
+                        LeftParenMatchType,
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                        AtLeastN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                    ]
+                ],
+                MatchIfTrue[Sequence[cst.LeftParen]],
+            ]
+        ],
+    ] = DoNotCare()
+    rpar: Union[
+        Sequence[
+            Union[
+                RightParenMatchType,
+                DoNotCareSentinel,
+                OneOf[RightParenMatchType],
+                AllOf[RightParenMatchType],
+                AtLeastN[
+                    Union[
+                        RightParenMatchType,
+                        DoNotCareSentinel,
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                    ]
+                ],
+                AtMostN[
+                    Union[
+                        RightParenMatchType,
+                        DoNotCareSentinel,
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                    ]
+                ],
+            ]
+        ],
+        DoNotCareSentinel,
+        MatchIfTrue[Sequence[cst.RightParen]],
+        OneOf[
+            Union[
+                Sequence[
+                    Union[
+                        RightParenMatchType,
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                        AtLeastN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                    ]
+                ],
+                MatchIfTrue[Sequence[cst.RightParen]],
+            ]
+        ],
+        AllOf[
+            Union[
+                Sequence[
+                    Union[
+                        RightParenMatchType,
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                        AtLeastN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                    ]
+                ],
+                MatchIfTrue[Sequence[cst.RightParen]],
+            ]
+        ],
+    ] = DoNotCare()
+    metadata: Union[
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
+    ] = DoNotCare()
+
+
+BitOrMatchType = Union["BitOr", MetadataMatchType, MatchIfTrue[cst.BitOr]]
+
+
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
+class MatchOrElement(BaseMatcherNode):
+    pattern: Union[
+        MatchPatternMatchType,
+        DoNotCareSentinel,
+        OneOf[MatchPatternMatchType],
+        AllOf[MatchPatternMatchType],
+    ] = DoNotCare()
+    separator: Union[
+        BitOrMatchType, DoNotCareSentinel, OneOf[BitOrMatchType], AllOf[BitOrMatchType]
+    ] = DoNotCare()
+    metadata: Union[
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
+    ] = DoNotCare()
+
+
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
+class MatchPattern(BaseMatcherNode):
+    metadata: Union[
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
+    ] = DoNotCare()
+
+
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
+class MatchSequence(BaseMatcherNode):
+    metadata: Union[
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
+    ] = DoNotCare()
+
+
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
+class MatchSequenceElement(BaseMatcherNode):
+    value: Union[
+        MatchPatternMatchType,
+        DoNotCareSentinel,
+        OneOf[MatchPatternMatchType],
+        AllOf[MatchPatternMatchType],
+    ] = DoNotCare()
+    comma: Union[
+        CommaMatchType, DoNotCareSentinel, OneOf[CommaMatchType], AllOf[CommaMatchType]
+    ] = DoNotCare()
+    metadata: Union[
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
+    ] = DoNotCare()
+
+
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
+class MatchSingleton(BaseMatcherNode):
+    value: Union[
+        NameMatchType, DoNotCareSentinel, OneOf[NameMatchType], AllOf[NameMatchType]
+    ] = DoNotCare()
+    metadata: Union[
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
+    ] = DoNotCare()
+
+
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
+class MatchStar(BaseMatcherNode):
+    name: Union[
+        Optional["Name"],
+        MetadataMatchType,
+        MatchIfTrue[Optional[cst.Name]],
+        DoNotCareSentinel,
+        OneOf[
+            Union[Optional["Name"], MetadataMatchType, MatchIfTrue[Optional[cst.Name]]]
+        ],
+        AllOf[
+            Union[Optional["Name"], MetadataMatchType, MatchIfTrue[Optional[cst.Name]]]
+        ],
+    ] = DoNotCare()
+    comma: Union[
+        CommaMatchType, DoNotCareSentinel, OneOf[CommaMatchType], AllOf[CommaMatchType]
+    ] = DoNotCare()
+    whitespace_before_name: Union[
+        BaseParenthesizableWhitespaceMatchType,
+        DoNotCareSentinel,
+        OneOf[BaseParenthesizableWhitespaceMatchType],
+        AllOf[BaseParenthesizableWhitespaceMatchType],
+    ] = DoNotCare()
+    metadata: Union[
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
+    ] = DoNotCare()
+
+
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
+class MatchTuple(BaseMatcherNode):
+    patterns: Union[
+        Sequence[
+            Union[
+                MatchSequenceElementOrMatchStarMatchType,
+                DoNotCareSentinel,
+                OneOf[MatchSequenceElementOrMatchStarMatchType],
+                AllOf[MatchSequenceElementOrMatchStarMatchType],
+                AtLeastN[
+                    Union[
+                        MatchSequenceElementOrMatchStarMatchType,
+                        DoNotCareSentinel,
+                        OneOf[MatchSequenceElementOrMatchStarMatchType],
+                        AllOf[MatchSequenceElementOrMatchStarMatchType],
+                    ]
+                ],
+                AtMostN[
+                    Union[
+                        MatchSequenceElementOrMatchStarMatchType,
+                        DoNotCareSentinel,
+                        OneOf[MatchSequenceElementOrMatchStarMatchType],
+                        AllOf[MatchSequenceElementOrMatchStarMatchType],
+                    ]
+                ],
+            ]
+        ],
+        DoNotCareSentinel,
+        MatchIfTrue[
+            Sequence[
+                Union[
+                    cst.MatchSequenceElement,
+                    cst.MatchStar,
+                    OneOf[Union[cst.MatchSequenceElement, cst.MatchStar]],
+                    AllOf[Union[cst.MatchSequenceElement, cst.MatchStar]],
+                ]
+            ]
+        ],
+        OneOf[
+            Union[
+                Sequence[
+                    Union[
+                        MatchSequenceElementOrMatchStarMatchType,
+                        OneOf[MatchSequenceElementOrMatchStarMatchType],
+                        AllOf[MatchSequenceElementOrMatchStarMatchType],
+                        AtLeastN[
+                            Union[
+                                MatchSequenceElementOrMatchStarMatchType,
+                                OneOf[MatchSequenceElementOrMatchStarMatchType],
+                                AllOf[MatchSequenceElementOrMatchStarMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                MatchSequenceElementOrMatchStarMatchType,
+                                OneOf[MatchSequenceElementOrMatchStarMatchType],
+                                AllOf[MatchSequenceElementOrMatchStarMatchType],
+                            ]
+                        ],
+                    ]
+                ],
+                MatchIfTrue[
+                    Sequence[
+                        Union[
+                            cst.MatchSequenceElement,
+                            cst.MatchStar,
+                            OneOf[Union[cst.MatchSequenceElement, cst.MatchStar]],
+                            AllOf[Union[cst.MatchSequenceElement, cst.MatchStar]],
+                        ]
+                    ]
+                ],
+            ]
+        ],
+        AllOf[
+            Union[
+                Sequence[
+                    Union[
+                        MatchSequenceElementOrMatchStarMatchType,
+                        OneOf[MatchSequenceElementOrMatchStarMatchType],
+                        AllOf[MatchSequenceElementOrMatchStarMatchType],
+                        AtLeastN[
+                            Union[
+                                MatchSequenceElementOrMatchStarMatchType,
+                                OneOf[MatchSequenceElementOrMatchStarMatchType],
+                                AllOf[MatchSequenceElementOrMatchStarMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                MatchSequenceElementOrMatchStarMatchType,
+                                OneOf[MatchSequenceElementOrMatchStarMatchType],
+                                AllOf[MatchSequenceElementOrMatchStarMatchType],
+                            ]
+                        ],
+                    ]
+                ],
+                MatchIfTrue[
+                    Sequence[
+                        Union[
+                            cst.MatchSequenceElement,
+                            cst.MatchStar,
+                            OneOf[Union[cst.MatchSequenceElement, cst.MatchStar]],
+                            AllOf[Union[cst.MatchSequenceElement, cst.MatchStar]],
+                        ]
+                    ]
+                ],
+            ]
+        ],
+    ] = DoNotCare()
+    lpar: Union[
+        Sequence[
+            Union[
+                LeftParenMatchType,
+                DoNotCareSentinel,
+                OneOf[LeftParenMatchType],
+                AllOf[LeftParenMatchType],
+                AtLeastN[
+                    Union[
+                        LeftParenMatchType,
+                        DoNotCareSentinel,
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                    ]
+                ],
+                AtMostN[
+                    Union[
+                        LeftParenMatchType,
+                        DoNotCareSentinel,
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                    ]
+                ],
+            ]
+        ],
+        DoNotCareSentinel,
+        MatchIfTrue[Sequence[cst.LeftParen]],
+        OneOf[
+            Union[
+                Sequence[
+                    Union[
+                        LeftParenMatchType,
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                        AtLeastN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                    ]
+                ],
+                MatchIfTrue[Sequence[cst.LeftParen]],
+            ]
+        ],
+        AllOf[
+            Union[
+                Sequence[
+                    Union[
+                        LeftParenMatchType,
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                        AtLeastN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                    ]
+                ],
+                MatchIfTrue[Sequence[cst.LeftParen]],
+            ]
+        ],
+    ] = DoNotCare()
+    rpar: Union[
+        Sequence[
+            Union[
+                RightParenMatchType,
+                DoNotCareSentinel,
+                OneOf[RightParenMatchType],
+                AllOf[RightParenMatchType],
+                AtLeastN[
+                    Union[
+                        RightParenMatchType,
+                        DoNotCareSentinel,
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                    ]
+                ],
+                AtMostN[
+                    Union[
+                        RightParenMatchType,
+                        DoNotCareSentinel,
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                    ]
+                ],
+            ]
+        ],
+        DoNotCareSentinel,
+        MatchIfTrue[Sequence[cst.RightParen]],
+        OneOf[
+            Union[
+                Sequence[
+                    Union[
+                        RightParenMatchType,
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                        AtLeastN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                    ]
+                ],
+                MatchIfTrue[Sequence[cst.RightParen]],
+            ]
+        ],
+        AllOf[
+            Union[
+                Sequence[
+                    Union[
+                        RightParenMatchType,
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                        AtLeastN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                    ]
+                ],
+                MatchIfTrue[Sequence[cst.RightParen]],
+            ]
+        ],
+    ] = DoNotCare()
+    metadata: Union[
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
+    ] = DoNotCare()
+
+
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
+class MatchValue(BaseMatcherNode):
+    value: Union[
+        BaseExpressionMatchType,
+        DoNotCareSentinel,
+        OneOf[BaseExpressionMatchType],
+        AllOf[BaseExpressionMatchType],
+    ] = DoNotCare()
+    metadata: Union[
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
+    ] = DoNotCare()
+
+
 @dataclass(frozen=True, eq=False, unsafe_hash=False)
 class MatrixMultiply(BaseBinaryOp, BaseMatcherNode):
     whitespace_before: Union[
@@ -13061,11 +15423,28 @@ __all__ = [
     "LessThanEqual",
     "List",
     "ListComp",
+    "Match",
+    "MatchAs",
+    "MatchCase",
+    "MatchClass",
     "MatchDecoratorMismatch",
     "MatchIfTrue",
+    "MatchKeywordElement",
+    "MatchList",
+    "MatchMapping",
+    "MatchMappingElement",
     "MatchMetadata",
     "MatchMetadataIfTrue",
+    "MatchOr",
+    "MatchOrElement",
+    "MatchPattern",
     "MatchRegex",
+    "MatchSequence",
+    "MatchSequenceElement",
+    "MatchSingleton",
+    "MatchStar",
+    "MatchTuple",
+    "MatchValue",
     "MatcherDecoratableTransformer",
     "MatcherDecoratableVisitor",
     "MatrixMultiply",

@@ -6,13 +6,14 @@
 import inspect
 import re
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Optional, Pattern, Sequence, Union
 
 from libcst._add_slots import add_slots
 from libcst._maybe_sentinel import MaybeSentinel
 from libcst._nodes.base import CSTNode, CSTValidationError
 from libcst._nodes.expression import (
+    _BaseParenthesizedNode,
     Annotation,
     Arg,
     Asynchronous,
@@ -24,11 +25,15 @@ from libcst._nodes.expression import (
     ConcatenatedString,
     ExpressionPosition,
     From,
+    LeftCurlyBrace,
     LeftParen,
+    LeftSquareBracket,
     List,
     Name,
     Parameters,
+    RightCurlyBrace,
     RightParen,
+    RightSquareBracket,
     SimpleString,
     Tuple,
 )
@@ -40,7 +45,15 @@ from libcst._nodes.internal import (
     visit_sentinel,
     visit_sequence,
 )
-from libcst._nodes.op import AssignEqual, BaseAugOp, Comma, Dot, ImportStar, Semicolon
+from libcst._nodes.op import (
+    AssignEqual,
+    BaseAugOp,
+    BitOr,
+    Comma,
+    Dot,
+    ImportStar,
+    Semicolon,
+)
 from libcst._nodes.whitespace import (
     BaseParenthesizableWhitespace,
     EmptyLine,
@@ -2419,3 +2432,811 @@ class Nonlocal(BaseSmallStatement):
                 state.add_token("; ")
         elif isinstance(semicolon, Semicolon):
             semicolon._codegen(state)
+
+
+class MatchPattern(_BaseParenthesizedNode, ABC):
+    """
+    A base class for anything that can appear as a pattern in a :class:`Match`
+    statement.
+    """
+
+
+class MatchSequence(MatchPattern, ABC):
+    """
+    A match sequence pattern. It's either a :class:`MatchList` or a :class:`MatchTuple`.
+    Matches a variable length sequence if one of the patterns is a :class:`MatchStar`,
+    otherwise matches a fixed length sequence.
+    """
+
+    #: Patterns to be matched against the subject elements if it is a sequence.
+    patterns: Sequence[Union["MatchSequenceElement", "MatchStar"]]
+
+
+@add_slots
+@dataclass(frozen=True)
+class Match(BaseCompoundStatement):
+    """
+    A ``match`` statement.
+    """
+
+    #: The subject of the match.
+    subject: BaseExpression
+
+    #: A non-empty list of match cases.
+    cases: Sequence["MatchCase"]
+
+    #: Sequence of empty lines appearing before this compound statement line.
+    leading_lines: Sequence[EmptyLine] = ()
+
+    #: Whitespace between the ``match`` keyword and the subject.
+    whitespace_after_match: SimpleWhitespace = SimpleWhitespace.field(" ")
+
+    #: Whitespace after the subject but before the colon.
+    whitespace_before_colon: SimpleWhitespace = SimpleWhitespace.field("")
+
+    #: Any optional trailing comment and the final ``NEWLINE`` at the end of the line.
+    whitespace_after_colon: TrailingWhitespace = TrailingWhitespace.field()
+
+    #: A string represents a specific indentation. A ``None`` value uses the modules's
+    #: default indentation. This is included because indentation is allowed to be
+    #: inconsistent across a file, just not ambiguously.
+    indent: Optional[str] = None
+
+    #: Any trailing comments or lines after the dedent that are owned by this match
+    #: block. Statements own preceeding and same-line trailing comments, but not
+    #: trailing lines, so it falls on :class:`Match` to own it. In the case
+    #: that a statement follows a :class:`Match` block, that statement will own the
+    #: comments and lines that are at the same indent as the statement, and this
+    #: :class:`Match` will own the comments and lines that are indented further.
+    footer: Sequence[EmptyLine] = ()
+
+    def _validate(self) -> None:
+        if len(self.cases) == 0:
+            raise CSTValidationError("A match statement must have at least one case.")
+
+        if self.whitespace_after_match.empty:
+            raise CSTValidationError(
+                "Must have at least one space after a 'match' keyword"
+            )
+
+        indent = self.indent
+        if indent is not None:
+            if len(indent) == 0:
+                raise CSTValidationError(
+                    "A match statement must have a non-zero width indent."
+                )
+            if _INDENT_WHITESPACE_RE.fullmatch(indent) is None:
+                raise CSTValidationError(
+                    "An indent must be composed of only whitespace characters."
+                )
+
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Match":
+        return Match(
+            leading_lines=visit_sequence(
+                self, "leading_lines", self.leading_lines, visitor
+            ),
+            whitespace_after_match=visit_required(
+                self, "whitespace_after_match", self.whitespace_after_match, visitor
+            ),
+            subject=visit_required(self, "subject", self.subject, visitor),
+            whitespace_before_colon=visit_required(
+                self, "whitespace_before_colon", self.whitespace_before_colon, visitor
+            ),
+            whitespace_after_colon=visit_required(
+                self, "whitespace_after_colon", self.whitespace_after_colon, visitor
+            ),
+            indent=self.indent,
+            cases=visit_sequence(self, "cases", self.cases, visitor),
+            footer=visit_sequence(self, "footer", self.footer, visitor),
+        )
+
+    def _codegen_impl(self, state: CodegenState) -> None:
+        for ll in self.leading_lines:
+            ll._codegen(state)
+        state.add_indent_tokens()
+
+        with state.record_syntactic_position(self, end_node=self.cases[-1]):
+            state.add_token("match")
+            self.whitespace_after_match._codegen(state)
+            self.subject._codegen(state)
+            self.whitespace_before_colon._codegen(state)
+            state.add_token(":")
+            self.whitespace_after_colon._codegen(state)
+
+            indent = self.indent
+            state.increase_indent(state.default_indent if indent is None else indent)
+            for c in self.cases:
+                c._codegen(state)
+
+            for f in self.footer:
+                f._codegen(state)
+
+            state.decrease_indent()
+
+
+@add_slots
+@dataclass(frozen=True)
+class MatchCase(CSTNode):
+    """
+    A single ``case`` block of a :class:`Match` statement.
+    """
+
+    #: The pattern that ``subject`` will be matched against.
+    pattern: MatchPattern
+
+    #: The body of this case block, to be evaluated if ``pattern`` matches ``subject``
+    #: and ``guard`` evaluates to a truthy value.
+    body: BaseSuite
+
+    #: Optional expression that will be evaluated if ``pattern`` matches ``subject``.
+    guard: Optional[BaseExpression] = None
+
+    #: Sequence of empty lines appearing before this case block.
+    leading_lines: Sequence[EmptyLine] = ()
+
+    #: Whitespace directly after the ``case`` keyword.
+    whitespace_after_case: SimpleWhitespace = SimpleWhitespace.field(" ")
+
+    #: Whitespace before the ``if`` keyword in case there's a guard expression.
+    whitespace_before_if: SimpleWhitespace = SimpleWhitespace.field("")
+
+    #: Whitespace after the ``if`` keyword in case there's a guard expression.
+    whitespace_after_if: SimpleWhitespace = SimpleWhitespace.field("")
+
+    #: Whitespace before the colon.
+    whitespace_before_colon: SimpleWhitespace = SimpleWhitespace.field("")
+
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "CSTNode":
+        return MatchCase(
+            leading_lines=visit_sequence(
+                self, "leading_lines", self.leading_lines, visitor
+            ),
+            whitespace_after_case=visit_required(
+                self, "whitespace_after_case", self.whitespace_after_case, visitor
+            ),
+            pattern=visit_required(self, "pattern", self.pattern, visitor),
+            whitespace_before_if=visit_optional(
+                self, "whitespace_before_if", self.whitespace_before_if, visitor
+            ),
+            whitespace_after_if=visit_optional(
+                self, "whitespace_after_if", self.whitespace_after_if, visitor
+            ),
+            guard=visit_optional(self, "guard", self.guard, visitor),
+            body=visit_required(self, "body", self.body, visitor),
+        )
+
+    def _codegen_impl(self, state: CodegenState) -> None:
+        for ll in self.leading_lines:
+            ll._codegen(state)
+        state.add_indent_tokens()
+        with state.record_syntactic_position(self, end_node=self.body):
+            state.add_token("case")
+            self.whitespace_after_case._codegen(state)
+            self.pattern._codegen(state)
+
+            guard = self.guard
+            if guard is not None:
+                self.whitespace_before_if._codegen(state)
+                state.add_token("if")
+                self.whitespace_after_if._codegen(state)
+                guard._codegen(state)
+
+            self.whitespace_before_colon._codegen(state)
+            state.add_token(":")
+            self.body._codegen(state)
+
+
+@add_slots
+@dataclass(frozen=True)
+class MatchValue(MatchPattern):
+    """
+    A match literal or value pattern that compares by equality.
+    """
+
+    #: an expression to compare to
+    value: BaseExpression
+
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "CSTNode":
+        return MatchValue(value=visit_required(self, "value", self.value, visitor))
+
+    def _codegen_impl(self, state: CodegenState) -> None:
+        with state.record_syntactic_position(self):
+            self.value._codegen(state)
+
+    @property
+    def lpar(self) -> Sequence[LeftParen]:
+        return self.value.lpar
+
+    @lpar.setter
+    def lpar(self, value: Sequence[LeftParen]) -> None:
+        self.value.lpar = value
+
+
+@add_slots
+@dataclass(frozen=True)
+class MatchSingleton(MatchPattern):
+    """
+    A match literal pattern that compares by identity.
+    """
+
+    #: a literal to compare to
+    value: Name
+
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "CSTNode":
+        return MatchSingleton(value=visit_required(self, "value", self.value, visitor))
+
+    def _validate(self) -> None:
+        if self.value.value not in {"True", "False", "None"}:
+            raise CSTValidationError(
+                "A match singleton can only be True, False, or None"
+            )
+
+    def _codegen_impl(self, state: CodegenState) -> None:
+        with state.record_syntactic_position(self):
+            self.value._codegen(state)
+
+    @property
+    def lpar(self) -> Sequence[LeftParen]:
+        return self.value.lpar
+
+    @lpar.setter
+    def lpar(self, value: Sequence[LeftParen]) -> None:
+        self.value.lpar = value
+
+
+@add_slots
+@dataclass(frozen=True)
+class MatchList(MatchSequence):
+    """
+    A list match pattern. It's either an "open sequence pattern" (without brackets) or a
+    regular list literal (with brackets).
+    """
+
+    #: Patterns to be matched against the subject elements if it is a sequence.
+    patterns: Sequence[Union["MatchSequenceElement", "MatchStar"]]
+
+    #: An optional left bracket. If missing, this is an open sequence pattern.
+    lbracket: Optional[LeftSquareBracket] = LeftSquareBracket.field()
+
+    #: An optional left bracket. If missing, this is an open sequence pattern.
+    rbracket: Optional[RightSquareBracket] = RightSquareBracket.field()
+
+    #: Parenthesis at the beginning of the node
+    lpar: Sequence[LeftParen] = ()
+    #: Parentheses after the pattern, but before a comma (if there is one).
+    rpar: Sequence[RightParen] = ()
+
+    def _validate(self) -> None:
+        if self.lbracket and not self.rbracket:
+            raise CSTValidationError("Cannot have left bracket without right bracket")
+        if self.rbracket and not self.lbracket:
+            raise CSTValidationError("Cannot have right bracket without left bracket")
+
+        if not self.patterns and not self.lbracket:
+            raise CSTValidationError(
+                "Must have brackets if matching against empty list"
+            )
+
+        super(MatchList, self)._validate()
+
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "MatchList":
+        return MatchList(
+            lpar=visit_sequence(self, "lpar", self.lpar, visitor),
+            lbracket=visit_optional(self, "lbracket", self.lbracket, visitor),
+            patterns=visit_sequence(self, "patterns", self.patterns, visitor),
+            rbracket=visit_optional(self, "rbracket", self.rbracket, visitor),
+            rpar=visit_sequence(self, "rpar", self.rpar, visitor),
+        )
+
+    def _codegen_impl(self, state: CodegenState) -> None:
+        with self._parenthesize(state):
+            lbracket = self.lbracket
+            if lbracket is not None:
+                lbracket._codegen(state)
+            pats = self.patterns
+            for idx, pat in enumerate(pats):
+                pat._codegen(state, default_comma=(idx < len(pats) - 1))
+            rbracket = self.rbracket
+            if rbracket is not None:
+                rbracket._codegen(state)
+
+
+@add_slots
+@dataclass(frozen=True)
+class MatchTuple(MatchSequence):
+    """
+    A tuple match pattern.
+    """
+
+    #: Patterns to be matched against the subject elements if it is a sequence.
+    patterns: Sequence[Union["MatchSequenceElement", "MatchStar"]]
+
+    #: Parenthesis at the beginning of the node
+    lpar: Sequence[LeftParen] = field(default_factory=lambda: (LeftParen(),))
+    #: Parentheses after the pattern, but before a comma (if there is one).
+    rpar: Sequence[RightParen] = field(default_factory=lambda: (RightParen(),))
+
+    def _validate(self) -> None:
+        if len(self.lpar) < 1:
+            raise CSTValidationError(
+                "Tuple patterns must have at least pair of parenthesis"
+            )
+
+        super(MatchTuple, self)._validate()
+
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "MatchTuple":
+        return MatchTuple(
+            lpar=visit_sequence(self, "lpar", self.lpar, visitor),
+            patterns=visit_sequence(self, "patterns", self.patterns, visitor),
+            rpar=visit_sequence(self, "rpar", self.rpar, visitor),
+        )
+
+    def _codegen_impl(self, state: CodegenState) -> None:
+        with self._parenthesize(state):
+            pats = self.patterns
+            l = len(pats)
+            for idx, pat in enumerate(pats):
+                pat._codegen(
+                    state,
+                    default_comma=l == 1 or (idx < l - 1),
+                    default_comma_whitespace=l != 1,
+                )
+
+
+@add_slots
+@dataclass(frozen=True)
+class MatchSequenceElement(CSTNode):
+    """
+    An element in a sequence match pattern.
+    """
+
+    value: MatchPattern
+
+    #: An optional trailing comma.
+    comma: Union[Comma, MaybeSentinel] = MaybeSentinel.DEFAULT
+
+    def _visit_and_replace_children(
+        self, visitor: CSTVisitorT
+    ) -> "MatchSequenceElement":
+        return MatchSequenceElement(
+            value=visit_required(self, "value", self.value, visitor),
+            comma=visit_sentinel(self, "comma", self.comma, visitor),
+        )
+
+    def _codegen_impl(
+        self,
+        state: CodegenState,
+        default_comma: bool = False,
+        default_comma_whitespace: bool = True,
+    ) -> None:
+        with state.record_syntactic_position(self):
+            self.value._codegen(state)
+            comma = self.comma
+            if comma is MaybeSentinel.DEFAULT and default_comma:
+                state.add_token(", " if default_comma_whitespace else ",")
+            elif isinstance(comma, Comma):
+                comma._codegen(state)
+
+
+@add_slots
+@dataclass(frozen=True)
+class MatchStar(CSTNode):
+    """
+    A starred element in a sequence match pattern. Matches the rest of the sequence.
+    """
+
+    #: The name of the pattern binding. A ``None`` value represents ``*_``.
+    name: Optional[Name] = None
+
+    #: An optional trailing comma.
+    comma: Union[Comma, MaybeSentinel] = MaybeSentinel.DEFAULT
+
+    #: Optional whitespace between the star and the name.
+    whitespace_before_name: BaseParenthesizableWhitespace = SimpleWhitespace.field("")
+
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "MatchStar":
+        return MatchStar(
+            whitespace_before_name=visit_required(
+                self, "whitespace_before_name", self.whitespace_before_name, visitor
+            ),
+            name=visit_optional(self, "name", self.name, visitor),
+            comma=visit_sentinel(self, "comma", self.comma, visitor),
+        )
+
+    def _codegen_impl(
+        self,
+        state: CodegenState,
+        default_comma: bool = False,
+        default_comma_whitespace: bool = True,
+    ) -> None:
+        with state.record_syntactic_position(self):
+            state.add_token("*")
+            self.whitespace_before_name._codegen(state)
+            name = self.name
+            if name is None:
+                state.add_token("_")
+            else:
+                name._codegen(state)
+            comma = self.comma
+            if comma is MaybeSentinel.DEFAULT and default_comma:
+                state.add_token(", " if default_comma_whitespace else ",")
+            elif isinstance(comma, Comma):
+                comma._codegen(state)
+
+
+@add_slots
+@dataclass(frozen=True)
+class MatchMappingElement(CSTNode):
+    """
+    A ``key: value`` pair in a match mapping pattern.
+    """
+
+    key: BaseExpression
+
+    #: The pattern to be matched corresponding to ``key``.
+    pattern: MatchPattern
+
+    #: An optional trailing comma.
+    comma: Union[Comma, MaybeSentinel] = MaybeSentinel.DEFAULT
+
+    #: Whitespace between ``key`` and the colon.
+    whitespace_before_colon: BaseParenthesizableWhitespace = SimpleWhitespace.field("")
+
+    #: Whitespace between the colon and ``pattern``.
+    whitespace_after_colon: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
+
+    def _visit_and_replace_children(
+        self, visitor: CSTVisitorT
+    ) -> "MatchMappingElement":
+        return MatchMappingElement(
+            key=visit_required(self, "key", self.key, visitor),
+            whitespace_before_colon=visit_required(
+                self, "whitespace_before_colon", self.whitespace_before_colon, visitor
+            ),
+            whitespace_after_colon=visit_required(
+                self, "whitespace_after_colon", self.whitespace_after_colon, visitor
+            ),
+            pattern=visit_required(self, "pattern", self.pattern, visitor),
+            comma=visit_sentinel(self, "comma", self.comma, visitor),
+        )
+
+    def _codegen_impl(self, state: CodegenState, default_comma: bool = False) -> None:
+        with state.record_syntactic_position(self):
+            self.key._codegen(state)
+            self.whitespace_before_colon._codegen(state)
+            state.add_token(":")
+            self.whitespace_after_colon._codegen(state)
+            self.pattern._codegen(state)
+            comma = self.comma
+            if comma is MaybeSentinel.DEFAULT and default_comma:
+                state.add_token(", ")
+            elif isinstance(comma, Comma):
+                comma._codegen(state)
+
+
+@add_slots
+@dataclass(frozen=True)
+class MatchMapping(MatchPattern):
+    """
+    A match mapping pattern.
+    """
+
+    #: A sequence of mapping elements.
+    elements: Sequence[MatchMappingElement] = ()
+
+    #: Left curly brace at the beginning of the pattern.
+    lbrace: LeftCurlyBrace = LeftCurlyBrace.field()
+
+    #: Right curly brace at the end of the pattern.
+    rbrace: RightCurlyBrace = RightCurlyBrace.field()
+
+    #: An optional name to capture the remaining elements of the mapping.
+    rest: Optional[Name] = None
+
+    #: Optional whitespace between stars and ``rest``.
+    whitespace_before_rest: SimpleWhitespace = SimpleWhitespace.field("")
+
+    #: An optional trailing comma attached to ``rest``.
+    trailing_comma: Optional[Comma] = None
+
+    #: Parenthesis at the beginning of the node
+    lpar: Sequence[LeftParen] = ()
+    #: Parentheses after the pattern
+    rpar: Sequence[RightParen] = ()
+
+    def _validate(self) -> None:
+        if isinstance(self.trailing_comma, Comma) and self.rest is not None:
+            raise CSTValidationError("Cannot have a trailing comma without **rest")
+        super(MatchMapping, self)._validate()
+
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "MatchMapping":
+        return MatchMapping(
+            lpar=visit_sequence(self, "lpar", self.lpar, visitor),
+            lbrace=visit_required(self, "lbrace", self.lbrace, visitor),
+            elements=visit_sequence(self, "elements", self.elements, visitor),
+            whitespace_before_rest=visit_required(
+                self, "whitespace_before_rest", self.whitespace_before_rest, visitor
+            ),
+            rest=visit_optional(self, "rest", self.rest, visitor),
+            trailing_comma=visit_optional(
+                self, "trailing_comma", self.trailing_comma, visitor
+            ),
+            rbrace=visit_required(self, "rbrace", self.rbrace, visitor),
+            rpar=visit_sequence(self, "rpar", self.rpar, visitor),
+        )
+
+    def _codegen_impl(self, state: CodegenState) -> None:
+        with self._parenthesize(state):
+            self.lbrace._codegen(state)
+            elems = self.elements
+            rest = self.rest
+            for idx, el in enumerate(elems):
+                el._codegen(
+                    state, default_comma=rest is not None or idx < len(elems) - 1
+                )
+
+            if rest is not None:
+                state.add_token("**")
+                self.whitespace_before_rest._codegen(state)
+                rest._codegen(state)
+                comma = self.trailing_comma
+                if comma is not None:
+                    comma._codegen(state)
+
+            self.rbrace._codegen(state)
+
+
+@add_slots
+@dataclass(frozen=True)
+class MatchKeywordElement(CSTNode):
+    """
+    A key=value pair in a :class:`MatchClass`.
+    """
+
+    key: Name
+
+    #: The pattern to be matched against the attribute named ``key``.
+    pattern: MatchPattern
+
+    #: An optional trailing comma.
+    comma: Union[Comma, MaybeSentinel] = MaybeSentinel.DEFAULT
+
+    #: Whitespace between ``key`` and the equals sign.
+    whitespace_before_equal: BaseParenthesizableWhitespace = SimpleWhitespace.field("")
+
+    #: Whitespace between the equals sign and ``pattern``.
+    whitespace_after_equal: BaseParenthesizableWhitespace = SimpleWhitespace.field("")
+
+    def _visit_and_replace_children(
+        self, visitor: CSTVisitorT
+    ) -> "MatchKeywordElement":
+        return MatchKeywordElement(
+            key=visit_required(self, "key", self.key, visitor),
+            whitespace_before_equal=visit_required(
+                self, "whitespace_before_equal", self.whitespace_before_equal, visitor
+            ),
+            whitespace_after_equal=visit_required(
+                self, "whitespace_after_equal", self.whitespace_after_equal, visitor
+            ),
+            pattern=visit_required(self, "pattern", self.pattern, visitor),
+            comma=visit_sentinel(self, "comma", self.comma, visitor),
+        )
+
+    def _codegen_impl(self, state: CodegenState, default_comma: bool = False) -> None:
+        with state.record_syntactic_position(self):
+            self.key._codegen(state)
+            self.whitespace_before_equal._codegen(state)
+            state.add_token("=")
+            self.whitespace_after_equal._codegen(state)
+            self.pattern._codegen(state)
+            comma = self.comma
+            if comma is MaybeSentinel.DEFAULT and default_comma:
+                state.add_token(", ")
+            elif isinstance(comma, Comma):
+                comma._codegen(state)
+
+
+@add_slots
+@dataclass(frozen=True)
+class MatchClass(MatchPattern):
+    """
+    A match class pattern.
+    """
+
+    #: An expression giving the nominal class to be matched.
+    cls: BaseExpression
+
+    #: A sequence of patterns to be matched against the class defined sequence of
+    #: pattern matching attributes.
+    patterns: Sequence[MatchSequenceElement] = ()
+
+    #: A sequence of additional attribute names and corresponding patterns to be
+    #: matched.
+    kwds: Sequence[MatchKeywordElement] = ()
+
+    #: Whitespace between the class name and the left parenthesis.
+    whitespace_after_cls: BaseParenthesizableWhitespace = SimpleWhitespace.field("")
+
+    #: Whitespace between the left parenthesis and the first pattern.
+    whitespace_before_patterns: BaseParenthesizableWhitespace = SimpleWhitespace.field(
+        ""
+    )
+
+    #: Whitespace between the last pattern and the right parenthesis.
+    whitespace_after_kwds: BaseParenthesizableWhitespace = SimpleWhitespace.field("")
+
+    #: Parenthesis at the beginning of the node
+    lpar: Sequence[LeftParen] = ()
+    #: Parentheses after the pattern
+    rpar: Sequence[RightParen] = ()
+
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "MatchClass":
+        return MatchClass(
+            lpar=visit_sequence(self, "lpar", self.lpar, visitor),
+            cls=visit_required(self, "cls", self.cls, visitor),
+            whitespace_after_cls=visit_required(
+                self, "whitespace_after_cls", self.whitespace_after_cls, visitor
+            ),
+            whitespace_before_patterns=visit_required(
+                self,
+                "whitespace_before_patterns",
+                self.whitespace_before_patterns,
+                visitor,
+            ),
+            patterns=visit_sequence(self, "patterns", self.patterns, visitor),
+            kwds=visit_sequence(self, "kwds", self.kwds, visitor),
+            whitespace_after_kwds=visit_required(
+                self, "whitespace_after_kwds", self.whitespace_after_kwds, visitor
+            ),
+        )
+
+    def _codegen_impl(self, state: CodegenState) -> None:
+        with self._parenthesize(state):
+            self.cls._codegen(state)
+            self.whitespace_after_cls._codegen(state)
+            state.add_token("(")
+            self.whitespace_before_patterns._codegen(state)
+            pats = self.patterns
+            kwds = self.kwds
+            for idx, pat in enumerate(pats):
+                pat._codegen(state, default_comma=idx + 1 < len(pats) + len(kwds))
+            for idx, kwd in enumerate(kwds):
+                kwd._codegen(state, default_comma=idx + 1 < len(kwds))
+            self.whitespace_after_kwds._codegen(state)
+            state.add_token(")")
+
+
+@add_slots
+@dataclass(frozen=True)
+class MatchAs(MatchPattern):
+    """
+    A match "as-pattern", capture pattern, or wildcard pattern.
+    """
+
+    #: The match pattern that the subject will be matched against. If this is ``None``,
+    #: the node represents a capture pattern (i.e. a bare name) and will always succeed.
+    pattern: Optional[MatchPattern] = None
+
+    #: The name that will be bound if the pattern is successful. If this is ``None``,
+    #: ``pattern`` must also be ``None`` and the node represents the wildcard pattern
+    #: (i.e. ``_``).
+    name: Optional[Name] = None
+
+    #: Whitespace between ``pattern`` and the ``as`` keyword (if ``pattern`` is not
+    #: ``None``)
+    whitespace_before_as: Union[
+        BaseParenthesizableWhitespace, MaybeSentinel
+    ] = MaybeSentinel.DEFAULT
+
+    #: Whitespace between the ``as`` keyword and ``name`` (if ``pattern`` is not
+    #: ``None``)
+    whitespace_after_as: Union[
+        BaseParenthesizableWhitespace, MaybeSentinel
+    ] = MaybeSentinel.DEFAULT
+
+    #: Parenthesis at the beginning of the node
+    lpar: Sequence[LeftParen] = ()
+    #: Parentheses after the pattern
+    rpar: Sequence[RightParen] = ()
+
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "MatchAs":
+        return MatchAs(
+            lpar=visit_sequence(self, "lpar", self.lpar, visitor),
+            pattern=visit_optional(self, "pattern", self.pattern, visitor),
+            whitespace_before_as=visit_sentinel(
+                self, "whitespace_before_as", self.whitespace_before_as, visitor
+            ),
+            whitespace_after_as=visit_sentinel(
+                self, "whitespace_after_as", self.whitespace_after_as, visitor
+            ),
+            name=visit_optional(self, "name", self.name, visitor),
+            rpar=visit_sequence(self, "rpar", self.rpar, visitor),
+        )
+
+    def _validate(self) -> None:
+        if self.name is None and self.pattern is not None:
+            raise CSTValidationError("Pattern must be None if name is None")
+        super(MatchAs, self)._validate()
+
+    def _codegen_impl(self, state: CodegenState) -> None:
+        with self._parenthesize(state):
+            pat = self.pattern
+            name = self.name
+            if pat is not None:
+                pat._codegen(state)
+                ws_before = self.whitespace_before_as
+                if ws_before is MaybeSentinel.DEFAULT:
+                    state.add_token(" ")
+                elif isinstance(ws_before, BaseParenthesizableWhitespace):
+                    ws_before._codegen(state)
+                state.add_token("as")
+                ws_after = self.whitespace_after_as
+                if ws_after is MaybeSentinel.DEFAULT:
+                    state.add_token(" ")
+                elif isinstance(ws_after, BaseParenthesizableWhitespace):
+                    ws_after._codegen(state)
+            if name is None:
+                state.add_token("_")
+            else:
+                name._codegen(state)
+
+
+@add_slots
+@dataclass(frozen=True)
+class MatchOrElement(CSTNode):
+    """
+    An element in a :class:`MatchOr` node.
+    """
+
+    pattern: MatchPattern
+
+    #: An optional ``|`` separator.
+    separator: Union[BitOr, MaybeSentinel] = MaybeSentinel.DEFAULT
+
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "MatchOrElement":
+        return MatchOrElement(
+            pattern=visit_required(self, "pattern", self.pattern, visitor),
+            separator=visit_sentinel(self, "separator", self.separator, visitor),
+        )
+
+    def _codegen_impl(
+        self, state: CodegenState, default_separator: bool = False
+    ) -> None:
+        with state.record_syntactic_position(self):
+            self.pattern._codegen(state)
+            sep = self.separator
+            if sep is MaybeSentinel.DEFAULT and default_separator:
+                state.add_token(" | ")
+            elif isinstance(sep, BitOr):
+                sep._codegen(state)
+
+
+@add_slots
+@dataclass(frozen=True)
+class MatchOr(MatchPattern):
+    """
+    A match "or-pattern". It matches each of its subpatterns in turn to the subject,
+    until one succeeds. The or-pattern is then deemed to succeed. If none of the
+    subpatterns succeed the or-pattern fails.
+    """
+
+    #: The subpatterns to be tried in turn.
+    patterns: Sequence[MatchOrElement]
+
+    #: Parenthesis at the beginning of the node
+    lpar: Sequence[LeftParen] = ()
+    #: Parentheses after the pattern
+    rpar: Sequence[RightParen] = ()
+
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "MatchOr":
+        return MatchOr(
+            lpar=visit_sequence(self, "lpar", self.lpar, visitor),
+            patterns=visit_sequence(self, "patterns", self.patterns, visitor),
+            rpar=visit_sequence(self, "rpar", self.rpar, visitor),
+        )
+
+    def _codegen_impl(self, state: CodegenState) -> None:
+        with self._parenthesize(state):
+            pats = self.patterns
+            for idx, pat in enumerate(pats):
+                pat._codegen(state, default_separator=idx + 1 < len(pats))
