@@ -1,3 +1,5 @@
+use std::ops::Deref;
+
 use crate::{
     tokenizer::whitespace_parser::{Config, WhitespaceError},
     Codegen, CodegenState, Comma, EmptyLine, LeftParen, RightParen,
@@ -25,6 +27,24 @@ pub trait ParenthesizedNode<'a> {
     }
 
     fn with_parens(self, left: LeftParen<'a>, right: RightParen<'a>) -> Self;
+}
+
+impl<'a, T: ParenthesizedNode<'a>> ParenthesizedNode<'a> for Box<T> {
+    fn lpar(&self) -> &Vec<LeftParen<'a>> {
+        self.deref().lpar()
+    }
+    fn rpar(&self) -> &Vec<RightParen<'a>> {
+        self.deref().rpar()
+    }
+    fn parenthesize<F>(&self, state: &mut CodegenState<'a>, f: F)
+    where
+        F: FnOnce(&mut CodegenState<'a>),
+    {
+        self.deref().parenthesize(state, f)
+    }
+    fn with_parens(self, left: LeftParen<'a>, right: RightParen<'a>) -> Self {
+        Self::new((*self).with_parens(left, right))
+    }
 }
 
 pub trait WithLeadingLines<'a> {
