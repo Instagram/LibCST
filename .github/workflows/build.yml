@@ -223,20 +223,45 @@ jobs:
     - uses: actions/upload-artifact@v2
       with:
         path: wheelhouse/*.whl
-    - name: Build a source tarball
-      if: ${{ matrix.os }} == 'i686' && ${{ matrix.os }} == 'ubuntu-20.04'
-      run: >-
-        python -m
-        build
-        --sdist
-        --outdir wheelhouse/
-    - name: Publish distribution 📦 to Test PyPI
-      uses: pypa/gh-action-pypi-publish@release/v1
+        name: wheels
+
+# Upload to pypi
+  pypi:
+    name: Upload wheels to pypi
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v1
+      - name: Download binary wheels
+        id: download
+        uses: actions/download-artifact@v2
+        with:
+          name: wheels
+          path: wheelhouse
+    - uses: actions/setup-python@v2
       with:
-        user: __token__
-        password: ${{ secrets.TEST_PYPI_API_TOKEN }}
-        repository_url: https://test.pypi.org/legacy/
-        packages_dir: wheelhouse/
+        python-version: ${{ matrix.python-version }}
+    - uses: actions/cache@v2
+      id: cache
+      with:
+        path: ${{ env.pythonLocation }}
+        key: ${{ env.pythonLocation }}-${{ hashFiles('requirements.txt', 'requirements-dev.txt', 'setup.py') }}
+    - name: Validate Dependencies
+      if: steps.cache.outputs.cache-hit != 'true'
+      run: exit 1
+      - name: Build a source tarball
+        run: >-
+          python -m
+          build
+          --sdist
+          --outdir ${{ steps.download.outputs.download-path }}
+      - name: Publish distribution 📦 to Test PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          user: __token__
+          password: ${{ secrets.TEST_PYPI_API_TOKEN }}
+          repository_url: https://test.pypi.org/legacy/
+          packages_dir: ${{ steps.download.outputs.download-path }}
 
 # Test rust parts
   native:
