@@ -216,7 +216,6 @@ jobs:
       if: steps.cache.outputs.cache-hit != 'true'
       run: exit 1
     - name: Disable scmtools local scheme
-      if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
       run: >-
         echo LIBCST_NO_LOCAL_SCHEME=1 >> $GITHUB_ENV
     - name: Build wheels
@@ -230,8 +229,7 @@ jobs:
         build
         --sdist
         --outdir wheelhouse/
-    - if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
-      name: Publish distribution 📦 to Test PyPI
+    - name: Publish distribution 📦 to Test PyPI
       uses: pypa/gh-action-pypi-publish@release/v1
       with:
         user: __token__
