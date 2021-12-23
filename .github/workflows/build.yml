@@ -224,7 +224,7 @@ jobs:
       with:
         path: wheelhouse/*.whl
     - name: Build a source tarball
-      if ${{ matrix.os == 'i686' && matrix.os == 'ubuntu-20.04' }}
+      if: ${{ matrix.os }} == 'i686' && ${{ matrix.os }} == 'ubuntu-20.04'
       run: >-
         python -m
         build
