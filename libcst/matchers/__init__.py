@@ -4342,6 +4342,142 @@ class ExceptHandler(BaseMatcherNode):
 
 
 @dataclass(frozen=True, eq=False, unsafe_hash=False)
+class ExceptStarHandler(BaseMatcherNode):
+    body: Union[
+        BaseSuiteMatchType,
+        DoNotCareSentinel,
+        OneOf[BaseSuiteMatchType],
+        AllOf[BaseSuiteMatchType],
+    ] = DoNotCare()
+    type: Union[
+        BaseExpressionMatchType,
+        DoNotCareSentinel,
+        OneOf[BaseExpressionMatchType],
+        AllOf[BaseExpressionMatchType],
+    ] = DoNotCare()
+    name: Union[
+        Optional["AsName"],
+        MetadataMatchType,
+        MatchIfTrue[Optional[cst.AsName]],
+        DoNotCareSentinel,
+        OneOf[
+            Union[
+                Optional["AsName"], MetadataMatchType, MatchIfTrue[Optional[cst.AsName]]
+            ]
+        ],
+        AllOf[
+            Union[
+                Optional["AsName"], MetadataMatchType, MatchIfTrue[Optional[cst.AsName]]
+            ]
+        ],
+    ] = DoNotCare()
+    leading_lines: Union[
+        Sequence[
+            Union[
+                EmptyLineMatchType,
+                DoNotCareSentinel,
+                OneOf[EmptyLineMatchType],
+                AllOf[EmptyLineMatchType],
+                AtLeastN[
+                    Union[
+                        EmptyLineMatchType,
+                        DoNotCareSentinel,
+                        OneOf[EmptyLineMatchType],
+                        AllOf[EmptyLineMatchType],
+                    ]
+                ],
+                AtMostN[
+                    Union[
+                        EmptyLineMatchType,
+                        DoNotCareSentinel,
+                        OneOf[EmptyLineMatchType],
+                        AllOf[EmptyLineMatchType],
+                    ]
+                ],
+            ]
+        ],
+        DoNotCareSentinel,
+        MatchIfTrue[Sequence[cst.EmptyLine]],
+        OneOf[
+            Union[
+                Sequence[
+                    Union[
+                        EmptyLineMatchType,
+                        OneOf[EmptyLineMatchType],
+                        AllOf[EmptyLineMatchType],
+                        AtLeastN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
+                    ]
+                ],
+                MatchIfTrue[Sequence[cst.EmptyLine]],
+            ]
+        ],
+        AllOf[
+            Union[
+                Sequence[
+                    Union[
+                        EmptyLineMatchType,
+                        OneOf[EmptyLineMatchType],
+                        AllOf[EmptyLineMatchType],
+                        AtLeastN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
+                    ]
+                ],
+                MatchIfTrue[Sequence[cst.EmptyLine]],
+            ]
+        ],
+    ] = DoNotCare()
+    whitespace_after_except: Union[
+        SimpleWhitespaceMatchType,
+        DoNotCareSentinel,
+        OneOf[SimpleWhitespaceMatchType],
+        AllOf[SimpleWhitespaceMatchType],
+    ] = DoNotCare()
+    whitespace_after_star: Union[
+        SimpleWhitespaceMatchType,
+        DoNotCareSentinel,
+        OneOf[SimpleWhitespaceMatchType],
+        AllOf[SimpleWhitespaceMatchType],
+    ] = DoNotCare()
+    whitespace_before_colon: Union[
+        SimpleWhitespaceMatchType,
+        DoNotCareSentinel,
+        OneOf[SimpleWhitespaceMatchType],
+        AllOf[SimpleWhitespaceMatchType],
+    ] = DoNotCare()
+    metadata: Union[
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
+    ] = DoNotCare()
+
+
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class Expr(BaseSmallStatement, BaseMatcherNode):
     value: Union[
         BaseExpressionMatchType,
@@ -11938,6 +12074,225 @@ class Try(BaseCompoundStatement, BaseStatement, BaseMatcherNode):
     ] = DoNotCare()
 
 
+ExceptStarHandlerMatchType = Union[
+    "ExceptStarHandler", MetadataMatchType, MatchIfTrue[cst.ExceptStarHandler]
+]
+
+
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
+class TryStar(BaseCompoundStatement, BaseStatement, BaseMatcherNode):
+    body: Union[
+        BaseSuiteMatchType,
+        DoNotCareSentinel,
+        OneOf[BaseSuiteMatchType],
+        AllOf[BaseSuiteMatchType],
+    ] = DoNotCare()
+    handlers: Union[
+        Sequence[
+            Union[
+                ExceptStarHandlerMatchType,
+                DoNotCareSentinel,
+                OneOf[ExceptStarHandlerMatchType],
+                AllOf[ExceptStarHandlerMatchType],
+                AtLeastN[
+                    Union[
+                        ExceptStarHandlerMatchType,
+                        DoNotCareSentinel,
+                        OneOf[ExceptStarHandlerMatchType],
+                        AllOf[ExceptStarHandlerMatchType],
+                    ]
+                ],
+                AtMostN[
+                    Union[
+                        ExceptStarHandlerMatchType,
+                        DoNotCareSentinel,
+                        OneOf[ExceptStarHandlerMatchType],
+                        AllOf[ExceptStarHandlerMatchType],
+                    ]
+                ],
+            ]
+        ],
+        DoNotCareSentinel,
+        MatchIfTrue[Sequence[cst.ExceptStarHandler]],
+        OneOf[
+            Union[
+                Sequence[
+                    Union[
+                        ExceptStarHandlerMatchType,
+                        OneOf[ExceptStarHandlerMatchType],
+                        AllOf[ExceptStarHandlerMatchType],
+                        AtLeastN[
+                            Union[
+                                ExceptStarHandlerMatchType,
+                                OneOf[ExceptStarHandlerMatchType],
+                                AllOf[ExceptStarHandlerMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                ExceptStarHandlerMatchType,
+                                OneOf[ExceptStarHandlerMatchType],
+                                AllOf[ExceptStarHandlerMatchType],
+                            ]
+                        ],
+                    ]
+                ],
+                MatchIfTrue[Sequence[cst.ExceptStarHandler]],
+            ]
+        ],
+        AllOf[
+            Union[
+                Sequence[
+                    Union[
+                        ExceptStarHandlerMatchType,
+                        OneOf[ExceptStarHandlerMatchType],
+                        AllOf[ExceptStarHandlerMatchType],
+                        AtLeastN[
+                            Union[
+                                ExceptStarHandlerMatchType,
+                                OneOf[ExceptStarHandlerMatchType],
+                                AllOf[ExceptStarHandlerMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                ExceptStarHandlerMatchType,
+                                OneOf[ExceptStarHandlerMatchType],
+                                AllOf[ExceptStarHandlerMatchType],
+                            ]
+                        ],
+                    ]
+                ],
+                MatchIfTrue[Sequence[cst.ExceptStarHandler]],
+            ]
+        ],
+    ] = DoNotCare()
+    orelse: Union[
+        Optional["Else"],
+        MetadataMatchType,
+        MatchIfTrue[Optional[cst.Else]],
+        DoNotCareSentinel,
+        OneOf[
+            Union[Optional["Else"], MetadataMatchType, MatchIfTrue[Optional[cst.Else]]]
+        ],
+        AllOf[
+            Union[Optional["Else"], MetadataMatchType, MatchIfTrue[Optional[cst.Else]]]
+        ],
+    ] = DoNotCare()
+    finalbody: Union[
+        Optional["Finally"],
+        MetadataMatchType,
+        MatchIfTrue[Optional[cst.Finally]],
+        DoNotCareSentinel,
+        OneOf[
+            Union[
+                Optional["Finally"],
+                MetadataMatchType,
+                MatchIfTrue[Optional[cst.Finally]],
+            ]
+        ],
+        AllOf[
+            Union[
+                Optional["Finally"],
+                MetadataMatchType,
+                MatchIfTrue[Optional[cst.Finally]],
+            ]
+        ],
+    ] = DoNotCare()
+    leading_lines: Union[
+        Sequence[
+            Union[
+                EmptyLineMatchType,
+                DoNotCareSentinel,
+                OneOf[EmptyLineMatchType],
+                AllOf[EmptyLineMatchType],
+                AtLeastN[
+                    Union[
+                        EmptyLineMatchType,
+                        DoNotCareSentinel,
+                        OneOf[EmptyLineMatchType],
+                        AllOf[EmptyLineMatchType],
+                    ]
+                ],
+                AtMostN[
+                    Union[
+                        EmptyLineMatchType,
+                        DoNotCareSentinel,
+                        OneOf[EmptyLineMatchType],
+                        AllOf[EmptyLineMatchType],
+                    ]
+                ],
+            ]
+        ],
+        DoNotCareSentinel,
+        MatchIfTrue[Sequence[cst.EmptyLine]],
+        OneOf[
+            Union[
+                Sequence[
+                    Union[
+                        EmptyLineMatchType,
+                        OneOf[EmptyLineMatchType],
+                        AllOf[EmptyLineMatchType],
+                        AtLeastN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
+                    ]
+                ],
+                MatchIfTrue[Sequence[cst.EmptyLine]],
+            ]
+        ],
+        AllOf[
+            Union[
+                Sequence[
+                    Union[
+                        EmptyLineMatchType,
+                        OneOf[EmptyLineMatchType],
+                        AllOf[EmptyLineMatchType],
+                        AtLeastN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                EmptyLineMatchType,
+                                OneOf[EmptyLineMatchType],
+                                AllOf[EmptyLineMatchType],
+                            ]
+                        ],
+                    ]
+                ],
+                MatchIfTrue[Sequence[cst.EmptyLine]],
+            ]
+        ],
+    ] = DoNotCare()
+    whitespace_before_colon: Union[
+        SimpleWhitespaceMatchType,
+        DoNotCareSentinel,
+        OneOf[SimpleWhitespaceMatchType],
+        AllOf[SimpleWhitespaceMatchType],
+    ] = DoNotCare()
+    metadata: Union[
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
+    ] = DoNotCare()
+
+
 @dataclass(frozen=True, eq=False, unsafe_hash=False)
 class Tuple(
     BaseAssignTargetExpression, BaseDelTargetExpression, BaseExpression, BaseMatcherNode
@@ -13023,6 +13378,7 @@ __all__ = [
     "EmptyLine",
     "Equal",
     "ExceptHandler",
+    "ExceptStarHandler",
     "Expr",
     "Finally",
     "Float",
@@ -13119,6 +13475,7 @@ __all__ = [
     "SubtractAssign",
     "TrailingWhitespace",
     "Try",
+    "TryStar",
     "Tuple",
     "TypeOf",
     "UnaryOperation",
