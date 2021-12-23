@@ -7,10 +7,10 @@ mod statement;
 pub use statement::{
     AnnAssign, Annotation, AsName, Assert, Assign, AssignTarget, AssignTargetExpression, AugAssign,
     Break, ClassDef, CompoundStatement, Continue, Decorator, Del, DelTargetExpression, Else,
-    ExceptHandler, Expr, Finally, For, FunctionDef, Global, If, Import, ImportAlias, ImportFrom,
-    ImportNames, IndentedBlock, NameItem, Nonlocal, OrElse, Pass, Raise, Return,
-    SimpleStatementLine, SimpleStatementSuite, SmallStatement, Statement, Suite, Try, While, With,
-    WithItem,
+    ExceptHandler, ExceptStarHandler, Expr, Finally, For, FunctionDef, Global, If, Import,
+    ImportAlias, ImportFrom, ImportNames, IndentedBlock, NameItem, Nonlocal, OrElse, Pass, Raise,
+    Return, SimpleStatementLine, SimpleStatementSuite, SmallStatement, Statement, Suite, Try,
+    TryStar, While, With, WithItem,
 };
 
 mod expression;
