@@ -1,4 +1,4 @@
-// This implementation is Copyright (c) Facebook, Inc. and its affiliates.
+// This implementation is Copyright (c) Meta Platforms, Inc. and its affiliates.
 //
 // CPython 3.10.0a5 and the original C code this is based on is
 // Copyright (c) 2001-2021 Python Software Foundation; All Rights Reserved
