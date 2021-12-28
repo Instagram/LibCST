@@ -3,7 +3,6 @@
 // This source code is licensed under the MIT license found in the
 // LICENSE file in the root directory of this source tree
 
-
 mod inflate;
 use inflate::impl_inflate;
 mod parenthesized_node;
