@@ -54,6 +54,7 @@ pub enum CompoundStatement<'a> {
     While(While<'a>),
     ClassDef(ClassDef<'a>),
     Try(Try<'a>),
+    TryStar(TryStar<'a>),
     With(With<'a>),
     Match(Match<'a>),
 }
@@ -67,6 +68,7 @@ impl<'a> WithLeadingLines<'a> for CompoundStatement<'a> {
             Self::While(f) => &mut f.leading_lines,
             Self::ClassDef(c) => &mut c.leading_lines,
             Self::Try(t) => &mut t.leading_lines,
+            Self::TryStar(t) => &mut t.leading_lines,
             Self::With(w) => &mut w.leading_lines,
             Self::Match(m) => &mut m.leading_lines,
         }
@@ -1717,6 +1719,68 @@ impl<'a> Inflate<'a> for ExceptHandler<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
+pub struct ExceptStarHandler<'a> {
+    pub body: Suite<'a>,
+    pub r#type: Expression<'a>,
+    pub name: Option<AsName<'a>>,
+    pub leading_lines: Vec<EmptyLine<'a>>,
+    pub whitespace_after_except: SimpleWhitespace<'a>,
+    pub whitespace_after_star: SimpleWhitespace<'a>,
+    pub whitespace_before_colon: SimpleWhitespace<'a>,
+
+    pub(crate) except_tok: TokenRef<'a>,
+    pub(crate) star_tok: TokenRef<'a>,
+    pub(crate) colon_tok: TokenRef<'a>,
+}
+
+impl<'a> Codegen<'a> for ExceptStarHandler<'a> {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
+        for ll in &self.leading_lines {
+            ll.codegen(state);
+        }
+        state.add_indent();
+
+        state.add_token("except");
+        self.whitespace_after_except.codegen(state);
+        state.add_token("*");
+        self.whitespace_after_star.codegen(state);
+        self.r#type.codegen(state);
+        if let Some(n) = &self.name {
+            n.codegen(state);
+        }
+        self.whitespace_before_colon.codegen(state);
+        state.add_token(":");
+        self.body.codegen(state);
+    }
+}
+
+impl<'a> Inflate<'a> for ExceptStarHandler<'a> {
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.leading_lines = parse_empty_lines(
+            config,
+            &mut self.except_tok.whitespace_before.borrow_mut(),
+            None,
+        )?;
+        self.whitespace_after_except =
+            parse_simple_whitespace(config, &mut self.except_tok.whitespace_after.borrow_mut())?;
+        self.whitespace_after_star =
+            parse_simple_whitespace(config, &mut self.star_tok.whitespace_after.borrow_mut())?;
+
+        self.r#type = self.r#type.inflate(config)?;
+        self.name = self.name.inflate(config)?;
+        if self.name.is_some() {
+            self.whitespace_before_colon = parse_simple_whitespace(
+                config,
+                &mut self.colon_tok.whitespace_before.borrow_mut(),
+            )?;
+        }
+
+        self.body = self.body.inflate(config)?;
+        Ok(self)
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
 pub struct Try<'a> {
     pub body: Suite<'a>,
     pub handlers: Vec<ExceptHandler<'a>>,
@@ -1752,6 +1816,58 @@ impl<'a> Codegen<'a> for Try<'a> {
 }
 
 impl<'a> Inflate<'a> for Try<'a> {
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.leading_lines = parse_empty_lines(
+            config,
+            &mut (*self.try_tok).whitespace_before.borrow_mut(),
+            None,
+        )?;
+        self.whitespace_before_colon =
+            parse_simple_whitespace(config, &mut (*self.try_tok).whitespace_after.borrow_mut())?;
+        self.body = self.body.inflate(config)?;
+        self.handlers = self.handlers.inflate(config)?;
+        self.orelse = self.orelse.inflate(config)?;
+        self.finalbody = self.finalbody.inflate(config)?;
+        Ok(self)
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
+pub struct TryStar<'a> {
+    pub body: Suite<'a>,
+    pub handlers: Vec<ExceptStarHandler<'a>>,
+    pub orelse: Option<Else<'a>>,
+    pub finalbody: Option<Finally<'a>>,
+    pub leading_lines: Vec<EmptyLine<'a>>,
+    pub whitespace_before_colon: SimpleWhitespace<'a>,
+
+    pub(crate) try_tok: TokenRef<'a>,
+    // colon_tok unnecessary
+}
+
+impl<'a> Codegen<'a> for TryStar<'a> {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
+        for ll in &self.leading_lines {
+            ll.codegen(state);
+        }
+        state.add_indent();
+        state.add_token("try");
+        self.whitespace_before_colon.codegen(state);
+        state.add_token(":");
+        self.body.codegen(state);
+        for h in &self.handlers {
+            h.codegen(state);
+        }
+        if let Some(e) = &self.orelse {
+            e.codegen(state);
+        }
+        if let Some(f) = &self.finalbody {
+            f.codegen(state);
+        }
+    }
+}
+
+impl<'a> Inflate<'a> for TryStar<'a> {
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.leading_lines = parse_empty_lines(
             config,

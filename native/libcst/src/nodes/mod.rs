@@ -12,12 +12,13 @@ mod statement;
 pub use statement::{
     AnnAssign, Annotation, AsName, Assert, Assign, AssignTarget, AssignTargetExpression, AugAssign,
     Break, ClassDef, CompoundStatement, Continue, Decorator, Del, DelTargetExpression, Else,
-    ExceptHandler, Expr, Finally, For, FunctionDef, Global, If, Import, ImportAlias, ImportFrom,
-    ImportNames, IndentedBlock, Match, MatchAs, MatchCase, MatchClass, MatchKeywordElement,
-    MatchList, MatchMapping, MatchMappingElement, MatchOr, MatchOrElement, MatchPattern,
-    MatchSequence, MatchSequenceElement, MatchSingleton, MatchStar, MatchTuple, MatchValue,
-    NameItem, Nonlocal, OrElse, Pass, Raise, Return, SimpleStatementLine, SimpleStatementSuite,
-    SmallStatement, StarrableMatchSequenceElement, Statement, Suite, Try, While, With, WithItem,
+    ExceptHandler, ExceptStarHandler, Expr, Finally, For, FunctionDef, Global, If, Import,
+    ImportAlias, ImportFrom, ImportNames, IndentedBlock, Match, MatchAs, MatchCase, MatchClass,
+    MatchKeywordElement, MatchList, MatchMapping, MatchMappingElement, MatchOr, MatchOrElement,
+    MatchPattern, MatchSequence, MatchSequenceElement, MatchSingleton, MatchStar, MatchTuple,
+    MatchValue, NameItem, Nonlocal, OrElse, Pass, Raise, Return, SimpleStatementLine,
+    SimpleStatementSuite, SmallStatement, StarrableMatchSequenceElement, Statement, Suite, Try,
+    TryStar, While, With, WithItem,
 };
 
 mod expression;

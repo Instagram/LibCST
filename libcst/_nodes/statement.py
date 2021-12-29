@@ -844,6 +844,82 @@ class ExceptHandler(CSTNode):
 
 @add_slots
 @dataclass(frozen=True)
+class ExceptStarHandler(CSTNode):
+    """
+    An ``except*`` clause that appears after a :class:`TryStar` statement.
+    """
+
+    #: The body of the except.
+    body: BaseSuite
+
+    #: The type of exception this catches. Can be a tuple in some cases.
+    type: BaseExpression
+
+    #: The optional name that a caught exception is assigned to.
+    name: Optional[AsName] = None
+
+    #: Sequence of empty lines appearing before this compound statement line.
+    leading_lines: Sequence[EmptyLine] = ()
+
+    #: The whitespace between the ``except`` keyword and the star.
+    whitespace_after_except: SimpleWhitespace = SimpleWhitespace.field("")
+
+    #: The whitespace between the star and the type.
+    whitespace_after_star: SimpleWhitespace = SimpleWhitespace.field(" ")
+
+    #: The whitespace after any type or name node (whichever comes last) and
+    #: the colon.
+    whitespace_before_colon: SimpleWhitespace = SimpleWhitespace.field("")
+
+    def _validate(self) -> None:
+        name = self.name
+        if name is not None and not isinstance(name.name, Name):
+            raise CSTValidationError(
+                "Must use a Name node for AsName name inside ExceptHandler."
+            )
+
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "ExceptStarHandler":
+        return ExceptStarHandler(
+            leading_lines=visit_sequence(
+                self, "leading_lines", self.leading_lines, visitor
+            ),
+            whitespace_after_except=visit_required(
+                self, "whitespace_after_except", self.whitespace_after_except, visitor
+            ),
+            whitespace_after_star=visit_required(
+                self, "whitespace_after_star", self.whitespace_after_star, visitor
+            ),
+            type=visit_required(self, "type", self.type, visitor),
+            name=visit_optional(self, "name", self.name, visitor),
+            whitespace_before_colon=visit_required(
+                self, "whitespace_before_colon", self.whitespace_before_colon, visitor
+            ),
+            body=visit_required(self, "body", self.body, visitor),
+        )
+
+    def _codegen_impl(self, state: CodegenState) -> None:
+        for ll in self.leading_lines:
+            ll._codegen(state)
+        state.add_indent_tokens()
+
+        with state.record_syntactic_position(self, end_node=self.body):
+            state.add_token("except")
+            self.whitespace_after_except._codegen(state)
+            state.add_token("*")
+            self.whitespace_after_star._codegen(state)
+            typenode = self.type
+            if typenode is not None:
+                typenode._codegen(state)
+            namenode = self.name
+            if namenode is not None:
+                namenode._codegen(state)
+            self.whitespace_before_colon._codegen(state)
+            state.add_token(":")
+            self.body._codegen(state)
+
+
+@add_slots
+@dataclass(frozen=True)
 class Finally(CSTNode):
     """
     A ``finally`` clause that appears optionally after a :class:`Try` statement.
@@ -886,7 +962,9 @@ class Finally(CSTNode):
 @dataclass(frozen=True)
 class Try(BaseCompoundStatement):
     """
-    A ``try`` statement.
+    A regular ``try`` statement that cannot contain :class:`ExceptStar` blocks. For
+    ``try`` statements that can contain :class:`ExceptStar` blocks, see
+    :class:`TryStar`.
     """
 
     #: The suite that is wrapped with a try statement.
@@ -944,6 +1022,75 @@ class Try(BaseCompoundStatement):
         end_node = self.body
         if len(self.handlers) > 0:
             end_node = self.handlers[-1]
+        orelse = self.orelse
+        end_node = end_node if orelse is None else orelse
+        finalbody = self.finalbody
+        end_node = end_node if finalbody is None else finalbody
+        with state.record_syntactic_position(self, end_node=end_node):
+            state.add_token("try")
+            self.whitespace_before_colon._codegen(state)
+            state.add_token(":")
+            self.body._codegen(state)
+            for handler in self.handlers:
+                handler._codegen(state)
+            if orelse is not None:
+                orelse._codegen(state)
+            if finalbody is not None:
+                finalbody._codegen(state)
+
+
+@add_slots
+@dataclass(frozen=True)
+class TryStar(BaseCompoundStatement):
+    """
+    A ``try`` statement with ``except*`` blocks.
+    """
+
+    #: The suite that is wrapped with a try statement.
+    body: BaseSuite
+
+    #: A list of one or more exception handlers.
+    handlers: Sequence[ExceptStarHandler]
+
+    #: An optional else case.
+    orelse: Optional[Else] = None
+
+    #: An optional finally case.
+    finalbody: Optional[Finally] = None
+
+    #: Sequence of empty lines appearing before this compound statement line.
+    leading_lines: Sequence[EmptyLine] = ()
+
+    #: The whitespace that appears after the ``try`` keyword but before
+    #: the colon.
+    whitespace_before_colon: SimpleWhitespace = SimpleWhitespace.field("")
+
+    def _validate(self) -> None:
+        if len(self.handlers) == 0:
+            raise CSTValidationError(
+                "A TryStar statement must have at least one ExceptHandler"
+            )
+
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "TryStar":
+        return TryStar(
+            leading_lines=visit_sequence(
+                self, "leading_lines", self.leading_lines, visitor
+            ),
+            whitespace_before_colon=visit_required(
+                self, "whitespace_before_colon", self.whitespace_before_colon, visitor
+            ),
+            body=visit_required(self, "body", self.body, visitor),
+            handlers=visit_sequence(self, "handlers", self.handlers, visitor),
+            orelse=visit_optional(self, "orelse", self.orelse, visitor),
+            finalbody=visit_optional(self, "finalbody", self.finalbody, visitor),
+        )
+
+    def _codegen_impl(self, state: CodegenState) -> None:
+        for ll in self.leading_lines:
+            ll._codegen(state)
+        state.add_indent_tokens()
+
+        end_node = self.handlers[-1]
         orelse = self.orelse
         end_node = end_node if orelse is None else orelse
         finalbody = self.finalbody
