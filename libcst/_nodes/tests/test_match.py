@@ -4,6 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 from typing import Any
+
 import libcst as cst
 from libcst import parse_statement
 from libcst._nodes.tests.base import CSTNodeTest
@@ -14,6 +15,7 @@ parser = parse_statement if is_native() else None
 
 
 class MatchTest(CSTNodeTest):
+    # pyre-fixme[56]: Invalid decoration - Pyre was not able to infer the type
     @data_provider(
         (
             # Values and singletons

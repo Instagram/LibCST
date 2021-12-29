@@ -3002,12 +3002,12 @@ class MatchTuple(MatchSequence):
     def _codegen_impl(self, state: CodegenState) -> None:
         with self._parenthesize(state):
             pats = self.patterns
-            l = len(pats)
+            patlen = len(pats)
             for idx, pat in enumerate(pats):
                 pat._codegen(
                     state,
-                    default_comma=l == 1 or (idx < l - 1),
-                    default_comma_whitespace=l != 1,
+                    default_comma=patlen == 1 or (idx < patlen - 1),
+                    default_comma_whitespace=patlen != 1,
                 )
 
 
