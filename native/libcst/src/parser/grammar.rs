@@ -624,10 +624,10 @@ parser! {
                 make_match_value(v.into())
             }
 
+        // In upstream attr and name_or_attr are mutually recursive, but rust-peg
+        // doesn't support this yet.
         rule attr() -> NameOrAttribute<'a>
-            = val:name_or_attr() d:lit(".") attr:name() {
-                NameOrAttribute::A(make_attribute(val.into(), d, attr))
-            }
+            = &(name() lit(".")) v:name_or_attr() { v }
 
         #[cache_left_rec]
         rule name_or_attr() -> NameOrAttribute<'a>
