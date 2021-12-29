@@ -1,9 +1,13 @@
-use std::ops::Deref;
+// Copyright (c) Meta Platforms, Inc. and its affiliates.
+//
+// This source code is licensed under the MIT license found in the
+// LICENSE file in the root directory of this source tree
 
 use crate::{
     tokenizer::whitespace_parser::{Config, WhitespaceError},
     Codegen, CodegenState, Comma, EmptyLine, LeftParen, RightParen,
 };
+use std::ops::Deref;
 
 pub trait WithComma<'a> {
     fn with_comma(self, comma: Comma<'a>) -> Self;

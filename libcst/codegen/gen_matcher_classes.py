@@ -1,4 +1,4 @@
-# Copyright (c) Facebook, Inc. and its affiliates.
+# Copyright (c) Meta Platforms, Inc. and affiliates.
 #
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
@@ -431,7 +431,7 @@ def _get_fields(node: Type[cst.CSTNode]) -> Generator[Field, None, None]:
 
 all_exports: Set[str] = set()
 generated_code: List[str] = []
-generated_code.append("# Copyright (c) Facebook, Inc. and its affiliates.")
+generated_code.append("# Copyright (c) Meta Platforms, Inc. and affiliates.")
 generated_code.append("#")
 generated_code.append(
     "# This source code is licensed under the MIT license found in the"
