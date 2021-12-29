@@ -2441,17 +2441,6 @@ class MatchPattern(_BaseParenthesizedNode, ABC):
     """
 
 
-class MatchSequence(MatchPattern, ABC):
-    """
-    A match sequence pattern. It's either a :class:`MatchList` or a :class:`MatchTuple`.
-    Matches a variable length sequence if one of the patterns is a :class:`MatchStar`,
-    otherwise matches a fixed length sequence.
-    """
-
-    #: Patterns to be matched against the subject elements if it is a sequence.
-    patterns: Sequence[Union["MatchSequenceElement", "MatchStar"]]
-
-
 @add_slots
 @dataclass(frozen=True)
 class Match(BaseCompoundStatement):
@@ -2686,105 +2675,6 @@ class MatchSingleton(MatchPattern):
 
 @add_slots
 @dataclass(frozen=True)
-class MatchList(MatchSequence):
-    """
-    A list match pattern. It's either an "open sequence pattern" (without brackets) or a
-    regular list literal (with brackets).
-    """
-
-    #: Patterns to be matched against the subject elements if it is a sequence.
-    patterns: Sequence[Union["MatchSequenceElement", "MatchStar"]]
-
-    #: An optional left bracket. If missing, this is an open sequence pattern.
-    lbracket: Optional[LeftSquareBracket] = LeftSquareBracket.field()
-
-    #: An optional left bracket. If missing, this is an open sequence pattern.
-    rbracket: Optional[RightSquareBracket] = RightSquareBracket.field()
-
-    #: Parenthesis at the beginning of the node
-    lpar: Sequence[LeftParen] = ()
-    #: Parentheses after the pattern, but before a comma (if there is one).
-    rpar: Sequence[RightParen] = ()
-
-    def _validate(self) -> None:
-        if self.lbracket and not self.rbracket:
-            raise CSTValidationError("Cannot have left bracket without right bracket")
-        if self.rbracket and not self.lbracket:
-            raise CSTValidationError("Cannot have right bracket without left bracket")
-
-        if not self.patterns and not self.lbracket:
-            raise CSTValidationError(
-                "Must have brackets if matching against empty list"
-            )
-
-        super(MatchList, self)._validate()
-
-    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "MatchList":
-        return MatchList(
-            lpar=visit_sequence(self, "lpar", self.lpar, visitor),
-            lbracket=visit_optional(self, "lbracket", self.lbracket, visitor),
-            patterns=visit_sequence(self, "patterns", self.patterns, visitor),
-            rbracket=visit_optional(self, "rbracket", self.rbracket, visitor),
-            rpar=visit_sequence(self, "rpar", self.rpar, visitor),
-        )
-
-    def _codegen_impl(self, state: CodegenState) -> None:
-        with self._parenthesize(state):
-            lbracket = self.lbracket
-            if lbracket is not None:
-                lbracket._codegen(state)
-            pats = self.patterns
-            for idx, pat in enumerate(pats):
-                pat._codegen(state, default_comma=(idx < len(pats) - 1))
-            rbracket = self.rbracket
-            if rbracket is not None:
-                rbracket._codegen(state)
-
-
-@add_slots
-@dataclass(frozen=True)
-class MatchTuple(MatchSequence):
-    """
-    A tuple match pattern.
-    """
-
-    #: Patterns to be matched against the subject elements if it is a sequence.
-    patterns: Sequence[Union["MatchSequenceElement", "MatchStar"]]
-
-    #: Parenthesis at the beginning of the node
-    lpar: Sequence[LeftParen] = field(default_factory=lambda: (LeftParen(),))
-    #: Parentheses after the pattern, but before a comma (if there is one).
-    rpar: Sequence[RightParen] = field(default_factory=lambda: (RightParen(),))
-
-    def _validate(self) -> None:
-        if len(self.lpar) < 1:
-            raise CSTValidationError(
-                "Tuple patterns must have at least pair of parenthesis"
-            )
-
-        super(MatchTuple, self)._validate()
-
-    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "MatchTuple":
-        return MatchTuple(
-            lpar=visit_sequence(self, "lpar", self.lpar, visitor),
-            patterns=visit_sequence(self, "patterns", self.patterns, visitor),
-            rpar=visit_sequence(self, "rpar", self.rpar, visitor),
-        )
-
-    def _codegen_impl(self, state: CodegenState) -> None:
-        with self._parenthesize(state):
-            pats = self.patterns
-            l = len(pats)
-            for idx, pat in enumerate(pats):
-                pat._codegen(
-                    state,
-                    default_comma=l == 1 or (idx < l - 1),
-                    default_comma_whitespace=l != 1,
-                )
-
-
-@add_slots
-@dataclass(frozen=True)
 class MatchSequenceElement(CSTNode):
     """
     An element in a sequence match pattern.
@@ -2862,6 +2752,116 @@ class MatchStar(CSTNode):
                 state.add_token(", " if default_comma_whitespace else ",")
             elif isinstance(comma, Comma):
                 comma._codegen(state)
+
+
+class MatchSequence(MatchPattern, ABC):
+    """
+    A match sequence pattern. It's either a :class:`MatchList` or a :class:`MatchTuple`.
+    Matches a variable length sequence if one of the patterns is a :class:`MatchStar`,
+    otherwise matches a fixed length sequence.
+    """
+
+    #: Patterns to be matched against the subject elements if it is a sequence.
+    patterns: Sequence[Union[MatchSequenceElement, MatchStar]]
+
+
+@add_slots
+@dataclass(frozen=True)
+class MatchList(MatchSequence):
+    """
+    A list match pattern. It's either an "open sequence pattern" (without brackets) or a
+    regular list literal (with brackets).
+    """
+
+    #: Patterns to be matched against the subject elements if it is a sequence.
+    patterns: Sequence[Union[MatchSequenceElement, MatchStar]]
+
+    #: An optional left bracket. If missing, this is an open sequence pattern.
+    lbracket: Optional[LeftSquareBracket] = LeftSquareBracket.field()
+
+    #: An optional left bracket. If missing, this is an open sequence pattern.
+    rbracket: Optional[RightSquareBracket] = RightSquareBracket.field()
+
+    #: Parenthesis at the beginning of the node
+    lpar: Sequence[LeftParen] = ()
+    #: Parentheses after the pattern, but before a comma (if there is one).
+    rpar: Sequence[RightParen] = ()
+
+    def _validate(self) -> None:
+        if self.lbracket and not self.rbracket:
+            raise CSTValidationError("Cannot have left bracket without right bracket")
+        if self.rbracket and not self.lbracket:
+            raise CSTValidationError("Cannot have right bracket without left bracket")
+
+        if not self.patterns and not self.lbracket:
+            raise CSTValidationError(
+                "Must have brackets if matching against empty list"
+            )
+
+        super(MatchList, self)._validate()
+
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "MatchList":
+        return MatchList(
+            lpar=visit_sequence(self, "lpar", self.lpar, visitor),
+            lbracket=visit_optional(self, "lbracket", self.lbracket, visitor),
+            patterns=visit_sequence(self, "patterns", self.patterns, visitor),
+            rbracket=visit_optional(self, "rbracket", self.rbracket, visitor),
+            rpar=visit_sequence(self, "rpar", self.rpar, visitor),
+        )
+
+    def _codegen_impl(self, state: CodegenState) -> None:
+        with self._parenthesize(state):
+            lbracket = self.lbracket
+            if lbracket is not None:
+                lbracket._codegen(state)
+            pats = self.patterns
+            for idx, pat in enumerate(pats):
+                pat._codegen(state, default_comma=(idx < len(pats) - 1))
+            rbracket = self.rbracket
+            if rbracket is not None:
+                rbracket._codegen(state)
+
+
+@add_slots
+@dataclass(frozen=True)
+class MatchTuple(MatchSequence):
+    """
+    A tuple match pattern.
+    """
+
+    #: Patterns to be matched against the subject elements if it is a sequence.
+    patterns: Sequence[Union[MatchSequenceElement, MatchStar]]
+
+    #: Parenthesis at the beginning of the node
+    lpar: Sequence[LeftParen] = field(default_factory=lambda: (LeftParen(),))
+    #: Parentheses after the pattern, but before a comma (if there is one).
+    rpar: Sequence[RightParen] = field(default_factory=lambda: (RightParen(),))
+
+    def _validate(self) -> None:
+        if len(self.lpar) < 1:
+            raise CSTValidationError(
+                "Tuple patterns must have at least pair of parenthesis"
+            )
+
+        super(MatchTuple, self)._validate()
+
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "MatchTuple":
+        return MatchTuple(
+            lpar=visit_sequence(self, "lpar", self.lpar, visitor),
+            patterns=visit_sequence(self, "patterns", self.patterns, visitor),
+            rpar=visit_sequence(self, "rpar", self.rpar, visitor),
+        )
+
+    def _codegen_impl(self, state: CodegenState) -> None:
+        with self._parenthesize(state):
+            pats = self.patterns
+            l = len(pats)
+            for idx, pat in enumerate(pats):
+                pat._codegen(
+                    state,
+                    default_comma=l == 1 or (idx < l - 1),
+                    default_comma_whitespace=l != 1,
+                )
 
 
 @add_slots

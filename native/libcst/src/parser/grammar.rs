@@ -575,17 +575,17 @@ parser! {
             = val:signed_number() !(lit("+") / lit("-")) { make_match_value(val) }
             / val:complex_number() { make_match_value(val) }
             / val:strings() { make_match_value(val.into()) }
+            / n:lit("None") { make_match_singleton(make_name(n)) }
             / n:lit("True") { make_match_singleton(make_name(n)) }
             / n:lit("False") { make_match_singleton(make_name(n)) }
-            / n:lit("None") { make_match_singleton(make_name(n)) }
 
         rule literal_expr() -> Expression<'a>
             = val:signed_number() !(lit("+") / lit("-")) { val }
             / val:complex_number() { val }
             / val:strings() { val.into() }
+            / n:lit("None") { Expression::Name(make_name(n)) }
             / n:lit("True") { Expression::Name(make_name(n)) }
             / n:lit("False") { Expression::Name(make_name(n)) }
-            / n:lit("None") { Expression::Name(make_name(n)) }
 
         rule complex_number() -> Expression<'a>
             = re:signed_real_number() op:(lit("+")/lit("-")) im:imaginary_number() {?

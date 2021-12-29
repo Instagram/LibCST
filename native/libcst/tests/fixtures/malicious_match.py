@@ -34,5 +34,6 @@ match x:
     case [  ( Foo  )   , ]: pass
     case Foo|Bar|Baz : pass
     case Foo  |    Bar |  (  Baz):  pass
+    case x,y  ,  * more   :pass
     case y.z: pass
 
