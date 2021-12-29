@@ -949,7 +949,9 @@ class Finally(CSTNode):
 @dataclass(frozen=True)
 class Try(BaseCompoundStatement):
     """
-    A ``try`` statement.
+    A regular ``try`` statement that cannot contain :class:`ExceptStar` blocks. For
+    ``try`` statements that can contain :class:`ExceptStar` blocks, see
+    :class:`TryStar`.
     """
 
     #: The suite that is wrapped with a try statement.
