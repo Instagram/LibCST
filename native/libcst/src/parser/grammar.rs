@@ -148,6 +148,7 @@ parser! {
             / &(lit("with") / tok(Async, "ASYNC")) w:with_stmt() { CompoundStatement::With(w) }
             / &(lit("for") / tok(Async, "ASYNC")) f:for_stmt() { CompoundStatement::For(f) }
             / &lit("try") t:try_stmt() { CompoundStatement::Try(t) }
+            / &lit("try") t:try_star_stmt() { CompoundStatement::TryStar(t) }
             / &lit("while") w:while_stmt() { CompoundStatement::While(w) }
 
         // Simple statements
@@ -498,6 +499,13 @@ parser! {
                     make_try(kw, b, ex, el, f)
             }
 
+        // Note: this is separate because TryStar is a different type in LibCST
+        rule try_star_stmt() -> TryStar<'a>
+            = kw:lit("try") lit(":") b:block() ex:except_star_block()+
+                el:else_block()? f:finally_block()? {
+                    make_try_star(kw, b, ex, el, f)
+            }
+
         // Except statement
 
         rule except_block() -> ExceptHandler<'a>
@@ -507,6 +515,12 @@ parser! {
             }
             / kw:lit("except") col:lit(":") b:block() {
                 make_except(kw, None, None, col, b)
+            }
+
+        rule except_star_block() -> ExceptStarHandler<'a>
+            = kw:lit("except") star:lit("*") e:expression()
+                a:(k:lit("as") n:name() {(k, n)})? col:lit(":") b:block() {
+                    make_except_star(kw, star, e, a, col, b)
             }
 
         rule finally_block() -> Finally<'a>
@@ -2814,6 +2828,30 @@ fn make_except<'a>(
     }
 }
 
+fn make_except_star<'a>(
+    except_tok: TokenRef<'a>,
+    star_tok: TokenRef<'a>,
+    exp: Expression<'a>,
+    as_: Option<(TokenRef<'a>, Name<'a>)>,
+    colon_tok: TokenRef<'a>,
+    body: Suite<'a>,
+) -> ExceptStarHandler<'a> {
+    // TODO: AsName should come from outside
+    let name = as_.map(|(x, y)| make_as_name(x, AssignTargetExpression::Name(y)));
+    ExceptStarHandler {
+        body,
+        r#type: exp,
+        name,
+        leading_lines: Default::default(),
+        whitespace_after_except: Default::default(),
+        whitespace_after_star: Default::default(),
+        whitespace_before_colon: Default::default(),
+        except_tok,
+        colon_tok,
+        star_tok,
+    }
+}
+
 fn make_try<'a>(
     try_tok: TokenRef<'a>,
     body: Suite<'a>,
@@ -2822,6 +2860,24 @@ fn make_try<'a>(
     finalbody: Option<Finally<'a>>,
 ) -> Try<'a> {
     Try {
+        body,
+        handlers,
+        orelse,
+        finalbody,
+        leading_lines: Default::default(),
+        whitespace_before_colon: Default::default(),
+        try_tok,
+    }
+}
+
+fn make_try_star<'a>(
+    try_tok: TokenRef<'a>,
+    body: Suite<'a>,
+    handlers: Vec<ExceptStarHandler<'a>>,
+    orelse: Option<Else<'a>>,
+    finalbody: Option<Finally<'a>>,
+) -> TryStar<'a> {
+    TryStar {
         body,
         handlers,
         orelse,

@@ -148,6 +148,7 @@ if TYPE_CHECKING:
         Del,
         Else,
         ExceptHandler,
+        ExceptStarHandler,
         Expr,
         Finally,
         For,
@@ -166,6 +167,7 @@ if TYPE_CHECKING:
         SimpleStatementLine,
         SimpleStatementSuite,
         Try,
+        TryStar,
         While,
         With,
         WithItem,
@@ -1775,6 +1777,78 @@ class CSTTypedBaseFunctions:
     @mark_no_op
     def leave_ExceptHandler_whitespace_before_colon(
         self, node: "ExceptHandler"
+    ) -> None:
+        pass
+
+    @mark_no_op
+    def visit_ExceptStarHandler(self, node: "ExceptStarHandler") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_ExceptStarHandler_body(self, node: "ExceptStarHandler") -> None:
+        pass
+
+    @mark_no_op
+    def leave_ExceptStarHandler_body(self, node: "ExceptStarHandler") -> None:
+        pass
+
+    @mark_no_op
+    def visit_ExceptStarHandler_type(self, node: "ExceptStarHandler") -> None:
+        pass
+
+    @mark_no_op
+    def leave_ExceptStarHandler_type(self, node: "ExceptStarHandler") -> None:
+        pass
+
+    @mark_no_op
+    def visit_ExceptStarHandler_name(self, node: "ExceptStarHandler") -> None:
+        pass
+
+    @mark_no_op
+    def leave_ExceptStarHandler_name(self, node: "ExceptStarHandler") -> None:
+        pass
+
+    @mark_no_op
+    def visit_ExceptStarHandler_leading_lines(self, node: "ExceptStarHandler") -> None:
+        pass
+
+    @mark_no_op
+    def leave_ExceptStarHandler_leading_lines(self, node: "ExceptStarHandler") -> None:
+        pass
+
+    @mark_no_op
+    def visit_ExceptStarHandler_whitespace_after_except(
+        self, node: "ExceptStarHandler"
+    ) -> None:
+        pass
+
+    @mark_no_op
+    def leave_ExceptStarHandler_whitespace_after_except(
+        self, node: "ExceptStarHandler"
+    ) -> None:
+        pass
+
+    @mark_no_op
+    def visit_ExceptStarHandler_whitespace_after_star(
+        self, node: "ExceptStarHandler"
+    ) -> None:
+        pass
+
+    @mark_no_op
+    def leave_ExceptStarHandler_whitespace_after_star(
+        self, node: "ExceptStarHandler"
+    ) -> None:
+        pass
+
+    @mark_no_op
+    def visit_ExceptStarHandler_whitespace_before_colon(
+        self, node: "ExceptStarHandler"
+    ) -> None:
+        pass
+
+    @mark_no_op
+    def leave_ExceptStarHandler_whitespace_before_colon(
+        self, node: "ExceptStarHandler"
     ) -> None:
         pass
 
@@ -4455,6 +4529,58 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_TryStar(self, node: "TryStar") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_TryStar_body(self, node: "TryStar") -> None:
+        pass
+
+    @mark_no_op
+    def leave_TryStar_body(self, node: "TryStar") -> None:
+        pass
+
+    @mark_no_op
+    def visit_TryStar_handlers(self, node: "TryStar") -> None:
+        pass
+
+    @mark_no_op
+    def leave_TryStar_handlers(self, node: "TryStar") -> None:
+        pass
+
+    @mark_no_op
+    def visit_TryStar_orelse(self, node: "TryStar") -> None:
+        pass
+
+    @mark_no_op
+    def leave_TryStar_orelse(self, node: "TryStar") -> None:
+        pass
+
+    @mark_no_op
+    def visit_TryStar_finalbody(self, node: "TryStar") -> None:
+        pass
+
+    @mark_no_op
+    def leave_TryStar_finalbody(self, node: "TryStar") -> None:
+        pass
+
+    @mark_no_op
+    def visit_TryStar_leading_lines(self, node: "TryStar") -> None:
+        pass
+
+    @mark_no_op
+    def leave_TryStar_leading_lines(self, node: "TryStar") -> None:
+        pass
+
+    @mark_no_op
+    def visit_TryStar_whitespace_before_colon(self, node: "TryStar") -> None:
+        pass
+
+    @mark_no_op
+    def leave_TryStar_whitespace_before_colon(self, node: "TryStar") -> None:
+        pass
+
+    @mark_no_op
     def visit_Tuple(self, node: "Tuple") -> Optional[bool]:
         pass
 
@@ -4889,6 +5015,10 @@ class CSTTypedVisitorFunctions(CSTTypedBaseFunctions):
         pass
 
     @mark_no_op
+    def leave_ExceptStarHandler(self, original_node: "ExceptStarHandler") -> None:
+        pass
+
+    @mark_no_op
     def leave_Expr(self, original_node: "Expr") -> None:
         pass
 
@@ -5241,6 +5371,10 @@ class CSTTypedVisitorFunctions(CSTTypedBaseFunctions):
         pass
 
     @mark_no_op
+    def leave_TryStar(self, original_node: "TryStar") -> None:
+        pass
+
+    @mark_no_op
     def leave_Tuple(self, original_node: "Tuple") -> None:
         pass
 
@@ -5572,6 +5706,14 @@ class CSTTypedTransformerFunctions(CSTTypedBaseFunctions):
     def leave_ExceptHandler(
         self, original_node: "ExceptHandler", updated_node: "ExceptHandler"
     ) -> Union["ExceptHandler", FlattenSentinel["ExceptHandler"], RemovalSentinel]:
+        return updated_node
+
+    @mark_no_op
+    def leave_ExceptStarHandler(
+        self, original_node: "ExceptStarHandler", updated_node: "ExceptStarHandler"
+    ) -> Union[
+        "ExceptStarHandler", FlattenSentinel["ExceptStarHandler"], RemovalSentinel
+    ]:
         return updated_node
 
     @mark_no_op
@@ -6111,6 +6253,12 @@ class CSTTypedTransformerFunctions(CSTTypedBaseFunctions):
     @mark_no_op
     def leave_Try(
         self, original_node: "Try", updated_node: "Try"
+    ) -> Union["BaseStatement", FlattenSentinel["BaseStatement"], RemovalSentinel]:
+        return updated_node
+
+    @mark_no_op
+    def leave_TryStar(
+        self, original_node: "TryStar", updated_node: "TryStar"
     ) -> Union["BaseStatement", FlattenSentinel["BaseStatement"], RemovalSentinel]:
         return updated_node
 
