@@ -159,6 +159,23 @@ if TYPE_CHECKING:
         ImportAlias,
         ImportFrom,
         IndentedBlock,
+        Match,
+        MatchAs,
+        MatchCase,
+        MatchClass,
+        MatchKeywordElement,
+        MatchList,
+        MatchMapping,
+        MatchMappingElement,
+        MatchOr,
+        MatchOrElement,
+        MatchPattern,
+        MatchSequence,
+        MatchSequenceElement,
+        MatchSingleton,
+        MatchStar,
+        MatchTuple,
+        MatchValue,
         NameItem,
         Nonlocal,
         Pass,
@@ -3135,6 +3152,636 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_Match(self, node: "Match") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_Match_subject(self, node: "Match") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Match_subject(self, node: "Match") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Match_cases(self, node: "Match") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Match_cases(self, node: "Match") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Match_leading_lines(self, node: "Match") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Match_leading_lines(self, node: "Match") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Match_whitespace_after_match(self, node: "Match") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Match_whitespace_after_match(self, node: "Match") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Match_whitespace_before_colon(self, node: "Match") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Match_whitespace_before_colon(self, node: "Match") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Match_whitespace_after_colon(self, node: "Match") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Match_whitespace_after_colon(self, node: "Match") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Match_indent(self, node: "Match") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Match_indent(self, node: "Match") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Match_footer(self, node: "Match") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Match_footer(self, node: "Match") -> None:
+        pass
+
+    @mark_no_op
+    def visit_MatchAs(self, node: "MatchAs") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_MatchAs_pattern(self, node: "MatchAs") -> None:
+        pass
+
+    @mark_no_op
+    def leave_MatchAs_pattern(self, node: "MatchAs") -> None:
+        pass
+
+    @mark_no_op
+    def visit_MatchAs_name(self, node: "MatchAs") -> None:
+        pass
+
+    @mark_no_op
+    def leave_MatchAs_name(self, node: "MatchAs") -> None:
+        pass
+
+    @mark_no_op
+    def visit_MatchAs_whitespace_before_as(self, node: "MatchAs") -> None:
+        pass
+
+    @mark_no_op
+    def leave_MatchAs_whitespace_before_as(self, node: "MatchAs") -> None:
+        pass
+
+    @mark_no_op
+    def visit_MatchAs_whitespace_after_as(self, node: "MatchAs") -> None:
+        pass
+
+    @mark_no_op
+    def leave_MatchAs_whitespace_after_as(self, node: "MatchAs") -> None:
+        pass
+
+    @mark_no_op
+    def visit_MatchAs_lpar(self, node: "MatchAs") -> None:
+        pass
+
+    @mark_no_op
+    def leave_MatchAs_lpar(self, node: "MatchAs") -> None:
+        pass
+
+    @mark_no_op
+    def visit_MatchAs_rpar(self, node: "MatchAs") -> None:
+        pass
+
+    @mark_no_op
+    def leave_MatchAs_rpar(self, node: "MatchAs") -> None:
+        pass
+
+    @mark_no_op
+    def visit_MatchCase(self, node: "MatchCase") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_MatchCase_pattern(self, node: "MatchCase") -> None:
+        pass
+
+    @mark_no_op
+    def leave_MatchCase_pattern(self, node: "MatchCase") -> None:
+        pass
+
+    @mark_no_op
+    def visit_MatchCase_body(self, node: "MatchCase") -> None:
+        pass
+
+    @mark_no_op
+    def leave_MatchCase_body(self, node: "MatchCase") -> None:
+        pass
+
+    @mark_no_op
+    def visit_MatchCase_guard(self, node: "MatchCase") -> None:
+        pass
+
+    @mark_no_op
+    def leave_MatchCase_guard(self, node: "MatchCase") -> None:
+        pass
+
+    @mark_no_op
+    def visit_MatchCase_leading_lines(self, node: "MatchCase") -> None:
+        pass
+
+    @mark_no_op
+    def leave_MatchCase_leading_lines(self, node: "MatchCase") -> None:
+        pass
+
+    @mark_no_op
+    def visit_MatchCase_whitespace_after_case(self, node: "MatchCase") -> None:
+        pass
+
+    @mark_no_op
+    def leave_MatchCase_whitespace_after_case(self, node: "MatchCase") -> None:
+        pass
+
+    @mark_no_op
+    def visit_MatchCase_whitespace_before_if(self, node: "MatchCase") -> None:
+        pass
+
+    @mark_no_op
+    def leave_MatchCase_whitespace_before_if(self, node: "MatchCase") -> None:
+        pass
+
+    @mark_no_op
+    def visit_MatchCase_whitespace_after_if(self, node: "MatchCase") -> None:
+        pass
+
+    @mark_no_op
+    def leave_MatchCase_whitespace_after_if(self, node: "MatchCase") -> None:
+        pass
+
+    @mark_no_op
+    def visit_MatchCase_whitespace_before_colon(self, node: "MatchCase") -> None:
+        pass
+
+    @mark_no_op
+    def leave_MatchCase_whitespace_before_colon(self, node: "MatchCase") -> None:
+        pass
+
+    @mark_no_op
+    def visit_MatchClass(self, node: "MatchClass") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_MatchClass_cls(self, node: "MatchClass") -> None:
+        pass
+
+    @mark_no_op
+    def leave_MatchClass_cls(self, node: "MatchClass") -> None:
+        pass
+
+    @mark_no_op
+    def visit_MatchClass_patterns(self, node: "MatchClass") -> None:
+        pass
+
+    @mark_no_op
+    def leave_MatchClass_patterns(self, node: "MatchClass") -> None:
+        pass
+
+    @mark_no_op
+    def visit_MatchClass_kwds(self, node: "MatchClass") -> None:
+        pass
+
+    @mark_no_op
+    def leave_MatchClass_kwds(self, node: "MatchClass") -> None:
+        pass
+
+    @mark_no_op
+    def visit_MatchClass_whitespace_after_cls(self, node: "MatchClass") -> None:
+        pass
+
+    @mark_no_op
+    def leave_MatchClass_whitespace_after_cls(self, node: "MatchClass") -> None:
+        pass
+
+    @mark_no_op
+    def visit_MatchClass_whitespace_before_patterns(self, node: "MatchClass") -> None:
+        pass
+
+    @mark_no_op
+    def leave_MatchClass_whitespace_before_patterns(self, node: "MatchClass") -> None:
+        pass
+
+    @mark_no_op
+    def visit_MatchClass_whitespace_after_kwds(self, node: "MatchClass") -> None:
+        pass
+
+    @mark_no_op
+    def leave_MatchClass_whitespace_after_kwds(self, node: "MatchClass") -> None:
+        pass
+
+    @mark_no_op
+    def visit_MatchClass_lpar(self, node: "MatchClass") -> None:
+        pass
+
+    @mark_no_op
+    def leave_MatchClass_lpar(self, node: "MatchClass") -> None:
+        pass
+
+    @mark_no_op
+    def visit_MatchClass_rpar(self, node: "MatchClass") -> None:
+        pass
+
+    @mark_no_op
+    def leave_MatchClass_rpar(self, node: "MatchClass") -> None:
+        pass
+
+    @mark_no_op
+    def visit_MatchKeywordElement(self, node: "MatchKeywordElement") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_MatchKeywordElement_key(self, node: "MatchKeywordElement") -> None:
+        pass
+
+    @mark_no_op
+    def leave_MatchKeywordElement_key(self, node: "MatchKeywordElement") -> None:
+        pass
+
+    @mark_no_op
+    def visit_MatchKeywordElement_pattern(self, node: "MatchKeywordElement") -> None:
+        pass
+
+    @mark_no_op
+    def leave_MatchKeywordElement_pattern(self, node: "MatchKeywordElement") -> None:
+        pass
+
+    @mark_no_op
+    def visit_MatchKeywordElement_comma(self, node: "MatchKeywordElement") -> None:
+        pass
+
+    @mark_no_op
+    def leave_MatchKeywordElement_comma(self, node: "MatchKeywordElement") -> None:
+        pass
+
+    @mark_no_op
+    def visit_MatchKeywordElement_whitespace_before_equal(
+        self, node: "MatchKeywordElement"
+    ) -> None:
+        pass
+
+    @mark_no_op
+    def leave_MatchKeywordElement_whitespace_before_equal(
+        self, node: "MatchKeywordElement"
+    ) -> None:
+        pass
+
+    @mark_no_op
+    def visit_MatchKeywordElement_whitespace_after_equal(
+        self, node: "MatchKeywordElement"
+    ) -> None:
+        pass
+
+    @mark_no_op
+    def leave_MatchKeywordElement_whitespace_after_equal(
+        self, node: "MatchKeywordElement"
+    ) -> None:
+        pass
+
+    @mark_no_op
+    def visit_MatchList(self, node: "MatchList") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_MatchList_patterns(self, node: "MatchList") -> None:
+        pass
+
+    @mark_no_op
+    def leave_MatchList_patterns(self, node: "MatchList") -> None:
+        pass
+
+    @mark_no_op
+    def visit_MatchList_lbracket(self, node: "MatchList") -> None:
+        pass
+
+    @mark_no_op
+    def leave_MatchList_lbracket(self, node: "MatchList") -> None:
+        pass
+
+    @mark_no_op
+    def visit_MatchList_rbracket(self, node: "MatchList") -> None:
+        pass
+
+    @mark_no_op
+    def leave_MatchList_rbracket(self, node: "MatchList") -> None:
+        pass
+
+    @mark_no_op
+    def visit_MatchList_lpar(self, node: "MatchList") -> None:
+        pass
+
+    @mark_no_op
+    def leave_MatchList_lpar(self, node: "MatchList") -> None:
+        pass
+
+    @mark_no_op
+    def visit_MatchList_rpar(self, node: "MatchList") -> None:
+        pass
+
+    @mark_no_op
+    def leave_MatchList_rpar(self, node: "MatchList") -> None:
+        pass
+
+    @mark_no_op
+    def visit_MatchMapping(self, node: "MatchMapping") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_MatchMapping_elements(self, node: "MatchMapping") -> None:
+        pass
+
+    @mark_no_op
+    def leave_MatchMapping_elements(self, node: "MatchMapping") -> None:
+        pass
+
+    @mark_no_op
+    def visit_MatchMapping_lbrace(self, node: "MatchMapping") -> None:
+        pass
+
+    @mark_no_op
+    def leave_MatchMapping_lbrace(self, node: "MatchMapping") -> None:
+        pass
+
+    @mark_no_op
+    def visit_MatchMapping_rbrace(self, node: "MatchMapping") -> None:
+        pass
+
+    @mark_no_op
+    def leave_MatchMapping_rbrace(self, node: "MatchMapping") -> None:
+        pass
+
+    @mark_no_op
+    def visit_MatchMapping_rest(self, node: "MatchMapping") -> None:
+        pass
+
+    @mark_no_op
+    def leave_MatchMapping_rest(self, node: "MatchMapping") -> None:
+        pass
+
+    @mark_no_op
+    def visit_MatchMapping_whitespace_before_rest(self, node: "MatchMapping") -> None:
+        pass
+
+    @mark_no_op
+    def leave_MatchMapping_whitespace_before_rest(self, node: "MatchMapping") -> None:
+        pass
+
+    @mark_no_op
+    def visit_MatchMapping_trailing_comma(self, node: "MatchMapping") -> None:
+        pass
+
+    @mark_no_op
+    def leave_MatchMapping_trailing_comma(self, node: "MatchMapping") -> None:
+        pass
+
+    @mark_no_op
+    def visit_MatchMapping_lpar(self, node: "MatchMapping") -> None:
+        pass
+
+    @mark_no_op
+    def leave_MatchMapping_lpar(self, node: "MatchMapping") -> None:
+        pass
+
+    @mark_no_op
+    def visit_MatchMapping_rpar(self, node: "MatchMapping") -> None:
+        pass
+
+    @mark_no_op
+    def leave_MatchMapping_rpar(self, node: "MatchMapping") -> None:
+        pass
+
+    @mark_no_op
+    def visit_MatchMappingElement(self, node: "MatchMappingElement") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_MatchMappingElement_key(self, node: "MatchMappingElement") -> None:
+        pass
+
+    @mark_no_op
+    def leave_MatchMappingElement_key(self, node: "MatchMappingElement") -> None:
+        pass
+
+    @mark_no_op
+    def visit_MatchMappingElement_pattern(self, node: "MatchMappingElement") -> None:
+        pass
+
+    @mark_no_op
+    def leave_MatchMappingElement_pattern(self, node: "MatchMappingElement") -> None:
+        pass
+
+    @mark_no_op
+    def visit_MatchMappingElement_comma(self, node: "MatchMappingElement") -> None:
+        pass
+
+    @mark_no_op
+    def leave_MatchMappingElement_comma(self, node: "MatchMappingElement") -> None:
+        pass
+
+    @mark_no_op
+    def visit_MatchMappingElement_whitespace_before_colon(
+        self, node: "MatchMappingElement"
+    ) -> None:
+        pass
+
+    @mark_no_op
+    def leave_MatchMappingElement_whitespace_before_colon(
+        self, node: "MatchMappingElement"
+    ) -> None:
+        pass
+
+    @mark_no_op
+    def visit_MatchMappingElement_whitespace_after_colon(
+        self, node: "MatchMappingElement"
+    ) -> None:
+        pass
+
+    @mark_no_op
+    def leave_MatchMappingElement_whitespace_after_colon(
+        self, node: "MatchMappingElement"
+    ) -> None:
+        pass
+
+    @mark_no_op
+    def visit_MatchOr(self, node: "MatchOr") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_MatchOr_patterns(self, node: "MatchOr") -> None:
+        pass
+
+    @mark_no_op
+    def leave_MatchOr_patterns(self, node: "MatchOr") -> None:
+        pass
+
+    @mark_no_op
+    def visit_MatchOr_lpar(self, node: "MatchOr") -> None:
+        pass
+
+    @mark_no_op
+    def leave_MatchOr_lpar(self, node: "MatchOr") -> None:
+        pass
+
+    @mark_no_op
+    def visit_MatchOr_rpar(self, node: "MatchOr") -> None:
+        pass
+
+    @mark_no_op
+    def leave_MatchOr_rpar(self, node: "MatchOr") -> None:
+        pass
+
+    @mark_no_op
+    def visit_MatchOrElement(self, node: "MatchOrElement") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_MatchOrElement_pattern(self, node: "MatchOrElement") -> None:
+        pass
+
+    @mark_no_op
+    def leave_MatchOrElement_pattern(self, node: "MatchOrElement") -> None:
+        pass
+
+    @mark_no_op
+    def visit_MatchOrElement_separator(self, node: "MatchOrElement") -> None:
+        pass
+
+    @mark_no_op
+    def leave_MatchOrElement_separator(self, node: "MatchOrElement") -> None:
+        pass
+
+    @mark_no_op
+    def visit_MatchPattern(self, node: "MatchPattern") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_MatchSequence(self, node: "MatchSequence") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_MatchSequenceElement(
+        self, node: "MatchSequenceElement"
+    ) -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_MatchSequenceElement_value(self, node: "MatchSequenceElement") -> None:
+        pass
+
+    @mark_no_op
+    def leave_MatchSequenceElement_value(self, node: "MatchSequenceElement") -> None:
+        pass
+
+    @mark_no_op
+    def visit_MatchSequenceElement_comma(self, node: "MatchSequenceElement") -> None:
+        pass
+
+    @mark_no_op
+    def leave_MatchSequenceElement_comma(self, node: "MatchSequenceElement") -> None:
+        pass
+
+    @mark_no_op
+    def visit_MatchSingleton(self, node: "MatchSingleton") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_MatchSingleton_value(self, node: "MatchSingleton") -> None:
+        pass
+
+    @mark_no_op
+    def leave_MatchSingleton_value(self, node: "MatchSingleton") -> None:
+        pass
+
+    @mark_no_op
+    def visit_MatchStar(self, node: "MatchStar") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_MatchStar_name(self, node: "MatchStar") -> None:
+        pass
+
+    @mark_no_op
+    def leave_MatchStar_name(self, node: "MatchStar") -> None:
+        pass
+
+    @mark_no_op
+    def visit_MatchStar_comma(self, node: "MatchStar") -> None:
+        pass
+
+    @mark_no_op
+    def leave_MatchStar_comma(self, node: "MatchStar") -> None:
+        pass
+
+    @mark_no_op
+    def visit_MatchStar_whitespace_before_name(self, node: "MatchStar") -> None:
+        pass
+
+    @mark_no_op
+    def leave_MatchStar_whitespace_before_name(self, node: "MatchStar") -> None:
+        pass
+
+    @mark_no_op
+    def visit_MatchTuple(self, node: "MatchTuple") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_MatchTuple_patterns(self, node: "MatchTuple") -> None:
+        pass
+
+    @mark_no_op
+    def leave_MatchTuple_patterns(self, node: "MatchTuple") -> None:
+        pass
+
+    @mark_no_op
+    def visit_MatchTuple_lpar(self, node: "MatchTuple") -> None:
+        pass
+
+    @mark_no_op
+    def leave_MatchTuple_lpar(self, node: "MatchTuple") -> None:
+        pass
+
+    @mark_no_op
+    def visit_MatchTuple_rpar(self, node: "MatchTuple") -> None:
+        pass
+
+    @mark_no_op
+    def leave_MatchTuple_rpar(self, node: "MatchTuple") -> None:
+        pass
+
+    @mark_no_op
+    def visit_MatchValue(self, node: "MatchValue") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_MatchValue_value(self, node: "MatchValue") -> None:
+        pass
+
+    @mark_no_op
+    def leave_MatchValue_value(self, node: "MatchValue") -> None:
+        pass
+
+    @mark_no_op
     def visit_MatrixMultiply(self, node: "MatrixMultiply") -> Optional[bool]:
         pass
 
@@ -5173,6 +5820,74 @@ class CSTTypedVisitorFunctions(CSTTypedBaseFunctions):
         pass
 
     @mark_no_op
+    def leave_Match(self, original_node: "Match") -> None:
+        pass
+
+    @mark_no_op
+    def leave_MatchAs(self, original_node: "MatchAs") -> None:
+        pass
+
+    @mark_no_op
+    def leave_MatchCase(self, original_node: "MatchCase") -> None:
+        pass
+
+    @mark_no_op
+    def leave_MatchClass(self, original_node: "MatchClass") -> None:
+        pass
+
+    @mark_no_op
+    def leave_MatchKeywordElement(self, original_node: "MatchKeywordElement") -> None:
+        pass
+
+    @mark_no_op
+    def leave_MatchList(self, original_node: "MatchList") -> None:
+        pass
+
+    @mark_no_op
+    def leave_MatchMapping(self, original_node: "MatchMapping") -> None:
+        pass
+
+    @mark_no_op
+    def leave_MatchMappingElement(self, original_node: "MatchMappingElement") -> None:
+        pass
+
+    @mark_no_op
+    def leave_MatchOr(self, original_node: "MatchOr") -> None:
+        pass
+
+    @mark_no_op
+    def leave_MatchOrElement(self, original_node: "MatchOrElement") -> None:
+        pass
+
+    @mark_no_op
+    def leave_MatchPattern(self, original_node: "MatchPattern") -> None:
+        pass
+
+    @mark_no_op
+    def leave_MatchSequence(self, original_node: "MatchSequence") -> None:
+        pass
+
+    @mark_no_op
+    def leave_MatchSequenceElement(self, original_node: "MatchSequenceElement") -> None:
+        pass
+
+    @mark_no_op
+    def leave_MatchSingleton(self, original_node: "MatchSingleton") -> None:
+        pass
+
+    @mark_no_op
+    def leave_MatchStar(self, original_node: "MatchStar") -> None:
+        pass
+
+    @mark_no_op
+    def leave_MatchTuple(self, original_node: "MatchTuple") -> None:
+        pass
+
+    @mark_no_op
+    def leave_MatchValue(self, original_node: "MatchValue") -> None:
+        pass
+
+    @mark_no_op
     def leave_MatrixMultiply(self, original_node: "MatrixMultiply") -> None:
         pass
 
@@ -5521,7 +6236,7 @@ class CSTTypedTransformerFunctions(CSTTypedBaseFunctions):
     @mark_no_op
     def leave_BitOr(
         self, original_node: "BitOr", updated_node: "BitOr"
-    ) -> "BaseBinaryOp":
+    ) -> Union["BaseBinaryOp", MaybeSentinel]:
         return updated_node
 
     @mark_no_op
@@ -5954,6 +6669,116 @@ class CSTTypedTransformerFunctions(CSTTypedBaseFunctions):
     def leave_ListComp(
         self, original_node: "ListComp", updated_node: "ListComp"
     ) -> "BaseExpression":
+        return updated_node
+
+    @mark_no_op
+    def leave_Match(
+        self, original_node: "Match", updated_node: "Match"
+    ) -> Union["BaseStatement", FlattenSentinel["BaseStatement"], RemovalSentinel]:
+        return updated_node
+
+    @mark_no_op
+    def leave_MatchAs(
+        self, original_node: "MatchAs", updated_node: "MatchAs"
+    ) -> "MatchPattern":
+        return updated_node
+
+    @mark_no_op
+    def leave_MatchCase(
+        self, original_node: "MatchCase", updated_node: "MatchCase"
+    ) -> "MatchCase":
+        return updated_node
+
+    @mark_no_op
+    def leave_MatchClass(
+        self, original_node: "MatchClass", updated_node: "MatchClass"
+    ) -> "MatchPattern":
+        return updated_node
+
+    @mark_no_op
+    def leave_MatchKeywordElement(
+        self, original_node: "MatchKeywordElement", updated_node: "MatchKeywordElement"
+    ) -> Union[
+        "MatchKeywordElement", FlattenSentinel["MatchKeywordElement"], RemovalSentinel
+    ]:
+        return updated_node
+
+    @mark_no_op
+    def leave_MatchList(
+        self, original_node: "MatchList", updated_node: "MatchList"
+    ) -> "MatchPattern":
+        return updated_node
+
+    @mark_no_op
+    def leave_MatchMapping(
+        self, original_node: "MatchMapping", updated_node: "MatchMapping"
+    ) -> "MatchPattern":
+        return updated_node
+
+    @mark_no_op
+    def leave_MatchMappingElement(
+        self, original_node: "MatchMappingElement", updated_node: "MatchMappingElement"
+    ) -> Union[
+        "MatchMappingElement", FlattenSentinel["MatchMappingElement"], RemovalSentinel
+    ]:
+        return updated_node
+
+    @mark_no_op
+    def leave_MatchOr(
+        self, original_node: "MatchOr", updated_node: "MatchOr"
+    ) -> "MatchPattern":
+        return updated_node
+
+    @mark_no_op
+    def leave_MatchOrElement(
+        self, original_node: "MatchOrElement", updated_node: "MatchOrElement"
+    ) -> Union["MatchOrElement", FlattenSentinel["MatchOrElement"], RemovalSentinel]:
+        return updated_node
+
+    @mark_no_op
+    def leave_MatchPattern(
+        self, original_node: "MatchPattern", updated_node: "MatchPattern"
+    ) -> "MatchPattern":
+        return updated_node
+
+    @mark_no_op
+    def leave_MatchSequence(
+        self, original_node: "MatchSequence", updated_node: "MatchSequence"
+    ) -> "MatchPattern":
+        return updated_node
+
+    @mark_no_op
+    def leave_MatchSequenceElement(
+        self,
+        original_node: "MatchSequenceElement",
+        updated_node: "MatchSequenceElement",
+    ) -> Union[
+        "MatchSequenceElement", FlattenSentinel["MatchSequenceElement"], RemovalSentinel
+    ]:
+        return updated_node
+
+    @mark_no_op
+    def leave_MatchSingleton(
+        self, original_node: "MatchSingleton", updated_node: "MatchSingleton"
+    ) -> "MatchPattern":
+        return updated_node
+
+    @mark_no_op
+    def leave_MatchStar(
+        self, original_node: "MatchStar", updated_node: "MatchStar"
+    ) -> "MatchStar":
+        return updated_node
+
+    @mark_no_op
+    def leave_MatchTuple(
+        self, original_node: "MatchTuple", updated_node: "MatchTuple"
+    ) -> "MatchPattern":
+        return updated_node
+
+    @mark_no_op
+    def leave_MatchValue(
+        self, original_node: "MatchValue", updated_node: "MatchValue"
+    ) -> "MatchPattern":
         return updated_node
 
     @mark_no_op

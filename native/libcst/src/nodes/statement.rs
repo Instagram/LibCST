@@ -14,7 +14,7 @@ use super::{
 use crate::{
     nodes::{
         traits::{Inflate, Result, WithComma, WithLeadingLines},
-        Arg, AssignEqual, Asynchronous, AugOp, Element, ParenthesizedNode,
+        Arg, AssignEqual, Asynchronous, AugOp, BitOr, Element, ParenthesizedNode,
     },
     tokenizer::{
         whitespace_parser::{
@@ -23,6 +23,7 @@ use crate::{
         },
         Token,
     },
+    LeftCurlyBrace, LeftSquareBracket, RightCurlyBrace, RightSquareBracket,
 };
 use libcst_derive::{Codegen, Inflate, IntoPy, ParenthesizedNode};
 
@@ -55,6 +56,7 @@ pub enum CompoundStatement<'a> {
     Try(Try<'a>),
     TryStar(TryStar<'a>),
     With(With<'a>),
+    Match(Match<'a>),
 }
 
 impl<'a> WithLeadingLines<'a> for CompoundStatement<'a> {
@@ -68,6 +70,7 @@ impl<'a> WithLeadingLines<'a> for CompoundStatement<'a> {
             Self::Try(t) => &mut t.leading_lines,
             Self::TryStar(t) => &mut t.leading_lines,
             Self::With(w) => &mut w.leading_lines,
+            Self::Match(m) => &mut m.leading_lines,
         }
     }
 }
@@ -2098,5 +2101,798 @@ impl<'a> Codegen<'a> for Del<'a> {
 impl<'a> Del<'a> {
     pub fn with_semicolon(self, semicolon: Option<Semicolon<'a>>) -> Self {
         Self { semicolon, ..self }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
+pub struct Match<'a> {
+    pub subject: Expression<'a>,
+    pub cases: Vec<MatchCase<'a>>,
+
+    pub leading_lines: Vec<EmptyLine<'a>>,
+    pub whitespace_after_match: SimpleWhitespace<'a>,
+    pub whitespace_before_colon: SimpleWhitespace<'a>,
+    pub whitespace_after_colon: TrailingWhitespace<'a>,
+    pub indent: Option<&'a str>,
+    pub footer: Vec<EmptyLine<'a>>,
+
+    pub(crate) match_tok: TokenRef<'a>,
+    pub(crate) colon_tok: TokenRef<'a>,
+    pub(crate) indent_tok: TokenRef<'a>,
+    pub(crate) dedent_tok: TokenRef<'a>,
+}
+
+impl<'a> Codegen<'a> for Match<'a> {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
+        for l in &self.leading_lines {
+            l.codegen(state);
+        }
+        state.add_indent();
+        state.add_token("match");
+        self.whitespace_after_match.codegen(state);
+        self.subject.codegen(state);
+        self.whitespace_before_colon.codegen(state);
+        state.add_token(":");
+        self.whitespace_after_colon.codegen(state);
+
+        let indent = self.indent.unwrap_or(state.default_indent);
+        state.indent(indent);
+
+        // Note: empty cases is a syntax error
+        for c in &self.cases {
+            c.codegen(state);
+        }
+
+        for f in &self.footer {
+            f.codegen(state);
+        }
+        state.dedent();
+    }
+}
+
+impl<'a> Inflate<'a> for Match<'a> {
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.leading_lines = parse_empty_lines(
+            config,
+            &mut self.match_tok.whitespace_before.borrow_mut(),
+            None,
+        )?;
+        self.whitespace_after_match =
+            parse_simple_whitespace(config, &mut self.match_tok.whitespace_after.borrow_mut())?;
+        self.subject = self.subject.inflate(config)?;
+        self.whitespace_before_colon =
+            parse_simple_whitespace(config, &mut self.colon_tok.whitespace_before.borrow_mut())?;
+        self.whitespace_after_colon =
+            parse_trailing_whitespace(config, &mut self.colon_tok.whitespace_after.borrow_mut())?;
+        self.indent = self.indent_tok.relative_indent;
+        if self.indent == Some(config.default_indent) {
+            self.indent = None;
+        }
+        self.cases = self.cases.inflate(config)?;
+        // See note about footers in `IndentedBlock`'s inflate fn
+        self.footer = parse_empty_lines(
+            config,
+            &mut self.dedent_tok.whitespace_after.borrow_mut(),
+            Some(self.indent_tok.whitespace_before.borrow().absolute_indent),
+        )?;
+        Ok(self)
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
+pub struct MatchCase<'a> {
+    pub pattern: MatchPattern<'a>,
+    pub guard: Option<Expression<'a>>,
+    pub body: Suite<'a>,
+
+    pub leading_lines: Vec<EmptyLine<'a>>,
+    pub whitespace_after_case: SimpleWhitespace<'a>,
+    pub whitespace_before_if: SimpleWhitespace<'a>,
+    pub whitespace_after_if: SimpleWhitespace<'a>,
+    pub whitespace_before_colon: SimpleWhitespace<'a>,
+
+    pub(crate) case_tok: TokenRef<'a>,
+    pub(crate) if_tok: Option<TokenRef<'a>>,
+    pub(crate) colon_tok: TokenRef<'a>,
+}
+
+impl<'a> Codegen<'a> for MatchCase<'a> {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
+        for l in &self.leading_lines {
+            l.codegen(state);
+        }
+        state.add_indent();
+        state.add_token("case");
+        self.whitespace_after_case.codegen(state);
+        self.pattern.codegen(state);
+        if let Some(guard) = &self.guard {
+            self.whitespace_before_if.codegen(state);
+            state.add_token("if");
+            self.whitespace_after_if.codegen(state);
+            guard.codegen(state);
+        }
+        self.whitespace_before_colon.codegen(state);
+        state.add_token(":");
+        self.body.codegen(state);
+    }
+}
+
+impl<'a> Inflate<'a> for MatchCase<'a> {
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.leading_lines = parse_empty_lines(
+            config,
+            &mut self.case_tok.whitespace_before.borrow_mut(),
+            None,
+        )?;
+        self.whitespace_after_case =
+            parse_simple_whitespace(config, &mut self.case_tok.whitespace_after.borrow_mut())?;
+        self.pattern = self.pattern.inflate(config)?;
+        if let Some(if_tok) = self.if_tok.as_mut() {
+            self.whitespace_before_if =
+                parse_simple_whitespace(config, &mut if_tok.whitespace_before.borrow_mut())?;
+            self.whitespace_after_if =
+                parse_simple_whitespace(config, &mut if_tok.whitespace_after.borrow_mut())?;
+
+            self.guard = self.guard.inflate(config)?;
+        }
+        self.whitespace_before_colon =
+            parse_simple_whitespace(config, &mut self.colon_tok.whitespace_before.borrow_mut())?;
+        self.body = self.body.inflate(config)?;
+        Ok(self)
+    }
+}
+
+#[allow(clippy::large_enum_variant)]
+#[derive(Debug, PartialEq, Eq, Clone, IntoPy, Codegen, Inflate, ParenthesizedNode)]
+pub enum MatchPattern<'a> {
+    Value(MatchValue<'a>),
+    Singleton(MatchSingleton<'a>),
+    Sequence(MatchSequence<'a>),
+    Mapping(MatchMapping<'a>),
+    Class(MatchClass<'a>),
+    As(Box<MatchAs<'a>>),
+    Or(Box<MatchOr<'a>>),
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
+pub struct MatchValue<'a> {
+    pub value: Expression<'a>,
+}
+
+impl<'a> ParenthesizedNode<'a> for MatchValue<'a> {
+    fn lpar(&self) -> &Vec<LeftParen<'a>> {
+        self.value.lpar()
+    }
+    fn rpar(&self) -> &Vec<RightParen<'a>> {
+        self.value.rpar()
+    }
+    fn parenthesize<F>(&self, state: &mut CodegenState<'a>, f: F)
+    where
+        F: FnOnce(&mut CodegenState<'a>),
+    {
+        self.value.parenthesize(state, f)
+    }
+    fn with_parens(self, left: LeftParen<'a>, right: RightParen<'a>) -> Self {
+        Self {
+            value: self.value.with_parens(left, right),
+        }
+    }
+}
+
+impl<'a> Codegen<'a> for MatchValue<'a> {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
+        self.value.codegen(state)
+    }
+}
+
+impl<'a> Inflate<'a> for MatchValue<'a> {
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.value = self.value.inflate(config)?;
+        Ok(self)
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
+pub struct MatchSingleton<'a> {
+    pub value: Name<'a>,
+}
+
+impl<'a> ParenthesizedNode<'a> for MatchSingleton<'a> {
+    fn lpar(&self) -> &Vec<LeftParen<'a>> {
+        self.value.lpar()
+    }
+    fn rpar(&self) -> &Vec<RightParen<'a>> {
+        self.value.rpar()
+    }
+    fn parenthesize<F>(&self, state: &mut CodegenState<'a>, f: F)
+    where
+        F: FnOnce(&mut CodegenState<'a>),
+    {
+        self.value.parenthesize(state, f)
+    }
+    fn with_parens(self, left: LeftParen<'a>, right: RightParen<'a>) -> Self {
+        Self {
+            value: self.value.with_parens(left, right),
+        }
+    }
+}
+
+impl<'a> Codegen<'a> for MatchSingleton<'a> {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
+        self.value.codegen(state)
+    }
+}
+
+impl<'a> Inflate<'a> for MatchSingleton<'a> {
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.value = self.value.inflate(config)?;
+        Ok(self)
+    }
+}
+
+#[allow(clippy::large_enum_variant)]
+#[derive(Debug, PartialEq, Eq, Clone, IntoPy, Codegen, Inflate, ParenthesizedNode)]
+pub enum MatchSequence<'a> {
+    MatchList(MatchList<'a>),
+    MatchTuple(MatchTuple<'a>),
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, IntoPy, ParenthesizedNode)]
+pub struct MatchList<'a> {
+    pub patterns: Vec<StarrableMatchSequenceElement<'a>>,
+    pub lbracket: Option<LeftSquareBracket<'a>>,
+    pub rbracket: Option<RightSquareBracket<'a>>,
+    pub lpar: Vec<LeftParen<'a>>,
+    pub rpar: Vec<RightParen<'a>>,
+}
+
+impl<'a> Codegen<'a> for MatchList<'a> {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
+        self.parenthesize(state, |state| {
+            self.lbracket.codegen(state);
+            let len = self.patterns.len();
+            if len == 1 {
+                self.patterns.first().unwrap().codegen(state, false, false);
+            } else {
+                for (idx, pat) in self.patterns.iter().enumerate() {
+                    pat.codegen(state, idx < len - 1, true);
+                }
+            }
+            self.rbracket.codegen(state);
+        })
+    }
+}
+
+impl<'a> Inflate<'a> for MatchList<'a> {
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.lpar = self.lpar.inflate(config)?;
+        self.lbracket = self.lbracket.inflate(config)?;
+
+        let len = self.patterns.len();
+        self.patterns = self
+            .patterns
+            .into_iter()
+            .enumerate()
+            .map(|(idx, el)| el.inflate_element(config, idx + 1 == len))
+            .collect::<Result<Vec<_>>>()?;
+
+        self.rbracket = self.rbracket.inflate(config)?;
+        self.rpar = self.rpar.inflate(config)?;
+        Ok(self)
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, IntoPy, ParenthesizedNode)]
+pub struct MatchTuple<'a> {
+    pub patterns: Vec<StarrableMatchSequenceElement<'a>>,
+    pub lpar: Vec<LeftParen<'a>>,
+    pub rpar: Vec<RightParen<'a>>,
+}
+
+impl<'a> Codegen<'a> for MatchTuple<'a> {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
+        self.parenthesize(state, |state| {
+            let len = self.patterns.len();
+            if len == 1 {
+                self.patterns.first().unwrap().codegen(state, true, false);
+            } else {
+                for (idx, pat) in self.patterns.iter().enumerate() {
+                    pat.codegen(state, idx < len - 1, true);
+                }
+            }
+        })
+    }
+}
+
+impl<'a> Inflate<'a> for MatchTuple<'a> {
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.lpar = self.lpar.inflate(config)?;
+        let len = self.patterns.len();
+        self.patterns = self
+            .patterns
+            .into_iter()
+            .enumerate()
+            .map(|(idx, el)| el.inflate_element(config, idx + 1 == len))
+            .collect::<Result<Vec<_>>>()?;
+        self.rpar = self.rpar.inflate(config)?;
+        Ok(self)
+    }
+}
+
+#[allow(clippy::large_enum_variant)]
+#[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
+pub enum StarrableMatchSequenceElement<'a> {
+    Simple(MatchSequenceElement<'a>),
+    Starred(MatchStar<'a>),
+}
+
+impl<'a> StarrableMatchSequenceElement<'a> {
+    fn codegen(
+        &self,
+        state: &mut CodegenState<'a>,
+        default_comma: bool,
+        default_comma_whitespace: bool,
+    ) {
+        match &self {
+            Self::Simple(s) => s.codegen(state, default_comma, default_comma_whitespace),
+            Self::Starred(s) => s.codegen(state, default_comma, default_comma_whitespace),
+        }
+    }
+    fn inflate_element(self, config: &Config<'a>, last_element: bool) -> Result<Self> {
+        Ok(match self {
+            Self::Simple(s) => Self::Simple(s.inflate_element(config, last_element)?),
+            Self::Starred(s) => Self::Starred(s.inflate_element(config, last_element)?),
+        })
+    }
+}
+
+impl<'a> WithComma<'a> for StarrableMatchSequenceElement<'a> {
+    fn with_comma(self, comma: Comma<'a>) -> Self {
+        match self {
+            Self::Simple(s) => Self::Simple(s.with_comma(comma)),
+            Self::Starred(s) => Self::Starred(s.with_comma(comma)),
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
+pub struct MatchSequenceElement<'a> {
+    pub value: MatchPattern<'a>,
+    pub comma: Option<Comma<'a>>,
+}
+
+impl<'a> MatchSequenceElement<'a> {
+    fn codegen(
+        &self,
+        state: &mut CodegenState<'a>,
+        default_comma: bool,
+        default_comma_whitespace: bool,
+    ) {
+        self.value.codegen(state);
+        self.comma.codegen(state);
+        if self.comma.is_none() && default_comma {
+            state.add_token(if default_comma_whitespace { ", " } else { "," });
+        }
+    }
+
+    fn inflate_element(mut self, config: &Config<'a>, last_element: bool) -> Result<Self> {
+        self.value = self.value.inflate(config)?;
+        self.comma = if last_element {
+            self.comma.map(|c| c.inflate_before(config)).transpose()
+        } else {
+            self.comma.inflate(config)
+        }?;
+        Ok(self)
+    }
+}
+
+impl<'a> WithComma<'a> for MatchSequenceElement<'a> {
+    fn with_comma(self, comma: Comma<'a>) -> Self {
+        Self {
+            comma: Some(comma),
+            ..self
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
+pub struct MatchStar<'a> {
+    pub name: Option<Name<'a>>,
+    pub comma: Option<Comma<'a>>,
+    pub whitespace_before_name: ParenthesizableWhitespace<'a>,
+
+    pub(crate) star_tok: TokenRef<'a>,
+}
+
+impl<'a> MatchStar<'a> {
+    fn codegen(
+        &self,
+        state: &mut CodegenState<'a>,
+        default_comma: bool,
+        default_comma_whitespace: bool,
+    ) {
+        state.add_token("*");
+        self.whitespace_before_name.codegen(state);
+        if let Some(name) = &self.name {
+            name.codegen(state);
+        } else {
+            state.add_token("_");
+        }
+        self.comma.codegen(state);
+        if self.comma.is_none() && default_comma {
+            state.add_token(if default_comma_whitespace { ", " } else { "," });
+        }
+    }
+
+    fn inflate_element(mut self, config: &Config<'a>, last_element: bool) -> Result<Self> {
+        self.whitespace_before_name = parse_parenthesizable_whitespace(
+            config,
+            &mut self.star_tok.whitespace_after.borrow_mut(),
+        )?;
+        self.name = self.name.inflate(config)?;
+        self.comma = if last_element {
+            self.comma.map(|c| c.inflate_before(config)).transpose()
+        } else {
+            self.comma.inflate(config)
+        }?;
+        Ok(self)
+    }
+}
+
+impl<'a> WithComma<'a> for MatchStar<'a> {
+    fn with_comma(self, comma: Comma<'a>) -> Self {
+        Self {
+            comma: Some(comma),
+            ..self
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, IntoPy, ParenthesizedNode)]
+pub struct MatchMapping<'a> {
+    pub elements: Vec<MatchMappingElement<'a>>,
+    pub rest: Option<Name<'a>>,
+    pub trailing_comma: Option<Comma<'a>>,
+    pub lbrace: LeftCurlyBrace<'a>,
+    pub rbrace: RightCurlyBrace<'a>,
+    pub lpar: Vec<LeftParen<'a>>,
+    pub rpar: Vec<RightParen<'a>>,
+
+    pub whitespace_before_rest: SimpleWhitespace<'a>,
+
+    pub(crate) star_tok: Option<TokenRef<'a>>,
+}
+
+impl<'a> Codegen<'a> for MatchMapping<'a> {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
+        self.parenthesize(state, |state| {
+            self.lbrace.codegen(state);
+            let len = self.elements.len();
+            for (idx, el) in self.elements.iter().enumerate() {
+                el.codegen(state, self.rest.is_some() || idx < len - 1);
+            }
+            if let Some(rest) = &self.rest {
+                state.add_token("**");
+                self.whitespace_before_rest.codegen(state);
+                rest.codegen(state);
+                self.trailing_comma.codegen(state);
+            }
+            self.rbrace.codegen(state);
+        })
+    }
+}
+
+impl<'a> Inflate<'a> for MatchMapping<'a> {
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.lpar = self.lpar.inflate(config)?;
+        self.lbrace = self.lbrace.inflate(config)?;
+
+        let len = self.elements.len();
+        let no_star = self.star_tok.is_none();
+        self.elements = self
+            .elements
+            .into_iter()
+            .enumerate()
+            .map(|(idx, el)| el.inflate_element(config, no_star && idx + 1 == len))
+            .collect::<Result<Vec<_>>>()?;
+
+        if let Some(star_tok) = self.star_tok.as_mut() {
+            self.whitespace_before_rest =
+                parse_simple_whitespace(config, &mut star_tok.whitespace_after.borrow_mut())?;
+            self.rest = self.rest.inflate(config)?;
+            self.trailing_comma = self
+                .trailing_comma
+                .map(|c| c.inflate_before(config))
+                .transpose()?;
+        }
+
+        self.rbrace = self.rbrace.inflate(config)?;
+        self.rpar = self.rpar.inflate(config)?;
+        Ok(self)
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
+pub struct MatchMappingElement<'a> {
+    pub key: Expression<'a>,
+    pub pattern: MatchPattern<'a>,
+    pub comma: Option<Comma<'a>>,
+
+    pub whitespace_before_colon: ParenthesizableWhitespace<'a>,
+    pub whitespace_after_colon: ParenthesizableWhitespace<'a>,
+
+    pub(crate) colon_tok: TokenRef<'a>,
+}
+
+impl<'a> MatchMappingElement<'a> {
+    fn codegen(&self, state: &mut CodegenState<'a>, default_comma: bool) {
+        self.key.codegen(state);
+        self.whitespace_before_colon.codegen(state);
+        state.add_token(":");
+        self.whitespace_after_colon.codegen(state);
+        self.pattern.codegen(state);
+        self.comma.codegen(state);
+        if self.comma.is_none() && default_comma {
+            state.add_token(", ");
+        }
+    }
+
+    fn inflate_element(mut self, config: &Config<'a>, last_element: bool) -> Result<Self> {
+        self.key = self.key.inflate(config)?;
+        self.whitespace_before_colon = parse_parenthesizable_whitespace(
+            config,
+            &mut self.colon_tok.whitespace_before.borrow_mut(),
+        )?;
+        self.whitespace_after_colon = parse_parenthesizable_whitespace(
+            config,
+            &mut self.colon_tok.whitespace_after.borrow_mut(),
+        )?;
+        self.pattern = self.pattern.inflate(config)?;
+        self.comma = if last_element {
+            self.comma.map(|c| c.inflate_before(config)).transpose()
+        } else {
+            self.comma.inflate(config)
+        }?;
+        Ok(self)
+    }
+}
+
+impl<'a> WithComma<'a> for MatchMappingElement<'a> {
+    fn with_comma(self, comma: Comma<'a>) -> Self {
+        Self {
+            comma: Some(comma),
+            ..self
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, IntoPy, ParenthesizedNode)]
+pub struct MatchClass<'a> {
+    pub cls: NameOrAttribute<'a>,
+    pub patterns: Vec<MatchSequenceElement<'a>>,
+    pub kwds: Vec<MatchKeywordElement<'a>>,
+    pub lpar: Vec<LeftParen<'a>>,
+    pub rpar: Vec<RightParen<'a>>,
+
+    pub whitespace_after_cls: ParenthesizableWhitespace<'a>,
+    pub whitespace_before_patterns: ParenthesizableWhitespace<'a>,
+    pub whitespace_after_kwds: ParenthesizableWhitespace<'a>,
+
+    pub(crate) lpar_tok: TokenRef<'a>,
+    pub(crate) rpar_tok: TokenRef<'a>,
+}
+
+impl<'a> Codegen<'a> for MatchClass<'a> {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
+        self.parenthesize(state, |state| {
+            self.cls.codegen(state);
+            self.whitespace_after_cls.codegen(state);
+            state.add_token("(");
+            self.whitespace_before_patterns.codegen(state);
+            let patlen = self.patterns.len();
+            let kwdlen = self.kwds.len();
+            for (idx, pat) in self.patterns.iter().enumerate() {
+                pat.codegen(state, idx < patlen - 1 + kwdlen, patlen == 1 && kwdlen == 0);
+            }
+            for (idx, kwd) in self.kwds.iter().enumerate() {
+                kwd.codegen(state, idx < kwdlen - 1);
+            }
+            self.whitespace_after_kwds.codegen(state);
+            state.add_token(")");
+        })
+    }
+}
+
+impl<'a> Inflate<'a> for MatchClass<'a> {
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.lpar = self.lpar.inflate(config)?;
+
+        self.cls = self.cls.inflate(config)?;
+        self.whitespace_after_cls = parse_parenthesizable_whitespace(
+            config,
+            &mut self.lpar_tok.whitespace_before.borrow_mut(),
+        )?;
+        self.whitespace_before_patterns = parse_parenthesizable_whitespace(
+            config,
+            &mut self.lpar_tok.whitespace_after.borrow_mut(),
+        )?;
+
+        let patlen = self.patterns.len();
+        let kwdlen = self.kwds.len();
+        self.patterns = self
+            .patterns
+            .into_iter()
+            .enumerate()
+            .map(|(idx, pat)| pat.inflate_element(config, idx + 1 == patlen + kwdlen))
+            .collect::<Result<_>>()?;
+        self.kwds = self
+            .kwds
+            .into_iter()
+            .enumerate()
+            .map(|(idx, kwd)| kwd.inflate_element(config, idx + 1 == kwdlen))
+            .collect::<Result<_>>()?;
+
+        self.whitespace_after_kwds = parse_parenthesizable_whitespace(
+            config,
+            &mut self.rpar_tok.whitespace_before.borrow_mut(),
+        )?;
+
+        self.rpar = self.rpar.inflate(config)?;
+        Ok(self)
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
+pub struct MatchKeywordElement<'a> {
+    pub key: Name<'a>,
+    pub pattern: MatchPattern<'a>,
+    pub comma: Option<Comma<'a>>,
+
+    pub whitespace_before_equal: ParenthesizableWhitespace<'a>,
+    pub whitespace_after_equal: ParenthesizableWhitespace<'a>,
+
+    pub(crate) equal_tok: TokenRef<'a>,
+}
+
+impl<'a> MatchKeywordElement<'a> {
+    fn codegen(&self, state: &mut CodegenState<'a>, default_comma: bool) {
+        self.key.codegen(state);
+        self.whitespace_before_equal.codegen(state);
+        state.add_token("=");
+        self.whitespace_after_equal.codegen(state);
+        self.pattern.codegen(state);
+        self.comma.codegen(state);
+        if self.comma.is_none() && default_comma {
+            state.add_token(", ");
+        }
+    }
+    fn inflate_element(mut self, config: &Config<'a>, last_element: bool) -> Result<Self> {
+        self.key = self.key.inflate(config)?;
+        self.whitespace_before_equal = parse_parenthesizable_whitespace(
+            config,
+            &mut self.equal_tok.whitespace_before.borrow_mut(),
+        )?;
+        self.whitespace_after_equal = parse_parenthesizable_whitespace(
+            config,
+            &mut self.equal_tok.whitespace_after.borrow_mut(),
+        )?;
+        self.pattern = self.pattern.inflate(config)?;
+        self.comma = if last_element {
+            self.comma.map(|c| c.inflate_before(config)).transpose()
+        } else {
+            self.comma.inflate(config)
+        }?;
+        Ok(self)
+    }
+}
+
+impl<'a> WithComma<'a> for MatchKeywordElement<'a> {
+    fn with_comma(self, comma: Comma<'a>) -> Self {
+        Self {
+            comma: Some(comma),
+            ..self
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, IntoPy, ParenthesizedNode)]
+pub struct MatchAs<'a> {
+    pub pattern: Option<MatchPattern<'a>>,
+    pub name: Option<Name<'a>>,
+    pub lpar: Vec<LeftParen<'a>>,
+    pub rpar: Vec<RightParen<'a>>,
+
+    pub whitespace_before_as: Option<ParenthesizableWhitespace<'a>>,
+    pub whitespace_after_as: Option<ParenthesizableWhitespace<'a>>,
+
+    pub(crate) as_tok: Option<TokenRef<'a>>,
+}
+
+impl<'a> Codegen<'a> for MatchAs<'a> {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
+        self.parenthesize(state, |state| {
+            if let Some(pat) = &self.pattern {
+                pat.codegen(state);
+                self.whitespace_before_as.codegen(state);
+                state.add_token("as");
+                self.whitespace_after_as.codegen(state);
+            }
+            if let Some(name) = &self.name {
+                name.codegen(state);
+            } else {
+                state.add_token("_");
+            }
+        })
+    }
+}
+
+impl<'a> Inflate<'a> for MatchAs<'a> {
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.lpar = self.lpar.inflate(config)?;
+        self.pattern = self.pattern.inflate(config)?;
+        if let Some(as_tok) = self.as_tok.as_mut() {
+            self.whitespace_before_as = Some(parse_parenthesizable_whitespace(
+                config,
+                &mut as_tok.whitespace_before.borrow_mut(),
+            )?);
+            self.whitespace_after_as = Some(parse_parenthesizable_whitespace(
+                config,
+                &mut as_tok.whitespace_after.borrow_mut(),
+            )?);
+        }
+        self.name = self.name.inflate(config)?;
+        self.rpar = self.rpar.inflate(config)?;
+        Ok(self)
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
+pub struct MatchOrElement<'a> {
+    pub pattern: MatchPattern<'a>,
+    pub separator: Option<BitOr<'a>>,
+}
+
+impl<'a> MatchOrElement<'a> {
+    fn codegen(&self, state: &mut CodegenState<'a>, default_separator: bool) {
+        self.pattern.codegen(state);
+        self.separator.codegen(state);
+        if self.separator.is_none() && default_separator {
+            state.add_token(" | ");
+        }
+    }
+}
+
+impl<'a> Inflate<'a> for MatchOrElement<'a> {
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.pattern = self.pattern.inflate(config)?;
+        self.separator = self.separator.inflate(config)?;
+        Ok(self)
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, IntoPy, ParenthesizedNode)]
+pub struct MatchOr<'a> {
+    pub patterns: Vec<MatchOrElement<'a>>,
+    pub lpar: Vec<LeftParen<'a>>,
+    pub rpar: Vec<RightParen<'a>>,
+}
+
+impl<'a> Codegen<'a> for MatchOr<'a> {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
+        self.parenthesize(state, |state| {
+            let len = self.patterns.len();
+            for (idx, pat) in self.patterns.iter().enumerate() {
+                pat.codegen(state, idx + 1 < len)
+            }
+        })
+    }
+}
+
+impl<'a> Inflate<'a> for MatchOr<'a> {
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+        self.lpar = self.lpar.inflate(config)?;
+        self.patterns = self.patterns.inflate(config)?;
+        self.rpar = self.rpar.inflate(config)?;
+        Ok(self)
     }
 }
