@@ -16,6 +16,7 @@ use TokType::{
 };
 
 pub type Result<'a, T> = std::result::Result<T, ParserError<'a>>;
+type GrammarResult<T> = std::result::Result<T, &'static str>;
 
 #[derive(Debug)]
 pub struct TokVec<'a>(Vec<Rc<Token<'a>>>);
@@ -148,7 +149,9 @@ parser! {
             / &(lit("with") / tok(Async, "ASYNC")) w:with_stmt() { CompoundStatement::With(w) }
             / &(lit("for") / tok(Async, "ASYNC")) f:for_stmt() { CompoundStatement::For(f) }
             / &lit("try") t:try_stmt() { CompoundStatement::Try(t) }
+            / &lit("try") t:try_star_stmt() { CompoundStatement::TryStar(t) }
             / &lit("while") w:while_stmt() { CompoundStatement::While(w) }
+            / m:match_stmt() { CompoundStatement::Match(m) }
 
         // Simple statements
 
@@ -498,6 +501,13 @@ parser! {
                     make_try(kw, b, ex, el, f)
             }
 
+        // Note: this is separate because TryStar is a different type in LibCST
+        rule try_star_stmt() -> TryStar<'a>
+            = kw:lit("try") lit(":") b:block() ex:except_star_block()+
+                el:else_block()? f:finally_block()? {
+                    make_try_star(kw, b, ex, el, f)
+            }
+
         // Except statement
 
         rule except_block() -> ExceptHandler<'a>
@@ -509,11 +519,229 @@ parser! {
                 make_except(kw, None, None, col, b)
             }
 
+        rule except_star_block() -> ExceptStarHandler<'a>
+            = kw:lit("except") star:lit("*") e:expression()
+                a:(k:lit("as") n:name() {(k, n)})? col:lit(":") b:block() {
+                    make_except_star(kw, star, e, a, col, b)
+            }
+
         rule finally_block() -> Finally<'a>
             = kw:lit("finally") col:lit(":") b:block() {
                 make_finally(kw, col, b)
             }
 
+
+        // Match statement
+
+        rule match_stmt() -> Match<'a>
+            = kw:lit("match") subject:subject_expr() col:lit(":") tok(NL, "NEWLINE")
+                i:tok(Indent, "INDENT") cases:case_block()+ d:tok(Dedent, "DEDENT") {
+                    make_match(kw, subject, col, i, cases, d)
+            }
+
+        rule subject_expr() -> Expression<'a>
+            = first:star_named_expression() c:comma() rest:star_named_expressions()? {
+                Expression::Tuple(
+                    make_tuple_from_elements(first.with_comma(c), rest.unwrap_or_default())
+                )
+            }
+            / named_expression()
+
+        rule case_block() -> MatchCase<'a>
+            = kw:lit("case") pattern:patterns() guard:guard()? col:lit(":") body:block() {
+                make_case(kw, pattern, guard, col, body)
+            }
+
+        rule guard() -> (TokenRef<'a>, Expression<'a>)
+            = kw:lit("if") exp:named_expression() { (kw, exp) }
+
+        rule patterns() -> MatchPattern<'a>
+            = pats:open_sequence_pattern() {
+                MatchPattern::Sequence(make_list_pattern(None, pats, None))
+            }
+            / pattern()
+
+        rule pattern() -> MatchPattern<'a>
+            = as_pattern()
+            / or_pattern()
+
+        rule as_pattern() -> MatchPattern<'a>
+            = pat:or_pattern() kw:lit("as") target:pattern_capture_target() {
+                make_as_pattern(Some(pat), Some(kw), Some(target))
+            }
+
+        rule or_pattern() -> MatchPattern<'a>
+            = pats:separated(<closed_pattern()>, <lit("|")>) {
+                make_or_pattern(pats.0, pats.1)
+            }
+
+        rule closed_pattern() -> MatchPattern<'a>
+            = literal_pattern()
+            / capture_pattern()
+            / wildcard_pattern()
+            / value_pattern()
+            / group_pattern()
+            / sequence_pattern()
+            / mapping_pattern()
+            / class_pattern()
+
+        rule literal_pattern() -> MatchPattern<'a>
+            = val:signed_number() !(lit("+") / lit("-")) { make_match_value(val) }
+            / val:complex_number() { make_match_value(val) }
+            / val:strings() { make_match_value(val.into()) }
+            / n:lit("None") { make_match_singleton(make_name(n)) }
+            / n:lit("True") { make_match_singleton(make_name(n)) }
+            / n:lit("False") { make_match_singleton(make_name(n)) }
+
+        rule literal_expr() -> Expression<'a>
+            = val:signed_number() !(lit("+") / lit("-")) { val }
+            / val:complex_number() { val }
+            / val:strings() { val.into() }
+            / n:lit("None") { Expression::Name(make_name(n)) }
+            / n:lit("True") { Expression::Name(make_name(n)) }
+            / n:lit("False") { Expression::Name(make_name(n)) }
+
+        rule complex_number() -> Expression<'a>
+            = re:signed_real_number() op:(lit("+")/lit("-")) im:imaginary_number() {?
+                make_binary_op(re, op, im).map_err(|_| "complex number")
+            }
+
+        rule signed_number() -> Expression<'a>
+            = n:tok(Number, "number") { make_number(n) }
+            / op:lit("-") n:tok(Number, "number") {?
+                make_unary_op(op, make_number(n)).map_err(|_| "signed number")
+            }
+
+        rule signed_real_number() -> Expression<'a>
+            = real_number()
+            / op:lit("-") n:real_number() {?
+                make_unary_op(op, n).map_err(|_| "signed real number")
+            }
+
+        rule real_number() -> Expression<'a>
+            = n:tok(Number, "number") {? ensure_real_number(n) }
+
+        rule imaginary_number() -> Expression<'a>
+            = n:tok(Number, "number") {? ensure_imaginary_number(n) }
+
+        rule capture_pattern() -> MatchPattern<'a>
+            = t:pattern_capture_target() { make_as_pattern(None, None, Some(t)) }
+
+        rule pattern_capture_target() -> Name<'a>
+            = !lit("_") n:name() !(lit(".") / lit("(") / lit("=")) { n }
+
+        rule wildcard_pattern() -> MatchPattern<'a>
+            = lit("_") { make_as_pattern(None, None, None) }
+
+        rule value_pattern() -> MatchPattern<'a>
+            = v:attr() !(lit(".") / lit("(") / lit("=")) {
+                make_match_value(v.into())
+            }
+
+        // In upstream attr and name_or_attr are mutually recursive, but rust-peg
+        // doesn't support this yet.
+        rule attr() -> NameOrAttribute<'a>
+            = &(name() lit(".")) v:name_or_attr() { v }
+
+        #[cache_left_rec]
+        rule name_or_attr() -> NameOrAttribute<'a>
+            = val:name_or_attr() d:lit(".") attr:name() {
+                NameOrAttribute::A(make_attribute(val.into(), d, attr))
+            }
+            / n:name() { NameOrAttribute::N(n) }
+
+        rule group_pattern() -> MatchPattern<'a>
+            = l:lpar() pat:pattern() r:rpar() { pat.with_parens(l, r) }
+
+        rule sequence_pattern() -> MatchPattern<'a>
+            = l:lbrak() pats:maybe_sequence_pattern()? r:rbrak() {
+                MatchPattern::Sequence(
+                    make_list_pattern(Some(l), pats.unwrap_or_default(), Some(r))
+                )
+            }
+            / l:lpar() pats:open_sequence_pattern()? r:rpar() {
+                MatchPattern::Sequence(make_tuple_pattern(l, pats.unwrap_or_default(), r))
+            }
+
+        rule open_sequence_pattern() -> Vec<StarrableMatchSequenceElement<'a>>
+            = pat:maybe_star_pattern() c:comma() pats:maybe_sequence_pattern()? {
+                make_open_sequence_pattern(pat, c, pats.unwrap_or_default())
+            }
+
+        rule maybe_sequence_pattern() -> Vec<StarrableMatchSequenceElement<'a>>
+            = pats:separated_trailer(<maybe_star_pattern()>, <comma()>) {
+                comma_separate(pats.0, pats.1, pats.2)
+            }
+
+        rule maybe_star_pattern() -> StarrableMatchSequenceElement<'a>
+            = s:star_pattern() { StarrableMatchSequenceElement::Starred(s) }
+            / p:pattern() {
+                StarrableMatchSequenceElement::Simple(
+                    make_match_sequence_element(p)
+                )
+            }
+
+        rule star_pattern() -> MatchStar<'a>
+            = star:lit("*") t:pattern_capture_target() {make_match_star(star, Some(t))}
+            / star:lit("*") t:wildcard_pattern() { make_match_star(star, None) }
+
+        rule mapping_pattern() -> MatchPattern<'a>
+            = l:lbrace() r:rbrace() {
+                make_match_mapping(l, vec![], None, None, None, None, r)
+            }
+            / l:lbrace() rest:double_star_pattern() trail:comma()? r:rbrace() {
+                make_match_mapping(l, vec![], None, Some(rest.0), Some(rest.1), trail, r)
+            }
+            / l:lbrace() items:items_pattern() c:comma() rest:double_star_pattern()
+                trail:comma()? r:rbrace() {
+                    make_match_mapping(l, items, Some(c), Some(rest.0), Some(rest.1), trail, r)
+                }
+            / l:lbrace() items:items_pattern() trail:comma()? r:rbrace() {
+                make_match_mapping(l, items, trail, None, None, None, r)
+            }
+
+        rule items_pattern() -> Vec<MatchMappingElement<'a>>
+            = pats:separated(<key_value_pattern()>, <comma()>) {
+                comma_separate(pats.0, pats.1, None)
+            }
+
+        rule key_value_pattern() -> MatchMappingElement<'a>
+            = key:(literal_expr() / a:attr() {a.into()}) colon:lit(":") pat:pattern() {
+                make_match_mapping_element(key, colon, pat)
+            }
+
+        rule double_star_pattern() -> (TokenRef<'a>, Name<'a>)
+            = star:lit("**") n:pattern_capture_target() { (star, n) }
+
+        rule class_pattern() -> MatchPattern<'a>
+            = cls:name_or_attr() l:lit("(") r:lit(")") {
+                make_class_pattern(cls, l, vec![], None, vec![], None, r)
+            }
+            / cls:name_or_attr() l:lit("(") pats:positional_patterns() c:comma()? r:lit(")") {
+                make_class_pattern(cls, l, pats, c, vec![], None, r)
+            }
+            / cls:name_or_attr() l:lit("(") kwds:keyword_patterns() c:comma()? r:lit(")") {
+                make_class_pattern(cls, l, vec![], None, kwds, c, r)
+            }
+            / cls:name_or_attr() l:lit("(") pats:positional_patterns() c:comma()
+                kwds:keyword_patterns() trail:comma()? r:lit(")") {
+                    make_class_pattern(cls, l, pats, Some(c), kwds, trail, r)
+            }
+
+        rule positional_patterns() -> Vec<MatchSequenceElement<'a>>
+            = pats:separated(<p:pattern() { make_match_sequence_element(p) }>, <comma()>) {
+                comma_separate(pats.0, pats.1, None)
+            }
+
+        rule keyword_patterns() -> Vec<MatchKeywordElement<'a>>
+            = pats:separated(<keyword_pattern()>, <comma()>) {
+                comma_separate(pats.0, pats.1, None)
+            }
+
+        rule keyword_pattern() -> MatchKeywordElement<'a>
+            = arg:name() eq:lit("=") value:pattern() {
+                make_match_keyword_element(arg, eq, value)
+            }
 
         // Expressions
 
@@ -1963,6 +2191,15 @@ fn make_tuple<'a>(
     }
 }
 
+fn make_tuple_from_elements<'a>(first: Element<'a>, mut rest: Vec<Element<'a>>) -> Tuple<'a> {
+    rest.insert(0, first);
+    Tuple {
+        elements: rest,
+        lpar: Default::default(),
+        rpar: Default::default(),
+    }
+}
+
 fn make_kwarg<'a>(name: Name<'a>, eq: TokenRef<'a>, value: Expression<'a>) -> Arg<'a> {
     let equal = Some(make_assign_equal(eq));
     let keyword = Some(name);
@@ -2814,6 +3051,30 @@ fn make_except<'a>(
     }
 }
 
+fn make_except_star<'a>(
+    except_tok: TokenRef<'a>,
+    star_tok: TokenRef<'a>,
+    exp: Expression<'a>,
+    as_: Option<(TokenRef<'a>, Name<'a>)>,
+    colon_tok: TokenRef<'a>,
+    body: Suite<'a>,
+) -> ExceptStarHandler<'a> {
+    // TODO: AsName should come from outside
+    let name = as_.map(|(x, y)| make_as_name(x, AssignTargetExpression::Name(y)));
+    ExceptStarHandler {
+        body,
+        r#type: exp,
+        name,
+        leading_lines: Default::default(),
+        whitespace_after_except: Default::default(),
+        whitespace_after_star: Default::default(),
+        whitespace_before_colon: Default::default(),
+        except_tok,
+        colon_tok,
+        star_tok,
+    }
+}
+
 fn make_try<'a>(
     try_tok: TokenRef<'a>,
     body: Suite<'a>,
@@ -2822,6 +3083,24 @@ fn make_try<'a>(
     finalbody: Option<Finally<'a>>,
 ) -> Try<'a> {
     Try {
+        body,
+        handlers,
+        orelse,
+        finalbody,
+        leading_lines: Default::default(),
+        whitespace_before_colon: Default::default(),
+        try_tok,
+    }
+}
+
+fn make_try_star<'a>(
+    try_tok: TokenRef<'a>,
+    body: Suite<'a>,
+    handlers: Vec<ExceptStarHandler<'a>>,
+    orelse: Option<Else<'a>>,
+    finalbody: Option<Finally<'a>>,
+) -> TryStar<'a> {
+    TryStar {
         body,
         handlers,
         orelse,
@@ -2989,5 +3268,274 @@ fn make_named_expr<'a>(name: Name<'a>, tok: TokenRef<'a>, expr: Expression<'a>) 
         whitespace_before_walrus: Default::default(),
         whitespace_after_walrus: Default::default(),
         walrus_tok: tok,
+    }
+}
+
+fn make_match<'a>(
+    match_tok: TokenRef<'a>,
+    subject: Expression<'a>,
+    colon_tok: TokenRef<'a>,
+    indent_tok: TokenRef<'a>,
+    cases: Vec<MatchCase<'a>>,
+    dedent_tok: TokenRef<'a>,
+) -> Match<'a> {
+    Match {
+        subject,
+        cases,
+        leading_lines: Default::default(),
+        whitespace_after_match: Default::default(),
+        whitespace_before_colon: Default::default(),
+        whitespace_after_colon: Default::default(),
+        indent: Default::default(),
+        footer: Default::default(),
+        match_tok,
+        colon_tok,
+        indent_tok,
+        dedent_tok,
+    }
+}
+
+fn make_case<'a>(
+    case_tok: TokenRef<'a>,
+    pattern: MatchPattern<'a>,
+    guard: Option<(TokenRef<'a>, Expression<'a>)>,
+    colon_tok: TokenRef<'a>,
+    body: Suite<'a>,
+) -> MatchCase<'a> {
+    let (if_tok, guard) = match guard {
+        Some((if_tok, guard)) => (Some(if_tok), Some(guard)),
+        None => (None, None),
+    };
+    MatchCase {
+        pattern,
+        guard,
+        body,
+        leading_lines: Default::default(),
+        whitespace_after_case: Default::default(),
+        whitespace_before_if: Default::default(),
+        whitespace_after_if: Default::default(),
+        whitespace_before_colon: Default::default(),
+        case_tok,
+        if_tok,
+        colon_tok,
+    }
+}
+
+fn make_match_value(value: Expression) -> MatchPattern {
+    MatchPattern::Value(MatchValue { value })
+}
+
+fn make_match_singleton(value: Name) -> MatchPattern {
+    MatchPattern::Singleton(MatchSingleton { value })
+}
+
+fn make_list_pattern<'a>(
+    lbracket: Option<LeftSquareBracket<'a>>,
+    patterns: Vec<StarrableMatchSequenceElement<'a>>,
+    rbracket: Option<RightSquareBracket<'a>>,
+) -> MatchSequence<'a> {
+    MatchSequence::MatchList(MatchList {
+        patterns,
+        lbracket,
+        rbracket,
+        lpar: Default::default(),
+        rpar: Default::default(),
+    })
+}
+
+fn make_as_pattern<'a>(
+    pattern: Option<MatchPattern<'a>>,
+    as_tok: Option<TokenRef<'a>>,
+    name: Option<Name<'a>>,
+) -> MatchPattern<'a> {
+    MatchPattern::As(Box::new(MatchAs {
+        pattern,
+        name,
+        lpar: Default::default(),
+        rpar: Default::default(),
+        whitespace_before_as: Default::default(),
+        whitespace_after_as: Default::default(),
+        as_tok,
+    }))
+}
+
+fn make_bit_or(tok: TokenRef) -> BitOr {
+    BitOr {
+        whitespace_before: Default::default(),
+        whitespace_after: Default::default(),
+        tok,
+    }
+}
+
+fn make_or_pattern<'a>(
+    first: MatchPattern<'a>,
+    rest: Vec<(TokenRef<'a>, MatchPattern<'a>)>,
+) -> MatchPattern<'a> {
+    if rest.is_empty() {
+        return first;
+    }
+
+    let mut patterns = vec![];
+    let mut current = first;
+    for (sep, next) in rest {
+        let op = make_bit_or(sep);
+        patterns.push(MatchOrElement {
+            pattern: current,
+            separator: Some(op),
+        });
+        current = next;
+    }
+    patterns.push(MatchOrElement {
+        pattern: current,
+        separator: None,
+    });
+    MatchPattern::Or(Box::new(MatchOr {
+        patterns,
+        lpar: Default::default(),
+        rpar: Default::default(),
+    }))
+}
+
+fn ensure_real_number(tok: TokenRef) -> GrammarResult<Expression> {
+    match make_number(tok) {
+        e @ (Expression::Integer(_) | Expression::Float(_)) => Ok(e),
+        _ => Err("real number"),
+    }
+}
+
+fn ensure_imaginary_number(tok: TokenRef) -> GrammarResult<Expression> {
+    match make_number(tok) {
+        e @ Expression::Imaginary(_) => Ok(e),
+        _ => Err("imaginary number"),
+    }
+}
+
+fn make_tuple_pattern<'a>(
+    lpar: LeftParen<'a>,
+    patterns: Vec<StarrableMatchSequenceElement<'a>>,
+    rpar: RightParen<'a>,
+) -> MatchSequence<'a> {
+    MatchSequence::MatchTuple(MatchTuple {
+        patterns,
+        lpar: vec![lpar],
+        rpar: vec![rpar],
+    })
+}
+
+fn make_open_sequence_pattern<'a>(
+    first: StarrableMatchSequenceElement<'a>,
+    comma: Comma<'a>,
+    mut rest: Vec<StarrableMatchSequenceElement<'a>>,
+) -> Vec<StarrableMatchSequenceElement<'a>> {
+    rest.insert(0, first.with_comma(comma));
+    rest
+}
+
+fn make_match_sequence_element(value: MatchPattern) -> MatchSequenceElement {
+    MatchSequenceElement {
+        value,
+        comma: Default::default(),
+    }
+}
+
+fn make_match_star<'a>(star_tok: TokenRef<'a>, name: Option<Name<'a>>) -> MatchStar<'a> {
+    MatchStar {
+        name,
+        comma: Default::default(),
+        whitespace_before_name: Default::default(),
+        star_tok,
+    }
+}
+
+fn make_match_mapping<'a>(
+    lbrace: LeftCurlyBrace<'a>,
+    mut elements: Vec<MatchMappingElement<'a>>,
+    el_comma: Option<Comma<'a>>,
+    star_tok: Option<TokenRef<'a>>,
+    rest: Option<Name<'a>>,
+    trailing_comma: Option<Comma<'a>>,
+    rbrace: RightCurlyBrace<'a>,
+) -> MatchPattern<'a> {
+    if let Some(c) = el_comma {
+        if let Some(el) = elements.pop() {
+            elements.push(el.with_comma(c));
+        }
+        // TODO: else raise error
+    }
+    MatchPattern::Mapping(MatchMapping {
+        elements,
+        rest,
+        trailing_comma,
+        lbrace,
+        rbrace,
+        lpar: Default::default(),
+        rpar: Default::default(),
+        whitespace_before_rest: Default::default(),
+        star_tok,
+    })
+}
+
+fn make_match_mapping_element<'a>(
+    key: Expression<'a>,
+    colon_tok: TokenRef<'a>,
+    pattern: MatchPattern<'a>,
+) -> MatchMappingElement<'a> {
+    MatchMappingElement {
+        key,
+        pattern,
+        comma: Default::default(),
+        whitespace_before_colon: Default::default(),
+        whitespace_after_colon: Default::default(),
+        colon_tok,
+    }
+}
+
+fn make_class_pattern<'a>(
+    cls: NameOrAttribute<'a>,
+    lpar_tok: TokenRef<'a>,
+    mut patterns: Vec<MatchSequenceElement<'a>>,
+    pat_comma: Option<Comma<'a>>,
+    mut kwds: Vec<MatchKeywordElement<'a>>,
+    kwd_comma: Option<Comma<'a>>,
+    rpar_tok: TokenRef<'a>,
+) -> MatchPattern<'a> {
+    if let Some(c) = pat_comma {
+        if let Some(el) = patterns.pop() {
+            patterns.push(el.with_comma(c));
+        }
+        // TODO: else raise error
+    }
+    if let Some(c) = kwd_comma {
+        if let Some(el) = kwds.pop() {
+            kwds.push(el.with_comma(c));
+        }
+        // TODO: else raise error
+    }
+    MatchPattern::Class(MatchClass {
+        cls,
+        patterns,
+        kwds,
+        lpar: Default::default(),
+        rpar: Default::default(),
+        whitespace_after_cls: Default::default(),
+        whitespace_before_patterns: Default::default(),
+        whitespace_after_kwds: Default::default(),
+        lpar_tok,
+        rpar_tok,
+    })
+}
+
+fn make_match_keyword_element<'a>(
+    key: Name<'a>,
+    equal_tok: TokenRef<'a>,
+    pattern: MatchPattern<'a>,
+) -> MatchKeywordElement<'a> {
+    MatchKeywordElement {
+        key,
+        pattern,
+        comma: Default::default(),
+        whitespace_before_equal: Default::default(),
+        whitespace_after_equal: Default::default(),
+        equal_tok,
     }
 }
