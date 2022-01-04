@@ -687,3 +687,43 @@ fn test_add_dedents_after_fake_newline() {
         ])
     );
 }
+
+#[test]
+fn test_add_dedents_for_dangling_indent() {
+    assert_eq!(
+        tokenize_with_end_marker("if 1:\n  if 2:\n    ", &default_config()),
+        Ok(vec![
+            (TokType::Name, "if"),
+            (TokType::Number, "1"),
+            (TokType::Op, ":"),
+            (TokType::Newline, "\n"),
+            (TokType::Indent, ""),
+            (TokType::Name, "if"),
+            (TokType::Number, "2"),
+            (TokType::Op, ":"),
+            (TokType::Newline, "\n"),
+            (TokType::Dedent, ""),
+            (TokType::EndMarker, "")
+        ])
+    );
+}
+
+#[test]
+fn test_add_dedents_for_dangling_indent_with_comment() {
+    assert_eq!(
+        tokenize_with_end_marker("if 1:\n  if 2:\n    # foo", &default_config()),
+        Ok(vec![
+            (TokType::Name, "if"),
+            (TokType::Number, "1"),
+            (TokType::Op, ":"),
+            (TokType::Newline, "\n"),
+            (TokType::Indent, ""),
+            (TokType::Name, "if"),
+            (TokType::Number, "2"),
+            (TokType::Op, ":"),
+            (TokType::Newline, "\n"),
+            (TokType::Dedent, ""),
+            (TokType::EndMarker, "")
+        ])
+    );
+}

@@ -342,7 +342,20 @@ impl<'t> TokState<'t> {
                         self.missing_nl_before_eof = false;
                         Ok(TokType::Newline)
                     } else {
-                        Ok(TokType::EndMarker)
+                        let hanging_indents = self.indent_stack.len() as i32;
+                        if self.pending_indents == 0 && hanging_indents != 0 {
+                            // We've reached EOF but there are still pending indents not
+                            // accounted for. Flush them out.
+                            self.pending_indents = -hanging_indents;
+                            self.indent_stack.clear();
+                            self.alt_indent_stack.clear();
+                            self.missing_nl_before_eof = false;
+                        }
+                        if let Some(t) = self.process_pending_indents() {
+                            Ok(t)
+                        } else {
+                            Ok(TokType::EndMarker)
+                        }
                     }
                 }
 
