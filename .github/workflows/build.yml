@@ -198,7 +198,7 @@ jobs:
       CIBW_BEFORE_ALL_LINUX: "curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain stable -y"
       CIBW_BEFORE_ALL_MACOS: "rustup target add aarch64-apple-darwin x86_64-apple-darwin"
       CIBW_BEFORE_ALL_WINDOWS: "rustup target add x86_64-pc-windows-msvc i686-pc-windows-msvc"
-      CIBW_ENVIRONMENT: 'PATH="$PATH:$HOME/.cargo/bin"'
+      CIBW_ENVIRONMENT: 'PATH="$PATH:$HOME/.cargo/bin" LIBCST_NO_LOCAL_SCHEME=$LIBCST_NO_LOCAL_SCHEME'
       CIBW_SKIP: "cp27-* cp34-* cp35-* pp* *-win32 *-win_arm64 *-musllinux_*"
       CIBW_ARCHS: ${{ matrix.vers }}
       CIBW_BUILD_VERBOSITY: 1
@@ -224,20 +224,48 @@ jobs:
     - uses: actions/upload-artifact@v2
       with:
         path: wheelhouse/*.whl
-    - name: Build a source tarball
-      run: >-
-        python -m
-        build
-        --sdist
-        --outdir wheelhouse/
-    - if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
-      name: Publish distribution 📦 to Test PyPI
-      uses: pypa/gh-action-pypi-publish@release/v1
-      with:
-        user: __token__
-        password: ${{ secrets.TEST_PYPI_API_TOKEN }}
-        repository_url: https://test.pypi.org/legacy/
-        packages_dir: wheelhouse/
+        name: wheels
+
+  pypi:
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    name: Upload wheels to pypi
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v1
+      - name: Download binary wheels
+        id: download
+        uses: actions/download-artifact@v2
+        with:
+          name: wheels
+          path: wheelhouse
+      - uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - uses: actions/cache@v2
+        id: cache
+        with:
+          path: ${{ env.pythonLocation }}
+          key: ${{ env.pythonLocation }}-${{ hashFiles('requirements.txt', 'requirements-dev.txt', 'setup.py') }}
+      - name: Validate Dependencies
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: exit 1
+      - name: Disable scmtools local scheme
+        run: >-
+          echo LIBCST_NO_LOCAL_SCHEME=1 >> $GITHUB_ENV
+      - name: Build a source tarball
+        run: >-
+          python -m
+          build
+          --sdist
+          --outdir ${{ steps.download.outputs.download-path }}
+      - name: Publish distribution 📦 to Test PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          user: __token__
+          password: ${{ secrets.TEST_PYPI_API_TOKEN }}
+          repository_url: https://test.pypi.org/legacy/
+          packages_dir: ${{ steps.download.outputs.download-path }}
 
 # Test rust parts
   native:
