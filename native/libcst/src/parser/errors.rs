@@ -6,10 +6,9 @@
 use pyo3::types::{IntoPyDict, PyModule};
 use pyo3::{IntoPy, PyErr, PyErrArguments, Python};
 
-use crate::parser::grammar::TokVec;
+use crate::parser::grammar::ParseLoc;
 use crate::tokenizer::whitespace_parser::WhitespaceError;
 use crate::tokenizer::TokError;
-use peg::Parse;
 use thiserror::Error;
 
 #[allow(clippy::enum_variant_names)]
@@ -18,10 +17,7 @@ pub enum ParserError<'a> {
     #[error("tokenizer error: {0}")]
     TokenizerError(TokError<'a>, &'a str),
     #[error("parser error: {0}")]
-    ParserError(
-        peg::error::ParseError<<TokVec<'a> as Parse>::PositionRepr>,
-        &'a str,
-    ),
+    ParserError(peg::error::ParseError<ParseLoc>, &'a str),
     #[error(transparent)]
     WhitespaceError(#[from] WhitespaceError),
     #[error("invalid operator")]

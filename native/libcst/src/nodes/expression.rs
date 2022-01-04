@@ -3,37 +3,33 @@
 // This source code is licensed under the MIT license found in the
 // LICENSE file in the root directory of this source tree.
 
-use std::{mem::swap, rc::Rc};
+use std::mem::swap;
 
 use crate::{
     inflate_helpers::adjust_parameters_trailing_whitespace,
     nodes::{
+        common::TokenRef,
         traits::{Inflate, ParenthesizedNode, Result, WithComma},
         whitespace::ParenthesizableWhitespace,
         Annotation, AssignEqual, AssignTargetExpression, BinaryOp, BooleanOp, Codegen,
         CodegenState, Colon, Comma, CompOp, Dot, UnaryOp,
     },
-    tokenizer::{
-        whitespace_parser::{parse_parenthesizable_whitespace, Config},
-        Token,
-    },
+    tokenizer::whitespace_parser::{parse_parenthesizable_whitespace, Config},
 };
-use libcst_derive::{Codegen, Inflate, IntoPy, ParenthesizedNode};
+use libcst_derive::{cst_node, Codegen, Inflate, IntoPy, ParenthesizedNode};
 use pyo3::{types::PyModule, IntoPy};
 
-type TokenRef<'a> = Rc<Token<'a>>;
-
 #[derive(Debug, Eq, PartialEq, Default, Clone, IntoPy)]
-pub struct Parameters<'a> {
-    pub params: Vec<Param<'a>>,
-    pub star_arg: Option<StarArg<'a>>,
-    pub kwonly_params: Vec<Param<'a>>,
-    pub star_kwarg: Option<Param<'a>>,
-    pub posonly_params: Vec<Param<'a>>,
-    pub posonly_ind: Option<ParamSlash<'a>>,
+pub struct Parameters<'r, 'a> {
+    pub params: Vec<Param<'r, 'a>>,
+    pub star_arg: Option<StarArg<'r, 'a>>,
+    pub kwonly_params: Vec<Param<'r, 'a>>,
+    pub star_kwarg: Option<Param<'r, 'a>>,
+    pub posonly_params: Vec<Param<'r, 'a>>,
+    pub posonly_ind: Option<ParamSlash<'r, 'a>>,
 }
 
-impl<'a> Parameters<'a> {
+impl<'r, 'a> Parameters<'r, 'a> {
     pub fn is_empty(&self) -> bool {
         self.params.is_empty()
             && self.star_arg.is_none()
@@ -44,7 +40,8 @@ impl<'a> Parameters<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for Parameters<'a> {
+impl<'r, 'a> Inflate<'a> for Parameters<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.posonly_params = self.posonly_params.inflate(config)?;
         self.posonly_ind = self.posonly_ind.inflate(config)?;
@@ -58,12 +55,12 @@ impl<'a> Inflate<'a> for Parameters<'a> {
 
 #[allow(clippy::large_enum_variant)]
 #[derive(Debug, PartialEq, Eq, Clone, Inflate, IntoPy)]
-pub enum StarArg<'a> {
-    Star(ParamStar<'a>),
-    Param(Box<Param<'a>>),
+pub enum StarArg<'r, 'a> {
+    Star(ParamStar<'r, 'a>),
+    Param(Box<Param<'r, 'a>>),
 }
 
-impl<'a> Codegen<'a> for Parameters<'a> {
+impl<'r, 'a> Codegen<'a> for Parameters<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         let params_after_kwonly = self.star_kwarg.is_some();
         let params_after_regular = !self.kwonly_params.is_empty() || params_after_kwonly;
@@ -118,11 +115,11 @@ impl<'a> Codegen<'a> for Parameters<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
-pub struct ParamSlash<'a> {
-    pub comma: Option<Comma<'a>>,
+pub struct ParamSlash<'r, 'a> {
+    pub comma: Option<Comma<'r, 'a>>,
 }
 
-impl<'a> ParamSlash<'a> {
+impl<'r, 'a> ParamSlash<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>, default_comma: bool) {
         state.add_token("/");
         match (&self.comma, default_comma) {
@@ -133,7 +130,8 @@ impl<'a> ParamSlash<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for ParamSlash<'a> {
+impl<'r, 'a> Inflate<'a> for ParamSlash<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.comma = self.comma.inflate(config)?;
         Ok(self)
@@ -141,18 +139,19 @@ impl<'a> Inflate<'a> for ParamSlash<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
-pub struct ParamStar<'a> {
-    pub comma: Comma<'a>,
+pub struct ParamStar<'r, 'a> {
+    pub comma: Comma<'r, 'a>,
 }
 
-impl<'a> Codegen<'a> for ParamStar<'a> {
+impl<'r, 'a> Codegen<'a> for ParamStar<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         state.add_token("*");
         self.comma.codegen(state);
     }
 }
 
-impl<'a> Inflate<'a> for ParamStar<'a> {
+impl<'r, 'a> Inflate<'a> for ParamStar<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.comma = self.comma.inflate(config)?;
         Ok(self)
@@ -160,13 +159,14 @@ impl<'a> Inflate<'a> for ParamStar<'a> {
 }
 
 #[derive(Debug, Eq, PartialEq, Default, Clone, ParenthesizedNode, IntoPy)]
-pub struct Name<'a> {
+pub struct Name<'r, 'a> {
     pub value: &'a str,
-    pub lpar: Vec<LeftParen<'a>>,
-    pub rpar: Vec<RightParen<'a>>,
+    pub lpar: Vec<LeftParen<'r, 'a>>,
+    pub rpar: Vec<RightParen<'r, 'a>>,
 }
 
-impl<'a> Inflate<'a> for Name<'a> {
+impl<'r, 'a> Inflate<'a> for Name<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.lpar = self.lpar.inflate(config)?;
         self.rpar = self.rpar.inflate(config)?;
@@ -174,7 +174,7 @@ impl<'a> Inflate<'a> for Name<'a> {
     }
 }
 
-impl<'a> Codegen<'a> for Name<'a> {
+impl<'r, 'a> Codegen<'a> for Name<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         self.parenthesize(state, |state| {
             state.add_token(self.value);
@@ -183,23 +183,24 @@ impl<'a> Codegen<'a> for Name<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
-pub struct Param<'a> {
-    pub name: Name<'a>,
-    pub annotation: Option<Annotation<'a>>,
-    pub equal: Option<AssignEqual<'a>>,
-    pub default: Option<Expression<'a>>,
+pub struct Param<'r, 'a> {
+    pub name: Name<'r, 'a>,
+    pub annotation: Option<Annotation<'r, 'a>>,
+    pub equal: Option<AssignEqual<'r, 'a>>,
+    pub default: Option<Expression<'r, 'a>>,
 
-    pub comma: Option<Comma<'a>>,
+    pub comma: Option<Comma<'r, 'a>>,
 
     pub star: Option<&'a str>,
 
     pub whitespace_after_star: ParenthesizableWhitespace<'a>,
     pub whitespace_after_param: ParenthesizableWhitespace<'a>,
 
-    pub(crate) star_tok: Option<TokenRef<'a>>,
+    pub(crate) star_tok: Option<TokenRef<'r, 'a>>,
 }
 
-impl<'a> Inflate<'a> for Param<'a> {
+impl<'r, 'a> Inflate<'a> for Param<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         // TODO: whitespace_after_param missing?
         self.name = self.name.inflate(config)?;
@@ -217,7 +218,7 @@ impl<'a> Inflate<'a> for Param<'a> {
     }
 }
 
-impl<'a> Default for Param<'a> {
+impl<'r, 'a> Default for Param<'r, 'a> {
     fn default() -> Self {
         Self {
             name: Default::default(),
@@ -233,7 +234,7 @@ impl<'a> Default for Param<'a> {
     }
 }
 
-impl<'a> Param<'a> {
+impl<'r, 'a> Param<'r, 'a> {
     fn codegen(
         &self,
         state: &mut CodegenState<'a>,
@@ -275,19 +276,20 @@ impl<'a> Param<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
-pub struct Arg<'a> {
-    pub value: Expression<'a>,
-    pub keyword: Option<Name<'a>>,
-    pub equal: Option<AssignEqual<'a>>,
-    pub comma: Option<Comma<'a>>,
+pub struct Arg<'r, 'a> {
+    pub value: Expression<'r, 'a>,
+    pub keyword: Option<Name<'r, 'a>>,
+    pub equal: Option<AssignEqual<'r, 'a>>,
+    pub comma: Option<Comma<'r, 'a>>,
     pub star: &'a str,
     pub whitespace_after_star: ParenthesizableWhitespace<'a>,
     pub whitespace_after_arg: ParenthesizableWhitespace<'a>,
 
-    pub(crate) star_tok: Option<TokenRef<'a>>,
+    pub(crate) star_tok: Option<TokenRef<'r, 'a>>,
 }
 
-impl<'a> Inflate<'a> for Arg<'a> {
+impl<'r, 'a> Inflate<'a> for Arg<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         if let Some(star_tok) = self.star_tok.as_mut() {
             self.whitespace_after_star = parse_parenthesizable_whitespace(
@@ -304,7 +306,7 @@ impl<'a> Inflate<'a> for Arg<'a> {
     }
 }
 
-impl<'a> Arg<'a> {
+impl<'r, 'a> Arg<'r, 'a> {
     pub fn codegen(&self, state: &mut CodegenState<'a>, default_comma: bool) {
         state.add_token(self.star);
         self.whitespace_after_star.codegen(state);
@@ -328,8 +330,8 @@ impl<'a> Arg<'a> {
     }
 }
 
-impl<'a> WithComma<'a> for Arg<'a> {
-    fn with_comma(self, c: Comma<'a>) -> Self {
+impl<'r, 'a> WithComma<'r, 'a> for Arg<'r, 'a> {
+    fn with_comma(self, c: Comma<'r, 'a>) -> Self {
         Self {
             comma: Some(c),
             ..self
@@ -338,21 +340,22 @@ impl<'a> WithComma<'a> for Arg<'a> {
 }
 
 #[derive(Debug, Eq, PartialEq, Clone, IntoPy)]
-pub struct LeftParen<'a> {
+pub struct LeftParen<'r, 'a> {
     /// Any space that appears directly after this left parenthesis.
     pub whitespace_after: ParenthesizableWhitespace<'a>,
 
-    pub(crate) lpar_tok: TokenRef<'a>,
+    pub(crate) lpar_tok: TokenRef<'r, 'a>,
 }
 
-impl<'a> Codegen<'a> for LeftParen<'a> {
+impl<'r, 'a> Codegen<'a> for LeftParen<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         state.add_token("(");
         self.whitespace_after.codegen(state);
     }
 }
 
-impl<'a> Inflate<'a> for LeftParen<'a> {
+impl<'r, 'a> Inflate<'a> for LeftParen<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.whitespace_after = parse_parenthesizable_whitespace(
             config,
@@ -363,21 +366,22 @@ impl<'a> Inflate<'a> for LeftParen<'a> {
 }
 
 #[derive(Debug, Eq, PartialEq, Clone, IntoPy)]
-pub struct RightParen<'a> {
+pub struct RightParen<'r, 'a> {
     /// Any space that appears directly before this right parenthesis.
     pub whitespace_before: ParenthesizableWhitespace<'a>,
 
-    pub(crate) rpar_tok: TokenRef<'a>,
+    pub(crate) rpar_tok: TokenRef<'r, 'a>,
 }
 
-impl<'a> Codegen<'a> for RightParen<'a> {
+impl<'r, 'a> Codegen<'a> for RightParen<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         self.whitespace_before.codegen(state);
         state.add_token(")");
     }
 }
 
-impl<'a> Inflate<'a> for RightParen<'a> {
+impl<'r, 'a> Inflate<'a> for RightParen<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.whitespace_before = parse_parenthesizable_whitespace(
             config,
@@ -389,52 +393,53 @@ impl<'a> Inflate<'a> for RightParen<'a> {
 
 #[allow(clippy::large_enum_variant)]
 #[derive(Debug, Eq, PartialEq, Clone, ParenthesizedNode, Codegen, Inflate, IntoPy)]
-pub enum Expression<'a> {
-    Name(Name<'a>),
-    Ellipsis(Ellipsis<'a>),
-    Integer(Integer<'a>),
-    Float(Float<'a>),
-    Imaginary(Imaginary<'a>),
-    Comparison(Comparison<'a>),
-    UnaryOperation(UnaryOperation<'a>),
-    BinaryOperation(BinaryOperation<'a>),
-    BooleanOperation(BooleanOperation<'a>),
-    Attribute(Attribute<'a>),
-    Tuple(Tuple<'a>),
-    Call(Call<'a>),
-    GeneratorExp(GeneratorExp<'a>),
-    ListComp(ListComp<'a>),
-    SetComp(SetComp<'a>),
-    DictComp(DictComp<'a>),
-    List(List<'a>),
-    Set(Set<'a>),
-    Dict(Dict<'a>),
-    Subscript(Subscript<'a>),
-    StarredElement(StarredElement<'a>),
-    IfExp(IfExp<'a>),
-    Lambda(Lambda<'a>),
-    Yield(Yield<'a>),
-    Await(Await<'a>),
-    SimpleString(SimpleString<'a>),
-    ConcatenatedString(ConcatenatedString<'a>),
-    FormattedString(FormattedString<'a>),
-    NamedExpr(NamedExpr<'a>),
+pub enum Expression<'r, 'a> {
+    Name(Name<'r, 'a>),
+    Ellipsis(Ellipsis<'r, 'a>),
+    Integer(Integer<'r, 'a>),
+    Float(Float<'r, 'a>),
+    Imaginary(Imaginary<'r, 'a>),
+    Comparison(Comparison<'r, 'a>),
+    UnaryOperation(UnaryOperation<'r, 'a>),
+    BinaryOperation(BinaryOperation<'r, 'a>),
+    BooleanOperation(BooleanOperation<'r, 'a>),
+    Attribute(Attribute<'r, 'a>),
+    Tuple(Tuple<'r, 'a>),
+    Call(Call<'r, 'a>),
+    GeneratorExp(GeneratorExp<'r, 'a>),
+    ListComp(ListComp<'r, 'a>),
+    SetComp(SetComp<'r, 'a>),
+    DictComp(DictComp<'r, 'a>),
+    List(List<'r, 'a>),
+    Set(Set<'r, 'a>),
+    Dict(Dict<'r, 'a>),
+    Subscript(Subscript<'r, 'a>),
+    StarredElement(StarredElement<'r, 'a>),
+    IfExp(IfExp<'r, 'a>),
+    Lambda(Lambda<'r, 'a>),
+    Yield(Yield<'r, 'a>),
+    Await(Await<'r, 'a>),
+    SimpleString(SimpleString<'r, 'a>),
+    ConcatenatedString(ConcatenatedString<'r, 'a>),
+    FormattedString(FormattedString<'r, 'a>),
+    NamedExpr(NamedExpr<'r, 'a>),
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode, IntoPy)]
-pub struct Ellipsis<'a> {
-    pub lpar: Vec<LeftParen<'a>>,
-    pub rpar: Vec<RightParen<'a>>,
+pub struct Ellipsis<'r, 'a> {
+    pub lpar: Vec<LeftParen<'r, 'a>>,
+    pub rpar: Vec<RightParen<'r, 'a>>,
 }
 
-impl<'a> Codegen<'a> for Ellipsis<'a> {
+impl<'r, 'a> Codegen<'a> for Ellipsis<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         self.parenthesize(state, |state| {
             state.add_token("...");
         })
     }
 }
-impl<'a> Inflate<'a> for Ellipsis<'a> {
+impl<'r, 'a> Inflate<'a> for Ellipsis<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.lpar = self.lpar.inflate(config)?;
         self.rpar = self.rpar.inflate(config)?;
@@ -443,15 +448,15 @@ impl<'a> Inflate<'a> for Ellipsis<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode, IntoPy)]
-pub struct Integer<'a> {
+pub struct Integer<'r, 'a> {
     /// A string representation of the integer, such as ``"100000"`` or
     /// ``"100_000"``.
     pub value: &'a str,
-    pub lpar: Vec<LeftParen<'a>>,
-    pub rpar: Vec<RightParen<'a>>,
+    pub lpar: Vec<LeftParen<'r, 'a>>,
+    pub rpar: Vec<RightParen<'r, 'a>>,
 }
 
-impl<'a> Codegen<'a> for Integer<'a> {
+impl<'r, 'a> Codegen<'a> for Integer<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         self.parenthesize(state, |state| {
             state.add_token(self.value);
@@ -459,7 +464,8 @@ impl<'a> Codegen<'a> for Integer<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for Integer<'a> {
+impl<'r, 'a> Inflate<'a> for Integer<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.lpar = self.lpar.inflate(config)?;
         self.rpar = self.rpar.inflate(config)?;
@@ -468,15 +474,15 @@ impl<'a> Inflate<'a> for Integer<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode, IntoPy)]
-pub struct Float<'a> {
+pub struct Float<'r, 'a> {
     /// A string representation of the floating point number, such as ```"0.05"``,
     /// ``".050"``, or ``"5e-2"``.
     pub value: &'a str,
-    pub lpar: Vec<LeftParen<'a>>,
-    pub rpar: Vec<RightParen<'a>>,
+    pub lpar: Vec<LeftParen<'r, 'a>>,
+    pub rpar: Vec<RightParen<'r, 'a>>,
 }
 
-impl<'a> Codegen<'a> for Float<'a> {
+impl<'r, 'a> Codegen<'a> for Float<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         self.parenthesize(state, |state| {
             state.add_token(self.value);
@@ -484,7 +490,8 @@ impl<'a> Codegen<'a> for Float<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for Float<'a> {
+impl<'r, 'a> Inflate<'a> for Float<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.lpar = self.lpar.inflate(config)?;
         self.rpar = self.rpar.inflate(config)?;
@@ -493,14 +500,14 @@ impl<'a> Inflate<'a> for Float<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode, IntoPy)]
-pub struct Imaginary<'a> {
+pub struct Imaginary<'r, 'a> {
     /// A string representation of the complex number, such as ``"2j"``
     pub value: &'a str,
-    pub lpar: Vec<LeftParen<'a>>,
-    pub rpar: Vec<RightParen<'a>>,
+    pub lpar: Vec<LeftParen<'r, 'a>>,
+    pub rpar: Vec<RightParen<'r, 'a>>,
 }
 
-impl<'a> Codegen<'a> for Imaginary<'a> {
+impl<'r, 'a> Codegen<'a> for Imaginary<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         self.parenthesize(state, |state| {
             state.add_token(self.value);
@@ -508,7 +515,8 @@ impl<'a> Codegen<'a> for Imaginary<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for Imaginary<'a> {
+impl<'r, 'a> Inflate<'a> for Imaginary<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.lpar = self.lpar.inflate(config)?;
         self.rpar = self.rpar.inflate(config)?;
@@ -517,14 +525,14 @@ impl<'a> Inflate<'a> for Imaginary<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode, IntoPy)]
-pub struct Comparison<'a> {
-    pub left: Box<Expression<'a>>,
-    pub comparisons: Vec<ComparisonTarget<'a>>,
-    pub lpar: Vec<LeftParen<'a>>,
-    pub rpar: Vec<RightParen<'a>>,
+pub struct Comparison<'r, 'a> {
+    pub left: Box<Expression<'r, 'a>>,
+    pub comparisons: Vec<ComparisonTarget<'r, 'a>>,
+    pub lpar: Vec<LeftParen<'r, 'a>>,
+    pub rpar: Vec<RightParen<'r, 'a>>,
 }
 
-impl<'a> Codegen<'a> for Comparison<'a> {
+impl<'r, 'a> Codegen<'a> for Comparison<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         self.parenthesize(state, |state| {
             self.left.codegen(state);
@@ -534,7 +542,8 @@ impl<'a> Codegen<'a> for Comparison<'a> {
         })
     }
 }
-impl<'a> Inflate<'a> for Comparison<'a> {
+impl<'r, 'a> Inflate<'a> for Comparison<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.lpar = self.lpar.inflate(config)?;
         self.left = self.left.inflate(config)?;
@@ -545,14 +554,14 @@ impl<'a> Inflate<'a> for Comparison<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode, IntoPy)]
-pub struct UnaryOperation<'a> {
-    pub operator: UnaryOp<'a>,
-    pub expression: Box<Expression<'a>>,
-    pub lpar: Vec<LeftParen<'a>>,
-    pub rpar: Vec<RightParen<'a>>,
+pub struct UnaryOperation<'r, 'a> {
+    pub operator: UnaryOp<'r, 'a>,
+    pub expression: Box<Expression<'r, 'a>>,
+    pub lpar: Vec<LeftParen<'r, 'a>>,
+    pub rpar: Vec<RightParen<'r, 'a>>,
 }
 
-impl<'a> Codegen<'a> for UnaryOperation<'a> {
+impl<'r, 'a> Codegen<'a> for UnaryOperation<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         self.parenthesize(state, |state| {
             self.operator.codegen(state);
@@ -561,7 +570,8 @@ impl<'a> Codegen<'a> for UnaryOperation<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for UnaryOperation<'a> {
+impl<'r, 'a> Inflate<'a> for UnaryOperation<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.lpar = self.lpar.inflate(config)?;
         self.operator = self.operator.inflate(config)?;
@@ -572,15 +582,15 @@ impl<'a> Inflate<'a> for UnaryOperation<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode, IntoPy)]
-pub struct BinaryOperation<'a> {
-    pub left: Box<Expression<'a>>,
-    pub operator: BinaryOp<'a>,
-    pub right: Box<Expression<'a>>,
-    pub lpar: Vec<LeftParen<'a>>,
-    pub rpar: Vec<RightParen<'a>>,
+pub struct BinaryOperation<'r, 'a> {
+    pub left: Box<Expression<'r, 'a>>,
+    pub operator: BinaryOp<'r, 'a>,
+    pub right: Box<Expression<'r, 'a>>,
+    pub lpar: Vec<LeftParen<'r, 'a>>,
+    pub rpar: Vec<RightParen<'r, 'a>>,
 }
 
-impl<'a> Codegen<'a> for BinaryOperation<'a> {
+impl<'r, 'a> Codegen<'a> for BinaryOperation<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         self.parenthesize(state, |state| {
             self.left.codegen(state);
@@ -590,7 +600,8 @@ impl<'a> Codegen<'a> for BinaryOperation<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for BinaryOperation<'a> {
+impl<'r, 'a> Inflate<'a> for BinaryOperation<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.lpar = self.lpar.inflate(config)?;
         self.left = self.left.inflate(config)?;
@@ -602,15 +613,15 @@ impl<'a> Inflate<'a> for BinaryOperation<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode, IntoPy)]
-pub struct BooleanOperation<'a> {
-    pub left: Box<Expression<'a>>,
-    pub operator: BooleanOp<'a>,
-    pub right: Box<Expression<'a>>,
-    pub lpar: Vec<LeftParen<'a>>,
-    pub rpar: Vec<RightParen<'a>>,
+pub struct BooleanOperation<'r, 'a> {
+    pub left: Box<Expression<'r, 'a>>,
+    pub operator: BooleanOp<'r, 'a>,
+    pub right: Box<Expression<'r, 'a>>,
+    pub lpar: Vec<LeftParen<'r, 'a>>,
+    pub rpar: Vec<RightParen<'r, 'a>>,
 }
 
-impl<'a> Codegen<'a> for BooleanOperation<'a> {
+impl<'r, 'a> Codegen<'a> for BooleanOperation<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         self.parenthesize(state, |state| {
             self.left.codegen(state);
@@ -620,7 +631,8 @@ impl<'a> Codegen<'a> for BooleanOperation<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for BooleanOperation<'a> {
+impl<'r, 'a> Inflate<'a> for BooleanOperation<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.lpar = self.lpar.inflate(config)?;
         self.left = self.left.inflate(config)?;
@@ -632,19 +644,20 @@ impl<'a> Inflate<'a> for BooleanOperation<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode, IntoPy)]
-pub struct Call<'a> {
-    pub func: Box<Expression<'a>>,
-    pub args: Vec<Arg<'a>>,
-    pub lpar: Vec<LeftParen<'a>>,
-    pub rpar: Vec<RightParen<'a>>,
+pub struct Call<'r, 'a> {
+    pub func: Box<Expression<'r, 'a>>,
+    pub args: Vec<Arg<'r, 'a>>,
+    pub lpar: Vec<LeftParen<'r, 'a>>,
+    pub rpar: Vec<RightParen<'r, 'a>>,
     pub whitespace_after_func: ParenthesizableWhitespace<'a>,
     pub whitespace_before_args: ParenthesizableWhitespace<'a>,
 
-    pub(crate) lpar_tok: TokenRef<'a>,
-    pub(crate) rpar_tok: TokenRef<'a>,
+    pub(crate) lpar_tok: TokenRef<'r, 'a>,
+    pub(crate) rpar_tok: TokenRef<'r, 'a>,
 }
 
-impl<'a> Inflate<'a> for Call<'a> {
+impl<'r, 'a> Inflate<'a> for Call<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.lpar = self.lpar.inflate(config)?;
         self.func = self.func.inflate(config)?;
@@ -672,7 +685,7 @@ impl<'a> Inflate<'a> for Call<'a> {
     }
 }
 
-impl<'a> Codegen<'a> for Call<'a> {
+impl<'r, 'a> Codegen<'a> for Call<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         self.parenthesize(state, |state| {
             self.func.codegen(state);
@@ -689,15 +702,16 @@ impl<'a> Codegen<'a> for Call<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode, IntoPy)]
-pub struct Attribute<'a> {
-    pub value: Box<Expression<'a>>,
-    pub attr: Name<'a>,
-    pub dot: Dot<'a>,
-    pub lpar: Vec<LeftParen<'a>>,
-    pub rpar: Vec<RightParen<'a>>,
+pub struct Attribute<'r, 'a> {
+    pub value: Box<Expression<'r, 'a>>,
+    pub attr: Name<'r, 'a>,
+    pub dot: Dot<'r, 'a>,
+    pub lpar: Vec<LeftParen<'r, 'a>>,
+    pub rpar: Vec<RightParen<'r, 'a>>,
 }
 
-impl<'a> Inflate<'a> for Attribute<'a> {
+impl<'r, 'a> Inflate<'a> for Attribute<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.lpar = self.lpar.inflate(config)?;
         self.value = self.value.inflate(config)?;
@@ -708,7 +722,7 @@ impl<'a> Inflate<'a> for Attribute<'a> {
     }
 }
 
-impl<'a> Codegen<'a> for Attribute<'a> {
+impl<'r, 'a> Codegen<'a> for Attribute<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         self.parenthesize(state, |state| {
             self.value.codegen(state);
@@ -720,13 +734,13 @@ impl<'a> Codegen<'a> for Attribute<'a> {
 
 #[allow(clippy::large_enum_variant)]
 #[derive(Debug, PartialEq, Eq, Clone, Codegen, Inflate, IntoPy)]
-pub enum NameOrAttribute<'a> {
-    N(Name<'a>),
-    A(Attribute<'a>),
+pub enum NameOrAttribute<'r, 'a> {
+    N(Name<'r, 'a>),
+    A(Attribute<'r, 'a>),
 }
 
-impl<'a> std::convert::From<NameOrAttribute<'a>> for Expression<'a> {
-    fn from(x: NameOrAttribute<'a>) -> Self {
+impl<'r, 'a> std::convert::From<NameOrAttribute<'r, 'a>> for Expression<'r, 'a> {
+    fn from(x: NameOrAttribute<'r, 'a>) -> Self {
         match x {
             NameOrAttribute::N(n) => Self::Name(n),
             NameOrAttribute::A(a) => Self::Attribute(a),
@@ -735,19 +749,20 @@ impl<'a> std::convert::From<NameOrAttribute<'a>> for Expression<'a> {
 }
 
 #[derive(Debug, Eq, PartialEq, Clone, IntoPy)]
-pub struct ComparisonTarget<'a> {
-    pub operator: CompOp<'a>,
-    pub comparator: Expression<'a>,
+pub struct ComparisonTarget<'r, 'a> {
+    pub operator: CompOp<'r, 'a>,
+    pub comparator: Expression<'r, 'a>,
 }
 
-impl<'a> Codegen<'a> for ComparisonTarget<'a> {
+impl<'r, 'a> Codegen<'a> for ComparisonTarget<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         self.operator.codegen(state);
         self.comparator.codegen(state);
     }
 }
 
-impl<'a> Inflate<'a> for ComparisonTarget<'a> {
+impl<'r, 'a> Inflate<'a> for ComparisonTarget<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.operator = self.operator.inflate(config)?;
         self.comparator = self.comparator.inflate(config)?;
@@ -756,17 +771,17 @@ impl<'a> Inflate<'a> for ComparisonTarget<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode, IntoPy)]
-pub struct StarredElement<'a> {
-    pub value: Box<Expression<'a>>,
-    pub comma: Option<Comma<'a>>,
-    pub lpar: Vec<LeftParen<'a>>,
-    pub rpar: Vec<RightParen<'a>>,
+pub struct StarredElement<'r, 'a> {
+    pub value: Box<Expression<'r, 'a>>,
+    pub comma: Option<Comma<'r, 'a>>,
+    pub lpar: Vec<LeftParen<'r, 'a>>,
+    pub rpar: Vec<RightParen<'r, 'a>>,
     pub whitespace_before_value: ParenthesizableWhitespace<'a>,
 
-    pub(crate) star_tok: TokenRef<'a>,
+    pub(crate) star_tok: TokenRef<'r, 'a>,
 }
 
-impl<'a> StarredElement<'a> {
+impl<'r, 'a> StarredElement<'r, 'a> {
     pub fn inflate_element(mut self, config: &Config<'a>, is_last: bool) -> Result<Self> {
         self.lpar = self.lpar.inflate(config)?;
         self.whitespace_before_value = parse_parenthesizable_whitespace(
@@ -783,13 +798,14 @@ impl<'a> StarredElement<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for StarredElement<'a> {
+impl<'r, 'a> Inflate<'a> for StarredElement<'r, 'a> {
+    type Inflated = Self;
     fn inflate(self, config: &Config<'a>) -> Result<Self> {
         self.inflate_element(config, false)
     }
 }
 
-impl<'a> Codegen<'a> for StarredElement<'a> {
+impl<'r, 'a> Codegen<'a> for StarredElement<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         self.parenthesize(state, |state| {
             state.add_token("*");
@@ -804,16 +820,16 @@ impl<'a> Codegen<'a> for StarredElement<'a> {
 
 #[allow(clippy::large_enum_variant)]
 #[derive(Debug, PartialEq, Eq, Clone)]
-pub enum Element<'a> {
+pub enum Element<'r, 'a> {
     Simple {
-        value: Expression<'a>,
-        comma: Option<Comma<'a>>,
+        value: Expression<'r, 'a>,
+        comma: Option<Comma<'r, 'a>>,
     },
-    Starred(StarredElement<'a>),
+    Starred(StarredElement<'r, 'a>),
 }
 
 // TODO: this could be a derive helper attribute to override the python class name
-impl<'a> IntoPy<pyo3::PyObject> for Element<'a> {
+impl<'r, 'a> IntoPy<pyo3::PyObject> for Element<'r, 'a> {
     fn into_py(self, py: pyo3::Python) -> pyo3::PyObject {
         match self {
             Self::Starred(s) => s.into_py(py),
@@ -839,7 +855,7 @@ impl<'a> IntoPy<pyo3::PyObject> for Element<'a> {
     }
 }
 
-impl<'a> Element<'a> {
+impl<'r, 'a> Element<'r, 'a> {
     fn codegen(
         &self,
         state: &mut CodegenState<'a>,
@@ -879,8 +895,8 @@ impl<'a> Element<'a> {
     }
 }
 
-impl<'a> WithComma<'a> for Element<'a> {
-    fn with_comma(self, comma: Comma<'a>) -> Self {
+impl<'r, 'a> WithComma<'r, 'a> for Element<'r, 'a> {
+    fn with_comma(self, comma: Comma<'r, 'a>) -> Self {
         let comma = Some(comma);
         match self {
             Self::Simple { value, .. } => Self::Simple { comma, value },
@@ -888,8 +904,8 @@ impl<'a> WithComma<'a> for Element<'a> {
         }
     }
 }
-impl<'a> std::convert::From<Expression<'a>> for Element<'a> {
-    fn from(e: Expression<'a>) -> Self {
+impl<'r, 'a> std::convert::From<Expression<'r, 'a>> for Element<'r, 'a> {
+    fn from(e: Expression<'r, 'a>) -> Self {
         match e {
             Expression::StarredElement(e) => Element::Starred(e),
             value => Element::Simple { value, comma: None },
@@ -898,14 +914,15 @@ impl<'a> std::convert::From<Expression<'a>> for Element<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Default, ParenthesizedNode, IntoPy)]
-pub struct Tuple<'a> {
-    pub elements: Vec<Element<'a>>,
-    pub lpar: Vec<LeftParen<'a>>,
-    pub rpar: Vec<RightParen<'a>>,
+pub struct Tuple<'r, 'a> {
+    pub elements: Vec<Element<'r, 'a>>,
+    pub lpar: Vec<LeftParen<'r, 'a>>,
+    pub rpar: Vec<RightParen<'r, 'a>>,
 }
 
-impl<'a> Inflate<'a> for Tuple<'a> {
-    fn inflate(mut self, config: &Config<'a>) -> Result<Tuple<'a>> {
+impl<'r, 'a> Inflate<'a> for Tuple<'r, 'a> {
+    type Inflated = Self;
+    fn inflate(mut self, config: &Config<'a>) -> Result<Tuple<'r, 'a>> {
         self.lpar = self.lpar.inflate(config)?;
         let len = self.elements.len();
         self.elements = self
@@ -922,7 +939,7 @@ impl<'a> Inflate<'a> for Tuple<'a> {
     }
 }
 
-impl<'a> Codegen<'a> for Tuple<'a> {
+impl<'r, 'a> Codegen<'a> for Tuple<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         self.parenthesize(state, |state| {
             let len = self.elements.len();
@@ -938,14 +955,14 @@ impl<'a> Codegen<'a> for Tuple<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode, IntoPy)]
-pub struct GeneratorExp<'a> {
-    pub elt: Box<Expression<'a>>,
-    pub for_in: Box<CompFor<'a>>,
-    pub lpar: Vec<LeftParen<'a>>,
-    pub rpar: Vec<RightParen<'a>>,
+pub struct GeneratorExp<'r, 'a> {
+    pub elt: Box<Expression<'r, 'a>>,
+    pub for_in: Box<CompFor<'r, 'a>>,
+    pub lpar: Vec<LeftParen<'r, 'a>>,
+    pub rpar: Vec<RightParen<'r, 'a>>,
 }
 
-impl<'a> Codegen<'a> for GeneratorExp<'a> {
+impl<'r, 'a> Codegen<'a> for GeneratorExp<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         self.parenthesize(state, |state| {
             self.elt.codegen(state);
@@ -954,7 +971,8 @@ impl<'a> Codegen<'a> for GeneratorExp<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for GeneratorExp<'a> {
+impl<'r, 'a> Inflate<'a> for GeneratorExp<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.lpar = self.lpar.inflate(config)?;
         self.elt = self.elt.inflate(config)?;
@@ -965,16 +983,16 @@ impl<'a> Inflate<'a> for GeneratorExp<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode, IntoPy)]
-pub struct ListComp<'a> {
-    pub elt: Box<Expression<'a>>,
-    pub for_in: Box<CompFor<'a>>,
-    pub lbracket: LeftSquareBracket<'a>,
-    pub rbracket: RightSquareBracket<'a>,
-    pub lpar: Vec<LeftParen<'a>>,
-    pub rpar: Vec<RightParen<'a>>,
+pub struct ListComp<'r, 'a> {
+    pub elt: Box<Expression<'r, 'a>>,
+    pub for_in: Box<CompFor<'r, 'a>>,
+    pub lbracket: LeftSquareBracket<'r, 'a>,
+    pub rbracket: RightSquareBracket<'r, 'a>,
+    pub lpar: Vec<LeftParen<'r, 'a>>,
+    pub rpar: Vec<RightParen<'r, 'a>>,
 }
 
-impl<'a> Codegen<'a> for ListComp<'a> {
+impl<'r, 'a> Codegen<'a> for ListComp<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         self.parenthesize(state, |state| {
             self.lbracket.codegen(state);
@@ -985,7 +1003,8 @@ impl<'a> Codegen<'a> for ListComp<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for ListComp<'a> {
+impl<'r, 'a> Inflate<'a> for ListComp<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.lpar = self.lpar.inflate(config)?;
         self.lbracket = self.lbracket.inflate(config)?;
@@ -998,19 +1017,20 @@ impl<'a> Inflate<'a> for ListComp<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
-pub struct LeftSquareBracket<'a> {
+pub struct LeftSquareBracket<'r, 'a> {
     pub whitespace_after: ParenthesizableWhitespace<'a>,
-    pub(crate) tok: TokenRef<'a>,
+    pub(crate) tok: TokenRef<'r, 'a>,
 }
 
-impl<'a> Codegen<'a> for LeftSquareBracket<'a> {
+impl<'r, 'a> Codegen<'a> for LeftSquareBracket<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         state.add_token("[");
         self.whitespace_after.codegen(state);
     }
 }
 
-impl<'a> Inflate<'a> for LeftSquareBracket<'a> {
+impl<'r, 'a> Inflate<'a> for LeftSquareBracket<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.whitespace_after = parse_parenthesizable_whitespace(
             config,
@@ -1021,19 +1041,20 @@ impl<'a> Inflate<'a> for LeftSquareBracket<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
-pub struct RightSquareBracket<'a> {
+pub struct RightSquareBracket<'r, 'a> {
     pub whitespace_before: ParenthesizableWhitespace<'a>,
-    pub(crate) tok: TokenRef<'a>,
+    pub(crate) tok: TokenRef<'r, 'a>,
 }
 
-impl<'a> Codegen<'a> for RightSquareBracket<'a> {
+impl<'r, 'a> Codegen<'a> for RightSquareBracket<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         self.whitespace_before.codegen(state);
         state.add_token("]");
     }
 }
 
-impl<'a> Inflate<'a> for RightSquareBracket<'a> {
+impl<'r, 'a> Inflate<'a> for RightSquareBracket<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.whitespace_before = parse_parenthesizable_whitespace(
             config,
@@ -1044,16 +1065,17 @@ impl<'a> Inflate<'a> for RightSquareBracket<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode, IntoPy)]
-pub struct SetComp<'a> {
-    pub elt: Box<Expression<'a>>,
-    pub for_in: Box<CompFor<'a>>,
-    pub lbrace: LeftCurlyBrace<'a>,
-    pub rbrace: RightCurlyBrace<'a>,
-    pub lpar: Vec<LeftParen<'a>>,
-    pub rpar: Vec<RightParen<'a>>,
+pub struct SetComp<'r, 'a> {
+    pub elt: Box<Expression<'r, 'a>>,
+    pub for_in: Box<CompFor<'r, 'a>>,
+    pub lbrace: LeftCurlyBrace<'r, 'a>,
+    pub rbrace: RightCurlyBrace<'r, 'a>,
+    pub lpar: Vec<LeftParen<'r, 'a>>,
+    pub rpar: Vec<RightParen<'r, 'a>>,
 }
 
-impl<'a> Inflate<'a> for SetComp<'a> {
+impl<'r, 'a> Inflate<'a> for SetComp<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.lpar = self.lpar.inflate(config)?;
         self.lbrace = self.lbrace.inflate(config)?;
@@ -1065,7 +1087,7 @@ impl<'a> Inflate<'a> for SetComp<'a> {
     }
 }
 
-impl<'a> Codegen<'a> for SetComp<'a> {
+impl<'r, 'a> Codegen<'a> for SetComp<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         self.parenthesize(state, |state| {
             self.lbrace.codegen(state);
@@ -1077,21 +1099,22 @@ impl<'a> Codegen<'a> for SetComp<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode, IntoPy)]
-pub struct DictComp<'a> {
-    pub key: Box<Expression<'a>>,
-    pub value: Box<Expression<'a>>,
-    pub for_in: Box<CompFor<'a>>,
-    pub lbrace: LeftCurlyBrace<'a>,
-    pub rbrace: RightCurlyBrace<'a>,
-    pub lpar: Vec<LeftParen<'a>>,
-    pub rpar: Vec<RightParen<'a>>,
+pub struct DictComp<'r, 'a> {
+    pub key: Box<Expression<'r, 'a>>,
+    pub value: Box<Expression<'r, 'a>>,
+    pub for_in: Box<CompFor<'r, 'a>>,
+    pub lbrace: LeftCurlyBrace<'r, 'a>,
+    pub rbrace: RightCurlyBrace<'r, 'a>,
+    pub lpar: Vec<LeftParen<'r, 'a>>,
+    pub rpar: Vec<RightParen<'r, 'a>>,
     pub whitespace_before_colon: ParenthesizableWhitespace<'a>,
     pub whitespace_after_colon: ParenthesizableWhitespace<'a>,
 
-    pub(crate) colon_tok: TokenRef<'a>,
+    pub(crate) colon_tok: TokenRef<'r, 'a>,
 }
 
-impl<'a> Inflate<'a> for DictComp<'a> {
+impl<'r, 'a> Inflate<'a> for DictComp<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.lpar = self.lpar.inflate(config)?;
         self.lbrace = self.lbrace.inflate(config)?;
@@ -1112,7 +1135,7 @@ impl<'a> Inflate<'a> for DictComp<'a> {
     }
 }
 
-impl<'a> Codegen<'a> for DictComp<'a> {
+impl<'r, 'a> Codegen<'a> for DictComp<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         self.parenthesize(state, |state| {
             self.lbrace.codegen(state);
@@ -1128,12 +1151,13 @@ impl<'a> Codegen<'a> for DictComp<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
-pub struct LeftCurlyBrace<'a> {
+pub struct LeftCurlyBrace<'r, 'a> {
     pub whitespace_after: ParenthesizableWhitespace<'a>,
-    pub(crate) tok: TokenRef<'a>,
+    pub(crate) tok: TokenRef<'r, 'a>,
 }
 
-impl<'a> Inflate<'a> for LeftCurlyBrace<'a> {
+impl<'r, 'a> Inflate<'a> for LeftCurlyBrace<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.whitespace_after = parse_parenthesizable_whitespace(
             config,
@@ -1143,7 +1167,7 @@ impl<'a> Inflate<'a> for LeftCurlyBrace<'a> {
     }
 }
 
-impl<'a> Codegen<'a> for LeftCurlyBrace<'a> {
+impl<'r, 'a> Codegen<'a> for LeftCurlyBrace<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         state.add_token("{");
         self.whitespace_after.codegen(state);
@@ -1151,12 +1175,13 @@ impl<'a> Codegen<'a> for LeftCurlyBrace<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
-pub struct RightCurlyBrace<'a> {
+pub struct RightCurlyBrace<'r, 'a> {
     pub whitespace_before: ParenthesizableWhitespace<'a>,
-    pub(crate) tok: TokenRef<'a>,
+    pub(crate) tok: TokenRef<'r, 'a>,
 }
 
-impl<'a> Inflate<'a> for RightCurlyBrace<'a> {
+impl<'r, 'a> Inflate<'a> for RightCurlyBrace<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.whitespace_before = parse_parenthesizable_whitespace(
             config,
@@ -1166,37 +1191,37 @@ impl<'a> Inflate<'a> for RightCurlyBrace<'a> {
     }
 }
 
-impl<'a> Codegen<'a> for RightCurlyBrace<'a> {
+impl<'r, 'a> Codegen<'a> for RightCurlyBrace<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         self.whitespace_before.codegen(state);
         state.add_token("}");
     }
 }
 
-impl<'a> pyo3::conversion::IntoPy<pyo3::PyObject> for Box<CompFor<'a>> {
+impl<'r, 'a> pyo3::conversion::IntoPy<pyo3::PyObject> for Box<CompFor<'r, 'a>> {
     fn into_py(self, py: pyo3::Python) -> pyo3::PyObject {
         (*self).into_py(py)
     }
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
-pub struct CompFor<'a> {
-    pub target: AssignTargetExpression<'a>,
-    pub iter: Expression<'a>,
-    pub ifs: Vec<CompIf<'a>>,
-    pub inner_for_in: Option<Box<CompFor<'a>>>,
+pub struct CompFor<'r, 'a> {
+    pub target: AssignTargetExpression<'r, 'a>,
+    pub iter: Expression<'r, 'a>,
+    pub ifs: Vec<CompIf<'r, 'a>>,
+    pub inner_for_in: Option<Box<CompFor<'r, 'a>>>,
     pub asynchronous: Option<Asynchronous<'a>>,
     pub whitespace_before: ParenthesizableWhitespace<'a>,
     pub whitespace_after_for: ParenthesizableWhitespace<'a>,
     pub whitespace_before_in: ParenthesizableWhitespace<'a>,
     pub whitespace_after_in: ParenthesizableWhitespace<'a>,
 
-    pub(crate) async_tok: Option<TokenRef<'a>>,
-    pub(crate) for_tok: TokenRef<'a>,
-    pub(crate) in_tok: TokenRef<'a>,
+    pub(crate) async_tok: Option<TokenRef<'r, 'a>>,
+    pub(crate) for_tok: TokenRef<'r, 'a>,
+    pub(crate) in_tok: TokenRef<'r, 'a>,
 }
 
-impl<'a> Codegen<'a> for CompFor<'a> {
+impl<'r, 'a> Codegen<'a> for CompFor<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         self.whitespace_before.codegen(state);
         if let Some(asynchronous) = &self.asynchronous {
@@ -1218,7 +1243,8 @@ impl<'a> Codegen<'a> for CompFor<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for CompFor<'a> {
+impl<'r, 'a> Inflate<'a> for CompFor<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.whitespace_before = parse_parenthesizable_whitespace(
             config,
@@ -1267,15 +1293,15 @@ impl<'a> Codegen<'a> for Asynchronous<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
-pub struct CompIf<'a> {
-    pub test: Expression<'a>,
+pub struct CompIf<'r, 'a> {
+    pub test: Expression<'r, 'a>,
     pub whitespace_before: ParenthesizableWhitespace<'a>,
     pub whitespace_before_test: ParenthesizableWhitespace<'a>,
 
-    pub(crate) if_tok: TokenRef<'a>,
+    pub(crate) if_tok: TokenRef<'r, 'a>,
 }
 
-impl<'a> Codegen<'a> for CompIf<'a> {
+impl<'r, 'a> Codegen<'a> for CompIf<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         self.whitespace_before.codegen(state);
         state.add_token("if");
@@ -1284,7 +1310,8 @@ impl<'a> Codegen<'a> for CompIf<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for CompIf<'a> {
+impl<'r, 'a> Inflate<'a> for CompIf<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.whitespace_before = parse_parenthesizable_whitespace(
             config,
@@ -1300,15 +1327,16 @@ impl<'a> Inflate<'a> for CompIf<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode, IntoPy)]
-pub struct List<'a> {
-    pub elements: Vec<Element<'a>>,
-    pub lbracket: LeftSquareBracket<'a>,
-    pub rbracket: RightSquareBracket<'a>,
-    pub lpar: Vec<LeftParen<'a>>,
-    pub rpar: Vec<RightParen<'a>>,
+pub struct List<'r, 'a> {
+    pub elements: Vec<Element<'r, 'a>>,
+    pub lbracket: LeftSquareBracket<'r, 'a>,
+    pub rbracket: RightSquareBracket<'r, 'a>,
+    pub lpar: Vec<LeftParen<'r, 'a>>,
+    pub rpar: Vec<RightParen<'r, 'a>>,
 }
 
-impl<'a> Inflate<'a> for List<'a> {
+impl<'r, 'a> Inflate<'a> for List<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.lpar = self.lpar.inflate(config)?;
         self.lbracket = self.lbracket.inflate(config)?;
@@ -1328,7 +1356,7 @@ impl<'a> Inflate<'a> for List<'a> {
     }
 }
 
-impl<'a> Codegen<'a> for List<'a> {
+impl<'r, 'a> Codegen<'a> for List<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         self.parenthesize(state, |state| {
             self.lbracket.codegen(state);
@@ -1342,15 +1370,16 @@ impl<'a> Codegen<'a> for List<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode, IntoPy)]
-pub struct Set<'a> {
-    pub elements: Vec<Element<'a>>,
-    pub lbrace: LeftCurlyBrace<'a>,
-    pub rbrace: RightCurlyBrace<'a>,
-    pub lpar: Vec<LeftParen<'a>>,
-    pub rpar: Vec<RightParen<'a>>,
+pub struct Set<'r, 'a> {
+    pub elements: Vec<Element<'r, 'a>>,
+    pub lbrace: LeftCurlyBrace<'r, 'a>,
+    pub rbrace: RightCurlyBrace<'r, 'a>,
+    pub lpar: Vec<LeftParen<'r, 'a>>,
+    pub rpar: Vec<RightParen<'r, 'a>>,
 }
 
-impl<'a> Inflate<'a> for Set<'a> {
+impl<'r, 'a> Inflate<'a> for Set<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.lpar = self.lpar.inflate(config)?;
         self.lbrace = self.lbrace.inflate(config)?;
@@ -1369,7 +1398,7 @@ impl<'a> Inflate<'a> for Set<'a> {
     }
 }
 
-impl<'a> Codegen<'a> for Set<'a> {
+impl<'r, 'a> Codegen<'a> for Set<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         self.parenthesize(state, |state| {
             self.lbrace.codegen(state);
@@ -1383,15 +1412,16 @@ impl<'a> Codegen<'a> for Set<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode, IntoPy)]
-pub struct Dict<'a> {
-    pub elements: Vec<DictElement<'a>>,
-    pub lbrace: LeftCurlyBrace<'a>,
-    pub rbrace: RightCurlyBrace<'a>,
-    pub lpar: Vec<LeftParen<'a>>,
-    pub rpar: Vec<RightParen<'a>>,
+pub struct Dict<'r, 'a> {
+    pub elements: Vec<DictElement<'r, 'a>>,
+    pub lbrace: LeftCurlyBrace<'r, 'a>,
+    pub rbrace: RightCurlyBrace<'r, 'a>,
+    pub lpar: Vec<LeftParen<'r, 'a>>,
+    pub rpar: Vec<RightParen<'r, 'a>>,
 }
 
-impl<'a> Inflate<'a> for Dict<'a> {
+impl<'r, 'a> Inflate<'a> for Dict<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.lpar = self.lpar.inflate(config)?;
         self.lbrace = self.lbrace.inflate(config)?;
@@ -1410,7 +1440,7 @@ impl<'a> Inflate<'a> for Dict<'a> {
     }
 }
 
-impl<'a> Codegen<'a> for Dict<'a> {
+impl<'r, 'a> Codegen<'a> for Dict<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         self.parenthesize(state, |state| {
             self.lbrace.codegen(state);
@@ -1425,20 +1455,20 @@ impl<'a> Codegen<'a> for Dict<'a> {
 
 #[allow(clippy::large_enum_variant)]
 #[derive(Debug, PartialEq, Eq, Clone)]
-pub enum DictElement<'a> {
+pub enum DictElement<'r, 'a> {
     Simple {
-        key: Expression<'a>,
-        value: Expression<'a>,
-        comma: Option<Comma<'a>>,
+        key: Expression<'r, 'a>,
+        value: Expression<'r, 'a>,
+        comma: Option<Comma<'r, 'a>>,
         whitespace_before_colon: ParenthesizableWhitespace<'a>,
         whitespace_after_colon: ParenthesizableWhitespace<'a>,
-        colon_tok: TokenRef<'a>,
+        colon_tok: TokenRef<'r, 'a>,
     },
-    Starred(StarredDictElement<'a>),
+    Starred(StarredDictElement<'r, 'a>),
 }
 
 // TODO: this could be a derive helper attribute to override the python class name
-impl<'a> IntoPy<pyo3::PyObject> for DictElement<'a> {
+impl<'r, 'a> IntoPy<pyo3::PyObject> for DictElement<'r, 'a> {
     fn into_py(self, py: pyo3::Python) -> pyo3::PyObject {
         match self {
             Self::Starred(s) => s.into_py(py),
@@ -1477,7 +1507,7 @@ impl<'a> IntoPy<pyo3::PyObject> for DictElement<'a> {
     }
 }
 
-impl<'a> DictElement<'a> {
+impl<'r, 'a> DictElement<'r, 'a> {
     pub fn inflate_element(self, config: &Config<'a>, last_element: bool) -> Result<Self> {
         Ok(match self {
             Self::Starred(s) => Self::Starred(s.inflate_element(config, last_element)?),
@@ -1513,7 +1543,7 @@ impl<'a> DictElement<'a> {
     }
 }
 
-impl<'a> DictElement<'a> {
+impl<'r, 'a> DictElement<'r, 'a> {
     fn codegen(
         &self,
         state: &mut CodegenState<'a>,
@@ -1550,8 +1580,8 @@ impl<'a> DictElement<'a> {
     }
 }
 
-impl<'a> WithComma<'a> for DictElement<'a> {
-    fn with_comma(self, comma: Comma<'a>) -> Self {
+impl<'r, 'a> WithComma<'r, 'a> for DictElement<'r, 'a> {
+    fn with_comma(self, comma: Comma<'r, 'a>) -> Self {
         let comma = Some(comma);
         match self {
             Self::Starred(s) => Self::Starred(StarredDictElement { comma, ..s }),
@@ -1575,15 +1605,15 @@ impl<'a> WithComma<'a> for DictElement<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
-pub struct StarredDictElement<'a> {
-    pub value: Expression<'a>,
-    pub comma: Option<Comma<'a>>,
+pub struct StarredDictElement<'r, 'a> {
+    pub value: Expression<'r, 'a>,
+    pub comma: Option<Comma<'r, 'a>>,
     pub whitespace_before_value: ParenthesizableWhitespace<'a>,
 
-    pub(crate) star_tok: TokenRef<'a>,
+    pub(crate) star_tok: TokenRef<'r, 'a>,
 }
 
-impl<'a> StarredDictElement<'a> {
+impl<'r, 'a> StarredDictElement<'r, 'a> {
     fn inflate_element(mut self, config: &Config<'a>, last_element: bool) -> Result<Self> {
         self.whitespace_before_value = parse_parenthesizable_whitespace(
             config,
@@ -1599,7 +1629,7 @@ impl<'a> StarredDictElement<'a> {
     }
 }
 
-impl<'a> Codegen<'a> for StarredDictElement<'a> {
+impl<'r, 'a> Codegen<'a> for StarredDictElement<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         state.add_token("**");
         self.whitespace_before_value.codegen(state);
@@ -1612,41 +1642,43 @@ impl<'a> Codegen<'a> for StarredDictElement<'a> {
 
 #[allow(clippy::large_enum_variant)]
 #[derive(Debug, PartialEq, Eq, Clone, Codegen, Inflate, IntoPy)]
-pub enum BaseSlice<'a> {
-    Index(Index<'a>),
-    Slice(Slice<'a>),
+pub enum BaseSlice<'r, 'a> {
+    Index(Index<'r, 'a>),
+    Slice(Slice<'r, 'a>),
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
-pub struct Index<'a> {
-    pub value: Expression<'a>,
+pub struct Index<'r, 'a> {
+    pub value: Expression<'r, 'a>,
 }
 
-impl<'a> Inflate<'a> for Index<'a> {
+impl<'r, 'a> Inflate<'a> for Index<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.value = self.value.inflate(config)?;
         Ok(self)
     }
 }
 
-impl<'a> Codegen<'a> for Index<'a> {
+impl<'r, 'a> Codegen<'a> for Index<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         self.value.codegen(state);
     }
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
-pub struct Slice<'a> {
+pub struct Slice<'r, 'a> {
     #[no_py_default]
-    pub lower: Option<Expression<'a>>,
+    pub lower: Option<Expression<'r, 'a>>,
     #[no_py_default]
-    pub upper: Option<Expression<'a>>,
-    pub step: Option<Expression<'a>>,
-    pub first_colon: Colon<'a>,
-    pub second_colon: Option<Colon<'a>>,
+    pub upper: Option<Expression<'r, 'a>>,
+    pub step: Option<Expression<'r, 'a>>,
+    pub first_colon: Colon<'r, 'a>,
+    pub second_colon: Option<Colon<'r, 'a>>,
 }
 
-impl<'a> Inflate<'a> for Slice<'a> {
+impl<'r, 'a> Inflate<'a> for Slice<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.lower = self.lower.inflate(config)?;
         self.first_colon = self.first_colon.inflate(config)?;
@@ -1657,7 +1689,7 @@ impl<'a> Inflate<'a> for Slice<'a> {
     }
 }
 
-impl<'a> Codegen<'a> for Slice<'a> {
+impl<'r, 'a> Codegen<'a> for Slice<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         if let Some(lower) = &self.lower {
             lower.codegen(state);
@@ -1678,12 +1710,13 @@ impl<'a> Codegen<'a> for Slice<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
-pub struct SubscriptElement<'a> {
-    pub slice: BaseSlice<'a>,
-    pub comma: Option<Comma<'a>>,
+pub struct SubscriptElement<'r, 'a> {
+    pub slice: BaseSlice<'r, 'a>,
+    pub comma: Option<Comma<'r, 'a>>,
 }
 
-impl<'a> Inflate<'a> for SubscriptElement<'a> {
+impl<'r, 'a> Inflate<'a> for SubscriptElement<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.slice = self.slice.inflate(config)?;
         self.comma = self.comma.inflate(config)?;
@@ -1691,7 +1724,7 @@ impl<'a> Inflate<'a> for SubscriptElement<'a> {
     }
 }
 
-impl<'a> Codegen<'a> for SubscriptElement<'a> {
+impl<'r, 'a> Codegen<'a> for SubscriptElement<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         self.slice.codegen(state);
         if let Some(comma) = &self.comma {
@@ -1701,19 +1734,20 @@ impl<'a> Codegen<'a> for SubscriptElement<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode, IntoPy)]
-pub struct Subscript<'a> {
-    pub value: Box<Expression<'a>>,
-    pub slice: Vec<SubscriptElement<'a>>,
-    pub lbracket: LeftSquareBracket<'a>,
-    pub rbracket: RightSquareBracket<'a>,
-    pub lpar: Vec<LeftParen<'a>>,
-    pub rpar: Vec<RightParen<'a>>,
+pub struct Subscript<'r, 'a> {
+    pub value: Box<Expression<'r, 'a>>,
+    pub slice: Vec<SubscriptElement<'r, 'a>>,
+    pub lbracket: LeftSquareBracket<'r, 'a>,
+    pub rbracket: RightSquareBracket<'r, 'a>,
+    pub lpar: Vec<LeftParen<'r, 'a>>,
+    pub rpar: Vec<RightParen<'r, 'a>>,
     pub whitespace_after_value: ParenthesizableWhitespace<'a>,
 
-    pub(crate) lbracket_tok: TokenRef<'a>,
+    pub(crate) lbracket_tok: TokenRef<'r, 'a>,
 }
 
-impl<'a> Inflate<'a> for Subscript<'a> {
+impl<'r, 'a> Inflate<'a> for Subscript<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.lpar = self.lpar.inflate(config)?;
         self.value = self.value.inflate(config)?;
@@ -1729,7 +1763,7 @@ impl<'a> Inflate<'a> for Subscript<'a> {
     }
 }
 
-impl<'a> Codegen<'a> for Subscript<'a> {
+impl<'r, 'a> Codegen<'a> for Subscript<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         self.parenthesize(state, |state| {
             self.value.codegen(state);
@@ -1748,22 +1782,23 @@ impl<'a> Codegen<'a> for Subscript<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode, IntoPy)]
-pub struct IfExp<'a> {
-    pub test: Box<Expression<'a>>,
-    pub body: Box<Expression<'a>>,
-    pub orelse: Box<Expression<'a>>,
-    pub lpar: Vec<LeftParen<'a>>,
-    pub rpar: Vec<RightParen<'a>>,
+pub struct IfExp<'r, 'a> {
+    pub test: Box<Expression<'r, 'a>>,
+    pub body: Box<Expression<'r, 'a>>,
+    pub orelse: Box<Expression<'r, 'a>>,
+    pub lpar: Vec<LeftParen<'r, 'a>>,
+    pub rpar: Vec<RightParen<'r, 'a>>,
     pub whitespace_before_if: ParenthesizableWhitespace<'a>,
     pub whitespace_after_if: ParenthesizableWhitespace<'a>,
     pub whitespace_before_else: ParenthesizableWhitespace<'a>,
     pub whitespace_after_else: ParenthesizableWhitespace<'a>,
 
-    pub(crate) if_tok: TokenRef<'a>,
-    pub(crate) else_tok: TokenRef<'a>,
+    pub(crate) if_tok: TokenRef<'r, 'a>,
+    pub(crate) else_tok: TokenRef<'r, 'a>,
 }
 
-impl<'a> Inflate<'a> for IfExp<'a> {
+impl<'r, 'a> Inflate<'a> for IfExp<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.lpar = self.lpar.inflate(config)?;
         self.body = self.body.inflate(config)?;
@@ -1790,7 +1825,7 @@ impl<'a> Inflate<'a> for IfExp<'a> {
     }
 }
 
-impl<'a> Codegen<'a> for IfExp<'a> {
+impl<'r, 'a> Codegen<'a> for IfExp<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         self.parenthesize(state, |state| {
             self.body.codegen(state);
@@ -1807,18 +1842,19 @@ impl<'a> Codegen<'a> for IfExp<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode, IntoPy)]
-pub struct Lambda<'a> {
-    pub params: Box<Parameters<'a>>,
-    pub body: Box<Expression<'a>>,
-    pub colon: Colon<'a>,
-    pub lpar: Vec<LeftParen<'a>>,
-    pub rpar: Vec<RightParen<'a>>,
+pub struct Lambda<'r, 'a> {
+    pub params: Box<Parameters<'r, 'a>>,
+    pub body: Box<Expression<'r, 'a>>,
+    pub colon: Colon<'r, 'a>,
+    pub lpar: Vec<LeftParen<'r, 'a>>,
+    pub rpar: Vec<RightParen<'r, 'a>>,
     pub whitespace_after_lambda: Option<ParenthesizableWhitespace<'a>>,
 
-    pub(crate) lambda_tok: TokenRef<'a>,
+    pub(crate) lambda_tok: TokenRef<'r, 'a>,
 }
 
-impl<'a> Inflate<'a> for Lambda<'a> {
+impl<'r, 'a> Inflate<'a> for Lambda<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.lpar = self.lpar.inflate(config)?;
         if !self.params.is_empty() {
@@ -1836,7 +1872,7 @@ impl<'a> Inflate<'a> for Lambda<'a> {
     }
 }
 
-impl<'a> Codegen<'a> for Lambda<'a> {
+impl<'r, 'a> Codegen<'a> for Lambda<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         self.parenthesize(state, |state| {
             state.add_token("lambda");
@@ -1854,15 +1890,15 @@ impl<'a> Codegen<'a> for Lambda<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
-pub struct From<'a> {
-    pub item: Expression<'a>,
+pub struct From<'r, 'a> {
+    pub item: Expression<'r, 'a>,
     pub whitespace_before_from: Option<ParenthesizableWhitespace<'a>>,
     pub whitespace_after_from: ParenthesizableWhitespace<'a>,
 
-    pub(crate) tok: TokenRef<'a>,
+    pub(crate) tok: TokenRef<'r, 'a>,
 }
 
-impl<'a> From<'a> {
+impl<'r, 'a> From<'r, 'a> {
     pub fn codegen(&self, state: &mut CodegenState<'a>, default_space: &'a str) {
         if let Some(ws) = &self.whitespace_before_from {
             ws.codegen(state);
@@ -1875,7 +1911,8 @@ impl<'a> From<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for From<'a> {
+impl<'r, 'a> Inflate<'a> for From<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.whitespace_before_from = Some(parse_parenthesizable_whitespace(
             config,
@@ -1892,12 +1929,13 @@ impl<'a> Inflate<'a> for From<'a> {
 
 #[allow(clippy::large_enum_variant)]
 #[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
-pub enum YieldValue<'a> {
-    Expression(Expression<'a>),
-    From(From<'a>),
+pub enum YieldValue<'r, 'a> {
+    Expression(Expression<'r, 'a>),
+    From(From<'r, 'a>),
 }
 
-impl<'a> Inflate<'a> for YieldValue<'a> {
+impl<'r, 'a> Inflate<'a> for YieldValue<'r, 'a> {
+    type Inflated = Self;
     fn inflate(self, config: &Config<'a>) -> Result<Self> {
         Ok(match self {
             Self::Expression(e) => Self::Expression(e.inflate(config)?),
@@ -1910,7 +1948,7 @@ impl<'a> Inflate<'a> for YieldValue<'a> {
     }
 }
 
-impl<'a> YieldValue<'a> {
+impl<'r, 'a> YieldValue<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>, default_space: &'a str) {
         match self {
             Self::Expression(e) => e.codegen(state),
@@ -1919,23 +1957,24 @@ impl<'a> YieldValue<'a> {
     }
 }
 
-impl<'a> pyo3::conversion::IntoPy<pyo3::PyObject> for Box<YieldValue<'a>> {
+impl<'r, 'a> pyo3::conversion::IntoPy<pyo3::PyObject> for Box<YieldValue<'r, 'a>> {
     fn into_py(self, py: pyo3::Python) -> pyo3::PyObject {
         (*self).into_py(py)
     }
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode, IntoPy)]
-pub struct Yield<'a> {
-    pub value: Option<Box<YieldValue<'a>>>,
-    pub lpar: Vec<LeftParen<'a>>,
-    pub rpar: Vec<RightParen<'a>>,
+pub struct Yield<'r, 'a> {
+    pub value: Option<Box<YieldValue<'r, 'a>>>,
+    pub lpar: Vec<LeftParen<'r, 'a>>,
+    pub rpar: Vec<RightParen<'r, 'a>>,
     pub whitespace_after_yield: Option<ParenthesizableWhitespace<'a>>,
 
-    pub(crate) yield_tok: TokenRef<'a>,
+    pub(crate) yield_tok: TokenRef<'r, 'a>,
 }
 
-impl<'a> Inflate<'a> for Yield<'a> {
+impl<'r, 'a> Inflate<'a> for Yield<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.lpar = self.lpar.inflate(config)?;
         if self.value.is_some() {
@@ -1950,7 +1989,7 @@ impl<'a> Inflate<'a> for Yield<'a> {
     }
 }
 
-impl<'a> Codegen<'a> for Yield<'a> {
+impl<'r, 'a> Codegen<'a> for Yield<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         self.parenthesize(state, |state| {
             state.add_token("yield");
@@ -1968,16 +2007,17 @@ impl<'a> Codegen<'a> for Yield<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode, IntoPy)]
-pub struct Await<'a> {
-    pub expression: Box<Expression<'a>>,
-    pub lpar: Vec<LeftParen<'a>>,
-    pub rpar: Vec<RightParen<'a>>,
+pub struct Await<'r, 'a> {
+    pub expression: Box<Expression<'r, 'a>>,
+    pub lpar: Vec<LeftParen<'r, 'a>>,
+    pub rpar: Vec<RightParen<'r, 'a>>,
     pub whitespace_after_await: ParenthesizableWhitespace<'a>,
 
-    pub(crate) await_tok: TokenRef<'a>,
+    pub(crate) await_tok: TokenRef<'r, 'a>,
 }
 
-impl<'a> Inflate<'a> for Await<'a> {
+impl<'r, 'a> Inflate<'a> for Await<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.lpar = self.lpar.inflate(config)?;
         self.whitespace_after_await = parse_parenthesizable_whitespace(
@@ -1990,7 +2030,7 @@ impl<'a> Inflate<'a> for Await<'a> {
     }
 }
 
-impl<'a> Codegen<'a> for Await<'a> {
+impl<'r, 'a> Codegen<'a> for Await<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         self.parenthesize(state, |state| {
             state.add_token("await");
@@ -2002,14 +2042,14 @@ impl<'a> Codegen<'a> for Await<'a> {
 
 #[allow(clippy::large_enum_variant)]
 #[derive(Debug, PartialEq, Eq, Clone, Codegen, Inflate, IntoPy)]
-pub enum String<'a> {
-    Simple(SimpleString<'a>),
-    Concatenated(ConcatenatedString<'a>),
-    Formatted(FormattedString<'a>),
+pub enum String<'r, 'a> {
+    Simple(SimpleString<'r, 'a>),
+    Concatenated(ConcatenatedString<'r, 'a>),
+    Formatted(FormattedString<'r, 'a>),
 }
 
-impl<'a> std::convert::From<String<'a>> for Expression<'a> {
-    fn from(s: String<'a>) -> Self {
+impl<'r, 'a> std::convert::From<String<'r, 'a>> for Expression<'r, 'a> {
+    fn from(s: String<'r, 'a>) -> Self {
         match s {
             String::Simple(s) => Self::SimpleString(s),
             String::Concatenated(s) => Self::ConcatenatedString(s),
@@ -2019,19 +2059,20 @@ impl<'a> std::convert::From<String<'a>> for Expression<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode, IntoPy)]
-pub struct ConcatenatedString<'a> {
-    pub left: Box<String<'a>>,
-    pub right: Box<String<'a>>,
-    pub lpar: Vec<LeftParen<'a>>,
-    pub rpar: Vec<RightParen<'a>>,
+pub struct ConcatenatedString<'r, 'a> {
+    pub left: Box<String<'r, 'a>>,
+    pub right: Box<String<'r, 'a>>,
+    pub lpar: Vec<LeftParen<'r, 'a>>,
+    pub rpar: Vec<RightParen<'r, 'a>>,
     pub whitespace_between: ParenthesizableWhitespace<'a>,
 
     // we capture the next token after each string piece so Inflate can extract the
     // whitespace between individual pieces
-    pub(crate) right_tok: TokenRef<'a>,
+    pub(crate) right_tok: TokenRef<'r, 'a>,
 }
 
-impl<'a> Inflate<'a> for ConcatenatedString<'a> {
+impl<'r, 'a> Inflate<'a> for ConcatenatedString<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.lpar = self.lpar.inflate(config)?;
         self.left = self.left.inflate(config)?;
@@ -2045,7 +2086,7 @@ impl<'a> Inflate<'a> for ConcatenatedString<'a> {
     }
 }
 
-impl<'a> Codegen<'a> for ConcatenatedString<'a> {
+impl<'r, 'a> Codegen<'a> for ConcatenatedString<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         self.parenthesize(state, |state| {
             self.left.codegen(state);
@@ -2056,16 +2097,17 @@ impl<'a> Codegen<'a> for ConcatenatedString<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Default, ParenthesizedNode, IntoPy)]
-pub struct SimpleString<'a> {
+pub struct SimpleString<'r, 'a> {
     /// The texual representation of the string, including quotes, prefix
     /// characters, and any escape characters present in the original source code,
     /// such as ``r"my string\n"``.
     pub value: &'a str,
-    pub lpar: Vec<LeftParen<'a>>,
-    pub rpar: Vec<RightParen<'a>>,
+    pub lpar: Vec<LeftParen<'r, 'a>>,
+    pub rpar: Vec<RightParen<'r, 'a>>,
 }
 
-impl<'a> Inflate<'a> for SimpleString<'a> {
+impl<'r, 'a> Inflate<'a> for SimpleString<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.lpar = self.lpar.inflate(config)?;
         self.rpar = self.rpar.inflate(config)?;
@@ -2073,7 +2115,7 @@ impl<'a> Inflate<'a> for SimpleString<'a> {
     }
 }
 
-impl<'a> Codegen<'a> for SimpleString<'a> {
+impl<'r, 'a> Codegen<'a> for SimpleString<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         self.parenthesize(state, |state| state.add_token(self.value))
     }
@@ -2085,6 +2127,7 @@ pub struct FormattedStringText<'a> {
 }
 
 impl<'a> Inflate<'a> for FormattedStringText<'a> {
+    type Inflated = Self;
     fn inflate(self, _config: &Config<'a>) -> Result<Self> {
         Ok(self)
     }
@@ -2097,21 +2140,22 @@ impl<'a> Codegen<'a> for FormattedStringText<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
-pub struct FormattedStringExpression<'a> {
-    pub expression: Expression<'a>,
+pub struct FormattedStringExpression<'r, 'a> {
+    pub expression: Expression<'r, 'a>,
     pub conversion: Option<&'a str>,
-    pub format_spec: Option<Vec<FormattedStringContent<'a>>>,
+    pub format_spec: Option<Vec<FormattedStringContent<'r, 'a>>>,
     pub whitespace_before_expression: ParenthesizableWhitespace<'a>,
     pub whitespace_after_expression: ParenthesizableWhitespace<'a>,
-    pub equal: Option<AssignEqual<'a>>,
+    pub equal: Option<AssignEqual<'r, 'a>>,
 
-    pub(crate) lbrace_tok: TokenRef<'a>,
+    pub(crate) lbrace_tok: TokenRef<'r, 'a>,
     // This is None if there's an equal sign, otherwise it's the first token of
     // (conversion, format spec, right brace) in that order
-    pub(crate) after_expr_tok: Option<TokenRef<'a>>,
+    pub(crate) after_expr_tok: Option<TokenRef<'r, 'a>>,
 }
 
-impl<'a> Inflate<'a> for FormattedStringExpression<'a> {
+impl<'r, 'a> Inflate<'a> for FormattedStringExpression<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.whitespace_before_expression = parse_parenthesizable_whitespace(
             config,
@@ -2130,7 +2174,7 @@ impl<'a> Inflate<'a> for FormattedStringExpression<'a> {
     }
 }
 
-impl<'a> Codegen<'a> for FormattedStringExpression<'a> {
+impl<'r, 'a> Codegen<'a> for FormattedStringExpression<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         state.add_token("{");
         self.whitespace_before_expression.codegen(state);
@@ -2161,15 +2205,16 @@ pub enum FormattedStringContent<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode, IntoPy)]
-pub struct FormattedString<'a> {
-    pub parts: Vec<FormattedStringContent<'a>>,
+pub struct FormattedString<'r, 'a> {
+    pub parts: Vec<FormattedStringContent<'r, 'a>>,
     pub start: &'a str,
     pub end: &'a str,
-    pub lpar: Vec<LeftParen<'a>>,
-    pub rpar: Vec<RightParen<'a>>,
+    pub lpar: Vec<LeftParen<'r, 'a>>,
+    pub rpar: Vec<RightParen<'r, 'a>>,
 }
 
-impl<'a> Inflate<'a> for FormattedString<'a> {
+impl<'r, 'a> Inflate<'a> for FormattedString<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.lpar = self.lpar.inflate(config)?;
         self.parts = self.parts.inflate(config)?;
@@ -2178,7 +2223,7 @@ impl<'a> Inflate<'a> for FormattedString<'a> {
     }
 }
 
-impl<'a> Codegen<'a> for FormattedString<'a> {
+impl<'r, 'a> Codegen<'a> for FormattedString<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         self.parenthesize(state, |state| {
             state.add_token(self.start);
@@ -2190,6 +2235,7 @@ impl<'a> Codegen<'a> for FormattedString<'a> {
     }
 }
 
+#[cst_node]
 #[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode, IntoPy)]
 pub struct NamedExpr<'a> {
     pub target: Box<Expression<'a>>,
@@ -2200,7 +2246,7 @@ pub struct NamedExpr<'a> {
     pub whitespace_before_walrus: ParenthesizableWhitespace<'a>,
     pub whitespace_after_walrus: ParenthesizableWhitespace<'a>,
 
-    pub(crate) walrus_tok: TokenRef<'a>,
+    pub(crate) walrus_tok: TokenRef,
 }
 
 impl<'a> Codegen<'a> for NamedExpr<'a> {
@@ -2215,8 +2261,9 @@ impl<'a> Codegen<'a> for NamedExpr<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for NamedExpr<'a> {
-    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+impl<'r, 'a> Inflate<'a> for DeflatedNamedExpr<'r, 'a> {
+    type Inflated = NamedExpr<'a>;
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self::Inflated> {
         self.lpar = self.lpar.inflate(config)?;
         self.target = self.target.inflate(config)?;
         self.whitespace_before_walrus = parse_parenthesizable_whitespace(

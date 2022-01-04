@@ -3,19 +3,15 @@
 // This source code is licensed under the MIT license found in the
 // LICENSE file in the root directory of this source tree.
 
-use std::rc::Rc;
-
 use super::{whitespace::ParenthesizableWhitespace, Codegen, CodegenState};
 use crate::{
+    nodes::common::TokenRef,
     nodes::traits::{Inflate, Result},
-    tokenizer::{
-        whitespace_parser::{parse_parenthesizable_whitespace, parse_simple_whitespace, Config},
-        Token,
+    tokenizer::whitespace_parser::{
+        parse_parenthesizable_whitespace, parse_simple_whitespace, Config,
     },
 };
 use libcst_derive::IntoPy;
-
-type TokenRef<'a> = Rc<Token<'a>>;
 
 #[derive(Debug, Eq, PartialEq, Clone, IntoPy)]
 pub struct Semicolon<'a> {
@@ -23,9 +19,12 @@ pub struct Semicolon<'a> {
     pub whitespace_before: ParenthesizableWhitespace<'a>,
     /// Any space that appears directly after this semicolon.
     pub whitespace_after: ParenthesizableWhitespace<'a>,
+}
 
-    #[skip_py]
-    pub(crate) tok: TokenRef<'a>,
+#[derive(Debug, Eq, PartialEq, Clone)]
+pub(crate) struct SemicolonTokens<'r, 'a> {
+    pub inner: Semicolon<'a>,
+    pub tok: TokenRef<'r, 'a>,
 }
 
 impl<'a> Codegen<'a> for Semicolon<'a> {
@@ -36,12 +35,13 @@ impl<'a> Codegen<'a> for Semicolon<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for Semicolon<'a> {
+impl<'r, 'a> Inflate<'a> for SemicolonTokens<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
-        self.whitespace_before = ParenthesizableWhitespace::SimpleWhitespace(
+        self.inner.whitespace_before = ParenthesizableWhitespace::SimpleWhitespace(
             parse_simple_whitespace(config, &mut (*self.tok).whitespace_before.borrow_mut())?,
         );
-        self.whitespace_after = ParenthesizableWhitespace::SimpleWhitespace(
+        self.inner.whitespace_after = ParenthesizableWhitespace::SimpleWhitespace(
             parse_simple_whitespace(config, &mut (*self.tok).whitespace_after.borrow_mut())?,
         );
         Ok(self)
@@ -49,17 +49,17 @@ impl<'a> Inflate<'a> for Semicolon<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
-pub struct Comma<'a> {
+pub struct Comma<'r, 'a> {
     /// Any space that appears directly before this comma.
     pub whitespace_before: ParenthesizableWhitespace<'a>,
     /// Any space that appears directly after this comma.
     pub whitespace_after: ParenthesizableWhitespace<'a>,
 
     #[skip_py]
-    pub(crate) tok: TokenRef<'a>,
+    pub(crate) tok: TokenRef<'r, 'a>,
 }
 
-impl<'a> Codegen<'a> for Comma<'a> {
+impl<'r, 'a> Codegen<'a> for Comma<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         self.whitespace_before.codegen(state);
         state.add_token(",");
@@ -67,7 +67,8 @@ impl<'a> Codegen<'a> for Comma<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for Comma<'a> {
+impl<'r, 'a> Inflate<'a> for Comma<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.whitespace_before = parse_parenthesizable_whitespace(
             config,
@@ -81,7 +82,7 @@ impl<'a> Inflate<'a> for Comma<'a> {
     }
 }
 
-impl<'a> Comma<'a> {
+impl<'r, 'a> Comma<'r, 'a> {
     pub fn inflate_before(mut self, config: &Config<'a>) -> Result<Self> {
         self.whitespace_before = parse_parenthesizable_whitespace(
             config,
@@ -92,17 +93,17 @@ impl<'a> Comma<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
-pub struct AssignEqual<'a> {
+pub struct AssignEqual<'r, 'a> {
     /// Any space that appears directly before this equal sign.
     pub whitespace_before: ParenthesizableWhitespace<'a>,
     /// Any space that appears directly after this equal sign.
     pub whitespace_after: ParenthesizableWhitespace<'a>,
 
     #[skip_py]
-    pub(crate) tok: TokenRef<'a>,
+    pub(crate) tok: TokenRef<'r, 'a>,
 }
 
-impl<'a> Codegen<'a> for AssignEqual<'a> {
+impl<'r, 'a> Codegen<'a> for AssignEqual<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         self.whitespace_before.codegen(state);
         state.add_token("=");
@@ -110,7 +111,8 @@ impl<'a> Codegen<'a> for AssignEqual<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for AssignEqual<'a> {
+impl<'r, 'a> Inflate<'a> for AssignEqual<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.whitespace_before = parse_parenthesizable_whitespace(
             config,
@@ -125,17 +127,17 @@ impl<'a> Inflate<'a> for AssignEqual<'a> {
 }
 
 #[derive(Debug, Eq, PartialEq, Clone, IntoPy)]
-pub struct Dot<'a> {
+pub struct Dot<'r, 'a> {
     /// Any space that appears directly before this dot.
     pub whitespace_before: ParenthesizableWhitespace<'a>,
     /// Any space that appears directly after this dot.
     pub whitespace_after: ParenthesizableWhitespace<'a>,
 
     #[skip_py]
-    pub(crate) tok: TokenRef<'a>,
+    pub(crate) tok: TokenRef<'r, 'a>,
 }
 
-impl<'a> Codegen<'a> for Dot<'a> {
+impl<'r, 'a> Codegen<'a> for Dot<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         self.whitespace_before.codegen(state);
         state.add_token(".");
@@ -143,7 +145,8 @@ impl<'a> Codegen<'a> for Dot<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for Dot<'a> {
+impl<'r, 'a> Inflate<'a> for Dot<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.inflate_before(config)?;
         self.inflate_after(config)?;
@@ -151,7 +154,7 @@ impl<'a> Inflate<'a> for Dot<'a> {
     }
 }
 
-impl<'a> Dot<'a> {
+impl<'r, 'a> Dot<'r, 'a> {
     fn inflate_before(&mut self, config: &Config<'a>) -> Result<()> {
         self.whitespace_before = parse_parenthesizable_whitespace(
             config,
@@ -172,43 +175,44 @@ impl<'a> Dot<'a> {
 #[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
 pub struct ImportStar {}
 
-impl<'a> Codegen<'a> for ImportStar {
+impl<'r, 'a> Codegen<'a> for ImportStar {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         state.add_token("*");
     }
 }
 
-impl<'a> Inflate<'a> for ImportStar {
+impl<'r, 'a> Inflate<'a> for ImportStar {
+    type Inflated = Self;
     fn inflate(self, _config: &Config<'a>) -> Result<Self> {
         Ok(self)
     }
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
-pub enum UnaryOp<'a> {
+pub enum UnaryOp<'r, 'a> {
     Plus {
         whitespace_after: ParenthesizableWhitespace<'a>,
         #[skip_py]
-        tok: TokenRef<'a>,
+        tok: TokenRef<'r, 'a>,
     },
     Minus {
         whitespace_after: ParenthesizableWhitespace<'a>,
         #[skip_py]
-        tok: TokenRef<'a>,
+        tok: TokenRef<'r, 'a>,
     },
     BitInvert {
         whitespace_after: ParenthesizableWhitespace<'a>,
         #[skip_py]
-        tok: TokenRef<'a>,
+        tok: TokenRef<'r, 'a>,
     },
     Not {
         whitespace_after: ParenthesizableWhitespace<'a>,
         #[skip_py]
-        tok: TokenRef<'a>,
+        tok: TokenRef<'r, 'a>,
     },
 }
 
-impl<'a> Codegen<'a> for UnaryOp<'a> {
+impl<'r, 'a> Codegen<'a> for UnaryOp<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         let (tok, whitespace_after) = match self {
             Self::Plus {
@@ -229,7 +233,8 @@ impl<'a> Codegen<'a> for UnaryOp<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for UnaryOp<'a> {
+impl<'r, 'a> Inflate<'a> for UnaryOp<'r, 'a> {
+    type Inflated = Self;
     fn inflate(self, config: &Config<'a>) -> Result<Self> {
         Ok(match self {
             Self::Plus { tok, .. } => {
@@ -277,22 +282,22 @@ impl<'a> Inflate<'a> for UnaryOp<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
-pub enum BooleanOp<'a> {
+pub enum BooleanOp<'r, 'a> {
     And {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
         #[skip_py]
-        tok: TokenRef<'a>,
+        tok: TokenRef<'r, 'a>,
     },
     Or {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
         #[skip_py]
-        tok: TokenRef<'a>,
+        tok: TokenRef<'r, 'a>,
     },
 }
 
-impl<'a> Codegen<'a> for BooleanOp<'a> {
+impl<'r, 'a> Codegen<'a> for BooleanOp<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         let (tok, ws_bef, ws_aft) = match self {
             Self::And {
@@ -312,7 +317,8 @@ impl<'a> Codegen<'a> for BooleanOp<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for BooleanOp<'a> {
+impl<'r, 'a> Inflate<'a> for BooleanOp<'r, 'a> {
+    type Inflated = Self;
     fn inflate(self, config: &Config<'a>) -> Result<Self> {
         Ok(match self {
             Self::And { tok, .. } => {
@@ -350,88 +356,88 @@ impl<'a> Inflate<'a> for BooleanOp<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
-pub enum BinaryOp<'a> {
+pub enum BinaryOp<'r, 'a> {
     Add {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
         #[skip_py]
-        tok: TokenRef<'a>,
+        tok: TokenRef<'r, 'a>,
     },
     Subtract {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
         #[skip_py]
-        tok: TokenRef<'a>,
+        tok: TokenRef<'r, 'a>,
     },
     Multiply {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
         #[skip_py]
-        tok: TokenRef<'a>,
+        tok: TokenRef<'r, 'a>,
     },
     Divide {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
         #[skip_py]
-        tok: TokenRef<'a>,
+        tok: TokenRef<'r, 'a>,
     },
     FloorDivide {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
         #[skip_py]
-        tok: TokenRef<'a>,
+        tok: TokenRef<'r, 'a>,
     },
     Modulo {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
         #[skip_py]
-        tok: TokenRef<'a>,
+        tok: TokenRef<'r, 'a>,
     },
     Power {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
         #[skip_py]
-        tok: TokenRef<'a>,
+        tok: TokenRef<'r, 'a>,
     },
     LeftShift {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
         #[skip_py]
-        tok: TokenRef<'a>,
+        tok: TokenRef<'r, 'a>,
     },
     RightShift {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
         #[skip_py]
-        tok: TokenRef<'a>,
+        tok: TokenRef<'r, 'a>,
     },
     BitOr {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
         #[skip_py]
-        tok: TokenRef<'a>,
+        tok: TokenRef<'r, 'a>,
     },
     BitAnd {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
         #[skip_py]
-        tok: TokenRef<'a>,
+        tok: TokenRef<'r, 'a>,
     },
     BitXor {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
         #[skip_py]
-        tok: TokenRef<'a>,
+        tok: TokenRef<'r, 'a>,
     },
     MatrixMultiply {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
         #[skip_py]
-        tok: TokenRef<'a>,
+        tok: TokenRef<'r, 'a>,
     },
 }
 
-impl<'a> Codegen<'a> for BinaryOp<'a> {
+impl<'r, 'a> Codegen<'a> for BinaryOp<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         let (whitespace_before, whitespace_after, tok) = match self {
             Self::Add {
@@ -506,7 +512,8 @@ impl<'a> Codegen<'a> for BinaryOp<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for BinaryOp<'a> {
+impl<'r, 'a> Inflate<'a> for BinaryOp<'r, 'a> {
+    type Inflated = Self;
     fn inflate(self, config: &Config<'a>) -> Result<Self> {
         Ok(match self {
             Self::Add { tok, .. } => {
@@ -709,76 +716,76 @@ impl<'a> Inflate<'a> for BinaryOp<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
-pub enum CompOp<'a> {
+pub enum CompOp<'r, 'a> {
     LessThan {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
         #[skip_py]
-        tok: TokenRef<'a>,
+        tok: TokenRef<'r, 'a>,
     },
     GreaterThan {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
         #[skip_py]
-        tok: TokenRef<'a>,
+        tok: TokenRef<'r, 'a>,
     },
     LessThanEqual {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
         #[skip_py]
-        tok: TokenRef<'a>,
+        tok: TokenRef<'r, 'a>,
     },
     GreaterThanEqual {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
         #[skip_py]
-        tok: TokenRef<'a>,
+        tok: TokenRef<'r, 'a>,
     },
     Equal {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
         #[skip_py]
-        tok: TokenRef<'a>,
+        tok: TokenRef<'r, 'a>,
     },
     NotEqual {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
         #[skip_py]
-        tok: TokenRef<'a>,
+        tok: TokenRef<'r, 'a>,
     },
     In {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
         #[skip_py]
-        tok: TokenRef<'a>,
+        tok: TokenRef<'r, 'a>,
     },
     NotIn {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_between: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
         #[skip_py]
-        not_tok: TokenRef<'a>,
+        not_tok: TokenRef<'r, 'a>,
         #[skip_py]
-        in_tok: TokenRef<'a>,
+        in_tok: TokenRef<'r, 'a>,
     },
     Is {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
         #[skip_py]
-        tok: TokenRef<'a>,
+        tok: TokenRef<'r, 'a>,
     },
     IsNot {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_between: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
         #[skip_py]
-        is_tok: TokenRef<'a>,
+        is_tok: TokenRef<'r, 'a>,
         #[skip_py]
-        not_tok: TokenRef<'a>,
+        not_tok: TokenRef<'r, 'a>,
     },
 }
 
-impl<'a> Codegen<'a> for CompOp<'a> {
+impl<'r, 'a> Codegen<'a> for CompOp<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         let (bef, aft, first_tok, between) = match self {
             Self::LessThan {
@@ -856,7 +863,8 @@ impl<'a> Codegen<'a> for CompOp<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for CompOp<'a> {
+impl<'r, 'a> Inflate<'a> for CompOp<'r, 'a> {
+    type Inflated = Self;
     fn inflate(self, config: &Config<'a>) -> Result<Self> {
         Ok(match self {
             Self::LessThan { tok, .. } => {
@@ -1030,15 +1038,16 @@ impl<'a> Inflate<'a> for CompOp<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
-pub struct Colon<'a> {
+pub struct Colon<'r, 'a> {
     pub whitespace_before: ParenthesizableWhitespace<'a>,
     pub whitespace_after: ParenthesizableWhitespace<'a>,
 
     #[skip_py]
-    pub(crate) tok: TokenRef<'a>,
+    pub(crate) tok: TokenRef<'r, 'a>,
 }
 
-impl<'a> Inflate<'a> for Colon<'a> {
+impl<'r, 'a> Inflate<'a> for Colon<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.whitespace_before = parse_parenthesizable_whitespace(
             config,
@@ -1052,7 +1061,7 @@ impl<'a> Inflate<'a> for Colon<'a> {
     }
 }
 
-impl<'a> Codegen<'a> for Colon<'a> {
+impl<'r, 'a> Codegen<'a> for Colon<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         self.whitespace_before.codegen(state);
         state.add_token(":");
@@ -1061,88 +1070,89 @@ impl<'a> Codegen<'a> for Colon<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
-pub enum AugOp<'a> {
+pub enum AugOp<'r, 'a> {
     AddAssign {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
         #[skip_py]
-        tok: TokenRef<'a>,
+        tok: TokenRef<'r, 'a>,
     },
     SubtractAssign {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
         #[skip_py]
-        tok: TokenRef<'a>,
+        tok: TokenRef<'r, 'a>,
     },
     MultiplyAssign {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
         #[skip_py]
-        tok: TokenRef<'a>,
+        tok: TokenRef<'r, 'a>,
     },
     MatrixMultiplyAssign {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
         #[skip_py]
-        tok: TokenRef<'a>,
+        tok: TokenRef<'r, 'a>,
     },
     DivideAssign {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
         #[skip_py]
-        tok: TokenRef<'a>,
+        tok: TokenRef<'r, 'a>,
     },
     ModuloAssign {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
         #[skip_py]
-        tok: TokenRef<'a>,
+        tok: TokenRef<'r, 'a>,
     },
     BitAndAssign {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
         #[skip_py]
-        tok: TokenRef<'a>,
+        tok: TokenRef<'r, 'a>,
     },
     BitOrAssign {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
         #[skip_py]
-        tok: TokenRef<'a>,
+        tok: TokenRef<'r, 'a>,
     },
     BitXorAssign {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
         #[skip_py]
-        tok: TokenRef<'a>,
+        tok: TokenRef<'r, 'a>,
     },
     LeftShiftAssign {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
         #[skip_py]
-        tok: TokenRef<'a>,
+        tok: TokenRef<'r, 'a>,
     },
     RightShiftAssign {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
         #[skip_py]
-        tok: TokenRef<'a>,
+        tok: TokenRef<'r, 'a>,
     },
     PowerAssign {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
         #[skip_py]
-        tok: TokenRef<'a>,
+        tok: TokenRef<'r, 'a>,
     },
     FloorDivideAssign {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
         #[skip_py]
-        tok: TokenRef<'a>,
+        tok: TokenRef<'r, 'a>,
     },
 }
 
-impl<'a> Inflate<'a> for AugOp<'a> {
+impl<'r, 'a> Inflate<'a> for AugOp<'r, 'a> {
+    type Inflated = Self;
     fn inflate(self, config: &Config<'a>) -> Result<Self> {
         Ok(match self {
             Self::AddAssign { tok, .. } => {
@@ -1344,7 +1354,7 @@ impl<'a> Inflate<'a> for AugOp<'a> {
     }
 }
 
-impl<'a> Codegen<'a> for AugOp<'a> {
+impl<'r, 'a> Codegen<'a> for AugOp<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         let (tok, bef, aft) = match self {
             Self::AddAssign {
@@ -1420,14 +1430,15 @@ impl<'a> Codegen<'a> for AugOp<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
-pub struct BitOr<'a> {
+pub struct BitOr<'r, 'a> {
     pub whitespace_before: ParenthesizableWhitespace<'a>,
     pub whitespace_after: ParenthesizableWhitespace<'a>,
 
-    pub(crate) tok: TokenRef<'a>,
+    pub(crate) tok: TokenRef<'r, 'a>,
 }
 
-impl<'a> Inflate<'a> for BitOr<'a> {
+impl<'r, 'a> Inflate<'a> for BitOr<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.whitespace_before = parse_parenthesizable_whitespace(
             config,
@@ -1441,7 +1452,7 @@ impl<'a> Inflate<'a> for BitOr<'a> {
     }
 }
 
-impl<'a> Codegen<'a> for BitOr<'a> {
+impl<'r, 'a> Codegen<'a> for BitOr<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         self.whitespace_before.codegen(state);
         state.add_token("|");

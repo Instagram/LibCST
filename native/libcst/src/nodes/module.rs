@@ -4,13 +4,12 @@
 // LICENSE file in the root directory of this source tree.
 
 use std::mem::swap;
-use std::rc::Rc;
 
 use crate::tokenizer::whitespace_parser::parse_empty_lines;
-use crate::tokenizer::Token;
 use crate::{
     nodes::{
         codegen::{Codegen, CodegenState},
+        common::TokenRef,
         statement::Statement,
         whitespace::EmptyLine,
     },
@@ -20,11 +19,9 @@ use libcst_derive::IntoPy;
 
 use super::traits::{Inflate, Result, WithLeadingLines};
 
-type TokenRef<'a> = Rc<Token<'a>>;
-
 #[derive(Debug, Eq, PartialEq, IntoPy)]
-pub struct Module<'a> {
-    pub body: Vec<Statement<'a>>,
+pub struct Module<'r, 'a> {
+    pub body: Vec<Statement<'r, 'a>>,
     pub header: Vec<EmptyLine<'a>>,
     pub footer: Vec<EmptyLine<'a>>,
 
@@ -33,10 +30,10 @@ pub struct Module<'a> {
     pub has_trailing_newline: bool,
     pub encoding: String,
 
-    pub(crate) eof_tok: TokenRef<'a>,
+    pub(crate) eof_tok: TokenRef<'r, 'a>,
 }
 
-impl<'a> Codegen<'a> for Module<'a> {
+impl<'r, 'a> Codegen<'a> for Module<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         for h in &self.header {
             h.codegen(state);
@@ -50,7 +47,8 @@ impl<'a> Codegen<'a> for Module<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for Module<'a> {
+impl<'r, 'a> Inflate<'a> for Module<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.default_indent = config.default_indent;
         self.default_newline = config.default_newline;

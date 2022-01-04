@@ -14,7 +14,7 @@ mod nodes;
 pub use nodes::*;
 
 mod parser;
-use parser::{ParserError, Result};
+use parser::{ParserError, Result, TokVec};
 
 pub mod py;
 
@@ -31,43 +31,45 @@ pub fn tokenize(text: &str) -> Result<Vec<Token>> {
         .map_err(|err| ParserError::TokenizerError(err, text))
 }
 
-pub fn parse_tokens_without_whitespace<'a>(
-    tokens: Vec<Token<'a>>,
+pub fn parse_tokens_without_whitespace<'r, 'a>(
+    tokens: TokVec<'a>,
     module_text: &'a str,
     encoding: Option<&str>,
-) -> Result<'a, Module<'a>> {
-    parser::python::file(&tokens.into(), module_text, encoding)
+) -> Result<'a, Module<'r, 'a>> {
+    parser::python::file(&tokens, module_text, encoding)
         .map_err(|err| ParserError::ParserError(err, module_text))
 }
 
-pub fn parse_module<'a>(
+pub fn parse_module<'r, 'a>(
     mut module_text: &'a str,
     encoding: Option<&str>,
-) -> Result<'a, Module<'a>> {
+) -> Result<'a, Module<'r, 'a>> {
     // Strip UTF-8 BOM
     if let Some(stripped) = module_text.strip_prefix('\u{feff}') {
         module_text = stripped;
     }
-    let tokens = tokenize(module_text)?;
-    let conf = whitespace_parser::Config::new(module_text, &tokens);
+    let tokens: TokVec = tokenize(module_text)?.into();
+    let conf = whitespace_parser::Config::new(module_text, tokens.0.as_slice());
     let m = parse_tokens_without_whitespace(tokens, module_text, encoding)?;
     Ok(m.inflate(&conf)?)
 }
 
 pub fn parse_statement(text: &str) -> Result<Statement> {
-    let tokens = tokenize(text)?;
-    let conf = whitespace_parser::Config::new(text, &tokens);
-    let stm = parser::python::statement_input(&tokens.into(), text)
+    let tokens: TokVec = tokenize(text)?.into();
+    let conf = whitespace_parser::Config::new(text, tokens.0.as_slice());
+    let stm = parser::python::statement_input(&tokens, text)
         .map_err(|err| ParserError::ParserError(err, text))?;
     Ok(stm.inflate(&conf)?)
 }
 
-pub fn parse_expression(text: &str) -> Result<Expression> {
-    let tokens = tokenize(text)?;
-    let conf = whitespace_parser::Config::new(text, &tokens);
-    let expr = parser::python::expression_input(&tokens.into(), text)
+pub fn parse_expression<'a>(text: &'a str) -> Result<Expression<'a, 'a>> {
+    let tokens: TokVec = tokenize(text)?.into();
+    let conf = whitespace_parser::Config::new(text, tokens.0.as_slice());
+    let expr = parser::python::expression_input(&tokens, text)
         .map_err(|err| ParserError::ParserError(err, text))?;
-    Ok(expr.inflate(&conf)?)
+
+    let inflated = expr.inflate(&conf)?;
+    Ok(inflated)
 }
 
 // n starts from 1

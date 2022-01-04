@@ -56,7 +56,7 @@ fn impl_enum(ast: &DeriveInput, e: &DataEnum) -> TokenStream {
     let ident = &ast.ident;
     let generics = &ast.generics;
     let gen = quote! {
-        impl<'a> Codegen<'a> for #ident #generics {
+        impl #generics Codegen<'a> for #ident #generics {
             fn codegen(&self, state: &mut CodegenState<'a>) {
                 match self {
                     #(Self::#varnames(x) => x.codegen(state),)*

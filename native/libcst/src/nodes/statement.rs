@@ -3,40 +3,36 @@
 // This source code is licensed under the MIT license found in the
 // LICENSE file in the root directory of this source tree.
 
-use std::{mem::swap, rc::Rc};
+use std::mem::swap;
 
 use super::{
-    inflate_helpers::adjust_parameters_trailing_whitespace, Attribute, Codegen, CodegenState,
-    Comma, Dot, EmptyLine, Expression, From, ImportStar, LeftParen, List, Name, NameOrAttribute,
-    Parameters, ParenthesizableWhitespace, RightParen, Semicolon, SimpleWhitespace, StarredElement,
-    Subscript, TrailingWhitespace, Tuple,
+    inflate_helpers::adjust_parameters_trailing_whitespace, op::SemicolonTokens, Attribute,
+    Codegen, CodegenState, Comma, Dot, EmptyLine, Expression, From, ImportStar, LeftParen, List,
+    Name, NameOrAttribute, Parameters, ParenthesizableWhitespace, RightParen, Semicolon,
+    SimpleWhitespace, StarredElement, Subscript, TrailingWhitespace, Tuple,
 };
 use crate::{
     nodes::{
+        common::TokenRef,
         traits::{Inflate, Result, WithComma, WithLeadingLines},
         Arg, AssignEqual, Asynchronous, AugOp, BitOr, Element, ParenthesizedNode,
     },
-    tokenizer::{
-        whitespace_parser::{
-            parse_empty_lines, parse_parenthesizable_whitespace, parse_simple_whitespace,
-            parse_trailing_whitespace, Config,
-        },
-        Token,
+    tokenizer::whitespace_parser::{
+        parse_empty_lines, parse_parenthesizable_whitespace, parse_simple_whitespace,
+        parse_trailing_whitespace, Config,
     },
     LeftCurlyBrace, LeftSquareBracket, RightCurlyBrace, RightSquareBracket,
 };
 use libcst_derive::{Codegen, Inflate, IntoPy, ParenthesizedNode};
 
-type TokenRef<'a> = Rc<Token<'a>>;
-
 #[allow(clippy::large_enum_variant)]
 #[derive(Debug, Eq, PartialEq, Clone, Inflate, Codegen, IntoPy)]
-pub enum Statement<'a> {
-    Simple(SimpleStatementLine<'a>),
-    Compound(CompoundStatement<'a>),
+pub enum Statement<'r, 'a> {
+    Simple(SimpleStatementLine<'r, 'a>),
+    Compound(CompoundStatement<'r, 'a>),
 }
 
-impl<'a> WithLeadingLines<'a> for Statement<'a> {
+impl<'r, 'a> WithLeadingLines<'a> for Statement<'r, 'a> {
     fn leading_lines(&mut self) -> &mut Vec<EmptyLine<'a>> {
         match self {
             Self::Simple(s) => &mut s.leading_lines,
@@ -47,19 +43,19 @@ impl<'a> WithLeadingLines<'a> for Statement<'a> {
 
 #[derive(Debug, PartialEq, Eq, Clone, Inflate, Codegen, IntoPy)]
 #[allow(clippy::large_enum_variant)]
-pub enum CompoundStatement<'a> {
-    FunctionDef(FunctionDef<'a>),
-    If(If<'a>),
-    For(For<'a>),
-    While(While<'a>),
-    ClassDef(ClassDef<'a>),
-    Try(Try<'a>),
-    TryStar(TryStar<'a>),
-    With(With<'a>),
-    Match(Match<'a>),
+pub enum CompoundStatement<'r, 'a> {
+    FunctionDef(FunctionDef<'r, 'a>),
+    If(If<'r, 'a>),
+    For(For<'r, 'a>),
+    While(While<'r, 'a>),
+    ClassDef(ClassDef<'r, 'a>),
+    Try(Try<'r, 'a>),
+    TryStar(TryStar<'r, 'a>),
+    With(With<'r, 'a>),
+    Match(Match<'r, 'a>),
 }
 
-impl<'a> WithLeadingLines<'a> for CompoundStatement<'a> {
+impl<'r, 'a> WithLeadingLines<'a> for CompoundStatement<'r, 'a> {
     fn leading_lines(&mut self) -> &mut Vec<EmptyLine<'a>> {
         match self {
             Self::FunctionDef(f) => &mut f.leading_lines,
@@ -76,15 +72,15 @@ impl<'a> WithLeadingLines<'a> for CompoundStatement<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Inflate, Codegen, IntoPy)]
-pub enum Suite<'a> {
-    IndentedBlock(IndentedBlock<'a>),
-    SimpleStatementSuite(SimpleStatementSuite<'a>),
+pub enum Suite<'r, 'a> {
+    IndentedBlock(IndentedBlock<'r, 'a>),
+    SimpleStatementSuite(SimpleStatementSuite<'r, 'a>),
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
-pub struct IndentedBlock<'a> {
+pub struct IndentedBlock<'r, 'a> {
     /// Sequence of statements belonging to this indented block.
-    pub body: Vec<Statement<'a>>,
+    pub body: Vec<Statement<'r, 'a>>,
     /// Any optional trailing comment and the final ``NEWLINE`` at the end of the line.
     pub header: TrailingWhitespace<'a>,
     /// A string represents a specific indentation. A ``None`` value uses the modules's
@@ -100,12 +96,12 @@ pub struct IndentedBlock<'a> {
     /// further.
     pub footer: Vec<EmptyLine<'a>>,
 
-    pub(crate) newline_tok: TokenRef<'a>,
-    pub(crate) indent_tok: TokenRef<'a>,
-    pub(crate) dedent_tok: TokenRef<'a>,
+    pub(crate) newline_tok: TokenRef<'r, 'a>,
+    pub(crate) indent_tok: TokenRef<'r, 'a>,
+    pub(crate) dedent_tok: TokenRef<'r, 'a>,
 }
 
-impl<'a> Codegen<'a> for IndentedBlock<'a> {
+impl<'r, 'a> Codegen<'a> for IndentedBlock<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         self.header.codegen(state);
 
@@ -138,7 +134,8 @@ impl<'a> Codegen<'a> for IndentedBlock<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for IndentedBlock<'a> {
+impl<'r, 'a> Inflate<'a> for IndentedBlock<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.body = self.body.inflate(config)?;
         // We want to be able to only keep comments in the footer that are actually for
@@ -172,21 +169,22 @@ impl<'a> Inflate<'a> for IndentedBlock<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
-pub struct SimpleStatementSuite<'a> {
+pub struct SimpleStatementSuite<'r, 'a> {
     /// Sequence of small statements. All but the last statement are required to have
     /// a semicolon.
-    pub body: Vec<SmallStatement<'a>>,
+    pub body: Vec<SmallStatement<'r, 'a>>,
 
     /// The whitespace between the colon in the parent statement and the body.
     pub leading_whitespace: SimpleWhitespace<'a>,
     /// Any optional trailing comment and the final ``NEWLINE`` at the end of the line.
     pub trailing_whitespace: TrailingWhitespace<'a>,
 
-    pub(crate) first_tok: TokenRef<'a>,
-    pub(crate) newline_tok: TokenRef<'a>,
+    pub(crate) first_tok: TokenRef<'r, 'a>,
+    pub(crate) newline_tok: TokenRef<'r, 'a>,
 }
 
-impl<'a> Inflate<'a> for SimpleStatementSuite<'a> {
+impl<'r, 'a> Inflate<'a> for SimpleStatementSuite<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.leading_whitespace = parse_simple_whitespace(
             config,
@@ -201,8 +199,8 @@ impl<'a> Inflate<'a> for SimpleStatementSuite<'a> {
     }
 }
 
-fn _simple_statement_codegen<'a>(
-    body: &[SmallStatement<'a>],
+fn _simple_statement_codegen<'r, 'a>(
+    body: &[SmallStatement<'r, 'a>],
     trailing_whitespace: &TrailingWhitespace<'a>,
     state: &mut CodegenState<'a>,
 ) {
@@ -218,7 +216,7 @@ fn _simple_statement_codegen<'a>(
     trailing_whitespace.codegen(state);
 }
 
-impl<'a> Codegen<'a> for SimpleStatementSuite<'a> {
+impl<'r, 'a> Codegen<'a> for SimpleStatementSuite<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         self.leading_whitespace.codegen(state);
         _simple_statement_codegen(&self.body, &self.trailing_whitespace, state);
@@ -226,21 +224,21 @@ impl<'a> Codegen<'a> for SimpleStatementSuite<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
-pub struct SimpleStatementLine<'a> {
+pub struct SimpleStatementLine<'r, 'a> {
     /// Sequence of small statements. All but the last statement are required to have
     /// a semicolon.
-    pub body: Vec<SmallStatement<'a>>,
+    pub body: Vec<SmallStatement<'r, 'a>>,
 
     /// Sequence of empty lines appearing before this simple statement line.
     pub leading_lines: Vec<EmptyLine<'a>>,
     /// Any optional trailing comment and the final ``NEWLINE`` at the end of the line.
     pub trailing_whitespace: TrailingWhitespace<'a>,
 
-    pub(crate) first_tok: TokenRef<'a>,
-    pub(crate) newline_tok: TokenRef<'a>,
+    pub(crate) first_tok: TokenRef<'r, 'a>,
+    pub(crate) newline_tok: TokenRef<'r, 'a>,
 }
 
-impl<'a> Codegen<'a> for SimpleStatementLine<'a> {
+impl<'r, 'a> Codegen<'a> for SimpleStatementLine<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         for line in &self.leading_lines {
             line.codegen(state);
@@ -250,7 +248,8 @@ impl<'a> Codegen<'a> for SimpleStatementLine<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for SimpleStatementLine<'a> {
+impl<'r, 'a> Inflate<'a> for SimpleStatementLine<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.leading_lines = parse_empty_lines(
             config,
@@ -268,26 +267,26 @@ impl<'a> Inflate<'a> for SimpleStatementLine<'a> {
 
 #[allow(dead_code, clippy::large_enum_variant)]
 #[derive(Debug, Eq, PartialEq, Clone, Codegen, Inflate, IntoPy)]
-pub enum SmallStatement<'a> {
-    Pass(Pass<'a>),
-    Break(Break<'a>),
-    Continue(Continue<'a>),
-    Return(Return<'a>),
-    Expr(Expr<'a>),
-    Assert(Assert<'a>),
-    Import(Import<'a>),
-    ImportFrom(ImportFrom<'a>),
-    Assign(Assign<'a>),
-    AnnAssign(AnnAssign<'a>),
-    Raise(Raise<'a>),
-    Global(Global<'a>),
-    Nonlocal(Nonlocal<'a>),
-    AugAssign(AugAssign<'a>),
-    Del(Del<'a>),
+pub enum SmallStatement<'r, 'a> {
+    Pass(Pass<'r, 'a>),
+    Break(Break<'r, 'a>),
+    Continue(Continue<'r, 'a>),
+    Return(Return<'r, 'a>),
+    Expr(Expr<'r, 'a>),
+    Assert(Assert<'r, 'a>),
+    Import(Import<'r, 'a>),
+    ImportFrom(ImportFrom<'r, 'a>),
+    Assign(Assign<'r, 'a>),
+    AnnAssign(AnnAssign<'r, 'a>),
+    Raise(Raise<'r, 'a>),
+    Global(Global<'r, 'a>),
+    Nonlocal(Nonlocal<'r, 'a>),
+    AugAssign(AugAssign<'r, 'a>),
+    Del(Del<'r, 'a>),
 }
 
-impl<'a> SmallStatement<'a> {
-    pub fn with_semicolon(self, semicolon: Option<Semicolon<'a>>) -> Self {
+impl<'r, 'a> SmallStatement<'r, 'a> {
+    pub fn with_semicolon(self, semicolon: Option<SemicolonTokens<'r, 'a>>) -> Self {
         match self {
             Self::Pass(p) => Self::Pass(p.with_semicolon(semicolon)),
             Self::Break(p) => Self::Break(p.with_semicolon(semicolon)),
@@ -309,21 +308,22 @@ impl<'a> SmallStatement<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
-pub struct Pass<'a> {
-    pub semicolon: Option<Semicolon<'a>>,
+pub struct Pass<'r, 'a> {
+    pub semicolon: Option<SemicolonTokens<'r, 'a>>,
 }
-impl<'a> Pass<'a> {
-    pub fn with_semicolon(self, semicolon: Option<Semicolon<'a>>) -> Self {
+impl<'r, 'a> Pass<'r, 'a> {
+    pub fn with_semicolon(self, semicolon: Option<SemicolonTokens<'r, 'a>>) -> Self {
         Self { semicolon }
     }
 }
-impl<'a> Codegen<'a> for Pass<'a> {
+impl<'r, 'a> Codegen<'a> for Pass<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         state.add_token("pass");
         self.semicolon.codegen(state);
     }
 }
-impl<'a> Inflate<'a> for Pass<'a> {
+impl<'r, 'a> Inflate<'a> for Pass<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.semicolon = self.semicolon.inflate(config)?;
         Ok(self)
@@ -331,21 +331,22 @@ impl<'a> Inflate<'a> for Pass<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
-pub struct Break<'a> {
-    pub semicolon: Option<Semicolon<'a>>,
+pub struct Break<'r, 'a> {
+    pub semicolon: Option<SemicolonTokens<'r, 'a>>,
 }
-impl<'a> Break<'a> {
-    pub fn with_semicolon(self, semicolon: Option<Semicolon<'a>>) -> Self {
+impl<'r, 'a> Break<'r, 'a> {
+    pub fn with_semicolon(self, semicolon: Option<SemicolonTokens<'r, 'a>>) -> Self {
         Self { semicolon }
     }
 }
-impl<'a> Codegen<'a> for Break<'a> {
+impl<'r, 'a> Codegen<'a> for Break<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         state.add_token("break");
         self.semicolon.codegen(state);
     }
 }
-impl<'a> Inflate<'a> for Break<'a> {
+impl<'r, 'a> Inflate<'a> for Break<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.semicolon = self.semicolon.inflate(config)?;
         Ok(self)
@@ -353,21 +354,22 @@ impl<'a> Inflate<'a> for Break<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
-pub struct Continue<'a> {
-    pub semicolon: Option<Semicolon<'a>>,
+pub struct Continue<'r, 'a> {
+    pub semicolon: Option<SemicolonTokens<'r, 'a>>,
 }
-impl<'a> Continue<'a> {
-    pub fn with_semicolon(self, semicolon: Option<Semicolon<'a>>) -> Self {
+impl<'r, 'a> Continue<'r, 'a> {
+    pub fn with_semicolon(self, semicolon: Option<SemicolonTokens<'r, 'a>>) -> Self {
         Self { semicolon }
     }
 }
-impl<'a> Codegen<'a> for Continue<'a> {
+impl<'r, 'a> Codegen<'a> for Continue<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         state.add_token("continue");
         self.semicolon.codegen(state);
     }
 }
-impl<'a> Inflate<'a> for Continue<'a> {
+impl<'r, 'a> Inflate<'a> for Continue<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.semicolon = self.semicolon.inflate(config)?;
         Ok(self)
@@ -375,22 +377,23 @@ impl<'a> Inflate<'a> for Continue<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
-pub struct Expr<'a> {
-    pub value: Expression<'a>,
-    pub semicolon: Option<Semicolon<'a>>,
+pub struct Expr<'r, 'a> {
+    pub value: Expression<'r, 'a>,
+    pub semicolon: Option<SemicolonTokens<'r, 'a>>,
 }
-impl<'a> Expr<'a> {
-    pub fn with_semicolon(self, semicolon: Option<Semicolon<'a>>) -> Self {
+impl<'r, 'a> Expr<'r, 'a> {
+    pub fn with_semicolon(self, semicolon: Option<SemicolonTokens<'r, 'a>>) -> Self {
         Self { semicolon, ..self }
     }
 }
-impl<'a> Codegen<'a> for Expr<'a> {
+impl<'r, 'a> Codegen<'a> for Expr<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         self.value.codegen(state);
         self.semicolon.codegen(state);
     }
 }
-impl<'a> Inflate<'a> for Expr<'a> {
+impl<'r, 'a> Inflate<'a> for Expr<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.value = self.value.inflate(config)?;
         self.semicolon = self.semicolon.inflate(config)?;
@@ -399,13 +402,13 @@ impl<'a> Inflate<'a> for Expr<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
-pub struct Assign<'a> {
-    pub targets: Vec<AssignTarget<'a>>,
-    pub value: Expression<'a>,
-    pub semicolon: Option<Semicolon<'a>>,
+pub struct Assign<'r, 'a> {
+    pub targets: Vec<AssignTarget<'r, 'a>>,
+    pub value: Expression<'r, 'a>,
+    pub semicolon: Option<SemicolonTokens<'r, 'a>>,
 }
 
-impl<'a> Codegen<'a> for Assign<'a> {
+impl<'r, 'a> Codegen<'a> for Assign<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         for target in &self.targets {
             target.codegen(state);
@@ -417,7 +420,8 @@ impl<'a> Codegen<'a> for Assign<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for Assign<'a> {
+impl<'r, 'a> Inflate<'a> for Assign<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.targets = self.targets.inflate(config)?;
         self.value = self.value.inflate(config)?;
@@ -426,22 +430,22 @@ impl<'a> Inflate<'a> for Assign<'a> {
     }
 }
 
-impl<'a> Assign<'a> {
-    pub fn with_semicolon(self, semicolon: Option<Semicolon<'a>>) -> Self {
+impl<'r, 'a> Assign<'r, 'a> {
+    pub fn with_semicolon(self, semicolon: Option<SemicolonTokens<'r, 'a>>) -> Self {
         Self { semicolon, ..self }
     }
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
-pub struct AssignTarget<'a> {
-    pub target: AssignTargetExpression<'a>,
+pub struct AssignTarget<'r, 'a> {
+    pub target: AssignTargetExpression<'r, 'a>,
     pub whitespace_before_equal: SimpleWhitespace<'a>,
     pub whitespace_after_equal: SimpleWhitespace<'a>,
 
-    pub(crate) equal_tok: TokenRef<'a>,
+    pub(crate) equal_tok: TokenRef<'r, 'a>,
 }
 
-impl<'a> Codegen<'a> for AssignTarget<'a> {
+impl<'r, 'a> Codegen<'a> for AssignTarget<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         self.target.codegen(state);
         self.whitespace_before_equal.codegen(state);
@@ -450,7 +454,8 @@ impl<'a> Codegen<'a> for AssignTarget<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for AssignTarget<'a> {
+impl<'r, 'a> Inflate<'a> for AssignTarget<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.target = self.target.inflate(config)?;
         self.whitespace_before_equal = parse_simple_whitespace(
@@ -465,25 +470,25 @@ impl<'a> Inflate<'a> for AssignTarget<'a> {
 
 #[allow(clippy::large_enum_variant)]
 #[derive(Debug, PartialEq, Eq, Clone, Codegen, ParenthesizedNode, Inflate, IntoPy)]
-pub enum AssignTargetExpression<'a> {
-    Name(Name<'a>),
-    Attribute(Attribute<'a>),
-    StarredElement(StarredElement<'a>),
-    Tuple(Tuple<'a>),
-    List(List<'a>),
-    Subscript(Subscript<'a>),
+pub enum AssignTargetExpression<'r, 'a> {
+    Name(Name<'r, 'a>),
+    Attribute(Attribute<'r, 'a>),
+    StarredElement(StarredElement<'r, 'a>),
+    Tuple(Tuple<'r, 'a>),
+    List(List<'r, 'a>),
+    Subscript(Subscript<'r, 'a>),
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
-pub struct Import<'a> {
-    pub names: Vec<ImportAlias<'a>>,
-    pub semicolon: Option<Semicolon<'a>>,
+pub struct Import<'r, 'a> {
+    pub names: Vec<ImportAlias<'r, 'a>>,
+    pub semicolon: Option<SemicolonTokens<'r, 'a>>,
     pub whitespace_after_import: SimpleWhitespace<'a>,
 
-    pub(crate) import_tok: TokenRef<'a>,
+    pub(crate) import_tok: TokenRef<'r, 'a>,
 }
 
-impl<'a> Codegen<'a> for Import<'a> {
+impl<'r, 'a> Codegen<'a> for Import<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         state.add_token("import");
         self.whitespace_after_import.codegen(state);
@@ -499,7 +504,8 @@ impl<'a> Codegen<'a> for Import<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for Import<'a> {
+impl<'r, 'a> Inflate<'a> for Import<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.whitespace_after_import = parse_simple_whitespace(
             config,
@@ -511,30 +517,30 @@ impl<'a> Inflate<'a> for Import<'a> {
     }
 }
 
-impl<'a> Import<'a> {
-    pub fn with_semicolon(self, semicolon: Option<Semicolon<'a>>) -> Self {
+impl<'r, 'a> Import<'r, 'a> {
+    pub fn with_semicolon(self, semicolon: Option<SemicolonTokens<'r, 'a>>) -> Self {
         Self { semicolon, ..self }
     }
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
-pub struct ImportFrom<'a> {
+pub struct ImportFrom<'r, 'a> {
     #[no_py_default]
-    pub module: Option<NameOrAttribute<'a>>,
-    pub names: ImportNames<'a>,
-    pub relative: Vec<Dot<'a>>,
-    pub lpar: Option<LeftParen<'a>>,
-    pub rpar: Option<RightParen<'a>>,
-    pub semicolon: Option<Semicolon<'a>>,
+    pub module: Option<NameOrAttribute<'r, 'a>>,
+    pub names: ImportNames<'r, 'a>,
+    pub relative: Vec<Dot<'r, 'a>>,
+    pub lpar: Option<LeftParen<'r, 'a>>,
+    pub rpar: Option<RightParen<'r, 'a>>,
+    pub semicolon: Option<SemicolonTokens<'r, 'a>>,
     pub whitespace_after_from: SimpleWhitespace<'a>,
     pub whitespace_before_import: SimpleWhitespace<'a>,
     pub whitespace_after_import: SimpleWhitespace<'a>,
 
-    pub(crate) from_tok: TokenRef<'a>,
-    pub(crate) import_tok: TokenRef<'a>,
+    pub(crate) from_tok: TokenRef<'r, 'a>,
+    pub(crate) import_tok: TokenRef<'r, 'a>,
 }
 
-impl<'a> Codegen<'a> for ImportFrom<'a> {
+impl<'r, 'a> Codegen<'a> for ImportFrom<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         state.add_token("from");
         self.whitespace_after_from.codegen(state);
@@ -561,7 +567,8 @@ impl<'a> Codegen<'a> for ImportFrom<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for ImportFrom<'a> {
+impl<'r, 'a> Inflate<'a> for ImportFrom<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.whitespace_after_from =
             parse_simple_whitespace(config, &mut (*self.from_tok).whitespace_after.borrow_mut())?;
@@ -602,9 +609,9 @@ impl<'a> Inflate<'a> for ImportFrom<'a> {
     }
 }
 
-fn inflate_dots<'a>(dots: Vec<Dot<'a>>, config: &Config<'a>) -> Result<Vec<Dot<'a>>> {
-    let mut ret: Vec<Dot<'a>> = vec![];
-    let mut last_tok: Option<TokenRef<'a>> = None;
+fn inflate_dots<'r, 'a>(dots: Vec<Dot<'r, 'a>>, config: &Config<'a>) -> Result<Vec<Dot<'r, 'a>>> {
+    let mut ret: Vec<Dot<'r, 'a>> = vec![];
+    let mut last_tok: Option<TokenRef<'r, 'a>> = None;
     for mut dot in dots {
         if let Some(last_tokref) = &last_tok {
             // Consecutive dots having the same Token can only happen if `...` was
@@ -620,26 +627,27 @@ fn inflate_dots<'a>(dots: Vec<Dot<'a>>, config: &Config<'a>) -> Result<Vec<Dot<'
                 continue;
             }
         }
-        last_tok = Some(dot.tok.clone());
+        last_tok = Some(&dot.tok);
         ret.push(dot.inflate(config)?);
     }
     Ok(ret)
 }
 
-impl<'a> ImportFrom<'a> {
-    pub fn with_semicolon(self, semicolon: Option<Semicolon<'a>>) -> Self {
+impl<'r, 'a> ImportFrom<'r, 'a> {
+    pub fn with_semicolon(self, semicolon: Option<SemicolonTokens<'r, 'a>>) -> Self {
         Self { semicolon, ..self }
     }
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
-pub struct ImportAlias<'a> {
-    pub name: NameOrAttribute<'a>,
-    pub asname: Option<AsName<'a>>,
-    pub comma: Option<Comma<'a>>,
+pub struct ImportAlias<'r, 'a> {
+    pub name: NameOrAttribute<'r, 'a>,
+    pub asname: Option<AsName<'r, 'a>>,
+    pub comma: Option<Comma<'r, 'a>>,
 }
 
-impl<'a> Inflate<'a> for ImportAlias<'a> {
+impl<'r, 'a> Inflate<'a> for ImportAlias<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.name = self.name.inflate(config)?;
         self.asname = self.asname.inflate(config)?;
@@ -648,14 +656,14 @@ impl<'a> Inflate<'a> for ImportAlias<'a> {
     }
 }
 
-impl<'a> WithComma<'a> for ImportAlias<'a> {
-    fn with_comma(self, comma: Comma<'a>) -> ImportAlias<'a> {
+impl<'r, 'a> WithComma<'r, 'a> for ImportAlias<'r, 'a> {
+    fn with_comma(self, comma: Comma<'r, 'a>) -> ImportAlias<'r, 'a> {
         let comma = Some(comma);
         Self { comma, ..self }
     }
 }
 
-impl<'a> Codegen<'a> for ImportAlias<'a> {
+impl<'r, 'a> Codegen<'a> for ImportAlias<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         self.name.codegen(state);
         if let Some(asname) = &self.asname {
@@ -668,15 +676,15 @@ impl<'a> Codegen<'a> for ImportAlias<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
-pub struct AsName<'a> {
-    pub name: AssignTargetExpression<'a>,
+pub struct AsName<'r, 'a> {
+    pub name: AssignTargetExpression<'r, 'a>,
     pub whitespace_before_as: ParenthesizableWhitespace<'a>,
     pub whitespace_after_as: ParenthesizableWhitespace<'a>,
 
-    pub(crate) as_tok: TokenRef<'a>,
+    pub(crate) as_tok: TokenRef<'r, 'a>,
 }
 
-impl<'a> Codegen<'a> for AsName<'a> {
+impl<'r, 'a> Codegen<'a> for AsName<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         self.whitespace_before_as.codegen(state);
         state.add_token("as");
@@ -685,7 +693,8 @@ impl<'a> Codegen<'a> for AsName<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for AsName<'a> {
+impl<'r, 'a> Inflate<'a> for AsName<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.whitespace_before_as = parse_parenthesizable_whitespace(
             config,
@@ -701,12 +710,12 @@ impl<'a> Inflate<'a> for AsName<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Inflate, IntoPy)]
-pub enum ImportNames<'a> {
+pub enum ImportNames<'r, 'a> {
     Star(ImportStar),
-    Aliases(Vec<ImportAlias<'a>>),
+    Aliases(Vec<ImportAlias<'r, 'a>>),
 }
 
-impl<'a> Codegen<'a> for ImportNames<'a> {
+impl<'r, 'a> Codegen<'a> for ImportNames<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         match self {
             Self::Star(s) => s.codegen(state),
@@ -723,12 +732,12 @@ impl<'a> Codegen<'a> for ImportNames<'a> {
 }
 
 #[derive(Debug, Eq, PartialEq, Clone, IntoPy)]
-pub struct FunctionDef<'a> {
-    pub name: Name<'a>,
-    pub params: Parameters<'a>,
-    pub body: Suite<'a>,
-    pub decorators: Vec<Decorator<'a>>,
-    pub returns: Option<Annotation<'a>>,
+pub struct FunctionDef<'r, 'a> {
+    pub name: Name<'r, 'a>,
+    pub params: Parameters<'r, 'a>,
+    pub body: Suite<'r, 'a>,
+    pub decorators: Vec<Decorator<'r, 'a>>,
+    pub returns: Option<Annotation<'r, 'a>>,
     pub asynchronous: Option<Asynchronous<'a>>,
     pub leading_lines: Vec<EmptyLine<'a>>,
     pub lines_after_decorators: Vec<EmptyLine<'a>>,
@@ -737,20 +746,20 @@ pub struct FunctionDef<'a> {
     pub whitespace_before_params: ParenthesizableWhitespace<'a>,
     pub whitespace_before_colon: SimpleWhitespace<'a>,
 
-    pub(crate) async_tok: Option<TokenRef<'a>>,
-    pub(crate) def_tok: TokenRef<'a>,
-    pub(crate) open_paren_tok: TokenRef<'a>,
-    pub(crate) close_paren_tok: TokenRef<'a>,
-    pub(crate) colon_tok: TokenRef<'a>,
+    pub(crate) async_tok: Option<TokenRef<'r, 'a>>,
+    pub(crate) def_tok: TokenRef<'r, 'a>,
+    pub(crate) open_paren_tok: TokenRef<'r, 'a>,
+    pub(crate) close_paren_tok: TokenRef<'r, 'a>,
+    pub(crate) colon_tok: TokenRef<'r, 'a>,
 }
 
-impl<'a> FunctionDef<'a> {
-    pub fn with_decorators(self, decorators: Vec<Decorator<'a>>) -> Self {
+impl<'r, 'a> FunctionDef<'r, 'a> {
+    pub fn with_decorators(self, decorators: Vec<Decorator<'r, 'a>>) -> Self {
         Self { decorators, ..self }
     }
 }
 
-impl<'a> Codegen<'a> for FunctionDef<'a> {
+impl<'r, 'a> Codegen<'a> for FunctionDef<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         for l in &self.leading_lines {
             l.codegen(state);
@@ -785,7 +794,8 @@ impl<'a> Codegen<'a> for FunctionDef<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for FunctionDef<'a> {
+impl<'r, 'a> Inflate<'a> for FunctionDef<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.decorators = self.decorators.inflate(config)?;
         let (asynchronous, leading_lines) = if let Some(asy) = self.async_tok.as_mut() {
@@ -848,17 +858,17 @@ impl<'a> Inflate<'a> for FunctionDef<'a> {
 }
 
 #[derive(Debug, Eq, PartialEq, Clone, IntoPy)]
-pub struct Decorator<'a> {
-    pub decorator: Expression<'a>,
+pub struct Decorator<'r, 'a> {
+    pub decorator: Expression<'r, 'a>,
     pub leading_lines: Vec<EmptyLine<'a>>,
     pub whitespace_after_at: SimpleWhitespace<'a>,
     pub trailing_whitespace: TrailingWhitespace<'a>,
 
-    pub(crate) at_tok: TokenRef<'a>,
-    pub(crate) newline_tok: TokenRef<'a>,
+    pub(crate) at_tok: TokenRef<'r, 'a>,
+    pub(crate) newline_tok: TokenRef<'r, 'a>,
 }
 
-impl<'a> Codegen<'a> for Decorator<'a> {
+impl<'r, 'a> Codegen<'a> for Decorator<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         for ll in self.leading_lines.iter() {
             ll.codegen(state);
@@ -871,7 +881,8 @@ impl<'a> Codegen<'a> for Decorator<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for Decorator<'a> {
+impl<'r, 'a> Inflate<'a> for Decorator<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.leading_lines = parse_empty_lines(
             config,
@@ -889,21 +900,21 @@ impl<'a> Inflate<'a> for Decorator<'a> {
     }
 }
 
-impl<'a> pyo3::conversion::IntoPy<pyo3::PyObject> for Box<OrElse<'a>> {
+impl<'r, 'a> pyo3::conversion::IntoPy<pyo3::PyObject> for Box<OrElse<'r, 'a>> {
     fn into_py(self, py: pyo3::Python) -> pyo3::PyObject {
         (*self).into_py(py)
     }
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
-pub struct If<'a> {
+pub struct If<'r, 'a> {
     /// The expression that, when evaluated, should give us a truthy value
-    pub test: Expression<'a>,
+    pub test: Expression<'r, 'a>,
     // The body of this compound statement.
-    pub body: Suite<'a>,
+    pub body: Suite<'r, 'a>,
 
     /// An optional ``elif`` or ``else`` clause. ``If`` signifies an ``elif`` block.
-    pub orelse: Option<Box<OrElse<'a>>>,
+    pub orelse: Option<Box<OrElse<'r, 'a>>>,
 
     /// Sequence of empty lines appearing before this compound statement line.
     pub leading_lines: Vec<EmptyLine<'a>>,
@@ -919,11 +930,11 @@ pub struct If<'a> {
     #[skip_py]
     pub is_elif: bool,
 
-    pub(crate) if_tok: TokenRef<'a>,
-    pub(crate) colon_tok: TokenRef<'a>,
+    pub(crate) if_tok: TokenRef<'r, 'a>,
+    pub(crate) colon_tok: TokenRef<'r, 'a>,
 }
 
-impl<'a> Codegen<'a> for If<'a> {
+impl<'r, 'a> Codegen<'a> for If<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         for l in &self.leading_lines {
             l.codegen(state);
@@ -942,7 +953,8 @@ impl<'a> Codegen<'a> for If<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for If<'a> {
+impl<'r, 'a> Inflate<'a> for If<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.leading_lines = parse_empty_lines(
             config,
@@ -965,24 +977,24 @@ impl<'a> Inflate<'a> for If<'a> {
 
 #[allow(clippy::large_enum_variant)]
 #[derive(Debug, PartialEq, Eq, Clone, Inflate, Codegen, IntoPy)]
-pub enum OrElse<'a> {
-    Elif(If<'a>),
-    Else(Else<'a>),
+pub enum OrElse<'r, 'a> {
+    Elif(If<'r, 'a>),
+    Else(Else<'r, 'a>),
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
-pub struct Else<'a> {
-    pub body: Suite<'a>,
+pub struct Else<'r, 'a> {
+    pub body: Suite<'r, 'a>,
     /// Sequence of empty lines appearing before this compound statement line.
     pub leading_lines: Vec<EmptyLine<'a>>,
     /// The whitespace appearing after the ``else`` keyword but before the colon.
     pub whitespace_before_colon: SimpleWhitespace<'a>,
 
-    pub(crate) else_tok: TokenRef<'a>,
-    pub(crate) colon_tok: TokenRef<'a>,
+    pub(crate) else_tok: TokenRef<'r, 'a>,
+    pub(crate) colon_tok: TokenRef<'r, 'a>,
 }
 
-impl<'a> Codegen<'a> for Else<'a> {
+impl<'r, 'a> Codegen<'a> for Else<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         for l in &self.leading_lines {
             l.codegen(state);
@@ -996,7 +1008,8 @@ impl<'a> Codegen<'a> for Else<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for Else<'a> {
+impl<'r, 'a> Inflate<'a> for Else<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.leading_lines = parse_empty_lines(
             config,
@@ -1014,15 +1027,15 @@ impl<'a> Inflate<'a> for Else<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
-pub struct Annotation<'a> {
-    pub annotation: Expression<'a>,
+pub struct Annotation<'r, 'a> {
+    pub annotation: Expression<'r, 'a>,
     pub whitespace_before_indicator: Option<ParenthesizableWhitespace<'a>>,
     pub whitespace_after_indicator: ParenthesizableWhitespace<'a>,
 
-    pub(crate) tok: TokenRef<'a>,
+    pub(crate) tok: TokenRef<'r, 'a>,
 }
 
-impl<'a> Annotation<'a> {
+impl<'r, 'a> Annotation<'r, 'a> {
     pub fn codegen(&self, state: &mut CodegenState<'a>, default_indicator: &'a str) {
         if let Some(ws) = &self.whitespace_before_indicator {
             ws.codegen(state);
@@ -1038,7 +1051,8 @@ impl<'a> Annotation<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for Annotation<'a> {
+impl<'r, 'a> Inflate<'a> for Annotation<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.whitespace_before_indicator = Some(parse_parenthesizable_whitespace(
             config,
@@ -1054,15 +1068,15 @@ impl<'a> Inflate<'a> for Annotation<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
-pub struct AnnAssign<'a> {
-    pub target: AssignTargetExpression<'a>,
-    pub annotation: Annotation<'a>,
-    pub value: Option<Expression<'a>>,
-    pub equal: Option<AssignEqual<'a>>,
-    pub semicolon: Option<Semicolon<'a>>,
+pub struct AnnAssign<'r, 'a> {
+    pub target: AssignTargetExpression<'r, 'a>,
+    pub annotation: Annotation<'r, 'a>,
+    pub value: Option<Expression<'r, 'a>>,
+    pub equal: Option<AssignEqual<'r, 'a>>,
+    pub semicolon: Option<SemicolonTokens<'r, 'a>>,
 }
 
-impl<'a> Codegen<'a> for AnnAssign<'a> {
+impl<'r, 'a> Codegen<'a> for AnnAssign<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         self.target.codegen(state);
         self.annotation.codegen(state, ":");
@@ -1081,7 +1095,8 @@ impl<'a> Codegen<'a> for AnnAssign<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for AnnAssign<'a> {
+impl<'r, 'a> Inflate<'a> for AnnAssign<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.target = self.target.inflate(config)?;
         self.annotation = self.annotation.inflate(config)?;
@@ -1092,22 +1107,22 @@ impl<'a> Inflate<'a> for AnnAssign<'a> {
     }
 }
 
-impl<'a> AnnAssign<'a> {
-    pub fn with_semicolon(self, semicolon: Option<Semicolon<'a>>) -> Self {
+impl<'r, 'a> AnnAssign<'r, 'a> {
+    pub fn with_semicolon(self, semicolon: Option<SemicolonTokens<'r, 'a>>) -> Self {
         Self { semicolon, ..self }
     }
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
-pub struct Return<'a> {
-    pub value: Option<Expression<'a>>,
+pub struct Return<'r, 'a> {
+    pub value: Option<Expression<'r, 'a>>,
     pub whitespace_after_return: Option<SimpleWhitespace<'a>>,
-    pub semicolon: Option<Semicolon<'a>>,
+    pub semicolon: Option<SemicolonTokens<'r, 'a>>,
 
-    pub(crate) return_tok: TokenRef<'a>,
+    pub(crate) return_tok: TokenRef<'r, 'a>,
 }
 
-impl<'a> Codegen<'a> for Return<'a> {
+impl<'r, 'a> Codegen<'a> for Return<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         state.add_token("return");
         if let Some(ws) = &self.whitespace_after_return {
@@ -1125,7 +1140,8 @@ impl<'a> Codegen<'a> for Return<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for Return<'a> {
+impl<'r, 'a> Inflate<'a> for Return<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         if self.value.is_some() {
             self.whitespace_after_return = Some(parse_simple_whitespace(
@@ -1143,24 +1159,24 @@ impl<'a> Inflate<'a> for Return<'a> {
     }
 }
 
-impl<'a> Return<'a> {
-    pub fn with_semicolon(self, semicolon: Option<Semicolon<'a>>) -> Self {
+impl<'r, 'a> Return<'r, 'a> {
+    pub fn with_semicolon(self, semicolon: Option<SemicolonTokens<'r, 'a>>) -> Self {
         Self { semicolon, ..self }
     }
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
-pub struct Assert<'a> {
-    pub test: Expression<'a>,
-    pub msg: Option<Expression<'a>>,
-    pub comma: Option<Comma<'a>>,
+pub struct Assert<'r, 'a> {
+    pub test: Expression<'r, 'a>,
+    pub msg: Option<Expression<'r, 'a>>,
+    pub comma: Option<Comma<'r, 'a>>,
     pub whitespace_after_assert: SimpleWhitespace<'a>,
-    pub semicolon: Option<Semicolon<'a>>,
+    pub semicolon: Option<SemicolonTokens<'r, 'a>>,
 
-    pub(crate) assert_tok: TokenRef<'a>,
+    pub(crate) assert_tok: TokenRef<'r, 'a>,
 }
 
-impl<'a> Codegen<'a> for Assert<'a> {
+impl<'r, 'a> Codegen<'a> for Assert<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         state.add_token("assert");
         self.whitespace_after_assert.codegen(state);
@@ -1178,7 +1194,8 @@ impl<'a> Codegen<'a> for Assert<'a> {
         }
     }
 }
-impl<'a> Inflate<'a> for Assert<'a> {
+impl<'r, 'a> Inflate<'a> for Assert<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.whitespace_after_assert = parse_simple_whitespace(
             config,
@@ -1194,23 +1211,24 @@ impl<'a> Inflate<'a> for Assert<'a> {
     }
 }
 
-impl<'a> Assert<'a> {
-    pub fn with_semicolon(self, semicolon: Option<Semicolon<'a>>) -> Self {
+impl<'r, 'a> Assert<'r, 'a> {
+    pub fn with_semicolon(self, semicolon: Option<SemicolonTokens<'r, 'a>>) -> Self {
         Self { semicolon, ..self }
     }
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
-pub struct Raise<'a> {
-    pub exc: Option<Expression<'a>>,
-    pub cause: Option<From<'a>>,
+pub struct Raise<'r, 'a> {
+    pub exc: Option<Expression<'r, 'a>>,
+    pub cause: Option<From<'r, 'a>>,
     pub whitespace_after_raise: Option<SimpleWhitespace<'a>>,
-    pub semicolon: Option<Semicolon<'a>>,
+    pub semicolon: Option<SemicolonTokens<'r, 'a>>,
 
-    pub(crate) raise_tok: TokenRef<'a>,
+    pub(crate) raise_tok: TokenRef<'r, 'a>,
 }
 
-impl<'a> Inflate<'a> for Raise<'a> {
+impl<'r, 'a> Inflate<'a> for Raise<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         if self.exc.is_some() {
             self.whitespace_after_raise = Some(parse_simple_whitespace(
@@ -1233,7 +1251,7 @@ impl<'a> Inflate<'a> for Raise<'a> {
     }
 }
 
-impl<'a> Codegen<'a> for Raise<'a> {
+impl<'r, 'a> Codegen<'a> for Raise<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         state.add_token("raise");
         if let Some(ws) = &self.whitespace_after_raise {
@@ -1256,19 +1274,20 @@ impl<'a> Codegen<'a> for Raise<'a> {
     }
 }
 
-impl<'a> Raise<'a> {
-    pub fn with_semicolon(self, semicolon: Option<Semicolon<'a>>) -> Self {
+impl<'r, 'a> Raise<'r, 'a> {
+    pub fn with_semicolon(self, semicolon: Option<SemicolonTokens<'r, 'a>>) -> Self {
         Self { semicolon, ..self }
     }
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
-pub struct NameItem<'a> {
-    pub name: Name<'a>,
-    pub comma: Option<Comma<'a>>,
+pub struct NameItem<'r, 'a> {
+    pub name: Name<'r, 'a>,
+    pub comma: Option<Comma<'r, 'a>>,
 }
 
-impl<'a> Inflate<'a> for NameItem<'a> {
+impl<'r, 'a> Inflate<'a> for NameItem<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.name = self.name.inflate(config)?;
         self.comma = self.comma.inflate(config)?;
@@ -1276,7 +1295,7 @@ impl<'a> Inflate<'a> for NameItem<'a> {
     }
 }
 
-impl<'a> NameItem<'a> {
+impl<'r, 'a> NameItem<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>, default_comma: bool) {
         self.name.codegen(state);
         if let Some(comma) = &self.comma {
@@ -1288,15 +1307,16 @@ impl<'a> NameItem<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
-pub struct Global<'a> {
-    pub names: Vec<NameItem<'a>>,
+pub struct Global<'r, 'a> {
+    pub names: Vec<NameItem<'r, 'a>>,
     pub whitespace_after_global: SimpleWhitespace<'a>,
-    pub semicolon: Option<Semicolon<'a>>,
+    pub semicolon: Option<SemicolonTokens<'r, 'a>>,
 
-    pub(crate) tok: TokenRef<'a>,
+    pub(crate) tok: TokenRef<'r, 'a>,
 }
 
-impl<'a> Inflate<'a> for Global<'a> {
+impl<'r, 'a> Inflate<'a> for Global<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.whitespace_after_global =
             parse_simple_whitespace(config, &mut (*self.tok).whitespace_after.borrow_mut())?;
@@ -1306,7 +1326,7 @@ impl<'a> Inflate<'a> for Global<'a> {
     }
 }
 
-impl<'a> Codegen<'a> for Global<'a> {
+impl<'r, 'a> Codegen<'a> for Global<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         state.add_token("global");
         self.whitespace_after_global.codegen(state);
@@ -1321,22 +1341,23 @@ impl<'a> Codegen<'a> for Global<'a> {
     }
 }
 
-impl<'a> Global<'a> {
-    pub fn with_semicolon(self, semicolon: Option<Semicolon<'a>>) -> Self {
+impl<'r, 'a> Global<'r, 'a> {
+    pub fn with_semicolon(self, semicolon: Option<SemicolonTokens<'r, 'a>>) -> Self {
         Self { semicolon, ..self }
     }
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
-pub struct Nonlocal<'a> {
-    pub names: Vec<NameItem<'a>>,
+pub struct Nonlocal<'r, 'a> {
+    pub names: Vec<NameItem<'r, 'a>>,
     pub whitespace_after_nonlocal: SimpleWhitespace<'a>,
-    pub semicolon: Option<Semicolon<'a>>,
+    pub semicolon: Option<SemicolonTokens<'r, 'a>>,
 
-    pub(crate) tok: TokenRef<'a>,
+    pub(crate) tok: TokenRef<'r, 'a>,
 }
 
-impl<'a> Inflate<'a> for Nonlocal<'a> {
+impl<'r, 'a> Inflate<'a> for Nonlocal<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.whitespace_after_nonlocal =
             parse_simple_whitespace(config, &mut (*self.tok).whitespace_after.borrow_mut())?;
@@ -1346,7 +1367,7 @@ impl<'a> Inflate<'a> for Nonlocal<'a> {
     }
 }
 
-impl<'a> Codegen<'a> for Nonlocal<'a> {
+impl<'r, 'a> Codegen<'a> for Nonlocal<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         state.add_token("nonlocal");
         self.whitespace_after_nonlocal.codegen(state);
@@ -1361,18 +1382,18 @@ impl<'a> Codegen<'a> for Nonlocal<'a> {
     }
 }
 
-impl<'a> Nonlocal<'a> {
-    pub fn with_semicolon(self, semicolon: Option<Semicolon<'a>>) -> Self {
+impl<'r, 'a> Nonlocal<'r, 'a> {
+    pub fn with_semicolon(self, semicolon: Option<SemicolonTokens<'r, 'a>>) -> Self {
         Self { semicolon, ..self }
     }
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
-pub struct For<'a> {
-    pub target: AssignTargetExpression<'a>,
-    pub iter: Expression<'a>,
-    pub body: Suite<'a>,
-    pub orelse: Option<Else<'a>>,
+pub struct For<'r, 'a> {
+    pub target: AssignTargetExpression<'r, 'a>,
+    pub iter: Expression<'r, 'a>,
+    pub body: Suite<'r, 'a>,
+    pub orelse: Option<Else<'r, 'a>>,
     pub asynchronous: Option<Asynchronous<'a>>,
 
     pub leading_lines: Vec<EmptyLine<'a>>,
@@ -1381,13 +1402,13 @@ pub struct For<'a> {
     pub whitespace_after_in: SimpleWhitespace<'a>,
     pub whitespace_before_colon: SimpleWhitespace<'a>,
 
-    pub(crate) async_tok: Option<TokenRef<'a>>,
-    pub(crate) for_tok: TokenRef<'a>,
-    pub(crate) in_tok: TokenRef<'a>,
-    pub(crate) colon_tok: TokenRef<'a>,
+    pub(crate) async_tok: Option<TokenRef<'r, 'a>>,
+    pub(crate) for_tok: TokenRef<'r, 'a>,
+    pub(crate) in_tok: TokenRef<'r, 'a>,
+    pub(crate) colon_tok: TokenRef<'r, 'a>,
 }
 
-impl<'a> Codegen<'a> for For<'a> {
+impl<'r, 'a> Codegen<'a> for For<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         for ll in &self.leading_lines {
             ll.codegen(state);
@@ -1413,7 +1434,8 @@ impl<'a> Codegen<'a> for For<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for For<'a> {
+impl<'r, 'a> Inflate<'a> for For<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         let (asynchronous, leading_lines) = if let Some(asy) = self.async_tok.as_mut() {
             let whitespace_after =
@@ -1460,19 +1482,19 @@ impl<'a> Inflate<'a> for For<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
-pub struct While<'a> {
-    pub test: Expression<'a>,
-    pub body: Suite<'a>,
-    pub orelse: Option<Else<'a>>,
+pub struct While<'r, 'a> {
+    pub test: Expression<'r, 'a>,
+    pub body: Suite<'r, 'a>,
+    pub orelse: Option<Else<'r, 'a>>,
     pub leading_lines: Vec<EmptyLine<'a>>,
     pub whitespace_after_while: SimpleWhitespace<'a>,
     pub whitespace_before_colon: SimpleWhitespace<'a>,
 
-    pub(crate) while_tok: TokenRef<'a>,
-    pub(crate) colon_tok: TokenRef<'a>,
+    pub(crate) while_tok: TokenRef<'r, 'a>,
+    pub(crate) colon_tok: TokenRef<'r, 'a>,
 }
 
-impl<'a> Codegen<'a> for While<'a> {
+impl<'r, 'a> Codegen<'a> for While<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         for ll in &self.leading_lines {
             ll.codegen(state);
@@ -1491,7 +1513,8 @@ impl<'a> Codegen<'a> for While<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for While<'a> {
+impl<'r, 'a> Inflate<'a> for While<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.leading_lines = parse_empty_lines(
             config,
@@ -1513,26 +1536,26 @@ impl<'a> Inflate<'a> for While<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
-pub struct ClassDef<'a> {
-    pub name: Name<'a>,
-    pub body: Suite<'a>,
-    pub bases: Vec<Arg<'a>>,
-    pub keywords: Vec<Arg<'a>>,
-    pub decorators: Vec<Decorator<'a>>,
-    pub lpar: Option<LeftParen<'a>>,
-    pub rpar: Option<RightParen<'a>>,
+pub struct ClassDef<'r, 'a> {
+    pub name: Name<'r, 'a>,
+    pub body: Suite<'r, 'a>,
+    pub bases: Vec<Arg<'r, 'a>>,
+    pub keywords: Vec<Arg<'r, 'a>>,
+    pub decorators: Vec<Decorator<'r, 'a>>,
+    pub lpar: Option<LeftParen<'r, 'a>>,
+    pub rpar: Option<RightParen<'r, 'a>>,
     pub leading_lines: Vec<EmptyLine<'a>>,
     pub lines_after_decorators: Vec<EmptyLine<'a>>,
     pub whitespace_after_class: SimpleWhitespace<'a>,
     pub whitespace_after_name: SimpleWhitespace<'a>,
     pub whitespace_before_colon: SimpleWhitespace<'a>,
 
-    pub(crate) class_tok: TokenRef<'a>,
-    pub(crate) parens_tok: Option<(TokenRef<'a>, TokenRef<'a>)>,
-    pub(crate) colon_tok: TokenRef<'a>,
+    pub(crate) class_tok: TokenRef<'r, 'a>,
+    pub(crate) parens_tok: Option<(TokenRef<'r, 'a>, TokenRef<'r, 'a>)>,
+    pub(crate) colon_tok: TokenRef<'r, 'a>,
 }
 
-impl<'a> Codegen<'a> for ClassDef<'a> {
+impl<'r, 'a> Codegen<'a> for ClassDef<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         for ll in &self.leading_lines {
             ll.codegen(state);
@@ -1575,7 +1598,8 @@ impl<'a> Codegen<'a> for ClassDef<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for ClassDef<'a> {
+impl<'r, 'a> Inflate<'a> for ClassDef<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.leading_lines = parse_empty_lines(
             config,
@@ -1612,23 +1636,23 @@ impl<'a> Inflate<'a> for ClassDef<'a> {
     }
 }
 
-impl<'a> ClassDef<'a> {
-    pub fn with_decorators(self, decorators: Vec<Decorator<'a>>) -> Self {
+impl<'r, 'a> ClassDef<'r, 'a> {
+    pub fn with_decorators(self, decorators: Vec<Decorator<'r, 'a>>) -> Self {
         Self { decorators, ..self }
     }
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
-pub struct Finally<'a> {
-    pub body: Suite<'a>,
+pub struct Finally<'r, 'a> {
+    pub body: Suite<'r, 'a>,
     pub leading_lines: Vec<EmptyLine<'a>>,
     pub whitespace_before_colon: SimpleWhitespace<'a>,
 
-    pub(crate) finally_tok: TokenRef<'a>,
-    pub(crate) colon_tok: TokenRef<'a>,
+    pub(crate) finally_tok: TokenRef<'r, 'a>,
+    pub(crate) colon_tok: TokenRef<'r, 'a>,
 }
 
-impl<'a> Codegen<'a> for Finally<'a> {
+impl<'r, 'a> Codegen<'a> for Finally<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         for ll in &self.leading_lines {
             ll.codegen(state);
@@ -1642,7 +1666,8 @@ impl<'a> Codegen<'a> for Finally<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for Finally<'a> {
+impl<'r, 'a> Inflate<'a> for Finally<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.leading_lines = parse_empty_lines(
             config,
@@ -1659,19 +1684,19 @@ impl<'a> Inflate<'a> for Finally<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
-pub struct ExceptHandler<'a> {
-    pub body: Suite<'a>,
-    pub r#type: Option<Expression<'a>>,
-    pub name: Option<AsName<'a>>,
+pub struct ExceptHandler<'r, 'a> {
+    pub body: Suite<'r, 'a>,
+    pub r#type: Option<Expression<'r, 'a>>,
+    pub name: Option<AsName<'r, 'a>>,
     pub leading_lines: Vec<EmptyLine<'a>>,
     pub whitespace_after_except: SimpleWhitespace<'a>,
     pub whitespace_before_colon: SimpleWhitespace<'a>,
 
-    pub(crate) except_tok: TokenRef<'a>,
-    pub(crate) colon_tok: TokenRef<'a>,
+    pub(crate) except_tok: TokenRef<'r, 'a>,
+    pub(crate) colon_tok: TokenRef<'r, 'a>,
 }
 
-impl<'a> Codegen<'a> for ExceptHandler<'a> {
+impl<'r, 'a> Codegen<'a> for ExceptHandler<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         for ll in &self.leading_lines {
             ll.codegen(state);
@@ -1692,7 +1717,8 @@ impl<'a> Codegen<'a> for ExceptHandler<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for ExceptHandler<'a> {
+impl<'r, 'a> Inflate<'a> for ExceptHandler<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.leading_lines = parse_empty_lines(
             config,
@@ -1719,21 +1745,21 @@ impl<'a> Inflate<'a> for ExceptHandler<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
-pub struct ExceptStarHandler<'a> {
-    pub body: Suite<'a>,
-    pub r#type: Expression<'a>,
-    pub name: Option<AsName<'a>>,
+pub struct ExceptStarHandler<'r, 'a> {
+    pub body: Suite<'r, 'a>,
+    pub r#type: Expression<'r, 'a>,
+    pub name: Option<AsName<'r, 'a>>,
     pub leading_lines: Vec<EmptyLine<'a>>,
     pub whitespace_after_except: SimpleWhitespace<'a>,
     pub whitespace_after_star: SimpleWhitespace<'a>,
     pub whitespace_before_colon: SimpleWhitespace<'a>,
 
-    pub(crate) except_tok: TokenRef<'a>,
-    pub(crate) star_tok: TokenRef<'a>,
-    pub(crate) colon_tok: TokenRef<'a>,
+    pub(crate) except_tok: TokenRef<'r, 'a>,
+    pub(crate) star_tok: TokenRef<'r, 'a>,
+    pub(crate) colon_tok: TokenRef<'r, 'a>,
 }
 
-impl<'a> Codegen<'a> for ExceptStarHandler<'a> {
+impl<'r, 'a> Codegen<'a> for ExceptStarHandler<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         for ll in &self.leading_lines {
             ll.codegen(state);
@@ -1754,7 +1780,8 @@ impl<'a> Codegen<'a> for ExceptStarHandler<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for ExceptStarHandler<'a> {
+impl<'r, 'a> Inflate<'a> for ExceptStarHandler<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.leading_lines = parse_empty_lines(
             config,
@@ -1781,19 +1808,19 @@ impl<'a> Inflate<'a> for ExceptStarHandler<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
-pub struct Try<'a> {
-    pub body: Suite<'a>,
-    pub handlers: Vec<ExceptHandler<'a>>,
-    pub orelse: Option<Else<'a>>,
-    pub finalbody: Option<Finally<'a>>,
+pub struct Try<'r, 'a> {
+    pub body: Suite<'r, 'a>,
+    pub handlers: Vec<ExceptHandler<'r, 'a>>,
+    pub orelse: Option<Else<'r, 'a>>,
+    pub finalbody: Option<Finally<'r, 'a>>,
     pub leading_lines: Vec<EmptyLine<'a>>,
     pub whitespace_before_colon: SimpleWhitespace<'a>,
 
-    pub(crate) try_tok: TokenRef<'a>,
+    pub(crate) try_tok: TokenRef<'r, 'a>,
     // colon_tok unnecessary
 }
 
-impl<'a> Codegen<'a> for Try<'a> {
+impl<'r, 'a> Codegen<'a> for Try<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         for ll in &self.leading_lines {
             ll.codegen(state);
@@ -1815,7 +1842,8 @@ impl<'a> Codegen<'a> for Try<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for Try<'a> {
+impl<'r, 'a> Inflate<'a> for Try<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.leading_lines = parse_empty_lines(
             config,
@@ -1833,19 +1861,19 @@ impl<'a> Inflate<'a> for Try<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
-pub struct TryStar<'a> {
-    pub body: Suite<'a>,
-    pub handlers: Vec<ExceptStarHandler<'a>>,
-    pub orelse: Option<Else<'a>>,
-    pub finalbody: Option<Finally<'a>>,
+pub struct TryStar<'r, 'a> {
+    pub body: Suite<'r, 'a>,
+    pub handlers: Vec<ExceptStarHandler<'r, 'a>>,
+    pub orelse: Option<Else<'r, 'a>>,
+    pub finalbody: Option<Finally<'r, 'a>>,
     pub leading_lines: Vec<EmptyLine<'a>>,
     pub whitespace_before_colon: SimpleWhitespace<'a>,
 
-    pub(crate) try_tok: TokenRef<'a>,
+    pub(crate) try_tok: TokenRef<'r, 'a>,
     // colon_tok unnecessary
 }
 
-impl<'a> Codegen<'a> for TryStar<'a> {
+impl<'r, 'a> Codegen<'a> for TryStar<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         for ll in &self.leading_lines {
             ll.codegen(state);
@@ -1867,7 +1895,8 @@ impl<'a> Codegen<'a> for TryStar<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for TryStar<'a> {
+impl<'r, 'a> Inflate<'a> for TryStar<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.leading_lines = parse_empty_lines(
             config,
@@ -1885,14 +1914,15 @@ impl<'a> Inflate<'a> for TryStar<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
-pub struct AugAssign<'a> {
-    pub target: AssignTargetExpression<'a>,
-    pub operator: AugOp<'a>,
-    pub value: Expression<'a>,
-    pub semicolon: Option<Semicolon<'a>>,
+pub struct AugAssign<'r, 'a> {
+    pub target: AssignTargetExpression<'r, 'a>,
+    pub operator: AugOp<'r, 'a>,
+    pub value: Expression<'r, 'a>,
+    pub semicolon: Option<SemicolonTokens<'r, 'a>>,
 }
 
-impl<'a> Inflate<'a> for AugAssign<'a> {
+impl<'r, 'a> Inflate<'a> for AugAssign<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.target = self.target.inflate(config)?;
         self.operator = self.operator.inflate(config)?;
@@ -1902,7 +1932,7 @@ impl<'a> Inflate<'a> for AugAssign<'a> {
     }
 }
 
-impl<'a> Codegen<'a> for AugAssign<'a> {
+impl<'r, 'a> Codegen<'a> for AugAssign<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         self.target.codegen(state);
         self.operator.codegen(state);
@@ -1914,20 +1944,20 @@ impl<'a> Codegen<'a> for AugAssign<'a> {
     }
 }
 
-impl<'a> AugAssign<'a> {
-    pub fn with_semicolon(self, semicolon: Option<Semicolon<'a>>) -> Self {
+impl<'r, 'a> AugAssign<'r, 'a> {
+    pub fn with_semicolon(self, semicolon: Option<SemicolonTokens<'r, 'a>>) -> Self {
         Self { semicolon, ..self }
     }
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
-pub struct WithItem<'a> {
-    pub item: Expression<'a>,
-    pub asname: Option<AsName<'a>>,
-    pub comma: Option<Comma<'a>>,
+pub struct WithItem<'r, 'a> {
+    pub item: Expression<'r, 'a>,
+    pub asname: Option<AsName<'r, 'a>>,
+    pub comma: Option<Comma<'r, 'a>>,
 }
 
-impl<'a> Codegen<'a> for WithItem<'a> {
+impl<'r, 'a> Codegen<'a> for WithItem<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         self.item.codegen(state);
         if let Some(n) = &self.asname {
@@ -1939,8 +1969,8 @@ impl<'a> Codegen<'a> for WithItem<'a> {
     }
 }
 
-impl<'a> WithComma<'a> for WithItem<'a> {
-    fn with_comma(self, comma: Comma<'a>) -> Self {
+impl<'r, 'a> WithComma<'r, 'a> for WithItem<'r, 'a> {
+    fn with_comma(self, comma: Comma<'r, 'a>) -> Self {
         Self {
             comma: Some(comma),
             ..self
@@ -1948,7 +1978,8 @@ impl<'a> WithComma<'a> for WithItem<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for WithItem<'a> {
+impl<'r, 'a> Inflate<'a> for WithItem<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.item = self.item.inflate(config)?;
         self.asname = self.asname.inflate(config)?;
@@ -1958,20 +1989,20 @@ impl<'a> Inflate<'a> for WithItem<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
-pub struct With<'a> {
-    pub items: Vec<WithItem<'a>>,
-    pub body: Suite<'a>,
+pub struct With<'r, 'a> {
+    pub items: Vec<WithItem<'r, 'a>>,
+    pub body: Suite<'r, 'a>,
     pub asynchronous: Option<Asynchronous<'a>>,
     pub leading_lines: Vec<EmptyLine<'a>>,
     pub whitespace_after_with: SimpleWhitespace<'a>,
     pub whitespace_before_colon: SimpleWhitespace<'a>,
 
-    pub(crate) async_tok: Option<TokenRef<'a>>,
-    pub(crate) with_tok: TokenRef<'a>,
-    pub(crate) colon_tok: TokenRef<'a>,
+    pub(crate) async_tok: Option<TokenRef<'r, 'a>>,
+    pub(crate) with_tok: TokenRef<'r, 'a>,
+    pub(crate) colon_tok: TokenRef<'r, 'a>,
 }
 
-impl<'a> Codegen<'a> for With<'a> {
+impl<'r, 'a> Codegen<'a> for With<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         for ll in &self.leading_lines {
             ll.codegen(state);
@@ -1996,7 +2027,8 @@ impl<'a> Codegen<'a> for With<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for With<'a> {
+impl<'r, 'a> Inflate<'a> for With<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         let (asynchronous, leading_lines) = if let Some(asy) = self.async_tok.as_mut() {
             let whitespace_after =
@@ -2040,16 +2072,16 @@ impl<'a> Inflate<'a> for With<'a> {
 
 #[allow(clippy::large_enum_variant)]
 #[derive(Debug, PartialEq, Eq, Clone, Codegen, ParenthesizedNode, Inflate, IntoPy)]
-pub enum DelTargetExpression<'a> {
-    Name(Name<'a>),
-    Attribute(Attribute<'a>),
-    Tuple(Tuple<'a>),
-    List(List<'a>),
-    Subscript(Subscript<'a>),
+pub enum DelTargetExpression<'r, 'a> {
+    Name(Name<'r, 'a>),
+    Attribute(Attribute<'r, 'a>),
+    Tuple(Tuple<'r, 'a>),
+    List(List<'r, 'a>),
+    Subscript(Subscript<'r, 'a>),
 }
 
-impl<'a> std::convert::From<DelTargetExpression<'a>> for Expression<'a> {
-    fn from(d: DelTargetExpression<'a>) -> Self {
+impl<'r, 'a> std::convert::From<DelTargetExpression<'r, 'a>> for Expression<'r, 'a> {
+    fn from(d: DelTargetExpression<'r, 'a>) -> Self {
         match d {
             DelTargetExpression::Attribute(a) => Expression::Attribute(a),
             DelTargetExpression::List(l) => Expression::List(l),
@@ -2059,8 +2091,8 @@ impl<'a> std::convert::From<DelTargetExpression<'a>> for Expression<'a> {
         }
     }
 }
-impl<'a> std::convert::From<DelTargetExpression<'a>> for Element<'a> {
-    fn from(d: DelTargetExpression<'a>) -> Element {
+impl<'r, 'a> std::convert::From<DelTargetExpression<'r, 'a>> for Element<'r, 'a> {
+    fn from(d: DelTargetExpression<'r, 'a>) -> Self {
         Element::Simple {
             value: d.into(),
             comma: None,
@@ -2069,15 +2101,16 @@ impl<'a> std::convert::From<DelTargetExpression<'a>> for Element<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
-pub struct Del<'a> {
-    pub target: DelTargetExpression<'a>,
+pub struct Del<'r, 'a> {
+    pub target: DelTargetExpression<'r, 'a>,
     pub whitespace_after_del: SimpleWhitespace<'a>,
-    pub semicolon: Option<Semicolon<'a>>,
+    pub semicolon: Option<SemicolonTokens<'r, 'a>>,
 
-    pub(crate) tok: TokenRef<'a>,
+    pub(crate) tok: TokenRef<'r, 'a>,
 }
 
-impl<'a> Inflate<'a> for Del<'a> {
+impl<'r, 'a> Inflate<'a> for Del<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.whitespace_after_del =
             parse_simple_whitespace(config, &mut (*self.tok).whitespace_after.borrow_mut())?;
@@ -2087,7 +2120,7 @@ impl<'a> Inflate<'a> for Del<'a> {
     }
 }
 
-impl<'a> Codegen<'a> for Del<'a> {
+impl<'r, 'a> Codegen<'a> for Del<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         state.add_token("del");
         self.whitespace_after_del.codegen(state);
@@ -2098,16 +2131,16 @@ impl<'a> Codegen<'a> for Del<'a> {
     }
 }
 
-impl<'a> Del<'a> {
-    pub fn with_semicolon(self, semicolon: Option<Semicolon<'a>>) -> Self {
+impl<'r, 'a> Del<'r, 'a> {
+    pub fn with_semicolon(self, semicolon: Option<SemicolonTokens<'r, 'a>>) -> Self {
         Self { semicolon, ..self }
     }
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
-pub struct Match<'a> {
-    pub subject: Expression<'a>,
-    pub cases: Vec<MatchCase<'a>>,
+pub struct Match<'r, 'a> {
+    pub subject: Expression<'r, 'a>,
+    pub cases: Vec<MatchCase<'r, 'a>>,
 
     pub leading_lines: Vec<EmptyLine<'a>>,
     pub whitespace_after_match: SimpleWhitespace<'a>,
@@ -2116,13 +2149,13 @@ pub struct Match<'a> {
     pub indent: Option<&'a str>,
     pub footer: Vec<EmptyLine<'a>>,
 
-    pub(crate) match_tok: TokenRef<'a>,
-    pub(crate) colon_tok: TokenRef<'a>,
-    pub(crate) indent_tok: TokenRef<'a>,
-    pub(crate) dedent_tok: TokenRef<'a>,
+    pub(crate) match_tok: TokenRef<'r, 'a>,
+    pub(crate) colon_tok: TokenRef<'r, 'a>,
+    pub(crate) indent_tok: TokenRef<'r, 'a>,
+    pub(crate) dedent_tok: TokenRef<'r, 'a>,
 }
 
-impl<'a> Codegen<'a> for Match<'a> {
+impl<'r, 'a> Codegen<'a> for Match<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         for l in &self.leading_lines {
             l.codegen(state);
@@ -2150,7 +2183,8 @@ impl<'a> Codegen<'a> for Match<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for Match<'a> {
+impl<'r, 'a> Inflate<'a> for Match<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.leading_lines = parse_empty_lines(
             config,
@@ -2180,10 +2214,10 @@ impl<'a> Inflate<'a> for Match<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
-pub struct MatchCase<'a> {
-    pub pattern: MatchPattern<'a>,
-    pub guard: Option<Expression<'a>>,
-    pub body: Suite<'a>,
+pub struct MatchCase<'r, 'a> {
+    pub pattern: MatchPattern<'r, 'a>,
+    pub guard: Option<Expression<'r, 'a>>,
+    pub body: Suite<'r, 'a>,
 
     pub leading_lines: Vec<EmptyLine<'a>>,
     pub whitespace_after_case: SimpleWhitespace<'a>,
@@ -2191,12 +2225,12 @@ pub struct MatchCase<'a> {
     pub whitespace_after_if: SimpleWhitespace<'a>,
     pub whitespace_before_colon: SimpleWhitespace<'a>,
 
-    pub(crate) case_tok: TokenRef<'a>,
-    pub(crate) if_tok: Option<TokenRef<'a>>,
-    pub(crate) colon_tok: TokenRef<'a>,
+    pub(crate) case_tok: TokenRef<'r, 'a>,
+    pub(crate) if_tok: Option<TokenRef<'r, 'a>>,
+    pub(crate) colon_tok: TokenRef<'r, 'a>,
 }
 
-impl<'a> Codegen<'a> for MatchCase<'a> {
+impl<'r, 'a> Codegen<'a> for MatchCase<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         for l in &self.leading_lines {
             l.codegen(state);
@@ -2217,7 +2251,8 @@ impl<'a> Codegen<'a> for MatchCase<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for MatchCase<'a> {
+impl<'r, 'a> Inflate<'a> for MatchCase<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.leading_lines = parse_empty_lines(
             config,
@@ -2244,26 +2279,26 @@ impl<'a> Inflate<'a> for MatchCase<'a> {
 
 #[allow(clippy::large_enum_variant)]
 #[derive(Debug, PartialEq, Eq, Clone, IntoPy, Codegen, Inflate, ParenthesizedNode)]
-pub enum MatchPattern<'a> {
-    Value(MatchValue<'a>),
-    Singleton(MatchSingleton<'a>),
-    Sequence(MatchSequence<'a>),
-    Mapping(MatchMapping<'a>),
-    Class(MatchClass<'a>),
-    As(Box<MatchAs<'a>>),
-    Or(Box<MatchOr<'a>>),
+pub enum MatchPattern<'r, 'a> {
+    Value(MatchValue<'r, 'a>),
+    Singleton(MatchSingleton<'r, 'a>),
+    Sequence(MatchSequence<'r, 'a>),
+    Mapping(MatchMapping<'r, 'a>),
+    Class(MatchClass<'r, 'a>),
+    As(Box<MatchAs<'r, 'a>>),
+    Or(Box<MatchOr<'r, 'a>>),
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
-pub struct MatchValue<'a> {
-    pub value: Expression<'a>,
+pub struct MatchValue<'r, 'a> {
+    pub value: Expression<'r, 'a>,
 }
 
-impl<'a> ParenthesizedNode<'a> for MatchValue<'a> {
-    fn lpar(&self) -> &Vec<LeftParen<'a>> {
+impl<'r, 'a> ParenthesizedNode<'r, 'a> for MatchValue<'r, 'a> {
+    fn lpar(&self) -> &Vec<LeftParen<'r, 'a>> {
         self.value.lpar()
     }
-    fn rpar(&self) -> &Vec<RightParen<'a>> {
+    fn rpar(&self) -> &Vec<RightParen<'r, 'a>> {
         self.value.rpar()
     }
     fn parenthesize<F>(&self, state: &mut CodegenState<'a>, f: F)
@@ -2272,20 +2307,21 @@ impl<'a> ParenthesizedNode<'a> for MatchValue<'a> {
     {
         self.value.parenthesize(state, f)
     }
-    fn with_parens(self, left: LeftParen<'a>, right: RightParen<'a>) -> Self {
+    fn with_parens(self, left: LeftParen<'r, 'a>, right: RightParen<'r, 'a>) -> Self {
         Self {
             value: self.value.with_parens(left, right),
         }
     }
 }
 
-impl<'a> Codegen<'a> for MatchValue<'a> {
+impl<'r, 'a> Codegen<'a> for MatchValue<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         self.value.codegen(state)
     }
 }
 
-impl<'a> Inflate<'a> for MatchValue<'a> {
+impl<'r, 'a> Inflate<'a> for MatchValue<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.value = self.value.inflate(config)?;
         Ok(self)
@@ -2293,15 +2329,15 @@ impl<'a> Inflate<'a> for MatchValue<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
-pub struct MatchSingleton<'a> {
-    pub value: Name<'a>,
+pub struct MatchSingleton<'r, 'a> {
+    pub value: Name<'r, 'a>,
 }
 
-impl<'a> ParenthesizedNode<'a> for MatchSingleton<'a> {
-    fn lpar(&self) -> &Vec<LeftParen<'a>> {
+impl<'r, 'a> ParenthesizedNode<'r, 'a> for MatchSingleton<'r, 'a> {
+    fn lpar(&self) -> &Vec<LeftParen<'r, 'a>> {
         self.value.lpar()
     }
-    fn rpar(&self) -> &Vec<RightParen<'a>> {
+    fn rpar(&self) -> &Vec<RightParen<'r, 'a>> {
         self.value.rpar()
     }
     fn parenthesize<F>(&self, state: &mut CodegenState<'a>, f: F)
@@ -2310,20 +2346,21 @@ impl<'a> ParenthesizedNode<'a> for MatchSingleton<'a> {
     {
         self.value.parenthesize(state, f)
     }
-    fn with_parens(self, left: LeftParen<'a>, right: RightParen<'a>) -> Self {
+    fn with_parens(self, left: LeftParen<'r, 'a>, right: RightParen<'r, 'a>) -> Self {
         Self {
             value: self.value.with_parens(left, right),
         }
     }
 }
 
-impl<'a> Codegen<'a> for MatchSingleton<'a> {
+impl<'r, 'a> Codegen<'a> for MatchSingleton<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         self.value.codegen(state)
     }
 }
 
-impl<'a> Inflate<'a> for MatchSingleton<'a> {
+impl<'r, 'a> Inflate<'a> for MatchSingleton<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.value = self.value.inflate(config)?;
         Ok(self)
@@ -2332,21 +2369,21 @@ impl<'a> Inflate<'a> for MatchSingleton<'a> {
 
 #[allow(clippy::large_enum_variant)]
 #[derive(Debug, PartialEq, Eq, Clone, IntoPy, Codegen, Inflate, ParenthesizedNode)]
-pub enum MatchSequence<'a> {
-    MatchList(MatchList<'a>),
-    MatchTuple(MatchTuple<'a>),
+pub enum MatchSequence<'r, 'a> {
+    MatchList(MatchList<'r, 'a>),
+    MatchTuple(MatchTuple<'r, 'a>),
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, IntoPy, ParenthesizedNode)]
-pub struct MatchList<'a> {
-    pub patterns: Vec<StarrableMatchSequenceElement<'a>>,
-    pub lbracket: Option<LeftSquareBracket<'a>>,
-    pub rbracket: Option<RightSquareBracket<'a>>,
-    pub lpar: Vec<LeftParen<'a>>,
-    pub rpar: Vec<RightParen<'a>>,
+pub struct MatchList<'r, 'a> {
+    pub patterns: Vec<StarrableMatchSequenceElement<'r, 'a>>,
+    pub lbracket: Option<LeftSquareBracket<'r, 'a>>,
+    pub rbracket: Option<RightSquareBracket<'r, 'a>>,
+    pub lpar: Vec<LeftParen<'r, 'a>>,
+    pub rpar: Vec<RightParen<'r, 'a>>,
 }
 
-impl<'a> Codegen<'a> for MatchList<'a> {
+impl<'r, 'a> Codegen<'a> for MatchList<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         self.parenthesize(state, |state| {
             self.lbracket.codegen(state);
@@ -2363,7 +2400,8 @@ impl<'a> Codegen<'a> for MatchList<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for MatchList<'a> {
+impl<'r, 'a> Inflate<'a> for MatchList<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.lpar = self.lpar.inflate(config)?;
         self.lbracket = self.lbracket.inflate(config)?;
@@ -2383,13 +2421,13 @@ impl<'a> Inflate<'a> for MatchList<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, IntoPy, ParenthesizedNode)]
-pub struct MatchTuple<'a> {
-    pub patterns: Vec<StarrableMatchSequenceElement<'a>>,
-    pub lpar: Vec<LeftParen<'a>>,
-    pub rpar: Vec<RightParen<'a>>,
+pub struct MatchTuple<'r, 'a> {
+    pub patterns: Vec<StarrableMatchSequenceElement<'r, 'a>>,
+    pub lpar: Vec<LeftParen<'r, 'a>>,
+    pub rpar: Vec<RightParen<'r, 'a>>,
 }
 
-impl<'a> Codegen<'a> for MatchTuple<'a> {
+impl<'r, 'a> Codegen<'a> for MatchTuple<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         self.parenthesize(state, |state| {
             let len = self.patterns.len();
@@ -2404,7 +2442,8 @@ impl<'a> Codegen<'a> for MatchTuple<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for MatchTuple<'a> {
+impl<'r, 'a> Inflate<'a> for MatchTuple<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.lpar = self.lpar.inflate(config)?;
         let len = self.patterns.len();
@@ -2421,12 +2460,12 @@ impl<'a> Inflate<'a> for MatchTuple<'a> {
 
 #[allow(clippy::large_enum_variant)]
 #[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
-pub enum StarrableMatchSequenceElement<'a> {
-    Simple(MatchSequenceElement<'a>),
-    Starred(MatchStar<'a>),
+pub enum StarrableMatchSequenceElement<'r, 'a> {
+    Simple(MatchSequenceElement<'r, 'a>),
+    Starred(MatchStar<'r, 'a>),
 }
 
-impl<'a> StarrableMatchSequenceElement<'a> {
+impl<'r, 'a> StarrableMatchSequenceElement<'r, 'a> {
     fn codegen(
         &self,
         state: &mut CodegenState<'a>,
@@ -2446,8 +2485,8 @@ impl<'a> StarrableMatchSequenceElement<'a> {
     }
 }
 
-impl<'a> WithComma<'a> for StarrableMatchSequenceElement<'a> {
-    fn with_comma(self, comma: Comma<'a>) -> Self {
+impl<'r, 'a> WithComma<'r, 'a> for StarrableMatchSequenceElement<'r, 'a> {
+    fn with_comma(self, comma: Comma<'r, 'a>) -> Self {
         match self {
             Self::Simple(s) => Self::Simple(s.with_comma(comma)),
             Self::Starred(s) => Self::Starred(s.with_comma(comma)),
@@ -2456,12 +2495,12 @@ impl<'a> WithComma<'a> for StarrableMatchSequenceElement<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
-pub struct MatchSequenceElement<'a> {
-    pub value: MatchPattern<'a>,
-    pub comma: Option<Comma<'a>>,
+pub struct MatchSequenceElement<'r, 'a> {
+    pub value: MatchPattern<'r, 'a>,
+    pub comma: Option<Comma<'r, 'a>>,
 }
 
-impl<'a> MatchSequenceElement<'a> {
+impl<'r, 'a> MatchSequenceElement<'r, 'a> {
     fn codegen(
         &self,
         state: &mut CodegenState<'a>,
@@ -2486,8 +2525,8 @@ impl<'a> MatchSequenceElement<'a> {
     }
 }
 
-impl<'a> WithComma<'a> for MatchSequenceElement<'a> {
-    fn with_comma(self, comma: Comma<'a>) -> Self {
+impl<'r, 'a> WithComma<'r, 'a> for MatchSequenceElement<'r, 'a> {
+    fn with_comma(self, comma: Comma<'r, 'a>) -> Self {
         Self {
             comma: Some(comma),
             ..self
@@ -2496,15 +2535,15 @@ impl<'a> WithComma<'a> for MatchSequenceElement<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
-pub struct MatchStar<'a> {
-    pub name: Option<Name<'a>>,
-    pub comma: Option<Comma<'a>>,
+pub struct MatchStar<'r, 'a> {
+    pub name: Option<Name<'r, 'a>>,
+    pub comma: Option<Comma<'r, 'a>>,
     pub whitespace_before_name: ParenthesizableWhitespace<'a>,
 
-    pub(crate) star_tok: TokenRef<'a>,
+    pub(crate) star_tok: TokenRef<'r, 'a>,
 }
 
-impl<'a> MatchStar<'a> {
+impl<'r, 'a> MatchStar<'r, 'a> {
     fn codegen(
         &self,
         state: &mut CodegenState<'a>,
@@ -2539,8 +2578,8 @@ impl<'a> MatchStar<'a> {
     }
 }
 
-impl<'a> WithComma<'a> for MatchStar<'a> {
-    fn with_comma(self, comma: Comma<'a>) -> Self {
+impl<'r, 'a> WithComma<'r, 'a> for MatchStar<'r, 'a> {
+    fn with_comma(self, comma: Comma<'r, 'a>) -> Self {
         Self {
             comma: Some(comma),
             ..self
@@ -2549,21 +2588,21 @@ impl<'a> WithComma<'a> for MatchStar<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, IntoPy, ParenthesizedNode)]
-pub struct MatchMapping<'a> {
-    pub elements: Vec<MatchMappingElement<'a>>,
-    pub rest: Option<Name<'a>>,
-    pub trailing_comma: Option<Comma<'a>>,
-    pub lbrace: LeftCurlyBrace<'a>,
-    pub rbrace: RightCurlyBrace<'a>,
-    pub lpar: Vec<LeftParen<'a>>,
-    pub rpar: Vec<RightParen<'a>>,
+pub struct MatchMapping<'r, 'a> {
+    pub elements: Vec<MatchMappingElement<'r, 'a>>,
+    pub rest: Option<Name<'r, 'a>>,
+    pub trailing_comma: Option<Comma<'r, 'a>>,
+    pub lbrace: LeftCurlyBrace<'r, 'a>,
+    pub rbrace: RightCurlyBrace<'r, 'a>,
+    pub lpar: Vec<LeftParen<'r, 'a>>,
+    pub rpar: Vec<RightParen<'r, 'a>>,
 
     pub whitespace_before_rest: SimpleWhitespace<'a>,
 
-    pub(crate) star_tok: Option<TokenRef<'a>>,
+    pub(crate) star_tok: Option<TokenRef<'r, 'a>>,
 }
 
-impl<'a> Codegen<'a> for MatchMapping<'a> {
+impl<'r, 'a> Codegen<'a> for MatchMapping<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         self.parenthesize(state, |state| {
             self.lbrace.codegen(state);
@@ -2582,7 +2621,8 @@ impl<'a> Codegen<'a> for MatchMapping<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for MatchMapping<'a> {
+impl<'r, 'a> Inflate<'a> for MatchMapping<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.lpar = self.lpar.inflate(config)?;
         self.lbrace = self.lbrace.inflate(config)?;
@@ -2613,18 +2653,18 @@ impl<'a> Inflate<'a> for MatchMapping<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
-pub struct MatchMappingElement<'a> {
-    pub key: Expression<'a>,
-    pub pattern: MatchPattern<'a>,
-    pub comma: Option<Comma<'a>>,
+pub struct MatchMappingElement<'r, 'a> {
+    pub key: Expression<'r, 'a>,
+    pub pattern: MatchPattern<'r, 'a>,
+    pub comma: Option<Comma<'r, 'a>>,
 
     pub whitespace_before_colon: ParenthesizableWhitespace<'a>,
     pub whitespace_after_colon: ParenthesizableWhitespace<'a>,
 
-    pub(crate) colon_tok: TokenRef<'a>,
+    pub(crate) colon_tok: TokenRef<'r, 'a>,
 }
 
-impl<'a> MatchMappingElement<'a> {
+impl<'r, 'a> MatchMappingElement<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>, default_comma: bool) {
         self.key.codegen(state);
         self.whitespace_before_colon.codegen(state);
@@ -2657,8 +2697,8 @@ impl<'a> MatchMappingElement<'a> {
     }
 }
 
-impl<'a> WithComma<'a> for MatchMappingElement<'a> {
-    fn with_comma(self, comma: Comma<'a>) -> Self {
+impl<'r, 'a> WithComma<'r, 'a> for MatchMappingElement<'r, 'a> {
+    fn with_comma(self, comma: Comma<'r, 'a>) -> Self {
         Self {
             comma: Some(comma),
             ..self
@@ -2667,22 +2707,22 @@ impl<'a> WithComma<'a> for MatchMappingElement<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, IntoPy, ParenthesizedNode)]
-pub struct MatchClass<'a> {
-    pub cls: NameOrAttribute<'a>,
-    pub patterns: Vec<MatchSequenceElement<'a>>,
-    pub kwds: Vec<MatchKeywordElement<'a>>,
-    pub lpar: Vec<LeftParen<'a>>,
-    pub rpar: Vec<RightParen<'a>>,
+pub struct MatchClass<'r, 'a> {
+    pub cls: NameOrAttribute<'r, 'a>,
+    pub patterns: Vec<MatchSequenceElement<'r, 'a>>,
+    pub kwds: Vec<MatchKeywordElement<'r, 'a>>,
+    pub lpar: Vec<LeftParen<'r, 'a>>,
+    pub rpar: Vec<RightParen<'r, 'a>>,
 
     pub whitespace_after_cls: ParenthesizableWhitespace<'a>,
     pub whitespace_before_patterns: ParenthesizableWhitespace<'a>,
     pub whitespace_after_kwds: ParenthesizableWhitespace<'a>,
 
-    pub(crate) lpar_tok: TokenRef<'a>,
-    pub(crate) rpar_tok: TokenRef<'a>,
+    pub(crate) lpar_tok: TokenRef<'r, 'a>,
+    pub(crate) rpar_tok: TokenRef<'r, 'a>,
 }
 
-impl<'a> Codegen<'a> for MatchClass<'a> {
+impl<'r, 'a> Codegen<'a> for MatchClass<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         self.parenthesize(state, |state| {
             self.cls.codegen(state);
@@ -2703,7 +2743,8 @@ impl<'a> Codegen<'a> for MatchClass<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for MatchClass<'a> {
+impl<'r, 'a> Inflate<'a> for MatchClass<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.lpar = self.lpar.inflate(config)?;
 
@@ -2743,18 +2784,18 @@ impl<'a> Inflate<'a> for MatchClass<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
-pub struct MatchKeywordElement<'a> {
-    pub key: Name<'a>,
-    pub pattern: MatchPattern<'a>,
-    pub comma: Option<Comma<'a>>,
+pub struct MatchKeywordElement<'r, 'a> {
+    pub key: Name<'r, 'a>,
+    pub pattern: MatchPattern<'r, 'a>,
+    pub comma: Option<Comma<'r, 'a>>,
 
     pub whitespace_before_equal: ParenthesizableWhitespace<'a>,
     pub whitespace_after_equal: ParenthesizableWhitespace<'a>,
 
-    pub(crate) equal_tok: TokenRef<'a>,
+    pub(crate) equal_tok: TokenRef<'r, 'a>,
 }
 
-impl<'a> MatchKeywordElement<'a> {
+impl<'r, 'a> MatchKeywordElement<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>, default_comma: bool) {
         self.key.codegen(state);
         self.whitespace_before_equal.codegen(state);
@@ -2786,8 +2827,8 @@ impl<'a> MatchKeywordElement<'a> {
     }
 }
 
-impl<'a> WithComma<'a> for MatchKeywordElement<'a> {
-    fn with_comma(self, comma: Comma<'a>) -> Self {
+impl<'r, 'a> WithComma<'r, 'a> for MatchKeywordElement<'r, 'a> {
+    fn with_comma(self, comma: Comma<'r, 'a>) -> Self {
         Self {
             comma: Some(comma),
             ..self
@@ -2796,19 +2837,19 @@ impl<'a> WithComma<'a> for MatchKeywordElement<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, IntoPy, ParenthesizedNode)]
-pub struct MatchAs<'a> {
-    pub pattern: Option<MatchPattern<'a>>,
-    pub name: Option<Name<'a>>,
-    pub lpar: Vec<LeftParen<'a>>,
-    pub rpar: Vec<RightParen<'a>>,
+pub struct MatchAs<'r, 'a> {
+    pub pattern: Option<MatchPattern<'r, 'a>>,
+    pub name: Option<Name<'r, 'a>>,
+    pub lpar: Vec<LeftParen<'r, 'a>>,
+    pub rpar: Vec<RightParen<'r, 'a>>,
 
     pub whitespace_before_as: Option<ParenthesizableWhitespace<'a>>,
     pub whitespace_after_as: Option<ParenthesizableWhitespace<'a>>,
 
-    pub(crate) as_tok: Option<TokenRef<'a>>,
+    pub(crate) as_tok: Option<TokenRef<'r, 'a>>,
 }
 
-impl<'a> Codegen<'a> for MatchAs<'a> {
+impl<'r, 'a> Codegen<'a> for MatchAs<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         self.parenthesize(state, |state| {
             if let Some(pat) = &self.pattern {
@@ -2826,7 +2867,8 @@ impl<'a> Codegen<'a> for MatchAs<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for MatchAs<'a> {
+impl<'r, 'a> Inflate<'a> for MatchAs<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.lpar = self.lpar.inflate(config)?;
         self.pattern = self.pattern.inflate(config)?;
@@ -2847,12 +2889,12 @@ impl<'a> Inflate<'a> for MatchAs<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
-pub struct MatchOrElement<'a> {
-    pub pattern: MatchPattern<'a>,
-    pub separator: Option<BitOr<'a>>,
+pub struct MatchOrElement<'r, 'a> {
+    pub pattern: MatchPattern<'r, 'a>,
+    pub separator: Option<BitOr<'r, 'a>>,
 }
 
-impl<'a> MatchOrElement<'a> {
+impl<'r, 'a> MatchOrElement<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>, default_separator: bool) {
         self.pattern.codegen(state);
         self.separator.codegen(state);
@@ -2862,7 +2904,8 @@ impl<'a> MatchOrElement<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for MatchOrElement<'a> {
+impl<'r, 'a> Inflate<'a> for MatchOrElement<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.pattern = self.pattern.inflate(config)?;
         self.separator = self.separator.inflate(config)?;
@@ -2871,13 +2914,13 @@ impl<'a> Inflate<'a> for MatchOrElement<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, IntoPy, ParenthesizedNode)]
-pub struct MatchOr<'a> {
-    pub patterns: Vec<MatchOrElement<'a>>,
-    pub lpar: Vec<LeftParen<'a>>,
-    pub rpar: Vec<RightParen<'a>>,
+pub struct MatchOr<'r, 'a> {
+    pub patterns: Vec<MatchOrElement<'r, 'a>>,
+    pub lpar: Vec<LeftParen<'r, 'a>>,
+    pub rpar: Vec<RightParen<'r, 'a>>,
 }
 
-impl<'a> Codegen<'a> for MatchOr<'a> {
+impl<'r, 'a> Codegen<'a> for MatchOr<'r, 'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         self.parenthesize(state, |state| {
             let len = self.patterns.len();
@@ -2888,7 +2931,8 @@ impl<'a> Codegen<'a> for MatchOr<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for MatchOr<'a> {
+impl<'r, 'a> Inflate<'a> for MatchOr<'r, 'a> {
+    type Inflated = Self;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
         self.lpar = self.lpar.inflate(config)?;
         self.patterns = self.patterns.inflate(config)?;

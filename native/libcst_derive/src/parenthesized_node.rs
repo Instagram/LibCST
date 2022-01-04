@@ -23,14 +23,14 @@ fn impl_struct(ast: &DeriveInput) -> TokenStream {
     let ident = &ast.ident;
     let generics = &ast.generics;
     let gen = quote! {
-        impl<'a> ParenthesizedNode<'a> for #ident #generics {
-            fn lpar(&self) -> &Vec<LeftParen<'a>> {
+        impl #generics ParenthesizedNode#generics for #ident #generics {
+            fn lpar(&self) -> &Vec<LeftParen#generics> {
                 &self.lpar
             }
-            fn rpar(&self) -> &Vec<RightParen<'a>> {
+            fn rpar(&self) -> &Vec<RightParen#generics> {
                 &self.rpar
             }
-            fn with_parens(self, left: LeftParen<'a>, right: RightParen<'a>) -> Self {
+            fn with_parens(self, left: LeftParen#generics, right: RightParen#generics) -> Self {
                 let mut lpar = self.lpar;
                 let mut rpar = self.rpar;
                 lpar.insert(0, left);
@@ -76,18 +76,18 @@ fn impl_enum(ast: &DeriveInput, e: &DataEnum) -> TokenStream {
     let ident = &ast.ident;
     let generics = &ast.generics;
     let gen = quote! {
-        impl<'a> ParenthesizedNode<'a> for #ident #generics {
-            fn lpar(&self) -> &Vec<LeftParen<'a>> {
+        impl #generics ParenthesizedNode#generics for #ident #generics {
+            fn lpar(&self) -> &Vec<LeftParen #generics > {
                 match self {
                     #(Self::#varnames(x) => x.lpar(),)*
                 }
             }
-            fn rpar(&self) -> &Vec<RightParen<'a>> {
+            fn rpar(&self) -> &Vec<RightParen #generics > {
                 match self {
                     #(Self::#varnames(x) => x.rpar(),)*
                 }
             }
-            fn with_parens(self, left: LeftParen<'a>, right: RightParen<'a>) -> Self {
+            fn with_parens(self, left: LeftParen #generics, right: RightParen #generics) -> Self {
                 match self {
                     #(Self::#varnames(x) => Self::#varnames(x.with_parens(left, right)),)*
                 }

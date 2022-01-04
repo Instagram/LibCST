@@ -3,6 +3,8 @@
 // This source code is licensed under the MIT license found in the
 // LICENSE file in the root directory of this source tree
 
+use std::rc::Rc;
+
 use crate::nodes::{
     Comment, EmptyLine, Fakeness, Newline, ParenthesizableWhitespace, ParenthesizedWhitespace,
     SimpleWhitespace, TrailingWhitespace,
@@ -65,7 +67,7 @@ pub struct Config<'a> {
 }
 
 impl<'a> Config<'a> {
-    pub fn new(input: &'a str, tokens: &[Token<'a>]) -> Self {
+    pub fn new(input: &'a str, tokens: &[Rc<Token<'a>>]) -> Self {
         let mut default_indent = "    ";
         for tok in tokens {
             if tok.r#type == TokType::Indent {
