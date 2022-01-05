@@ -360,6 +360,7 @@ class AddImportsVisitor(ContextAwareTransformer):
         # import ptvsd; ptvsd.set_trace()
         # Now, add all of the imports we need!
         return updated_node.with_changes(
+            # pyre-fixme[60]: Concatenation not yet support for multiple variadic tup...
             body=(
                 *statements_before_imports,
                 *[

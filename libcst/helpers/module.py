@@ -28,4 +28,6 @@ def insert_header_comments(node: libcst.Module, comments: List[str]) -> libcst.M
     inserted_lines = [
         libcst.EmptyLine(comment=libcst.Comment(value=comment)) for comment in comments
     ]
+    # pyre-fixme[60]: Concatenation not yet support for multiple variadic tuples:
+    #  `*comment_lines, *inserted_lines, *empty_lines`.
     return node.with_changes(header=(*comment_lines, *inserted_lines, *empty_lines))

@@ -1863,6 +1863,8 @@ class Parameters(CSTNode):
 
     def _validate_defaults(self) -> None:
         seen_default = False
+        # pyre-fixme[60]: Concatenation not yet support for multiple variadic
+        #  tuples: `*self.posonly_params, *self.params`.
         for param in (*self.posonly_params, *self.params):
             if param.default:
                 # Mark that we've moved onto defaults

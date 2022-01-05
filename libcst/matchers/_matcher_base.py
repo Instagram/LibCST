@@ -1098,9 +1098,11 @@ def _sequence_matches(  # noqa: C901
                         metadata_lookup,
                     )
                     if result.sequence_capture is not None:
+                        matched = result.matched_nodes
+                        assert isinstance(matched, Sequence)
                         return _SequenceMatchesResult(
                             {**attribute_capture, **result.sequence_capture},
-                            (node, *result.matched_nodes),
+                            (node, *matched),
                         )
             # Finally, assume that this does not match the current node.
             # Consume the matcher but not the node.
@@ -1124,9 +1126,11 @@ def _sequence_matches(  # noqa: C901
                         metadata_lookup,
                     )
                     if result.sequence_capture is not None:
+                        matched = result.matched_nodes
+                        assert isinstance(matched, Sequence)
                         return _SequenceMatchesResult(
                             {**attribute_capture, **result.sequence_capture},
-                            (node, *result.matched_nodes),
+                            (node, *matched),
                         )
                 return _SequenceMatchesResult(None, None)
             else:
@@ -1138,9 +1142,11 @@ def _sequence_matches(  # noqa: C901
                 if attribute_capture is not None:
                     result = _sequence_matches(nodes[1:], matchers, metadata_lookup)
                     if result.sequence_capture is not None:
+                        matched = result.matched_nodes
+                        assert isinstance(matched, Sequence)
                         return _SequenceMatchesResult(
                             {**attribute_capture, **result.sequence_capture},
-                            (node, *result.matched_nodes),
+                            (node, *matched),
                         )
                 # Now, assume that this does not match the current node.
                 # Consume the matcher but not the node.
