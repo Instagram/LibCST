@@ -13,7 +13,23 @@ from libcst.codegen.generate import clean_generated_code, format_file
 from libcst.testing.utils import UnitTest
 
 
+
+
 class TestCodegenClean(UnitTest):
+    def assert_code_matches(
+        self,
+        old_code: str,
+        new_code: str,
+        module_name: str,
+    ) -> None:
+        self.assertTrue(
+            old_code == new_code,
+            f"{module_name} needs new codegen, see "
+            "`python -m libcst.codegen.generate --help` "
+            "for instructions"
+        )
+
+    
     def test_codegen_clean_visitor_functions(self) -> None:
         """
         Verifies that codegen of visitor functions would not result in a
@@ -44,9 +60,7 @@ class TestCodegenClean(UnitTest):
             old_code = fp.read()
 
         # Now that we've done simple codegen, verify that it matches.
-        self.assertTrue(
-            old_code == new_code, "libcst._typed_visitor needs new codegen!"
-        )
+        self.assert_code_matches(old_code, new_code, "libcst._typed_visitor")
 
     def test_codegen_clean_matcher_classes(self) -> None:
         """
@@ -78,9 +92,7 @@ class TestCodegenClean(UnitTest):
             old_code = fp.read()
 
         # Now that we've done simple codegen, verify that it matches.
-        self.assertTrue(
-            old_code == new_code, "libcst.matchers.__init__ needs new codegen!"
-        )
+        self.assert_code_matches(old_code, new_code, "libcst.matchers.__init__")
 
     def test_codegen_clean_return_types(self) -> None:
         """
@@ -113,6 +125,4 @@ class TestCodegenClean(UnitTest):
             old_code = fp.read()
 
         # Now that we've done simple codegen, verify that it matches.
-        self.assertTrue(
-            old_code == new_code, "libcst.matchers._return_types needs new codegen!"
-        )
+        self.assert_code_matches(old_code, new_code, "libcst.matchers._return_types")
