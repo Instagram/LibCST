@@ -133,7 +133,7 @@ def validate_provider_tests(dct: Dict[str, Any]) -> None:
                         + "these combinations."
                     )
 
-                test_replacement.__name__ = member_name
+                setattr(test_replacement, "__name__", member_name)
                 members_to_replace[member_name] = test_replacement
 
     for member_name, new_member in members_to_replace.items():

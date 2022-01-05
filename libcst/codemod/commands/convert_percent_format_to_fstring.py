@@ -3,8 +3,9 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 #
+import itertools
 import re
-from typing import Callable, cast
+from typing import Callable, List, Sequence, cast
 
 import libcst as cst
 import libcst.matchers as m
@@ -83,7 +84,8 @@ class ConvertPercentFormatStringCommand(VisitorBasedCodemodCommand):
         )
 
         if extracts:
-            expr = extracts[expr_key]
+            exprs = extracts[expr_key]
+            exprs = (exprs,) if not isinstance(exprs, Sequence) else exprs
             parts = []
             simple_string = cst.ensure_type(original_node.left, cst.SimpleString)
             innards = simple_string.raw_value.replace("{", "{{").replace("}", "}}")
@@ -91,10 +93,13 @@ class ConvertPercentFormatStringCommand(VisitorBasedCodemodCommand):
             token = tokens[0]
             if len(token) > 0:
                 parts.append(cst.FormattedStringText(value=token))
-            expressions = (
-                [elm.value for elm in expr.elements]
-                if isinstance(expr, cst.Tuple)
-                else [expr]
+            expressions: List[cst.CSTNode] = list(
+                *itertools.chain(
+                    [elm.value for elm in expr.elements]
+                    if isinstance(expr, cst.Tuple)
+                    else [expr]
+                    for expr in exprs
+                )
             )
             escape_transformer = EscapeStringQuote(simple_string.quote)
             i = 1

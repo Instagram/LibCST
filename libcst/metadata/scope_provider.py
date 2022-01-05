@@ -280,6 +280,7 @@ class ImportAssignment(Assignment):
     def get_qualified_names_for(self, full_name: str) -> Set[QualifiedName]:
         module = self.get_module_name_for_import()
         results = set()
+        assert isinstance(self.node, (cst.ImportFrom, cst.Import))
         import_names = self.node.names
         if not isinstance(import_names, cst.ImportStar):
             for name in import_names:

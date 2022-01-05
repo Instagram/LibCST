@@ -1062,6 +1062,7 @@ def _sequence_matches(  # noqa: C901
         # Base case, we have one or more matcher that wasn't matched
         if all(_matches_zero_nodes(m) for m in matchers):
             return _SequenceMatchesResult(
+                # pyre-ignore[16]: `MatchIfTrue` has no attribute `name`.
                 {m.name: () for m in matchers if isinstance(m, _ExtractMatchingNode)},
                 (),
             )
@@ -1245,7 +1246,8 @@ def _attribute_matches(  # noqa: C901
                     if result.sequence_capture is not None:
                         return result.sequence_capture
                 elif isinstance(m, MatchIfTrue):
-                    return {} if matcher.func(node) else None
+                    # TODO: return captures
+                    return {} if m.func(node) else None
         elif isinstance(matcher, AllOf):
             # We should compare against each of the sequences in the AllOf
             all_captures = {}
@@ -1256,8 +1258,6 @@ def _attribute_matches(  # noqa: C901
                     if result.sequence_capture is None:
                         return None
                     all_captures = {**all_captures, **result.sequence_capture}
-                elif isinstance(m, MatchIfTrue):
-                    return {} if matcher.func(node) else None
                 else:
                     # The value in the AllOf wasn't a sequence, it can't match.
                     return None
