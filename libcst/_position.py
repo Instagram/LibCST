@@ -45,8 +45,6 @@ class CodeRange:
     def __init__(self, start: Tuple[int, int], end: Tuple[int, int]) -> None:
         ...
 
-    # pyre-ignore[13]: Attribute `end` is never initialized.
-    # pyre-ignore[13]: Attribute `start` is never initialized.
     def __init__(self, start: _CodePositionT, end: _CodePositionT) -> None:
         if isinstance(start, tuple) and isinstance(end, tuple):
             object.__setattr__(self, "start", CodePosition(start[0], start[1]))

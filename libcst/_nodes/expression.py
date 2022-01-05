@@ -1844,7 +1844,6 @@ class Parameters(CSTNode):
         if len(vals) == 0:
             return
         for val in vals:
-            # pyre-ignore Pyre seems to think val.star.__eq__ is not callable
             if isinstance(val.star, str) and val.star != "":
                 raise CSTValidationError(
                     f"Expecting a star prefix of '' for {section} Param."
@@ -1891,7 +1890,6 @@ class Parameters(CSTNode):
         if (
             isinstance(star_arg, Param)
             and isinstance(star_arg.star, str)
-            # pyre-ignore Pyre seems to think star_kwarg.star.__eq__ is not callable
             and star_arg.star != "*"
         ):
             raise CSTValidationError(
@@ -1903,7 +1901,6 @@ class Parameters(CSTNode):
         if (
             star_kwarg is not None
             and isinstance(star_kwarg.star, str)
-            # pyre-ignore Pyre seems to think star_kwarg.star.__eq__ is not callable
             and star_kwarg.star != "**"
         ):
             raise CSTValidationError(

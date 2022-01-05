@@ -237,7 +237,6 @@ def _check_types(
                 )
             if has_invalid_top_level:
                 raise MatchDecoratorMismatch(
-                    # pyre-ignore This anonymous method has a qualname.
                     meth.__qualname__,
                     "The root matcher in a matcher decorator cannot be an "
                     + "AtLeastN, AtMostN or MatchIfTrue matcher",

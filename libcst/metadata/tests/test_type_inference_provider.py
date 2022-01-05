@@ -89,9 +89,6 @@ class TypeInferenceProviderTest(UnitTest):
         data: PyreData = json.loads(data_path.read_text())
         wrapper = MetadataWrapper(
             cst.parse_module(source_path.read_text()),
-            # pyre-fixme[6]: Expected `Mapping[Type[BaseMetadataProvider[object]],
-            #  Any]` for 2nd param but got `Dict[Type[TypeInferenceProvider],
-            #  Sequence[InferredType]]`.
             cache={TypeInferenceProvider: data},
         )
         _test_simple_class_helper(self, wrapper)

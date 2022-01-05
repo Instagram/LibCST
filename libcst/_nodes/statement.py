@@ -2308,7 +2308,6 @@ class Raise(BaseSmallStatement):
                 not isinstance(whitespace_before_from, MaybeSentinel)
                 and whitespace_before_from.empty
             )
-            # pyre-ignore Pyre thinks exc is Optional
             if has_no_gap and not exc._safe_to_use_with_word_operator(
                 ExpressionPosition.LEFT
             ):

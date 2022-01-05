@@ -778,13 +778,10 @@ def convert_subscript(
             first_colon=Colon(
                 whitespace_before=parse_parenthesizable_whitespace(
                     config,
-                    # pyre-fixme[16]: Optional type has no attribute
-                    #  `whitespace_before`.
                     first_colon.whitespace_before,
                 ),
                 whitespace_after=parse_parenthesizable_whitespace(
                     config,
-                    # pyre-fixme[16]: Optional type has no attribute `whitespace_after`.
                     first_colon.whitespace_after,
                 ),
             ),
@@ -1237,7 +1234,6 @@ def _convert_sequencelike(
 
     # lpar/rpar are the responsibility of our parent
     return WithLeadingWhitespace(
-        # pyre-ignore[29]: `Union[Type[List], Type[Set], Type[Tuple]]` is not a function.
         sequence_type(elements, lpar=(), rpar=()),
         children[0].whitespace_before,
     )

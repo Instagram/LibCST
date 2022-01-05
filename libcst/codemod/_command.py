@@ -142,8 +142,6 @@ class MagicArgsCodemodCommand(CodemodCommand, ABC):
         argspec = inspect.getfullargspec(transform.__init__)
         args: List[object] = []
         kwargs: Dict[str, object] = {}
-        # pyre-fixme[6]: Expected `Sized` for 1st param but got `Union[Tuple[],
-        #  Tuple[Any, ...]]`.
         last_default_arg = len(argspec.args) - len(argspec.defaults or ())
         for i, arg in enumerate(argspec.args):
             if arg in ["self", "context"]:

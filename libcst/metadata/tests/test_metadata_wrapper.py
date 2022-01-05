@@ -70,9 +70,6 @@ class MetadataWrapperTest(UnitTest):
                 self.set_metadata(node, self.cache)
 
         cached_data = object()
-        # pyre-fixme[6]: Expected `Mapping[Type[BaseMetadataProvider[object]],
-        #  object]` for 2nd param but got `Dict[Type[SimpleCacheMetadataProvider],
-        #  object]`.
         mw = MetadataWrapper(m, cache={SimpleCacheMetadataProvider: cached_data})
         pass_node = cst.ensure_type(mw.module.body[0], cst.SimpleStatementLine).body[0]
         self.assertEqual(

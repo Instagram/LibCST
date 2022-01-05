@@ -23,11 +23,7 @@ try:
 except ImportError:
     from libcst._parser import py_whitespace_parser as mod
 
-# pyre-fixme[5]: There's no sane way to type these re-exports
 parse_simple_whitespace = mod.parse_simple_whitespace
-# pyre-fixme[5]: There's no sane way to type these re-exports
 parse_empty_lines = mod.parse_empty_lines
-# pyre-fixme[5]: There's no sane way to type these re-exports
 parse_trailing_whitespace = mod.parse_trailing_whitespace
-# pyre-fixme[5]: There's no sane way to type these re-exports
 parse_parenthesizable_whitespace = mod.parse_parenthesizable_whitespace

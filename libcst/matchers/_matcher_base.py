@@ -518,7 +518,6 @@ class MatchIfTrue(Generic[_MatchIfTrueT]):
         return MatchIfTrue(lambda val: not self._func(val))
 
     def __repr__(self) -> str:
-        # pyre-ignore Pyre doesn't believe that functions have a repr.
         return f"MatchIfTrue({repr(self._func)})"
 
 
@@ -719,7 +718,6 @@ class MatchMetadataIfTrue(_BaseMetadataMatcher):
         return MatchMetadataIfTrue(self._key, lambda val: not self._func(val))
 
     def __repr__(self) -> str:
-        # pyre-ignore Pyre doesn't believe that functions have a repr.
         return f"MatchMetadataIfTrue(key={repr(self._key)}, func={repr(self._func)})"
 
 
@@ -980,7 +978,6 @@ def DoesNotMatch(obj: _OtherNodeT) -> _OtherNodeT:
     ):
         # We can use the overridden __invert__ in this case. Pyre doesn't think
         # we can though, and casting doesn't fix the issue.
-        # pyre-ignore All three types above have overridden __invert__.
         inverse = ~obj
     else:
         # We must wrap in a _InverseOf.
@@ -1784,8 +1781,6 @@ class _ReplaceTransformer(libcst.CSTTransformer):
         ]
 
         if inspect.isfunction(replacement):
-            # pyre-ignore Pyre knows replacement is a function, but somehow drops
-            # the type hint from the init signature.
             self.replacement = replacement
         elif isinstance(replacement, (MaybeSentinel, RemovalSentinel)):
             self.replacement = lambda node, matches: copy.deepcopy(replacement)

@@ -15,7 +15,6 @@ parser = parse_statement if is_native() else None
 
 
 class MatchTest(CSTNodeTest):
-    # pyre-fixme[56]: Invalid decoration - Pyre was not able to infer the type
     @data_provider(
         (
             # Values and singletons
