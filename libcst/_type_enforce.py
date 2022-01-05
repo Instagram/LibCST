@@ -11,10 +11,12 @@ from typing_inspect import get_args, get_origin, is_classvar, is_typevar, is_uni
 try:  # py37+
     from typing import ForwardRef
 except ImportError:  # py36
+    # pyre-fixme[21]: Could not find name `_ForwardRef` in `typing` (stubbed).
     from typing import _ForwardRef as ForwardRef
 
 
 def is_value_of_type(  # noqa: C901 "too complex"
+    # pyre-fixme[2]: Parameter annotation cannot be `Any`.
     value: Any, expected_type: Any, invariant_check: bool = False
 ) -> bool:
     """
@@ -79,6 +81,9 @@ def is_value_of_type(  # noqa: C901 "too complex"
     # We don't want to include Tuple subclasses, like NamedTuple, because they're
     # unlikely to behave similarly.
     elif expected_origin_type in [Tuple, tuple]:  # py36 uses Tuple, py37+ uses tuple
+        # pyre-fixme[6]: Expected `Union[typing.Type[typing.Any],
+        #  typing.Tuple[typing.Type[typing.Any], ...]]` for 2nd param but got
+        #  `_SpecialForm`.
         if not isinstance(value, Tuple):
             return False
 
@@ -133,6 +138,10 @@ def is_value_of_type(  # noqa: C901 "too complex"
     # Similarly, tuple subclasses tend to have pretty different behavior, and we should
     # fall back to the default check.
     elif issubclass(expected_origin_type, Iterable) and not issubclass(
+        # pyre-fixme[6]: Expected `Union[typing.Type[typing.Any], types.UnionType,
+        #  typing.Tuple[typing.Union[typing.Type[typing.Any], types.UnionType,
+        #  typing.Tuple[typing.Any, ...]], ...]]` for 2nd param but got
+        #  `Tuple[typing.Type[str], typing.Type[bytes], typing._SpecialForm]`.
         expected_origin_type, (str, bytes, Tuple)
     ):
         # We know this thing is *some* kind of Iterable, but we want to

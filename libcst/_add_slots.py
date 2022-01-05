@@ -34,9 +34,13 @@ def add_slots(cls: Type[_T]) -> Type[_T]:
         # by the removal of GenericMeta. We should just be able to use cls.__bases__ in the
         # future.
         bases = getattr(cls, "__orig_bases__", cls.__bases__)
+        # pyre-fixme[9]: cls has type `Type[Variable[_T]]`; used as `_T`.
+        # pyre-fixme[19]: Expected 0 positional arguments.
         cls = type(cls)(cls.__name__, bases, cls_dict)
     except TypeError:
         # We're in py3.7 and should use cls.__bases__
+        # pyre-fixme[9]: cls has type `Type[Variable[_T]]`; used as `_T`.
+        # pyre-fixme[19]: Expected 0 positional arguments.
         cls = type(cls)(cls.__name__, cls.__bases__, cls_dict)
     if qualname is not None:
         cls.__qualname__ = qualname

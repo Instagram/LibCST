@@ -45,6 +45,11 @@ class TestApplyAnnotationsVisitor(CodemodTest):
             context, parse_module(textwrap.dedent(stub.rstrip()))
         )
         # Test setting the flag on the codemod instance.
+        # pyre-fixme[6]: Expected `Optional[typing.Sequence[str]]` for 4th param but
+        #  got `Dict[str, bool]`.
+        # pyre-fixme[6]: Expected `Optional[str]` for 4th param but got `Dict[str,
+        #  bool]`.
+        # pyre-fixme[6]: Expected `bool` for 4th param but got `Dict[str, bool]`.
         self.assertCodemod(before, after, context_override=context, **kwargs)
 
         # Test setting the flag when storing the stub in the context.
@@ -52,6 +57,7 @@ class TestApplyAnnotationsVisitor(CodemodTest):
         ApplyTypeAnnotationsVisitor.store_stub_in_context(
             context,
             parse_module(textwrap.dedent(stub.rstrip())),
+            # pyre-fixme[6]: Expected `bool` for 3rd param but got `Dict[str, bool]`.
             **kwargs,
         )
         self.assertCodemod(before, after, context_override=context)
@@ -888,6 +894,7 @@ class TestApplyAnnotationsVisitor(CodemodTest):
             stub=stub,
             before=before,
             after=after,
+            # pyre-fixme[6]: Expected `Dict[str, bool]` for 4th param but got `bool`.
             overwrite_existing_annotations=True,
         )
 
@@ -946,6 +953,7 @@ class TestApplyAnnotationsVisitor(CodemodTest):
             stub=stub,
             before=before,
             after=after,
+            # pyre-fixme[6]: Expected `Dict[str, bool]` for 4th param but got `bool`.
             overwrite_existing_annotations=True,
         )
 
@@ -986,6 +994,7 @@ class TestApplyAnnotationsVisitor(CodemodTest):
             stub=stub,
             before=before,
             after=after,
+            # pyre-fixme[6]: Expected `Dict[str, bool]` for 4th param but got `bool`.
             use_future_annotations=True,
         )
 
@@ -1096,6 +1105,7 @@ class TestApplyAnnotationsVisitor(CodemodTest):
         before: str,
         after: str,
         annotation_counts: AnnotationCounts,
+        # pyre-fixme[31]: Expression `False` is not a valid type.
         any_changes_applied: False,
     ) -> None:
         stub = self.make_fixture_data(stub)

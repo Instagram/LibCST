@@ -12,6 +12,7 @@ from libcst._parser.entrypoints import is_native
 from libcst.metadata import CodeRange
 from libcst.testing.utils import data_provider
 
+# pyre-fixme[5]: Global expression must be annotated.
 native_parse_statement = parse_statement if is_native() else None
 
 

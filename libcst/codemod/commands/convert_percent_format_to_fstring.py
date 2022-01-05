@@ -74,8 +74,10 @@ class ConvertPercentFormatStringCommand(VisitorBasedCodemodCommand):
         extracts = m.extract(
             original_node,
             m.BinaryOperation(
+                # pyre-fixme[6]: Expected `Union[m._matcher_base.AllOf[typing.Union[m...
                 left=m.MatchIfTrue(_match_simple_string),
                 operator=m.Modulo(),
+                # pyre-fixme[6]: Expected `Union[m._matcher_base.AllOf[typing.Union[m...
                 right=m.SaveMatchedNode(
                     m.MatchIfTrue(_gen_match_simple_expression(self.module)),
                     expr_key,

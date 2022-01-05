@@ -423,7 +423,7 @@ class CSTNode(ABC):
             raise Exception("Logic error, cannot get a *Sentinel here!")
         return new_tree
 
-    def __eq__(self: _CSTNodeSelfT, other: _CSTNodeSelfT) -> bool:
+    def __eq__(self: _CSTNodeSelfT, other: object) -> bool:
         """
         CSTNodes are only treated as equal by identity. This matches the behavior of
         CPython's AST nodes.

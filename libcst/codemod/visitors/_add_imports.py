@@ -107,6 +107,7 @@ class AddImportsVisitor(ContextAwareTransformer):
         # Allow for instantiation from either a context (used when multiple transforms
         # get chained) or from a direct instantiation.
         super().__init__(context)
+        # pyre-fixme[35]: Target cannot be annotated.
         imports: List[Tuple[str, Optional[str], Optional[str]]] = [
             *AddImportsVisitor._get_imports_from_context(context),
             *imports,

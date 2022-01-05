@@ -616,6 +616,8 @@ def convert_atom_expr_trailer(
                     config, trailer.whitespace_before
                 ),
                 lbracket=trailer.lbracket,
+                # pyre-fixme[6]: Expected `Sequence[SubscriptElement]` for 4th param
+                #  but got `Union[typing.Sequence[SubscriptElement], Index, Slice]`.
                 slice=trailer.slice,
                 rbracket=trailer.rbracket,
             )
@@ -643,6 +645,8 @@ def convert_atom_expr_trailer(
                     config, trailer.lpar.whitespace_before
                 ),
                 whitespace_before_args=trailer.lpar.value.whitespace_after,
+                # pyre-fixme[6]: Expected `Sequence[Arg]` for 4th param but got
+                #  `Tuple[object, ...]`.
                 args=tuple(args),
             )
         else:

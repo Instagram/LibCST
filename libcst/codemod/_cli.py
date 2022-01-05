@@ -160,6 +160,7 @@ def exec_transform_with_prettyprint(
         return code
 
     result = transform_module(transform, code, python_version=python_version)
+    # pyre-fixme[35]: Target cannot be annotated.
     code: Optional[str] = (
         None
         if isinstance(result, (TransformFailure, TransformExit, TransformSkip))
@@ -572,6 +573,7 @@ def parallel_exec_transform_with_prettyprint(  # noqa: C901
 
     chunksize = 4
     # Grab number of cores if we need to
+    # pyre-fixme[35]: Target cannot be annotated.
     jobs: int = min(
         jobs if jobs is not None else cpu_count(),
         (len(files) + chunksize - 1) // chunksize,

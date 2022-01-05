@@ -31,6 +31,8 @@ class CodePosition:
 
 @add_slots
 @dataclass(frozen=True)
+# pyre-fixme[13]: Attribute `end` is never initialized.
+# pyre-fixme[13]: Attribute `start` is never initialized.
 class CodeRange:
     #: Starting position of a node (inclusive).
     start: CodePosition

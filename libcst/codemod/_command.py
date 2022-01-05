@@ -171,6 +171,7 @@ class MagicArgsCodemodCommand(CodemodCommand, ABC):
             kwargs[kwarg] = self.context.scratch.get(kwarg, kwonlydefaults[kwarg])
 
         # Return an instance of the transform with those arguments
+        # pyre-fixme[45]: Cannot instantiate abstract class `Codemod`.
         return transform(self.context, *args, **kwargs)
 
     def transform_module_impl(self, tree: Module) -> Module:

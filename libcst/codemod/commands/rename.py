@@ -42,6 +42,8 @@ class RenameCommand(VisitorBasedCodemodCommand):
     METADATA_DEPENDENCIES = (QualifiedNameProvider,)
 
     @staticmethod
+    # pyre-fixme[14]: `add_args` overrides method defined in `CodemodCommand`
+    #  inconsistently.
     def add_args(parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
             "--old_name",

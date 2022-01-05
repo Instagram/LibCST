@@ -2195,6 +2195,7 @@ class _BaseExpressionWithArgs(BaseExpression, ABC):
 
     def _check_kwargs_or_keywords(
         self, arg: Arg
+    # pyre-fixme[24]: Generic type `Callable` expects 2 type parameters.
     ) -> Optional[Callable[[Arg], Callable]]:
         """
         Validates that we only have a mix of "keyword=arg" and "**arg" expansion.
@@ -2219,6 +2220,7 @@ class _BaseExpressionWithArgs(BaseExpression, ABC):
 
     def _check_starred_or_keywords(
         self, arg: Arg
+    # pyre-fixme[24]: Generic type `Callable` expects 2 type parameters.
     ) -> Optional[Callable[[Arg], Callable]]:
         """
         Validates that we only have a mix of "*arg" expansion and "keyword=arg".
@@ -2242,6 +2244,7 @@ class _BaseExpressionWithArgs(BaseExpression, ABC):
                 "Cannot have positional argument after keyword argument."
             )
 
+    # pyre-fixme[24]: Generic type `Callable` expects 2 type parameters.
     def _check_positional(self, arg: Arg) -> Optional[Callable[[Arg], Callable]]:
         """
         Validates that we only have a mix of positional args and "*arg" expansion.
@@ -2266,6 +2269,8 @@ class _BaseExpressionWithArgs(BaseExpression, ABC):
             # Valid, allowed to have positional arguments here
             return None
 
+    # pyre-fixme[30]: Pyre gave up inferring some types - function `_validate` was
+    #  too complex.
     def _validate(self) -> None:
         # Validate any super-class stuff, whatever it may be.
         super()._validate()
