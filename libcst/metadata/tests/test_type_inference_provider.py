@@ -80,7 +80,7 @@ class TypeInferenceProviderTest(UnitTest):
             root_path=source_path.parent, paths=[source_path.name], timeout=None
         )
         data: PyreData = json.loads(data_path.read_text())
-        self.assertEqual(cache[source_path.name], data)
+        self.assertEqual(data, cache[source_path.name])
 
     @data_provider(
         ((TEST_SUITE_PATH / "simple_class.py", TEST_SUITE_PATH / "simple_class.json"),)

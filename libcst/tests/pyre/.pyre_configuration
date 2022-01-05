@@ -2,6 +2,5 @@
   "source_directories": [
     "."
   ],
-  "search_path": [],
-  "workers": 1
+  "search_path": []
 }
