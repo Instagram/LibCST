@@ -858,6 +858,8 @@ class TestApplyAnnotationsVisitor(CodemodTest):
             ),
         }
     )
+    # pyre-fixme[56]: Pyre was not able to infer the type of argument
+    #  `sys.version_info < (3, 8)` to decorator factory `unittest.skipIf`.
     @unittest.skipIf(sys.version_info < (3, 8), "Unsupported Python version")
     def test_annotate_functions_py38(self, stub: str, before: str, after: str) -> None:
         self.run_simple_test_case(stub=stub, before=before, after=after)
