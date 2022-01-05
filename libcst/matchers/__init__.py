@@ -15418,10 +15418,10 @@ class With(BaseCompoundStatement, BaseStatement, BaseMatcherNode):
         AllOf[LeftParenMatchType],
     ] = DoNotCare()
     rpar: Union[
-        LeftParenMatchType,
+        RightParenMatchType,
         DoNotCareSentinel,
-        OneOf[LeftParenMatchType],
-        AllOf[LeftParenMatchType],
+        OneOf[RightParenMatchType],
+        AllOf[RightParenMatchType],
     ] = DoNotCare()
     whitespace_after_with: Union[
         SimpleWhitespaceMatchType,
