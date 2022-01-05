@@ -112,7 +112,17 @@ jobs:
     - name: Make sure Pyre uses the working copy
       run: pip install -e .
     - run: pyre --version
-    - run: pyre check
+    - run: |
+        if ! pyre -n check; then
+          echo "====== Pyre rage output ====="
+          pyre -n rage
+          echo "====== Pyre server output ====="
+          echo "====== why isn't this part of pyre rage"
+          tree .pyre
+          cat .pyre/new_server/server.stderr
+          echo "Pyre failed, see above for error"
+          exit 1
+        fi
     - run: python libcst/tests/test_pyre_integration.py
     - run: git diff --exit-code
 
