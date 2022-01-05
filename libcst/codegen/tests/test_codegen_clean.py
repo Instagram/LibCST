@@ -23,8 +23,8 @@ class TestCodegenClean(UnitTest):
         self.assertTrue(
             old_code == new_code,
             f"{module_name} needs new codegen, see "
-            "`python -m libcst.codegen.generate --help` "
-            "for instructions",
+            + "`python -m libcst.codegen.generate --help` "
+            + "for instructions, or run `tox -e codegen`",
         )
 
     def test_codegen_clean_visitor_functions(self) -> None:
