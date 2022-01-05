@@ -63,12 +63,7 @@ class TypeVerificationVisitor(cst.CSTVisitor):
         end = pos.end
         tup = (start.line, start.column, end.line, end.column)
         # remove this if condition when the type issues are fixed.
-        if not any(
-            node.deep_equals(name) and tup == _tup
-            for (name, _tup) in {
-                (cst.Name("i"), (17, 21, 17, 22)),
-            }
-        ):
+        if node.value not in {"n", "i"}:
             self.test.assertIn(
                 tup,
                 self.lookup,
