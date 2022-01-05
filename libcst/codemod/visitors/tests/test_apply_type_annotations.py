@@ -1097,7 +1097,7 @@ class TestApplyAnnotationsVisitor(CodemodTest):
         after: str,
         annotation_counts: AnnotationCounts,
         any_changes_applied: False,
-    ):
+    ) -> None:
         stub = self.make_fixture_data(stub)
         before = self.make_fixture_data(before)
         after = self.make_fixture_data(after)

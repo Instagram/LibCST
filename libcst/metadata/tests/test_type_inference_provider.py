@@ -58,7 +58,7 @@ def _test_simple_class_helper(test: UnitTest, wrapper: MetadataWrapper) -> None:
 @skipIf(sys.platform == "win32", "TypeInferenceProvider doesn't support windows")
 class TypeInferenceProviderTest(UnitTest):
     @classmethod
-    def setUpClass(cls):
+    def setUpClass(cls) -> None:
         os.chdir(TEST_SUITE_PATH)
         try:
             subprocess.run(["pyre", "-n", "start", "--no-watchman"])
@@ -66,7 +66,7 @@ class TypeInferenceProviderTest(UnitTest):
             raise exc
 
     @classmethod
-    def tearDownClass(cls):
+    def tearDownClass(cls) -> None:
         try:
             subprocess.run(["pyre", "-n", "stop"], cwd=TEST_SUITE_PATH)
         except subprocess.TimeoutExpired as exc:

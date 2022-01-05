@@ -262,7 +262,7 @@ class ImportAssignment(Assignment):
         node: cst.CSTNode,
         index: int,
         as_name: cst.CSTNode,
-    ):
+    ) -> None:
         super().__init__(name, scope, node, index)
         self.as_name = as_name
 
