@@ -38,7 +38,7 @@ class TestApplyAnnotationsVisitor(CodemodTest):
         stub: str,
         before: str,
         after: str,
-        **kwargs: Dict[str, bool],
+        **kwargs: bool,
     ) -> None:
         context = CodemodContext()
         ApplyTypeAnnotationsVisitor.store_stub_in_context(
@@ -57,7 +57,6 @@ class TestApplyAnnotationsVisitor(CodemodTest):
         ApplyTypeAnnotationsVisitor.store_stub_in_context(
             context,
             parse_module(textwrap.dedent(stub.rstrip())),
-            # pyre-fixme[6]: Expected `bool` for 3rd param but got `Dict[str, bool]`.
             **kwargs,
         )
         self.assertCodemod(before, after, context_override=context)
@@ -894,7 +893,6 @@ class TestApplyAnnotationsVisitor(CodemodTest):
             stub=stub,
             before=before,
             after=after,
-            # pyre-fixme[6]: Expected `Dict[str, bool]` for 4th param but got `bool`.
             overwrite_existing_annotations=True,
         )
 
@@ -953,7 +951,6 @@ class TestApplyAnnotationsVisitor(CodemodTest):
             stub=stub,
             before=before,
             after=after,
-            # pyre-fixme[6]: Expected `Dict[str, bool]` for 4th param but got `bool`.
             overwrite_existing_annotations=True,
         )
 
@@ -994,7 +991,6 @@ class TestApplyAnnotationsVisitor(CodemodTest):
             stub=stub,
             before=before,
             after=after,
-            # pyre-fixme[6]: Expected `Dict[str, bool]` for 4th param but got `bool`.
             use_future_annotations=True,
         )
 
@@ -1105,8 +1101,7 @@ class TestApplyAnnotationsVisitor(CodemodTest):
         before: str,
         after: str,
         annotation_counts: AnnotationCounts,
-        # pyre-fixme[31]: Expression `False` is not a valid type.
-        any_changes_applied: False,
+        any_changes_applied: bool,
     ) -> None:
         stub = self.make_fixture_data(stub)
         before = self.make_fixture_data(before)
