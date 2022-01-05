@@ -13,8 +13,6 @@ from libcst.codegen.generate import clean_generated_code, format_file
 from libcst.testing.utils import UnitTest
 
 
-
-
 class TestCodegenClean(UnitTest):
     def assert_code_matches(
         self,
@@ -26,10 +24,9 @@ class TestCodegenClean(UnitTest):
             old_code == new_code,
             f"{module_name} needs new codegen, see "
             "`python -m libcst.codegen.generate --help` "
-            "for instructions"
+            "for instructions",
         )
 
-    
     def test_codegen_clean_visitor_functions(self) -> None:
         """
         Verifies that codegen of visitor functions would not result in a
