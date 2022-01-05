@@ -34,6 +34,10 @@ class GatherUnusedImportsVisitor(ContextAwareVisitor):
     parent import node.
     """
 
+    # pyre-fixme[8]: Attribute has type
+    #  `Tuple[typing.Type[cst.metadata.base_provider.BaseMetadataProvider[object]]]`;
+    #  used as `Tuple[typing.Type[cst.metadata.name_provider.QualifiedNameProvider],
+    #  typing.Type[cst.metadata.scope_provider.ScopeProvider]]`.
     METADATA_DEPENDENCIES: Tuple[ProviderT] = (
         *GatherNamesFromStringAnnotationsVisitor.METADATA_DEPENDENCIES,
         ScopeProvider,

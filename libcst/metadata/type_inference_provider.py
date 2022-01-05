@@ -53,6 +53,8 @@ class TypeInferenceProvider(BatchableMetadataProvider[str]):
     METADATA_DEPENDENCIES = (PositionProvider,)
 
     @staticmethod
+    # pyre-fixme[40]: Static method `gen_cache` cannot override a non-static method
+    #  defined in `cst.metadata.base_provider.BaseMetadataProvider`.
     def gen_cache(
         root_path: Path, paths: List[str], timeout: Optional[int]
     ) -> Mapping[str, object]:

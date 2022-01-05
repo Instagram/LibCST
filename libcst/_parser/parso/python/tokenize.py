@@ -580,6 +580,7 @@ def _tokenize_lines_py36_or_below(  # noqa: C901
             if not pseudomatch:  # scan for tokens
                 match = token_collection.whitespace.match(line, pos)
                 if pos == 0:
+                    # pyre-fixme[16]: `Optional` has no attribute `end`.
                     yield from dedent_if_necessary(match.end())
                 pos = match.end()
                 new_line = False
@@ -587,6 +588,7 @@ def _tokenize_lines_py36_or_below(  # noqa: C901
                     ERRORTOKEN,
                     line[pos],
                     (lnum, pos),
+                    # pyre-fixme[16]: `Optional` has no attribute `group`.
                     additional_prefix + match.group(0),
                 )
                 additional_prefix = ""
@@ -935,6 +937,7 @@ def _tokenize_lines_py37_or_above(  # noqa: C901
             if not pseudomatch:  # scan for tokens
                 match = token_collection.whitespace.match(line, pos)
                 if pos == 0:
+                    # pyre-fixme[16]: `Optional` has no attribute `end`.
                     for t in dedent_if_necessary(match.end()):
                         yield t
                 pos = match.end()
@@ -943,6 +946,7 @@ def _tokenize_lines_py37_or_above(  # noqa: C901
                     ERRORTOKEN,
                     line[pos],
                     (lnum, pos),
+                    # pyre-fixme[16]: `Optional` has no attribute `group`.
                     additional_prefix + match.group(0),
                 )
                 additional_prefix = ""

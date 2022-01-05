@@ -23,7 +23,6 @@ try:
 except ImportError:
     from libcst._parser.types import py_config as config_mod
 
-    # pyre-fixme[9]: This is a small implementation difference between native and python
     MockWhitespaceParserConfig = config_mod.MockWhitespaceParserConfig
 
 BaseWhitespaceParserConfig = config_mod.BaseWhitespaceParserConfig

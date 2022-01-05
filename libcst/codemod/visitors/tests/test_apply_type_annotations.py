@@ -7,7 +7,7 @@
 import sys
 import textwrap
 import unittest
-from typing import Dict, Type
+from typing import Type
 
 from libcst import parse_module
 from libcst.codemod import Codemod, CodemodContext, CodemodTest
@@ -38,13 +38,18 @@ class TestApplyAnnotationsVisitor(CodemodTest):
         stub: str,
         before: str,
         after: str,
-        **kwargs: Dict[str, bool],
+        **kwargs: bool,
     ) -> None:
         context = CodemodContext()
         ApplyTypeAnnotationsVisitor.store_stub_in_context(
             context, parse_module(textwrap.dedent(stub.rstrip()))
         )
         # Test setting the flag on the codemod instance.
+        # pyre-fixme[6]: Expected `Optional[typing.Sequence[str]]` for 4th param but
+        #  got `Dict[str, bool]`.
+        # pyre-fixme[6]: Expected `Optional[str]` for 4th param but got `Dict[str,
+        #  bool]`.
+        # pyre-fixme[6]: Expected `bool` for 4th param but got `Dict[str, bool]`.
         self.assertCodemod(before, after, context_override=context, **kwargs)
 
         # Test setting the flag when storing the stub in the context.
@@ -858,6 +863,8 @@ class TestApplyAnnotationsVisitor(CodemodTest):
             ),
         }
     )
+    # pyre-fixme[56]: Pyre was not able to infer the type of argument
+    #  `sys.version_info < (3, 8)` to decorator factory `unittest.skipIf`.
     @unittest.skipIf(sys.version_info < (3, 8), "Unsupported Python version")
     def test_annotate_functions_py38(self, stub: str, before: str, after: str) -> None:
         self.run_simple_test_case(stub=stub, before=before, after=after)
@@ -1094,8 +1101,8 @@ class TestApplyAnnotationsVisitor(CodemodTest):
         before: str,
         after: str,
         annotation_counts: AnnotationCounts,
-        any_changes_applied: False,
-    ):
+        any_changes_applied: bool,
+    ) -> None:
         stub = self.make_fixture_data(stub)
         before = self.make_fixture_data(before)
         after = self.make_fixture_data(after)

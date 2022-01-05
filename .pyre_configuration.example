@@ -6,7 +6,8 @@
         "stubs"
     ],
     "exclude": [
-        ".*/\\.tox/.*"
+        ".*/\\.tox/.*",
+        ".*/native/.*"
     ],
     "strict": true
 }

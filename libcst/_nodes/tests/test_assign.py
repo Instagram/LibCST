@@ -422,7 +422,7 @@ class AugAssignTest(CSTNodeTest):
                             operator=cst.Add(),
                             right=cst.Integer("1"),
                         ),
-                        operator=cst.Add(),
+                        operator=cst.AddAssign(),
                         value=cst.Name("y"),
                     )
                 ),

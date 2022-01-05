@@ -160,19 +160,19 @@ def exec_transform_with_prettyprint(
         return code
 
     result = transform_module(transform, code, python_version=python_version)
-    code: Optional[str] = (
+    maybe_code: Optional[str] = (
         None
         if isinstance(result, (TransformFailure, TransformExit, TransformSkip))
         else result.code
     )
 
-    if code is not None and format_code:
+    if maybe_code is not None and format_code:
         try:
-            code = invoke_formatter(formatter_args, code)
+            maybe_code = invoke_formatter(formatter_args, maybe_code)
         except Exception as ex:
             # Failed to format code, treat as a failure and make sure that
             # we print the exception for debugging.
-            code = None
+            maybe_code = None
             result = TransformFailure(
                 error=ex,
                 traceback_str=traceback.format_exc(),
@@ -181,7 +181,7 @@ def exec_transform_with_prettyprint(
 
     # Finally, print the output, regardless of what happened
     print_execution_result(result)
-    return code
+    return maybe_code
 
 
 def _calculate_module(repo_root: Optional[str], filename: str) -> Optional[str]:
@@ -572,7 +572,7 @@ def parallel_exec_transform_with_prettyprint(  # noqa: C901
 
     chunksize = 4
     # Grab number of cores if we need to
-    jobs: int = min(
+    jobs = min(
         jobs if jobs is not None else cpu_count(),
         (len(files) + chunksize - 1) // chunksize,
     )

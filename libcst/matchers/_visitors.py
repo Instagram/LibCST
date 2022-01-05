@@ -126,6 +126,7 @@ def _verify_return_annotation(
         # it is "None".
         if type_hints.get("return", type(None)) is not type(None):  # noqa: E721
             raise MatchDecoratorMismatch(
+                # pyre-fixme[16]: Anonymous callable has no attribute `__qualname__`.
                 meth.__qualname__,
                 f"@{decorator_name} should only decorate functions that do "
                 + "not return.",
@@ -174,6 +175,7 @@ def _verify_parameter_annotations(
     meth_signature = signature(meth)
     if len(meth_signature.parameters) != expected_param_count:
         raise MatchDecoratorMismatch(
+            # pyre-fixme[16]: Anonymous callable has no attribute `__qualname__`.
             meth.__qualname__,
             f"@{decorator_name} should decorate functions which take "
             + f"{expected_param_count} parameter"
@@ -230,6 +232,8 @@ def _check_types(
             # First thing first, make sure this isn't wrapping an inner class.
             if not ismethod(meth):
                 raise MatchDecoratorMismatch(
+                    # pyre-fixme[16]: Anonymous callable has no attribute
+                    #  `__qualname__`.
                     meth.__qualname__,
                     "Matcher decorators should only be used on methods of "
                     + "MatcherDecoratableTransformer or "
@@ -237,7 +241,6 @@ def _check_types(
                 )
             if has_invalid_top_level:
                 raise MatchDecoratorMismatch(
-                    # pyre-ignore This anonymous method has a qualname.
                     meth.__qualname__,
                     "The root matcher in a matcher decorator cannot be an "
                     + "AtLeastN, AtMostN or MatchIfTrue matcher",
@@ -314,6 +317,10 @@ def _gather_constructed_visit_funcs(
             _assert_not_concrete("visit", func)
         for matcher in matchers:
             casted_matcher = cast(BaseMatcherNode, matcher)
+            # pyre-fixme[6]: Expected
+            #  `Sequence[typing.Callable[[cst._nodes.base.CSTNode], None]]` for 2nd
+            #  param but got `Tuple[*Tuple[(CSTNode) -> None, ...], (CSTNode) ->
+            #  None]`.
             constructed_visitors[casted_matcher] = (
                 *constructed_visitors.get(casted_matcher, ()),
                 func,
@@ -349,6 +356,10 @@ def _gather_constructed_leave_funcs(
             _assert_not_concrete("leave", func)
         for matcher in matchers:
             casted_matcher = cast(BaseMatcherNode, matcher)
+            # pyre-fixme[6]: Expected
+            #  `Sequence[typing.Callable[[cst._nodes.base.CSTNode], None]]` for 2nd
+            #  param but got `Tuple[*Tuple[(CSTNode) -> None, ...], (CSTNode) ->
+            #  None]`.
             constructed_visitors[casted_matcher] = (
                 *constructed_visitors.get(casted_matcher, ()),
                 func,

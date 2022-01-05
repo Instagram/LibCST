@@ -8,5 +8,6 @@
     "search_path": [
         "stubs", "{{ .python_site_packages }}"
     ],
+    "workers": 3,
     "strict": true
 }

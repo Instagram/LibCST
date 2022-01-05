@@ -3,8 +3,9 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 #
+import itertools
 import re
-from typing import Callable, cast
+from typing import Callable, cast, List, Sequence
 
 import libcst as cst
 import libcst.matchers as m
@@ -73,8 +74,10 @@ class ConvertPercentFormatStringCommand(VisitorBasedCodemodCommand):
         extracts = m.extract(
             original_node,
             m.BinaryOperation(
+                # pyre-fixme[6]: Expected `Union[m._matcher_base.AllOf[typing.Union[m...
                 left=m.MatchIfTrue(_match_simple_string),
                 operator=m.Modulo(),
+                # pyre-fixme[6]: Expected `Union[m._matcher_base.AllOf[typing.Union[m...
                 right=m.SaveMatchedNode(
                     m.MatchIfTrue(_gen_match_simple_expression(self.module)),
                     expr_key,
@@ -83,7 +86,8 @@ class ConvertPercentFormatStringCommand(VisitorBasedCodemodCommand):
         )
 
         if extracts:
-            expr = extracts[expr_key]
+            exprs = extracts[expr_key]
+            exprs = (exprs,) if not isinstance(exprs, Sequence) else exprs
             parts = []
             simple_string = cst.ensure_type(original_node.left, cst.SimpleString)
             innards = simple_string.raw_value.replace("{", "{{").replace("}", "}}")
@@ -91,10 +95,13 @@ class ConvertPercentFormatStringCommand(VisitorBasedCodemodCommand):
             token = tokens[0]
             if len(token) > 0:
                 parts.append(cst.FormattedStringText(value=token))
-            expressions = (
-                [elm.value for elm in expr.elements]
-                if isinstance(expr, cst.Tuple)
-                else [expr]
+            expressions: List[cst.CSTNode] = list(
+                *itertools.chain(
+                    [elm.value for elm in expr.elements]
+                    if isinstance(expr, cst.Tuple)
+                    else [expr]
+                    for expr in exprs
+                )
             )
             escape_transformer = EscapeStringQuote(simple_string.quote)
             i = 1

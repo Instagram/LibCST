@@ -58,7 +58,7 @@ def _test_simple_class_helper(test: UnitTest, wrapper: MetadataWrapper) -> None:
 @skipIf(sys.platform == "win32", "TypeInferenceProvider doesn't support windows")
 class TypeInferenceProviderTest(UnitTest):
     @classmethod
-    def setUpClass(cls):
+    def setUpClass(cls) -> None:
         os.chdir(TEST_SUITE_PATH)
         try:
             subprocess.run(["pyre", "-n", "start", "--no-watchman"])
@@ -66,7 +66,7 @@ class TypeInferenceProviderTest(UnitTest):
             raise exc
 
     @classmethod
-    def tearDownClass(cls):
+    def tearDownClass(cls) -> None:
         try:
             subprocess.run(["pyre", "-n", "stop"], cwd=TEST_SUITE_PATH)
         except subprocess.TimeoutExpired as exc:
@@ -80,7 +80,7 @@ class TypeInferenceProviderTest(UnitTest):
             root_path=source_path.parent, paths=[source_path.name], timeout=None
         )
         data: PyreData = json.loads(data_path.read_text())
-        self.assertEqual(cache[source_path.name], data)
+        self.assertEqual(data, cache[source_path.name])
 
     @data_provider(
         ((TEST_SUITE_PATH / "simple_class.py", TEST_SUITE_PATH / "simple_class.json"),)
@@ -89,9 +89,6 @@ class TypeInferenceProviderTest(UnitTest):
         data: PyreData = json.loads(data_path.read_text())
         wrapper = MetadataWrapper(
             cst.parse_module(source_path.read_text()),
-            # pyre-fixme[6]: Expected `Mapping[Type[BaseMetadataProvider[object]],
-            #  Any]` for 2nd param but got `Dict[Type[TypeInferenceProvider],
-            #  Sequence[InferredType]]`.
             cache={TypeInferenceProvider: data},
         )
         _test_simple_class_helper(self, wrapper)

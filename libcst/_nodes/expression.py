@@ -1844,7 +1844,6 @@ class Parameters(CSTNode):
         if len(vals) == 0:
             return
         for val in vals:
-            # pyre-ignore Pyre seems to think val.star.__eq__ is not callable
             if isinstance(val.star, str) and val.star != "":
                 raise CSTValidationError(
                     f"Expecting a star prefix of '' for {section} Param."
@@ -1864,6 +1863,8 @@ class Parameters(CSTNode):
 
     def _validate_defaults(self) -> None:
         seen_default = False
+        # pyre-fixme[60]: Concatenation not yet support for multiple variadic
+        #  tuples: `*self.posonly_params, *self.params`.
         for param in (*self.posonly_params, *self.params):
             if param.default:
                 # Mark that we've moved onto defaults
@@ -1891,7 +1892,6 @@ class Parameters(CSTNode):
         if (
             isinstance(star_arg, Param)
             and isinstance(star_arg.star, str)
-            # pyre-ignore Pyre seems to think star_kwarg.star.__eq__ is not callable
             and star_arg.star != "*"
         ):
             raise CSTValidationError(
@@ -1903,7 +1903,6 @@ class Parameters(CSTNode):
         if (
             star_kwarg is not None
             and isinstance(star_kwarg.star, str)
-            # pyre-ignore Pyre seems to think star_kwarg.star.__eq__ is not callable
             and star_kwarg.star != "**"
         ):
             raise CSTValidationError(
@@ -2194,9 +2193,7 @@ class _BaseExpressionWithArgs(BaseExpression, ABC):
     #: Sequence of arguments that will be passed to the function call.
     args: Sequence[Arg] = ()
 
-    def _check_kwargs_or_keywords(
-        self, arg: Arg
-    ) -> Optional[Callable[[Arg], Callable]]:
+    def _check_kwargs_or_keywords(self, arg: Arg) -> None:
         """
         Validates that we only have a mix of "keyword=arg" and "**arg" expansion.
         """
@@ -2220,7 +2217,7 @@ class _BaseExpressionWithArgs(BaseExpression, ABC):
 
     def _check_starred_or_keywords(
         self, arg: Arg
-    ) -> Optional[Callable[[Arg], Callable]]:
+    ) -> Optional[Callable[[Arg], Callable[[Arg], None]]]:
         """
         Validates that we only have a mix of "*arg" expansion and "keyword=arg".
         """
@@ -2243,7 +2240,9 @@ class _BaseExpressionWithArgs(BaseExpression, ABC):
                 "Cannot have positional argument after keyword argument."
             )
 
-    def _check_positional(self, arg: Arg) -> Optional[Callable[[Arg], Callable]]:
+    def _check_positional(
+        self, arg: Arg
+    ) -> Optional[Callable[[Arg], Callable[[Arg], Callable[[Arg], None]]]]:
         """
         Validates that we only have a mix of positional args and "*arg" expansion.
         """
@@ -2267,6 +2266,8 @@ class _BaseExpressionWithArgs(BaseExpression, ABC):
             # Valid, allowed to have positional arguments here
             return None
 
+    # pyre-fixme[30]: Pyre gave up inferring some types - function `_validate` was
+    #  too complex.
     def _validate(self) -> None:
         # Validate any super-class stuff, whatever it may be.
         super()._validate()

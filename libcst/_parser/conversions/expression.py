@@ -616,6 +616,8 @@ def convert_atom_expr_trailer(
                     config, trailer.whitespace_before
                 ),
                 lbracket=trailer.lbracket,
+                # pyre-fixme[6]: Expected `Sequence[SubscriptElement]` for 4th param
+                #  but got `Union[typing.Sequence[SubscriptElement], Index, Slice]`.
                 slice=trailer.slice,
                 rbracket=trailer.rbracket,
             )
@@ -643,6 +645,8 @@ def convert_atom_expr_trailer(
                     config, trailer.lpar.whitespace_before
                 ),
                 whitespace_before_args=trailer.lpar.value.whitespace_after,
+                # pyre-fixme[6]: Expected `Sequence[Arg]` for 4th param but got
+                #  `Tuple[object, ...]`.
                 args=tuple(args),
             )
         else:
@@ -778,13 +782,10 @@ def convert_subscript(
             first_colon=Colon(
                 whitespace_before=parse_parenthesizable_whitespace(
                     config,
-                    # pyre-fixme[16]: Optional type has no attribute
-                    #  `whitespace_before`.
                     first_colon.whitespace_before,
                 ),
                 whitespace_after=parse_parenthesizable_whitespace(
                     config,
-                    # pyre-fixme[16]: Optional type has no attribute `whitespace_after`.
                     first_colon.whitespace_after,
                 ),
             ),
@@ -948,7 +949,10 @@ def convert_atom_parens(
         inner_atom = atoms[0].value
         return WithLeadingWhitespace(
             inner_atom.with_changes(
-                lpar=(lpar, *inner_atom.lpar), rpar=(*inner_atom.rpar, rpar)
+                # pyre-fixme[60]: Expected to unpack an iterable, but got `unknown`.
+                lpar=(lpar, *inner_atom.lpar),
+                # pyre-fixme[60]: Expected to unpack an iterable, but got `unknown`.
+                rpar=(*inner_atom.rpar, rpar),
             ),
             lpar_tok.whitespace_before,
         )
@@ -1237,7 +1241,6 @@ def _convert_sequencelike(
 
     # lpar/rpar are the responsibility of our parent
     return WithLeadingWhitespace(
-        # pyre-ignore[29]: `Union[Type[List], Type[Set], Type[Tuple]]` is not a function.
         sequence_type(elements, lpar=(), rpar=()),
         children[0].whitespace_before,
     )

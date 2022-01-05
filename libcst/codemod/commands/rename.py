@@ -42,15 +42,15 @@ class RenameCommand(VisitorBasedCodemodCommand):
     METADATA_DEPENDENCIES = (QualifiedNameProvider,)
 
     @staticmethod
-    def add_args(parser: argparse.ArgumentParser) -> None:
-        parser.add_argument(
+    def add_args(arg_parser: argparse.ArgumentParser) -> None:
+        arg_parser.add_argument(
             "--old_name",
             dest="old_name",
             required=True,
             help="Full dotted name of object to rename. Eg: `foo.bar.baz`",
         )
 
-        parser.add_argument(
+        arg_parser.add_argument(
             "--new_name",
             dest="new_name",
             required=True,

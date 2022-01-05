@@ -223,8 +223,8 @@ class ConvertFormatStringCommand(VisitorBasedCodemodCommand):
     DESCRIPTION: str = "Converts instances of str.format() to f-string."
 
     @staticmethod
-    def add_args(parser: argparse.ArgumentParser) -> None:
-        parser.add_argument(
+    def add_args(arg_parser: argparse.ArgumentParser) -> None:
+        arg_parser.add_argument(
             "--allow-strip-comments",
             dest="allow_strip_comments",
             help=(
@@ -233,7 +233,7 @@ class ConvertFormatStringCommand(VisitorBasedCodemodCommand):
             ),
             action="store_true",
         )
-        parser.add_argument(
+        arg_parser.add_argument(
             "--allow-await",
             dest="allow_await",
             help=(

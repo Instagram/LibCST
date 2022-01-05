@@ -2308,7 +2308,6 @@ class Raise(BaseSmallStatement):
                 not isinstance(whitespace_before_from, MaybeSentinel)
                 and whitespace_before_from.empty
             )
-            # pyre-ignore Pyre thinks exc is Optional
             if has_no_gap and not exc._safe_to_use_with_word_operator(
                 ExpressionPosition.LEFT
             ):
@@ -2590,6 +2589,7 @@ class MatchPattern(_BaseParenthesizedNode, ABC):
 
 @add_slots
 @dataclass(frozen=True)
+# pyre-fixme[13]: Attribute `body` is never initialized.
 class Match(BaseCompoundStatement):
     """
     A ``match`` statement.
@@ -2731,9 +2731,13 @@ class MatchCase(CSTNode):
                 self, "whitespace_after_case", self.whitespace_after_case, visitor
             ),
             pattern=visit_required(self, "pattern", self.pattern, visitor),
+            # pyre-fixme[6]: Expected `SimpleWhitespace` for 4th param but got
+            #  `Optional[SimpleWhitespace]`.
             whitespace_before_if=visit_optional(
                 self, "whitespace_before_if", self.whitespace_before_if, visitor
             ),
+            # pyre-fixme[6]: Expected `SimpleWhitespace` for 5th param but got
+            #  `Optional[SimpleWhitespace]`.
             whitespace_after_if=visit_optional(
                 self, "whitespace_after_if", self.whitespace_after_if, visitor
             ),
@@ -2817,6 +2821,7 @@ class MatchSingleton(MatchPattern):
 
     @lpar.setter
     def lpar(self, value: Sequence[LeftParen]) -> None:
+        # pyre-fixme[41]: Cannot reassign final attribute `lpar`.
         self.value.lpar = value
 
 

@@ -63,12 +63,7 @@ class TypeVerificationVisitor(cst.CSTVisitor):
         end = pos.end
         tup = (start.line, start.column, end.line, end.column)
         # remove this if condition when the type issues are fixed.
-        if not any(
-            node.deep_equals(name) and tup == _tup
-            for (name, _tup) in {
-                (cst.Name("i"), (17, 21, 17, 22)),
-            }
-        ):
+        if node.value not in {"n", "i"}:
             self.test.assertIn(
                 tup,
                 self.lookup,
@@ -95,6 +90,10 @@ class TypeVerificationVisitor(cst.CSTVisitor):
 
 
 class PyreIntegrationTest(UnitTest):
+    # pyre-fixme[56]: Pyre was not able to infer the type of argument
+    #  `comprehension((source_path, data_path) for generators(generator((source_path,
+    #  data_path) in zip(TEST_SUITE_PATH.glob("*.py"), TEST_SUITE_PATH.glob("*.json"))
+    #  if )))` to decorator factory `libcst.testing.utils.data_provider`.
     @data_provider(
         (
             (source_path, data_path)

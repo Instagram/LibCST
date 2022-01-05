@@ -18,8 +18,8 @@ class EnsureImportPresentCommand(MagicArgsCodemodCommand):
     )
 
     @staticmethod
-    def add_args(parser: argparse.ArgumentParser) -> None:
-        parser.add_argument(
+    def add_args(arg_parser: argparse.ArgumentParser) -> None:
+        arg_parser.add_argument(
             "--module",
             dest="module",
             metavar="MODULE",
@@ -27,7 +27,7 @@ class EnsureImportPresentCommand(MagicArgsCodemodCommand):
             type=str,
             required=True,
         )
-        parser.add_argument(
+        arg_parser.add_argument(
             "--entity",
             dest="entity",
             metavar="ENTITY",
@@ -38,7 +38,7 @@ class EnsureImportPresentCommand(MagicArgsCodemodCommand):
             type=str,
             default=None,
         )
-        parser.add_argument(
+        arg_parser.add_argument(
             "--alias",
             dest="alias",
             metavar="ALIAS",

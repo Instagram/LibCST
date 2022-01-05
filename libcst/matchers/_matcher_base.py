@@ -69,6 +69,8 @@ class AbstractBaseMatcherNodeMeta(ABCMeta):
     matcher.
     """
 
+    # pyre-fixme[14]: `__or__` overrides method defined in `type` inconsistently.
+    # pyre-fixme[15]: `__or__` overrides method defined in `type` inconsistently.
     def __or__(self, node: Type["BaseMatcherNode"]) -> "TypeOf[Type[BaseMatcherNode]]":
         return TypeOf(self, node)
 
@@ -82,6 +84,8 @@ class BaseMatcherNode:
     several concrete matchers as options.
     """
 
+    # pyre-fixme[14]: `__or__` overrides method defined in `type` inconsistently.
+    # pyre-fixme[15]: `__or__` overrides method defined in `type` inconsistently.
     def __or__(
         self: _BaseMatcherNodeSelfT, other: _OtherNodeT
     ) -> "OneOf[Union[_BaseMatcherNodeSelfT, _OtherNodeT]]":
@@ -176,11 +180,15 @@ class TypeOf(Generic[_MatcherTypeT], BaseMatcherNode):
         self._call_items = (args, kwargs)
         return self
 
+    # pyre-fixme[14]: `__or__` overrides method defined in `type` inconsistently.
+    # pyre-fixme[15]: `__or__` overrides method defined in `type` inconsistently.
     def __or__(
         self, other: _OtherNodeMatcherTypeT
     ) -> "TypeOf[Union[_MatcherTypeT, _OtherNodeMatcherTypeT]]":
         return TypeOf[Union[_MatcherTypeT, _OtherNodeMatcherTypeT]](self, other)
 
+    # pyre-fixme[14]: `__and__` overrides method defined in `BaseMatcherNode`
+    #  inconsistently.
     def __and__(self, other: _OtherNodeMatcherTypeT) -> NoReturn:
         left, right = type(self).__name__, other.__name__
         raise TypeError(
@@ -232,6 +240,8 @@ class OneOf(Generic[_MatcherT], BaseMatcherNode):
         """
         return self._options
 
+    # pyre-fixme[14]: `__or__` overrides method defined in `type` inconsistently.
+    # pyre-fixme[15]: `__or__` overrides method defined in `type` inconsistently.
     def __or__(self, other: _OtherNodeT) -> "OneOf[Union[_MatcherT, _OtherNodeT]]":
         # Without a cast, pyre thinks that the below OneOf is type OneOf[object]
         # even though it has the types passed into it.
@@ -306,6 +316,8 @@ class AllOf(Generic[_MatcherT], BaseMatcherNode):
         """
         return self._options
 
+    # pyre-fixme[14]: `__or__` overrides method defined in `type` inconsistently.
+    # pyre-fixme[15]: `__or__` overrides method defined in `type` inconsistently.
     def __or__(self, other: _OtherNodeT) -> NoReturn:
         raise Exception("Cannot use AllOf and OneOf in combination!")
 
@@ -353,6 +365,8 @@ class _InverseOf(Generic[_MatcherT]):
         """
         return self._matcher
 
+    # pyre-fixme[14]: `__or__` overrides method defined in `type` inconsistently.
+    # pyre-fixme[15]: `__or__` overrides method defined in `type` inconsistently.
     def __or__(self, other: _OtherNodeT) -> "OneOf[Union[_MatcherT, _OtherNodeT]]":
         # Without a cast, pyre thinks that the below OneOf is type OneOf[object]
         # even though it has the types passed into it.
@@ -422,6 +436,8 @@ class _ExtractMatchingNode(Generic[_MatcherT]):
         """
         return self._name
 
+    # pyre-fixme[14]: `__or__` overrides method defined in `type` inconsistently.
+    # pyre-fixme[15]: `__or__` overrides method defined in `type` inconsistently.
     def __or__(self, other: _OtherNodeT) -> "OneOf[Union[_MatcherT, _OtherNodeT]]":
         # Without a cast, pyre thinks that the below OneOf is type OneOf[object]
         # even though it has the types passed into it.
@@ -494,6 +510,8 @@ class MatchIfTrue(Generic[_MatchIfTrueT]):
         """
         return self._func
 
+    # pyre-fixme[14]: `__or__` overrides method defined in `type` inconsistently.
+    # pyre-fixme[15]: `__or__` overrides method defined in `type` inconsistently.
     def __or__(
         self, other: _OtherNodeT
     ) -> "OneOf[Union[MatchIfTrue[_MatchIfTrueT], _OtherNodeT]]":
@@ -518,7 +536,6 @@ class MatchIfTrue(Generic[_MatchIfTrueT]):
         return MatchIfTrue(lambda val: not self._func(val))
 
     def __repr__(self) -> str:
-        # pyre-ignore Pyre doesn't believe that functions have a repr.
         return f"MatchIfTrue({repr(self._func)})"
 
 
@@ -620,6 +637,8 @@ class MatchMetadata(_BaseMetadataMatcher):
         """
         return self._value
 
+    # pyre-fixme[14]: `__or__` overrides method defined in `type` inconsistently.
+    # pyre-fixme[15]: `__or__` overrides method defined in `type` inconsistently.
     def __or__(self, other: _OtherNodeT) -> "OneOf[Union[MatchMetadata, _OtherNodeT]]":
         # Without the cast, pyre doesn't know this is valid
         return cast(OneOf[Union[MatchMetadata, _OtherNodeT]], OneOf(self, other))
@@ -702,6 +721,8 @@ class MatchMetadataIfTrue(_BaseMetadataMatcher):
         """
         return self._func
 
+    # pyre-fixme[14]: `__or__` overrides method defined in `type` inconsistently.
+    # pyre-fixme[15]: `__or__` overrides method defined in `type` inconsistently.
     def __or__(
         self, other: _OtherNodeT
     ) -> "OneOf[Union[MatchMetadataIfTrue, _OtherNodeT]]":
@@ -719,7 +740,6 @@ class MatchMetadataIfTrue(_BaseMetadataMatcher):
         return MatchMetadataIfTrue(self._key, lambda val: not self._func(val))
 
     def __repr__(self) -> str:
-        # pyre-ignore Pyre doesn't believe that functions have a repr.
         return f"MatchMetadataIfTrue(key={repr(self._key)}, func={repr(self._func)})"
 
 
@@ -790,6 +810,8 @@ class AtLeastN(Generic[_MatcherT], _BaseWildcardNode):
         """
         return self._matcher
 
+    # pyre-fixme[14]: `__or__` overrides method defined in `type` inconsistently.
+    # pyre-fixme[15]: `__or__` overrides method defined in `type` inconsistently.
     def __or__(self, other: object) -> NoReturn:
         raise Exception("AtLeastN cannot be used in a OneOf matcher")
 
@@ -892,6 +914,8 @@ class AtMostN(Generic[_MatcherT], _BaseWildcardNode):
         """
         return self._matcher
 
+    # pyre-fixme[14]: `__or__` overrides method defined in `type` inconsistently.
+    # pyre-fixme[15]: `__or__` overrides method defined in `type` inconsistently.
     def __or__(self, other: object) -> NoReturn:
         raise Exception("AtMostN cannot be used in a OneOf matcher")
 
@@ -980,7 +1004,6 @@ def DoesNotMatch(obj: _OtherNodeT) -> _OtherNodeT:
     ):
         # We can use the overridden __invert__ in this case. Pyre doesn't think
         # we can though, and casting doesn't fix the issue.
-        # pyre-ignore All three types above have overridden __invert__.
         inverse = ~obj
     else:
         # We must wrap in a _InverseOf.
@@ -1065,6 +1088,7 @@ def _sequence_matches(  # noqa: C901
         # Base case, we have one or more matcher that wasn't matched
         if all(_matches_zero_nodes(m) for m in matchers):
             return _SequenceMatchesResult(
+                # pyre-ignore[16]: `MatchIfTrue` has no attribute `name`.
                 {m.name: () for m in matchers if isinstance(m, _ExtractMatchingNode)},
                 (),
             )
@@ -1100,9 +1124,12 @@ def _sequence_matches(  # noqa: C901
                         metadata_lookup,
                     )
                     if result.sequence_capture is not None:
+                        matched = result.matched_nodes
+                        assert isinstance(matched, Sequence)
                         return _SequenceMatchesResult(
                             {**attribute_capture, **result.sequence_capture},
-                            (node, *result.matched_nodes),
+                            # pyre-fixme[6]: Expected `Union[None, Sequence[libcst._n...
+                            (node, *matched),
                         )
             # Finally, assume that this does not match the current node.
             # Consume the matcher but not the node.
@@ -1126,9 +1153,12 @@ def _sequence_matches(  # noqa: C901
                         metadata_lookup,
                     )
                     if result.sequence_capture is not None:
+                        matched = result.matched_nodes
+                        assert isinstance(matched, Sequence)
                         return _SequenceMatchesResult(
                             {**attribute_capture, **result.sequence_capture},
-                            (node, *result.matched_nodes),
+                            # pyre-fixme[6]: Expected `Union[None, Sequence[libcst._n...
+                            (node, *matched),
                         )
                 return _SequenceMatchesResult(None, None)
             else:
@@ -1140,9 +1170,12 @@ def _sequence_matches(  # noqa: C901
                 if attribute_capture is not None:
                     result = _sequence_matches(nodes[1:], matchers, metadata_lookup)
                     if result.sequence_capture is not None:
+                        matched = result.matched_nodes
+                        assert isinstance(matched, Sequence)
                         return _SequenceMatchesResult(
                             {**attribute_capture, **result.sequence_capture},
-                            (node, *result.matched_nodes),
+                            # pyre-fixme[6]: Expected `Union[None, Sequence[libcst._n...
+                            (node, *matched),
                         )
                 # Now, assume that this does not match the current node.
                 # Consume the matcher but not the node.
@@ -1235,9 +1268,7 @@ def _attribute_matches(  # noqa: C901
     if isinstance(node, collections.abc.Sequence):
         # Given we've generated the types for matchers based on LibCST, we know that
         # this is true unless the node is badly constructed and types were ignored.
-        node = cast(
-            Sequence[Union[MaybeSentinel, RemovalSentinel, libcst.CSTNode]], node
-        )
+        node = cast(Sequence[Union[MaybeSentinel, libcst.CSTNode]], node)
 
         if isinstance(matcher, OneOf):
             # We should compare against each of the sequences in the OneOf
@@ -1248,7 +1279,8 @@ def _attribute_matches(  # noqa: C901
                     if result.sequence_capture is not None:
                         return result.sequence_capture
                 elif isinstance(m, MatchIfTrue):
-                    return {} if matcher.func(node) else None
+                    # TODO: return captures
+                    return {} if m.func(node) else None
         elif isinstance(matcher, AllOf):
             # We should compare against each of the sequences in the AllOf
             all_captures = {}
@@ -1259,8 +1291,6 @@ def _attribute_matches(  # noqa: C901
                     if result.sequence_capture is None:
                         return None
                     all_captures = {**all_captures, **result.sequence_capture}
-                elif isinstance(m, MatchIfTrue):
-                    return {} if matcher.func(node) else None
                 else:
                     # The value in the AllOf wasn't a sequence, it can't match.
                     return None
@@ -1294,7 +1324,8 @@ def _attribute_matches(  # noqa: C901
     # so the only way it is wrong is if the node was badly constructed and
     # types were ignored.
     return _matches(
-        cast(Union[MaybeSentinel, RemovalSentinel, libcst.CSTNode], node),
+        cast(Union[MaybeSentinel, libcst.CSTNode], node),
+        # pyre-fixme[24]: Generic type `MatchIfTrue` expects 1 type parameter.
         cast(Union[BaseMatcherNode, MatchIfTrue, _BaseMetadataMatcher], matcher),
         metadata_lookup,
     )
@@ -1784,8 +1815,6 @@ class _ReplaceTransformer(libcst.CSTTransformer):
         ]
 
         if inspect.isfunction(replacement):
-            # pyre-ignore Pyre knows replacement is a function, but somehow drops
-            # the type hint from the init signature.
             self.replacement = replacement
         elif isinstance(replacement, (MaybeSentinel, RemovalSentinel)):
             self.replacement = lambda node, matches: copy.deepcopy(replacement)

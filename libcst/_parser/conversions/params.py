@@ -140,7 +140,6 @@ def convert_argslist(  # noqa: C901
                     "Cannot have multiple slash ('/') markers in a single argument "
                     + "list."
                 )
-        # pyre-ignore Pyre seems to think param.star.__eq__ is not callable
         elif isinstance(param.star, str) and param.star == "" and param.default is None:
             # Can only add this if we're in the params or kwonly_params section
             if current_param is params and not seen_default:
@@ -156,7 +155,6 @@ def convert_argslist(  # noqa: C901
                 )
         elif (
             isinstance(param.star, str)
-            # pyre-ignore Pyre seems to think param.star.__eq__ is not callable
             and param.star == ""
             and param.default is not None
         ):
@@ -172,10 +170,7 @@ def convert_argslist(  # noqa: C901
                 # This should be unreachable, the grammar already disallows it.
                 raise Exception("Cannot have any arguments after a kwargs expansion.")
         elif (
-            isinstance(param.star, str)
-            # pyre-ignore Pyre seems to think param.star.__eq__ is not callable
-            and param.star == "*"
-            and param.default is None
+            isinstance(param.star, str) and param.star == "*" and param.default is None
         ):
             # Can only add this if we're in params, since we only allow one of
             # "*" or "*param".
@@ -191,10 +186,7 @@ def convert_argslist(  # noqa: C901
                     + "argument expansion."
                 )
         elif (
-            isinstance(param.star, str)
-            # pyre-ignore Pyre seems to think param.star.__eq__ is not callable
-            and param.star == "**"
-            and param.default is None
+            isinstance(param.star, str) and param.star == "**" and param.default is None
         ):
             # Can add this in all cases where we don't have a star_kwarg
             # yet.

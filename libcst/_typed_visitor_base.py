@@ -8,6 +8,7 @@ from typing import Any, Callable, cast, TYPE_CHECKING, TypeVar
 if TYPE_CHECKING:
     from libcst._typed_visitor import CSTTypedBaseFunctions  # noqa: F401
 
+# pyre-fixme[24]: Generic type `Callable` expects 2 type parameters.
 F = TypeVar("F", bound=Callable)
 
 

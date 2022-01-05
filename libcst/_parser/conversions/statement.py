@@ -1300,6 +1300,10 @@ def convert_decorated(config: ParserConfig, children: Sequence[Any]) -> Any:
     # Now, modify the original function or class to add the decorators.
     return class_or_func.with_changes(
         leading_lines=leading_lines,
+        # pyre-fixme[60]: Concatenation not yet support for multiple variadic
+        #  tuples: `*class_or_func.leading_lines,
+        #  *class_or_func.lines_after_decorators`.
+        # pyre-fixme[60]: Expected to unpack an iterable, but got `unknown`.
         lines_after_decorators=(
             *class_or_func.leading_lines,
             *class_or_func.lines_after_decorators,

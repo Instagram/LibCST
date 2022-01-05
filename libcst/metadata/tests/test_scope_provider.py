@@ -205,7 +205,13 @@ class ScopeProviderTest(UnitTest):
                     import_node,
                     f"The node of ImportAssignment {assignment.node} should equal to {import_node}",
                 )
-                alias = import_node.names[0]
+                self.assertTrue(isinstance(import_node, (cst.Import, cst.ImportFrom)))
+
+                names = import_node.names
+
+                self.assertFalse(isinstance(names, cst.ImportStar))
+
+                alias = names[0]
                 as_name = alias.asname.name if alias.asname else alias.name
                 self.assertEqual(
                     assignment.as_name,
@@ -323,7 +329,13 @@ class ScopeProviderTest(UnitTest):
                 f"The node of ImportAssignment {import_assignment.node} should equal to {import_node}",
             )
 
-            alias = import_node.names[imported_object_idx]
+            self.assertTrue(isinstance(import_node, (cst.Import, cst.ImportFrom)))
+
+            names = import_node.names
+
+            self.assertFalse(isinstance(names, cst.ImportStar))
+
+            alias = names[imported_object_idx]
             as_name = alias.asname.name if alias.asname else alias.name
             self.assertEqual(
                 import_assignment.as_name,
@@ -1761,7 +1773,7 @@ class ScopeProviderTest(UnitTest):
             for acc in scope.accesses:
                 self.assertEqual(
                     len(acc.referents),
-                    1 if getattr(acc.node, "value") == "x" else 0,
+                    1 if getattr(acc.node, "value", None) == "x" else 0,
                     msg=(
                         "Access for node has incorrect number of referents: "
                         + f"{acc.node}"
