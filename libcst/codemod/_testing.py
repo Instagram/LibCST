@@ -4,7 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 #
 from textwrap import dedent
-from typing import Optional, Sequence, Type, TypeVar, Generic
+from typing import Optional, Sequence, Type
 
 from libcst import parse_module, PartialParserConfig
 from libcst.codemod._codemod import Codemod
@@ -13,12 +13,10 @@ from libcst.codemod._runner import SkipFile
 from libcst.testing.utils import UnitTest
 
 
-_Codemod = TypeVar("_Codemod", bound=Codemod)
-
 # pyre-fixme[13]: This should be an ABC but there are metaclass conflicts due to
 # the way we implement the data_provider decorator, so pyre complains about the
 # uninitialized TRANSFORM below.
-class _CodemodTest(Generic[_Codemod]):
+class _CodemodTest:
     """
     Mixin that can be added to a unit test framework in order to provide
     convenience features. This is provided as an internal-only feature so
@@ -26,7 +24,7 @@ class _CodemodTest(Generic[_Codemod]):
     since we set a metaclass on our UnitTest implementation.
     """
 
-    TRANSFORM: Type[_Codemod] = ...
+    TRANSFORM: Type[Codemod] = ...
 
     @staticmethod
     def make_fixture_data(data: str) -> str:
@@ -100,6 +98,7 @@ class _CodemodTest(Generic[_Codemod]):
         """
 
         context = context_override if context_override is not None else CodemodContext()
+        # pyre-fixme[45]: Cannot instantiate abstract class `Codemod`.
         transform_instance = self.TRANSFORM(context, *args, **kwargs)
         input_tree = parse_module(
             CodemodTest.make_fixture_data(before),
@@ -129,7 +128,7 @@ class _CodemodTest(Generic[_Codemod]):
             self.assertSequenceEqual(expected_warnings, context.warnings)
 
 
-class CodemodTest(_CodemodTest[_Codemod], UnitTest):
+class CodemodTest(_CodemodTest, UnitTest):
     """
     Base test class for a :class:`Codemod` test. Provides facilities for
     auto-instantiating and executing a codemod, given the args/kwargs that

@@ -7,7 +7,7 @@
 import sys
 import textwrap
 import unittest
-from typing import Dict, Type
+from typing import Type
 
 from libcst import parse_module
 from libcst.codemod import Codemod, CodemodContext, CodemodTest
