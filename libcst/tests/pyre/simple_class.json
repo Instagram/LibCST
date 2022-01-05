@@ -60,7 +60,7 @@
         },
         "stop": {
           "line": 11,
-          "column": 24
+          "column": 29
         }
       },
       "annotation": "int"
@@ -190,7 +190,7 @@
         },
         "stop": {
           "line": 16,
-          "column": 25
+          "column": 30
         }
       },
       "annotation": "int"
