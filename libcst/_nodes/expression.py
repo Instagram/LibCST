@@ -2193,10 +2193,7 @@ class _BaseExpressionWithArgs(BaseExpression, ABC):
     #: Sequence of arguments that will be passed to the function call.
     args: Sequence[Arg] = ()
 
-    def _check_kwargs_or_keywords(
-        self, arg: Arg
-    # pyre-fixme[24]: Generic type `Callable` expects 2 type parameters.
-    ) -> Optional[Callable[[Arg], Callable]]:
+    def _check_kwargs_or_keywords(self, arg: Arg) -> None:
         """
         Validates that we only have a mix of "keyword=arg" and "**arg" expansion.
         """
@@ -2220,8 +2217,7 @@ class _BaseExpressionWithArgs(BaseExpression, ABC):
 
     def _check_starred_or_keywords(
         self, arg: Arg
-    # pyre-fixme[24]: Generic type `Callable` expects 2 type parameters.
-    ) -> Optional[Callable[[Arg], Callable]]:
+    ) -> Optional[Callable[[Arg], Callable[[Arg], None]]]:
         """
         Validates that we only have a mix of "*arg" expansion and "keyword=arg".
         """
@@ -2244,8 +2240,9 @@ class _BaseExpressionWithArgs(BaseExpression, ABC):
                 "Cannot have positional argument after keyword argument."
             )
 
-    # pyre-fixme[24]: Generic type `Callable` expects 2 type parameters.
-    def _check_positional(self, arg: Arg) -> Optional[Callable[[Arg], Callable]]:
+    def _check_positional(
+        self, arg: Arg
+    ) -> Optional[Callable[[Arg], Callable[[Arg], Callable[[Arg], None]]]]:
         """
         Validates that we only have a mix of positional args and "*arg" expansion.
         """

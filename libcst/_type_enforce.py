@@ -17,7 +17,10 @@ except ImportError:  # py36
 
 def is_value_of_type(  # noqa: C901 "too complex"
     # pyre-fixme[2]: Parameter annotation cannot be `Any`.
-    value: Any, expected_type: Any, invariant_check: bool = False
+    value: Any,
+    # pyre-fixme[2]: Parameter annotation cannot be `Any`.
+    expected_type: Any,
+    invariant_check: bool = False,
 ) -> bool:
     """
     This method attempts to verify a given value is of a given type. If the type is
@@ -81,10 +84,7 @@ def is_value_of_type(  # noqa: C901 "too complex"
     # We don't want to include Tuple subclasses, like NamedTuple, because they're
     # unlikely to behave similarly.
     elif expected_origin_type in [Tuple, tuple]:  # py36 uses Tuple, py37+ uses tuple
-        # pyre-fixme[6]: Expected `Union[typing.Type[typing.Any],
-        #  typing.Tuple[typing.Type[typing.Any], ...]]` for 2nd param but got
-        #  `_SpecialForm`.
-        if not isinstance(value, Tuple):
+        if not isinstance(value, tuple):
             return False
 
         type_args = get_args(expected_type, evaluate=True)
@@ -138,11 +138,8 @@ def is_value_of_type(  # noqa: C901 "too complex"
     # Similarly, tuple subclasses tend to have pretty different behavior, and we should
     # fall back to the default check.
     elif issubclass(expected_origin_type, Iterable) and not issubclass(
-        # pyre-fixme[6]: Expected `Union[typing.Type[typing.Any], types.UnionType,
-        #  typing.Tuple[typing.Union[typing.Type[typing.Any], types.UnionType,
-        #  typing.Tuple[typing.Any, ...]], ...]]` for 2nd param but got
-        #  `Tuple[typing.Type[str], typing.Type[bytes], typing._SpecialForm]`.
-        expected_origin_type, (str, bytes, Tuple)
+        expected_origin_type,
+        (str, bytes, tuple),
     ):
         # We know this thing is *some* kind of Iterable, but we want to
         # allow subclasses. That means we want [1,2,3] to match both

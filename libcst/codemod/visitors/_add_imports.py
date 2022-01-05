@@ -107,14 +107,13 @@ class AddImportsVisitor(ContextAwareTransformer):
         # Allow for instantiation from either a context (used when multiple transforms
         # get chained) or from a direct instantiation.
         super().__init__(context)
-        # pyre-fixme[35]: Target cannot be annotated.
-        imports: List[Tuple[str, Optional[str], Optional[str]]] = [
+        imps: List[Tuple[str, Optional[str], Optional[str]]] = [
             *AddImportsVisitor._get_imports_from_context(context),
             *imports,
         ]
 
         # Verify that the imports are valid
-        for module, obj, alias in imports:
+        for module, obj, alias in imps:
             if module == "__future__" and obj is None:
                 raise Exception("Cannot import __future__ directly!")
             if module == "__future__" and alias is not None:
@@ -122,21 +121,17 @@ class AddImportsVisitor(ContextAwareTransformer):
 
         # List of modules we need to ensure are imported
         self.module_imports: Set[str] = {
-            module for (module, obj, alias) in imports if obj is None and alias is None
+            module for (module, obj, alias) in imps if obj is None and alias is None
         }
 
         # List of modules we need to check for object imports on
         from_imports: Set[str] = {
-            module
-            for (module, obj, alias) in imports
-            if obj is not None and alias is None
+            module for (module, obj, alias) in imps if obj is not None and alias is None
         }
         # Mapping of modules we're adding to the object they should import
         self.module_mapping: Dict[str, Set[str]] = {
             module: {
-                o
-                for (m, o, n) in imports
-                if m == module and o is not None and n is None
+                o for (m, o, n) in imps if m == module and o is not None and n is None
             }
             for module in sorted(from_imports)
         }
@@ -144,20 +139,20 @@ class AddImportsVisitor(ContextAwareTransformer):
         # List of aliased modules we need to ensure are imported
         self.module_aliases: Dict[str, str] = {
             module: alias
-            for (module, obj, alias) in imports
+            for (module, obj, alias) in imps
             if obj is None and alias is not None
         }
         # List of modules we need to check for object imports on
         from_imports_aliases: Set[str] = {
             module
-            for (module, obj, alias) in imports
+            for (module, obj, alias) in imps
             if obj is not None and alias is not None
         }
         # Mapping of modules we're adding to the object with alias they should import
         self.alias_mapping: Dict[str, List[Tuple[str, str]]] = {
             module: [
                 (o, n)
-                for (m, o, n) in imports
+                for (m, o, n) in imps
                 if m == module and o is not None and n is not None
             ]
             for module in sorted(from_imports_aliases)
@@ -358,7 +353,6 @@ class AddImportsVisitor(ContextAwareTransformer):
             module: sorted(aliases)
             for module, aliases in module_and_alias_mapping.items()
         }
-        # import ptvsd; ptvsd.set_trace()
         # Now, add all of the imports we need!
         return updated_node.with_changes(
             # pyre-fixme[60]: Concatenation not yet support for multiple variadic tup...

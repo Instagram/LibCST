@@ -422,9 +422,7 @@ class AugAssignTest(CSTNodeTest):
                             operator=cst.Add(),
                             right=cst.Integer("1"),
                         ),
-                        # pyre-fixme[6]: Expected `BaseAugOp` for 2nd param but got
-                        #  `Add`.
-                        operator=cst.Add(),
+                        operator=cst.AddAssign(),
                         value=cst.Name("y"),
                     )
                 ),
