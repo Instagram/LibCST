@@ -14,6 +14,8 @@ from libcst.testing.utils import data_provider
 
 
 class WithTest(CSTNodeTest):
+    maxDiff: int = 2000
+
     @data_provider(
         (
             # Simple with block
@@ -177,6 +179,18 @@ class WithTest(CSTNodeTest):
                 "code": "with  context_mgr()  as  ctx  : pass\n",
                 "parser": parse_statement,
                 "expected_position": CodeRange((1, 0), (1, 36)),
+            },
+            # Parenthesized
+            {
+                "node": cst.With(
+                    (cst.WithItem(cst.Call(cst.Name("context_mgr"))),),
+                    cst.SimpleStatementSuite((cst.Pass(),)),
+                    lpar=cst.LeftParen(whitespace_after=cst.SimpleWhitespace(" ")),
+                    rpar=cst.RightParen(whitespace_before=cst.SimpleWhitespace(" ")),
+                ),
+                "code": "with ( context_mgr() ): pass\n",
+                "parser": None,
+                "expected_position": CodeRange((1, 0), (1, 28)),
             },
         )
     )

@@ -2017,13 +2017,30 @@ class With(BaseCompoundStatement):
     #: Sequence of empty lines appearing before this with statement.
     leading_lines: Sequence[EmptyLine] = ()
 
+    #: Optional open parenthesis for multi-line with bindings
+    lpar: Union[LeftParen, MaybeSentinel] = MaybeSentinel.DEFAULT
+
+    #: Optional close parenthesis for multi-line with bindings
+    rpar: Union[RightParen, MaybeSentinel] = MaybeSentinel.DEFAULT
+
     #: Whitespace after the ``with`` keyword and before the first item.
     whitespace_after_with: SimpleWhitespace = SimpleWhitespace.field(" ")
 
     #: Whitespace after the last item and before the colon.
     whitespace_before_colon: SimpleWhitespace = SimpleWhitespace.field("")
 
+    def _validate_parens(self) -> None:
+        if isinstance(self.lpar, MaybeSentinel) and isinstance(self.rpar, RightParen):
+            raise CSTValidationError(
+                "Do not mix concrete LeftParen/RightParen with MaybeSentinel."
+            )
+        if isinstance(self.lpar, LeftParen) and isinstance(self.rpar, MaybeSentinel):
+            raise CSTValidationError(
+                "Do not mix concrete LeftParen/RightParen with MaybeSentinel."
+            )
+
     def _validate(self) -> None:
+        self._validate_parens()
         if len(self.items) == 0:
             raise CSTValidationError(
                 "A With statement must have at least one WithItem."
@@ -2048,7 +2065,9 @@ class With(BaseCompoundStatement):
             whitespace_after_with=visit_required(
                 self, "whitespace_after_with", self.whitespace_after_with, visitor
             ),
+            lpar=visit_sentinel(self, "lpar", self.lpar, visitor),
             items=visit_sequence(self, "items", self.items, visitor),
+            rpar=visit_sentinel(self, "rpar", self.rpar, visitor),
             whitespace_before_colon=visit_required(
                 self, "whitespace_before_colon", self.whitespace_before_colon, visitor
             ),
@@ -2066,9 +2085,15 @@ class With(BaseCompoundStatement):
                 asynchronous._codegen(state)
             state.add_token("with")
             self.whitespace_after_with._codegen(state)
+            lpar = self.lpar
+            if isinstance(lpar, LeftParen):
+                lpar._codegen(state)
             last_item = len(self.items) - 1
             for i, item in enumerate(self.items):
                 item._codegen(state, default_comma=(i != last_item))
+            rpar = self.rpar
+            if isinstance(rpar, RightParen):
+                rpar._codegen(state)
             self.whitespace_before_colon._codegen(state)
             state.add_token(":")
             self.body._codegen(state)
