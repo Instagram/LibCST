@@ -951,6 +951,7 @@ def convert_atom_parens(
             inner_atom.with_changes(
                 # pyre-fixme[60]: Expected to unpack an iterable, but got `unknown`.
                 lpar=(lpar, *inner_atom.lpar),
+                # pyre-fixme[60]: Expected to unpack an iterable, but got `unknown`.
                 rpar=(*inner_atom.rpar, rpar),
             ),
             lpar_tok.whitespace_before,
