@@ -137,7 +137,9 @@ class CSTNodeTest(UnitTest):
             codegen_children,
             msg=(
                 "The list of children we got from `node.children` differs from the "
-                + "children that were visited by `node._codegen`."
+                + "children that were visited by `node._codegen`. This is probably "
+                + "due to a mismatch between _visit_and_replace_children and "
+                + "_codegen_impl."
             ),
         )
 
