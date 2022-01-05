@@ -170,9 +170,7 @@ def convert_argslist(  # noqa: C901
                 # This should be unreachable, the grammar already disallows it.
                 raise Exception("Cannot have any arguments after a kwargs expansion.")
         elif (
-            isinstance(param.star, str)
-            and param.star == "*"
-            and param.default is None
+            isinstance(param.star, str) and param.star == "*" and param.default is None
         ):
             # Can only add this if we're in params, since we only allow one of
             # "*" or "*param".
@@ -188,9 +186,7 @@ def convert_argslist(  # noqa: C901
                     + "argument expansion."
                 )
         elif (
-            isinstance(param.star, str)
-            and param.star == "**"
-            and param.default is None
+            isinstance(param.star, str) and param.star == "**" and param.default is None
         ):
             # Can add this in all cases where we don't have a star_kwarg
             # yet.

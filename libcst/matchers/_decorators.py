@@ -18,7 +18,7 @@ CONSTRUCTED_LEAVE_MATCHER_ATTR: str = "_leave_matcher"
 
 def call_if_inside(
     matcher: BaseMatcherNode,
-# pyre-fixme[34]: `Variable[_CSTVisitFuncT]` isn't present in the function's parameters.
+    # pyre-fixme[34]: `Variable[_CSTVisitFuncT]` isn't present in the function's parameters.
 ) -> Callable[[_CSTVisitFuncT], _CSTVisitFuncT]:
     """
     A decorator for visit and leave methods inside a :class:`MatcherDecoratableTransformer`
@@ -44,7 +44,7 @@ def call_if_inside(
 
 def call_if_not_inside(
     matcher: BaseMatcherNode,
-# pyre-fixme[34]: `Variable[_CSTVisitFuncT]` isn't present in the function's parameters.
+    # pyre-fixme[34]: `Variable[_CSTVisitFuncT]` isn't present in the function's parameters.
 ) -> Callable[[_CSTVisitFuncT], _CSTVisitFuncT]:
     """
     A decorator for visit and leave methods inside a :class:`MatcherDecoratableTransformer`

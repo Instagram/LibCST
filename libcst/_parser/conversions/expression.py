@@ -950,7 +950,8 @@ def convert_atom_parens(
         return WithLeadingWhitespace(
             inner_atom.with_changes(
                 # pyre-fixme[60]: Expected to unpack an iterable, but got `unknown`.
-                lpar=(lpar, *inner_atom.lpar), rpar=(*inner_atom.rpar, rpar)
+                lpar=(lpar, *inner_atom.lpar),
+                rpar=(*inner_atom.rpar, rpar),
             ),
             lpar_tok.whitespace_before,
         )

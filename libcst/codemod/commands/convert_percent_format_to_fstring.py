@@ -5,7 +5,7 @@
 #
 import itertools
 import re
-from typing import Callable, List, Sequence, cast
+from typing import Callable, cast, List, Sequence
 
 import libcst as cst
 import libcst.matchers as m
