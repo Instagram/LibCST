@@ -109,6 +109,8 @@ jobs:
             python_site_packages: ${{ steps.python-info.outputs.SITE_PACKAGES }}
     - name: Write Pyre Config
       run: echo '${{ steps.pyre_template.outputs.result }}' > .pyre_configuration
+    - name: Make sure Pyre uses the working copy
+      run: pip install -e .
     - run: pyre --version
     - run: pyre check
     - run: python libcst/tests/test_pyre_integration.py
