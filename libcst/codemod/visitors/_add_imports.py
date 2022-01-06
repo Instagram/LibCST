@@ -11,7 +11,7 @@ from libcst import matchers as m, parse_statement
 from libcst.codemod._context import CodemodContext
 from libcst.codemod._visitor import ContextAwareTransformer
 from libcst.codemod.visitors._gather_imports import GatherImportsVisitor
-from libcst.codemod.visitors._imports import Import
+from libcst.codemod.visitors._imports import ImportItem
 from libcst.helpers import get_absolute_module, get_absolute_module_for_import
 
 
@@ -64,7 +64,7 @@ class AddImportsVisitor(ContextAwareTransformer):
     @staticmethod
     def _get_imports_from_context(
         context: CodemodContext,
-    ) -> List[Import]:
+    ) -> List[ImportItem]:
         imports = context.scratch.get(AddImportsVisitor.CONTEXT_KEY, [])
         if not isinstance(imports, list):
             raise Exception("Logic error!")
@@ -98,18 +98,18 @@ class AddImportsVisitor(ContextAwareTransformer):
         if module == "__future__" and obj is None:
             raise Exception("Cannot import __future__ directly!")
         imports = AddImportsVisitor._get_imports_from_context(context)
-        imports.append(Import(module, obj, asname, relative))
+        imports.append(ImportItem(module, obj, asname, relative))
         context.scratch[AddImportsVisitor.CONTEXT_KEY] = imports
 
     def __init__(
         self,
         context: CodemodContext,
-        imports: Sequence[Import] = (),
+        imports: Sequence[ImportItem] = (),
     ) -> None:
         # Allow for instantiation from either a context (used when multiple transforms
         # get chained) or from a direct instantiation.
         super().__init__(context)
-        imps: List[Import] = [
+        imps: List[ImportItem] = [
             *AddImportsVisitor._get_imports_from_context(context),
             *imports,
         ]

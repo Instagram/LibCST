@@ -10,7 +10,7 @@ from libcst.helpers import get_absolute_module
 
 
 @dataclass(frozen=True)
-class Import:
+class ImportItem:
     """Representation of individual import items for codemods."""
 
     module_name: str
@@ -18,7 +18,7 @@ class Import:
     alias: Optional[str] = None
     relative: int = 0
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.module_name.startswith("."):
             mod = self.module_name.lstrip(".")
             rel = self.relative + len(self.module_name) - len(mod)
@@ -29,8 +29,8 @@ class Import:
     def module(self) -> str:
         return "." * self.relative + self.module_name
 
-    def resolve_relative(self, base_module: Optional[str]) -> "Import":
-        """Return an Import with an absolute module name if possible."""
+    def resolve_relative(self, base_module: Optional[str]) -> "ImportItem":
+        """Return an ImportItem with an absolute module name if possible."""
         if base_module is None:
             return self
         m = get_absolute_module(base_module, self.module_name, self.relative)
