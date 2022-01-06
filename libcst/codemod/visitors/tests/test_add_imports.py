@@ -4,7 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 #
 from libcst.codemod import CodemodContext, CodemodTest
-from libcst.codemod.visitors import AddImportsVisitor
+from libcst.codemod.visitors import AddImportsVisitor, Import
 
 
 class TestAddImportsCodemod(CodemodTest):
@@ -55,7 +55,7 @@ class TestAddImportsCodemod(CodemodTest):
                 return 5
         """
 
-        self.assertCodemod(before, after, [("a.b.c", None, None)])
+        self.assertCodemod(before, after, [Import("a.b.c", None, None)])
 
     def test_dont_add_module_simple(self) -> None:
         """
@@ -81,7 +81,7 @@ class TestAddImportsCodemod(CodemodTest):
                 return 5
         """
 
-        self.assertCodemod(before, after, [("a.b.c", None, None)])
+        self.assertCodemod(before, after, [Import("a.b.c", None, None)])
 
     def test_add_module_alias_simple(self) -> None:
         """
@@ -105,7 +105,7 @@ class TestAddImportsCodemod(CodemodTest):
                 return 5
         """
 
-        self.assertCodemod(before, after, [("a.b.c", None, "d")])
+        self.assertCodemod(before, after, [Import("a.b.c", None, "d")])
 
     def test_dont_add_module_alias_simple(self) -> None:
         """
@@ -131,7 +131,7 @@ class TestAddImportsCodemod(CodemodTest):
                 return 5
         """
 
-        self.assertCodemod(before, after, [("a.b.c", None, "d")])
+        self.assertCodemod(before, after, [Import("a.b.c", None, "d")])
 
     def test_add_module_complex(self) -> None:
         """
@@ -167,11 +167,11 @@ class TestAddImportsCodemod(CodemodTest):
             before,
             after,
             [
-                ("a.b.c", None, None),
-                ("defg.hi", None, None),
-                ("argparse", None, None),
-                ("jkl", None, "h"),
-                ("i.j", None, "k"),
+                Import("a.b.c", None, None),
+                Import("defg.hi", None, None),
+                Import("argparse", None, None),
+                Import("jkl", None, "h"),
+                Import("i.j", None, "k"),
             ],
         )
 
@@ -197,7 +197,7 @@ class TestAddImportsCodemod(CodemodTest):
                 return 5
         """
 
-        self.assertCodemod(before, after, [("a.b.c", "D", None)])
+        self.assertCodemod(before, after, [Import("a.b.c", "D", None)])
 
     def test_add_object_alias_simple(self) -> None:
         """
@@ -221,7 +221,7 @@ class TestAddImportsCodemod(CodemodTest):
                 return 5
         """
 
-        self.assertCodemod(before, after, [("a.b.c", "D", "E")])
+        self.assertCodemod(before, after, [Import("a.b.c", "D", "E")])
 
     def test_add_future(self) -> None:
         """
@@ -250,7 +250,7 @@ class TestAddImportsCodemod(CodemodTest):
                 return 5
         """
 
-        self.assertCodemod(before, after, [("__future__", "dummy_feature", None)])
+        self.assertCodemod(before, after, [Import("__future__", "dummy_feature", None)])
 
     def test_dont_add_object_simple(self) -> None:
         """
@@ -276,7 +276,7 @@ class TestAddImportsCodemod(CodemodTest):
                 return 5
         """
 
-        self.assertCodemod(before, after, [("a.b.c", "D", None)])
+        self.assertCodemod(before, after, [Import("a.b.c", "D", None)])
 
     def test_dont_add_object_alias_simple(self) -> None:
         """
@@ -302,7 +302,7 @@ class TestAddImportsCodemod(CodemodTest):
                 return 5
         """
 
-        self.assertCodemod(before, after, [("a.b.c", "D", "E")])
+        self.assertCodemod(before, after, [Import("a.b.c", "D", "E")])
 
     def test_add_object_modify_simple(self) -> None:
         """
@@ -328,7 +328,7 @@ class TestAddImportsCodemod(CodemodTest):
                 return 5
         """
 
-        self.assertCodemod(before, after, [("a.b.c", "D", None)])
+        self.assertCodemod(before, after, [Import("a.b.c", "D", None)])
 
     def test_add_object_alias_modify_simple(self) -> None:
         """
@@ -354,7 +354,7 @@ class TestAddImportsCodemod(CodemodTest):
                 return 5
         """
 
-        self.assertCodemod(before, after, [("a.b.c", "D", "_")])
+        self.assertCodemod(before, after, [Import("a.b.c", "D", "_")])
 
     def test_add_object_modify_complex(self) -> None:
         """
@@ -387,17 +387,17 @@ class TestAddImportsCodemod(CodemodTest):
             before,
             after,
             [
-                ("a.b.c", "D", None),
-                ("a.b.c", "F", None),
-                ("a.b.c", "G", "H"),
-                ("d.e.f", "Foo", None),
-                ("g.h.i", "Z", None),
-                ("g.h.i", "X", None),
-                ("d.e.f", "Bar", None),
-                ("d.e.f", "Baz", "Qux"),
-                ("g.h.i", "Y", None),
-                ("g.h.i", "V", "W"),
-                ("a.b.c", "F", None),
+                Import("a.b.c", "D", None),
+                Import("a.b.c", "F", None),
+                Import("a.b.c", "G", "H"),
+                Import("d.e.f", "Foo", None),
+                Import("g.h.i", "Z", None),
+                Import("g.h.i", "X", None),
+                Import("d.e.f", "Bar", None),
+                Import("d.e.f", "Baz", "Qux"),
+                Import("g.h.i", "Y", None),
+                Import("g.h.i", "V", "W"),
+                Import("a.b.c", "F", None),
             ],
         )
 
@@ -440,18 +440,18 @@ class TestAddImportsCodemod(CodemodTest):
             before,
             after,
             [
-                ("a.b.c", "D", None),
-                ("a.b.c", "F", None),
-                ("d.e.f", "Foo", None),
-                ("sys", None, None),
-                ("g.h.i", "Z", None),
-                ("g.h.i", "X", None),
-                ("d.e.f", "Bar", None),
-                ("g.h.i", "Y", None),
-                ("foo", None, None),
-                ("a.b.c", "F", None),
-                ("bar", None, "baz"),
-                ("qux", None, "quux"),
+                Import("a.b.c", "D", None),
+                Import("a.b.c", "F", None),
+                Import("d.e.f", "Foo", None),
+                Import("sys", None, None),
+                Import("g.h.i", "Z", None),
+                Import("g.h.i", "X", None),
+                Import("d.e.f", "Bar", None),
+                Import("g.h.i", "Y", None),
+                Import("foo", None, None),
+                Import("a.b.c", "F", None),
+                Import("bar", None, "baz"),
+                Import("qux", None, "quux"),
             ],
         )
 
@@ -481,11 +481,11 @@ class TestAddImportsCodemod(CodemodTest):
                 return 5
         """
 
-        self.assertCodemod(before, after, [("a.b.c", "D", None)])
+        self.assertCodemod(before, after, [Import("a.b.c", "D", None)])
 
     def test_add_import_preserve_doctring_multiples(self) -> None:
         """
-        Should preserve any doctring if adding to the beginning.
+        Should preserve any doctring if addImport(ng to the beginning.
         """
 
         before = """
@@ -511,7 +511,7 @@ class TestAddImportsCodemod(CodemodTest):
         """
 
         self.assertCodemod(
-            before, after, [("a.b.c", "D", None), ("argparse", None, None)]
+            before, after, [Import("a.b.c", "D", None), Import("argparse", None, None)]
         )
 
     def test_strict_module_no_imports(self) -> None:
@@ -532,7 +532,7 @@ class TestAddImportsCodemod(CodemodTest):
                 pass
         """
 
-        self.assertCodemod(before, after, [("argparse", None, None)])
+        self.assertCodemod(before, after, [Import("argparse", None, None)])
 
     def test_strict_module_with_imports(self) -> None:
         """
@@ -556,7 +556,7 @@ class TestAddImportsCodemod(CodemodTest):
                 pass
         """
 
-        self.assertCodemod(before, after, [("argparse", None, None)])
+        self.assertCodemod(before, after, [Import("argparse", None, None)])
 
     def test_dont_add_relative_object_simple(self) -> None:
         """
@@ -585,7 +585,7 @@ class TestAddImportsCodemod(CodemodTest):
         self.assertCodemod(
             before,
             after,
-            [("a.b.c", "D", None)],
+            [Import("a.b.c", "D", None)],
             context_override=CodemodContext(full_module_name="a.b.foobar"),
         )
 
@@ -616,7 +616,7 @@ class TestAddImportsCodemod(CodemodTest):
         self.assertCodemod(
             before,
             after,
-            [("a.b.c", "D", None)],
+            [Import("a.b.c", "D", None)],
             context_override=CodemodContext(full_module_name="a.b.foobar"),
         )
 
@@ -634,7 +634,164 @@ class TestAddImportsCodemod(CodemodTest):
         self.assertCodemod(
             before,
             after,
-            [("a", "f", None), ("a", "g", "y"), ("a", "c", None), ("a", "d", "x")],
+            [
+                Import("a", "f", None),
+                Import("a", "g", "y"),
+                Import("a", "c", None),
+                Import("a", "d", "x"),
+            ],
+            context_override=CodemodContext(full_module_name="a.b.foobar"),
+        )
+
+    def test_add_explicit_relative_simple(self) -> None:
+        """
+        Should add a relative import.
+        """
+
+        before = """
+            def foo() -> None:
+                pass
+
+            def bar() -> int:
+                return 5
+        """
+        after = """
+            from ..a import B
+
+            def foo() -> None:
+                pass
+
+            def bar() -> int:
+                return 5
+        """
+
+        self.assertCodemod(
+            before,
+            after,
+            [Import("a", "B", None, 2)],
+        )
+
+    def test_dont_add_explicit_relative_object_simple(self) -> None:
+        """
+        Should not add object as an import since it exists.
+        """
+
+        before = """
+            from ..c import D
+
+            def foo() -> None:
+                pass
+
+            def bar() -> int:
+                return 5
+        """
+        after = """
+            from ..c import D
+
+            def foo() -> None:
+                pass
+
+            def bar() -> int:
+                return 5
+        """
+
+        self.assertCodemod(
+            before,
+            after,
+            [Import("c", "D", None, 2)],
+            context_override=CodemodContext(full_module_name="a.b.foobar"),
+        )
+
+    def test_add_object_explicit_relative_modify_simple(self) -> None:
+        """
+        Should modify existing import to add new object.
+        """
+
+        before = """
+            from ..c import E, F
+
+            def foo() -> None:
+                pass
+
+            def bar() -> int:
+                return 5
+        """
+        after = """
+            from ..c import D, E, F
+
+            def foo() -> None:
+                pass
+
+            def bar() -> int:
+                return 5
+        """
+
+        self.assertCodemod(
+            before,
+            after,
+            [Import("c", "D", None, 2)],
+            context_override=CodemodContext(full_module_name="a.b.foobar"),
+        )
+
+    def test_add_object_resolve_explicit_relative_modify_simple(self) -> None:
+        """
+        Should merge a relative new module with an absolute existing one.
+        """
+
+        before = """
+            from ..c import E, F
+
+            def foo() -> None:
+                pass
+
+            def bar() -> int:
+                return 5
+        """
+        after = """
+            from ..c import D, E, F
+
+            def foo() -> None:
+                pass
+
+            def bar() -> int:
+                return 5
+        """
+
+        self.assertCodemod(
+            before,
+            after,
+            [Import("c", "D", None, 2)],
+            context_override=CodemodContext(full_module_name="a.b.foobar"),
+        )
+
+    def test_add_object_resolve_dotted_relative_modify_simple(self) -> None:
+        """
+        Should merge a relative new module with an absolute existing one.
+        """
+
+        before = """
+            from ..c import E, F
+
+            def foo() -> None:
+                pass
+
+            def bar() -> int:
+                return 5
+        """
+        after = """
+            from ..c import D, E, F
+
+            def foo() -> None:
+                pass
+
+            def bar() -> int:
+                return 5
+        """
+
+        self.assertCodemod(
+            before,
+            after,
+            [Import("..c", "D", None)],
             context_override=CodemodContext(full_module_name="a.b.foobar"),
         )
 
@@ -655,6 +812,6 @@ class TestAddImportsCodemod(CodemodTest):
         self.assertCodemod(
             before,
             after,
-            [("__future__", "annotations", None)],
+            [Import("__future__", "annotations", None)],
             context_override=CodemodContext(full_module_name="a.b.foobar"),
         )

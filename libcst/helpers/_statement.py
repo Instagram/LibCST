@@ -9,14 +9,9 @@ import libcst as cst
 from libcst.helpers.expression import get_full_name_for_node
 
 
-def get_absolute_module_for_import(
-    current_module: Optional[str], import_node: cst.ImportFrom
+def get_absolute_module(
+    current_module: Optional[str], module_name: Optional[str], num_dots: int
 ) -> Optional[str]:
-    # First, let's try to grab the module name, regardless of relative status.
-    module = import_node.module
-    module_name = get_full_name_for_node(module) if module is not None else None
-    # Now, get the relative import location if it exists.
-    num_dots = len(import_node.relative)
     if num_dots == 0:
         # This is an absolute import, so the module is correct.
         return module_name
@@ -41,6 +36,17 @@ def get_absolute_module_for_import(
     # If they tried to import all the way to the root, return None. Otherwise,
     # return the module itself.
     return base_module if len(base_module) > 0 else None
+
+
+def get_absolute_module_for_import(
+    current_module: Optional[str], import_node: cst.ImportFrom
+) -> Optional[str]:
+    # First, let's try to grab the module name, regardless of relative status.
+    module = import_node.module
+    module_name = get_full_name_for_node(module) if module is not None else None
+    # Now, get the relative import location if it exists.
+    num_dots = len(import_node.relative)
+    return get_absolute_module(current_module, module_name, num_dots)
 
 
 def get_absolute_module_for_import_or_raise(
