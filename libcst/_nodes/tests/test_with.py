@@ -189,7 +189,7 @@ class WithTest(CSTNodeTest):
                     rpar=cst.RightParen(whitespace_before=cst.SimpleWhitespace(" ")),
                 ),
                 "code": "with ( context_mgr() ): pass\n",
-                "parser": None,
+                "parser": parse_statement if is_native else None,
                 "expected_position": CodeRange((1, 0), (1, 28)),
             },
         )
