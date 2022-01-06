@@ -7,6 +7,7 @@ from typing import Any
 
 import libcst as cst
 from libcst import parse_statement, PartialParserConfig
+from libcst._maybe_sentinel import MaybeSentinel
 from libcst._nodes.tests.base import CSTNodeTest, DummyIndentedBlock, parse_statement_as
 from libcst._parser.entrypoints import is_native
 from libcst.metadata import CodeRange
@@ -140,25 +141,6 @@ class WithTest(CSTNodeTest):
                 "parser": parse_statement,
                 "expected_position": CodeRange((2, 0), (2, 24)),
             },
-            # Weird spacing rules
-            {
-                "node": cst.With(
-                    (
-                        cst.WithItem(
-                            cst.Call(
-                                cst.Name("context_mgr"),
-                                lpar=(cst.LeftParen(),),
-                                rpar=(cst.RightParen(),),
-                            )
-                        ),
-                    ),
-                    cst.SimpleStatementSuite((cst.Pass(),)),
-                    whitespace_after_with=cst.SimpleWhitespace(""),
-                ),
-                "code": "with(context_mgr()): pass\n",
-                "parser": parse_statement,
-                "expected_position": CodeRange((1, 0), (1, 25)),
-            },
             # Whitespace
             {
                 "node": cst.With(
@@ -180,17 +162,71 @@ class WithTest(CSTNodeTest):
                 "parser": parse_statement,
                 "expected_position": CodeRange((1, 0), (1, 36)),
             },
-            # Parenthesized
+            # Weird spacing rules, that parse differently depending on whether
+            # we are using a grammar that included parenthesized with statements.
             {
                 "node": cst.With(
-                    (cst.WithItem(cst.Call(cst.Name("context_mgr"))),),
+                    (
+                        cst.WithItem(
+                            cst.Call(
+                                cst.Name("context_mgr"),
+                                lpar=() if is_native() else (cst.LeftParen(),),
+                                rpar=() if is_native() else (cst.RightParen(),),
+                            )
+                        ),
+                    ),
+                    cst.SimpleStatementSuite((cst.Pass(),)),
+                    lpar=(
+                        cst.LeftParen()
+                        if is_native() else MaybeSentinel.DEFAULT
+                    ),
+                    rpar=(
+                        cst.RightParen()
+                        if is_native() else MaybeSentinel.DEFAULT
+                    ),
+                    whitespace_after_with=cst.SimpleWhitespace(""),
+                ),
+                "code": "with(context_mgr()): pass\n",
+                "parser": parse_statement,
+                "expected_position": CodeRange((1, 0), (1, 25)),
+            },
+            # Multi-line parenthesized with.
+            {
+                "node": cst.With(
+                    (
+                        cst.WithItem(
+                            cst.Call(cst.Name("foo")),
+                            comma=cst.Comma(
+                                whitespace_after=cst.ParenthesizedWhitespace(
+                                    first_line=cst.TrailingWhitespace(
+                                        whitespace=cst.SimpleWhitespace(
+                                            value='',
+                                        ),
+                                        comment=None,
+                                        newline=cst.Newline(
+                                            value=None,
+                                        ),
+                                    ),
+                                    empty_lines=[],
+                                    indent=True,
+                                    last_line=cst.SimpleWhitespace(
+                                        value='       ',
+                                    ),
+                                )
+                            ),
+                        ),
+                        cst.WithItem(cst.Call(cst.Name("bar"))),
+                    ),
                     cst.SimpleStatementSuite((cst.Pass(),)),
                     lpar=cst.LeftParen(whitespace_after=cst.SimpleWhitespace(" ")),
                     rpar=cst.RightParen(whitespace_before=cst.SimpleWhitespace(" ")),
                 ),
-                "code": "with ( context_mgr() ): pass\n",
-                "parser": parse_statement if is_native else None,
-                "expected_position": CodeRange((1, 0), (1, 28)),
+                "code": (
+                    "with ( foo(),\n"
+                    "       bar() ): pass\n"
+                ),  # noqa
+                "parser": parse_statement if is_native() else None,
+                "expected_position": CodeRange((1, 0), (2, 20)),
             },
         )
     )

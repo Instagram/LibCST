@@ -2049,9 +2049,10 @@ class With(BaseCompoundStatement):
             raise CSTValidationError(
                 "The last WithItem in a With cannot have a trailing comma."
             )
-        if self.whitespace_after_with.empty and not self.items[
-            0
-        ].item._safe_to_use_with_word_operator(ExpressionPosition.RIGHT):
+        if self.whitespace_after_with.empty and not (
+            isinstance(self.lpar, LeftParen) or
+            self.items[0].item._safe_to_use_with_word_operator(ExpressionPosition.RIGHT)
+        ):
             raise CSTValidationError("Must have at least one space after with keyword.")
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "With":
