@@ -1985,6 +1985,14 @@ impl<'a> Codegen<'a> for With<'a> {
         }
         state.add_token("with");
         self.whitespace_after_with.codegen(state);
+
+        let need_parens = false;  // TODO be smarter here
+        if let Some(lpar) = &self.lpar {
+            lpar.codegen(state);
+        } else if need_parens {
+            state.add_token("(");
+        }
+
         let len = self.items.len();
         for (i, item) in self.items.iter().enumerate() {
             item.codegen(state);
@@ -1992,6 +2000,13 @@ impl<'a> Codegen<'a> for With<'a> {
                 state.add_token(", ");
             }
         }
+
+        if let Some(rpar) = &self.rpar {
+            rpar.codegen(state);
+        } else if need_parens {
+            state.add_token(")");
+        }
+
         self.whitespace_before_colon.codegen(state);
         state.add_token(":");
         self.body.codegen(state);
@@ -2029,7 +2044,9 @@ impl<'a> Inflate<'a> for With<'a> {
 
         self.whitespace_after_with =
             parse_simple_whitespace(config, &mut (*self.with_tok).whitespace_after.borrow_mut())?;
+        self.lpar = self.lpar.map(|lpar| lpar.inflate(config)).transpose()?;
         self.items = self.items.inflate(config)?;
+        self.rpar = self.rpar.map(|rpar| rpar.inflate(config)).transpose()?;
         self.whitespace_before_colon = parse_simple_whitespace(
             config,
             &mut (*self.colon_tok).whitespace_before.borrow_mut(),
