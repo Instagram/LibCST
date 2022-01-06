@@ -473,9 +473,17 @@ parser! {
         // With statement
 
         rule with_stmt() -> With<'a>
-            = kw:lit("with") items:separated(<with_item()>, <comma()>)
+            = kw:lit("with") l:lpar() items:separated(<with_item()>, <comma()>) r:rpar()
+                col:lit(":") b:block() {
+                    make_with(None, kw, Some(l), comma_separate(items.0, items.1, None), Some(r), col, b)
+            }
+            / kw:lit("with") items:separated(<with_item()>, <comma()>)
                 col:lit(":") b:block() {
                     make_with(None, kw, None, comma_separate(items.0, items.1, None), None, col, b)
+            }
+            / asy:tok(Async, "ASYNC") kw:lit("with") l:lpar() items:separated(<with_item()>, <comma()>) r:rpar()
+                col:lit(":") b:block() {
+                    make_with(Some(asy), kw, Some(l), comma_separate(items.0, items.1, None), Some(r), col, b)
             }
             / asy:tok(Async, "ASYNC") kw:lit("with") items:separated(<with_item()>, <comma()>)
                 col:lit(":") b:block() {
