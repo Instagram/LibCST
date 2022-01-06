@@ -77,19 +77,6 @@ jobs:
       if: steps.cache.outputs.cache-hit != 'true'
       run: |
         pip install --upgrade --upgrade-strategy eager build -r requirements.txt -r requirements-dev.txt
-    - name: Get Python site-packages
-      id: python-info
-      run: |
-        echo "::set-output name=SITE_PACKAGES::$(python -c 'import sysconfig; print(sysconfig.get_paths()["purelib"])')"
-    - name: Configure Pyre
-      id: pyre_template
-      uses: chuhlomin/render-template@v1.2
-      with:
-          template: .github/workflows/.pyre_configuration.template
-          vars: |
-            python_site_packages: ${{ steps.python-info.outputs.SITE_PACKAGES }}
-    - name: Write Pyre Config
-      run: echo '${{ steps.pyre_template.outputs.result }}' > .pyre_configuration
     - name: Make sure Pyre uses the working copy
       run: pip install -e .
     - run: pyre --version
