@@ -1963,6 +1963,8 @@ pub struct With<'a> {
     pub body: Suite<'a>,
     pub asynchronous: Option<Asynchronous<'a>>,
     pub leading_lines: Vec<EmptyLine<'a>>,
+    pub lpar: Option<LeftParen<'a>>,
+    pub rpar: Option<RightParen<'a>>,
     pub whitespace_after_with: SimpleWhitespace<'a>,
     pub whitespace_before_colon: SimpleWhitespace<'a>,
 
