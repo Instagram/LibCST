@@ -1927,6 +1927,19 @@ pub struct WithItem<'a> {
     pub comma: Option<Comma<'a>>,
 }
 
+impl<'a> WithItem<'a> {
+    fn inflate_withitem(mut self, config: &Config<'a>, is_last: bool) -> Result<Self> {
+        self.item = self.item.inflate(config)?;
+        self.asname = self.asname.inflate(config)?;
+        self.comma = if is_last {
+            self.comma.map(|c| c.inflate_before(config)).transpose()?
+        } else {
+            self.comma.map(|c| c.inflate(config)).transpose()?
+        };
+        Ok(self)
+    }
+}
+
 impl<'a> Codegen<'a> for WithItem<'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         self.item.codegen(state);
@@ -1945,15 +1958,6 @@ impl<'a> WithComma<'a> for WithItem<'a> {
             comma: Some(comma),
             ..self
         }
-    }
-}
-
-impl<'a> Inflate<'a> for WithItem<'a> {
-    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
-        self.item = self.item.inflate(config)?;
-        self.asname = self.asname.inflate(config)?;
-        self.comma = self.comma.inflate(config)?;
-        Ok(self)
     }
 }
 
@@ -2045,8 +2049,17 @@ impl<'a> Inflate<'a> for With<'a> {
         self.whitespace_after_with =
             parse_simple_whitespace(config, &mut (*self.with_tok).whitespace_after.borrow_mut())?;
         self.lpar = self.lpar.map(|lpar| lpar.inflate(config)).transpose()?;
-        self.items = self.items.inflate(config)?;
-        self.rpar = self.rpar.map(|rpar| rpar.inflate(config)).transpose()?;
+        let len = self.items.len();
+        self.items = self
+            .items
+            .into_iter()
+            .enumerate()
+            .map(|(idx, el)| el.inflate_withitem(config, idx + 1 == len))
+            .collect::<Result<Vec<_>>>()?;
+        if !self.items.is_empty() {
+            // rpar only has whitespace if items is non empty
+            self.rpar = self.rpar.map(|rpar| rpar.inflate(config)).transpose()?;
+        }
         self.whitespace_before_colon = parse_simple_whitespace(
             config,
             &mut (*self.colon_tok).whitespace_before.borrow_mut(),
