@@ -7,32 +7,8 @@ on:
   pull_request:
 
 jobs:
-# Install and cache dependencies
-  setup:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-        python-version: [3.6, 3.7, 3.8, 3.9, "3.10"]
-    steps:
-    - uses: actions/checkout@v1
-    - uses: actions/setup-python@v2
-      with:
-        python-version: ${{ matrix.python-version }}
-    - uses: actions/cache@v2
-      id: cache
-      with:
-        path: ${{ env.pythonLocation }}
-        key: ${{ env.pythonLocation }}-${{ hashFiles('requirements.txt', 'requirements-dev.txt', 'setup.py') }}
-    - name: Install Dependencies
-      if: steps.cache.outputs.cache-hit != 'true'
-      run: |
-        pip install --upgrade --upgrade-strategy eager build -r requirements.txt -r requirements-dev.txt
-
 # Run unittests
   test:
-    needs: setup
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -50,9 +26,10 @@ jobs:
       with:
         path: ${{ env.pythonLocation }}
         key: ${{ env.pythonLocation }}-${{ hashFiles('requirements.txt', 'requirements-dev.txt', 'setup.py') }}
-    - name: Validate Dependencies
+    - name: Install Dependencies
       if: steps.cache.outputs.cache-hit != 'true'
-      run: exit 1
+      run: |
+        pip install --upgrade --upgrade-strategy eager build -r requirements.txt -r requirements-dev.txt
     - if: ${{ matrix.parser == 'native' }}
       uses: actions-rs/toolchain@v1
       with:
@@ -64,7 +41,6 @@ jobs:
 
 # Run linters
   lint:
-    needs: setup
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
@@ -76,16 +52,16 @@ jobs:
       with:
         path: ${{ env.pythonLocation }}
         key: ${{ env.pythonLocation }}-${{ hashFiles('requirements.txt', 'requirements-dev.txt', 'setup.py') }}
-    - name: Validate Dependencies
+    - name: Install Dependencies
       if: steps.cache.outputs.cache-hit != 'true'
-      run: exit 1
+      run: |
+        pip install --upgrade --upgrade-strategy eager build -r requirements.txt -r requirements-dev.txt
     - run: flake8
     - run: ufmt check .
     - run: python3 -m fixit.cli.run_rules
 
 # Run pyre typechecker
   typecheck:
-    needs: setup
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
@@ -97,9 +73,10 @@ jobs:
       with:
         path: ${{ env.pythonLocation }}
         key: ${{ env.pythonLocation }}-${{ hashFiles('requirements.txt', 'requirements-dev.txt', 'setup.py') }}
-    - name: Validate Dependencies
+    - name: Install Dependencies
       if: steps.cache.outputs.cache-hit != 'true'
-      run: exit 1
+      run: |
+        pip install --upgrade --upgrade-strategy eager build -r requirements.txt -r requirements-dev.txt
     - name: Get Python site-packages
       id: python-info
       run: |
@@ -122,7 +99,6 @@ jobs:
 
 # Upload test coverage
   coverage:
-    needs: setup
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
@@ -134,9 +110,10 @@ jobs:
       with:
         path: ${{ env.pythonLocation }}
         key: ${{ env.pythonLocation }}-${{ hashFiles('requirements.txt', 'requirements-dev.txt', 'setup.py') }}
-    - name: Validate Dependencies
+    - name: Install Dependencies
       if: steps.cache.outputs.cache-hit != 'true'
-      run: exit 1
+      run: |
+        pip install --upgrade --upgrade-strategy eager build -r requirements.txt -r requirements-dev.txt
     - name: Generate Coverage
       run: |
         coverage run setup.py test
@@ -154,7 +131,6 @@ jobs:
 
 # Build the docs
   docs:
-    needs: setup
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
@@ -166,9 +142,10 @@ jobs:
       with:
         path: ${{ env.pythonLocation }}
         key: ${{ env.pythonLocation }}-${{ hashFiles('requirements.txt', 'requirements-dev.txt', 'setup.py') }}
-    - name: Validate Dependencies
+    - name: Install Dependencies
       if: steps.cache.outputs.cache-hit != 'true'
-      run: exit 1
+      run: |
+        pip install --upgrade --upgrade-strategy eager build -r requirements.txt -r requirements-dev.txt
     - uses: ts-graphviz/setup-graphviz@v1
     - run: sphinx-build docs/source/ docs/build/
     - name: Archive Docs
@@ -180,7 +157,6 @@ jobs:
 # Build python package
   build:
     name: Build wheels on ${{ matrix.os }}/${{ matrix.vers }}
-    needs: setup
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -218,9 +194,10 @@ jobs:
       with:
         path: ${{ env.pythonLocation }}
         key: ${{ env.pythonLocation }}-${{ hashFiles('requirements.txt', 'requirements-dev.txt', 'setup.py') }}
-    - name: Validate Dependencies
+    - name: Install Dependencies
       if: steps.cache.outputs.cache-hit != 'true'
-      run: exit 1
+      run: |
+        pip install --upgrade --upgrade-strategy eager build -r requirements.txt -r requirements-dev.txt
     - name: Disable scmtools local scheme
       if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
       run: >-
@@ -253,9 +230,10 @@ jobs:
         with:
           path: ${{ env.pythonLocation }}
           key: ${{ env.pythonLocation }}-${{ hashFiles('requirements.txt', 'requirements-dev.txt', 'setup.py') }}
-      - name: Validate Dependencies
+      - name: Install Dependencies
         if: steps.cache.outputs.cache-hit != 'true'
-        run: exit 1
+        run: |
+          pip install --upgrade --upgrade-strategy eager build -r requirements.txt -r requirements-dev.txt
       - name: Disable scmtools local scheme
         run: >-
           echo LIBCST_NO_LOCAL_SCHEME=1 >> $GITHUB_ENV
@@ -300,7 +278,7 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           args: --manifest-path=native/Cargo.toml --all-features
-  
+
   rustfmt:
     name: Rustfmt
     runs-on: ubuntu-latest
