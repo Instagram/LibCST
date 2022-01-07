@@ -261,6 +261,24 @@ class WithTest(CSTNodeTest):
                 ),
                 "expected_re": "Must have at least one space after with keyword",
             },
+            {
+                "get_node": lambda: cst.With(
+                    (cst.WithItem(cst.Call(cst.Name("context_mgr"))),),
+                    cst.SimpleStatementSuite((cst.Pass(),)),
+                    whitespace_after_with=cst.SimpleWhitespace(""),
+                    lpar=cst.LeftParen(),
+                ),
+                "expected_re": "Do not mix concrete LeftParen/RightParen with MaybeSentinel",
+            },
+            {
+                "get_node": lambda: cst.With(
+                    (cst.WithItem(cst.Call(cst.Name("context_mgr"))),),
+                    cst.SimpleStatementSuite((cst.Pass(),)),
+                    whitespace_after_with=cst.SimpleWhitespace(""),
+                    rpar=cst.RightParen(),
+                ),
+                "expected_re": "Do not mix concrete LeftParen/RightParen with MaybeSentinel",
+            },
         )
     )
     def test_invalid(self, **kwargs: Any) -> None:
