@@ -242,8 +242,8 @@ class WithTest(CSTNodeTest):
                     ),
                     cst.IndentedBlock((cst.SimpleStatementLine((cst.Pass(),)),)),
                 ),
-                "expected_re": "The last WithItem in an unparenthasized With cannot "
-                + "have a trailing comma",
+                "expected_re": "The last WithItem in an unparenthesized With cannot "
+                + "have a trailing comma.",
             },
             {
                 "get_node": lambda: cst.With(
@@ -313,4 +313,10 @@ class WithTest(CSTNodeTest):
                 rpar=cst.RightParen(whitespace_before=cst.SimpleWhitespace(" ")),
             )
             module = cst.Module([])
-            self.assertEqual(module.code_for_node(node), "")
+            self.assertEqual(
+                module.code_for_node(node),
+                (
+                    "with ( foo(),\n"
+                    "bar(), ): pass\n"
+                )  # noqa
+            )
