@@ -36,7 +36,13 @@ class ImportItem:
         mod = self
         # `import ..a` -> `from .. import a`
         if mod.relative and mod.obj is None:
-            mod = replace(mod, module_name="", obj=mod.module_name)
+            # py3.6 dataclass backport does not like `obj` as an arg to replace()
+            mod = ImportItem(
+                module_name="",
+                obj=mod.module_name,
+                alias=mod.alias,
+                relative=mod.relative,
+            )
         if base_module is None:
             return mod
         m = get_absolute_module(base_module, mod.module_name or None, self.relative)
