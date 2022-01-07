@@ -24,14 +24,14 @@ class TestCodegenClean(UnitTest):
             old_code == new_code,
             f"{module_name} needs new codegen, see "
             + "`python -m libcst.codegen.generate --help` "
-            + "for instructions, or run `tox -e codegen`",
+            + "for instructions, or run `python -m libcst.codegen.generate all`",
         )
 
     def test_codegen_clean_visitor_functions(self) -> None:
         """
         Verifies that codegen of visitor functions would not result in a
-        changed file. If this test fails, please run 'tox -e codegen' to
-        generate new files.
+        changed file. If this test fails, please run 'python -m libcst.codegen.generate all'
+        to generate new files.
         """
         new_code = clean_generated_code("\n".join(visitor_codegen.generated_code))
         new_file = os.path.join(
@@ -62,8 +62,8 @@ class TestCodegenClean(UnitTest):
     def test_codegen_clean_matcher_classes(self) -> None:
         """
         Verifies that codegen of matcher classes would not result in a
-        changed file. If this test fails, please run 'tox -e codegen' to
-        generate new files.
+        changed file. If this test fails, please run 'python -m libcst.codegen.generate all'
+        to generate new files.
         """
         new_code = clean_generated_code("\n".join(matcher_codegen.generated_code))
         new_file = os.path.join(
@@ -94,8 +94,8 @@ class TestCodegenClean(UnitTest):
     def test_codegen_clean_return_types(self) -> None:
         """
         Verifies that codegen of return types would not result in a
-        changed file. If this test fails, please run 'tox -e codegen' to
-        generate new files.
+        changed file. If this test fails, please run 'python -m libcst.codegen.generate all'
+        to generate new files.
         """
         new_code = clean_generated_code("\n".join(type_codegen.generated_code))
         new_file = os.path.join(

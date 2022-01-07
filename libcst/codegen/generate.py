@@ -144,11 +144,16 @@ def main(cli_args: List[str]) -> int:
     parser = argparse.ArgumentParser(description="Generate code for libcst.")
     parser.add_argument(
         "system",
-        metavar="SYSTEM",
-        help='System to generate code for. Valid values include: "visitors", "matchers"',
+        choices=["all", "visitors", "matchers", "return_types"],
+        help="System to generate code for.",
         type=str,
     )
     args = parser.parse_args(cli_args)
+    if args.system == "all":
+        codegen_visitors()
+        codegen_matchers()
+        codegen_return_types()
+        return 0
     if args.system == "visitors":
         codegen_visitors()
         return 0

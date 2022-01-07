@@ -155,14 +155,13 @@ changes to be conformant, run the following in the root:
 
 .. code-block:: shell
 
-    tox -e autofix
+    ufmt format && python -m fixit.cli.apply_fix
 
-To run all tests, you'll need to install `tox <https://tox.readthedocs.io/en/latest/>`_
-and do the following in the root:
+To run all tests, you'll need to do the following in the root:
 
 .. code-block:: shell
 
-    tox -e py37
+    python -m unittest
 
 You can also run individual tests by using unittest and specifying a module like
 this:
@@ -198,7 +197,7 @@ To generate documents, do the following in the root:
 
 .. code-block:: shell
 
-    tox -e docs
+    sphinx-build docs/source/ docs/build/
 
 Future
 ======

@@ -3,7 +3,7 @@ We want to make contributing to this project as easy and transparent as
 possible.
 
 ## Our Development Process
-This github repo is the source of truth and all changes need to be reviewed in 
+This github repo is the source of truth and all changes need to be reviewed in
 pull requests.
 
 ## Pull Requests
@@ -12,7 +12,7 @@ We actively welcome your pull requests.
 1. Fork the repo and create your branch from `main`.
 2. If you've added code that should be tested, add tests.
 3. If you've changed APIs, update the documentation.
-4. Ensure the test suite passes by `tox test`.
+4. Ensure the test suite passes by `python -m unittest`.
 5. Make sure your code lints.
 6. If you haven't already, complete the Contributor License Agreement ("CLA").
 
@@ -30,7 +30,7 @@ Facebook has a [bounty program](https://www.facebook.com/whitehat/) for the safe
 disclosure of security bugs. In those cases, please go through the process
 outlined on that page and do not file a public issue.
 
-## Coding Style  
+## Coding Style
 We use flake8 and ufmt to enforce coding style.
 
 ## License
