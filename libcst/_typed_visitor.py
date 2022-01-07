@@ -5380,6 +5380,22 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_With_lpar(self, node: "With") -> None:
+        pass
+
+    @mark_no_op
+    def leave_With_lpar(self, node: "With") -> None:
+        pass
+
+    @mark_no_op
+    def visit_With_rpar(self, node: "With") -> None:
+        pass
+
+    @mark_no_op
+    def leave_With_rpar(self, node: "With") -> None:
+        pass
+
+    @mark_no_op
     def visit_With_whitespace_after_with(self, node: "With") -> None:
         pass
 

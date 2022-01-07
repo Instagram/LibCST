@@ -473,13 +473,21 @@ parser! {
         // With statement
 
         rule with_stmt() -> With<'a>
-            = kw:lit("with") items:separated(<with_item()>, <comma()>)
+            = kw:lit("with") l:lpar() items:separated_trailer(<with_item()>, <comma()>) r:rpar()
                 col:lit(":") b:block() {
-                    make_with(None, kw, comma_separate(items.0, items.1, None), col, b)
+                    make_with(None, kw, Some(l), comma_separate(items.0, items.1, items.2), Some(r), col, b)
+            }
+            / kw:lit("with") items:separated(<with_item()>, <comma()>)
+                col:lit(":") b:block() {
+                    make_with(None, kw, None, comma_separate(items.0, items.1, None), None, col, b)
+            }
+            / asy:tok(Async, "ASYNC") kw:lit("with") l:lpar() items:separated_trailer(<with_item()>, <comma()>) r:rpar()
+                col:lit(":") b:block() {
+                    make_with(Some(asy), kw, Some(l), comma_separate(items.0, items.1, items.2), Some(r), col, b)
             }
             / asy:tok(Async, "ASYNC") kw:lit("with") items:separated(<with_item()>, <comma()>)
                 col:lit(":") b:block() {
-                    make_with(Some(asy), kw, comma_separate(items.0, items.1, None), col, b)
+                    make_with(Some(asy), kw, None, comma_separate(items.0, items.1, None), None, col, b)
             }
 
         rule with_item() -> WithItem<'a>
@@ -3218,7 +3226,9 @@ fn make_with_item<'a>(
 fn make_with<'a>(
     async_tok: Option<TokenRef<'a>>,
     with_tok: TokenRef<'a>,
+    lpar: Option<LeftParen<'a>>,
     items: Vec<WithItem<'a>>,
+    rpar: Option<RightParen<'a>>,
     colon_tok: TokenRef<'a>,
     body: Suite<'a>,
 ) -> With<'a> {
@@ -3230,6 +3240,8 @@ fn make_with<'a>(
         body,
         asynchronous,
         leading_lines: Default::default(),
+        lpar,
+        rpar,
         whitespace_after_with: Default::default(),
         whitespace_before_colon: Default::default(),
         async_tok,

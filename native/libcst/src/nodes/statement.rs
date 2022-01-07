@@ -1927,6 +1927,19 @@ pub struct WithItem<'a> {
     pub comma: Option<Comma<'a>>,
 }
 
+impl<'a> WithItem<'a> {
+    fn inflate_withitem(mut self, config: &Config<'a>, is_last: bool) -> Result<Self> {
+        self.item = self.item.inflate(config)?;
+        self.asname = self.asname.inflate(config)?;
+        self.comma = if is_last {
+            self.comma.map(|c| c.inflate_before(config)).transpose()?
+        } else {
+            self.comma.map(|c| c.inflate(config)).transpose()?
+        };
+        Ok(self)
+    }
+}
+
 impl<'a> Codegen<'a> for WithItem<'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         self.item.codegen(state);
@@ -1948,21 +1961,14 @@ impl<'a> WithComma<'a> for WithItem<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for WithItem<'a> {
-    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
-        self.item = self.item.inflate(config)?;
-        self.asname = self.asname.inflate(config)?;
-        self.comma = self.comma.inflate(config)?;
-        Ok(self)
-    }
-}
-
 #[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
 pub struct With<'a> {
     pub items: Vec<WithItem<'a>>,
     pub body: Suite<'a>,
     pub asynchronous: Option<Asynchronous<'a>>,
     pub leading_lines: Vec<EmptyLine<'a>>,
+    pub lpar: Option<LeftParen<'a>>,
+    pub rpar: Option<RightParen<'a>>,
     pub whitespace_after_with: SimpleWhitespace<'a>,
     pub whitespace_before_colon: SimpleWhitespace<'a>,
 
@@ -1983,6 +1989,18 @@ impl<'a> Codegen<'a> for With<'a> {
         }
         state.add_token("with");
         self.whitespace_after_with.codegen(state);
+
+        // TODO: Force parens whenever there are newlines in
+        // the commas of self.items.
+        //
+        // For now, only the python API does this.
+        let need_parens = false;
+        if let Some(lpar) = &self.lpar {
+            lpar.codegen(state);
+        } else if need_parens {
+            state.add_token("(");
+        }
+
         let len = self.items.len();
         for (i, item) in self.items.iter().enumerate() {
             item.codegen(state);
@@ -1990,6 +2008,13 @@ impl<'a> Codegen<'a> for With<'a> {
                 state.add_token(", ");
             }
         }
+
+        if let Some(rpar) = &self.rpar {
+            rpar.codegen(state);
+        } else if need_parens {
+            state.add_token(")");
+        }
+
         self.whitespace_before_colon.codegen(state);
         state.add_token(":");
         self.body.codegen(state);
@@ -2027,7 +2052,18 @@ impl<'a> Inflate<'a> for With<'a> {
 
         self.whitespace_after_with =
             parse_simple_whitespace(config, &mut (*self.with_tok).whitespace_after.borrow_mut())?;
-        self.items = self.items.inflate(config)?;
+        self.lpar = self.lpar.map(|lpar| lpar.inflate(config)).transpose()?;
+        let len = self.items.len();
+        self.items = self
+            .items
+            .into_iter()
+            .enumerate()
+            .map(|(idx, el)| el.inflate_withitem(config, idx + 1 == len))
+            .collect::<Result<Vec<_>>>()?;
+        if !self.items.is_empty() {
+            // rpar only has whitespace if items is non empty
+            self.rpar = self.rpar.map(|rpar| rpar.inflate(config)).transpose()?;
+        }
         self.whitespace_before_colon = parse_simple_whitespace(
             config,
             &mut (*self.colon_tok).whitespace_before.borrow_mut(),
