@@ -250,7 +250,9 @@ class TestAddImportsCodemod(CodemodTest):
                 return 5
         """
 
-        self.assertCodemod(before, after, [ImportItem("__future__", "dummy_feature", None)])
+        self.assertCodemod(
+            before, after, [ImportItem("__future__", "dummy_feature", None)]
+        )
 
     def test_dont_add_object_simple(self) -> None:
         """
@@ -511,7 +513,9 @@ class TestAddImportsCodemod(CodemodTest):
         """
 
         self.assertCodemod(
-            before, after, [ImportItem("a.b.c", "D", None), ImportItem("argparse", None, None)]
+            before,
+            after,
+            [ImportItem("a.b.c", "D", None), ImportItem("argparse", None, None)],
         )
 
     def test_strict_module_no_imports(self) -> None:
