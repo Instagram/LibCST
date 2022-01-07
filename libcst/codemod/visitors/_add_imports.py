@@ -138,7 +138,9 @@ class AddImportsVisitor(ContextAwareTransformer):
             module: {
                 imp.obj_name
                 for imp in imps
-                if imp.module == module and imp.obj_name is not None and imp.alias is None
+                if imp.module == module
+                and imp.obj_name is not None
+                and imp.alias is None
             }
             for module in sorted(from_imports)
         }
@@ -151,7 +153,9 @@ class AddImportsVisitor(ContextAwareTransformer):
         }
         # List of modules we need to check for object imports on
         from_imports_aliases: Set[str] = {
-            imp.module for imp in imps if imp.obj_name is not None and imp.alias is not None
+            imp.module
+            for imp in imps
+            if imp.obj_name is not None and imp.alias is not None
         }
         # Mapping of modules we're adding to the object with alias they should import
         self.alias_mapping: Dict[str, List[Tuple[str, str]]] = {
