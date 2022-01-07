@@ -57,6 +57,7 @@ from libcst._nodes.op import (
 from libcst._nodes.whitespace import (
     BaseParenthesizableWhitespace,
     EmptyLine,
+    ParenthesizedWhitespace,
     SimpleWhitespace,
     TrailingWhitespace,
 )
@@ -2050,7 +2051,7 @@ class With(BaseCompoundStatement):
             and self.items[-1].comma != MaybeSentinel.DEFAULT
         ):
             raise CSTValidationError(
-                "The last WithItem in a With cannot have a trailing comma."
+                "The last WithItem in an unparenthesized With cannot have a trailing comma."
             )
         if self.whitespace_after_with.empty and not (
             isinstance(self.lpar, LeftParen)
@@ -2085,6 +2086,17 @@ class With(BaseCompoundStatement):
             ll._codegen(state)
         state.add_indent_tokens()
 
+        needs_paren = False
+        for item in self.items:
+            comma = item.comma
+            if isinstance(comma, Comma):
+                if isinstance(
+                    comma.whitespace_after,
+                    (EmptyLine, TrailingWhitespace, ParenthesizedWhitespace),
+                ):
+                    needs_paren = True
+                    break
+
         with state.record_syntactic_position(self, end_node=self.body):
             asynchronous = self.asynchronous
             if asynchronous is not None:
@@ -2094,12 +2106,16 @@ class With(BaseCompoundStatement):
             lpar = self.lpar
             if isinstance(lpar, LeftParen):
                 lpar._codegen(state)
+            elif needs_paren:
+                state.add_token("(")
             last_item = len(self.items) - 1
             for i, item in enumerate(self.items):
                 item._codegen(state, default_comma=(i != last_item))
             rpar = self.rpar
             if isinstance(rpar, RightParen):
                 rpar._codegen(state)
+            elif needs_paren:
+                state.add_token(")")
             self.whitespace_before_colon._codegen(state)
             state.add_token(":")
             self.body._codegen(state)
