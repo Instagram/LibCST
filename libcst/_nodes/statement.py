@@ -2045,13 +2045,18 @@ class With(BaseCompoundStatement):
             raise CSTValidationError(
                 "A With statement must have at least one WithItem."
             )
-        if isinstance(self.rpar, MaybeSentinel) and self.items[-1].comma != MaybeSentinel.DEFAULT:
+        if (
+            isinstance(self.rpar, MaybeSentinel)
+            and self.items[-1].comma != MaybeSentinel.DEFAULT
+        ):
             raise CSTValidationError(
                 "The last WithItem in a With cannot have a trailing comma."
             )
         if self.whitespace_after_with.empty and not (
-            isinstance(self.lpar, LeftParen) or
-            self.items[0].item._safe_to_use_with_word_operator(ExpressionPosition.RIGHT)
+            isinstance(self.lpar, LeftParen)
+            or self.items[0].item._safe_to_use_with_word_operator(
+                ExpressionPosition.RIGHT
+            )
         ):
             raise CSTValidationError("Must have at least one space after with keyword.")
 
