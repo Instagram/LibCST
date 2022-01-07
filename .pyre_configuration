@@ -6,7 +6,7 @@
         "."
     ],
     "search_path": [
-        "stubs", "{{ .python_site_packages }}"
+        "stubs", {"site-package": "setuptools_rust"}
     ],
     "workers": 3,
     "strict": true
