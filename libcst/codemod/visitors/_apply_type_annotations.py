@@ -43,7 +43,7 @@ def _get_import_names(imports: Sequence[Union[cst.Import, cst.ImportFrom]]) -> S
     return import_names
 
 
-def _is_set(x) -> bool:
+def _is_set(x: Optional[cst.CSTNode]) -> bool:
     return x is not None and x != cst.MaybeSentinel.DEFAULT
 
 
@@ -57,7 +57,7 @@ class FunctionKey:
     star_kwarg: bool
 
     @classmethod
-    def make(cls, name: str, params: cst.Parameters):
+    def make(cls, name: str, params: cst.Parameters) -> 'FunctionKey':
         pos = len(params.params)
         kwonly = ",".join(sorted(x.name.value for x in params.kwonly_params))
         posonly = len(params.posonly_params)
@@ -637,14 +637,14 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
             *statements[1:],
         ]
 
-    def _match_signatures(
+    def _match_signatures(  # noqa: C901: Too complex
         self,
         function: cst.FunctionDef,
         annotations: FunctionAnnotation,
     ) -> bool:
         """Check that function annotations on both signatures are compatible."""
 
-        def compatible(p: cst.Annotation, q: cst.Annotation) -> bool:
+        def compatible(p: Optional[cst.Annotation], q: Optional[cst.Annotation]) -> bool:
             return self.overwrite_existing_annotations or (
                 not _is_set(p)
                 or not _is_set(q)
@@ -662,19 +662,19 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
             return True
 
         def match_kwargs(ps: Sequence[cst.Param], qs: Sequence[cst.Param]) -> bool:
-            ps = {x.name.value: x for x in ps}
-            qs = {x.name.value: x for x in qs}
-            if set(ps.keys()) != set(qs.keys()):
+            ps_dict = {x.name.value: x for x in ps}
+            qs_dict = {x.name.value: x for x in qs}
+            if set(ps_dict.keys()) != set(qs_dict.keys()):
                 return False
-            for k in ps.keys():
-                if not compatible(ps[k].annotation, qs[k].annotation):
+            for k in ps_dict.keys():
+                if not compatible(ps_dict[k].annotation, qs_dict[k].annotation):
                     return False
             return True
 
-        def match_star(p, q):
-            return bool(p) == bool(q)
+        def match_star(p: cst.Param, q: cst.Param) -> bool:
+            return _is_set(p) == _is_set(q)
 
-        def match_params(f, g):
+        def match_params(f: cst.FunctionDef, g: FunctionAnnotation) -> bool:
             p, q = f.params, g.parameters
             return (
                 match_posargs(p.params, q.params)
@@ -684,7 +684,7 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
                 and match_star(p.star_kwarg, q.star_kwarg)
             )
 
-        def match_return(f, g):
+        def match_return(f: cst.FunctionDef, g: FunctionAnnotation) -> bool:
             return compatible(f.returns, g.returns)
 
         return match_params(function, annotations) and match_return(
