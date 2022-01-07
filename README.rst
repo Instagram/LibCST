@@ -175,23 +175,18 @@ for more examples of how to run tests.
 
 We use `Pyre <https://github.com/facebook/pyre-check>`_ for type-checking.
 
-To set up pyre check environment:
-
-1. Copy the example Pyre config: ``cp .pyre_configuration.example .pyre_configuration``.
-2. In the config file, add your venv site-packages dir to "search_path". (e.g. add "/workspace/libcst-env/lib/python3.7/site-packages")
-   Note: venv dir must **not** be inside the libcst dir
-3. Remove installed LibCST and install from the source code:
-
-.. code-block:: shell
-
-    pip uninstall -y libcst
-    pip install -e .
-
 To verify types for the library, do the following in the root:
 
 .. code-block:: shell
 
     pyre check
+
+*Note*: You may need to remove installed LibCST and install from the source code prior to type checking:
+
+.. code-block:: shell
+
+    pip uninstall -y libcst
+    pip install -e .
 
 To generate documents, do the following in the root:
 
