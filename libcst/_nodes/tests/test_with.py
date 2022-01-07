@@ -298,25 +298,21 @@ class WithTest(CSTNodeTest):
         self.assert_parses(**kwargs)
 
     def test_adding_parens(self) -> None:
-            node = cst.With(
-                (
-                    cst.WithItem(
-                        cst.Call(cst.Name("foo")),
-                        comma=cst.Comma(
-                            whitespace_after=cst.EmptyLine(),
-                        ),
+        node = cst.With(
+            (
+                cst.WithItem(
+                    cst.Call(cst.Name("foo")),
+                    comma=cst.Comma(
+                        whitespace_after=cst.EmptyLine(),
                     ),
-                    cst.WithItem(cst.Call(cst.Name("bar")), comma=cst.Comma()),
                 ),
-                cst.SimpleStatementSuite((cst.Pass(),)),
-                lpar=cst.LeftParen(whitespace_after=cst.SimpleWhitespace(" ")),
-                rpar=cst.RightParen(whitespace_before=cst.SimpleWhitespace(" ")),
-            )
-            module = cst.Module([])
-            self.assertEqual(
-                module.code_for_node(node),
-                (
-                    "with ( foo(),\n"
-                    "bar(), ): pass\n"
-                )  # noqa
-            )
+                cst.WithItem(cst.Call(cst.Name("bar")), comma=cst.Comma()),
+            ),
+            cst.SimpleStatementSuite((cst.Pass(),)),
+            lpar=cst.LeftParen(whitespace_after=cst.SimpleWhitespace(" ")),
+            rpar=cst.RightParen(whitespace_before=cst.SimpleWhitespace(" ")),
+        )
+        module = cst.Module([])
+        self.assertEqual(
+            module.code_for_node(node), ("with ( foo(),\n" "bar(), ): pass\n")  # noqa
+        )
