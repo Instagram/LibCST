@@ -176,14 +176,8 @@ class WithTest(CSTNodeTest):
                         ),
                     ),
                     cst.SimpleStatementSuite((cst.Pass(),)),
-                    lpar=(
-                        cst.LeftParen()
-                        if is_native() else MaybeSentinel.DEFAULT
-                    ),
-                    rpar=(
-                        cst.RightParen()
-                        if is_native() else MaybeSentinel.DEFAULT
-                    ),
+                    lpar=(cst.LeftParen() if is_native() else MaybeSentinel.DEFAULT),
+                    rpar=(cst.RightParen() if is_native() else MaybeSentinel.DEFAULT),
                     whitespace_after_with=cst.SimpleWhitespace(""),
                 ),
                 "code": "with(context_mgr()): pass\n",
@@ -200,7 +194,7 @@ class WithTest(CSTNodeTest):
                                 whitespace_after=cst.ParenthesizedWhitespace(
                                     first_line=cst.TrailingWhitespace(
                                         whitespace=cst.SimpleWhitespace(
-                                            value='',
+                                            value="",
                                         ),
                                         comment=None,
                                         newline=cst.Newline(
@@ -210,23 +204,20 @@ class WithTest(CSTNodeTest):
                                     empty_lines=[],
                                     indent=True,
                                     last_line=cst.SimpleWhitespace(
-                                        value='       ',
+                                        value="       ",
                                     ),
                                 )
                             ),
                         ),
-                        cst.WithItem(cst.Call(cst.Name("bar"))),
+                        cst.WithItem(cst.Call(cst.Name("bar")), comma=cst.Comma()),
                     ),
                     cst.SimpleStatementSuite((cst.Pass(),)),
                     lpar=cst.LeftParen(whitespace_after=cst.SimpleWhitespace(" ")),
                     rpar=cst.RightParen(whitespace_before=cst.SimpleWhitespace(" ")),
                 ),
-                "code": (
-                    "with ( foo(),\n"
-                    "       bar() ): pass\n"
-                ),  # noqa
+                "code": ("with ( foo(),\n" "       bar(), ): pass\n"),  # noqa
                 "parser": parse_statement if is_native() else None,
-                "expected_position": CodeRange((1, 0), (2, 20)),
+                "expected_position": CodeRange((1, 0), (2, 21)),
             },
         )
     )
@@ -251,7 +242,8 @@ class WithTest(CSTNodeTest):
                     ),
                     cst.IndentedBlock((cst.SimpleStatementLine((cst.Pass(),)),)),
                 ),
-                "expected_re": "The last WithItem in a With cannot have a trailing comma",
+                "expected_re": "The last WithItem in an unparenthasized With cannot "
+                + "have a trailing comma",
             },
             {
                 "get_node": lambda: cst.With(
@@ -268,7 +260,8 @@ class WithTest(CSTNodeTest):
                     whitespace_after_with=cst.SimpleWhitespace(""),
                     lpar=cst.LeftParen(),
                 ),
-                "expected_re": "Do not mix concrete LeftParen/RightParen with MaybeSentinel",
+                "expected_re": "Do not mix concrete LeftParen/RightParen with "
+                + "MaybeSentinel",
             },
             {
                 "get_node": lambda: cst.With(
@@ -277,7 +270,8 @@ class WithTest(CSTNodeTest):
                     whitespace_after_with=cst.SimpleWhitespace(""),
                     rpar=cst.RightParen(),
                 ),
-                "expected_re": "Do not mix concrete LeftParen/RightParen with MaybeSentinel",
+                "expected_re": "Do not mix concrete LeftParen/RightParen with "
+                + "MaybeSentinel",
             },
         )
     )

@@ -2045,7 +2045,7 @@ class With(BaseCompoundStatement):
             raise CSTValidationError(
                 "A With statement must have at least one WithItem."
             )
-        if self.items[-1].comma != MaybeSentinel.DEFAULT:
+        if isinstance(self.rpar, MaybeSentinel) and self.items[-1].comma != MaybeSentinel.DEFAULT:
             raise CSTValidationError(
                 "The last WithItem in a With cannot have a trailing comma."
             )
