@@ -1990,7 +1990,7 @@ impl<'a> Codegen<'a> for With<'a> {
         state.add_token("with");
         self.whitespace_after_with.codegen(state);
 
-        let need_parens = false;  // TODO be smarter here
+        let need_parens = false; // TODO be smarter here
         if let Some(lpar) = &self.lpar {
             lpar.codegen(state);
         } else if need_parens {
