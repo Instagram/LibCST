@@ -1598,7 +1598,7 @@ impl<'a> Inflate<'a> for ClassDef<'a> {
             self.lpar = self.lpar.map(|lpar| lpar.inflate(config)).transpose()?;
             self.bases = self.bases.inflate(config)?;
             self.keywords = self.keywords.inflate(config)?;
-            self.rpar = self.rpar.map(|lpar| lpar.inflate(config)).transpose()?;
+            self.rpar = self.rpar.map(|rpar| rpar.inflate(config)).transpose()?;
             // TODO: set whitespace_after_arg for last arg?
         }
 
