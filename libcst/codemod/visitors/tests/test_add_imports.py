@@ -643,7 +643,63 @@ class TestAddImportsCodemod(CodemodTest):
             context_override=CodemodContext(full_module_name="a.b.foobar"),
         )
 
-    def test_add_explicit_relative_simple(self) -> None:
+    def test_add_explicit_relative(self) -> None:
+        """
+        Should add a relative import from .. .
+        """
+
+        before = """
+            def foo() -> None:
+                pass
+
+            def bar() -> int:
+                return 5
+        """
+        after = """
+            from .. import a
+
+            def foo() -> None:
+                pass
+
+            def bar() -> int:
+                return 5
+        """
+
+        self.assertCodemod(
+            before,
+            after,
+            [ImportItem("a", None, None, 2)],
+        )
+
+    def test_add_explicit_relative_alias(self) -> None:
+        """
+        Should add a relative import from .. .
+        """
+
+        before = """
+            def foo() -> None:
+                pass
+
+            def bar() -> int:
+                return 5
+        """
+        after = """
+            from .. import a as foo
+
+            def foo() -> None:
+                pass
+
+            def bar() -> int:
+                return 5
+        """
+
+        self.assertCodemod(
+            before,
+            after,
+            [ImportItem("a", None, "foo", 2)],
+        )
+
+    def test_add_explicit_relative_object_simple(self) -> None:
         """
         Should add a relative import.
         """

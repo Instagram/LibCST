@@ -19,7 +19,9 @@ class ImportItem:
     relative: int = 0
 
     def __post_init__(self) -> None:
-        if self.module_name.startswith("."):
+        if self.module_name is None:
+            object.__setattr__(self, "module_name", "")
+        elif self.module_name.startswith("."):
             mod = self.module_name.lstrip(".")
             rel = self.relative + len(self.module_name) - len(mod)
             object.__setattr__(self, "module_name", mod)
@@ -31,7 +33,11 @@ class ImportItem:
 
     def resolve_relative(self, base_module: Optional[str]) -> "ImportItem":
         """Return an ImportItem with an absolute module name if possible."""
+        mod = self
+        # `import ..a` -> `from .. import a`
+        if mod.relative and mod.obj is None:
+            mod = replace(mod, module_name="", obj=mod.module_name)
         if base_module is None:
-            return self
-        m = get_absolute_module(base_module, self.module_name, self.relative)
-        return self if m is None else replace(self, module_name=m, relative=0)
+            return mod
+        m = get_absolute_module(base_module, mod.module_name or None, self.relative)
+        return mod if m is None else replace(mod, module_name=m, relative=0)
