@@ -23,6 +23,6 @@ __all__ = [
     "GatherImportsVisitor",
     "GatherNamesFromStringAnnotationsVisitor",
     "GatherUnusedImportsVisitor",
-    "Import",
+    "ImportItem",
     "RemoveImportsVisitor",
 ]

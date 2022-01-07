@@ -12,7 +12,7 @@ from libcst.codemod._context import CodemodContext
 from libcst.codemod._visitor import ContextAwareTransformer
 from libcst.codemod.visitors._gather_imports import GatherImportsVisitor
 from libcst.codemod.visitors._imports import ImportItem
-from libcst.helpers import get_absolute_module, get_absolute_module_for_import
+from libcst.helpers import get_absolute_module_for_import
 
 
 class AddImportsVisitor(ContextAwareTransformer):
