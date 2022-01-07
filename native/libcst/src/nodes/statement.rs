@@ -1990,7 +1990,11 @@ impl<'a> Codegen<'a> for With<'a> {
         state.add_token("with");
         self.whitespace_after_with.codegen(state);
 
-        let need_parens = false; // TODO be smarter here
+        // TODO: Force parens whenever there are newlines in
+        // the commas of self.items.
+        //
+        // For now, only the python API does this.
+        let need_parens = false;
         if let Some(lpar) = &self.lpar {
             lpar.codegen(state);
         } else if need_parens {
