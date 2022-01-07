@@ -303,7 +303,7 @@ class WithTest(CSTNodeTest):
                 cst.WithItem(
                     cst.Call(cst.Name("foo")),
                     comma=cst.Comma(
-                        whitespace_after=cst.EmptyLine(),
+                        whitespace_after=cst.ParenthesizedWhitespace(),
                     ),
                 ),
                 cst.WithItem(cst.Call(cst.Name("bar")), comma=cst.Comma()),
