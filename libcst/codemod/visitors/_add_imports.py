@@ -116,7 +116,7 @@ class AddImportsVisitor(ContextAwareTransformer):
 
         # Verify that the imports are valid
         for imp in imps:
-            if imp.module == "__future__" and imp.obj is None:
+            if imp.module == "__future__" and imp.obj_name is None:
                 raise Exception("Cannot import __future__ directly!")
             if imp.module == "__future__" and imp.alias is not None:
                 raise Exception("Cannot import __future__ objects with aliases!")
@@ -126,19 +126,19 @@ class AddImportsVisitor(ContextAwareTransformer):
 
         # List of modules we need to ensure are imported
         self.module_imports: Set[str] = {
-            imp.module for imp in imps if imp.obj is None and imp.alias is None
+            imp.module for imp in imps if imp.obj_name is None and imp.alias is None
         }
 
         # List of modules we need to check for object imports on
         from_imports: Set[str] = {
-            imp.module for imp in imps if imp.obj is not None and imp.alias is None
+            imp.module for imp in imps if imp.obj_name is not None and imp.alias is None
         }
         # Mapping of modules we're adding to the object they should import
         self.module_mapping: Dict[str, Set[str]] = {
             module: {
-                imp.obj
+                imp.obj_name
                 for imp in imps
-                if imp.module == module and imp.obj is not None and imp.alias is None
+                if imp.module == module and imp.obj_name is not None and imp.alias is None
             }
             for module in sorted(from_imports)
         }
@@ -147,19 +147,19 @@ class AddImportsVisitor(ContextAwareTransformer):
         self.module_aliases: Dict[str, str] = {
             imp.module: imp.alias
             for imp in imps
-            if imp.obj is None and imp.alias is not None
+            if imp.obj_name is None and imp.alias is not None
         }
         # List of modules we need to check for object imports on
         from_imports_aliases: Set[str] = {
-            imp.module for imp in imps if imp.obj is not None and imp.alias is not None
+            imp.module for imp in imps if imp.obj_name is not None and imp.alias is not None
         }
         # Mapping of modules we're adding to the object with alias they should import
         self.alias_mapping: Dict[str, List[Tuple[str, str]]] = {
             module: [
-                (imp.obj, imp.alias)
+                (imp.obj_name, imp.alias)
                 for imp in imps
                 if imp.module == module
-                and imp.obj is not None
+                and imp.obj_name is not None
                 and imp.alias is not None
             ]
             for module in sorted(from_imports_aliases)

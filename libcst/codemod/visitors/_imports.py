@@ -14,7 +14,7 @@ class ImportItem:
     """Representation of individual import items for codemods."""
 
     module_name: str
-    obj: Optional[str] = None
+    obj_name: Optional[str] = None
     alias: Optional[str] = None
     relative: int = 0
 
@@ -35,14 +35,8 @@ class ImportItem:
         """Return an ImportItem with an absolute module name if possible."""
         mod = self
         # `import ..a` -> `from .. import a`
-        if mod.relative and mod.obj is None:
-            # py3.6 dataclass backport does not like `obj` as an arg to replace()
-            mod = ImportItem(
-                module_name="",
-                obj=mod.module_name,
-                alias=mod.alias,
-                relative=mod.relative,
-            )
+        if mod.relative and mod.obj_name is None:
+            mod = replace(mod, module_name="", obj_name=mod.module_name)
         if base_module is None:
             return mod
         m = get_absolute_module(base_module, mod.module_name or None, self.relative)
