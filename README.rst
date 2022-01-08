@@ -173,6 +173,38 @@ this:
 See the `unittest documentation <https://docs.python.org/3/library/unittest.html>`_
 for more examples of how to run tests.
 
+Building
+~~~~~~~~
+
+In order to build LibCST, which has a native parser module, you will
+need to have the Rust build tool ``cargo`` on your path. You can
+usually install ``cargo`` using your system package manager, but the
+most popular way to install cargo is using
+`rustup <https://rustup.rs/>`_.
+
+To generate documents, do the following in the root:
+
+.. code-block:: shell
+
+    sphinx-build docs/source/ docs/build/
+
+To build just the native parser, do the following from the ``native``
+directory:
+
+.. code-block:: shell
+
+    cargo build
+
+To build the ``libcst.native`` module, run this from root:
+
+.. code-block:: shell
+
+    pip uninstall -y libcst
+    pip install -e .
+
+Type Checking
+~~~~~~~~~~~~~
+
 We use `Pyre <https://github.com/facebook/pyre-check>`_ for type-checking.
 
 To verify types for the library, do the following in the root:
@@ -181,18 +213,8 @@ To verify types for the library, do the following in the root:
 
     pyre check
 
-*Note*: You may need to remove installed LibCST and install from the source code prior to type checking:
-
-.. code-block:: shell
-
-    pip uninstall -y libcst
-    pip install -e .
-
-To generate documents, do the following in the root:
-
-.. code-block:: shell
-
-    sphinx-build docs/source/ docs/build/
+*Note:* You may need to run the ``pip install -e .`` command prior
+to type checking, see the section above on building.
 
 Future
 ======
