@@ -2,7 +2,7 @@
 #
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
-#
+
 from collections import defaultdict
 from typing import Dict, List, Optional, Sequence, Set, Tuple, Union
 
@@ -11,6 +11,7 @@ from libcst import matchers as m, parse_statement
 from libcst.codemod._context import CodemodContext
 from libcst.codemod._visitor import ContextAwareTransformer
 from libcst.codemod.visitors._gather_imports import GatherImportsVisitor
+from libcst.codemod.visitors._imports import ImportItem
 from libcst.helpers import get_absolute_module_for_import
 
 
@@ -63,7 +64,7 @@ class AddImportsVisitor(ContextAwareTransformer):
     @staticmethod
     def _get_imports_from_context(
         context: CodemodContext,
-    ) -> List[Tuple[str, Optional[str], Optional[str]]]:
+    ) -> List[ImportItem]:
         imports = context.scratch.get(AddImportsVisitor.CONTEXT_KEY, [])
         if not isinstance(imports, list):
             raise Exception("Logic error!")
@@ -75,6 +76,7 @@ class AddImportsVisitor(ContextAwareTransformer):
         module: str,
         obj: Optional[str] = None,
         asname: Optional[str] = None,
+        relative: int = 0,
     ) -> None:
         """
         Schedule an import to be added in a future invocation of this class by
@@ -96,64 +98,73 @@ class AddImportsVisitor(ContextAwareTransformer):
         if module == "__future__" and obj is None:
             raise Exception("Cannot import __future__ directly!")
         imports = AddImportsVisitor._get_imports_from_context(context)
-        imports.append((module, obj, asname))
+        imports.append(ImportItem(module, obj, asname, relative))
         context.scratch[AddImportsVisitor.CONTEXT_KEY] = imports
 
     def __init__(
         self,
         context: CodemodContext,
-        imports: Sequence[Tuple[str, Optional[str], Optional[str]]] = (),
+        imports: Sequence[ImportItem] = (),
     ) -> None:
         # Allow for instantiation from either a context (used when multiple transforms
         # get chained) or from a direct instantiation.
         super().__init__(context)
-        imps: List[Tuple[str, Optional[str], Optional[str]]] = [
+        imps: List[ImportItem] = [
             *AddImportsVisitor._get_imports_from_context(context),
             *imports,
         ]
 
         # Verify that the imports are valid
-        for module, obj, alias in imps:
-            if module == "__future__" and obj is None:
+        for imp in imps:
+            if imp.module == "__future__" and imp.obj_name is None:
                 raise Exception("Cannot import __future__ directly!")
-            if module == "__future__" and alias is not None:
+            if imp.module == "__future__" and imp.alias is not None:
                 raise Exception("Cannot import __future__ objects with aliases!")
+
+        # Resolve relative imports if we have a module name
+        imps = [imp.resolve_relative(self.context.full_module_name) for imp in imps]
 
         # List of modules we need to ensure are imported
         self.module_imports: Set[str] = {
-            module for (module, obj, alias) in imps if obj is None and alias is None
+            imp.module for imp in imps if imp.obj_name is None and imp.alias is None
         }
 
         # List of modules we need to check for object imports on
         from_imports: Set[str] = {
-            module for (module, obj, alias) in imps if obj is not None and alias is None
+            imp.module for imp in imps if imp.obj_name is not None and imp.alias is None
         }
         # Mapping of modules we're adding to the object they should import
         self.module_mapping: Dict[str, Set[str]] = {
             module: {
-                o for (m, o, n) in imps if m == module and o is not None and n is None
+                imp.obj_name
+                for imp in imps
+                if imp.module == module
+                and imp.obj_name is not None
+                and imp.alias is None
             }
             for module in sorted(from_imports)
         }
 
         # List of aliased modules we need to ensure are imported
         self.module_aliases: Dict[str, str] = {
-            module: alias
-            for (module, obj, alias) in imps
-            if obj is None and alias is not None
+            imp.module: imp.alias
+            for imp in imps
+            if imp.obj_name is None and imp.alias is not None
         }
         # List of modules we need to check for object imports on
         from_imports_aliases: Set[str] = {
-            module
-            for (module, obj, alias) in imps
-            if obj is not None and alias is not None
+            imp.module
+            for imp in imps
+            if imp.obj_name is not None and imp.alias is not None
         }
         # Mapping of modules we're adding to the object with alias they should import
         self.alias_mapping: Dict[str, List[Tuple[str, str]]] = {
             module: [
-                (o, n)
-                for (m, o, n) in imps
-                if m == module and o is not None and n is not None
+                (imp.obj_name, imp.alias)
+                for imp in imps
+                if imp.module == module
+                and imp.obj_name is not None
+                and imp.alias is not None
             ]
             for module in sorted(from_imports_aliases)
         }

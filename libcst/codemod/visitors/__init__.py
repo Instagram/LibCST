@@ -12,6 +12,7 @@ from libcst.codemod.visitors._gather_string_annotation_names import (
     GatherNamesFromStringAnnotationsVisitor,
 )
 from libcst.codemod.visitors._gather_unused_imports import GatherUnusedImportsVisitor
+from libcst.codemod.visitors._imports import ImportItem
 from libcst.codemod.visitors._remove_imports import RemoveImportsVisitor
 
 __all__ = [
@@ -22,5 +23,6 @@ __all__ = [
     "GatherImportsVisitor",
     "GatherNamesFromStringAnnotationsVisitor",
     "GatherUnusedImportsVisitor",
+    "ImportItem",
     "RemoveImportsVisitor",
 ]
