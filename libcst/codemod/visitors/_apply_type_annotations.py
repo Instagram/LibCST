@@ -5,7 +5,7 @@
 #
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Sequence, Set, Tuple, Union
+from typing import Dict, List, Optional, Sequence, Set, Tuple, Union
 
 import libcst as cst
 from libcst.codemod._context import CodemodContext
@@ -50,7 +50,7 @@ def _get_import_names(imports: Sequence[Union[cst.Import, cst.ImportFrom]]) -> S
     return import_names
 
 
-def _is_set(x: Any) -> bool:
+def _is_set(x: Union[None, cst.CSTNode, cst.MaybeSentinel]) -> bool:
     return x is not None and x != cst.MaybeSentinel.DEFAULT
 
 
