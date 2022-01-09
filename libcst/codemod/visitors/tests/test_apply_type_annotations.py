@@ -179,11 +179,11 @@ class TestApplyAnnotationsVisitor(CodemodTest):
                 def foo(x: int) -> str: ...
                 """,
                 """
-                def foo(x: int):
+                def foo(x: str):
                     pass
                 """,
                 """
-                def foo(x: int) -> str:
+                def foo(x: str) -> str:
                     pass
                 """,
             ),
@@ -298,7 +298,7 @@ class TestApplyAnnotationsVisitor(CodemodTest):
                 """
                 from typing import Iterable, Any
 
-                def foo(x = 1) -> Iterable[Any]:
+                def foo(x: int = 1) -> Iterable[Any]:
                     return ['']
                 """,
             ),
@@ -1018,7 +1018,7 @@ class TestApplyAnnotationsVisitor(CodemodTest):
                     return 'hello'
                 """,
                 """
-                def f(a, b: int):
+                def f(a: bool, b: int) -> str:
                     return 'hello'
                 """,
             ),
@@ -1044,7 +1044,7 @@ class TestApplyAnnotationsVisitor(CodemodTest):
                     return 'hello'
                 """,
                 """
-                def f(a, b) -> str:
+                def f(a: bool, b: bool) -> str:
                     return 'hello'
                 """,
             ),
@@ -1118,6 +1118,95 @@ class TestApplyAnnotationsVisitor(CodemodTest):
     ) -> None:
         self.run_test_case_with_flags(
             stub=stub, before=before, after=after, strict_posargs_matching=False
+        )
+
+    @data_provider(
+        {
+            "mismatched_signature_posargs": (
+                """
+                def f(a: bool, b: bool) -> str: ...
+                """,
+                """
+                def f(a):
+                    return 'hello'
+                """,
+                """
+                def f(a):
+                    return 'hello'
+                """,
+            ),
+            "mismatched_signature_annotation": (
+                """
+                def f(a: bool, b: bool) -> str: ...
+                """,
+                """
+                def f(a, b: int):
+                    return 'hello'
+                """,
+                """
+                def f(a, b: int):
+                    return 'hello'
+                """,
+            ),
+            "mismatched_posarg_names": (
+                """
+                def f(a: bool, b: bool) -> str: ...
+                """,
+                """
+                def f(x, y):
+                    return 'hello'
+                """,
+                """
+                def f(x, y):
+                    return 'hello'
+                """,
+            ),
+            "mismatched_return_type": (
+                """
+                def f(a: bool, b: bool) -> int: ...
+                """,
+                """
+                def f(a, b) -> str:
+                    return 'hello'
+                """,
+                """
+                def f(a, b) -> str:
+                    return 'hello'
+                """,
+            ),
+            "matched_signature": (
+                """
+                def f(a: bool, b: bool) -> str: ...
+                """,
+                """
+                def f(a: bool, b = False):
+                    return 'hello'
+                """,
+                """
+                def f(a: bool, b: bool = False) -> str:
+                    return 'hello'
+                """,
+            ),
+            "matched_signature_with_permuted_kwargs": (
+                """
+                def f(*, a: bool, b: bool) -> str: ...
+                """,
+                """
+                def f(*, b: bool, a = False):
+                    return 'hello'
+                """,
+                """
+                def f(*, b: bool, a: bool = False) -> str:
+                    return 'hello'
+                """,
+            ),
+        }
+    )
+    def test_signature_matching_with_strict_annotation_matching(
+        self, stub: str, before: str, after: str
+    ) -> None:
+        self.run_test_case_with_flags(
+            stub=stub, before=before, after=after, strict_annotation_matching=True
         )
 
     @data_provider(

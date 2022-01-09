@@ -5,7 +5,7 @@
 #
 
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Sequence, Set, Tuple, Union
+from typing import Any, Dict, List, Optional, Sequence, Set, Tuple, Union
 
 import libcst as cst
 from libcst.codemod._context import CodemodContext
@@ -18,6 +18,13 @@ from libcst.metadata import PositionProvider, QualifiedNameProvider
 
 NameOrAttribute = Union[cst.Name, cst.Attribute]
 NAME_OR_ATTRIBUTE = (cst.Name, cst.Attribute)
+# Union type for *args and **args
+StarParamType = Union[
+    None,
+    cst._maybe_sentinel.MaybeSentinel,
+    cst._nodes.expression.Param,
+    cst._nodes.expression.ParamStar,
+]
 
 
 def _get_import_alias_names(import_aliases: Sequence[cst.ImportAlias]) -> Set[str]:
@@ -43,7 +50,7 @@ def _get_import_names(imports: Sequence[Union[cst.Import, cst.ImportFrom]]) -> S
     return import_names
 
 
-def _is_set(x: Optional[cst.CSTNode]) -> bool:
+def _is_set(x: Any) -> bool:
     return x is not None and x != cst.MaybeSentinel.DEFAULT
 
 
@@ -57,7 +64,7 @@ class FunctionKey:
     star_kwarg: bool
 
     @classmethod
-    def make(cls, name: str, params: cst.Parameters) -> 'FunctionKey':
+    def make(cls, name: str, params: cst.Parameters) -> "FunctionKey":
         pos = len(params.params)
         kwonly = ",".join(sorted(x.name.value for x in params.kwonly_params))
         posonly = len(params.posonly_params)
@@ -86,7 +93,7 @@ class TypeCollector(cst.CSTVisitor):
         # Qualifier for storing the canonical name of the current function.
         self.qualifier: List[str] = []
         # Store the annotations.
-        self.function_annotations: Dict[str, FunctionAnnotation] = {}
+        self.function_annotations: Dict[FunctionKey, FunctionAnnotation] = {}
         self.attribute_annotations: Dict[str, cst.Annotation] = {}
         self.existing_imports: Set[str] = existing_imports
         self.class_definitions: Dict[str, cst.ClassDef] = {}
@@ -296,7 +303,9 @@ class TypeCollector(cst.CSTVisitor):
 
 @dataclass(frozen=True)
 class Annotations:
-    function_annotations: Dict[str, FunctionAnnotation] = field(default_factory=dict)
+    function_annotations: Dict[FunctionKey, FunctionAnnotation] = field(
+        default_factory=dict
+    )
     attribute_annotations: Dict[str, cst.Annotation] = field(default_factory=dict)
     class_definitions: Dict[str, cst.ClassDef] = field(default_factory=dict)
 
@@ -363,6 +372,7 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
         overwrite_existing_annotations: bool = False,
         use_future_annotations: bool = False,
         strict_posargs_matching: bool = True,
+        strict_annotation_matching: bool = False,
     ) -> None:
         super().__init__(context)
         # Qualifier for storing the canonical name of the current function.
@@ -375,6 +385,7 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
         self.overwrite_existing_annotations = overwrite_existing_annotations
         self.use_future_annotations = use_future_annotations
         self.strict_posargs_matching = strict_posargs_matching
+        self.strict_annotation_matching = strict_annotation_matching
 
         # We use this to determine the end of the import block so that we can
         # insert top-level annotations.
@@ -392,6 +403,7 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
         overwrite_existing_annotations: bool = False,
         use_future_annotations: bool = False,
         strict_posargs_matching: bool = True,
+        strict_annotation_matching: bool = False,
     ) -> None:
         """
         Store a stub module in the :class:`~libcst.codemod.CodemodContext` so
@@ -409,6 +421,7 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
             overwrite_existing_annotations,
             use_future_annotations,
             strict_posargs_matching,
+            strict_annotation_matching,
         )
 
     def transform_module_impl(self, tree: cst.Module) -> cst.Module:
@@ -430,6 +443,7 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
                 overwrite_existing_annotations,
                 use_future_annotations,
                 strict_posargs_matching,
+                strict_annotation_matching,
             ) = context_contents
             self.overwrite_existing_annotations = (
                 self.overwrite_existing_annotations or overwrite_existing_annotations
@@ -439,6 +453,9 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
             )
             self.strict_posargs_matching = (
                 self.strict_posargs_matching and strict_posargs_matching
+            )
+            self.strict_annotation_matching = (
+                self.strict_annotation_matching or strict_annotation_matching
             )
             visitor = TypeCollector(existing_import_names, self.context)
             cst.MetadataWrapper(stub).visit(visitor)
@@ -644,12 +661,16 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
     ) -> bool:
         """Check that function annotations on both signatures are compatible."""
 
-        def compatible(p: Optional[cst.Annotation], q: Optional[cst.Annotation]) -> bool:
-            return self.overwrite_existing_annotations or (
-                not _is_set(p)
-                or not _is_set(q)
-                or p.annotation.deep_equals(q.annotation)
-            )
+        def compatible(
+            p: Optional[cst.Annotation], q: Optional[cst.Annotation]
+        ) -> bool:
+            if self.overwrite_existing_annotations or not _is_set(p) or not _is_set(q):
+                return True
+            if not self.strict_annotation_matching:
+                # We will not overwrite clashing annotations, but the signature as a
+                # whole will be marked compatible so that holes can be filled in.
+                return True
+            return p.annotation.deep_equals(q.annotation)  # pyre-ignore[16]
 
         def match_posargs(ps: Sequence[cst.Param], qs: Sequence[cst.Param]) -> bool:
             if len(ps) != len(qs):
@@ -671,7 +692,7 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
                     return False
             return True
 
-        def match_star(p: cst.Param, q: cst.Param) -> bool:
+        def match_star(p: StarParamType, q: StarParamType) -> bool:
             return _is_set(p) == _is_set(q)
 
         def match_params(f: cst.FunctionDef, g: FunctionAnnotation) -> bool:
