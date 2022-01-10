@@ -19,6 +19,13 @@ from libcst.metadata import PositionProvider, QualifiedNameProvider
 
 NameOrAttribute = Union[cst.Name, cst.Attribute]
 NAME_OR_ATTRIBUTE = (cst.Name, cst.Attribute)
+# Union type for *args and **args
+StarParamType = Union[
+    None,
+    cst._maybe_sentinel.MaybeSentinel,
+    cst._nodes.expression.Param,
+    cst._nodes.expression.ParamStar,
+]
 
 
 def _get_import_alias_names(import_aliases: Sequence[cst.ImportAlias]) -> Set[str]:
@@ -44,6 +51,29 @@ def _get_import_names(imports: Sequence[Union[cst.Import, cst.ImportFrom]]) -> S
     return import_names
 
 
+def _is_set(x: Union[None, cst.CSTNode, cst.MaybeSentinel]) -> bool:
+    return x is not None and x != cst.MaybeSentinel.DEFAULT
+
+
+@dataclass(frozen=True)
+class FunctionKey:
+    name: str
+    pos: int
+    kwonly: str
+    posonly: int
+    star_arg: bool
+    star_kwarg: bool
+
+    @classmethod
+    def make(cls, name: str, params: cst.Parameters) -> "FunctionKey":
+        pos = len(params.params)
+        kwonly = ",".join(sorted(x.name.value for x in params.kwonly_params))
+        posonly = len(params.posonly_params)
+        star_arg = _is_set(params.star_arg)
+        star_kwarg = _is_set(params.star_kwarg)
+        return cls(name, pos, kwonly, posonly, star_arg, star_kwarg)
+
+
 @dataclass(frozen=True)
 class FunctionAnnotation:
     parameters: cst.Parameters
@@ -64,7 +94,7 @@ class TypeCollector(cst.CSTVisitor):
         # Qualifier for storing the canonical name of the current function.
         self.qualifier: List[str] = []
         # Store the annotations.
-        self.function_annotations: Dict[str, FunctionAnnotation] = {}
+        self.function_annotations: Dict[FunctionKey, FunctionAnnotation] = {}
         self.attribute_annotations: Dict[str, cst.Annotation] = {}
         self.existing_imports: Set[str] = existing_imports
         self.class_definitions: Dict[str, cst.ClassDef] = {}
@@ -100,7 +130,9 @@ class TypeCollector(cst.CSTVisitor):
             self._handle_Annotation(annotation=returns) if returns is not None else None
         )
         parameter_annotations = self._handle_Parameters(node.params)
-        self.function_annotations[".".join(self.qualifier)] = FunctionAnnotation(
+        name = ".".join(self.qualifier)
+        key = FunctionKey.make(name, node.params)
+        self.function_annotations[key] = FunctionAnnotation(
             parameters=parameter_annotations, returns=return_annotation
         )
 
@@ -272,7 +304,9 @@ class TypeCollector(cst.CSTVisitor):
 
 @dataclass(frozen=True)
 class Annotations:
-    function_annotations: Dict[str, FunctionAnnotation] = field(default_factory=dict)
+    function_annotations: Dict[FunctionKey, FunctionAnnotation] = field(
+        default_factory=dict
+    )
     attribute_annotations: Dict[str, cst.Annotation] = field(default_factory=dict)
     class_definitions: Dict[str, cst.ClassDef] = field(default_factory=dict)
 
@@ -338,6 +372,8 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
         annotations: Optional[Annotations] = None,
         overwrite_existing_annotations: bool = False,
         use_future_annotations: bool = False,
+        strict_posargs_matching: bool = True,
+        strict_annotation_matching: bool = False,
     ) -> None:
         super().__init__(context)
         # Qualifier for storing the canonical name of the current function.
@@ -349,6 +385,8 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
         self.visited_classes: Set[str] = set()
         self.overwrite_existing_annotations = overwrite_existing_annotations
         self.use_future_annotations = use_future_annotations
+        self.strict_posargs_matching = strict_posargs_matching
+        self.strict_annotation_matching = strict_annotation_matching
 
         # We use this to determine the end of the import block so that we can
         # insert top-level annotations.
@@ -365,6 +403,8 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
         stub: cst.Module,
         overwrite_existing_annotations: bool = False,
         use_future_annotations: bool = False,
+        strict_posargs_matching: bool = True,
+        strict_annotation_matching: bool = False,
     ) -> None:
         """
         Store a stub module in the :class:`~libcst.codemod.CodemodContext` so
@@ -381,6 +421,8 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
             stub,
             overwrite_existing_annotations,
             use_future_annotations,
+            strict_posargs_matching,
+            strict_annotation_matching,
         )
 
     def transform_module_impl(self, tree: cst.Module) -> cst.Module:
@@ -401,12 +443,20 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
                 stub,
                 overwrite_existing_annotations,
                 use_future_annotations,
+                strict_posargs_matching,
+                strict_annotation_matching,
             ) = context_contents
             self.overwrite_existing_annotations = (
                 self.overwrite_existing_annotations or overwrite_existing_annotations
             )
             self.use_future_annotations = (
                 self.use_future_annotations or use_future_annotations
+            )
+            self.strict_posargs_matching = (
+                self.strict_posargs_matching and strict_posargs_matching
+            )
+            self.strict_annotation_matching = (
+                self.strict_annotation_matching or strict_annotation_matching
             )
             visitor = TypeCollector(existing_import_names, self.context)
             cst.MetadataWrapper(stub).visit(visitor)
@@ -538,15 +588,21 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
         # Don't override existing annotations or default values unless asked
         # to overwrite existing annotations.
         def update_annotation(
-            parameters: Sequence[cst.Param], annotations: Sequence[cst.Param]
+            parameters: Sequence[cst.Param],
+            annotations: Sequence[cst.Param],
+            positional: bool,
         ) -> List[cst.Param]:
             parameter_annotations = {}
             annotated_parameters = []
-            for parameter in annotations:
+            positional = positional and not self.strict_posargs_matching
+            for i, parameter in enumerate(annotations):
+                key = i if positional else parameter.name.value
                 if parameter.annotation:
-                    parameter_annotations[parameter.name.value] = parameter.annotation
-            for parameter in parameters:
-                key = parameter.name.value
+                    parameter_annotations[key] = parameter.annotation.with_changes(
+                        whitespace_before_indicator=cst.SimpleWhitespace(value="")
+                    )
+            for i, parameter in enumerate(parameters):
+                key = i if positional else parameter.name.value
                 if key in parameter_annotations and (
                     self.overwrite_existing_annotations or not parameter.annotation
                 ):
@@ -559,14 +615,19 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
 
         return annotations.parameters.with_changes(
             params=update_annotation(
-                updated_node.params.params, annotations.parameters.params
+                updated_node.params.params,
+                annotations.parameters.params,
+                positional=True,
             ),
             kwonly_params=update_annotation(
-                updated_node.params.kwonly_params, annotations.parameters.kwonly_params
+                updated_node.params.kwonly_params,
+                annotations.parameters.kwonly_params,
+                positional=False,
             ),
             posonly_params=update_annotation(
                 updated_node.params.posonly_params,
                 annotations.parameters.posonly_params,
+                positional=True,
             ),
         )
 
@@ -594,6 +655,64 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
             *statements[1:],
         ]
 
+    def _match_signatures(  # noqa: C901: Too complex
+        self,
+        function: cst.FunctionDef,
+        annotations: FunctionAnnotation,
+    ) -> bool:
+        """Check that function annotations on both signatures are compatible."""
+
+        def compatible(
+            p: Optional[cst.Annotation], q: Optional[cst.Annotation]
+        ) -> bool:
+            if self.overwrite_existing_annotations or not _is_set(p) or not _is_set(q):
+                return True
+            if not self.strict_annotation_matching:
+                # We will not overwrite clashing annotations, but the signature as a
+                # whole will be marked compatible so that holes can be filled in.
+                return True
+            return p.annotation.deep_equals(q.annotation)  # pyre-ignore[16]
+
+        def match_posargs(ps: Sequence[cst.Param], qs: Sequence[cst.Param]) -> bool:
+            if len(ps) != len(qs):
+                return False
+            for p, q in zip(ps, qs):
+                if self.strict_posargs_matching and not p.name.value == q.name.value:
+                    return False
+                if not compatible(p.annotation, q.annotation):
+                    return False
+            return True
+
+        def match_kwargs(ps: Sequence[cst.Param], qs: Sequence[cst.Param]) -> bool:
+            ps_dict = {x.name.value: x for x in ps}
+            qs_dict = {x.name.value: x for x in qs}
+            if set(ps_dict.keys()) != set(qs_dict.keys()):
+                return False
+            for k in ps_dict.keys():
+                if not compatible(ps_dict[k].annotation, qs_dict[k].annotation):
+                    return False
+            return True
+
+        def match_star(p: StarParamType, q: StarParamType) -> bool:
+            return _is_set(p) == _is_set(q)
+
+        def match_params(f: cst.FunctionDef, g: FunctionAnnotation) -> bool:
+            p, q = f.params, g.parameters
+            return (
+                match_posargs(p.params, q.params)
+                and match_posargs(p.posonly_params, q.posonly_params)
+                and match_kwargs(p.kwonly_params, q.kwonly_params)
+                and match_star(p.star_arg, q.star_arg)
+                and match_star(p.star_kwarg, q.star_kwarg)
+            )
+
+        def match_return(f: cst.FunctionDef, g: FunctionAnnotation) -> bool:
+            return compatible(f.returns, g.returns)
+
+        return match_params(function, annotations) and match_return(
+            function, annotations
+        )
+
     # transform API methods
 
     def visit_ClassDef(self, node: cst.ClassDef) -> None:
@@ -614,12 +733,16 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
     def leave_FunctionDef(
         self, original_node: cst.FunctionDef, updated_node: cst.FunctionDef
     ) -> cst.FunctionDef:
-        key = self._qualifier_name()
+        key = FunctionKey.make(self._qualifier_name(), updated_node.params)
         self.qualifier.pop()
         if key in self.annotations.function_annotations:
             function_annotation = self.annotations.function_annotations[key]
-            # Only add new annotation if explicitly told to overwrite existing
-            # annotations or if one doesn't already exist.
+            # Only add new annotation if:
+            # * we have matching function signatures and
+            # * we are explicitly told to overwrite existing annotations or
+            # * there is no existing annotation
+            if not self._match_signatures(updated_node, function_annotation):
+                return updated_node
             set_return_annotation = (
                 self.overwrite_existing_annotations or updated_node.returns is None
             )
