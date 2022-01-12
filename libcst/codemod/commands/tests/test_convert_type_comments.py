@@ -42,6 +42,8 @@ class TestConvertTypeComments(CodemodTest):
         Also verify that our matching works regardless of spacing
         """
         before = """
+            bar(); baz = 12  # type: int
+
             def foo():
                 z = ('this', 7) # type: typing.Tuple[str, int]
 
@@ -51,6 +53,8 @@ class TestConvertTypeComments(CodemodTest):
                     self.attr1 = True  # type: bool
         """
         after = """
+            bar(); baz: int = 12
+
             def foo():
                 z: "typing.Tuple[str, int]" = ('this', 7)
 
@@ -61,38 +65,16 @@ class TestConvertTypeComments(CodemodTest):
         """
         self.assertCodemod38Plus(before, after)
 
-    def test_strip_useless_type_comments(self) -> None:
-        """
-        Verify that we remove type comments that are in a place
-        not permitted by PEP 484. This is debateable behavior but
-        is intended, because according to PEP 484 such comments are
-        illegal.
-        """
-        before = """
-           print("hello")  # type: None
-        """
-        after = """
-           print("hello")
-        """
-        self.assertCodemod38Plus(before, after)
-
-    def test_non_type_comments_on_assignments(self) -> None:
+    def test_no_change_when_type_comment_unused(self) -> None:
         before = """
             # type-ignores are not type comments
             x = 10  # type: ignore
+
             # a commented type comment (per PEP 484) is not a type comment
             z = 15  # # type: int
-        """
-        after = before
-        self.assertCodemod38Plus(before, after)
 
-    def test_no_change_to_non_single_statement_comments(self) -> None:
-        before = """
-            def f(
-                x,  # type: int
-            ):
-                # type (...) -> int
-                return x
+            # a type comment in an illegal location won't be used
+            print("hello")  # type: None
         """
         after = before
         self.assertCodemod38Plus(before, after)

@@ -28,8 +28,10 @@ def _ast_for_node(node: cst.CSTNode) -> ast.Module:
     return ast.parse(code, type_comments=True)
 
 
-def _assign_type_comment(node: cst.SimpleStatementLine) -> Optional[str]:
-    return _ast_for_node(node).body[0].type_comment
+def _simple_statement_type_comment(
+    node: cst.SimpleStatementLine,
+) -> Optional[str]:
+    return _ast_for_node(node).body[-1].type_comment
 
 
 @functools.lru_cache()
@@ -65,8 +67,6 @@ class ConvertTypeComments(VisitorBasedCodemodCommand):
     TYPE_COMMENT_REGEX: Pattern[str] = re.compile("# *type: *[^ ]+")
     TYPE_IGNORE_PREFIX: str = "# type: ignore"
 
-    _should_strip_type_comments: bool = False
-
     def __init__(self, context: CodemodContext) -> None:
         if (sys.version_info.major, sys.version_info.minor) < (3, 8):
             # The ast module did not get `type_comments` until Python 3.7.
@@ -82,15 +82,16 @@ class ConvertTypeComments(VisitorBasedCodemodCommand):
             )
         super().__init__(context)
 
-    def _is_type_comment(self, comment: Optional[cst.Comment]) -> bool:
-        return (
-            comment is not None
-            and self.TYPE_COMMENT_REGEX.match(comment.value) is not None
-            and not comment.value.startswith(self.TYPE_IGNORE_PREFIX)
+    def _strip_TrailingWhitespace(
+        self,
+        node: cst.TrailingWhitespace,
+    ) -> cst.TrailingWhitespace:
+        return node.with_changes(
+            whitespace=cst.SimpleWhitespace(
+                ""
+            ),  # any whitespace came before the comment, so strip it.
+            comment=None,
         )
-
-    def _should_strip_comment(self, comment: Optional[cst.Comment]) -> bool:
-        return self._should_strip_type_comments and self._is_type_comment(comment)
 
     def _convert_Assign(
         self,
@@ -106,13 +107,6 @@ class ConvertTypeComments(VisitorBasedCodemodCommand):
             semicolon=assign.semicolon,
         )
 
-    def visit_SimpleStatementLine(
-        self,
-        node: cst.SimpleStatementLine,
-    ) -> None:
-        # manage the state used for determining comments to delete
-        self._should_strip_type_comments = True
-
     def leave_SimpleStatementLine(
         self,
         original_node: cst.SimpleStatementLine,
@@ -122,42 +116,24 @@ class ConvertTypeComments(VisitorBasedCodemodCommand):
         Convert any SimpleStatementLine containing an Assign with a
         type comment into a one that uses a PEP 526 AnnAssign.
         """
-        # manage the state used for determining comments to delete
-        self._should_strip_type_comments = False
         # determine whether to apply an annotation
-        body = updated_node.body
-        if len(body) != 1:
-            return updated_node
-        statement = body[0]
+        statement = updated_node.body[-1]
         if not isinstance(statement, cst.Assign):
             return updated_node
-        type_comment = _assign_type_comment(original_node)
+        type_comment = _simple_statement_type_comment(original_node)
         if type_comment is None:
             return updated_node
         # At this point have a single-line Assign with a type comment.
         # Convert it to an AnnAssign.
         return updated_node.with_changes(
             body=[
+                *updated_node.body[:-1],
                 self._convert_Assign(
                     assign=statement,
                     type_comment=type_comment,
-                )
-            ]
+                ),
+            ],
+            trailing_whitespace=self._strip_TrailingWhitespace(
+                updated_node.trailing_whitespace
+            ),
         )
-
-    def leave_TrailingWhitespace(
-        self,
-        original_node: cst.TrailingWhitespace,
-        updated_node: cst.TrailingWhitespace,
-    ) -> cst.TrailingWhitespace:
-        """
-        Remove type comments from trailing whitespace.
-        """
-        if self._should_strip_comment(updated_node.comment):
-            return updated_node.with_changes(
-                whitespace=cst.SimpleWhitespace(
-                    ""
-                ),  # whitespace came before the comment, so strip it.
-                comment=None,
-            )
-        return updated_node
