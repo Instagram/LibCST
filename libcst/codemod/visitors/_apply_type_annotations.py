@@ -232,7 +232,7 @@ class TypeCollector(cst.CSTVisitor):
         else:
             return dequalified_node
 
-    def _handle_Index(self, slice: cst.Index, node: cst.Subscript) -> cst.Index:
+    def _handle_Index(self, slice: cst.Index) -> cst.Index:
         value = slice.value
         if isinstance(value, cst.Subscript):
             return slice.with_changes(value=self._handle_Subscript(value))
@@ -265,7 +265,7 @@ class TypeCollector(cst.CSTVisitor):
                 else:
                     if isinstance(item.slice, cst.Index):
                         new_index = item.slice.with_changes(
-                            value=self._handle_Index(item.slice, item)
+                            value=self._handle_Index(item.slice)
                         )
                         item = item.with_changes(slice=new_index)
                     new_slice.append(item)
