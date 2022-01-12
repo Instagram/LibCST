@@ -2,7 +2,9 @@
 #
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
-#
+
+import sys
+
 from libcst.codemod import CodemodTest
 from libcst.codemod.commands.convert_type_comments import ConvertTypeComments
 
@@ -10,6 +12,13 @@ from libcst.codemod.commands.convert_type_comments import ConvertTypeComments
 class TestConvertTypeComments(CodemodTest):
 
     TRANSFORM = ConvertTypeComments
+
+    def assertCodemod(self, before: str, after: str):
+        if (sys.version_info.major, sys.version_info.minor) < (3, 8):
+            with self.assertRaises(NotImplementedError):
+                super().assertCodemod(before, after)
+        else:
+            super().assertCodemod(before, after)
 
     # Tests converting assignment type comments -----------------
 

@@ -24,7 +24,19 @@ def _code_for_node(node: cst.CSTNode) -> str:
 
 def _ast_for_node(node: cst.CSTNode) -> ast.Module:
     code = _code_for_node(node)
-    return ast.parse(code, type_comments=True)
+    try:
+        return ast.parse(code, type_comments=True)
+    except TypeError:
+        # The ast module did not get `type_comments` until Python 3.7.
+        # In 3.6, we should error than silently running a nonsense codemod.
+        #
+        # NOTE: it is possible to use the typed_ast library for 3.6, but this is
+        # not a high priority right now. See, e.g., the mypy.fastparse module.
+        raise NotImplementedError(
+            "You are trying to run ConvertTypeComments on a "
+            "python version without type comment support. Please "
+            "try using python 3.8 to run your codemod"
+        )
 
 
 def _assign_type_comment(node: cst.SimpleStatementLine) -> Optional[str]:
@@ -45,7 +57,9 @@ def _convert_annotation(raw: str) -> cst.Annotation:
     # otherwise runtime errors would be common.
     #
     # Special-case builtins to reduce the amount of quoting noise.
-    # TODO: use scope provider to detect more cases where we can skip quotes.
+    #
+    # NOTE: we could potentially detect more cases for skipping quotes
+    # using ScopeProvider, which would make the output prettier.
     if _is_builtin(raw):
         return cst.Annotation(annotation=cst.Name(value=raw))
     else:
