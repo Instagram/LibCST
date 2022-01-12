@@ -23,12 +23,12 @@ path = "src/bin.rs"
 #
 # Once https://github.com/PyO3/pyo3/pull/1123 lands, it may be better to use
 # `-Zextra-link-arg` for this instead.
-default = ["pyo3/extension-module"]
+default = ["pyo3","pyo3/extension-module"]
 trace = ["peg/trace"]
 
 [dependencies]
 paste = "1.0.4"
-pyo3 = "0.14.4"
+pyo3 = { version = "0.14.4", optional = true }
 thiserror = "1.0.23"
 peg = { git = "https://github.com/kevinmehall/rust-peg", rev = "4b146b4b78a80c07e43d7ace2d97f65bfde279a8" }
 chic = "1.2.2"

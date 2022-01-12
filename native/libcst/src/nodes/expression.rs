@@ -812,32 +812,6 @@ pub enum Element<'a> {
     Starred(StarredElement<'a>),
 }
 
-// TODO: this could be a derive helper attribute to override the python class name
-impl<'a> IntoPy<pyo3::PyObject> for Element<'a> {
-    fn into_py(self, py: pyo3::Python) -> pyo3::PyObject {
-        match self {
-            Self::Starred(s) => s.into_py(py),
-            Self::Simple { value, comma } => {
-                let libcst = PyModule::import(py, "libcst").expect("libcst cannot be imported");
-                let kwargs = [
-                    Some(("value", value.into_py(py))),
-                    comma.map(|x| ("comma", x.into_py(py))),
-                ]
-                .iter()
-                .filter(|x| x.is_some())
-                .map(|x| x.as_ref().unwrap())
-                .collect::<Vec<_>>()
-                .into_py_dict(py);
-                libcst
-                    .getattr("Element")
-                    .expect("no Element found in libcst")
-                    .call((), Some(kwargs))
-                    .expect("conversion failed")
-                    .into()
-            }
-        }
-    }
-}
 
 impl<'a> Element<'a> {
     fn codegen(
@@ -1173,11 +1147,6 @@ impl<'a> Codegen<'a> for RightCurlyBrace<'a> {
     }
 }
 
-impl<'a> pyo3::conversion::IntoPy<pyo3::PyObject> for Box<CompFor<'a>> {
-    fn into_py(self, py: pyo3::Python) -> pyo3::PyObject {
-        (*self).into_py(py)
-    }
-}
 
 #[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
 pub struct CompFor<'a> {
@@ -1435,46 +1404,6 @@ pub enum DictElement<'a> {
         colon_tok: TokenRef<'a>,
     },
     Starred(StarredDictElement<'a>),
-}
-
-// TODO: this could be a derive helper attribute to override the python class name
-impl<'a> IntoPy<pyo3::PyObject> for DictElement<'a> {
-    fn into_py(self, py: pyo3::Python) -> pyo3::PyObject {
-        match self {
-            Self::Starred(s) => s.into_py(py),
-            Self::Simple {
-                key,
-                value,
-                comma,
-                whitespace_after_colon,
-                whitespace_before_colon,
-                ..
-            } => {
-                let libcst = PyModule::import(py, "libcst").expect("libcst cannot be imported");
-                let kwargs = [
-                    Some(("key", key.into_py(py))),
-                    Some(("value", value.into_py(py))),
-                    Some((
-                        "whitespace_before_colon",
-                        whitespace_before_colon.into_py(py),
-                    )),
-                    Some(("whitespace_after_colon", whitespace_after_colon.into_py(py))),
-                    comma.map(|x| ("comma", x.into_py(py))),
-                ]
-                .iter()
-                .filter(|x| x.is_some())
-                .map(|x| x.as_ref().unwrap())
-                .collect::<Vec<_>>()
-                .into_py_dict(py);
-                libcst
-                    .getattr("DictElement")
-                    .expect("no Element found in libcst")
-                    .call((), Some(kwargs))
-                    .expect("conversion failed")
-                    .into()
-            }
-        }
-    }
 }
 
 impl<'a> DictElement<'a> {
@@ -1919,11 +1848,7 @@ impl<'a> YieldValue<'a> {
     }
 }
 
-impl<'a> pyo3::conversion::IntoPy<pyo3::PyObject> for Box<YieldValue<'a>> {
-    fn into_py(self, py: pyo3::Python) -> pyo3::PyObject {
-        (*self).into_py(py)
-    }
-}
+
 
 #[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode, IntoPy)]
 pub struct Yield<'a> {
@@ -2231,4 +2156,103 @@ impl<'a> Inflate<'a> for NamedExpr<'a> {
         self.rpar = self.rpar.inflate(config)?;
         Ok(self)
     }
+}
+
+
+#[cfg(feature = "pyo3")]
+mod py {
+
+    use pyo3::{types::PyModule, IntoPy};
+
+    use crate::OrElse;
+    use super::*;
+
+    // TODO: this could be a derive helper attribute to override the python class name
+    impl<'a> IntoPy<pyo3::PyObject> for Element<'a> {
+        fn into_py(self, py: pyo3::Python) -> pyo3::PyObject {
+            match self {
+                Self::Starred(s) => s.into_py(py),
+                Self::Simple { value, comma } => {
+                    let libcst = PyModule::import(py, "libcst").expect("libcst cannot be imported");
+                    let kwargs = [
+                        Some(("value", value.into_py(py))),
+                        comma.map(|x| ("comma", x.into_py(py))),
+                    ]
+                    .iter()
+                    .filter(|x| x.is_some())
+                    .map(|x| x.as_ref().unwrap())
+                    .collect::<Vec<_>>()
+                    .into_py_dict(py);
+                    libcst
+                        .getattr("Element")
+                        .expect("no Element found in libcst")
+                        .call((), Some(kwargs))
+                        .expect("conversion failed")
+                        .into()
+                }
+            }
+        }
+    }
+
+
+    // TODO: this could be a derive helper attribute to override the python class name
+    impl<'a> IntoPy<pyo3::PyObject> for DictElement<'a> {
+        fn into_py(self, py: pyo3::Python) -> pyo3::PyObject {
+            match self {
+                Self::Starred(s) => s.into_py(py),
+                Self::Simple {
+                    key,
+                    value,
+                    comma,
+                    whitespace_after_colon,
+                    whitespace_before_colon,
+                    ..
+                } => {
+                    let libcst = PyModule::import(py, "libcst").expect("libcst cannot be imported");
+                    let kwargs = [
+                        Some(("key", key.into_py(py))),
+                        Some(("value", value.into_py(py))),
+                        Some((
+                            "whitespace_before_colon",
+                            whitespace_before_colon.into_py(py),
+                        )),
+                        Some(("whitespace_after_colon", whitespace_after_colon.into_py(py))),
+                        comma.map(|x| ("comma", x.into_py(py))),
+                    ]
+                    .iter()
+                    .filter(|x| x.is_some())
+                    .map(|x| x.as_ref().unwrap())
+                    .collect::<Vec<_>>()
+                    .into_py_dict(py);
+                    libcst
+                        .getattr("DictElement")
+                        .expect("no Element found in libcst")
+                        .call((), Some(kwargs))
+                        .expect("conversion failed")
+                        .into()
+                }
+            }
+        }
+    }
+
+
+    impl<'a> pyo3::conversion::IntoPy<pyo3::PyObject> for Box<CompFor<'a>> {
+        fn into_py(self, py: pyo3::Python) -> pyo3::PyObject {
+            (*self).into_py(py)
+        }
+    }
+
+    impl<'a> pyo3::conversion::IntoPy<pyo3::PyObject> for Box<YieldValue<'a>> {
+        fn into_py(self, py: pyo3::Python) -> pyo3::PyObject {
+            (*self).into_py(py)
+        }
+    }
+
+    impl<'a> pyo3::conversion::IntoPy<pyo3::PyObject> for Box<OrElse<'a>> {
+        fn into_py(self, py: pyo3::Python) -> pyo3::PyObject {
+            (*self).into_py(py)
+        }
+    }
+    
+
 }
