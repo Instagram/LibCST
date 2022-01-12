@@ -7,10 +7,11 @@ import ast
 import builtins
 import functools
 import re
+import sys
 from typing import Optional, Pattern, Set, Union
 
 import libcst as cst
-from libcst.codemod import VisitorBasedCodemodCommand
+from libcst.codemod import CodemodContext, VisitorBasedCodemodCommand
 
 
 @functools.lru_cache()
@@ -24,19 +25,7 @@ def _code_for_node(node: cst.CSTNode) -> str:
 
 def _ast_for_node(node: cst.CSTNode) -> ast.Module:
     code = _code_for_node(node)
-    try:
-        return ast.parse(code, type_comments=True)
-    except TypeError:
-        # The ast module did not get `type_comments` until Python 3.7.
-        # In 3.6, we should error than silently running a nonsense codemod.
-        #
-        # NOTE: it is possible to use the typed_ast library for 3.6, but this is
-        # not a high priority right now. See, e.g., the mypy.fastparse module.
-        raise NotImplementedError(
-            "You are trying to run ConvertTypeComments on a "
-            "python version without type comment support. Please "
-            "try using python 3.8 to run your codemod"
-        )
+    return ast.parse(code, type_comments=True)
 
 
 def _assign_type_comment(node: cst.SimpleStatementLine) -> Optional[str]:
@@ -71,13 +60,27 @@ class ConvertTypeComments(VisitorBasedCodemodCommand):
     Codemod that converts type comments, as described in
     https://www.python.org/dev/peps/pep-0484/#type-comments,
     into PEP 526 annotated assignments.
-
     """
 
     TYPE_COMMENT_REGEX: Pattern[str] = re.compile("# *type: *[^ ]+")
     TYPE_IGNORE_PREFIX: str = "# type: ignore"
 
     _should_strip_type_comments: bool = False
+
+    def __init__(self, context: CodemodContext) -> None:
+        if (sys.version_info.major, sys.version_info.minor) < (3, 8):
+            # The ast module did not get `type_comments` until Python 3.7.
+            # In 3.6, we should error than silently running a nonsense codemod.
+            #
+            # NOTE: it is possible to use the typed_ast library for 3.6, but
+            # this is not a high priority right now. See, e.g., the
+            # mypy.fastparse module.
+            raise NotImplementedError(
+                "You are trying to run ConvertTypeComments on a "
+                + "python version without type comment support. Please "
+                + "try using python 3.8+ to run your codemod."
+            )
+        super().__init__(context)
 
     def _is_type_comment(self, comment: Optional[cst.Comment]) -> bool:
         return (
