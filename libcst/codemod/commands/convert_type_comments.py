@@ -61,6 +61,10 @@ class ConvertTypeComments(VisitorBasedCodemodCommand):
     Codemod that converts type comments, as described in
     https://www.python.org/dev/peps/pep-0484/#type-comments,
     into PEP 526 annotated assignments.
+
+    This is a work in progress: the codemod only currently handles
+    single-annotation assigns, but it will preserve any type comments
+    that it does not consume.
     """
 
     def __init__(self, context: CodemodContext) -> None:
