@@ -11,6 +11,7 @@ from libcst.codemod.commands.convert_type_comments import ConvertTypeComments
 
 class TestConvertTypeComments(CodemodTest):
 
+    maxDiff = 1000
     TRANSFORM = ConvertTypeComments
 
     def assertCodemod38Plus(self, before: str, after: str) -> None:
@@ -75,6 +76,13 @@ class TestConvertTypeComments(CodemodTest):
 
             # a type comment in an illegal location won't be used
             print("hello")  # type: None
+
+            # We currently cannot handle multiple-target assigns.
+            # Make sure we won't strip those type comments.
+            x, y, z = [], [], []  # type: List[int], List[int], List[str]
+            x, y, z = [], [], []  # type: (List[int], List[int], List[str])
+            a, b, *c = range(5)   # type: float, float, List[float]
+            a, b = 1, 2  # type: Tuple[int, int]
         """
         after = before
         self.assertCodemod38Plus(before, after)

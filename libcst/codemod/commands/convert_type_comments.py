@@ -6,9 +6,8 @@
 import ast
 import builtins
 import functools
-import re
 import sys
-from typing import Optional, Pattern, Set, Union
+from typing import Optional, Set, Union
 
 import libcst as cst
 from libcst.codemod import CodemodContext, VisitorBasedCodemodCommand
@@ -64,9 +63,6 @@ class ConvertTypeComments(VisitorBasedCodemodCommand):
     into PEP 526 annotated assignments.
     """
 
-    TYPE_COMMENT_REGEX: Pattern[str] = re.compile("# *type: *[^ ]+")
-    TYPE_IGNORE_PREFIX: str = "# type: ignore"
-
     def __init__(self, context: CodemodContext) -> None:
         if (sys.version_info.major, sys.version_info.minor) < (3, 8):
             # The ast module did not get `type_comments` until Python 3.7.
@@ -99,7 +95,9 @@ class ConvertTypeComments(VisitorBasedCodemodCommand):
         type_comment: str,
     ) -> Union[cst.AnnAssign, cst.Assign]:
         if len(assign.targets) != 1:
-            return assign
+            # this case is not yet implemented, and we short-circuit
+            # it when handling SimpleStatementLine.
+            raise RuntimeError("Should not convert multi-target assign")
         return cst.AnnAssign(
             target=assign.targets[0].target,
             annotation=_convert_annotation(raw=type_comment),
@@ -117,19 +115,24 @@ class ConvertTypeComments(VisitorBasedCodemodCommand):
         type comment into a one that uses a PEP 526 AnnAssign.
         """
         # determine whether to apply an annotation
-        statement = updated_node.body[-1]
-        if not isinstance(statement, cst.Assign):
+        assign = updated_node.body[-1]
+        if not isinstance(assign, cst.Assign):  # only Assign matters
+            return updated_node
+        if len(assign.targets) != 1:  # multi-target Assign isn't used
+            return updated_node
+        target = assign.targets[0].target
+        if isinstance(target, cst.Tuple):  # multi-element Assign isn't handled
             return updated_node
         type_comment = _simple_statement_type_comment(original_node)
         if type_comment is None:
             return updated_node
         # At this point have a single-line Assign with a type comment.
-        # Convert it to an AnnAssign.
+        # Convert it to an AnnAssign and strip the comment.
         return updated_node.with_changes(
             body=[
                 *updated_node.body[:-1],
                 self._convert_Assign(
-                    assign=statement,
+                    assign=assign,
                     type_comment=type_comment,
                 ),
             ],
