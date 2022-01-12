@@ -13,7 +13,11 @@ class TestConvertTypeComments(CodemodTest):
 
     TRANSFORM = ConvertTypeComments
 
-    def assertCodemod(self, before: str, after: str):
+    def assertCodemod38Plus(self, before: str, after: str) -> None:
+        """
+        Assert that the codemod works on Python 3.8+, and that we raise
+        a NotImplementedError on other python versions.
+        """
         if (sys.version_info.major, sys.version_info.minor) < (3, 8):
             with self.assertRaises(NotImplementedError):
                 super().assertCodemod(before, after)
@@ -31,7 +35,7 @@ class TestConvertTypeComments(CodemodTest):
             y: int = 5
             z: "typing.Tuple[str, int]" = ('this', 7)
         """
-        self.assertCodemod(before, after)
+        self.assertCodemod38Plus(before, after)
 
     def test_convert_assignments_in_context(self) -> None:
         """
@@ -55,7 +59,7 @@ class TestConvertTypeComments(CodemodTest):
                 def __init__(self):
                     self.attr1: bool = True
         """
-        self.assertCodemod(before, after)
+        self.assertCodemod38Plus(before, after)
 
     def test_strip_useless_type_comments(self) -> None:
         """
@@ -70,7 +74,7 @@ class TestConvertTypeComments(CodemodTest):
         after = """
            print("hello")
         """
-        self.assertCodemod(before, after)
+        self.assertCodemod38Plus(before, after)
 
     def test_non_type_comments_on_assignments(self) -> None:
         before = """
@@ -80,7 +84,7 @@ class TestConvertTypeComments(CodemodTest):
             z = 15  # # type: int
         """
         after = before
-        self.assertCodemod(before, after)
+        self.assertCodemod38Plus(before, after)
 
     def test_no_change_to_non_single_statement_comments(self) -> None:
         before = """
@@ -91,4 +95,4 @@ class TestConvertTypeComments(CodemodTest):
                 return x
         """
         after = before
-        self.assertCodemod(before, after)
+        self.assertCodemod38Plus(before, after)
