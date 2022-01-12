@@ -1,3 +1,26 @@
+# 0.4.0 - 2022-01-12
+
+This release contains a new parsing infrastructure that is turned off by default. You
+can enable it by setting the `LIBCST_PARSER_TYPE` environment variable to `native`
+before parsing an input with the usual LibCST APIs. Parsing Python 3.10 documents is
+only supported in this new mode.
+
+Note: the new parser is built as a native extension, so LibCST will ship with binary
+wheels from now on.
+
+## Added
+* Implement a Python PEG parser in Rust by @zsol in [#566](https://github.com/Instagram/LibCST/pull/566)
+* implement PEP-654: except* by @zsol in [#571](https://github.com/Instagram/LibCST/pull/571)
+* Implement PEP-634 - Match statement by @zsol in [#568](https://github.com/Instagram/LibCST/pull/568)
+* Add instructions to codegen test failures by @stroxler in [#582](https://github.com/Instagram/LibCST/pull/582)
+* Support Parenthesized With Statements by @stroxler in [#584](https://github.com/Instagram/LibCST/pull/584)
+* Support relative imports in AddImportsVisitor by @martindemello in [#585](https://github.com/Instagram/LibCST/pull/585)
+* Codemod for PEP 484 Assign w / type comments -> PEP 526 AnnAssign by @stroxler in [#594](https://github.com/Instagram/LibCST/pull/594)
+
+## Updated
+* Update license headers by @zsol in [#560](https://github.com/Instagram/LibCST/pull/560)
+* Use precise signature matching when inserting function type annotations by @martindemello in [#591](https://github.com/Instagram/LibCST/pull/591)
+
 # 0.3.23 - 2021-11-23
 
 ## Fixed
