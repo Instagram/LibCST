@@ -122,13 +122,13 @@ class ConvertTypeComments(VisitorBasedCodemodCommand):
         assign = updated_node.body[-1]
         if not isinstance(assign, cst.Assign):  # only Assign matters
             return updated_node
+        type_comment = _simple_statement_type_comment(original_node)
+        if type_comment is None:
+            return updated_node
         if len(assign.targets) != 1:  # multi-target Assign isn't used
             return updated_node
         target = assign.targets[0].target
         if isinstance(target, cst.Tuple):  # multi-element Assign isn't handled
-            return updated_node
-        type_comment = _simple_statement_type_comment(original_node)
-        if type_comment is None:
             return updated_node
         # At this point have a single-line Assign with a type comment.
         # Convert it to an AnnAssign and strip the comment.
