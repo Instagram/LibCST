@@ -132,7 +132,7 @@ packaging tools. We recommend installing the latest stable release from
 For parsing, LibCST ships with a native extension, so releases are distributed as binary
 wheels as well as the source code. If a binary wheel is not available for your system
 (Linux/Windows x86/x64 and Mac x64/arm are covered), you'll need a recent 
-[Rust toolchain](https://rustup.rs) for installing.
+`Rust toolchain <https://rustup.rs>`_ for installing.
 
 Further Reading
 ---------------
@@ -142,7 +142,7 @@ Further Reading
 Development
 -----------
 
-You'll need a recent [Rust toolchain](https://rustup.rs) for developing.
+You'll need a recent `Rust toolchain <https://rustup.rs>`_ for developing.
 
 Then, start by setting up and activating a virtualenv:
 
