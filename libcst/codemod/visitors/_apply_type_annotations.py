@@ -28,7 +28,9 @@ StarParamType = Union[
 ]
 
 
-def _get_import_alias_names(import_aliases: Sequence[cst.ImportAlias]) -> Set[str]:
+def _get_import_alias_names(
+    import_aliases: Sequence[cst.ImportAlias],
+) -> Set[str]:
     import_names = set()
     for imported_name in import_aliases:
         asname = imported_name.asname
@@ -39,7 +41,9 @@ def _get_import_alias_names(import_aliases: Sequence[cst.ImportAlias]) -> Set[st
     return import_names
 
 
-def _get_import_names(imports: Sequence[Union[cst.Import, cst.ImportFrom]]) -> Set[str]:
+def _get_import_names(
+    imports: Sequence[Union[cst.Import, cst.ImportFrom]],
+) -> Set[str]:
     import_names = set()
     for _import in imports:
         if isinstance(_import, cst.Import):
@@ -65,7 +69,11 @@ class FunctionKey:
     star_kwarg: bool
 
     @classmethod
-    def make(cls, name: str, params: cst.Parameters) -> "FunctionKey":
+    def make(
+        cls,
+        name: str,
+        params: cst.Parameters,
+    ) -> "FunctionKey":
         pos = len(params.params)
         kwonly = ",".join(sorted(x.name.value for x in params.kwonly_params))
         posonly = len(params.posonly_params)
@@ -90,7 +98,11 @@ class TypeCollector(cst.CSTVisitor):
         QualifiedNameProvider,
     )
 
-    def __init__(self, existing_imports: Set[str], context: CodemodContext) -> None:
+    def __init__(
+        self,
+        existing_imports: Set[str],
+        context: CodemodContext,
+    ) -> None:
         # Qualifier for storing the canonical name of the current function.
         self.qualifier: List[str] = []
         # Store the annotations.
@@ -100,7 +112,10 @@ class TypeCollector(cst.CSTVisitor):
         self.class_definitions: Dict[str, cst.ClassDef] = {}
         self.context = context
 
-    def visit_ClassDef(self, node: cst.ClassDef) -> None:
+    def visit_ClassDef(
+        self,
+        node: cst.ClassDef,
+    ) -> None:
         self.qualifier.append(node.name.value)
         new_bases = []
         for base in node.bases:
@@ -120,10 +135,16 @@ class TypeCollector(cst.CSTVisitor):
 
         self.class_definitions[node.name.value] = node.with_changes(bases=new_bases)
 
-    def leave_ClassDef(self, original_node: cst.ClassDef) -> None:
+    def leave_ClassDef(
+        self,
+        original_node: cst.ClassDef,
+    ) -> None:
         self.qualifier.pop()
 
-    def visit_FunctionDef(self, node: cst.FunctionDef) -> bool:
+    def visit_FunctionDef(
+        self,
+        node: cst.FunctionDef,
+    ) -> bool:
         self.qualifier.append(node.name.value)
         returns = node.returns
         return_annotation = (
@@ -139,10 +160,16 @@ class TypeCollector(cst.CSTVisitor):
         # pyi files don't support inner functions, return False to stop the traversal.
         return False
 
-    def leave_FunctionDef(self, original_node: cst.FunctionDef) -> None:
+    def leave_FunctionDef(
+        self,
+        original_node: cst.FunctionDef,
+    ) -> None:
         self.qualifier.pop()
 
-    def visit_AnnAssign(self, node: cst.AnnAssign) -> bool:
+    def visit_AnnAssign(
+        self,
+        node: cst.AnnAssign,
+    ) -> bool:
         name = get_full_name_for_node(node.target)
         if name is not None:
             self.qualifier.append(name)
@@ -150,10 +177,16 @@ class TypeCollector(cst.CSTVisitor):
         self.attribute_annotations[".".join(self.qualifier)] = annotation_value
         return True
 
-    def leave_AnnAssign(self, original_node: cst.AnnAssign) -> None:
+    def leave_AnnAssign(
+        self,
+        original_node: cst.AnnAssign,
+    ) -> None:
         self.qualifier.pop()
 
-    def _get_unique_qualified_name(self, node: cst.CSTNode) -> str:
+    def _get_unique_qualified_name(
+        self,
+        node: cst.CSTNode,
+    ) -> str:
         name = None
         names = [q.name for q in self.get_metadata(QualifiedNameProvider, node)]
         if len(names) == 0:
@@ -180,7 +213,10 @@ class TypeCollector(cst.CSTVisitor):
         dequalified_node = node.attr if isinstance(node, cst.Attribute) else node
         return qualified_name, dequalified_node
 
-    def _module_and_target(self, qualified_name: str) -> Tuple[str, str]:
+    def _module_and_target(
+        self,
+        qualified_name: str,
+    ) -> Tuple[str, str]:
         relative_prefix = ""
         while qualified_name.startswith("."):
             relative_prefix += "."
@@ -192,7 +228,10 @@ class TypeCollector(cst.CSTVisitor):
             qualifier, target = split
         return (relative_prefix + qualifier, target)
 
-    def _handle_qualification_and_should_qualify(self, qualified_name: str) -> bool:
+    def _handle_qualification_and_should_qualify(
+        self,
+        qualified_name: str,
+    ) -> bool:
         """
         Basd on a qualified name and the existing module imports, record that
         we need to add an import if necessary and return whether or not we
@@ -232,7 +271,10 @@ class TypeCollector(cst.CSTVisitor):
         else:
             return dequalified_node
 
-    def _handle_Index(self, slice: cst.Index) -> cst.Index:
+    def _handle_Index(
+        self,
+        slice: cst.Index,
+    ) -> cst.Index:
         value = slice.value
         if isinstance(value, cst.Subscript):
             return slice.with_changes(value=self._handle_Subscript(value))
@@ -241,7 +283,10 @@ class TypeCollector(cst.CSTVisitor):
         else:
             return slice
 
-    def _handle_Subscript(self, node: cst.Subscript) -> cst.Subscript:
+    def _handle_Subscript(
+        self,
+        node: cst.Subscript,
+    ) -> cst.Subscript:
         value = node.value
         if isinstance(value, NAME_OR_ATTRIBUTE):
             new_node = node.with_changes(value=self._handle_NameOrAttribute(value))
@@ -276,7 +321,10 @@ class TypeCollector(cst.CSTVisitor):
         else:
             return new_node
 
-    def _handle_Annotation(self, annotation: cst.Annotation) -> cst.Annotation:
+    def _handle_Annotation(
+        self,
+        annotation: cst.Annotation,
+    ) -> cst.Annotation:
         node = annotation.annotation
         if isinstance(node, cst.SimpleString):
             return annotation
@@ -287,8 +335,13 @@ class TypeCollector(cst.CSTVisitor):
         else:
             raise ValueError(f"Unexpected annotation node: {node}")
 
-    def _handle_Parameters(self, parameters: cst.Parameters) -> cst.Parameters:
-        def update_annotations(parameters: Sequence[cst.Param]) -> List[cst.Param]:
+    def _handle_Parameters(
+        self,
+        parameters: cst.Parameters,
+    ) -> cst.Parameters:
+        def update_annotations(
+            parameters: Sequence[cst.Param],
+        ) -> List[cst.Param]:
             updated_parameters = []
             for parameter in list(parameters):
                 annotation = parameter.annotation
@@ -425,7 +478,10 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
             strict_annotation_matching,
         )
 
-    def transform_module_impl(self, tree: cst.Module) -> cst.Module:
+    def transform_module_impl(
+        self,
+        tree: cst.Module,
+    ) -> cst.Module:
         """
         Collect type annotations from all stubs and apply them to ``tree``.
 
@@ -518,7 +574,9 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
         return ".".join(self.qualifier)
 
     def _annotate_single_target(
-        self, node: cst.Assign, updated_node: cst.Assign
+        self,
+        node: cst.Assign,
+        updated_node: cst.Assign,
     ) -> Union[cst.Assign, cst.AnnAssign]:
         only_target = node.targets[0].target
         if isinstance(only_target, (cst.Tuple, cst.List)):
@@ -551,7 +609,9 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
         return updated_node
 
     def _split_module(
-        self, module: cst.Module, updated_module: cst.Module
+        self,
+        module: cst.Module,
+        updated_module: cst.Module,
     ) -> Tuple[
         List[Union[cst.SimpleStatementLine, cst.BaseCompoundStatement]],
         List[Union[cst.SimpleStatementLine, cst.BaseCompoundStatement]],
@@ -582,7 +642,9 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
         self.qualifier.pop()
 
     def _update_parameters(
-        self, annotations: FunctionAnnotation, updated_node: cst.FunctionDef
+        self,
+        annotations: FunctionAnnotation,
+        updated_node: cst.FunctionDef,
     ) -> cst.Parameters:
         # Update params and default params with annotations
         # Don't override existing annotations or default values unless asked
@@ -663,7 +725,8 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
         """Check that function annotations on both signatures are compatible."""
 
         def compatible(
-            p: Optional[cst.Annotation], q: Optional[cst.Annotation]
+            p: Optional[cst.Annotation],
+            q: Optional[cst.Annotation],
         ) -> bool:
             if self.overwrite_existing_annotations or not _is_set(p) or not _is_set(q):
                 return True
@@ -673,7 +736,10 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
                 return True
             return p.annotation.deep_equals(q.annotation)  # pyre-ignore[16]
 
-        def match_posargs(ps: Sequence[cst.Param], qs: Sequence[cst.Param]) -> bool:
+        def match_posargs(
+            ps: Sequence[cst.Param],
+            qs: Sequence[cst.Param],
+        ) -> bool:
             if len(ps) != len(qs):
                 return False
             for p, q in zip(ps, qs):
@@ -683,7 +749,10 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
                     return False
             return True
 
-        def match_kwargs(ps: Sequence[cst.Param], qs: Sequence[cst.Param]) -> bool:
+        def match_kwargs(
+            ps: Sequence[cst.Param],
+            qs: Sequence[cst.Param],
+        ) -> bool:
             ps_dict = {x.name.value: x for x in ps}
             qs_dict = {x.name.value: x for x in qs}
             if set(ps_dict.keys()) != set(qs_dict.keys()):
@@ -693,10 +762,16 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
                     return False
             return True
 
-        def match_star(p: StarParamType, q: StarParamType) -> bool:
+        def match_star(
+            p: StarParamType,
+            q: StarParamType,
+        ) -> bool:
             return _is_set(p) == _is_set(q)
 
-        def match_params(f: cst.FunctionDef, g: FunctionAnnotation) -> bool:
+        def match_params(
+            f: cst.FunctionDef,
+            g: FunctionAnnotation,
+        ) -> bool:
             p, q = f.params, g.parameters
             return (
                 match_posargs(p.params, q.params)
@@ -706,7 +781,10 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
                 and match_star(p.star_kwarg, q.star_kwarg)
             )
 
-        def match_return(f: cst.FunctionDef, g: FunctionAnnotation) -> bool:
+        def match_return(
+            f: cst.FunctionDef,
+            g: FunctionAnnotation,
+        ) -> bool:
             return compatible(f.returns, g.returns)
 
         return match_params(function, annotations) and match_return(
@@ -715,23 +793,33 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
 
     # transform API methods
 
-    def visit_ClassDef(self, node: cst.ClassDef) -> None:
+    def visit_ClassDef(
+        self,
+        node: cst.ClassDef,
+    ) -> None:
         self.qualifier.append(node.name.value)
         self.visited_classes.add(node.name.value)
 
     def leave_ClassDef(
-        self, original_node: cst.ClassDef, updated_node: cst.ClassDef
+        self,
+        original_node: cst.ClassDef,
+        updated_node: cst.ClassDef,
     ) -> cst.ClassDef:
         self.qualifier.pop()
         return updated_node
 
-    def visit_FunctionDef(self, node: cst.FunctionDef) -> bool:
+    def visit_FunctionDef(
+        self,
+        node: cst.FunctionDef,
+    ) -> bool:
         self.qualifier.append(node.name.value)
         # pyi files don't support inner functions, return False to stop the traversal.
         return False
 
     def leave_FunctionDef(
-        self, original_node: cst.FunctionDef, updated_node: cst.FunctionDef
+        self,
+        original_node: cst.FunctionDef,
+        updated_node: cst.FunctionDef,
     ) -> cst.FunctionDef:
         key = FunctionKey.make(self._qualifier_name(), updated_node.params)
         self.qualifier.pop()
@@ -757,7 +845,9 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
         return updated_node
 
     def leave_Assign(
-        self, original_node: cst.Assign, updated_node: cst.Assign
+        self,
+        original_node: cst.Assign,
+        updated_node: cst.Assign,
     ) -> Union[cst.Assign, cst.AnnAssign]:
 
         if len(original_node.targets) > 1:
@@ -774,13 +864,17 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
             return self._annotate_single_target(original_node, updated_node)
 
     def leave_ImportFrom(
-        self, original_node: cst.ImportFrom, updated_node: cst.ImportFrom
+        self,
+        original_node: cst.ImportFrom,
+        updated_node: cst.ImportFrom,
     ) -> cst.ImportFrom:
         self.import_statements.append(original_node)
         return updated_node
 
     def leave_Module(
-        self, original_node: cst.Module, updated_node: cst.Module
+        self,
+        original_node: cst.Module,
+        updated_node: cst.Module,
     ) -> cst.Module:
         fresh_class_definitions = [
             definition
