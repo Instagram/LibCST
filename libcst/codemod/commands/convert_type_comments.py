@@ -66,7 +66,7 @@ class _ArityError(Exception):
     pass
 
 
-UnpackedTargets: TypeAlias = Union[cst.BaseExpression, "UnpackedTargets"]
+UnpackedTargets: TypeAlias = Union[cst.BaseExpression, List["UnpackedTargets"]]
 UnpackedAnnotations: TypeAlias = Union[str, List["UnpackedAnnotations"]]
 TargetAnnotationPair: TypeAlias = Tuple[cst.BaseExpression, str]
 
@@ -105,7 +105,7 @@ class AnnotationSpreader:
     @staticmethod
     def unpack_target(
         target: cst.BaseExpression,
-    ) -> UnpackedTargets:  # pyre-ignore: I'm unsure what the problem is.
+    ) -> UnpackedTargets:
         """
         Take a (non-function-type) type comment and split it into
         components. A type comment body should always be either a single
