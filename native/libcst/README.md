@@ -1,66 +1,106 @@
-# libcst_native
+# libcst/native
 
-A very experimental native extension to speed up LibCST. This does not currently provide
-much performance benefit and is therefore not recommended for general use.
+A native extension to enable parsing of new Python grammar in LibCST.
 
-The extension is written in Rust using [PyO3](https://pyo3.rs/).
+The extension is written in Rust, and exposed to Python using [PyO3](https://pyo3.rs/).
+This is packaged together with libcst, and can be imported from `libcst.native`. When
+the `LIBCST_PARSER_TYPE` environment variable is set to `native`, the LibCST APIs use
+this module for all parsing.
 
-This installs as a separate python package that LibCST looks for and will import if it's
-available.
+Later on, the parser library might be packaged separately as 
+[a Rust crate](https://crates.io). Pull requests towards this are much appreciated.
+
+## Goals
+
+1. Adopt the CPython grammar definition as closely as possible to reduce maintenance
+   burden. This means using a PEG parser.
+2. Feature-parity with the pure-python LibCST parser: the API should be easy to use from
+   Python, support parsing with a target version, bytes and strings as inputs, etc.
+3. [future] Performance. The aspirational goal is to be within 2x CPython performance,
+   which would enable LibCST to be used in interactive use cases (think IDEs).
+4. [future] Error recovery. The parser should be able to handle partially complete
+   documents, returning a CST for the syntactically correct parts, and a list of errors
+   found.
+
+## Structure
+
+The extension is organized into two rust crates: `libcst_derive` contains some macros to
+facilitate various features of CST nodes, and `libcst` contains the `parser` itself
+(including the Python grammar), a `tokenizer` implementation by @bgw, and a very basic
+representation of CST `nodes`. Parsing is done by
+1. **tokenizing** the input utf-8 string (bytes are not supported at the Rust layer,
+   they are converted to utf-8 strings by the python wrapper)
+2. running the **PEG parser** on the tokenized input, which also captures certain anchor
+   tokens in the resulting syntax tree
+3. using the anchor tokens to **inflate** the syntax tree into a proper CST
+
+These steps are wrapped into a high-level `parse_module` API
+[here](https://github.com/Instagram/LibCST/blob/main/native/libcst/src/lib.rs#L43),
+along with `parse_statement` and `parse_expression` functions which all just accept the
+input string and an optional encoding.
+
+These Rust functions are exposed to Python
+[here](https://github.com/Instagram/LibCST/blob/main/native/libcst/src/py.rs) using the
+excellent [PyO3](https://pyo3.rs/) library, plus an `IntoPy` trait which is mostly
+implemented via a macro in `libcst_derive`.
 
 
-## Using with LibCST
+## Hacking
 
-[Set up a rust development environment](https://www.rust-lang.org/tools/install). Using
-`rustup` is recommended, but not necessary. Rust 1.45.0+ should work.
+## Grammar
 
-Follow the instructions for setting up a virtualenv in the top-level README, then:
+The grammar is mostly a straightforward translation from the [CPython
+grammar](https://github.com/python/cpython/blob/main/Grammar/python.gram), with some
+exceptions:
 
-```
-cd libcst_native
-maturin develop  # install libcst_native to the virtualenv
-cd ..            # cd back into the main project
-python -m unittest
-```
+* The output of grammar rules are deflated CST nodes that capture the AST plus
+  additional anchor token references used for whitespace parsing later on.
+* Rules in the grammar must be strongly typed, as enforced by the Rust compiler. The
+  CPython grammar rules are a bit more loosely-typed in comparison.
+* Some features in the CPython peg parser are not supported by rust-peg: keywords,
+  mutually recursive rules, special `invalid_` rules, the `~` operator, terminating the
+  parser early.
 
-This will run the python test suite. Nothing special is required to use `libcst_native`,
-since `libcst` will automatically use the native extension when it's installed.
+The PEG parser is run on a `Vec` of `Token`s, and tries its best to avoid allocating any
+strings, working only with references. As such, the output nodes don't own any strings,
+but refer to slices of the original input (hence the `'a` lifetime parameter on almost
+all nodes).
 
-When benchmarking this code, make sure to run `maturin develop` with the `--release`
-flag to enable compiler optimizations.
+### Whitespace parsing
 
-You can disable the native extension by uninstalling the package from your virtualenv:
+The `Inflate` trait is responsible for taking a "deflated", skeleton CST node, and
+parsing out the relevant whitespace from the anchor tokens to produce an "inflated"
+(normal) CST node. In addition to the deflated node, inflation requires a whitespace
+config object which contains global information required for certain aspects of
+whitespace parsing, like the default indentation.
 
-```
-pip uninstall libcst_native
-```
+Inflation consumes the deflated node, while mutating the tokens referenced by it. This
+is important to make sure whitespace is only ever assigned to at most one CST node. The
+`Inflate` trait implementation needs to ensure that all whitespace is assigned to a CST
+node; this is generally verified using roundtrip tests (i.e. parsing code and then
+generating it back to then assert the original and generated are byte-by-byte equal).
 
+The general convention is that the top-most possible node owns a certain piece of
+whitespace, which should be straightforward to achieve in a top-down parser like
+`Inflate`. In cases where whitespace is shared between sibling nodes, usually the
+leftmost node owns the whitespace except in the case of trailing commas and closing
+parentheses, where the latter owns the whitespace (for backwards compatibility with the
+pure python parser). See the implementation of `inflate_element` for how this is done.
 
-## Rust Tests
+### Tests
 
 In addition to running the python test suite, you can run some tests written in rust
 with
 
 ```
-cargo test --no-default-features
+cd native
+cargo test
 ```
 
-The `--no-default-features` flag needed to work around an incompatibility between tests
-and pyo3's `extension-module` feature.
+These include unit and roundtrip tests.
 
+Additionally, some benchmarks can be run on x86-based architectures using `cargo bench`.
 
-## Code Formatting
+### Code Formatting
 
 Use `cargo fmt` to format your code.
-
-
-## Release
-
-This isn't currently supported, so there's no releases available, but the end-goal would
-be to publish this on PyPI.
-
-Because this is a native extension, it must be re-built for each platform/architecture.
-The per-platform build could be automated using a CI system, [like github
-actions][gh-actions].
-
-[gh-actions]: https://github.com/PyO3/maturin/blob/master/.github/workflows/release.yml
