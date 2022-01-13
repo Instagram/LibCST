@@ -29,8 +29,8 @@ def _ast_for_node(node: cst.CSTNode) -> ast.Module:
     return ast.parse(code, type_comments=True)
 
 
-def _simple_statement_type_comment(
-    node: cst.SimpleStatementLine,
+def _statement_type_comment(
+    node: Union[cst.SimpleStatementLine, cst.For],
 ) -> Optional[str]:
     return _ast_for_node(node).body[-1].type_comment
 
@@ -66,7 +66,7 @@ class _ArityError(Exception):
     pass
 
 
-UnpackedTargets: TypeAlias = Union[cst.BaseExpression, List["UnpackedTargets"]]
+UnpackedBindings: TypeAlias = Union[cst.BaseExpression, List["UnpackedBindings"]]
 UnpackedAnnotations: TypeAlias = Union[str, List["UnpackedAnnotations"]]
 TargetAnnotationPair: TypeAlias = Tuple[cst.BaseExpression, str]
 
@@ -103,7 +103,7 @@ class AnnotationSpreader:
     @staticmethod
     def unpack_target(
         target: cst.BaseExpression,
-    ) -> UnpackedTargets:
+    ) -> UnpackedBindings:
         """
         Take a (non-function-type) type comment and split it into
         components. A type comment body should always be either a single
@@ -121,27 +121,40 @@ class AnnotationSpreader:
             return target
 
     @staticmethod
-    def zip_and_flatten(
-        target: UnpackedTargets,
-        type_info: UnpackedAnnotations,
+    def annotated_bindings(
+        bindings: UnpackedBindings,
+        annotations: UnpackedAnnotations,
     ) -> List[Tuple[cst.BaseAssignTargetExpression, str]]:
-        if isinstance(type_info, list):
-            if isinstance(target, list) and len(target) == len(type_info):
+        if isinstance(annotations, list):
+            if isinstance(bindings, list) and len(bindings) == len(annotations):
                 # The arities match, so we return the flattened result of
-                # mapping zip_and_flatten over each pair.
+                # mapping annotated_bindings over each pair.
                 out: List[Tuple[cst.BaseAssignTargetExpression, str]] = []
-                for target_, type_info_ in zip(target, type_info):
-                    out.extend(AnnotationSpreader.zip_and_flatten(target_, type_info_))
+                for binding, annotation in zip(bindings, annotations):
+                    out.extend(
+                        AnnotationSpreader.annotated_bindings(binding, annotation)
+                    )
                 return out
             else:
                 # Either mismatched lengths, or multi-type and one-target
                 raise _ArityError()
-        elif isinstance(target, list):
+        elif isinstance(bindings, list):
             # multi-target and one-type
             raise _ArityError()
         else:
-            assert isinstance(target, cst.BaseAssignTargetExpression)
-            return [(target, type_info)]
+            assert isinstance(bindings, cst.BaseAssignTargetExpression)
+            return [(bindings, annotations)]
+
+    @staticmethod
+    def type_declaration(
+        binding: cst.BaseAssignTargetExpression,
+        raw_annotation: str,
+    ) -> cst.AnnAssign:
+        return cst.AnnAssign(
+            target=binding,
+            annotation=_convert_annotation(raw=raw_annotation),
+            value=None,
+        )
 
 
 def convert_Assign(
@@ -152,25 +165,26 @@ def convert_Assign(
     cst.AnnAssign,
     List[Union[cst.AnnAssign, cst.Assign]],
 ]:
-    type_info = AnnotationSpreader.unpack_type_comment(type_comment)
-    targets = [
-        AnnotationSpreader.unpack_target(target.target) for target in node.targets
-    ]
     # zip the type and target information tother. If there are mismatched
     # arities, this is a PEP 484 violation (technically we could use
     # logic beyond the PEP to recover some cases as typing.Tuple, but this
     # should be rare) so we give up.
     try:
-        zipped_targets = [
-            AnnotationSpreader.zip_and_flatten(target, type_info) for target in targets
+        annotations = AnnotationSpreader.unpack_type_comment(type_comment)
+        annotated_targets = [
+            AnnotationSpreader.annotated_bindings(
+                bindings=AnnotationSpreader.unpack_target(target.target),
+                annotations=annotations,
+            )
+            for target in node.targets
         ]
     except _ArityError:
         return _FailedToApplyAnnotation()
-    if len(zipped_targets) == 1 and len(zipped_targets[0]) == 1:
+    if len(annotated_targets) == 1 and len(annotated_targets[0]) == 1:
         # We can convert simple one-target assignments into a single AnnAssign
-        target, raw_annotation = zipped_targets[0][0]
+        binding, raw_annotation = annotated_targets[0][0]
         return cst.AnnAssign(
-            target=target,
+            target=binding,
             annotation=_convert_annotation(raw=raw_annotation),
             value=node.value,
             semicolon=node.semicolon,
@@ -180,13 +194,9 @@ def convert_Assign(
         # on the LHS or multiple `=` tokens or both), we need to add a type
         # declaration per individual LHS target.
         type_declarations = [
-            cst.AnnAssign(
-                target=target,
-                annotation=_convert_annotation(raw=raw_annotation),
-                value=None,
-            )
-            for zipped_target in zipped_targets
-            for target, raw_annotation in zipped_target
+            AnnotationSpreader.type_declaration(binding, raw_annotation)
+            for annotated_bindings in annotated_targets
+            for binding, raw_annotation in annotated_bindings
         ]
         return [
             *type_declarations,
@@ -245,7 +255,7 @@ class ConvertTypeComments(VisitorBasedCodemodCommand):
         assign = updated_node.body[-1]
         if not isinstance(assign, cst.Assign):  # only Assign matters
             return updated_node
-        type_comment = _simple_statement_type_comment(original_node)
+        type_comment = _statement_type_comment(original_node)
         if type_comment is None:
             return updated_node
         # At this point have a single-line Assign with a type comment.
