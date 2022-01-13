@@ -23,7 +23,8 @@ path = "src/bin.rs"
 #
 # Once https://github.com/PyO3/pyo3/pull/1123 lands, it may be better to use
 # `-Zextra-link-arg` for this instead.
-default = ["pyo3","pyo3/extension-module"]
+default = ["py"]
+py = ["pyo3","pyo3/extension-module"]
 trace = ["peg/trace"]
 
 [dependencies]

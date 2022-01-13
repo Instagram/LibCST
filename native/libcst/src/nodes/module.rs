@@ -16,7 +16,7 @@ use crate::{
     },
     tokenizer::whitespace_parser::Config,
 };
-#[cfg(feature = "pyo3")]
+#[cfg(feature = "py")]
 use libcst_derive::IntoPy;
 
 use super::traits::{Inflate, Result, WithLeadingLines};
@@ -24,7 +24,7 @@ use super::traits::{Inflate, Result, WithLeadingLines};
 type TokenRef<'a> = Rc<Token<'a>>;
 
 #[derive(Debug, Eq, PartialEq)]
-#[cfg_attr(feature = "pyo3", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(IntoPy))]
 pub struct Module<'a> {
     pub body: Vec<Statement<'a>>,
     pub header: Vec<EmptyLine<'a>>,

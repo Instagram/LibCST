@@ -25,8 +25,7 @@ pub enum ParserError<'a> {
     OperatorError,
 }
 
-
-#[cfg(feature = "pyo3")]
+#[cfg(feature = "py")]
 mod py_error {
 
     use pyo3::types::{IntoPyDict, PyModule};
@@ -40,7 +39,6 @@ mod py_error {
         raw_line: u32,
         raw_column: u32,
     }
-
 
     impl<'a> From<ParserError<'a>> for PyErr {
         fn from(e: ParserError) -> Self {
@@ -88,4 +86,4 @@ mod py_error {
             .into_py(py)
         }
     }
-}    
+}
