@@ -47,7 +47,7 @@ implemented via a macro in `libcst_derive`.
 
 ## Hacking
 
-## Grammar
+### Grammar
 
 The grammar is mostly a straightforward translation from the [CPython
 grammar](https://github.com/python/cpython/blob/main/Grammar/python.gram), with some
