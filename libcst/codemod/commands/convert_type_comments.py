@@ -105,7 +105,7 @@ class AnnotationSpreader:
     @staticmethod
     def unpack_target(
         target: cst.BaseExpression,
-    ) -> UnpackedTargets:
+    ) -> UnpackedTargets:  # pyre-ignore: I'm unsure what the problem is.
         """
         Take a (non-function-type) type comment and split it into
         components. A type comment body should always be either a single
@@ -208,17 +208,18 @@ class ConvertTypeComments(VisitorBasedCodemodCommand):
     """
 
     def __init__(self, context: CodemodContext) -> None:
-        if (sys.version_info.major, sys.version_info.minor) < (3, 8):
-            # The ast module did not get `type_comments` until Python 3.7.
-            # In 3.6, we should error than silently running a nonsense codemod.
+        if (sys.version_info.major, sys.version_info.minor) < (3, 9):
+            # The ast module did not get `unparse` until Python 3.9,
+            # or `type_comments` until Python 3.8
             #
-            # NOTE: it is possible to use the typed_ast library for 3.6, but
-            # this is not a high priority right now. See, e.g., the
-            # mypy.fastparse module.
+            # For earlier versions of python, raise early instead of failing
+            # later. It might be possible to use libcst parsing and the typed_ast
+            # library to support earlier python versions, but this is not a
+            # high priority.
             raise NotImplementedError(
                 "You are trying to run ConvertTypeComments on a "
                 + "python version without type comment support. Please "
-                + "try using python 3.8+ to run your codemod."
+                + "try using Python 3.9+ to run your codemod."
             )
         super().__init__(context)
 

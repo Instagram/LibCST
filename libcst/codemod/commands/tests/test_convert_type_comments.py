@@ -14,12 +14,12 @@ class TestConvertTypeComments(CodemodTest):
     maxDiff = 1500
     TRANSFORM = ConvertTypeComments
 
-    def assertCodemod38Plus(self, before: str, after: str) -> None:
+    def assertCodemod39Plus(self, before: str, after: str) -> None:
         """
-        Assert that the codemod works on Python 3.8+, and that we raise
-        a NotImplementedError on other python versions.
+        Assert that the codemod works on Python 3.9+, and that we raise
+        a NotImplementedError on other Python versions.
         """
-        if (sys.version_info.major, sys.version_info.minor) < (3, 8):
+        if (sys.version_info.major, sys.version_info.minor) < (3, 9):
             with self.assertRaises(NotImplementedError):
                 super().assertCodemod(before, after)
         else:
@@ -36,7 +36,7 @@ class TestConvertTypeComments(CodemodTest):
             y: int = 5
             z: "typing.Tuple[str, int]" = ('this', 7)
         """
-        self.assertCodemod38Plus(before, after)
+        self.assertCodemod39Plus(before, after)
 
     def test_convert_assignments_in_context(self) -> None:
         """
@@ -60,7 +60,7 @@ class TestConvertTypeComments(CodemodTest):
                 def __init__(self):
                     self.attr1: bool = True
         """
-        self.assertCodemod38Plus(before, after)
+        self.assertCodemod39Plus(before, after)
 
     def test_multiple_elements_in_assign_lhs(self) -> None:
         before = """
@@ -89,7 +89,7 @@ class TestConvertTypeComments(CodemodTest):
             e2: str
             d, (e1, e2) = foo()
         """
-        self.assertCodemod38Plus(before, after)
+        self.assertCodemod39Plus(before, after)
 
     def test_multiple_assignments(self) -> None:
         before = """
@@ -109,7 +109,7 @@ class TestConvertTypeComments(CodemodTest):
             d: str
             a, b = c, d = 'this', 'that'
         """
-        self.assertCodemod38Plus(before, after)
+        self.assertCodemod39Plus(before, after)
 
     def test_semicolons_with_assignment(self) -> None:
         """
@@ -130,7 +130,7 @@ class TestConvertTypeComments(CodemodTest):
             z: str
             y, z = baz()
         """
-        self.assertCodemod38Plus(before, after)
+        self.assertCodemod39Plus(before, after)
 
     def test_no_change_when_type_comment_unused(self) -> None:
         before = """
@@ -152,4 +152,4 @@ class TestConvertTypeComments(CodemodTest):
             v = v0, v1 = (3, 5)  # type: int, int
         """
         after = before
-        self.assertCodemod38Plus(before, after)
+        self.assertCodemod39Plus(before, after)
