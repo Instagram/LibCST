@@ -77,8 +77,6 @@ class AnnotationSpreader:
     the tuples of values with which they should be associated.
     """
 
-    # TODO: find a 3.6-compatible way to handle TypeAlias
-
     @staticmethod
     def _unparse_annotation(
         expression: ast.expr,
