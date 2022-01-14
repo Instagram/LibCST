@@ -149,7 +149,11 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - vers: "x86_64 i686 aarch64"
+          - vers: x86_64
+            os: ubuntu-20.04
+          - vers: i686
+            os: ubuntu-20.04
+          - vers: aarch64
             os: ubuntu-20.04
           - vers: arm64
             os: macos-10.15
@@ -163,7 +167,7 @@ jobs:
       CIBW_BEFORE_ALL_MACOS: "rustup target add aarch64-apple-darwin x86_64-apple-darwin"
       CIBW_BEFORE_ALL_WINDOWS: "rustup target add x86_64-pc-windows-msvc i686-pc-windows-msvc"
       CIBW_ENVIRONMENT: 'PATH="$PATH:$HOME/.cargo/bin" LIBCST_NO_LOCAL_SCHEME=$LIBCST_NO_LOCAL_SCHEME'
-      CIBW_SKIP: "cp27-* cp34-* cp35-* pp* *-win32 *-win_arm64 *-musllinux_*"
+      CIBW_SKIP: "cp27-* cp34-* cp35-* pp* *-win32 *-win_arm64 *-musllinux_* cp36-manylinux_aarch64"
       CIBW_ARCHS: ${{ matrix.vers }}
       CIBW_BUILD_VERBOSITY: 1
     steps:
