@@ -823,6 +823,120 @@ class TestApplyAnnotationsVisitor(CodemodTest):
 
     @data_provider(
         {
+            "insert_new_TypeVar_not_in_source_file": (
+                """
+                from typing import Dict, TypeVar
+
+                _KT = TypeVar('_KT')
+                _VT = TypeVar('_VT')
+
+                class UserDict(Dict[_KT, _VT]):
+                    def __init__(self, initialdata: Dict[_KT, _VT] = ...): ...
+                """,
+                """
+                class UserDict:
+                    def __init__(self, initialdata = None):
+                        pass
+                """,
+                """
+                from typing import Dict, TypeVar
+
+                _KT = TypeVar('_KT')
+                _VT = TypeVar('_VT')
+
+                class UserDict:
+                    def __init__(self, initialdata: Dict[_KT, _VT] = None):
+                        pass
+                """,
+            ),
+            "insert_only_used_TypeVar_not_already_in_source": (
+                """
+                from typing import Dict, TypeVar
+
+                K = TypeVar('K')
+                V = TypeVar('V')
+                X = TypeVar('X')
+
+                class UserDict(Dict[K, V]):
+                    def __init__(self, initialdata: Dict[K, V] = ...): ...
+                """,
+                """
+                from typing import TypeVar
+
+                V = TypeVar('V')
+
+                class UserDict:
+                    def __init__(self, initialdata = None):
+                        pass
+
+                def f(x: V) -> V:
+                    pass
+                """,
+                """
+                from typing import Dict, TypeVar
+
+                K = TypeVar('K')
+
+                V = TypeVar('V')
+
+                class UserDict:
+                    def __init__(self, initialdata: Dict[K, V] = None):
+                        pass
+
+                def f(x: V) -> V:
+                    pass
+                """,
+            ),
+            "insert_Generic_base_class": (
+                """
+                from typing import TypeVar
+
+                T = TypeVar('T')
+                X = TypeVar('X')
+
+                class B(A, Generic[T]):
+                    def f(self, x: T) -> T: ...
+                """,
+                """
+                from typing import TypeVar
+
+                V = TypeVar('V')
+
+                def f(x: V) -> V:
+                    pass
+
+                class A:
+                    pass
+
+                class B(A):
+                    def f(self, x):
+                        pass
+                """,
+                """
+                from typing import TypeVar
+
+                T = TypeVar('T')
+
+                V = TypeVar('V')
+
+                def f(x: V) -> V:
+                    pass
+
+                class A:
+                    pass
+
+                class B(A, Generic[T]):
+                    def f(self, x: T) -> T:
+                        pass
+                """,
+            ),
+        }
+    )
+    def test_adding_typevars(self, stub: str, before: str, after: str) -> None:
+        self.run_simple_test_case(stub=stub, before=before, after=after)
+
+    @data_provider(
+        {
             "required_positional_only_args": (
                 """
                 def foo(
