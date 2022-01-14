@@ -1,6 +1,7 @@
 # This file is derived from github.com/ericvsmith/dataclasses, and is Apache 2 licensed.
 # https://github.com/ericvsmith/dataclasses/blob/ae712dd993420d43444f188f452/LICENSE.txt
 # https://github.com/ericvsmith/dataclasses/blob/ae712dd993420d43444f/dataclass_tools.py
+# Changed: takes slots in base classes into account when creating slots
 
 import dataclasses
 from itertools import chain, filterfalse
