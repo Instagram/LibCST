@@ -149,12 +149,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - vers: i686
-            os: ubuntu-20.04
-          # aarch64 seems to be stuck
-          # - vers: aarch64
-          #   os: ubuntu-20.04
-          - vers: auto64
+          - vers: "x86_64 i686 aarch64"
             os: ubuntu-20.04
           - vers: arm64
             os: macos-10.15
@@ -189,6 +184,11 @@ jobs:
       if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
       run: >-
         echo LIBCST_NO_LOCAL_SCHEME=1 >> $GITHUB_ENV
+    - name: Set up QEMU
+      if: matrix.os == 'ubuntu-20.04'
+      uses: docker/setup-qemu-action@v1
+      with:
+        platforms: all
     - name: Build wheels
       uses: pypa/cibuildwheel@v2.3.1
     - uses: actions/upload-artifact@v2
