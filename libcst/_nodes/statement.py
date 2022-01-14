@@ -169,8 +169,7 @@ class Del(BaseSmallStatement):
             semicolon._codegen(state)
 
 
-# TODO: re-add slots after fixing test_batched_visitor.py
-# @add_slots
+@add_slots
 @dataclass(frozen=True)
 class Pass(BaseSmallStatement):
     """
