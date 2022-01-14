@@ -3,6 +3,7 @@
 # https://github.com/ericvsmith/dataclasses/blob/ae712dd993420d43444f/dataclass_tools.py
 
 import dataclasses
+from itertools import chain, filterfalse
 from typing import Any, Mapping, Type, TypeVar
 
 _T = TypeVar("_T")
@@ -19,7 +20,14 @@ def add_slots(cls: Type[_T]) -> Type[_T]:
     # Create a new dict for our new class.
     cls_dict = dict(cls.__dict__)
     field_names = tuple(f.name for f in dataclasses.fields(cls))
-    cls_dict["__slots__"] = field_names
+    inherited_slots = set(
+        chain.from_iterable(
+            superclass.__dict__.get("__slots__", ()) for superclass in cls.mro()
+        )
+    )
+    cls_dict["__slots__"] = tuple(
+        filterfalse(inherited_slots.__contains__, field_names)
+    )
     for field_name in field_names:
         # Remove our attributes, if present. They'll still be
         #  available in _MARKER.
@@ -50,7 +58,10 @@ def add_slots(cls: Type[_T]) -> Type[_T]:
 
     def __getstate__(self: object) -> Mapping[str, Any]:
         return {
-            slot: getattr(self, slot) for slot in self.__slots__ if hasattr(self, slot)
+            slot: getattr(self, slot)
+            # pyre-ignore[16]: `object` has no attribute `__dataclass_fields__`.
+            for slot in self.__dataclass_fields__
+            if hasattr(self, slot)
         }
 
     def __setstate__(self: object, state: Mapping[str, Any]) -> None:

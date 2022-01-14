@@ -79,6 +79,8 @@ class BaseSuite(CSTNode, ABC):
         -- https://docs.python.org/3/reference/compound_stmts.html
     """
 
+    __slots__ = ()
+
     body: Union[Sequence["BaseStatement"], Sequence["BaseSmallStatement"]]
 
 
@@ -88,7 +90,7 @@ class BaseStatement(CSTNode, ABC):
     in a particular location.
     """
 
-    pass
+    __slots__ = ()
 
 
 class BaseSmallStatement(CSTNode, ABC):
@@ -98,6 +100,8 @@ class BaseSmallStatement(CSTNode, ABC):
     :class:`SimpleStatementLine` or :class:`SimpleStatementSuite`. This exists to
     simplify type definitions and isinstance checks.
     """
+
+    __slots__ = ()
 
     #: An optional semicolon that appears after a small statement. This is optional
     #: for the last small statement in a :class:`SimpleStatementLine` or
@@ -165,7 +169,8 @@ class Del(BaseSmallStatement):
             semicolon._codegen(state)
 
 
-@add_slots
+# TODO: re-add slots after fixing test_batched_visitor.py
+# @add_slots
 @dataclass(frozen=True)
 class Pass(BaseSmallStatement):
     """
@@ -370,6 +375,8 @@ class _BaseSimpleStatement(CSTNode, ABC):
     small statement.
     """
 
+    __slots__ = ()
+
     #: Sequence of small statements. All but the last statement are required to have
     #: a semicolon.
     body: Sequence[BaseSmallStatement]
@@ -553,6 +560,8 @@ class BaseCompoundStatement(BaseStatement, ABC):
 
         -- https://docs.python.org/3/reference/compound_stmts.html
     """
+
+    __slots__ = ()
 
     #: The body of this compound statement.
     body: BaseSuite
@@ -2633,6 +2642,8 @@ class MatchPattern(_BaseParenthesizedNode, ABC):
     statement.
     """
 
+    __slots__ = ()
+
 
 @add_slots
 @dataclass(frozen=True)
@@ -2959,6 +2970,8 @@ class MatchSequence(MatchPattern, ABC):
     Matches a variable length sequence if one of the patterns is a :class:`MatchStar`,
     otherwise matches a fixed length sequence.
     """
+
+    __slots__ = ()
 
     #: Patterns to be matched against the subject elements if it is a sequence.
     patterns: Sequence[Union[MatchSequenceElement, MatchStar]]

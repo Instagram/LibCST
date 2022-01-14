@@ -109,6 +109,12 @@ def _clone(val: object) -> object:
 
 @dataclass(frozen=True)
 class CSTNode(ABC):
+
+    # pyre-ignore[4]: Attribute `__slots__` of class `CSTNode`
+    # has type `typing.Tuple[]` but no type is specified.
+    # But we know it's str
+    __slots__ = ()
+
     def __post_init__(self) -> None:
         # PERF: It might make more sense to move validation work into the visitor, which
         # would allow us to avoid validating the tree when parsing a file.
@@ -468,6 +474,9 @@ class CSTNode(ABC):
 
 
 class BaseLeaf(CSTNode, ABC):
+
+    __slots__ = ()
+
     @property
     def children(self) -> Sequence[CSTNode]:
         # override this with an optimized implementation
@@ -486,6 +495,8 @@ class BaseValueToken(BaseLeaf, ABC):
     constant value (e.g. a COLON token), the token's value will be implicitly folded
     into the parent CSTNode, and hard-coded into the implementation of _codegen.
     """
+
+    __slots__ = ()
 
     value: str
 

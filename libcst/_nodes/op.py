@@ -19,6 +19,8 @@ class _BaseOneTokenOp(CSTNode, ABC):
     Any node that has a static value and needs to own whitespace on both sides.
     """
 
+    __slots__ = ()
+
     whitespace_before: BaseParenthesizableWhitespace
 
     whitespace_after: BaseParenthesizableWhitespace
@@ -50,6 +52,8 @@ class _BaseTwoTokenOp(CSTNode, ABC):
     Any node that ends up as two tokens, so we must preserve the whitespace
     in beteween them.
     """
+
+    __slots__ = ()
 
     whitespace_before: BaseParenthesizableWhitespace
 
@@ -93,6 +97,8 @@ class BaseUnaryOp(CSTNode, ABC):
     Any node that has a static value used in a :class:`UnaryOperation` expression.
     """
 
+    __slots__ = ()
+
     #: Any space that appears directly after this operator.
     whitespace_after: BaseParenthesizableWhitespace
 
@@ -119,12 +125,16 @@ class BaseBooleanOp(_BaseOneTokenOp, ABC):
     This node is purely for typing.
     """
 
+    __slots__ = ()
+
 
 class BaseBinaryOp(CSTNode, ABC):
     """
     Any node that has a static value used in a :class:`BinaryOperation` expression.
     This node is purely for typing.
     """
+
+    __slots__ = ()
 
 
 class BaseCompOp(CSTNode, ABC):
@@ -133,12 +143,16 @@ class BaseCompOp(CSTNode, ABC):
     This node is purely for typing.
     """
 
+    __slots__ = ()
+
 
 class BaseAugOp(CSTNode, ABC):
     """
     Any node that has a static value used in an :class:`AugAssign` assignment.
     This node is purely for typing.
     """
+
+    __slots__ = ()
 
 
 @add_slots

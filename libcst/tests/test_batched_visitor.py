@@ -16,57 +16,57 @@ class BatchedVisitorTest(UnitTest):
         mock = Mock()
 
         class ABatchable(BatchableCSTVisitor):
-            def visit_Pass(self, node: cst.Pass) -> None:
-                mock.visited_a()
-                object.__setattr__(node, "a_attr", True)
+            def visit_Del(self, node: cst.Del) -> None:
+                object.__setattr__(node, "target", mock.visited_a())
 
         class BBatchable(BatchableCSTVisitor):
-            def visit_Pass(self, node: cst.Pass) -> None:
-                mock.visited_b()
-                object.__setattr__(node, "b_attr", 1)
+            def visit_Del(self, node: cst.Del) -> None:
+                object.__setattr__(node, "semicolon", mock.visited_b())
 
-        module = visit_batched(parse_module("pass"), [ABatchable(), BBatchable()])
-        pass_ = cast(cst.SimpleStatementLine, module.body[0]).body[0]
-
-        # Check properties were set
-        self.assertEqual(object.__getattribute__(pass_, "a_attr"), True)
-        self.assertEqual(object.__getattribute__(pass_, "b_attr"), 1)
+        module = visit_batched(parse_module("del 5"), [ABatchable(), BBatchable()])
+        del_ = cast(cst.SimpleStatementLine, module.body[0]).body[0]
 
         # Check that each visitor was only called once
         mock.visited_a.assert_called_once()
         mock.visited_b.assert_called_once()
 
+        # Check properties were set
+        self.assertEqual(object.__getattribute__(del_, "target"), mock.visited_a())
+        self.assertEqual(object.__getattribute__(del_, "semicolon"), mock.visited_b())
+
     def test_all_visits(self) -> None:
         mock = Mock()
 
         class Batchable(BatchableCSTVisitor):
-            def visit_Pass(self, node: cst.Pass) -> None:
-                mock.visit_Pass()
-                object.__setattr__(node, "visit_Pass", True)
+            def visit_If(self, node: cst.If) -> None:
+                object.__setattr__(node, "test", mock.visit_If())
 
-            def visit_Pass_semicolon(self, node: cst.Pass) -> None:
-                mock.visit_Pass_semicolon()
-                object.__setattr__(node, "visit_Pass_semicolon", True)
+            def visit_If_body(self, node: cst.If) -> None:
+                object.__setattr__(node, "leading_lines", mock.visit_If_body())
 
-            def leave_Pass_semicolon(self, node: cst.Pass) -> None:
-                mock.leave_Pass_semicolon()
-                object.__setattr__(node, "leave_Pass_semicolon", True)
+            def leave_If_body(self, node: cst.If) -> None:
+                object.__setattr__(node, "orelse", mock.leave_If_body())
 
-            def leave_Pass(self, original_node: cst.Pass) -> None:
-                mock.leave_Pass()
-                object.__setattr__(original_node, "leave_Pass", True)
+            def leave_If(self, original_node: cst.If) -> None:
+                object.__setattr__(
+                    original_node, "whitespace_before_test", mock.leave_If()
+                )
 
-        module = visit_batched(parse_module("pass"), [Batchable()])
-        pass_ = cast(cst.SimpleStatementLine, module.body[0]).body[0]
-
-        # Check properties were set
-        self.assertEqual(object.__getattribute__(pass_, "visit_Pass"), True)
-        self.assertEqual(object.__getattribute__(pass_, "leave_Pass"), True)
-        self.assertEqual(object.__getattribute__(pass_, "visit_Pass_semicolon"), True)
-        self.assertEqual(object.__getattribute__(pass_, "leave_Pass_semicolon"), True)
+        module = visit_batched(parse_module("if True: pass"), [Batchable()])
+        if_ = cast(cst.SimpleStatementLine, module.body[0])
 
         # Check that each visitor was only called once
-        mock.visit_Pass.assert_called_once()
-        mock.leave_Pass.assert_called_once()
-        mock.visit_Pass_semicolon.assert_called_once()
-        mock.leave_Pass_semicolon.assert_called_once()
+        mock.visit_If.assert_called_once()
+        mock.leave_If.assert_called_once()
+        mock.visit_If_body.assert_called_once()
+        mock.leave_If_body.assert_called_once()
+
+        # Check properties were set
+        self.assertEqual(object.__getattribute__(if_, "test"), mock.visit_If())
+        self.assertEqual(
+            object.__getattribute__(if_, "leading_lines"), mock.visit_If_body()
+        )
+        self.assertEqual(object.__getattribute__(if_, "orelse"), mock.leave_If_body())
+        self.assertEqual(
+            object.__getattribute__(if_, "whitespace_before_test"), mock.leave_If()
+        )

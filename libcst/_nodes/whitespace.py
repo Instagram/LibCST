@@ -48,6 +48,8 @@ class BaseParenthesizableWhitespace(CSTNode, ABC):
     ``iftest``), it has some semantic value.
     """
 
+    __slots__ = ()
+
     # TODO: Should we somehow differentiate places where we require non-zero whitespace
     # with a separate type?
 
