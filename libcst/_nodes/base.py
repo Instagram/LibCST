@@ -6,7 +6,7 @@
 from abc import ABC, abstractmethod
 from copy import deepcopy
 from dataclasses import dataclass, field, fields, replace
-from typing import Any, cast, Dict, List, Mapping, Sequence, TypeVar, Union
+from typing import Any, cast, ClassVar, Dict, List, Mapping, Sequence, TypeVar, Union
 
 from libcst._flatten_sentinel import FlattenSentinel
 from libcst._nodes.internal import CodegenState
@@ -110,10 +110,7 @@ def _clone(val: object) -> object:
 @dataclass(frozen=True)
 class CSTNode(ABC):
 
-    # pyre-ignore[4]: Attribute `__slots__` of class `CSTNode`
-    # has type `typing.Tuple[]` but no type is specified.
-    # But we know it's str
-    __slots__ = ()
+    __slots__: ClassVar[Sequence[str]] = ()
 
     def __post_init__(self) -> None:
         # PERF: It might make more sense to move validation work into the visitor, which
