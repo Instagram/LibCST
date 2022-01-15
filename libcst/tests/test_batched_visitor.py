@@ -23,7 +23,7 @@ class BatchedVisitorTest(UnitTest):
             def visit_Del(self, node: cst.Del) -> None:
                 object.__setattr__(node, "semicolon", mock.visited_b())
 
-        module = visit_batched(parse_module("del 5"), [ABatchable(), BBatchable()])
+        module = visit_batched(parse_module("del a"), [ABatchable(), BBatchable()])
         del_ = cast(cst.SimpleStatementLine, module.body[0]).body[0]
 
         # Check that each visitor was only called once
