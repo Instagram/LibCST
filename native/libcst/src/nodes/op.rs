@@ -13,18 +13,20 @@ use crate::{
         Token,
     },
 };
+#[cfg(feature = "py")]
 use libcst_derive::IntoPy;
 
 type TokenRef<'a> = Rc<Token<'a>>;
 
-#[derive(Debug, Eq, PartialEq, Clone, IntoPy)]
+#[derive(Debug, Eq, PartialEq, Clone)]
+#[cfg_attr(feature = "py", derive(IntoPy))]
 pub struct Semicolon<'a> {
     /// Any space that appears directly before this semicolon.
     pub whitespace_before: ParenthesizableWhitespace<'a>,
     /// Any space that appears directly after this semicolon.
     pub whitespace_after: ParenthesizableWhitespace<'a>,
 
-    #[skip_py]
+    #[cfg_attr(feature = "py", skip_py)]
     pub(crate) tok: TokenRef<'a>,
 }
 
@@ -48,14 +50,15 @@ impl<'a> Inflate<'a> for Semicolon<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
+#[derive(Debug, PartialEq, Eq, Clone)]
+#[cfg_attr(feature = "py", derive(IntoPy))]
 pub struct Comma<'a> {
     /// Any space that appears directly before this comma.
     pub whitespace_before: ParenthesizableWhitespace<'a>,
     /// Any space that appears directly after this comma.
     pub whitespace_after: ParenthesizableWhitespace<'a>,
 
-    #[skip_py]
+    #[cfg_attr(feature = "py", skip_py)]
     pub(crate) tok: TokenRef<'a>,
 }
 
@@ -91,14 +94,15 @@ impl<'a> Comma<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
+#[derive(Debug, PartialEq, Eq, Clone)]
+#[cfg_attr(feature = "py", derive(IntoPy))]
 pub struct AssignEqual<'a> {
     /// Any space that appears directly before this equal sign.
     pub whitespace_before: ParenthesizableWhitespace<'a>,
     /// Any space that appears directly after this equal sign.
     pub whitespace_after: ParenthesizableWhitespace<'a>,
 
-    #[skip_py]
+    #[cfg_attr(feature = "py", skip_py)]
     pub(crate) tok: TokenRef<'a>,
 }
 
@@ -124,14 +128,15 @@ impl<'a> Inflate<'a> for AssignEqual<'a> {
     }
 }
 
-#[derive(Debug, Eq, PartialEq, Clone, IntoPy)]
+#[derive(Debug, Eq, PartialEq, Clone)]
+#[cfg_attr(feature = "py", derive(IntoPy))]
 pub struct Dot<'a> {
     /// Any space that appears directly before this dot.
     pub whitespace_before: ParenthesizableWhitespace<'a>,
     /// Any space that appears directly after this dot.
     pub whitespace_after: ParenthesizableWhitespace<'a>,
 
-    #[skip_py]
+    #[cfg_attr(feature = "py", skip_py)]
     pub(crate) tok: TokenRef<'a>,
 }
 
@@ -169,7 +174,8 @@ impl<'a> Dot<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
+#[derive(Debug, PartialEq, Eq, Clone)]
+#[cfg_attr(feature = "py", derive(IntoPy))]
 pub struct ImportStar {}
 
 impl<'a> Codegen<'a> for ImportStar {
@@ -184,26 +190,27 @@ impl<'a> Inflate<'a> for ImportStar {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
+#[derive(Debug, PartialEq, Eq, Clone)]
+#[cfg_attr(feature = "py", derive(IntoPy))]
 pub enum UnaryOp<'a> {
     Plus {
         whitespace_after: ParenthesizableWhitespace<'a>,
-        #[skip_py]
+        #[cfg_attr(feature = "py", skip_py)]
         tok: TokenRef<'a>,
     },
     Minus {
         whitespace_after: ParenthesizableWhitespace<'a>,
-        #[skip_py]
+        #[cfg_attr(feature = "py", skip_py)]
         tok: TokenRef<'a>,
     },
     BitInvert {
         whitespace_after: ParenthesizableWhitespace<'a>,
-        #[skip_py]
+        #[cfg_attr(feature = "py", skip_py)]
         tok: TokenRef<'a>,
     },
     Not {
         whitespace_after: ParenthesizableWhitespace<'a>,
-        #[skip_py]
+        #[cfg_attr(feature = "py", skip_py)]
         tok: TokenRef<'a>,
     },
 }
@@ -276,18 +283,19 @@ impl<'a> Inflate<'a> for UnaryOp<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
+#[derive(Debug, PartialEq, Eq, Clone)]
+#[cfg_attr(feature = "py", derive(IntoPy))]
 pub enum BooleanOp<'a> {
     And {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
-        #[skip_py]
+        #[cfg_attr(feature = "py", skip_py)]
         tok: TokenRef<'a>,
     },
     Or {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
-        #[skip_py]
+        #[cfg_attr(feature = "py", skip_py)]
         tok: TokenRef<'a>,
     },
 }
@@ -349,84 +357,85 @@ impl<'a> Inflate<'a> for BooleanOp<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
+#[derive(Debug, PartialEq, Eq, Clone)]
+#[cfg_attr(feature = "py", derive(IntoPy))]
 pub enum BinaryOp<'a> {
     Add {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
-        #[skip_py]
+        #[cfg_attr(feature = "py", skip_py)]
         tok: TokenRef<'a>,
     },
     Subtract {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
-        #[skip_py]
+        #[cfg_attr(feature = "py", skip_py)]
         tok: TokenRef<'a>,
     },
     Multiply {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
-        #[skip_py]
+        #[cfg_attr(feature = "py", skip_py)]
         tok: TokenRef<'a>,
     },
     Divide {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
-        #[skip_py]
+        #[cfg_attr(feature = "py", skip_py)]
         tok: TokenRef<'a>,
     },
     FloorDivide {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
-        #[skip_py]
+        #[cfg_attr(feature = "py", skip_py)]
         tok: TokenRef<'a>,
     },
     Modulo {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
-        #[skip_py]
+        #[cfg_attr(feature = "py", skip_py)]
         tok: TokenRef<'a>,
     },
     Power {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
-        #[skip_py]
+        #[cfg_attr(feature = "py", skip_py)]
         tok: TokenRef<'a>,
     },
     LeftShift {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
-        #[skip_py]
+        #[cfg_attr(feature = "py", skip_py)]
         tok: TokenRef<'a>,
     },
     RightShift {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
-        #[skip_py]
+        #[cfg_attr(feature = "py", skip_py)]
         tok: TokenRef<'a>,
     },
     BitOr {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
-        #[skip_py]
+        #[cfg_attr(feature = "py", skip_py)]
         tok: TokenRef<'a>,
     },
     BitAnd {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
-        #[skip_py]
+        #[cfg_attr(feature = "py", skip_py)]
         tok: TokenRef<'a>,
     },
     BitXor {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
-        #[skip_py]
+        #[cfg_attr(feature = "py", skip_py)]
         tok: TokenRef<'a>,
     },
     MatrixMultiply {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
-        #[skip_py]
+        #[cfg_attr(feature = "py", skip_py)]
         tok: TokenRef<'a>,
     },
 }
@@ -708,72 +717,73 @@ impl<'a> Inflate<'a> for BinaryOp<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
+#[derive(Debug, PartialEq, Eq, Clone)]
+#[cfg_attr(feature = "py", derive(IntoPy))]
 pub enum CompOp<'a> {
     LessThan {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
-        #[skip_py]
+        #[cfg_attr(feature = "py", skip_py)]
         tok: TokenRef<'a>,
     },
     GreaterThan {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
-        #[skip_py]
+        #[cfg_attr(feature = "py", skip_py)]
         tok: TokenRef<'a>,
     },
     LessThanEqual {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
-        #[skip_py]
+        #[cfg_attr(feature = "py", skip_py)]
         tok: TokenRef<'a>,
     },
     GreaterThanEqual {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
-        #[skip_py]
+        #[cfg_attr(feature = "py", skip_py)]
         tok: TokenRef<'a>,
     },
     Equal {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
-        #[skip_py]
+        #[cfg_attr(feature = "py", skip_py)]
         tok: TokenRef<'a>,
     },
     NotEqual {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
-        #[skip_py]
+        #[cfg_attr(feature = "py", skip_py)]
         tok: TokenRef<'a>,
     },
     In {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
-        #[skip_py]
+        #[cfg_attr(feature = "py", skip_py)]
         tok: TokenRef<'a>,
     },
     NotIn {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_between: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
-        #[skip_py]
+        #[cfg_attr(feature = "py", skip_py)]
         not_tok: TokenRef<'a>,
-        #[skip_py]
+        #[cfg_attr(feature = "py", skip_py)]
         in_tok: TokenRef<'a>,
     },
     Is {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
-        #[skip_py]
+        #[cfg_attr(feature = "py", skip_py)]
         tok: TokenRef<'a>,
     },
     IsNot {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_between: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
-        #[skip_py]
+        #[cfg_attr(feature = "py", skip_py)]
         is_tok: TokenRef<'a>,
-        #[skip_py]
+        #[cfg_attr(feature = "py", skip_py)]
         not_tok: TokenRef<'a>,
     },
 }
@@ -1029,12 +1039,13 @@ impl<'a> Inflate<'a> for CompOp<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
+#[derive(Debug, PartialEq, Eq, Clone)]
+#[cfg_attr(feature = "py", derive(IntoPy))]
 pub struct Colon<'a> {
     pub whitespace_before: ParenthesizableWhitespace<'a>,
     pub whitespace_after: ParenthesizableWhitespace<'a>,
 
-    #[skip_py]
+    #[cfg_attr(feature = "py", skip_py)]
     pub(crate) tok: TokenRef<'a>,
 }
 
@@ -1060,84 +1071,85 @@ impl<'a> Codegen<'a> for Colon<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
+#[derive(Debug, PartialEq, Eq, Clone)]
+#[cfg_attr(feature = "py", derive(IntoPy))]
 pub enum AugOp<'a> {
     AddAssign {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
-        #[skip_py]
+        #[cfg_attr(feature = "py", skip_py)]
         tok: TokenRef<'a>,
     },
     SubtractAssign {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
-        #[skip_py]
+        #[cfg_attr(feature = "py", skip_py)]
         tok: TokenRef<'a>,
     },
     MultiplyAssign {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
-        #[skip_py]
+        #[cfg_attr(feature = "py", skip_py)]
         tok: TokenRef<'a>,
     },
     MatrixMultiplyAssign {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
-        #[skip_py]
+        #[cfg_attr(feature = "py", skip_py)]
         tok: TokenRef<'a>,
     },
     DivideAssign {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
-        #[skip_py]
+        #[cfg_attr(feature = "py", skip_py)]
         tok: TokenRef<'a>,
     },
     ModuloAssign {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
-        #[skip_py]
+        #[cfg_attr(feature = "py", skip_py)]
         tok: TokenRef<'a>,
     },
     BitAndAssign {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
-        #[skip_py]
+        #[cfg_attr(feature = "py", skip_py)]
         tok: TokenRef<'a>,
     },
     BitOrAssign {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
-        #[skip_py]
+        #[cfg_attr(feature = "py", skip_py)]
         tok: TokenRef<'a>,
     },
     BitXorAssign {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
-        #[skip_py]
+        #[cfg_attr(feature = "py", skip_py)]
         tok: TokenRef<'a>,
     },
     LeftShiftAssign {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
-        #[skip_py]
+        #[cfg_attr(feature = "py", skip_py)]
         tok: TokenRef<'a>,
     },
     RightShiftAssign {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
-        #[skip_py]
+        #[cfg_attr(feature = "py", skip_py)]
         tok: TokenRef<'a>,
     },
     PowerAssign {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
-        #[skip_py]
+        #[cfg_attr(feature = "py", skip_py)]
         tok: TokenRef<'a>,
     },
     FloorDivideAssign {
         whitespace_before: ParenthesizableWhitespace<'a>,
         whitespace_after: ParenthesizableWhitespace<'a>,
-        #[skip_py]
+        #[cfg_attr(feature = "py", skip_py)]
         tok: TokenRef<'a>,
     },
 }
@@ -1419,7 +1431,8 @@ impl<'a> Codegen<'a> for AugOp<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, IntoPy)]
+#[derive(Debug, PartialEq, Eq, Clone)]
+#[cfg_attr(feature = "py", derive(IntoPy))]
 pub struct BitOr<'a> {
     pub whitespace_before: ParenthesizableWhitespace<'a>,
     pub whitespace_after: ParenthesizableWhitespace<'a>,
