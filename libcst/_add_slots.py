@@ -59,15 +59,14 @@ def add_slots(cls: Type[_T]) -> Type[_T]:
 
     def __getstate__(self: object) -> Mapping[str, Any]:
         return {
-            field: getattr(self, field)
-            # pyre-ignore[16]: `object` has no attribute `__dataclass_fields__`.
-            for field in self.__dataclass_fields__
-            if hasattr(self, field)
+            field.name: getattr(self, field.name)
+            for field in dataclasses.fields(self)
+            if hasattr(self, field.name)
         }
 
     def __setstate__(self: object, state: Mapping[str, Any]) -> None:
-        for slot, value in state.items():
-            object.__setattr__(self, slot, value)
+        for fieldname, value in state.items():
+            object.__setattr__(self, fieldname, value)
 
     cls.__getstate__ = __getstate__
     cls.__setstate__ = __setstate__
