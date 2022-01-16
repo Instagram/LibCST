@@ -222,6 +222,8 @@ class _BaseParenthesizedNode(CSTNode, ABC):
     this to get that functionality.
     """
 
+    __slots__ = ()
+
     lpar: Sequence[LeftParen] = ()
     # Sequence of parenthesis for precedence dictation.
     rpar: Sequence[RightParen] = ()
@@ -253,6 +255,8 @@ class BaseExpression(_BaseParenthesizedNode, ABC):
     """
     An base class for all expressions. :class:`BaseExpression` contains no fields.
     """
+
+    __slots__ = ()
 
     def _safe_to_use_with_word_operator(self, position: ExpressionPosition) -> bool:
         """
@@ -296,7 +300,7 @@ class BaseAssignTargetExpression(BaseExpression, ABC):
     <https://github.com/python/cpython/blob/v3.8.0a4/Python/ast.c#L1120>`_.
     """
 
-    pass
+    __slots__ = ()
 
 
 class BaseDelTargetExpression(BaseExpression, ABC):
@@ -316,7 +320,7 @@ class BaseDelTargetExpression(BaseExpression, ABC):
     <https://github.com/python/cpython/blob/v3.8.0a4/Python/compile.c#L4854>`_.
     """
 
-    pass
+    __slots__ = ()
 
 
 @add_slots
@@ -392,6 +396,8 @@ class BaseNumber(BaseExpression, ABC):
     A type such as :class:`Integer`, :class:`Float`, or :class:`Imaginary` that can be
     used anywhere that you need to explicitly take any number type.
     """
+
+    __slots__ = ()
 
     def _safe_to_use_with_word_operator(self, position: ExpressionPosition) -> bool:
         """
@@ -522,13 +528,16 @@ class BaseString(BaseExpression, ABC):
     :class:`SimpleString`, :class:`ConcatenatedString`, and :class:`FormattedString`.
     """
 
-    pass
+    __slots__ = ()
 
 
 StringQuoteLiteral = Literal['"', "'", '"""', "'''"]
 
 
 class _BasePrefixedString(BaseString, ABC):
+
+    __slots__ = ()
+
     @property
     def prefix(self) -> str:
         """
@@ -699,7 +708,7 @@ class BaseFormattedStringContent(CSTNode, ABC):
     sequence of :class:`BaseFormattedStringContent` parts.
     """
 
-    pass
+    __slots__ = ()
 
 
 @add_slots
@@ -1414,6 +1423,8 @@ class BaseSlice(CSTNode, ABC):
     Any slice type that can slot into a :class:`SubscriptElement`.
     This node is purely for typing.
     """
+
+    __slots__ = ()
 
 
 @add_slots
@@ -2190,6 +2201,8 @@ class _BaseExpressionWithArgs(BaseExpression, ABC):
     in typing. So, we have common validation functions here.
     """
 
+    __slots__ = ()
+
     #: Sequence of arguments that will be passed to the function call.
     args: Sequence[Arg] = ()
 
@@ -2631,6 +2644,8 @@ class _BaseElementImpl(CSTNode, ABC):
     An internal base class for :class:`Element` and :class:`DictElement`.
     """
 
+    __slots__ = ()
+
     value: BaseExpression
     comma: Union[Comma, MaybeSentinel] = MaybeSentinel.DEFAULT
 
@@ -2668,12 +2683,16 @@ class BaseElement(_BaseElementImpl, ABC):
     BaseDictElement.
     """
 
+    __slots__ = ()
+
 
 class BaseDictElement(_BaseElementImpl, ABC):
     """
     An element of a literal dict. For elements of a list, tuple, or set, see
     BaseElement.
     """
+
+    __slots__ = ()
 
 
 @add_slots
@@ -2957,6 +2976,8 @@ class BaseList(BaseExpression, ABC):
     object when evaluated.
     """
 
+    __slots__ = ()
+
     lbracket: LeftSquareBracket = LeftSquareBracket.field()
     #: Brackets surrounding the list.
     rbracket: RightSquareBracket = RightSquareBracket.field()
@@ -3037,6 +3058,8 @@ class _BaseSetOrDict(BaseExpression, ABC):
     shouldn't be exported.
     """
 
+    __slots__ = ()
+
     lbrace: LeftCurlyBrace = LeftCurlyBrace.field()
     #: Braces surrounding the set or dict.
     rbrace: RightCurlyBrace = RightCurlyBrace.field()
@@ -3061,6 +3084,8 @@ class BaseSet(_BaseSetOrDict, ABC):
     An abstract base class for :class:`Set` and :class:`SetComp`, which both result in
     a set object when evaluated.
     """
+
+    __slots__ = ()
 
 
 @add_slots
@@ -3130,6 +3155,8 @@ class BaseDict(_BaseSetOrDict, ABC):
     An abstract base class for :class:`Dict` and :class:`DictComp`, which both result in
     a dict object when evaluated.
     """
+
+    __slots__ = ()
 
 
 @add_slots
@@ -3407,6 +3434,8 @@ class BaseComp(BaseExpression, ABC):
     :class:`GeneratorExp`, :class:`ListComp`, :class:`SetComp`, and :class:`DictComp`.
     """
 
+    __slots__ = ()
+
     for_in: CompFor
 
 
@@ -3416,6 +3445,8 @@ class BaseSimpleComp(BaseComp, ABC):
     :class:`DictComp` is not a :class:`BaseSimpleComp`, because it uses ``key`` and
     ``value``.
     """
+
+    __slots__ = ()
 
     #: The expression evaluated during each iteration of the comprehension. This
     #: lexically comes before the ``for_in`` clause, but it is semantically the

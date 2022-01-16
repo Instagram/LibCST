@@ -6,7 +6,7 @@
 from abc import ABC, abstractmethod
 from copy import deepcopy
 from dataclasses import dataclass, field, fields, replace
-from typing import Any, cast, Dict, List, Mapping, Sequence, TypeVar, Union
+from typing import Any, cast, ClassVar, Dict, List, Mapping, Sequence, TypeVar, Union
 
 from libcst._flatten_sentinel import FlattenSentinel
 from libcst._nodes.internal import CodegenState
@@ -109,6 +109,9 @@ def _clone(val: object) -> object:
 
 @dataclass(frozen=True)
 class CSTNode(ABC):
+
+    __slots__: ClassVar[Sequence[str]] = ()
+
     def __post_init__(self) -> None:
         # PERF: It might make more sense to move validation work into the visitor, which
         # would allow us to avoid validating the tree when parsing a file.
@@ -468,6 +471,9 @@ class CSTNode(ABC):
 
 
 class BaseLeaf(CSTNode, ABC):
+
+    __slots__ = ()
+
     @property
     def children(self) -> Sequence[CSTNode]:
         # override this with an optimized implementation
@@ -486,6 +492,8 @@ class BaseValueToken(BaseLeaf, ABC):
     constant value (e.g. a COLON token), the token's value will be implicitly folded
     into the parent CSTNode, and hard-coded into the implementation of _codegen.
     """
+
+    __slots__ = ()
 
     value: str
 

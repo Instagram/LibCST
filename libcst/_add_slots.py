@@ -1,8 +1,10 @@
 # This file is derived from github.com/ericvsmith/dataclasses, and is Apache 2 licensed.
 # https://github.com/ericvsmith/dataclasses/blob/ae712dd993420d43444f188f452/LICENSE.txt
 # https://github.com/ericvsmith/dataclasses/blob/ae712dd993420d43444f/dataclass_tools.py
+# Changed: takes slots in base classes into account when creating slots
 
 import dataclasses
+from itertools import chain, filterfalse
 from typing import Any, Mapping, Type, TypeVar
 
 _T = TypeVar("_T")
@@ -19,7 +21,14 @@ def add_slots(cls: Type[_T]) -> Type[_T]:
     # Create a new dict for our new class.
     cls_dict = dict(cls.__dict__)
     field_names = tuple(f.name for f in dataclasses.fields(cls))
-    cls_dict["__slots__"] = field_names
+    inherited_slots = set(
+        chain.from_iterable(
+            superclass.__dict__.get("__slots__", ()) for superclass in cls.mro()
+        )
+    )
+    cls_dict["__slots__"] = tuple(
+        filterfalse(inherited_slots.__contains__, field_names)
+    )
     for field_name in field_names:
         # Remove our attributes, if present. They'll still be
         #  available in _MARKER.
@@ -50,12 +59,14 @@ def add_slots(cls: Type[_T]) -> Type[_T]:
 
     def __getstate__(self: object) -> Mapping[str, Any]:
         return {
-            slot: getattr(self, slot) for slot in self.__slots__ if hasattr(self, slot)
+            field.name: getattr(self, field.name)
+            for field in dataclasses.fields(self)
+            if hasattr(self, field.name)
         }
 
     def __setstate__(self: object, state: Mapping[str, Any]) -> None:
-        for slot, value in state.items():
-            object.__setattr__(self, slot, value)
+        for fieldname, value in state.items():
+            object.__setattr__(self, fieldname, value)
 
     cls.__getstate__ = __getstate__
     cls.__setstate__ = __setstate__
