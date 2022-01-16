@@ -34,6 +34,11 @@ jobs:
       uses: actions-rs/toolchain@v1
       with:
         toolchain: stable
+    - if: ${{ matrix.parser == 'native' }}
+      name: Rust Cache
+      uses: Swatinem/rust-cache@v1.3.0
+      with:
+        working-directory: native
     - run: >-
         echo LIBCST_PARSER_TYPE=${{ matrix.parser }} >> $GITHUB_ENV
     - name: Run Tests
@@ -185,6 +190,10 @@ jobs:
       if: steps.cache.outputs.cache-hit != 'true'
       run: |
         pip install --upgrade --upgrade-strategy eager build -r requirements.txt -r requirements-dev.txt
+    - name: Rust Cache
+      uses: Swatinem/rust-cache@v1.3.0
+      with:
+        working-directory: native
     - name: Disable scmtools local scheme
       if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
       run: >-
@@ -252,6 +261,10 @@ jobs:
         with:
           toolchain: stable
           components: rustfmt, clippy
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v1.3.0
+        with:
+          working-directory: native
       - uses: actions/setup-python@v2
         with:
           python-version: "3.10"
