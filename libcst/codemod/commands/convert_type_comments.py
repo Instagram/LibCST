@@ -221,13 +221,15 @@ class ConvertTypeComments(VisitorBasedCodemodCommand):
             # or `type_comments` until Python 3.8
             #
             # For earlier versions of python, raise early instead of failing
-            # later. It might be possible to use libcst parsing and the typed_ast
-            # library to support earlier python versions, but this is not a
-            # high priority.
+            # later. It might be possible to use libcst parsing and the
+            # typed_ast library to support earlier python versions, but this is
+            # not a high priority.
             raise NotImplementedError(
-                "You are trying to run ConvertTypeComments on a "
-                + "python version without type comment support. Please "
-                + "try using Python 3.9+ to run your codemod."
+                "You are trying to run ConvertTypeComments, but libcst "
+                + "needs to be running with Python 3.9+ in order to "
+                + "do this. Try using Python 3.9+ to run your codemod. "
+                + "Note that the target code can be using Python 3.6+, "
+                + "it is only libcst that needs a new Python version."
             )
         super().__init__(context)
 
