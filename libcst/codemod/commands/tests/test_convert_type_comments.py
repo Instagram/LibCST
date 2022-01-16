@@ -11,15 +11,15 @@ from libcst.codemod.commands.convert_type_comments import ConvertTypeComments
 
 class TestConvertTypeComments(CodemodTest):
 
-    maxDiff = 1000
+    maxDiff = 1500
     TRANSFORM = ConvertTypeComments
 
-    def assertCodemod38Plus(self, before: str, after: str) -> None:
+    def assertCodemod39Plus(self, before: str, after: str) -> None:
         """
-        Assert that the codemod works on Python 3.8+, and that we raise
-        a NotImplementedError on other python versions.
+        Assert that the codemod works on Python 3.9+, and that we raise
+        a NotImplementedError on other Python versions.
         """
-        if (sys.version_info.major, sys.version_info.minor) < (3, 8):
+        if (sys.version_info.major, sys.version_info.minor) < (3, 9):
             with self.assertRaises(NotImplementedError):
                 super().assertCodemod(before, after)
         else:
@@ -36,15 +36,13 @@ class TestConvertTypeComments(CodemodTest):
             y: int = 5
             z: "typing.Tuple[str, int]" = ('this', 7)
         """
-        self.assertCodemod38Plus(before, after)
+        self.assertCodemod39Plus(before, after)
 
     def test_convert_assignments_in_context(self) -> None:
         """
         Also verify that our matching works regardless of spacing
         """
         before = """
-            bar(); baz = 12  # type: int
-
             def foo():
                 z = ('this', 7) # type: typing.Tuple[str, int]
 
@@ -54,8 +52,6 @@ class TestConvertTypeComments(CodemodTest):
                     self.attr1 = True  # type: bool
         """
         after = """
-            bar(); baz: int = 12
-
             def foo():
                 z: "typing.Tuple[str, int]" = ('this', 7)
 
@@ -64,7 +60,77 @@ class TestConvertTypeComments(CodemodTest):
                 def __init__(self):
                     self.attr1: bool = True
         """
-        self.assertCodemod38Plus(before, after)
+        self.assertCodemod39Plus(before, after)
+
+    def test_multiple_elements_in_assign_lhs(self) -> None:
+        before = """
+            x, y = [], []        # type: List[int], List[str]
+            z, w = [], []        # type: (List[int], List[str])
+
+            a, b, *c = range(5)  # type: float, float, List[float]
+
+            d, (e1, e2) = foo()  # type: float, (int, str)
+        """
+        after = """
+            x: "List[int]"
+            y: "List[str]"
+            x, y = [], []
+            z: "List[int]"
+            w: "List[str]"
+            z, w = [], []
+
+            a: float
+            b: float
+            c: "List[float]"
+            a, b, *c = range(5)
+
+            d: float
+            e1: int
+            e2: str
+            d, (e1, e2) = foo()
+        """
+        self.assertCodemod39Plus(before, after)
+
+    def test_multiple_assignments(self) -> None:
+        before = """
+            x = y = z = 15 # type: int
+
+            a, b = c, d = 'this', 'that' # type: (str, str)
+        """
+        after = """
+            x: int
+            y: int
+            z: int
+            x = y = z = 15
+
+            a: str
+            b: str
+            c: str
+            d: str
+            a, b = c, d = 'this', 'that'
+        """
+        self.assertCodemod39Plus(before, after)
+
+    def test_semicolons_with_assignment(self) -> None:
+        """
+        When we convert an Assign to an AnnAssign, preserve
+        semicolons. But if we have to add separate type declarations,
+        expand them.
+        """
+        before = """
+            foo(); x = 12  # type: int
+
+            bar(); y, z = baz() # type: int, str
+        """
+        after = """
+            foo(); x: int = 12
+
+            bar()
+            y: int
+            z: str
+            y, z = baz()
+        """
+        self.assertCodemod39Plus(before, after)
 
     def test_no_change_when_type_comment_unused(self) -> None:
         before = """
@@ -77,12 +143,13 @@ class TestConvertTypeComments(CodemodTest):
             # a type comment in an illegal location won't be used
             print("hello")  # type: None
 
-            # We currently cannot handle multiple-target assigns.
-            # Make sure we won't strip those type comments.
-            x, y, z = [], [], []  # type: List[int], List[int], List[str]
-            x, y, z = [], [], []  # type: (List[int], List[int], List[str])
-            a, b, *c = range(5)   # type: float, float, List[float]
+            # These examples are not PEP 484 compliant, and result in arity errors
             a, b = 1, 2  # type: Tuple[int, int]
+            w = foo()  # type: float, str
+
+            # Multiple assigns with mismatched LHS arities always result in arity
+            # errors, and we only codemod if each target is error-free
+            v = v0, v1 = (3, 5)  # type: int, int
         """
         after = before
-        self.assertCodemod38Plus(before, after)
+        self.assertCodemod39Plus(before, after)
