@@ -533,9 +533,13 @@ impl<'t> TokState<'t> {
             }
         }
 
-        // Lines with only whitespace and/or comments and/or a line continuation character shouldn't
-        // affect the indentation and are not passed to the parser as NEWLINE tokens.
-        self.blank_line = matches!(self.text_pos.peek(), Some('#') | Some('\n') | Some('\\'));
+        // Lines with only whitespace and/or comments and/or a line continuation
+        // character shouldn't affect the indentation and are not passed to the parser
+        // as NEWLINE tokens.
+        self.blank_line = matches!(
+            self.text_pos.peek(),
+            Some('#') | Some('\n') | Some('\\') | None
+        );
 
         if self.blank_line || !self.paren_stack.is_empty() {
             return Ok(());
