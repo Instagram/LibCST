@@ -132,6 +132,65 @@ class TestConvertTypeComments(CodemodTest):
         """
         self.assertCodemod39Plus(before, after)
 
+    def test_converting_for_statements(self) -> None:
+        before = """
+        # simple binding
+        for x in foo():  # type: int
+            pass
+
+        # nested binding
+        for (a, (b, c)) in bar(): # type: int, (str, float)
+            pass
+        """
+        after = """
+        # simple binding
+        x: int
+        for x in foo():
+            pass
+
+        # nested binding
+        a: int
+        b: str
+        c: float
+        for (a, (b, c)) in bar():
+            pass
+        """
+        self.assertCodemod39Plus(before, after)
+
+    def test_converting_with_statements(self) -> None:
+        before = """
+        # simple binding
+        with open('file') as f:  # type: File
+            pass
+
+        # simple binding, with extra items
+        with foo(), open('file') as f, bar():  # type: File
+            pass
+
+        # nested binding
+        with bar() as (a, (b, c)): # type: int, (str, float)
+            pass
+        """
+        after = """
+        # simple binding
+        f: "File"
+        with open('file') as f:
+            pass
+
+        # simple binding, with extra items
+        f: "File"
+        with foo(), open('file') as f, bar():
+            pass
+
+        # nested binding
+        a: int
+        b: str
+        c: float
+        with bar() as (a, (b, c)):
+            pass
+        """
+        self.assertCodemod39Plus(before, after)
+
     def test_no_change_when_type_comment_unused(self) -> None:
         before = """
             # type-ignores are not type comments
@@ -150,6 +209,18 @@ class TestConvertTypeComments(CodemodTest):
             # Multiple assigns with mismatched LHS arities always result in arity
             # errors, and we only codemod if each target is error-free
             v = v0, v1 = (3, 5)  # type: int, int
+
+            # Ignore for statements with arity mismatches
+            for x in []: # type: int, int
+                pass
+
+            # Ignore with statements with arity mismatches
+            with open('file') as (f0, f1): # type: File
+                pass
+
+            # Ignore with statements that have multiple item bindings
+            with open('file') as f0, open('file') as f1: # type: File
+                pass
         """
         after = before
         self.assertCodemod39Plus(before, after)
