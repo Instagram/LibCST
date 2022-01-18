@@ -169,7 +169,7 @@ of class ``__slots__``. To check that slots are defined properly, run:
 
 .. code-block:: shell
 
-   slotscheck libcst
+    slotscheck libcst
 
 To run all tests, you'll need to do the following in the root:
 
