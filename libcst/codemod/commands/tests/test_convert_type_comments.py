@@ -9,7 +9,7 @@ from libcst.codemod import CodemodTest
 from libcst.codemod.commands.convert_type_comments import ConvertTypeComments
 
 
-class TestConvertTypeComments(CodemodTest):
+class TestConvertTypeCommentsBase(CodemodTest):
 
     maxDiff = 1500
     TRANSFORM = ConvertTypeComments
@@ -25,8 +25,8 @@ class TestConvertTypeComments(CodemodTest):
         else:
             super().assertCodemod(before, after)
 
-    # Tests converting assignment type comments -----------------
 
+class TestConvertTypeComments_AssignForWith(TestConvertTypeCommentsBase):
     def test_convert_assignments(self) -> None:
         before = """
             y = 5  # type: int
@@ -221,6 +221,117 @@ class TestConvertTypeComments(CodemodTest):
             # Ignore with statements that have multiple item bindings
             with open('file') as f0, open('file') as f1: # type: File
                 pass
+        """
+        after = before
+        self.assertCodemod39Plus(before, after)
+
+
+class TestConvertTypeComments_FunctionDef(TestConvertTypeCommentsBase):
+    """
+    Some notes on our testing strategy: In order to avoid a combinatorial
+    explosion in test cases, we leverage some knowledge about the
+    implementation.
+
+    Here are the key ideas that allow us to write fewer cases:
+    - The logic for generating annotations is the same for all annotations,
+      and is well-covered by TestConvertTypeComments_AssignForWith, so we
+      can stick to just simple builtin types.
+    - The application of types is independent of where they came from.
+    - Type comment removal is indepenent of type application, other
+      than in the case where we give up entirely.
+    - The rules for which type gets used (existing annotation, inline comment,
+      or func type comment) is independent of the location of a parameter.
+    """
+
+    def test_simple_function_type_comments(self) -> None:
+        before = """
+        def f0(x):  # type: (...) -> None
+            pass
+
+        def f1(x):  # type: (int) -> None
+            pass
+
+        def f2(x, /, y = 'y', *, z = 1.5):
+            # type: (int, str, float) -> None
+            pass
+
+        def f3(x, *args, y, **kwargs):
+            # type: (str, int, str, float) -> None
+            pass
+
+        def f4(x, *args, **kwargs):
+            # type: (str, *int, **float) -> None
+            pass
+        """
+        after = """
+        def f0(x) -> None:
+            pass
+
+        def f1(x: int) -> None:
+            pass
+
+        def f2(x: int, /, y: str = 'y', *, z: float = 1.5) -> None:
+            pass
+
+        def f3(x: str, *args: int, y: str, **kwargs: float) -> None:
+            pass
+
+        def f4(x: str, *args: int, **kwargs: float) -> None:
+            pass
+        """
+        self.assertCodemod39Plus(before, after)
+
+    def test_prioritization_order_for_type_application(self) -> None:
+        before = """
+        def f(
+            x: int,  # type: str
+            y,  # type: str
+            z
+        ): # type: (float, float, float) -> None
+            pass
+        """
+        after = """
+        def f(
+            x: int,
+            y: str,
+            z: float
+        ) -> None:
+            pass
+        """
+        self.assertCodemod39Plus(before, after)
+
+    def test_inlined_function_type_comments(self) -> None:
+        before = """
+        def f(
+            x,  # not-a-type-comment
+            # also-not-a-type-comment
+            y = 42,  # type: int
+            *args,
+            # type: technically-another-line-is-legal :o
+            z,
+            **kwargs,  # type: str
+        ): # not-a-type-comment
+            # also-not-a-type-comment
+            pass
+        """
+        after = """
+        def f(
+            x,  # not-a-type-comment
+            # also-not-a-type-comment
+            y: int = 42,
+            *args: "technically-another-line-is-legal :o",
+            z,
+            **kwargs: str,
+        ): # not-a-type-comment
+            # also-not-a-type-comment
+            pass
+        """
+        self.assertCodemod39Plus(before, after)
+
+    def test_no_change_if_arity_error_in_func_type_comment(self) -> None:
+        before = """
+        def f(x, y):  # type: (int) -> float
+            pass
         """
         after = before
         self.assertCodemod39Plus(before, after)
