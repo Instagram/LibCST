@@ -8,6 +8,7 @@ name = "libcst"
 version = "0.1.0"
 authors = ["LibCST Developers"]
 edition = "2018"
+rust-version = "1.53"
 
 [lib]
 name = "libcst_native"
