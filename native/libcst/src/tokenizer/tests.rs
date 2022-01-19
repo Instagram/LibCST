@@ -727,3 +727,20 @@ fn test_add_dedents_for_dangling_indent_with_comment() {
         ])
     );
 }
+
+#[test]
+fn test_inconsistent_indentation_at_eof() {
+    assert_eq!(
+        tokenize_all("if 1:\n  pass\n ", &default_config()),
+        Ok(vec![
+            (TokType::Name, "if"),
+            (TokType::Number, "1"),
+            (TokType::Op, ":"),
+            (TokType::Newline, "\n"),
+            (TokType::Indent, ""),
+            (TokType::Name, "pass"),
+            (TokType::Newline, "\n"),
+            (TokType::Dedent, ""),
+        ])
+    )
+}

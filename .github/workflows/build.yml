@@ -34,6 +34,11 @@ jobs:
       uses: actions-rs/toolchain@v1
       with:
         toolchain: stable
+    - if: ${{ matrix.parser == 'native' }}
+      name: Rust Cache
+      uses: Swatinem/rust-cache@v1.3.0
+      with:
+        working-directory: native
     - run: >-
         echo LIBCST_PARSER_TYPE=${{ matrix.parser }} >> $GITHUB_ENV
     - name: Run Tests
@@ -163,7 +168,9 @@ jobs:
             os: windows-2019
     env:
       SCCACHE_VERSION: 0.2.13
-      CIBW_BEFORE_ALL_LINUX: "curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain stable -y"
+      CIBW_BEFORE_ALL_LINUX: "curl https://sh.rustup.rs -sSf | env -u CARGO_HOME sh -s -- --default-toolchain stable --profile minimal -y"
+      CIBW_BEFORE_BUILD_LINUX: "rm -rf native/target; ln -s /host/${{github.workspace}}/native/target native/target; [ -d /host/${{github.workspace}}/native/target ] ||  mkdir /host/${{github.workspace}}/native/target"
+      CIBW_ENVIRONMENT_LINUX: 'PATH="$PATH:$HOME/.cargo/bin" LIBCST_NO_LOCAL_SCHEME=$LIBCST_NO_LOCAL_SCHEME CARGO_HOME=/host/home/runner/.cargo'
       CIBW_BEFORE_ALL_MACOS: "rustup target add aarch64-apple-darwin x86_64-apple-darwin"
       CIBW_BEFORE_ALL_WINDOWS: "rustup target add x86_64-pc-windows-msvc i686-pc-windows-msvc"
       CIBW_ENVIRONMENT: 'PATH="$PATH:$HOME/.cargo/bin" LIBCST_NO_LOCAL_SCHEME=$LIBCST_NO_LOCAL_SCHEME'
@@ -184,6 +191,10 @@ jobs:
       if: steps.cache.outputs.cache-hit != 'true'
       run: |
         pip install --upgrade --upgrade-strategy eager build -r requirements.txt -r requirements-dev.txt
+    - name: Rust Cache
+      uses: Swatinem/rust-cache@v1.3.0
+      with:
+        working-directory: native
     - name: Disable scmtools local scheme
       if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
       run: >-
@@ -256,6 +267,10 @@ jobs:
         with:
           toolchain: stable
           components: rustfmt, clippy
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v1.3.0
+        with:
+          working-directory: native
       - uses: actions/setup-python@v2
         with:
           python-version: "3.10"
@@ -264,6 +279,12 @@ jobs:
         with:
           command: test
           args: --manifest-path=native/Cargo.toml --release
+      - name: test without python
+        if: matrix.os == 'ubuntu-latest'
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --manifest-path=native/Cargo.toml --release --no-default-features
       - name: clippy
         uses: actions-rs/clippy-check@v1
         with:

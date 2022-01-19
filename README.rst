@@ -33,7 +33,7 @@ A Concrete Syntax Tree (CST) parser and serializer library for Python
 
 .. intro-start
 
-LibCST parses Python 3.0, 3.1, 3.3, 3.5, 3.6, 3.7 or 3.8 source code as a CST tree that keeps
+LibCST parses Python 3.0 -> 3.11 source code as a CST tree that keeps
 all formatting details (comments, whitespaces, parentheses, etc). It's useful for
 building automated refactoring (codemod) applications and linters.
 
@@ -129,6 +129,11 @@ packaging tools. We recommend installing the latest stable release from
 
     pip install libcst
 
+For parsing, LibCST ships with a native extension, so releases are distributed as binary
+wheels as well as the source code. If a binary wheel is not available for your system
+(Linux/Windows x86/x64 and Mac x64/arm are covered), you'll need a recent 
+`Rust toolchain <https://rustup.rs>`_ for installing.
+
 Further Reading
 ---------------
 - `Static Analysis at Scale: An Instagram Story. <https://instagram-engineering.com/static-analysis-at-scale-an-instagram-story-8f498ab71a0c>`_
@@ -137,7 +142,9 @@ Further Reading
 Development
 -----------
 
-Start by setting up and activating a virtualenv:
+You'll need a recent `Rust toolchain <https://rustup.rs>`_ for developing.
+
+Then, start by setting up and activating a virtualenv:
 
 .. code-block:: shell
 

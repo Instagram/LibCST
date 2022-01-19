@@ -16,6 +16,7 @@ pub use nodes::*;
 mod parser;
 use parser::{ParserError, Result};
 
+#[cfg(feature = "py")]
 pub mod py;
 
 pub fn tokenize(text: &str) -> Result<Vec<Token>> {
