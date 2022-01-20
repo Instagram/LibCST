@@ -64,6 +64,7 @@ jobs:
     - run: flake8
     - run: ufmt check .
     - run: python3 -m fixit.cli.run_rules
+    - run: python -m slotscheck libcst
 
 # Run pyre typechecker
   typecheck:

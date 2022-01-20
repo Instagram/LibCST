@@ -164,6 +164,13 @@ changes to be conformant, run the following in the root:
 
     ufmt format && python -m fixit.cli.apply_fix
 
+We use `slotscheck <https://slotscheck.rtfd.io>`_ to check the correctness
+of class ``__slots__``. To check that slots are defined properly, run:
+
+.. code-block:: shell
+
+    python -m slotscheck libcst
+
 To run all tests, you'll need to do the following in the root:
 
 .. code-block:: shell
