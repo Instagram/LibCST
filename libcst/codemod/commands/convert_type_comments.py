@@ -64,7 +64,7 @@ def _annotation_for_statement(
 
 def _parse_func_type_comment(
     func_type_comment: Optional[str],
-) -> Optional[ast.FunctionType]:
+) -> Optional["ast.FunctionType"]:
     if func_type_comment is None:
         return None
     return cast(
