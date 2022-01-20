@@ -8,7 +8,7 @@ import builtins
 import dataclasses
 import functools
 import sys
-from typing import Any, Dict, List, Optional, Sequence, Set, Tuple, Union
+from typing import cast, Dict, List, Optional, Sequence, Set, Tuple, Union
 
 from typing_extensions import TypeAlias
 
@@ -25,15 +25,52 @@ def _code_for_node(node: cst.CSTNode) -> str:
     return _empty_module().code_for_node(node)
 
 
-def _ast_for_node(node: cst.CSTNode) -> ast.Module:
+def _ast_for_statement(node: cst.CSTNode) -> ast.stmt:
+    """
+    Get the type-comment-enriched python AST for a node.
+
+    If there are illegal type comments, this can return a SyntaxError.
+    In that case, return the same node with no type comments (which will
+    cause this codemod to ignore it).
+    """
     code = _code_for_node(node)
-    return ast.parse(code, type_comments=True)
+    try:
+        return ast.parse(code, type_comments=True).body[-1]
+    except SyntaxError:
+        return ast.parse(code, type_comments=False).body[-1]
 
 
-def _statement_type_comment(
-    node: Union[cst.SimpleStatementLine, cst.For, cst.With],
-) -> Optional[str]:
-    return _ast_for_node(node).body[-1].type_comment
+def _parse_type_comment(
+    type_comment: Optional[str],
+) -> Optional[ast.expr]:
+    """
+    Attempt to parse a type comment. If it is None or if it fails to parse,
+    return None.
+    """
+    if type_comment is None:
+        return None
+    try:
+        # pyre-ignore[16]: the ast module stubs do not have full details
+        return ast.parse(type_comment, "<type_comment>", "eval").body
+    except SyntaxError:
+        return None
+
+
+def _annotation_for_statement(
+    node: cst.CSTNode,
+) -> Optional[ast.expr]:
+    return _parse_type_comment(_ast_for_statement(node).type_comment)
+
+
+def _parse_func_type_comment(
+    func_type_comment: Optional[str],
+) -> Optional[ast.FunctionType]:
+    if func_type_comment is None:
+        return None
+    return cast(
+        ast.FunctionType,
+        ast.parse(func_type_comment, "<func_type_comment>", "func_type"),
+    )
 
 
 @functools.lru_cache()
@@ -98,27 +135,15 @@ class AnnotationSpreader:
     """
 
     @staticmethod
-    def _unparse_annotation(
+    def unpack_annotation(
         expression: ast.expr,
     ) -> UnpackedAnnotations:
         if isinstance(expression, ast.Tuple):
             return [
-                AnnotationSpreader._unparse_annotation(elt) for elt in expression.elts
+                AnnotationSpreader.unpack_annotation(elt) for elt in expression.elts
             ]
         else:
             return ast.unparse(expression)
-
-    @staticmethod
-    def unpack_type_comment(
-        type_comment: str,
-    ) -> UnpackedAnnotations:
-        """
-        Unpack an ast module expression and unparse it into a recursive
-        list of strings matching the tuple structure of the type comment.
-        """
-        # pyre-ignore[16]: the ast module stubs do not have full details
-        annotation_ast = ast.parse(type_comment, "<type_comment>", "eval").body
-        return AnnotationSpreader._unparse_annotation(annotation_ast)
 
     @staticmethod
     def unpack_target(
@@ -203,7 +228,7 @@ class AnnotationSpreader:
 
 def convert_Assign(
     node: cst.Assign,
-    type_comment: str,
+    annotation: ast.expr,
 ) -> Union[
     _FailedToApplyAnnotation,
     cst.AnnAssign,
@@ -214,7 +239,7 @@ def convert_Assign(
     # logic beyond the PEP to recover some cases as typing.Tuple, but this
     # should be rare) so we give up.
     try:
-        annotations = AnnotationSpreader.unpack_type_comment(type_comment)
+        annotations = AnnotationSpreader.unpack_annotation(annotation)
         annotated_targets = [
             AnnotationSpreader.annotated_bindings(
                 bindings=AnnotationSpreader.unpack_target(target.target),
@@ -267,8 +292,7 @@ class FunctionTypeInfo:
 
         To understand edge case behavior see the `leave_FunctionDef` docstring.
         """
-        # pyre-ignore[33]: ast doesn't have complete stubs
-        node_ast: Any = ast.parse(_code_for_node(node_cst), type_comments=True).body[0]
+        node_ast = cast(ast.FunctionDef, _ast_for_statement(node_cst))
         # Note: this is guaranteed to have the correct arity.
         args = [
             *node_ast.args.posonlyargs,
@@ -289,24 +313,27 @@ class FunctionTypeInfo:
                 ]
             ),
         ]
-        function_type_comment = node_ast.type_comment
-        if function_type_comment is None:
+        try:
+            func_type_annotation = _parse_func_type_comment(node_ast.type_comment)
+        except SyntaxError:
+            # On unparsable function type annotations, ignore type information
+            return cls({}, None)
+        if func_type_annotation is None:
             return cls(
-                arguments={arg.arg: arg.type_comment for arg in args},
+                arguments={
+                    arg.arg: arg.type_comment
+                    for arg in args
+                    if arg.type_comment is not None
+                },
                 returns=None,
             )
         else:
-            # pyre-ignore[33]: ast doesn't have complete stubs
-            function_type_ast: Any = ast.parse(
-                node_ast.type_comment,
-                "<type_comment>",
-                mode="func_type",
-            )
-            argtypes = function_type_ast.argtypes
-            returns = ast.unparse(function_type_ast.returns)
+            argtypes = func_type_annotation.argtypes
+            returns = ast.unparse(func_type_annotation.returns)
             if (
                 len(argtypes) == 1
                 and isinstance(argtypes[0], ast.Constant)
+                # pyre-ignore [16] Pyre cannot refine constant indexes (yet!)
                 and argtypes[0].value is Ellipsis
             ):
                 # Only use the return type if the comment was like `(...) -> R`
@@ -431,14 +458,14 @@ class ConvertTypeComments(VisitorBasedCodemodCommand):
         assign = updated_node.body[-1]
         if not isinstance(assign, cst.Assign):  # only Assign matters
             return updated_node
-        type_comment = _statement_type_comment(original_node)
-        if type_comment is None:
+        annotation = _annotation_for_statement(original_node)
+        if annotation is None:
             return updated_node
         # At this point have a single-line Assign with a type comment.
         # Convert it to an AnnAssign and strip the comment.
         converted = convert_Assign(
             node=assign,
-            type_comment=type_comment,
+            annotation=annotation,
         )
         if isinstance(converted, _FailedToApplyAnnotation):
             # We were unable to consume the type comment, so return the
@@ -505,15 +532,15 @@ class ConvertTypeComments(VisitorBasedCodemodCommand):
         body = updated_node.body
         if not isinstance(body, cst.IndentedBlock):
             return updated_node
-        type_comment = _statement_type_comment(original_node)
-        if type_comment is None:
+        annotation = _annotation_for_statement(original_node)
+        if annotation is None:
             return updated_node
         # Zip up the type hint and the bindings. If we hit an arity
         # error, abort.
         try:
             type_declarations = AnnotationSpreader.type_declaration_statements(
                 bindings=AnnotationSpreader.unpack_target(updated_node.target),
-                annotations=AnnotationSpreader.unpack_type_comment(type_comment),
+                annotations=AnnotationSpreader.unpack_annotation(annotation),
                 leading_lines=updated_node.leading_lines,
             )
         except _ArityError:
@@ -546,8 +573,8 @@ class ConvertTypeComments(VisitorBasedCodemodCommand):
         body = updated_node.body
         if not isinstance(body, cst.IndentedBlock):
             return updated_node
-        type_comment = _statement_type_comment(original_node)
-        if type_comment is None:
+        annotation = _annotation_for_statement(original_node)
+        if annotation is None:
             return updated_node
         # PEP 484 does not attempt to specify type comment semantics for
         # multiple with bindings (there's more than one sensible way to
@@ -563,7 +590,7 @@ class ConvertTypeComments(VisitorBasedCodemodCommand):
         try:
             type_declarations = AnnotationSpreader.type_declaration_statements(
                 bindings=AnnotationSpreader.unpack_target(target),
-                annotations=AnnotationSpreader.unpack_type_comment(type_comment),
+                annotations=AnnotationSpreader.unpack_annotation(annotation),
                 leading_lines=updated_node.leading_lines,
             )
         except _ArityError:
