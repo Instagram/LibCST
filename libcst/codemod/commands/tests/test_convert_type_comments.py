@@ -199,6 +199,9 @@ class TestConvertTypeComments_AssignForWith(TestConvertTypeCommentsBase):
             # a commented type comment (per PEP 484) is not a type comment
             z = 15  # # type: int
 
+            # ignore unparseable type comments
+            var = "var"  # type: this is not a python type!
+
             # a type comment in an illegal location won't be used
             print("hello")  # type: None
 
@@ -221,6 +224,12 @@ class TestConvertTypeComments_AssignForWith(TestConvertTypeCommentsBase):
             # Ignore with statements that have multiple item bindings
             with open('file') as f0, open('file') as f1: # type: File
                 pass
+
+            # In cases where the entire statement cannot successfully be parsed
+            # with `type_comments=True` because of an invalid type comment, we
+            # skip it. Here, annotating the inner `pass` is illegal.
+            for x in []: # type: int
+                pass # type: None
         """
         after = before
         self.assertCodemod39Plus(before, after)
@@ -328,10 +337,21 @@ class TestConvertTypeComments_FunctionDef(TestConvertTypeCommentsBase):
         """
         self.assertCodemod39Plus(before, after)
 
-    def test_no_change_if_arity_error_in_func_type_comment(self) -> None:
+    def test_no_change_if_function_type_comments_unused(self) -> None:
         before = """
+        # arity error in arguments
         def f(x, y):  # type: (int) -> float
             pass
+
+        # unparseable function type
+        def f(x, y):  # type: this is not a type!
+            pass
+
+        # In cases where the entire statement cannot successfully be parsed
+        # with `type_comments=True` because of an invalid type comment, we
+        # skip it. Here, annotating the inner `pass` is illegal.
+        def f(x, y):  # type: (int, int) -> None
+            pass # type: None
         """
         after = before
         self.assertCodemod39Plus(before, after)
