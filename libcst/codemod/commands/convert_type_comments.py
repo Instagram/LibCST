@@ -13,6 +13,7 @@ from typing import cast, Dict, List, Optional, Sequence, Set, Tuple, Union
 from typing_extensions import TypeAlias
 
 import libcst as cst
+import libcst.matchers as m
 from libcst.codemod import CodemodContext, VisitorBasedCodemodCommand
 
 
@@ -285,6 +286,7 @@ class FunctionTypeInfo:
     def from_cst(
         cls,
         node_cst: cst.FunctionDef,
+        is_method: bool,
     ) -> "FunctionTypeInfo":
         """
         Using the `ast` type comment extraction logic, get type information
@@ -347,6 +349,18 @@ class FunctionTypeInfo:
                     arguments={
                         arg.arg: arg.type_comment or ast.unparse(from_func_type)
                         for arg, from_func_type in zip(args, argtypes)
+                    },
+                    returns=returns,
+                )
+            elif is_method and len(argtypes) == len(args) - 1:
+                # Merge as above, but skip merging the initial `self` or `cls` arg.
+                return cls(
+                    arguments={
+                        args[0].arg: args[0].type_comment,
+                        **{
+                            arg.arg: arg.type_comment or ast.unparse(from_func_type)
+                            for arg, from_func_type in zip(args[1:], argtypes)
+                        },
                     },
                     returns=returns,
                 )
@@ -413,6 +427,10 @@ class ConvertTypeComments(VisitorBasedCodemodCommand):
     function_body_stack: List[cst.BaseSuite]
     aggressively_strip_type_comments: bool
 
+    # This helps us track when we are inside of a class body - nesting level 0
+    # is the module top-level.
+    nesting_level: int = 0
+
     def __init__(self, context: CodemodContext) -> None:
         if (sys.version_info.major, sys.version_info.minor) < (3, 9):
             # The ast module did not get `unparse` until Python 3.9,
@@ -433,6 +451,7 @@ class ConvertTypeComments(VisitorBasedCodemodCommand):
         self.function_type_info_stack = []
         self.function_body_stack = []
         self.aggressively_strip_type_comments = False
+        self.nesting_level = 0
 
     def _strip_TrailingWhitespace(
         self,
@@ -623,10 +642,31 @@ class ConvertTypeComments(VisitorBasedCodemodCommand):
     # (B) we also manually reach down to the first statement inside of the
     #     funciton body and aggressively strip type comments from leading
     #     whitespaces
+    #
+    # PEP 484 underspecifies how to apply type comments to (non-static)
+    # methods - it would be possible to provide a type for `self`, or to omit
+    # it. We use heuristics to determine when a function is a method, and allow
+    # for the `self` or `cls` argument to have no type provided.
+    #
+    # The heuristics are:
+    # - Is it inside of a class body? If not, it is never a method.
+    # - Is the name of the first parameter `cls` or `self`? This isn't required
+    #   but it's a strong enough convention that it should work as a heuristic.
 
-    def visit_FunctionDef(
+    def visit_Class(
         self,
         node: cst.FunctionDef,
+    ) -> None:
+        """
+        Keep track of when we are and are not inside of classes, to help with
+        heuristics to handle methods correctly.
+        """
+        self.nesting_level += 1
+
+    def _visit_FunctionDef(
+        self,
+        node: cst.FunctionDef,
+        is_method: bool,
     ) -> None:
         """
         Set up the data we need to handle function definitions:
@@ -636,10 +676,36 @@ class ConvertTypeComments(VisitorBasedCodemodCommand):
         - Set that we are aggressively stripping type comments, which will
           remain true until we visit the body.
         """
-        function_type_info = FunctionTypeInfo.from_cst(node)
+        function_type_info = FunctionTypeInfo.from_cst(node, is_method=is_method)
         self.aggressively_strip_type_comments = not function_type_info.is_empty()
         self.function_type_info_stack.append(function_type_info)
         self.function_body_stack.append(node.body)
+
+
+    @m.call_if_not_inside(m.ClassDef())
+    @m.visit(m.FunctionDef())
+    def visit_method(
+        self,
+        node: cst.FunctionDef,
+    ) -> None:
+        return self._visit_FunctionDef(
+            node=node,
+            is_method=False,
+        )
+
+    @m.call_if_inside(m.ClassDef())
+    @m.visit(m.FunctionDef())
+    def visit_function(
+        self,
+        node: cst.FunctionDef,
+    ) -> None:
+        return self._visit_FunctionDef(
+            node=node,
+            is_method=not any(
+                m.matches(d.decorator, m.Name("staticmethod"))
+                for d in node.decorators
+            ),
+        )
 
     def leave_TrailingWhitespace(
         self,
@@ -747,6 +813,17 @@ class ConvertTypeComments(VisitorBasedCodemodCommand):
             )
         else:
             return updated_node
+
+    def leave_Class(
+        self,
+        original_node: cst.FunctionDef,
+        updated_node: cst.FunctionDef,
+    ) -> None:
+        """
+        Keep track of when we are and are not inside of classes, to help with
+        heuristics to handle methods correctly.
+        """
+        self.nesting_level -= 1
 
     def visit_Lambda(
         self,

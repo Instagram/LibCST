@@ -337,6 +337,73 @@ class TestConvertTypeComments_FunctionDef(TestConvertTypeCommentsBase):
         """
         self.assertCodemod39Plus(before, after)
 
+    def test_method_transforms(self) -> None:
+        before = """
+        class A:
+
+            def __init__(self, thing):  # type: (str) -> None
+                self.thing = thing
+
+            @classmethod
+            def make(cls):  # type: () -> A
+                return cls("thing")
+
+            @staticmethod
+            def f(x, y):  # type: (object, object) -> None
+                pass
+
+            def method0(
+                self,
+                other_thing,
+            ):  # type: (str) -> bool
+                return self.thing == other_thing
+
+            def method1(
+                self,  # type: A
+                other_thing,  # type: str
+            ):  # type: (int) -> bool
+                return self.thing == other_thing
+
+            def method2(
+                self,
+                other_thing,
+            ):  # type: (A, str) -> bool
+                return self.thing == other_thing
+        """
+        after = """
+        class A:
+
+            def __init__(self, thing: str) -> None:
+                self.thing = thing
+
+            @classmethod
+            def make(cls) -> "A":
+                return cls("thing")
+
+            @staticmethod
+            def f(x: object, y: object) -> None:
+                pass
+
+            def method0(
+                self,
+                other_thing: str,
+            ) -> bool:
+                return self.thing == other_thing
+
+            def method1(
+                self: "A",
+                other_thing: str,
+            ) -> bool:
+                return self.thing == other_thing
+
+            def method2(
+                self: "A",
+                other_thing: str,
+            ) -> bool:
+                return self.thing == other_thing
+        """
+        self.assertCodemod39Plus(before, after)
+
     def test_no_change_if_function_type_comments_unused(self) -> None:
         before = """
         # arity error in arguments
