@@ -2174,9 +2174,12 @@ fn make_assignment<'a>(
 }
 
 fn expr_to_element(expr: Expression) -> Element {
-    Element::Simple {
-        value: expr,
-        comma: Default::default(),
+    match expr {
+        Expression::StarredElement(inner_expr) => Element::Starred(inner_expr),
+        _ => Element::Simple {
+            value: expr,
+            comma: Default::default(),
+        },
     }
 }
 
