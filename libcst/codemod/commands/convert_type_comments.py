@@ -681,7 +681,6 @@ class ConvertTypeComments(VisitorBasedCodemodCommand):
         self.function_type_info_stack.append(function_type_info)
         self.function_body_stack.append(node.body)
 
-
     @m.call_if_not_inside(m.ClassDef())
     @m.visit(m.FunctionDef())
     def visit_method(
@@ -702,8 +701,7 @@ class ConvertTypeComments(VisitorBasedCodemodCommand):
         return self._visit_FunctionDef(
             node=node,
             is_method=not any(
-                m.matches(d.decorator, m.Name("staticmethod"))
-                for d in node.decorators
+                m.matches(d.decorator, m.Name("staticmethod")) for d in node.decorators
             ),
         )
 
