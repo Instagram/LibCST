@@ -355,3 +355,17 @@ class TestConvertTypeComments_FunctionDef(TestConvertTypeCommentsBase):
         """
         after = before
         self.assertCodemod39Plus(before, after)
+
+    def test_do_not_traverse_lambda_Param(self) -> None:
+        """
+        The Param node can happen not just in FunctionDef but also in
+        Lambda. Make sure this doesn't cause problems.
+        """
+        before = """
+        @dataclass
+        class WrapsAFunction:
+            func: Callable
+            msg_gen: Callable = lambda self: f"calling {self.func.__name__}..."
+        """
+        after = before
+        self.assertCodemod39Plus(before, after)

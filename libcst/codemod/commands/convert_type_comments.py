@@ -747,3 +747,14 @@ class ConvertTypeComments(VisitorBasedCodemodCommand):
             )
         else:
             return updated_node
+
+    def visit_Lambda(
+        self,
+        node: cst.Lambda,
+    ) -> bool:
+        """
+        Disable traversing under lambdas. They don't have any statements
+        nested inside them so there's no need, and they do have Params which
+        we don't want to transform.
+        """
+        return False
