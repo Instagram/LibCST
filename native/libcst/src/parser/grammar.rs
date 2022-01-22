@@ -1396,7 +1396,7 @@ parser! {
 
         rule _f_expr() -> Expression<'a>
             = (g:_bare_genexp() {Expression::GeneratorExp(g)})
-            / _conditional_expression()
+            / star_expressions()
             / yield_expr()
 
         rule _f_conversion() -> &'a str

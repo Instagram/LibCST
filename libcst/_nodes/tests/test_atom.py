@@ -740,6 +740,69 @@ class AtomTest(CSTNodeTest):
                 "parser": parse_expression,
                 "expected_position": None,
             },
+            # Unpacked tuple
+            {
+                "node": cst.FormattedString(
+                    parts=[
+                        cst.FormattedStringExpression(
+                            expression=cst.Tuple(
+                                elements=[
+                                    cst.Element(
+                                        value=cst.Name(
+                                            value="a",
+                                        ),
+                                        comma=cst.Comma(
+                                            whitespace_before=cst.SimpleWhitespace(
+                                                value="",
+                                            ),
+                                            whitespace_after=cst.SimpleWhitespace(
+                                                value=" ",
+                                            ),
+                                        ),
+                                    ),
+                                    cst.Element(
+                                        value=cst.Name(
+                                            value="b",
+                                        ),
+                                    ),
+                                ],
+                                lpar=[],
+                                rpar=[],
+                            ),
+                        ),
+                    ],
+                    start="f'",
+                    end="'",
+                ),
+                "code": "f'{a, b}'",
+                "parser": parse_expression,
+                "expected_position": None,
+            },
+            # Conditional expression
+            {
+                "node": cst.FormattedString(
+                    parts=[
+                        cst.FormattedStringExpression(
+                            expression=cst.IfExp(
+                                test=cst.Name(
+                                    value="b",
+                                ),
+                                body=cst.Name(
+                                    value="a",
+                                ),
+                                orelse=cst.Name(
+                                    value="c",
+                                ),
+                            ),
+                        ),
+                    ],
+                    start="f'",
+                    end="'",
+                ),
+                "code": "f'{a if b else c}'",
+                "parser": parse_expression,
+                "expected_position": None,
+            },
             # Concatenated strings
             {
                 "node": cst.ConcatenatedString(
