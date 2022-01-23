@@ -2687,11 +2687,6 @@ class Match(BaseCompoundStatement):
         if len(self.cases) == 0:
             raise CSTValidationError("A match statement must have at least one case.")
 
-        if self.whitespace_after_match.empty:
-            raise CSTValidationError(
-                "Must have at least one space after a 'match' keyword"
-            )
-
         indent = self.indent
         if indent is not None:
             if len(indent) == 0:
