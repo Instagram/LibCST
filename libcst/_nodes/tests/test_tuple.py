@@ -91,6 +91,47 @@ class TupleTest(CSTNodeTest):
                 "parser": parse_expression,
                 "expected_position": CodeRange((1, 1), (1, 11)),
             },
+            # top-level two-element tuple, with one being starred
+            {
+                "node": cst.SimpleStatementLine(
+                    body=[
+                        cst.Expr(
+                            value=cst.Tuple(
+                                [
+                                    cst.Element(cst.Name("one"), comma=cst.Comma()),
+                                    cst.StarredElement(cst.Name("two")),
+                                ],
+                                lpar=[],
+                                rpar=[],
+                            )
+                        )
+                    ]
+                ),
+                "code": "one,*two\n",
+                "parser": parse_statement,
+            },
+            # top-level three-element tuple, start/end is starred
+            {
+                "node": cst.SimpleStatementLine(
+                    body=[
+                        cst.Expr(
+                            value=cst.Tuple(
+                                [
+                                    cst.StarredElement(
+                                        cst.Name("one"), comma=cst.Comma()
+                                    ),
+                                    cst.Element(cst.Name("two"), comma=cst.Comma()),
+                                    cst.StarredElement(cst.Name("three")),
+                                ],
+                                lpar=[],
+                                rpar=[],
+                            )
+                        )
+                    ]
+                ),
+                "code": "*one,two,*three\n",
+                "parser": parse_statement,
+            },
             # missing spaces around tuple, okay with parenthesis
             {
                 "node": cst.For(
