@@ -425,6 +425,34 @@ class MatchTest(CSTNodeTest):
                 + "    case None | False | True: pass\n",
                 "parser": None,
             },
+            # Match without whitespace between keyword and the expr
+            {
+                "node": cst.Match(
+                    subject=cst.Name(
+                        "x", lpar=[cst.LeftParen()], rpar=[cst.RightParen()]
+                    ),
+                    cases=[
+                        cst.MatchCase(
+                            pattern=cst.MatchSingleton(
+                                cst.Name(
+                                    "None",
+                                    lpar=[cst.LeftParen()],
+                                    rpar=[cst.RightParen()],
+                                )
+                            ),
+                            body=cst.SimpleStatementSuite((cst.Pass(),)),
+                            whitespace_after_case=cst.SimpleWhitespace(
+                                value="",
+                            ),
+                        ),
+                    ],
+                    whitespace_after_match=cst.SimpleWhitespace(
+                        value="",
+                    ),
+                ),
+                "code": "match(x):\n    case(None): pass\n",
+                "parser": parser,
+            },
         )
     )
     def test_valid(self, **kwargs: Any) -> None:
