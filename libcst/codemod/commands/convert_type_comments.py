@@ -427,10 +427,6 @@ class ConvertTypeComments(VisitorBasedCodemodCommand):
     function_body_stack: List[cst.BaseSuite]
     aggressively_strip_type_comments: bool
 
-    # This helps us track when we are inside of a class body - nesting level 0
-    # is the module top-level.
-    nesting_level: int = 0
-
     def __init__(self, context: CodemodContext) -> None:
         if (sys.version_info.major, sys.version_info.minor) < (3, 9):
             # The ast module did not get `unparse` until Python 3.9,
@@ -451,7 +447,6 @@ class ConvertTypeComments(VisitorBasedCodemodCommand):
         self.function_type_info_stack = []
         self.function_body_stack = []
         self.aggressively_strip_type_comments = False
-        self.nesting_level = 0
 
     def _strip_TrailingWhitespace(
         self,
@@ -648,16 +643,6 @@ class ConvertTypeComments(VisitorBasedCodemodCommand):
     # it. So we accept either approach when interpreting type comments on
     # non-static methods: the first argument an have a type provided or not.
 
-    def visit_ClassDef(
-        self,
-        node: cst.ClassDef,
-    ) -> None:
-        """
-        Keep track of when we are and are not inside of classes, to help with
-        heuristics to handle methods correctly.
-        """
-        self.nesting_level += 1
-
     def _visit_FunctionDef(
         self,
         node: cst.FunctionDef,
@@ -806,18 +791,6 @@ class ConvertTypeComments(VisitorBasedCodemodCommand):
             )
         else:
             return updated_node
-
-    def leave_ClassDef(
-        self,
-        original_node: cst.ClassDef,
-        updated_node: cst.ClassDef,
-    ) -> cst.ClassDef:
-        """
-        Keep track of when we are and are not inside of classes, to help with
-        heuristics to handle methods correctly.
-        """
-        self.nesting_level -= 1
-        return updated_node
 
     def visit_Lambda(
         self,
