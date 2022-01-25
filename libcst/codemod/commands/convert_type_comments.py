@@ -655,7 +655,7 @@ class ConvertTypeComments(VisitorBasedCodemodCommand):
 
     def visit_Class(
         self,
-        node: cst.FunctionDef,
+        node: cst.Class,
     ) -> None:
         """
         Keep track of when we are and are not inside of classes, to help with
@@ -814,8 +814,8 @@ class ConvertTypeComments(VisitorBasedCodemodCommand):
 
     def leave_Class(
         self,
-        original_node: cst.FunctionDef,
-        updated_node: cst.FunctionDef,
+        original_node: cst.Class,
+        updated_node: cst.Class,
     ) -> None:
         """
         Keep track of when we are and are not inside of classes, to help with
