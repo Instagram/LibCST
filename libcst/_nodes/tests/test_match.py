@@ -39,6 +39,39 @@ class MatchTest(CSTNodeTest):
                 + '    case "foo": pass\n',
                 "parser": parser,
             },
+            # Parenthesized value
+            {
+                "node": cst.Match(
+                    subject=cst.Name(
+                        value="x",
+                    ),
+                    cases=[
+                        cst.MatchCase(
+                            pattern=cst.MatchAs(
+                                pattern=cst.MatchValue(
+                                    value=cst.Integer(
+                                        value="1",
+                                        lpar=[
+                                            cst.LeftParen(),
+                                        ],
+                                        rpar=[
+                                            cst.RightParen(),
+                                        ],
+                                    ),
+                                ),
+                                name=cst.Name(
+                                    value="z",
+                                ),
+                                whitespace_before_as=cst.SimpleWhitespace(" "),
+                                whitespace_after_as=cst.SimpleWhitespace(" "),
+                            ),
+                            body=cst.SimpleStatementSuite([cst.Pass()]),
+                        ),
+                    ],
+                ),
+                "code": "match x:\n    case (1) as z: pass\n",
+                "parser": parser,
+            },
             # List patterns
             {
                 "node": cst.Match(

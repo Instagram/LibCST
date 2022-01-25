@@ -2843,6 +2843,14 @@ class MatchValue(MatchPattern):
     def lpar(self, value: Sequence[LeftParen]) -> None:
         self.value.lpar = value
 
+    @property
+    def rpar(self) -> Sequence[RightParen]:
+        return self.value.rpar
+
+    @rpar.setter
+    def rpar(self, value: Sequence[RightParen]) -> None:
+        self.value.rpar = value
+
 
 @add_slots
 @dataclass(frozen=True)
@@ -2875,6 +2883,15 @@ class MatchSingleton(MatchPattern):
     def lpar(self, value: Sequence[LeftParen]) -> None:
         # pyre-fixme[41]: Cannot reassign final attribute `lpar`.
         self.value.lpar = value
+
+    @property
+    def rpar(self) -> Sequence[RightParen]:
+        return self.value.rpar
+
+    @rpar.setter
+    def rpar(self, value: Sequence[RightParen]) -> None:
+        # pyre-fixme[41]: Cannot reassign final attribute `rpar`.
+        self.value.rpar = value
 
 
 @add_slots
