@@ -13,6 +13,7 @@ from typing import cast, Dict, List, Optional, Sequence, Set, Tuple, Union
 from typing_extensions import TypeAlias
 
 import libcst as cst
+import libcst.matchers as m
 from libcst.codemod import CodemodContext, VisitorBasedCodemodCommand
 
 
@@ -285,6 +286,7 @@ class FunctionTypeInfo:
     def from_cst(
         cls,
         node_cst: cst.FunctionDef,
+        is_method: bool,
     ) -> "FunctionTypeInfo":
         """
         Using the `ast` type comment extraction logic, get type information
@@ -347,6 +349,18 @@ class FunctionTypeInfo:
                     arguments={
                         arg.arg: arg.type_comment or ast.unparse(from_func_type)
                         for arg, from_func_type in zip(args, argtypes)
+                    },
+                    returns=returns,
+                )
+            elif is_method and len(argtypes) == len(args) - 1:
+                # Merge as above, but skip merging the initial `self` or `cls` arg.
+                return cls(
+                    arguments={
+                        args[0].arg: args[0].type_comment,
+                        **{
+                            arg.arg: arg.type_comment or ast.unparse(from_func_type)
+                            for arg, from_func_type in zip(args[1:], argtypes)
+                        },
                     },
                     returns=returns,
                 )
@@ -623,10 +637,16 @@ class ConvertTypeComments(VisitorBasedCodemodCommand):
     # (B) we also manually reach down to the first statement inside of the
     #     funciton body and aggressively strip type comments from leading
     #     whitespaces
+    #
+    # PEP 484 underspecifies how to apply type comments to (non-static)
+    # methods - it would be possible to provide a type for `self`, or to omit
+    # it. So we accept either approach when interpreting type comments on
+    # non-static methods: the first argument an have a type provided or not.
 
-    def visit_FunctionDef(
+    def _visit_FunctionDef(
         self,
         node: cst.FunctionDef,
+        is_method: bool,
     ) -> None:
         """
         Set up the data we need to handle function definitions:
@@ -636,10 +656,34 @@ class ConvertTypeComments(VisitorBasedCodemodCommand):
         - Set that we are aggressively stripping type comments, which will
           remain true until we visit the body.
         """
-        function_type_info = FunctionTypeInfo.from_cst(node)
+        function_type_info = FunctionTypeInfo.from_cst(node, is_method=is_method)
         self.aggressively_strip_type_comments = not function_type_info.is_empty()
         self.function_type_info_stack.append(function_type_info)
         self.function_body_stack.append(node.body)
+
+    @m.call_if_not_inside(m.ClassDef())
+    @m.visit(m.FunctionDef())
+    def visit_method(
+        self,
+        node: cst.FunctionDef,
+    ) -> None:
+        return self._visit_FunctionDef(
+            node=node,
+            is_method=False,
+        )
+
+    @m.call_if_inside(m.ClassDef())
+    @m.visit(m.FunctionDef())
+    def visit_function(
+        self,
+        node: cst.FunctionDef,
+    ) -> None:
+        return self._visit_FunctionDef(
+            node=node,
+            is_method=not any(
+                m.matches(d.decorator, m.Name("staticmethod")) for d in node.decorators
+            ),
+        )
 
     def leave_TrailingWhitespace(
         self,
