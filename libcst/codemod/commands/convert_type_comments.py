@@ -811,7 +811,7 @@ class ConvertTypeComments(VisitorBasedCodemodCommand):
         self,
         original_node: cst.ClassDef,
         updated_node: cst.ClassDef,
-    ) -> None:
+    ) -> cst.ClassDef:
         """
         Keep track of when we are and are not inside of classes, to help with
         heuristics to handle methods correctly.
