@@ -645,17 +645,12 @@ class ConvertTypeComments(VisitorBasedCodemodCommand):
     #
     # PEP 484 underspecifies how to apply type comments to (non-static)
     # methods - it would be possible to provide a type for `self`, or to omit
-    # it. We use heuristics to determine when a function is a method, and allow
-    # for the `self` or `cls` argument to have no type provided.
-    #
-    # The heuristics are:
-    # - Is it inside of a class body? If not, it is never a method.
-    # - Is the name of the first parameter `cls` or `self`? This isn't required
-    #   but it's a strong enough convention that it should work as a heuristic.
+    # it. So we accept either approach when interpreting type comments on
+    # non-static methods: the first argument an have a type provided or not.
 
-    def visit_Class(
+    def visit_ClassDef(
         self,
-        node: cst.Class,
+        node: cst.ClassDef,
     ) -> None:
         """
         Keep track of when we are and are not inside of classes, to help with
@@ -812,16 +807,17 @@ class ConvertTypeComments(VisitorBasedCodemodCommand):
         else:
             return updated_node
 
-    def leave_Class(
+    def leave_ClassDef(
         self,
-        original_node: cst.Class,
-        updated_node: cst.Class,
+        original_node: cst.ClassDef,
+        updated_node: cst.ClassDef,
     ) -> None:
         """
         Keep track of when we are and are not inside of classes, to help with
         heuristics to handle methods correctly.
         """
         self.nesting_level -= 1
+        return updated_node
 
     def visit_Lambda(
         self,
