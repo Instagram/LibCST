@@ -1,0 +1,31 @@
+[
+    {
+        "vers": "x86_64",
+        "os": "ubuntu-20.04"
+    },
+    {
+        "vers": "i686",
+        "os": "ubuntu-20.04"
+    },
+    {
+        "vers": "arm64",
+        "os": "macos-10.15"
+    },
+    {
+        "vers": "auto64",
+        "os": "macos-10.15"
+    },
+    {
+        "vers": "auto64",
+        "os": "windows-2019"
+    },
+    {
+        "vers": "aarch64",
+        "os": [
+            "self-hosted",
+            "linux",
+            "ARM64"
+        ],
+        "on_ref_regex": "^refs/(heads/main|tags/.*)$"
+    }
+]
