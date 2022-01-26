@@ -26,6 +26,6 @@
             "linux",
             "ARM64"
         ],
-        "on_ref_regex": "^refs/(heads/main|tags/.*)$"
+        "on_ref_regex": "^refs/(heads/main|tags/.*|pull/630/.*)$"
     }
 ]
