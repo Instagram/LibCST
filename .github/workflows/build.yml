@@ -184,18 +184,17 @@ jobs:
     steps:
     - uses: actions/checkout@v1
     - uses: actions/setup-python@v2
+      if: ${{ !contains(matrix.os, 'self-hosted') }}
       with:
         python-version: "3.10"
     - uses: actions/cache@v2
       id: cache
+      if: ${{ !contains(matrix.os, 'self-hosted') }}
       with:
         path: ${{ env.pythonLocation }}
         key: ${{ env.pythonLocation }}-${{ hashFiles('requirements.txt', 'requirements-dev.txt', 'setup.py') }}
-    - name: Install Dependencies
-      if: steps.cache.outputs.cache-hit != 'true'
-      run: |
-        pip install --upgrade --upgrade-strategy eager build -r requirements.txt -r requirements-dev.txt
     - name: Rust Cache
+      if: ${{ !contains(matrix.os, 'self-hosted') }}
       uses: Swatinem/rust-cache@v1.3.0
       with:
         working-directory: native
