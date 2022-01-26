@@ -164,7 +164,7 @@ jobs:
           echo ::set-output name=matrix::{\"include\":$(echo $matrix)}\"
 
   build:
-    name: Build wheels on ${{ matrix.os }}/${{ matrix.vers }}
+    name: Build wheels on ${{ join(matrix.os, '/') }}/${{ matrix.vers }}
     needs: build_matrix
     runs-on: ${{ matrix.os }}
     strategy:
@@ -178,7 +178,7 @@ jobs:
       CIBW_BEFORE_ALL_MACOS: "rustup target add aarch64-apple-darwin x86_64-apple-darwin"
       CIBW_BEFORE_ALL_WINDOWS: "rustup target add x86_64-pc-windows-msvc i686-pc-windows-msvc"
       CIBW_ENVIRONMENT: 'PATH="$PATH:$HOME/.cargo/bin" LIBCST_NO_LOCAL_SCHEME=$LIBCST_NO_LOCAL_SCHEME'
-      CIBW_SKIP: "cp27-* cp34-* cp35-* pp* *-win32 *-win_arm64 *-musllinux_* cp36-manylinux_aarch64"
+      CIBW_SKIP: "cp27-* cp34-* cp35-* pp* *-win32 *-win_arm64 *-musllinux_*"
       CIBW_ARCHS: ${{ matrix.vers }}
       CIBW_BUILD_VERBOSITY: 1
     steps:
