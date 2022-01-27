@@ -58,11 +58,10 @@ impl<'a> Inflate<'a> for Parameters<'a> {
     }
 }
 
-#[allow(clippy::large_enum_variant)]
 #[derive(Debug, PartialEq, Eq, Clone, Inflate)]
 #[cfg_attr(feature = "py", derive(IntoPy))]
 pub enum StarArg<'a> {
-    Star(ParamStar<'a>),
+    Star(Box<ParamStar<'a>>),
     Param(Box<Param<'a>>),
 }
 
@@ -397,39 +396,38 @@ impl<'a> Inflate<'a> for RightParen<'a> {
     }
 }
 
-#[allow(clippy::large_enum_variant)]
 #[derive(Debug, Eq, PartialEq, Clone, ParenthesizedNode, Codegen, Inflate)]
 #[cfg_attr(feature = "py", derive(IntoPy))]
 pub enum Expression<'a> {
-    Name(Name<'a>),
-    Ellipsis(Ellipsis<'a>),
-    Integer(Integer<'a>),
-    Float(Float<'a>),
-    Imaginary(Imaginary<'a>),
-    Comparison(Comparison<'a>),
-    UnaryOperation(UnaryOperation<'a>),
-    BinaryOperation(BinaryOperation<'a>),
-    BooleanOperation(BooleanOperation<'a>),
-    Attribute(Attribute<'a>),
-    Tuple(Tuple<'a>),
-    Call(Call<'a>),
-    GeneratorExp(GeneratorExp<'a>),
-    ListComp(ListComp<'a>),
-    SetComp(SetComp<'a>),
-    DictComp(DictComp<'a>),
-    List(List<'a>),
-    Set(Set<'a>),
-    Dict(Dict<'a>),
-    Subscript(Subscript<'a>),
-    StarredElement(StarredElement<'a>),
-    IfExp(IfExp<'a>),
-    Lambda(Lambda<'a>),
-    Yield(Yield<'a>),
-    Await(Await<'a>),
-    SimpleString(SimpleString<'a>),
-    ConcatenatedString(ConcatenatedString<'a>),
-    FormattedString(FormattedString<'a>),
-    NamedExpr(NamedExpr<'a>),
+    Name(Box<Name<'a>>),
+    Ellipsis(Box<Ellipsis<'a>>),
+    Integer(Box<Integer<'a>>),
+    Float(Box<Float<'a>>),
+    Imaginary(Box<Imaginary<'a>>),
+    Comparison(Box<Comparison<'a>>),
+    UnaryOperation(Box<UnaryOperation<'a>>),
+    BinaryOperation(Box<BinaryOperation<'a>>),
+    BooleanOperation(Box<BooleanOperation<'a>>),
+    Attribute(Box<Attribute<'a>>),
+    Tuple(Box<Tuple<'a>>),
+    Call(Box<Call<'a>>),
+    GeneratorExp(Box<GeneratorExp<'a>>),
+    ListComp(Box<ListComp<'a>>),
+    SetComp(Box<SetComp<'a>>),
+    DictComp(Box<DictComp<'a>>),
+    List(Box<List<'a>>),
+    Set(Box<Set<'a>>),
+    Dict(Box<Dict<'a>>),
+    Subscript(Box<Subscript<'a>>),
+    StarredElement(Box<StarredElement<'a>>),
+    IfExp(Box<IfExp<'a>>),
+    Lambda(Box<Lambda<'a>>),
+    Yield(Box<Yield<'a>>),
+    Await(Box<Await<'a>>),
+    SimpleString(Box<SimpleString<'a>>),
+    ConcatenatedString(Box<ConcatenatedString<'a>>),
+    FormattedString(Box<FormattedString<'a>>),
+    NamedExpr(Box<NamedExpr<'a>>),
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode)]
@@ -739,12 +737,11 @@ impl<'a> Codegen<'a> for Attribute<'a> {
     }
 }
 
-#[allow(clippy::large_enum_variant)]
 #[derive(Debug, PartialEq, Eq, Clone, Codegen, Inflate)]
 #[cfg_attr(feature = "py", derive(IntoPy))]
 pub enum NameOrAttribute<'a> {
-    N(Name<'a>),
-    A(Attribute<'a>),
+    N(Box<Name<'a>>),
+    A(Box<Attribute<'a>>),
 }
 
 impl<'a> std::convert::From<NameOrAttribute<'a>> for Expression<'a> {
@@ -833,7 +830,7 @@ pub enum Element<'a> {
         value: Expression<'a>,
         comma: Option<Comma<'a>>,
     },
-    Starred(StarredElement<'a>),
+    Starred(Box<StarredElement<'a>>),
 }
 
 impl<'a> Element<'a> {
@@ -863,7 +860,7 @@ impl<'a> Element<'a> {
 
     pub fn inflate_element(self, config: &Config<'a>, is_last: bool) -> Result<Self> {
         Ok(match self {
-            Self::Starred(s) => Self::Starred(s.inflate_element(config, is_last)?),
+            Self::Starred(s) => Self::Starred(Box::new(s.inflate_element(config, is_last)?)),
             Self::Simple { value, comma } => Self::Simple {
                 value: value.inflate(config)?,
                 comma: if is_last {
@@ -881,7 +878,10 @@ impl<'a> WithComma<'a> for Element<'a> {
         let comma = Some(comma);
         match self {
             Self::Simple { value, .. } => Self::Simple { comma, value },
-            Self::Starred(s) => Self::Starred(StarredElement { comma, ..s }),
+            Self::Starred(mut s) => {
+                s.comma = comma;
+                Self::Starred(s)
+            }
         }
     }
 }
@@ -1429,7 +1429,6 @@ impl<'a> Codegen<'a> for Dict<'a> {
     }
 }
 
-#[allow(clippy::large_enum_variant)]
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum DictElement<'a> {
     Simple {
@@ -1577,12 +1576,11 @@ impl<'a> Codegen<'a> for StarredDictElement<'a> {
     }
 }
 
-#[allow(clippy::large_enum_variant)]
 #[derive(Debug, PartialEq, Eq, Clone, Codegen, Inflate)]
 #[cfg_attr(feature = "py", derive(IntoPy))]
 pub enum BaseSlice<'a> {
-    Index(Index<'a>),
-    Slice(Slice<'a>),
+    Index(Box<Index<'a>>),
+    Slice(Box<Slice<'a>>),
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -1865,12 +1863,11 @@ impl<'a> Inflate<'a> for From<'a> {
     }
 }
 
-#[allow(clippy::large_enum_variant)]
 #[derive(Debug, PartialEq, Eq, Clone)]
 #[cfg_attr(feature = "py", derive(IntoPy))]
 pub enum YieldValue<'a> {
-    Expression(Expression<'a>),
-    From(From<'a>),
+    Expression(Box<Expression<'a>>),
+    From(Box<From<'a>>),
 }
 
 impl<'a> Inflate<'a> for YieldValue<'a> {
@@ -1972,7 +1969,6 @@ impl<'a> Codegen<'a> for Await<'a> {
     }
 }
 
-#[allow(clippy::large_enum_variant)]
 #[derive(Debug, PartialEq, Eq, Clone, Codegen, Inflate)]
 #[cfg_attr(feature = "py", derive(IntoPy))]
 pub enum String<'a> {
@@ -1984,9 +1980,9 @@ pub enum String<'a> {
 impl<'a> std::convert::From<String<'a>> for Expression<'a> {
     fn from(s: String<'a>) -> Self {
         match s {
-            String::Simple(s) => Self::SimpleString(s),
-            String::Concatenated(s) => Self::ConcatenatedString(s),
-            String::Formatted(s) => Self::FormattedString(s),
+            String::Simple(s) => Self::SimpleString(Box::new(s)),
+            String::Concatenated(s) => Self::ConcatenatedString(Box::new(s)),
+            String::Formatted(s) => Self::FormattedString(Box::new(s)),
         }
     }
 }
@@ -2130,12 +2126,11 @@ impl<'a> Codegen<'a> for FormattedStringExpression<'a> {
     }
 }
 
-#[allow(clippy::large_enum_variant)]
 #[derive(Debug, PartialEq, Eq, Clone, Codegen, Inflate)]
 #[cfg_attr(feature = "py", derive(IntoPy))]
 pub enum FormattedStringContent<'a> {
     Text(FormattedStringText<'a>),
-    Expression(FormattedStringExpression<'a>),
+    Expression(Box<FormattedStringExpression<'a>>),
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode)]

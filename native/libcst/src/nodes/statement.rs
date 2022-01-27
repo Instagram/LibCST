@@ -482,12 +482,12 @@ impl<'a> Inflate<'a> for AssignTarget<'a> {
 #[derive(Debug, PartialEq, Eq, Clone, Codegen, ParenthesizedNode, Inflate)]
 #[cfg_attr(feature = "py", derive(IntoPy))]
 pub enum AssignTargetExpression<'a> {
-    Name(Name<'a>),
-    Attribute(Attribute<'a>),
-    StarredElement(StarredElement<'a>),
-    Tuple(Tuple<'a>),
-    List(List<'a>),
-    Subscript(Subscript<'a>),
+    Name(Box<Name<'a>>),
+    Attribute(Box<Attribute<'a>>),
+    StarredElement(Box<StarredElement<'a>>),
+    Tuple(Box<Tuple<'a>>),
+    List(Box<List<'a>>),
+    Subscript(Box<Subscript<'a>>),
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -2113,15 +2113,14 @@ impl<'a> Inflate<'a> for With<'a> {
     }
 }
 
-#[allow(clippy::large_enum_variant)]
 #[derive(Debug, PartialEq, Eq, Clone, Codegen, ParenthesizedNode, Inflate)]
 #[cfg_attr(feature = "py", derive(IntoPy))]
 pub enum DelTargetExpression<'a> {
-    Name(Name<'a>),
-    Attribute(Attribute<'a>),
-    Tuple(Tuple<'a>),
-    List(List<'a>),
-    Subscript(Subscript<'a>),
+    Name(Box<Name<'a>>),
+    Attribute(Box<Attribute<'a>>),
+    Tuple(Box<Tuple<'a>>),
+    List(Box<List<'a>>),
+    Subscript(Box<Subscript<'a>>),
 }
 
 impl<'a> std::convert::From<DelTargetExpression<'a>> for Expression<'a> {
