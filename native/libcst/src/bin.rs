@@ -26,7 +26,7 @@ pub fn main() {
             if first_arg != "-n" {
                 let mut state = Default::default();
                 m.codegen(&mut state);
-                print!("{}", state.to_string());
+                print!("{}", state);
             }
         }
     };

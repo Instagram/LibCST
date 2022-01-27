@@ -81,7 +81,7 @@ impl<'a> ParseElem for TokVec<'a> {
 }
 
 parser! {
-    pub grammar python<'a>(input: &'a str) for TokVec<'a> {
+    pub grammar python<'a>() for TokVec<'a> {
 
         // Starting Rules
 

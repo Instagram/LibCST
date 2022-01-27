@@ -37,7 +37,7 @@ pub fn parse_tokens_without_whitespace<'a>(
     module_text: &'a str,
     encoding: Option<&str>,
 ) -> Result<'a, Module<'a>> {
-    parser::python::file(&tokens.into(), module_text, encoding)
+    parser::python::file(&tokens.into(), encoding)
         .map_err(|err| ParserError::ParserError(err, module_text))
 }
 
@@ -58,7 +58,7 @@ pub fn parse_module<'a>(
 pub fn parse_statement(text: &str) -> Result<Statement> {
     let tokens = tokenize(text)?;
     let conf = whitespace_parser::Config::new(text, &tokens);
-    let stm = parser::python::statement_input(&tokens.into(), text)
+    let stm = parser::python::statement_input(&tokens.into())
         .map_err(|err| ParserError::ParserError(err, text))?;
     Ok(stm.inflate(&conf)?)
 }
@@ -66,7 +66,7 @@ pub fn parse_statement(text: &str) -> Result<Statement> {
 pub fn parse_expression(text: &str) -> Result<Expression> {
     let tokens = tokenize(text)?;
     let conf = whitespace_parser::Config::new(text, &tokens);
-    let expr = parser::python::expression_input(&tokens.into(), text)
+    let expr = parser::python::expression_input(&tokens.into())
         .map_err(|err| ParserError::ParserError(err, text))?;
     Ok(expr.inflate(&conf)?)
 }
