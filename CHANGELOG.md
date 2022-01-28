@@ -1,3 +1,34 @@
+# 0.4.1 - 2022-01-28
+
+## New Contributors
+* @ariebovenberg made their first contribution in https://github.com/Instagram/LibCST/pull/605
+* @sehz made their first contribution in https://github.com/Instagram/LibCST/pull/598
+
+## Added
+* Add docs about the native parts by @zsol in https://github.com/Instagram/LibCST/pull/601
+* Specify minimum rust toolchain version by @zsol in https://github.com/Instagram/LibCST/pull/614
+* build wheels on main branch for linux/arm64 by @zsol in https://github.com/Instagram/LibCST/pull/630
+
+## Updated
+* ApplyTypeAnnotationVisitor changes
+  * Add support for methods with func type comment excluding self/cls by @stroxler in https://github.com/Instagram/LibCST/pull/622
+  * Merge in TypeVars and Generic base classes in ApplyTypeAnnotationVisitor by @martindemello in https://github.com/Instagram/LibCST/pull/596
+  * add slots to base classes, @add_slots takes bases into account by @ariebovenberg in https://github.com/Instagram/LibCST/pull/605
+  * Full handling for applying type comments to Assign by @stroxler in https://github.com/Instagram/LibCST/pull/599
+  * Add support for For and With by @stroxler in https://github.com/Instagram/LibCST/pull/607
+  * Support FunctionDef transformations by @stroxler in https://github.com/Instagram/LibCST/pull/610
+* change pyo3 as optional dependency in native Python Parser by @sehz in https://github.com/Instagram/LibCST/pull/598
+* [native] Box most enums by @zsol in https://github.com/Instagram/LibCST/pull/632
+* [native] Return tuples instead of lists in CST nodes by @zsol in https://github.com/Instagram/LibCST/pull/631
+
+## Fixed
+* Allow trailing whitespace without newline at EOF by @zsol in https://github.com/Instagram/LibCST/pull/611
+* Handle ast.parse failures when converting function type comments by @stroxler in https://github.com/Instagram/LibCST/pull/616
+* [native] Don't redundantly nest StarredElement inside another Element by @isidentical in https://github.com/Instagram/LibCST/pull/624
+* [native] Allow unparenthesized tuples inside f-strings by @isidentical in https://github.com/Instagram/LibCST/pull/621
+* Don't require whitespace right after match by @isidentical in https://github.com/Instagram/LibCST/pull/628
+* Proxy both parentheses in some pattern matching nodes by @isidentical in https://github.com/Instagram/LibCST/pull/626
+
 # 0.4.0 - 2022-01-12
 
 This release contains a new parsing infrastructure that is turned off by default. You
