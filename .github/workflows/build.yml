@@ -147,27 +147,30 @@ jobs:
         name: sphinx-docs
         path: docs/build
 
-# Build python package
+# Build python wheels
+  build_matrix:
+    name: Prepare job matrix for build job
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v1
+      - id: set-matrix
+        # match github.ref to the on_ref_regex field in the json
+        # to skip running linux/aarch64 builds on PRs
+        run: |
+          matrix=$(jq --arg ref "${{ github.ref }}" \
+            'map(select(.on_ref_regex as $pat | $pat == null or ($ref | test($pat))) | del(.on_ref_regex))' \
+            .github/build-matrix.json)
+          echo ::set-output name=matrix::{\"include\":$(echo $matrix)}\"
+
   build:
-    name: Build wheels on ${{ matrix.os }}/${{ matrix.vers }}
+    name: Build wheels on ${{ join(matrix.os, '/') }}/${{ matrix.vers }}
+    needs: build_matrix
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
-      matrix:
-        include:
-          - vers: i686
-            os: ubuntu-20.04
-          # aarch64 seems to be stuck
-          # - vers: aarch64
-          #   os: ubuntu-20.04
-          - vers: auto64
-            os: ubuntu-20.04
-          - vers: arm64
-            os: macos-10.15
-          - vers: auto64
-            os: macos-10.15
-          - vers: auto64
-            os: windows-2019
+      matrix: ${{fromJson(needs.build_matrix.outputs.matrix)}}
     env:
       SCCACHE_VERSION: 0.2.13
       CIBW_BEFORE_ALL_LINUX: "curl https://sh.rustup.rs -sSf | env -u CARGO_HOME sh -s -- --default-toolchain stable --profile minimal -y"
@@ -182,18 +185,17 @@ jobs:
     steps:
     - uses: actions/checkout@v1
     - uses: actions/setup-python@v2
+      if: ${{ !contains(matrix.os, 'self-hosted') }}
       with:
         python-version: "3.10"
     - uses: actions/cache@v2
       id: cache
+      if: ${{ !contains(matrix.os, 'self-hosted') }}
       with:
         path: ${{ env.pythonLocation }}
         key: ${{ env.pythonLocation }}-${{ hashFiles('requirements.txt', 'requirements-dev.txt', 'setup.py') }}
-    - name: Install Dependencies
-      if: steps.cache.outputs.cache-hit != 'true'
-      run: |
-        pip install --upgrade --upgrade-strategy eager build -r requirements.txt -r requirements-dev.txt
     - name: Rust Cache
+      if: ${{ !contains(matrix.os, 'self-hosted') }}
       uses: Swatinem/rust-cache@v1.3.0
       with:
         working-directory: native
