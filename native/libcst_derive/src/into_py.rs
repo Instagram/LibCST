@@ -108,6 +108,8 @@ fn fields_to_kwargs(fields: &Fields, is_enum: bool) -> quote::__private::TokenSt
     let mut rust_varnames = vec![];
     let mut optional_py_varnames = vec![];
     let mut optional_rust_varnames = vec![];
+    let mut vec_py_varnames = vec![];
+    let mut vec_rust_varnames = vec![];
     match &fields {
         Fields::Named(FieldsNamed { named, .. }) => {
             for field in named.iter() {
@@ -138,12 +140,23 @@ fn fields_to_kwargs(fields: &Fields, is_enum: bool) -> quote::__private::TokenSt
                                 }
                             }
                         }
+                        if let Type::Path(TypePath { path, .. }) = &field.ty {
+                            if let Some(first) = path.segments.first() {
+                                if first.ident == "Vec" {
+                                    vec_py_varnames.push(pyname);
+                                    vec_rust_varnames.push(rustname);
+                                    continue;
+                                }
+                            }
+                        }
                         py_varnames.push(pyname);
                         rust_varnames.push(rustname);
                     }
                 }
             }
-            empty_kwargs = py_varnames.is_empty() && optional_py_varnames.is_empty();
+            empty_kwargs = py_varnames.is_empty()
+                && optional_py_varnames.is_empty()
+                && vec_py_varnames.is_empty();
         }
         Fields::Unnamed(FieldsUnnamed { unnamed, .. }) => {
             if unnamed.first().is_some() {
@@ -163,11 +176,22 @@ fn fields_to_kwargs(fields: &Fields, is_enum: bool) -> quote::__private::TokenSt
     let optional_pairs = quote! {
         #(#optional_rust_varnames.map(|x| (stringify!(#optional_py_varnames), x.into_py(py))),)*
     };
+    let vec_pairs = quote! {
+        #(Some((
+            stringify!(#vec_py_varnames),
+            pyo3::IntoPy::<pyo3::PyObject>::into_py(
+                pyo3::types::PyTuple::new(
+                    py,
+                    #vec_rust_varnames.into_iter().map(|x| x.into_py(py)),
+                ),
+                py,
+        ))),)*
+    };
     if empty_kwargs {
         quote! { pyo3::types::PyDict::new(py) }
     } else {
         quote! {
-            [ #kwargs_pairs #optional_pairs ]
+            [ #kwargs_pairs #optional_pairs #vec_pairs ]
                 .iter()
                 .filter(|x| x.is_some())
                 .map(|x| x.as_ref().unwrap())
