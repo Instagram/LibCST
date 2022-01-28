@@ -13,11 +13,11 @@
 * ApplyTypeAnnotationVisitor changes
   * Add support for methods with func type comment excluding self/cls by @stroxler in https://github.com/Instagram/LibCST/pull/622
   * Merge in TypeVars and Generic base classes in ApplyTypeAnnotationVisitor by @martindemello in https://github.com/Instagram/LibCST/pull/596
-  * add slots to base classes, @add_slots takes bases into account by @ariebovenberg in https://github.com/Instagram/LibCST/pull/605
   * Full handling for applying type comments to Assign by @stroxler in https://github.com/Instagram/LibCST/pull/599
   * Add support for For and With by @stroxler in https://github.com/Instagram/LibCST/pull/607
   * Support FunctionDef transformations by @stroxler in https://github.com/Instagram/LibCST/pull/610
 * change pyo3 as optional dependency in native Python Parser by @sehz in https://github.com/Instagram/LibCST/pull/598
+* add slots to base classes, @add_slots takes bases into account by @ariebovenberg in https://github.com/Instagram/LibCST/pull/605
 * [native] Box most enums by @zsol in https://github.com/Instagram/LibCST/pull/632
 * [native] Return tuples instead of lists in CST nodes by @zsol in https://github.com/Instagram/LibCST/pull/631
 
