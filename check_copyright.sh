@@ -25,5 +25,6 @@ while read filename; do \
     if ! head -n 16 "$filename" | grep -q "Copyright (c) Meta Platforms, Inc. and affiliates."; then
         error "Missing copyright in $filename"
     fi
-done < <( git ls-tree -r --name-only HEAD | grep "\(.py\|\.sh\|\.rs\)$" | grep -v "${EXCEPTION_PATTERNS[@]/#/-e}" )
+done < <( git ls-tree -r --name-only HEAD | grep "\(.py\|\.sh\|\.rs\)$" | \
+            grep -v "${EXCEPTION_PATTERNS[@]/#/-e}" )
 exit $EXITCODE
