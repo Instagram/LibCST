@@ -176,8 +176,8 @@ class ParseErrorsTest(UnitTest):
             self.assertEqual(str(cm.exception), expected)
 
     def test_native_fallible_into_py(self) -> None:
-        with patch("libcst._nodes.expression.Await._validate") as await_validate:
+        with patch("libcst._nodes.expression.Name._validate") as await_validate:
             await_validate.side_effect = CSTValidationError("validate is broken")
             with self.assertRaises(Exception) as e:
-                cst.parse_module("await(foo)")
+                cst.parse_module("foo")
             self.assertIsInstance(e.exception, (SyntaxError, cst.ParserSyntaxError))
