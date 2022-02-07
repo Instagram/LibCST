@@ -17,14 +17,14 @@ use crate::{
     tokenizer::whitespace_parser::Config,
 };
 #[cfg(feature = "py")]
-use libcst_derive::IntoPy;
+use libcst_derive::TryIntoPy;
 
 use super::traits::{Inflate, Result, WithLeadingLines};
 
 type TokenRef<'a> = Rc<Token<'a>>;
 
 #[derive(Debug, Eq, PartialEq)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct Module<'a> {
     pub body: Vec<Statement<'a>>,
     pub header: Vec<EmptyLine<'a>>,

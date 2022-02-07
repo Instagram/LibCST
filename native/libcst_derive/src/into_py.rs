@@ -38,14 +38,13 @@ fn impl_into_py_enum(ast: &DeriveInput, e: &DataEnum) -> TokenStream {
                 let kwargs_toks = fields_to_kwargs(&var.fields, true);
                 toks.push(quote! {
                     Self::#varname { #(#fieldnames,)* .. } => {
-                        let libcst = pyo3::types::PyModule::import(py, "libcst").expect("libcst couldn't be imported");
+                        let libcst = pyo3::types::PyModule::import(py, "libcst")?;
                         let kwargs = #kwargs_toks ;
-                        libcst
+                        Ok(libcst
                             .getattr(stringify!(#varname))
                             .expect(stringify!(no #varname found in libcst))
-                            .call((), Some(kwargs))
-                            .expect(stringify!(conversion failed for #varname))
-                            .into()
+                            .call((), Some(kwargs))?
+                            .into())
                     }
                 })
             }
@@ -58,7 +57,7 @@ fn impl_into_py_enum(ast: &DeriveInput, e: &DataEnum) -> TokenStream {
             }
             Fields::Unnamed(_) => {
                 toks.push(quote! {
-                    Self::#varname(x, ..) => x.into_py(py),
+                    Self::#varname(x, ..) => x.try_into_py(py),
                 });
             }
         }
@@ -68,8 +67,8 @@ fn impl_into_py_enum(ast: &DeriveInput, e: &DataEnum) -> TokenStream {
     let gen = quote! {
         use pyo3::types::IntoPyDict as _;
         #[automatically_derived]
-        impl#generics pyo3::conversion::IntoPy<pyo3::PyObject> for #ident #generics {
-            fn into_py(self, py: pyo3::Python) -> pyo3::PyObject {
+        impl#generics crate::nodes::traits::py::TryIntoPy<pyo3::PyObject> for #ident #generics {
+            fn try_into_py(self, py: pyo3::Python) -> pyo3::PyResult<pyo3::PyObject> {
                 match self {
                     #(#toks)*
                 }
@@ -86,16 +85,15 @@ fn impl_into_py_struct(ast: &DeriveInput, e: &DataStruct) -> TokenStream {
     let gen = quote! {
         use pyo3::types::IntoPyDict as _;
         #[automatically_derived]
-        impl#generics pyo3::conversion::IntoPy<pyo3::PyObject> for #ident #generics {
-            fn into_py(self, py: pyo3::Python) -> pyo3::PyObject {
-                let libcst = pyo3::types::PyModule::import(py, "libcst").expect("libcst couldn't be imported");
+        impl#generics crate::nodes::traits::py::TryIntoPy<pyo3::PyObject> for #ident #generics {
+            fn try_into_py(self, py: pyo3::Python) -> pyo3::PyResult<pyo3::PyObject> {
+                let libcst = pyo3::types::PyModule::import(py, "libcst")?;
                 let kwargs = #kwargs_toks ;
-                libcst
+                Ok(libcst
                     .getattr(stringify!(#ident))
                     .expect(stringify!(no #ident found in libcst))
-                    .call((), Some(kwargs))
-                    .expect(stringify!(conversion failed for #ident))
-                    .into()
+                    .call((), Some(kwargs))?
+                    .into())
             }
         }
     };
@@ -108,8 +106,6 @@ fn fields_to_kwargs(fields: &Fields, is_enum: bool) -> quote::__private::TokenSt
     let mut rust_varnames = vec![];
     let mut optional_py_varnames = vec![];
     let mut optional_rust_varnames = vec![];
-    let mut vec_py_varnames = vec![];
-    let mut vec_rust_varnames = vec![];
     match &fields {
         Fields::Named(FieldsNamed { named, .. }) => {
             for field in named.iter() {
@@ -140,23 +136,12 @@ fn fields_to_kwargs(fields: &Fields, is_enum: bool) -> quote::__private::TokenSt
                                 }
                             }
                         }
-                        if let Type::Path(TypePath { path, .. }) = &field.ty {
-                            if let Some(first) = path.segments.first() {
-                                if first.ident == "Vec" {
-                                    vec_py_varnames.push(pyname);
-                                    vec_rust_varnames.push(rustname);
-                                    continue;
-                                }
-                            }
-                        }
                         py_varnames.push(pyname);
                         rust_varnames.push(rustname);
                     }
                 }
             }
-            empty_kwargs = py_varnames.is_empty()
-                && optional_py_varnames.is_empty()
-                && vec_py_varnames.is_empty();
+            empty_kwargs = py_varnames.is_empty() && optional_py_varnames.is_empty()
         }
         Fields::Unnamed(FieldsUnnamed { unnamed, .. }) => {
             if unnamed.first().is_some() {
@@ -171,27 +156,16 @@ fn fields_to_kwargs(fields: &Fields, is_enum: bool) -> quote::__private::TokenSt
         }
     };
     let kwargs_pairs = quote! {
-        #(Some((stringify!(#py_varnames), #rust_varnames.into_py(py))),)*
+        #(Some((stringify!(#py_varnames), #rust_varnames.try_into_py(py)?)),)*
     };
     let optional_pairs = quote! {
-        #(#optional_rust_varnames.map(|x| (stringify!(#optional_py_varnames), x.into_py(py))),)*
-    };
-    let vec_pairs = quote! {
-        #(Some((
-            stringify!(#vec_py_varnames),
-            pyo3::IntoPy::<pyo3::PyObject>::into_py(
-                pyo3::types::PyTuple::new(
-                    py,
-                    #vec_rust_varnames.into_iter().map(|x| x.into_py(py)),
-                ),
-                py,
-        ))),)*
+        #(#optional_rust_varnames.map(|x| x.try_into_py(py)).transpose()?.map(|x| (stringify!(#optional_py_varnames), x)),)*
     };
     if empty_kwargs {
         quote! { pyo3::types::PyDict::new(py) }
     } else {
         quote! {
-            [ #kwargs_pairs #optional_pairs #vec_pairs ]
+            [ #kwargs_pairs #optional_pairs ]
                 .iter()
                 .filter(|x| x.is_some())
                 .map(|x| x.as_ref().unwrap())

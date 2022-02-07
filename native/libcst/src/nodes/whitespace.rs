@@ -4,12 +4,12 @@
 // LICENSE file in the root directory of this source tree.
 
 #[cfg(feature = "py")]
-use libcst_derive::IntoPy;
+use libcst_derive::TryIntoPy;
 
 use super::{Codegen, CodegenState};
 
 #[derive(Debug, Eq, PartialEq, Default, Clone)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct SimpleWhitespace<'a>(pub &'a str);
 
 impl<'a> Codegen<'a> for SimpleWhitespace<'a> {
@@ -19,7 +19,7 @@ impl<'a> Codegen<'a> for SimpleWhitespace<'a> {
 }
 
 #[derive(Debug, Eq, PartialEq, Clone)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct Comment<'a>(pub &'a str);
 
 impl<'a> Default for Comment<'a> {
@@ -35,7 +35,7 @@ impl<'a> Codegen<'a> for Comment<'a> {
 }
 
 #[derive(Debug, Eq, PartialEq, Default, Clone)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct Newline<'a>(pub Option<&'a str>, pub Fakeness);
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -64,7 +64,7 @@ impl<'a> Codegen<'a> for Newline<'a> {
 }
 
 #[derive(Debug, Eq, PartialEq, Default, Clone)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct TrailingWhitespace<'a> {
     pub whitespace: SimpleWhitespace<'a>,
     pub comment: Option<Comment<'a>>,
@@ -82,7 +82,7 @@ impl<'a> Codegen<'a> for TrailingWhitespace<'a> {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct EmptyLine<'a> {
     pub indent: bool,
     pub whitespace: SimpleWhitespace<'a>,
@@ -131,7 +131,7 @@ impl<'a> EmptyLine<'a> {
 }
 
 #[derive(Debug, Eq, PartialEq, Default, Clone)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct ParenthesizedWhitespace<'a> {
     pub first_line: TrailingWhitespace<'a>,
     pub empty_lines: Vec<EmptyLine<'a>>,
@@ -153,7 +153,7 @@ impl<'a> Codegen<'a> for ParenthesizedWhitespace<'a> {
 }
 
 #[derive(Debug, Eq, PartialEq, Clone)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub enum ParenthesizableWhitespace<'a> {
     SimpleWhitespace(SimpleWhitespace<'a>),
     ParenthesizedWhitespace(ParenthesizedWhitespace<'a>),

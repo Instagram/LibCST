@@ -84,3 +84,82 @@ impl<'a, T: Inflate<'a>> Inflate<'a> for Vec<T> {
         self.into_iter().map(|item| item.inflate(config)).collect()
     }
 }
+#[cfg(feature = "py")]
+pub mod py {
+    use pyo3::{types::PyTuple, AsPyPointer, IntoPy, PyObject, PyResult, Python};
+
+    // TODO: replace with upstream implementation once
+    // https://github.com/PyO3/pyo3/issues/1813 is resolved
+    pub trait TryIntoPy<T>: Sized {
+        fn try_into_py(self, py: Python) -> PyResult<T>;
+    }
+
+    // I wish:
+    // impl<PyT, T: IntoPy<PyT>> TryIntoPy<PyT> for T {
+    //     fn try_into_py(self, py: Python) -> PyResult<PyT> {
+    //         Ok(self.into_py(py))
+    //     }
+    // }
+
+    impl TryIntoPy<PyObject> for bool {
+        fn try_into_py(self, py: Python) -> PyResult<PyObject> {
+            Ok(self.into_py(py))
+        }
+    }
+
+    impl<T: TryIntoPy<PyObject>> TryIntoPy<PyObject> for Box<T>
+    where
+        T: TryIntoPy<PyObject>,
+    {
+        fn try_into_py(self, py: Python) -> PyResult<PyObject> {
+            (*self).try_into_py(py)
+        }
+    }
+
+    impl<T> TryIntoPy<PyObject> for Option<T>
+    where
+        T: TryIntoPy<PyObject>,
+    {
+        fn try_into_py(self, py: Python) -> PyResult<PyObject> {
+            Ok(match self {
+                None => py.None(),
+                Some(x) => x.try_into_py(py)?,
+            })
+        }
+    }
+
+    impl<T> TryIntoPy<PyObject> for Vec<T>
+    where
+        T: TryIntoPy<PyObject>,
+    {
+        fn try_into_py(self, py: Python) -> PyResult<PyObject> {
+            let converted = self
+                .into_iter()
+                .map(|x| x.try_into_py(py))
+                .collect::<PyResult<Vec<_>>>()?
+                .into_iter();
+            Ok(PyTuple::new(py, converted).into())
+        }
+    }
+
+    impl TryIntoPy<PyObject> for PyTuple {
+        fn try_into_py(self, py: Python) -> PyResult<PyObject> {
+            Ok(self.into_py(py))
+        }
+    }
+
+    impl<'a> TryIntoPy<PyObject> for &'a str {
+        fn try_into_py(self, py: Python) -> PyResult<PyObject> {
+            Ok(self.into_py(py))
+        }
+    }
+
+    impl<T> TryIntoPy<PyObject> for &'_ T
+    where
+        T: AsPyPointer,
+    {
+        fn try_into_py(self, py: Python) -> PyResult<PyObject> {
+            Ok(self.into_py(py))
+        }
+    }
+}

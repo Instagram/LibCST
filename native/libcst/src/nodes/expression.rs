@@ -19,13 +19,13 @@ use crate::{
     },
 };
 #[cfg(feature = "py")]
-use libcst_derive::IntoPy;
+use libcst_derive::TryIntoPy;
 use libcst_derive::{Codegen, Inflate, ParenthesizedNode};
 
 type TokenRef<'a> = Rc<Token<'a>>;
 
 #[derive(Debug, Eq, PartialEq, Default, Clone)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct Parameters<'a> {
     pub params: Vec<Param<'a>>,
     pub star_arg: Option<StarArg<'a>>,
@@ -59,7 +59,7 @@ impl<'a> Inflate<'a> for Parameters<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Inflate)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub enum StarArg<'a> {
     Star(Box<ParamStar<'a>>),
     Param(Box<Param<'a>>),
@@ -120,7 +120,7 @@ impl<'a> Codegen<'a> for Parameters<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct ParamSlash<'a> {
     pub comma: Option<Comma<'a>>,
 }
@@ -144,7 +144,7 @@ impl<'a> Inflate<'a> for ParamSlash<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct ParamStar<'a> {
     pub comma: Comma<'a>,
 }
@@ -164,7 +164,7 @@ impl<'a> Inflate<'a> for ParamStar<'a> {
 }
 
 #[derive(Debug, Eq, PartialEq, Default, Clone, ParenthesizedNode)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct Name<'a> {
     pub value: &'a str,
     pub lpar: Vec<LeftParen<'a>>,
@@ -188,7 +188,7 @@ impl<'a> Codegen<'a> for Name<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct Param<'a> {
     pub name: Name<'a>,
     pub annotation: Option<Annotation<'a>>,
@@ -281,7 +281,7 @@ impl<'a> Param<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct Arg<'a> {
     pub value: Expression<'a>,
     pub keyword: Option<Name<'a>>,
@@ -345,7 +345,7 @@ impl<'a> WithComma<'a> for Arg<'a> {
 }
 
 #[derive(Debug, Eq, PartialEq, Clone)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct LeftParen<'a> {
     /// Any space that appears directly after this left parenthesis.
     pub whitespace_after: ParenthesizableWhitespace<'a>,
@@ -371,7 +371,7 @@ impl<'a> Inflate<'a> for LeftParen<'a> {
 }
 
 #[derive(Debug, Eq, PartialEq, Clone)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct RightParen<'a> {
     /// Any space that appears directly before this right parenthesis.
     pub whitespace_before: ParenthesizableWhitespace<'a>,
@@ -397,7 +397,7 @@ impl<'a> Inflate<'a> for RightParen<'a> {
 }
 
 #[derive(Debug, Eq, PartialEq, Clone, ParenthesizedNode, Codegen, Inflate)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub enum Expression<'a> {
     Name(Box<Name<'a>>),
     Ellipsis(Box<Ellipsis<'a>>),
@@ -431,7 +431,7 @@ pub enum Expression<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct Ellipsis<'a> {
     pub lpar: Vec<LeftParen<'a>>,
     pub rpar: Vec<RightParen<'a>>,
@@ -453,7 +453,7 @@ impl<'a> Inflate<'a> for Ellipsis<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct Integer<'a> {
     /// A string representation of the integer, such as ``"100000"`` or
     /// ``"100_000"``.
@@ -479,7 +479,7 @@ impl<'a> Inflate<'a> for Integer<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct Float<'a> {
     /// A string representation of the floating point number, such as ```"0.05"``,
     /// ``".050"``, or ``"5e-2"``.
@@ -505,7 +505,7 @@ impl<'a> Inflate<'a> for Float<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct Imaginary<'a> {
     /// A string representation of the complex number, such as ``"2j"``
     pub value: &'a str,
@@ -530,7 +530,7 @@ impl<'a> Inflate<'a> for Imaginary<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct Comparison<'a> {
     pub left: Box<Expression<'a>>,
     pub comparisons: Vec<ComparisonTarget<'a>>,
@@ -559,7 +559,7 @@ impl<'a> Inflate<'a> for Comparison<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct UnaryOperation<'a> {
     pub operator: UnaryOp<'a>,
     pub expression: Box<Expression<'a>>,
@@ -587,7 +587,7 @@ impl<'a> Inflate<'a> for UnaryOperation<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct BinaryOperation<'a> {
     pub left: Box<Expression<'a>>,
     pub operator: BinaryOp<'a>,
@@ -618,7 +618,7 @@ impl<'a> Inflate<'a> for BinaryOperation<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct BooleanOperation<'a> {
     pub left: Box<Expression<'a>>,
     pub operator: BooleanOp<'a>,
@@ -649,7 +649,7 @@ impl<'a> Inflate<'a> for BooleanOperation<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct Call<'a> {
     pub func: Box<Expression<'a>>,
     pub args: Vec<Arg<'a>>,
@@ -707,7 +707,7 @@ impl<'a> Codegen<'a> for Call<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct Attribute<'a> {
     pub value: Box<Expression<'a>>,
     pub attr: Name<'a>,
@@ -738,7 +738,7 @@ impl<'a> Codegen<'a> for Attribute<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Codegen, Inflate)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub enum NameOrAttribute<'a> {
     N(Box<Name<'a>>),
     A(Box<Attribute<'a>>),
@@ -754,7 +754,7 @@ impl<'a> std::convert::From<NameOrAttribute<'a>> for Expression<'a> {
 }
 
 #[derive(Debug, Eq, PartialEq, Clone)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct ComparisonTarget<'a> {
     pub operator: CompOp<'a>,
     pub comparator: Expression<'a>,
@@ -776,7 +776,7 @@ impl<'a> Inflate<'a> for ComparisonTarget<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct StarredElement<'a> {
     pub value: Box<Expression<'a>>,
     pub comma: Option<Comma<'a>>,
@@ -895,7 +895,7 @@ impl<'a> std::convert::From<Expression<'a>> for Element<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Default, ParenthesizedNode)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct Tuple<'a> {
     pub elements: Vec<Element<'a>>,
     pub lpar: Vec<LeftParen<'a>>,
@@ -936,7 +936,7 @@ impl<'a> Codegen<'a> for Tuple<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct GeneratorExp<'a> {
     pub elt: Box<Expression<'a>>,
     pub for_in: Box<CompFor<'a>>,
@@ -964,7 +964,7 @@ impl<'a> Inflate<'a> for GeneratorExp<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct ListComp<'a> {
     pub elt: Box<Expression<'a>>,
     pub for_in: Box<CompFor<'a>>,
@@ -998,7 +998,7 @@ impl<'a> Inflate<'a> for ListComp<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct LeftSquareBracket<'a> {
     pub whitespace_after: ParenthesizableWhitespace<'a>,
     pub(crate) tok: TokenRef<'a>,
@@ -1022,7 +1022,7 @@ impl<'a> Inflate<'a> for LeftSquareBracket<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct RightSquareBracket<'a> {
     pub whitespace_before: ParenthesizableWhitespace<'a>,
     pub(crate) tok: TokenRef<'a>,
@@ -1046,7 +1046,7 @@ impl<'a> Inflate<'a> for RightSquareBracket<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct SetComp<'a> {
     pub elt: Box<Expression<'a>>,
     pub for_in: Box<CompFor<'a>>,
@@ -1080,7 +1080,7 @@ impl<'a> Codegen<'a> for SetComp<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct DictComp<'a> {
     pub key: Box<Expression<'a>>,
     pub value: Box<Expression<'a>>,
@@ -1132,7 +1132,7 @@ impl<'a> Codegen<'a> for DictComp<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct LeftCurlyBrace<'a> {
     pub whitespace_after: ParenthesizableWhitespace<'a>,
     pub(crate) tok: TokenRef<'a>,
@@ -1156,7 +1156,7 @@ impl<'a> Codegen<'a> for LeftCurlyBrace<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct RightCurlyBrace<'a> {
     pub whitespace_before: ParenthesizableWhitespace<'a>,
     pub(crate) tok: TokenRef<'a>,
@@ -1180,7 +1180,7 @@ impl<'a> Codegen<'a> for RightCurlyBrace<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct CompFor<'a> {
     pub target: AssignTargetExpression<'a>,
     pub iter: Expression<'a>,
@@ -1256,7 +1256,7 @@ impl<'a> Inflate<'a> for CompFor<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct Asynchronous<'a> {
     pub whitespace_after: ParenthesizableWhitespace<'a>,
 }
@@ -1269,7 +1269,7 @@ impl<'a> Codegen<'a> for Asynchronous<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct CompIf<'a> {
     pub test: Expression<'a>,
     pub whitespace_before: ParenthesizableWhitespace<'a>,
@@ -1303,7 +1303,7 @@ impl<'a> Inflate<'a> for CompIf<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct List<'a> {
     pub elements: Vec<Element<'a>>,
     pub lbracket: LeftSquareBracket<'a>,
@@ -1346,7 +1346,7 @@ impl<'a> Codegen<'a> for List<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct Set<'a> {
     pub elements: Vec<Element<'a>>,
     pub lbrace: LeftCurlyBrace<'a>,
@@ -1388,7 +1388,7 @@ impl<'a> Codegen<'a> for Set<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct Dict<'a> {
     pub elements: Vec<DictElement<'a>>,
     pub lbrace: LeftCurlyBrace<'a>,
@@ -1540,7 +1540,7 @@ impl<'a> WithComma<'a> for DictElement<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct StarredDictElement<'a> {
     pub value: Expression<'a>,
     pub comma: Option<Comma<'a>>,
@@ -1577,14 +1577,14 @@ impl<'a> Codegen<'a> for StarredDictElement<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Codegen, Inflate)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub enum BaseSlice<'a> {
     Index(Box<Index<'a>>),
     Slice(Box<Slice<'a>>),
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct Index<'a> {
     pub value: Expression<'a>,
 }
@@ -1603,7 +1603,7 @@ impl<'a> Codegen<'a> for Index<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct Slice<'a> {
     #[cfg_attr(feature = "py", no_py_default)]
     pub lower: Option<Expression<'a>>,
@@ -1646,7 +1646,7 @@ impl<'a> Codegen<'a> for Slice<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct SubscriptElement<'a> {
     pub slice: BaseSlice<'a>,
     pub comma: Option<Comma<'a>>,
@@ -1670,7 +1670,7 @@ impl<'a> Codegen<'a> for SubscriptElement<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct Subscript<'a> {
     pub value: Box<Expression<'a>>,
     pub slice: Vec<SubscriptElement<'a>>,
@@ -1718,7 +1718,7 @@ impl<'a> Codegen<'a> for Subscript<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct IfExp<'a> {
     pub test: Box<Expression<'a>>,
     pub body: Box<Expression<'a>>,
@@ -1778,7 +1778,7 @@ impl<'a> Codegen<'a> for IfExp<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct Lambda<'a> {
     pub params: Box<Parameters<'a>>,
     pub body: Box<Expression<'a>>,
@@ -1826,7 +1826,7 @@ impl<'a> Codegen<'a> for Lambda<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct From<'a> {
     pub item: Expression<'a>,
     pub whitespace_before_from: Option<ParenthesizableWhitespace<'a>>,
@@ -1864,7 +1864,7 @@ impl<'a> Inflate<'a> for From<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub enum YieldValue<'a> {
     Expression(Box<Expression<'a>>),
     From(Box<From<'a>>),
@@ -1893,7 +1893,7 @@ impl<'a> YieldValue<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct Yield<'a> {
     pub value: Option<Box<YieldValue<'a>>>,
     pub lpar: Vec<LeftParen<'a>>,
@@ -1936,7 +1936,7 @@ impl<'a> Codegen<'a> for Yield<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct Await<'a> {
     pub expression: Box<Expression<'a>>,
     pub lpar: Vec<LeftParen<'a>>,
@@ -1970,7 +1970,7 @@ impl<'a> Codegen<'a> for Await<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Codegen, Inflate)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub enum String<'a> {
     Simple(SimpleString<'a>),
     Concatenated(ConcatenatedString<'a>),
@@ -1988,7 +1988,7 @@ impl<'a> std::convert::From<String<'a>> for Expression<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct ConcatenatedString<'a> {
     pub left: Box<String<'a>>,
     pub right: Box<String<'a>>,
@@ -2026,7 +2026,7 @@ impl<'a> Codegen<'a> for ConcatenatedString<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Default, ParenthesizedNode)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct SimpleString<'a> {
     /// The texual representation of the string, including quotes, prefix
     /// characters, and any escape characters present in the original source code,
@@ -2051,7 +2051,7 @@ impl<'a> Codegen<'a> for SimpleString<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct FormattedStringText<'a> {
     pub value: &'a str,
 }
@@ -2069,7 +2069,7 @@ impl<'a> Codegen<'a> for FormattedStringText<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct FormattedStringExpression<'a> {
     pub expression: Expression<'a>,
     pub conversion: Option<&'a str>,
@@ -2127,14 +2127,14 @@ impl<'a> Codegen<'a> for FormattedStringExpression<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Codegen, Inflate)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub enum FormattedStringContent<'a> {
     Text(FormattedStringText<'a>),
     Expression(Box<FormattedStringExpression<'a>>),
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct FormattedString<'a> {
     pub parts: Vec<FormattedStringContent<'a>>,
     pub start: &'a str,
@@ -2165,7 +2165,7 @@ impl<'a> Codegen<'a> for FormattedString<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct NamedExpr<'a> {
     pub target: Box<Expression<'a>>,
     pub value: Box<Expression<'a>>,
@@ -2211,43 +2211,45 @@ impl<'a> Inflate<'a> for NamedExpr<'a> {
 #[cfg(feature = "py")]
 mod py {
 
-    use pyo3::{types::PyModule, IntoPy};
+    use pyo3::types::PyModule;
 
     use super::*;
-    use crate::OrElse;
+    use crate::nodes::traits::py::TryIntoPy;
 
     // TODO: this could be a derive helper attribute to override the python class name
-    impl<'a> IntoPy<pyo3::PyObject> for Element<'a> {
-        fn into_py(self, py: pyo3::Python) -> pyo3::PyObject {
+    impl<'a> TryIntoPy<pyo3::PyObject> for Element<'a> {
+        fn try_into_py(self, py: pyo3::Python) -> pyo3::PyResult<pyo3::PyObject> {
             match self {
-                Self::Starred(s) => s.into_py(py),
+                Self::Starred(s) => s.try_into_py(py),
                 Self::Simple { value, comma } => {
-                    let libcst = PyModule::import(py, "libcst").expect("libcst cannot be imported");
+                    let libcst = PyModule::import(py, "libcst")?;
                     let kwargs = [
-                        Some(("value", value.into_py(py))),
-                        comma.map(|x| ("comma", x.into_py(py))),
+                        Some(("value", value.try_into_py(py)?)),
+                        comma
+                            .map(|x| x.try_into_py(py))
+                            .transpose()?
+                            .map(|x| ("comma", x)),
                     ]
                     .iter()
                     .filter(|x| x.is_some())
                     .map(|x| x.as_ref().unwrap())
                     .collect::<Vec<_>>()
                     .into_py_dict(py);
-                    libcst
+                    Ok(libcst
                         .getattr("Element")
                         .expect("no Element found in libcst")
-                        .call((), Some(kwargs))
-                        .expect("conversion failed")
-                        .into()
+                        .call((), Some(kwargs))?
+                        .into())
                 }
             }
         }
     }
 
     // TODO: this could be a derive helper attribute to override the python class name
-    impl<'a> IntoPy<pyo3::PyObject> for DictElement<'a> {
-        fn into_py(self, py: pyo3::Python) -> pyo3::PyObject {
+    impl<'a> TryIntoPy<pyo3::PyObject> for DictElement<'a> {
+        fn try_into_py(self, py: pyo3::Python) -> pyo3::PyResult<pyo3::PyObject> {
             match self {
-                Self::Starred(s) => s.into_py(py),
+                Self::Starred(s) => s.try_into_py(py),
                 Self::Simple {
                     key,
                     value,
@@ -2256,48 +2258,35 @@ mod py {
                     whitespace_before_colon,
                     ..
                 } => {
-                    let libcst = PyModule::import(py, "libcst").expect("libcst cannot be imported");
+                    let libcst = PyModule::import(py, "libcst")?;
                     let kwargs = [
-                        Some(("key", key.into_py(py))),
-                        Some(("value", value.into_py(py))),
+                        Some(("key", key.try_into_py(py)?)),
+                        Some(("value", value.try_into_py(py)?)),
                         Some((
                             "whitespace_before_colon",
-                            whitespace_before_colon.into_py(py),
+                            whitespace_before_colon.try_into_py(py)?,
                         )),
-                        Some(("whitespace_after_colon", whitespace_after_colon.into_py(py))),
-                        comma.map(|x| ("comma", x.into_py(py))),
+                        Some((
+                            "whitespace_after_colon",
+                            whitespace_after_colon.try_into_py(py)?,
+                        )),
+                        comma
+                            .map(|x| x.try_into_py(py))
+                            .transpose()?
+                            .map(|x| ("comma", x)),
                     ]
                     .iter()
                     .filter(|x| x.is_some())
                     .map(|x| x.as_ref().unwrap())
                     .collect::<Vec<_>>()
                     .into_py_dict(py);
-                    libcst
+                    Ok(libcst
                         .getattr("DictElement")
                         .expect("no Element found in libcst")
-                        .call((), Some(kwargs))
-                        .expect("conversion failed")
-                        .into()
+                        .call((), Some(kwargs))?
+                        .into())
                 }
             }
-        }
-    }
-
-    impl<'a> pyo3::conversion::IntoPy<pyo3::PyObject> for Box<CompFor<'a>> {
-        fn into_py(self, py: pyo3::Python) -> pyo3::PyObject {
-            (*self).into_py(py)
-        }
-    }
-
-    impl<'a> pyo3::conversion::IntoPy<pyo3::PyObject> for Box<YieldValue<'a>> {
-        fn into_py(self, py: pyo3::Python) -> pyo3::PyObject {
-            (*self).into_py(py)
-        }
-    }
-
-    impl<'a> pyo3::conversion::IntoPy<pyo3::PyObject> for Box<OrElse<'a>> {
-        fn into_py(self, py: pyo3::Python) -> pyo3::PyObject {
-            (*self).into_py(py)
         }
     }
 }
