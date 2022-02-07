@@ -136,7 +136,8 @@ pub mod py {
             let converted = self
                 .into_iter()
                 .map(|x| x.try_into_py(py))
-                .collect::<PyResult<Vec<_>>>();
+                .collect::<PyResult<Vec<_>>>()?
+                .into_iter();
             Ok(PyTuple::new(py, converted).into())
         }
     }
