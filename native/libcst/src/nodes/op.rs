@@ -14,12 +14,12 @@ use crate::{
     },
 };
 #[cfg(feature = "py")]
-use libcst_derive::IntoPy;
+use libcst_derive::TryIntoPy;
 
 type TokenRef<'a> = Rc<Token<'a>>;
 
 #[derive(Debug, Eq, PartialEq, Clone)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct Semicolon<'a> {
     /// Any space that appears directly before this semicolon.
     pub whitespace_before: ParenthesizableWhitespace<'a>,
@@ -51,7 +51,7 @@ impl<'a> Inflate<'a> for Semicolon<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct Comma<'a> {
     /// Any space that appears directly before this comma.
     pub whitespace_before: ParenthesizableWhitespace<'a>,
@@ -95,7 +95,7 @@ impl<'a> Comma<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct AssignEqual<'a> {
     /// Any space that appears directly before this equal sign.
     pub whitespace_before: ParenthesizableWhitespace<'a>,
@@ -129,7 +129,7 @@ impl<'a> Inflate<'a> for AssignEqual<'a> {
 }
 
 #[derive(Debug, Eq, PartialEq, Clone)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct Dot<'a> {
     /// Any space that appears directly before this dot.
     pub whitespace_before: ParenthesizableWhitespace<'a>,
@@ -175,7 +175,7 @@ impl<'a> Dot<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct ImportStar {}
 
 impl<'a> Codegen<'a> for ImportStar {
@@ -191,7 +191,7 @@ impl<'a> Inflate<'a> for ImportStar {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub enum UnaryOp<'a> {
     Plus {
         whitespace_after: ParenthesizableWhitespace<'a>,
@@ -284,7 +284,7 @@ impl<'a> Inflate<'a> for UnaryOp<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub enum BooleanOp<'a> {
     And {
         whitespace_before: ParenthesizableWhitespace<'a>,
@@ -358,7 +358,7 @@ impl<'a> Inflate<'a> for BooleanOp<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub enum BinaryOp<'a> {
     Add {
         whitespace_before: ParenthesizableWhitespace<'a>,
@@ -718,7 +718,7 @@ impl<'a> Inflate<'a> for BinaryOp<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub enum CompOp<'a> {
     LessThan {
         whitespace_before: ParenthesizableWhitespace<'a>,
@@ -1040,7 +1040,7 @@ impl<'a> Inflate<'a> for CompOp<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct Colon<'a> {
     pub whitespace_before: ParenthesizableWhitespace<'a>,
     pub whitespace_after: ParenthesizableWhitespace<'a>,
@@ -1072,7 +1072,7 @@ impl<'a> Codegen<'a> for Colon<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub enum AugOp<'a> {
     AddAssign {
         whitespace_before: ParenthesizableWhitespace<'a>,
@@ -1432,7 +1432,7 @@ impl<'a> Codegen<'a> for AugOp<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct BitOr<'a> {
     pub whitespace_before: ParenthesizableWhitespace<'a>,
     pub whitespace_after: ParenthesizableWhitespace<'a>,

@@ -26,14 +26,14 @@ use crate::{
     LeftCurlyBrace, LeftSquareBracket, RightCurlyBrace, RightSquareBracket,
 };
 #[cfg(feature = "py")]
-use libcst_derive::IntoPy;
+use libcst_derive::TryIntoPy;
 use libcst_derive::{Codegen, Inflate, ParenthesizedNode};
 
 type TokenRef<'a> = Rc<Token<'a>>;
 
 #[allow(clippy::large_enum_variant)]
 #[derive(Debug, Eq, PartialEq, Clone, Inflate, Codegen)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub enum Statement<'a> {
     Simple(SimpleStatementLine<'a>),
     Compound(CompoundStatement<'a>),
@@ -49,7 +49,7 @@ impl<'a> WithLeadingLines<'a> for Statement<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Inflate, Codegen)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 #[allow(clippy::large_enum_variant)]
 pub enum CompoundStatement<'a> {
     FunctionDef(FunctionDef<'a>),
@@ -80,14 +80,14 @@ impl<'a> WithLeadingLines<'a> for CompoundStatement<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Inflate, Codegen)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub enum Suite<'a> {
     IndentedBlock(IndentedBlock<'a>),
     SimpleStatementSuite(SimpleStatementSuite<'a>),
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct IndentedBlock<'a> {
     /// Sequence of statements belonging to this indented block.
     pub body: Vec<Statement<'a>>,
@@ -178,7 +178,7 @@ impl<'a> Inflate<'a> for IndentedBlock<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct SimpleStatementSuite<'a> {
     /// Sequence of small statements. All but the last statement are required to have
     /// a semicolon.
@@ -233,7 +233,7 @@ impl<'a> Codegen<'a> for SimpleStatementSuite<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct SimpleStatementLine<'a> {
     /// Sequence of small statements. All but the last statement are required to have
     /// a semicolon.
@@ -276,7 +276,7 @@ impl<'a> Inflate<'a> for SimpleStatementLine<'a> {
 
 #[allow(dead_code, clippy::large_enum_variant)]
 #[derive(Debug, Eq, PartialEq, Clone, Codegen, Inflate)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub enum SmallStatement<'a> {
     Pass(Pass<'a>),
     Break(Break<'a>),
@@ -318,7 +318,7 @@ impl<'a> SmallStatement<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct Pass<'a> {
     pub semicolon: Option<Semicolon<'a>>,
 }
@@ -341,7 +341,7 @@ impl<'a> Inflate<'a> for Pass<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct Break<'a> {
     pub semicolon: Option<Semicolon<'a>>,
 }
@@ -364,7 +364,7 @@ impl<'a> Inflate<'a> for Break<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct Continue<'a> {
     pub semicolon: Option<Semicolon<'a>>,
 }
@@ -387,7 +387,7 @@ impl<'a> Inflate<'a> for Continue<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct Expr<'a> {
     pub value: Expression<'a>,
     pub semicolon: Option<Semicolon<'a>>,
@@ -412,7 +412,7 @@ impl<'a> Inflate<'a> for Expr<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct Assign<'a> {
     pub targets: Vec<AssignTarget<'a>>,
     pub value: Expression<'a>,
@@ -447,7 +447,7 @@ impl<'a> Assign<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct AssignTarget<'a> {
     pub target: AssignTargetExpression<'a>,
     pub whitespace_before_equal: SimpleWhitespace<'a>,
@@ -480,7 +480,7 @@ impl<'a> Inflate<'a> for AssignTarget<'a> {
 
 #[allow(clippy::large_enum_variant)]
 #[derive(Debug, PartialEq, Eq, Clone, Codegen, ParenthesizedNode, Inflate)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub enum AssignTargetExpression<'a> {
     Name(Box<Name<'a>>),
     Attribute(Box<Attribute<'a>>),
@@ -491,7 +491,7 @@ pub enum AssignTargetExpression<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct Import<'a> {
     pub names: Vec<ImportAlias<'a>>,
     pub semicolon: Option<Semicolon<'a>>,
@@ -535,7 +535,7 @@ impl<'a> Import<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct ImportFrom<'a> {
     #[cfg_attr(feature = "py", no_py_default)]
     pub module: Option<NameOrAttribute<'a>>,
@@ -651,7 +651,7 @@ impl<'a> ImportFrom<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct ImportAlias<'a> {
     pub name: NameOrAttribute<'a>,
     pub asname: Option<AsName<'a>>,
@@ -687,7 +687,7 @@ impl<'a> Codegen<'a> for ImportAlias<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct AsName<'a> {
     pub name: AssignTargetExpression<'a>,
     pub whitespace_before_as: ParenthesizableWhitespace<'a>,
@@ -721,7 +721,7 @@ impl<'a> Inflate<'a> for AsName<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Inflate)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub enum ImportNames<'a> {
     Star(ImportStar),
     Aliases(Vec<ImportAlias<'a>>),
@@ -744,7 +744,7 @@ impl<'a> Codegen<'a> for ImportNames<'a> {
 }
 
 #[derive(Debug, Eq, PartialEq, Clone)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct FunctionDef<'a> {
     pub name: Name<'a>,
     pub params: Parameters<'a>,
@@ -870,7 +870,7 @@ impl<'a> Inflate<'a> for FunctionDef<'a> {
 }
 
 #[derive(Debug, Eq, PartialEq, Clone)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct Decorator<'a> {
     pub decorator: Expression<'a>,
     pub leading_lines: Vec<EmptyLine<'a>>,
@@ -913,7 +913,7 @@ impl<'a> Inflate<'a> for Decorator<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct If<'a> {
     /// The expression that, when evaluated, should give us a truthy value
     pub test: Expression<'a>,
@@ -983,14 +983,14 @@ impl<'a> Inflate<'a> for If<'a> {
 
 #[allow(clippy::large_enum_variant)]
 #[derive(Debug, PartialEq, Eq, Clone, Inflate, Codegen)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub enum OrElse<'a> {
     Elif(If<'a>),
     Else(Else<'a>),
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct Else<'a> {
     pub body: Suite<'a>,
     /// Sequence of empty lines appearing before this compound statement line.
@@ -1034,7 +1034,7 @@ impl<'a> Inflate<'a> for Else<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct Annotation<'a> {
     pub annotation: Expression<'a>,
     pub whitespace_before_indicator: Option<ParenthesizableWhitespace<'a>>,
@@ -1075,7 +1075,7 @@ impl<'a> Inflate<'a> for Annotation<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct AnnAssign<'a> {
     pub target: AssignTargetExpression<'a>,
     pub annotation: Annotation<'a>,
@@ -1121,7 +1121,7 @@ impl<'a> AnnAssign<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct Return<'a> {
     pub value: Option<Expression<'a>>,
     pub whitespace_after_return: Option<SimpleWhitespace<'a>>,
@@ -1173,7 +1173,7 @@ impl<'a> Return<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct Assert<'a> {
     pub test: Expression<'a>,
     pub msg: Option<Expression<'a>>,
@@ -1225,7 +1225,7 @@ impl<'a> Assert<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct Raise<'a> {
     pub exc: Option<Expression<'a>>,
     pub cause: Option<From<'a>>,
@@ -1288,7 +1288,7 @@ impl<'a> Raise<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct NameItem<'a> {
     pub name: Name<'a>,
     pub comma: Option<Comma<'a>>,
@@ -1314,7 +1314,7 @@ impl<'a> NameItem<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct Global<'a> {
     pub names: Vec<NameItem<'a>>,
     pub whitespace_after_global: SimpleWhitespace<'a>,
@@ -1355,7 +1355,7 @@ impl<'a> Global<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct Nonlocal<'a> {
     pub names: Vec<NameItem<'a>>,
     pub whitespace_after_nonlocal: SimpleWhitespace<'a>,
@@ -1396,7 +1396,7 @@ impl<'a> Nonlocal<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct For<'a> {
     pub target: AssignTargetExpression<'a>,
     pub iter: Expression<'a>,
@@ -1489,7 +1489,7 @@ impl<'a> Inflate<'a> for For<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct While<'a> {
     pub test: Expression<'a>,
     pub body: Suite<'a>,
@@ -1543,7 +1543,7 @@ impl<'a> Inflate<'a> for While<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct ClassDef<'a> {
     pub name: Name<'a>,
     pub body: Suite<'a>,
@@ -1650,7 +1650,7 @@ impl<'a> ClassDef<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct Finally<'a> {
     pub body: Suite<'a>,
     pub leading_lines: Vec<EmptyLine<'a>>,
@@ -1691,7 +1691,7 @@ impl<'a> Inflate<'a> for Finally<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct ExceptHandler<'a> {
     pub body: Suite<'a>,
     pub r#type: Option<Expression<'a>>,
@@ -1752,7 +1752,7 @@ impl<'a> Inflate<'a> for ExceptHandler<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct ExceptStarHandler<'a> {
     pub body: Suite<'a>,
     pub r#type: Expression<'a>,
@@ -1815,7 +1815,7 @@ impl<'a> Inflate<'a> for ExceptStarHandler<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct Try<'a> {
     pub body: Suite<'a>,
     pub handlers: Vec<ExceptHandler<'a>>,
@@ -1868,7 +1868,7 @@ impl<'a> Inflate<'a> for Try<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct TryStar<'a> {
     pub body: Suite<'a>,
     pub handlers: Vec<ExceptStarHandler<'a>>,
@@ -1921,7 +1921,7 @@ impl<'a> Inflate<'a> for TryStar<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct AugAssign<'a> {
     pub target: AssignTargetExpression<'a>,
     pub operator: AugOp<'a>,
@@ -1958,7 +1958,7 @@ impl<'a> AugAssign<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct WithItem<'a> {
     pub item: Expression<'a>,
     pub asname: Option<AsName<'a>>,
@@ -2000,7 +2000,7 @@ impl<'a> WithComma<'a> for WithItem<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct With<'a> {
     pub items: Vec<WithItem<'a>>,
     pub body: Suite<'a>,
@@ -2114,7 +2114,7 @@ impl<'a> Inflate<'a> for With<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Codegen, ParenthesizedNode, Inflate)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub enum DelTargetExpression<'a> {
     Name(Box<Name<'a>>),
     Attribute(Box<Attribute<'a>>),
@@ -2144,7 +2144,7 @@ impl<'a> std::convert::From<DelTargetExpression<'a>> for Element<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct Del<'a> {
     pub target: DelTargetExpression<'a>,
     pub whitespace_after_del: SimpleWhitespace<'a>,
@@ -2181,7 +2181,7 @@ impl<'a> Del<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct Match<'a> {
     pub subject: Expression<'a>,
     pub cases: Vec<MatchCase<'a>>,
@@ -2257,7 +2257,7 @@ impl<'a> Inflate<'a> for Match<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct MatchCase<'a> {
     pub pattern: MatchPattern<'a>,
     pub guard: Option<Expression<'a>>,
@@ -2322,7 +2322,7 @@ impl<'a> Inflate<'a> for MatchCase<'a> {
 
 #[allow(clippy::large_enum_variant)]
 #[derive(Debug, PartialEq, Eq, Clone, Codegen, Inflate, ParenthesizedNode)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub enum MatchPattern<'a> {
     Value(MatchValue<'a>),
     Singleton(MatchSingleton<'a>),
@@ -2334,7 +2334,7 @@ pub enum MatchPattern<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct MatchValue<'a> {
     pub value: Expression<'a>,
 }
@@ -2373,7 +2373,7 @@ impl<'a> Inflate<'a> for MatchValue<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct MatchSingleton<'a> {
     pub value: Name<'a>,
 }
@@ -2413,14 +2413,14 @@ impl<'a> Inflate<'a> for MatchSingleton<'a> {
 
 #[allow(clippy::large_enum_variant)]
 #[derive(Debug, PartialEq, Eq, Clone, Codegen, Inflate, ParenthesizedNode)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub enum MatchSequence<'a> {
     MatchList(MatchList<'a>),
     MatchTuple(MatchTuple<'a>),
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct MatchList<'a> {
     pub patterns: Vec<StarrableMatchSequenceElement<'a>>,
     pub lbracket: Option<LeftSquareBracket<'a>>,
@@ -2466,7 +2466,7 @@ impl<'a> Inflate<'a> for MatchList<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct MatchTuple<'a> {
     pub patterns: Vec<StarrableMatchSequenceElement<'a>>,
     pub lpar: Vec<LeftParen<'a>>,
@@ -2505,7 +2505,7 @@ impl<'a> Inflate<'a> for MatchTuple<'a> {
 
 #[allow(clippy::large_enum_variant)]
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub enum StarrableMatchSequenceElement<'a> {
     Simple(MatchSequenceElement<'a>),
     Starred(MatchStar<'a>),
@@ -2541,7 +2541,7 @@ impl<'a> WithComma<'a> for StarrableMatchSequenceElement<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct MatchSequenceElement<'a> {
     pub value: MatchPattern<'a>,
     pub comma: Option<Comma<'a>>,
@@ -2582,7 +2582,7 @@ impl<'a> WithComma<'a> for MatchSequenceElement<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct MatchStar<'a> {
     pub name: Option<Name<'a>>,
     pub comma: Option<Comma<'a>>,
@@ -2636,7 +2636,7 @@ impl<'a> WithComma<'a> for MatchStar<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct MatchMapping<'a> {
     pub elements: Vec<MatchMappingElement<'a>>,
     pub rest: Option<Name<'a>>,
@@ -2701,7 +2701,7 @@ impl<'a> Inflate<'a> for MatchMapping<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct MatchMappingElement<'a> {
     pub key: Expression<'a>,
     pub pattern: MatchPattern<'a>,
@@ -2756,7 +2756,7 @@ impl<'a> WithComma<'a> for MatchMappingElement<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct MatchClass<'a> {
     pub cls: NameOrAttribute<'a>,
     pub patterns: Vec<MatchSequenceElement<'a>>,
@@ -2833,7 +2833,7 @@ impl<'a> Inflate<'a> for MatchClass<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct MatchKeywordElement<'a> {
     pub key: Name<'a>,
     pub pattern: MatchPattern<'a>,
@@ -2887,7 +2887,7 @@ impl<'a> WithComma<'a> for MatchKeywordElement<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct MatchAs<'a> {
     pub pattern: Option<MatchPattern<'a>>,
     pub name: Option<Name<'a>>,
@@ -2939,7 +2939,7 @@ impl<'a> Inflate<'a> for MatchAs<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct MatchOrElement<'a> {
     pub pattern: MatchPattern<'a>,
     pub separator: Option<BitOr<'a>>,
@@ -2964,7 +2964,7 @@ impl<'a> Inflate<'a> for MatchOrElement<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode)]
-#[cfg_attr(feature = "py", derive(IntoPy))]
+#[cfg_attr(feature = "py", derive(TryIntoPy))]
 pub struct MatchOr<'a> {
     pub patterns: Vec<MatchOrElement<'a>>,
     pub lpar: Vec<LeftParen<'a>>,
