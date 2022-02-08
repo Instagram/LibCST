@@ -46,6 +46,14 @@ class AwaitTest(CSTNodeTest):
                 ),
                 "expected_position": CodeRange((1, 2), (1, 13)),
             },
+            # Whitespace after await
+            {
+                "node": cst.Await(
+                    cst.Name("foo", lpar=[cst.LeftParen()], rpar=[cst.RightParen()]),
+                    whitespace_after_await=cst.SimpleWhitespace(""),
+                ),
+                "code": "await(foo)",
+            },
         )
     )
     def test_valid_py37(self, **kwargs: Any) -> None:
