@@ -53,7 +53,7 @@ class AddTrailingCommas(VisitorBasedCodemodCommand):
         if presets is None:
             raise ValueError(
                 f"Unknown formatter {formatter!r}. Presets exist for "
-                + ', '.join(presets_per_formatter.keys())
+                + ", ".join(presets_per_formatter.keys())
             )
         self.parameter_count: int = parameter_count or presets["parameter_count"]
         self.argument_count: int = argument_count or presets["argument_count"]
@@ -66,7 +66,7 @@ class AddTrailingCommas(VisitorBasedCodemodCommand):
             metavar="FORMATTER",
             help="Formatter to target (e.g. yapf or black)",
             type=str,
-            default="black"
+            default="black",
         )
         arg_parser.add_argument(
             "--paramter-count",
@@ -74,7 +74,7 @@ class AddTrailingCommas(VisitorBasedCodemodCommand):
             metavar="PARAMETER_COUNT",
             help="Minimal number of parameters for us to add trailing comma",
             type=int,
-            default=None
+            default=None,
         )
         arg_parser.add_argument(
             "--argument-count",
@@ -82,7 +82,7 @@ class AddTrailingCommas(VisitorBasedCodemodCommand):
             metavar="ARGUMENT_COUNT",
             help="Minimal number of arguments for us to add trailing comma",
             type=int,
-            default=None
+            default=None,
         )
 
     def leave_Parameters(
@@ -104,13 +104,11 @@ class AddTrailingCommas(VisitorBasedCodemodCommand):
         else:
             last_param = updated_node.params[-1]
             return updated_node.with_changes(
-                params=updated_node.params[:-1] + (
-                    last_param.with_changes(
-                        comma=cst.Comma()
-                    ),
-                )
+                params=(
+                    *updated_node.params[:-1],
+                    last_param.with_changes(comma=cst.Comma()),
+                ),
             )
-
 
     def leave_Call(
         self,
@@ -122,9 +120,8 @@ class AddTrailingCommas(VisitorBasedCodemodCommand):
         else:
             last_arg = updated_node.args[-1]
             return updated_node.with_changes(
-                args=updated_node.args[:-1] + (
-                    last_arg.with_changes(
-                        comma=cst.Comma()
-                    ),
-                )
+                args=(
+                    *updated_node.args[:-1],
+                    last_arg.with_changes(comma=cst.Comma()),
+                ),
             )
