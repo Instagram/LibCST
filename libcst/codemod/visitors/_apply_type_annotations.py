@@ -65,7 +65,7 @@ def _get_imported_names(
     return import_names
 
 
-def _is_set(
+def _is_non_sentinel(
     x: Union[None, cst.CSTNode, cst.MaybeSentinel],
 ) -> bool:
     return x is not None and x != cst.MaybeSentinel.DEFAULT
@@ -105,8 +105,8 @@ class FunctionKey:
         pos = len(params.params)
         kwonly = ",".join(sorted(x.name.value for x in params.kwonly_params))
         posonly = len(params.posonly_params)
-        star_arg = _is_set(params.star_arg)
-        star_kwarg = _is_set(params.star_kwarg)
+        star_arg = _is_non_sentinel(params.star_arg)
+        star_kwarg = _is_non_sentinel(params.star_kwarg)
         return cls(
             name,
             pos,
@@ -829,7 +829,11 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
             p: Optional[cst.Annotation],
             q: Optional[cst.Annotation],
         ) -> bool:
-            if self.overwrite_existing_annotations or not _is_set(p) or not _is_set(q):
+            if (
+                self.overwrite_existing_annotations
+                or not _is_non_sentinel(p)
+                or not _is_non_sentinel(q)
+            ):
                 return True
             if not self.strict_annotation_matching:
                 # We will not overwrite clashing annotations, but the signature as a
@@ -867,7 +871,7 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
             p: StarParamType,
             q: StarParamType,
         ) -> bool:
-            return _is_set(p) == _is_set(q)
+            return _is_non_sentinel(p) == _is_non_sentinel(q)
 
         def match_params(
             f: cst.FunctionDef,
