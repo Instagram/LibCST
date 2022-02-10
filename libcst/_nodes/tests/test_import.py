@@ -592,7 +592,7 @@ class ImportFromCreateTest(CSTNodeTest):
                                 ),
                                 whitespace_before_as=cst.SimpleWhitespace(""),
                             ),
-                        )
+                        ),
                     ),
                 ),
                 "expected_re": "one space before as keyword",
