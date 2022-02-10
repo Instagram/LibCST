@@ -1,5 +1,3 @@
-# Copyright (c) Meta Platforms, Inc. and affiliates.
-#
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
@@ -14,11 +12,11 @@ from libcst.codemod import CodemodContext, VisitorBasedCodemodCommand
 presets_per_formatter: Dict[str, Dict[str, int]] = {
     "black": {
         "parameter_count": 1,
-        "argument_count": 3,
+        "argument_count": 2,
     },
     "yapf": {
         "parameter_count": 2,
-        "argument_count": 3,
+        "argument_count": 2,
     },
 }
 
