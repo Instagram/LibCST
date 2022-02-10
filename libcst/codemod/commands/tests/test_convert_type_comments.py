@@ -4,6 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 import sys
+from typing import Any
 
 from libcst.codemod import CodemodTest
 from libcst.codemod.commands.convert_type_comments import ConvertTypeComments
@@ -14,16 +15,16 @@ class TestConvertTypeCommentsBase(CodemodTest):
     maxDiff = 1500
     TRANSFORM = ConvertTypeComments
 
-    def assertCodemod39Plus(self, before: str, after: str) -> None:
+    def assertCodemod39Plus(self, before: str, after: str, **kwargs: Any) -> None:
         """
         Assert that the codemod works on Python 3.9+, and that we raise
         a NotImplementedError on other Python versions.
         """
         if (sys.version_info.major, sys.version_info.minor) < (3, 9):
             with self.assertRaises(NotImplementedError):
-                super().assertCodemod(before, after)
+                super().assertCodemod(before, after, **kwargs)
         else:
-            super().assertCodemod(before, after)
+            super().assertCodemod(before, after, **kwargs)
 
 
 class TestConvertTypeComments_AssignForWith(TestConvertTypeCommentsBase):
@@ -436,3 +437,37 @@ class TestConvertTypeComments_FunctionDef(TestConvertTypeCommentsBase):
         """
         after = before
         self.assertCodemod39Plus(before, after)
+
+    def test_no_quoting(self) -> None:
+        before = """
+        def f(x):
+            # type: (Foo) -> Foo
+            pass
+            w = x # type: Foo
+            y, z = x, x  # type: (Foo, Foo)
+            return w
+
+        with get_context() as context:  # type: Context
+            pass
+
+        for loop_var in the_iterable: # type: LoopType
+            pass
+        """
+        after = """
+        def f(x: Foo) -> Foo:
+            pass
+            w: Foo = x
+            y: Foo
+            z: Foo
+            y, z = x, x
+            return w
+
+        context: Context
+        with get_context() as context:
+            pass
+
+        loop_var: LoopType
+        for loop_var in the_iterable:
+            pass
+        """
+        self.assertCodemod39Plus(before, after, no_quote_annotations=True)
