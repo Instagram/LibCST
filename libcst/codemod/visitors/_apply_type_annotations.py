@@ -307,9 +307,7 @@ class TypeCollector(m.MatcherDecoratableVisitor):
         if module in ("", "builtins"):
             return False
         elif qualified_name not in self.existing_imports:
-            if module == "builtins":
-                return False
-            elif module in self.existing_imports:
+            if module in self.existing_imports:
                 return True
             else:
                 AddImportsVisitor.add_needed_import(
