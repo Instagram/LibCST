@@ -89,6 +89,12 @@ def _find_generic_base(
 
 @dataclass(frozen=True)
 class FunctionKey:
+    """
+    Class representing a funciton name and signature.
+
+    This exists to ensure we do not attempt to apply stubs to functions whose
+    definition is incompatible.
+    """
     name: str
     pos: int
     kwonly: str
