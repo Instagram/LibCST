@@ -95,6 +95,7 @@ class FunctionKey:
     This exists to ensure we do not attempt to apply stubs to functions whose
     definition is incompatible.
     """
+
     name: str
     pos: int
     kwonly: str
@@ -139,23 +140,66 @@ class TypeCollector(m.MatcherDecoratableVisitor):
         QualifiedNameProvider,
     )
 
+    # Set of all the names (either module names or object names)
+    # that are already imported in the existing code.
+    existing_imports: Set[str]
+
+    # Map where keys represent unique a name + signature
+    # and values contain all the information needed to apply
+    # annotations to the header.
+    #
+    # The name is relative to the module top-level. Both
+    # ordinary functions and methods will apppear, the differnece
+    # is that methods will have a "." in the qualifier used
+    # to create the key (e.g. "Cat.meow").
+    function_annotations: Dict[FunctionKey, FunctionAnnotation]
+
+    # Map from names to annotations of attribues.
+    #
+    # The name is relative to the module top-level. Both
+    # globals and class attributes will appear, the difference
+    # is that the qualifier will have a "." for class attributes
+    # (e.g. "Cat.eye_color").
+    attribute_annotations: Dict[str, cst.Annotation]
+
+    # All of the class definitions from the stub file.
+    #
+    # These are *not* used to apply type annotations to methods
+    # and attributes. They are only used to handle class definitions
+    # that may only exist in a stub, such as typed dictionaries or
+    # protocols.
+    class_definitions: Dict[str, cst.ClassDef]
+
+    # All of the type vars defined in the stub file.
+    typevars: Dict[str, cst.Assign]
+    # All of the names used in annotations - this determines whether
+    # a particular type var is actually used (which cannot be determined
+    # locally, only at the end of scanning a stub.)
+    annotation_names: Set[str]
+
     def __init__(
         self,
         existing_imports: Set[str],
         context: CodemodContext,
     ) -> None:
         super().__init__()
-        # Qualifier for storing the canonical name of the current function.
-        self.qualifier: List[str] = []
-        # Store the annotations.
-        self.function_annotations: Dict[FunctionKey, FunctionAnnotation] = {}
-        self.attribute_annotations: Dict[str, cst.Annotation] = {}
-        self.existing_imports: Set[str] = existing_imports
-        self.class_definitions: Dict[str, cst.ClassDef] = {}
         self.context = context
+        # Existing imports, determined by looking at the target module.
+        # Used to help us determine when a type in a stub will require new imports.
+        #
+        # The contents of this are fully-qualified names of types in scope
+        # as well as module names, although downstream we effectively ignore
+        # the module names as of the current implementation.
+        self.existing_imports: Set[str] = existing_imports
+        # Fields that help us track temporary state as we recurse
+        self.qualifier: List[str] = []
         self.current_assign: Optional[cst.Assign] = None  # used to collect typevars
-        self.typevars: Dict[str, cst.Assign] = {}
-        self.annotation_names: Set[str] = set()
+        # Store the annotations.
+        self.function_annotations = {}
+        self.attribute_annotations = {}
+        self.class_definitions = {}
+        self.typevars = {}
+        self.annotation_names = set()
 
     def visit_ClassDef(
         self,
