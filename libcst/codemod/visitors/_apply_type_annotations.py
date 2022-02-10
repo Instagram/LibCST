@@ -43,9 +43,17 @@ def _get_import_alias_names(
     return import_names
 
 
-def _get_import_names(
+def _get_imported_names(
     imports: Sequence[Union[cst.Import, cst.ImportFrom]],
 ) -> Set[str]:
+    """
+    Given a series of import statements (both Import and ImportFrom),
+    determine all of the names that have been imported into the current
+    scope. For example:
+    - ``import foo.bar as bar, foo.baz`` produces ``{'bar', 'foo.baz'}``
+    - ``from foo import (Bar, Baz as B)`` produces ``{'Bar', 'B'}``
+    - ``from foo import *`` produces ``set()` because we cannot resolve names
+    """
     import_names = set()
     for _import in imports:
         if isinstance(_import, cst.Import):
@@ -568,7 +576,7 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
         """
         import_gatherer = GatherImportsVisitor(CodemodContext())
         tree.visit(import_gatherer)
-        existing_import_names = _get_import_names(import_gatherer.all_imports)
+        existing_import_names = _get_imported_names(import_gatherer.all_imports)
 
         context_contents = self.context.scratch.get(
             ApplyTypeAnnotationsVisitor.CONTEXT_KEY
