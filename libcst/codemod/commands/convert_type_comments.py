@@ -456,7 +456,6 @@ class ConvertTypeComments(VisitorBasedCodemodCommand):
                 "Add unquoted annotations. This leads to prettier code "
                 + "but possibly more errors if type comments are invalid."
             ),
-            defaut=False,
         )
 
     def __init__(
