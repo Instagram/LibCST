@@ -197,6 +197,20 @@ class ImportCreateTest(CSTNodeTest):
             },
             {
                 "get_node": lambda: cst.Import(
+                    names=(
+                        cst.ImportAlias(
+                            cst.Name("foo"),
+                            asname=cst.AsName(
+                                cst.Name("bar"),
+                                whitespace_before_as=cst.SimpleWhitespace(""),
+                            ),
+                        ),
+                    ),
+                ),
+                "expected_re": "at least one space",
+            },
+            {
+                "get_node": lambda: cst.Import(
                     names=[
                         cst.ImportAlias(
                             name=cst.Attribute(
@@ -563,6 +577,25 @@ class ImportFromCreateTest(CSTNodeTest):
                     whitespace_after_import=cst.SimpleWhitespace(""),
                 ),
                 "expected_re": "one space after import",
+            },
+            {
+                "get_node": lambda: cst.ImportFrom(
+                    module=cst.Name("foo"),
+                    names=(
+                        cst.ImportAlias(
+                            cst.Name("bar"),
+                            asname=cst.AsName(
+                                cst.Name(
+                                    "baz",
+                                    lpar=(cst.LeftParen(),),
+                                    rpar=(cst.RightParen(),),
+                                ),
+                                whitespace_before_as=cst.SimpleWhitespace(""),
+                            ),
+                        ),
+                    ),
+                ),
+                "expected_re": "one space before as keyword",
             },
         )
     )

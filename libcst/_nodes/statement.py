@@ -750,8 +750,6 @@ class AsName(CSTNode):
             raise CSTValidationError(
                 "There must be at least one space between 'as' and name."
             )
-        if self.whitespace_before_as.empty:
-            raise CSTValidationError("There must be at least one space before 'as'.")
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "AsName":
         return AsName(
@@ -815,6 +813,16 @@ class ExceptHandler(CSTNode):
                 raise CSTValidationError(
                     "Must have at least one space after except when ExceptHandler has a type."
                 )
+        name = self.name
+        if (
+            type_ is not None
+            and name is not None
+            and name.whitespace_before_as.empty
+            and not type_._safe_to_use_with_word_operator(ExpressionPosition.LEFT)
+        ):
+            raise CSTValidationError(
+                "Must have at least one space before as keyword in an except handler."
+            )
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "ExceptHandler":
         return ExceptHandler(
@@ -1139,10 +1147,15 @@ class ImportAlias(CSTNode):
 
     def _validate(self) -> None:
         asname = self.asname
-        if asname is not None and not isinstance(asname.name, Name):
-            raise CSTValidationError(
-                "Must use a Name node for AsName name inside ImportAlias."
-            )
+        if asname is not None:
+            if not isinstance(asname.name, Name):
+                raise CSTValidationError(
+                    "Must use a Name node for AsName name inside ImportAlias."
+                )
+            if asname.whitespace_before_as.empty:
+                raise CSTValidationError(
+                    "Must have at least one space before as keyword in an ImportAlias."
+                )
         try:
             self.evaluated_name
         except Exception as e:
@@ -1985,6 +1998,15 @@ class WithItem(CSTNode):
     #: This is forbidden for the last :class:`WithItem` in a :class:`With`, but all
     #: other items inside a with block must contain a comma to separate them.
     comma: Union[Comma, MaybeSentinel] = MaybeSentinel.DEFAULT
+
+    def _validate(self) -> None:
+        asname = self.asname
+        if (
+            asname is not None
+            and asname.whitespace_before_as.empty
+            and not self.item._safe_to_use_with_word_operator(ExpressionPosition.LEFT)
+        ):
+            raise CSTValidationError("Must have at least one space before as keyword.")
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "WithItem":
         return WithItem(

@@ -2394,7 +2394,12 @@ class Await(BaseExpression):
         # Validate any super-class stuff, whatever it may be.
         super(Await, self)._validate()
         # Make sure we don't run identifiers together.
-        if self.whitespace_after_await.empty:
+        if (
+            self.whitespace_after_await.empty
+            and not self.expression._safe_to_use_with_word_operator(
+                ExpressionPosition.RIGHT
+            )
+        ):
             raise CSTValidationError("Must have at least one space after await")
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Await":

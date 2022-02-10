@@ -329,6 +329,24 @@ class TryTest(CSTNodeTest):
                 "code": "try: pass\nexcept(IOError, ImportError): pass\n",
                 "parser": parse_statement,
             },
+            # No space before as
+            {
+                "node": cst.Try(
+                    cst.SimpleStatementSuite((cst.Pass(),)),
+                    handlers=[
+                        cst.ExceptHandler(
+                            cst.SimpleStatementSuite((cst.Pass(),)),
+                            whitespace_after_except=cst.SimpleWhitespace(" "),
+                            type=cst.Call(cst.Name("foo")),
+                            name=cst.AsName(
+                                whitespace_before_as=cst.SimpleWhitespace(""),
+                                name=cst.Name("bar"),
+                            ),
+                        )
+                    ],
+                ),
+                "code": "try: pass\nexcept foo()as bar: pass\n",
+            },
         )
     )
     def test_valid(self, **kwargs: Any) -> None:
@@ -345,12 +363,6 @@ class TryTest(CSTNodeTest):
                     cst.Name("bla"), whitespace_after_as=cst.SimpleWhitespace("")
                 ),
                 "expected_re": "between 'as'",
-            },
-            {
-                "get_node": lambda: cst.AsName(
-                    cst.Name("bla"), whitespace_before_as=cst.SimpleWhitespace("")
-                ),
-                "expected_re": "before 'as'",
             },
             {
                 "get_node": lambda: cst.ExceptHandler(
