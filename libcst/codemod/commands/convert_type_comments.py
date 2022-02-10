@@ -394,9 +394,19 @@ class FunctionTypeInfo:
 
 
 class ConvertTypeComments(VisitorBasedCodemodCommand):
-    """
+    DESCRIPTION = """
     Codemod that converts type comments into Python 3.6+ style
     annotations.
+
+    Notes:
+    - This transform requires using the `ast` module, which is not compatible
+      with multiprocessing. So you should run using a recent version of python,
+      and set `--jobs=1` if using `python -m libcst.tool codemod ...` from the
+      commandline.
+    - This transform requires capabilities from `ast` that are not available
+      prior to Python 3.9, so libcst must run on Python 3.9+. The code you are
+      transforming can by Python 3.6+, this limitation applies only to libcst
+      itself.
 
     We can handle type comments in the following statement types:
     - Assign
