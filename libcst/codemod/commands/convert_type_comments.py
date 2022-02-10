@@ -284,7 +284,11 @@ def convert_Assign(
         # on the LHS or multiple `=` tokens or both), we need to add a type
         # declaration per individual LHS target.
         type_declarations = [
-            AnnotationSpreader.type_declaration(binding, raw_annotation, quote_annotations=quote_annotations,)
+            AnnotationSpreader.type_declaration(
+                binding,
+                raw_annotation,
+                quote_annotations=quote_annotations,
+            )
             for annotated_bindings in annotated_targets
             for binding, raw_annotation in annotated_bindings
         ]
