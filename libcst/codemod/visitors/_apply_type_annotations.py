@@ -4,7 +4,7 @@
 # LICENSE file in the root directory of this source tree
 #
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Dict, List, Optional, Sequence, Set, Tuple, Union
 
 import libcst as cst
@@ -130,7 +130,7 @@ class FunctionAnnotation:
     returns: Optional[cst.Annotation]
 
 
-@dataclass()
+@dataclass
 class Annotations:
     """
     Represents all of the annotation information we might add to
@@ -155,16 +155,16 @@ class Annotations:
       all of the names used in annotations; together these fields
       tell us which typevars should be included in the codemod
       (all typevars that appear in annotations.)
-
-    TODO: consider simplifying this in a few ways:
-    - We could probably just inject all typevars, used or not.
-      It doesn't seem to me that our codemod needs to act like
-      a linter checking for unused names.
-    - We could probably decide which classes are typing-only
-      in the visitor rather than the codemod, which would make
-      it easier to reason locally about (and document) how the
-      class_definitions field works.
     """
+
+    # TODO: consider simplifying this in a few ways:
+    # - We could probably just inject all typevars, used or not.
+    #   It doesn't seem to me that our codemod needs to act like
+    #   a linter checking for unused names.
+    # - We could probably decide which classes are typing-only
+    #   in the visitor rather than the codemod, which would make
+    #   it easier to reason locally about (and document) how the
+    #   class_definitions field works.
 
     functions: Dict[FunctionKey, FunctionAnnotation]
     attributes: Dict[str, cst.Annotation]
