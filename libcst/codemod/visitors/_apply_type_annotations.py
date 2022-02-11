@@ -130,6 +130,63 @@ class FunctionAnnotation:
     returns: Optional[cst.Annotation]
 
 
+@dataclass()
+class Annotations:
+    """
+    Represents all of the annotation information we might add to
+    a class:
+    - All data is keyed on the qualified name relative to the module root
+    - The ``functions`` field also keys on the signature so that we
+      do not apply stub types where the signature is incompatible.
+
+    The idea is that
+    - ``functions`` contains all function and method type
+      information from the stub, and the qualifier for a method includes
+      the containing class names (e.g. "Cat.meow")
+    - ``attributes`` similarly contains all globals
+      and class-level attribute type information.
+    - The ``class_definitions`` field contains all of the classes
+      defined in the stub. Most of these classes will be ignored in
+      downstream logic (it is *not* used to annotate attributes or
+      method), but there are some cases like TypedDict where a
+      typing-only class needs to be injected.
+    - The field ``typevars`` contains the assign statement for all
+      type variables in the stub, and ``names`` tracks
+      all of the names used in annotations; together these fields
+      tell us which typevars should be included in the codemod
+      (all typevars that appear in annotations.)
+
+    TODO: consider simplifying this in a few ways:
+    - We could probably just inject all typevars, used or not.
+      It doesn't seem to me that our codemod needs to act like
+      a linter checking for unused names.
+    - We could probably decide which classes are typing-only
+      in the visitor rather than the codemod, which would make
+      it easier to reason locally about (and document) how the
+      class_definitions field works.
+    """
+
+    functions: Dict[FunctionKey, FunctionAnnotation]
+    attributes: Dict[str, cst.Annotation]
+    class_definitions: Dict[str, cst.ClassDef]
+    typevars: Dict[str, cst.Assign]
+    names: Set[str]
+
+    @classmethod
+    def empty(cls) -> "Annotations":
+        return Annotations({}, {}, {}, {}, set())
+
+    def update(self, other: "Annotations") -> None:
+        self.functions.update(other.functions)
+        self.attributes.update(other.attributes)
+        self.class_definitions.update(other.class_definitions)
+        self.typevars.update(other.typevars)
+        self.names.update(other.names)
+
+    def finish(self) -> None:
+        self.typevars = {k: v for k, v in self.typevars.items() if k in self.names}
+
+
 class TypeCollector(m.MatcherDecoratableVisitor):
     """
     Collect type annotations from a stub module.
@@ -140,42 +197,7 @@ class TypeCollector(m.MatcherDecoratableVisitor):
         QualifiedNameProvider,
     )
 
-    # Set of all the names (either module names or object names)
-    # that are already imported in the existing code.
-    existing_imports: Set[str]
-
-    # Map where keys represent unique a name + signature
-    # and values contain all the information needed to apply
-    # annotations to the header.
-    #
-    # The name is relative to the module top-level. Both
-    # ordinary functions and methods will apppear, the differnece
-    # is that methods will have a "." in the qualifier used
-    # to create the key (e.g. "Cat.meow").
-    function_annotations: Dict[FunctionKey, FunctionAnnotation]
-
-    # Map from names to annotations of attribues.
-    #
-    # The name is relative to the module top-level. Both
-    # globals and class attributes will appear, the difference
-    # is that the qualifier will have a "." for class attributes
-    # (e.g. "Cat.eye_color").
-    attribute_annotations: Dict[str, cst.Annotation]
-
-    # All of the class definitions from the stub file.
-    #
-    # These are *not* used to apply type annotations to methods
-    # and attributes. They are only used to handle class definitions
-    # that may only exist in a stub, such as typed dictionaries or
-    # protocols.
-    class_definitions: Dict[str, cst.ClassDef]
-
-    # All of the type vars defined in the stub file.
-    typevars: Dict[str, cst.Assign]
-    # All of the names used in annotations - this determines whether
-    # a particular type var is actually used (which cannot be determined
-    # locally, only at the end of scanning a stub.)
-    annotation_names: Set[str]
+    annotations: Annotations
 
     def __init__(
         self,
@@ -195,11 +217,7 @@ class TypeCollector(m.MatcherDecoratableVisitor):
         self.qualifier: List[str] = []
         self.current_assign: Optional[cst.Assign] = None  # used to collect typevars
         # Store the annotations.
-        self.function_annotations = {}
-        self.attribute_annotations = {}
-        self.class_definitions = {}
-        self.typevars = {}
-        self.annotation_names = set()
+        self.annotations = Annotations.empty()
 
     def visit_ClassDef(
         self,
@@ -222,7 +240,9 @@ class TypeCollector(m.MatcherDecoratableVisitor):
                 )
             new_bases.append(base.with_changes(value=new_value))
 
-        self.class_definitions[node.name.value] = node.with_changes(bases=new_bases)
+        self.annotations.class_definitions[node.name.value] = node.with_changes(
+            bases=new_bases
+        )
 
     def leave_ClassDef(
         self,
@@ -242,7 +262,7 @@ class TypeCollector(m.MatcherDecoratableVisitor):
         parameter_annotations = self._handle_Parameters(node.params)
         name = ".".join(self.qualifier)
         key = FunctionKey.make(name, node.params)
-        self.function_annotations[key] = FunctionAnnotation(
+        self.annotations.functions[key] = FunctionAnnotation(
             parameters=parameter_annotations, returns=return_annotation
         )
 
@@ -263,7 +283,7 @@ class TypeCollector(m.MatcherDecoratableVisitor):
         if name is not None:
             self.qualifier.append(name)
         annotation_value = self._handle_Annotation(annotation=node.annotation)
-        self.attribute_annotations[".".join(self.qualifier)] = annotation_value
+        self.annotations.attributes[".".join(self.qualifier)] = annotation_value
         return True
 
     def leave_AnnAssign(
@@ -294,7 +314,7 @@ class TypeCollector(m.MatcherDecoratableVisitor):
         name = get_full_name_for_node(self.current_assign.targets[0].target)
         if name:
             # pyre-ignore current_assign is never None here
-            self.typevars[name] = self.current_assign
+            self.annotations.typevars[name] = self.current_assign
             self._handle_qualification_and_should_qualify("typing.TypeVar")
             self.current_assign = None
 
@@ -302,10 +322,7 @@ class TypeCollector(m.MatcherDecoratableVisitor):
         self,
         original_node: cst.Module,
     ) -> None:
-        # Filter out unused typevars
-        self.typevars = {
-            k: v for k, v in self.typevars.items() if k in self.annotation_names
-        }
+        self.annotations.finish()
 
     def _get_unique_qualified_name(
         self,
@@ -392,7 +409,7 @@ class TypeCollector(m.MatcherDecoratableVisitor):
             dequalified_node,
         ) = self._get_qualified_name_and_dequalified_node(node)
         should_qualify = self._handle_qualification_and_should_qualify(qualified_name)
-        self.annotation_names.add(qualified_name)
+        self.annotations.names.add(qualified_name)
         if should_qualify:
             return node
         else:
@@ -409,7 +426,7 @@ class TypeCollector(m.MatcherDecoratableVisitor):
             return slice.with_changes(value=self._handle_NameOrAttribute(value))
         else:
             if isinstance(value, cst.SimpleString):
-                self.annotation_names.add(_get_string_value(value))
+                self.annotations.names.add(_get_string_value(value))
             return slice
 
     def _handle_Subscript(
@@ -456,7 +473,7 @@ class TypeCollector(m.MatcherDecoratableVisitor):
     ) -> cst.Annotation:
         node = annotation.annotation
         if isinstance(node, cst.SimpleString):
-            self.annotation_names.add(_get_string_value(node))
+            self.annotations.names.add(_get_string_value(node))
             return annotation
         elif isinstance(node, cst.Subscript):
             return cst.Annotation(annotation=self._handle_Subscript(node))
@@ -483,16 +500,6 @@ class TypeCollector(m.MatcherDecoratableVisitor):
             return updated_parameters
 
         return parameters.with_changes(params=update_annotations(parameters.params))
-
-
-@dataclass(frozen=True)
-class Annotations:
-    function_annotations: Dict[FunctionKey, FunctionAnnotation] = field(
-        default_factory=dict
-    )
-    attribute_annotations: Dict[str, cst.Annotation] = field(default_factory=dict)
-    class_definitions: Dict[str, cst.ClassDef] = field(default_factory=dict)
-    typevars: Dict[str, cst.Assign] = field(default_factory=dict)
 
 
 @dataclass
@@ -565,7 +572,7 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
         # Qualifier for storing the canonical name of the current function.
         self.qualifier: List[str] = []
         self.annotations: Annotations = (
-            Annotations() if annotations is None else annotations
+            Annotations.empty() if annotations is None else annotations
         )
         self.toplevel_annotations: Dict[str, cst.Annotation] = {}
         self.visited_classes: Set[str] = set()
@@ -653,25 +660,22 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
             )
             visitor = TypeCollector(existing_import_names, self.context)
             cst.MetadataWrapper(stub).visit(visitor)
-            self.annotations.function_annotations.update(visitor.function_annotations)
-            self.annotations.attribute_annotations.update(visitor.attribute_annotations)
-            self.annotations.class_definitions.update(visitor.class_definitions)
-            self.annotations.typevars.update(visitor.typevars)
+            self.annotations.update(visitor.annotations)
 
-        tree_with_imports = AddImportsVisitor(
-            context=self.context,
-            imports=(
-                [
-                    ImportItem(
-                        "__future__",
-                        "annotations",
-                        None,
-                    )
-                ]
-                if self.use_future_annotations
-                else ()
-            ),
-        ).transform_module(tree)
+            tree_with_imports = AddImportsVisitor(
+                context=self.context,
+                imports=(
+                    [
+                        ImportItem(
+                            "__future__",
+                            "annotations",
+                            None,
+                        )
+                    ]
+                    if self.use_future_annotations
+                    else ()
+                ),
+            ).transform_module(tree)
         tree_with_changes = tree_with_imports.visit(self)
 
         # don't modify the imports if we didn't actually add any type information
@@ -740,12 +744,10 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
             if name is not None:
                 self.qualifier.append(name)
                 if (
-                    self._qualifier_name() in self.annotations.attribute_annotations
+                    self._qualifier_name() in self.annotations.attributes
                     and not isinstance(only_target, cst.Subscript)
                 ):
-                    annotation = self.annotations.attribute_annotations[
-                        self._qualifier_name()
-                    ]
+                    annotation = self.annotations.attributes[self._qualifier_name()]
                     self.qualifier.pop()
                     return self._apply_annotation_to_attribute_or_global(
                         name=name,
@@ -787,8 +789,8 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
         name: str,
     ) -> None:
         self.qualifier.append(name)
-        if self._qualifier_name() in self.annotations.attribute_annotations:
-            annotation = self.annotations.attribute_annotations[self._qualifier_name()]
+        if self._qualifier_name() in self.annotations.attributes:
+            annotation = self.annotations.attributes[self._qualifier_name()]
             self.toplevel_annotations[name] = annotation
         self.qualifier.pop()
 
@@ -987,8 +989,8 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
     ) -> cst.FunctionDef:
         key = FunctionKey.make(self._qualifier_name(), updated_node.params)
         self.qualifier.pop()
-        if key in self.annotations.function_annotations:
-            function_annotation = self.annotations.function_annotations[key]
+        if key in self.annotations.functions:
+            function_annotation = self.annotations.functions[key]
             # Only add new annotation if:
             # * we have matching function signatures and
             # * we are explicitly told to overwrite existing annotations or
