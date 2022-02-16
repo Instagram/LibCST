@@ -65,6 +65,7 @@ jobs:
     - run: ufmt check .
     - run: python3 -m fixit.cli.run_rules
     - run: python -m slotscheck libcst
+    - run: ./check_copyright.sh
 
 # Run pyre typechecker
   typecheck:
