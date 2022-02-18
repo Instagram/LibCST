@@ -1531,19 +1531,20 @@ class ScopeProviderTest(UnitTest):
         first_assignment = list(global_scope.assignments)[0]
         assert isinstance(first_assignment, cst.metadata.Assignment)
         self.assertEqual(first_assignment.node, import_stmt)
-        global_refs = list(first_assignment.references)
+        global_refs = first_assignment.references
         self.assertEqual(len(global_refs), 2)
+        global_refs_nodes = {x.node for x in global_refs}
         class_def = ensure_type(m.body[1], cst.ClassDef)
         x = ensure_type(
             ensure_type(class_def.body.body[0], cst.SimpleStatementLine).body[0],
             cst.Assign,
         )
-        self.assertEqual(x.value, global_refs[0].node)
+        self.assertIn(x.value, global_refs_nodes)
         class_b = ensure_type(
             ensure_type(class_def.body.body[1], cst.SimpleStatementLine).body[0],
             cst.Assign,
         )
-        self.assertEqual(class_b.value, global_refs[1].node)
+        self.assertIn(class_b.value, global_refs_nodes)
 
         class_accesses = list(scopes[x].accesses)
         self.assertEqual(len(class_accesses), 3)
