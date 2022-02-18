@@ -491,6 +491,31 @@ class TestApplyAnnotationsVisitor(CodemodTest):
                     return respond(r, b)
                 """,
             ),
+            "with_variadic_arguments": (
+                """
+                def incomplete_stubs_with_stars(
+                    x: int,
+                    *args,
+                    **kwargs,
+                ) -> None: ...
+                """,
+                """
+                def incomplete_stubs_with_stars(
+                    x,
+                    *args: P.args,
+                    **kwargs: P.kwargs,
+                ):
+                    pass
+                """,
+                """
+                def incomplete_stubs_with_stars(
+                    x: int,
+                    *args,
+                    **kwargs,
+                ) -> None:
+                    pass
+                """,
+            ),
             # test cases named with the REQUIRES_PREEXISTING prefix are verifying
             # that certain special cases work if the stub and the existing code
             # happen to align well, but none of these cases are guaranteed to work
