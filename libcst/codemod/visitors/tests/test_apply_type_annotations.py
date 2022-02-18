@@ -154,6 +154,30 @@ class TestApplyAnnotationsVisitor(CodemodTest):
                 x2: Optional[T2] = None
                 """,
             ),
+            "splitting_multi_assigns": (
+                """
+                a: str = ...
+                x: int = ...
+                y: int = ...
+                _: str = ...
+                z: str = ...
+                """,
+                """
+                a = 'a'
+                x, y = 1, 2
+                _, z = 'hello world'.split()
+                """,
+                """
+                x: int
+                y: int
+                _: str
+                z: str
+
+                a: str = 'a'
+                x, y = 1, 2
+                _, z = 'hello world'.split()
+                """,
+            ),
         }
     )
     def test_annotate_globals(self, stub: str, before: str, after: str) -> None:
