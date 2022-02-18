@@ -312,7 +312,7 @@ class TypeCollector(m.MatcherDecoratableVisitor):
     ) -> None:
         # pyre-ignore current_assign is never None here
         name = get_full_name_for_node(self.current_assign.targets[0].target)
-        if name:
+        if name is not None:
             # pyre-ignore current_assign is never None here
             self.annotations.typevars[name] = self.current_assign
             self._handle_qualification_and_should_qualify("typing.TypeVar")
@@ -730,7 +730,7 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
             for element in only_target.elements:
                 value = element.value
                 name = get_full_name_for_node(value)
-                if name:
+                if name is not None and name != "_":
                     self._add_to_toplevel_annotations(name)
         elif isinstance(only_target, (cst.Subscript)):
             pass
@@ -1019,7 +1019,7 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
     ) -> None:
         # pyre-ignore current_assign is never None here
         name = get_full_name_for_node(self.current_assign.targets[0].target)
-        if name:
+        if name is not None:
             # Preserve the whole node, even though we currently just use the
             # name, so that we can match bounds and variance at some point and
             # determine if two typevars with the same name are indeed the same.
@@ -1041,7 +1041,7 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
                 target = assign.target
                 if isinstance(target, (cst.Name, cst.Attribute)):
                     name = get_full_name_for_node(target)
-                    if name is not None:
+                    if name is not None and name != "_":
                         # Add separate top-level annotations for `a = b = 1`
                         # as `a: int` and `b: int`.
                         self._add_to_toplevel_annotations(name)

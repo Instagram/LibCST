@@ -170,7 +170,6 @@ class TestApplyAnnotationsVisitor(CodemodTest):
                 """
                 x: int
                 y: int
-                _: str
                 z: str
 
                 a: str = 'a'
