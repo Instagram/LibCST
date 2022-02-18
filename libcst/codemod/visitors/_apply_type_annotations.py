@@ -14,7 +14,6 @@ from libcst.codemod._context import CodemodContext
 from libcst.codemod._visitor import ContextAwareTransformer
 from libcst.codemod.visitors._add_imports import AddImportsVisitor
 from libcst.codemod.visitors._gather_imports import GatherImportsVisitor
-from libcst.codemod.visitors._imports import ImportItem
 from libcst.helpers import get_full_name_for_node
 from libcst.metadata import PositionProvider, QualifiedNameProvider
 
