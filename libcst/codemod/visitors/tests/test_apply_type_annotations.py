@@ -510,8 +510,8 @@ class TestApplyAnnotationsVisitor(CodemodTest):
                 """
                 def incomplete_stubs_with_stars(
                     x: int,
-                    *args,
-                    **kwargs,
+                    *args: P.args,
+                    **kwargs: P.kwargs,
                 ) -> None:
                     pass
                 """,
