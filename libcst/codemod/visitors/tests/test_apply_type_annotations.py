@@ -154,6 +154,29 @@ class TestApplyAnnotationsVisitor(CodemodTest):
                 x2: Optional[T2] = None
                 """,
             ),
+            "splitting_multi_assigns": (
+                """
+                a: str = ...
+                x: int = ...
+                y: int = ...
+                _: str = ...
+                z: str = ...
+                """,
+                """
+                a = 'a'
+                x, y = 1, 2
+                _, z = 'hello world'.split()
+                """,
+                """
+                x: int
+                y: int
+                z: str
+
+                a: str = 'a'
+                x, y = 1, 2
+                _, z = 'hello world'.split()
+                """,
+            ),
         }
     )
     def test_annotate_globals(self, stub: str, before: str, after: str) -> None:
@@ -466,6 +489,31 @@ class TestApplyAnnotationsVisitor(CodemodTest):
                 @first_decorator(5)
                 async def async_with_decorators(r: Request, b: bool) -> HttpResponse:
                     return respond(r, b)
+                """,
+            ),
+            "with_variadic_arguments": (
+                """
+                def incomplete_stubs_with_stars(
+                    x: int,
+                    *args,
+                    **kwargs,
+                ) -> None: ...
+                """,
+                """
+                def incomplete_stubs_with_stars(
+                    x,
+                    *args: P.args,
+                    **kwargs: P.kwargs,
+                ):
+                    pass
+                """,
+                """
+                def incomplete_stubs_with_stars(
+                    x: int,
+                    *args: P.args,
+                    **kwargs: P.kwargs,
+                ) -> None:
+                    pass
                 """,
             ),
             # test cases named with the REQUIRES_PREEXISTING prefix are verifying

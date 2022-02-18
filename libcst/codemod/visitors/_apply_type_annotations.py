@@ -14,7 +14,6 @@ from libcst.codemod._context import CodemodContext
 from libcst.codemod._visitor import ContextAwareTransformer
 from libcst.codemod.visitors._add_imports import AddImportsVisitor
 from libcst.codemod.visitors._gather_imports import GatherImportsVisitor
-from libcst.codemod.visitors._imports import ImportItem
 from libcst.helpers import get_full_name_for_node
 from libcst.metadata import PositionProvider, QualifiedNameProvider
 
@@ -312,7 +311,7 @@ class TypeCollector(m.MatcherDecoratableVisitor):
     ) -> None:
         # pyre-ignore current_assign is never None here
         name = get_full_name_for_node(self.current_assign.targets[0].target)
-        if name:
+        if name is not None:
             # pyre-ignore current_assign is never None here
             self.annotations.typevars[name] = self.current_assign
             self._handle_qualification_and_should_qualify("typing.TypeVar")
@@ -530,10 +529,12 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
 
     This is one of the transforms that is available automatically to you when
     running a codemod. To use it in this manner, import
-    :class:`~libcst.codemod.visitors.ApplyTypeAnnotationsVisitor` and then call the static
-    :meth:`~libcst.codemod.visitors.ApplyTypeAnnotationsVisitor.store_stub_in_context` method,
-    giving it the current context (found as ``self.context`` for all subclasses of
-    :class:`~libcst.codemod.Codemod`), the stub module from which you wish to add annotations.
+    :class:`~libcst.codemod.visitors.ApplyTypeAnnotationsVisitor` and then call
+    the static
+    :meth:`~libcst.codemod.visitors.ApplyTypeAnnotationsVisitor.store_stub_in_context`
+    method, giving it the current context (found as ``self.context`` for all
+    subclasses of :class:`~libcst.codemod.Codemod`), the stub module from which
+    you wish to add annotations.
 
     For example, you can store the type annotation ``int`` for ``x`` using::
 
@@ -550,7 +551,8 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
 
         x: int = 1
 
-    If the function or attribute already has a type annotation, it will not be overwritten.
+    If the function or attribute already has a type annotation, it will not be
+    overwritten.
 
     To overwrite existing annotations when applying annotations from a stub,
     use the keyword argument ``overwrite_existing_annotations=True`` when
@@ -662,20 +664,12 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
             cst.MetadataWrapper(stub).visit(visitor)
             self.annotations.update(visitor.annotations)
 
-            tree_with_imports = AddImportsVisitor(
-                context=self.context,
-                imports=(
-                    [
-                        ImportItem(
-                            "__future__",
-                            "annotations",
-                            None,
-                        )
-                    ]
-                    if self.use_future_annotations
-                    else ()
-                ),
-            ).transform_module(tree)
+            if self.use_future_annotations:
+                AddImportsVisitor.add_needed_import(
+                    self.context, "__future__", "annotations"
+                )
+            tree_with_imports = AddImportsVisitor(self.context).transform_module(tree)
+
         tree_with_changes = tree_with_imports.visit(self)
 
         # don't modify the imports if we didn't actually add any type information
@@ -735,7 +729,7 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
             for element in only_target.elements:
                 value = element.value
                 name = get_full_name_for_node(value)
-                if name:
+                if name is not None and name != "_":
                     self._add_to_toplevel_annotations(name)
         elif isinstance(only_target, (cst.Subscript)):
             pass
@@ -828,7 +822,7 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
                 annotated_parameters.append(parameter)
             return annotated_parameters
 
-        return annotations.parameters.with_changes(
+        return updated_node.params.with_changes(
             params=update_annotation(
                 updated_node.params.params,
                 annotations.parameters.params,
@@ -1024,7 +1018,7 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
     ) -> None:
         # pyre-ignore current_assign is never None here
         name = get_full_name_for_node(self.current_assign.targets[0].target)
-        if name:
+        if name is not None:
             # Preserve the whole node, even though we currently just use the
             # name, so that we can match bounds and variance at some point and
             # determine if two typevars with the same name are indeed the same.
@@ -1046,7 +1040,7 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
                 target = assign.target
                 if isinstance(target, (cst.Name, cst.Attribute)):
                     name = get_full_name_for_node(target)
-                    if name is not None:
+                    if name is not None and name != "_":
                         # Add separate top-level annotations for `a = b = 1`
                         # as `a: int` and `b: int`.
                         self._add_to_toplevel_annotations(name)
