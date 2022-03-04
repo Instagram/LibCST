@@ -4,8 +4,12 @@
 
 A Concrete Syntax Tree (CST) parser and serializer library for Python
 
-|readthedocs-badge| |ci-badge| |codecov-badge| |pypi-badge| |pypi-download| |notebook-badge|
+|support-ukraine| |readthedocs-badge| |ci-badge| |codecov-badge| |pypi-badge| |pypi-download| |notebook-badge|
 
+.. |support-ukraine| image:: https://img.shields.io/badge/Support-Ukraine-FFD500?style=flat&labelColor=005BBB
+   :alt: Support Ukraine - Help Provide Humanitarian Aid to Ukraine.
+   :target: https://opensource.fb.com/support-ukraine
+   
 .. |readthedocs-badge| image:: https://readthedocs.org/projects/pip/badge/?version=latest&style=flat
    :target: https://libcst.readthedocs.io/en/latest/
    :alt: Documentation
