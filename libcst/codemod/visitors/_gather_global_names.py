@@ -2,8 +2,8 @@
 #
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
-#
-from typing import Dict, List, Sequence, Set, Tuple, Union
+
+from typing import Set
 
 import libcst
 from libcst.codemod._context import CodemodContext
@@ -48,7 +48,7 @@ class GatherGlobalNamesVisitor(ContextAwareVisitor):
             self.class_names.add(node.name.value)
         self.scope_depth += 1
 
-    def leave_ClassDef(self, node: libcst.ClassDef) -> None:
+    def leave_ClassDef(self, original_node: libcst.ClassDef) -> None:
         self.scope_depth -= 1
 
     def visit_FunctionDef(self, node: libcst.FunctionDef) -> None:
@@ -56,7 +56,7 @@ class GatherGlobalNamesVisitor(ContextAwareVisitor):
             self.function_names.add(node.name.value)
         self.scope_depth += 1
 
-    def leave_FunctionDef(self, node: libcst.FunctionDef) -> None:
+    def leave_FunctionDef(self, original_node: libcst.FunctionDef) -> None:
         self.scope_depth -= 1
 
     def visit_Assign(self, node: libcst.Assign) -> None:
