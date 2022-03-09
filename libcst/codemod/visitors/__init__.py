@@ -7,6 +7,7 @@ from libcst.codemod.visitors._add_imports import AddImportsVisitor
 from libcst.codemod.visitors._apply_type_annotations import ApplyTypeAnnotationsVisitor
 from libcst.codemod.visitors._gather_comments import GatherCommentsVisitor
 from libcst.codemod.visitors._gather_exports import GatherExportsVisitor
+from libcst.codemod.visitors._gather_global_names import GatherGlobalNamesVisitor
 from libcst.codemod.visitors._gather_imports import GatherImportsVisitor
 from libcst.codemod.visitors._gather_string_annotation_names import (
     GatherNamesFromStringAnnotationsVisitor,
@@ -20,6 +21,7 @@ __all__ = [
     "ApplyTypeAnnotationsVisitor",
     "GatherCommentsVisitor",
     "GatherExportsVisitor",
+    "GatherGlobalNamesVisitor",
     "GatherImportsVisitor",
     "GatherNamesFromStringAnnotationsVisitor",
     "GatherUnusedImportsVisitor",

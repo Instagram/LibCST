@@ -1060,6 +1060,124 @@ class TestApplyAnnotationsVisitor(CodemodTest):
 
     @data_provider(
         {
+            "return_self": (
+                """
+                class Foo:
+                    def f(self) -> Foo: ...
+                """,
+                """
+                class Foo:
+                    def f(self):
+                        return self
+                """,
+                """
+                class Foo:
+                    def f(self) -> "Foo":
+                        return self
+                """,
+            ),
+            "return_forward_reference": (
+                """
+                class Foo:
+                    def f(self) -> Bar: ...
+
+                class Bar:
+                    ...
+                """,
+                """
+                class Foo:
+                    def f(self):
+                        return Bar()
+
+                class Bar:
+                    pass
+                """,
+                """
+                class Foo:
+                    def f(self) -> "Bar":
+                        return Bar()
+
+                class Bar:
+                    pass
+                """,
+            ),
+            "return_backward_reference": (
+                """
+                class Bar:
+                    ...
+
+                class Foo:
+                    def f(self) -> Bar: ...
+                """,
+                """
+                class Bar:
+                    pass
+
+                class Foo:
+                    def f(self):
+                        return Bar()
+                """,
+                """
+                class Bar:
+                    pass
+
+                class Foo:
+                    def f(self) -> Bar:
+                        return Bar()
+                """,
+            ),
+            "return_undefined_name": (
+                """
+                class Foo:
+                    def f(self) -> Bar: ...
+                """,
+                """
+                class Foo:
+                    def f(self):
+                        return self
+                """,
+                """
+                class Foo:
+                    def f(self) -> Bar:
+                        return self
+                """,
+            ),
+            "parameter_forward_reference": (
+                """
+                def f(input: Bar) -> None: ...
+
+                class Bar:
+                    ...
+                """,
+                """
+                def f(input):
+                    pass
+
+                class Bar:
+                    pass
+                """,
+                """
+                def f(input: "Bar") -> None:
+                    pass
+
+                class Bar:
+                    pass
+                """,
+            ),
+        }
+    )
+    def test_annotate_with_forward_references(
+        self, stub: str, before: str, after: str
+    ) -> None:
+        self.run_test_case_with_flags(
+            stub=stub,
+            before=before,
+            after=after,
+            overwrite_existing_annotations=True,
+        )
+
+    @data_provider(
+        {
             "fully_annotated_with_untyped_stub": (
                 """
                 def f(a, b): ...
