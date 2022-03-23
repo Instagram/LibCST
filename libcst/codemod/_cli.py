@@ -17,7 +17,7 @@ import traceback
 from dataclasses import dataclass, replace
 from multiprocessing import cpu_count, Pool
 from pathlib import Path, PurePath
-from typing import Any, AnyStr, cast, Dict, List, Optional, Sequence, Union
+from typing import Any, AnyStr, cast, Dict, List, Optional, Sequence, Union, Tuple
 
 from libcst import parse_module, PartialParserConfig
 from libcst.codemod._codemod import Codemod
@@ -184,28 +184,31 @@ def exec_transform_with_prettyprint(
     return maybe_code
 
 
-def _calculate_module(repo_root: Optional[str], filename: str) -> Optional[str]:
+def _calculate_module_and_package(repo_root: Optional[str], filename: str) -> Tuple[Optional[str], Optional[str]]:
     # Given an absolute repo_root and an absolute filename, calculate the
     # python module name for the file.
     if repo_root is None:
         # We don't have a repo root, so this is impossible to calculate.
-        return None
+        return None, None
 
     try:
         relative_filename = PurePath(filename).relative_to(repo_root)
     except ValueError:
         # This file seems to be out of the repo root.
-        return None
+        return None, None
 
     # get rid of extension
     relative_filename = relative_filename.with_suffix("")
 
-    # get rid of any special cases
+    # handle special cases
     if relative_filename.stem in ["__init__", "__main__"]:
         relative_filename = relative_filename.parent
+        package = module = ".".join(relative_filename.parts)
+    else:
+        module = ".".join(relative_filename.parts)
+        package = ".".join(relative_filename.parts[:-1])
 
-    # Now, convert to dots to represent the python module.
-    return ".".join(relative_filename.parts)
+    return module, package
 
 
 @dataclass(frozen=True)
@@ -264,6 +267,11 @@ def _execute_transform(  # noqa: C901
                 ),
             )
 
+        # attempt to work out the module and package name for this file
+        full_module_name, full_package_name = _calculate_module_and_package(
+            config.repo_root, filename
+        )
+
         # Somewhat gross hack to provide the filename in the transform's context.
         # We do this after the fork so that a context that was initialized with
         # some defaults before calling parallel_exec_transform_with_prettyprint
@@ -271,7 +279,8 @@ def _execute_transform(  # noqa: C901
         transformer.context = replace(
             transformer.context,
             filename=filename,
-            full_module_name=_calculate_module(config.repo_root, filename),
+            full_module_name=full_module_name,
+            full_package_name=full_package_name,
             scratch={},
         )
 
