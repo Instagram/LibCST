@@ -292,6 +292,23 @@ class TestApplyAnnotationsVisitor(CodemodTest):
                     return returns_baz()
                 """,
             ),
+            "with_as_import": (
+                """
+                def foo(x): ...
+                """,
+                """
+                from bar import A as B
+
+                def foo(x: B):
+                    pass
+                """,
+                """
+                from bar import A as B
+
+                def foo(x: B):
+                    pass
+                """,
+            ),
             "with_nested_import": (
                 """
                 def foo(x: django.http.response.HttpResponse) -> str:

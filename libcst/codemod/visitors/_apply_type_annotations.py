@@ -369,8 +369,7 @@ class TypeCollector(m.MatcherDecoratableVisitor):
         return (relative_prefix + qualifier, target)
 
     def _handle_qualification_and_should_qualify(
-        self,
-        qualified_name: str,
+        self, qualified_name: str, node: Optional[cst.CSTNode] = None
     ) -> bool:
         """
         Based on a qualified name and the existing module imports, record that
@@ -384,10 +383,15 @@ class TypeCollector(m.MatcherDecoratableVisitor):
             if module in self.existing_imports:
                 return True
             else:
+                if node and isinstance(node, cst.Name):
+                    asname = node.value
+                else:
+                    asname = None
                 AddImportsVisitor.add_needed_import(
                     self.context,
                     module,
                     target,
+                    asname=asname,
                 )
                 return False
         return False
