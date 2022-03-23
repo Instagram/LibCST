@@ -590,7 +590,9 @@ class TestAddImportsCodemod(CodemodTest):
             before,
             after,
             [ImportItem("a.b.c", "D", None)],
-            context_override=CodemodContext(full_module_name="a.b.foobar"),
+            context_override=CodemodContext(
+                full_module_name="a.b.foobar", full_package_name="a.b"
+            ),
         )
 
     def test_add_object_relative_modify_simple(self) -> None:
@@ -621,7 +623,9 @@ class TestAddImportsCodemod(CodemodTest):
             before,
             after,
             [ImportItem("a.b.c", "D", None)],
-            context_override=CodemodContext(full_module_name="a.b.foobar"),
+            context_override=CodemodContext(
+                full_module_name="a.b.foobar", full_package_name="a.b"
+            ),
         )
 
     def test_import_order(self) -> None:
@@ -644,7 +648,9 @@ class TestAddImportsCodemod(CodemodTest):
                 ImportItem("a", "c", None),
                 ImportItem("a", "d", "x"),
             ],
-            context_override=CodemodContext(full_module_name="a.b.foobar"),
+            context_override=CodemodContext(
+                full_module_name="a.b.foobar", full_package_name="a.b"
+            ),
         )
 
     def test_add_explicit_relative(self) -> None:
@@ -759,7 +765,9 @@ class TestAddImportsCodemod(CodemodTest):
             before,
             after,
             [ImportItem("c", "D", None, 2)],
-            context_override=CodemodContext(full_module_name="a.b.foobar"),
+            context_override=CodemodContext(
+                full_module_name="a.b.foobar", full_package_name="a.b"
+            ),
         )
 
     def test_add_object_explicit_relative_modify_simple(self) -> None:
@@ -790,7 +798,9 @@ class TestAddImportsCodemod(CodemodTest):
             before,
             after,
             [ImportItem("c", "D", None, 2)],
-            context_override=CodemodContext(full_module_name="a.b.foobar"),
+            context_override=CodemodContext(
+                full_module_name="a.b.foobar", full_package_name="a.b"
+            ),
         )
 
     def test_add_object_resolve_explicit_relative_modify_simple(self) -> None:
@@ -821,7 +831,9 @@ class TestAddImportsCodemod(CodemodTest):
             before,
             after,
             [ImportItem("c", "D", None, 2)],
-            context_override=CodemodContext(full_module_name="a.b.foobar"),
+            context_override=CodemodContext(
+                full_module_name="a.b.foobar", full_package_name="a.b"
+            ),
         )
 
     def test_add_object_resolve_dotted_relative_modify_simple(self) -> None:
@@ -852,7 +864,9 @@ class TestAddImportsCodemod(CodemodTest):
             before,
             after,
             [ImportItem("..c", "D", None)],
-            context_override=CodemodContext(full_module_name="a.b.foobar"),
+            context_override=CodemodContext(
+                full_module_name="a.b.foobar", full_package_name="a.b"
+            ),
         )
 
     def test_import_in_docstring_module(self) -> None:
@@ -873,5 +887,7 @@ class TestAddImportsCodemod(CodemodTest):
             before,
             after,
             [ImportItem("__future__", "annotations", None)],
-            context_override=CodemodContext(full_module_name="a.b.foobar"),
+            context_override=CodemodContext(
+                full_module_name="a.b.foobar", full_package_name="a.b"
+            ),
         )

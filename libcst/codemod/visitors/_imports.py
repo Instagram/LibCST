@@ -31,13 +31,13 @@ class ImportItem:
     def module(self) -> str:
         return "." * self.relative + self.module_name
 
-    def resolve_relative(self, base_module: Optional[str]) -> "ImportItem":
+    def resolve_relative(self, package_name: Optional[str]) -> "ImportItem":
         """Return an ImportItem with an absolute module name if possible."""
         mod = self
         # `import ..a` -> `from .. import a`
         if mod.relative and mod.obj_name is None:
             mod = replace(mod, module_name="", obj_name=mod.module_name)
-        if base_module is None:
+        if package_name is None:
             return mod
-        m = get_absolute_module(base_module, mod.module_name or None, self.relative)
+        m = get_absolute_module(package_name, mod.module_name or None, self.relative)
         return mod if m is None else replace(mod, module_name=m, relative=0)
