@@ -3,7 +3,15 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from typing import Any, Iterable, ForwardRef, Mapping, MutableMapping, MutableSequence, Tuple
+from typing import (
+    Any,
+    ForwardRef,
+    Iterable,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Tuple,
+)
 
 from typing_extensions import Literal
 from typing_inspect import get_args, get_origin, is_classvar, is_typevar, is_union_type

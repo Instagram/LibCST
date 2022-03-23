@@ -30,7 +30,7 @@ setuptools.setup(
         ),
     },
     name="libcst",
-    description="A concrete syntax tree with AST-like properties for Python 3.7, 3.8, 3.9, and 3.10 programs.",
+    description="A concrete syntax tree with AST-like properties for Python 3.5, 3.6, 3.7, 3.8, 3.9, and 3.10 programs.",
     long_description=long_description,
     long_description_content_type="text/x-rst",
     url="https://github.com/Instagram/LibCST",
