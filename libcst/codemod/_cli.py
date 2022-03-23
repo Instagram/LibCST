@@ -16,7 +16,7 @@ import time
 import traceback
 from dataclasses import dataclass, replace
 from multiprocessing import cpu_count, Pool
-from pathlib import Path, PurePath
+from pathlib import Path
 from typing import Any, AnyStr, cast, Dict, List, Optional, Sequence, Union
 
 from libcst import parse_module, PartialParserConfig
@@ -32,6 +32,7 @@ from libcst.codemod._runner import (
     TransformSkip,
     TransformSuccess,
 )
+from libcst.helpers import calculate_module_and_package
 from libcst.metadata import FullRepoManager
 
 _DEFAULT_GENERATED_CODE_MARKER: str = f"@gen{''}erated"
@@ -184,30 +185,6 @@ def exec_transform_with_prettyprint(
     return maybe_code
 
 
-def _calculate_module(repo_root: Optional[str], filename: str) -> Optional[str]:
-    # Given an absolute repo_root and an absolute filename, calculate the
-    # python module name for the file.
-    if repo_root is None:
-        # We don't have a repo root, so this is impossible to calculate.
-        return None
-
-    try:
-        relative_filename = PurePath(filename).relative_to(repo_root)
-    except ValueError:
-        # This file seems to be out of the repo root.
-        return None
-
-    # get rid of extension
-    relative_filename = relative_filename.with_suffix("")
-
-    # get rid of any special cases
-    if relative_filename.stem in ["__init__", "__main__"]:
-        relative_filename = relative_filename.parent
-
-    # Now, convert to dots to represent the python module.
-    return ".".join(relative_filename.parts)
-
-
 @dataclass(frozen=True)
 class ExecutionResult:
     # File we have results for
@@ -271,9 +248,19 @@ def _execute_transform(  # noqa: C901
         transformer.context = replace(
             transformer.context,
             filename=filename,
-            full_module_name=_calculate_module(config.repo_root, filename),
             scratch={},
         )
+
+        # attempt to work out the module and package name for this file
+        module_name_and_package = calculate_module_and_package(
+            config.repo_root, filename
+        )
+        if module_name_and_package is not None:
+            transformer.context = replace(
+                transformer.context,
+                full_module_name=module_name_and_package.name,
+                full_package_name=module_name_and_package.package,
+            )
 
         # Run the transform, bail if we failed or if we aren't formatting code
         try:

@@ -4,11 +4,6 @@
 # LICENSE file in the root directory of this source tree.
 #
 
-from libcst.helpers._statement import (
-    get_absolute_module,
-    get_absolute_module_for_import,
-    get_absolute_module_for_import_or_raise,
-)
 from libcst.helpers._template import (
     parse_template_expression,
     parse_template_module,
@@ -19,9 +14,17 @@ from libcst.helpers.expression import (
     get_full_name_for_node,
     get_full_name_for_node_or_raise,
 )
-from libcst.helpers.module import insert_header_comments
+from libcst.helpers.module import (
+    calculate_module_and_package,
+    get_absolute_module,
+    get_absolute_module_for_import,
+    get_absolute_module_for_import_or_raise,
+    insert_header_comments,
+    ModuleNameAndPackage,
+)
 
 __all__ = [
+    "calculate_module_and_package",
     "get_absolute_module",
     "get_absolute_module_for_import",
     "get_absolute_module_for_import_or_raise",
@@ -32,4 +35,5 @@ __all__ = [
     "parse_template_module",
     "parse_template_statement",
     "parse_template_expression",
+    "ModuleNameAndPackage",
 ]

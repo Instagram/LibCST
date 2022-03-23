@@ -44,6 +44,12 @@ class CodemodContext:
     #: in the repo named ``foo/bar/baz.py``.
     full_module_name: Optional[str] = None
 
+    #: The current package if a codemod is being executed against a file that
+    #: lives on disk, and the repository root is correctly configured. This
+    #: Will take the form of a dotted name such as ``foo.bar`` for a file
+    #: in the repo named ``foo/bar/baz.py``
+    full_package_name: Optional[str] = None
+
     #: The current top level metadata wrapper for the module being modified.
     #: To access computed metadata when inside an actively running codemod, use
     #: the :meth:`~libcst.MetadataDependent.get_metadata` method on
