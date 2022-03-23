@@ -12,7 +12,7 @@ from libcst.testing.utils import UnitTest
 class TestGatherImportsVisitor(UnitTest):
     def gather_imports(self, code: str) -> GatherImportsVisitor:
         transform_instance = GatherImportsVisitor(
-            CodemodContext(full_module_name="a.b.foobar")
+            CodemodContext(full_module_name="a.b.foobar", full_package_name="a.b")
         )
         input_tree = parse_module(CodemodTest.make_fixture_data(code))
         input_tree.visit(transform_instance)
