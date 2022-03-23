@@ -17,7 +17,7 @@ import traceback
 from dataclasses import dataclass, replace
 from multiprocessing import cpu_count, Pool
 from pathlib import Path, PurePath
-from typing import Any, AnyStr, cast, Dict, List, Optional, Sequence, Union, Tuple
+from typing import Any, AnyStr, cast, Dict, List, Optional, Sequence, Tuple, Union
 
 from libcst import parse_module, PartialParserConfig
 from libcst.codemod._codemod import Codemod
@@ -184,18 +184,20 @@ def exec_transform_with_prettyprint(
     return maybe_code
 
 
-def _calculate_module_and_package(repo_root: Optional[str], filename: str) -> Tuple[Optional[str], Optional[str]]:
+def _calculate_module_and_package(
+    repo_root: Optional[str], filename: str
+) -> Optional[Tuple[str, str]]:
     # Given an absolute repo_root and an absolute filename, calculate the
     # python module name for the file.
     if repo_root is None:
         # We don't have a repo root, so this is impossible to calculate.
-        return None, None
+        return None
 
     try:
         relative_filename = PurePath(filename).relative_to(repo_root)
     except ValueError:
         # This file seems to be out of the repo root.
-        return None, None
+        return None
 
     # get rid of extension
     relative_filename = relative_filename.with_suffix("")
@@ -270,7 +272,7 @@ def _execute_transform(  # noqa: C901
         # attempt to work out the module and package name for this file
         full_module_name, full_package_name = _calculate_module_and_package(
             config.repo_root, filename
-        )
+        ) or (None, None)
 
         # Somewhat gross hack to provide the filename in the transform's context.
         # We do this after the fork so that a context that was initialized with
