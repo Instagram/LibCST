@@ -39,7 +39,7 @@ class RemovedNodeVisitor(ContextAwareVisitor):
             return
 
         module_name = get_absolute_module_for_import(
-            self.context.full_module_name, import_node
+            self.context.full_package_name, import_node
         )
         if module_name is None:
             raise Exception("Cannot look up absolute module from relative import!")
@@ -248,7 +248,9 @@ class RemoveImportsVisitor(ContextAwareTransformer):
             if isinstance(names, cst.ImportStar):
                 # We don't handle removing this, so ignore it.
                 return
-            module_name = get_absolute_module_for_import(context.full_module_name, node)
+            module_name = get_absolute_module_for_import(
+                context.full_package_name, node
+            )
             if module_name is None:
                 raise Exception("Cannot look up absolute module from relative import!")
             for import_alias in names:
@@ -414,7 +416,7 @@ class RemoveImportsVisitor(ContextAwareTransformer):
 
         # Make sure we actually know the absolute module.
         module_name = get_absolute_module_for_import(
-            self.context.full_module_name, updated_node
+            self.context.full_package_name, updated_node
         )
         if module_name is None or module_name not in self.unused_obj_imports:
             # This node isn't on our list of todos, so let's bail.
