@@ -6,7 +6,7 @@
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from textwrap import dedent
-from typing import Collection, Mapping, Optional, Set, Tuple
+from typing import Collection, Dict, Mapping, Optional, Set, Tuple
 
 import libcst as cst
 from libcst import ensure_type
@@ -19,7 +19,7 @@ from libcst.metadata import (
 )
 from libcst.metadata.full_repo_manager import FullRepoManager
 from libcst.metadata.name_provider import FullyQualifiedNameVisitor
-from libcst.testing.utils import UnitTest
+from libcst.testing.utils import data_provider, UnitTest
 
 
 def get_qualified_name_metadata_provider(
@@ -416,62 +416,67 @@ class QualifiedNameProviderTest(UnitTest):
 
 
 class FullyQualifiedNameProviderTest(UnitTest):
-    def test_builtins(self) -> None:
-        qnames = get_fully_qualified_names(
-            "test/module.py",
-            """
-            int(None)
-            """,
+    @data_provider(
+        (
+            # test module names
+            ("a/b/c.py", "", {"a.b.c": QualifiedNameSource.LOCAL}),
+            ("a/b.py", "", {"a.b": QualifiedNameSource.LOCAL}),
+            ("a.py", "", {"a": QualifiedNameSource.LOCAL}),
+            ("a/b/__init__.py", "", {"a.b": QualifiedNameSource.LOCAL}),
+            ("a/b/__main__.py", "", {"a.b": QualifiedNameSource.LOCAL}),
+            # test builtinxsx
+            (
+                "test/module.py",
+                "int(None)",
+                {
+                    "test.module": QualifiedNameSource.LOCAL,
+                    "builtins.int": QualifiedNameSource.BUILTIN,
+                    "builtins.None": QualifiedNameSource.BUILTIN,
+                },
+            ),
+            # test imports
+            (
+                "some/test/module.py",
+                """
+                from a.b import c as d
+                from . import rel
+                from .lol import rel2
+                from .. import thing as rel3
+                d, rel, rel2, rel3
+                """,
+                {
+                    "some.test.module": QualifiedNameSource.LOCAL,
+                    "a.b.c": QualifiedNameSource.IMPORT,
+                    "some.test.rel": QualifiedNameSource.IMPORT,
+                    "some.test.lol.rel2": QualifiedNameSource.IMPORT,
+                    "some.thing": QualifiedNameSource.IMPORT,
+                },
+            ),
+            # test locals
+            (
+                "some/test/module.py",
+                """
+                class X:
+                    a: X
+                """,
+                {
+                    "some.test.module": QualifiedNameSource.LOCAL,
+                    "some.test.module.X": QualifiedNameSource.LOCAL,
+                    "some.test.module.X.a": QualifiedNameSource.LOCAL,
+                },
+            ),
         )
-        module_name = QualifiedName(
-            name="test.module", source=QualifiedNameSource.LOCAL
-        )
-        self.assertIn(module_name, qnames)
-        qnames -= {module_name}
+    )
+    def test_qnames(
+        self, file: str, code: str, names: Dict[str, QualifiedNameSource]
+    ) -> None:
+        qnames = get_fully_qualified_names(file, code)
         self.assertEqual(
-            {"builtins.int", "builtins.None"},
+            names.keys(),
             {qname.name for qname in qnames},
         )
         for qname in qnames:
-            self.assertEqual(qname.source, QualifiedNameSource.BUILTIN, msg=f"{qname}")
-
-    def test_imports(self) -> None:
-        qnames = get_fully_qualified_names(
-            "some/test/module.py",
-            """
-            from a.b import c as d
-            from . import rel
-            from .lol import rel2
-            from .. import thing as rel3
-            d, rel, rel2, rel3
-            """,
-        )
-        module_name = QualifiedName(
-            name="some.test.module", source=QualifiedNameSource.LOCAL
-        )
-        self.assertIn(module_name, qnames)
-        qnames -= {module_name}
-        self.assertEqual(
-            {"a.b.c", "some.test.rel", "some.test.lol.rel2", "some.thing"},
-            {qname.name for qname in qnames},
-        )
-        for qname in qnames:
-            self.assertEqual(qname.source, QualifiedNameSource.IMPORT, msg=f"{qname}")
-
-    def test_locals(self) -> None:
-        qnames = get_fully_qualified_names(
-            "some/test/module.py",
-            """
-            class X:
-                a: X
-            """,
-        )
-        self.assertEqual(
-            {"some.test.module", "some.test.module.X", "some.test.module.X.a"},
-            {qname.name for qname in qnames},
-        )
-        for qname in qnames:
-            self.assertEqual(qname.source, QualifiedNameSource.LOCAL, msg=f"{qname}")
+            self.assertEqual(qname.source, names[qname.name], msg=f"{qname}")
 
     def test_local_qualification(self) -> None:
         base_module = "some.test.module"

@@ -85,7 +85,7 @@ class QualifiedNameVisitor(cst.CSTVisitor):
         return True
 
 
-DOT_PY: Pattern[str] = re.compile(r"(__init__)?\.py$")
+DOT_PY: Pattern[str] = re.compile(r"(__init__|__main__)?\.py$")
 
 
 def _module_name(path: str) -> Optional[str]:
