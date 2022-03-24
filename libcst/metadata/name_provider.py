@@ -10,6 +10,7 @@ from typing import Collection, List, Mapping, Optional, Pattern, Union
 
 import libcst as cst
 from libcst._metadata_dependent import MetadataDependent
+from libcst.helpers.module import calculate_module_and_package, ModuleNameAndPackage
 from libcst.metadata.base_provider import BatchableMetadataProvider
 from libcst.metadata.scope_provider import (
     QualifiedName,
@@ -85,13 +86,6 @@ class QualifiedNameVisitor(cst.CSTVisitor):
         return True
 
 
-DOT_PY: Pattern[str] = re.compile(r"(__init__|__main__)?\.py$")
-
-
-def _module_name(path: str) -> Optional[str]:
-    return DOT_PY.sub("", path).replace("/", ".").rstrip(".")
-
-
 class FullyQualifiedNameProvider(BatchableMetadataProvider[Collection[QualifiedName]]):
     """
     Provide fully qualified names for CST nodes. Like :class:`QualifiedNameProvider`,
@@ -118,16 +112,17 @@ class FullyQualifiedNameProvider(BatchableMetadataProvider[Collection[QualifiedN
     @classmethod
     def gen_cache(
         cls, root_path: Path, paths: List[str], timeout: Optional[int] = None
-    ) -> Mapping[str, object]:
-        cache = {path: _module_name(path) for path in paths}
+    ) -> Mapping[str, ModuleNameAndPackage]:
+        cache = {path: calculate_module_and_package(".", path) for path in paths}
         return cache
 
-    def __init__(self, cache: str) -> None:
+    def __init__(self, cache: ModuleNameAndPackage) -> None:
         super().__init__(cache)
-        self.module_name: str = cache
+        self.module_name: str = cache.name
+        self.package_name: str = cache.package
 
     def visit_Module(self, node: cst.Module) -> bool:
-        visitor = FullyQualifiedNameVisitor(self, self.module_name)
+        visitor = FullyQualifiedNameVisitor(self, self.module_name, self.package_name)
         node.visit(visitor)
         self.set_metadata(
             node,
@@ -138,20 +133,23 @@ class FullyQualifiedNameProvider(BatchableMetadataProvider[Collection[QualifiedN
 
 class FullyQualifiedNameVisitor(cst.CSTVisitor):
     @staticmethod
-    def _fully_qualify_local(module_name: str, qname: QualifiedName) -> str:
-        name = qname.name
-        if not name.startswith("."):
-            # not a relative import
-            return f"{module_name}.{name}"
+    def _fully_qualify_local(module_name: str, package_name: str, name: str) -> str:
+        abs_name = name.lstrip(".")
+        num_dots = len(name) - len(abs_name)
+        # handle relative import
+        if num_dots > 0:
+            name = abs_name
+            bits = package_name.rsplit(".", num_dots - 1)
+            if len(bits) < num_dots:
+                raise ImportError("attempted relative import beyond top-level package")
+            module_name = bits[0]
 
-        # relative import
-        name = name.lstrip(".")
-        parts_to_strip = len(qname.name) - len(name)
-        target_module = ".".join(module_name.split(".")[: -1 * parts_to_strip])
-        return f"{target_module}.{name}"
+        return f"{module_name}.{name}"
 
     @staticmethod
-    def _fully_qualify(module_name: str, qname: QualifiedName) -> QualifiedName:
+    def _fully_qualify(
+        module_name: str, package_name: str, qname: QualifiedName
+    ) -> QualifiedName:
         if qname.source == QualifiedNameSource.BUILTIN:
             # builtins are already fully qualified
             return qname
@@ -159,11 +157,16 @@ class FullyQualifiedNameVisitor(cst.CSTVisitor):
         if qname.source == QualifiedNameSource.IMPORT and not name.startswith("."):
             # non-relative imports are already fully qualified
             return qname
-        new_name = FullyQualifiedNameVisitor._fully_qualify_local(module_name, qname)
+        new_name = FullyQualifiedNameVisitor._fully_qualify_local(
+            module_name, package_name, qname.name
+        )
         return dataclasses.replace(qname, name=new_name)
 
-    def __init__(self, provider: FullyQualifiedNameProvider, module_name: str) -> None:
+    def __init__(
+        self, provider: FullyQualifiedNameProvider, module_name: str, package_name: str
+    ) -> None:
         self.module_name = module_name
+        self.package_name = package_name
         self.provider = provider
 
     def on_visit(self, node: cst.CSTNode) -> bool:
@@ -172,7 +175,9 @@ class FullyQualifiedNameVisitor(cst.CSTVisitor):
             self.provider.set_metadata(
                 node,
                 {
-                    FullyQualifiedNameVisitor._fully_qualify(self.module_name, qname)
+                    FullyQualifiedNameVisitor._fully_qualify(
+                        self.module_name, self.package_name, qname
+                    )
                     for qname in qnames
                 },
             )

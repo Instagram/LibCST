@@ -452,6 +452,20 @@ class FullyQualifiedNameProviderTest(UnitTest):
                     "some.thing": QualifiedNameSource.IMPORT,
                 },
             ),
+            # test more imports
+            (
+                "some/test/module/__init__.py",
+                """
+                from . import rel
+                from .lol import rel2
+                rel, rel2
+                """,
+                {
+                    "some.test.module": QualifiedNameSource.LOCAL,
+                    "some.test.module.rel": QualifiedNameSource.IMPORT,
+                    "some.test.module.lol.rel2": QualifiedNameSource.IMPORT,
+                },
+            ),
             # test locals
             (
                 "some/test/module.py",
@@ -471,15 +485,16 @@ class FullyQualifiedNameProviderTest(UnitTest):
         self, file: str, code: str, names: Dict[str, QualifiedNameSource]
     ) -> None:
         qnames = get_fully_qualified_names(file, code)
-        self.assertEqual(
-            names.keys(),
+        self.assertSetEqual(
+            set(names.keys()),
             {qname.name for qname in qnames},
         )
         for qname in qnames:
             self.assertEqual(qname.source, names[qname.name], msg=f"{qname}")
 
     def test_local_qualification(self) -> None:
-        base_module = "some.test.module"
+        module_name = "some.test.module"
+        package_name = "some.test"
         for (name, expected) in [
             (".foo", "some.test.foo"),
             ("..bar", "some.bar"),
@@ -488,8 +503,7 @@ class FullyQualifiedNameProviderTest(UnitTest):
             with self.subTest(name=name):
                 self.assertEqual(
                     FullyQualifiedNameVisitor._fully_qualify_local(
-                        base_module,
-                        QualifiedName(name=name, source=QualifiedNameSource.LOCAL),
+                        module_name, package_name, name
                     ),
                     expected,
                 )
