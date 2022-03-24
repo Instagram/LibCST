@@ -35,19 +35,19 @@ def insert_header_comments(node: Module, comments: List[str]) -> Module:
 
 
 def get_absolute_module(
-    currnet_package: Optional[str], module_name: Optional[str], num_dots: int
+    current_package: Optional[str], module_name: Optional[str], num_dots: int
 ) -> Optional[str]:
     if num_dots == 0:
         # This is an absolute import, so the module is correct.
         return module_name
-    if currnet_package is None:
+    if current_package is None:
         # We don't actually have the current module available, so we can't compute
         # the absolute module from relative.
         return None
 
     # see importlib._bootstrap._resolve_name
-    # https://github.com/python/cpython/blob/8146e6b636905d9872140c990d93308ac20d13f0/Lib/importlib/_bootstrap.py#L902
-    bits = currnet_package.rsplit(".", num_dots - 1)
+    # https://github.com/python/cpython/blob/3.10/Lib/importlib/_bootstrap.py#L902
+    bits = current_package.rsplit(".", num_dots - 1)
     if len(bits) < num_dots:
         return None
 
@@ -56,20 +56,20 @@ def get_absolute_module(
 
 
 def get_absolute_module_for_import(
-    currnet_package: Optional[str], import_node: ImportFrom
+    current_package: Optional[str], import_node: ImportFrom
 ) -> Optional[str]:
     # First, let's try to grab the module name, regardless of relative status.
     module = import_node.module
     module_name = get_full_name_for_node(module) if module is not None else None
     # Now, get the relative import location if it exists.
     num_dots = len(import_node.relative)
-    return get_absolute_module(currnet_package, module_name, num_dots)
+    return get_absolute_module(current_package, module_name, num_dots)
 
 
 def get_absolute_module_for_import_or_raise(
-    currnet_package: Optional[str], import_node: ImportFrom
+    current_package: Optional[str], import_node: ImportFrom
 ) -> str:
-    module = get_absolute_module_for_import(currnet_package, import_node)
+    module = get_absolute_module_for_import(current_package, import_node)
     if module is None:
         raise Exception(f"Unable to compute absolute module for {import_node}")
     return module
