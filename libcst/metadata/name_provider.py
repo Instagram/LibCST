@@ -4,9 +4,8 @@
 # LICENSE file in the root directory of this source tree.
 
 import dataclasses
-import re
 from pathlib import Path
-from typing import Collection, List, Mapping, Optional, Pattern, Union
+from typing import Collection, List, Mapping, Optional, Union
 
 import libcst as cst
 from libcst._metadata_dependent import MetadataDependent
@@ -139,6 +138,8 @@ class FullyQualifiedNameVisitor(cst.CSTVisitor):
         # handle relative import
         if num_dots > 0:
             name = abs_name
+            # see importlib._bootstrap._resolve_name
+            # https://github.com/python/cpython/blob/3.10/Lib/importlib/_bootstrap.py#L902
             bits = package_name.rsplit(".", num_dots - 1)
             if len(bits) < num_dots:
                 raise ImportError("attempted relative import beyond top-level package")
