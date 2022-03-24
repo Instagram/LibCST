@@ -71,38 +71,50 @@ class ModuleTest(UnitTest):
         (
             # Simple imports that are already absolute.
             (None, "from a.b import c", "a.b"),
-            ("x.y.z", "from a.b import c", "a.b"),
+            ("x/y/z.py", "from a.b import c", "a.b"),
+            ("x/y/z/__init__.py", "from a.b import c", "a.b"),
             # Relative import that can't be resolved due to missing module.
             (None, "from ..w import c", None),
             # Relative import that goes past the module level.
-            ("x", "from ...y import z", None),
-            ("x.y.z", "from .....w import c", None),
-            ("x.y.z", "from ... import c", None),
+            ("x.py", "from ...y import z", None),
+            ("x/y/z.py", "from ... import c", None),
+            ("x/y/z.py", "from ...w import c", None),
+            ("x/y/z/__init__.py", "from .... import c", None),
+            ("x/y/z/__init__.py", "from ....w import c", None),
             # Correct resolution of absolute from relative modules.
-            ("x.y.z", "from . import c", "x.y"),
-            ("x.y.z", "from .. import c", "x"),
-            ("x.y.z", "from .w import c", "x.y.w"),
-            ("x.y.z", "from ..w import c", "x.w"),
-            ("x.y.z", "from ...w import c", "w"),
+            ("x/y/z.py", "from . import c", "x.y"),
+            ("x/y/z.py", "from .. import c", "x"),
+            ("x/y/z.py", "from .w import c", "x.y.w"),
+            ("x/y/z.py", "from ..w import c", "x.w"),
+            ("x/y/z/__init__.py", "from . import c", "x.y.z"),
+            ("x/y/z/__init__.py", "from .. import c", "x.y"),
+            ("x/y/z/__init__.py", "from ... import c", "x"),
+            ("x/y/z/__init__.py", "from .w import c", "x.y.z.w"),
+            ("x/y/z/__init__.py", "from ..w import c", "x.y.w"),
+            ("x/y/z/__init__.py", "from ...w import c", "x.w"),
         )
     )
     def test_get_absolute_module(
         self,
-        module: Optional[str],
+        filename: Optional[str],
         importfrom: str,
         output: Optional[str],
     ) -> None:
+        package = None
+        if filename is not None:
+            info = calculate_module_and_package(".", filename)
+            package = info.package
         node = ensure_type(cst.parse_statement(importfrom), cst.SimpleStatementLine)
         assert len(node.body) == 1, "Unexpected number of statements!"
         import_node = ensure_type(node.body[0], cst.ImportFrom)
 
-        self.assertEqual(get_absolute_module_for_import(module, import_node), output)
+        self.assertEqual(get_absolute_module_for_import(package, import_node), output)
         if output is None:
             with self.assertRaises(Exception):
-                get_absolute_module_for_import_or_raise(module, import_node)
+                get_absolute_module_for_import_or_raise(package, import_node)
         else:
             self.assertEqual(
-                get_absolute_module_for_import_or_raise(module, import_node), output
+                get_absolute_module_for_import_or_raise(package, import_node), output
             )
 
     @data_provider(
@@ -140,12 +152,6 @@ class ModuleTest(UnitTest):
 
     @data_provider(
         (
-            # Providing no root should give back no module.
-            (None, "/some/dummy/file.py", None),
-            # Providing a file outside the root should give back no module.
-            ("/home/username/root", "/some/dummy/file.py", None),
-            ("/home/username/root/", "/some/dummy/file.py", None),
-            ("/home/username/root", "/home/username/file.py", None),
             # Various files inside the root should give back valid modules.
             (
                 "/home/username/root",
@@ -173,17 +179,6 @@ class ModuleTest(UnitTest):
                 "/home/username/root/some/dir/__main__.py",
                 ModuleNameAndPackage("some.dir", "some.dir"),
             ),
-            # some windows tests
-            (
-                "c:/Program Files/",
-                "d:/Program Files/some/dir/file.py",
-                None,
-            ),
-            (
-                "c:/Program Files/other/",
-                "c:/Program Files/some/dir/file.py",
-                None,
-            ),
             (
                 "c:/Program Files/",
                 "c:/Program Files/some/dir/file.py",
@@ -198,10 +193,35 @@ class ModuleTest(UnitTest):
     )
     def test_calculate_module_and_package(
         self,
-        repo_root: Optional[str],
+        repo_root: str,
         filename: str,
         module_and_package: Optional[ModuleNameAndPackage],
     ) -> None:
         self.assertEqual(
             calculate_module_and_package(repo_root, filename), module_and_package
         )
+
+    @data_provider(
+        (
+            # Providing a file outside the root should raise an exception
+            ("/home/username/root", "/some/dummy/file.py"),
+            ("/home/username/root/", "/some/dummy/file.py"),
+            ("/home/username/root", "/home/username/file.py"),
+            # some windows tests
+            (
+                "c:/Program Files/",
+                "d:/Program Files/some/dir/file.py",
+            ),
+            (
+                "c:/Program Files/other/",
+                "c:/Program Files/some/dir/file.py",
+            ),
+        )
+    )
+    def test_invalid_module_and_package(
+        self,
+        repo_root: str,
+        filename: str,
+    ) -> None:
+        with self.assertRaises(ValueError):
+            calculate_module_and_package(repo_root, filename)

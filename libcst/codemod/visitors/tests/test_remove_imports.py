@@ -419,7 +419,9 @@ class TestRemoveImportsCodemod(CodemodTest):
             before,
             after,
             [("a.b.c", "qux", None)],
-            context_override=CodemodContext(full_module_name="a.b.foobar"),
+            context_override=CodemodContext(
+                full_module_name="a.b.foobar", full_package_name="a.b"
+            ),
         )
 
     def test_dont_remove_inuse_importfrom_relative(self) -> None:
@@ -446,7 +448,9 @@ class TestRemoveImportsCodemod(CodemodTest):
             before,
             after,
             [("a.b.c", "qux", None)],
-            context_override=CodemodContext(full_module_name="a.b.foobar"),
+            context_override=CodemodContext(
+                full_module_name="a.b.foobar", full_package_name="a.b"
+            ),
         )
 
     def test_dont_remove_wrong_importfrom_relative(self) -> None:
@@ -473,7 +477,9 @@ class TestRemoveImportsCodemod(CodemodTest):
             before,
             after,
             [("a.b.d", "qux", None)],
-            context_override=CodemodContext(full_module_name="a.b.foobar"),
+            context_override=CodemodContext(
+                full_module_name="a.b.foobar", full_package_name="a.b"
+            ),
         )
 
     def test_remove_import_complex(self) -> None:

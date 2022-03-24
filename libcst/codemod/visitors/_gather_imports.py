@@ -79,7 +79,7 @@ class GatherImportsVisitor(ContextAwareVisitor):
         self.all_imports.append(node)
 
         # Get the module we're importing as a string.
-        module = get_absolute_module_for_import(self.context.full_module_name, node)
+        module = get_absolute_module_for_import(self.context.full_package_name, node)
         if module is None:
             # Can't get the absolute import from relative, so we can't
             # support this.

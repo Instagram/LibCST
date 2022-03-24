@@ -122,7 +122,7 @@ class AddImportsVisitor(ContextAwareTransformer):
                 raise Exception("Cannot import __future__ objects with aliases!")
 
         # Resolve relative imports if we have a module name
-        imps = [imp.resolve_relative(self.context.full_module_name) for imp in imps]
+        imps = [imp.resolve_relative(self.context.full_package_name) for imp in imps]
 
         # List of modules we need to ensure are imported
         self.module_imports: Set[str] = {
@@ -215,7 +215,7 @@ class AddImportsVisitor(ContextAwareTransformer):
 
         # Get the module we're importing as a string, see if we have work to do.
         module = get_absolute_module_for_import(
-            self.context.full_module_name, updated_node
+            self.context.full_package_name, updated_node
         )
         if (
             module is None

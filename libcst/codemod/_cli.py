@@ -251,15 +251,19 @@ def _execute_transform(  # noqa: C901
             scratch={},
         )
 
-        # attempt to work out the module and package name for this file
-        module_name_and_package = calculate_module_and_package(
-            config.repo_root, filename
-        )
-        if module_name_and_package is not None:
+        # determine the module and package name for this file
+        try:
+            module_name_and_package = calculate_module_and_package(
+                config.repo_root or ".", filename
+            )
             transformer.context = replace(
                 transformer.context,
                 full_module_name=module_name_and_package.name,
                 full_package_name=module_name_and_package.package,
+            )
+        except ValueError as ex:
+            print(
+                f"Failed to determine module name for {filename}: {ex}", file=sys.stderr
             )
 
         # Run the transform, bail if we failed or if we aren't formatting code
