@@ -140,12 +140,6 @@ class ModuleTest(UnitTest):
 
     @data_provider(
         (
-            # Providing no root should give back no module.
-            (None, "/some/dummy/file.py", None),
-            # Providing a file outside the root should give back no module.
-            ("/home/username/root", "/some/dummy/file.py", None),
-            ("/home/username/root/", "/some/dummy/file.py", None),
-            ("/home/username/root", "/home/username/file.py", None),
             # Various files inside the root should give back valid modules.
             (
                 "/home/username/root",
@@ -173,17 +167,6 @@ class ModuleTest(UnitTest):
                 "/home/username/root/some/dir/__main__.py",
                 ModuleNameAndPackage("some.dir", "some.dir"),
             ),
-            # some windows tests
-            (
-                "c:/Program Files/",
-                "d:/Program Files/some/dir/file.py",
-                None,
-            ),
-            (
-                "c:/Program Files/other/",
-                "c:/Program Files/some/dir/file.py",
-                None,
-            ),
             (
                 "c:/Program Files/",
                 "c:/Program Files/some/dir/file.py",
@@ -198,10 +181,35 @@ class ModuleTest(UnitTest):
     )
     def test_calculate_module_and_package(
         self,
-        repo_root: Optional[str],
+        repo_root: str,
         filename: str,
         module_and_package: Optional[ModuleNameAndPackage],
     ) -> None:
         self.assertEqual(
             calculate_module_and_package(repo_root, filename), module_and_package
         )
+
+    @data_provider(
+        (
+            # Providing a file outside the root should raise an exception
+            ("/home/username/root", "/some/dummy/file.py"),
+            ("/home/username/root/", "/some/dummy/file.py"),
+            ("/home/username/root", "/home/username/file.py"),
+            # some windows tests
+            (
+                "c:/Program Files/",
+                "d:/Program Files/some/dir/file.py",
+            ),
+            (
+                "c:/Program Files/other/",
+                "c:/Program Files/some/dir/file.py",
+            ),
+        )
+    )
+    def test_invalid_module_and_package(
+        self,
+        repo_root: str,
+        filename: str,
+    ) -> None:
+        with self.assertRaises(ValueError):
+            calculate_module_and_package(repo_root, filename)

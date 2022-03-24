@@ -241,6 +241,11 @@ def _execute_transform(  # noqa: C901
                 ),
             )
 
+        # determine the module and package name for this file
+        module_name_and_package = calculate_module_and_package(
+            config.repo_root or Path.cwd(), filename
+        )
+
         # Somewhat gross hack to provide the filename in the transform's context.
         # We do this after the fork so that a context that was initialized with
         # some defaults before calling parallel_exec_transform_with_prettyprint
@@ -248,19 +253,10 @@ def _execute_transform(  # noqa: C901
         transformer.context = replace(
             transformer.context,
             filename=filename,
+            full_module_name=module_name_and_package.name,
+            full_package_name=module_name_and_package.package,
             scratch={},
         )
-
-        # attempt to work out the module and package name for this file
-        module_name_and_package = calculate_module_and_package(
-            config.repo_root, filename
-        )
-        if module_name_and_package is not None:
-            transformer.context = replace(
-                transformer.context,
-                full_module_name=module_name_and_package.name,
-                full_package_name=module_name_and_package.package,
-            )
 
         # Run the transform, bail if we failed or if we aren't formatting code
         try:

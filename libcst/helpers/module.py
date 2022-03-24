@@ -89,22 +89,10 @@ class ModuleNameAndPackage:
     package: str
 
 
-def calculate_module_and_package(
-    repo_root: Optional[str], filename: str
-) -> Optional[ModuleNameAndPackage]:
+def calculate_module_and_package(repo_root: str, filename: str) -> ModuleNameAndPackage:
     # Given an absolute repo_root and an absolute filename, calculate the
     # python module name for the file.
-    if repo_root is None:
-        # We don't have a repo root, so this is impossible to calculate.
-        return None
-
-    try:
-        relative_filename = PurePath(filename).relative_to(repo_root)
-    except ValueError:
-        # This file seems to be out of the repo root.
-        return None
-
-    # get rid of extension
+    relative_filename = PurePath(filename).relative_to(repo_root)
     relative_filename = relative_filename.with_suffix("")
 
     # handle special cases
