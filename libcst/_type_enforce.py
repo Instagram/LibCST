@@ -3,16 +3,18 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from typing import Any, Iterable, Mapping, MutableMapping, MutableSequence, Tuple
+from typing import (
+    Any,
+    ForwardRef,
+    Iterable,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Tuple,
+)
 
 from typing_extensions import Literal
 from typing_inspect import get_args, get_origin, is_classvar, is_typevar, is_union_type
-
-try:  # py37+
-    from typing import ForwardRef
-except ImportError:  # py36
-    # pyre-fixme[21]: Could not find name `_ForwardRef` in `typing` (stubbed).
-    from typing import _ForwardRef as ForwardRef
 
 
 def is_value_of_type(  # noqa: C901 "too complex"
@@ -47,12 +49,8 @@ def is_value_of_type(  # noqa: C901 "too complex"
     - Type[...]
     """
     if is_classvar(expected_type):
-        # `ClassVar` (no subscript) is implicitly `ClassVar[Any]`
-        if hasattr(expected_type, "__type__"):  # py36
-            expected_type = expected_type.__type__ or Any
-        else:  # py37+
-            classvar_args = get_args(expected_type)
-            expected_type = (classvar_args[0] or Any) if classvar_args else Any
+        classvar_args = get_args(expected_type)
+        expected_type = (classvar_args[0] or Any) if classvar_args else Any
 
     if is_typevar(expected_type):
         # treat this the same as Any
@@ -70,10 +68,7 @@ def is_value_of_type(  # noqa: C901 "too complex"
         )
 
     elif isinstance(expected_origin_type, type(Literal)):
-        if hasattr(expected_type, "__values__"):  # py36
-            literal_values = expected_type.__values__
-        else:  # py37+
-            literal_values = get_args(expected_type, evaluate=True)
+        literal_values = get_args(expected_type, evaluate=True)
         return any(value == literal for literal in literal_values)
 
     elif isinstance(expected_origin_type, ForwardRef):

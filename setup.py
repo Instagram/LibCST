@@ -30,7 +30,7 @@ setuptools.setup(
         ),
     },
     name="libcst",
-    description="A concrete syntax tree with AST-like properties for Python 3.5, 3.6, 3.7 and 3.8 programs.",
+    description="A concrete syntax tree with AST-like properties for Python 3.5, 3.6, 3.7, 3.8, 3.9, and 3.10 programs.",
     long_description=long_description,
     long_description_content_type="text/x-rst",
     url="https://github.com/Instagram/LibCST",
@@ -42,7 +42,7 @@ setuptools.setup(
         "libcst.codemod.tests": ["*"],
     },
     test_suite="libcst",
-    python_requires=">=3.6",
+    python_requires=">=3.7",
     setup_requires=["setuptools_scm"],
     install_requires=[dep.strip() for dep in open("requirements.txt").readlines()],
     extras_require={
@@ -62,9 +62,10 @@ setuptools.setup(
     classifiers=[
         "License :: OSI Approved :: MIT License",
         "Topic :: Software Development :: Libraries",
-        "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
     ],
     zip_safe=False,  # for mypy compatibility https://mypy.readthedocs.io/en/latest/installed_packages.html
 )
