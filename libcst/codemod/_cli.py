@@ -261,8 +261,10 @@ def _execute_transform(  # noqa: C901
                 full_module_name=module_name_and_package.name,
                 full_package_name=module_name_and_package.package,
             )
-        except ValueError:
-            pass
+        except ValueError as ex:
+            print(
+                f"Failed to determine module name for {filename}: {ex}", file=sys.stderr
+            )
 
         # Run the transform, bail if we failed or if we aren't formatting code
         try:
