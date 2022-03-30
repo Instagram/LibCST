@@ -414,6 +414,41 @@ class QualifiedNameProviderTest(UnitTest):
             },
         )
 
+    def test_shadowed_assignments(self) -> None:
+        m, names = get_qualified_name_metadata_provider(
+            """
+                from lib import a,b,c
+                a = a
+                class Test:
+                    b = b
+                def func():
+                    c = c
+            """
+        )
+
+        def test_name(node: cst.CSTNode, qnames: Set[QualifiedName]):
+            name = ensure_type(
+                ensure_type(node, cst.SimpleStatementLine).body[0], cst.Assign
+            ).value
+            self.assertEqual(names[name], qnames)
+
+        test_name(
+            m.body[1],
+            {
+                QualifiedName("lib.a", QualifiedNameSource.IMPORT),
+                QualifiedName("a", QualifiedNameSource.LOCAL),
+            },
+        )
+
+        cls = ensure_type(m.body[2], cst.ClassDef)
+        test_name(cls.body.body[0], {QualifiedName("Test.b", QualifiedNameSource.LOCAL)})
+
+        func = ensure_type(m.body[3], cst.FunctionDef)
+        test_name(
+            func.body.body[0],
+            {QualifiedName("func.<locals>.c", QualifiedNameSource.LOCAL)},
+        )
+
 
 class FullyQualifiedNameProviderTest(UnitTest):
     @data_provider(
