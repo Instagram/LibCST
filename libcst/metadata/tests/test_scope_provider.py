@@ -1947,3 +1947,56 @@ class ScopeProviderTest(UnitTest):
         self.assertEqual(len(assignment.references), 1)
         references = list(assignment.references)
         self.assertTrue(references[0].is_annotation)
+
+    def test_shadowed_assignments(self) -> None:
+        m, scopes = get_scope_metadata_provider(
+            """
+                from lib import a,b,c
+                a = a
+                class Test:
+                    b = b
+                def func():
+                    c = c
+            """
+        )
+        cls = ensure_type(m.body[2], cst.ClassDef)
+        func = ensure_type(m.body[3], cst.FunctionDef)
+        scope_of_module = scopes[m]
+        scope_of_cls = scopes[cls.body.body[0]]
+        scope_of_func = scopes[func.body.body[0]]
+
+        def _count_assignment_references(scope: Scope, name: str, number: int) -> int:
+            assignment = list(scope.assignments[name])[number]
+            return len(assignment.references)
+
+        # test that the imported assignments are all referenced
+        expected_references = {"a": 1, "b": 1, "c": 1}
+        self.assertEqual(
+            {
+                name: _count_assignment_references(scope_of_module, name, 0)
+                for name in expected_references.keys()
+            },
+            expected_references,
+        )
+
+        # test that the variable assignments are not referenced
+        self.assertEqual(_count_assignment_references(scope_of_module, "a", 1), 0)
+        self.assertEqual(_count_assignment_references(scope_of_cls, "b", 0), 0)
+        self.assertEqual(_count_assignment_references(scope_of_func, "c", 0), 0)
+
+        # test that the accesses match the assignment references
+        expected_accesses = {"a": 1, "b": 1, "c": 1}
+        self.assertEqual(
+            {
+                name: len(scope_of_module.accesses[name])
+                for name in expected_accesses.keys()
+            },
+            expected_accesses,
+        )
+
+        # test that the accesses to the variables are zero
+        cls_var_accesses = scope_of_cls.accesses["b"]
+        func_var_accesses = scope_of_func.accesses["c"]
+
+        self.assertEqual(len(cls_var_accesses), 0)
+        self.assertEqual(len(func_var_accesses), 0)
