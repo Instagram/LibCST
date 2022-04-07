@@ -114,11 +114,11 @@ def python_bytes_to_unicode(
             return b"utf-8"
 
         # pyre-ignore Pyre can't see that Union[str, bytes] conforms to AnyStr.
-        first_two_match = re.match(br"(?:[^\n]*\n){0,2}", source)
+        first_two_match = re.match(rb"(?:[^\n]*\n){0,2}", source)
         if first_two_match is None:
             return encoding
         first_two_lines = first_two_match.group(0)
-        possible_encoding = re.search(br"coding[=:]\s*([-\w.]+)", first_two_lines)
+        possible_encoding = re.search(rb"coding[=:]\s*([-\w.]+)", first_two_lines)
         if possible_encoding:
             return possible_encoding.group(1)
         else:
