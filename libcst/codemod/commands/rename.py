@@ -259,14 +259,11 @@ class RenameCommand(VisitorBasedCodemodCommand):
         inside_import_statement: bool = not self.get_metadata(
             QualifiedNameProvider, original_node, set()
         )
-        if (
-            QualifiedNameProvider.has_name(
-                self,
-                original_node,
-                self.old_name,
-            )
-            or (inside_import_statement and full_replacement_name == self.new_name)
-        ):
+        if QualifiedNameProvider.has_name(
+            self,
+            original_node,
+            self.old_name,
+        ) or (inside_import_statement and full_replacement_name == self.new_name):
             new_value, new_attr = self.new_module, self.new_mod_or_obj
             if not inside_import_statement:
                 self.scheduled_removals.add(original_node.value)
