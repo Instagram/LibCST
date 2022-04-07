@@ -383,7 +383,7 @@ class TypeCollector(m.MatcherDecoratableVisitor):
             if module in self.existing_imports:
                 return True
             else:
-                if node and isinstance(node, cst.Name):
+                if node and isinstance(node, cst.Name) and node.value != target:
                     asname = node.value
                 else:
                     asname = None
@@ -411,7 +411,7 @@ class TypeCollector(m.MatcherDecoratableVisitor):
             qualified_name,
             dequalified_node,
         ) = self._get_qualified_name_and_dequalified_node(node)
-        should_qualify = self._handle_qualification_and_should_qualify(qualified_name)
+        should_qualify = self._handle_qualification_and_should_qualify(qualified_name, node)
         self.annotations.names.add(qualified_name)
         if should_qualify:
             return node

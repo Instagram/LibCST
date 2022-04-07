@@ -294,12 +294,12 @@ class TestApplyAnnotationsVisitor(CodemodTest):
             ),
             "with_as_import": (
                 """
-                def foo(x): ...
-                """,
-                """
                 from bar import A as B
 
-                def foo(x: B):
+                def foo(x: B): ...
+                """,
+                """
+                def foo(x):
                     pass
                 """,
                 """
