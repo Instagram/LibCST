@@ -411,7 +411,9 @@ class TypeCollector(m.MatcherDecoratableVisitor):
             qualified_name,
             dequalified_node,
         ) = self._get_qualified_name_and_dequalified_node(node)
-        should_qualify = self._handle_qualification_and_should_qualify(qualified_name, node)
+        should_qualify = self._handle_qualification_and_should_qualify(
+            qualified_name, node
+        )
         self.annotations.names.add(qualified_name)
         if should_qualify:
             return node
