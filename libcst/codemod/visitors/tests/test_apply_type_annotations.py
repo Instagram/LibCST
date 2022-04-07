@@ -295,7 +295,7 @@ class TestApplyAnnotationsVisitor(CodemodTest):
             "with_nested_import": (
                 """
                 def foo(x: django.http.response.HttpResponse) -> str:
-                    pass
+                    ...
                 """,
                 """
                 def foo(x) -> str:
