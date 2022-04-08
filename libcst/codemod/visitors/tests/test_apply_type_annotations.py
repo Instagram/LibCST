@@ -309,6 +309,27 @@ class TestApplyAnnotationsVisitor(CodemodTest):
                     pass
                 """,
             ),
+            "with_conflicting_imported_symbols": (
+                """
+                import a.foo as bar
+                from b.c import Baz as B
+                import d
+
+                def f(a: d.A, b: B) -> bar.B: ...
+                """,
+                """
+                def f(a, b):
+                    pass
+                """,
+                """
+                import a.foo as bar
+                from b.c import Baz as B
+                from d import A
+
+                def f(a: A, b: B) -> bar.B:
+                    pass
+                """,
+            ),
             "with_nested_import": (
                 """
                 def foo(x: django.http.response.HttpResponse) -> str:
