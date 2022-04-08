@@ -944,6 +944,25 @@ class ScopeProviderTest(UnitTest):
             {QualifiedName("f4.<locals>.f5.<locals>.C", QualifiedNameSource.LOCAL)},
         )
 
+    def test_get_qualified_names_for_the_same_prefix(self) -> None:
+        m, scopes = get_scope_metadata_provider(
+            """
+                from a import b, bc
+                bc()
+            """
+        )
+        call = ensure_type(
+            ensure_type(
+                ensure_type(m.body[1], cst.SimpleStatementLine).body[0], cst.Expr
+            ).value,
+            cst.Call,
+        )
+        module_scope = scopes[m]
+        self.assertEqual(
+            module_scope.get_qualified_names_for(call.func),
+            {QualifiedName("a.bc", QualifiedNameSource.IMPORT)},
+        )
+
     def test_get_qualified_names_for_dotted_imports(self) -> None:
         m, scopes = get_scope_metadata_provider(
             """
