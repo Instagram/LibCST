@@ -304,7 +304,10 @@ class ImportAssignment(Assignment):
                         if eval_alias is not None:
                             as_name = eval_alias
                     if full_name.startswith(as_name):
-                        remaining_name = full_name.split(as_name, 1)[1].lstrip(".")
+                        remaining_name = full_name.split(as_name, 1)[1]
+                        if remaining_name and not remaining_name.startswith("."):
+                            continue
+                        remaining_name = remaining_name.lstrip(".")
                         results.add(
                             QualifiedName(
                                 f"{real_name}.{remaining_name}"
