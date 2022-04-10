@@ -206,11 +206,11 @@ class RenameCommand(VisitorBasedCodemodCommand):
                         ] = self.gen_name_or_attr_node(replacement_obj)
                         # Rename on the spot only if this is the only imported name under the module.
                         if len(names) == 1:
-                            self.bypass_import = True
-                            return updated_node.with_changes(
+                            updated_node = updated_node.with_changes(
                                 module=cst.parse_expression(replacement_module),
-                                names=(cst.ImportAlias(name=new_import_alias_name),),
                             )
+                            self.scheduled_removals.add(updated_node)
+                            new_names.append(import_alias)
                         # Or if the module name is to stay the same.
                         elif replacement_module == imported_module_name:
                             self.bypass_import = True

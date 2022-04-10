@@ -660,3 +660,21 @@ class TestRenameCommand(CodemodTest):
             bar(42)
         """
         self.assertCodemod(before, before, old_name="baz.bar", new_name="qux.bar")
+
+    def test_rename_single_with_colon(self) -> None:
+        before = """
+            from a.b import qux
+
+            print(qux)
+        """
+        after = """
+            from a import b
+
+            print(b.qux)
+        """
+        self.assertCodemod(
+            before,
+            after,
+            old_name="a.b.qux",
+            new_name="a:b.qux",
+        )
