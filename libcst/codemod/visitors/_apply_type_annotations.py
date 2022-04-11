@@ -873,23 +873,23 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
         import_gatherer = GatherImportsVisitor(CodemodContext())
         stub.visit(import_gatherer)
         symbol_map = import_gatherer.symbol_mapping
-        isc = ImportedSymbolCollector(existing_import_names, self.context)
-        cst.MetadataWrapper(stub).visit(isc)
+        symbol_collector = ImportedSymbolCollector(existing_import_names, self.context)
+        cst.MetadataWrapper(stub).visit(symbol_collector)
         module_imports = {}
-        for sym, isyms in isc.imported_symbols.items():
-            if len(isyms) == 1:
+        for imported_symbols in symbol_collector.imported_symbols.values():
+            if len(imported_symbols) == 1:
                 # If we have a single use of a symbol we can from-import it
                 continue
             used = False
-            for isym in isyms:
-                if not isym.symbol:
+            for imp_sym in imported_symbols:
+                if not imp_sym.symbol:
                     continue
-                imp = symbol_map.get(isym.symbol)
-                if not used and imp and imp.module_name == isym.module_name:
+                imp = symbol_map.get(imp_sym.symbol)
+                if not used and imp and imp.module_name == imp_sym.module_name:
                     # We can only import a symbol directly once.
                     used = True
                 else:
-                    imp = symbol_map.get(isym.module_symbol)
+                    imp = symbol_map.get(imp_sym.module_symbol)
                     if imp:
                         # imp will be None in corner cases like
                         #   import foo.bar as Baz
