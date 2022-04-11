@@ -488,14 +488,6 @@ class TypeCollector(m.MatcherDecoratableVisitor):
     ) -> None:
         self.annotations.finish()
 
-    def _get_qualified_name_and_dequalified_node(
-        self,
-        node: Union[cst.Name, cst.Attribute],
-    ) -> Tuple[str, Union[cst.Name, cst.Attribute]]:
-        qualified_name = _get_unique_qualified_name(self, node)
-        dequalified_node = node.attr if isinstance(node, cst.Attribute) else node
-        return qualified_name, dequalified_node
-
     def _module_and_target(
         self,
         qualified_name: str,
@@ -560,17 +552,18 @@ class TypeCollector(m.MatcherDecoratableVisitor):
         self,
         node: NameOrAttribute,
     ) -> Union[cst.Name, cst.Attribute]:
-        (
-            qualified_name,
-            dequalified_node,
-        ) = self._get_qualified_name_and_dequalified_node(node)
+        qualified_name = _get_unique_qualified_name(self, node)
         should_qualify = self._handle_qualification_and_should_qualify(
             qualified_name, node
         )
         self.annotations.names.add(qualified_name)
         if should_qualify:
-            return node
+            qualified_node = (
+                cst.parse_module(qualified_name) if isinstance(node, cst.Name) else node
+            )
+            return qualified_node
         else:
+            dequalified_node = node.attr if isinstance(node, cst.Attribute) else node
             return dequalified_node
 
     def _handle_Index(
@@ -832,7 +825,7 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
             self.strict_annotation_matching = (
                 self.strict_annotation_matching or strict_annotation_matching
             )
-            module_imports = self._get_module_imports(stub, existing_import_names)
+            module_imports = self._get_module_imports(stub, import_gatherer)
             visitor = TypeCollector(existing_import_names, module_imports, self.context)
             cst.MetadataWrapper(stub).visit(visitor)
             self.annotations.update(visitor.annotations)
@@ -854,7 +847,7 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
     # helpers for collecting type information from the stub files
 
     def _get_module_imports(
-        self, stub: cst.Module, existing_import_names: Set[str]
+        self, stub: cst.Module, existing_import_gatherer: GatherImportsVisitor
     ) -> Dict[str, ImportItem]:
         """Returns a dict of modules that need to be imported to qualify symbols."""
         # We correlate all imported symbols, e.g. foo.bar.Baz, with a list of module
@@ -873,14 +866,27 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
         import_gatherer = GatherImportsVisitor(CodemodContext())
         stub.visit(import_gatherer)
         symbol_map = import_gatherer.symbol_mapping
+        existing_import_names = _get_imported_names(
+            existing_import_gatherer.all_imports
+        )
         symbol_collector = ImportedSymbolCollector(existing_import_names, self.context)
         cst.MetadataWrapper(stub).visit(symbol_collector)
         module_imports = {}
-        for imported_symbols in symbol_collector.imported_symbols.values():
-            if len(imported_symbols) == 1:
-                # If we have a single use of a symbol we can from-import it
+        for sym, imported_symbols in symbol_collector.imported_symbols.items():
+            existing = existing_import_gatherer.symbol_mapping.get(sym)
+            if existing and any(
+                s.module_name != existing.module_name for s in imported_symbols
+            ):
+                # If a symbol is imported in the main file, we have to qualify
+                # it when imported from a different module in the stub file.
+                used = True
+            elif len(imported_symbols) == 1:
+                # If we have a single use of a new symbol we can from-import it
                 continue
-            used = False
+            else:
+                # There are multiple occurrences in the stub file and none in
+                # the main file. At least one can be from-imported.
+                used = False
             for imp_sym in imported_symbols:
                 if not imp_sym.symbol:
                     continue
@@ -888,6 +894,8 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
                 if not used and imp and imp.module_name == imp_sym.module_name:
                     # We can only import a symbol directly once.
                     used = True
+                elif sym in existing_import_names:
+                    module_imports[imp.module_name] = imp
                 else:
                     imp = symbol_map.get(imp_sym.module_symbol)
                     if imp:
