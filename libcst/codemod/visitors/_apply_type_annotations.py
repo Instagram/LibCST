@@ -561,7 +561,7 @@ class TypeCollector(m.MatcherDecoratableVisitor):
             qualified_node = (
                 cst.parse_module(qualified_name) if isinstance(node, cst.Name) else node
             )
-            return qualified_node
+            return qualified_node  # pyre-ignore[7]
         else:
             dequalified_node = node.attr if isinstance(node, cst.Attribute) else node
             return dequalified_node
@@ -895,7 +895,8 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
                     # We can only import a symbol directly once.
                     used = True
                 elif sym in existing_import_names:
-                    module_imports[imp.module_name] = imp
+                    if imp:
+                        module_imports[imp.module_name] = imp
                 else:
                     imp = symbol_map.get(imp_sym.module_symbol)
                     if imp:
