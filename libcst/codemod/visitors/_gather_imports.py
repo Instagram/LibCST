@@ -8,6 +8,7 @@ from typing import Dict, List, Sequence, Set, Tuple, Union
 import libcst
 from libcst.codemod._context import CodemodContext
 from libcst.codemod._visitor import ContextAwareVisitor
+from libcst.codemod.visitors._imports import ImportItem
 from libcst.helpers import get_absolute_module_for_import
 
 
@@ -60,6 +61,8 @@ class GatherImportsVisitor(ContextAwareVisitor):
         self.alias_mapping: Dict[str, List[Tuple[str, str]]] = {}
         # Track all of the imports found in this transform
         self.all_imports: List[Union[libcst.Import, libcst.ImportFrom]] = []
+        # Track the import for every symbol introduced into the module
+        self.symbol_mapping: Dict[str, ImportItem] = {}
 
     def visit_Import(self, node: libcst.Import) -> None:
         # Track this import statement for later analysis.
@@ -67,12 +70,15 @@ class GatherImportsVisitor(ContextAwareVisitor):
 
         for name in node.names:
             alias = name.evaluated_alias
+            imp = ImportItem(name.evaluated_name, alias=alias)
             if alias is not None:
                 # Track this as an aliased module
                 self.module_aliases[name.evaluated_name] = alias
+                self.symbol_mapping[alias] = imp
             else:
                 # Get the module we're importing as a string.
                 self.module_imports.add(name.evaluated_name)
+                self.symbol_mapping[name.evaluated_name] = imp
 
     def visit_ImportFrom(self, node: libcst.ImportFrom) -> None:
         # Track this import statement for later analysis.
@@ -114,3 +120,9 @@ class GatherImportsVisitor(ContextAwareVisitor):
                     return
 
                 self.object_mapping[module].update(new_objects)
+            for ia in nodenames:
+                imp = ImportItem(
+                    module, obj_name=ia.evaluated_name, alias=ia.evaluated_alias
+                )
+                key = ia.evaluated_alias or ia.evaluated_name
+                self.symbol_mapping[key] = imp
