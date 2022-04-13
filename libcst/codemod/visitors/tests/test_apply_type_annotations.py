@@ -1676,3 +1676,72 @@ class TestApplyAnnotationsVisitor(CodemodTest):
         self.assertEqual(
             any_changes_applied, visitor.annotation_counts.any_changes_applied()
         )
+
+    @data_provider(
+        {
+            "always_qualify": (
+                """
+                from a import A
+                import b
+                def f(x: A, y: b.B) -> None: ...
+                """,
+                """
+                def f(x, y):
+                    pass
+                """,
+                """
+                import a
+                import b
+
+                def f(x: a.A, y: b.B) -> None:
+                    pass
+                """,
+            ),
+            "never_qualify_typing": (
+                """
+                from a import A
+                from b import B
+                from typing import List
+
+                def f(x: List[A], y: B[A]) -> None: ...
+                """,
+                """
+                def f(x, y):
+                    pass
+                """,
+                """
+                import a
+                import b
+                from typing import List
+
+                def f(x: List[a.A], y: b.B[a.A]) -> None:
+                    pass
+                """,
+            ),
+            "preserve_explicit_from_import": (
+                """
+                from a import A
+                import b
+                def f(x: A, y: b.B) -> None: ...
+                """,
+                """
+                from b import B
+                def f(x, y):
+                    pass
+                """,
+                """
+                from b import B
+                import a
+
+                def f(x: a.A, y: B) -> None:
+                    pass
+                """,
+            ),
+        }
+    )
+    def test_signature_matching_with_always_qualify(
+        self, stub: str, before: str, after: str
+    ) -> None:
+        self.run_test_case_with_flags(
+            stub=stub, before=before, after=after, always_qualify_annotations=True
+        )

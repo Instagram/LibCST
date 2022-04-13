@@ -721,6 +721,7 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
         use_future_annotations: bool = False,
         strict_posargs_matching: bool = True,
         strict_annotation_matching: bool = False,
+        always_qualify_annotations: bool = False,
     ) -> None:
         super().__init__(context)
         # Qualifier for storing the canonical name of the current function.
@@ -734,6 +735,7 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
         self.use_future_annotations = use_future_annotations
         self.strict_posargs_matching = strict_posargs_matching
         self.strict_annotation_matching = strict_annotation_matching
+        self.always_qualify_annotations = always_qualify_annotations
 
         # We use this to determine the end of the import block so that we can
         # insert top-level annotations.
@@ -761,6 +763,7 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
         use_future_annotations: bool = False,
         strict_posargs_matching: bool = True,
         strict_annotation_matching: bool = False,
+        always_qualify_annotations: bool = False,
     ) -> None:
         """
         Store a stub module in the :class:`~libcst.codemod.CodemodContext` so
@@ -779,6 +782,7 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
             use_future_annotations,
             strict_posargs_matching,
             strict_annotation_matching,
+            always_qualify_annotations,
         )
 
     def transform_module_impl(
@@ -812,6 +816,7 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
                 use_future_annotations,
                 strict_posargs_matching,
                 strict_annotation_matching,
+                always_qualify_annotations,
             ) = context_contents
             self.overwrite_existing_annotations = (
                 self.overwrite_existing_annotations or overwrite_existing_annotations
@@ -824,6 +829,9 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
             )
             self.strict_annotation_matching = (
                 self.strict_annotation_matching or strict_annotation_matching
+            )
+            self.always_qualify_annotations = (
+                self.always_qualify_annotations or always_qualify_annotations
             )
             module_imports = self._get_module_imports(stub, import_gatherer)
             visitor = TypeCollector(existing_import_names, module_imports, self.context)
@@ -846,7 +854,7 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
 
     # helpers for collecting type information from the stub files
 
-    def _get_module_imports(
+    def _get_module_imports(  # noqa: C901: too complex
         self, stub: cst.Module, existing_import_gatherer: GatherImportsVisitor
     ) -> Dict[str, ImportItem]:
         """Returns a dict of modules that need to be imported to qualify symbols."""
@@ -880,7 +888,7 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
                 # If a symbol is imported in the main file, we have to qualify
                 # it when imported from a different module in the stub file.
                 used = True
-            elif len(imported_symbols) == 1:
+            elif len(imported_symbols) == 1 and not self.always_qualify_annotations:
                 # If we have a single use of a new symbol we can from-import it
                 continue
             else:
@@ -891,7 +899,16 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
                 if not imp_sym.symbol:
                     continue
                 imp = symbol_map.get(imp_sym.symbol)
-                if not used and imp and imp.module_name == imp_sym.module_name:
+                if self.always_qualify_annotations and sym not in existing_import_names:
+                    # Override 'always qualify' if this is a typing import, or
+                    # the main file explicitly from-imports a symbol.
+                    if imp and imp.module_name != "typing":
+                        module_imports[imp.module_name] = imp
+                    else:
+                        imp = symbol_map.get(imp_sym.module_symbol)
+                        if imp:
+                            module_imports[imp.module_name] = imp
+                elif not used and imp and imp.module_name == imp_sym.module_name:
                     # We can only import a symbol directly once.
                     used = True
                 elif sym in existing_import_names:
