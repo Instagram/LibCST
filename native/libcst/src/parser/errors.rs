@@ -49,16 +49,20 @@ mod py_error {
                     }
                     _ => vec![""],
                 };
-                let (line, col) = match &e {
+                let (mut line, mut col) = match &e {
                     ParserError::ParserError(err, ..) => {
                         (err.location.start_pos.line, err.location.start_pos.column)
                     }
                     _ => (0, 0),
                 };
+                if line + 1 > lines.len() {
+                    line = lines.len() - 1;
+                    col = 0;
+                }
                 let kwargs = [
                     ("message", e.to_string().into_py(py)),
                     ("lines", lines.into_py(py)),
-                    ("raw_line", line.into_py(py)),
+                    ("raw_line", (line + 1).into_py(py)),
                     ("raw_column", col.into_py(py)),
                 ]
                 .into_py_dict(py);

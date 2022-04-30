@@ -172,6 +172,8 @@ class ParseErrorsTest(UnitTest):
     ) -> None:
         with self.assertRaises(cst.ParserSyntaxError) as cm:
             parse_fn()
+        # make sure str() doesn't blow up
+        self.assertIn("Syntax Error", str(cm.exception))
         if not is_native():
             self.assertEqual(str(cm.exception), expected)
 
