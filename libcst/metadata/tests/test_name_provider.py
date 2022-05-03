@@ -436,10 +436,14 @@ class QualifiedNameProviderTest(UnitTest):
         test_name(m.body[1], {QualifiedName("lib.a", QualifiedNameSource.IMPORT)})
 
         cls = ensure_type(m.body[2], cst.ClassDef)
-        test_name(cls.body.body[0], {QualifiedName("lib.b", QualifiedNameSource.IMPORT)})
+        test_name(
+            cls.body.body[0], {QualifiedName("lib.b", QualifiedNameSource.IMPORT)}
+        )
 
         func = ensure_type(m.body[3], cst.FunctionDef)
-        test_name(func.body.body[0], {QualifiedName("lib.c", QualifiedNameSource.IMPORT)})
+        test_name(
+            func.body.body[0], {QualifiedName("lib.c", QualifiedNameSource.IMPORT)}
+        )
 
 
 class FullyQualifiedNameProviderTest(UnitTest):
