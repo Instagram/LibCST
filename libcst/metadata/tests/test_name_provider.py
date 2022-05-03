@@ -101,7 +101,7 @@ class QualifiedNameProviderTest(UnitTest):
         )
         cls = ensure_type(m.body[1], cst.ClassDef)
         f = ensure_type(cls.body.body[0], cst.FunctionDef)
-        self.assertSetEqual(
+        self.assertEqual(
             names[ensure_type(f.returns, cst.Annotation).annotation],
             {QualifiedName("a.b.c", QualifiedNameSource.IMPORT)},
         )
@@ -427,7 +427,8 @@ class QualifiedNameProviderTest(UnitTest):
             """
         )
 
-        def test_name(node: cst.CSTNode, qnames: Set[QualifiedName]):
+        # pyre-fixme[53]: Captured variable `names` is not annotated.
+        def test_name(node: cst.CSTNode, qnames: Set[QualifiedName]) -> None:
             name = ensure_type(
                 ensure_type(node, cst.SimpleStatementLine).body[0], cst.Assign
             ).value
