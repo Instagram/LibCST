@@ -102,7 +102,8 @@ class QualifiedNameProviderTest(UnitTest):
         cls = ensure_type(m.body[1], cst.ClassDef)
         f = ensure_type(cls.body.body[0], cst.FunctionDef)
         self.assertEqual(
-            names[ensure_type(f.returns, cst.Annotation).annotation], set()
+            names[ensure_type(f.returns, cst.Annotation).annotation],
+            {QualifiedName("a.b.c", QualifiedNameSource.IMPORT)},
         )
 
         c_call = ensure_type(
@@ -412,6 +413,37 @@ class QualifiedNameProviderTest(UnitTest):
                 QualifiedName("f", QualifiedNameSource.LOCAL),
                 QualifiedName("a.b", QualifiedNameSource.IMPORT),
             },
+        )
+
+    def test_shadowed_assignments(self) -> None:
+        m, names = get_qualified_name_metadata_provider(
+            """
+                from lib import a,b,c
+                a = a
+                class Test:
+                    b = b
+                def func():
+                    c = c
+            """
+        )
+
+        # pyre-fixme[53]: Captured variable `names` is not annotated.
+        def test_name(node: cst.CSTNode, qnames: Set[QualifiedName]) -> None:
+            name = ensure_type(
+                ensure_type(node, cst.SimpleStatementLine).body[0], cst.Assign
+            ).value
+            self.assertEqual(names[name], qnames)
+
+        test_name(m.body[1], {QualifiedName("lib.a", QualifiedNameSource.IMPORT)})
+
+        cls = ensure_type(m.body[2], cst.ClassDef)
+        test_name(
+            cls.body.body[0], {QualifiedName("lib.b", QualifiedNameSource.IMPORT)}
+        )
+
+        func = ensure_type(m.body[3], cst.FunctionDef)
+        test_name(
+            func.body.body[0], {QualifiedName("lib.c", QualifiedNameSource.IMPORT)}
         )
 
 

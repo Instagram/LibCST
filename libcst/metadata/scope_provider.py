@@ -543,6 +543,22 @@ class Scope(abc.ABC):
         considering it could be a complex type annotation in the string which is hard to
         resolve, e.g. ``List[Union[int, str]]``.
         """
+
+        # if this node is an access we know the assignment and we can use that name
+        node_accesses = {
+            access
+            for all_accesses in self._accesses.values()
+            for access in all_accesses
+            if access.node == node
+        }
+        if node_accesses:
+            return {
+                qname
+                for access in node_accesses
+                for referent in access.referents
+                for qname in referent.get_qualified_names_for(referent.name)
+            }
+
         results = set()
         full_name = get_full_name_for_node(node)
         if full_name is None:
