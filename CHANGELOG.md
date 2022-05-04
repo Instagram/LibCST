@@ -1,3 +1,37 @@
+# 0.4.2 - 2022-05-04
+
+## New Contributors
+* @stanislavlevin made their first contribution in https://github.com/Instagram/LibCST/pull/650
+* @dmitryvinn made their first contribution in https://github.com/Instagram/LibCST/pull/655
+* @wiyr made their first contribution in https://github.com/Instagram/LibCST/pull/669
+* @toofar made their first contribution in https://github.com/Instagram/LibCST/pull/675
+
+## Fixed
+* native: Avoid crashing by making IntoPy conversion fallible by @zsol in https://github.com/Instagram/LibCST/pull/639
+* native: make sure ParserError's line is zero-indexed by @zsol in https://github.com/Instagram/LibCST/pull/681
+* Fix space validation for AsName and Await by @zsol in https://github.com/Instagram/LibCST/pull/641
+* Qualified Name Provider: Fix returned qname for symbols that are prefixes of each other by @wiyr in https://github.com/Instagram/LibCST/pull/669
+* Rename Codemod: Correct last renamed import from by @toofar in https://github.com/Instagram/LibCST/pull/675
+* Many changes to the Apply Type Comments codemod:
+  * Allow for skipping quotes when applying type comments by @stroxler in https://github.com/Instagram/LibCST/pull/644
+  * Port pyre fixes by @stroxler in https://github.com/Instagram/LibCST/pull/651
+  * Preserve as-imports when merging type annotations. by @martindemello in https://github.com/Instagram/LibCST/pull/664
+  * Qualify imported symbols when the dequalified form would cause a conflict by @martindemello in https://github.com/Instagram/LibCST/pull/674
+  * Add an argument to always qualify imported type annotations. by @martindemello in https://github.com/Instagram/LibCST/pull/676
+
+## Added
+
+* Create an AddTrailingCommas codemod by @stroxler in https://github.com/Instagram/LibCST/pull/643
+* Define gather global names visitor by @shannonzhu in https://github.com/Instagram/LibCST/pull/657
+
+## Updated
+
+* Support module and package names in the codemod context by @lpetre in https://github.com/Instagram/LibCST/pull/662
+* Drop support for running libcst using a python 3.6 interpreter by @lpetre in https://github.com/Instagram/LibCST/pull/663
+* Update relative import logic to match cpython by @lpetre in https://github.com/Instagram/LibCST/pull/660
+* Scope Provider: Consider access information when computing qualified names for nodes by @lpetre in https://github.com/Instagram/LibCST/pull/682
+
+
 # 0.4.1 - 2022-01-28
 
 ## New Contributors
