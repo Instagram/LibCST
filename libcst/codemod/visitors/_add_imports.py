@@ -12,7 +12,7 @@ from libcst.codemod._context import CodemodContext
 from libcst.codemod._visitor import ContextAwareTransformer
 from libcst.codemod.visitors._gather_imports import GatherImportsVisitor
 from libcst.codemod.visitors._imports import ImportItem
-from libcst.helpers import get_absolute_module_for_import
+from libcst.helpers import get_absolute_module_from_package_for_import
 
 
 class AddImportsVisitor(ContextAwareTransformer):
@@ -214,7 +214,7 @@ class AddImportsVisitor(ContextAwareTransformer):
             return updated_node
 
         # Get the module we're importing as a string, see if we have work to do.
-        module = get_absolute_module_for_import(
+        module = get_absolute_module_from_package_for_import(
             self.context.full_package_name, updated_node
         )
         if (

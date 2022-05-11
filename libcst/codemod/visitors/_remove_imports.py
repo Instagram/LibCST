@@ -9,7 +9,10 @@ import libcst as cst
 from libcst.codemod._context import CodemodContext
 from libcst.codemod._visitor import ContextAwareTransformer, ContextAwareVisitor
 from libcst.codemod.visitors._gather_unused_imports import GatherUnusedImportsVisitor
-from libcst.helpers import get_absolute_module_for_import, get_full_name_for_node
+from libcst.helpers import (
+    get_absolute_module_from_package_for_import,
+    get_full_name_for_node,
+)
 from libcst.metadata import Assignment, ProviderT, ScopeProvider
 
 
@@ -38,7 +41,7 @@ class RemovedNodeVisitor(ContextAwareVisitor):
             # We don't handle removing this, so ignore it.
             return
 
-        module_name = get_absolute_module_for_import(
+        module_name = get_absolute_module_from_package_for_import(
             self.context.full_package_name, import_node
         )
         if module_name is None:
@@ -248,7 +251,7 @@ class RemoveImportsVisitor(ContextAwareTransformer):
             if isinstance(names, cst.ImportStar):
                 # We don't handle removing this, so ignore it.
                 return
-            module_name = get_absolute_module_for_import(
+            module_name = get_absolute_module_from_package_for_import(
                 context.full_package_name, node
             )
             if module_name is None:
@@ -415,7 +418,7 @@ class RemoveImportsVisitor(ContextAwareTransformer):
             return updated_node
 
         # Make sure we actually know the absolute module.
-        module_name = get_absolute_module_for_import(
+        module_name = get_absolute_module_from_package_for_import(
             self.context.full_package_name, updated_node
         )
         if module_name is None or module_name not in self.unused_obj_imports:
