@@ -1,3 +1,9 @@
+# 0.4.3 - 2022-05-11
+
+## Fixed
+* Restore the 0.4.1 behavior for libcst.helpers.get_absolute_module by @lpetre in https://github.com/Instagram/LibCST/pull/684
+
+
 # 0.4.2 - 2022-05-04
 
 ## New Contributors
