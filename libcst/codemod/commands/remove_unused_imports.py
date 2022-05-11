@@ -9,7 +9,7 @@ from typing import Set, Tuple, Union
 from libcst import Import, ImportFrom, ImportStar, Module
 from libcst.codemod import CodemodContext, VisitorBasedCodemodCommand
 from libcst.codemod.visitors import GatherCommentsVisitor, RemoveImportsVisitor
-from libcst.helpers import get_absolute_module_for_import
+from libcst.helpers import get_absolute_module_from_package_for_import
 from libcst.metadata import PositionProvider, ProviderT
 
 DEFAULT_SUPPRESS_COMMENT_REGEX = (
@@ -74,8 +74,8 @@ class RemoveUnusedImportsCommand(VisitorBasedCodemodCommand):
                         asname=alias.evaluated_alias,
                     )
                 else:
-                    module_name = get_absolute_module_for_import(
-                        self.context.full_module_name, node
+                    module_name = get_absolute_module_from_package_for_import(
+                        self.context.full_package_name, node
                     )
                     if module_name is None:
                         raise ValueError(

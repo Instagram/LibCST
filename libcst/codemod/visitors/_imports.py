@@ -6,7 +6,7 @@
 from dataclasses import dataclass, replace
 from typing import Optional
 
-from libcst.helpers import get_absolute_module
+from libcst.helpers import get_absolute_module_from_package
 
 
 @dataclass(frozen=True)
@@ -39,5 +39,7 @@ class ImportItem:
             mod = replace(mod, module_name="", obj_name=mod.module_name)
         if package_name is None:
             return mod
-        m = get_absolute_module(package_name, mod.module_name or None, self.relative)
+        m = get_absolute_module_from_package(
+            package_name, mod.module_name or None, self.relative
+        )
         return mod if m is None else replace(mod, module_name=m, relative=0)

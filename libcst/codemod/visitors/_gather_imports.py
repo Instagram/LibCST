@@ -9,7 +9,7 @@ import libcst
 from libcst.codemod._context import CodemodContext
 from libcst.codemod._visitor import ContextAwareVisitor
 from libcst.codemod.visitors._imports import ImportItem
-from libcst.helpers import get_absolute_module_for_import
+from libcst.helpers import get_absolute_module_from_package_for_import
 
 
 class GatherImportsVisitor(ContextAwareVisitor):
@@ -85,7 +85,9 @@ class GatherImportsVisitor(ContextAwareVisitor):
         self.all_imports.append(node)
 
         # Get the module we're importing as a string.
-        module = get_absolute_module_for_import(self.context.full_package_name, node)
+        module = get_absolute_module_from_package_for_import(
+            self.context.full_package_name, node
+        )
         if module is None:
             # Can't get the absolute import from relative, so we can't
             # support this.
