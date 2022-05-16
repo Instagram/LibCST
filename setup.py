@@ -34,6 +34,10 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/x-rst",
     url="https://github.com/Instagram/LibCST",
+    project_urls={
+        "Changelog": "https://github.com/Instagram/LibCST/blob/main/CHANGELOG.md",
+        "Documentation": "https://libcst.readthedocs.io/en/latest/",
+    },
     license="MIT",
     packages=setuptools.find_packages(),
     package_data={
