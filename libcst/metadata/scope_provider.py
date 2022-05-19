@@ -406,16 +406,18 @@ class Scope(abc.ABC):
     #: Refers to the GlobalScope.
     globals: "GlobalScope"
     _assignments: MutableMapping[str, Set[BaseAssignment]]
-    _accesses: MutableMapping[str, Set[Access]]
     _assignment_count: int
+    _accesses_by_name: MutableMapping[str, Set[Access]]
+    _accesses_by_node: MutableMapping[cst.CSTNode, Set[Access]]
 
     def __init__(self, parent: "Scope") -> None:
         super().__init__()
         self.parent = parent
         self.globals = parent.globals
         self._assignments = defaultdict(set)
-        self._accesses = defaultdict(set)
         self._assignment_count = 0
+        self._accesses_by_name = defaultdict(set)
+        self._accesses_by_node = defaultdict(set)
 
     def record_assignment(self, name: str, node: cst.CSTNode) -> None:
         target = self._find_assignment_target(name)
@@ -446,7 +448,8 @@ class Scope(abc.ABC):
         return self
 
     def record_access(self, name: str, access: Access) -> None:
-        self._accesses[name].add(access)
+        self._accesses_by_name[name].add(access)
+        self._accesses_by_node[access.node].add(access)
 
     def _getitem_from_self_or_parent(self, name: str) -> Set[BaseAssignment]:
         """Overridden by ClassScope to hide it's assignments from child scopes."""
@@ -545,12 +548,9 @@ class Scope(abc.ABC):
         """
 
         # if this node is an access we know the assignment and we can use that name
-        node_accesses = {
-            access
-            for all_accesses in self._accesses.values()
-            for access in all_accesses
-            if access.node == node
-        }
+        node_accesses = (
+            self._accesses_by_node.get(node) if isinstance(node, cst.CSTNode) else None
+        )
         if node_accesses:
             return {
                 qname
@@ -589,7 +589,7 @@ class Scope(abc.ABC):
     @property
     def accesses(self) -> Accesses:
         """Return an :class:`~libcst.metadata.Accesses` contains all accesses in current scope."""
-        return Accesses(self._accesses)
+        return Accesses(self._accesses_by_name)
 
 
 class BuiltinScope(Scope):
