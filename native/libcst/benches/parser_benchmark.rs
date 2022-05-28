@@ -49,12 +49,13 @@ fn load_all_fixtures() -> String {
 pub fn inflate_benchmarks<T: Measurement>(c: &mut Criterion<T>) {
     let fixture = load_all_fixtures();
     let tokens = tokenize(fixture.as_str()).expect("tokenize failed");
+    let tokvec = tokens.clone().into();
     let mut group = c.benchmark_group("inflate");
     group.bench_function("all", |b| {
         b.iter_batched(
             || {
                 let conf = Config::new(fixture.as_str(), &tokens);
-                let m = parse_tokens_without_whitespace(tokens.clone(), fixture.as_str(), None)
+                let m = parse_tokens_without_whitespace(&tokvec, fixture.as_str(), None)
                     .expect("parse failed");
                 (conf, m)
             },
@@ -71,13 +72,13 @@ pub fn parser_benchmarks<T: Measurement>(c: &mut Criterion<T>) {
     group.measurement_time(Duration::from_secs(15));
     group.bench_function("all", |b| {
         b.iter_batched(
-            || tokenize(fixture.as_str()).expect("tokenize failed"),
+            || tokenize(fixture.as_str()).expect("tokenize failed").into(),
             |tokens| {
-                black_box(parse_tokens_without_whitespace(
-                    tokens,
+                black_box(drop(parse_tokens_without_whitespace(
+                    &tokens,
                     fixture.as_str(),
                     None,
-                ))
+                )))
             },
             BatchSize::SmallInput,
         )

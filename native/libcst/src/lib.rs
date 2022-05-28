@@ -11,10 +11,11 @@ pub use tokenizer::whitespace_parser::Config;
 use tokenizer::{whitespace_parser, TokConfig, Token, TokenIterator};
 
 mod nodes;
+use nodes::deflated::Module as DeflatedModule;
 pub use nodes::*;
 
 mod parser;
-use parser::{ParserError, Result};
+use parser::{ParserError, Result, TokVec};
 
 #[cfg(feature = "py")]
 pub mod py;
@@ -32,15 +33,6 @@ pub fn tokenize(text: &str) -> Result<Vec<Token>> {
         .map_err(|err| ParserError::TokenizerError(err, text))
 }
 
-pub fn parse_tokens_without_whitespace<'a>(
-    tokens: Vec<Token<'a>>,
-    module_text: &'a str,
-    encoding: Option<&str>,
-) -> Result<'a, Module<'a>> {
-    parser::python::file(&tokens.into(), module_text, encoding)
-        .map_err(|err| ParserError::ParserError(err, module_text))
-}
-
 pub fn parse_module<'a>(
     mut module_text: &'a str,
     encoding: Option<&str>,
@@ -51,14 +43,26 @@ pub fn parse_module<'a>(
     }
     let tokens = tokenize(module_text)?;
     let conf = whitespace_parser::Config::new(module_text, &tokens);
-    let m = parse_tokens_without_whitespace(tokens, module_text, encoding)?;
+    let tokvec = tokens.into();
+    let m = parse_tokens_without_whitespace(&tokvec, module_text, encoding)?;
     Ok(m.inflate(&conf)?)
+}
+
+pub fn parse_tokens_without_whitespace<'r, 'a>(
+    tokens: &'r TokVec<'a>,
+    module_text: &'a str,
+    encoding: Option<&str>,
+) -> Result<'a, DeflatedModule<'r, 'a>> {
+    let m = parser::python::file(tokens, module_text, encoding)
+        .map_err(|err| ParserError::ParserError(err, module_text))?;
+    Ok(m)
 }
 
 pub fn parse_statement(text: &str) -> Result<Statement> {
     let tokens = tokenize(text)?;
     let conf = whitespace_parser::Config::new(text, &tokens);
-    let stm = parser::python::statement_input(&tokens.into(), text)
+    let tokvec = tokens.into();
+    let stm = parser::python::statement_input(&tokvec, text)
         .map_err(|err| ParserError::ParserError(err, text))?;
     Ok(stm.inflate(&conf)?)
 }
@@ -66,7 +70,8 @@ pub fn parse_statement(text: &str) -> Result<Statement> {
 pub fn parse_expression(text: &str) -> Result<Expression> {
     let tokens = tokenize(text)?;
     let conf = whitespace_parser::Config::new(text, &tokens);
-    let expr = parser::python::expression_input(&tokens.into(), text)
+    let tokvec = tokens.into();
+    let expr = parser::python::expression_input(&tokvec, text)
         .map_err(|err| ParserError::ParserError(err, text))?;
     Ok(expr.inflate(&conf)?)
 }

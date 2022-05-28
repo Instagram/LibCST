@@ -4,7 +4,7 @@
 // LICENSE file in the root directory of this source tree
 
 use proc_macro::TokenStream;
-use quote::{quote, quote_spanned};
+use quote::{format_ident, quote, quote_spanned};
 use syn::{self, spanned::Spanned, Data, DataEnum, DeriveInput, Fields, FieldsUnnamed};
 
 pub(crate) fn impl_inflate(ast: &DeriveInput) -> TokenStream {
@@ -55,11 +55,19 @@ fn impl_inflate_enum(ast: &DeriveInput, e: &DataEnum) -> TokenStream {
     }
     let ident = &ast.ident;
     let generics = &ast.generics;
+    let ident_str = ident.to_string();
+    let inflated_ident = format_ident!(
+        "{}",
+        ident_str
+            .strip_prefix("Deflated")
+            .expect("Cannot implement Inflate on a non-Deflated item")
+    );
     let gen = quote! {
-        impl<'a> Inflate<'a> for #ident #generics {
-            fn inflate(mut self, config: & crate::tokenizer::whitespace_parser::Config<'a>) -> std::result::Result<Self, crate::tokenizer::whitespace_parser::WhitespaceError> {
+        impl#generics Inflate<'a> for #ident #generics {
+            type Inflated = #inflated_ident <'a>;
+            fn inflate(mut self, config: & crate::tokenizer::whitespace_parser::Config<'a>) -> std::result::Result<Self::Inflated, crate::tokenizer::whitespace_parser::WhitespaceError> {
                 match self {
-                    #(Self::#varnames(x) => Ok(Self::#varnames(x.inflate(config)?)),)*
+                    #(Self::#varnames(x) => Ok(Self::Inflated::#varnames(x.inflate(config)?)),)*
                 }
             }
         }

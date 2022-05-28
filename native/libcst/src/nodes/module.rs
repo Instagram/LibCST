@@ -4,27 +4,26 @@
 // LICENSE file in the root directory of this source tree.
 
 use std::mem::swap;
-use std::rc::Rc;
 
 use crate::tokenizer::whitespace_parser::parse_empty_lines;
 use crate::tokenizer::Token;
 use crate::{
     nodes::{
         codegen::{Codegen, CodegenState},
-        statement::Statement,
+        statement::*,
         whitespace::EmptyLine,
     },
     tokenizer::whitespace_parser::Config,
 };
+use libcst_derive::cst_node;
 #[cfg(feature = "py")]
 use libcst_derive::TryIntoPy;
 
 use super::traits::{Inflate, Result, WithLeadingLines};
 
-type TokenRef<'a> = Rc<Token<'a>>;
+type TokenRef<'r, 'a> = &'r Token<'a>;
 
-#[derive(Debug, Eq, PartialEq)]
-#[cfg_attr(feature = "py", derive(TryIntoPy))]
+#[cst_node]
 pub struct Module<'a> {
     pub body: Vec<Statement<'a>>,
     pub header: Vec<EmptyLine<'a>>,
@@ -52,19 +51,20 @@ impl<'a> Codegen<'a> for Module<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for Module<'a> {
-    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
-        self.default_indent = config.default_indent;
-        self.default_newline = config.default_newline;
-        self.has_trailing_newline = config.has_trailing_newline();
-        self.body = self.body.inflate(config)?;
+impl<'r, 'a> Inflate<'a> for DeflatedModule<'r, 'a> {
+    type Inflated = Module<'a>;
+    fn inflate(self, config: &Config<'a>) -> Result<Self::Inflated> {
+        let default_indent = config.default_indent;
+        let default_newline = config.default_newline;
+        let has_trailing_newline = config.has_trailing_newline();
+        let mut body = self.body.inflate(config)?;
         let mut footer = parse_empty_lines(
             config,
             &mut (*self.eof_tok).whitespace_before.borrow_mut(),
             Some(""),
         )?;
         let mut header = vec![];
-        if let Some(stmt) = self.body.first_mut() {
+        if let Some(stmt) = body.first_mut() {
             swap(stmt.leading_lines(), &mut header);
             let mut last_indented = None;
             for (num, line) in footer.iter().enumerate() {
@@ -87,8 +87,14 @@ impl<'a> Inflate<'a> for Module<'a> {
         } else {
             swap(&mut header, &mut footer);
         }
-        self.footer = footer;
-        self.header = header;
-        Ok(self)
+        Ok(Self::Inflated {
+            body,
+            header,
+            footer,
+            default_indent,
+            default_newline,
+            has_trailing_newline,
+            encoding: self.encoding,
+        })
     }
 }

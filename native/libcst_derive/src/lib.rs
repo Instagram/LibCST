@@ -15,7 +15,7 @@ mod cstnode;
 use cstnode::{impl_cst_node, CSTNodeParams};
 
 use proc_macro::TokenStream;
-use syn::{parse, parse_macro_input, DeriveInput};
+use syn::{parse_macro_input, DeriveInput};
 
 #[proc_macro_derive(Inflate)]
 pub fn inflate_derive(input: TokenStream) -> TokenStream {
@@ -25,11 +25,16 @@ pub fn inflate_derive(input: TokenStream) -> TokenStream {
 
 #[proc_macro_derive(ParenthesizedNode)]
 pub fn parenthesized_node_derive(input: TokenStream) -> TokenStream {
-    impl_parenthesized_node(&syn::parse(input).unwrap())
+    impl_parenthesized_node(&syn::parse(input).unwrap(), false)
+}
+
+#[proc_macro_derive(ParenthesizedDeflatedNode)]
+pub fn parenthesized_deflated_node_derive(input: TokenStream) -> TokenStream {
+    impl_parenthesized_node(&syn::parse(input).unwrap(), true)
 }
 
 #[proc_macro_derive(Codegen)]
-pub fn parenthesized_node_codegen(input: TokenStream) -> TokenStream {
+pub fn codegen_derive(input: TokenStream) -> TokenStream {
     impl_codegen(&syn::parse(input).unwrap())
 }
 

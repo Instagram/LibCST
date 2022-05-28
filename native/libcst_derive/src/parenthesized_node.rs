@@ -5,12 +5,14 @@
 
 use proc_macro::TokenStream;
 use quote::{quote, quote_spanned};
-use syn::{spanned::Spanned, Data, DataEnum, DeriveInput, Fields, FieldsUnnamed};
+use syn::{
+    parse_quote, spanned::Spanned, Data, DataEnum, DeriveInput, Fields, FieldsUnnamed, Ident,
+};
 
-pub(crate) fn impl_parenthesized_node(ast: &DeriveInput) -> TokenStream {
+pub(crate) fn impl_parenthesized_node(ast: &DeriveInput, deflated: bool) -> TokenStream {
     match &ast.data {
-        Data::Enum(e) => impl_enum(ast, e),
-        Data::Struct(_) => impl_struct(ast),
+        Data::Enum(e) => impl_enum(ast, e, deflated),
+        Data::Struct(_) => impl_struct(ast, deflated),
         Data::Union(u) => quote_spanned! {
             u.union_token.span() =>
             compile_error!("Union type is not supported")
@@ -19,18 +21,43 @@ pub(crate) fn impl_parenthesized_node(ast: &DeriveInput) -> TokenStream {
     }
 }
 
-fn impl_struct(ast: &DeriveInput) -> TokenStream {
+fn idents(deflated: bool) -> (Ident, Ident, Ident) {
+    let treyt: Ident = if deflated {
+        parse_quote!(ParenthesizedDeflatedNode)
+    } else {
+        parse_quote!(ParenthesizedNode)
+    };
+    let leftparen: Ident = if deflated {
+        parse_quote!(DeflatedLeftParen)
+    } else {
+        parse_quote!(LeftParen)
+    };
+    let rightparen: Ident = if deflated {
+        parse_quote!(DeflatedRightParen)
+    } else {
+        parse_quote!(RightParen)
+    };
+    (treyt, leftparen, rightparen)
+}
+
+fn impl_struct(ast: &DeriveInput, deflated: bool) -> TokenStream {
     let ident = &ast.ident;
-    let generics = &ast.generics;
+    let generics = if deflated {
+        parse_quote!(<'r, 'a>)
+    } else {
+        ast.generics.clone()
+    };
+
+    let (treyt, leftparen, rightparen) = idents(deflated);
     let gen = quote! {
-        impl<'a> ParenthesizedNode<'a> for #ident #generics {
-            fn lpar(&self) -> &Vec<LeftParen<'a>> {
+        impl#generics #treyt#generics for #ident #generics {
+            fn lpar(&self) -> &Vec<#leftparen#generics> {
                 &self.lpar
             }
-            fn rpar(&self) -> &Vec<RightParen<'a>> {
+            fn rpar(&self) -> &Vec<#rightparen#generics> {
                 &self.rpar
             }
-            fn with_parens(self, left: LeftParen<'a>, right: RightParen<'a>) -> Self {
+            fn with_parens(self, left: #leftparen#generics, right: #rightparen#generics) -> Self {
                 let mut lpar = self.lpar;
                 let mut rpar = self.rpar;
                 lpar.insert(0, left);
@@ -43,7 +70,7 @@ fn impl_struct(ast: &DeriveInput) -> TokenStream {
     gen.into()
 }
 
-fn impl_enum(ast: &DeriveInput, e: &DataEnum) -> TokenStream {
+fn impl_enum(ast: &DeriveInput, e: &DataEnum, deflated: bool) -> TokenStream {
     let mut varnames = vec![];
     for var in e.variants.iter() {
         match &var.fields {
@@ -74,20 +101,25 @@ fn impl_enum(ast: &DeriveInput, e: &DataEnum) -> TokenStream {
         }
     }
     let ident = &ast.ident;
-    let generics = &ast.generics;
+    let generics = if deflated {
+        parse_quote!(<'r, 'a>)
+    } else {
+        ast.generics.clone()
+    };
+    let (treyt, leftparen, rightparen) = idents(deflated);
     let gen = quote! {
-        impl<'a> ParenthesizedNode<'a> for #ident #generics {
-            fn lpar(&self) -> &Vec<LeftParen<'a>> {
+        impl#generics #treyt#generics for #ident #generics {
+            fn lpar(&self) -> &Vec<#leftparen#generics> {
                 match self {
                     #(Self::#varnames(x) => x.lpar(),)*
                 }
             }
-            fn rpar(&self) -> &Vec<RightParen<'a>> {
+            fn rpar(&self) -> &Vec<#rightparen#generics> {
                 match self {
                     #(Self::#varnames(x) => x.rpar(),)*
                 }
             }
-            fn with_parens(self, left: LeftParen<'a>, right: RightParen<'a>) -> Self {
+            fn with_parens(self, left: #leftparen#generics, right: #rightparen#generics) -> Self {
                 match self {
                     #(Self::#varnames(x) => Self::#varnames(x.with_parens(left, right)),)*
                 }

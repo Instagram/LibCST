@@ -3,7 +3,7 @@
 // This source code is licensed under the MIT license found in the
 // LICENSE file in the root directory of this source tree.
 
-use std::{mem::swap, rc::Rc};
+use std::mem::swap;
 
 use super::{
     inflate_helpers::adjust_parameters_trailing_whitespace, Attribute, Codegen, CodegenState,
@@ -13,8 +13,12 @@ use super::{
 };
 use crate::{
     nodes::{
-        traits::{Inflate, Result, WithComma, WithLeadingLines},
-        Arg, AssignEqual, Asynchronous, AugOp, BitOr, Element, ParenthesizedNode,
+        expression::*,
+        op::*,
+        traits::{
+            Inflate, ParenthesizedDeflatedNode, ParenthesizedNode, Result, WithComma,
+            WithLeadingLines,
+        },
     },
     tokenizer::{
         whitespace_parser::{
@@ -27,13 +31,12 @@ use crate::{
 };
 #[cfg(feature = "py")]
 use libcst_derive::TryIntoPy;
-use libcst_derive::{Codegen, Inflate, ParenthesizedNode};
+use libcst_derive::{cst_node, Codegen, Inflate, ParenthesizedDeflatedNode, ParenthesizedNode};
 
-type TokenRef<'a> = Rc<Token<'a>>;
+type TokenRef<'r, 'a> = &'r Token<'a>;
 
 #[allow(clippy::large_enum_variant)]
-#[derive(Debug, Eq, PartialEq, Clone, Inflate, Codegen)]
-#[cfg_attr(feature = "py", derive(TryIntoPy))]
+#[cst_node(Inflate, Codegen)]
 pub enum Statement<'a> {
     Simple(SimpleStatementLine<'a>),
     Compound(CompoundStatement<'a>),
@@ -48,9 +51,8 @@ impl<'a> WithLeadingLines<'a> for Statement<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Inflate, Codegen)]
-#[cfg_attr(feature = "py", derive(TryIntoPy))]
 #[allow(clippy::large_enum_variant)]
+#[cst_node(Inflate, Codegen)]
 pub enum CompoundStatement<'a> {
     FunctionDef(FunctionDef<'a>),
     If(If<'a>),
@@ -79,15 +81,13 @@ impl<'a> WithLeadingLines<'a> for CompoundStatement<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Inflate, Codegen)]
-#[cfg_attr(feature = "py", derive(TryIntoPy))]
+#[cst_node(Inflate, Codegen)]
 pub enum Suite<'a> {
     IndentedBlock(IndentedBlock<'a>),
     SimpleStatementSuite(SimpleStatementSuite<'a>),
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(TryIntoPy))]
+#[cst_node]
 pub struct IndentedBlock<'a> {
     /// Sequence of statements belonging to this indented block.
     pub body: Vec<Statement<'a>>,
@@ -144,9 +144,10 @@ impl<'a> Codegen<'a> for IndentedBlock<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for IndentedBlock<'a> {
-    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
-        self.body = self.body.inflate(config)?;
+impl<'r, 'a> Inflate<'a> for DeflatedIndentedBlock<'r, 'a> {
+    type Inflated = IndentedBlock<'a>;
+    fn inflate(self, config: &Config<'a>) -> Result<Self::Inflated> {
+        let body = self.body.inflate(config)?;
         // We want to be able to only keep comments in the footer that are actually for
         // this IndentedBlock. We do so by assuming that lines which are indented to the
         // same level as the block itself are comments that go at the footer of the
@@ -167,18 +168,20 @@ impl<'a> Inflate<'a> for IndentedBlock<'a> {
             config,
             &mut (*self.newline_tok).whitespace_before.borrow_mut(),
         )?;
-        self.footer = footer;
-        self.header = header;
-        self.indent = self.indent_tok.relative_indent;
-        if self.indent == Some(config.default_indent) {
-            self.indent = None;
+        let mut indent = self.indent_tok.relative_indent;
+        if indent == Some(config.default_indent) {
+            indent = None;
         }
-        Ok(self)
+        Ok(Self::Inflated {
+            body,
+            header,
+            indent,
+            footer,
+        })
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(TryIntoPy))]
+#[cst_node]
 pub struct SimpleStatementSuite<'a> {
     /// Sequence of small statements. All but the last statement are required to have
     /// a semicolon.
@@ -193,18 +196,23 @@ pub struct SimpleStatementSuite<'a> {
     pub(crate) newline_tok: TokenRef<'a>,
 }
 
-impl<'a> Inflate<'a> for SimpleStatementSuite<'a> {
-    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
-        self.leading_whitespace = parse_simple_whitespace(
+impl<'r, 'a> Inflate<'a> for DeflatedSimpleStatementSuite<'r, 'a> {
+    type Inflated = SimpleStatementSuite<'a>;
+    fn inflate(self, config: &Config<'a>) -> Result<Self::Inflated> {
+        let leading_whitespace = parse_simple_whitespace(
             config,
             &mut (*self.first_tok).whitespace_before.borrow_mut(),
         )?;
-        self.body = self.body.inflate(config)?;
-        self.trailing_whitespace = parse_trailing_whitespace(
+        let body = self.body.inflate(config)?;
+        let trailing_whitespace = parse_trailing_whitespace(
             config,
             &mut (*self.newline_tok).whitespace_before.borrow_mut(),
         )?;
-        Ok(self)
+        Ok(Self::Inflated {
+            body,
+            leading_whitespace,
+            trailing_whitespace,
+        })
     }
 }
 
@@ -232,8 +240,7 @@ impl<'a> Codegen<'a> for SimpleStatementSuite<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(TryIntoPy))]
+#[cst_node]
 pub struct SimpleStatementLine<'a> {
     /// Sequence of small statements. All but the last statement are required to have
     /// a semicolon.
@@ -258,25 +265,29 @@ impl<'a> Codegen<'a> for SimpleStatementLine<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for SimpleStatementLine<'a> {
-    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
-        self.leading_lines = parse_empty_lines(
+impl<'r, 'a> Inflate<'a> for DeflatedSimpleStatementLine<'r, 'a> {
+    type Inflated = SimpleStatementLine<'a>;
+    fn inflate(self, config: &Config<'a>) -> Result<Self::Inflated> {
+        let leading_lines = parse_empty_lines(
             config,
             &mut (*self.first_tok).whitespace_before.borrow_mut(),
             None,
         )?;
-        self.body = self.body.inflate(config)?;
-        self.trailing_whitespace = parse_trailing_whitespace(
+        let body = self.body.inflate(config)?;
+        let trailing_whitespace = parse_trailing_whitespace(
             config,
             &mut (*self.newline_tok).whitespace_before.borrow_mut(),
         )?;
-        Ok(self)
+        Ok(Self::Inflated {
+            body,
+            leading_lines,
+            trailing_whitespace,
+        })
     }
 }
 
 #[allow(dead_code, clippy::large_enum_variant)]
-#[derive(Debug, Eq, PartialEq, Clone, Codegen, Inflate)]
-#[cfg_attr(feature = "py", derive(TryIntoPy))]
+#[cst_node(Codegen, Inflate)]
 pub enum SmallStatement<'a> {
     Pass(Pass<'a>),
     Break(Break<'a>),
@@ -295,8 +306,8 @@ pub enum SmallStatement<'a> {
     Del(Del<'a>),
 }
 
-impl<'a> SmallStatement<'a> {
-    pub fn with_semicolon(self, semicolon: Option<Semicolon<'a>>) -> Self {
+impl<'r, 'a> DeflatedSmallStatement<'r, 'a> {
+    pub fn with_semicolon(self, semicolon: Option<DeflatedSemicolon<'r, 'a>>) -> Self {
         match self {
             Self::Pass(p) => Self::Pass(p.with_semicolon(semicolon)),
             Self::Break(p) => Self::Break(p.with_semicolon(semicolon)),
@@ -317,13 +328,12 @@ impl<'a> SmallStatement<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(TryIntoPy))]
+#[cst_node]
 pub struct Pass<'a> {
     pub semicolon: Option<Semicolon<'a>>,
 }
-impl<'a> Pass<'a> {
-    pub fn with_semicolon(self, semicolon: Option<Semicolon<'a>>) -> Self {
+impl<'r, 'a> DeflatedPass<'r, 'a> {
+    pub fn with_semicolon(self, semicolon: Option<DeflatedSemicolon<'r, 'a>>) -> Self {
         Self { semicolon }
     }
 }
@@ -333,20 +343,20 @@ impl<'a> Codegen<'a> for Pass<'a> {
         self.semicolon.codegen(state);
     }
 }
-impl<'a> Inflate<'a> for Pass<'a> {
-    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
-        self.semicolon = self.semicolon.inflate(config)?;
-        Ok(self)
+impl<'r, 'a> Inflate<'a> for DeflatedPass<'r, 'a> {
+    type Inflated = Pass<'a>;
+    fn inflate(self, config: &Config<'a>) -> Result<Self::Inflated> {
+        let semicolon = self.semicolon.inflate(config)?;
+        Ok(Self::Inflated { semicolon })
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(TryIntoPy))]
+#[cst_node]
 pub struct Break<'a> {
     pub semicolon: Option<Semicolon<'a>>,
 }
-impl<'a> Break<'a> {
-    pub fn with_semicolon(self, semicolon: Option<Semicolon<'a>>) -> Self {
+impl<'r, 'a> DeflatedBreak<'r, 'a> {
+    pub fn with_semicolon(self, semicolon: Option<DeflatedSemicolon<'r, 'a>>) -> Self {
         Self { semicolon }
     }
 }
@@ -356,20 +366,20 @@ impl<'a> Codegen<'a> for Break<'a> {
         self.semicolon.codegen(state);
     }
 }
-impl<'a> Inflate<'a> for Break<'a> {
-    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
-        self.semicolon = self.semicolon.inflate(config)?;
-        Ok(self)
+impl<'r, 'a> Inflate<'a> for DeflatedBreak<'r, 'a> {
+    type Inflated = Break<'a>;
+    fn inflate(self, config: &Config<'a>) -> Result<Self::Inflated> {
+        let semicolon = self.semicolon.inflate(config)?;
+        Ok(Self::Inflated { semicolon })
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(TryIntoPy))]
+#[cst_node]
 pub struct Continue<'a> {
     pub semicolon: Option<Semicolon<'a>>,
 }
-impl<'a> Continue<'a> {
-    pub fn with_semicolon(self, semicolon: Option<Semicolon<'a>>) -> Self {
+impl<'r, 'a> DeflatedContinue<'r, 'a> {
+    pub fn with_semicolon(self, semicolon: Option<DeflatedSemicolon<'r, 'a>>) -> Self {
         Self { semicolon }
     }
 }
@@ -379,21 +389,21 @@ impl<'a> Codegen<'a> for Continue<'a> {
         self.semicolon.codegen(state);
     }
 }
-impl<'a> Inflate<'a> for Continue<'a> {
-    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
-        self.semicolon = self.semicolon.inflate(config)?;
-        Ok(self)
+impl<'r, 'a> Inflate<'a> for DeflatedContinue<'r, 'a> {
+    type Inflated = Continue<'a>;
+    fn inflate(self, config: &Config<'a>) -> Result<Self::Inflated> {
+        let semicolon = self.semicolon.inflate(config)?;
+        Ok(Self::Inflated { semicolon })
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(TryIntoPy))]
+#[cst_node]
 pub struct Expr<'a> {
     pub value: Expression<'a>,
     pub semicolon: Option<Semicolon<'a>>,
 }
-impl<'a> Expr<'a> {
-    pub fn with_semicolon(self, semicolon: Option<Semicolon<'a>>) -> Self {
+impl<'r, 'a> DeflatedExpr<'r, 'a> {
+    pub fn with_semicolon(self, semicolon: Option<DeflatedSemicolon<'r, 'a>>) -> Self {
         Self { semicolon, ..self }
     }
 }
@@ -403,16 +413,16 @@ impl<'a> Codegen<'a> for Expr<'a> {
         self.semicolon.codegen(state);
     }
 }
-impl<'a> Inflate<'a> for Expr<'a> {
-    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
-        self.value = self.value.inflate(config)?;
-        self.semicolon = self.semicolon.inflate(config)?;
-        Ok(self)
+impl<'r, 'a> Inflate<'a> for DeflatedExpr<'r, 'a> {
+    type Inflated = Expr<'a>;
+    fn inflate(self, config: &Config<'a>) -> Result<Self::Inflated> {
+        let value = self.value.inflate(config)?;
+        let semicolon = self.semicolon.inflate(config)?;
+        Ok(Self::Inflated { value, semicolon })
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(TryIntoPy))]
+#[cst_node]
 pub struct Assign<'a> {
     pub targets: Vec<AssignTarget<'a>>,
     pub value: Expression<'a>,
@@ -431,23 +441,27 @@ impl<'a> Codegen<'a> for Assign<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for Assign<'a> {
-    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
-        self.targets = self.targets.inflate(config)?;
-        self.value = self.value.inflate(config)?;
-        self.semicolon = self.semicolon.inflate(config)?;
-        Ok(self)
+impl<'r, 'a> Inflate<'a> for DeflatedAssign<'r, 'a> {
+    type Inflated = Assign<'a>;
+    fn inflate(self, config: &Config<'a>) -> Result<Self::Inflated> {
+        let targets = self.targets.inflate(config)?;
+        let value = self.value.inflate(config)?;
+        let semicolon = self.semicolon.inflate(config)?;
+        Ok(Self::Inflated {
+            targets,
+            value,
+            semicolon,
+        })
     }
 }
 
-impl<'a> Assign<'a> {
-    pub fn with_semicolon(self, semicolon: Option<Semicolon<'a>>) -> Self {
+impl<'r, 'a> DeflatedAssign<'r, 'a> {
+    pub fn with_semicolon(self, semicolon: Option<DeflatedSemicolon<'r, 'a>>) -> Self {
         Self { semicolon, ..self }
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(TryIntoPy))]
+#[cst_node]
 pub struct AssignTarget<'a> {
     pub target: AssignTargetExpression<'a>,
     pub whitespace_before_equal: SimpleWhitespace<'a>,
@@ -465,22 +479,26 @@ impl<'a> Codegen<'a> for AssignTarget<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for AssignTarget<'a> {
-    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
-        self.target = self.target.inflate(config)?;
-        self.whitespace_before_equal = parse_simple_whitespace(
+impl<'r, 'a> Inflate<'a> for DeflatedAssignTarget<'r, 'a> {
+    type Inflated = AssignTarget<'a>;
+    fn inflate(self, config: &Config<'a>) -> Result<Self::Inflated> {
+        let target = self.target.inflate(config)?;
+        let whitespace_before_equal = parse_simple_whitespace(
             config,
             &mut (*self.equal_tok).whitespace_before.borrow_mut(),
         )?;
-        self.whitespace_after_equal =
+        let whitespace_after_equal =
             parse_simple_whitespace(config, &mut (*self.equal_tok).whitespace_after.borrow_mut())?;
-        Ok(self)
+        Ok(Self::Inflated {
+            target,
+            whitespace_before_equal,
+            whitespace_after_equal,
+        })
     }
 }
 
 #[allow(clippy::large_enum_variant)]
-#[derive(Debug, PartialEq, Eq, Clone, Codegen, ParenthesizedNode, Inflate)]
-#[cfg_attr(feature = "py", derive(TryIntoPy))]
+#[cst_node(Codegen, ParenthesizedNode, Inflate)]
 pub enum AssignTargetExpression<'a> {
     Name(Box<Name<'a>>),
     Attribute(Box<Attribute<'a>>),
@@ -490,8 +508,7 @@ pub enum AssignTargetExpression<'a> {
     Subscript(Box<Subscript<'a>>),
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(TryIntoPy))]
+#[cst_node]
 pub struct Import<'a> {
     pub names: Vec<ImportAlias<'a>>,
     pub semicolon: Option<Semicolon<'a>>,
@@ -516,26 +533,30 @@ impl<'a> Codegen<'a> for Import<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for Import<'a> {
-    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
-        self.whitespace_after_import = parse_simple_whitespace(
+impl<'r, 'a> Inflate<'a> for DeflatedImport<'r, 'a> {
+    type Inflated = Import<'a>;
+    fn inflate(self, config: &Config<'a>) -> Result<Self::Inflated> {
+        let whitespace_after_import = parse_simple_whitespace(
             config,
             &mut (*self.import_tok).whitespace_after.borrow_mut(),
         )?;
-        self.names = self.names.inflate(config)?;
-        self.semicolon = self.semicolon.inflate(config)?;
-        Ok(self)
+        let names = self.names.inflate(config)?;
+        let semicolon = self.semicolon.inflate(config)?;
+        Ok(Self::Inflated {
+            names,
+            semicolon,
+            whitespace_after_import,
+        })
     }
 }
 
-impl<'a> Import<'a> {
-    pub fn with_semicolon(self, semicolon: Option<Semicolon<'a>>) -> Self {
+impl<'r, 'a> DeflatedImport<'r, 'a> {
+    pub fn with_semicolon(self, semicolon: Option<DeflatedSemicolon<'r, 'a>>) -> Self {
         Self { semicolon, ..self }
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(TryIntoPy))]
+#[cst_node]
 pub struct ImportFrom<'a> {
     #[cfg_attr(feature = "py", no_py_default)]
     pub module: Option<NameOrAttribute<'a>>,
@@ -579,96 +600,119 @@ impl<'a> Codegen<'a> for ImportFrom<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for ImportFrom<'a> {
-    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
-        self.whitespace_after_from =
+impl<'r, 'a> Inflate<'a> for DeflatedImportFrom<'r, 'a> {
+    type Inflated = ImportFrom<'a>;
+    fn inflate(self, config: &Config<'a>) -> Result<Self::Inflated> {
+        let whitespace_after_from =
             parse_simple_whitespace(config, &mut (*self.from_tok).whitespace_after.borrow_mut())?;
 
-        self.module = self.module.inflate(config)?;
+        let module = self.module.inflate(config)?;
 
-        self.whitespace_after_import = parse_simple_whitespace(
+        let whitespace_after_import = parse_simple_whitespace(
             config,
             &mut (*self.import_tok).whitespace_after.borrow_mut(),
         )?;
 
-        self.relative = inflate_dots(self.relative, config)?;
+        let mut relative = inflate_dots(self.relative, config)?;
+        let mut whitespace_before_import = Default::default();
 
-        if !self.relative.is_empty() && self.module.is_none() {
+        if !relative.is_empty() && module.is_none() {
             // For relative-only imports relocate the space after the final dot to be owned
             // by the import token.
             if let Some(Dot {
                 whitespace_after: ParenthesizableWhitespace::SimpleWhitespace(dot_ws),
                 ..
-            }) = self.relative.last_mut()
+            }) = relative.last_mut()
             {
-                swap(dot_ws, &mut self.whitespace_before_import);
+                swap(dot_ws, &mut whitespace_before_import);
             }
         } else {
-            self.whitespace_before_import = parse_simple_whitespace(
+            whitespace_before_import = parse_simple_whitespace(
                 config,
                 &mut (*self.import_tok).whitespace_before.borrow_mut(),
             )?;
         }
 
-        self.lpar = self.lpar.inflate(config)?;
-        self.names = self.names.inflate(config)?;
-        self.rpar = self.rpar.inflate(config)?;
+        let lpar = self.lpar.inflate(config)?;
+        let names = self.names.inflate(config)?;
+        let rpar = self.rpar.inflate(config)?;
 
-        self.semicolon = self.semicolon.inflate(config)?;
+        let semicolon = self.semicolon.inflate(config)?;
 
-        Ok(self)
+        Ok(Self::Inflated {
+            module,
+            names,
+            relative,
+            lpar,
+            rpar,
+            semicolon,
+            whitespace_after_from,
+            whitespace_before_import,
+            whitespace_after_import,
+        })
     }
 }
 
-fn inflate_dots<'a>(dots: Vec<Dot<'a>>, config: &Config<'a>) -> Result<Vec<Dot<'a>>> {
+fn inflate_dots<'r, 'a>(
+    dots: Vec<DeflatedDot<'r, 'a>>,
+    config: &Config<'a>,
+) -> Result<Vec<Dot<'a>>> {
     let mut ret: Vec<Dot<'a>> = vec![];
-    let mut last_tok: Option<TokenRef<'a>> = None;
-    for mut dot in dots {
+    let mut last_tok: Option<TokenRef<'r, 'a>> = None;
+    for dot in dots {
         if let Some(last_tokref) = &last_tok {
             // Consecutive dots having the same Token can only happen if `...` was
             // parsed as a single ELLIPSIS token. In this case the token's
             // whitespace_before belongs to the first dot, but the whitespace_after is
             // moved to the 3rd dot (by swapping it twice)
             if last_tokref.start_pos == dot.tok.start_pos {
+                let mut subsequent_dot = Dot {
+                    whitespace_before: Default::default(),
+                    whitespace_after: Default::default(),
+                };
                 swap(
                     &mut ret.last_mut().unwrap().whitespace_after,
-                    &mut dot.whitespace_after,
+                    &mut subsequent_dot.whitespace_after,
                 );
-                ret.push(dot);
+                ret.push(subsequent_dot);
                 continue;
             }
         }
-        last_tok = Some(dot.tok.clone());
+        last_tok = Some(dot.tok);
         ret.push(dot.inflate(config)?);
     }
     Ok(ret)
 }
 
-impl<'a> ImportFrom<'a> {
-    pub fn with_semicolon(self, semicolon: Option<Semicolon<'a>>) -> Self {
+impl<'r, 'a> DeflatedImportFrom<'r, 'a> {
+    pub fn with_semicolon(self, semicolon: Option<DeflatedSemicolon<'r, 'a>>) -> Self {
         Self { semicolon, ..self }
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(TryIntoPy))]
+#[cst_node]
 pub struct ImportAlias<'a> {
     pub name: NameOrAttribute<'a>,
     pub asname: Option<AsName<'a>>,
     pub comma: Option<Comma<'a>>,
 }
 
-impl<'a> Inflate<'a> for ImportAlias<'a> {
-    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
-        self.name = self.name.inflate(config)?;
-        self.asname = self.asname.inflate(config)?;
-        self.comma = self.comma.inflate(config)?;
-        Ok(self)
+impl<'r, 'a> Inflate<'a> for DeflatedImportAlias<'r, 'a> {
+    type Inflated = ImportAlias<'a>;
+    fn inflate(self, config: &Config<'a>) -> Result<Self::Inflated> {
+        let name = self.name.inflate(config)?;
+        let asname = self.asname.inflate(config)?;
+        let comma = self.comma.inflate(config)?;
+        Ok(Self::Inflated {
+            name,
+            asname,
+            comma,
+        })
     }
 }
 
-impl<'a> WithComma<'a> for ImportAlias<'a> {
-    fn with_comma(self, comma: Comma<'a>) -> ImportAlias<'a> {
+impl<'r, 'a> WithComma<'r, 'a> for DeflatedImportAlias<'r, 'a> {
+    fn with_comma(self, comma: DeflatedComma<'r, 'a>) -> Self {
         let comma = Some(comma);
         Self { comma, ..self }
     }
@@ -686,8 +730,7 @@ impl<'a> Codegen<'a> for ImportAlias<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(TryIntoPy))]
+#[cst_node]
 pub struct AsName<'a> {
     pub name: AssignTargetExpression<'a>,
     pub whitespace_before_as: ParenthesizableWhitespace<'a>,
@@ -705,23 +748,27 @@ impl<'a> Codegen<'a> for AsName<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for AsName<'a> {
-    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
-        self.whitespace_before_as = parse_parenthesizable_whitespace(
+impl<'r, 'a> Inflate<'a> for DeflatedAsName<'r, 'a> {
+    type Inflated = AsName<'a>;
+    fn inflate(self, config: &Config<'a>) -> Result<Self::Inflated> {
+        let whitespace_before_as = parse_parenthesizable_whitespace(
             config,
             &mut (*self.as_tok).whitespace_before.borrow_mut(),
         )?;
-        self.whitespace_after_as = parse_parenthesizable_whitespace(
+        let whitespace_after_as = parse_parenthesizable_whitespace(
             config,
             &mut (*self.as_tok).whitespace_after.borrow_mut(),
         )?;
-        self.name = self.name.inflate(config)?;
-        Ok(self)
+        let name = self.name.inflate(config)?;
+        Ok(Self::Inflated {
+            name,
+            whitespace_before_as,
+            whitespace_after_as,
+        })
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Inflate)]
-#[cfg_attr(feature = "py", derive(TryIntoPy))]
+#[cst_node(Inflate)]
 pub enum ImportNames<'a> {
     Star(ImportStar),
     Aliases(Vec<ImportAlias<'a>>),
@@ -743,8 +790,7 @@ impl<'a> Codegen<'a> for ImportNames<'a> {
     }
 }
 
-#[derive(Debug, Eq, PartialEq, Clone)]
-#[cfg_attr(feature = "py", derive(TryIntoPy))]
+#[cst_node]
 pub struct FunctionDef<'a> {
     pub name: Name<'a>,
     pub params: Parameters<'a>,
@@ -766,8 +812,8 @@ pub struct FunctionDef<'a> {
     pub(crate) colon_tok: TokenRef<'a>,
 }
 
-impl<'a> FunctionDef<'a> {
-    pub fn with_decorators(self, decorators: Vec<Decorator<'a>>) -> Self {
+impl<'r, 'a> DeflatedFunctionDef<'r, 'a> {
+    pub fn with_decorators(self, decorators: Vec<DeflatedDecorator<'r, 'a>>) -> Self {
         Self { decorators, ..self }
     }
 }
@@ -807,9 +853,10 @@ impl<'a> Codegen<'a> for FunctionDef<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for FunctionDef<'a> {
-    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
-        self.decorators = self.decorators.inflate(config)?;
+impl<'r, 'a> Inflate<'a> for DeflatedFunctionDef<'r, 'a> {
+    type Inflated = FunctionDef<'a>;
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self::Inflated> {
+        let mut decorators = self.decorators.inflate(config)?;
         let (asynchronous, leading_lines) = if let Some(asy) = self.async_tok.as_mut() {
             let whitespace_after =
                 parse_parenthesizable_whitespace(config, &mut asy.whitespace_after.borrow_mut())?;
@@ -825,8 +872,7 @@ impl<'a> Inflate<'a> for FunctionDef<'a> {
             (None, None)
         };
 
-        self.asynchronous = asynchronous;
-        let leading_lines = if let Some(ll) = leading_lines {
+        let mut leading_lines = if let Some(ll) = leading_lines {
             ll
         } else {
             parse_empty_lines(
@@ -836,41 +882,54 @@ impl<'a> Inflate<'a> for FunctionDef<'a> {
             )?
         };
 
-        self.leading_lines = leading_lines;
-        if let Some(dec) = self.decorators.first_mut() {
-            swap(&mut self.lines_after_decorators, &mut self.leading_lines);
-            swap(&mut dec.leading_lines, &mut self.leading_lines);
+        let mut lines_after_decorators = Default::default();
+
+        if let Some(dec) = decorators.first_mut() {
+            swap(&mut lines_after_decorators, &mut leading_lines);
+            swap(&mut dec.leading_lines, &mut leading_lines);
         }
 
-        self.whitespace_after_def =
+        let whitespace_after_def =
             parse_simple_whitespace(config, &mut (*self.def_tok).whitespace_after.borrow_mut())?;
 
-        self.name = self.name.inflate(config)?;
-        self.whitespace_after_name = parse_simple_whitespace(
+        let name = self.name.inflate(config)?;
+        let whitespace_after_name = parse_simple_whitespace(
             config,
             &mut (*self.open_paren_tok).whitespace_before.borrow_mut(),
         )?;
 
-        self.whitespace_before_params = parse_parenthesizable_whitespace(
+        let whitespace_before_params = parse_parenthesizable_whitespace(
             config,
             &mut (*self.open_paren_tok).whitespace_after.borrow_mut(),
         )?;
-        self.params = self.params.inflate(config)?;
-        adjust_parameters_trailing_whitespace(config, &mut self.params, &self.close_paren_tok)?;
+        let mut params = self.params.inflate(config)?;
+        adjust_parameters_trailing_whitespace(config, &mut params, &self.close_paren_tok)?;
 
-        self.returns = self.returns.inflate(config)?;
-        self.whitespace_before_colon = parse_simple_whitespace(
+        let returns = self.returns.inflate(config)?;
+        let whitespace_before_colon = parse_simple_whitespace(
             config,
             &mut (*self.colon_tok).whitespace_before.borrow_mut(),
         )?;
 
-        self.body = self.body.inflate(config)?;
-        Ok(self)
+        let body = self.body.inflate(config)?;
+        Ok(Self::Inflated {
+            name,
+            params,
+            body,
+            decorators,
+            returns,
+            asynchronous,
+            leading_lines,
+            lines_after_decorators,
+            whitespace_after_def,
+            whitespace_after_name,
+            whitespace_before_params,
+            whitespace_before_colon,
+        })
     }
 }
 
-#[derive(Debug, Eq, PartialEq, Clone)]
-#[cfg_attr(feature = "py", derive(TryIntoPy))]
+#[cst_node]
 pub struct Decorator<'a> {
     pub decorator: Expression<'a>,
     pub leading_lines: Vec<EmptyLine<'a>>,
@@ -894,26 +953,31 @@ impl<'a> Codegen<'a> for Decorator<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for Decorator<'a> {
-    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
-        self.leading_lines = parse_empty_lines(
+impl<'r, 'a> Inflate<'a> for DeflatedDecorator<'r, 'a> {
+    type Inflated = Decorator<'a>;
+    fn inflate(self, config: &Config<'a>) -> Result<Self::Inflated> {
+        let leading_lines = parse_empty_lines(
             config,
             &mut (*self.at_tok).whitespace_before.borrow_mut(),
             None,
         )?;
-        self.whitespace_after_at =
+        let whitespace_after_at =
             parse_simple_whitespace(config, &mut (*self.at_tok).whitespace_after.borrow_mut())?;
-        self.decorator = self.decorator.inflate(config)?;
-        self.trailing_whitespace = parse_trailing_whitespace(
+        let decorator = self.decorator.inflate(config)?;
+        let trailing_whitespace = parse_trailing_whitespace(
             config,
             &mut (*self.newline_tok).whitespace_before.borrow_mut(),
         )?;
-        Ok(self)
+        Ok(Self::Inflated {
+            decorator,
+            leading_lines,
+            whitespace_after_at,
+            trailing_whitespace,
+        })
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(TryIntoPy))]
+#[cst_node]
 pub struct If<'a> {
     /// The expression that, when evaluated, should give us a truthy value
     pub test: Expression<'a>,
@@ -960,37 +1024,44 @@ impl<'a> Codegen<'a> for If<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for If<'a> {
-    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
-        self.leading_lines = parse_empty_lines(
+impl<'r, 'a> Inflate<'a> for DeflatedIf<'r, 'a> {
+    type Inflated = If<'a>;
+    fn inflate(self, config: &Config<'a>) -> Result<Self::Inflated> {
+        let leading_lines = parse_empty_lines(
             config,
             &mut (*self.if_tok).whitespace_before.borrow_mut(),
             None,
         )?;
-        self.whitespace_before_test =
+        let whitespace_before_test =
             parse_simple_whitespace(config, &mut (*self.if_tok).whitespace_after.borrow_mut())?;
-        self.test = self.test.inflate(config)?;
-        self.whitespace_after_test = parse_simple_whitespace(
+        let test = self.test.inflate(config)?;
+        let whitespace_after_test = parse_simple_whitespace(
             config,
             &mut (*self.colon_tok).whitespace_before.borrow_mut(),
         )?;
-        self.body = self.body.inflate(config)?;
-        self.orelse = self.orelse.inflate(config)?;
+        let body = self.body.inflate(config)?;
+        let orelse = self.orelse.inflate(config)?;
 
-        Ok(self)
+        Ok(Self::Inflated {
+            test,
+            body,
+            orelse,
+            leading_lines,
+            whitespace_before_test,
+            whitespace_after_test,
+            is_elif: self.is_elif,
+        })
     }
 }
 
 #[allow(clippy::large_enum_variant)]
-#[derive(Debug, PartialEq, Eq, Clone, Inflate, Codegen)]
-#[cfg_attr(feature = "py", derive(TryIntoPy))]
+#[cst_node(Inflate, Codegen)]
 pub enum OrElse<'a> {
     Elif(If<'a>),
     Else(Else<'a>),
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(TryIntoPy))]
+#[cst_node]
 pub struct Else<'a> {
     pub body: Suite<'a>,
     /// Sequence of empty lines appearing before this compound statement line.
@@ -1016,25 +1087,29 @@ impl<'a> Codegen<'a> for Else<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for Else<'a> {
-    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
-        self.leading_lines = parse_empty_lines(
+impl<'r, 'a> Inflate<'a> for DeflatedElse<'r, 'a> {
+    type Inflated = Else<'a>;
+    fn inflate(self, config: &Config<'a>) -> Result<Self::Inflated> {
+        let leading_lines = parse_empty_lines(
             config,
             &mut (*self.else_tok).whitespace_before.borrow_mut(),
             None,
         )?;
-        self.whitespace_before_colon = parse_simple_whitespace(
+        let whitespace_before_colon = parse_simple_whitespace(
             config,
             &mut (*self.colon_tok).whitespace_before.borrow_mut(),
         )?;
-        self.body = self.body.inflate(config)?;
+        let body = self.body.inflate(config)?;
 
-        Ok(self)
+        Ok(Self::Inflated {
+            body,
+            leading_lines,
+            whitespace_before_colon,
+        })
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(TryIntoPy))]
+#[cst_node]
 pub struct Annotation<'a> {
     pub annotation: Expression<'a>,
     pub whitespace_before_indicator: Option<ParenthesizableWhitespace<'a>>,
@@ -1059,23 +1134,27 @@ impl<'a> Annotation<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for Annotation<'a> {
-    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
-        self.whitespace_before_indicator = Some(parse_parenthesizable_whitespace(
+impl<'r, 'a> Inflate<'a> for DeflatedAnnotation<'r, 'a> {
+    type Inflated = Annotation<'a>;
+    fn inflate(self, config: &Config<'a>) -> Result<Self::Inflated> {
+        let whitespace_before_indicator = Some(parse_parenthesizable_whitespace(
             config,
             &mut (*self.tok).whitespace_before.borrow_mut(),
         )?);
-        self.whitespace_after_indicator = parse_parenthesizable_whitespace(
+        let whitespace_after_indicator = parse_parenthesizable_whitespace(
             config,
             &mut (*self.tok).whitespace_after.borrow_mut(),
         )?;
-        self.annotation = self.annotation.inflate(config)?;
-        Ok(self)
+        let annotation = self.annotation.inflate(config)?;
+        Ok(Self::Inflated {
+            annotation,
+            whitespace_before_indicator,
+            whitespace_after_indicator,
+        })
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(TryIntoPy))]
+#[cst_node]
 pub struct AnnAssign<'a> {
     pub target: AssignTargetExpression<'a>,
     pub annotation: Annotation<'a>,
@@ -1103,25 +1182,31 @@ impl<'a> Codegen<'a> for AnnAssign<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for AnnAssign<'a> {
-    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
-        self.target = self.target.inflate(config)?;
-        self.annotation = self.annotation.inflate(config)?;
-        self.value = self.value.inflate(config)?;
-        self.equal = self.equal.inflate(config)?;
-        self.semicolon = self.semicolon.inflate(config)?;
-        Ok(self)
+impl<'r, 'a> Inflate<'a> for DeflatedAnnAssign<'r, 'a> {
+    type Inflated = AnnAssign<'a>;
+    fn inflate(self, config: &Config<'a>) -> Result<Self::Inflated> {
+        let target = self.target.inflate(config)?;
+        let annotation = self.annotation.inflate(config)?;
+        let value = self.value.inflate(config)?;
+        let equal = self.equal.inflate(config)?;
+        let semicolon = self.semicolon.inflate(config)?;
+        Ok(Self::Inflated {
+            target,
+            annotation,
+            value,
+            equal,
+            semicolon,
+        })
     }
 }
 
-impl<'a> AnnAssign<'a> {
-    pub fn with_semicolon(self, semicolon: Option<Semicolon<'a>>) -> Self {
+impl<'r, 'a> DeflatedAnnAssign<'r, 'a> {
+    pub fn with_semicolon(self, semicolon: Option<DeflatedSemicolon<'r, 'a>>) -> Self {
         Self { semicolon, ..self }
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(TryIntoPy))]
+#[cst_node]
 pub struct Return<'a> {
     pub value: Option<Expression<'a>>,
     pub whitespace_after_return: Option<SimpleWhitespace<'a>>,
@@ -1148,32 +1233,36 @@ impl<'a> Codegen<'a> for Return<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for Return<'a> {
-    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
-        if self.value.is_some() {
-            self.whitespace_after_return = Some(parse_simple_whitespace(
+impl<'r, 'a> Inflate<'a> for DeflatedReturn<'r, 'a> {
+    type Inflated = Return<'a>;
+    fn inflate(self, config: &Config<'a>) -> Result<Self::Inflated> {
+        let whitespace_after_return = if self.value.is_some() {
+            Some(parse_simple_whitespace(
                 config,
                 &mut (*self.return_tok).whitespace_after.borrow_mut(),
-            )?);
+            )?)
         } else {
             // otherwise space is owned by semicolon or small statement
             // whitespace is not None to preserve a quirk of the pure python parser
-            self.whitespace_after_return = Some(Default::default())
-        }
-        self.value = self.value.inflate(config)?;
-        self.semicolon = self.semicolon.inflate(config)?;
-        Ok(self)
+            Some(Default::default())
+        };
+        let value = self.value.inflate(config)?;
+        let semicolon = self.semicolon.inflate(config)?;
+        Ok(Self::Inflated {
+            value,
+            whitespace_after_return,
+            semicolon,
+        })
     }
 }
 
-impl<'a> Return<'a> {
-    pub fn with_semicolon(self, semicolon: Option<Semicolon<'a>>) -> Self {
+impl<'r, 'a> DeflatedReturn<'r, 'a> {
+    pub fn with_semicolon(self, semicolon: Option<DeflatedSemicolon<'r, 'a>>) -> Self {
         Self { semicolon, ..self }
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(TryIntoPy))]
+#[cst_node]
 pub struct Assert<'a> {
     pub test: Expression<'a>,
     pub msg: Option<Expression<'a>>,
@@ -1202,30 +1291,36 @@ impl<'a> Codegen<'a> for Assert<'a> {
         }
     }
 }
-impl<'a> Inflate<'a> for Assert<'a> {
-    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
-        self.whitespace_after_assert = parse_simple_whitespace(
+impl<'r, 'a> Inflate<'a> for DeflatedAssert<'r, 'a> {
+    type Inflated = Assert<'a>;
+    fn inflate(self, config: &Config<'a>) -> Result<Self::Inflated> {
+        let whitespace_after_assert = parse_simple_whitespace(
             config,
             &mut (*self.assert_tok).whitespace_after.borrow_mut(),
         )?;
 
-        self.test = self.test.inflate(config)?;
-        self.comma = self.comma.inflate(config)?;
-        self.msg = self.msg.inflate(config)?;
+        let test = self.test.inflate(config)?;
+        let comma = self.comma.inflate(config)?;
+        let msg = self.msg.inflate(config)?;
 
-        self.semicolon = self.semicolon.inflate(config)?;
-        Ok(self)
+        let semicolon = self.semicolon.inflate(config)?;
+        Ok(Self::Inflated {
+            test,
+            msg,
+            comma,
+            whitespace_after_assert,
+            semicolon,
+        })
     }
 }
 
-impl<'a> Assert<'a> {
-    pub fn with_semicolon(self, semicolon: Option<Semicolon<'a>>) -> Self {
+impl<'r, 'a> DeflatedAssert<'r, 'a> {
+    pub fn with_semicolon(self, semicolon: Option<DeflatedSemicolon<'r, 'a>>) -> Self {
         Self { semicolon, ..self }
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(TryIntoPy))]
+#[cst_node]
 pub struct Raise<'a> {
     pub exc: Option<Expression<'a>>,
     pub cause: Option<From<'a>>,
@@ -1235,26 +1330,34 @@ pub struct Raise<'a> {
     pub(crate) raise_tok: TokenRef<'a>,
 }
 
-impl<'a> Inflate<'a> for Raise<'a> {
-    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
-        if self.exc.is_some() {
-            self.whitespace_after_raise = Some(parse_simple_whitespace(
+impl<'r, 'a> Inflate<'a> for DeflatedRaise<'r, 'a> {
+    type Inflated = Raise<'a>;
+    fn inflate(self, config: &Config<'a>) -> Result<Self::Inflated> {
+        let whitespace_after_raise = if self.exc.is_some() {
+            Some(parse_simple_whitespace(
                 config,
                 &mut (*self.raise_tok).whitespace_after.borrow_mut(),
-            )?);
-        }
+            )?)
+        } else {
+            Default::default()
+        };
 
-        self.exc = self.exc.inflate(config)?;
-        self.cause = self.cause.inflate(config)?;
-        if self.exc.is_none() {
-            if let Some(cause) = self.cause.as_mut() {
+        let exc = self.exc.inflate(config)?;
+        let mut cause = self.cause.inflate(config)?;
+        if exc.is_none() {
+            if let Some(cause) = cause.as_mut() {
                 // in `raise from`, `raise` owns the shared whitespace
                 cause.whitespace_before_from = None;
             }
         }
-        self.semicolon = self.semicolon.inflate(config)?;
+        let semicolon = self.semicolon.inflate(config)?;
 
-        Ok(self)
+        Ok(Self::Inflated {
+            exc,
+            cause,
+            whitespace_after_raise,
+            semicolon,
+        })
     }
 }
 
@@ -1281,24 +1384,24 @@ impl<'a> Codegen<'a> for Raise<'a> {
     }
 }
 
-impl<'a> Raise<'a> {
-    pub fn with_semicolon(self, semicolon: Option<Semicolon<'a>>) -> Self {
+impl<'r, 'a> DeflatedRaise<'r, 'a> {
+    pub fn with_semicolon(self, semicolon: Option<DeflatedSemicolon<'r, 'a>>) -> Self {
         Self { semicolon, ..self }
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(TryIntoPy))]
+#[cst_node]
 pub struct NameItem<'a> {
     pub name: Name<'a>,
     pub comma: Option<Comma<'a>>,
 }
 
-impl<'a> Inflate<'a> for NameItem<'a> {
-    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
-        self.name = self.name.inflate(config)?;
-        self.comma = self.comma.inflate(config)?;
-        Ok(self)
+impl<'r, 'a> Inflate<'a> for DeflatedNameItem<'r, 'a> {
+    type Inflated = NameItem<'a>;
+    fn inflate(self, config: &Config<'a>) -> Result<Self::Inflated> {
+        let name = self.name.inflate(config)?;
+        let comma = self.comma.inflate(config)?;
+        Ok(Self::Inflated { name, comma })
     }
 }
 
@@ -1313,8 +1416,7 @@ impl<'a> NameItem<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(TryIntoPy))]
+#[cst_node]
 pub struct Global<'a> {
     pub names: Vec<NameItem<'a>>,
     pub whitespace_after_global: SimpleWhitespace<'a>,
@@ -1323,13 +1425,18 @@ pub struct Global<'a> {
     pub(crate) tok: TokenRef<'a>,
 }
 
-impl<'a> Inflate<'a> for Global<'a> {
-    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
-        self.whitespace_after_global =
+impl<'r, 'a> Inflate<'a> for DeflatedGlobal<'r, 'a> {
+    type Inflated = Global<'a>;
+    fn inflate(self, config: &Config<'a>) -> Result<Self::Inflated> {
+        let whitespace_after_global =
             parse_simple_whitespace(config, &mut (*self.tok).whitespace_after.borrow_mut())?;
-        self.names = self.names.inflate(config)?;
-        self.semicolon = self.semicolon.inflate(config)?;
-        Ok(self)
+        let names = self.names.inflate(config)?;
+        let semicolon = self.semicolon.inflate(config)?;
+        Ok(Self::Inflated {
+            names,
+            whitespace_after_global,
+            semicolon,
+        })
     }
 }
 
@@ -1348,14 +1455,13 @@ impl<'a> Codegen<'a> for Global<'a> {
     }
 }
 
-impl<'a> Global<'a> {
-    pub fn with_semicolon(self, semicolon: Option<Semicolon<'a>>) -> Self {
+impl<'r, 'a> DeflatedGlobal<'r, 'a> {
+    pub fn with_semicolon(self, semicolon: Option<DeflatedSemicolon<'r, 'a>>) -> Self {
         Self { semicolon, ..self }
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(TryIntoPy))]
+#[cst_node]
 pub struct Nonlocal<'a> {
     pub names: Vec<NameItem<'a>>,
     pub whitespace_after_nonlocal: SimpleWhitespace<'a>,
@@ -1364,13 +1470,18 @@ pub struct Nonlocal<'a> {
     pub(crate) tok: TokenRef<'a>,
 }
 
-impl<'a> Inflate<'a> for Nonlocal<'a> {
-    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
-        self.whitespace_after_nonlocal =
+impl<'r, 'a> Inflate<'a> for DeflatedNonlocal<'r, 'a> {
+    type Inflated = Nonlocal<'a>;
+    fn inflate(self, config: &Config<'a>) -> Result<Self::Inflated> {
+        let whitespace_after_nonlocal =
             parse_simple_whitespace(config, &mut (*self.tok).whitespace_after.borrow_mut())?;
-        self.names = self.names.inflate(config)?;
-        self.semicolon = self.semicolon.inflate(config)?;
-        Ok(self)
+        let names = self.names.inflate(config)?;
+        let semicolon = self.semicolon.inflate(config)?;
+        Ok(Self::Inflated {
+            names,
+            whitespace_after_nonlocal,
+            semicolon,
+        })
     }
 }
 
@@ -1389,14 +1500,13 @@ impl<'a> Codegen<'a> for Nonlocal<'a> {
     }
 }
 
-impl<'a> Nonlocal<'a> {
-    pub fn with_semicolon(self, semicolon: Option<Semicolon<'a>>) -> Self {
+impl<'r, 'a> DeflatedNonlocal<'r, 'a> {
+    pub fn with_semicolon(self, semicolon: Option<DeflatedSemicolon<'r, 'a>>) -> Self {
         Self { semicolon, ..self }
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(TryIntoPy))]
+#[cst_node]
 pub struct For<'a> {
     pub target: AssignTargetExpression<'a>,
     pub iter: Expression<'a>,
@@ -1442,8 +1552,9 @@ impl<'a> Codegen<'a> for For<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for For<'a> {
-    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+impl<'r, 'a> Inflate<'a> for DeflatedFor<'r, 'a> {
+    type Inflated = For<'a>;
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self::Inflated> {
         let (asynchronous, leading_lines) = if let Some(asy) = self.async_tok.as_mut() {
             let whitespace_after =
                 parse_parenthesizable_whitespace(config, &mut asy.whitespace_after.borrow_mut())?;
@@ -1458,7 +1569,7 @@ impl<'a> Inflate<'a> for For<'a> {
         } else {
             (None, None)
         };
-        self.leading_lines = if let Some(ll) = leading_lines {
+        let leading_lines = if let Some(ll) = leading_lines {
             ll
         } else {
             parse_empty_lines(
@@ -1467,29 +1578,38 @@ impl<'a> Inflate<'a> for For<'a> {
                 None,
             )?
         };
-        self.asynchronous = asynchronous;
-        self.whitespace_after_for =
+        let whitespace_after_for =
             parse_simple_whitespace(config, &mut (*self.for_tok).whitespace_after.borrow_mut())?;
-        self.target = self.target.inflate(config)?;
-        self.whitespace_before_in =
+        let target = self.target.inflate(config)?;
+        let whitespace_before_in =
             parse_simple_whitespace(config, &mut (*self.in_tok).whitespace_before.borrow_mut())?;
-        self.whitespace_after_in =
+        let whitespace_after_in =
             parse_simple_whitespace(config, &mut (*self.in_tok).whitespace_after.borrow_mut())?;
-        self.iter = self.iter.inflate(config)?;
-        self.whitespace_before_colon = parse_simple_whitespace(
+        let iter = self.iter.inflate(config)?;
+        let whitespace_before_colon = parse_simple_whitespace(
             config,
             &mut (*self.colon_tok).whitespace_before.borrow_mut(),
         )?;
 
-        self.body = self.body.inflate(config)?;
-        self.orelse = self.orelse.inflate(config)?;
+        let body = self.body.inflate(config)?;
+        let orelse = self.orelse.inflate(config)?;
 
-        Ok(self)
+        Ok(Self::Inflated {
+            target,
+            iter,
+            body,
+            orelse,
+            asynchronous,
+            leading_lines,
+            whitespace_after_for,
+            whitespace_before_in,
+            whitespace_after_in,
+            whitespace_before_colon,
+        })
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(TryIntoPy))]
+#[cst_node]
 pub struct While<'a> {
     pub test: Expression<'a>,
     pub body: Suite<'a>,
@@ -1521,29 +1641,36 @@ impl<'a> Codegen<'a> for While<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for While<'a> {
-    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
-        self.leading_lines = parse_empty_lines(
+impl<'r, 'a> Inflate<'a> for DeflatedWhile<'r, 'a> {
+    type Inflated = While<'a>;
+    fn inflate(self, config: &Config<'a>) -> Result<Self::Inflated> {
+        let leading_lines = parse_empty_lines(
             config,
             &mut (*self.while_tok).whitespace_before.borrow_mut(),
             None,
         )?;
-        self.whitespace_after_while =
+        let whitespace_after_while =
             parse_simple_whitespace(config, &mut (*self.while_tok).whitespace_after.borrow_mut())?;
-        self.test = self.test.inflate(config)?;
-        self.whitespace_before_colon = parse_simple_whitespace(
+        let test = self.test.inflate(config)?;
+        let whitespace_before_colon = parse_simple_whitespace(
             config,
             &mut (*self.colon_tok).whitespace_before.borrow_mut(),
         )?;
-        self.body = self.body.inflate(config)?;
-        self.orelse = self.orelse.inflate(config)?;
+        let body = self.body.inflate(config)?;
+        let orelse = self.orelse.inflate(config)?;
 
-        Ok(self)
+        Ok(Self::Inflated {
+            test,
+            body,
+            orelse,
+            leading_lines,
+            whitespace_after_while,
+            whitespace_before_colon,
+        })
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(TryIntoPy))]
+#[cst_node]
 pub struct ClassDef<'a> {
     pub name: Name<'a>,
     pub body: Suite<'a>,
@@ -1559,7 +1686,8 @@ pub struct ClassDef<'a> {
     pub whitespace_before_colon: SimpleWhitespace<'a>,
 
     pub(crate) class_tok: TokenRef<'a>,
-    pub(crate) parens_tok: Option<(TokenRef<'a>, TokenRef<'a>)>,
+    pub(crate) lpar_tok: Option<TokenRef<'a>>,
+    pub(crate) rpar_tok: Option<TokenRef<'a>>,
     pub(crate) colon_tok: TokenRef<'a>,
 }
 
@@ -1606,51 +1734,69 @@ impl<'a> Codegen<'a> for ClassDef<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for ClassDef<'a> {
-    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
-        self.leading_lines = parse_empty_lines(
+impl<'r, 'a> Inflate<'a> for DeflatedClassDef<'r, 'a> {
+    type Inflated = ClassDef<'a>;
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self::Inflated> {
+        let mut leading_lines = parse_empty_lines(
             config,
             &mut (*self.class_tok).whitespace_before.borrow_mut(),
             None,
         )?;
-        self.decorators = self.decorators.inflate(config)?;
-        if let Some(dec) = self.decorators.first_mut() {
-            swap(&mut self.lines_after_decorators, &mut self.leading_lines);
-            swap(&mut dec.leading_lines, &mut self.leading_lines);
+        let mut decorators = self.decorators.inflate(config)?;
+        let mut lines_after_decorators = Default::default();
+        if let Some(dec) = decorators.first_mut() {
+            swap(&mut lines_after_decorators, &mut leading_lines);
+            swap(&mut dec.leading_lines, &mut leading_lines);
         }
 
-        self.whitespace_after_class =
+        let whitespace_after_class =
             parse_simple_whitespace(config, &mut (*self.class_tok).whitespace_after.borrow_mut())?;
-        self.name = self.name.inflate(config)?;
+        let name = self.name.inflate(config)?;
 
-        if let Some((lpar_tok, _)) = self.parens_tok.as_mut() {
-            self.whitespace_after_name =
-                parse_simple_whitespace(config, &mut lpar_tok.whitespace_before.borrow_mut())?;
-            self.lpar = self.lpar.map(|lpar| lpar.inflate(config)).transpose()?;
-            self.bases = self.bases.inflate(config)?;
-            self.keywords = self.keywords.inflate(config)?;
-            self.rpar = self.rpar.map(|rpar| rpar.inflate(config)).transpose()?;
-            // TODO: set whitespace_after_arg for last arg?
-        }
+        let (whitespace_after_name, lpar, bases, keywords, rpar) =
+            if let Some(lpar_tok) = self.lpar_tok.as_mut() {
+                (
+                    parse_simple_whitespace(config, &mut lpar_tok.whitespace_before.borrow_mut())?,
+                    self.lpar.map(|lpar| lpar.inflate(config)).transpose()?,
+                    self.bases.inflate(config)?,
+                    self.keywords.inflate(config)?,
+                    self.rpar.map(|rpar| rpar.inflate(config)).transpose()?,
+                    // TODO: set whitespace_after_arg for last arg?
+                )
+            } else {
+                Default::default()
+            };
 
-        self.whitespace_before_colon = parse_simple_whitespace(
+        let whitespace_before_colon = parse_simple_whitespace(
             config,
             &mut (*self.colon_tok).whitespace_before.borrow_mut(),
         )?;
-        self.body = self.body.inflate(config)?;
+        let body = self.body.inflate(config)?;
 
-        Ok(self)
+        Ok(Self::Inflated {
+            name,
+            body,
+            bases,
+            keywords,
+            decorators,
+            lpar,
+            rpar,
+            leading_lines,
+            lines_after_decorators,
+            whitespace_after_class,
+            whitespace_after_name,
+            whitespace_before_colon,
+        })
     }
 }
 
-impl<'a> ClassDef<'a> {
-    pub fn with_decorators(self, decorators: Vec<Decorator<'a>>) -> Self {
+impl<'r, 'a> DeflatedClassDef<'r, 'a> {
+    pub fn with_decorators(self, decorators: Vec<DeflatedDecorator<'r, 'a>>) -> Self {
         Self { decorators, ..self }
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(TryIntoPy))]
+#[cst_node]
 pub struct Finally<'a> {
     pub body: Suite<'a>,
     pub leading_lines: Vec<EmptyLine<'a>>,
@@ -1674,24 +1820,28 @@ impl<'a> Codegen<'a> for Finally<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for Finally<'a> {
-    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
-        self.leading_lines = parse_empty_lines(
+impl<'r, 'a> Inflate<'a> for DeflatedFinally<'r, 'a> {
+    type Inflated = Finally<'a>;
+    fn inflate(self, config: &Config<'a>) -> Result<Self::Inflated> {
+        let leading_lines = parse_empty_lines(
             config,
             &mut (*self.finally_tok).whitespace_before.borrow_mut(),
             None,
         )?;
-        self.whitespace_before_colon = parse_simple_whitespace(
+        let whitespace_before_colon = parse_simple_whitespace(
             config,
             &mut (*self.colon_tok).whitespace_before.borrow_mut(),
         )?;
-        self.body = self.body.inflate(config)?;
-        Ok(self)
+        let body = self.body.inflate(config)?;
+        Ok(Self::Inflated {
+            body,
+            leading_lines,
+            whitespace_before_colon,
+        })
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(TryIntoPy))]
+#[cst_node]
 pub struct ExceptHandler<'a> {
     pub body: Suite<'a>,
     pub r#type: Option<Expression<'a>>,
@@ -1725,34 +1875,43 @@ impl<'a> Codegen<'a> for ExceptHandler<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for ExceptHandler<'a> {
-    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
-        self.leading_lines = parse_empty_lines(
+impl<'r, 'a> Inflate<'a> for DeflatedExceptHandler<'r, 'a> {
+    type Inflated = ExceptHandler<'a>;
+    fn inflate(self, config: &Config<'a>) -> Result<Self::Inflated> {
+        let leading_lines = parse_empty_lines(
             config,
             &mut (*self.except_tok).whitespace_before.borrow_mut(),
             None,
         )?;
-        self.whitespace_after_except = parse_simple_whitespace(
+        let whitespace_after_except = parse_simple_whitespace(
             config,
             &mut (*self.except_tok).whitespace_after.borrow_mut(),
         )?;
 
-        self.r#type = self.r#type.inflate(config)?;
-        self.name = self.name.inflate(config)?;
-        if self.name.is_some() {
-            self.whitespace_before_colon = parse_simple_whitespace(
+        let r#type = self.r#type.inflate(config)?;
+        let name = self.name.inflate(config)?;
+        let whitespace_before_colon = if name.is_some() {
+            parse_simple_whitespace(
                 config,
                 &mut (*self.colon_tok).whitespace_before.borrow_mut(),
-            )?;
-        }
+            )?
+        } else {
+            Default::default()
+        };
 
-        self.body = self.body.inflate(config)?;
-        Ok(self)
+        let body = self.body.inflate(config)?;
+        Ok(Self::Inflated {
+            body,
+            r#type,
+            name,
+            leading_lines,
+            whitespace_after_except,
+            whitespace_before_colon,
+        })
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(TryIntoPy))]
+#[cst_node]
 pub struct ExceptStarHandler<'a> {
     pub body: Suite<'a>,
     pub r#type: Expression<'a>,
@@ -1788,34 +1947,41 @@ impl<'a> Codegen<'a> for ExceptStarHandler<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for ExceptStarHandler<'a> {
-    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
-        self.leading_lines = parse_empty_lines(
+impl<'r, 'a> Inflate<'a> for DeflatedExceptStarHandler<'r, 'a> {
+    type Inflated = ExceptStarHandler<'a>;
+    fn inflate(self, config: &Config<'a>) -> Result<Self::Inflated> {
+        let leading_lines = parse_empty_lines(
             config,
             &mut self.except_tok.whitespace_before.borrow_mut(),
             None,
         )?;
-        self.whitespace_after_except =
+        let whitespace_after_except =
             parse_simple_whitespace(config, &mut self.except_tok.whitespace_after.borrow_mut())?;
-        self.whitespace_after_star =
+        let whitespace_after_star =
             parse_simple_whitespace(config, &mut self.star_tok.whitespace_after.borrow_mut())?;
 
-        self.r#type = self.r#type.inflate(config)?;
-        self.name = self.name.inflate(config)?;
-        if self.name.is_some() {
-            self.whitespace_before_colon = parse_simple_whitespace(
-                config,
-                &mut self.colon_tok.whitespace_before.borrow_mut(),
-            )?;
-        }
+        let r#type = self.r#type.inflate(config)?;
+        let name = self.name.inflate(config)?;
+        let whitespace_before_colon = if name.is_some() {
+            parse_simple_whitespace(config, &mut self.colon_tok.whitespace_before.borrow_mut())?
+        } else {
+            Default::default()
+        };
 
-        self.body = self.body.inflate(config)?;
-        Ok(self)
+        let body = self.body.inflate(config)?;
+        Ok(Self::Inflated {
+            body,
+            r#type,
+            name,
+            leading_lines,
+            whitespace_after_except,
+            whitespace_after_star,
+            whitespace_before_colon,
+        })
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(TryIntoPy))]
+#[cst_node]
 pub struct Try<'a> {
     pub body: Suite<'a>,
     pub handlers: Vec<ExceptHandler<'a>>,
@@ -1850,25 +2016,32 @@ impl<'a> Codegen<'a> for Try<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for Try<'a> {
-    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
-        self.leading_lines = parse_empty_lines(
+impl<'r, 'a> Inflate<'a> for DeflatedTry<'r, 'a> {
+    type Inflated = Try<'a>;
+    fn inflate(self, config: &Config<'a>) -> Result<Self::Inflated> {
+        let leading_lines = parse_empty_lines(
             config,
             &mut (*self.try_tok).whitespace_before.borrow_mut(),
             None,
         )?;
-        self.whitespace_before_colon =
+        let whitespace_before_colon =
             parse_simple_whitespace(config, &mut (*self.try_tok).whitespace_after.borrow_mut())?;
-        self.body = self.body.inflate(config)?;
-        self.handlers = self.handlers.inflate(config)?;
-        self.orelse = self.orelse.inflate(config)?;
-        self.finalbody = self.finalbody.inflate(config)?;
-        Ok(self)
+        let body = self.body.inflate(config)?;
+        let handlers = self.handlers.inflate(config)?;
+        let orelse = self.orelse.inflate(config)?;
+        let finalbody = self.finalbody.inflate(config)?;
+        Ok(Self::Inflated {
+            body,
+            handlers,
+            orelse,
+            finalbody,
+            leading_lines,
+            whitespace_before_colon,
+        })
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(TryIntoPy))]
+#[cst_node]
 pub struct TryStar<'a> {
     pub body: Suite<'a>,
     pub handlers: Vec<ExceptStarHandler<'a>>,
@@ -1903,25 +2076,32 @@ impl<'a> Codegen<'a> for TryStar<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for TryStar<'a> {
-    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
-        self.leading_lines = parse_empty_lines(
+impl<'r, 'a> Inflate<'a> for DeflatedTryStar<'r, 'a> {
+    type Inflated = TryStar<'a>;
+    fn inflate(self, config: &Config<'a>) -> Result<Self::Inflated> {
+        let leading_lines = parse_empty_lines(
             config,
             &mut (*self.try_tok).whitespace_before.borrow_mut(),
             None,
         )?;
-        self.whitespace_before_colon =
+        let whitespace_before_colon =
             parse_simple_whitespace(config, &mut (*self.try_tok).whitespace_after.borrow_mut())?;
-        self.body = self.body.inflate(config)?;
-        self.handlers = self.handlers.inflate(config)?;
-        self.orelse = self.orelse.inflate(config)?;
-        self.finalbody = self.finalbody.inflate(config)?;
-        Ok(self)
+        let body = self.body.inflate(config)?;
+        let handlers = self.handlers.inflate(config)?;
+        let orelse = self.orelse.inflate(config)?;
+        let finalbody = self.finalbody.inflate(config)?;
+        Ok(Self::Inflated {
+            body,
+            handlers,
+            orelse,
+            finalbody,
+            leading_lines,
+            whitespace_before_colon,
+        })
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(TryIntoPy))]
+#[cst_node]
 pub struct AugAssign<'a> {
     pub target: AssignTargetExpression<'a>,
     pub operator: AugOp<'a>,
@@ -1929,13 +2109,19 @@ pub struct AugAssign<'a> {
     pub semicolon: Option<Semicolon<'a>>,
 }
 
-impl<'a> Inflate<'a> for AugAssign<'a> {
-    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
-        self.target = self.target.inflate(config)?;
-        self.operator = self.operator.inflate(config)?;
-        self.value = self.value.inflate(config)?;
-        self.semicolon = self.semicolon.inflate(config)?;
-        Ok(self)
+impl<'r, 'a> Inflate<'a> for DeflatedAugAssign<'r, 'a> {
+    type Inflated = AugAssign<'a>;
+    fn inflate(self, config: &Config<'a>) -> Result<Self::Inflated> {
+        let target = self.target.inflate(config)?;
+        let operator = self.operator.inflate(config)?;
+        let value = self.value.inflate(config)?;
+        let semicolon = self.semicolon.inflate(config)?;
+        Ok(Self::Inflated {
+            target,
+            operator,
+            value,
+            semicolon,
+        })
     }
 }
 
@@ -1951,30 +2137,33 @@ impl<'a> Codegen<'a> for AugAssign<'a> {
     }
 }
 
-impl<'a> AugAssign<'a> {
-    pub fn with_semicolon(self, semicolon: Option<Semicolon<'a>>) -> Self {
+impl<'r, 'a> DeflatedAugAssign<'r, 'a> {
+    pub fn with_semicolon(self, semicolon: Option<DeflatedSemicolon<'r, 'a>>) -> Self {
         Self { semicolon, ..self }
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(TryIntoPy))]
+#[cst_node]
 pub struct WithItem<'a> {
     pub item: Expression<'a>,
     pub asname: Option<AsName<'a>>,
     pub comma: Option<Comma<'a>>,
 }
 
-impl<'a> WithItem<'a> {
-    fn inflate_withitem(mut self, config: &Config<'a>, is_last: bool) -> Result<Self> {
-        self.item = self.item.inflate(config)?;
-        self.asname = self.asname.inflate(config)?;
-        self.comma = if is_last {
+impl<'r, 'a> DeflatedWithItem<'r, 'a> {
+    fn inflate_withitem(self, config: &Config<'a>, is_last: bool) -> Result<WithItem<'a>> {
+        let item = self.item.inflate(config)?;
+        let asname = self.asname.inflate(config)?;
+        let comma = if is_last {
             self.comma.map(|c| c.inflate_before(config)).transpose()?
         } else {
             self.comma.map(|c| c.inflate(config)).transpose()?
         };
-        Ok(self)
+        Ok(WithItem {
+            item,
+            asname,
+            comma,
+        })
     }
 }
 
@@ -1990,8 +2179,8 @@ impl<'a> Codegen<'a> for WithItem<'a> {
     }
 }
 
-impl<'a> WithComma<'a> for WithItem<'a> {
-    fn with_comma(self, comma: Comma<'a>) -> Self {
+impl<'r, 'a> WithComma<'r, 'a> for DeflatedWithItem<'r, 'a> {
+    fn with_comma(self, comma: DeflatedComma<'r, 'a>) -> Self {
         Self {
             comma: Some(comma),
             ..self
@@ -1999,8 +2188,7 @@ impl<'a> WithComma<'a> for WithItem<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(TryIntoPy))]
+#[cst_node]
 pub struct With<'a> {
     pub items: Vec<WithItem<'a>>,
     pub body: Suite<'a>,
@@ -2060,8 +2248,9 @@ impl<'a> Codegen<'a> for With<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for With<'a> {
-    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
+impl<'r, 'a> Inflate<'a> for DeflatedWith<'r, 'a> {
+    type Inflated = With<'a>;
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self::Inflated> {
         let (asynchronous, leading_lines) = if let Some(asy) = self.async_tok.as_mut() {
             let whitespace_after =
                 parse_parenthesizable_whitespace(config, &mut asy.whitespace_after.borrow_mut())?;
@@ -2077,9 +2266,7 @@ impl<'a> Inflate<'a> for With<'a> {
             (None, None)
         };
 
-        self.asynchronous = asynchronous;
-
-        self.leading_lines = if let Some(ll) = leading_lines {
+        let leading_lines = if let Some(ll) = leading_lines {
             ll
         } else {
             parse_empty_lines(
@@ -2089,32 +2276,42 @@ impl<'a> Inflate<'a> for With<'a> {
             )?
         };
 
-        self.whitespace_after_with =
+        let whitespace_after_with =
             parse_simple_whitespace(config, &mut (*self.with_tok).whitespace_after.borrow_mut())?;
-        self.lpar = self.lpar.map(|lpar| lpar.inflate(config)).transpose()?;
+        let lpar = self.lpar.map(|lpar| lpar.inflate(config)).transpose()?;
         let len = self.items.len();
-        self.items = self
+        let items = self
             .items
             .into_iter()
             .enumerate()
             .map(|(idx, el)| el.inflate_withitem(config, idx + 1 == len))
             .collect::<Result<Vec<_>>>()?;
-        if !self.items.is_empty() {
+        let rpar = if !items.is_empty() {
             // rpar only has whitespace if items is non empty
-            self.rpar = self.rpar.map(|rpar| rpar.inflate(config)).transpose()?;
-        }
-        self.whitespace_before_colon = parse_simple_whitespace(
+            self.rpar.map(|rpar| rpar.inflate(config)).transpose()?
+        } else {
+            Default::default()
+        };
+        let whitespace_before_colon = parse_simple_whitespace(
             config,
             &mut (*self.colon_tok).whitespace_before.borrow_mut(),
         )?;
-        self.body = self.body.inflate(config)?;
+        let body = self.body.inflate(config)?;
 
-        Ok(self)
+        Ok(Self::Inflated {
+            items,
+            body,
+            asynchronous,
+            leading_lines,
+            lpar,
+            rpar,
+            whitespace_after_with,
+            whitespace_before_colon,
+        })
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Codegen, ParenthesizedNode, Inflate)]
-#[cfg_attr(feature = "py", derive(TryIntoPy))]
+#[cst_node(Codegen, ParenthesizedNode, Inflate)]
 pub enum DelTargetExpression<'a> {
     Name(Box<Name<'a>>),
     Attribute(Box<Attribute<'a>>),
@@ -2123,28 +2320,29 @@ pub enum DelTargetExpression<'a> {
     Subscript(Box<Subscript<'a>>),
 }
 
-impl<'a> std::convert::From<DelTargetExpression<'a>> for Expression<'a> {
-    fn from(d: DelTargetExpression<'a>) -> Self {
+impl<'r, 'a> std::convert::From<DeflatedDelTargetExpression<'r, 'a>>
+    for DeflatedExpression<'r, 'a>
+{
+    fn from(d: DeflatedDelTargetExpression<'r, 'a>) -> Self {
         match d {
-            DelTargetExpression::Attribute(a) => Expression::Attribute(a),
-            DelTargetExpression::List(l) => Expression::List(l),
-            DelTargetExpression::Name(n) => Expression::Name(n),
-            DelTargetExpression::Subscript(s) => Expression::Subscript(s),
-            DelTargetExpression::Tuple(t) => Expression::Tuple(t),
+            DeflatedDelTargetExpression::Attribute(a) => Self::Attribute(a),
+            DeflatedDelTargetExpression::List(l) => Self::List(l),
+            DeflatedDelTargetExpression::Name(n) => Self::Name(n),
+            DeflatedDelTargetExpression::Subscript(s) => Self::Subscript(s),
+            DeflatedDelTargetExpression::Tuple(t) => Self::Tuple(t),
         }
     }
 }
-impl<'a> std::convert::From<DelTargetExpression<'a>> for Element<'a> {
-    fn from(d: DelTargetExpression<'a>) -> Element {
-        Element::Simple {
+impl<'r, 'a> std::convert::From<DeflatedDelTargetExpression<'r, 'a>> for DeflatedElement<'r, 'a> {
+    fn from(d: DeflatedDelTargetExpression<'r, 'a>) -> Self {
+        Self::Simple {
             value: d.into(),
             comma: None,
         }
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(TryIntoPy))]
+#[cst_node]
 pub struct Del<'a> {
     pub target: DelTargetExpression<'a>,
     pub whitespace_after_del: SimpleWhitespace<'a>,
@@ -2153,13 +2351,18 @@ pub struct Del<'a> {
     pub(crate) tok: TokenRef<'a>,
 }
 
-impl<'a> Inflate<'a> for Del<'a> {
-    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
-        self.whitespace_after_del =
+impl<'r, 'a> Inflate<'a> for DeflatedDel<'r, 'a> {
+    type Inflated = Del<'a>;
+    fn inflate(self, config: &Config<'a>) -> Result<Self::Inflated> {
+        let whitespace_after_del =
             parse_simple_whitespace(config, &mut (*self.tok).whitespace_after.borrow_mut())?;
-        self.target = self.target.inflate(config)?;
-        self.semicolon = self.semicolon.inflate(config)?;
-        Ok(self)
+        let target = self.target.inflate(config)?;
+        let semicolon = self.semicolon.inflate(config)?;
+        Ok(Self::Inflated {
+            target,
+            whitespace_after_del,
+            semicolon,
+        })
     }
 }
 
@@ -2174,14 +2377,13 @@ impl<'a> Codegen<'a> for Del<'a> {
     }
 }
 
-impl<'a> Del<'a> {
-    pub fn with_semicolon(self, semicolon: Option<Semicolon<'a>>) -> Self {
+impl<'r, 'a> DeflatedDel<'r, 'a> {
+    pub fn with_semicolon(self, semicolon: Option<DeflatedSemicolon<'r, 'a>>) -> Self {
         Self { semicolon, ..self }
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(TryIntoPy))]
+#[cst_node]
 pub struct Match<'a> {
     pub subject: Expression<'a>,
     pub cases: Vec<MatchCase<'a>>,
@@ -2227,37 +2429,46 @@ impl<'a> Codegen<'a> for Match<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for Match<'a> {
-    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
-        self.leading_lines = parse_empty_lines(
+impl<'r, 'a> Inflate<'a> for DeflatedMatch<'r, 'a> {
+    type Inflated = Match<'a>;
+    fn inflate(self, config: &Config<'a>) -> Result<Self::Inflated> {
+        let leading_lines = parse_empty_lines(
             config,
             &mut self.match_tok.whitespace_before.borrow_mut(),
             None,
         )?;
-        self.whitespace_after_match =
+        let whitespace_after_match =
             parse_simple_whitespace(config, &mut self.match_tok.whitespace_after.borrow_mut())?;
-        self.subject = self.subject.inflate(config)?;
-        self.whitespace_before_colon =
+        let subject = self.subject.inflate(config)?;
+        let whitespace_before_colon =
             parse_simple_whitespace(config, &mut self.colon_tok.whitespace_before.borrow_mut())?;
-        self.whitespace_after_colon =
+        let whitespace_after_colon =
             parse_trailing_whitespace(config, &mut self.colon_tok.whitespace_after.borrow_mut())?;
-        self.indent = self.indent_tok.relative_indent;
-        if self.indent == Some(config.default_indent) {
-            self.indent = None;
+        let mut indent = self.indent_tok.relative_indent;
+        if indent == Some(config.default_indent) {
+            indent = None;
         }
-        self.cases = self.cases.inflate(config)?;
+        let cases = self.cases.inflate(config)?;
         // See note about footers in `IndentedBlock`'s inflate fn
-        self.footer = parse_empty_lines(
+        let footer = parse_empty_lines(
             config,
             &mut self.dedent_tok.whitespace_after.borrow_mut(),
             Some(self.indent_tok.whitespace_before.borrow().absolute_indent),
         )?;
-        Ok(self)
+        Ok(Self::Inflated {
+            subject,
+            cases,
+            leading_lines,
+            whitespace_after_match,
+            whitespace_before_colon,
+            whitespace_after_colon,
+            indent,
+            footer,
+        })
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(TryIntoPy))]
+#[cst_node]
 pub struct MatchCase<'a> {
     pub pattern: MatchPattern<'a>,
     pub guard: Option<Expression<'a>>,
@@ -2295,34 +2506,45 @@ impl<'a> Codegen<'a> for MatchCase<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for MatchCase<'a> {
-    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
-        self.leading_lines = parse_empty_lines(
+impl<'r, 'a> Inflate<'a> for DeflatedMatchCase<'r, 'a> {
+    type Inflated = MatchCase<'a>;
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self::Inflated> {
+        let leading_lines = parse_empty_lines(
             config,
             &mut self.case_tok.whitespace_before.borrow_mut(),
             None,
         )?;
-        self.whitespace_after_case =
+        let whitespace_after_case =
             parse_simple_whitespace(config, &mut self.case_tok.whitespace_after.borrow_mut())?;
-        self.pattern = self.pattern.inflate(config)?;
-        if let Some(if_tok) = self.if_tok.as_mut() {
-            self.whitespace_before_if =
-                parse_simple_whitespace(config, &mut if_tok.whitespace_before.borrow_mut())?;
-            self.whitespace_after_if =
-                parse_simple_whitespace(config, &mut if_tok.whitespace_after.borrow_mut())?;
-
-            self.guard = self.guard.inflate(config)?;
-        }
-        self.whitespace_before_colon =
+        let pattern = self.pattern.inflate(config)?;
+        let (whitespace_before_if, whitespace_after_if, guard) =
+            if let Some(if_tok) = self.if_tok.as_mut() {
+                (
+                    parse_simple_whitespace(config, &mut if_tok.whitespace_before.borrow_mut())?,
+                    parse_simple_whitespace(config, &mut if_tok.whitespace_after.borrow_mut())?,
+                    self.guard.inflate(config)?,
+                )
+            } else {
+                Default::default()
+            };
+        let whitespace_before_colon =
             parse_simple_whitespace(config, &mut self.colon_tok.whitespace_before.borrow_mut())?;
-        self.body = self.body.inflate(config)?;
-        Ok(self)
+        let body = self.body.inflate(config)?;
+        Ok(Self::Inflated {
+            pattern,
+            guard,
+            body,
+            leading_lines,
+            whitespace_after_case,
+            whitespace_before_if,
+            whitespace_after_if,
+            whitespace_before_colon,
+        })
     }
 }
 
 #[allow(clippy::large_enum_variant)]
-#[derive(Debug, PartialEq, Eq, Clone, Codegen, Inflate, ParenthesizedNode)]
-#[cfg_attr(feature = "py", derive(TryIntoPy))]
+#[cst_node(Codegen, Inflate, ParenthesizedNode)]
 pub enum MatchPattern<'a> {
     Value(MatchValue<'a>),
     Singleton(MatchSingleton<'a>),
@@ -2333,8 +2555,7 @@ pub enum MatchPattern<'a> {
     Or(Box<MatchOr<'a>>),
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(TryIntoPy))]
+#[cst_node]
 pub struct MatchValue<'a> {
     pub value: Expression<'a>,
 }
@@ -2365,15 +2586,33 @@ impl<'a> Codegen<'a> for MatchValue<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for MatchValue<'a> {
-    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
-        self.value = self.value.inflate(config)?;
-        Ok(self)
+impl<'r, 'a> Inflate<'a> for DeflatedMatchValue<'r, 'a> {
+    type Inflated = MatchValue<'a>;
+    fn inflate(self, config: &Config<'a>) -> Result<Self::Inflated> {
+        let value = self.value.inflate(config)?;
+        Ok(Self::Inflated { value })
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(TryIntoPy))]
+impl<'r, 'a> ParenthesizedDeflatedNode<'r, 'a> for DeflatedMatchValue<'r, 'a> {
+    fn lpar(&self) -> &Vec<DeflatedLeftParen<'r, 'a>> {
+        self.value.lpar()
+    }
+    fn rpar(&self) -> &Vec<DeflatedRightParen<'r, 'a>> {
+        self.value.rpar()
+    }
+    fn with_parens(
+        self,
+        left: DeflatedLeftParen<'r, 'a>,
+        right: DeflatedRightParen<'r, 'a>,
+    ) -> Self {
+        Self {
+            value: self.value.with_parens(left, right),
+        }
+    }
+}
+
+#[cst_node]
 pub struct MatchSingleton<'a> {
     pub value: Name<'a>,
 }
@@ -2404,23 +2643,40 @@ impl<'a> Codegen<'a> for MatchSingleton<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for MatchSingleton<'a> {
-    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
-        self.value = self.value.inflate(config)?;
-        Ok(self)
+impl<'r, 'a> Inflate<'a> for DeflatedMatchSingleton<'r, 'a> {
+    type Inflated = MatchSingleton<'a>;
+    fn inflate(self, config: &Config<'a>) -> Result<Self::Inflated> {
+        let value = self.value.inflate(config)?;
+        Ok(Self::Inflated { value })
+    }
+}
+
+impl<'r, 'a> ParenthesizedDeflatedNode<'r, 'a> for DeflatedMatchSingleton<'r, 'a> {
+    fn lpar(&self) -> &Vec<DeflatedLeftParen<'r, 'a>> {
+        self.value.lpar()
+    }
+    fn rpar(&self) -> &Vec<DeflatedRightParen<'r, 'a>> {
+        self.value.rpar()
+    }
+    fn with_parens(
+        self,
+        left: DeflatedLeftParen<'r, 'a>,
+        right: DeflatedRightParen<'r, 'a>,
+    ) -> Self {
+        Self {
+            value: self.value.with_parens(left, right),
+        }
     }
 }
 
 #[allow(clippy::large_enum_variant)]
-#[derive(Debug, PartialEq, Eq, Clone, Codegen, Inflate, ParenthesizedNode)]
-#[cfg_attr(feature = "py", derive(TryIntoPy))]
+#[cst_node(Codegen, Inflate, ParenthesizedNode)]
 pub enum MatchSequence<'a> {
     MatchList(MatchList<'a>),
     MatchTuple(MatchTuple<'a>),
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode)]
-#[cfg_attr(feature = "py", derive(TryIntoPy))]
+#[cst_node(ParenthesizedNode)]
 pub struct MatchList<'a> {
     pub patterns: Vec<StarrableMatchSequenceElement<'a>>,
     pub lbracket: Option<LeftSquareBracket<'a>>,
@@ -2446,27 +2702,33 @@ impl<'a> Codegen<'a> for MatchList<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for MatchList<'a> {
-    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
-        self.lpar = self.lpar.inflate(config)?;
-        self.lbracket = self.lbracket.inflate(config)?;
+impl<'r, 'a> Inflate<'a> for DeflatedMatchList<'r, 'a> {
+    type Inflated = MatchList<'a>;
+    fn inflate(self, config: &Config<'a>) -> Result<Self::Inflated> {
+        let lpar = self.lpar.inflate(config)?;
+        let lbracket = self.lbracket.inflate(config)?;
 
         let len = self.patterns.len();
-        self.patterns = self
+        let patterns = self
             .patterns
             .into_iter()
             .enumerate()
             .map(|(idx, el)| el.inflate_element(config, idx + 1 == len))
             .collect::<Result<Vec<_>>>()?;
 
-        self.rbracket = self.rbracket.inflate(config)?;
-        self.rpar = self.rpar.inflate(config)?;
-        Ok(self)
+        let rbracket = self.rbracket.inflate(config)?;
+        let rpar = self.rpar.inflate(config)?;
+        Ok(Self::Inflated {
+            patterns,
+            lbracket,
+            rbracket,
+            lpar,
+            rpar,
+        })
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode)]
-#[cfg_attr(feature = "py", derive(TryIntoPy))]
+#[cst_node(ParenthesizedNode)]
 pub struct MatchTuple<'a> {
     pub patterns: Vec<StarrableMatchSequenceElement<'a>>,
     pub lpar: Vec<LeftParen<'a>>,
@@ -2488,24 +2750,28 @@ impl<'a> Codegen<'a> for MatchTuple<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for MatchTuple<'a> {
-    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
-        self.lpar = self.lpar.inflate(config)?;
+impl<'r, 'a> Inflate<'a> for DeflatedMatchTuple<'r, 'a> {
+    type Inflated = MatchTuple<'a>;
+    fn inflate(self, config: &Config<'a>) -> Result<Self::Inflated> {
+        let lpar = self.lpar.inflate(config)?;
         let len = self.patterns.len();
-        self.patterns = self
+        let patterns = self
             .patterns
             .into_iter()
             .enumerate()
             .map(|(idx, el)| el.inflate_element(config, idx + 1 == len))
             .collect::<Result<Vec<_>>>()?;
-        self.rpar = self.rpar.inflate(config)?;
-        Ok(self)
+        let rpar = self.rpar.inflate(config)?;
+        Ok(Self::Inflated {
+            patterns,
+            lpar,
+            rpar,
+        })
     }
 }
 
 #[allow(clippy::large_enum_variant)]
-#[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(TryIntoPy))]
+#[cst_node]
 pub enum StarrableMatchSequenceElement<'a> {
     Simple(MatchSequenceElement<'a>),
     Starred(MatchStar<'a>),
@@ -2523,16 +2789,26 @@ impl<'a> StarrableMatchSequenceElement<'a> {
             Self::Starred(s) => s.codegen(state, default_comma, default_comma_whitespace),
         }
     }
-    fn inflate_element(self, config: &Config<'a>, last_element: bool) -> Result<Self> {
+}
+impl<'r, 'a> DeflatedStarrableMatchSequenceElement<'r, 'a> {
+    fn inflate_element(
+        self,
+        config: &Config<'a>,
+        last_element: bool,
+    ) -> Result<StarrableMatchSequenceElement<'a>> {
         Ok(match self {
-            Self::Simple(s) => Self::Simple(s.inflate_element(config, last_element)?),
-            Self::Starred(s) => Self::Starred(s.inflate_element(config, last_element)?),
+            Self::Simple(s) => {
+                StarrableMatchSequenceElement::Simple(s.inflate_element(config, last_element)?)
+            }
+            Self::Starred(s) => {
+                StarrableMatchSequenceElement::Starred(s.inflate_element(config, last_element)?)
+            }
         })
     }
 }
 
-impl<'a> WithComma<'a> for StarrableMatchSequenceElement<'a> {
-    fn with_comma(self, comma: Comma<'a>) -> Self {
+impl<'r, 'a> WithComma<'r, 'a> for DeflatedStarrableMatchSequenceElement<'r, 'a> {
+    fn with_comma(self, comma: DeflatedComma<'r, 'a>) -> Self {
         match self {
             Self::Simple(s) => Self::Simple(s.with_comma(comma)),
             Self::Starred(s) => Self::Starred(s.with_comma(comma)),
@@ -2540,8 +2816,7 @@ impl<'a> WithComma<'a> for StarrableMatchSequenceElement<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(TryIntoPy))]
+#[cst_node]
 pub struct MatchSequenceElement<'a> {
     pub value: MatchPattern<'a>,
     pub comma: Option<Comma<'a>>,
@@ -2560,20 +2835,25 @@ impl<'a> MatchSequenceElement<'a> {
             state.add_token(if default_comma_whitespace { ", " } else { "," });
         }
     }
-
-    fn inflate_element(mut self, config: &Config<'a>, last_element: bool) -> Result<Self> {
-        self.value = self.value.inflate(config)?;
-        self.comma = if last_element {
+}
+impl<'r, 'a> DeflatedMatchSequenceElement<'r, 'a> {
+    fn inflate_element(
+        self,
+        config: &Config<'a>,
+        last_element: bool,
+    ) -> Result<MatchSequenceElement<'a>> {
+        let value = self.value.inflate(config)?;
+        let comma = if last_element {
             self.comma.map(|c| c.inflate_before(config)).transpose()
         } else {
             self.comma.inflate(config)
         }?;
-        Ok(self)
+        Ok(MatchSequenceElement { value, comma })
     }
 }
 
-impl<'a> WithComma<'a> for MatchSequenceElement<'a> {
-    fn with_comma(self, comma: Comma<'a>) -> Self {
+impl<'r, 'a> WithComma<'r, 'a> for DeflatedMatchSequenceElement<'r, 'a> {
+    fn with_comma(self, comma: DeflatedComma<'r, 'a>) -> Self {
         Self {
             comma: Some(comma),
             ..self
@@ -2581,8 +2861,7 @@ impl<'a> WithComma<'a> for MatchSequenceElement<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(TryIntoPy))]
+#[cst_node]
 pub struct MatchStar<'a> {
     pub name: Option<Name<'a>>,
     pub comma: Option<Comma<'a>>,
@@ -2610,24 +2889,29 @@ impl<'a> MatchStar<'a> {
             state.add_token(if default_comma_whitespace { ", " } else { "," });
         }
     }
-
-    fn inflate_element(mut self, config: &Config<'a>, last_element: bool) -> Result<Self> {
-        self.whitespace_before_name = parse_parenthesizable_whitespace(
+}
+impl<'r, 'a> DeflatedMatchStar<'r, 'a> {
+    fn inflate_element(self, config: &Config<'a>, last_element: bool) -> Result<MatchStar<'a>> {
+        let whitespace_before_name = parse_parenthesizable_whitespace(
             config,
             &mut self.star_tok.whitespace_after.borrow_mut(),
         )?;
-        self.name = self.name.inflate(config)?;
-        self.comma = if last_element {
+        let name = self.name.inflate(config)?;
+        let comma = if last_element {
             self.comma.map(|c| c.inflate_before(config)).transpose()
         } else {
             self.comma.inflate(config)
         }?;
-        Ok(self)
+        Ok(MatchStar {
+            name,
+            comma,
+            whitespace_before_name,
+        })
     }
 }
 
-impl<'a> WithComma<'a> for MatchStar<'a> {
-    fn with_comma(self, comma: Comma<'a>) -> Self {
+impl<'r, 'a> WithComma<'r, 'a> for DeflatedMatchStar<'r, 'a> {
+    fn with_comma(self, comma: DeflatedComma<'r, 'a>) -> Self {
         Self {
             comma: Some(comma),
             ..self
@@ -2635,8 +2919,7 @@ impl<'a> WithComma<'a> for MatchStar<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode)]
-#[cfg_attr(feature = "py", derive(TryIntoPy))]
+#[cst_node(ParenthesizedNode)]
 pub struct MatchMapping<'a> {
     pub elements: Vec<MatchMappingElement<'a>>,
     pub rest: Option<Name<'a>>,
@@ -2670,38 +2953,50 @@ impl<'a> Codegen<'a> for MatchMapping<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for MatchMapping<'a> {
-    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
-        self.lpar = self.lpar.inflate(config)?;
-        self.lbrace = self.lbrace.inflate(config)?;
+impl<'r, 'a> Inflate<'a> for DeflatedMatchMapping<'r, 'a> {
+    type Inflated = MatchMapping<'a>;
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self::Inflated> {
+        let lpar = self.lpar.inflate(config)?;
+        let lbrace = self.lbrace.inflate(config)?;
 
         let len = self.elements.len();
         let no_star = self.star_tok.is_none();
-        self.elements = self
+        let elements = self
             .elements
             .into_iter()
             .enumerate()
             .map(|(idx, el)| el.inflate_element(config, no_star && idx + 1 == len))
             .collect::<Result<Vec<_>>>()?;
 
-        if let Some(star_tok) = self.star_tok.as_mut() {
-            self.whitespace_before_rest =
-                parse_simple_whitespace(config, &mut star_tok.whitespace_after.borrow_mut())?;
-            self.rest = self.rest.inflate(config)?;
-            self.trailing_comma = self
-                .trailing_comma
-                .map(|c| c.inflate_before(config))
-                .transpose()?;
-        }
+        let (whitespace_before_rest, rest, trailing_comma) =
+            if let Some(star_tok) = self.star_tok.as_mut() {
+                (
+                    parse_simple_whitespace(config, &mut star_tok.whitespace_after.borrow_mut())?,
+                    self.rest.inflate(config)?,
+                    self.trailing_comma
+                        .map(|c| c.inflate_before(config))
+                        .transpose()?,
+                )
+            } else {
+                Default::default()
+            };
 
-        self.rbrace = self.rbrace.inflate(config)?;
-        self.rpar = self.rpar.inflate(config)?;
-        Ok(self)
+        let rbrace = self.rbrace.inflate(config)?;
+        let rpar = self.rpar.inflate(config)?;
+        Ok(Self::Inflated {
+            elements,
+            rest,
+            trailing_comma,
+            lbrace,
+            rbrace,
+            lpar,
+            rpar,
+            whitespace_before_rest,
+        })
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(TryIntoPy))]
+#[cst_node]
 pub struct MatchMappingElement<'a> {
     pub key: Expression<'a>,
     pub pattern: MatchPattern<'a>,
@@ -2725,29 +3020,40 @@ impl<'a> MatchMappingElement<'a> {
             state.add_token(", ");
         }
     }
-
-    fn inflate_element(mut self, config: &Config<'a>, last_element: bool) -> Result<Self> {
-        self.key = self.key.inflate(config)?;
-        self.whitespace_before_colon = parse_parenthesizable_whitespace(
+}
+impl<'r, 'a> DeflatedMatchMappingElement<'r, 'a> {
+    fn inflate_element(
+        self,
+        config: &Config<'a>,
+        last_element: bool,
+    ) -> Result<MatchMappingElement<'a>> {
+        let key = self.key.inflate(config)?;
+        let whitespace_before_colon = parse_parenthesizable_whitespace(
             config,
             &mut self.colon_tok.whitespace_before.borrow_mut(),
         )?;
-        self.whitespace_after_colon = parse_parenthesizable_whitespace(
+        let whitespace_after_colon = parse_parenthesizable_whitespace(
             config,
             &mut self.colon_tok.whitespace_after.borrow_mut(),
         )?;
-        self.pattern = self.pattern.inflate(config)?;
-        self.comma = if last_element {
+        let pattern = self.pattern.inflate(config)?;
+        let comma = if last_element {
             self.comma.map(|c| c.inflate_before(config)).transpose()
         } else {
             self.comma.inflate(config)
         }?;
-        Ok(self)
+        Ok(MatchMappingElement {
+            key,
+            pattern,
+            comma,
+            whitespace_before_colon,
+            whitespace_after_colon,
+        })
     }
 }
 
-impl<'a> WithComma<'a> for MatchMappingElement<'a> {
-    fn with_comma(self, comma: Comma<'a>) -> Self {
+impl<'r, 'a> WithComma<'r, 'a> for DeflatedMatchMappingElement<'r, 'a> {
+    fn with_comma(self, comma: DeflatedComma<'r, 'a>) -> Self {
         Self {
             comma: Some(comma),
             ..self
@@ -2755,8 +3061,7 @@ impl<'a> WithComma<'a> for MatchMappingElement<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode)]
-#[cfg_attr(feature = "py", derive(TryIntoPy))]
+#[cst_node(ParenthesizedNode)]
 pub struct MatchClass<'a> {
     pub cls: NameOrAttribute<'a>,
     pub patterns: Vec<MatchSequenceElement<'a>>,
@@ -2793,47 +3098,56 @@ impl<'a> Codegen<'a> for MatchClass<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for MatchClass<'a> {
-    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
-        self.lpar = self.lpar.inflate(config)?;
+impl<'r, 'a> Inflate<'a> for DeflatedMatchClass<'r, 'a> {
+    type Inflated = MatchClass<'a>;
+    fn inflate(self, config: &Config<'a>) -> Result<Self::Inflated> {
+        let lpar = self.lpar.inflate(config)?;
 
-        self.cls = self.cls.inflate(config)?;
-        self.whitespace_after_cls = parse_parenthesizable_whitespace(
+        let cls = self.cls.inflate(config)?;
+        let whitespace_after_cls = parse_parenthesizable_whitespace(
             config,
             &mut self.lpar_tok.whitespace_before.borrow_mut(),
         )?;
-        self.whitespace_before_patterns = parse_parenthesizable_whitespace(
+        let whitespace_before_patterns = parse_parenthesizable_whitespace(
             config,
             &mut self.lpar_tok.whitespace_after.borrow_mut(),
         )?;
 
         let patlen = self.patterns.len();
         let kwdlen = self.kwds.len();
-        self.patterns = self
+        let patterns = self
             .patterns
             .into_iter()
             .enumerate()
             .map(|(idx, pat)| pat.inflate_element(config, idx + 1 == patlen + kwdlen))
             .collect::<Result<_>>()?;
-        self.kwds = self
+        let kwds = self
             .kwds
             .into_iter()
             .enumerate()
             .map(|(idx, kwd)| kwd.inflate_element(config, idx + 1 == kwdlen))
             .collect::<Result<_>>()?;
 
-        self.whitespace_after_kwds = parse_parenthesizable_whitespace(
+        let whitespace_after_kwds = parse_parenthesizable_whitespace(
             config,
             &mut self.rpar_tok.whitespace_before.borrow_mut(),
         )?;
 
-        self.rpar = self.rpar.inflate(config)?;
-        Ok(self)
+        let rpar = self.rpar.inflate(config)?;
+        Ok(Self::Inflated {
+            cls,
+            patterns,
+            kwds,
+            lpar,
+            rpar,
+            whitespace_after_cls,
+            whitespace_before_patterns,
+            whitespace_after_kwds,
+        })
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(TryIntoPy))]
+#[cst_node]
 pub struct MatchKeywordElement<'a> {
     pub key: Name<'a>,
     pub pattern: MatchPattern<'a>,
@@ -2857,28 +3171,40 @@ impl<'a> MatchKeywordElement<'a> {
             state.add_token(", ");
         }
     }
-    fn inflate_element(mut self, config: &Config<'a>, last_element: bool) -> Result<Self> {
-        self.key = self.key.inflate(config)?;
-        self.whitespace_before_equal = parse_parenthesizable_whitespace(
+}
+impl<'r, 'a> DeflatedMatchKeywordElement<'r, 'a> {
+    fn inflate_element(
+        self,
+        config: &Config<'a>,
+        last_element: bool,
+    ) -> Result<MatchKeywordElement<'a>> {
+        let key = self.key.inflate(config)?;
+        let whitespace_before_equal = parse_parenthesizable_whitespace(
             config,
             &mut self.equal_tok.whitespace_before.borrow_mut(),
         )?;
-        self.whitespace_after_equal = parse_parenthesizable_whitespace(
+        let whitespace_after_equal = parse_parenthesizable_whitespace(
             config,
             &mut self.equal_tok.whitespace_after.borrow_mut(),
         )?;
-        self.pattern = self.pattern.inflate(config)?;
-        self.comma = if last_element {
+        let pattern = self.pattern.inflate(config)?;
+        let comma = if last_element {
             self.comma.map(|c| c.inflate_before(config)).transpose()
         } else {
             self.comma.inflate(config)
         }?;
-        Ok(self)
+        Ok(MatchKeywordElement {
+            key,
+            pattern,
+            comma,
+            whitespace_before_equal,
+            whitespace_after_equal,
+        })
     }
 }
 
-impl<'a> WithComma<'a> for MatchKeywordElement<'a> {
-    fn with_comma(self, comma: Comma<'a>) -> Self {
+impl<'r, 'a> WithComma<'r, 'a> for DeflatedMatchKeywordElement<'r, 'a> {
+    fn with_comma(self, comma: DeflatedComma<'r, 'a>) -> Self {
         Self {
             comma: Some(comma),
             ..self
@@ -2886,8 +3212,7 @@ impl<'a> WithComma<'a> for MatchKeywordElement<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode)]
-#[cfg_attr(feature = "py", derive(TryIntoPy))]
+#[cst_node(ParenthesizedNode)]
 pub struct MatchAs<'a> {
     pub pattern: Option<MatchPattern<'a>>,
     pub name: Option<Name<'a>>,
@@ -2918,28 +3243,40 @@ impl<'a> Codegen<'a> for MatchAs<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for MatchAs<'a> {
-    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
-        self.lpar = self.lpar.inflate(config)?;
-        self.pattern = self.pattern.inflate(config)?;
-        if let Some(as_tok) = self.as_tok.as_mut() {
-            self.whitespace_before_as = Some(parse_parenthesizable_whitespace(
-                config,
-                &mut as_tok.whitespace_before.borrow_mut(),
-            )?);
-            self.whitespace_after_as = Some(parse_parenthesizable_whitespace(
-                config,
-                &mut as_tok.whitespace_after.borrow_mut(),
-            )?);
-        }
-        self.name = self.name.inflate(config)?;
-        self.rpar = self.rpar.inflate(config)?;
-        Ok(self)
+impl<'r, 'a> Inflate<'a> for DeflatedMatchAs<'r, 'a> {
+    type Inflated = MatchAs<'a>;
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self::Inflated> {
+        let lpar = self.lpar.inflate(config)?;
+        let pattern = self.pattern.inflate(config)?;
+        let (whitespace_before_as, whitespace_after_as) = if let Some(as_tok) = self.as_tok.as_mut()
+        {
+            (
+                Some(parse_parenthesizable_whitespace(
+                    config,
+                    &mut as_tok.whitespace_before.borrow_mut(),
+                )?),
+                Some(parse_parenthesizable_whitespace(
+                    config,
+                    &mut as_tok.whitespace_after.borrow_mut(),
+                )?),
+            )
+        } else {
+            Default::default()
+        };
+        let name = self.name.inflate(config)?;
+        let rpar = self.rpar.inflate(config)?;
+        Ok(Self::Inflated {
+            pattern,
+            name,
+            lpar,
+            rpar,
+            whitespace_before_as,
+            whitespace_after_as,
+        })
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(TryIntoPy))]
+#[cst_node]
 pub struct MatchOrElement<'a> {
     pub pattern: MatchPattern<'a>,
     pub separator: Option<BitOr<'a>>,
@@ -2955,16 +3292,16 @@ impl<'a> MatchOrElement<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for MatchOrElement<'a> {
-    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
-        self.pattern = self.pattern.inflate(config)?;
-        self.separator = self.separator.inflate(config)?;
-        Ok(self)
+impl<'r, 'a> Inflate<'a> for DeflatedMatchOrElement<'r, 'a> {
+    type Inflated = MatchOrElement<'a>;
+    fn inflate(self, config: &Config<'a>) -> Result<Self::Inflated> {
+        let pattern = self.pattern.inflate(config)?;
+        let separator = self.separator.inflate(config)?;
+        Ok(Self::Inflated { pattern, separator })
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, ParenthesizedNode)]
-#[cfg_attr(feature = "py", derive(TryIntoPy))]
+#[cst_node(ParenthesizedNode)]
 pub struct MatchOr<'a> {
     pub patterns: Vec<MatchOrElement<'a>>,
     pub lpar: Vec<LeftParen<'a>>,
@@ -2982,11 +3319,16 @@ impl<'a> Codegen<'a> for MatchOr<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for MatchOr<'a> {
-    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
-        self.lpar = self.lpar.inflate(config)?;
-        self.patterns = self.patterns.inflate(config)?;
-        self.rpar = self.rpar.inflate(config)?;
-        Ok(self)
+impl<'r, 'a> Inflate<'a> for DeflatedMatchOr<'r, 'a> {
+    type Inflated = MatchOr<'a>;
+    fn inflate(self, config: &Config<'a>) -> Result<Self::Inflated> {
+        let lpar = self.lpar.inflate(config)?;
+        let patterns = self.patterns.inflate(config)?;
+        let rpar = self.rpar.inflate(config)?;
+        Ok(Self::Inflated {
+            patterns,
+            lpar,
+            rpar,
+        })
     }
 }

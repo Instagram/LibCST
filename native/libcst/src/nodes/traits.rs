@@ -4,13 +4,15 @@
 // LICENSE file in the root directory of this source tree
 
 use crate::{
+    nodes::expression::{DeflatedLeftParen, DeflatedRightParen},
+    nodes::op::DeflatedComma,
     tokenizer::whitespace_parser::{Config, WhitespaceError},
-    Codegen, CodegenState, Comma, EmptyLine, LeftParen, RightParen,
+    Codegen, CodegenState, EmptyLine, LeftParen, RightParen,
 };
 use std::ops::Deref;
 
-pub trait WithComma<'a> {
-    fn with_comma(self, comma: Comma<'a>) -> Self;
+pub trait WithComma<'r, 'a> {
+    fn with_comma(self, comma: DeflatedComma<'r, 'a>) -> Self;
 }
 
 pub trait ParenthesizedNode<'a> {
@@ -51,6 +53,32 @@ impl<'a, T: ParenthesizedNode<'a>> ParenthesizedNode<'a> for Box<T> {
     }
 }
 
+pub trait ParenthesizedDeflatedNode<'r, 'a> {
+    fn lpar(&self) -> &Vec<DeflatedLeftParen<'r, 'a>>;
+    fn rpar(&self) -> &Vec<DeflatedRightParen<'r, 'a>>;
+
+    fn with_parens(
+        self,
+        left: DeflatedLeftParen<'r, 'a>,
+        right: DeflatedRightParen<'r, 'a>,
+    ) -> Self;
+}
+impl<'r, 'a, T: ParenthesizedDeflatedNode<'r, 'a>> ParenthesizedDeflatedNode<'r, 'a> for Box<T> {
+    fn lpar(&self) -> &Vec<DeflatedLeftParen<'r, 'a>> {
+        self.deref().lpar()
+    }
+    fn rpar(&self) -> &Vec<DeflatedRightParen<'r, 'a>> {
+        self.deref().rpar()
+    }
+    fn with_parens(
+        self,
+        left: DeflatedLeftParen<'r, 'a>,
+        right: DeflatedRightParen<'r, 'a>,
+    ) -> Self {
+        Self::new((*self).with_parens(left, right))
+    }
+}
+
 pub trait WithLeadingLines<'a> {
     fn leading_lines(&mut self) -> &mut Vec<EmptyLine<'a>>;
 }
@@ -61,17 +89,20 @@ pub trait Inflate<'a>
 where
     Self: Sized,
 {
-    fn inflate(self, config: &Config<'a>) -> Result<Self>;
+    type Inflated;
+    fn inflate(self, config: &Config<'a>) -> Result<Self::Inflated>;
 }
 
 impl<'a, T: Inflate<'a>> Inflate<'a> for Option<T> {
-    fn inflate(self, config: &Config<'a>) -> Result<Self> {
+    type Inflated = Option<T::Inflated>;
+    fn inflate(self, config: &Config<'a>) -> Result<Self::Inflated> {
         self.map(|x| x.inflate(config)).transpose()
     }
 }
 
 impl<'a, T: Inflate<'a> + ?Sized> Inflate<'a> for Box<T> {
-    fn inflate(self, config: &Config<'a>) -> Result<Self> {
+    type Inflated = Box<T::Inflated>;
+    fn inflate(self, config: &Config<'a>) -> Result<Self::Inflated> {
         match (*self).inflate(config) {
             Ok(a) => Ok(Box::new(a)),
             Err(e) => Err(e),
@@ -80,7 +111,8 @@ impl<'a, T: Inflate<'a> + ?Sized> Inflate<'a> for Box<T> {
 }
 
 impl<'a, T: Inflate<'a>> Inflate<'a> for Vec<T> {
-    fn inflate(self, config: &Config<'a>) -> Result<Self> {
+    type Inflated = Vec<T::Inflated>;
+    fn inflate(self, config: &Config<'a>) -> Result<Self::Inflated> {
         self.into_iter().map(|item| item.inflate(config)).collect()
     }
 }
