@@ -17,6 +17,11 @@ use libcst_native::{
     parse_module, parse_tokens_without_whitespace, tokenize, Codegen, Config, Inflate,
 };
 
+#[cfg(not(windows))]
+const NEWLINE: &str = "\n";
+#[cfg(windows)]
+const NEWLINE: &str = "\r\n";
+
 fn load_all_fixtures() -> String {
     let mut path = PathBuf::from(file!());
     path.pop();
@@ -38,7 +43,7 @@ fn load_all_fixtures() -> String {
             let path = file.unwrap().path();
             std::fs::read_to_string(&path).expect("reading_file")
         })
-        .join("\n")
+        .join(NEWLINE)
 }
 
 pub fn inflate_benchmarks<T: Measurement>(c: &mut Criterion<T>) {
