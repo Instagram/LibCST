@@ -47,6 +47,23 @@ implemented via a macro in `libcst_derive`.
 
 ## Hacking
 
+### Nodes
+All CST nodes are marked with the `#[cst_node]` proc macro, which duplicates the node types; for a node named `Foo`, there's:
+
+- `DeflatedFoo`, which is the output of the parsing phase and isn't exposed through the
+  API of the crate.
+  - it has two lifetime parameters: `'r` (or `'input` in the grammar) is the lifetime of
+    `Token` references, and `'a` is the lifetime of `str` slices from the original input
+  - `TokenRef` fields are contained here, while whitespace fields aren't
+  - if there aren't any fields that refer to other CST nodes or `TokenRef`s, there's an
+    extra (private) `_phantom` field that "contains" the two lifetime parameters (this
+    is to make the type parameters of all `DeflatedFoo` types uniform)
+  - it implements the `Inflate` trait, which converts `DeflatedFoo` into `Foo`
+- `Foo`, which is what's publicly exposed in the crate and is the output of `Inflate`ing `DeflatedFoo`.
+   - it only retains the second (`'a`) lifetime parameter of `DeflatedFoo` to refer back to slices of the original input string
+   - whitespace fields are contained here, but `TokenRef`s aren't
+   - `IntoPy` is implemented for it (assuming the `py` crate feature is enabled), which contains code to translate `Foo` back into a Python object; hence, the fields on `Foo` match the Python CST node implementations (barring fields marked with `#[skip_py]`)
+
 ### Grammar
 
 The grammar is mostly a straightforward translation from the [CPython
@@ -61,10 +78,10 @@ exceptions:
   mutually recursive rules, special `invalid_` rules, the `~` operator, terminating the
   parser early.
 
-The PEG parser is run on a `Vec` of `Token`s, and tries its best to avoid allocating any
-strings, working only with references. As such, the output nodes don't own any strings,
-but refer to slices of the original input (hence the `'a` lifetime parameter on almost
-all nodes).
+The PEG parser is run on a `Vec` of `Token`s (more precisely `&'input Vec<Token<'a>>`),
+and tries its best to avoid allocating any strings, working only with references. As
+such, the output nodes don't own any strings, but refer to slices of the original input
+(hence the `'input, 'a` lifetime parameters on almost all nodes).
 
 ### Whitespace parsing
 
