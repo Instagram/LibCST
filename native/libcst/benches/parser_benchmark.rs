@@ -17,6 +17,11 @@ use libcst_native::{
     parse_module, parse_tokens_without_whitespace, tokenize, Codegen, Config, Inflate,
 };
 
+#[cfg(not(windows))]
+const NEWLINE: &str = "\n";
+#[cfg(windows)]
+const NEWLINE: &str = "\r\n";
+
 fn load_all_fixtures() -> String {
     let mut path = PathBuf::from(file!());
     path.pop();
@@ -38,7 +43,7 @@ fn load_all_fixtures() -> String {
             let path = file.unwrap().path();
             std::fs::read_to_string(&path).expect("reading_file")
         })
-        .join("\n")
+        .join(NEWLINE)
 }
 
 pub fn inflate_benchmarks<T: Measurement>(c: &mut Criterion<T>) {
@@ -82,7 +87,7 @@ pub fn parser_benchmarks<T: Measurement>(c: &mut Criterion<T>) {
 
 pub fn codegen_benchmarks<T: Measurement>(c: &mut Criterion<T>) {
     let input = load_all_fixtures();
-    let m = parse_module(&input, None).expect("parse failed");
+    let m = parse_module(input.as_str(), None).expect("parse failed");
     let mut group = c.benchmark_group("codegen");
     group.bench_function("all", |b| {
         b.iter(|| {
@@ -102,9 +107,19 @@ pub fn tokenize_benchmarks<T: Measurement>(c: &mut Criterion<T>) {
     group.finish();
 }
 
+pub fn parse_into_cst_benchmarks<T: Measurement>(c: &mut Criterion<T>) {
+    let fixture = load_all_fixtures();
+    let mut group = c.benchmark_group("parse_into_cst");
+    group.measurement_time(Duration::from_secs(15));
+    group.bench_function("all", |b| {
+        b.iter(|| black_box(parse_module(&fixture, None)))
+    });
+    group.finish();
+}
+
 criterion_group!(
     name=benches;
     config = Criterion::default().with_measurement(CyclesPerByte);
-    targets=parser_benchmarks, codegen_benchmarks, inflate_benchmarks, tokenize_benchmarks
+    targets=parser_benchmarks, codegen_benchmarks, inflate_benchmarks, tokenize_benchmarks, parse_into_cst_benchmarks
 );
 criterion_main!(benches);
