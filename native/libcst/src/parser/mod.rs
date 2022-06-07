@@ -8,4 +8,5 @@ mod grammar;
 mod numbers;
 
 pub use errors::ParserError;
+pub(crate) use grammar::TokVec;
 pub use grammar::{python, Result};

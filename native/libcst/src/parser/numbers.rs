@@ -6,7 +6,7 @@
 use once_cell::sync::Lazy;
 use regex::Regex;
 
-use crate::{Expression, Float, Imaginary, Integer};
+use crate::nodes::deflated::{Expression, Float, Imaginary, Integer};
 
 static HEX: &str = r"0[xX](?:_?[0-9a-fA-F])+";
 static BIN: &str = r"0[bB](?:_?[01])+";

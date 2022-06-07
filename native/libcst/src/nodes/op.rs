@@ -3,8 +3,6 @@
 // This source code is licensed under the MIT license found in the
 // LICENSE file in the root directory of this source tree.
 
-use std::rc::Rc;
-
 use super::{whitespace::ParenthesizableWhitespace, Codegen, CodegenState};
 use crate::{
     nodes::traits::{Inflate, Result},
@@ -13,13 +11,13 @@ use crate::{
         Token,
     },
 };
+use libcst_derive::cst_node;
 #[cfg(feature = "py")]
 use libcst_derive::TryIntoPy;
 
-type TokenRef<'a> = Rc<Token<'a>>;
+type TokenRef<'r, 'a> = &'r Token<'a>;
 
-#[derive(Debug, Eq, PartialEq, Clone)]
-#[cfg_attr(feature = "py", derive(TryIntoPy))]
+#[cst_node]
 pub struct Semicolon<'a> {
     /// Any space that appears directly before this semicolon.
     pub whitespace_before: ParenthesizableWhitespace<'a>,
@@ -38,20 +36,23 @@ impl<'a> Codegen<'a> for Semicolon<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for Semicolon<'a> {
-    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
-        self.whitespace_before = ParenthesizableWhitespace::SimpleWhitespace(
+impl<'r, 'a> Inflate<'a> for DeflatedSemicolon<'r, 'a> {
+    type Inflated = Semicolon<'a>;
+    fn inflate(self, config: &Config<'a>) -> Result<Self::Inflated> {
+        let whitespace_before = ParenthesizableWhitespace::SimpleWhitespace(
             parse_simple_whitespace(config, &mut (*self.tok).whitespace_before.borrow_mut())?,
         );
-        self.whitespace_after = ParenthesizableWhitespace::SimpleWhitespace(
+        let whitespace_after = ParenthesizableWhitespace::SimpleWhitespace(
             parse_simple_whitespace(config, &mut (*self.tok).whitespace_after.borrow_mut())?,
         );
-        Ok(self)
+        Ok(Self::Inflated {
+            whitespace_before,
+            whitespace_after,
+        })
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(TryIntoPy))]
+#[cst_node]
 pub struct Comma<'a> {
     /// Any space that appears directly before this comma.
     pub whitespace_before: ParenthesizableWhitespace<'a>,
@@ -70,32 +71,39 @@ impl<'a> Codegen<'a> for Comma<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for Comma<'a> {
-    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
-        self.whitespace_before = parse_parenthesizable_whitespace(
+impl<'r, 'a> Inflate<'a> for DeflatedComma<'r, 'a> {
+    type Inflated = Comma<'a>;
+    fn inflate(self, config: &Config<'a>) -> Result<Self::Inflated> {
+        let whitespace_before = parse_parenthesizable_whitespace(
             config,
             &mut (*self.tok).whitespace_before.borrow_mut(),
         )?;
-        self.whitespace_after = parse_parenthesizable_whitespace(
+        let whitespace_after = parse_parenthesizable_whitespace(
             config,
             &mut (*self.tok).whitespace_after.borrow_mut(),
         )?;
-        Ok(self)
+        Ok(Self::Inflated {
+            whitespace_before,
+            whitespace_after,
+        })
     }
 }
 
-impl<'a> Comma<'a> {
-    pub fn inflate_before(mut self, config: &Config<'a>) -> Result<Self> {
-        self.whitespace_before = parse_parenthesizable_whitespace(
+impl<'r, 'a> DeflatedComma<'r, 'a> {
+    pub fn inflate_before(self, config: &Config<'a>) -> Result<Comma<'a>> {
+        let whitespace_before = parse_parenthesizable_whitespace(
             config,
             &mut (*self.tok).whitespace_before.borrow_mut(),
         )?;
-        Ok(self)
+        let whitespace_after = Default::default();
+        Ok(Comma {
+            whitespace_before,
+            whitespace_after,
+        })
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(TryIntoPy))]
+#[cst_node]
 pub struct AssignEqual<'a> {
     /// Any space that appears directly before this equal sign.
     pub whitespace_before: ParenthesizableWhitespace<'a>,
@@ -114,22 +122,25 @@ impl<'a> Codegen<'a> for AssignEqual<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for AssignEqual<'a> {
-    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
-        self.whitespace_before = parse_parenthesizable_whitespace(
+impl<'r, 'a> Inflate<'a> for DeflatedAssignEqual<'r, 'a> {
+    type Inflated = AssignEqual<'a>;
+    fn inflate(self, config: &Config<'a>) -> Result<Self::Inflated> {
+        let whitespace_before = parse_parenthesizable_whitespace(
             config,
             &mut (*self.tok).whitespace_before.borrow_mut(),
         )?;
-        self.whitespace_after = parse_parenthesizable_whitespace(
+        let whitespace_after = parse_parenthesizable_whitespace(
             config,
             &mut (*self.tok).whitespace_after.borrow_mut(),
         )?;
-        Ok(self)
+        Ok(Self::Inflated {
+            whitespace_before,
+            whitespace_after,
+        })
     }
 }
 
-#[derive(Debug, Eq, PartialEq, Clone)]
-#[cfg_attr(feature = "py", derive(TryIntoPy))]
+#[cst_node]
 pub struct Dot<'a> {
     /// Any space that appears directly before this dot.
     pub whitespace_before: ParenthesizableWhitespace<'a>,
@@ -148,35 +159,36 @@ impl<'a> Codegen<'a> for Dot<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for Dot<'a> {
-    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
-        self.inflate_before(config)?;
-        self.inflate_after(config)?;
-        Ok(self)
+impl<'r, 'a> Inflate<'a> for DeflatedDot<'r, 'a> {
+    type Inflated = Dot<'a>;
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self::Inflated> {
+        let whitespace_before = self.inflate_before(config)?;
+        let whitespace_after = self.inflate_after(config)?;
+        Ok(Self::Inflated {
+            whitespace_before,
+            whitespace_after,
+        })
     }
 }
 
-impl<'a> Dot<'a> {
-    fn inflate_before(&mut self, config: &Config<'a>) -> Result<()> {
-        self.whitespace_before = parse_parenthesizable_whitespace(
-            config,
-            &mut (*self.tok).whitespace_before.borrow_mut(),
-        )?;
-        Ok(())
+impl<'r, 'a> DeflatedDot<'r, 'a> {
+    fn inflate_before(&mut self, config: &Config<'a>) -> Result<ParenthesizableWhitespace<'a>> {
+        parse_parenthesizable_whitespace(config, &mut (*self.tok).whitespace_before.borrow_mut())
     }
 
-    fn inflate_after(&mut self, config: &Config<'a>) -> Result<()> {
-        self.whitespace_after = parse_parenthesizable_whitespace(
-            config,
-            &mut (*self.tok).whitespace_after.borrow_mut(),
-        )?;
-        Ok(())
+    fn inflate_after(&mut self, config: &Config<'a>) -> Result<ParenthesizableWhitespace<'a>> {
+        parse_parenthesizable_whitespace(config, &mut (*self.tok).whitespace_after.borrow_mut())
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(TryIntoPy))]
+#[cst_node]
 pub struct ImportStar {}
+
+pub(crate) fn make_importstar<'r, 'a>() -> DeflatedImportStar<'r, 'a> {
+    DeflatedImportStar {
+        _phantom: Default::default(),
+    }
+}
 
 impl<'a> Codegen<'a> for ImportStar {
     fn codegen(&self, state: &mut CodegenState<'a>) {
@@ -184,14 +196,14 @@ impl<'a> Codegen<'a> for ImportStar {
     }
 }
 
-impl<'a> Inflate<'a> for ImportStar {
-    fn inflate(self, _config: &Config<'a>) -> Result<Self> {
-        Ok(self)
+impl<'r, 'a> Inflate<'a> for DeflatedImportStar<'r, 'a> {
+    type Inflated = ImportStar;
+    fn inflate(self, _config: &Config<'a>) -> Result<Self::Inflated> {
+        Ok(ImportStar {})
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(TryIntoPy))]
+#[cst_node]
 pub enum UnaryOp<'a> {
     Plus {
         whitespace_after: ParenthesizableWhitespace<'a>,
@@ -236,55 +248,43 @@ impl<'a> Codegen<'a> for UnaryOp<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for UnaryOp<'a> {
-    fn inflate(self, config: &Config<'a>) -> Result<Self> {
+impl<'r, 'a> Inflate<'a> for DeflatedUnaryOp<'r, 'a> {
+    type Inflated = UnaryOp<'a>;
+    fn inflate(self, config: &Config<'a>) -> Result<Self::Inflated> {
         Ok(match self {
             Self::Plus { tok, .. } => {
                 let whitespace_after = parse_parenthesizable_whitespace(
                     config,
                     &mut (*tok).whitespace_after.borrow_mut(),
                 )?;
-                Self::Plus {
-                    whitespace_after,
-                    tok,
-                }
+                Self::Inflated::Plus { whitespace_after }
             }
             Self::Minus { tok, .. } => {
                 let whitespace_after = parse_parenthesizable_whitespace(
                     config,
                     &mut (*tok).whitespace_after.borrow_mut(),
                 )?;
-                Self::Minus {
-                    whitespace_after,
-                    tok,
-                }
+                Self::Inflated::Minus { whitespace_after }
             }
             Self::BitInvert { tok, .. } => {
                 let whitespace_after = parse_parenthesizable_whitespace(
                     config,
                     &mut (*tok).whitespace_after.borrow_mut(),
                 )?;
-                Self::BitInvert {
-                    whitespace_after,
-                    tok,
-                }
+                Self::Inflated::BitInvert { whitespace_after }
             }
             Self::Not { tok, .. } => {
                 let whitespace_after = parse_parenthesizable_whitespace(
                     config,
                     &mut (*tok).whitespace_after.borrow_mut(),
                 )?;
-                Self::Not {
-                    whitespace_after,
-                    tok,
-                }
+                Self::Inflated::Not { whitespace_after }
             }
         })
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(TryIntoPy))]
+#[cst_node]
 pub enum BooleanOp<'a> {
     And {
         whitespace_before: ParenthesizableWhitespace<'a>,
@@ -320,8 +320,9 @@ impl<'a> Codegen<'a> for BooleanOp<'a> {
     }
 }
 
-impl<'a> Inflate<'a> for BooleanOp<'a> {
-    fn inflate(self, config: &Config<'a>) -> Result<Self> {
+impl<'r, 'a> Inflate<'a> for DeflatedBooleanOp<'r, 'a> {
+    type Inflated = BooleanOp<'a>;
+    fn inflate(self, config: &Config<'a>) -> Result<Self::Inflated> {
         Ok(match self {
             Self::And { tok, .. } => {
                 let whitespace_before = parse_parenthesizable_whitespace(
@@ -332,10 +333,9 @@ impl<'a> Inflate<'a> for BooleanOp<'a> {
                     config,
                     &mut (*tok).whitespace_after.borrow_mut(),
                 )?;
-                Self::And {
+                Self::Inflated::And {
                     whitespace_before,
                     whitespace_after,
-                    tok,
                 }
             }
             Self::Or { tok, .. } => {
@@ -347,18 +347,16 @@ impl<'a> Inflate<'a> for BooleanOp<'a> {
                     config,
                     &mut (*tok).whitespace_after.borrow_mut(),
                 )?;
-                Self::Or {
+                Self::Inflated::Or {
                     whitespace_before,
                     whitespace_after,
-                    tok,
                 }
             }
         })
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(TryIntoPy))]
+#[cst_node]
 pub enum BinaryOp<'a> {
     Add {
         whitespace_before: ParenthesizableWhitespace<'a>,
@@ -442,81 +440,84 @@ pub enum BinaryOp<'a> {
 
 impl<'a> Codegen<'a> for BinaryOp<'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
-        let (whitespace_before, whitespace_after, tok) = match self {
+        let (whitespace_before, whitespace_after) = match self {
             Self::Add {
                 whitespace_before,
                 whitespace_after,
-                tok,
             }
             | Self::Subtract {
                 whitespace_before,
                 whitespace_after,
-                tok,
             }
             | Self::Multiply {
                 whitespace_before,
                 whitespace_after,
-                tok,
             }
             | Self::Divide {
                 whitespace_before,
                 whitespace_after,
-                tok,
             }
             | Self::FloorDivide {
                 whitespace_before,
                 whitespace_after,
-                tok,
             }
             | Self::Modulo {
                 whitespace_before,
                 whitespace_after,
-                tok,
             }
             | Self::Power {
                 whitespace_before,
                 whitespace_after,
-                tok,
             }
             | Self::LeftShift {
                 whitespace_before,
                 whitespace_after,
-                tok,
             }
             | Self::RightShift {
                 whitespace_before,
                 whitespace_after,
-                tok,
             }
             | Self::BitOr {
                 whitespace_before,
                 whitespace_after,
-                tok,
             }
             | Self::BitAnd {
                 whitespace_before,
                 whitespace_after,
-                tok,
             }
             | Self::BitXor {
                 whitespace_before,
                 whitespace_after,
-                tok,
             }
             | Self::MatrixMultiply {
                 whitespace_before,
                 whitespace_after,
-                tok,
-            } => (whitespace_before, whitespace_after, tok),
+            } => (whitespace_before, whitespace_after),
+        };
+        let tok = match self {
+            BinaryOp::Add { .. } => "+",
+            BinaryOp::Subtract { .. } => "-",
+            BinaryOp::Multiply { .. } => "*",
+            BinaryOp::Divide { .. } => "/",
+            BinaryOp::FloorDivide { .. } => "//",
+            BinaryOp::Modulo { .. } => "%",
+            BinaryOp::Power { .. } => "**",
+            BinaryOp::LeftShift { .. } => "<<",
+            BinaryOp::RightShift { .. } => ">>",
+            BinaryOp::BitOr { .. } => "|",
+            BinaryOp::BitAnd { .. } => "&",
+            BinaryOp::BitXor { .. } => "^",
+            BinaryOp::MatrixMultiply { .. } => "@",
         };
         whitespace_before.codegen(state);
-        state.add_token(tok.string);
+        state.add_token(tok);
         whitespace_after.codegen(state);
     }
 }
 
-impl<'a> Inflate<'a> for BinaryOp<'a> {
-    fn inflate(self, config: &Config<'a>) -> Result<Self> {
+impl<'r, 'a> Inflate<'a> for DeflatedBinaryOp<'r, 'a> {
+    type Inflated = BinaryOp<'a>;
+    fn inflate(self, config: &Config<'a>) -> Result<Self::Inflated> {
         Ok(match self {
             Self::Add { tok, .. } => {
                 let whitespace_before = parse_parenthesizable_whitespace(
@@ -527,10 +528,9 @@ impl<'a> Inflate<'a> for BinaryOp<'a> {
                     config,
                     &mut (*tok).whitespace_after.borrow_mut(),
                 )?;
-                Self::Add {
+                Self::Inflated::Add {
                     whitespace_before,
                     whitespace_after,
-                    tok,
                 }
             }
             Self::Subtract { tok, .. } => {
@@ -542,10 +542,9 @@ impl<'a> Inflate<'a> for BinaryOp<'a> {
                     config,
                     &mut (*tok).whitespace_after.borrow_mut(),
                 )?;
-                Self::Subtract {
+                Self::Inflated::Subtract {
                     whitespace_before,
                     whitespace_after,
-                    tok,
                 }
             }
             Self::Multiply { tok, .. } => {
@@ -557,10 +556,9 @@ impl<'a> Inflate<'a> for BinaryOp<'a> {
                     config,
                     &mut (*tok).whitespace_after.borrow_mut(),
                 )?;
-                Self::Multiply {
+                Self::Inflated::Multiply {
                     whitespace_before,
                     whitespace_after,
-                    tok,
                 }
             }
             Self::Divide { tok, .. } => {
@@ -572,10 +570,9 @@ impl<'a> Inflate<'a> for BinaryOp<'a> {
                     config,
                     &mut (*tok).whitespace_after.borrow_mut(),
                 )?;
-                Self::Divide {
+                Self::Inflated::Divide {
                     whitespace_before,
                     whitespace_after,
-                    tok,
                 }
             }
             Self::FloorDivide { tok, .. } => {
@@ -587,10 +584,9 @@ impl<'a> Inflate<'a> for BinaryOp<'a> {
                     config,
                     &mut (*tok).whitespace_after.borrow_mut(),
                 )?;
-                Self::FloorDivide {
+                Self::Inflated::FloorDivide {
                     whitespace_before,
                     whitespace_after,
-                    tok,
                 }
             }
             Self::Modulo { tok, .. } => {
@@ -602,10 +598,9 @@ impl<'a> Inflate<'a> for BinaryOp<'a> {
                     config,
                     &mut (*tok).whitespace_after.borrow_mut(),
                 )?;
-                Self::Modulo {
+                Self::Inflated::Modulo {
                     whitespace_before,
                     whitespace_after,
-                    tok,
                 }
             }
             Self::Power { tok, .. } => {
@@ -617,10 +612,9 @@ impl<'a> Inflate<'a> for BinaryOp<'a> {
                     config,
                     &mut (*tok).whitespace_after.borrow_mut(),
                 )?;
-                Self::Power {
+                Self::Inflated::Power {
                     whitespace_before,
                     whitespace_after,
-                    tok,
                 }
             }
             Self::LeftShift { tok, .. } => {
@@ -632,10 +626,9 @@ impl<'a> Inflate<'a> for BinaryOp<'a> {
                     config,
                     &mut (*tok).whitespace_after.borrow_mut(),
                 )?;
-                Self::LeftShift {
+                Self::Inflated::LeftShift {
                     whitespace_before,
                     whitespace_after,
-                    tok,
                 }
             }
             Self::RightShift { tok, .. } => {
@@ -647,10 +640,9 @@ impl<'a> Inflate<'a> for BinaryOp<'a> {
                     config,
                     &mut (*tok).whitespace_after.borrow_mut(),
                 )?;
-                Self::RightShift {
+                Self::Inflated::RightShift {
                     whitespace_before,
                     whitespace_after,
-                    tok,
                 }
             }
             Self::BitOr { tok, .. } => {
@@ -662,10 +654,9 @@ impl<'a> Inflate<'a> for BinaryOp<'a> {
                     config,
                     &mut (*tok).whitespace_after.borrow_mut(),
                 )?;
-                Self::BitOr {
+                Self::Inflated::BitOr {
                     whitespace_before,
                     whitespace_after,
-                    tok,
                 }
             }
             Self::BitAnd { tok, .. } => {
@@ -677,10 +668,9 @@ impl<'a> Inflate<'a> for BinaryOp<'a> {
                     config,
                     &mut (*tok).whitespace_after.borrow_mut(),
                 )?;
-                Self::BitAnd {
+                Self::Inflated::BitAnd {
                     whitespace_before,
                     whitespace_after,
-                    tok,
                 }
             }
             Self::BitXor { tok, .. } => {
@@ -692,10 +682,9 @@ impl<'a> Inflate<'a> for BinaryOp<'a> {
                     config,
                     &mut (*tok).whitespace_after.borrow_mut(),
                 )?;
-                Self::BitXor {
+                Self::Inflated::BitXor {
                     whitespace_before,
                     whitespace_after,
-                    tok,
                 }
             }
             Self::MatrixMultiply { tok, .. } => {
@@ -707,18 +696,16 @@ impl<'a> Inflate<'a> for BinaryOp<'a> {
                     config,
                     &mut (*tok).whitespace_after.borrow_mut(),
                 )?;
-                Self::MatrixMultiply {
+                Self::Inflated::MatrixMultiply {
                     whitespace_before,
                     whitespace_after,
-                    tok,
                 }
             }
         })
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(TryIntoPy))]
+#[cst_node]
 pub enum CompOp<'a> {
     LessThan {
         whitespace_before: ParenthesizableWhitespace<'a>,
@@ -790,84 +777,83 @@ pub enum CompOp<'a> {
 
 impl<'a> Codegen<'a> for CompOp<'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
-        let (bef, aft, first_tok, between) = match self {
+        let (bef, aft, between) = match self {
             Self::LessThan {
                 whitespace_before,
                 whitespace_after,
-                tok,
             }
             | Self::GreaterThan {
                 whitespace_before,
                 whitespace_after,
-                tok,
             }
             | Self::LessThanEqual {
                 whitespace_before,
                 whitespace_after,
-                tok,
             }
             | Self::GreaterThanEqual {
                 whitespace_before,
                 whitespace_after,
-                tok,
             }
             | Self::Equal {
                 whitespace_before,
                 whitespace_after,
-                tok,
             }
             | Self::NotEqual {
                 whitespace_before,
                 whitespace_after,
-                tok,
             }
             | Self::In {
                 whitespace_before,
                 whitespace_after,
-                tok,
             }
             | Self::Is {
                 whitespace_before,
                 whitespace_after,
-                tok,
-            } => (whitespace_before, whitespace_after, tok, None),
+            } => (whitespace_before, whitespace_after, None),
             Self::IsNot {
                 whitespace_before,
                 whitespace_between,
                 whitespace_after,
-                is_tok,
-                not_tok,
             } => (
                 whitespace_before,
                 whitespace_after,
-                is_tok,
-                Some((whitespace_between, not_tok)),
+                Some(whitespace_between),
             ),
             Self::NotIn {
                 whitespace_before,
                 whitespace_between,
                 whitespace_after,
-                not_tok,
-                in_tok,
             } => (
                 whitespace_before,
                 whitespace_after,
-                not_tok,
-                Some((whitespace_between, in_tok)),
+                Some(whitespace_between),
             ),
         };
+        let (first_tok, second_tok) = match self {
+            CompOp::LessThan { .. } => ("<", None),
+            CompOp::GreaterThan { .. } => (">", None),
+            CompOp::LessThanEqual { .. } => ("<=", None),
+            CompOp::GreaterThanEqual { .. } => (">=", None),
+            CompOp::Equal { .. } => ("==", None),
+            CompOp::NotEqual { .. } => ("!=", None),
+            CompOp::In { .. } => ("in", None),
+            CompOp::NotIn { .. } => ("not", Some("in")),
+            CompOp::Is { .. } => ("is", None),
+            CompOp::IsNot { .. } => ("is", Some("not")),
+        };
         bef.codegen(state);
-        state.add_token(first_tok.string);
-        if let Some((btw, second_tok)) = between {
+        state.add_token(first_tok);
+        if let (Some(btw), Some(second_tok)) = (between, second_tok) {
             btw.codegen(state);
-            state.add_token(second_tok.string);
+            state.add_token(second_tok);
         }
         aft.codegen(state);
     }
 }
 
-impl<'a> Inflate<'a> for CompOp<'a> {
-    fn inflate(self, config: &Config<'a>) -> Result<Self> {
+impl<'r, 'a> Inflate<'a> for DeflatedCompOp<'r, 'a> {
+    type Inflated = CompOp<'a>;
+    fn inflate(self, config: &Config<'a>) -> Result<Self::Inflated> {
         Ok(match self {
             Self::LessThan { tok, .. } => {
                 let whitespace_before = parse_parenthesizable_whitespace(
@@ -878,10 +864,9 @@ impl<'a> Inflate<'a> for CompOp<'a> {
                     config,
                     &mut (*tok).whitespace_after.borrow_mut(),
                 )?;
-                Self::LessThan {
+                Self::Inflated::LessThan {
                     whitespace_before,
                     whitespace_after,
-                    tok,
                 }
             }
             Self::GreaterThan { tok, .. } => {
@@ -893,10 +878,9 @@ impl<'a> Inflate<'a> for CompOp<'a> {
                     config,
                     &mut (*tok).whitespace_after.borrow_mut(),
                 )?;
-                Self::GreaterThan {
+                Self::Inflated::GreaterThan {
                     whitespace_before,
                     whitespace_after,
-                    tok,
                 }
             }
             Self::LessThanEqual { tok, .. } => {
@@ -908,10 +892,9 @@ impl<'a> Inflate<'a> for CompOp<'a> {
                     config,
                     &mut (*tok).whitespace_after.borrow_mut(),
                 )?;
-                Self::LessThanEqual {
+                Self::Inflated::LessThanEqual {
                     whitespace_before,
                     whitespace_after,
-                    tok,
                 }
             }
             Self::GreaterThanEqual { tok, .. } => {
@@ -923,10 +906,9 @@ impl<'a> Inflate<'a> for CompOp<'a> {
                     config,
                     &mut (*tok).whitespace_after.borrow_mut(),
                 )?;
-                Self::GreaterThanEqual {
+                Self::Inflated::GreaterThanEqual {
                     whitespace_before,
                     whitespace_after,
-                    tok,
                 }
             }
             Self::Equal { tok, .. } => {
@@ -938,10 +920,9 @@ impl<'a> Inflate<'a> for CompOp<'a> {
                     config,
                     &mut (*tok).whitespace_after.borrow_mut(),
                 )?;
-                Self::Equal {
+                Self::Inflated::Equal {
                     whitespace_before,
                     whitespace_after,
-                    tok,
                 }
             }
             Self::NotEqual { tok, .. } => {
@@ -953,10 +934,9 @@ impl<'a> Inflate<'a> for CompOp<'a> {
                     config,
                     &mut (*tok).whitespace_after.borrow_mut(),
                 )?;
-                Self::NotEqual {
+                Self::Inflated::NotEqual {
                     whitespace_before,
                     whitespace_after,
-                    tok,
                 }
             }
             Self::In { tok, .. } => {
@@ -968,10 +948,9 @@ impl<'a> Inflate<'a> for CompOp<'a> {
                     config,
                     &mut (*tok).whitespace_after.borrow_mut(),
                 )?;
-                Self::In {
+                Self::Inflated::In {
                     whitespace_before,
                     whitespace_after,
-                    tok,
                 }
             }
             Self::Is { tok, .. } => {
@@ -983,10 +962,9 @@ impl<'a> Inflate<'a> for CompOp<'a> {
                     config,
                     &mut (*tok).whitespace_after.borrow_mut(),
                 )?;
-                Self::Is {
+                Self::Inflated::Is {
                     whitespace_before,
                     whitespace_after,
-                    tok,
                 }
             }
             Self::IsNot {
@@ -1004,12 +982,10 @@ impl<'a> Inflate<'a> for CompOp<'a> {
                     config,
                     &mut (*not_tok).whitespace_after.borrow_mut(),
                 )?;
-                Self::IsNot {
+                Self::Inflated::IsNot {
                     whitespace_before,
                     whitespace_between,
                     whitespace_after,
-                    is_tok,
-                    not_tok,
                 }
             }
             Self::NotIn {
@@ -1027,20 +1003,17 @@ impl<'a> Inflate<'a> for CompOp<'a> {
                     config,
                     &mut (*in_tok).whitespace_after.borrow_mut(),
                 )?;
-                Self::NotIn {
+                Self::Inflated::NotIn {
                     whitespace_before,
                     whitespace_between,
                     whitespace_after,
-                    not_tok,
-                    in_tok,
                 }
             }
         })
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(TryIntoPy))]
+#[cst_node]
 pub struct Colon<'a> {
     pub whitespace_before: ParenthesizableWhitespace<'a>,
     pub whitespace_after: ParenthesizableWhitespace<'a>,
@@ -1049,17 +1022,21 @@ pub struct Colon<'a> {
     pub(crate) tok: TokenRef<'a>,
 }
 
-impl<'a> Inflate<'a> for Colon<'a> {
-    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
-        self.whitespace_before = parse_parenthesizable_whitespace(
+impl<'r, 'a> Inflate<'a> for DeflatedColon<'r, 'a> {
+    type Inflated = Colon<'a>;
+    fn inflate(self, config: &Config<'a>) -> Result<Self::Inflated> {
+        let whitespace_before = parse_parenthesizable_whitespace(
             config,
             &mut (*self.tok).whitespace_before.borrow_mut(),
         )?;
-        self.whitespace_after = parse_parenthesizable_whitespace(
+        let whitespace_after = parse_parenthesizable_whitespace(
             config,
             &mut (*self.tok).whitespace_after.borrow_mut(),
         )?;
-        Ok(self)
+        Ok(Self::Inflated {
+            whitespace_before,
+            whitespace_after,
+        })
     }
 }
 
@@ -1071,8 +1048,7 @@ impl<'a> Codegen<'a> for Colon<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(TryIntoPy))]
+#[cst_node]
 pub enum AugOp<'a> {
     AddAssign {
         whitespace_before: ParenthesizableWhitespace<'a>,
@@ -1154,8 +1130,9 @@ pub enum AugOp<'a> {
     },
 }
 
-impl<'a> Inflate<'a> for AugOp<'a> {
-    fn inflate(self, config: &Config<'a>) -> Result<Self> {
+impl<'r, 'a> Inflate<'a> for DeflatedAugOp<'r, 'a> {
+    type Inflated = AugOp<'a>;
+    fn inflate(self, config: &Config<'a>) -> Result<Self::Inflated> {
         Ok(match self {
             Self::AddAssign { tok, .. } => {
                 let whitespace_before = parse_parenthesizable_whitespace(
@@ -1166,10 +1143,9 @@ impl<'a> Inflate<'a> for AugOp<'a> {
                     config,
                     &mut (*tok).whitespace_after.borrow_mut(),
                 )?;
-                Self::AddAssign {
+                Self::Inflated::AddAssign {
                     whitespace_before,
                     whitespace_after,
-                    tok,
                 }
             }
             Self::SubtractAssign { tok, .. } => {
@@ -1181,10 +1157,9 @@ impl<'a> Inflate<'a> for AugOp<'a> {
                     config,
                     &mut (*tok).whitespace_after.borrow_mut(),
                 )?;
-                Self::SubtractAssign {
+                Self::Inflated::SubtractAssign {
                     whitespace_before,
                     whitespace_after,
-                    tok,
                 }
             }
             Self::MultiplyAssign { tok, .. } => {
@@ -1196,10 +1171,9 @@ impl<'a> Inflate<'a> for AugOp<'a> {
                     config,
                     &mut (*tok).whitespace_after.borrow_mut(),
                 )?;
-                Self::MultiplyAssign {
+                Self::Inflated::MultiplyAssign {
                     whitespace_before,
                     whitespace_after,
-                    tok,
                 }
             }
             Self::MatrixMultiplyAssign { tok, .. } => {
@@ -1211,10 +1185,9 @@ impl<'a> Inflate<'a> for AugOp<'a> {
                     config,
                     &mut (*tok).whitespace_after.borrow_mut(),
                 )?;
-                Self::MatrixMultiplyAssign {
+                Self::Inflated::MatrixMultiplyAssign {
                     whitespace_before,
                     whitespace_after,
-                    tok,
                 }
             }
             Self::DivideAssign { tok, .. } => {
@@ -1226,10 +1199,9 @@ impl<'a> Inflate<'a> for AugOp<'a> {
                     config,
                     &mut (*tok).whitespace_after.borrow_mut(),
                 )?;
-                Self::DivideAssign {
+                Self::Inflated::DivideAssign {
                     whitespace_before,
                     whitespace_after,
-                    tok,
                 }
             }
             Self::ModuloAssign { tok, .. } => {
@@ -1241,10 +1213,9 @@ impl<'a> Inflate<'a> for AugOp<'a> {
                     config,
                     &mut (*tok).whitespace_after.borrow_mut(),
                 )?;
-                Self::ModuloAssign {
+                Self::Inflated::ModuloAssign {
                     whitespace_before,
                     whitespace_after,
-                    tok,
                 }
             }
             Self::BitAndAssign { tok, .. } => {
@@ -1256,10 +1227,9 @@ impl<'a> Inflate<'a> for AugOp<'a> {
                     config,
                     &mut (*tok).whitespace_after.borrow_mut(),
                 )?;
-                Self::BitAndAssign {
+                Self::Inflated::BitAndAssign {
                     whitespace_before,
                     whitespace_after,
-                    tok,
                 }
             }
             Self::BitOrAssign { tok, .. } => {
@@ -1271,10 +1241,9 @@ impl<'a> Inflate<'a> for AugOp<'a> {
                     config,
                     &mut (*tok).whitespace_after.borrow_mut(),
                 )?;
-                Self::BitOrAssign {
+                Self::Inflated::BitOrAssign {
                     whitespace_before,
                     whitespace_after,
-                    tok,
                 }
             }
             Self::BitXorAssign { tok, .. } => {
@@ -1286,10 +1255,9 @@ impl<'a> Inflate<'a> for AugOp<'a> {
                     config,
                     &mut (*tok).whitespace_after.borrow_mut(),
                 )?;
-                Self::BitXorAssign {
+                Self::Inflated::BitXorAssign {
                     whitespace_before,
                     whitespace_after,
-                    tok,
                 }
             }
             Self::LeftShiftAssign { tok, .. } => {
@@ -1301,10 +1269,9 @@ impl<'a> Inflate<'a> for AugOp<'a> {
                     config,
                     &mut (*tok).whitespace_after.borrow_mut(),
                 )?;
-                Self::LeftShiftAssign {
+                Self::Inflated::LeftShiftAssign {
                     whitespace_before,
                     whitespace_after,
-                    tok,
                 }
             }
             Self::RightShiftAssign { tok, .. } => {
@@ -1316,10 +1283,9 @@ impl<'a> Inflate<'a> for AugOp<'a> {
                     config,
                     &mut (*tok).whitespace_after.borrow_mut(),
                 )?;
-                Self::RightShiftAssign {
+                Self::Inflated::RightShiftAssign {
                     whitespace_before,
                     whitespace_after,
-                    tok,
                 }
             }
             Self::PowerAssign { tok, .. } => {
@@ -1331,10 +1297,9 @@ impl<'a> Inflate<'a> for AugOp<'a> {
                     config,
                     &mut (*tok).whitespace_after.borrow_mut(),
                 )?;
-                Self::PowerAssign {
+                Self::Inflated::PowerAssign {
                     whitespace_before,
                     whitespace_after,
-                    tok,
                 }
             }
             Self::FloorDivideAssign { tok, .. } => {
@@ -1346,10 +1311,9 @@ impl<'a> Inflate<'a> for AugOp<'a> {
                     config,
                     &mut (*tok).whitespace_after.borrow_mut(),
                 )?;
-                Self::FloorDivideAssign {
+                Self::Inflated::FloorDivideAssign {
                     whitespace_before,
                     whitespace_after,
-                    tok,
                 }
             }
         })
@@ -1431,8 +1395,7 @@ impl<'a> Codegen<'a> for AugOp<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "py", derive(TryIntoPy))]
+#[cst_node]
 pub struct BitOr<'a> {
     pub whitespace_before: ParenthesizableWhitespace<'a>,
     pub whitespace_after: ParenthesizableWhitespace<'a>,
@@ -1440,17 +1403,21 @@ pub struct BitOr<'a> {
     pub(crate) tok: TokenRef<'a>,
 }
 
-impl<'a> Inflate<'a> for BitOr<'a> {
-    fn inflate(mut self, config: &Config<'a>) -> Result<Self> {
-        self.whitespace_before = parse_parenthesizable_whitespace(
+impl<'r, 'a> Inflate<'a> for DeflatedBitOr<'r, 'a> {
+    type Inflated = BitOr<'a>;
+    fn inflate(self, config: &Config<'a>) -> Result<Self::Inflated> {
+        let whitespace_before = parse_parenthesizable_whitespace(
             config,
             &mut (*self.tok).whitespace_before.borrow_mut(),
         )?;
-        self.whitespace_after = parse_parenthesizable_whitespace(
+        let whitespace_after = parse_parenthesizable_whitespace(
             config,
             &mut (*self.tok).whitespace_after.borrow_mut(),
         )?;
-        Ok(self)
+        Ok(Self::Inflated {
+            whitespace_before,
+            whitespace_after,
+        })
     }
 }
 
