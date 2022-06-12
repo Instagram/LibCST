@@ -387,6 +387,10 @@ parser! {
                 StarEtc(Some(StarArg::Param(Box::new(
                     add_param_star(a, star)))), b, kw)
             }
+            / star:lit("*") a:param_no_default_star_annotation() b:param_maybe_default()* kw:kwds()? {
+                StarEtc(Some(StarArg::Param(Box::new(
+                    add_param_star(a, star)))), b, kw)
+            }
             / lit("*") c:comma() b:param_maybe_default()+ kw:kwds()? {
                 StarEtc(Some(StarArg::Star(Box::new(ParamStar {comma:c }))), b, kw)
             }
@@ -400,6 +404,10 @@ parser! {
         rule param_no_default() -> Param<'input, 'a>
             = a:param() c:lit(",") { add_param_default(a, None, Some(c)) }
             / a:param() &lit(")") {a}
+
+        rule param_no_default_star_annotation() -> Param<'input, 'a>
+            = a:param_star_annotation() c:lit(",") { add_param_default(a, None, Some(c))}
+            / a:param_star_annotation() &lit(")") {a}
 
         rule param_with_default() -> Param<'input, 'a>
             = a:param() def:default() c:lit(",") {
@@ -422,8 +430,18 @@ parser! {
                 Param {name: n, annotation: a, ..Default::default() }
             }
 
+        rule param_star_annotation() -> Param<'input, 'a>
+            = n:name() a:star_annotation() {
+                Param {name: n, annotation: Some(a), ..Default::default() }
+            }
+
         rule annotation() -> Annotation<'input, 'a>
             = col:lit(":") e:expression() {
+                make_annotation(col, e)
+            }
+
+        rule star_annotation() -> Annotation<'input, 'a>
+            = col:lit(":") e:star_expression() {
                 make_annotation(col, e)
             }
 
@@ -983,6 +1001,7 @@ parser! {
                 rest:(c:lit(":") s:expression()? {(c, s)})? {
                     make_slice(l, col, u, rest)
             }
+            / e:starred_expression() { make_index_from_arg(e) }
             / v:expression() { make_index(v) }
 
         rule atom() -> Expression<'input, 'a>
@@ -2412,7 +2431,19 @@ fn make_double_starred_element<'input, 'a>(
 }
 
 fn make_index<'input, 'a>(value: Expression<'input, 'a>) -> BaseSlice<'input, 'a> {
-    BaseSlice::Index(Box::new(Index { value }))
+    BaseSlice::Index(Box::new(Index {
+        value,
+        star: None,
+        star_tok: None,
+    }))
+}
+
+fn make_index_from_arg<'input, 'a>(arg: Arg<'input, 'a>) -> BaseSlice<'input, 'a> {
+    BaseSlice::Index(Box::new(Index {
+        value: arg.value,
+        star: Some(arg.star),
+        star_tok: arg.star_tok,
+    }))
 }
 
 fn make_colon<'input, 'a>(tok: TokenRef<'input, 'a>) -> Colon<'input, 'a> {

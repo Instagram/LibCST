@@ -1787,18 +1787,41 @@ pub enum BaseSlice<'a> {
 #[cst_node]
 pub struct Index<'a> {
     pub value: Expression<'a>,
+    pub star: Option<&'a str>,
+    pub whitespace_after_star: Option<ParenthesizableWhitespace<'a>>,
+
+    pub(crate) star_tok: Option<TokenRef<'a>>,
 }
 
 impl<'r, 'a> Inflate<'a> for DeflatedIndex<'r, 'a> {
     type Inflated = Index<'a>;
-    fn inflate(self, config: &Config<'a>) -> Result<Self::Inflated> {
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self::Inflated> {
+        let (star, whitespace_after_star) = if let Some(star_tok) = self.star_tok.as_mut() {
+            (
+                Some(star_tok.string),
+                Some(parse_parenthesizable_whitespace(
+                    config,
+                    &mut star_tok.whitespace_after.borrow_mut(),
+                )?),
+            )
+        } else {
+            (None, None)
+        };
         let value = self.value.inflate(config)?;
-        Ok(Self::Inflated { value })
+        Ok(Self::Inflated {
+            value,
+            star,
+            whitespace_after_star,
+        })
     }
 }
 
 impl<'a> Codegen<'a> for Index<'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
+        if let Some(star) = self.star {
+            state.add_token(star);
+        }
+        self.whitespace_after_star.codegen(state);
         self.value.codegen(state);
     }
 }
