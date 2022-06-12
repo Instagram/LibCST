@@ -7364,6 +7364,46 @@ class Index(BaseSlice, BaseMatcherNode):
         OneOf[BaseExpressionMatchType],
         AllOf[BaseExpressionMatchType],
     ] = DoNotCare()
+    star: Union[
+        Optional[Literal["*"]],
+        MetadataMatchType,
+        MatchIfTrue[Optional[Literal["*"]]],
+        DoNotCareSentinel,
+        OneOf[
+            Union[
+                Optional[Literal["*"]],
+                MetadataMatchType,
+                MatchIfTrue[Optional[Literal["*"]]],
+            ]
+        ],
+        AllOf[
+            Union[
+                Optional[Literal["*"]],
+                MetadataMatchType,
+                MatchIfTrue[Optional[Literal["*"]]],
+            ]
+        ],
+    ] = DoNotCare()
+    whitespace_after_star: Union[
+        Optional["BaseParenthesizableWhitespace"],
+        MetadataMatchType,
+        MatchIfTrue[Optional[cst.BaseParenthesizableWhitespace]],
+        DoNotCareSentinel,
+        OneOf[
+            Union[
+                Optional["BaseParenthesizableWhitespace"],
+                MetadataMatchType,
+                MatchIfTrue[Optional[cst.BaseParenthesizableWhitespace]],
+            ]
+        ],
+        AllOf[
+            Union[
+                Optional["BaseParenthesizableWhitespace"],
+                MetadataMatchType,
+                MatchIfTrue[Optional[cst.BaseParenthesizableWhitespace]],
+            ]
+        ],
+    ] = DoNotCare()
     metadata: Union[
         MetadataMatchType,
         DoNotCareSentinel,
@@ -13644,7 +13684,7 @@ class StarredDictElement(BaseDictElement, BaseMatcherNode):
 
 
 @dataclass(frozen=True, eq=False, unsafe_hash=False)
-class StarredElement(BaseElement, BaseMatcherNode):
+class StarredElement(BaseElement, BaseExpression, BaseMatcherNode):
     value: Union[
         BaseExpressionMatchType,
         DoNotCareSentinel,
