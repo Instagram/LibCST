@@ -2808,6 +2808,22 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_Index_star(self, node: "Index") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Index_star(self, node: "Index") -> None:
+        pass
+
+    @mark_no_op
+    def visit_Index_whitespace_after_star(self, node: "Index") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Index_whitespace_after_star(self, node: "Index") -> None:
+        pass
+
+    @mark_no_op
     def visit_Integer(self, node: "Integer") -> Optional[bool]:
         pass
 
@@ -7056,7 +7072,7 @@ class CSTTypedTransformerFunctions(CSTTypedBaseFunctions):
     @mark_no_op
     def leave_StarredElement(
         self, original_node: "StarredElement", updated_node: "StarredElement"
-    ) -> Union["BaseElement", FlattenSentinel["BaseElement"], RemovalSentinel]:
+    ) -> "BaseExpression":
         return updated_node
 
     @mark_no_op

@@ -701,6 +701,81 @@ class FunctionDefCreationTest(CSTNodeTest):
         )
     )
     def test_valid(self, **kwargs: Any) -> None:
+        if not is_native() and kwargs.get("native_only", False):
+            self.skipTest("Disabled for native parser")
+        if "native_only" in kwargs:
+            kwargs.pop("native_only")
+        self.validate_node(**kwargs)
+
+    @data_provider(
+        (
+            # PEP 646
+            {
+                "node": cst.FunctionDef(
+                    name=cst.Name(value="foo"),
+                    params=cst.Parameters(
+                        params=[],
+                        star_arg=cst.Param(
+                            star="*",
+                            name=cst.Name("a"),
+                            annotation=cst.Annotation(
+                                cst.StarredElement(value=cst.Name("b")),
+                                whitespace_before_indicator=cst.SimpleWhitespace(""),
+                            ),
+                        ),
+                    ),
+                    body=cst.SimpleStatementSuite((cst.Pass(),)),
+                ),
+                "parser": parse_statement,
+                "code": "def foo(*a: *b): pass\n",
+            },
+            {
+                "node": cst.FunctionDef(
+                    name=cst.Name(value="foo"),
+                    params=cst.Parameters(
+                        params=[],
+                        star_arg=cst.Param(
+                            star="*",
+                            name=cst.Name("a"),
+                            annotation=cst.Annotation(
+                                cst.StarredElement(
+                                    value=cst.Subscript(
+                                        value=cst.Name("tuple"),
+                                        slice=[
+                                            cst.SubscriptElement(
+                                                cst.Index(cst.Name("int")),
+                                                comma=cst.Comma(),
+                                            ),
+                                            cst.SubscriptElement(
+                                                cst.Index(
+                                                    value=cst.Name("Ts"),
+                                                    star="*",
+                                                    whitespace_after_star=cst.SimpleWhitespace(
+                                                        ""
+                                                    ),
+                                                ),
+                                                comma=cst.Comma(),
+                                            ),
+                                            cst.SubscriptElement(
+                                                cst.Index(cst.Ellipsis())
+                                            ),
+                                        ],
+                                    )
+                                ),
+                                whitespace_before_indicator=cst.SimpleWhitespace(""),
+                            ),
+                        ),
+                    ),
+                    body=cst.SimpleStatementSuite((cst.Pass(),)),
+                ),
+                "parser": parse_statement,
+                "code": "def foo(*a: *tuple[int,*Ts,...]): pass\n",
+            },
+        )
+    )
+    def test_valid_native(self, **kwargs: Any) -> None:
+        if not is_native():
+            self.skipTest("Disabled for native parser")
         self.validate_node(**kwargs)
 
     @data_provider(
@@ -2045,3 +2120,22 @@ class FunctionDefParserTest(CSTNodeTest):
         if is_native() and not kwargs.get("expect_success", True):
             self.skipTest("parse errors are disabled for native parser")
         self.assert_parses(**kwargs)
+
+    @data_provider(
+        (
+            {"code": "A[:*b]"},
+            {"code": "A[*b:]"},
+            {"code": "A[*b:*b]"},
+            {"code": "A[*(1:2)]"},
+            {"code": "A[*:]"},
+            {"code": "A[:*]"},
+            {"code": "A[**b]"},
+            {"code": "def f(x: *b): pass"},
+            {"code": "def f(**x: *b): pass"},
+            {"code": "x: *b"},
+        )
+    )
+    def test_parse_error(self, **kwargs: Any) -> None:
+        if not is_native():
+            self.skipTest("Skipped for non-native parser")
+        self.assert_parses(**kwargs, expect_success=False, parser=parse_statement)

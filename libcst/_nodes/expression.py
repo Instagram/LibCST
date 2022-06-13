@@ -1438,10 +1438,29 @@ class Index(BaseSlice):
     #: The index value itself.
     value: BaseExpression
 
+    #: An optional string with an asterisk appearing before the name. This is
+    #: expanded into variable number of positional arguments. See PEP-646
+    star: Optional[Literal["*"]] = None
+
+    #: Whitespace after the ``star`` (if it exists), but before the ``value``.
+    whitespace_after_star: Optional[BaseParenthesizableWhitespace] = None
+
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Index":
-        return Index(value=visit_required(self, "value", self.value, visitor))
+        return Index(
+            star=self.star,
+            whitespace_after_star=visit_optional(
+                self, "whitespace_after_star", self.whitespace_after_star, visitor
+            ),
+            value=visit_required(self, "value", self.value, visitor),
+        )
 
     def _codegen_impl(self, state: CodegenState) -> None:
+        star = self.star
+        if star is not None:
+            state.add_token(star)
+        ws = self.whitespace_after_star
+        if ws is not None:
+            ws._codegen(state)
         self.value._codegen(state)
 
 
@@ -2785,7 +2804,7 @@ class DictElement(BaseDictElement):
 
 @add_slots
 @dataclass(frozen=True)
-class StarredElement(BaseElement, _BaseParenthesizedNode):
+class StarredElement(BaseElement, BaseExpression, _BaseParenthesizedNode):
     """
     A starred ``*value`` element that expands to represent multiple values in a literal
     :class:`List`, :class:`Tuple`, or :class:`Set`.

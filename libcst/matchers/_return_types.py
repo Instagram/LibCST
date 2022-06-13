@@ -346,7 +346,7 @@ TYPED_FUNCTION_RETURN_MAPPING: TypingDict[Type[CSTNode], object] = {
     SimpleWhitespace: Union[BaseParenthesizableWhitespace, MaybeSentinel],
     Slice: BaseSlice,
     StarredDictElement: Union[BaseDictElement, RemovalSentinel],
-    StarredElement: Union[BaseElement, RemovalSentinel],
+    StarredElement: BaseExpression,
     Subscript: BaseExpression,
     SubscriptElement: Union[SubscriptElement, RemovalSentinel],
     Subtract: BaseBinaryOp,

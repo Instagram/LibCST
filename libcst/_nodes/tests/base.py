@@ -239,7 +239,7 @@ class CSTNodeTest(UnitTest):
     def assert_parses(
         self,
         code: str,
-        parser: Callable[[str], cst.BaseExpression],
+        parser: Callable[[str], cst.CSTNode],
         expect_success: bool,
     ) -> None:
         if not expect_success:
