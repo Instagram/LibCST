@@ -1,0 +1,203 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  # Run unittests
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: [3.7, 3.8, 3.9, "3.10"]
+        parser: [pure, native]
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - uses: actions/cache@v2
+        id: cache
+        with:
+          path: ${{ env.pythonLocation }}
+          key: ${{ env.pythonLocation }}-${{ hashFiles('requirements.txt', 'requirements-dev.txt', 'setup.py') }}
+      - name: Install Dependencies
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          pip install --upgrade --upgrade-strategy eager build -r requirements.txt -r requirements-dev.txt
+      - if: ${{ matrix.parser == 'native' }}
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+      - if: ${{ matrix.parser == 'native' }}
+        name: Rust Cache
+        uses: Swatinem/rust-cache@v1.3.0
+        with:
+          working-directory: native
+      - run: >-
+          echo LIBCST_PARSER_TYPE=${{ matrix.parser }} >> $GITHUB_ENV
+      - name: Run Tests
+        run: python setup.py test
+
+  # Run linters
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/setup-python@v2
+        with:
+          python-version: "3.10"
+      - uses: actions/cache@v2
+        id: cache
+        with:
+          path: ${{ env.pythonLocation }}
+          key: ${{ env.pythonLocation }}-${{ hashFiles('requirements.txt', 'requirements-dev.txt', 'setup.py') }}
+      - name: Install Dependencies
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          pip install --upgrade --upgrade-strategy eager build -r requirements.txt -r requirements-dev.txt
+      - run: flake8
+      - run: ufmt check .
+      - run: python3 -m fixit.cli.run_rules
+      - run: python -m slotscheck libcst
+      - run: ./check_copyright.sh
+
+  # Run pyre typechecker
+  typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/setup-python@v2
+        with:
+          python-version: "3.10"
+      - uses: actions/cache@v2
+        id: cache
+        with:
+          path: ${{ env.pythonLocation }}
+          key: ${{ env.pythonLocation }}-${{ hashFiles('requirements.txt', 'requirements-dev.txt', 'setup.py') }}
+      - name: Install Dependencies
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          pip install --upgrade --upgrade-strategy eager build -r requirements.txt -r requirements-dev.txt
+      - name: Make sure Pyre uses the working copy
+        run: pip install -e .
+      - run: pyre --version
+      - run: pyre -n check
+      - run: python libcst/tests/test_pyre_integration.py
+      - run: git diff --exit-code
+
+  # Upload test coverage
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/setup-python@v2
+        with:
+          python-version: "3.10"
+      - uses: actions/cache@v2
+        id: cache
+        with:
+          path: ${{ env.pythonLocation }}
+          key: ${{ env.pythonLocation }}-${{ hashFiles('requirements.txt', 'requirements-dev.txt', 'setup.py') }}
+      - name: Install Dependencies
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          pip install --upgrade --upgrade-strategy eager build -r requirements.txt -r requirements-dev.txt
+      - name: Generate Coverage
+        run: |
+          coverage run setup.py test
+          coverage xml -i
+      - uses: codecov/codecov-action@v2
+        with:
+          files: coverage.xml
+          fail_ci_if_error: true
+          verbose: true
+      - name: Archive Coverage
+        uses: actions/upload-artifact@v2
+        with:
+          name: coverage
+          path: coverage.xml
+
+  # Build the docs
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/setup-python@v2
+        with:
+          python-version: "3.10"
+      - uses: actions/cache@v2
+        id: cache
+        with:
+          path: ${{ env.pythonLocation }}
+          key: ${{ env.pythonLocation }}-${{ hashFiles('requirements.txt', 'requirements-dev.txt', 'setup.py') }}
+      - name: Install Dependencies
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          pip install --upgrade --upgrade-strategy eager build -r requirements.txt -r requirements-dev.txt
+      - uses: ts-graphviz/setup-graphviz@v1
+      - run: sphinx-build docs/source/ docs/build/
+      - name: Archive Docs
+        uses: actions/upload-artifact@v2
+        with:
+          name: sphinx-docs
+          path: docs/build
+
+  # Test rust parts
+  native:
+    name: Rust unit tests
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          components: rustfmt, clippy
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v1.3.0
+        with:
+          working-directory: native
+      - uses: actions/setup-python@v2
+        with:
+          python-version: "3.10"
+      - name: test
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --manifest-path=native/Cargo.toml --release
+      - name: test without python
+        if: matrix.os == 'ubuntu-latest'
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --manifest-path=native/Cargo.toml --release --no-default-features
+      - name: clippy
+        uses: actions-rs/clippy-check@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          args: --manifest-path=native/Cargo.toml --all-features
+
+  rustfmt:
+    name: Rustfmt
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+      - run: rustup component add rustfmt
+      - uses: actions-rs/cargo@v1
+        with:
+          command: fmt
+          args: --all --manifest-path=native/Cargo.toml -- --check
