@@ -59,5 +59,4 @@ jobs:
         with:
           user: __token__
           password: ${{ secrets.PYPI_API_TOKEN }}
-          repository_url: https://pypi.org/legacy/
           packages_dir: ${{ steps.download.outputs.download-path }}
