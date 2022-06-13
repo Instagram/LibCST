@@ -4,14 +4,14 @@ on:
   release:
     types: [published]
   push:
-    branches: [main, release-automation]
+    branches: [main]
 
 permissions:
   contents: read
 
 jobs:
   build:
-    uses: Instagram/LibCST/.github/workflows/build.yml@release-automation
+    uses: Instagram/LibCST/.github/workflows/build.yml@main
   upload_release:
     name: Upload wheels to pypi
     runs-on: ubuntu-latest
