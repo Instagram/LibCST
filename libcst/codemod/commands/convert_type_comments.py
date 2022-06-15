@@ -126,6 +126,19 @@ def _is_type_comment(comment: Optional[cst.Comment]) -> bool:
     return True
 
 
+def _strip_type_comment(comment: Optional[cst.Comment]) -> Optional[cst.Comment]:
+    """
+    Remove the type comment while keeping any following comments.
+    """
+    if not _is_type_comment(comment):
+        return comment
+    assert comment is not None
+    idx = comment.value.find("#", 1)
+    if idx < 0:
+        return None
+    return comment.with_changes(value=comment.value[idx:])
+
+
 class _FailedToApplyAnnotation:
     pass
 
@@ -504,6 +517,9 @@ class ConvertTypeComments(VisitorBasedCodemodCommand):
         self,
         node: cst.TrailingWhitespace,
     ) -> cst.TrailingWhitespace:
+        trailing_comment = _strip_type_comment(node.comment)
+        if trailing_comment is not None:
+            return node.with_changes(comment=trailing_comment)
         return node.with_changes(
             whitespace=cst.SimpleWhitespace(
                 ""

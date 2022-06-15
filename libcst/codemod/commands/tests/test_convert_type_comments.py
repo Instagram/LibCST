@@ -28,6 +28,15 @@ class TestConvertTypeCommentsBase(CodemodTest):
 
 
 class TestConvertTypeComments_AssignForWith(TestConvertTypeCommentsBase):
+    def test_preserves_trailing_comment(self) -> None:
+        before = """
+            y = 5  # type: int  # foo
+        """
+        after = """
+            y: int = 5  # foo
+        """
+        self.assertCodemod39Plus(before, after)
+
     def test_convert_assignments(self) -> None:
         before = """
             y = 5  # type: int
