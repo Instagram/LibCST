@@ -953,6 +953,13 @@ impl<'t> TokState<'t> {
                         }
                     }
                 }
+                (Some('\\'), _) if is_raw_string => {
+                    self.text_pos.next();
+                    if let Some('"' | '\'') = self.text_pos.peek() {
+                        // these aren't end of string markers, skip them
+                        self.text_pos.next();
+                    }
+                }
                 (Some('{'), _) => {
                     if is_in_format_spec {
                         // don't actually consume the {, and generate an OP for it instead
