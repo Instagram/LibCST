@@ -618,6 +618,34 @@ fn test_split_fstring() {
 }
 
 #[test]
+fn test_fstring_escapes() {
+    let config = TokConfig {
+        split_fstring: true,
+        ..default_config()
+    };
+    assert_eq!(
+        tokenize_all("f'\\{{\\}}'", &config),
+        Ok(vec![
+            (TokType::FStringStart, "f'"),
+            (TokType::FStringString, "\\{{\\}}"),
+            (TokType::FStringEnd, "'"),
+        ])
+    );
+    assert_eq!(
+        tokenize_all(r#"f"regexp_like(path, '.*\{file_type}$')""#, &config),
+        Ok(vec![
+            (TokType::FStringStart, "f\""),
+            (TokType::FStringString, "regexp_like(path, '.*\\"),
+            (TokType::Op, "{"),
+            (TokType::Name, "file_type"),
+            (TokType::Op, "}"),
+            (TokType::FStringString, "$')"),
+            (TokType::FStringEnd, "\""),
+        ])
+    );
+}
+
+#[test]
 fn test_operator() {
     assert_eq!(
         tokenize_all("= == * ** **= -> . .. ...", &default_config()),

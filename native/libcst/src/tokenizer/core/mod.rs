@@ -940,7 +940,25 @@ impl<'t> TokState<'t> {
                             // skip escaped char (e.g. \', \", or newline/line continuation)
                             self.text_pos.next();
                         }
-                    } else {
+                    } else if let Some(
+                        '\n'
+                        | '\\'
+                        | '\''
+                        | '"'
+                        | 'a'
+                        | 'b'
+                        | 'f'
+                        | 'n'
+                        | 'r'
+                        | 't'
+                        | 'v'
+                        | 'x'
+                        | '0'..='9'
+                        | 'N'
+                        | 'u'
+                        | 'U',
+                    ) = self.text_pos.peek()
+                    {
                         // skip escaped char
                         let next_ch = self.text_pos.next();
                         // check if this is a \N sequence
