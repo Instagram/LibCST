@@ -18,10 +18,10 @@ numbers of nodes through the :class:`~libcst.metadata.PositionProvider`:
 .. code-block:: python
 
     class NamePrinter(cst.CSTVisitor):
-        METADATA_DEPENDENCIES = (cst.PositionProvider,)
+        METADATA_DEPENDENCIES = (cst.metadata.PositionProvider,)
 
         def visit_Name(self, node: cst.Name) -> None:
-            pos = self.get_metadata(cst.PositionProvider, node).start
+            pos = self.get_metadata(cst.metadata.PositionProvider, node).start
             print(f"{node.value} found at line {pos.line}, column {pos.column}")
 
     wrapper = cst.metadata.MetadataWrapper(cst.parse_module("x = 1"))
