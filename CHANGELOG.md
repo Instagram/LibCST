@@ -1,3 +1,17 @@
+# 0.4.5 - 2022-06-17
+
+## New Contributors
+
+-   @zzl0 made their first contribution in https://github.com/Instagram/LibCST/pull/704
+
+## Fixes
+
+-   Only skip supported escaped characters in f-strings by @zsol in https://github.com/Instagram/LibCST/pull/700
+-   Escaping quote characters in raw string literals causes a tokenizer error by @zsol in https://github.com/Instagram/LibCST/issues/668
+-   Corrected a code example in the documentation by @zzl0 in https://github.com/Instagram/LibCST/pull/703
+-   Handle multiline strings that start with quotes by @zzl0 in https://github.com/Instagram/LibCST/pull/704
+-   Fixed a performance regression in libcst.metadata.ScopeProvider by @lpetre in https://github.com/Instagram/LibCST/pull/698
+
 # 0.4.4 - 2022-06-13
 
 ## New Contributors
