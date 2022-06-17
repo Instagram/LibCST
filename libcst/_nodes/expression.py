@@ -656,14 +656,20 @@ class SimpleString(_BasePrefixedString):
         if len(quote) == 2:
             # Let's assume this is an empty string.
             quote = quote[:1]
-        elif len(quote) == 6:
-            # Let's assume this is an empty triple-quoted string.
+        elif 3 < len(quote) <= 6:
+            # Let's assume this can be one of the following:
+            # >>> """"foo"""
+            # '"foo'
+            # >>> """""bar"""
+            # '""bar'
+            # >>> """"""
+            # ''
             quote = quote[:3]
 
         if len(quote) not in {1, 3}:
             # We shouldn't get here due to construction validation logic,
             # but handle the case anyway.
-            raise Exception("Invalid string {self.value}")
+            raise Exception(f"Invalid string {self.value}")
 
         # pyre-ignore We know via the above validation that we will only
         # ever return one of the four string literals.
