@@ -657,6 +657,7 @@ class LocalScope(Scope, abc.ABC):
         self.name = name
         self.node = node
         self._scope_overwrites = {}
+        # pyre-fixme[4]: Attribute `_name_prefix` of class `LocalScope` has type `str` but no type is specified.
         self._name_prefix = self._make_name_prefix()
 
     def record_global_overwrite(self, name: str) -> None:
