@@ -217,24 +217,12 @@ class Assignment(BaseAssignment):
         return self.__index
 
     def get_qualified_names_for(self, full_name: str) -> Set[QualifiedName]:
-        scope = self.scope
-        name_prefixes = []
-        while scope:
-            if isinstance(scope, ClassScope):
-                name_prefixes.append(scope.name)
-            elif isinstance(scope, FunctionScope):
-                name_prefixes.append(f"{scope.name}.<locals>")
-            elif isinstance(scope, ComprehensionScope):
-                name_prefixes.append("<comprehension>")
-            elif not isinstance(scope, (GlobalScope, BuiltinScope)):
-                raise Exception(f"Unexpected Scope: {scope}")
-
-            scope = scope.parent if scope.parent != scope else None
-
-        parts = [*reversed(name_prefixes)]
-        if full_name:
-            parts.append(full_name)
-        return {QualifiedName(".".join(parts), QualifiedNameSource.LOCAL)}
+        return {
+            QualifiedName(
+                self.scope._maybe_dotted_name(full_name),
+                QualifiedNameSource.LOCAL,
+            )
+        }
 
 
 # even though we don't override the constructor.
@@ -409,6 +397,7 @@ class Scope(abc.ABC):
     _assignment_count: int
     _accesses_by_name: MutableMapping[str, Set[Access]]
     _accesses_by_node: MutableMapping[cst.CSTNode, Set[Access]]
+    _name_prefix: str
 
     def __init__(self, parent: "Scope") -> None:
         super().__init__()
@@ -418,6 +407,7 @@ class Scope(abc.ABC):
         self._assignment_count = 0
         self._accesses_by_name = defaultdict(set)
         self._accesses_by_node = defaultdict(set)
+        self._name_prefix = ""
 
     def record_assignment(self, name: str, node: cst.CSTNode) -> None:
         target = self._find_assignment_target(name)
@@ -591,6 +581,11 @@ class Scope(abc.ABC):
         """Return an :class:`~libcst.metadata.Accesses` contains all accesses in current scope."""
         return Accesses(self._accesses_by_name)
 
+    # makes a dot separated name but filters out empty strings
+    def _maybe_dotted_name(self, *args: Optional[str]) -> str:
+        # filter(None, ...) removes all falsey values (ie empty string)
+        return ".".join(filter(None, [self._name_prefix, *args]))
+
 
 class BuiltinScope(Scope):
     """
@@ -667,6 +662,8 @@ class LocalScope(Scope, abc.ABC):
         self.name = name
         self.node = node
         self._scope_overwrites = {}
+        # pyre-fixme[4]: Attribute `_name_prefix` of class `LocalScope` has type `str` but no type is specified.
+        self._name_prefix = self._make_name_prefix()
 
     def record_global_overwrite(self, name: str) -> None:
         self._scope_overwrites[name] = self.globals
@@ -694,6 +691,9 @@ class LocalScope(Scope, abc.ABC):
             return self._assignments[name]
         else:
             return self.parent._getitem_from_self_or_parent(name)
+
+    def _make_name_prefix(self) -> str:
+        return self.parent._maybe_dotted_name(self.name, "<locals>")
 
 
 # even though we don't override the constructor.
@@ -741,6 +741,9 @@ class ClassScope(LocalScope):
         """
         return self.parent._contains_in_self_or_parent(name)
 
+    def _make_name_prefix(self) -> str:
+        return self.parent._maybe_dotted_name(self.name)
+
 
 # even though we don't override the constructor.
 class ComprehensionScope(LocalScope):
@@ -755,7 +758,9 @@ class ComprehensionScope(LocalScope):
     # TODO: Assignment expressions (Python 3.8) will complicate ComprehensionScopes,
     # and will require us to handle such assignments as non-local.
     # https://www.python.org/dev/peps/pep-0572/#scope-of-the-target
-    pass
+
+    def _make_name_prefix(self) -> str:
+        return self.parent._maybe_dotted_name("<comprehension>")
 
 
 # Generates dotted names from an Attribute or Name node:
