@@ -219,7 +219,9 @@ class Assignment(BaseAssignment):
     def get_qualified_names_for(self, full_name: str) -> Set[QualifiedName]:
         return {
             QualifiedName(
-                self.scope._maybe_dotted_name(full_name),
+                f"{self.scope._name_prefix}.{full_name}"
+                if self.scope._name_prefix
+                else full_name,
                 QualifiedNameSource.LOCAL,
             )
         }
@@ -581,11 +583,6 @@ class Scope(abc.ABC):
         """Return an :class:`~libcst.metadata.Accesses` contains all accesses in current scope."""
         return Accesses(self._accesses_by_name)
 
-    # makes a dot separated name but filters out empty strings
-    def _maybe_dotted_name(self, *args: Optional[str]) -> str:
-        # filter(None, ...) removes all falsey values (ie empty string)
-        return ".".join(filter(None, [self._name_prefix, *args]))
-
 
 class BuiltinScope(Scope):
     """
@@ -693,7 +690,8 @@ class LocalScope(Scope, abc.ABC):
             return self.parent._getitem_from_self_or_parent(name)
 
     def _make_name_prefix(self) -> str:
-        return self.parent._maybe_dotted_name(self.name, "<locals>")
+        # filter falsey strings out
+        return ".".join(filter(None, [self.parent._name_prefix, self.name, "<locals>"]))
 
 
 # even though we don't override the constructor.
@@ -742,7 +740,8 @@ class ClassScope(LocalScope):
         return self.parent._contains_in_self_or_parent(name)
 
     def _make_name_prefix(self) -> str:
-        return self.parent._maybe_dotted_name(self.name)
+        # filter falsey strings out
+        return ".".join(filter(None, [self.parent._name_prefix, self.name]))
 
 
 # even though we don't override the constructor.
@@ -760,7 +759,8 @@ class ComprehensionScope(LocalScope):
     # https://www.python.org/dev/peps/pep-0572/#scope-of-the-target
 
     def _make_name_prefix(self) -> str:
-        return self.parent._maybe_dotted_name("<comprehension>")
+        # filter falsey strings out
+        return ".".join(filter(None, [self.parent._name_prefix, "<comprehension>"]))
 
 
 # Generates dotted names from an Attribute or Name node:
