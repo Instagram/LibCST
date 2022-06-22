@@ -1732,15 +1732,26 @@ class ParamSlash(CSTNode):
     .. _PEP 570: https://www.python.org/dev/peps/pep-0570/#specification
     """
 
-    # Optional comma that comes after the slash.
+    #: Optional comma that comes after the slash. This comma doesn't own the whitespace
+    #: between ``/`` and ``,``.
     comma: Union[Comma, MaybeSentinel] = MaybeSentinel.DEFAULT
 
+    #: Whitespace after the ``/`` character. This is captured here in case there is a
+    #: comma.
+    whitespace_after: BaseParenthesizableWhitespace = SimpleWhitespace.field("")
+
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "ParamSlash":
-        return ParamSlash(comma=visit_sentinel(self, "comma", self.comma, visitor))
+        return ParamSlash(
+            comma=visit_sentinel(self, "comma", self.comma, visitor),
+            whitespace_after=visit_required(
+                self, "whitespace_after", self.whitespace_after, visitor
+            ),
+        )
 
     def _codegen_impl(self, state: CodegenState, default_comma: bool = False) -> None:
         state.add_token("/")
 
+        self.whitespace_after._codegen(state)
         comma = self.comma
         if comma is MaybeSentinel.DEFAULT and default_comma:
             state.add_token(", ")
