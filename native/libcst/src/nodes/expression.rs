@@ -999,7 +999,6 @@ pub struct Tuple<'a> {
 impl<'r, 'a> Inflate<'a> for DeflatedTuple<'r, 'a> {
     type Inflated = Tuple<'a>;
     fn inflate(self, config: &Config<'a>) -> Result<Self::Inflated> {
-        dbg!(&self);
         let lpar = self.lpar.inflate(config)?;
         let len = self.elements.len();
         let elements = self
