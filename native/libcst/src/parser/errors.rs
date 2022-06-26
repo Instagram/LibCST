@@ -67,7 +67,7 @@ mod py_error {
                 ]
                 .into_py_dict(py);
                 let libcst = PyModule::import(py, "libcst").expect("libcst cannot be imported");
-                PyErr::from_instance(
+                PyErr::from_value(
                     libcst
                         .getattr("ParserSyntaxError")
                         .expect("ParserSyntaxError not found")
