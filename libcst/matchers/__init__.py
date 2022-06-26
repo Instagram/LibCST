@@ -11955,6 +11955,12 @@ class ParamSlash(BaseMatcherNode):
     comma: Union[
         CommaMatchType, DoNotCareSentinel, OneOf[CommaMatchType], AllOf[CommaMatchType]
     ] = DoNotCare()
+    whitespace_after: Union[
+        BaseParenthesizableWhitespaceMatchType,
+        DoNotCareSentinel,
+        OneOf[BaseParenthesizableWhitespaceMatchType],
+        AllOf[BaseParenthesizableWhitespaceMatchType],
+    ] = DoNotCare()
     metadata: Union[
         MetadataMatchType,
         DoNotCareSentinel,

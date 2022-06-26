@@ -4308,6 +4308,14 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_ParamSlash_whitespace_after(self, node: "ParamSlash") -> None:
+        pass
+
+    @mark_no_op
+    def leave_ParamSlash_whitespace_after(self, node: "ParamSlash") -> None:
+        pass
+
+    @mark_no_op
     def visit_ParamStar(self, node: "ParamStar") -> Optional[bool]:
         pass
 

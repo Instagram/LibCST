@@ -30,6 +30,22 @@ class LambdaCreationTest(CSTNodeTest):
                 ),
                 "code": "lambda bar, baz, /: 5",
             },
+            # Test basic positional only params with extra trailing whitespace
+            {
+                "node": cst.Lambda(
+                    cst.Parameters(
+                        posonly_params=(
+                            cst.Param(cst.Name("bar")),
+                            cst.Param(cst.Name("baz")),
+                        ),
+                        posonly_ind=cst.ParamSlash(
+                            whitespace_after=cst.SimpleWhitespace(" ")
+                        ),
+                    ),
+                    cst.Integer("5"),
+                ),
+                "code": "lambda bar, baz, / : 5",
+            },
             # Test basic positional params
             (
                 cst.Lambda(

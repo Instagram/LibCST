@@ -1,4 +1,6 @@
 def f(a, /,): pass
+def f(a, / ,): pass
+def f(a, / ): pass
 def f(a, /, c, d, e): pass
 def f(a, /, c, *, d, e): pass
 def f(a, /, c, *, d, e, **kwargs): pass
@@ -24,6 +26,10 @@ def f(a, /, c, d, e):
 def f(a, /, c, *, d, e):
     pass
 
+def foo(a, *
+    , bar):
+    pass
+
 
 def f(
     a,
@@ -42,6 +48,11 @@ def f(
     /,
 ):
     pass
+
+def say_hello(
+    self, user: str, /
+):
+    print('Hello ' + user)
 
 
 def f(a=1, /, b=2, c=4):

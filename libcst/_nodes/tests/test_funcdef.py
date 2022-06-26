@@ -1874,6 +1874,36 @@ class FunctionDefParserTest(CSTNodeTest):
                 ),
                 "code": "def foo(bar, baz, /): pass\n",
             },
+            # Positional only params with whitespace after but no comma
+            {
+                "node": cst.FunctionDef(
+                    cst.Name("foo"),
+                    cst.Parameters(
+                        posonly_params=(
+                            cst.Param(
+                                cst.Name("bar"),
+                                star="",
+                                comma=cst.Comma(
+                                    whitespace_after=cst.SimpleWhitespace(" ")
+                                ),
+                            ),
+                            cst.Param(
+                                cst.Name("baz"),
+                                star="",
+                                comma=cst.Comma(
+                                    whitespace_after=cst.SimpleWhitespace(" ")
+                                ),
+                            ),
+                        ),
+                        posonly_ind=cst.ParamSlash(
+                            whitespace_after=cst.SimpleWhitespace(" ")
+                        ),
+                    ),
+                    cst.SimpleStatementSuite((cst.Pass(),)),
+                ),
+                "code": "def foo(bar, baz, / ): pass\n",
+                "native_only": True,
+            },
             # Typed positional only params
             {
                 "node": cst.FunctionDef(
@@ -2089,7 +2119,9 @@ class FunctionDefParserTest(CSTNodeTest):
             },
         )
     )
-    def test_valid_38(self, node: cst.CSTNode, code: str) -> None:
+    def test_valid_38(self, node: cst.CSTNode, code: str, **kwargs: Any) -> None:
+        if not is_native() and kwargs.get("native_only", False):
+            self.skipTest("disabled for pure python parser")
         self.validate_node(node, code, _parse_statement_force_38)
 
     @data_provider(

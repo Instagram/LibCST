@@ -141,11 +141,15 @@ impl<'a> Codegen<'a> for Parameters<'a> {
 #[cst_node]
 pub struct ParamSlash<'a> {
     pub comma: Option<Comma<'a>>,
+    pub whitespace_after: ParenthesizableWhitespace<'a>,
+
+    pub(crate) tok: TokenRef<'a>,
 }
 
 impl<'a> ParamSlash<'a> {
     fn codegen(&self, state: &mut CodegenState<'a>, default_comma: bool) {
         state.add_token("/");
+        self.whitespace_after.codegen(state);
         match (&self.comma, default_comma) {
             (Some(comma), _) => comma.codegen(state),
             (None, true) => state.add_token(", "),
@@ -157,8 +161,13 @@ impl<'a> ParamSlash<'a> {
 impl<'r, 'a> Inflate<'a> for DeflatedParamSlash<'r, 'a> {
     type Inflated = ParamSlash<'a>;
     fn inflate(self, config: &Config<'a>) -> Result<Self::Inflated> {
+        let whitespace_after =
+            parse_parenthesizable_whitespace(config, &mut self.tok.whitespace_after.borrow_mut())?;
         let comma = self.comma.inflate(config)?;
-        Ok(Self::Inflated { comma })
+        Ok(Self::Inflated {
+            comma,
+            whitespace_after,
+        })
     }
 }
 

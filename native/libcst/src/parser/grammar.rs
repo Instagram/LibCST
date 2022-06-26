@@ -367,19 +367,19 @@ parser! {
             }
 
         rule slash_no_default() -> (Vec<Param<'input, 'a>>, ParamSlash<'input, 'a>)
-            = a:param_no_default()+ slash:lit("/") com:comma() {
-                    (a, ParamSlash { comma: Some(com)})
+            = a:param_no_default()+ tok:lit("/") com:comma() {
+                    (a, ParamSlash { comma: Some(com), tok })
             }
-            / a:param_no_default()+ slash:lit("/") &lit(")") {
-                (a, ParamSlash { comma: None })
+            / a:param_no_default()+ tok:lit("/") &lit(")") {
+                (a, ParamSlash { comma: None, tok })
             }
 
         rule slash_with_default() -> (Vec<Param<'input, 'a>>, ParamSlash<'input, 'a>)
-            = a:param_no_default()* b:param_with_default()+ slash:lit("/") c:comma() {
-                (concat(a, b), ParamSlash { comma: Some(c) })
+            = a:param_no_default()* b:param_with_default()+ tok:lit("/") c:comma() {
+                (concat(a, b), ParamSlash { comma: Some(c), tok })
             }
-            / a:param_no_default()* b:param_with_default()+ slash:lit("/") &lit(")") {
-                (concat(a, b), ParamSlash { comma: None })
+            / a:param_no_default()* b:param_with_default()+ tok:lit("/") &lit(")") {
+                (concat(a, b), ParamSlash { comma: None, tok })
             }
 
         rule star_etc() -> StarEtc<'input, 'a>
@@ -1056,19 +1056,19 @@ parser! {
             }
 
         rule lambda_slash_no_default() -> (Vec<Param<'input, 'a>>, ParamSlash<'input, 'a>)
-            = a:lambda_param_no_default()+ slash:lit("/") com:comma() {
-                (a, ParamSlash { comma: Some(com) } )
+            = a:lambda_param_no_default()+ tok:lit("/") com:comma() {
+                (a, ParamSlash { comma: Some(com), tok } )
             }
-            / a:lambda_param_no_default()+ slash:lit("/") &lit(":") {
-                (a, ParamSlash { comma: None })
+            / a:lambda_param_no_default()+ tok:lit("/") &lit(":") {
+                (a, ParamSlash { comma: None, tok })
             }
 
         rule lambda_slash_with_default() -> (Vec<Param<'input, 'a>>, ParamSlash<'input, 'a>)
-            = a:lambda_param_no_default()* b:lambda_param_with_default()+ slash:lit("/") c:comma(){
-                (concat(a, b), ParamSlash { comma: Some(c) })
+            = a:lambda_param_no_default()* b:lambda_param_with_default()+ tok:lit("/") c:comma(){
+                (concat(a, b), ParamSlash { comma: Some(c), tok })
             }
-            / a:lambda_param_no_default()* b:lambda_param_with_default()+ slash:lit("/") &lit(":") {
-                (concat(a, b), ParamSlash { comma: None })
+            / a:lambda_param_no_default()* b:lambda_param_with_default()+ tok:lit("/") &lit(":") {
+                (concat(a, b), ParamSlash { comma: None, tok })
             }
 
         rule lambda_star_etc() -> StarEtc<'input, 'a>
