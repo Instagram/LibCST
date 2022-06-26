@@ -1007,12 +1007,7 @@ impl<'r, 'a> Inflate<'a> for DeflatedTuple<'r, 'a> {
             .enumerate()
             .map(|(idx, el)| el.inflate_element(config, idx + 1 == len))
             .collect::<Result<Vec<_>>>()?;
-        let rpar = if !elements.is_empty() {
-            // rpar only has whitespace if elements is non empty
-            self.rpar.inflate(config)?
-        } else {
-            vec![Default::default()]
-        };
+        let rpar = self.rpar.inflate(config)?;
         Ok(Self::Inflated {
             elements,
             lpar,
