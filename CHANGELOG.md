@@ -1,10 +1,25 @@
+# 0.4.6 - 2022-07-04
+
+## New Contributors
+- @superbobry made their first contribution in https://github.com/Instagram/LibCST/pull/702
+
+## Fixed
+- convert_type_comments now preserves comments following type comments by @superbobry in https://github.com/Instagram/LibCST/pull/702
+- QualifiedNameProvider optimizations
+  - Cache the scope name prefix to prevent scope traversal in a tight loop by @lpetre in https://github.com/Instagram/LibCST/pull/708
+  - Faster qualified name formatting by @lpetre in https://github.com/Instagram/LibCST/pull/710
+  - Prevent unnecessary work in Scope.get_qualified_names_for_ by @lpetre in https://github.com/Instagram/LibCST/pull/709
+- Fix parsing of parenthesized empty tuples by @zsol in https://github.com/Instagram/LibCST/pull/712
+- Support whitespace after ParamSlash by @zsol in https://github.com/Instagram/LibCST/pull/713
+- [parser] bail on deeply nested expressions by @zsol in https://github.com/Instagram/LibCST/pull/718
+
 # 0.4.5 - 2022-06-17
 
 ## New Contributors
 
 -   @zzl0 made their first contribution in https://github.com/Instagram/LibCST/pull/704
 
-## Fixes
+## Fixed
 
 -   Only skip supported escaped characters in f-strings by @zsol in https://github.com/Instagram/LibCST/pull/700
 -   Escaping quote characters in raw string literals causes a tokenizer error by @zsol in https://github.com/Instagram/LibCST/issues/668
