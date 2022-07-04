@@ -85,6 +85,8 @@ impl<'input, 'a: 'input> ParseElem<'input> for TokVec<'a> {
     }
 }
 
+const MAX_RECURSION_DEPTH: usize = 3000;
+
 parser! {
     pub grammar python<'a>(input: &'a str) for TokVec<'a> {
 
@@ -1117,7 +1119,7 @@ parser! {
 
         rule strings() -> String<'input, 'a>
             = s:(str:tok(STRING, "STRING") t:&_ {(make_string(str), t)}
-                / str:fstring() t:&_ {(String::Formatted(str), t)})+ {
+                / str:fstring() t:&_ {(String::Formatted(str), t)})+ {?
                 make_strings(s)
             }
 
@@ -1171,7 +1173,7 @@ parser! {
         // Comprehensions & generators
 
         rule for_if_clauses() -> CompFor<'input, 'a>
-            = c:for_if_clause()+ { merge_comp_fors(c) }
+            = c:for_if_clause()+ {? merge_comp_fors(c) }
 
         rule for_if_clause() -> CompFor<'input, 'a>
             = asy:_async() f:lit("for") tgt:star_targets() i:lit("in")
@@ -2240,14 +2242,19 @@ fn make_bare_genexp<'input, 'a>(
     }
 }
 
-fn merge_comp_fors<'input, 'a>(comp_fors: Vec<CompFor<'input, 'a>>) -> CompFor<'input, 'a> {
+fn merge_comp_fors<'input, 'a>(
+    comp_fors: Vec<CompFor<'input, 'a>>,
+) -> GrammarResult<CompFor<'input, 'a>> {
+    if comp_fors.len() > MAX_RECURSION_DEPTH {
+        return Err("shallower comprehension");
+    }
     let mut it = comp_fors.into_iter().rev();
     let first = it.next().expect("cant merge empty comp_fors");
 
-    it.fold(first, |acc, curr| CompFor {
+    Ok(it.fold(first, |acc, curr| CompFor {
         inner_for_in: Some(Box::new(acc)),
         ..curr
-    })
+    }))
 }
 
 fn make_left_bracket<'input, 'a>(tok: TokenRef<'input, 'a>) -> LeftSquareBracket<'input, 'a> {
@@ -2816,10 +2823,13 @@ fn make_string<'input, 'a>(tok: TokenRef<'input, 'a>) -> String<'input, 'a> {
 
 fn make_strings<'input, 'a>(
     s: Vec<(String<'input, 'a>, TokenRef<'input, 'a>)>,
-) -> String<'input, 'a> {
+) -> GrammarResult<String<'input, 'a>> {
+    if s.len() > MAX_RECURSION_DEPTH {
+        return Err("shorter concatenated string");
+    }
     let mut strings = s.into_iter().rev();
     let (first, _) = strings.next().expect("no strings to make a string of");
-    strings.fold(first, |acc, (str, tok)| {
+    Ok(strings.fold(first, |acc, (str, tok)| {
         let ret: String<'input, 'a> = String::Concatenated(ConcatenatedString {
             left: Box::new(str),
             right: Box::new(acc),
@@ -2828,7 +2838,7 @@ fn make_strings<'input, 'a>(
             right_tok: tok,
         });
         ret
-    })
+    }))
 }
 
 fn make_fstring_expression<'input, 'a>(

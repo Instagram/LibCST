@@ -30,7 +30,7 @@ trace = ["peg/trace"]
 
 [dependencies]
 paste = "1.0.4"
-pyo3 = { version = "0.16.5", optional = true }
+pyo3 = { version = "0.16", optional = true }
 thiserror = "1.0.23"
 peg = "0.8.0"
 chic = "1.2.2"

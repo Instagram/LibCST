@@ -8,6 +8,7 @@ from typing import Any
 import libcst as cst
 from libcst import parse_expression
 from libcst._nodes.tests.base import CSTNodeTest
+from libcst._parser.entrypoints import is_native
 from libcst.metadata import CodeRange
 from libcst.testing.utils import data_provider
 
@@ -174,3 +175,18 @@ class BinaryOperationTest(CSTNodeTest):
     )
     def test_invalid(self, **kwargs: Any) -> None:
         self.assert_invalid(**kwargs)
+
+    @data_provider(
+        (
+            {
+                "code": '"a"' * 6000,
+                "parser": parse_expression,
+            },
+            {
+                "code": "[_" + " for _ in _" * 6000 + "]",
+                "parser": parse_expression,
+            },
+        )
+    )
+    def test_parse_error(self, **kwargs: Any) -> None:
+        self.assert_parses(**kwargs, expect_success=not is_native())
