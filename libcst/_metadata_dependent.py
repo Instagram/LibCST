@@ -7,6 +7,7 @@ import inspect
 from abc import ABC
 from contextlib import contextmanager
 from typing import (
+    Callable,
     cast,
     ClassVar,
     Collection,
@@ -30,6 +31,26 @@ if TYPE_CHECKING:
 _T = TypeVar("_T")
 
 _UNDEFINED_DEFAULT = object()
+
+_SENTINEL = object()
+
+class LazyValue:
+    """
+    The class for implementing a lazy metadata loading mechanism that improves the
+    performance when retriving expensive metadata (e.g., qualified names). Providers
+    including :class:`~libcst.metadata.QualifiedNameProvider` use this class to load
+    the metadata of a certain node lazily when calling
+    :func:`~libcst.MetadataDependent.get_metadata`.
+    """
+
+    def __init__(self, callable: Callable) -> None:
+        self.callable = callable
+        self.return_value = _SENTINEL
+
+    def __call__(self) -> None:
+        if self.return_value is _SENTINEL:
+            self.return_value = self.callable()
+        return self.return_value
 
 
 class MetadataDependent(ABC):
@@ -107,6 +128,9 @@ class MetadataDependent(ABC):
             )
 
         if default is not _UNDEFINED_DEFAULT:
-            return cast(_T, self.metadata[key].get(node, default))
+            value = self.metadata[key].get(node, default)
         else:
-            return cast(_T, self.metadata[key][node])
+            value = self.metadata[key][node]
+        if isinstance(value, LazyValue):
+            value = value()
+        return cast(_T, value)
