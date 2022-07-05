@@ -560,7 +560,8 @@ class Scope(abc.ABC):
             if prefix in self:
                 assignments = self[prefix]
                 break
-            prefix = prefix[: prefix.rfind(".")]
+            idx = prefix.rfind(".")
+            prefix = None if idx == -1 else prefix[:idx]
 
         if not isinstance(node, str):
             for assignment in assignments:

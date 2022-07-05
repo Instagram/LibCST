@@ -1964,3 +1964,21 @@ class ScopeProviderTest(UnitTest):
         self.assertEqual(len(assignment.references), 1)
         references = list(assignment.references)
         self.assertTrue(references[0].is_annotation)
+
+    def test_prefix_match(self) -> None:
+        """Verify that a name doesn't overmatch on prefix"""
+        m, scopes = get_scope_metadata_provider(
+            """
+                def something():
+                    ...
+            """
+        )
+        scope = scopes[m]
+        self.assertEqual(
+            scope.get_qualified_names_for(cst.Name("something")),
+            {QualifiedName(name="something", source=QualifiedNameSource.LOCAL)},
+        )
+        self.assertEqual(
+            scope.get_qualified_names_for(cst.Name("something_else")),
+            set(),
+        )
