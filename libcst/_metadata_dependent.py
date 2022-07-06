@@ -34,6 +34,7 @@ _UNDEFINED_DEFAULT = object()
 
 _SENTINEL = object()
 
+
 class LazyValue:
     """
     The class for implementing a lazy metadata loading mechanism that improves the

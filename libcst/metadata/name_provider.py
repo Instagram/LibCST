@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Collection, List, Mapping, Optional, Union
 
 import libcst as cst
-from libcst._metadata_dependent import MetadataDependent, LazyValue
+from libcst._metadata_dependent import LazyValue, MetadataDependent
 from libcst.helpers.module import calculate_module_and_package, ModuleNameAndPackage
 from libcst.metadata.base_provider import BatchableMetadataProvider
 from libcst.metadata.scope_provider import (
@@ -78,7 +78,9 @@ class QualifiedNameVisitor(cst.CSTVisitor):
     def on_visit(self, node: cst.CSTNode) -> bool:
         scope = self.provider.get_metadata(ScopeProvider, node, None)
         if scope:
-            self.provider.set_metadata(node, LazyValue(lambda: scope.get_qualified_names_for(node)))
+            self.provider.set_metadata(
+                node, LazyValue(lambda: scope.get_qualified_names_for(node))
+            )
         else:
             self.provider.set_metadata(node, set())
         super().on_visit(node)

@@ -21,12 +21,26 @@ from libcst.metadata.full_repo_manager import FullRepoManager
 from libcst.metadata.name_provider import FullyQualifiedNameVisitor
 from libcst.testing.utils import data_provider, UnitTest
 
+class QNameVisitor(cst.CSTVisitor):
+
+    METADATA_DEPENDENCIES = (QualifiedNameProvider,)
+
+    def __init__(self):
+        self.qnames = {}
+
+    def on_visit(self, node: cst.CSTNode) -> bool:
+        qname = self.get_metadata(QualifiedNameProvider, node)
+        self.qnames[node] = qname
+        return True
+
 
 def get_qualified_name_metadata_provider(
     module_str: str,
 ) -> Tuple[cst.Module, Mapping[cst.CSTNode, Collection[QualifiedName]]]:
     wrapper = MetadataWrapper(cst.parse_module(dedent(module_str)))
-    return wrapper.module, wrapper.resolve(QualifiedNameProvider)
+    visitor = QNameVisitor()
+    wrapper.visit(visitor)
+    return wrapper.module, visitor.qnames
 
 
 def get_qualified_names(module_str: str) -> Set[QualifiedName]:
@@ -358,7 +372,7 @@ class QualifiedNameProviderTest(UnitTest):
             else:
                 import f
             import a.b as f
-            
+
             f()
             """
         )
