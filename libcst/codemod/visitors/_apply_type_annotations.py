@@ -5,7 +5,7 @@
 
 from collections import defaultdict
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Sequence, Set, Tuple, Union
+from typing import cast, Collection, Dict, List, Optional, Sequence, Set, Tuple, Union
 
 import libcst as cst
 import libcst.matchers as m
@@ -17,7 +17,7 @@ from libcst.codemod.visitors._gather_global_names import GatherGlobalNamesVisito
 from libcst.codemod.visitors._gather_imports import GatherImportsVisitor
 from libcst.codemod.visitors._imports import ImportItem
 from libcst.helpers import get_full_name_for_node
-from libcst.metadata import PositionProvider, QualifiedNameProvider
+from libcst.metadata import PositionProvider, QualifiedName, QualifiedNameProvider
 
 
 NameOrAttribute = Union[cst.Name, cst.Attribute]
@@ -48,7 +48,12 @@ def _get_unique_qualified_name(
     visitor: m.MatcherDecoratableVisitor, node: cst.CSTNode
 ) -> str:
     name = None
-    names = [q.name for q in visitor.get_metadata(QualifiedNameProvider, node)]
+    names = [
+        q.name
+        for q in cast(
+            Collection[QualifiedName], visitor.get_metadata(QualifiedNameProvider, node)
+        )
+    ]
     if len(names) == 0:
         # we hit this branch if the stub is directly using a fully
         # qualified name, which is not technically valid python but is

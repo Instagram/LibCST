@@ -5,7 +5,7 @@
 
 import dataclasses
 from pathlib import Path
-from typing import Collection, List, Mapping, Optional, Union
+from typing import cast, Collection, List, Mapping, Optional, Union
 
 import libcst as cst
 from libcst._metadata_dependent import LazyValue, MetadataDependent
@@ -17,8 +17,10 @@ from libcst.metadata.scope_provider import (
     ScopeProvider,
 )
 
+_UNDEFINED_DEFAULT = object
 
-class QualifiedNameProvider(BatchableMetadataProvider[Collection[QualifiedName]]):
+
+class QualifiedNameProvider(BatchableMetadataProvider[_UNDEFINED_DEFAULT]):
     """
     Compute possible qualified names of a variable CSTNode
     (extends `PEP-3155 <https://www.python.org/dev/peps/pep-3155/>`_).
@@ -64,7 +66,10 @@ class QualifiedNameProvider(BatchableMetadataProvider[Collection[QualifiedName]]
         visitor: MetadataDependent, node: cst.CSTNode, name: Union[str, QualifiedName]
     ) -> bool:
         """Check if any of qualified name has the str name or :class:`~libcst.metadata.QualifiedName` name."""
-        qualified_names = visitor.get_metadata(QualifiedNameProvider, node, set())
+        qualified_names = cast(
+            Collection[QualifiedName],
+            visitor.get_metadata(QualifiedNameProvider, node, set()),
+        )
         if isinstance(name, str):
             return any(qn.name == name for qn in qualified_names)
         else:
@@ -173,7 +178,10 @@ class FullyQualifiedNameVisitor(cst.CSTVisitor):
         self.provider = provider
 
     def on_visit(self, node: cst.CSTNode) -> bool:
-        qnames = self.provider.get_metadata(QualifiedNameProvider, node)
+        qnames = cast(
+            Collection[QualifiedName],
+            self.provider.get_metadata(QualifiedNameProvider, node),
+        )
         if qnames is not None:
             self.provider.set_metadata(
                 node,
