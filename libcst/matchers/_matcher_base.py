@@ -31,7 +31,7 @@ from typing import (
 import libcst
 import libcst.metadata as meta
 from libcst import FlattenSentinel, MaybeSentinel, RemovalSentinel
-
+from libcst._metadata_dependent import LazyValue
 
 class DoNotCareSentinel(Enum):
     """
@@ -1544,7 +1544,11 @@ def _construct_metadata_fetcher_wrapper(
         if provider not in metadata:
             metadata[provider] = wrapper.resolve(provider)
 
-        return metadata.get(provider, {}).get(node, _METADATA_MISSING_SENTINEL)
+        node_metadata = metadata.get(provider, {}).get(node, _METADATA_MISSING_SENTINEL)
+        if isinstance(node_metadata, LazyValue):
+            node_metadata = node_metadata()
+
+        return node_metadata
 
     return _fetch
 
