@@ -44,11 +44,11 @@ class LazyValue:
     :func:`~libcst.MetadataDependent.get_metadata`.
     """
 
-    def __init__(self, callable: Callable) -> None:
+    def __init__(self, callable: Callable[[], _T]) -> None:
         self.callable = callable
-        self.return_value = _SENTINEL
+        self.return_value: object = _SENTINEL
 
-    def __call__(self) -> None:
+    def __call__(self) -> object:
         if self.return_value is _SENTINEL:
             self.return_value = self.callable()
         return self.return_value

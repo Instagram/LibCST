@@ -19,14 +19,15 @@ from libcst.metadata import (
 )
 from libcst.metadata.full_repo_manager import FullRepoManager
 from libcst.metadata.name_provider import FullyQualifiedNameVisitor
+from libcst._nodes.base import CSTNode
 from libcst.testing.utils import data_provider, UnitTest
 
 class QNameVisitor(cst.CSTVisitor):
 
     METADATA_DEPENDENCIES = (QualifiedNameProvider,)
 
-    def __init__(self):
-        self.qnames = {}
+    def __init__(self) -> None:
+        self.qnames: Dict["CSTNode", Collection[QualifiedName]] = {}
 
     def on_visit(self, node: cst.CSTNode) -> bool:
         qname = self.get_metadata(QualifiedNameProvider, node)
