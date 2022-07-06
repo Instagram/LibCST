@@ -33,6 +33,7 @@ import libcst.metadata as meta
 from libcst import FlattenSentinel, MaybeSentinel, RemovalSentinel
 from libcst._metadata_dependent import LazyValue
 
+
 class DoNotCareSentinel(Enum):
     """
     A sentinel that is used in matcher classes to indicate that a caller

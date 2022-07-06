@@ -10,6 +10,7 @@ from typing import Collection, Dict, Mapping, Optional, Set, Tuple
 
 import libcst as cst
 from libcst import ensure_type
+from libcst._nodes.base import CSTNode
 from libcst.metadata import (
     FullyQualifiedNameProvider,
     MetadataWrapper,
@@ -19,8 +20,8 @@ from libcst.metadata import (
 )
 from libcst.metadata.full_repo_manager import FullRepoManager
 from libcst.metadata.name_provider import FullyQualifiedNameVisitor
-from libcst._nodes.base import CSTNode
 from libcst.testing.utils import data_provider, UnitTest
+
 
 class QNameVisitor(cst.CSTVisitor):
 
