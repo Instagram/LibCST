@@ -7,13 +7,13 @@ from typing import cast
 
 import libcst as cst
 from libcst import parse_module
+from libcst._metadata_dependent import LazyValue
 from libcst.metadata import (
     BatchableMetadataProvider,
     MetadataWrapper,
     VisitorMetadataProvider,
 )
 from libcst.metadata.wrapper import _gen_batchable
-from libcst._metadata_dependent import LazyValue
 from libcst.testing.utils import UnitTest
 
 
