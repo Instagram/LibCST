@@ -700,7 +700,7 @@ class SimpleString(_BasePrefixedString):
             state.add_token(self.value)
 
     @property
-    def evaluated_value(self) -> str:
+    def evaluated_value(self) -> Union[str, bytes]:
         """
         Return an :func:`ast.literal_eval` evaluated str of :py:attr:`value`.
         """
@@ -1035,7 +1035,7 @@ class ConcatenatedString(BaseString):
             self.right._codegen(state)
 
     @property
-    def evaluated_value(self) -> Optional[str]:
+    def evaluated_value(self) -> Union[str, bytes, None]:
         """
         Return an :func:`ast.literal_eval` evaluated str of recursively concatenated :py:attr:`left` and :py:attr:`right`
         if and only if both :py:attr:`left` and :py:attr:`right` are composed by :class:`SimpleString` or :class:`ConcatenatedString`
