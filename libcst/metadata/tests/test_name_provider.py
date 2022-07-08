@@ -6,7 +6,7 @@
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from textwrap import dedent
-from typing import cast, Collection, Dict, Mapping, Optional, Set, Tuple
+from typing import Collection, Dict, Mapping, Optional, Set, Tuple
 
 import libcst as cst
 from libcst import ensure_type
@@ -31,9 +31,7 @@ class QNameVisitor(cst.CSTVisitor):
         self.qnames: Dict["CSTNode", Collection[QualifiedName]] = {}
 
     def on_visit(self, node: cst.CSTNode) -> bool:
-        qname = cast(
-            Collection[QualifiedName], self.get_metadata(QualifiedNameProvider, node)
-        )
+        qname = self.get_metadata(QualifiedNameProvider, node)
         self.qnames[node] = qname
         return True
 

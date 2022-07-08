@@ -7,7 +7,6 @@ from pathlib import Path
 from types import MappingProxyType
 from typing import (
     Callable,
-    cast,
     Generic,
     List,
     Mapping,
@@ -16,12 +15,14 @@ from typing import (
     Type,
     TYPE_CHECKING,
     TypeVar,
+    Union,
 )
 
 from libcst._batched_visitor import BatchableCSTVisitor
 from libcst._metadata_dependent import (
     _T as _MetadataT,
     _UNDEFINED_DEFAULT,
+    LazyValue,
     MetadataDependent,
 )
 from libcst._visitors import CSTVisitor
@@ -36,6 +37,7 @@ ProviderT = Type["BaseMetadataProvider[object]"]
 # BaseMetadataProvider[int] would be a subtype of BaseMetadataProvider[object], so the
 # typevar is covariant.
 _ProvidedMetadataT = TypeVar("_ProvidedMetadataT", covariant=True)
+MaybeLazyMetadataT = Union[LazyValue[_ProvidedMetadataT], _ProvidedMetadataT]
 
 
 # We can't use an ABCMeta here, because of metaclass conflicts
@@ -52,16 +54,16 @@ class BaseMetadataProvider(MetadataDependent, Generic[_ProvidedMetadataT]):
     #
     # N.B. This has some typing variance problems. See `set_metadata` for an
     # explanation.
-    _computed: MutableMapping["CSTNode", _ProvidedMetadataT]
+    _computed: MutableMapping["CSTNode", MaybeLazyMetadataT]
 
-    #: Implement gen_cache to indicate the matadata provider depends on cache from external
+    #: Implement gen_cache to indicate the metadata provider depends on cache from external
     #: system. This function will be called by :class:`~libcst.metadata.FullRepoManager`
     #: to compute required cache object per file path.
     gen_cache: Optional[Callable[[Path, List[str], int], Mapping[str, object]]] = None
 
     def __init__(self, cache: object = None) -> None:
         super().__init__()
-        self._computed = {}
+        self._computed: MutableMapping["CSTNode", MaybeLazyMetadataT] = {}
         if self.gen_cache and cache is None:
             # The metadata provider implementation is responsible to store and use cache.
             raise Exception(
@@ -71,7 +73,7 @@ class BaseMetadataProvider(MetadataDependent, Generic[_ProvidedMetadataT]):
 
     def _gen(
         self, wrapper: "MetadataWrapper"
-    ) -> Mapping["CSTNode", _ProvidedMetadataT]:
+    ) -> Mapping["CSTNode", MaybeLazyMetadataT]:
         """
         Resolves and returns metadata mapping for the module in ``wrapper``.
 
@@ -93,11 +95,7 @@ class BaseMetadataProvider(MetadataDependent, Generic[_ProvidedMetadataT]):
         """
         ...
 
-    # pyre-ignore[46]: The covariant `value` isn't type-safe because we write it to
-    # pyre: `self._computed`, however we assume that only one subclass in the MRO chain
-    # pyre: will ever call `set_metadata`, so it's okay for our purposes. There's no
-    # pyre: sane way to redesign this API so that it doesn't have this problem.
-    def set_metadata(self, node: "CSTNode", value: _ProvidedMetadataT) -> None:
+    def set_metadata(self, node: "CSTNode", value: MaybeLazyMetadataT) -> None:
         """
         Record a metadata value ``value`` for ``node``.
         """
@@ -107,7 +105,9 @@ class BaseMetadataProvider(MetadataDependent, Generic[_ProvidedMetadataT]):
         self,
         key: Type["BaseMetadataProvider[_MetadataT]"],
         node: "CSTNode",
-        default: _MetadataT = _UNDEFINED_DEFAULT,
+        default: Union[
+            MaybeLazyMetadataT, Type[_UNDEFINED_DEFAULT]
+        ] = _UNDEFINED_DEFAULT,
     ) -> _MetadataT:
         """
         The same method as :func:`~libcst.MetadataDependent.get_metadata` except
@@ -116,9 +116,12 @@ class BaseMetadataProvider(MetadataDependent, Generic[_ProvidedMetadataT]):
         """
         if key is type(self):
             if default is not _UNDEFINED_DEFAULT:
-                return cast(_MetadataT, self._computed.get(node, default))
+                ret = self._computed.get(node, default)
             else:
-                return cast(_MetadataT, self._computed[node])
+                ret = self._computed[node]
+            if isinstance(ret, LazyValue):
+                return ret()
+            return ret
 
         return super().get_metadata(key, node, default)
 

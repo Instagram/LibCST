@@ -11,11 +11,13 @@ from typing import (
     cast,
     ClassVar,
     Collection,
+    Generic,
     Iterator,
     Mapping,
     Type,
     TYPE_CHECKING,
     TypeVar,
+    Union,
 )
 
 if TYPE_CHECKING:
@@ -30,12 +32,12 @@ if TYPE_CHECKING:
 
 _T = TypeVar("_T")
 
-_UNDEFINED_DEFAULT = object()
 
-_SENTINEL = object()
+class _UNDEFINED_DEFAULT:
+    pass
 
 
-class LazyValue:
+class LazyValue(Generic[_T]):
     """
     The class for implementing a lazy metadata loading mechanism that improves the
     performance when retriving expensive metadata (e.g., qualified names). Providers
@@ -46,12 +48,12 @@ class LazyValue:
 
     def __init__(self, callable: Callable[[], _T]) -> None:
         self.callable = callable
-        self.return_value: object = _SENTINEL
+        self.return_value: Union[_T, Type[_UNDEFINED_DEFAULT]] = _UNDEFINED_DEFAULT
 
-    def __call__(self) -> object:
-        if self.return_value is _SENTINEL:
+    def __call__(self) -> _T:
+        if self.return_value is _UNDEFINED_DEFAULT:
             self.return_value = self.callable()
-        return self.return_value
+        return cast(_T, self.return_value)
 
 
 class MetadataDependent(ABC):

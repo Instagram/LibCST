@@ -9,7 +9,7 @@ import libcst as cst
 import libcst.matchers as m
 from libcst.codemod._context import CodemodContext
 from libcst.codemod._visitor import ContextAwareVisitor
-from libcst.metadata import MetadataWrapper, QualifiedName, QualifiedNameProvider
+from libcst.metadata import MetadataWrapper, QualifiedNameProvider
 
 FUNCS_CONSIDERED_AS_STRING_ANNOTATIONS = {"typing.TypeVar"}
 
@@ -45,9 +45,7 @@ class GatherNamesFromStringAnnotationsVisitor(ContextAwareVisitor):
         self._annotation_stack.pop()
 
     def visit_Call(self, node: cst.Call) -> bool:
-        qnames = cast(
-            Collection[QualifiedName], self.get_metadata(QualifiedNameProvider, node)
-        )
+        qnames = self.get_metadata(QualifiedNameProvider, node)
         if any(qn.name in self._typing_functions for qn in qnames):
             self._annotation_stack.append(node)
             return True
