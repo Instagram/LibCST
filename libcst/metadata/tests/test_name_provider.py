@@ -10,6 +10,7 @@ from typing import Collection, Dict, Mapping, Optional, Set, Tuple
 
 import libcst as cst
 from libcst import ensure_type
+from libcst._nodes.base import CSTNode
 from libcst.metadata import (
     FullyQualifiedNameProvider,
     MetadataWrapper,
@@ -22,11 +23,26 @@ from libcst.metadata.name_provider import FullyQualifiedNameVisitor
 from libcst.testing.utils import data_provider, UnitTest
 
 
+class QNameVisitor(cst.CSTVisitor):
+
+    METADATA_DEPENDENCIES = (QualifiedNameProvider,)
+
+    def __init__(self) -> None:
+        self.qnames: Dict["CSTNode", Collection[QualifiedName]] = {}
+
+    def on_visit(self, node: cst.CSTNode) -> bool:
+        qname = self.get_metadata(QualifiedNameProvider, node)
+        self.qnames[node] = qname
+        return True
+
+
 def get_qualified_name_metadata_provider(
     module_str: str,
 ) -> Tuple[cst.Module, Mapping[cst.CSTNode, Collection[QualifiedName]]]:
     wrapper = MetadataWrapper(cst.parse_module(dedent(module_str)))
-    return wrapper.module, wrapper.resolve(QualifiedNameProvider)
+    visitor = QNameVisitor()
+    wrapper.visit(visitor)
+    return wrapper.module, visitor.qnames
 
 
 def get_qualified_names(module_str: str) -> Set[QualifiedName]:
@@ -358,7 +374,7 @@ class QualifiedNameProviderTest(UnitTest):
             else:
                 import f
             import a.b as f
-            
+
             f()
             """
         )
