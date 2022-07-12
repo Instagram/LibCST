@@ -1,3 +1,14 @@
+# 0.4.7 - 2022-07-12
+
+## New Contributors
+* @Chenguang-Zhu made their first contribution in https://github.com/Instagram/LibCST/pull/720
+
+## Fixed
+* Fix get_qualified_names_for matching on prefixes of the given name by @lpetre in https://github.com/Instagram/LibCST/pull/719
+
+## Added
+* Implement lazy loading mechanism for expensive metadata providers by @Chenguang-Zhu in https://github.com/Instagram/LibCST/pull/720
+
 # 0.4.6 - 2022-07-04
 
 ## New Contributors
