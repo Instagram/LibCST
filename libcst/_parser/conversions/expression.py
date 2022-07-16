@@ -870,7 +870,7 @@ def convert_atom_basic(
                 Imaginary(child.string), child.whitespace_before
             )
         else:
-            raise Exception("Unparseable number {child.string}")
+            raise Exception(f"Unparseable number {child.string}")
     else:
         raise Exception(f"Logic error, unexpected token {child.type.name}")
 
