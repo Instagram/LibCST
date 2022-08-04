@@ -90,6 +90,8 @@ const MAX_RECURSION_DEPTH: usize = 3000;
 parser! {
     pub grammar python<'a>(input: &'a str) for TokVec<'a> {
 
+        stack_limit 3000;
+
         // Starting Rules
 
         pub rule file(encoding: Option<&str>) -> Module<'input, 'a>
