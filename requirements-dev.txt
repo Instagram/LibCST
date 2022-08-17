@@ -16,4 +16,4 @@ ufmt==2.0.0
 usort==1.0.4
 setuptools-rust>=0.12.1
 slotscheck>=0.7.1
-jinja2==3.0.3
+jinja2==3.1.2
