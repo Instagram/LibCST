@@ -10,6 +10,8 @@ build:
   tools:
     python: "3"
     rust: "1.55"
+  apt_packages:
+    - graphviz
 
 python:
    install:
