@@ -9,7 +9,7 @@ jupyter>=1.0.0
 maturin>=0.8.3,<0.14
 nbsphinx>=0.4.2
 prompt-toolkit>=2.0.9
-pyre-check==0.9.9; platform_system != "Windows"
+pyre-check==0.9.15; platform_system != "Windows"
 setuptools_scm>=6.0.1
 sphinx-rtd-theme>=0.4.3
 ufmt==2.0.0
