@@ -13,7 +13,7 @@ pyre-check==0.9.9; platform_system != "Windows"
 setuptools_scm>=6.0.1
 sphinx-rtd-theme>=0.4.3
 ufmt==1.3.3
-usort==1.0.0rc1
+usort==1.0.4
 setuptools-rust>=0.12.1
 slotscheck>=0.7.1
 jinja2==3.0.3
