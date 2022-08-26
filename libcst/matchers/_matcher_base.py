@@ -302,6 +302,8 @@ class AllOf(Generic[_MatcherT], BaseMatcherNode):
         for option in options:
             if isinstance(option, OneOf):
                 raise Exception("Cannot use AllOf and OneOf in combination!")
+            elif isinstance(option, TypeOf):
+                raise Exception("Cannot use AllOf and TypeOf in combination!")
             elif isinstance(option, AllOf):
                 actual_options.extend(option.options)
             else:
