@@ -291,6 +291,13 @@ class MatchersMatcherTest(UnitTest):
         self.assertTrue(
             matches(cst.Name("True"), m.OneOf(m.Name("True"), m.Name("False")))
         )
+        # Match when one of the option is a TypeOf
+        self.assertTrue(
+            matches(
+                cst.Name("True"),
+                m.OneOf(m.TypeOf(m.Name, m.NameItem)("True"), m.Name("False")),
+            )
+        )
         # Match any assignment that assigns a value of True or False to an
         # unspecified target.
         self.assertTrue(
