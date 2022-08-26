@@ -226,7 +226,7 @@ class OneOf(Generic[_MatcherT], BaseMatcherNode):
         for option in options:
             if isinstance(option, AllOf):
                 raise Exception("Cannot use AllOf and OneOf in combination!")
-            elif isinstance(option, OneOf):
+            elif isinstance(option, (OneOf, TypeOf)):
                 actual_options.extend(option.options)
             else:
                 actual_options.append(option)
