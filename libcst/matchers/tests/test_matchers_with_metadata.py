@@ -373,7 +373,10 @@ class MatchersMetadataTest(UnitTest):
         )
         functiondef = cst.ensure_type(module.body[1], cst.FunctionDef)
 
-        self.assertFalse(
+        with self.assertRaises(
+            LookupError,
+            msg="QualifiedNameProvider is not resolved; did you forget a MetadataWrapper?",
+        ):
             matches(
                 functiondef,
                 m.FunctionDef(
@@ -385,7 +388,6 @@ class MatchersMetadataTest(UnitTest):
                     )
                 ),
             )
-        )
 
     def test_lambda_metadata_matcher_operators(self) -> None:
         # Match on qualified name provider

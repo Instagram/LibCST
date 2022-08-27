@@ -1523,8 +1523,10 @@ def _matches(
 def _construct_metadata_fetcher_null() -> Callable[
     [meta.ProviderT, libcst.CSTNode], object
 ]:
-    def _fetch(*args: object, **kwargs: object) -> object:
-        return _METADATA_MISSING_SENTINEL
+    def _fetch(provider: meta.ProviderT, node: libcst.CSTNode) -> NoReturn:
+        raise LookupError(
+            f"{provider.__name__} is not resolved; did you forget a MetadataWrapper?"
+        )
 
     return _fetch
 
@@ -1547,7 +1549,7 @@ def _construct_metadata_fetcher_wrapper(
         if provider not in metadata:
             metadata[provider] = wrapper.resolve(provider)
 
-        node_metadata = metadata.get(provider, {}).get(node, _METADATA_MISSING_SENTINEL)
+        node_metadata = metadata[provider].get(node, _METADATA_MISSING_SENTINEL)
         if isinstance(node_metadata, LazyValue):
             node_metadata = node_metadata()
 
