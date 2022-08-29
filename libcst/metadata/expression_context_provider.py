@@ -201,7 +201,7 @@ class ExpressionContextVisitor(cst.CSTVisitor):
         return False
 
 
-class ExpressionContextProvider(BatchableMetadataProvider[Optional[ExpressionContext]]):
+class ExpressionContextProvider(BatchableMetadataProvider[ExpressionContext]):
     """
     Provides :class:`ExpressionContext` metadata (mimics the `expr_context
     <https://docs.python.org/3/library/ast.html>`__ in ast) for the
@@ -209,9 +209,9 @@ class ExpressionContextProvider(BatchableMetadataProvider[Optional[ExpressionCon
     :class:`~libcst.Attribute`, :class:`~libcst.Subscript`,
     :class:`~libcst.StarredElement` , :class:`~libcst.List`,
     :class:`~libcst.Tuple` and :class:`~libcst.Name`.
-    Not that a :class:`~libcst.Name` may not always has context because of the differences between
+    Note that a :class:`~libcst.Name` may not always have context because of the differences between
     ast and LibCST. E.g. :attr:`~libcst.Attribute.attr` is a :class:`~libcst.Name` in LibCST
-    but a str in ast. To honor ast implementation, we don't assignment context to
+    but a str in ast. To honor ast implementation, we don't assign context to
     :attr:`~libcst.Attribute.attr`.
 
 
