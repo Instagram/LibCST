@@ -581,8 +581,11 @@ class MatchMetadata(_BaseMetadataMatcher):
     """
     Matcher that looks up the metadata on the current node using the provided
     metadata provider and compares the value on the node against the value provided
-    to :class:`MatchMetadata`. If the metadata value does not exist for a particular
-    node, :class:`MatchMetadata` will always be considered not a match.
+    to :class:`MatchMetadata`.
+    If the metadata provider is unresolved, a :class:`LookupError` exeption will be
+    raised and ask you to provide a :class:`~libcst.metadata.MetadataWrapper`.
+    If the metadata value does not exist for a particular node, :class:`MatchMetadata`
+    will be considered not a match.
 
     For example, to match against any function call which has one parameter which
     is used in a load expression context::
@@ -664,8 +667,10 @@ class MatchMetadataIfTrue(_BaseMetadataMatcher):
     Matcher that looks up the metadata on the current node using the provided
     metadata provider and passes it to a callable which can inspect the metadata
     further, returning ``True`` if the matcher should be considered a match.
+    If the metadata provider is unresolved, a :class:`LookupError` exeption will be
+    raised and ask you to provide a :class:`~libcst.metadata.MetadataWrapper`.
     If the metadata value does not exist for a particular node,
-    :class:`MatchMetadataIfTrue` will always be considered not a match.
+    :class:`MatchMetadataIfTrue` will be considered not a match.
 
     For example, to match against any arg whose qualified name might be
     ``typing.Dict``::
@@ -1523,8 +1528,10 @@ def _matches(
 def _construct_metadata_fetcher_null() -> Callable[
     [meta.ProviderT, libcst.CSTNode], object
 ]:
-    def _fetch(*args: object, **kwargs: object) -> object:
-        return _METADATA_MISSING_SENTINEL
+    def _fetch(provider: meta.ProviderT, node: libcst.CSTNode) -> NoReturn:
+        raise LookupError(
+            f"{provider.__name__} is not resolved; did you forget a MetadataWrapper?"
+        )
 
     return _fetch
 
@@ -1547,7 +1554,7 @@ def _construct_metadata_fetcher_wrapper(
         if provider not in metadata:
             metadata[provider] = wrapper.resolve(provider)
 
-        node_metadata = metadata.get(provider, {}).get(node, _METADATA_MISSING_SENTINEL)
+        node_metadata = metadata[provider].get(node, _METADATA_MISSING_SENTINEL)
         if isinstance(node_metadata, LazyValue):
             node_metadata = node_metadata()
 

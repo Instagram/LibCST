@@ -366,14 +366,18 @@ class MatchersMetadataTest(UnitTest):
             )
         )
 
-    def test_lambda_metadata_matcher_with_no_metadata(self) -> None:
+    def test_lambda_metadata_matcher_with_unresolved_metadata(self) -> None:
         # Match on qualified name provider
         module = cst.parse_module(
             "from typing import List\n\ndef foo() -> None: pass\n"
         )
         functiondef = cst.ensure_type(module.body[1], cst.FunctionDef)
 
-        self.assertFalse(
+        # Test that when the metadata is unresolved, raise an informative exception.
+        with self.assertRaises(
+            LookupError,
+            msg="QualifiedNameProvider is not resolved; did you forget a MetadataWrapper?",
+        ):
             matches(
                 functiondef,
                 m.FunctionDef(
@@ -384,6 +388,24 @@ class MatchersMetadataTest(UnitTest):
                         ),
                     )
                 ),
+            )
+
+    def test_lambda_metadata_matcher_with_no_metadata(self) -> None:
+        class VoidProvider(meta.BatchableMetadataProvider[object]):
+            """A dummy metadata provider"""
+
+        module = cst.parse_module(
+            "from typing import List\n\ndef foo() -> None: pass\n"
+        )
+        wrapper = cst.MetadataWrapper(module)
+        functiondef = cst.ensure_type(wrapper.module.body[1], cst.FunctionDef)
+
+        # Test that when the node has no corresponding metadata, there is no match.
+        self.assertFalse(
+            matches(
+                functiondef,
+                m.FunctionDef(name=m.MatchMetadataIfTrue(VoidProvider, lambda _: True)),
+                metadata_resolver=wrapper,
             )
         )
 

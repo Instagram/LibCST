@@ -103,14 +103,17 @@ class MatchersFindAllTest(UnitTest):
             ],
         )
 
-        # Test that failing to provide metadata leads to no match
-        booleans = findall(
-            wrapper.module,
-            m.MatchMetadata(
-                meta.ExpressionContextProvider, meta.ExpressionContext.STORE
-            ),
-        )
-        self.assertNodeSequenceEqual(booleans, [])
+        # Test that failing to provide metadata leads to raising an informative exception
+        with self.assertRaises(
+            LookupError,
+            msg="ExpressionContextProvider is not resolved; did you forget a MetadataWrapper?",
+        ):
+            booleans = findall(
+                wrapper.module,
+                m.MatchMetadata(
+                    meta.ExpressionContextProvider, meta.ExpressionContext.STORE
+                ),
+            )
 
     def test_findall_with_visitors(self) -> None:
         # Find all assignments in a tree
