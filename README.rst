@@ -9,8 +9,8 @@ A Concrete Syntax Tree (CST) parser and serializer library for Python
 .. |support-ukraine| image:: https://img.shields.io/badge/Support-Ukraine-FFD500?style=flat&labelColor=005BBB
    :alt: Support Ukraine - Help Provide Humanitarian Aid to Ukraine.
    :target: https://opensource.fb.com/support-ukraine
-   
-.. |readthedocs-badge| image:: https://readthedocs.org/projects/pip/badge/?version=latest&style=flat
+
+.. |readthedocs-badge| image:: https://readthedocs.org/projects/libcst/badge/?version=latest&style=flat
    :target: https://libcst.readthedocs.io/en/latest/
    :alt: Documentation
 
@@ -135,7 +135,7 @@ packaging tools. We recommend installing the latest stable release from
 
 For parsing, LibCST ships with a native extension, so releases are distributed as binary
 wheels as well as the source code. If a binary wheel is not available for your system
-(Linux/Windows x86/x64 and Mac x64/arm are covered), you'll need a recent 
+(Linux/Windows x86/x64 and Mac x64/arm are covered), you'll need a recent
 `Rust toolchain <https://rustup.rs>`_ for installing.
 
 Further Reading
@@ -190,7 +190,7 @@ this:
 
 See the `unittest documentation <https://docs.python.org/3/library/unittest.html>`_
 for more examples of how to run tests.
-    
+
 Building
 ~~~~~~~~
 
