@@ -6,7 +6,6 @@
 
 
 import subprocess
-import sys
 from pathlib import Path
 
 from libcst._parser.entrypoints import is_native
