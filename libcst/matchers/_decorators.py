@@ -30,12 +30,10 @@ def call_if_inside(
     """
 
     def inner(original: _CSTVisitFuncT) -> _CSTVisitFuncT:
-        if not hasattr(original, VISIT_POSITIVE_MATCHER_ATTR):
-            setattr(original, VISIT_POSITIVE_MATCHER_ATTR, [])
         setattr(
             original,
             VISIT_POSITIVE_MATCHER_ATTR,
-            [*getattr(original, VISIT_POSITIVE_MATCHER_ATTR), matcher],
+            [*getattr(original, VISIT_POSITIVE_MATCHER_ATTR, []), matcher],
         )
         return original
 
@@ -57,12 +55,10 @@ def call_if_not_inside(
     """
 
     def inner(original: _CSTVisitFuncT) -> _CSTVisitFuncT:
-        if not hasattr(original, VISIT_NEGATIVE_MATCHER_ATTR):
-            setattr(original, VISIT_NEGATIVE_MATCHER_ATTR, [])
         setattr(
             original,
             VISIT_NEGATIVE_MATCHER_ATTR,
-            [*getattr(original, VISIT_NEGATIVE_MATCHER_ATTR), matcher],
+            [*getattr(original, VISIT_NEGATIVE_MATCHER_ATTR, []), matcher],
         )
         return original
 
@@ -88,12 +84,10 @@ def visit(matcher: BaseMatcherNode) -> Callable[[_CSTVisitFuncT], _CSTVisitFuncT
     """
 
     def inner(original: _CSTVisitFuncT) -> _CSTVisitFuncT:
-        if not hasattr(original, CONSTRUCTED_VISIT_MATCHER_ATTR):
-            setattr(original, CONSTRUCTED_VISIT_MATCHER_ATTR, [])
         setattr(
             original,
             CONSTRUCTED_VISIT_MATCHER_ATTR,
-            [*getattr(original, CONSTRUCTED_VISIT_MATCHER_ATTR), matcher],
+            [*getattr(original, CONSTRUCTED_VISIT_MATCHER_ATTR, []), matcher],
         )
         return original
 
@@ -116,12 +110,10 @@ def leave(matcher: BaseMatcherNode) -> Callable[[_CSTVisitFuncT], _CSTVisitFuncT
     """
 
     def inner(original: _CSTVisitFuncT) -> _CSTVisitFuncT:
-        if not hasattr(original, CONSTRUCTED_LEAVE_MATCHER_ATTR):
-            setattr(original, CONSTRUCTED_LEAVE_MATCHER_ATTR, [])
         setattr(
             original,
             CONSTRUCTED_LEAVE_MATCHER_ATTR,
-            [*getattr(original, CONSTRUCTED_LEAVE_MATCHER_ATTR), matcher],
+            [*getattr(original, CONSTRUCTED_LEAVE_MATCHER_ATTR, []), matcher],
         )
         return original
 

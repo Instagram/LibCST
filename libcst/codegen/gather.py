@@ -7,12 +7,12 @@ import inspect
 from collections import defaultdict
 from collections.abc import Sequence as ABCSequence
 from dataclasses import dataclass, fields, replace
-from typing import Dict, Generator, List, Mapping, Sequence, Set, Type, Union
+from typing import Dict, Iterator, List, Mapping, Sequence, Set, Type, Union
 
 import libcst as cst
 
 
-def _get_bases() -> Generator[Type[cst.CSTNode], None, None]:
+def _get_bases() -> Iterator[Type[cst.CSTNode]]:
     """
     Get all base classes that are subclasses of CSTNode but not an actual
     node itself. This allows us to keep our types sane by refering to the
@@ -31,7 +31,7 @@ typeclasses: Sequence[Type[cst.CSTNode]] = sorted(
 )
 
 
-def _get_nodes() -> Generator[Type[cst.CSTNode], None, None]:
+def _get_nodes() -> Iterator[Type[cst.CSTNode]]:
     """
     Grab all CSTNodes that are not a superclass. Basically, anything that a
     person might use to generate a tree.
