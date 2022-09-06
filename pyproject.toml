@@ -1,6 +1,6 @@
 [tool.black]
 target-version = ["py37"]
-extend-exclude = "native/.*"
+extend-exclude = "^/native/"  # Prepend "^/" to specify root file/folder. See https://black.readthedocs.io/en/stable/usage_and_configuration/the_basics.html#configuration-format
 
 [tool.ufmt]
 excludes = ["native/", "stubs/"]
