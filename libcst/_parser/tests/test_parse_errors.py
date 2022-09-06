@@ -180,6 +180,5 @@ class ParseErrorsTest(UnitTest):
     def test_native_fallible_into_py(self) -> None:
         with patch("libcst._nodes.expression.Name._validate") as await_validate:
             await_validate.side_effect = CSTValidationError("validate is broken")
-            with self.assertRaises(Exception) as e:
+            with self.assertRaises((SyntaxError, cst.ParserSyntaxError)):
                 cst.parse_module("foo")
-            self.assertIsInstance(e.exception, (SyntaxError, cst.ParserSyntaxError))
