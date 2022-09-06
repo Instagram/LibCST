@@ -31,6 +31,7 @@ from libcst import (
     PartialParserConfig,
 )
 from libcst._nodes.deep_equals import deep_equals
+from libcst._parser.parso.utils import parse_version_string
 from libcst.codemod import (
     CodemodCommand,
     CodemodContext,
@@ -537,6 +538,17 @@ def _codemod_impl(proc_name: str, command_args: List[str]) -> int:  # noqa: C901
         ]
     }
     command_instance = command_class(CodemodContext(), **codemod_args)
+
+    # Sepcify target version for black formatter
+    if os.path.basename(config["formatter"][0]) in ("black", "black.exe"):
+
+        parsed_version = parse_version_string(args.python_version)
+
+        config["formatter"] = [
+            config["formatter"][0],
+            "--target-version",
+            f"py{parsed_version.major}{parsed_version.minor}",
+        ] + config["formatter"][1:]
 
     # Special case for allowing stdin/stdout. Note that this does not allow for
     # full-repo metadata since there is no path.
