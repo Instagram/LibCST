@@ -32,7 +32,7 @@ generated_code.append("")
 generated_code.append("if TYPE_CHECKING:")
 for module, objects in imports.items():
     generated_code.append(f"    from {module} import (  # noqa: F401")
-    generated_code.append(f"        {', '.join(sorted(list(objects)))}")
+    generated_code.append(f"        {', '.join(sorted(objects))}")
     generated_code.append("    )")
 
 

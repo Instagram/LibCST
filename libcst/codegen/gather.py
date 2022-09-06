@@ -27,7 +27,7 @@ def _get_bases() -> Iterator[Type[cst.CSTNode]]:
 
 
 typeclasses: Sequence[Type[cst.CSTNode]] = sorted(
-    list(_get_bases()), key=lambda base: base.__name__
+    _get_bases(), key=lambda base: base.__name__
 )
 
 
@@ -53,7 +53,7 @@ def _get_nodes() -> Iterator[Type[cst.CSTNode]]:
 
 
 all_libcst_nodes: Sequence[Type[cst.CSTNode]] = sorted(
-    list(_get_nodes()), key=lambda node: node.__name__
+    _get_nodes(), key=lambda node: node.__name__
 )
 node_to_bases: Dict[Type[cst.CSTNode], List[Type[cst.CSTNode]]] = {}
 for node in all_libcst_nodes:
