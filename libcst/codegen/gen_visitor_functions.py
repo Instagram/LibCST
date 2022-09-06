@@ -87,7 +87,6 @@ for node in sorted(nodebases.keys(), key=lambda node: node.__name__):
 generated_code.append("")
 generated_code.append("")
 generated_code.append("class CSTTypedTransformerFunctions(CSTTypedBaseFunctions):")
-generated_code.append("    pass")
 for node in sorted(nodebases.keys(), key=lambda node: node.__name__):
     name = node.__name__
     if name.startswith("Base"):
@@ -110,6 +109,9 @@ for node in sorted(nodebases.keys(), key=lambda node: node.__name__):
         f'    def leave_{name}(self, original_node: "{name}", updated_node: "{name}") -> Union[{", ".join(valid_return_types)}]:'
     )
     generated_code.append("        return updated_node")
+else:
+    generated_code.append("    pass")
+
 
 if __name__ == "__main__":
     # Output the code
