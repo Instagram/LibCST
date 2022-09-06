@@ -1,6 +1,6 @@
 [tool.black]
 target-version = ["py37"]
-exclude = "native/.*"
+extend-exclude = "native/.*"
 
 [tool.ufmt]
 excludes = ["native/", "stubs/"]
