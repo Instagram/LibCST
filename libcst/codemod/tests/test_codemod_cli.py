@@ -6,7 +6,6 @@
 
 
 import subprocess
-import sys
 from pathlib import Path
 
 from libcst._parser.entrypoints import is_native
@@ -22,13 +21,16 @@ class TestCodemodCLI(UnitTest):
                 "libcst.tool",
                 "codemod",
                 "remove_unused_imports.RemoveUnusedImportsCommand",
+                # `ArgumentParser.parse_known_args()`'s behavior dictates that options
+                # need to go after instead of before the codemod command identifier.
+                "--python-version",
+                "3.6",
                 str(Path(__file__).parent / "codemod_formatter_error_input.py.txt"),
             ],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
         )
-        version = sys.version_info
-        if version[0] == 3 and version[1] == 6 and not is_native():
+        if not is_native():
             self.assertIn(
                 "ParserSyntaxError: Syntax Error @ 14:11.",
                 rlt.stderr.decode("utf-8"),
