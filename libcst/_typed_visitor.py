@@ -6155,8 +6155,6 @@ class CSTTypedVisitorFunctions(CSTTypedBaseFunctions):
 
 
 class CSTTypedTransformerFunctions(CSTTypedBaseFunctions):
-    pass
-
     @mark_no_op
     def leave_Add(self, original_node: "Add", updated_node: "Add") -> "BaseBinaryOp":
         return updated_node

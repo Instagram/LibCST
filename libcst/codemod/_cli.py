@@ -557,7 +557,7 @@ def parallel_exec_transform_with_prettyprint(  # noqa: C901
 
     # Ensure that we have no duplicates, otherwise we might get race conditions
     # on write.
-    files = sorted(list({os.path.abspath(f) for f in files}))
+    files = sorted({os.path.abspath(f) for f in files})
     total = len(files)
     progress = Progress(enabled=not hide_progress, total=total)
 

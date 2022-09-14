@@ -4,7 +4,6 @@
 # LICENSE file in the root directory of this source tree.
 
 import collections.abc
-import copy
 import inspect
 import re
 from abc import ABCMeta
@@ -1831,7 +1830,7 @@ class _ReplaceTransformer(libcst.CSTTransformer):
         if inspect.isfunction(replacement):
             self.replacement = replacement
         elif isinstance(replacement, (MaybeSentinel, RemovalSentinel)):
-            self.replacement = lambda node, matches: copy.deepcopy(replacement)
+            self.replacement = lambda node, matches: replacement
         else:
             # pyre-ignore We know this is a CSTNode.
             self.replacement = lambda node, matches: replacement.deep_clone()
@@ -1946,7 +1945,7 @@ def replace(
     """
     if isinstance(tree, (RemovalSentinel, MaybeSentinel)):
         # We can't do any replacements on this, so return the tree exactly.
-        return copy.deepcopy(tree)
+        return tree
     if isinstance(matcher, (AtLeastN, AtMostN)):
         # We can't match this, since these matchers are forbidden at top level.
         # These are not subclasses of BaseMatcherNode, but in the case that the

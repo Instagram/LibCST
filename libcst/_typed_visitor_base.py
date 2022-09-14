@@ -3,10 +3,8 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from typing import Any, Callable, cast, TYPE_CHECKING, TypeVar
+from typing import Any, Callable, cast, TypeVar
 
-if TYPE_CHECKING:
-    from libcst._typed_visitor import CSTTypedBaseFunctions  # noqa: F401
 
 # pyre-fixme[24]: Generic type `Callable` expects 2 type parameters.
 F = TypeVar("F", bound=Callable)

@@ -32,7 +32,7 @@ generated_code.append("")
 generated_code.append("if TYPE_CHECKING:")
 for module, objects in imports.items():
     generated_code.append(f"    from {module} import (  # noqa: F401")
-    generated_code.append(f"        {', '.join(sorted(list(objects)))}")
+    generated_code.append(f"        {', '.join(sorted(objects))}")
     generated_code.append("    )")
 
 
@@ -87,7 +87,6 @@ for node in sorted(nodebases.keys(), key=lambda node: node.__name__):
 generated_code.append("")
 generated_code.append("")
 generated_code.append("class CSTTypedTransformerFunctions(CSTTypedBaseFunctions):")
-generated_code.append("    pass")
 for node in sorted(nodebases.keys(), key=lambda node: node.__name__):
     name = node.__name__
     if name.startswith("Base"):
@@ -110,6 +109,7 @@ for node in sorted(nodebases.keys(), key=lambda node: node.__name__):
         f'    def leave_{name}(self, original_node: "{name}", updated_node: "{name}") -> Union[{", ".join(valid_return_types)}]:'
     )
     generated_code.append("        return updated_node")
+
 
 if __name__ == "__main__":
     # Output the code

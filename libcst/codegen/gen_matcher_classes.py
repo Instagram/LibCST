@@ -547,7 +547,7 @@ for node in all_libcst_nodes:
 
 
 # Make sure to add an __all__ for flake8 and compatibility with "from libcst.matchers import *"
-generated_code.append(f"__all__ = {repr(sorted(list(all_exports)))}")
+generated_code.append(f"__all__ = {repr(sorted(all_exports))}")
 
 
 if __name__ == "__main__":

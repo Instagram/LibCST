@@ -29,7 +29,7 @@ generated_code.append("")
 generated_code.append("")
 for module, objects in imports.items():
     generated_code.append(f"from {module} import (")
-    generated_code.append(f"    {', '.join(sorted(list(objects)))}")
+    generated_code.append(f"    {', '.join(sorted(objects))}")
     generated_code.append(")")
 
 # Generate the base visit_ methods
