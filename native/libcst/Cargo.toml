@@ -40,7 +40,7 @@ regex = "1.6.0"
 libcst_derive = { path = "../libcst_derive" }
 
 [dev-dependencies]
-criterion = { version = "0.3.6", features = ["html_reports"] }
+criterion = { version = "0.4.0", features = ["html_reports"] }
 criterion-cycles-per-byte = "0.1"
 difference = "2.0.0"
 
