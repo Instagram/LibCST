@@ -32,7 +32,7 @@ trace = ["peg/trace"]
 paste = "1.0.9"
 pyo3 = { version = "0.17", optional = true }
 thiserror = "1.0.37"
-peg = "0.8.0"
+peg = "0.8.1"
 chic = "1.2.2"
 itertools = "0.10.5"
 once_cell = "1.15.0"
