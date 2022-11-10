@@ -18,7 +18,7 @@ jobs:
           matrix=$(jq --arg ref "${{ github.ref }}" \
             'map(select(.on_ref_regex as $pat | $pat == null or ($ref | test($pat))) | del(.on_ref_regex))' \
             .github/build-matrix.json)
-          echo ::set-output name=matrix::{\"include\":$(echo $matrix)}\"
+          echo matrix={\"include\":$(echo $matrix)}\" >> $GITHUB_OUTPUT
 
   build:
     name: Build wheels on ${{ join(matrix.os, '/') }}/${{ matrix.vers }}
