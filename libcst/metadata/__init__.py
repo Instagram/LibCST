@@ -5,6 +5,7 @@
 
 
 from libcst._position import CodePosition, CodeRange
+from libcst.metadata.accessor_provider import AccessorProvider
 from libcst.metadata.base_provider import (
     BaseMetadataProvider,
     BatchableMetadataProvider,
@@ -86,6 +87,7 @@ __all__ = [
     "Accesses",
     "TypeInferenceProvider",
     "FullRepoManager",
+    "AccessorProvider",
     # Experimental APIs:
     "ExperimentalReentrantCodegenProvider",
     "CodegenPartial",
