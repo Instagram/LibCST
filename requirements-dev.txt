@@ -14,6 +14,6 @@ setuptools_scm>=6.0.1
 sphinx-rtd-theme>=0.4.3
 ufmt==2.0.1
 usort==1.0.5
-setuptools-rust>=0.12.1
+setuptools-rust>=1.5.2
 slotscheck>=0.7.1
 jinja2==3.1.2
