@@ -40,7 +40,7 @@ jobs:
       CIBW_BUILD_VERBOSITY: 1
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-python@v2
+      - uses: actions/setup-python@v4
         if: ${{ !contains(matrix.os, 'self-hosted') }}
         with:
           python-version: "3.10"
