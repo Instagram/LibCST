@@ -52,7 +52,7 @@ jobs:
           key: ${{ env.pythonLocation }}-${{ hashFiles('requirements.txt', 'requirements-dev.txt', 'setup.py') }}
       - name: Rust Cache
         if: ${{ !contains(matrix.os, 'self-hosted') }}
-        uses: Swatinem/rust-cache@v1.3.0
+        uses: Swatinem/rust-cache@v2.2.0
         with:
           working-directory: native
       - name: Disable scmtools local scheme
