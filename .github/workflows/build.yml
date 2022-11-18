@@ -10,7 +10,7 @@ jobs:
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v3
       - id: set-matrix
         # match github.ref to the on_ref_regex field in the json
         # to skip running linux/aarch64 builds on PRs
@@ -18,7 +18,7 @@ jobs:
           matrix=$(jq --arg ref "${{ github.ref }}" \
             'map(select(.on_ref_regex as $pat | $pat == null or ($ref | test($pat))) | del(.on_ref_regex))' \
             .github/build-matrix.json)
-          echo ::set-output name=matrix::{\"include\":$(echo $matrix)}\"
+          echo matrix={\"include\":$(echo $matrix)}\" >> $GITHUB_OUTPUT
 
   build:
     name: Build wheels on ${{ join(matrix.os, '/') }}/${{ matrix.vers }}
@@ -39,12 +39,12 @@ jobs:
       CIBW_ARCHS: ${{ matrix.vers }}
       CIBW_BUILD_VERBOSITY: 1
     steps:
-      - uses: actions/checkout@v1
-      - uses: actions/setup-python@v2
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
         if: ${{ !contains(matrix.os, 'self-hosted') }}
         with:
           python-version: "3.10"
-      - uses: actions/cache@v2
+      - uses: actions/cache@v3
         id: cache
         if: ${{ !contains(matrix.os, 'self-hosted') }}
         with:
@@ -61,7 +61,7 @@ jobs:
           echo LIBCST_NO_LOCAL_SCHEME=1 >> $GITHUB_ENV
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.11.2
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
           path: wheelhouse/*.whl
           name: wheels
