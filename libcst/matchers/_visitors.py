@@ -45,6 +45,15 @@ from libcst.matchers._matcher_base import (
 )
 from libcst.matchers._return_types import TYPED_FUNCTION_RETURN_MAPPING
 
+try:
+    # PEP 604 unions, in Python 3.10+
+    from types import UnionType
+except ImportError:
+    # We use this for isinstance; no annotation will be an instance of this
+    class UnionType:
+        pass
+
+
 CONCRETE_METHODS: Set[str] = {
     *{f"visit_{cls.__name__}" for cls in TYPED_FUNCTION_RETURN_MAPPING},
     *{f"leave_{cls.__name__}" for cls in TYPED_FUNCTION_RETURN_MAPPING},
@@ -78,18 +87,15 @@ def _get_possible_match_classes(matcher: BaseMatcherNode) -> List[Type[cst.CSTNo
         return [getattr(cst, matcher.__class__.__name__)]
 
 
-def _annotation_looks_like_union(annotation: object) -> bool:
-    if getattr(annotation, "__origin__", None) is Union:
-        return True
-    # support PEP-604 style unions introduced in Python 3.10
+def _annotation_is_union(annotation: object) -> bool:
     return (
-        annotation.__class__.__name__ == "Union"
-        and annotation.__class__.__module__ == "types"
+        isinstance(annotation, UnionType)
+        or getattr(annotation, "__origin__", None) is Union
     )
 
 
 def _get_possible_annotated_classes(annotation: object) -> List[Type[object]]:
-    if _annotation_looks_like_union(annotation):
+    if _annotation_is_union(annotation):
         return getattr(annotation, "__args__", [])
     else:
         return [cast(Type[object], annotation)]
