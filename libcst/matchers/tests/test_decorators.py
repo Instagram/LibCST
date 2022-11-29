@@ -3,10 +3,11 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import sys
 from ast import literal_eval
 from textwrap import dedent
 from typing import List, Set
-from unittest.mock import Mock
+from unittest import skipIf
 
 import libcst as cst
 import libcst.matchers as m
@@ -996,22 +997,14 @@ class MatchersVisitLeaveDecoratorsTest(UnitTest):
         self.assertEqual(visitor.visits, ['"baz"'])
 
 
-# This is meant to simulate `cst.ImportFrom | cst.RemovalSentinel` in py3.10
-FakeUnionClass: Mock = Mock()
-setattr(FakeUnionClass, "__name__", "Union")
-setattr(FakeUnionClass, "__module__", "types")
-FakeUnion: Mock = Mock()
-FakeUnion.__class__ = FakeUnionClass
-FakeUnion.__args__ = [cst.ImportFrom, cst.RemovalSentinel]
-
-
 class MatchersUnionDecoratorsTest(UnitTest):
+    @skipIf(bool(sys.version_info < (3, 10)), "new union syntax not available")
     def test_init_with_new_union_annotation(self) -> None:
         class TransformerWithUnionReturnAnnotation(m.MatcherDecoratableTransformer):
             @m.leave(m.ImportFrom(module=m.Name(value="typing")))
             def test(
                 self, original_node: cst.ImportFrom, updated_node: cst.ImportFrom
-            ) -> FakeUnion:
+            ) -> cst.ImportFrom | cst.RemovalSentinel:
                 pass
 
         # assert that init (specifically _check_types on return annotation) passes
