@@ -998,7 +998,7 @@ class MatchersVisitLeaveDecoratorsTest(UnitTest):
 
 
 class MatchersUnionDecoratorsTest(UnitTest):
-    @skipIf(sys.version_info < (3, 10), "new union syntax not available")
+    @skipIf(bool(sys.version_info < (3, 10)), "new union syntax not available")
     def test_init_with_new_union_annotation(self) -> None:
         class TransformerWithUnionReturnAnnotation(m.MatcherDecoratableTransformer):
             @m.leave(m.ImportFrom(module=m.Name(value="typing")))
