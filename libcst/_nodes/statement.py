@@ -1700,6 +1700,8 @@ def get_docstring_impl(
         evaluated_value = val.evaluated_value
     else:
         return None
+    if isinstance(evaluated_value, bytes):
+        return None
 
     if evaluated_value is not None and clean:
         return inspect.cleandoc(evaluated_value)

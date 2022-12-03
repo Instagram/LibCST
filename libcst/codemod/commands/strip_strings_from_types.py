@@ -44,8 +44,12 @@ class StripStringsCommand(VisitorBasedCodemodCommand):
         self, original_node: libcst.SimpleString, updated_node: libcst.SimpleString
     ) -> Union[libcst.SimpleString, libcst.BaseExpression]:
         AddImportsVisitor.add_needed_import(self.context, "__future__", "annotations")
+        evaluated_value = updated_node.evaluated_value
         # Just use LibCST to evaluate the expression itself, and insert that as the
         # annotation.
-        return parse_expression(
-            updated_node.evaluated_value, config=self.module.config_for_parsing
-        )
+        if isinstance(evaluated_value, str):
+            return parse_expression(
+                evaluated_value, config=self.module.config_for_parsing
+            )
+        else:
+            return updated_node

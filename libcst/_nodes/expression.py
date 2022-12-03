@@ -1049,7 +1049,11 @@ class ConcatenatedString(BaseString):
         right_val = right.evaluated_value
         if right_val is None:
             return None
-        return left_val + right_val
+        if isinstance(left_val, bytes) and isinstance(right_val, bytes):
+            return left_val + right_val
+        if isinstance(left_val, str) and isinstance(right_val, str):
+            return left_val + right_val
+        return None
 
 
 @add_slots
