@@ -17,6 +17,7 @@ from libcst.metadata.expression_context_provider import (
     ExpressionContextProvider,
 )
 from libcst.metadata.full_repo_manager import FullRepoManager
+from libcst.metadata.mypy_type_inference_provider import MypyTypeInferenceProvider
 from libcst.metadata.name_provider import (
     FullyQualifiedNameProvider,
     QualifiedNameProvider,
@@ -74,6 +75,7 @@ __all__ = [
     "ClassScope",
     "ComprehensionScope",
     "ScopeProvider",
+    "MypyTypeInferenceProvider",
     "ParentNodeProvider",
     "QualifiedName",
     "QualifiedNameSource",
