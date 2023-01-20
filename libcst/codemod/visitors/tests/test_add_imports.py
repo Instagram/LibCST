@@ -892,8 +892,8 @@ class TestAddImportsCodemod(CodemodTest):
             ),
         )
 
-    def test_import_in_docstring_module_with_docstring_not_as_the_top_line(
-        self
+    def test_import_in_module_with_standalone_string_not_a_docstring(
+        self,
     ) -> None:
         """
         The import should be added after the __future__ imports.
