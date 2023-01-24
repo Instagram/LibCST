@@ -891,3 +891,36 @@ class TestAddImportsCodemod(CodemodTest):
                 full_module_name="a.b.foobar", full_package_name="a.b"
             ),
         )
+
+    def test_import_in_module_with_standalone_string_not_a_docstring(
+        self,
+    ) -> None:
+        """
+        The import should be added after the __future__ imports.
+        """
+        before = """
+            from __future__ import annotations
+            from __future__ import division
+
+            '''docstring.'''
+            def func():
+                pass
+        """
+        after = """
+            from __future__ import annotations
+            from __future__ import division
+            import typing
+
+            '''docstring.'''
+            def func():
+                pass
+        """
+
+        self.assertCodemod(
+            before,
+            after,
+            [ImportItem("typing", None, None)],
+            context_override=CodemodContext(
+                full_module_name="a.b.foobar", full_package_name="a.b"
+            ),
+        )

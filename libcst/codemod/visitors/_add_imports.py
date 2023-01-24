@@ -283,7 +283,7 @@ class AddImportsVisitor(ContextAwareTransformer):
         # original tree but break up the statements of the modified tree. If we
         # change this assumption in this visitor, we will have to change this code.
         for i, statement in enumerate(orig_module.body):
-            if m.matches(
+            if i == 0 and m.matches(
                 statement, m.SimpleStatementLine(body=[m.Expr(value=m.SimpleString())])
             ):
                 statement_before_import_location = import_add_location = 1
