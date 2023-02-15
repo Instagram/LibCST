@@ -516,7 +516,7 @@ parser! {
             }
 
         rule with_item() -> WithItem<'input, 'a>
-            = e:expression() a:lit("as") t:star_target() &(lit(",") / lit(":")) {
+            = e:expression() a:lit("as") t:star_target() &(lit(",") / lit(":") / rpar()) {
                 make_with_item(e, Some(a), Some(t))
             }
             / e:expression() {
