@@ -3,6 +3,15 @@
 with foo :
     pass
 
+with foo, bar:
+    pass
+
+with (foo, bar):
+    pass
+
+with (foo, bar,):
+    pass
+
 with foo, bar as bar:
     pass
 
@@ -19,6 +28,15 @@ async def f():
             pass
 
     async with foo :
+        pass
+
+    async with foo, bar:
+        pass
+
+    async with (foo, bar):
+        pass
+
+    async with (foo, bar,):
         pass
 
     async with foo, bar as bar:
