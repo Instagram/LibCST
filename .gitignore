@@ -17,3 +17,5 @@ libcst/_version.py
 .hypothesis/
 .python-version
 target/
+venv/
+.venv/
