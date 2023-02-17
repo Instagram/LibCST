@@ -560,11 +560,14 @@ class FullyQualifiedNameProviderTest(UnitTest):
 class FullyQualifiedNameIntegrationTest(UnitTest):
     def test_with_full_repo_manager(self) -> None:
         with TemporaryDirectory() as dir:
-            fname = "pkg/mod.py"
-            (Path(dir) / "pkg").mkdir()
-            (Path(dir) / fname).touch()
-            mgr = FullRepoManager(dir, [fname], [FullyQualifiedNameProvider])
-            wrapper = mgr.get_metadata_wrapper_for_path(fname)
+            root = Path(dir)
+            file_path = root / "pkg/mod.py"
+            file_path.parent.mkdir()
+            file_path.touch()
+
+            file_path_str = file_path.as_posix()
+            mgr = FullRepoManager(root, [file_path_str], [FullyQualifiedNameProvider])
+            wrapper = mgr.get_metadata_wrapper_for_path(file_path_str)
             fqnames = wrapper.resolve(FullyQualifiedNameProvider)
             (mod, names) = next(iter(fqnames.items()))
             self.assertIsInstance(mod, cst.Module)

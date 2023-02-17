@@ -4,7 +4,8 @@
 # LICENSE file in the root directory of this source tree.
 
 
-from typing import TYPE_CHECKING, TypeVar
+from pathlib import PurePath
+from typing import TYPE_CHECKING, TypeVar, Union
 
 if TYPE_CHECKING:
     from libcst._nodes.base import CSTNode  # noqa: F401
@@ -12,3 +13,4 @@ if TYPE_CHECKING:
 
 CSTNodeT = TypeVar("CSTNodeT", bound="CSTNode")
 CSTNodeT_co = TypeVar("CSTNodeT_co", bound="CSTNode", covariant=True)
+StrPath = Union[str, PurePath]
