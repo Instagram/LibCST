@@ -330,16 +330,24 @@ class ImportedSymbolCollector(m.MatcherDecoratableVisitor):
         elif isinstance(slice, cst.Index):
             self._handle_Index(slice)
 
-    def _handle_Annotation(self, annotation: cst.Annotation) -> None:
-        node = annotation.annotation
+    def _handle_BinaryOperation(self, node: cst.BinaryOperation) -> None:
+        self._handle_AnnotationExpression(node.left)
+        self._handle_AnnotationExpression(node.right)
+
+    def _handle_AnnotationExpression(self, node: cst.BaseExpression) -> None:
         if isinstance(node, cst.Subscript):
             self._handle_Subscript(node)
         elif isinstance(node, NAME_OR_ATTRIBUTE):
             self._handle_NameOrAttribute(node)
+        elif isinstance(node, cst.BinaryOperation):
+            self._handle_BinaryOperation(node)
         elif isinstance(node, cst.SimpleString):
             pass
         else:
             raise ValueError(f"Unexpected annotation node: {node}")
+
+    def _handle_Annotation(self, annotation: cst.Annotation) -> None:
+        self._handle_AnnotationExpression(annotation.annotation)
 
     def _handle_Parameters(self, parameters: cst.Parameters) -> None:
         for parameter in list(parameters.params):
@@ -618,20 +626,29 @@ class TypeCollector(m.MatcherDecoratableVisitor):
         else:
             return new_node
 
+    def _handle_AnnotationExpression(self, node: cst.BaseExpression) -> cst.BaseExpression:
+        if isinstance(node, cst.SimpleString):
+            self.annotations.names.add(_get_string_value(node))
+            return node
+        elif isinstance(node, cst.Subscript):
+            return self._handle_Subscript(node)
+        elif isinstance(node, NAME_OR_ATTRIBUTE):
+            return self._handle_NameOrAttribute(node)
+        elif isinstance(node, cst.BinaryOperation):
+            return cst.BinaryOperation(
+                left=self._handle_AnnotationExpression(node.left),
+                operator=node.operator,
+                right=self._handle_AnnotationExpression(node.right),
+            )
+        else:
+            raise ValueError(f"Unexpected annotation node: {node}")
+
     def _handle_Annotation(
         self,
         annotation: cst.Annotation,
     ) -> cst.Annotation:
         node = annotation.annotation
-        if isinstance(node, cst.SimpleString):
-            self.annotations.names.add(_get_string_value(node))
-            return annotation
-        elif isinstance(node, cst.Subscript):
-            return cst.Annotation(annotation=self._handle_Subscript(node))
-        elif isinstance(node, NAME_OR_ATTRIBUTE):
-            return cst.Annotation(annotation=self._handle_NameOrAttribute(node))
-        else:
-            raise ValueError(f"Unexpected annotation node: {node}")
+        return cst.Annotation(annotation=self._handle_AnnotationExpression(node))
 
     def _handle_Parameters(
         self,
