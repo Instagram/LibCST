@@ -626,7 +626,9 @@ class TypeCollector(m.MatcherDecoratableVisitor):
         else:
             return new_node
 
-    def _handle_AnnotationExpression(self, node: cst.BaseExpression) -> cst.BaseExpression:
+    def _handle_AnnotationExpression(
+        self, node: cst.BaseExpression
+    ) -> cst.BaseExpression:
         if isinstance(node, cst.SimpleString):
             self.annotations.names.add(_get_string_value(node))
             return node
