@@ -1121,6 +1121,33 @@ class TestApplyAnnotationsVisitor(CodemodTest):
 
     @data_provider(
         {
+            "fully_annotated_with_different_stub": (
+                """
+                def f(a: int | str, b: int | list[int | list[int | str]]) -> str: ...
+                """,
+                """
+                def f(a, b):
+                    return 'hello'
+                """,
+                """
+                def f(a: int | str, b: int | list[int | list[int | str]]) -> str:
+                    return 'hello'
+                """,
+            ),
+        }
+    )
+    def test_annotate_functions_pep_604(
+        self, stub: str, before: str, after: str
+    ) -> None:
+        self.run_test_case_with_flags(
+            stub=stub,
+            before=before,
+            after=after,
+            overwrite_existing_annotations=True,
+        )
+
+    @data_provider(
+        {
             "return_self": (
                 """
                 class Foo:
