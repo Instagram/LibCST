@@ -5,17 +5,12 @@
 
 
 import json
-import os
 from pathlib import Path
 from typing import Dict, List, Mapping, Optional, Tuple, Union
 
 import libcst as cst
 from libcst.metadata import MetadataWrapper, PositionProvider
-from libcst.metadata.type_inference_provider import (
-    _process_pyre_data,
-    PyreData,
-    run_command,
-)
+from libcst.metadata.type_inference_provider import PyreData
 from libcst.testing.utils import data_provider, UnitTest
 
 TEST_SUITE_PATH: Path = Path(__file__).parent / "pyre"
@@ -117,29 +112,7 @@ class PyreIntegrationTest(UnitTest):
 
 
 if __name__ == "__main__":
-    """Run this script directly to generate pyre data for test suite (tests/pyre/*.py)"""
-    print("start pyre server")
-    stdout: str
-    stderr: str
-    return_code: int
-    os.chdir(TEST_SUITE_PATH)
-    stdout, stderr, return_code = run_command(["pyre", "start", "--no-watchman"])
-    if return_code != 0:
-        print(stdout)
-        print(stderr)
+    import sys
 
-    for path in TEST_SUITE_PATH.glob("*.py"):
-        # Pull params into it's own arg to avoid the string escaping in subprocess
-        params = f"path='{path}'"
-        cmd = ["pyre", "query", f"types({params})"]
-        print(cmd)
-        stdout, stderr, return_code = run_command(cmd)
-        if return_code != 0:
-            print(stdout)
-            print(stderr)
-        data = json.loads(stdout)
-        data = data["response"][0]
-        data = _process_pyre_data(data)
-        output_path = path.with_suffix(".json")
-        print(f"write output to {output_path}")
-        output_path.write_text(json.dumps(data, indent=2))
+    print("run `scripts/regenerate-fixtures.py` instead")
+    sys.exit(1)

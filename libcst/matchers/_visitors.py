@@ -323,10 +323,6 @@ def _gather_constructed_visit_funcs(
             _assert_not_concrete("visit", func)
         for matcher in matchers:
             casted_matcher = cast(BaseMatcherNode, matcher)
-            # pyre-fixme[6]: Expected
-            #  `Sequence[typing.Callable[[cst._nodes.base.CSTNode], None]]` for 2nd
-            #  param but got `Tuple[*Tuple[(CSTNode) -> None, ...], (CSTNode) ->
-            #  None]`.
             constructed_visitors[casted_matcher] = (
                 *constructed_visitors.get(casted_matcher, ()),
                 func,
@@ -362,10 +358,6 @@ def _gather_constructed_leave_funcs(
             _assert_not_concrete("leave", func)
         for matcher in matchers:
             casted_matcher = cast(BaseMatcherNode, matcher)
-            # pyre-fixme[6]: Expected
-            #  `Sequence[typing.Callable[[cst._nodes.base.CSTNode], None]]` for 2nd
-            #  param but got `Tuple[*Tuple[(CSTNode) -> None, ...], (CSTNode) ->
-            #  None]`.
             constructed_visitors[casted_matcher] = (
                 *constructed_visitors.get(casted_matcher, ()),
                 func,

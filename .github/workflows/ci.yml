@@ -92,7 +92,7 @@ jobs:
         run: pip install -e .
       - run: pyre --version
       - run: pyre -n check
-      - run: python libcst/tests/test_pyre_integration.py
+      - run: python scripts/regenerate-fixtures.py
       - run: git diff --exit-code
 
   # Upload test coverage

@@ -9,6 +9,7 @@ import os
 import subprocess
 import sys
 from pathlib import Path
+from typing import cast, Mapping, Optional
 from unittest import skipIf
 
 import libcst as cst
@@ -57,6 +58,8 @@ def _test_simple_class_helper(test: UnitTest, wrapper: MetadataWrapper) -> None:
 )
 @skipIf(sys.platform == "win32", "TypeInferenceProvider doesn't support windows")
 class TypeInferenceProviderTest(UnitTest):
+    maxDiff: Optional[int] = None
+
     @classmethod
     def setUpClass(cls) -> None:
         os.chdir(TEST_SUITE_PATH)
@@ -79,8 +82,13 @@ class TypeInferenceProviderTest(UnitTest):
         cache = TypeInferenceProvider.gen_cache(
             root_path=source_path.parent, paths=[source_path.name], timeout=None
         )
+        result = cast(Mapping[str, object], cache[source_path.name])
         data: PyreData = json.loads(data_path.read_text())
-        self.assertEqual(data, cache[source_path.name])
+        self.assertDictEqual(
+            data,
+            result,
+            "Pyre query result mismatch, try running `scripts/regenerate-fixtures.py`?",
+        )
 
     @data_provider(
         ((TEST_SUITE_PATH / "simple_class.py", TEST_SUITE_PATH / "simple_class.json"),)
