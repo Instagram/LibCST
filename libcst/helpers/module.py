@@ -9,6 +9,7 @@ from pathlib import PurePath
 from typing import List, Optional
 
 from libcst import Comment, EmptyLine, ImportFrom, Module
+from libcst._types import StrPath
 from libcst.helpers.expression import get_full_name_for_node
 
 
@@ -130,7 +131,9 @@ class ModuleNameAndPackage:
     package: str
 
 
-def calculate_module_and_package(repo_root: str, filename: str) -> ModuleNameAndPackage:
+def calculate_module_and_package(
+    repo_root: StrPath, filename: StrPath
+) -> ModuleNameAndPackage:
     # Given an absolute repo_root and an absolute filename, calculate the
     # python module name for the file.
     relative_filename = PurePath(filename).relative_to(repo_root)

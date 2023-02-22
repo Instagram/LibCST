@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Collection, Dict, List, Mapping, TYPE_CHECKING
 
 import libcst as cst
+from libcst._types import StrPath
 from libcst.metadata.wrapper import MetadataWrapper
 
 if TYPE_CHECKING:
@@ -17,7 +18,7 @@ if TYPE_CHECKING:
 class FullRepoManager:
     def __init__(
         self,
-        repo_root_dir: str,
+        repo_root_dir: StrPath,
         paths: Collection[str],
         providers: Collection["ProviderT"],
         timeout: int = 5,
