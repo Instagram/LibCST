@@ -1,511 +1,511 @@
 {
   "types": [
     {
+      "annotation": "typing.Type[typing.Sequence]",
       "location": {
         "start": {
-          "line": 7,
-          "column": 19
+          "column": 19,
+          "line": 7
         },
         "stop": {
-          "line": 7,
-          "column": 27
+          "column": 27,
+          "line": 7
         }
-      },
-      "annotation": "typing.Type[typing.Sequence]"
+      }
     },
     {
+      "annotation": "typing.Type[simple_class.Item]",
       "location": {
         "start": {
-          "line": 10,
-          "column": 6
+          "column": 6,
+          "line": 10
         },
         "stop": {
-          "line": 10,
-          "column": 10
+          "column": 10,
+          "line": 10
         }
-      },
-      "annotation": "typing.Type[simple_class.Item]"
+      }
     },
     {
+      "annotation": "typing.Callable(simple_class.Item.__init__)[[Named(self, simple_class.Item), Named(n, int)], None]",
       "location": {
         "start": {
-          "line": 11,
-          "column": 8
+          "column": 8,
+          "line": 11
         },
         "stop": {
-          "line": 11,
-          "column": 16
+          "column": 16,
+          "line": 11
         }
-      },
-      "annotation": "typing.Callable(simple_class.Item.__init__)[[Named(self, simple_class.Item), Named(n, int)], None]"
+      }
     },
     {
+      "annotation": "simple_class.Item",
       "location": {
         "start": {
-          "line": 11,
-          "column": 17
+          "column": 17,
+          "line": 11
         },
         "stop": {
-          "line": 11,
-          "column": 21
+          "column": 21,
+          "line": 11
         }
-      },
-      "annotation": "simple_class.Item"
+      }
     },
     {
+      "annotation": "int",
       "location": {
         "start": {
-          "line": 11,
-          "column": 23
+          "column": 23,
+          "line": 11
         },
         "stop": {
-          "line": 11,
-          "column": 29
+          "column": 24,
+          "line": 11
         }
-      },
-      "annotation": "int"
+      }
     },
     {
+      "annotation": "typing.Type[int]",
       "location": {
         "start": {
-          "line": 11,
-          "column": 26
+          "column": 26,
+          "line": 11
         },
         "stop": {
-          "line": 11,
-          "column": 29
+          "column": 29,
+          "line": 11
         }
-      },
-      "annotation": "typing.Type[int]"
+      }
     },
     {
+      "annotation": "None",
       "location": {
         "start": {
-          "line": 11,
-          "column": 34
+          "column": 34,
+          "line": 11
         },
         "stop": {
-          "line": 11,
-          "column": 38
+          "column": 38,
+          "line": 11
         }
-      },
-      "annotation": "None"
+      }
     },
     {
+      "annotation": "simple_class.Item",
       "location": {
         "start": {
-          "line": 12,
-          "column": 8
+          "column": 8,
+          "line": 12
         },
         "stop": {
-          "line": 12,
-          "column": 12
+          "column": 12,
+          "line": 12
         }
-      },
-      "annotation": "simple_class.Item"
+      }
     },
     {
+      "annotation": "int",
       "location": {
         "start": {
-          "line": 12,
-          "column": 8
+          "column": 8,
+          "line": 12
         },
         "stop": {
-          "line": 12,
-          "column": 19
+          "column": 19,
+          "line": 12
         }
-      },
-      "annotation": "int"
+      }
     },
     {
+      "annotation": "typing.Type[int]",
       "location": {
         "start": {
-          "line": 12,
-          "column": 21
+          "column": 21,
+          "line": 12
         },
         "stop": {
-          "line": 12,
-          "column": 24
+          "column": 24,
+          "line": 12
         }
-      },
-      "annotation": "typing.Type[int]"
+      }
     },
     {
+      "annotation": "int",
       "location": {
         "start": {
-          "line": 12,
-          "column": 27
+          "column": 27,
+          "line": 12
         },
         "stop": {
-          "line": 12,
-          "column": 28
+          "column": 28,
+          "line": 12
         }
-      },
-      "annotation": "int"
+      }
     },
     {
+      "annotation": "typing.Type[simple_class.ItemCollector]",
       "location": {
         "start": {
-          "line": 15,
-          "column": 6
+          "column": 6,
+          "line": 15
         },
         "stop": {
-          "line": 15,
-          "column": 19
+          "column": 19,
+          "line": 15
         }
-      },
-      "annotation": "typing.Type[simple_class.ItemCollector]"
+      }
     },
     {
+      "annotation": "typing.Callable(simple_class.ItemCollector.get_items)[[Named(self, simple_class.ItemCollector), Named(n, int)], typing.Sequence[simple_class.Item]]",
       "location": {
         "start": {
-          "line": 16,
-          "column": 8
+          "column": 8,
+          "line": 16
         },
         "stop": {
-          "line": 16,
-          "column": 17
+          "column": 17,
+          "line": 16
         }
-      },
-      "annotation": "typing.Callable(simple_class.ItemCollector.get_items)[[Named(self, simple_class.ItemCollector), Named(n, int)], typing.Sequence[simple_class.Item]]"
+      }
     },
     {
+      "annotation": "simple_class.ItemCollector",
       "location": {
         "start": {
-          "line": 16,
-          "column": 18
+          "column": 18,
+          "line": 16
         },
         "stop": {
-          "line": 16,
-          "column": 22
+          "column": 22,
+          "line": 16
         }
-      },
-      "annotation": "simple_class.ItemCollector"
+      }
     },
     {
+      "annotation": "int",
       "location": {
         "start": {
-          "line": 16,
-          "column": 24
+          "column": 24,
+          "line": 16
         },
         "stop": {
-          "line": 16,
-          "column": 30
+          "column": 25,
+          "line": 16
         }
-      },
-      "annotation": "int"
+      }
     },
     {
+      "annotation": "typing.Type[int]",
       "location": {
         "start": {
-          "line": 16,
-          "column": 27
+          "column": 27,
+          "line": 16
         },
         "stop": {
-          "line": 16,
-          "column": 30
+          "column": 30,
+          "line": 16
         }
-      },
-      "annotation": "typing.Type[int]"
+      }
     },
     {
+      "annotation": "BoundMethod[typing.Callable(typing.GenericMeta.__getitem__)[[Named(self, unknown), typing.Type[Variable[typing._T_co](covariant)]], typing.Type[typing.Sequence[Variable[typing._T_co](covariant)]]], typing.Type[typing.Sequence]]",
       "location": {
         "start": {
-          "line": 16,
-          "column": 35
+          "column": 35,
+          "line": 16
         },
         "stop": {
-          "line": 16,
-          "column": 43
+          "column": 43,
+          "line": 16
         }
-      },
-      "annotation": "BoundMethod[typing.Callable(typing.GenericMeta.__getitem__)[[Named(self, unknown), typing.Type[Variable[typing._T_co](covariant)]], typing.Type[typing.Sequence[Variable[typing._T_co](covariant)]]], typing.Type[typing.Sequence]]"
+      }
     },
     {
+      "annotation": "typing.Type[typing.Sequence[simple_class.Item]]",
       "location": {
         "start": {
-          "line": 16,
-          "column": 35
+          "column": 35,
+          "line": 16
         },
         "stop": {
-          "line": 16,
-          "column": 49
+          "column": 49,
+          "line": 16
         }
-      },
-      "annotation": "typing.Type[typing.Sequence[simple_class.Item]]"
+      }
     },
     {
+      "annotation": "typing.Type[simple_class.Item]",
       "location": {
         "start": {
-          "line": 16,
-          "column": 44
+          "column": 44,
+          "line": 16
         },
         "stop": {
-          "line": 16,
-          "column": 48
+          "column": 48,
+          "line": 16
         }
-      },
-      "annotation": "typing.Type[simple_class.Item]"
+      }
     },
     {
+      "annotation": "typing.List[simple_class.Item]",
       "location": {
         "start": {
-          "line": 17,
-          "column": 15
+          "column": 15,
+          "line": 17
         },
         "stop": {
-          "line": 17,
-          "column": 42
+          "column": 42,
+          "line": 17
         }
-      },
-      "annotation": "typing.List[simple_class.Item]"
+      }
     },
     {
+      "annotation": "typing.Type[simple_class.Item]",
       "location": {
         "start": {
-          "line": 17,
-          "column": 16
+          "column": 16,
+          "line": 17
         },
         "stop": {
-          "line": 17,
-          "column": 20
+          "column": 20,
+          "line": 17
         }
-      },
-      "annotation": "typing.Type[simple_class.Item]"
+      }
     },
     {
+      "annotation": "simple_class.Item",
       "location": {
         "start": {
-          "line": 17,
-          "column": 16
+          "column": 16,
+          "line": 17
         },
         "stop": {
-          "line": 17,
-          "column": 23
+          "column": 23,
+          "line": 17
         }
-      },
-      "annotation": "simple_class.Item"
+      }
     },
     {
+      "annotation": "int",
       "location": {
         "start": {
-          "line": 17,
-          "column": 28
+          "column": 28,
+          "line": 17
         },
         "stop": {
-          "line": 17,
-          "column": 29
+          "column": 29,
+          "line": 17
         }
-      },
-      "annotation": "int"
+      }
     },
     {
+      "annotation": "typing.Type[range]",
       "location": {
         "start": {
-          "line": 17,
-          "column": 33
+          "column": 33,
+          "line": 17
         },
         "stop": {
-          "line": 17,
-          "column": 38
+          "column": 38,
+          "line": 17
         }
-      },
-      "annotation": "typing.Type[range]"
+      }
     },
     {
+      "annotation": "range",
       "location": {
         "start": {
-          "line": 17,
-          "column": 33
+          "column": 33,
+          "line": 17
         },
         "stop": {
-          "line": 17,
-          "column": 41
+          "column": 41,
+          "line": 17
         }
-      },
-      "annotation": "range"
+      }
     },
     {
+      "annotation": "int",
       "location": {
         "start": {
-          "line": 17,
-          "column": 39
+          "column": 39,
+          "line": 17
         },
         "stop": {
-          "line": 17,
-          "column": 40
+          "column": 40,
+          "line": 17
         }
-      },
-      "annotation": "int"
+      }
     },
     {
+      "annotation": "simple_class.ItemCollector",
       "location": {
         "start": {
-          "line": 20,
-          "column": 0
+          "column": 0,
+          "line": 20
         },
         "stop": {
-          "line": 20,
-          "column": 9
+          "column": 9,
+          "line": 20
         }
-      },
-      "annotation": "simple_class.ItemCollector"
+      }
     },
     {
+      "annotation": "typing.Type[simple_class.ItemCollector]",
       "location": {
         "start": {
-          "line": 20,
-          "column": 12
+          "column": 12,
+          "line": 20
         },
         "stop": {
-          "line": 20,
-          "column": 25
+          "column": 25,
+          "line": 20
         }
-      },
-      "annotation": "typing.Type[simple_class.ItemCollector]"
+      }
     },
     {
+      "annotation": "simple_class.ItemCollector",
       "location": {
         "start": {
-          "line": 20,
-          "column": 12
+          "column": 12,
+          "line": 20
         },
         "stop": {
-          "line": 20,
-          "column": 27
+          "column": 27,
+          "line": 20
         }
-      },
-      "annotation": "simple_class.ItemCollector"
+      }
     },
     {
+      "annotation": "typing.Sequence[simple_class.Item]",
       "location": {
         "start": {
-          "line": 21,
-          "column": 0
+          "column": 0,
+          "line": 21
         },
         "stop": {
-          "line": 21,
-          "column": 5
+          "column": 5,
+          "line": 21
         }
-      },
-      "annotation": "typing.Sequence[simple_class.Item]"
+      }
     },
     {
+      "annotation": "typing.Type[typing.Sequence[simple_class.Item]]",
       "location": {
         "start": {
-          "line": 21,
-          "column": 7
+          "column": 7,
+          "line": 21
         },
         "stop": {
-          "line": 21,
-          "column": 21
+          "column": 21,
+          "line": 21
         }
-      },
-      "annotation": "typing.Type[typing.Sequence[simple_class.Item]]"
+      }
     },
     {
+      "annotation": "simple_class.ItemCollector",
       "location": {
         "start": {
-          "line": 21,
-          "column": 24
+          "column": 24,
+          "line": 21
         },
         "stop": {
-          "line": 21,
-          "column": 33
+          "column": 33,
+          "line": 21
         }
-      },
-      "annotation": "simple_class.ItemCollector"
+      }
     },
     {
+      "annotation": "BoundMethod[typing.Callable(simple_class.ItemCollector.get_items)[[Named(self, simple_class.ItemCollector), Named(n, int)], typing.Sequence[simple_class.Item]], simple_class.ItemCollector]",
       "location": {
         "start": {
-          "line": 21,
-          "column": 24
+          "column": 24,
+          "line": 21
         },
         "stop": {
-          "line": 21,
-          "column": 43
+          "column": 43,
+          "line": 21
         }
-      },
-      "annotation": "BoundMethod[typing.Callable(simple_class.ItemCollector.get_items)[[Named(self, simple_class.ItemCollector), Named(n, int)], typing.Sequence[simple_class.Item]], simple_class.ItemCollector]"
+      }
     },
     {
+      "annotation": "typing.Sequence[simple_class.Item]",
       "location": {
         "start": {
-          "line": 21,
-          "column": 24
+          "column": 24,
+          "line": 21
         },
         "stop": {
-          "line": 21,
-          "column": 46
+          "column": 46,
+          "line": 21
         }
-      },
-      "annotation": "typing.Sequence[simple_class.Item]"
+      }
     },
     {
+      "annotation": "typing_extensions.Literal[3]",
       "location": {
         "start": {
-          "line": 21,
-          "column": 44
+          "column": 44,
+          "line": 21
         },
         "stop": {
-          "line": 21,
-          "column": 45
+          "column": 45,
+          "line": 21
         }
-      },
-      "annotation": "typing_extensions.Literal[3]"
+      }
     },
     {
+      "annotation": "simple_class.Item",
       "location": {
         "start": {
-          "line": 22,
-          "column": 4
+          "column": 4,
+          "line": 22
         },
         "stop": {
-          "line": 22,
-          "column": 8
+          "column": 8,
+          "line": 22
         }
-      },
-      "annotation": "simple_class.Item"
+      }
     },
     {
+      "annotation": "typing.Sequence[simple_class.Item]",
       "location": {
         "start": {
-          "line": 22,
-          "column": 12
+          "column": 12,
+          "line": 22
         },
         "stop": {
-          "line": 22,
-          "column": 17
+          "column": 17,
+          "line": 22
         }
-      },
-      "annotation": "typing.Sequence[simple_class.Item]"
+      }
     },
     {
+      "annotation": "simple_class.Item",
       "location": {
         "start": {
-          "line": 23,
-          "column": 4
+          "column": 4,
+          "line": 23
         },
         "stop": {
-          "line": 23,
-          "column": 8
+          "column": 8,
+          "line": 23
         }
-      },
-      "annotation": "simple_class.Item"
+      }
     },
     {
+      "annotation": "int",
       "location": {
         "start": {
-          "line": 23,
-          "column": 4
+          "column": 4,
+          "line": 23
         },
         "stop": {
-          "line": 23,
-          "column": 15
+          "column": 15,
+          "line": 23
         }
-      },
-      "annotation": "int"
+      }
     }
   ]
 }
