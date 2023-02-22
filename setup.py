@@ -47,7 +47,7 @@ setuptools.setup(
     },
     test_suite="libcst",
     python_requires=">=3.7",
-    setup_requires=["setuptools_scm"],
+    setup_requires=["setuptools-rust", "setuptools_scm"],
     install_requires=[dep.strip() for dep in open("requirements.txt").readlines()],
     extras_require={
         "dev": [
