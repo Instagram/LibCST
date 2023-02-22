@@ -24,14 +24,10 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
         with:
+          cache: pip
+          cache-dependency-path: "**/requirements*.txt"
           python-version: ${{ matrix.python-version }}
-      - uses: actions/cache@v3
-        id: cache
-        with:
-          path: ${{ env.pythonLocation }}
-          key: ${{ env.pythonLocation }}-${{ hashFiles('requirements.txt', 'requirements-dev.txt', 'setup.py') }}
       - name: Install Dependencies
-        if: steps.cache.outputs.cache-hit != 'true'
         run: |
           pip install --upgrade --upgrade-strategy eager build -r requirements.txt -r requirements-dev.txt
       - if: ${{ matrix.parser == 'native' }}
@@ -55,14 +51,10 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
         with:
+          cache: pip
+          cache-dependency-path: "**/requirements*.txt"
           python-version: "3.10"
-      - uses: actions/cache@v3
-        id: cache
-        with:
-          path: ${{ env.pythonLocation }}
-          key: ${{ env.pythonLocation }}-${{ hashFiles('requirements.txt', 'requirements-dev.txt', 'setup.py') }}
       - name: Install Dependencies
-        if: steps.cache.outputs.cache-hit != 'true'
         run: |
           pip install --upgrade --upgrade-strategy eager build -r requirements.txt -r requirements-dev.txt
       - run: flake8
@@ -78,14 +70,10 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
         with:
+          cache: pip
+          cache-dependency-path: "**/requirements*.txt"
           python-version: "3.10"
-      - uses: actions/cache@v3
-        id: cache
-        with:
-          path: ${{ env.pythonLocation }}
-          key: ${{ env.pythonLocation }}-${{ hashFiles('requirements.txt', 'requirements-dev.txt', 'setup.py') }}
       - name: Install Dependencies
-        if: steps.cache.outputs.cache-hit != 'true'
         run: |
           pip install --upgrade --upgrade-strategy eager build -r requirements.txt -r requirements-dev.txt
       - name: Make sure Pyre uses the working copy
@@ -102,14 +90,10 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
         with:
+          cache: pip
+          cache-dependency-path: "**/requirements*.txt"
           python-version: "3.10"
-      - uses: actions/cache@v3
-        id: cache
-        with:
-          path: ${{ env.pythonLocation }}
-          key: ${{ env.pythonLocation }}-${{ hashFiles('requirements.txt', 'requirements-dev.txt', 'setup.py') }}
       - name: Install Dependencies
-        if: steps.cache.outputs.cache-hit != 'true'
         run: |
           pip install --upgrade --upgrade-strategy eager build -r requirements.txt -r requirements-dev.txt
       - name: Generate Coverage
@@ -134,14 +118,10 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
         with:
+          cache: pip
+          cache-dependency-path: "**/requirements*.txt"
           python-version: "3.10"
-      - uses: actions/cache@v3
-        id: cache
-        with:
-          path: ${{ env.pythonLocation }}
-          key: ${{ env.pythonLocation }}-${{ hashFiles('requirements.txt', 'requirements-dev.txt', 'setup.py') }}
       - name: Install Dependencies
-        if: steps.cache.outputs.cache-hit != 'true'
         run: |
           pip install --upgrade --upgrade-strategy eager build -r requirements.txt -r requirements-dev.txt
       - uses: ts-graphviz/setup-graphviz@v1
@@ -172,6 +152,8 @@ jobs:
           working-directory: native
       - uses: actions/setup-python@v4
         with:
+          cache: pip
+          cache-dependency-path: "**/requirements*.txt"
           python-version: "3.10"
       - name: test
         uses: actions-rs/cargo@v1
