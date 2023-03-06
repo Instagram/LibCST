@@ -4,6 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 from dataclasses import dataclass
+from pathlib import Path
 from typing import cast, Optional, Sequence, TYPE_CHECKING, TypeVar, Union
 
 from libcst._add_slots import add_slots
@@ -67,6 +68,9 @@ class Module(CSTNode):
 
     #: Whether the module has a trailing newline or not.
     has_trailing_newline: bool = True
+
+    #: A filename or path associated with this module, if available
+    path: Optional[Path] = None
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Module":
         return Module(

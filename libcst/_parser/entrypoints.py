@@ -10,8 +10,10 @@ information
 """
 
 import os
+from dataclasses import replace
 from functools import partial
-from typing import Union
+from pathlib import Path
+from typing import Optional, Union
 
 from libcst._nodes.base import CSTNode
 from libcst._nodes.expression import BaseExpression
@@ -94,6 +96,7 @@ def _pure_python_parse(
 def parse_module(
     source: Union[str, bytes],  # the only entrypoint that accepts bytes
     config: PartialParserConfig = _DEFAULT_PARTIAL_PARSER_CONFIG,
+    path: Optional[Path] = None,
 ) -> Module:
     """
     Accepts an entire python module, including all leading and trailing whitespace.
@@ -114,6 +117,8 @@ def parse_module(
         detect_default_newline=True,
     )
     assert isinstance(result, Module)
+    if path:
+        result = replace(result, path=path)
     return result
 
 

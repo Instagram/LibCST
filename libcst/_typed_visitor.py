@@ -3920,6 +3920,14 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_Module_path(self, node: "Module") -> None:
+        pass
+
+    @mark_no_op
+    def leave_Module_path(self, node: "Module") -> None:
+        pass
+
+    @mark_no_op
     def visit_Modulo(self, node: "Modulo") -> Optional[bool]:
         pass
 

@@ -3,6 +3,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+from pathlib import PurePosixPath
 from textwrap import dedent
 
 from libcst import parse_module
@@ -160,6 +161,7 @@ class PrettyPrintNodesTest(UnitTest):
               default_indent='    ',
               default_newline='\n',
               has_trailing_newline=True,
+              path=PurePosixPath('/fake/path/to/module.py'),
             )
         """
 
@@ -168,7 +170,10 @@ class PrettyPrintNodesTest(UnitTest):
         self.assertEqual(
             dedent(module[1:])[:-1],
             dump(
-                parse_module("def foo(a: str) -> None:\n    pass ; pass\n    return\n"),
+                parse_module(
+                    "def foo(a: str) -> None:\n    pass ; pass\n    return\n",
+                    path=PurePosixPath("/fake/path/to/module.py"),
+                ),
                 show_whitespace=True,
                 show_defaults=True,
                 show_syntax=True,
@@ -249,6 +254,7 @@ class PrettyPrintNodesTest(UnitTest):
               default_indent='    ',
               default_newline='\n',
               has_trailing_newline=True,
+              path=None,
             )
         """
 
@@ -536,6 +542,7 @@ class PrettyPrintNodesTest(UnitTest):
               ],
               header=[],
               footer=[],
+              path=None,
             )
         """
 
@@ -614,6 +621,7 @@ class PrettyPrintNodesTest(UnitTest):
                   asynchronous=None,
                 ),
               ],
+              path=None,
             )
         """
 
