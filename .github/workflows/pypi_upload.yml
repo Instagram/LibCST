@@ -26,14 +26,10 @@ jobs:
           path: wheelhouse
       - uses: actions/setup-python@v4
         with:
+          cache: pip
+          cache-dependency-path: "**/requirements*.txt"
           python-version: "3.10"
-      - uses: actions/cache@v3
-        id: cache
-        with:
-          path: ${{ env.pythonLocation }}
-          key: ${{ env.pythonLocation }}-${{ hashFiles('requirements.txt', 'requirements-dev.txt', 'setup.py') }}
       - name: Install Dependencies
-        if: steps.cache.outputs.cache-hit != 'true'
         run: |
           pip install --upgrade --upgrade-strategy eager build -r requirements.txt -r requirements-dev.txt
       - name: Disable scmtools local scheme
