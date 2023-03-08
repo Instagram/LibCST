@@ -5,6 +5,7 @@ on:
     types: [published]
   push:
     branches: [main]
+  pull_request:
 
 permissions:
   contents: read
@@ -44,7 +45,6 @@ jobs:
           --sdist
           --outdir ${{ steps.download.outputs.download-path }}
       - name: Publish distribution 📦 to Test PyPI
-        if: github.event_name == 'push'
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           user: __token__
