@@ -5,6 +5,7 @@ on:
     types: [published]
   push:
     branches: [main]
+  pull_request:
 
 permissions:
   contents: read
