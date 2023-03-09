@@ -5,13 +5,14 @@ on:
     types: [published]
   push:
     branches: [main]
+  pull_request:
 
 permissions:
   contents: read
 
 jobs:
   build:
-    uses: Instagram/LibCST/.github/workflows/build.yml@main
+    uses: Instagram/LibCST/.github/workflows/build.yml@pr889
   upload_release:
     name: Upload wheels to pypi
     runs-on: ubuntu-latest
@@ -44,7 +45,6 @@ jobs:
           --sdist
           --outdir ${{ steps.download.outputs.download-path }}
       - name: Publish distribution 📦 to Test PyPI
-        if: github.event_name == 'push'
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           user: __token__
