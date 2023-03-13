@@ -9,6 +9,7 @@ from typing import Set
 
 import libcst
 from libcst._visitors import CSTVisitor
+from libcst.helpers.paths import chdir
 from libcst.metadata import FilePathProvider, FullRepoManager, MetadataWrapper
 from libcst.testing.utils import UnitTest
 
@@ -36,7 +37,7 @@ class FilePathProviderTest(UnitTest):
             }
             self.assertDictEqual(expected, repo_manager.cache)
 
-        with self.subTest("relative paths"):
+        with self.subTest("repo relative paths"):
             repo_manager = FullRepoManager(
                 self.tdp,
                 [f.relative_to(self.tdp).as_posix() for f in files],
@@ -50,6 +51,22 @@ class FilePathProviderTest(UnitTest):
                 },
             }
             self.assertDictEqual(expected, repo_manager.cache)
+
+        with self.subTest("dot relative paths"):
+            with chdir(self.tdp):
+                repo_manager = FullRepoManager(
+                    ".",
+                    [f.relative_to(self.tdp).as_posix() for f in files],
+                    {FilePathProvider},
+                )
+                repo_manager.resolve_cache()
+
+                expected = {
+                    FilePathProvider: {
+                        f.relative_to(self.tdp).as_posix(): f for f in files
+                    },
+                }
+                self.assertDictEqual(expected, repo_manager.cache)
 
     def test_visitor(self) -> None:
         pkg = self.tdp / "pkg"
@@ -82,7 +99,7 @@ class FilePathProviderTest(UnitTest):
             expected = set(files)
             self.assertSetEqual(expected, seen)
 
-        with self.subTest("relative paths"):
+        with self.subTest("repo relative paths"):
             seen.clear()
             repo_manager = FullRepoManager(
                 self.tdp,
@@ -103,3 +120,26 @@ class FilePathProviderTest(UnitTest):
 
             expected = set(files)
             self.assertSetEqual(expected, seen)
+
+        with self.subTest("dot relative paths"):
+            with chdir(self.tdp):
+                seen.clear()
+                repo_manager = FullRepoManager(
+                    ".",
+                    [f.relative_to(self.tdp).as_posix() for f in files],
+                    {FilePathProvider},
+                )
+                repo_manager.resolve_cache()
+
+                for file in files:
+                    module = libcst.parse_module(file.read_bytes())
+                    wrapper = MetadataWrapper(
+                        module,
+                        cache=repo_manager.get_cache_for_path(
+                            file.relative_to(self.tdp).as_posix()
+                        ),
+                    )
+                    wrapper.visit(FakeVisitor())
+
+                expected = set(files)
+                self.assertSetEqual(expected, seen)

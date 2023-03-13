@@ -14,9 +14,8 @@ class FilePathProvider(BatchableMetadataProvider[Collection[Path]]):
     """
     Provides the path to the current file on disk as metadata for the root
     :class:`~libcst.Module` node. Requires a :class:`~libcst.metadata.FullRepoManager`.
-    If an absolute path to the repo root is given, or file paths are absolute, then the
-    resulting metadata will contain absolute paths. Otherwise, the metadata will only
-    contain relative paths matching those given to the repo manager.
+    The returned path will always be resolved to an absolute path using
+    :func:`pathlib.Path.resolve`.
 
     Example usage:
 
@@ -36,7 +35,7 @@ class FilePathProvider(BatchableMetadataProvider[Collection[Path]]):
         >>> wrapper = mgr.get_metadata_wrapper_for_path("libcst/_types.py")
         >>> fqnames = wrapper.resolve(FilePathProvider)
         >>> {type(k): v for k, v in wrapper.resolve(FilePathProvider).items()}
-        {<class 'libcst._nodes.module.Module'>: PosixPath('libcst/_types.py')}
+        {<class 'libcst._nodes.module.Module'>: PosixPath('/home/user/libcst/_types.py')}
 
     """
 
@@ -44,7 +43,7 @@ class FilePathProvider(BatchableMetadataProvider[Collection[Path]]):
     def gen_cache(
         cls, root_path: Path, paths: List[str], timeout: Optional[int] = None
     ) -> Mapping[str, Path]:
-        cache = {path: root_path / path for path in paths}
+        cache = {path: (root_path / path).resolve() for path in paths}
         return cache
 
     def __init__(self, cache: Path) -> None:
