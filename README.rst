@@ -148,48 +148,47 @@ Development
 
 You'll need a recent `Rust toolchain <https://rustup.rs>`_ for developing.
 
-Then, start by setting up and activating a virtualenv:
+We recommend using `hatch <https://hatch.pypa.io/>` for running tests, linters,
+etc.
+
+Then, start by setting up and building the project:
 
 .. code-block:: shell
 
     git clone git@github.com:Instagram/LibCST.git libcst
     cd libcst
-    python3 -m venv ../libcst-env/  # just an example, put this wherever you want
-    source ../libcst-env/bin/activate
-    pip install --upgrade pip  # optional, if you have an old system version of pip
-    pip install -r requirements.txt -r requirements-dev.txt
-    # If you're done with the virtualenv, you can leave it by running:
-    deactivate
+    hatch env create
 
-We use `ufmt <https://ufmt.omnilib.dev/en/stable/>`_ to format code. To format
-changes to be conformant, run the following in the root:
+To run the project's test suite, you can:
 
 .. code-block:: shell
 
-    ufmt format && python -m fixit.cli.apply_fix
-
-We use `slotscheck <https://slotscheck.rtfd.io>`_ to check the correctness
-of class ``__slots__``. To check that slots are defined properly, run:
-
-.. code-block:: shell
-
-    python -m slotscheck libcst
-
-To run all tests, you'll need to do the following in the root:
-
-.. code-block:: shell
-
-    python -m unittest
+    hatch run test
 
 You can also run individual tests by using unittest and specifying a module like
 this:
 
 .. code-block:: shell
 
-    python -m unittest libcst.tests.test_batched_visitor
+    hatch run python -m unittest libcst.tests.test_batched_visitor
 
 See the `unittest documentation <https://docs.python.org/3/library/unittest.html>`_
 for more examples of how to run tests.
+
+We have multiple linters, including copyright checks and
+`slotscheck <https://slotscheck.rtfd.io>`_ to check the correctness of class
+``__slots__``. To run all of the linters:
+
+.. code-block:: shell
+
+    hatch run lint
+
+We use `ufmt <https://ufmt.omnilib.dev/en/stable/>`_ to format code. To format
+changes to be conformant, run the following in the root:
+
+.. code-block:: shell
+
+    hatch run format
 
 Building
 ~~~~~~~~
@@ -207,13 +206,11 @@ directory:
 
     cargo build
 
-To build the ``libcst.native`` module and install ``libcst``, run this
-from the root:
+To rebuild the ``libcst.native`` module, from the repo root:
 
 .. code-block:: shell
 
-    pip uninstall -y libcst
-    pip install -e .
+    hatch env prune && hatch env create
 
 Type Checking
 ~~~~~~~~~~~~~
@@ -224,10 +221,7 @@ To verify types for the library, do the following in the root:
 
 .. code-block:: shell
 
-    pyre check
-
-*Note:* You may need to run the ``pip install -e .`` command prior
-to type checking, see the section above on building.
+    hatch run typecheck
 
 Generating Documents
 ~~~~~~~~~~~~~~~~~~~~
@@ -236,7 +230,7 @@ To generate documents, do the following in the root:
 
 .. code-block:: shell
 
-    sphinx-build docs/source/ docs/build/
+    hatch run docs
 
 Future
 ======

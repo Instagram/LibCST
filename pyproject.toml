@@ -1,12 +1,85 @@
+[build-system]
+requires = ["setuptools", "wheel", "setuptools-rust"]
+
+[project]
+name = "libcst"
+description = "A concrete syntax tree with AST-like properties for Python 3.5, 3.6, 3.7, 3.8, 3.9, and 3.10 programs."
+readme = "README.rst"
+dynamic = ["version"]
+license = {file="LICENSE"}
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Topic :: Software Development :: Libraries",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+]
+requires-python = ">=3.7"
+dependencies = [
+    "dataclasses>=0.6.0; python_version < '3.7'",
+    "typing_extensions>=3.7.4.2",
+    "typing_inspect>=0.4.0",
+    "pyyaml>=5.2",
+]
+
+[project.optional-dependencies]
+dev = [
+    "black==22.12.0",
+    "coverage>=4.5.4",
+    "fixit==0.1.1",
+    "flake8>=3.7.8,<5",
+    "Sphinx>=5.1.1",
+    "hypothesis>=4.36.0",
+    "hypothesmith>=0.0.4",
+    "jupyter>=1.0.0",
+    "maturin>=0.8.3,<0.14",
+    "nbsphinx>=0.4.2",
+    "prompt-toolkit>=2.0.9",
+    "pyre-check==0.9.10; platform_system != 'Windows'",
+    "setuptools_scm>=6.0.1",
+    "sphinx-rtd-theme>=0.4.3",
+    "ufmt==2.0.1",
+    "usort==1.0.5",
+    "setuptools-rust>=1.5.2",
+    "slotscheck>=0.7.1",
+    "jinja2==3.1.2",
+]
+
+[project.urls]
+Documentation = "https://libcst.readthedocs.io/en/latest/"
+Github = "https://github.com/Instagram/LibCST"
+Changelog = "https://github.com/Instagram/LibCST/blob/main/CHANGELOG.md"
+
 [tool.black]
 target-version = ["py37"]
 extend-exclude = '^/native/'  # Prepend "^/" to specify root file/folder. See https://black.readthedocs.io/en/stable/usage_and_configuration/the_basics.html#configuration-format
 
-[tool.ufmt]
-excludes = ["native/", "stubs/"]
+[tool.hatch.envs.default]
+features = ["dev"]
+
+[tool.hatch.envs.default.scripts]
+docs = "sphinx-build -ab html docs/source docs/build"
+fixtures = [
+    "python scripts/regenerate-fixtures.py",
+    "git diff --exit-code",
+]
+format = "ufmt format libcst scripts"
+lint = [
+    "flake8 libcst",
+    "ufmt check libcst scripts",
+    "python -m slotscheck libcst",
+    "./check_copyright.sh",
+]
+test = "python -m unittest -v"
+typecheck = [
+    "pyre --version",
+    "pyre check",
+]
 
 [tool.slotscheck]
 exclude-modules = '^libcst\.(testing|tests)'
 
-[build-system]
-requires = ["setuptools", "wheel", "setuptools-rust"]
+[tool.ufmt]
+excludes = ["native/", "stubs/"]
