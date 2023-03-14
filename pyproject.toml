@@ -70,7 +70,7 @@ lint = [
     "flake8 libcst",
     "ufmt check libcst scripts",
     "python -m slotscheck libcst",
-    "./check_copyright.sh",
+    "python scripts/check_copyright.py",
 ]
 test = "python -m unittest -v"
 typecheck = [
