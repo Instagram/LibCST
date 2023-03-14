@@ -21,6 +21,8 @@ jobs:
             python-version: "3.11"
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v4
         with:
           cache: pip
@@ -50,6 +52,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v4
         with:
           cache: pip
@@ -58,12 +62,15 @@ jobs:
       - name: Install hatch
         run: pip install -U hatch
       - run: hatch run lint
+      - run: hatch run fixtures
 
   # Run pyre typechecker
   typecheck:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v4
         with:
           cache: pip
@@ -72,13 +79,14 @@ jobs:
       - name: Install hatch
         run: pip install -U hatch
       - run: hatch run typecheck
-      - run: hatch run fixtures
 
   # Upload test coverage
   coverage:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v4
         with:
           cache: pip
@@ -106,6 +114,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v4
         with:
           cache: pip
