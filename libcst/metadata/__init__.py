@@ -16,6 +16,7 @@ from libcst.metadata.expression_context_provider import (
     ExpressionContext,
     ExpressionContextProvider,
 )
+from libcst.metadata.file_path_provider import FilePathProvider
 from libcst.metadata.full_repo_manager import FullRepoManager
 from libcst.metadata.name_provider import (
     FullyQualifiedNameProvider,
@@ -88,6 +89,7 @@ __all__ = [
     "TypeInferenceProvider",
     "FullRepoManager",
     "AccessorProvider",
+    "FilePathProvider",
     # Experimental APIs:
     "ExperimentalReentrantCodegenProvider",
     "CodegenPartial",

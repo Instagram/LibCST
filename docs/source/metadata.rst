@@ -226,6 +226,14 @@ We provide :class:`~libcst.metadata.ParentNodeProvider` for those use cases.
 .. autoclass:: libcst.metadata.ParentNodeProvider
    :no-undoc-members:
 
+File Path Metadata
+------------------
+This provides the absolute file path on disk for any module being visited.
+Requires an active :class:`~libcst.metadata.FullRepoManager` when using this provider.
+
+.. autoclass:: libcst.metadata.FilePathProvider
+   :no-undoc-members:
+
 Type Inference Metadata
 -----------------------
 `Type inference <https://en.wikipedia.org/wiki/Type_inference>`__ is to automatically infer
