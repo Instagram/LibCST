@@ -90,7 +90,7 @@ def get_absolute_module_from_package(
     if num_dots == 0:
         # This is an absolute import, so the module is correct.
         return module_name
-    if current_package is None:
+    if current_package is None or current_package == "":
         # We don't actually have the current module available, so we can't compute
         # the absolute module from relative.
         return None
