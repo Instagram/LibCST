@@ -115,6 +115,9 @@ class ModuleTest(UnitTest):
             ("x/y/z/__init__.py", "from a.b import c", "a.b"),
             # Relative import that can't be resolved due to missing module.
             (None, "from ..w import c", None),
+            # Attempted relative import with no known parent package
+            ("__init__.py", "from .y import z", None),
+            ("x.py", "from .y import z", None),
             # Relative import that goes past the module level.
             ("x.py", "from ...y import z", None),
             ("x/y/z.py", "from ... import c", None),
