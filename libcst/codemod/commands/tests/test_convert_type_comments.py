@@ -11,7 +11,6 @@ from libcst.codemod.commands.convert_type_comments import ConvertTypeComments
 
 
 class TestConvertTypeCommentsBase(CodemodTest):
-
     maxDiff = 1500
     TRANSFORM = ConvertTypeComments
 

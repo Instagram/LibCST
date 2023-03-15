@@ -8,7 +8,6 @@ from libcst.codemod.commands.add_pyre_directive import AddPyreUnsafeCommand
 
 
 class TestAddPyreUnsafeCommand(CodemodTest):
-
     TRANSFORM = AddPyreUnsafeCommand
 
     def test_add_to_file(self) -> None:

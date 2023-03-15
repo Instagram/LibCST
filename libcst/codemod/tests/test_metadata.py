@@ -13,7 +13,6 @@ from libcst.testing.utils import UnitTest
 
 
 class TestingCollector(ContextAwareVisitor):
-
     METADATA_DEPENDENCIES = (PositionProvider,)
 
     def visit_Pass(self, node: cst.Pass) -> None:
@@ -22,7 +21,6 @@ class TestingCollector(ContextAwareVisitor):
 
 
 class TestingTransform(ContextAwareTransformer):
-
     METADATA_DEPENDENCIES = (PositionProvider,)
 
     def visit_FunctionDef(self, node: cst.FunctionDef) -> None:

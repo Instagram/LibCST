@@ -8,7 +8,6 @@ from libcst.codemod.commands.noop import NOOPCommand
 
 
 class TestNOOPCodemod(CodemodTest):
-
     TRANSFORM = NOOPCommand
 
     def test_noop(self) -> None:

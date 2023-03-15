@@ -219,7 +219,6 @@ class SwitchStringQuotesTransformer(ContextAwareTransformer):
 
 
 class ConvertFormatStringCommand(VisitorBasedCodemodCommand):
-
     DESCRIPTION: str = "Converts instances of str.format() to f-string."
 
     @staticmethod
@@ -271,7 +270,7 @@ class ConvertFormatStringCommand(VisitorBasedCodemodCommand):
             inserted_sequence: int = 0
             stringnode = cst.ensure_type(extraction["string"], cst.SimpleString)
             tokens = _get_tokens(stringnode.raw_value)
-            for (literal_text, field_name, format_spec, conversion) in tokens:
+            for literal_text, field_name, format_spec, conversion in tokens:
                 if literal_text:
                     fstring.append(cst.FormattedStringText(literal_text))
                 if field_name is None:

@@ -9,7 +9,6 @@ from libcst.codemod import VisitorBasedCodemodCommand
 
 
 class UnnecessaryFormatString(VisitorBasedCodemodCommand):
-
     DESCRIPTION: str = (
         "Converts f-strings which perform no formatting to regular strings."
     )

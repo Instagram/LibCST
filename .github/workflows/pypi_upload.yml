@@ -30,17 +30,15 @@ jobs:
       - uses: actions/setup-python@v4
         with:
           cache: pip
-          cache-dependency-path: "**/requirements*.txt"
+          cache-dependency-path: "pyproject.toml"
           python-version: "3.10"
-      - name: Install Dependencies
-        run: |
-          pip install --upgrade --upgrade-strategy eager build -r requirements.txt -r requirements-dev.txt
-      - name: Disable scmtools local scheme
-        run: >-
-          echo LIBCST_NO_LOCAL_SCHEME=1 >> $GITHUB_ENV
+      - name: Install hatch
+        run: pip install -U hatch
       - name: Build a source tarball
+        env:
+          LIBCST_NO_LOCAL_SCHEME: 1
         run: >-
-          python -m
+          hatch run python -m
           build
           --sdist
           --outdir ${{ steps.download.outputs.download-path }}

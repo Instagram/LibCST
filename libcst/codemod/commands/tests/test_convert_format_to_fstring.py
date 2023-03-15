@@ -8,7 +8,6 @@ from libcst.codemod.commands.convert_format_to_fstring import ConvertFormatStrin
 
 
 class ConvertFormatStringCommandTest(CodemodTest):
-
     TRANSFORM = ConvertFormatStringCommand
 
     def test_noop(self) -> None:
