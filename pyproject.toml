@@ -29,7 +29,7 @@ dev = [
     "black==23.1.0",
     "coverage>=4.5.4",
     "fixit==0.1.1",
-    "flake8>=3.7.8,<5",
+    "flake8>=3.7.8,<7",
     "Sphinx>=5.1.1",
     "hypothesis>=4.36.0",
     "hypothesmith>=0.0.4",
