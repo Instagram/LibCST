@@ -7,14 +7,14 @@ import re
 import sys
 from pathlib import Path
 from subprocess import run
-from typing import Iterable
+from typing import Iterable, List, Pattern
 
 # Use the copyright header from this file as the benchmark for all files
-EXPECTED_HEADER = "\n".join(
+EXPECTED_HEADER: str = "\n".join(
     line for line in Path(__file__).read_text().splitlines()[:4]
 )
 
-EXCEPTION_PATTERNS = [
+EXCEPTION_PATTERNS: List[Pattern[str]] = [
     re.compile(pattern)
     for pattern in (
         r"^native/libcst/tests/fixtures/",
@@ -44,7 +44,7 @@ def tracked_files() -> Iterable[Path]:
     )
 
 
-def main():
+def main() -> None:
     error = False
     for path in tracked_files():
         content = path.read_text("utf-8")
