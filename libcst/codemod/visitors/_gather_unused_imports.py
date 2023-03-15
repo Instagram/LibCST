@@ -108,7 +108,7 @@ class GatherUnusedImportsVisitor(ContextAwareVisitor):
         Override this in a subclass for additional filtering.
         """
         unused_imports = set()
-        for (alias, parent) in candidates:
+        for alias, parent in candidates:
             scope = self.get_metadata(ScopeProvider, parent)
             if scope is None:
                 continue

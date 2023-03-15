@@ -8,7 +8,6 @@ from libcst.codemod.commands.fix_pyre_directives import FixPyreDirectivesCommand
 
 
 class TestFixPyreDirectivesCommand(CodemodTest):
-
     TRANSFORM = FixPyreDirectivesCommand
 
     def test_no_need_to_fix_simple(self) -> None:

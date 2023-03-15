@@ -11,7 +11,6 @@ from libcst.codemod.visitors import AddImportsVisitor
 
 
 class EnsureImportPresentCommand(MagicArgsCodemodCommand):
-
     DESCRIPTION: str = (
         "Given a module and possibly an entity in that module, add an import "
         + "as long as one does not already exist."

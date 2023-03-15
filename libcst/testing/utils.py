@@ -64,7 +64,6 @@ def populate_data_provider_tests(dct: Dict[str, Any]) -> None:
             member_name, member, DATA_PROVIDER_DATA_ATTR_NAME
         )
         if provider_data is not None:
-
             for description, data in (
                 provider_data.items()
                 if isinstance(provider_data, dict)

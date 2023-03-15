@@ -1524,9 +1524,9 @@ def _matches(
         return _node_matches(node, matcher, metadata_lookup)
 
 
-def _construct_metadata_fetcher_null() -> Callable[
-    [meta.ProviderT, libcst.CSTNode], object
-]:
+def _construct_metadata_fetcher_null() -> (
+    Callable[[meta.ProviderT, libcst.CSTNode], object]
+):
     def _fetch(provider: meta.ProviderT, node: libcst.CSTNode) -> NoReturn:
         raise LookupError(
             f"{provider.__name__} is not resolved; did you forget a MetadataWrapper?"

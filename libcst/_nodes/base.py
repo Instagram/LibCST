@@ -109,7 +109,6 @@ def _clone(val: object) -> object:
 
 @dataclass(frozen=True)
 class CSTNode(ABC):
-
     __slots__: ClassVar[Sequence[str]] = ()
 
     def __post_init__(self) -> None:
@@ -471,7 +470,6 @@ class CSTNode(ABC):
 
 
 class BaseLeaf(CSTNode, ABC):
-
     __slots__ = ()
 
     @property

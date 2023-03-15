@@ -24,7 +24,6 @@ from libcst.testing.utils import data_provider, UnitTest
 
 
 class QNameVisitor(cst.CSTVisitor):
-
     METADATA_DEPENDENCIES = (QualifiedNameProvider,)
 
     def __init__(self) -> None:
@@ -543,7 +542,7 @@ class FullyQualifiedNameProviderTest(UnitTest):
     def test_local_qualification(self) -> None:
         module_name = "some.test.module"
         package_name = "some.test"
-        for (name, expected) in [
+        for name, expected in [
             (".foo", "some.test.foo"),
             ("..bar", "some.bar"),
             ("foo", "some.test.module.foo"),

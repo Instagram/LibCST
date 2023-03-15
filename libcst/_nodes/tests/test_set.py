@@ -13,7 +13,6 @@ from libcst.testing.utils import data_provider
 
 
 class ListTest(CSTNodeTest):
-
     # A lot of Element/StarredElement tests are provided by the tests for Tuple, so we
     # we don't need to duplicate them here.
     @data_provider(

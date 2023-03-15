@@ -8,7 +8,6 @@ from libcst.codemod.commands.strip_strings_from_types import StripStringsCommand
 
 
 class TestStripStringsCodemod(CodemodTest):
-
     TRANSFORM = StripStringsCommand
 
     def test_noop(self) -> None:

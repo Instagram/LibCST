@@ -535,7 +535,6 @@ StringQuoteLiteral = Literal['"', "'", '"""', "'''"]
 
 
 class _BasePrefixedString(BaseString, ABC):
-
     __slots__ = ()
 
     @property

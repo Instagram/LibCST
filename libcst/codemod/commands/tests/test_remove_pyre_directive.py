@@ -11,7 +11,6 @@ from libcst.codemod.commands.remove_pyre_directive import (
 
 
 class TestRemovePyreStrictCommand(CodemodTest):
-
     TRANSFORM = RemovePyreStrictCommand
 
     def test_remove_from_file(self) -> None:
@@ -97,7 +96,6 @@ class TestRemovePyreStrictCommand(CodemodTest):
 
 
 class TestRemovePyreUnsafeCommand(CodemodTest):
-
     TRANSFORM = RemovePyreUnsafeCommand
 
     def test_remove_from_file(self) -> None:

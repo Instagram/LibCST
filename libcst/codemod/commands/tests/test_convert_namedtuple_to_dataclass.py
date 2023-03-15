@@ -10,7 +10,6 @@ from libcst.codemod.commands.convert_namedtuple_to_dataclass import (
 
 
 class ConvertNamedTupleToDataclassCommandTest(CodemodTest):
-
     TRANSFORM = ConvertNamedTupleToDataclassCommand
 
     def test_no_change(self) -> None:
