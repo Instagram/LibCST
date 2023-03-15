@@ -5,10 +5,10 @@
 #
 
 
-import subprocess
 import platform
-from unittest import skipIf
+import subprocess
 from pathlib import Path
+from unittest import skipIf
 
 from libcst._parser.entrypoints import is_native
 from libcst.testing.utils import UnitTest
