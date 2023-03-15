@@ -6,6 +6,8 @@
 
 
 import subprocess
+import platform
+from unittest import skipIf
 from pathlib import Path
 
 from libcst._parser.entrypoints import is_native
@@ -13,6 +15,7 @@ from libcst.testing.utils import UnitTest
 
 
 class TestCodemodCLI(UnitTest):
+    @skipIf(platform.system() == "Windows", "Windows")
     def test_codemod_formatter_error_input(self) -> None:
         rlt = subprocess.run(
             [
