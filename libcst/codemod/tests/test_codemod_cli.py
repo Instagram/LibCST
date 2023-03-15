@@ -5,14 +5,18 @@
 #
 
 
+import platform
 import subprocess
 from pathlib import Path
+from unittest import skipIf
 
 from libcst._parser.entrypoints import is_native
 from libcst.testing.utils import UnitTest
 
 
 class TestCodemodCLI(UnitTest):
+    # pyre-ignore - no idea why pyre is complaining about this
+    @skipIf(platform.system() == "Windows", "Windows")
     def test_codemod_formatter_error_input(self) -> None:
         rlt = subprocess.run(
             [
