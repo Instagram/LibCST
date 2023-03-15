@@ -63,7 +63,6 @@ class TypeInferenceProvider(BatchableMetadataProvider[str]):
         try:
             stdout, stderr, return_code = run_command(cmd_args, timeout=timeout)
         except subprocess.TimeoutExpired as exc:
-
             raise exc
 
         if return_code != 0:

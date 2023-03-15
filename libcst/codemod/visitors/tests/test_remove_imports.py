@@ -17,7 +17,6 @@ from libcst.testing.utils import data_provider
 
 
 class TestRemoveImportsCodemod(CodemodTest):
-
     TRANSFORM = RemoveImportsVisitor
 
     def test_noop(self) -> None:
@@ -757,7 +756,6 @@ class TestRemoveImportsCodemod(CodemodTest):
         """
 
         class RemoveBarTransformer(VisitorBasedCodemodCommand):
-
             METADATA_DEPENDENCIES = (QualifiedNameProvider, ScopeProvider)
 
             @m.leave(
@@ -821,7 +819,6 @@ class TestRemoveImportsCodemod(CodemodTest):
         """
 
         class RemoveImportTransformer(VisitorBasedCodemodCommand):
-
             METADATA_DEPENDENCIES = (QualifiedNameProvider, ScopeProvider)
 
             def visit_ImportFrom(self, node: cst.ImportFrom) -> None:
@@ -860,7 +857,6 @@ class TestRemoveImportsCodemod(CodemodTest):
         """
 
         class RemoveImportTransformer(VisitorBasedCodemodCommand):
-
             METADATA_DEPENDENCIES = (QualifiedNameProvider, ScopeProvider)
 
             def visit_Import(self, node: cst.Import) -> None:
@@ -892,7 +888,6 @@ class TestRemoveImportsCodemod(CodemodTest):
         """
 
         class RemoveImportTransformer(VisitorBasedCodemodCommand):
-
             METADATA_DEPENDENCIES = (QualifiedNameProvider, ScopeProvider)
 
             def visit_ImportFrom(self, node: cst.ImportFrom) -> None:

@@ -23,7 +23,6 @@ class SimpleCodemod(Codemod):
 
 
 class TestSkipDetection(CodemodTest):
-
     TRANSFORM = SimpleCodemod
 
     def test_detect_skip(self) -> None:
@@ -87,7 +86,6 @@ class IncrementCodemod(Codemod):
 
 
 class TestMultipass(CodemodTest):
-
     TRANSFORM = IncrementCodemod
 
     def test_multi_iterations(self) -> None:

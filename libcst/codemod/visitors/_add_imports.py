@@ -183,7 +183,7 @@ class AddImportsVisitor(ContextAwareTransformer):
             if module in self.module_aliases and self.module_aliases[module] == alias:
                 del self.module_aliases[module]
         for module, aliases in gatherer.alias_mapping.items():
-            for (obj, alias) in aliases:
+            for obj, alias in aliases:
                 if (
                     module in self.alias_mapping
                     and (obj, alias) in self.alias_mapping[module]

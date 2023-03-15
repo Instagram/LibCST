@@ -189,7 +189,6 @@ class RenameCommand(VisitorBasedCodemodCommand):
                 if alias_name is not None:
                     qual_name = f"{imported_module_name}.{alias_name}"
                     if self.old_name == qual_name:
-
                         replacement_module = self.gen_replacement_module(
                             imported_module_name
                         )

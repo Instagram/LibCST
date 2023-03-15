@@ -8,7 +8,6 @@ from libcst.codemod.visitors import AddImportsVisitor, ImportItem
 
 
 class TestAddImportsCodemod(CodemodTest):
-
     TRANSFORM = AddImportsVisitor
 
     def test_noop(self) -> None:

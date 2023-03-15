@@ -10,11 +10,9 @@ from libcst.codemod.commands.rename import RenameCommand
 
 
 class TestRenameCommand(CodemodTest):
-
     TRANSFORM = RenameCommand
 
     def test_rename_name(self) -> None:
-
         before = """
             from foo import bar
 
@@ -31,7 +29,6 @@ class TestRenameCommand(CodemodTest):
         self.assertCodemod(before, after, old_name="foo.bar", new_name="baz.qux")
 
     def test_rename_name_asname(self) -> None:
-
         before = """
             from foo import bar as bla
 
@@ -73,7 +70,6 @@ class TestRenameCommand(CodemodTest):
         )
 
     def test_rename_attr(self) -> None:
-
         before = """
             import a.b
 
@@ -95,7 +91,6 @@ class TestRenameCommand(CodemodTest):
         )
 
     def test_rename_attr_asname(self) -> None:
-
         before = """
             import foo as bar
 
