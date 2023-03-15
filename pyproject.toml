@@ -72,7 +72,7 @@ lint = [
     "python -m slotscheck libcst",
     "python scripts/check_copyright.py",
 ]
-test = "python -m unittest -v"
+test = "python -m libcst.tests"
 typecheck = [
     "pyre --version",
     "pyre check",
