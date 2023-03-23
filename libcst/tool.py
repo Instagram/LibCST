@@ -395,14 +395,10 @@ def _codemod_impl(proc_name: str, command_args: List[str]) -> int:  # noqa: C901
 
     # Now, try to load the class and get its arguments for help purposes.
     if args.command is not None:
-        command_path = args.command.split(".")
-        if len(command_path) < 2:
+        command_module_name, _, command_class_name = args.command.rpartition(".")
+        if not (command_module_name and command_class_name):
             print(f"{args.command} is not a valid codemod command", file=sys.stderr)
             return 1
-        command_module_name, command_class_name = (
-            ".".join(command_path[:-1]),
-            command_path[-1],
-        )
         command_class = None
         for module in config["modules"]:
             try:
