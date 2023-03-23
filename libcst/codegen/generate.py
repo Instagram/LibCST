@@ -69,7 +69,7 @@ def codegen_visitors() -> None:
         # Now, see if the file we generated causes any import errors
         # by attempting to run codegen again in a new process.
         subprocess.check_call(
-            ["python3", "-m", "libcst.codegen.gen_visitor_functions"],
+            [sys.executable, "-m", "libcst.codegen.gen_visitor_functions"],
             cwd=base,
             stdout=subprocess.DEVNULL,
         )
