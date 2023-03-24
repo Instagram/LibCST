@@ -25,8 +25,11 @@ from libcst.codegen.transforms import (
 
 
 def format_file(fname: str) -> None:
-    with open(os.devnull, "w") as devnull:
-        subprocess.check_call(["ufmt", "format", fname], stdout=devnull, stderr=devnull)
+    subprocess.check_call(
+        ["ufmt", "format", fname],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
 
 
 def clean_generated_code(code: str) -> str:
@@ -65,12 +68,11 @@ def codegen_visitors() -> None:
 
         # Now, see if the file we generated causes any import errors
         # by attempting to run codegen again in a new process.
-        with open(os.devnull, "w") as devnull:
-            subprocess.check_call(
-                ["python3", "-m", "libcst.codegen.gen_visitor_functions"],
-                cwd=base,
-                stdout=devnull,
-            )
+        subprocess.check_call(
+            ["python3", "-m", "libcst.codegen.gen_visitor_functions"],
+            cwd=base,
+            stdout=subprocess.DEVNULL,
+        )
 
         # If it worked, lets format the file
         format_file(visitors_file)
