@@ -386,7 +386,9 @@ class TypeCollector(m.MatcherDecoratableVisitor):
             if returns is not None
             else None
         )
-        assert return_annotation is None or isinstance(return_annotation, cst.Annotation)
+        assert return_annotation is None or isinstance(
+            return_annotation, cst.Annotation
+        )
         parameter_annotations = self._handle_Parameters(node.params)
         name = ".".join(self.qualifier)
         key = FunctionKey.make(name, node.params)
@@ -560,9 +562,13 @@ class _TypeCollectorDequalifier(cst.CSTTransformer):
         else:
             return original_node.attr
 
-    def leave_Index(self, original_node: cst.Index, updated_node: cst.Index) -> cst.Index:
+    def leave_Index(
+        self, original_node: cst.Index, updated_node: cst.Index
+    ) -> cst.Index:
         if isinstance(original_node.value, cst.SimpleString):
-            self.type_collector.annotations.names.add(_get_string_value(original_node.value))
+            self.type_collector.annotations.names.add(
+                _get_string_value(original_node.value)
+            )
         return updated_node
 
     def visit_Subscript(self, node: cst.Subscript) -> bool:
