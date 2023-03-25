@@ -260,7 +260,7 @@ class ImportedSymbolCollector(m.MatcherDecoratableVisitor):
     def visit_Annotation(self, node: cst.Annotation) -> None:
         self.in_annotation = True
 
-    def leave_Annotation(self, node: cst.Annotation) -> None:
+    def leave_Annotation(self, original_node: cst.Annotation) -> None:
         self.in_annotation = False
 
     def visit_ClassDef(self, node: cst.ClassDef) -> None:
@@ -386,6 +386,7 @@ class TypeCollector(m.MatcherDecoratableVisitor):
             if returns is not None
             else None
         )
+        assert return_annotation is None or isinstance(return_annotation, cst.Annotation)
         parameter_annotations = self._handle_Parameters(node.params)
         name = ".".join(self.qualifier)
         key = FunctionKey.make(name, node.params)
@@ -410,6 +411,7 @@ class TypeCollector(m.MatcherDecoratableVisitor):
         if name is not None:
             self.qualifier.append(name)
         annotation_value = node.annotation.visit(_TypeCollectorDequalifier(self))
+        assert isinstance(annotation_value, cst.Annotation)
         self.annotations.attributes[".".join(self.qualifier)] = annotation_value
         return True
 
@@ -530,37 +532,37 @@ class _TypeCollectorDequalifier(cst.CSTTransformer):
     def __init__(self, type_collector: "TypeCollector") -> None:
         self.type_collector = type_collector
 
-    def leave_Name(self, node: cst.Name, updated_node: cst.Name) -> cst.Name:
-        qualified_name = _get_unique_qualified_name(self.type_collector, node)
+    def leave_Name(self, original_node: cst.Name, updated_node: cst.Name) -> cst.Name:
+        qualified_name = _get_unique_qualified_name(self.type_collector, original_node)
         should_qualify = self.type_collector._handle_qualification_and_should_qualify(
-            qualified_name, node
+            qualified_name, original_node
         )
         self.type_collector.annotations.names.add(qualified_name)
         if should_qualify:
             qualified_node = cst.parse_module(qualified_name)
             return qualified_node  # pyre-ignore[7]
         else:
-            return node
+            return original_node
 
     def visit_Attribute(self, node: cst.Attribute) -> bool:
         return False
 
     def leave_Attribute(
-        self, node: cst.Attribute, updated_node: cst.Attribute
+        self, original_node: cst.Attribute, updated_node: cst.Attribute
     ) -> cst.BaseExpression:
-        qualified_name = _get_unique_qualified_name(self.type_collector, node)
+        qualified_name = _get_unique_qualified_name(self.type_collector, original_node)
         should_qualify = self.type_collector._handle_qualification_and_should_qualify(
-            qualified_name, node
+            qualified_name, original_node
         )
         self.type_collector.annotations.names.add(qualified_name)
         if should_qualify:
-            return node
+            return original_node
         else:
-            return node.attr
+            return original_node.attr
 
-    def leave_Index(self, node: cst.Index, updated_node: cst.Index) -> cst.Index:
-        if isinstance(node.value, cst.SimpleString):
-            self.type_collector.annotations.names.add(_get_string_value(node.value))
+    def leave_Index(self, original_node: cst.Index, updated_node: cst.Index) -> cst.Index:
+        if isinstance(original_node.value, cst.SimpleString):
+            self.type_collector.annotations.names.add(_get_string_value(original_node.value))
         return updated_node
 
     def visit_Subscript(self, node: cst.Subscript) -> bool:
@@ -570,9 +572,9 @@ class _TypeCollectorDequalifier(cst.CSTTransformer):
         )
 
     def leave_Subscript(
-        self, node: cst.Subscript, updated_node: cst.Subscript
+        self, original_node: cst.Subscript, updated_node: cst.Subscript
     ) -> cst.Subscript:
-        if _get_unique_qualified_name(self.type_collector, node) in (
+        if _get_unique_qualified_name(self.type_collector, original_node) in (
             "Type",
             "typing.Type",
         ):
@@ -580,7 +582,7 @@ class _TypeCollectorDequalifier(cst.CSTTransformer):
             # anything inside `Type` because it's common to have nested
             # classes, which we cannot currently distinguish from classes
             # coming from other modules, appear here.
-            return node.with_changes(value=node.value.visit(self))
+            return original_node.with_changes(value=original_node.value.visit(self))
         return updated_node
 
 
