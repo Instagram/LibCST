@@ -382,7 +382,9 @@ class TypeCollector(m.MatcherDecoratableVisitor):
         self.qualifier.append(node.name.value)
         returns = node.returns
         return_annotation = (
-            returns.visit(_TypeCollectorDequalifier(self)) if returns is not None else None
+            returns.visit(_TypeCollectorDequalifier(self))
+            if returns is not None
+            else None
         )
         parameter_annotations = self._handle_Parameters(node.params)
         name = ".".join(self.qualifier)
@@ -543,7 +545,9 @@ class _TypeCollectorDequalifier(cst.CSTTransformer):
     def visit_Attribute(self, node: cst.Attribute) -> bool:
         return False
 
-    def leave_Attribute(self, node: cst.Attribute, updated_node: cst.Attribute) -> cst.BaseExpression:
+    def leave_Attribute(
+        self, node: cst.Attribute, updated_node: cst.Attribute
+    ) -> cst.BaseExpression:
         qualified_name = _get_unique_qualified_name(self.type_collector, node)
         should_qualify = self.type_collector._handle_qualification_and_should_qualify(
             qualified_name, node
@@ -560,10 +564,18 @@ class _TypeCollectorDequalifier(cst.CSTTransformer):
         return updated_node
 
     def visit_Subscript(self, node: cst.Subscript) -> bool:
-        return _get_unique_qualified_name(self.type_collector, node) not in ("Type", "typing.Type")
+        return _get_unique_qualified_name(self.type_collector, node) not in (
+            "Type",
+            "typing.Type",
+        )
 
-    def leave_Subscript(self, node: cst.Subscript, updated_node: cst.Subscript) -> cst.Subscript:
-        if _get_unique_qualified_name(self.type_collector, node) in ("Type", "typing.Type"):
+    def leave_Subscript(
+        self, node: cst.Subscript, updated_node: cst.Subscript
+    ) -> cst.Subscript:
+        if _get_unique_qualified_name(self.type_collector, node) in (
+            "Type",
+            "typing.Type",
+        ):
             # Note: we are intentionally not handling qualification of
             # anything inside `Type` because it's common to have nested
             # classes, which we cannot currently distinguish from classes
@@ -1220,7 +1232,6 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
         original_node: cst.Assign,
         updated_node: cst.Assign,
     ) -> Union[cst.Assign, cst.AnnAssign]:
-
         self.current_assign = None
 
         if len(original_node.targets) > 1:
