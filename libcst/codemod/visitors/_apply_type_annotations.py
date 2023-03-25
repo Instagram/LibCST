@@ -255,35 +255,38 @@ class ImportedSymbolCollector(m.MatcherDecoratableVisitor):
         super().__init__()
         self.existing_imports: Set[str] = existing_imports
         self.imported_symbols: Dict[str, Set[ImportedSymbol]] = defaultdict(set)
+        self.in_annotation: bool = False
+
+    def visit_Annotation(self, node: cst.Annotation) -> None:
+        self.in_annotation = True
+
+    def leave_Annotation(self, node: cst.Annotation) -> None:
+        self.in_annotation = False
 
     def visit_ClassDef(self, node: cst.ClassDef) -> None:
         for base in node.bases:
             value = base.value
             if isinstance(value, NAME_OR_ATTRIBUTE):
                 self._handle_NameOrAttribute(value)
-            elif isinstance(value, cst.Subscript):
-                self._handle_Subscript(value)
 
-    def visit_FunctionDef(self, node: cst.FunctionDef) -> bool:
-        if node.returns is not None:
-            self._handle_Annotation(annotation=node.returns)
-        self._handle_Parameters(node.params)
+    def visit_Name(self, node: cst.Name) -> None:
+        if self.in_annotation:
+            self._handle_NameOrAttribute(node)
 
-        # pyi files don't support inner functions, return False to stop the traversal.
-        return False
+    def visit_Attribute(self, node: cst.Attribute) -> None:
+        if self.in_annotation:
+            self._handle_NameOrAttribute(node)
 
-    def visit_AnnAssign(self, node: cst.AnnAssign) -> None:
-        self._handle_Annotation(annotation=node.annotation)
-
-    # Handler functions.
-    #
-    # These ultimately all call _handle_NameOrAttribute, which adds the
-    # qualified name to the list of imported symbols
+    def visit_Subscript(self, node: cst.Subscript) -> bool:
+        if isinstance(node.value, NAME_OR_ATTRIBUTE):
+            return True
+        return _get_unique_qualified_name(self, node) not in ("Type", "typing.Type")
 
     def _handle_NameOrAttribute(
         self,
         node: NameOrAttribute,
     ) -> None:
+        # Adds the qualified name to the list of imported symbols
         obj = sym = None  # keep pyre happy
         if isinstance(node, cst.Name):
             obj = None
@@ -303,56 +306,6 @@ class ImportedSymbolCollector(m.MatcherDecoratableVisitor):
                 target_alias=sym if sym != target else None,
             )
             self.imported_symbols[sym].add(mod)
-
-    def _handle_Index(self, slice: cst.Index) -> None:
-        value = slice.value
-        if isinstance(value, cst.Subscript):
-            self._handle_Subscript(value)
-        elif isinstance(value, cst.Attribute):
-            self._handle_NameOrAttribute(value)
-
-    def _handle_Subscript(self, node: cst.Subscript) -> None:
-        value = node.value
-        if isinstance(value, NAME_OR_ATTRIBUTE):
-            self._handle_NameOrAttribute(value)
-        else:
-            raise ValueError("Expected any indexed type to have")
-        if _get_unique_qualified_name(self, node) in ("Type", "typing.Type"):
-            return
-        slice = node.slice
-        if isinstance(slice, tuple):
-            for item in slice:
-                if isinstance(item.slice.value, NAME_OR_ATTRIBUTE):
-                    self._handle_NameOrAttribute(item.slice.value)
-                else:
-                    if isinstance(item.slice, cst.Index):
-                        self._handle_Index(item.slice)
-        elif isinstance(slice, cst.Index):
-            self._handle_Index(slice)
-
-    def _handle_BinaryOperation(self, node: cst.BinaryOperation) -> None:
-        self._handle_AnnotationExpression(node.left)
-        self._handle_AnnotationExpression(node.right)
-
-    def _handle_AnnotationExpression(self, node: cst.BaseExpression) -> None:
-        if isinstance(node, cst.Subscript):
-            self._handle_Subscript(node)
-        elif isinstance(node, NAME_OR_ATTRIBUTE):
-            self._handle_NameOrAttribute(node)
-        elif isinstance(node, cst.BinaryOperation):
-            self._handle_BinaryOperation(node)
-        elif isinstance(node, cst.SimpleString):
-            pass
-        else:
-            raise ValueError(f"Unexpected annotation node: {node}")
-
-    def _handle_Annotation(self, annotation: cst.Annotation) -> None:
-        self._handle_AnnotationExpression(annotation.annotation)
-
-    def _handle_Parameters(self, parameters: cst.Parameters) -> None:
-        for parameter in list(parameters.params):
-            if parameter.annotation is not None:
-                self._handle_Annotation(annotation=parameter.annotation)
 
 
 class TypeCollector(m.MatcherDecoratableVisitor):
@@ -400,9 +353,9 @@ class TypeCollector(m.MatcherDecoratableVisitor):
         for base in node.bases:
             value = base.value
             if isinstance(value, NAME_OR_ATTRIBUTE):
-                new_value = self._handle_NameOrAttribute(value)
+                new_value = value.visit(_TypeCollectorDequalifier(self))
             elif isinstance(value, cst.Subscript):
-                new_value = self._handle_Subscript(value)
+                new_value = value.visit(_TypeCollectorDequalifier(self))
             else:
                 start = self.get_metadata(PositionProvider, node).start
                 raise ValueError(
@@ -429,7 +382,7 @@ class TypeCollector(m.MatcherDecoratableVisitor):
         self.qualifier.append(node.name.value)
         returns = node.returns
         return_annotation = (
-            self._handle_Annotation(annotation=returns) if returns is not None else None
+            returns.visit(_TypeCollectorDequalifier(self)) if returns is not None else None
         )
         parameter_annotations = self._handle_Parameters(node.params)
         name = ".".join(self.qualifier)
@@ -454,7 +407,7 @@ class TypeCollector(m.MatcherDecoratableVisitor):
         name = get_full_name_for_node(node.target)
         if name is not None:
             self.qualifier.append(name)
-        annotation_value = self._handle_Annotation(annotation=node.annotation)
+        annotation_value = node.annotation.visit(_TypeCollectorDequalifier(self))
         self.annotations.attributes[".".join(self.qualifier)] = annotation_value
         return True
 
@@ -549,108 +502,7 @@ class TypeCollector(m.MatcherDecoratableVisitor):
                 return False
         return False
 
-    # Handler functions.
-    #
-    # Each of these does one of two things, possibly recursively, over some
-    # valid CST node for a static type:
-    #  - process the qualified name and ensure we will add necessary imports
-    #  - dequalify the node
-
-    def _handle_NameOrAttribute(
-        self,
-        node: NameOrAttribute,
-    ) -> Union[cst.Name, cst.Attribute]:
-        qualified_name = _get_unique_qualified_name(self, node)
-        should_qualify = self._handle_qualification_and_should_qualify(
-            qualified_name, node
-        )
-        self.annotations.names.add(qualified_name)
-        if should_qualify:
-            qualified_node = (
-                cst.parse_module(qualified_name) if isinstance(node, cst.Name) else node
-            )
-            return qualified_node  # pyre-ignore[7]
-        else:
-            dequalified_node = node.attr if isinstance(node, cst.Attribute) else node
-            return dequalified_node
-
-    def _handle_Index(
-        self,
-        slice: cst.Index,
-    ) -> cst.Index:
-        value = slice.value
-        if isinstance(value, cst.Subscript):
-            return slice.with_changes(value=self._handle_Subscript(value))
-        elif isinstance(value, cst.Attribute):
-            return slice.with_changes(value=self._handle_NameOrAttribute(value))
-        else:
-            if isinstance(value, cst.SimpleString):
-                self.annotations.names.add(_get_string_value(value))
-            return slice
-
-    def _handle_Subscript(
-        self,
-        node: cst.Subscript,
-    ) -> cst.Subscript:
-        value = node.value
-        if isinstance(value, NAME_OR_ATTRIBUTE):
-            new_node = node.with_changes(value=self._handle_NameOrAttribute(value))
-        else:
-            raise ValueError("Expected any indexed type to have")
-        if _get_unique_qualified_name(self, node) in ("Type", "typing.Type"):
-            # Note: we are intentionally not handling qualification of
-            # anything inside `Type` because it's common to have nested
-            # classes, which we cannot currently distinguish from classes
-            # coming from other modules, appear here.
-            return new_node
-        slice = node.slice
-        if isinstance(slice, tuple):
-            new_slice = []
-            for item in slice:
-                value = item.slice.value
-                if isinstance(value, NAME_OR_ATTRIBUTE):
-                    name = self._handle_NameOrAttribute(item.slice.value)
-                    new_index = item.slice.with_changes(value=name)
-                    new_slice.append(item.with_changes(slice=new_index))
-                else:
-                    if isinstance(item.slice, cst.Index):
-                        new_index = item.slice.with_changes(
-                            value=self._handle_Index(item.slice)
-                        )
-                        item = item.with_changes(slice=new_index)
-                    new_slice.append(item)
-            return new_node.with_changes(slice=tuple(new_slice))
-        elif isinstance(slice, cst.Index):
-            new_slice = self._handle_Index(slice)
-            return new_node.with_changes(slice=new_slice)
-        else:
-            return new_node
-
-    def _handle_AnnotationExpression(
-        self, node: cst.BaseExpression
-    ) -> cst.BaseExpression:
-        if isinstance(node, cst.SimpleString):
-            self.annotations.names.add(_get_string_value(node))
-            return node
-        elif isinstance(node, cst.Subscript):
-            return self._handle_Subscript(node)
-        elif isinstance(node, NAME_OR_ATTRIBUTE):
-            return self._handle_NameOrAttribute(node)
-        elif isinstance(node, cst.BinaryOperation):
-            return cst.BinaryOperation(
-                left=self._handle_AnnotationExpression(node.left),
-                operator=node.operator,
-                right=self._handle_AnnotationExpression(node.right),
-            )
-        else:
-            raise ValueError(f"Unexpected annotation node: {node}")
-
-    def _handle_Annotation(
-        self,
-        annotation: cst.Annotation,
-    ) -> cst.Annotation:
-        node = annotation.annotation
-        return cst.Annotation(annotation=self._handle_AnnotationExpression(node))
+    # Handler functions
 
     def _handle_Parameters(
         self,
@@ -664,12 +516,60 @@ class TypeCollector(m.MatcherDecoratableVisitor):
                 annotation = parameter.annotation
                 if annotation is not None:
                     parameter = parameter.with_changes(
-                        annotation=self._handle_Annotation(annotation=annotation)
+                        annotation=annotation.visit(_TypeCollectorDequalifier(self))
                     )
                 updated_parameters.append(parameter)
             return updated_parameters
 
         return parameters.with_changes(params=update_annotations(parameters.params))
+
+
+class _TypeCollectorDequalifier(cst.CSTTransformer):
+    def __init__(self, type_collector: "TypeCollector") -> None:
+        self.type_collector = type_collector
+
+    def leave_Name(self, node: cst.Name, updated_node: cst.Name) -> cst.Name:
+        qualified_name = _get_unique_qualified_name(self.type_collector, node)
+        should_qualify = self.type_collector._handle_qualification_and_should_qualify(
+            qualified_name, node
+        )
+        self.type_collector.annotations.names.add(qualified_name)
+        if should_qualify:
+            qualified_node = cst.parse_module(qualified_name)
+            return qualified_node  # pyre-ignore[7]
+        else:
+            return node
+
+    def visit_Attribute(self, node: cst.Attribute) -> bool:
+        return False
+
+    def leave_Attribute(self, node: cst.Attribute, updated_node: cst.Attribute) -> cst.BaseExpression:
+        qualified_name = _get_unique_qualified_name(self.type_collector, node)
+        should_qualify = self.type_collector._handle_qualification_and_should_qualify(
+            qualified_name, node
+        )
+        self.type_collector.annotations.names.add(qualified_name)
+        if should_qualify:
+            return node
+        else:
+            return node.attr
+
+    def leave_Index(self, node: cst.Index, updated_node: cst.Index) -> cst.Index:
+        if isinstance(node.value, cst.SimpleString):
+            self.type_collector.annotations.names.add(_get_string_value(node.value))
+        return updated_node
+
+    def visit_Subscript(self, node: cst.Subscript) -> bool:
+        return _get_unique_qualified_name(self.type_collector, node) not in ("Type", "typing.Type")
+
+    def leave_Subscript(self, node: cst.Subscript, updated_node: cst.Subscript) -> cst.Subscript:
+        if _get_unique_qualified_name(self.type_collector, node) in ("Type", "typing.Type"):
+            # Note: we are intentionally not handling qualification of
+            # anything inside `Type` because it's common to have nested
+            # classes, which we cannot currently distinguish from classes
+            # coming from other modules, appear here.
+            return node.with_changes(value=node.value.visit(self))
+        return updated_node
 
 
 @dataclass
