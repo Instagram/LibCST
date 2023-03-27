@@ -391,38 +391,49 @@ def _codemod_impl(proc_name: str, command_args: List[str]) -> int:  # noqa: C901
     # full parser below once we know the command and have added its arguments.
     parser = argparse.ArgumentParser(add_help=False, fromfile_prefix_chars="@")
     parser.add_argument("command", metavar="COMMAND", type=str, nargs="?", default=None)
+    ext_action = parser.add_argument(
+        "-x",
+        "--external",
+        action="store_true",
+        default=False,
+        help="Interpret `command` as just a module/class specifier",
+    )
     args, _ = parser.parse_known_args(command_args)
 
     # Now, try to load the class and get its arguments for help purposes.
     if args.command is not None:
-        command_path = args.command.split(".")
-        if len(command_path) < 2:
+        command_module_name, _, command_class_name = args.command.rpartition(".")
+        if not (command_module_name and command_class_name):
             print(f"{args.command} is not a valid codemod command", file=sys.stderr)
             return 1
-        command_module_name, command_class_name = (
-            ".".join(command_path[:-1]),
-            command_path[-1],
-        )
-        command_class = None
-        for module in config["modules"]:
-            try:
-                command_class = getattr(
-                    importlib.import_module(f"{module}.{command_module_name}"),
-                    command_class_name,
-                )
-                break
-            # Only swallow known import errors, show the rest of the exceptions
-            # to the user who is trying to run the codemod.
-            except AttributeError:
-                continue
-            except ModuleNotFoundError:
-                continue
-        if command_class is None:
-            print(
-                f"Could not find {command_module_name} in any configured modules",
-                file=sys.stderr,
+        if args.external:
+            # There's no error handling here on purpose; if the user opted in for `-x`,
+            # they'll probably want to see the exact import error too.
+            command_class = getattr(
+                importlib.import_module(command_module_name),
+                command_class_name,
             )
-            return 1
+        else:
+            command_class = None
+            for module in config["modules"]:
+                try:
+                    command_class = getattr(
+                        importlib.import_module(f"{module}.{command_module_name}"),
+                        command_class_name,
+                    )
+                    break
+                # Only swallow known import errors, show the rest of the exceptions
+                # to the user who is trying to run the codemod.
+                except AttributeError:
+                    continue
+                except ModuleNotFoundError:
+                    continue
+            if command_class is None:
+                print(
+                    f"Could not find {command_module_name} in any configured modules",
+                    file=sys.stderr,
+                )
+                return 1
     else:
         # Dummy, specifically to allow for running --help with no arguments.
         command_class = CodemodCommand
@@ -437,6 +448,7 @@ def _codemod_impl(proc_name: str, command_args: List[str]) -> int:  # noqa: C901
         prog=f"{proc_name} codemod",
         fromfile_prefix_chars="@",
     )
+    parser._add_action(ext_action)
     parser.add_argument(
         "command",
         metavar="COMMAND",
@@ -522,20 +534,21 @@ def _codemod_impl(proc_name: str, command_args: List[str]) -> int:  # noqa: C901
         k: v
         for k, v in vars(args).items()
         if k
-        not in [
+        not in {
             "command",
-            "path",
-            "unified_diff",
-            "jobs",
-            "python_version",
+            "external",
+            "hide_blacklisted_warnings",
+            "hide_generated_warnings",
+            "hide_progress",
             "include_generated",
             "include_stubs",
+            "jobs",
             "no_format",
+            "path",
+            "python_version",
             "show_successes",
-            "hide_generated_warnings",
-            "hide_blacklisted_warnings",
-            "hide_progress",
-        ]
+            "unified_diff",
+        }
     }
     command_instance = command_class(CodemodContext(), **codemod_args)
 
