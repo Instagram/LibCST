@@ -7,6 +7,7 @@
 
 import platform
 import subprocess
+import sys
 from pathlib import Path
 from unittest import skipIf
 
@@ -20,7 +21,7 @@ class TestCodemodCLI(UnitTest):
     def test_codemod_formatter_error_input(self) -> None:
         rlt = subprocess.run(
             [
-                "python",
+                sys.executable,
                 "-m",
                 "libcst.tool",
                 "codemod",
