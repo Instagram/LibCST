@@ -1745,3 +1745,91 @@ class TestApplyAnnotationsVisitor(CodemodTest):
         self.run_test_case_with_flags(
             stub=stub, before=before, after=after, always_qualify_annotations=True
         )
+
+    @data_provider(
+        {
+            "attribute": (
+                """
+                class C:
+                    x: int
+                """,
+                """
+                class C:
+                    x = 0
+                C.x = 1
+                """,
+                """
+                class C:
+                    x: int = 0
+                C.x = 1
+                """,
+            ),
+            "subscript": (
+                """
+                d: dict[str, int]
+                """,
+                """
+                d = {}
+                d["k"] = 0
+                """,
+                """
+                d: dict[str, int] = {}
+                d["k"] = 0
+                """,
+            ),
+            "starred": (
+                """
+                a: int
+                b: list[int]
+                """,
+                """
+                a, *b = [1, 2, 3]
+                """,
+                """
+                a: int
+                b: list[int]
+
+                a, *b = [1, 2, 3]
+                """,
+            ),
+            "name": (
+                """
+                a: int
+                """,
+                """
+                a = 0
+                """,
+                """
+                a: int = 0
+                """,
+            ),
+            "list": (
+                """
+                a: int
+                """,
+                """
+                [a] = [0]
+                """,
+                """
+                a: int
+
+                [a] = [0]
+                """,
+            ),
+            "tuple": (
+                """
+                a: int
+                """,
+                """
+                (a,) = [0]
+                """,
+                """
+                a: int
+
+                (a,) = [0]
+                """,
+            ),
+        }
+    )
+    def test_valid_assign_expressions(self, stub: str, before: str, after: str) -> None:
+        self.run_simple_test_case(stub=stub, before=before, after=after)
