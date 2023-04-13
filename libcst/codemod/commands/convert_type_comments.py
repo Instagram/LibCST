@@ -706,7 +706,7 @@ class ConvertTypeComments(VisitorBasedCodemodCommand):
     #     able to extract type information. This is done via mutable state and the
     #     usual visitor pattern.
     # (B) we also manually reach down to the first statement inside of the
-    #     funciton body and aggressively strip type comments from leading
+    #     function body and aggressively strip type comments from leading
     #     whitespaces
     #
     # PEP 484 underspecifies how to apply type comments to (non-static)
