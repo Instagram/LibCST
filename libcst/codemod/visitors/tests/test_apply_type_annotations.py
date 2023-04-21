@@ -469,7 +469,7 @@ class TestApplyAnnotationsVisitor(CodemodTest):
             ),
             "deeply_nested_example_with_multiline_annotation": (
                 """
-                def foo(x: int)-> Union[
+                def foo(x: int) -> Union[
                     Coroutine[Any, Any, django.http.response.HttpResponse], str
                 ]:
                     ...
@@ -1110,6 +1110,83 @@ class TestApplyAnnotationsVisitor(CodemodTest):
         }
     )
     def test_annotate_functions_with_existing_annotations(
+        self, stub: str, before: str, after: str
+    ) -> None:
+        self.run_test_case_with_flags(
+            stub=stub,
+            before=before,
+            after=after,
+            overwrite_existing_annotations=True,
+        )
+
+    @data_provider(
+        {
+            "pep_604": (
+                """
+                def f(a: int | str, b: int | list[int | list[int | str]]) -> str: ...
+                """,
+                """
+                def f(a, b):
+                    return 'hello'
+                """,
+                """
+                def f(a: int | str, b: int | list[int | list[int | str]]) -> str:
+                    return 'hello'
+                """,
+            ),
+            "pep_604_import": (
+                """
+                from typing import Callable
+                from collections.abc import Sequence
+                def f(a: int | str, b: int | list[int | Callable[[str], Sequence]]) -> str: ...
+                """,
+                """
+                def f(a, b):
+                    return 'hello'
+                """,
+                """
+                from collections.abc import Sequence
+                from typing import Callable
+
+                def f(a: int | str, b: int | list[int | Callable[[str], Sequence]]) -> str:
+                    return 'hello'
+                """,
+            ),
+        }
+    )
+    def test_annotate_functions_pep_604(
+        self, stub: str, before: str, after: str
+    ) -> None:
+        self.run_test_case_with_flags(
+            stub=stub,
+            before=before,
+            after=after,
+            overwrite_existing_annotations=True,
+        )
+
+    @data_provider(
+        {
+            "import_inside_list": (
+                """
+                from typing import Callable
+                from collections.abc import Sequence
+                def f(a: Callable[[Sequence[int]], int], b: int) -> str: ...
+                """,
+                """
+                def f(a, b):
+                    return 'hello'
+                """,
+                """
+                from collections.abc import Sequence
+                from typing import Callable
+
+                def f(a: Callable[[Sequence[int]], int], b: int) -> str:
+                    return 'hello'
+                """,
+            ),
+        }
+    )
+    def test_annotate_function_nested_imports(
         self, stub: str, before: str, after: str
     ) -> None:
         self.run_test_case_with_flags(
