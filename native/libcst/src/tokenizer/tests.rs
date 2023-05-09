@@ -529,6 +529,10 @@ fn test_string_prefix() {
         tokenize_all(r#"r"\"""#, &default_config()),
         Ok(vec![(TokType::String, r#"r"\"""#)]),
     );
+    assert_eq!(
+        tokenize_all(r#"r'\\'"#, &default_config()),
+        Ok(vec![(TokType::String, r#"r'\\'"#)]),
+    );
     let config = TokConfig {
         split_fstring: true,
         ..default_config()
@@ -547,6 +551,14 @@ fn test_string_prefix() {
             (TokType::FStringStart, "rf\""),
             (TokType::FStringString, r#"\""#),
             (TokType::FStringEnd, "\""),
+        ]),
+    );
+    assert_eq!(
+        tokenize_all(r#"rf'\\'"#, &config),
+        Ok(vec![
+            (TokType::FStringStart, "rf'"),
+            (TokType::FStringString, r#"\\"#),
+            (TokType::FStringEnd, "'"),
         ]),
     );
 }
