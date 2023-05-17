@@ -973,8 +973,8 @@ impl<'t> TokState<'t> {
                 }
                 (Some('\\'), _) if is_raw_string => {
                     self.text_pos.next();
-                    if let Some('"' | '\'') = self.text_pos.peek() {
-                        // these aren't end of string markers, skip them
+                    // skip escaped end-of-string marker or backslash
+                    if let Some('"' | '\'' | '\\') = self.text_pos.peek() {
                         self.text_pos.next();
                     }
                 }
