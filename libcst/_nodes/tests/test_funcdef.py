@@ -633,6 +633,20 @@ class FunctionDefCreationTest(CSTNodeTest):
                 ),
                 "code": "@bar()()\ndef foo(): pass\n",
             },
+            # Allow any expression in decorator
+            {
+                "node": cst.FunctionDef(
+                    cst.Name("foo"),
+                    cst.Parameters(),
+                    cst.SimpleStatementSuite((cst.Pass(),)),
+                    (
+                        cst.Decorator(
+                            cst.BinaryOperation(cst.Name("a"), cst.Add(), cst.Name("b"))
+                        ),
+                    ),
+                ),
+                "code": "@a + b\ndef foo(): pass\n",
+            },
             # Allow parentheses around decorator
             {
                 "node": cst.FunctionDef(

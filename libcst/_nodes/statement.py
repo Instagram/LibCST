@@ -21,7 +21,6 @@ from libcst._nodes.expression import (
     BaseAssignTargetExpression,
     BaseDelTargetExpression,
     BaseExpression,
-    Call,
     ConcatenatedString,
     ExpressionPosition,
     From,
@@ -1619,7 +1618,7 @@ class Decorator(CSTNode):
 
     #: The decorator that will return a new function wrapping the parent
     #: of this decorator.
-    decorator: Union[Name, Attribute, Call]
+    decorator: BaseExpression
 
     #: Line comments and empty lines before this decorator. The parent
     #: :class:`FunctionDef` or :class:`ClassDef` node owns leading lines before
