@@ -354,7 +354,7 @@ class Name(BaseAssignTargetExpression, BaseDelTargetExpression):
         if len(self.value) == 0:
             raise CSTValidationError("Cannot have empty name identifier.")
         if not self.value.isidentifier():
-            raise CSTValidationError("Name is not a valid identifier.")
+            raise CSTValidationError(f"Name {self.value!r} is not a valid identifier.")
 
     def _codegen_impl(self, state: CodegenState) -> None:
         with self._parenthesize(state):

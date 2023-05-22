@@ -58,7 +58,7 @@ jobs:
         run: >-
           echo LIBCST_NO_LOCAL_SCHEME=1 >> $GITHUB_ENV
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.12.1
+        uses: pypa/cibuildwheel@v2.12.3
       - uses: actions/upload-artifact@v3
         with:
           path: wheelhouse/*.whl

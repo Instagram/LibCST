@@ -7,6 +7,7 @@
 
 import platform
 import subprocess
+import sys
 from pathlib import Path
 from unittest import skipIf
 
@@ -20,7 +21,7 @@ class TestCodemodCLI(UnitTest):
     def test_codemod_formatter_error_input(self) -> None:
         rlt = subprocess.run(
             [
-                "python",
+                sys.executable,
                 "-m",
                 "libcst.tool",
                 "codemod",
@@ -44,3 +45,21 @@ class TestCodemodCLI(UnitTest):
                 "error: cannot format -: Cannot parse: 13:10:     async with AsyncExitStack() as stack:",
                 rlt.stderr.decode("utf-8"),
             )
+
+    def test_codemod_external(self) -> None:
+        # Test running the NOOP command as an "external command"
+        # against this very file.
+        output = subprocess.check_output(
+            [
+                sys.executable,
+                "-m",
+                "libcst.tool",
+                "codemod",
+                "-x",  # external module
+                "libcst.codemod.commands.noop.NOOPCommand",
+                str(Path(__file__)),
+            ],
+            encoding="utf-8",
+            stderr=subprocess.STDOUT,
+        )
+        assert "Finished codemodding 1 files!" in output

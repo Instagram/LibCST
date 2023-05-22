@@ -469,7 +469,7 @@ class TestApplyAnnotationsVisitor(CodemodTest):
             ),
             "deeply_nested_example_with_multiline_annotation": (
                 """
-                def foo(x: int)-> Union[
+                def foo(x: int) -> Union[
                     Coroutine[Any, Any, django.http.response.HttpResponse], str
                 ]:
                     ...
@@ -1121,6 +1121,83 @@ class TestApplyAnnotationsVisitor(CodemodTest):
 
     @data_provider(
         {
+            "pep_604": (
+                """
+                def f(a: int | str, b: int | list[int | list[int | str]]) -> str: ...
+                """,
+                """
+                def f(a, b):
+                    return 'hello'
+                """,
+                """
+                def f(a: int | str, b: int | list[int | list[int | str]]) -> str:
+                    return 'hello'
+                """,
+            ),
+            "pep_604_import": (
+                """
+                from typing import Callable
+                from collections.abc import Sequence
+                def f(a: int | str, b: int | list[int | Callable[[str], Sequence]]) -> str: ...
+                """,
+                """
+                def f(a, b):
+                    return 'hello'
+                """,
+                """
+                from collections.abc import Sequence
+                from typing import Callable
+
+                def f(a: int | str, b: int | list[int | Callable[[str], Sequence]]) -> str:
+                    return 'hello'
+                """,
+            ),
+        }
+    )
+    def test_annotate_functions_pep_604(
+        self, stub: str, before: str, after: str
+    ) -> None:
+        self.run_test_case_with_flags(
+            stub=stub,
+            before=before,
+            after=after,
+            overwrite_existing_annotations=True,
+        )
+
+    @data_provider(
+        {
+            "import_inside_list": (
+                """
+                from typing import Callable
+                from collections.abc import Sequence
+                def f(a: Callable[[Sequence[int]], int], b: int) -> str: ...
+                """,
+                """
+                def f(a, b):
+                    return 'hello'
+                """,
+                """
+                from collections.abc import Sequence
+                from typing import Callable
+
+                def f(a: Callable[[Sequence[int]], int], b: int) -> str:
+                    return 'hello'
+                """,
+            ),
+        }
+    )
+    def test_annotate_function_nested_imports(
+        self, stub: str, before: str, after: str
+    ) -> None:
+        self.run_test_case_with_flags(
+            stub=stub,
+            before=before,
+            after=after,
+            overwrite_existing_annotations=True,
+        )
+
+    @data_provider(
+        {
             "return_self": (
                 """
                 class Foo:
@@ -1745,3 +1822,91 @@ class TestApplyAnnotationsVisitor(CodemodTest):
         self.run_test_case_with_flags(
             stub=stub, before=before, after=after, always_qualify_annotations=True
         )
+
+    @data_provider(
+        {
+            "attribute": (
+                """
+                class C:
+                    x: int
+                """,
+                """
+                class C:
+                    x = 0
+                C.x = 1
+                """,
+                """
+                class C:
+                    x: int = 0
+                C.x = 1
+                """,
+            ),
+            "subscript": (
+                """
+                d: dict[str, int]
+                """,
+                """
+                d = {}
+                d["k"] = 0
+                """,
+                """
+                d: dict[str, int] = {}
+                d["k"] = 0
+                """,
+            ),
+            "starred": (
+                """
+                a: int
+                b: list[int]
+                """,
+                """
+                a, *b = [1, 2, 3]
+                """,
+                """
+                a: int
+                b: list[int]
+
+                a, *b = [1, 2, 3]
+                """,
+            ),
+            "name": (
+                """
+                a: int
+                """,
+                """
+                a = 0
+                """,
+                """
+                a: int = 0
+                """,
+            ),
+            "list": (
+                """
+                a: int
+                """,
+                """
+                [a] = [0]
+                """,
+                """
+                a: int
+
+                [a] = [0]
+                """,
+            ),
+            "tuple": (
+                """
+                a: int
+                """,
+                """
+                (a,) = [0]
+                """,
+                """
+                a: int
+
+                (a,) = [0]
+                """,
+            ),
+        }
+    )
+    def test_valid_assign_expressions(self, stub: str, before: str, after: str) -> None:
+        self.run_simple_test_case(stub=stub, before=before, after=after)
