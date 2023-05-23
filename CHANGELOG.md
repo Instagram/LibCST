@@ -1,3 +1,69 @@
+# 0.4.10 - 2023-05-23
+
+## New Contributors
+* @and-semakin made their first contribution in https://github.com/Instagram/LibCST/pull/816
+* @carljm made their first contribution in https://github.com/Instagram/LibCST/pull/828
+* @sagarbadiyani made their first contribution in https://github.com/Instagram/LibCST/pull/841
+* @podtserkovskiy made their first contribution in https://github.com/Instagram/LibCST/pull/894
+* @rchen152 made their first contribution in https://github.com/Instagram/LibCST/pull/903
+* @Kludex made their first contribution in https://github.com/Instagram/LibCST/pull/913
+* @jakkdl made their first contribution in https://github.com/Instagram/LibCST/pull/921
+
+## Added
+* Add py3.11 classifier by @and-semakin in https://github.com/Instagram/LibCST/pull/816
+* Script to regenerate test fixtures, upgrade to Pyre 0.9.10 by @amyreese in https://github.com/Instagram/LibCST/pull/872
+* Allow FullyQualifiedNameProvider to work with absolute paths by @amyreese in https://github.com/Instagram/LibCST/pull/867
+* Allow running codemods without configuring in YAML by @akx in https://github.com/Instagram/LibCST/pull/879
+* Support PEP 604 in ApplyTypeAnnotationsVisitor by @hauntsaninja in https://github.com/Instagram/LibCST/pull/868
+
+## Fixed
+* fix PEP 604 union annotations in decorators by @carljm in https://github.com/Instagram/LibCST/pull/828
+* [AddImportsVisitor] Docstring Check Only for the Top Element of the Body by @sagarbadiyani in https://github.com/Instagram/LibCST/pull/841
+* Fix [#855](https://github.com/Instagram/LibCST/issues/855) - fail to parse with statement by @stroxler in https://github.com/Instagram/LibCST/pull/861
+* Add setuptools-rust to build requirements in setup.py by @amyreese in https://github.com/Instagram/LibCST/pull/873
+* Relative imports from '' package are not allowed by @podtserkovskiy in https://github.com/Instagram/LibCST/pull/894
+* Use subprocess.DEVNULL instead of opening os.devnull by hand by @akx in https://github.com/Instagram/LibCST/pull/897
+* Ensure current Python interpreter is used for subprocesses by @akx in https://github.com/Instagram/LibCST/pull/898
+* Fix ApplyTypeAnnotationsVisitor behavior on attribute assignments. by @rchen152 in https://github.com/Instagram/LibCST/pull/903
+* Fix spelling and grammar in some comments by @stroxler in https://github.com/Instagram/LibCST/pull/908
+* skip escaped backslash in rf-string by @jakkdl in https://github.com/Instagram/LibCST/pull/921
+* relax validation rules on decorators by @jakkdl in https://github.com/Instagram/LibCST/pull/926
+
+**Full Changelog**: https://github.com/Instagram/LibCST/compare/v0.4.9...v0.4.10
+
+# 0.4.9 - 2022-11-10
+
+## Updated
+* Bump setuptools-rust version by @zsol in https://github.com/Instagram/LibCST/pull/809
+
+**Full Changelog**: https://github.com/Instagram/LibCST/compare/v0.4.8...v0.4.9
+
+# 0.4.8 - 2022-11-10
+
+## New Contributors
+* @dhruvmanila made their first contribution in https://github.com/Instagram/LibCST/pull/728
+* @vfazio made their first contribution in https://github.com/Instagram/LibCST/pull/801
+* @matthewshaer made their first contribution in https://github.com/Instagram/LibCST/pull/807
+
+
+## Fixed
+* Fix parse error message for number parsing by @zzl0 in https://github.com/Instagram/LibCST/pull/724
+* Fix problematic doc build, due to the new builder image provided by readthedocs doesn't has the `graphviz-dev` package pre-installed any more by @MapleCCC in https://github.com/Instagram/LibCST/pull/751
+* Fix docstring of `FullRepoManager` by @MapleCCC in https://github.com/Instagram/LibCST/pull/750
+* Fix bug when `TypeOf` is one of options in `OneOf` / `AllOf` by @MapleCCC in https://github.com/Instagram/LibCST/pull/756
+* Tighten the metadata type of `ExpressionContextProvider` by @MapleCCC in https://github.com/Instagram/LibCST/pull/760
+* Fix the bug that the use of formatter in codemods has undetermined target Python version, resulting in hard-to-reason-with behavior by @MapleCCC in https://github.com/Instagram/LibCST/pull/771
+
+
+## Added
+* Python 3.11 rutime support
+  * test using python 3.11 beta versions by @zsol in https://github.com/Instagram/LibCST/pull/723
+  * Python 3.11 wheels by @vfazio in https://github.com/Instagram/LibCST/pull/801
+* Raise informative exception when metadata is unresolved in a metadata-based match by @MapleCCC in https://github.com/Instagram/LibCST/pull/757
+* Add AccessorProvider by @matthewshaer in https://github.com/Instagram/LibCST/pull/807
+
+**Full Changelog**: https://github.com/Instagram/LibCST/compare/v0.4.7...v0.4.8
+
 # 0.4.7 - 2022-07-12
 
 ## New Contributors
