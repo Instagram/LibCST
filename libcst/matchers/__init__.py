@@ -3089,13 +3089,6 @@ class Continue(BaseSmallStatement, BaseMatcherNode):
     ] = DoNotCare()
 
 
-NameOrAttributeOrCallMatchType = Union[
-    "Name",
-    "Attribute",
-    "Call",
-    MetadataMatchType,
-    MatchIfTrue[Union[cst.Name, cst.Attribute, cst.Call]],
-]
 TrailingWhitespaceMatchType = Union[
     "TrailingWhitespace", MetadataMatchType, MatchIfTrue[cst.TrailingWhitespace]
 ]
@@ -3104,10 +3097,10 @@ TrailingWhitespaceMatchType = Union[
 @dataclass(frozen=True, eq=False, unsafe_hash=False)
 class Decorator(BaseMatcherNode):
     decorator: Union[
-        NameOrAttributeOrCallMatchType,
+        BaseExpressionMatchType,
         DoNotCareSentinel,
-        OneOf[NameOrAttributeOrCallMatchType],
-        AllOf[NameOrAttributeOrCallMatchType],
+        OneOf[BaseExpressionMatchType],
+        AllOf[BaseExpressionMatchType],
     ] = DoNotCare()
     leading_lines: Union[
         Sequence[

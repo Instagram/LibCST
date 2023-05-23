@@ -623,6 +623,46 @@ class FunctionDefCreationTest(CSTNodeTest):
                 "code": "@ bar (  )\n",
                 "expected_position": CodeRange((1, 0), (1, 10)),
             },
+            # Allow nested calls on decorator
+            {
+                "node": cst.FunctionDef(
+                    cst.Name("foo"),
+                    cst.Parameters(),
+                    cst.SimpleStatementSuite((cst.Pass(),)),
+                    (cst.Decorator(cst.Call(func=cst.Call(func=cst.Name("bar")))),),
+                ),
+                "code": "@bar()()\ndef foo(): pass\n",
+            },
+            # Allow any expression in decorator
+            {
+                "node": cst.FunctionDef(
+                    cst.Name("foo"),
+                    cst.Parameters(),
+                    cst.SimpleStatementSuite((cst.Pass(),)),
+                    (
+                        cst.Decorator(
+                            cst.BinaryOperation(cst.Name("a"), cst.Add(), cst.Name("b"))
+                        ),
+                    ),
+                ),
+                "code": "@a + b\ndef foo(): pass\n",
+            },
+            # Allow parentheses around decorator
+            {
+                "node": cst.FunctionDef(
+                    cst.Name("foo"),
+                    cst.Parameters(),
+                    cst.SimpleStatementSuite((cst.Pass(),)),
+                    (
+                        cst.Decorator(
+                            cst.Name(
+                                "bar", lpar=(cst.LeftParen(),), rpar=(cst.RightParen(),)
+                            )
+                        ),
+                    ),
+                ),
+                "code": "@(bar)\ndef foo(): pass\n",
+            },
             # Parameters
             {
                 "node": cst.Parameters(
@@ -921,22 +961,6 @@ class FunctionDefCreationTest(CSTNodeTest):
                     cst.SimpleStatementSuite((cst.Pass(),)),
                 ),
                 r"Expecting a star prefix of '\*\*'",
-            ),
-            # Validate decorator name semantics
-            (
-                lambda: cst.FunctionDef(
-                    cst.Name("foo"),
-                    cst.Parameters(),
-                    cst.SimpleStatementSuite((cst.Pass(),)),
-                    (
-                        cst.Decorator(
-                            cst.Name(
-                                "bar", lpar=(cst.LeftParen(),), rpar=(cst.RightParen(),)
-                            )
-                        ),
-                    ),
-                ),
-                "Cannot have parens around decorator in a Decorator",
             ),
         )
     )
