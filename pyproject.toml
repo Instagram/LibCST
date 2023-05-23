@@ -28,6 +28,7 @@ dependencies = [
 dev = [
     "black==23.1.0",
     "coverage>=4.5.4",
+    "build>=0.10.0",
     "fixit==0.1.1",
     "flake8>=3.7.8,<5",
     "Sphinx>=5.1.1",
