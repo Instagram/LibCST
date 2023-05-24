@@ -23,7 +23,7 @@ setuptools.setup(
             else {}
         ),
     },
-    packages=setuptools.find_packages(exclude=["native.target.*"]),
+    packages=setuptools.find_packages(),
     package_data={
         "libcst": ["py.typed"],
         "libcst.tests.pyre": ["*"],
