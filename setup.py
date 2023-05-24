@@ -8,6 +8,7 @@ from os import environ
 import setuptools
 from setuptools_rust import Binding, RustExtension
 
+
 def no_local_scheme(version: str) -> str:
     return ""
 

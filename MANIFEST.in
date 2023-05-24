@@ -2,3 +2,4 @@ include README.rst LICENSE CODE_OF_CONDUCT.md CONTRIBUTING.md docs/source/*.rst 
 
 include native/Cargo.toml
 recursive-include native *
+recursive-exclude native/target *
