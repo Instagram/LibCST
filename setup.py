@@ -8,6 +8,7 @@ from os import environ
 import setuptools
 from setuptools_rust import Binding, RustExtension
 
+
 def no_local_scheme(version: str) -> str:
     return ""
 
@@ -22,7 +23,7 @@ setuptools.setup(
             else {}
         ),
     },
-    packages=setuptools.find_packages(),
+    packages=setuptools.find_packages(exclude=["native.target.*"]),
     package_data={
         "libcst": ["py.typed"],
         "libcst.tests.pyre": ["*"],
