@@ -40,11 +40,11 @@ jobs:
           working-directory: native
       - name: Build LibCST
         run: hatch env create
-      - name: Pure Tests
+      - name: Tests
         run: hatch run test
-      - name: Native Tests
+      - name: Pure Parser Tests
         env:
-          LIBCST_PARSER_TYPE: ${{ matrix.parser }}
+          LIBCST_PARSER_TYPE: pure
         run: hatch run test
 
   # Run linters
