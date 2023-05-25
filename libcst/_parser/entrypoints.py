@@ -27,7 +27,7 @@ _DEFAULT_PARTIAL_PARSER_CONFIG: PartialParserConfig = PartialParserConfig()
 
 def is_native() -> bool:
     typ = os.environ.get("LIBCST_PARSER_TYPE")
-    return typ == "native"
+    return typ != "pure"
 
 
 def _parse(

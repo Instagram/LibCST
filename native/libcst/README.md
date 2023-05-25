@@ -3,9 +3,8 @@
 A native extension to enable parsing of new Python grammar in LibCST.
 
 The extension is written in Rust, and exposed to Python using [PyO3](https://pyo3.rs/).
-This is packaged together with libcst, and can be imported from `libcst.native`. When
-the `LIBCST_PARSER_TYPE` environment variable is set to `native`, the LibCST APIs use
-this module for all parsing.
+This is packaged together with libcst, and can be imported from `libcst.native`. By default
+the LibCST APIs use this module for all parsing.
 
 Later on, the parser library might be packaged separately as 
 [a Rust crate](https://crates.io). Pull requests towards this are much appreciated.

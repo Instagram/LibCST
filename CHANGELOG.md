@@ -1,3 +1,14 @@
+# 1.0.0 - 2023-05-25
+
+The first major release of LibCST is essentially the same as 0.4.10, but using the
+newer, Rust-based parser implementation by default. The old, pure Python parser is
+scheduled for removal in the next (non-patch) release. Until then, it is available with
+the `LIBCST_PARSER_TYPE` environment variable set to `pure`.
+
+## Updated
+
+* Switch the default parser implementation to native by @zsol in https://github.com/Instagram/LibCST/pull/929
+
 # 0.4.10 - 2023-05-23
 
 ## New Contributors
