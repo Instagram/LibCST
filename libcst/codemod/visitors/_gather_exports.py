@@ -140,6 +140,6 @@ class GatherExportsVisitor(ContextAwareVisitor):
     ) -> None:
         if self._in_assigned_export:
             name = node.evaluated_value
-            if name is None:
+            if not isinstance(name, str):
                 return
             self.explicit_exported_objects.add(name)

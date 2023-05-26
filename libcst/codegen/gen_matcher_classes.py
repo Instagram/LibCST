@@ -265,7 +265,9 @@ def _get_raw_name(node: cst.CSTNode) -> Optional[str]:
     if isinstance(node, cst.Name):
         return node.value
     elif isinstance(node, cst.SimpleString):
-        return node.evaluated_value
+        evaluated_value = node.evaluated_value
+        if isinstance(evaluated_value, str):
+            return evaluated_value
     elif isinstance(node, cst.SubscriptElement):
         return _get_raw_name(node.slice)
     elif isinstance(node, cst.Index):
