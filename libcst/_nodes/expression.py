@@ -1983,6 +1983,25 @@ class Parameters(CSTNode):
             star_kwarg=visit_optional(self, "star_kwarg", self.star_kwarg, visitor),
         )
 
+    def _safe_to_join_with_lambda(self) -> bool:
+        """
+        Determine if Parameters need a space after the `lambda` keyword. Returns True
+        iff it's safe to omit the space between `lambda` and these Parameters.
+
+        See also `BaseExpression._safe_to_use_with_word_operator`.
+
+        For example: `lambda*_: pass`
+        """
+        if len(self.posonly_params) != 0:
+            return False
+
+        # posonly_ind can't appear if above condition is false
+
+        if len(self.params) > 0 and self.params[0].star not in {"*", "**"}:
+            return False
+
+        return True
+
     def _codegen_impl(self, state: CodegenState) -> None:  # noqa: C901
         # Compute the star existence first so we can ask about whether
         # each element is the last in the list or not.
@@ -2115,6 +2134,7 @@ class Lambda(BaseExpression):
             if (
                 isinstance(whitespace_after_lambda, BaseParenthesizableWhitespace)
                 and whitespace_after_lambda.empty
+                and not self.params._safe_to_join_with_lambda()
             ):
                 raise CSTValidationError(
                     "Must have at least one space after lambda when specifying params"
