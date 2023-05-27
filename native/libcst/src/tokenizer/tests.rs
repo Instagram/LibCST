@@ -814,3 +814,29 @@ fn test_inconsistent_indentation_at_eof() {
         ])
     )
 }
+
+#[test]
+fn test_nested_f_string_specs() {
+    let config = TokConfig {
+        split_fstring: true,
+        ..default_config()
+    };
+    assert_eq!(
+        tokenize_all("f'{_:{_:}{_}}'", &config),
+        Ok(vec![
+            (TokType::FStringStart, "f'"),
+            (TokType::Op, "{"),
+            (TokType::Name, "_"),
+            (TokType::Op, ":"),
+            (TokType::Op, "{"),
+            (TokType::Name, "_"),
+            (TokType::Op, ":"),
+            (TokType::Op, "}"),
+            (TokType::Op, "{"),
+            (TokType::Name, "_"),
+            (TokType::Op, "}"),
+            (TokType::Op, "}"),
+            (TokType::FStringEnd, "'")
+        ])
+    )
+}

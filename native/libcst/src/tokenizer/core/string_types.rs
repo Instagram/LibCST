@@ -98,11 +98,10 @@ impl FStringNode {
     }
 
     pub fn close_parentheses(&mut self) {
-        self.parentheses_count -= 1;
-        if self.parentheses_count == 0 {
-            // No parentheses means that the format spec is also finished.
-            self.format_spec_count = 0;
+        if self.is_in_format_spec() {
+            self.format_spec_count -= 1;
         }
+        self.parentheses_count -= 1;
     }
 
     pub fn allow_multiline(&self) -> bool {
