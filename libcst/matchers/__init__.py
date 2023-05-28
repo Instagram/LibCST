@@ -3516,16 +3516,16 @@ CompForMatchType = Union["CompFor", MetadataMatchType, MatchIfTrue[cst.CompFor]]
 @dataclass(frozen=True, eq=False, unsafe_hash=False)
 class DictComp(BaseComp, BaseDict, BaseExpression, BaseMatcherNode):
     key: Union[
-        BaseAssignTargetExpressionMatchType,
+        BaseExpressionMatchType,
         DoNotCareSentinel,
-        OneOf[BaseAssignTargetExpressionMatchType],
-        AllOf[BaseAssignTargetExpressionMatchType],
+        OneOf[BaseExpressionMatchType],
+        AllOf[BaseExpressionMatchType],
     ] = DoNotCare()
     value: Union[
-        BaseAssignTargetExpressionMatchType,
+        BaseExpressionMatchType,
         DoNotCareSentinel,
-        OneOf[BaseAssignTargetExpressionMatchType],
-        AllOf[BaseAssignTargetExpressionMatchType],
+        OneOf[BaseExpressionMatchType],
+        AllOf[BaseExpressionMatchType],
     ] = DoNotCare()
     for_in: Union[
         CompForMatchType,
@@ -5709,10 +5709,10 @@ class FunctionDef(BaseCompoundStatement, BaseStatement, BaseMatcherNode):
 @dataclass(frozen=True, eq=False, unsafe_hash=False)
 class GeneratorExp(BaseComp, BaseExpression, BaseSimpleComp, BaseMatcherNode):
     elt: Union[
-        BaseAssignTargetExpressionMatchType,
+        BaseExpressionMatchType,
         DoNotCareSentinel,
-        OneOf[BaseAssignTargetExpressionMatchType],
-        AllOf[BaseAssignTargetExpressionMatchType],
+        OneOf[BaseExpressionMatchType],
+        AllOf[BaseExpressionMatchType],
     ] = DoNotCare()
     for_in: Union[
         CompForMatchType,
@@ -8240,10 +8240,10 @@ class List(
 @dataclass(frozen=True, eq=False, unsafe_hash=False)
 class ListComp(BaseComp, BaseExpression, BaseList, BaseSimpleComp, BaseMatcherNode):
     elt: Union[
-        BaseAssignTargetExpressionMatchType,
+        BaseExpressionMatchType,
         DoNotCareSentinel,
-        OneOf[BaseAssignTargetExpressionMatchType],
-        AllOf[BaseAssignTargetExpressionMatchType],
+        OneOf[BaseExpressionMatchType],
+        AllOf[BaseExpressionMatchType],
     ] = DoNotCare()
     for_in: Union[
         CompForMatchType,
@@ -12921,10 +12921,10 @@ class Set(BaseExpression, BaseSet, BaseMatcherNode):
 @dataclass(frozen=True, eq=False, unsafe_hash=False)
 class SetComp(BaseComp, BaseExpression, BaseSet, BaseSimpleComp, BaseMatcherNode):
     elt: Union[
-        BaseAssignTargetExpressionMatchType,
+        BaseExpressionMatchType,
         DoNotCareSentinel,
-        OneOf[BaseAssignTargetExpressionMatchType],
-        AllOf[BaseAssignTargetExpressionMatchType],
+        OneOf[BaseExpressionMatchType],
+        AllOf[BaseExpressionMatchType],
     ] = DoNotCare()
     for_in: Union[
         CompForMatchType,
