@@ -2107,6 +2107,13 @@ class Lambda(BaseExpression):
         BaseParenthesizableWhitespace, MaybeSentinel
     ] = MaybeSentinel.DEFAULT
 
+    def _safe_to_use_with_word_operator(self, position: ExpressionPosition) -> bool:
+        if position == ExpressionPosition.LEFT:
+            return len(self.rpar) > 0 or self.body._safe_to_use_with_word_operator(
+                position
+            )
+        return super()._safe_to_use_with_word_operator(position)
+
     def _validate(self) -> None:
         # Validate parents
         super(Lambda, self)._validate()
