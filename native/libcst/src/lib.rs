@@ -150,6 +150,22 @@ mod test {
     }
 
     #[test]
+    fn test_single_statement_with_no_newline() {
+        for src in &[
+            "(\n \\\n)",
+            "(\n  \\\n)",
+            "(\n    '''\n''')",
+            "del _",
+            "if _:\n    '''\n)'''",
+            "if _:\n    ('''\n''')",
+            "if _:\n     '''\n  '''",
+            "if _:\n        '''\n    ''' ",
+        ] {
+            parse_module(src, None).unwrap_or_else(|e| panic!("'{}' doesn't parse: {}", src, e));
+        }
+    }
+
+    #[test]
     fn bol_offset_first_line() {
         assert_eq!(0, bol_offset("hello", 1));
         assert_eq!(0, bol_offset("hello", 0));

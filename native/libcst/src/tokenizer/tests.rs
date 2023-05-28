@@ -719,6 +719,19 @@ fn test_fake_newline() {
 }
 
 #[test]
+fn test_fake_newline_when_at_bol() {
+    assert_eq!(
+        tokenize_with_end_marker("(\n \\\n)", &default_config()),
+        Ok(vec![
+            (TokType::Op, "("),
+            (TokType::Op, ")"),
+            (TokType::Newline, ""),
+            (TokType::EndMarker, "")
+        ])
+    )
+}
+
+#[test]
 fn test_no_fake_newline_for_empty_input() {
     assert_eq!(
         tokenize_with_end_marker("", &default_config()),
