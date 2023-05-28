@@ -26,6 +26,17 @@ class DictCompTest(CSTNodeTest):
                 "parser": parse_expression,
                 "expected_position": CodeRange((1, 0), (1, 17)),
             },
+            # non-trivial keys & values in DictComp
+            {
+                "node": cst.DictComp(
+                    cst.BinaryOperation(cst.Name("k1"), cst.Add(), cst.Name("k2")),
+                    cst.BinaryOperation(cst.Name("v1"), cst.Add(), cst.Name("v2")),
+                    cst.CompFor(target=cst.Name("a"), iter=cst.Name("b")),
+                ),
+                "code": "{k1 + k2: v1 + v2 for a in b}",
+                "parser": parse_expression,
+                "expected_position": CodeRange((1, 0), (1, 29)),
+            },
             # custom whitespace around colon
             {
                 "node": cst.DictComp(
