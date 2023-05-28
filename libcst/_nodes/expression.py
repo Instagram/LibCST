@@ -3515,7 +3515,7 @@ class BaseSimpleComp(BaseComp, ABC):
     #: The expression evaluated during each iteration of the comprehension. This
     #: lexically comes before the ``for_in`` clause, but it is semantically the
     #: inner-most element, evaluated inside the ``for_in`` clause.
-    elt: BaseAssignTargetExpression
+    elt: BaseExpression
 
     #: The ``for ... in ... if ...`` clause that lexically comes after ``elt``. This may
     #: be a nested structure for nested comprehensions. See :class:`CompFor` for
@@ -3548,7 +3548,7 @@ class GeneratorExp(BaseSimpleComp):
     """
 
     #: The expression evaluated and yielded during each iteration of the generator.
-    elt: BaseAssignTargetExpression
+    elt: BaseExpression
 
     #: The ``for ... in ... if ...`` clause that comes after ``elt``. This may be a
     #: nested structure for nested comprehensions. See :class:`CompFor` for details.
@@ -3599,7 +3599,7 @@ class ListComp(BaseList, BaseSimpleComp):
     """
 
     #: The expression evaluated and stored during each iteration of the comprehension.
-    elt: BaseAssignTargetExpression
+    elt: BaseExpression
 
     #: The ``for ... in ... if ...`` clause that comes after ``elt``. This may be a
     #: nested structure for nested comprehensions. See :class:`CompFor` for details.
@@ -3641,7 +3641,7 @@ class SetComp(BaseSet, BaseSimpleComp):
     """
 
     #: The expression evaluated and stored during each iteration of the comprehension.
-    elt: BaseAssignTargetExpression
+    elt: BaseExpression
 
     #: The ``for ... in ... if ...`` clause that comes after ``elt``. This may be a
     #: nested structure for nested comprehensions. See :class:`CompFor` for details.
@@ -3683,10 +3683,10 @@ class DictComp(BaseDict, BaseComp):
     """
 
     #: The key inserted into the dictionary during each iteration of the comprehension.
-    key: BaseAssignTargetExpression
+    key: BaseExpression
     #: The value associated with the ``key`` inserted into the dictionary during each
     #: iteration of the comprehension.
-    value: BaseAssignTargetExpression
+    value: BaseExpression
 
     #: The ``for ... in ... if ...`` clause that lexically comes after ``key`` and
     #: ``value``. This may be a nested structure for nested comprehensions. See
