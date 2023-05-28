@@ -2512,6 +2512,9 @@ class IfExp(BaseExpression):
     #: Whitespace after the ``else`` keyword, but before the ``orelse`` expression.
     whitespace_after_else: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
+    def _safe_to_use_with_word_operator(self, position: ExpressionPosition) -> bool:
+        return self.body._safe_to_use_with_word_operator(position)
+
     def _validate(self) -> None:
         # Paren validation and such
         super(IfExp, self)._validate()
