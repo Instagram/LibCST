@@ -3796,6 +3796,15 @@ class NamedExpr(BaseExpression):
             rpar=visit_sequence(self, "rpar", self.rpar, visitor),
         )
 
+    def _safe_to_use_with_word_operator(self, position: ExpressionPosition) -> bool:
+        if position == ExpressionPosition.LEFT:
+            return len(self.rpar) > 0 or self.value._safe_to_use_with_word_operator(
+                position
+            )
+        return len(self.lpar) > 0 or self.target._safe_to_use_with_word_operator(
+            position
+        )
+
     def _codegen_impl(self, state: CodegenState) -> None:
         with self._parenthesize(state):
             self.target._codegen(state)
