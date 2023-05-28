@@ -952,6 +952,21 @@ class LambdaParserTest(CSTNodeTest):
                 ),
                 "lambda*,args: 5",
             ),
+            (
+                cst.ListComp(
+                    elt=cst.Lambda(
+                        params=cst.Parameters(),
+                        body=cst.Tuple(()),
+                        colon=cst.Colon(),
+                    ),
+                    for_in=cst.CompFor(
+                        target=cst.Name("_"),
+                        iter=cst.Name("_"),
+                        whitespace_before=cst.SimpleWhitespace(""),
+                    ),
+                ),
+                "[lambda:()for _ in _]",
+            ),
         )
     )
     def test_valid(
