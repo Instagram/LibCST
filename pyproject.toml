@@ -42,7 +42,7 @@ dev = [
     "setuptools_scm>=6.0.1",
     "sphinx-rtd-theme>=0.4.3",
     "ufmt==2.1.0",
-    "usort==1.0.6",
+    "usort==1.0.7",
     "setuptools-rust>=1.5.2",
     "slotscheck>=0.7.1",
     "jinja2==3.1.2",
