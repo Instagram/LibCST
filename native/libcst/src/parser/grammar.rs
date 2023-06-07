@@ -1004,7 +1004,7 @@ parser! {
                     make_slice(l, col, u, rest)
             }
             / e:starred_expression() { make_index_from_arg(e) }
-            / v:expression() { make_index(v) }
+            / v:named_expression() { make_index(v) }
 
         rule atom() -> Expression<'input, 'a>
             = n:name() { Expression::Name(Box::new(n)) }

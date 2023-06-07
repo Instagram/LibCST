@@ -41,6 +41,33 @@ class SimpleCompTest(CSTNodeTest):
                 "code": "{a for b in c}",
                 "parser": parse_expression,
             },
+            # non-trivial elt in GeneratorExp
+            {
+                "node": cst.GeneratorExp(
+                    cst.BinaryOperation(cst.Name("a1"), cst.Add(), cst.Name("a2")),
+                    cst.CompFor(target=cst.Name("b"), iter=cst.Name("c")),
+                ),
+                "code": "(a1 + a2 for b in c)",
+                "parser": parse_expression,
+            },
+            # non-trivial elt in ListComp
+            {
+                "node": cst.ListComp(
+                    cst.BinaryOperation(cst.Name("a1"), cst.Add(), cst.Name("a2")),
+                    cst.CompFor(target=cst.Name("b"), iter=cst.Name("c")),
+                ),
+                "code": "[a1 + a2 for b in c]",
+                "parser": parse_expression,
+            },
+            # non-trivial elt in SetComp
+            {
+                "node": cst.SetComp(
+                    cst.BinaryOperation(cst.Name("a1"), cst.Add(), cst.Name("a2")),
+                    cst.CompFor(target=cst.Name("b"), iter=cst.Name("c")),
+                ),
+                "code": "{a1 + a2 for b in c}",
+                "parser": parse_expression,
+            },
             # async GeneratorExp
             {
                 "node": cst.GeneratorExp(

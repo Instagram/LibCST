@@ -114,12 +114,8 @@ pub enum TokType {
     Dedent,
     Async,
     Await,
-    // TODO; add support for these
-    #[allow(dead_code)]
     FStringStart,
-    #[allow(dead_code)]
     FStringString,
-    #[allow(dead_code)]
     FStringEnd,
     EndMarker,
 }

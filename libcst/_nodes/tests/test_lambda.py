@@ -305,30 +305,6 @@ class LambdaCreationTest(CSTNodeTest):
             ),
             (
                 lambda: cst.Lambda(
-                    cst.Parameters(star_arg=cst.Param(cst.Name("arg"))),
-                    cst.Integer("5"),
-                    whitespace_after_lambda=cst.SimpleWhitespace(""),
-                ),
-                "at least one space after lambda",
-            ),
-            (
-                lambda: cst.Lambda(
-                    cst.Parameters(kwonly_params=(cst.Param(cst.Name("arg")),)),
-                    cst.Integer("5"),
-                    whitespace_after_lambda=cst.SimpleWhitespace(""),
-                ),
-                "at least one space after lambda",
-            ),
-            (
-                lambda: cst.Lambda(
-                    cst.Parameters(star_kwarg=cst.Param(cst.Name("arg"))),
-                    cst.Integer("5"),
-                    whitespace_after_lambda=cst.SimpleWhitespace(""),
-                ),
-                "at least one space after lambda",
-            ),
-            (
-                lambda: cst.Lambda(
                     cst.Parameters(
                         star_kwarg=cst.Param(cst.Name("bar"), equal=cst.AssignEqual())
                     ),
@@ -943,6 +919,53 @@ class LambdaParserTest(CSTNodeTest):
                     rpar=(cst.RightParen(whitespace_before=cst.SimpleWhitespace(" ")),),
                 ),
                 "( lambda  : 5 )",
+            ),
+            # No space between lambda and params
+            (
+                cst.Lambda(
+                    cst.Parameters(star_arg=cst.Param(cst.Name("args"), star="*")),
+                    cst.Integer("5"),
+                    whitespace_after_lambda=cst.SimpleWhitespace(""),
+                ),
+                "lambda*args: 5",
+            ),
+            (
+                cst.Lambda(
+                    cst.Parameters(star_kwarg=cst.Param(cst.Name("kwargs"), star="**")),
+                    cst.Integer("5"),
+                    whitespace_after_lambda=cst.SimpleWhitespace(""),
+                ),
+                "lambda**kwargs: 5",
+            ),
+            (
+                cst.Lambda(
+                    cst.Parameters(
+                        star_arg=cst.ParamStar(
+                            comma=cst.Comma(
+                                cst.SimpleWhitespace(""), cst.SimpleWhitespace("")
+                            )
+                        ),
+                        kwonly_params=[cst.Param(cst.Name("args"), star="")],
+                    ),
+                    cst.Integer("5"),
+                    whitespace_after_lambda=cst.SimpleWhitespace(""),
+                ),
+                "lambda*,args: 5",
+            ),
+            (
+                cst.ListComp(
+                    elt=cst.Lambda(
+                        params=cst.Parameters(),
+                        body=cst.Tuple(()),
+                        colon=cst.Colon(),
+                    ),
+                    for_in=cst.CompFor(
+                        target=cst.Name("_"),
+                        iter=cst.Name("_"),
+                        whitespace_before=cst.SimpleWhitespace(""),
+                    ),
+                ),
+                "[lambda:()for _ in _]",
             ),
         )
     )

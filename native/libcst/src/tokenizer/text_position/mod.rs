@@ -117,6 +117,10 @@ impl<'t> TextPosition<'t> {
                 .inner_char_column_number
                 .checked_sub(1)
                 .expect("cannot back up past the beginning of a line.");
+            self.inner_byte_column_number = self
+                .inner_byte_column_number
+                .checked_sub(cw.byte_width)
+                .expect("cannot back up past the beginning of a line.");
             self.inner_byte_idx -= cw.byte_width;
         } else {
             panic!("Tried to backup past the beginning of the text.")
@@ -217,6 +221,7 @@ impl fmt::Debug for TextPosition<'_> {
             .field("char_widths", &EllipsisDebug)
             .field("inner_byte_idx", &self.inner_byte_idx)
             .field("inner_char_column_number", &self.inner_char_column_number)
+            .field("inner_byte_column_number", &self.inner_byte_column_number)
             .field("inner_line_number", &self.inner_line_number)
             .finish()
     }

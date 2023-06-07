@@ -166,6 +166,22 @@ class NamedExprTest(CSTNodeTest):
                 "parser": _parse_expression_force_38,
                 "expected_position": None,
             },
+            {
+                "node": cst.ListComp(
+                    elt=cst.NamedExpr(
+                        cst.Name("_"),
+                        cst.SimpleString("''"),
+                        whitespace_after_walrus=cst.SimpleWhitespace(""),
+                        whitespace_before_walrus=cst.SimpleWhitespace(""),
+                    ),
+                    for_in=cst.CompFor(
+                        target=cst.Name("_"),
+                        iter=cst.Name("_"),
+                        whitespace_before=cst.SimpleWhitespace(""),
+                    ),
+                ),
+                "code": "[_:=''for _ in _]",
+            },
         )
     )
     def test_valid(self, **kwargs: Any) -> None:

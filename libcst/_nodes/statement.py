@@ -745,7 +745,10 @@ class AsName(CSTNode):
     whitespace_after_as: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
 
     def _validate(self) -> None:
-        if self.whitespace_after_as.empty:
+        if (
+            self.whitespace_after_as.empty
+            and not self.name._safe_to_use_with_word_operator(ExpressionPosition.RIGHT)
+        ):
             raise CSTValidationError(
                 "There must be at least one space between 'as' and name."
             )

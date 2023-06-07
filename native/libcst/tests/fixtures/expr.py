@@ -44,6 +44,7 @@ lambda a, b, c=True, *vararg, d=(v1 << 2), e='str', **kwargs : a + b
 manylambdas = lambda x=lambda y=lambda z=1: z: y(): x()
 foo = (lambda port_id, ignore_missing: {"port1": port1_resource, "port2": port2_resource}[port_id])
 1 if True else 2
+_ if 0else  _
 str or None if True else str or bytes or None
 (str or None) if True else (str or bytes or None)
 str or None if (1 if True else 2) else str or bytes or None

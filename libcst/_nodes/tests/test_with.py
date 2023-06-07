@@ -102,6 +102,23 @@ class WithTest(CSTNodeTest):
                 "code": "with context_mgr() as ctx: pass\n",
                 "parser": parse_statement,
             },
+            {
+                "node": cst.With(
+                    (
+                        cst.WithItem(
+                            cst.Call(cst.Name("context_mgr")),
+                            cst.AsName(
+                                cst.Tuple(()),
+                                whitespace_after_as=cst.SimpleWhitespace(""),
+                                whitespace_before_as=cst.SimpleWhitespace(""),
+                            ),
+                        ),
+                    ),
+                    cst.SimpleStatementSuite((cst.Pass(),)),
+                ),
+                "code": "with context_mgr()as(): pass\n",
+                "parser": parse_statement,
+            },
             # indentation
             {
                 "node": DummyIndentedBlock(

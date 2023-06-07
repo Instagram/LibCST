@@ -52,6 +52,41 @@ class IfExpTest(CSTNodeTest):
                 "(foo)if(bar)else(baz)",
                 CodeRange((1, 0), (1, 21)),
             ),
+            (
+                cst.IfExp(
+                    body=cst.Name("foo"),
+                    whitespace_before_if=cst.SimpleWhitespace(" "),
+                    whitespace_after_if=cst.SimpleWhitespace(" "),
+                    test=cst.Name("bar"),
+                    whitespace_before_else=cst.SimpleWhitespace(" "),
+                    whitespace_after_else=cst.SimpleWhitespace(""),
+                    orelse=cst.IfExp(
+                        body=cst.SimpleString("''"),
+                        whitespace_before_if=cst.SimpleWhitespace(""),
+                        test=cst.Name("bar"),
+                        orelse=cst.Name("baz"),
+                    ),
+                ),
+                "foo if bar else''if bar else baz",
+                CodeRange((1, 0), (1, 32)),
+            ),
+            (
+                cst.GeneratorExp(
+                    elt=cst.IfExp(
+                        body=cst.Name("foo"),
+                        test=cst.Name("bar"),
+                        orelse=cst.SimpleString("''"),
+                        whitespace_after_else=cst.SimpleWhitespace(""),
+                    ),
+                    for_in=cst.CompFor(
+                        target=cst.Name("_"),
+                        iter=cst.Name("_"),
+                        whitespace_before=cst.SimpleWhitespace(""),
+                    ),
+                ),
+                "(foo if bar else''for _ in _)",
+                CodeRange((1, 1), (1, 28)),
+            ),
             # Make sure that spacing works
             (
                 cst.IfExp(

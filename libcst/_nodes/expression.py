@@ -1983,6 +1983,25 @@ class Parameters(CSTNode):
             star_kwarg=visit_optional(self, "star_kwarg", self.star_kwarg, visitor),
         )
 
+    def _safe_to_join_with_lambda(self) -> bool:
+        """
+        Determine if Parameters need a space after the `lambda` keyword. Returns True
+        iff it's safe to omit the space between `lambda` and these Parameters.
+
+        See also `BaseExpression._safe_to_use_with_word_operator`.
+
+        For example: `lambda*_: pass`
+        """
+        if len(self.posonly_params) != 0:
+            return False
+
+        # posonly_ind can't appear if above condition is false
+
+        if len(self.params) > 0 and self.params[0].star not in {"*", "**"}:
+            return False
+
+        return True
+
     def _codegen_impl(self, state: CodegenState) -> None:  # noqa: C901
         # Compute the star existence first so we can ask about whether
         # each element is the last in the list or not.
@@ -2088,6 +2107,13 @@ class Lambda(BaseExpression):
         BaseParenthesizableWhitespace, MaybeSentinel
     ] = MaybeSentinel.DEFAULT
 
+    def _safe_to_use_with_word_operator(self, position: ExpressionPosition) -> bool:
+        if position == ExpressionPosition.LEFT:
+            return len(self.rpar) > 0 or self.body._safe_to_use_with_word_operator(
+                position
+            )
+        return super()._safe_to_use_with_word_operator(position)
+
     def _validate(self) -> None:
         # Validate parents
         super(Lambda, self)._validate()
@@ -2115,6 +2141,7 @@ class Lambda(BaseExpression):
             if (
                 isinstance(whitespace_after_lambda, BaseParenthesizableWhitespace)
                 and whitespace_after_lambda.empty
+                and not self.params._safe_to_join_with_lambda()
             ):
                 raise CSTValidationError(
                     "Must have at least one space after lambda when specifying params"
@@ -2491,6 +2518,12 @@ class IfExp(BaseExpression):
 
     #: Whitespace after the ``else`` keyword, but before the ``orelse`` expression.
     whitespace_after_else: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
+
+    def _safe_to_use_with_word_operator(self, position: ExpressionPosition) -> bool:
+        if position == ExpressionPosition.RIGHT:
+            return self.body._safe_to_use_with_word_operator(position)
+        else:
+            return self.orelse._safe_to_use_with_word_operator(position)
 
     def _validate(self) -> None:
         # Paren validation and such
@@ -3495,7 +3528,7 @@ class BaseSimpleComp(BaseComp, ABC):
     #: The expression evaluated during each iteration of the comprehension. This
     #: lexically comes before the ``for_in`` clause, but it is semantically the
     #: inner-most element, evaluated inside the ``for_in`` clause.
-    elt: BaseAssignTargetExpression
+    elt: BaseExpression
 
     #: The ``for ... in ... if ...`` clause that lexically comes after ``elt``. This may
     #: be a nested structure for nested comprehensions. See :class:`CompFor` for
@@ -3528,7 +3561,7 @@ class GeneratorExp(BaseSimpleComp):
     """
 
     #: The expression evaluated and yielded during each iteration of the generator.
-    elt: BaseAssignTargetExpression
+    elt: BaseExpression
 
     #: The ``for ... in ... if ...`` clause that comes after ``elt``. This may be a
     #: nested structure for nested comprehensions. See :class:`CompFor` for details.
@@ -3579,7 +3612,7 @@ class ListComp(BaseList, BaseSimpleComp):
     """
 
     #: The expression evaluated and stored during each iteration of the comprehension.
-    elt: BaseAssignTargetExpression
+    elt: BaseExpression
 
     #: The ``for ... in ... if ...`` clause that comes after ``elt``. This may be a
     #: nested structure for nested comprehensions. See :class:`CompFor` for details.
@@ -3621,7 +3654,7 @@ class SetComp(BaseSet, BaseSimpleComp):
     """
 
     #: The expression evaluated and stored during each iteration of the comprehension.
-    elt: BaseAssignTargetExpression
+    elt: BaseExpression
 
     #: The ``for ... in ... if ...`` clause that comes after ``elt``. This may be a
     #: nested structure for nested comprehensions. See :class:`CompFor` for details.
@@ -3663,10 +3696,10 @@ class DictComp(BaseDict, BaseComp):
     """
 
     #: The key inserted into the dictionary during each iteration of the comprehension.
-    key: BaseAssignTargetExpression
+    key: BaseExpression
     #: The value associated with the ``key`` inserted into the dictionary during each
     #: iteration of the comprehension.
-    value: BaseAssignTargetExpression
+    value: BaseExpression
 
     #: The ``for ... in ... if ...`` clause that lexically comes after ``key`` and
     #: ``value``. This may be a nested structure for nested comprehensions. See
@@ -3768,6 +3801,15 @@ class NamedExpr(BaseExpression):
             ),
             value=visit_required(self, "value", self.value, visitor),
             rpar=visit_sequence(self, "rpar", self.rpar, visitor),
+        )
+
+    def _safe_to_use_with_word_operator(self, position: ExpressionPosition) -> bool:
+        if position == ExpressionPosition.LEFT:
+            return len(self.rpar) > 0 or self.value._safe_to_use_with_word_operator(
+                position
+            )
+        return len(self.lpar) > 0 or self.target._safe_to_use_with_word_operator(
+            position
         )
 
     def _codegen_impl(self, state: CodegenState) -> None:

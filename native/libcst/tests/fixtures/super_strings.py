@@ -30,3 +30,5 @@ print(f"{self.ERASE_CURRENT_LINE}{self._human_seconds(elapsed_time)} {percent:.{
 f'\{{\}}'
 f"regexp_like(path, '.*\{file_type}$')"
 f"\lfoo"
+
+f"{_:{_:}{a}}"
