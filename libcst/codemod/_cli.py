@@ -473,7 +473,7 @@ def _print_parallel_result(
             )
 
         # In unified diff mode, the code is a diff we must print.
-        if unified_diff:
+        if unified_diff and result.code:
             print(result.code)
 
 
