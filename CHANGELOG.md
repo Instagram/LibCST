@@ -1,3 +1,19 @@
+# 1.0.1 - 2023-06-07
+
+## Fixed
+* Fix type of `evaluated_value` on string to allow bytes by @ljodal in https://github.com/Instagram/LibCST/pull/721
+* Fix Sentinal typo by @kit1980 in https://github.com/Instagram/LibCST/pull/948
+* Allow no whitespace after lambda body in certain cases by @zsol in https://github.com/Instagram/LibCST/pull/939
+* Fix whitespace, fstring, walrus related parse errors (#939, #938, #937,
+#936, #935, #934, #933, #932, #931) by @zsol in https://github.com/Instagram/LibCST/pull/940
+* Codemod CLI: Print diff only when there is a change by @kit1980 in https://github.com/Instagram/LibCST/pull/945
+
+## New Contributors
+* @ljodal made their first contribution in https://github.com/Instagram/LibCST/pull/721
+* @kit1980 made their first contribution in https://github.com/Instagram/LibCST/pull/948
+
+**Full Changelog**: https://github.com/Instagram/LibCST/compare/v1.0.0...v1.0.1
+
 # 1.0.0 - 2023-05-25
 
 The first major release of LibCST is essentially the same as 0.4.10, but using the
