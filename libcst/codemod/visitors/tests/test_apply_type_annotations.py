@@ -1910,3 +1910,58 @@ class TestApplyAnnotationsVisitor(CodemodTest):
     )
     def test_valid_assign_expressions(self, stub: str, before: str, after: str) -> None:
         self.run_simple_test_case(stub=stub, before=before, after=after)
+
+    @data_provider(
+        {
+            "toplevel": (
+                """
+                x: int
+                """,
+                """
+                x = 1
+                x = 2
+                """,
+                """
+                x: int = 1
+                x = 2
+                """,
+            ),
+            "class": (
+                """
+                class A:
+                    x: int
+                """,
+                """
+                class A:
+                    x = 1
+                    x = 2
+                """,
+                """
+                class A:
+                    x: int = 1
+                    x = 2
+                """,
+            ),
+            "mixed": (
+                """
+                x: int
+                class A:
+                    x: int
+                """,
+                """
+                x = 1
+                class A:
+                    x = 1
+                    x = 2
+                """,
+                """
+                x: int = 1
+                class A:
+                    x: int = 1
+                    x = 2
+                """,
+            ),
+        }
+    )
+    def test_no_duplicate_annotations(self, stub: str, before: str, after: str) -> None:
+        self.run_simple_test_case(stub=stub, before=before, after=after)

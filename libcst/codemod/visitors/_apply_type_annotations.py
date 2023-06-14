@@ -694,6 +694,10 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
         # quotations to avoid undefined forward references in type annotations.
         self.global_names: Set[str] = set()
 
+        # We use this to avoid annotating multiple assignments to the same
+        # symbol in a given scope
+        self.already_annotated: Set[str] = set()
+
     @staticmethod
     def store_stub_in_context(
         context: CodemodContext,
@@ -945,17 +949,19 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
             name = get_full_name_for_node(only_target)
             if name is not None:
                 self.qualifier.append(name)
-                if (
-                    self._qualifier_name() in self.annotations.attributes
-                    and not isinstance(only_target, (cst.Attribute, cst.Subscript))
+                qualifier_name = self._qualifier_name()
+                if qualifier_name in self.annotations.attributes and not isinstance(
+                    only_target, (cst.Attribute, cst.Subscript)
                 ):
-                    annotation = self.annotations.attributes[self._qualifier_name()]
-                    self.qualifier.pop()
-                    return self._apply_annotation_to_attribute_or_global(
-                        name=name,
-                        annotation=annotation,
-                        value=node.value,
-                    )
+                    if qualifier_name not in self.already_annotated:
+                        self.already_annotated.add(qualifier_name)
+                        annotation = self.annotations.attributes[qualifier_name]
+                        self.qualifier.pop()
+                        return self._apply_annotation_to_attribute_or_global(
+                            name=name,
+                            annotation=annotation,
+                            value=node.value,
+                        )
                 else:
                     self.qualifier.pop()
         return updated_node
