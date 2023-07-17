@@ -77,12 +77,8 @@ impl<'r, 'a> Inflate<'a> for DeflatedModule<'r, 'a> {
                 }
             }
             if let Some(num) = last_indented {
-                if num + 1 == footer.len() {
-                    footer = vec![];
-                } else {
-                    let (_, rest) = footer.split_at(num + 1);
-                    footer = rest.to_vec();
-                }
+                let (_, rest) = footer.split_at(num);
+                footer = rest.to_vec();
             }
         } else {
             swap(&mut header, &mut footer);
