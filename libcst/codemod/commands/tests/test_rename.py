@@ -275,6 +275,38 @@ class TestRenameCommand(CodemodTest):
             new_name="a.b.module_3.Class_3",
         )
 
+    def test_import_same_module(self) -> None:
+        before = """
+            import logging
+            logging.warn(1)
+        """
+        after = """
+            import logging
+            logging.warning(1)
+        """
+        self.assertCodemod(
+            before,
+            after,
+            old_name="logging.warn",
+            new_name="logging.warning",
+        )
+
+    def test_import_same_dotted_module(self) -> None:
+        before = """
+            import a.b
+            a.b.warn(1)
+        """
+        after = """
+            import a.b
+            a.b.warning(1)
+        """
+        self.assertCodemod(
+            before,
+            after,
+            old_name="a.b.warn",
+            new_name="a.b.warning",
+        )
+
     def test_rename_local_variable(self) -> None:
         before = """
             x = 5
