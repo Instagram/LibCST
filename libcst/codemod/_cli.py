@@ -90,7 +90,10 @@ def gather_files(
             ret.extend(
                 str(p)
                 for p in Path(fd).rglob("*.py*")
-                if str(p).endswith("py") or (include_stubs and str(p).endswith("pyi"))
+                if Path.is_file(p)
+                and (
+                    str(p).endswith("py") or (include_stubs and str(p).endswith("pyi"))
+                )
             )
     return sorted(ret)
 
