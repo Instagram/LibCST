@@ -168,6 +168,11 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           args: --manifest-path=native/Cargo.toml --all-features
+      - name: compile-benchmarks
+        uses: actions-rs/cargo@v1
+        with:
+          command: bench
+          args: --manifest-path=native/Cargo.toml --no-run
 
   rustfmt:
     name: Rustfmt
