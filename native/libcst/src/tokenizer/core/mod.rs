@@ -58,7 +58,6 @@
 /// [RustPython's parser]: https://crates.io/crates/rustpython-parser
 mod string_types;
 
-use once_cell::sync::Lazy;
 use regex::Regex;
 use std::cell::RefCell;
 use std::cmp::Ordering;
@@ -83,25 +82,27 @@ const MAX_INDENT: usize = 100;
 // https://github.com/rust-lang/rust/issues/71763
 const MAX_CHAR: char = '\u{10ffff}';
 
-static SPACE_TAB_FORMFEED_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"\A[ \f\t]+").expect("regex"));
-static ANY_NON_NEWLINE_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"\A[^\r\n]+").expect("regex"));
-static STRING_PREFIX_RE: Lazy<Regex> =
-    Lazy::new(|| Regex::new(r"\A(?i)(u|[bf]r|r[bf]|r|b|f)").expect("regex"));
-static POTENTIAL_IDENTIFIER_TAIL_RE: Lazy<Regex> =
-    Lazy::new(|| Regex::new(r"\A([a-zA-Z0-9_]|[^\x00-\x7f])+").expect("regex"));
-static DECIMAL_DOT_DIGIT_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"\A\.[0-9]").expect("regex"));
-static DECIMAL_TAIL_RE: Lazy<Regex> =
-    Lazy::new(|| Regex::new(r"\A[0-9](_?[0-9])*").expect("regex"));
-static HEXADECIMAL_TAIL_RE: Lazy<Regex> =
-    Lazy::new(|| Regex::new(r"\A(_?[0-9a-fA-F])+").expect("regex"));
-static OCTAL_TAIL_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"\A(_?[0-7])+").expect("regex"));
-static BINARY_TAIL_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"\A(_?[01])+").expect("regex"));
+thread_local! {
+    static SPACE_TAB_FORMFEED_RE: Regex = Regex::new(r"\A[ \f\t]+").expect("regex");
+    static ANY_NON_NEWLINE_RE: Regex = Regex::new(r"\A[^\r\n]+").expect("regex");
+    static STRING_PREFIX_RE: Regex =
+        Regex::new(r"\A(?i)(u|[bf]r|r[bf]|r|b|f)").expect("regex");
+    static POTENTIAL_IDENTIFIER_TAIL_RE: Regex =
+        Regex::new(r"\A([a-zA-Z0-9_]|[^\x00-\x7f])+").expect("regex");
+    static DECIMAL_DOT_DIGIT_RE: Regex = Regex::new(r"\A\.[0-9]").expect("regex");
+    static DECIMAL_TAIL_RE: Regex =
+        Regex::new(r"\A[0-9](_?[0-9])*").expect("regex");
+    static HEXADECIMAL_TAIL_RE: Regex =
+        Regex::new(r"\A(_?[0-9a-fA-F])+").expect("regex");
+    static OCTAL_TAIL_RE: Regex = Regex::new(r"\A(_?[0-7])+").expect("regex");
+    static BINARY_TAIL_RE: Regex = Regex::new(r"\A(_?[01])+").expect("regex");
 
-/// Used to verify identifiers when there's a non-ascii character in them.
-// This changes across unicode revisions. We'd need to ship our own unicode tables to 100% match a
-// given Python version's behavior.
-static UNICODE_IDENTIFIER_RE: Lazy<Regex> =
-    Lazy::new(|| Regex::new(r"\A[\p{XID_Start}_]\p{XID_Continue}*\z").expect("regex"));
+    /// Used to verify identifiers when there's a non-ascii character in them.
+    // This changes across unicode revisions. We'd need to ship our own unicode tables to 100% match a
+    // given Python version's behavior.
+    static UNICODE_IDENTIFIER_RE: Regex =
+        Regex::new(r"\A[\p{XID_Start}_]\p{XID_Continue}*\z").expect("regex");
+}
 
 #[derive(Debug, Eq, PartialEq, Copy, Clone)]
 pub enum TokType {
@@ -316,11 +317,11 @@ impl<'t> TokState<'t> {
 
         'again: loop {
             // Skip spaces
-            self.text_pos.consume(&*SPACE_TAB_FORMFEED_RE);
+            SPACE_TAB_FORMFEED_RE.with(|v| self.text_pos.consume(v));
 
             // Skip comment, unless it's a type comment
             if self.text_pos.peek() == Some('#') {
-                self.text_pos.consume(&*ANY_NON_NEWLINE_RE);
+                ANY_NON_NEWLINE_RE.with(|v| self.text_pos.consume(v));
                 // type_comment is not supported
             }
 
@@ -384,7 +385,7 @@ impl<'t> TokState<'t> {
                 }
 
                 // Number starting with period
-                Some('.') if self.text_pos.matches(&*DECIMAL_DOT_DIGIT_RE) => {
+                Some('.') if DECIMAL_DOT_DIGIT_RE.with(|r| self.text_pos.matches(r)) => {
                     self.consume_number(NumberState::Fraction)
                 }
 
@@ -472,7 +473,7 @@ impl<'t> TokState<'t> {
                 }
 
                 // Operator
-                Some(_) if self.text_pos.consume(&*OPERATOR_RE) => Ok(TokType::Op),
+                Some(_) if OPERATOR_RE.with(|r| self.text_pos.consume(r)) => Ok(TokType::Op),
 
                 // Bad character
                 // If nothing works, fall back to this error. CPython returns an OP in this case,
@@ -623,7 +624,7 @@ impl<'t> TokState<'t> {
 
     fn consume_identifier_or_prefixed_string(&mut self) -> Result<TokType, TokError<'t>> {
         // Process the various legal combinations of b"", r"", u"", and f"".
-        if self.text_pos.consume(&*STRING_PREFIX_RE) {
+        if STRING_PREFIX_RE.with(|r| self.text_pos.consume(r)) {
             if let Some('"') | Some('\'') = self.text_pos.peek() {
                 // We found a string, not an identifier. Bail!
                 if self.split_fstring
@@ -645,7 +646,7 @@ impl<'t> TokState<'t> {
                 Some('a'..='z') | Some('A'..='Z') | Some('_') | Some('\u{80}'..=MAX_CHAR)
             ));
         }
-        self.text_pos.consume(&*POTENTIAL_IDENTIFIER_TAIL_RE);
+        POTENTIAL_IDENTIFIER_TAIL_RE.with(|r| self.text_pos.consume(r));
         let identifier_str = self.text_pos.slice_from_start_pos(&self.start_pos);
         if !verify_identifier(identifier_str) {
             // TODO: async/await
@@ -691,7 +692,7 @@ impl<'t> TokState<'t> {
                     match self.text_pos.peek() {
                         Some('x') | Some('X') => {
                             self.text_pos.next();
-                            if !self.text_pos.consume(&*HEXADECIMAL_TAIL_RE)
+                            if !HEXADECIMAL_TAIL_RE.with(|r| self.text_pos.consume(r))
                                 || self.text_pos.peek() == Some('_')
                             {
                                 Err(TokError::BadHexadecimal)
@@ -701,7 +702,7 @@ impl<'t> TokState<'t> {
                         }
                         Some('o') | Some('O') => {
                             self.text_pos.next();
-                            if !self.text_pos.consume(&*OCTAL_TAIL_RE)
+                            if !OCTAL_TAIL_RE.with(|r| self.text_pos.consume(r))
                                 || self.text_pos.peek() == Some('_')
                             {
                                 return Err(TokError::BadOctal);
@@ -715,7 +716,7 @@ impl<'t> TokState<'t> {
                         }
                         Some('b') | Some('B') => {
                             self.text_pos.next();
-                            if !self.text_pos.consume(&*BINARY_TAIL_RE)
+                            if !BINARY_TAIL_RE.with(|r| self.text_pos.consume(r))
                                 || self.text_pos.peek() == Some('_')
                             {
                                 return Err(TokError::BadBinary);
@@ -819,7 +820,7 @@ impl<'t> TokState<'t> {
 
     /// Processes a decimal tail. This is the bit after the dot or after an E in a float.
     fn consume_decimal_tail(&mut self) -> Result<(), TokError<'t>> {
-        let result = self.text_pos.consume(&*DECIMAL_TAIL_RE);
+        let result = DECIMAL_TAIL_RE.with(|r| self.text_pos.consume(r));
         // Assumption: If we've been called, the first character is an integer, so we must have a
         // regex match
         debug_assert!(result, "try_decimal_tail was called on a non-digit char");
@@ -1058,7 +1059,7 @@ fn verify_identifier(name: &str) -> bool {
     // TODO: If `name` is non-ascii, must first normalize name to NFKC.
     // Common case: If the entire string is ascii, we can avoid the more expensive regex check,
     // since the tokenizer already validates ascii characters before calling us.
-    name.is_ascii() || UNICODE_IDENTIFIER_RE.is_match(name)
+    name.is_ascii() || UNICODE_IDENTIFIER_RE.with(|r| r.is_match(name))
 }
 
 #[derive(Clone)]
