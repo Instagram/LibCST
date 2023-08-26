@@ -11,7 +11,6 @@ use std::{
 use criterion::{
     black_box, criterion_group, criterion_main, measurement::Measurement, BatchSize, Criterion,
 };
-use criterion_cycles_per_byte::CyclesPerByte;
 use itertools::Itertools;
 use libcst_native::{
     parse_module, parse_tokens_without_whitespace, tokenize, Codegen, Config, Inflate,
@@ -120,7 +119,7 @@ pub fn parse_into_cst_benchmarks<T: Measurement>(c: &mut Criterion<T>) {
 
 criterion_group!(
     name=benches;
-    config = Criterion::default().with_measurement(CyclesPerByte);
+    config=Criterion::default();
     targets=parser_benchmarks, codegen_benchmarks, inflate_benchmarks, tokenize_benchmarks, parse_into_cst_benchmarks
 );
 criterion_main!(benches);
