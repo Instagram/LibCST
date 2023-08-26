@@ -8,7 +8,6 @@
 // code or that we retain the original work's copyright information.
 // https://docs.python.org/3/license.html#zero-clause-bsd-license-for-code-in-the-python-release-documentation
 
-use once_cell::sync::Lazy;
 use regex::Regex;
 
 /// A list of strings that make up all the possible operators in a specific version of Python.
@@ -69,7 +68,8 @@ pub const OPERATORS: &[&str] = &[
     "<>",
 ];
 
-pub static OPERATOR_RE: Lazy<Regex> = Lazy::new(|| {
+thread_local! {
+pub static OPERATOR_RE: Regex = {
     // sort operators so that we try to match the longest ones first
     let mut sorted_operators: Box<[&str]> = OPERATORS.into();
     sorted_operators.sort_unstable_by_key(|op| usize::MAX - op.len());
@@ -82,4 +82,5 @@ pub static OPERATOR_RE: Lazy<Regex> = Lazy::new(|| {
             .join("|")
     ))
     .expect("regex")
-});
+};
+}
