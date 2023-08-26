@@ -90,7 +90,10 @@ def gather_files(
             ret.extend(
                 str(p)
                 for p in Path(fd).rglob("*.py*")
-                if str(p).endswith("py") or (include_stubs and str(p).endswith("pyi"))
+                if Path.is_file(p)
+                and (
+                    str(p).endswith("py") or (include_stubs and str(p).endswith("pyi"))
+                )
             )
     return sorted(ret)
 
@@ -473,7 +476,7 @@ def _print_parallel_result(
             )
 
         # In unified diff mode, the code is a diff we must print.
-        if unified_diff:
+        if unified_diff and result.code:
             print(result.code)
 
 

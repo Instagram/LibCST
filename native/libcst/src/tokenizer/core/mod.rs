@@ -330,10 +330,7 @@ impl<'t> TokState<'t> {
             return match self.text_pos.peek() {
                 // Check for EOF now
                 None => {
-                    if self.missing_nl_before_eof
-                        && self.text_pos.byte_column_number() != self.bol_width
-                        && !self.blank_line
-                    {
+                    if self.missing_nl_before_eof && !self.blank_line {
                         self.at_bol = true;
                         self.missing_nl_before_eof = false;
                         Ok(TokType::Newline)

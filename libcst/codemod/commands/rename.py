@@ -128,28 +128,26 @@ class RenameCommand(VisitorBasedCodemodCommand):
             ):
                 # Might, be in use elsewhere in the code, so schedule a potential removal, and add another alias.
                 new_names.append(import_alias)
-                self.scheduled_removals.add(original_node)
-                new_names.append(
-                    cst.ImportAlias(
-                        name=cst.Name(
-                            value=self.gen_replacement_module(import_alias_full_name)
-                        )
-                    )
-                )
+                replacement_module = self.gen_replacement_module(import_alias_full_name)
                 self.bypass_import = True
+                if replacement_module != import_alias_name.value:
+                    self.scheduled_removals.add(original_node)
+                    new_names.append(
+                        cst.ImportAlias(name=cst.Name(value=replacement_module))
+                    )
             elif isinstance(
                 import_alias_name, cst.Attribute
             ) and self.old_name.startswith(import_alias_full_name + "."):
                 # Same idea as above.
                 new_names.append(import_alias)
-                self.scheduled_removals.add(original_node)
-                new_name_node: Union[
-                    cst.Attribute, cst.Name
-                ] = self.gen_name_or_attr_node(
-                    self.gen_replacement_module(import_alias_full_name)
-                )
-                new_names.append(cst.ImportAlias(name=new_name_node))
+                replacement_module = self.gen_replacement_module(import_alias_full_name)
                 self.bypass_import = True
+                if replacement_module != import_alias_full_name:
+                    self.scheduled_removals.add(original_node)
+                    new_name_node: Union[
+                        cst.Attribute, cst.Name
+                    ] = self.gen_name_or_attr_node(replacement_module)
+                    new_names.append(cst.ImportAlias(name=new_name_node))
             else:
                 new_names.append(import_alias)
 

@@ -383,7 +383,7 @@ class CSTNode(ABC):
         new_tree = self.visit(_ChildReplacementTransformer(old_node, new_node))
         if isinstance(new_tree, (FlattenSentinel, RemovalSentinel)):
             # The above transform never returns *Sentinel, so this isn't possible
-            raise Exception("Logic error, cannot get a *Sentinal here!")
+            raise Exception("Logic error, cannot get a *Sentinel here!")
         return new_tree
 
     def deep_remove(

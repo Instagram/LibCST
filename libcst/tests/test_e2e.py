@@ -48,6 +48,9 @@ class ToolE2ETest(TestCase):
             # File that should not be modified
             other = tmp / "other.py"
             other.touch()
+            # Just a dir named "dir.py", should be ignored
+            adir = tmp / "dir.py"
+            adir.mkdir()
 
             # Run command
             command_instance = PrintToPPrintCommand(CodemodContext())
