@@ -33,7 +33,7 @@ jobs:
       - name: Rust Cache
         uses: Swatinem/rust-cache@v2.4.0
         with:
-          working-directory: native
+          workspaces: native
       - name: Build LibCST
         run: hatch env create
       - name: Tests
