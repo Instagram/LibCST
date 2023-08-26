@@ -33,7 +33,8 @@ jobs:
       - name: Rust Cache
         uses: Swatinem/rust-cache@v2.4.0
         with:
-          working-directory: native
+          shared-key: "shared"
+          workspaces: native
       - name: Build LibCST
         run: hatch env create
       - name: Tests
@@ -144,7 +145,8 @@ jobs:
       - name: Rust Cache
         uses: Swatinem/rust-cache@v2.4.0
         with:
-          working-directory: native
+          shared-key: "shared"
+          workspaces: native
       - uses: actions/setup-python@v4
         with:
           cache: pip
