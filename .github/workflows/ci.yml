@@ -15,10 +15,6 @@ jobs:
       matrix:
         os: [macos-latest, ubuntu-latest, windows-latest]
         python-version: ["3.7", "3.8", "3.9", "3.10", "3.11"]
-        exclude:
-          # skip these builds until https://bugs.launchpad.net/lxml/+bug/1977998 is resolved
-          - os: windows-latest
-            python-version: "3.11"
     steps:
       - uses: actions/checkout@v3
         with:
