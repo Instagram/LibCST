@@ -6,19 +6,17 @@ name = "libcst"
 description = "A concrete syntax tree with AST-like properties for Python 3.5, 3.6, 3.7, 3.8, 3.9, and 3.10 programs."
 readme = "README.rst"
 dynamic = ["version"]
-license = {file="LICENSE"}
+license = { file = "LICENSE" }
 classifiers = [
     "License :: OSI Approved :: MIT License",
     "Topic :: Software Development :: Libraries",
-    "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
 ]
-requires-python = ">=3.7"
+requires-python = ">=3.8"
 dependencies = [
-    "dataclasses>=0.6.0; python_version < '3.7'",
     "typing_extensions>=3.7.4.2",
     "typing_inspect>=0.4.0",
     "pyyaml>=5.2",
@@ -54,18 +52,15 @@ Github = "https://github.com/Instagram/LibCST"
 Changelog = "https://github.com/Instagram/LibCST/blob/main/CHANGELOG.md"
 
 [tool.black]
-target-version = ["py37"]
-extend-exclude = '^/native/'  # Prepend "^/" to specify root file/folder. See https://black.readthedocs.io/en/stable/usage_and_configuration/the_basics.html#configuration-format
+target-version = ["py38"]
+extend-exclude = '^/native/' # Prepend "^/" to specify root file/folder. See https://black.readthedocs.io/en/stable/usage_and_configuration/the_basics.html#configuration-format
 
 [tool.hatch.envs.default]
 features = ["dev"]
 
 [tool.hatch.envs.default.scripts]
 docs = "sphinx-build -ab html docs/source docs/build"
-fixtures = [
-    "python scripts/regenerate-fixtures.py",
-    "git diff --exit-code",
-]
+fixtures = ["python scripts/regenerate-fixtures.py", "git diff --exit-code"]
 format = "ufmt format libcst scripts"
 lint = [
     "flake8 libcst",
@@ -74,10 +69,7 @@ lint = [
     "python scripts/check_copyright.py",
 ]
 test = "python -m libcst.tests"
-typecheck = [
-    "pyre --version",
-    "pyre check",
-]
+typecheck = ["pyre --version", "pyre check"]
 
 [tool.slotscheck]
 exclude-modules = '^libcst\.(testing|tests)'
