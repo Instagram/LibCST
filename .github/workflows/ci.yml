@@ -144,7 +144,7 @@ jobs:
       - name: Rust Cache
         uses: Swatinem/rust-cache@v2.4.0
         with:
-          working-directory: native
+          workspaces: native
       - uses: actions/setup-python@v4
         with:
           cache: pip
