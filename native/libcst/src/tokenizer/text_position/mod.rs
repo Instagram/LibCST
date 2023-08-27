@@ -11,10 +11,6 @@ use std::fmt;
 use crate::tokenizer::debug_utils::EllipsisDebug;
 use char_width::NewlineNormalizedCharWidths;
 
-thread_local! {
-    static CR_OR_LF_RE: Regex = Regex::new(r"[\r\n]").expect("regex");
-}
-
 pub trait TextPattern {
     fn match_len(&self, text: &str) -> Option<usize>;
 }
@@ -99,7 +95,7 @@ impl<'t> TextPosition<'t> {
         match match_len {
             Some(match_len) => {
                 assert!(
-                    !CR_OR_LF_RE.with(|r| r.is_match(&rest_of_text[..match_len])),
+                    !rest_of_text[..match_len].contains(|x| x == '\r' || x == '\n'),
                     "matches pattern must not match a newline",
                 );
                 true
