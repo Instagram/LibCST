@@ -9,10 +9,12 @@ use std::{
 };
 
 use criterion::{
-    black_box, criterion_group, criterion_main, measurement::Measurement, BatchSize, Criterion,
+    black_box, criterion_group, criterion_main, measurement::Measurement, BatchSize, BenchmarkId,
+    Criterion, Throughput,
 };
-use criterion_cycles_per_byte::CyclesPerByte;
 use itertools::Itertools;
+use rayon::prelude::*;
+
 use libcst_native::{
     parse_module, parse_tokens_without_whitespace, tokenize, Codegen, Config, Inflate,
 };
@@ -22,7 +24,7 @@ const NEWLINE: &str = "\n";
 #[cfg(windows)]
 const NEWLINE: &str = "\r\n";
 
-fn load_all_fixtures() -> String {
+fn load_all_fixtures_vec() -> Vec<String> {
     let mut path = PathBuf::from(file!());
     path.pop();
     path.pop();
@@ -43,7 +45,11 @@ fn load_all_fixtures() -> String {
             let path = file.unwrap().path();
             std::fs::read_to_string(&path).expect("reading_file")
         })
-        .join(NEWLINE)
+        .collect()
+}
+
+fn load_all_fixtures() -> String {
+    load_all_fixtures_vec().join(NEWLINE)
 }
 
 pub fn inflate_benchmarks<T: Measurement>(c: &mut Criterion<T>) {
@@ -118,9 +124,47 @@ pub fn parse_into_cst_benchmarks<T: Measurement>(c: &mut Criterion<T>) {
     group.finish();
 }
 
+pub fn parse_into_cst_multithreaded_benchmarks<T: Measurement + std::marker::Sync>(
+    c: &mut Criterion<T>,
+) where
+    <T as Measurement>::Value: Send,
+{
+    let fixtures = load_all_fixtures_vec();
+    let mut group = c.benchmark_group("parse_into_cst_parallel");
+    group.measurement_time(Duration::from_secs(15));
+    group.warm_up_time(Duration::from_secs(5));
+
+    for thread_count in 1..10 {
+        let expanded_fixtures = (0..thread_count)
+            .flat_map(|_| fixtures.clone())
+            .collect_vec();
+        group.throughput(Throughput::Elements(expanded_fixtures.len() as u64));
+        group.bench_with_input(
+            BenchmarkId::from_parameter(thread_count),
+            &thread_count,
+            |b, thread_count| {
+                let thread_pool = rayon::ThreadPoolBuilder::new()
+                    .num_threads(*thread_count)
+                    .build()
+                    .unwrap();
+                thread_pool.install(|| {
+                    b.iter_with_large_drop(|| {
+                        expanded_fixtures
+                            .par_iter()
+                            .map(|contents| black_box(parse_module(&contents, None)))
+                            .collect::<Vec<_>>()
+                    });
+                });
+            },
+        );
+    }
+
+    group.finish();
+}
+
 criterion_group!(
     name=benches;
-    config = Criterion::default().with_measurement(CyclesPerByte);
-    targets=parser_benchmarks, codegen_benchmarks, inflate_benchmarks, tokenize_benchmarks, parse_into_cst_benchmarks
+    config=Criterion::default();
+    targets=parser_benchmarks, codegen_benchmarks, inflate_benchmarks, tokenize_benchmarks, parse_into_cst_benchmarks, parse_into_cst_multithreaded_benchmarks
 );
 criterion_main!(benches);

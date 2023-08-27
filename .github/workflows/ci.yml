@@ -14,11 +14,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [macos-latest, ubuntu-latest, windows-latest]
-        python-version: ["3.7", "3.8", "3.9", "3.10", "3.11"]
-        exclude:
-          # skip these builds until https://bugs.launchpad.net/lxml/+bug/1977998 is resolved
-          - os: windows-latest
-            python-version: "3.11"
+        python-version: ["3.8", "3.9", "3.10", "3.11"]
     steps:
       - uses: actions/checkout@v3
         with:
@@ -35,7 +31,7 @@ jobs:
         with:
           toolchain: stable
       - name: Rust Cache
-        uses: Swatinem/rust-cache@v2.4.0
+        uses: Swatinem/rust-cache@v2.6.2
         with:
           shared-key: "shared"
           workspaces: native
@@ -147,7 +143,7 @@ jobs:
           toolchain: stable
           components: rustfmt, clippy
       - name: Rust Cache
-        uses: Swatinem/rust-cache@v2.4.0
+        uses: Swatinem/rust-cache@v2.6.2
         with:
           shared-key: "shared"
           workspaces: native
@@ -172,6 +168,11 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           args: --manifest-path=native/Cargo.toml --all-features
+      - name: compile-benchmarks
+        uses: actions-rs/cargo@v1
+        with:
+          command: bench
+          args: --manifest-path=native/Cargo.toml --no-run
 
   rustfmt:
     name: Rustfmt
