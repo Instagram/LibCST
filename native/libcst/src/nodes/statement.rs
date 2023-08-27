@@ -304,6 +304,7 @@ pub enum SmallStatement<'a> {
     Nonlocal(Nonlocal<'a>),
     AugAssign(AugAssign<'a>),
     Del(Del<'a>),
+    TypeAlias(TypeAlias<'a>),
 }
 
 impl<'r, 'a> DeflatedSmallStatement<'r, 'a> {
@@ -324,6 +325,7 @@ impl<'r, 'a> DeflatedSmallStatement<'r, 'a> {
             Self::Nonlocal(l) => Self::Nonlocal(l.with_semicolon(semicolon)),
             Self::AugAssign(a) => Self::AugAssign(a.with_semicolon(semicolon)),
             Self::Del(d) => Self::Del(d.with_semicolon(semicolon)),
+            Self::TypeAlias(t) => Self::TypeAlias(t.with_semicolon(semicolon)),
         }
     }
 }
@@ -3330,5 +3332,237 @@ impl<'r, 'a> Inflate<'a> for DeflatedMatchOr<'r, 'a> {
             lpar,
             rpar,
         })
+    }
+}
+
+#[cst_node]
+pub struct TypeVar<'a> {
+    pub name: Name<'a>,
+    pub bound: Option<Box<Expression<'a>>>,
+    pub colon: Option<Colon<'a>>,
+}
+
+impl<'a> Codegen<'a> for TypeVar<'a> {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
+        self.name.codegen(state);
+        self.colon.codegen(state);
+        if let Some(bound) = &self.bound {
+            bound.codegen(state);
+        }
+    }
+}
+
+impl<'r, 'a> Inflate<'a> for DeflatedTypeVar<'r, 'a> {
+    type Inflated = TypeVar<'a>;
+    fn inflate(self, config: &Config<'a>) -> Result<Self::Inflated> {
+        let name = self.name.inflate(config)?;
+        let colon = self.colon.inflate(config)?;
+        let bound = self.bound.inflate(config)?;
+        Ok(Self::Inflated { name, bound, colon })
+    }
+}
+
+#[cst_node]
+pub struct TypeVarTuple<'a> {
+    pub name: Name<'a>,
+
+    pub whitespace_after_star: SimpleWhitespace<'a>,
+
+    pub(crate) star_tok: TokenRef<'a>,
+}
+
+impl<'a> Codegen<'a> for TypeVarTuple<'a> {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
+        state.add_token("*");
+        self.whitespace_after_star.codegen(state);
+        self.name.codegen(state);
+    }
+}
+
+impl<'r, 'a> Inflate<'a> for DeflatedTypeVarTuple<'r, 'a> {
+    type Inflated = TypeVarTuple<'a>;
+    fn inflate(self, config: &Config<'a>) -> Result<Self::Inflated> {
+        let whitespace_after_star =
+            parse_simple_whitespace(config, &mut self.star_tok.whitespace_after.borrow_mut())?;
+        let name = self.name.inflate(config)?;
+        Ok(Self::Inflated {
+            name,
+            whitespace_after_star,
+        })
+    }
+}
+
+#[cst_node]
+pub struct ParamSpec<'a> {
+    pub name: Name<'a>,
+
+    pub whitespace_after_star: SimpleWhitespace<'a>,
+
+    pub(crate) star_tok: TokenRef<'a>,
+}
+
+impl<'a> Codegen<'a> for ParamSpec<'a> {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
+        state.add_token("**");
+        self.whitespace_after_star.codegen(state);
+        self.name.codegen(state);
+    }
+}
+
+impl<'r, 'a> Inflate<'a> for DeflatedParamSpec<'r, 'a> {
+    type Inflated = ParamSpec<'a>;
+    fn inflate(self, config: &Config<'a>) -> Result<Self::Inflated> {
+        let whitespace_after_star =
+            parse_simple_whitespace(config, &mut self.star_tok.whitespace_after.borrow_mut())?;
+        let name = self.name.inflate(config)?;
+        Ok(Self::Inflated {
+            name,
+            whitespace_after_star,
+        })
+    }
+}
+
+#[cst_node(Inflate, Codegen)]
+pub enum TypeParamItem<'a> {
+    TypeVar(TypeVar<'a>),
+    TypeVarTuple(TypeVarTuple<'a>),
+    ParamSpec(ParamSpec<'a>),
+}
+
+#[cst_node]
+pub struct TypeParam<'a> {
+    pub param: TypeParamItem<'a>,
+    pub comma: Option<Comma<'a>>,
+}
+
+impl<'a> Codegen<'a> for TypeParam<'a> {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
+        self.param.codegen(state);
+    }
+}
+
+impl<'r, 'a> Inflate<'a> for DeflatedTypeParam<'r, 'a> {
+    type Inflated = TypeParam<'a>;
+    fn inflate(self, config: &Config<'a>) -> Result<Self::Inflated> {
+        let param = self.param.inflate(config)?;
+        let comma = self.comma.inflate(config)?;
+        Ok(Self::Inflated { param, comma })
+    }
+}
+
+#[cst_node]
+pub struct TypeParameters<'a> {
+    pub params: Vec<TypeParam<'a>>,
+
+    pub lbracket: LeftSquareBracket<'a>,
+    pub rbracket: RightSquareBracket<'a>,
+}
+
+impl<'a> Codegen<'a> for TypeParameters<'a> {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
+        self.lbracket.codegen(state);
+        let params_len = self.params.len();
+        for (idx, param) in self.params.iter().enumerate() {
+            param.codegen(state);
+            if idx + 1 < params_len && param.comma.is_none() {
+                state.add_token(", ");
+            }
+        }
+        self.rbracket.codegen(state);
+    }
+}
+
+impl<'r, 'a> Inflate<'a> for DeflatedTypeParameters<'r, 'a> {
+    type Inflated = TypeParameters<'a>;
+    fn inflate(self, config: &Config<'a>) -> Result<Self::Inflated> {
+        let lbracket = self.lbracket.inflate(config)?;
+        let params = self.params.inflate(config)?;
+        let rbracket = self.rbracket.inflate(config)?;
+        Ok(Self::Inflated {
+            params,
+            lbracket,
+            rbracket,
+        })
+    }
+}
+
+#[cst_node]
+pub struct TypeAlias<'a> {
+    pub name: Name<'a>,
+    pub value: Box<Expression<'a>>,
+    pub type_parameters: Option<TypeParameters<'a>>,
+
+    pub whitespace_after_type: SimpleWhitespace<'a>,
+    pub whitespace_after_name: Option<SimpleWhitespace<'a>>,
+    pub whitespace_after_type_parameters: Option<SimpleWhitespace<'a>>,
+    pub whitespace_after_equals: SimpleWhitespace<'a>,
+    pub semicolon: Option<Semicolon<'a>>,
+
+    pub(crate) type_tok: TokenRef<'a>,
+    pub(crate) lbracket_tok: Option<TokenRef<'a>>,
+    pub(crate) equals_tok: TokenRef<'a>,
+    pub(crate) semicolon_tok: TokenRef<'a>,
+}
+
+impl<'a> Codegen<'a> for TypeAlias<'a> {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
+        state.add_token("type");
+        self.whitespace_after_type.codegen(state);
+        self.name.codegen(state);
+        if self.whitespace_after_name.is_none() && self.type_parameters.is_none() {
+            state.add_token(" ");
+        } else {
+            self.whitespace_after_name.codegen(state);
+        }
+        if self.type_parameters.is_some() {
+            self.type_parameters.codegen(state);
+            self.whitespace_after_type_parameters.codegen(state);
+        }
+        state.add_token("=");
+        self.whitespace_after_equals.codegen(state);
+        self.semicolon.codegen(state);
+    }
+}
+
+impl<'r, 'a> Inflate<'a> for DeflatedTypeAlias<'r, 'a> {
+    type Inflated = TypeAlias<'a>;
+    fn inflate(self, config: &Config<'a>) -> Result<Self::Inflated> {
+        let whitespace_after_type =
+            parse_simple_whitespace(config, &mut self.type_tok.whitespace_after.borrow_mut())?;
+        let name = self.name.inflate(config)?;
+        let whitespace_after_name = Some(if let Some(tok) = self.lbracket_tok {
+            parse_simple_whitespace(config, &mut tok.whitespace_before.borrow_mut())
+        } else {
+            parse_simple_whitespace(config, &mut self.equals_tok.whitespace_before.borrow_mut())
+        }?);
+        let type_parameters = self.type_parameters.inflate(config)?;
+        let whitespace_after_type_parameters = if type_parameters.is_some() {
+            Some(parse_simple_whitespace(
+                config,
+                &mut self.equals_tok.whitespace_before.borrow_mut(),
+            )?)
+        } else {
+            None
+        };
+        let whitespace_after_equals =
+            parse_simple_whitespace(config, &mut self.equals_tok.whitespace_after.borrow_mut())?;
+        let value = self.value.inflate(config)?;
+        let semicolon = self.semicolon.inflate(config)?;
+        Ok(Self::Inflated {
+            name,
+            value,
+            type_parameters,
+            whitespace_after_type,
+            whitespace_after_name,
+            whitespace_after_type_parameters,
+            whitespace_after_equals,
+            semicolon,
+        })
+    }
+}
+
+impl<'r, 'a> DeflatedTypeAlias<'r, 'a> {
+    pub fn with_semicolon(self, semicolon: Option<DeflatedSemicolon<'r, 'a>>) -> Self {
+        Self { semicolon, ..self }
     }
 }
