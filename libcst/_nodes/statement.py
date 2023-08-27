@@ -1713,6 +1713,9 @@ class FunctionDef(BaseCompoundStatement):
     #: The function body.
     body: BaseSuite
 
+    #: An optional declaration of type parameters.
+    type_parameters: Optional[TypeParameters] = None
+
     #: Sequence of decorators applied to this function. Decorators are listed in
     #: order that they appear in source (top to bottom) as apposed to the order
     #: that they are applied to the function at runtime.
@@ -1738,9 +1741,13 @@ class FunctionDef(BaseCompoundStatement):
     #: Whitespace after the ``def`` keyword and before the function name.
     whitespace_after_def: SimpleWhitespace = SimpleWhitespace.field(" ")
 
-    #: Whitespace after the function name and before the opening parenthesis for
-    #: the parameters.
+    #: Whitespace after the function name and before the type parameters or the opening
+    #: parenthesis for the parameters.
     whitespace_after_name: SimpleWhitespace = SimpleWhitespace.field("")
+
+    #: Whitespace between the type parameters and the opening parenthesis for the
+    #: (non-type) parameters.
+    whitespace_after_type_parameters: SimpleWhitespace = SimpleWhitespace.field("")
 
     #: Whitespace after the opening parenthesis for the parameters but before
     #: the first param itself.
@@ -1756,6 +1763,15 @@ class FunctionDef(BaseCompoundStatement):
         if self.whitespace_after_def.empty:
             raise CSTValidationError(
                 "There must be at least one space between 'def' and name."
+            )
+
+        if (
+            self.type_parameters is None
+            and self.whitespace_after_type_parameters != SimpleWhitespace("")
+        ):
+            raise CSTValidationError(
+                "whitespace_after_type_parameters must be empty if there are no type "
+                "parameters in FunctionDef"
             )
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "FunctionDef":
@@ -1776,6 +1792,15 @@ class FunctionDef(BaseCompoundStatement):
             name=visit_required(self, "name", self.name, visitor),
             whitespace_after_name=visit_required(
                 self, "whitespace_after_name", self.whitespace_after_name, visitor
+            ),
+            type_parameters=visit_optional(
+                self, "type_parameters", self.type_parameters, visitor
+            ),
+            whitespace_after_type_parameters=visit_required(
+                self,
+                "whitespace_after_type_parameters",
+                self.whitespace_after_type_parameters,
+                visitor,
             ),
             whitespace_before_params=visit_required(
                 self, "whitespace_before_params", self.whitespace_before_params, visitor
@@ -1805,6 +1830,10 @@ class FunctionDef(BaseCompoundStatement):
             self.whitespace_after_def._codegen(state)
             self.name._codegen(state)
             self.whitespace_after_name._codegen(state)
+            type_params = self.type_parameters
+            if type_params is not None:
+                type_params._codegen(state)
+                self.whitespace_after_type_parameters._codegen(state)
             state.add_token("(")
             self.whitespace_before_params._codegen(state)
             self.params._codegen(state)
@@ -1837,6 +1866,9 @@ class ClassDef(BaseCompoundStatement):
     #: The class body.
     body: BaseSuite
 
+    #: An optional declaration of type parameters.
+    type_parameters: Optional[TypeParameters] = None
+
     #: Sequence of base classes this class inherits from.
     bases: Sequence[Arg] = ()
 
@@ -1866,9 +1898,13 @@ class ClassDef(BaseCompoundStatement):
     #: Whitespace after the ``class`` keyword and before the class name.
     whitespace_after_class: SimpleWhitespace = SimpleWhitespace.field(" ")
 
-    #: Whitespace after the class name and before the opening parenthesis for
-    #: the bases and keywords.
+    #: Whitespace after the class name and before the type parameters or the opening
+    #: parenthesis for the bases and keywords.
     whitespace_after_name: SimpleWhitespace = SimpleWhitespace.field("")
+
+    #: Whitespace between type parameters and opening parenthesis for the bases and
+    #: keywords.
+    whitespace_after_type_parameters: SimpleWhitespace = SimpleWhitespace.field("")
 
     #: Whitespace after the closing parenthesis or class name and before
     #: the colon.
@@ -1878,6 +1914,14 @@ class ClassDef(BaseCompoundStatement):
         if self.whitespace_after_class.empty:
             raise CSTValidationError(
                 "There must be at least one space between 'class' and name."
+            )
+        if (
+            self.type_parameters is None
+            and self.whitespace_after_type_parameters != SimpleWhitespace("")
+        ):
+            raise CSTValidationError(
+                "whitespace_after_type_parameters must be empty if there are no type"
+                "parameters in a ClassDef"
             )
 
     def _validate_parens(self) -> None:
@@ -1921,6 +1965,15 @@ class ClassDef(BaseCompoundStatement):
             whitespace_after_name=visit_required(
                 self, "whitespace_after_name", self.whitespace_after_name, visitor
             ),
+            type_parameters=visit_optional(
+                self, "type_parameters", self.type_parameters, visitor
+            ),
+            whitespace_after_type_parameters=visit_required(
+                self,
+                "whitespace_after_type_parameters",
+                self.whitespace_after_type_parameters,
+                visitor,
+            ),
             lpar=visit_sentinel(self, "lpar", self.lpar, visitor),
             bases=visit_sequence(self, "bases", self.bases, visitor),
             keywords=visit_sequence(self, "keywords", self.keywords, visitor),
@@ -1945,6 +1998,10 @@ class ClassDef(BaseCompoundStatement):
             self.whitespace_after_class._codegen(state)
             self.name._codegen(state)
             self.whitespace_after_name._codegen(state)
+            type_params = self.type_parameters
+            if type_params is not None:
+                type_params._codegen(state)
+                self.whitespace_after_type_parameters._codegen(state)
             lpar = self.lpar
             if isinstance(lpar, MaybeSentinel):
                 if self.bases or self.keywords:
@@ -3476,3 +3533,283 @@ class MatchOr(MatchPattern):
             pats = self.patterns
             for idx, pat in enumerate(pats):
                 pat._codegen(state, default_separator=idx + 1 < len(pats))
+
+
+@add_slots
+@dataclass(frozen=True)
+class TypeVar(CSTNode):
+    """
+    A simple (non-variadic) type variable.
+
+    Note: this node represents type a variable when declared using PEP-695 syntax.
+    """
+
+    #: The name of the type variable.
+    name: Name
+
+    #: An optional bound on the type.
+    bound: Optional[BaseExpression] = None
+
+    #: The colon used to separate the name and bound. If not specified,
+    #: :class:`MaybeSentinel` will be replaced with a colon if there is a bound,
+    #: otherwise will be left empty.
+    colon: Union[Colon, MaybeSentinel] = MaybeSentinel.DEFAULT
+
+    def _codegen_impl(self, state: CodegenState) -> None:
+        with state.record_syntactic_position(self):
+            self.name._codegen(state)
+            bound = self.bound
+            colon = self.colon
+            if not isinstance(colon, MaybeSentinel):
+                colon._codegen(state)
+            else:
+                if bound is not None:
+                    state.add_token(": ")
+
+            if bound is not None:
+                bound._codegen(state)
+
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "TypeVar":
+        return TypeVar(
+            name=visit_required(self, "name", self.name, visitor),
+            colon=visit_sentinel(self, "colon", self.colon, visitor),
+            bound=visit_optional(self, "bound", self.bound, visitor),
+        )
+
+
+@add_slots
+@dataclass(frozen=True)
+class TypeVarTuple(CSTNode):
+    """
+    A variadic type variable.
+    """
+
+    #: The name of this type variable.
+    name: Name
+
+    #: The (optional) whitespace between the star declaring this type variable as
+    #: variadic, and the variable's name.
+    whitespace_after_star: SimpleWhitespace = SimpleWhitespace.field(" ")
+
+    def _codegen_impl(self, state: CodegenState) -> None:
+        with state.record_syntactic_position(self):
+            state.add_token("*")
+            self.whitespace_after_star._codegen(state)
+            self.name._codegen(state)
+
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "TypeVarTuple":
+        return TypeVarTuple(
+            name=visit_required(self, "name", self.name, visitor),
+            whitespace_after_star=visit_required(
+                self, "whitespace_after_star", self.whitespace_after_star, visitor
+            ),
+        )
+
+
+@add_slots
+@dataclass(frozen=True)
+class ParamSpec(CSTNode):
+    """
+    A parameter specification.
+
+    Note: this node represents a parameter specification when declared using PEP-695
+    syntax.
+    """
+
+    #: The name of this parameter specification.
+    name: Name
+
+    #: The (optional) whitespace between the double star declaring this type variable as
+    #: a parameter specification, and the name.
+    whitespace_after_star: SimpleWhitespace = SimpleWhitespace.field(" ")
+
+    def _codegen_impl(self, state: CodegenState) -> None:
+        with state.record_syntactic_position(self):
+            state.add_token("**")
+            self.whitespace_after_star._codegen(state)
+            self.name._codegen(state)
+
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "ParamSpec":
+        return ParamSpec(
+            name=visit_required(self, "name", self.name, visitor),
+            whitespace_after_star=visit_required(
+                self, "whitespace_after_star", self.whitespace_after_star, visitor
+            ),
+        )
+
+
+@add_slots
+@dataclass(frozen=True)
+class TypeParam(CSTNode):
+    """
+    A single type parameter that is contained in a :class:`TypeParameters` list.
+    """
+
+    #: The actual parameter.
+    param: Union[TypeVar, TypeVarTuple, ParamSpec]
+
+    #: A trailing comma. If one is not provided, :class:`MaybeSentinel` will be replaced
+    #: with a comma only if a comma is required.
+    comma: Union[Comma, MaybeSentinel] = MaybeSentinel.DEFAULT
+
+    def _codegen_impl(self, state: CodegenState, default_comma: bool = False) -> None:
+        self.param._codegen(state)
+        comma = self.comma
+        if isinstance(comma, MaybeSentinel):
+            if default_comma:
+                state.add_token(", ")
+        else:
+            comma._codegen(state)
+
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "TypeParam":
+        return TypeParam(
+            param=visit_required(self, "param", self.param, visitor),
+            comma=visit_sentinel(self, "comma", self.comma, visitor),
+        )
+
+
+@add_slots
+@dataclass(frozen=True)
+class TypeParameters(CSTNode):
+    """
+    Type parameters when specified with PEP-695 syntax.
+
+    This node captures all specified parameters that are enclosed with square brackets.
+    """
+
+    #: The parameters within the square brackets.
+    params: Sequence[TypeParam] = ()
+
+    #: Opening square bracket that marks the start of these parameters.
+    lbracket: LeftSquareBracket = LeftSquareBracket.field()
+    #: Closing square bracket that marks the end of these parameters.
+    rbracket: RightSquareBracket = RightSquareBracket.field()
+
+    def _codegen_impl(self, state: CodegenState) -> None:
+        self.lbracket._codegen(state)
+        params_len = len(self.params)
+        for idx, param in enumerate(self.params):
+            param._codegen(state, default_comma=idx + 1 < params_len)
+        self.rbracket._codegen(state)
+
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "TypeParameters":
+        return TypeParameters(
+            lbracket=visit_required(self, "lbracket", self.lbracket, visitor),
+            params=visit_sequence(self, "params", self.params, visitor),
+            rbracket=visit_required(self, "rbracket", self.rbracket, visitor),
+        )
+
+
+@add_slots
+@dataclass(frozen=True)
+class TypeAlias(BaseSmallStatement):
+    """
+    A type alias statement.
+
+    This node represents the ``type`` statement as specified initially by PEP-695.
+    Example: ``type ListOrSet[T] = list[T] | set[T]``.
+    """
+
+    #: The name being introduced in this statement.
+    name: Name
+
+    #: Everything on the right hand side of the ``=``.
+    value: BaseExpression
+
+    #: An optional list of type parameters, specified after the name.
+    type_parameters: Optional[TypeParameters] = None
+
+    #: Whitespace between the ``type`` soft keyword and the name.
+    whitespace_after_type: SimpleWhitespace = SimpleWhitespace.field(" ")
+
+    #: Whitespace between the name and the type parameters (if they exist) or the ``=``.
+    #: If not specified, :class:`MaybeSentinel` will be replaced with a single space if
+    #: there are no type parameters, otherwise no spaces.
+    whitespace_after_name: Union[
+        SimpleWhitespace, MaybeSentinel
+    ] = MaybeSentinel.DEFAULT
+
+    #: Whitespace between the type parameters and the ``=``. Always empty if there are
+    #: no type parameters. If not specified, :class:`MaybeSentinel` will be replaced
+    #: with a single space if there are type parameters.
+    whitespace_after_type_parameters: Union[
+        SimpleWhitespace, MaybeSentinel
+    ] = MaybeSentinel.DEFAULT
+
+    #: Whitespace between the ``=`` and the value.
+    whitespace_after_equals: SimpleWhitespace = SimpleWhitespace.field(" ")
+
+    #: Optional semicolon when this is used in a statement line. This semicolon
+    #: owns the whitespace on both sides of it when it is used.
+    semicolon: Union[Semicolon, MaybeSentinel] = MaybeSentinel.DEFAULT
+
+    def _validate(self) -> None:
+        if (
+            self.type_parameters is None
+            and self.whitespace_after_type_parameters
+            not in {
+                SimpleWhitespace(""),
+                MaybeSentinel.DEFAULT,
+            }
+        ):
+            raise CSTValidationError(
+                "whitespace_after_type_parameters must be empty when there are no type parameters in a TypeAlias"
+            )
+
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "TypeAlias":
+        return TypeAlias(
+            whitespace_after_type=visit_required(
+                self, "whitespace_after_type", self.whitespace_after_type, visitor
+            ),
+            name=visit_required(self, "name", self.name, visitor),
+            whitespace_after_name=visit_sentinel(
+                self, "whitespace_after_name", self.whitespace_after_name, visitor
+            ),
+            type_parameters=visit_optional(
+                self, "type_parameters", self.type_parameters, visitor
+            ),
+            whitespace_after_type_parameters=visit_sentinel(
+                self,
+                "whitespace_after_type_parameters",
+                self.whitespace_after_type_parameters,
+                visitor,
+            ),
+            whitespace_after_equals=visit_required(
+                self, "whitespace_after_equals", self.whitespace_after_equals, visitor
+            ),
+            value=visit_required(self, "value", self.value, visitor),
+            semicolon=visit_sentinel(self, "semicolon", self.semicolon, visitor),
+        )
+
+    def _codegen_impl(
+        self, state: CodegenState, default_semicolon: bool = False
+    ) -> None:
+        with state.record_syntactic_position(self):
+            state.add_token("type")
+            self.whitespace_after_type._codegen(state)
+            self.name._codegen(state)
+            ws_after_name = self.whitespace_after_name
+            if isinstance(ws_after_name, MaybeSentinel):
+                if self.type_parameters is None:
+                    state.add_token(" ")
+            else:
+                ws_after_name._codegen(state)
+
+            ws_after_type_params = self.whitespace_after_type_parameters
+            if self.type_parameters is not None:
+                self.type_parameters._codegen(state)
+                if isinstance(ws_after_type_params, MaybeSentinel):
+                    state.add_token(" ")
+                else:
+                    ws_after_type_params._codegen(state)
+
+            state.add_token("=")
+            self.whitespace_after_equals._codegen(state)
+            self.value._codegen(state)
+
+            semi = self.semicolon
+            if isinstance(semi, MaybeSentinel):
+                if default_semicolon:
+                    state.add_token("; ")
+            else:
+                semi._codegen(state)
