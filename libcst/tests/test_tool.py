@@ -123,6 +123,7 @@ class PrettyPrintNodesTest(UnitTest):
                     indent=None,
                     footer=[],
                   ),
+                  type_parameters=None,
                   decorators=[],
                   returns=Annotation(
                     annotation=Name(
@@ -144,6 +145,9 @@ class PrettyPrintNodesTest(UnitTest):
                     value=' ',
                   ),
                   whitespace_after_name=SimpleWhitespace(
+                    value='',
+                  ),
+                  whitespace_after_type_parameters=SimpleWhitespace(
                     value='',
                   ),
                   whitespace_before_params=SimpleWhitespace(
@@ -234,6 +238,7 @@ class PrettyPrintNodesTest(UnitTest):
                       ),
                     ],
                   ),
+                  type_parameters=None,
                   decorators=[],
                   returns=Annotation(
                     annotation=Name(
@@ -503,6 +508,7 @@ class PrettyPrintNodesTest(UnitTest):
                     indent=None,
                     footer=[],
                   ),
+                  type_parameters=None,
                   decorators=[],
                   returns=Annotation(
                     annotation=Name(
@@ -524,6 +530,9 @@ class PrettyPrintNodesTest(UnitTest):
                     value=' ',
                   ),
                   whitespace_after_name=SimpleWhitespace(
+                    value='',
+                  ),
+                  whitespace_after_type_parameters=SimpleWhitespace(
                     value='',
                   ),
                   whitespace_before_params=SimpleWhitespace(
@@ -603,6 +612,7 @@ class PrettyPrintNodesTest(UnitTest):
                       ),
                     ],
                   ),
+                  type_parameters=None,
                   decorators=[],
                   returns=Annotation(
                     annotation=Name(
