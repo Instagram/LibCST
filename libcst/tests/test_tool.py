@@ -152,6 +152,10 @@ class PrettyPrintNodesTest(UnitTest):
                   whitespace_before_colon=SimpleWhitespace(
                     value='',
                   ),
+                  type_parameters=None,
+                  whitespace_after_type_parameters=SimpleWhitespace(
+                    value='',
+                  ),
                 ),
               ],
               header=[],
@@ -243,6 +247,7 @@ class PrettyPrintNodesTest(UnitTest):
                     ),
                   ),
                   asynchronous=None,
+                  type_parameters=None,
                 ),
               ],
               encoding='utf-8',
@@ -532,6 +537,10 @@ class PrettyPrintNodesTest(UnitTest):
                   whitespace_before_colon=SimpleWhitespace(
                     value='',
                   ),
+                  type_parameters=None,
+                  whitespace_after_type_parameters=SimpleWhitespace(
+                    value='',
+                  ),
                 ),
               ],
               header=[],
@@ -612,6 +621,7 @@ class PrettyPrintNodesTest(UnitTest):
                     ),
                   ),
                   asynchronous=None,
+                  type_parameters=None,
                 ),
               ],
             )
