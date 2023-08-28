@@ -811,11 +811,88 @@ class FunctionDefCreationTest(CSTNodeTest):
                 "parser": parse_statement,
                 "code": "def foo(*a: *tuple[int,*Ts,...]): pass\n",
             },
+            # Single type variable
+            {
+                "node": cst.FunctionDef(
+                    cst.Name("foo"),
+                    cst.Parameters(),
+                    cst.SimpleStatementSuite((cst.Pass(),)),
+                    type_parameters=cst.TypeParameters(
+                        (cst.TypeParam(cst.TypeVar(cst.Name("T"))),)
+                    ),
+                ),
+                "code": "def foo[T](): pass\n",
+                "parser": parse_statement,
+            },
+            # All the type parameters
+            {
+                "node": cst.FunctionDef(
+                    cst.Name("foo"),
+                    cst.Parameters(),
+                    cst.SimpleStatementSuite((cst.Pass(),)),
+                    type_parameters=cst.TypeParameters(
+                        (
+                            cst.TypeParam(
+                                cst.TypeVar(
+                                    cst.Name("T"),
+                                    bound=cst.Name("int"),
+                                    colon=cst.Colon(
+                                        whitespace_after=cst.SimpleWhitespace(" ")
+                                    ),
+                                ),
+                                cst.Comma(whitespace_after=cst.SimpleWhitespace(" ")),
+                            ),
+                            cst.TypeParam(
+                                cst.TypeVarTuple(cst.Name("Ts")),
+                                cst.Comma(whitespace_after=cst.SimpleWhitespace(" ")),
+                            ),
+                            cst.TypeParam(cst.ParamSpec(cst.Name("KW"))),
+                        )
+                    ),
+                ),
+                "code": "def foo[T: int, *Ts, **KW](): pass\n",
+                "parser": parse_statement,
+            },
+            # Type parameters with whitespace
+            {
+                "node": cst.FunctionDef(
+                    cst.Name("foo"),
+                    cst.Parameters(),
+                    cst.SimpleStatementSuite((cst.Pass(),)),
+                    type_parameters=cst.TypeParameters(
+                        params=(
+                            cst.TypeParam(
+                                param=cst.TypeVar(
+                                    cst.Name("T"),
+                                    bound=cst.Name("str"),
+                                    colon=cst.Colon(
+                                        whitespace_before=cst.SimpleWhitespace(" "),
+                                        whitespace_after=cst.ParenthesizedWhitespace(
+                                            empty_lines=(cst.EmptyLine(),),
+                                            indent=True,
+                                        ),
+                                    ),
+                                ),
+                                comma=cst.Comma(cst.SimpleWhitespace(" ")),
+                            ),
+                            cst.TypeParam(
+                                cst.ParamSpec(
+                                    cst.Name("PS"), cst.SimpleWhitespace("  ")
+                                ),
+                                cst.Comma(cst.SimpleWhitespace("  ")),
+                            ),
+                        )
+                    ),
+                    whitespace_after_type_parameters=cst.SimpleWhitespace("  "),
+                ),
+                "code": "def foo[T :\n\nstr ,**  PS  ,]  (): pass\n",
+                "parser": parse_statement,
+            },
         )
     )
     def test_valid_native(self, **kwargs: Any) -> None:
         if not is_native():
-            self.skipTest("Disabled for native parser")
+            self.skipTest("Disabled for pure python parser")
         self.validate_node(**kwargs)
 
     @data_provider(

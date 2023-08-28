@@ -2317,6 +2317,32 @@ class ClassDef(BaseCompoundStatement, BaseStatement, BaseMatcherNode):
         OneOf[SimpleWhitespaceMatchType],
         AllOf[SimpleWhitespaceMatchType],
     ] = DoNotCare()
+    type_parameters: Union[
+        Optional["TypeParameters"],
+        MetadataMatchType,
+        MatchIfTrue[Optional[cst.TypeParameters]],
+        DoNotCareSentinel,
+        OneOf[
+            Union[
+                Optional["TypeParameters"],
+                MetadataMatchType,
+                MatchIfTrue[Optional[cst.TypeParameters]],
+            ]
+        ],
+        AllOf[
+            Union[
+                Optional["TypeParameters"],
+                MetadataMatchType,
+                MatchIfTrue[Optional[cst.TypeParameters]],
+            ]
+        ],
+    ] = DoNotCare()
+    whitespace_after_type_parameters: Union[
+        SimpleWhitespaceMatchType,
+        DoNotCareSentinel,
+        OneOf[SimpleWhitespaceMatchType],
+        AllOf[SimpleWhitespaceMatchType],
+    ] = DoNotCare()
     metadata: Union[
         MetadataMatchType,
         DoNotCareSentinel,
@@ -5693,6 +5719,32 @@ class FunctionDef(BaseCompoundStatement, BaseStatement, BaseMatcherNode):
         AllOf[BaseParenthesizableWhitespaceMatchType],
     ] = DoNotCare()
     whitespace_before_colon: Union[
+        SimpleWhitespaceMatchType,
+        DoNotCareSentinel,
+        OneOf[SimpleWhitespaceMatchType],
+        AllOf[SimpleWhitespaceMatchType],
+    ] = DoNotCare()
+    type_parameters: Union[
+        Optional["TypeParameters"],
+        MetadataMatchType,
+        MatchIfTrue[Optional[cst.TypeParameters]],
+        DoNotCareSentinel,
+        OneOf[
+            Union[
+                Optional["TypeParameters"],
+                MetadataMatchType,
+                MatchIfTrue[Optional[cst.TypeParameters]],
+            ]
+        ],
+        AllOf[
+            Union[
+                Optional["TypeParameters"],
+                MetadataMatchType,
+                MatchIfTrue[Optional[cst.TypeParameters]],
+            ]
+        ],
+    ] = DoNotCare()
+    whitespace_after_type_parameters: Union[
         SimpleWhitespaceMatchType,
         DoNotCareSentinel,
         OneOf[SimpleWhitespaceMatchType],
@@ -11963,6 +12015,25 @@ class ParamSlash(BaseMatcherNode):
 
 
 @dataclass(frozen=True, eq=False, unsafe_hash=False)
+class ParamSpec(BaseMatcherNode):
+    name: Union[
+        NameMatchType, DoNotCareSentinel, OneOf[NameMatchType], AllOf[NameMatchType]
+    ] = DoNotCare()
+    whitespace_after_star: Union[
+        SimpleWhitespaceMatchType,
+        DoNotCareSentinel,
+        OneOf[SimpleWhitespaceMatchType],
+        AllOf[SimpleWhitespaceMatchType],
+    ] = DoNotCare()
+    metadata: Union[
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
+    ] = DoNotCare()
+
+
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class ParamStar(BaseMatcherNode):
     comma: Union[
         CommaMatchType, DoNotCareSentinel, OneOf[CommaMatchType], AllOf[CommaMatchType]
@@ -14946,6 +15017,263 @@ class Tuple(
     ] = DoNotCare()
 
 
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
+class TypeAlias(BaseSmallStatement, BaseMatcherNode):
+    name: Union[
+        NameMatchType, DoNotCareSentinel, OneOf[NameMatchType], AllOf[NameMatchType]
+    ] = DoNotCare()
+    value: Union[
+        BaseExpressionMatchType,
+        DoNotCareSentinel,
+        OneOf[BaseExpressionMatchType],
+        AllOf[BaseExpressionMatchType],
+    ] = DoNotCare()
+    type_parameters: Union[
+        Optional["TypeParameters"],
+        MetadataMatchType,
+        MatchIfTrue[Optional[cst.TypeParameters]],
+        DoNotCareSentinel,
+        OneOf[
+            Union[
+                Optional["TypeParameters"],
+                MetadataMatchType,
+                MatchIfTrue[Optional[cst.TypeParameters]],
+            ]
+        ],
+        AllOf[
+            Union[
+                Optional["TypeParameters"],
+                MetadataMatchType,
+                MatchIfTrue[Optional[cst.TypeParameters]],
+            ]
+        ],
+    ] = DoNotCare()
+    whitespace_after_type: Union[
+        SimpleWhitespaceMatchType,
+        DoNotCareSentinel,
+        OneOf[SimpleWhitespaceMatchType],
+        AllOf[SimpleWhitespaceMatchType],
+    ] = DoNotCare()
+    whitespace_after_name: Union[
+        SimpleWhitespaceMatchType,
+        DoNotCareSentinel,
+        OneOf[SimpleWhitespaceMatchType],
+        AllOf[SimpleWhitespaceMatchType],
+    ] = DoNotCare()
+    whitespace_after_type_parameters: Union[
+        SimpleWhitespaceMatchType,
+        DoNotCareSentinel,
+        OneOf[SimpleWhitespaceMatchType],
+        AllOf[SimpleWhitespaceMatchType],
+    ] = DoNotCare()
+    whitespace_after_equals: Union[
+        SimpleWhitespaceMatchType,
+        DoNotCareSentinel,
+        OneOf[SimpleWhitespaceMatchType],
+        AllOf[SimpleWhitespaceMatchType],
+    ] = DoNotCare()
+    semicolon: Union[
+        SemicolonMatchType,
+        DoNotCareSentinel,
+        OneOf[SemicolonMatchType],
+        AllOf[SemicolonMatchType],
+    ] = DoNotCare()
+    metadata: Union[
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
+    ] = DoNotCare()
+
+
+TypeVarOrTypeVarTupleOrParamSpecMatchType = Union[
+    "TypeVar",
+    "TypeVarTuple",
+    "ParamSpec",
+    MetadataMatchType,
+    MatchIfTrue[Union[cst.TypeVar, cst.TypeVarTuple, cst.ParamSpec]],
+]
+
+
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
+class TypeParam(BaseMatcherNode):
+    param: Union[
+        TypeVarOrTypeVarTupleOrParamSpecMatchType,
+        DoNotCareSentinel,
+        OneOf[TypeVarOrTypeVarTupleOrParamSpecMatchType],
+        AllOf[TypeVarOrTypeVarTupleOrParamSpecMatchType],
+    ] = DoNotCare()
+    comma: Union[
+        CommaMatchType, DoNotCareSentinel, OneOf[CommaMatchType], AllOf[CommaMatchType]
+    ] = DoNotCare()
+    metadata: Union[
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
+    ] = DoNotCare()
+
+
+TypeParamMatchType = Union["TypeParam", MetadataMatchType, MatchIfTrue[cst.TypeParam]]
+
+
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
+class TypeParameters(BaseMatcherNode):
+    params: Union[
+        Sequence[
+            Union[
+                TypeParamMatchType,
+                DoNotCareSentinel,
+                OneOf[TypeParamMatchType],
+                AllOf[TypeParamMatchType],
+                AtLeastN[
+                    Union[
+                        TypeParamMatchType,
+                        DoNotCareSentinel,
+                        OneOf[TypeParamMatchType],
+                        AllOf[TypeParamMatchType],
+                    ]
+                ],
+                AtMostN[
+                    Union[
+                        TypeParamMatchType,
+                        DoNotCareSentinel,
+                        OneOf[TypeParamMatchType],
+                        AllOf[TypeParamMatchType],
+                    ]
+                ],
+            ]
+        ],
+        DoNotCareSentinel,
+        MatchIfTrue[Sequence[cst.TypeParam]],
+        OneOf[
+            Union[
+                Sequence[
+                    Union[
+                        TypeParamMatchType,
+                        OneOf[TypeParamMatchType],
+                        AllOf[TypeParamMatchType],
+                        AtLeastN[
+                            Union[
+                                TypeParamMatchType,
+                                OneOf[TypeParamMatchType],
+                                AllOf[TypeParamMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                TypeParamMatchType,
+                                OneOf[TypeParamMatchType],
+                                AllOf[TypeParamMatchType],
+                            ]
+                        ],
+                    ]
+                ],
+                MatchIfTrue[Sequence[cst.TypeParam]],
+            ]
+        ],
+        AllOf[
+            Union[
+                Sequence[
+                    Union[
+                        TypeParamMatchType,
+                        OneOf[TypeParamMatchType],
+                        AllOf[TypeParamMatchType],
+                        AtLeastN[
+                            Union[
+                                TypeParamMatchType,
+                                OneOf[TypeParamMatchType],
+                                AllOf[TypeParamMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                TypeParamMatchType,
+                                OneOf[TypeParamMatchType],
+                                AllOf[TypeParamMatchType],
+                            ]
+                        ],
+                    ]
+                ],
+                MatchIfTrue[Sequence[cst.TypeParam]],
+            ]
+        ],
+    ] = DoNotCare()
+    lbracket: Union[
+        LeftSquareBracketMatchType,
+        DoNotCareSentinel,
+        OneOf[LeftSquareBracketMatchType],
+        AllOf[LeftSquareBracketMatchType],
+    ] = DoNotCare()
+    rbracket: Union[
+        RightSquareBracketMatchType,
+        DoNotCareSentinel,
+        OneOf[RightSquareBracketMatchType],
+        AllOf[RightSquareBracketMatchType],
+    ] = DoNotCare()
+    metadata: Union[
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
+    ] = DoNotCare()
+
+
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
+class TypeVar(BaseMatcherNode):
+    name: Union[
+        NameMatchType, DoNotCareSentinel, OneOf[NameMatchType], AllOf[NameMatchType]
+    ] = DoNotCare()
+    bound: Union[
+        Optional["BaseExpression"],
+        MetadataMatchType,
+        MatchIfTrue[Optional[cst.BaseExpression]],
+        DoNotCareSentinel,
+        OneOf[
+            Union[
+                Optional["BaseExpression"],
+                MetadataMatchType,
+                MatchIfTrue[Optional[cst.BaseExpression]],
+            ]
+        ],
+        AllOf[
+            Union[
+                Optional["BaseExpression"],
+                MetadataMatchType,
+                MatchIfTrue[Optional[cst.BaseExpression]],
+            ]
+        ],
+    ] = DoNotCare()
+    colon: Union[
+        ColonMatchType, DoNotCareSentinel, OneOf[ColonMatchType], AllOf[ColonMatchType]
+    ] = DoNotCare()
+    metadata: Union[
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
+    ] = DoNotCare()
+
+
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
+class TypeVarTuple(BaseMatcherNode):
+    name: Union[
+        NameMatchType, DoNotCareSentinel, OneOf[NameMatchType], AllOf[NameMatchType]
+    ] = DoNotCare()
+    whitespace_after_star: Union[
+        SimpleWhitespaceMatchType,
+        DoNotCareSentinel,
+        OneOf[SimpleWhitespaceMatchType],
+        AllOf[SimpleWhitespaceMatchType],
+    ] = DoNotCare()
+    metadata: Union[
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
+    ] = DoNotCare()
+
+
 BaseUnaryOpMatchType = Union[
     "BaseUnaryOp", MetadataMatchType, MatchIfTrue[cst.BaseUnaryOp]
 ]
@@ -15874,6 +16202,7 @@ __all__ = [
     "Or",
     "Param",
     "ParamSlash",
+    "ParamSpec",
     "ParamStar",
     "Parameters",
     "ParenthesizedWhitespace",
@@ -15907,7 +16236,12 @@ __all__ = [
     "Try",
     "TryStar",
     "Tuple",
+    "TypeAlias",
     "TypeOf",
+    "TypeParam",
+    "TypeParameters",
+    "TypeVar",
+    "TypeVarTuple",
     "UnaryOperation",
     "While",
     "With",
