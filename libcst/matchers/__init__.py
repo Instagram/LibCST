@@ -2343,6 +2343,32 @@ class ClassDef(BaseCompoundStatement, BaseStatement, BaseMatcherNode):
         OneOf[SimpleWhitespaceMatchType],
         AllOf[SimpleWhitespaceMatchType],
     ] = DoNotCare()
+    type_parameters: Union[
+        Optional["TypeParameters"],
+        MetadataMatchType,
+        MatchIfTrue[Optional[cst.TypeParameters]],
+        DoNotCareSentinel,
+        OneOf[
+            Union[
+                Optional["TypeParameters"],
+                MetadataMatchType,
+                MatchIfTrue[Optional[cst.TypeParameters]],
+            ]
+        ],
+        AllOf[
+            Union[
+                Optional["TypeParameters"],
+                MetadataMatchType,
+                MatchIfTrue[Optional[cst.TypeParameters]],
+            ]
+        ],
+    ] = DoNotCare()
+    whitespace_after_type_parameters: Union[
+        SimpleWhitespaceMatchType,
+        DoNotCareSentinel,
+        OneOf[SimpleWhitespaceMatchType],
+        AllOf[SimpleWhitespaceMatchType],
+    ] = DoNotCare()
     metadata: Union[
         MetadataMatchType,
         DoNotCareSentinel,
@@ -5745,6 +5771,32 @@ class FunctionDef(BaseCompoundStatement, BaseStatement, BaseMatcherNode):
         AllOf[BaseParenthesizableWhitespaceMatchType],
     ] = DoNotCare()
     whitespace_before_colon: Union[
+        SimpleWhitespaceMatchType,
+        DoNotCareSentinel,
+        OneOf[SimpleWhitespaceMatchType],
+        AllOf[SimpleWhitespaceMatchType],
+    ] = DoNotCare()
+    type_parameters: Union[
+        Optional["TypeParameters"],
+        MetadataMatchType,
+        MatchIfTrue[Optional[cst.TypeParameters]],
+        DoNotCareSentinel,
+        OneOf[
+            Union[
+                Optional["TypeParameters"],
+                MetadataMatchType,
+                MatchIfTrue[Optional[cst.TypeParameters]],
+            ]
+        ],
+        AllOf[
+            Union[
+                Optional["TypeParameters"],
+                MetadataMatchType,
+                MatchIfTrue[Optional[cst.TypeParameters]],
+            ]
+        ],
+    ] = DoNotCare()
+    whitespace_after_type_parameters: Union[
         SimpleWhitespaceMatchType,
         DoNotCareSentinel,
         OneOf[SimpleWhitespaceMatchType],

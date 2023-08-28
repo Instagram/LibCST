@@ -1076,6 +1076,22 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_ClassDef_type_parameters(self, node: "ClassDef") -> None:
+        pass
+
+    @mark_no_op
+    def leave_ClassDef_type_parameters(self, node: "ClassDef") -> None:
+        pass
+
+    @mark_no_op
+    def visit_ClassDef_whitespace_after_type_parameters(self, node: "ClassDef") -> None:
+        pass
+
+    @mark_no_op
+    def leave_ClassDef_whitespace_after_type_parameters(self, node: "ClassDef") -> None:
+        pass
+
+    @mark_no_op
     def visit_Colon(self, node: "Colon") -> Optional[bool]:
         pass
 
@@ -2379,6 +2395,26 @@ class CSTTypedBaseFunctions:
 
     @mark_no_op
     def leave_FunctionDef_whitespace_before_colon(self, node: "FunctionDef") -> None:
+        pass
+
+    @mark_no_op
+    def visit_FunctionDef_type_parameters(self, node: "FunctionDef") -> None:
+        pass
+
+    @mark_no_op
+    def leave_FunctionDef_type_parameters(self, node: "FunctionDef") -> None:
+        pass
+
+    @mark_no_op
+    def visit_FunctionDef_whitespace_after_type_parameters(
+        self, node: "FunctionDef"
+    ) -> None:
+        pass
+
+    @mark_no_op
+    def leave_FunctionDef_whitespace_after_type_parameters(
+        self, node: "FunctionDef"
+    ) -> None:
         pass
 
     @mark_no_op
