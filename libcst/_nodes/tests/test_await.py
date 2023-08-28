@@ -150,6 +150,7 @@ class AwaitTest(CSTNodeTest):
     def test_valid_py36(self, **kwargs: Any) -> None:
         # We don't have sentinel nodes for atoms, so we know that 100% of atoms
         # can be parsed identically to their creation.
+        self.maxDiff = None
         self.validate_node(**kwargs)
 
     @data_provider(

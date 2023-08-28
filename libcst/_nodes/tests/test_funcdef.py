@@ -485,7 +485,7 @@ class FunctionDefCreationTest(CSTNodeTest):
                     cst.Name("foo"),
                     cst.Parameters(),
                     cst.SimpleStatementSuite((cst.Pass(),)),
-                    (cst.Decorator(cst.Name("bar")),),
+                    decorators=(cst.Decorator(cst.Name("bar")),),
                 ),
                 "code": "@bar\ndef foo(): pass\n",
             },
@@ -494,7 +494,7 @@ class FunctionDefCreationTest(CSTNodeTest):
                     cst.Name("foo"),
                     cst.Parameters(),
                     cst.SimpleStatementSuite((cst.Pass(),)),
-                    (
+                    decorators=(
                         cst.Decorator(
                             cst.Call(
                                 cst.Name("bar"),
@@ -513,7 +513,7 @@ class FunctionDefCreationTest(CSTNodeTest):
                     cst.Name("foo"),
                     cst.Parameters(),
                     cst.SimpleStatementSuite((cst.Pass(),)),
-                    (
+                    decorators=(
                         cst.Decorator(
                             cst.Call(
                                 cst.Name("bar"), (cst.Arg(cst.SimpleString("'123'")),)
@@ -537,7 +537,7 @@ class FunctionDefCreationTest(CSTNodeTest):
                         cst.Name("foo"),
                         cst.Parameters(),
                         cst.SimpleStatementSuite((cst.Pass(),)),
-                        (cst.Decorator(cst.Name("bar")),),
+                        decorators=(cst.Decorator(cst.Name("bar")),),
                     ),
                 ),
                 "code": "    @bar\n    def foo(): pass\n",
@@ -550,7 +550,7 @@ class FunctionDefCreationTest(CSTNodeTest):
                         cst.Name("foo"),
                         cst.Parameters(),
                         cst.IndentedBlock((cst.SimpleStatementLine((cst.Pass(),)),)),
-                        (cst.Decorator(cst.Name("bar")),),
+                        decorators=(cst.Decorator(cst.Name("bar")),),
                     ),
                 ),
                 "code": "    @bar\n    def foo():\n        pass\n",
@@ -629,7 +629,9 @@ class FunctionDefCreationTest(CSTNodeTest):
                     cst.Name("foo"),
                     cst.Parameters(),
                     cst.SimpleStatementSuite((cst.Pass(),)),
-                    (cst.Decorator(cst.Call(func=cst.Call(func=cst.Name("bar")))),),
+                    decorators=(
+                        cst.Decorator(cst.Call(func=cst.Call(func=cst.Name("bar")))),
+                    ),
                 ),
                 "code": "@bar()()\ndef foo(): pass\n",
             },
@@ -639,7 +641,7 @@ class FunctionDefCreationTest(CSTNodeTest):
                     cst.Name("foo"),
                     cst.Parameters(),
                     cst.SimpleStatementSuite((cst.Pass(),)),
-                    (
+                    decorators=(
                         cst.Decorator(
                             cst.BinaryOperation(cst.Name("a"), cst.Add(), cst.Name("b"))
                         ),
@@ -653,7 +655,7 @@ class FunctionDefCreationTest(CSTNodeTest):
                     cst.Name("foo"),
                     cst.Parameters(),
                     cst.SimpleStatementSuite((cst.Pass(),)),
-                    (
+                    decorators=(
                         cst.Decorator(
                             cst.Name(
                                 "bar", lpar=(cst.LeftParen(),), rpar=(cst.RightParen(),)
@@ -1761,7 +1763,7 @@ class FunctionDefParserTest(CSTNodeTest):
                     cst.Name("foo"),
                     cst.Parameters(),
                     cst.SimpleStatementSuite((cst.Pass(),)),
-                    (cst.Decorator(cst.Name("bar")),),
+                    decorators=(cst.Decorator(cst.Name("bar")),),
                 ),
                 "@bar\ndef foo(): pass\n",
             ),
@@ -1770,7 +1772,7 @@ class FunctionDefParserTest(CSTNodeTest):
                     cst.Name("foo"),
                     cst.Parameters(),
                     cst.SimpleStatementSuite((cst.Pass(),)),
-                    (
+                    decorators=(
                         cst.Decorator(
                             cst.Call(
                                 cst.Name("bar"),
@@ -1795,7 +1797,7 @@ class FunctionDefParserTest(CSTNodeTest):
                     cst.Name("foo"),
                     cst.Parameters(),
                     cst.SimpleStatementSuite((cst.Pass(),)),
-                    (
+                    decorators=(
                         cst.Decorator(
                             cst.Call(
                                 cst.Name("bar"),
