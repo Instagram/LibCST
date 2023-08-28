@@ -178,6 +178,7 @@ if TYPE_CHECKING:
         MatchValue,
         NameItem,
         Nonlocal,
+        ParamSpec,
         Pass,
         Raise,
         Return,
@@ -185,6 +186,11 @@ if TYPE_CHECKING:
         SimpleStatementSuite,
         Try,
         TryStar,
+        TypeAlias,
+        TypeParam,
+        TypeParameters,
+        TypeVar,
+        TypeVarTuple,
         While,
         With,
         WithItem,
@@ -974,6 +980,14 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_ClassDef_type_parameters(self, node: "ClassDef") -> None:
+        pass
+
+    @mark_no_op
+    def leave_ClassDef_type_parameters(self, node: "ClassDef") -> None:
+        pass
+
+    @mark_no_op
     def visit_ClassDef_bases(self, node: "ClassDef") -> None:
         pass
 
@@ -1043,6 +1057,14 @@ class CSTTypedBaseFunctions:
 
     @mark_no_op
     def leave_ClassDef_whitespace_after_name(self, node: "ClassDef") -> None:
+        pass
+
+    @mark_no_op
+    def visit_ClassDef_whitespace_after_type_parameters(self, node: "ClassDef") -> None:
+        pass
+
+    @mark_no_op
+    def leave_ClassDef_whitespace_after_type_parameters(self, node: "ClassDef") -> None:
         pass
 
     @mark_no_op
@@ -2268,6 +2290,14 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_FunctionDef_type_parameters(self, node: "FunctionDef") -> None:
+        pass
+
+    @mark_no_op
+    def leave_FunctionDef_type_parameters(self, node: "FunctionDef") -> None:
+        pass
+
+    @mark_no_op
     def visit_FunctionDef_decorators(self, node: "FunctionDef") -> None:
         pass
 
@@ -2321,6 +2351,18 @@ class CSTTypedBaseFunctions:
 
     @mark_no_op
     def leave_FunctionDef_whitespace_after_name(self, node: "FunctionDef") -> None:
+        pass
+
+    @mark_no_op
+    def visit_FunctionDef_whitespace_after_type_parameters(
+        self, node: "FunctionDef"
+    ) -> None:
+        pass
+
+    @mark_no_op
+    def leave_FunctionDef_whitespace_after_type_parameters(
+        self, node: "FunctionDef"
+    ) -> None:
         pass
 
     @mark_no_op
@@ -4316,6 +4358,26 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_ParamSpec(self, node: "ParamSpec") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_ParamSpec_name(self, node: "ParamSpec") -> None:
+        pass
+
+    @mark_no_op
+    def leave_ParamSpec_name(self, node: "ParamSpec") -> None:
+        pass
+
+    @mark_no_op
+    def visit_ParamSpec_whitespace_after_star(self, node: "ParamSpec") -> None:
+        pass
+
+    @mark_no_op
+    def leave_ParamSpec_whitespace_after_star(self, node: "ParamSpec") -> None:
+        pass
+
+    @mark_no_op
     def visit_ParamStar(self, node: "ParamStar") -> Optional[bool]:
         pass
 
@@ -5280,6 +5342,174 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_TypeAlias(self, node: "TypeAlias") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_TypeAlias_name(self, node: "TypeAlias") -> None:
+        pass
+
+    @mark_no_op
+    def leave_TypeAlias_name(self, node: "TypeAlias") -> None:
+        pass
+
+    @mark_no_op
+    def visit_TypeAlias_value(self, node: "TypeAlias") -> None:
+        pass
+
+    @mark_no_op
+    def leave_TypeAlias_value(self, node: "TypeAlias") -> None:
+        pass
+
+    @mark_no_op
+    def visit_TypeAlias_type_parameters(self, node: "TypeAlias") -> None:
+        pass
+
+    @mark_no_op
+    def leave_TypeAlias_type_parameters(self, node: "TypeAlias") -> None:
+        pass
+
+    @mark_no_op
+    def visit_TypeAlias_whitespace_after_type(self, node: "TypeAlias") -> None:
+        pass
+
+    @mark_no_op
+    def leave_TypeAlias_whitespace_after_type(self, node: "TypeAlias") -> None:
+        pass
+
+    @mark_no_op
+    def visit_TypeAlias_whitespace_after_name(self, node: "TypeAlias") -> None:
+        pass
+
+    @mark_no_op
+    def leave_TypeAlias_whitespace_after_name(self, node: "TypeAlias") -> None:
+        pass
+
+    @mark_no_op
+    def visit_TypeAlias_whitespace_after_type_parameters(
+        self, node: "TypeAlias"
+    ) -> None:
+        pass
+
+    @mark_no_op
+    def leave_TypeAlias_whitespace_after_type_parameters(
+        self, node: "TypeAlias"
+    ) -> None:
+        pass
+
+    @mark_no_op
+    def visit_TypeAlias_whitespace_after_equals(self, node: "TypeAlias") -> None:
+        pass
+
+    @mark_no_op
+    def leave_TypeAlias_whitespace_after_equals(self, node: "TypeAlias") -> None:
+        pass
+
+    @mark_no_op
+    def visit_TypeAlias_semicolon(self, node: "TypeAlias") -> None:
+        pass
+
+    @mark_no_op
+    def leave_TypeAlias_semicolon(self, node: "TypeAlias") -> None:
+        pass
+
+    @mark_no_op
+    def visit_TypeParam(self, node: "TypeParam") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_TypeParam_param(self, node: "TypeParam") -> None:
+        pass
+
+    @mark_no_op
+    def leave_TypeParam_param(self, node: "TypeParam") -> None:
+        pass
+
+    @mark_no_op
+    def visit_TypeParam_comma(self, node: "TypeParam") -> None:
+        pass
+
+    @mark_no_op
+    def leave_TypeParam_comma(self, node: "TypeParam") -> None:
+        pass
+
+    @mark_no_op
+    def visit_TypeParameters(self, node: "TypeParameters") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_TypeParameters_params(self, node: "TypeParameters") -> None:
+        pass
+
+    @mark_no_op
+    def leave_TypeParameters_params(self, node: "TypeParameters") -> None:
+        pass
+
+    @mark_no_op
+    def visit_TypeParameters_lbracket(self, node: "TypeParameters") -> None:
+        pass
+
+    @mark_no_op
+    def leave_TypeParameters_lbracket(self, node: "TypeParameters") -> None:
+        pass
+
+    @mark_no_op
+    def visit_TypeParameters_rbracket(self, node: "TypeParameters") -> None:
+        pass
+
+    @mark_no_op
+    def leave_TypeParameters_rbracket(self, node: "TypeParameters") -> None:
+        pass
+
+    @mark_no_op
+    def visit_TypeVar(self, node: "TypeVar") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_TypeVar_name(self, node: "TypeVar") -> None:
+        pass
+
+    @mark_no_op
+    def leave_TypeVar_name(self, node: "TypeVar") -> None:
+        pass
+
+    @mark_no_op
+    def visit_TypeVar_bound(self, node: "TypeVar") -> None:
+        pass
+
+    @mark_no_op
+    def leave_TypeVar_bound(self, node: "TypeVar") -> None:
+        pass
+
+    @mark_no_op
+    def visit_TypeVar_colon(self, node: "TypeVar") -> None:
+        pass
+
+    @mark_no_op
+    def leave_TypeVar_colon(self, node: "TypeVar") -> None:
+        pass
+
+    @mark_no_op
+    def visit_TypeVarTuple(self, node: "TypeVarTuple") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_TypeVarTuple_name(self, node: "TypeVarTuple") -> None:
+        pass
+
+    @mark_no_op
+    def leave_TypeVarTuple_name(self, node: "TypeVarTuple") -> None:
+        pass
+
+    @mark_no_op
+    def visit_TypeVarTuple_whitespace_after_star(self, node: "TypeVarTuple") -> None:
+        pass
+
+    @mark_no_op
+    def leave_TypeVarTuple_whitespace_after_star(self, node: "TypeVarTuple") -> None:
+        pass
+
+    @mark_no_op
     def visit_UnaryOperation(self, node: "UnaryOperation") -> Optional[bool]:
         pass
 
@@ -6004,6 +6234,10 @@ class CSTTypedVisitorFunctions(CSTTypedBaseFunctions):
         pass
 
     @mark_no_op
+    def leave_ParamSpec(self, original_node: "ParamSpec") -> None:
+        pass
+
+    @mark_no_op
     def leave_ParamStar(self, original_node: "ParamStar") -> None:
         pass
 
@@ -6131,6 +6365,26 @@ class CSTTypedVisitorFunctions(CSTTypedBaseFunctions):
 
     @mark_no_op
     def leave_Tuple(self, original_node: "Tuple") -> None:
+        pass
+
+    @mark_no_op
+    def leave_TypeAlias(self, original_node: "TypeAlias") -> None:
+        pass
+
+    @mark_no_op
+    def leave_TypeParam(self, original_node: "TypeParam") -> None:
+        pass
+
+    @mark_no_op
+    def leave_TypeParameters(self, original_node: "TypeParameters") -> None:
+        pass
+
+    @mark_no_op
+    def leave_TypeVar(self, original_node: "TypeVar") -> None:
+        pass
+
+    @mark_no_op
+    def leave_TypeVarTuple(self, original_node: "TypeVarTuple") -> None:
         pass
 
     @mark_no_op
@@ -6932,6 +7186,12 @@ class CSTTypedTransformerFunctions(CSTTypedBaseFunctions):
         return updated_node
 
     @mark_no_op
+    def leave_ParamSpec(
+        self, original_node: "ParamSpec", updated_node: "ParamSpec"
+    ) -> "ParamSpec":
+        return updated_node
+
+    @mark_no_op
     def leave_ParamStar(
         self, original_node: "ParamStar", updated_node: "ParamStar"
     ) -> Union["ParamStar", MaybeSentinel]:
@@ -7129,6 +7389,38 @@ class CSTTypedTransformerFunctions(CSTTypedBaseFunctions):
     def leave_Tuple(
         self, original_node: "Tuple", updated_node: "Tuple"
     ) -> "BaseExpression":
+        return updated_node
+
+    @mark_no_op
+    def leave_TypeAlias(
+        self, original_node: "TypeAlias", updated_node: "TypeAlias"
+    ) -> Union[
+        "BaseSmallStatement", FlattenSentinel["BaseSmallStatement"], RemovalSentinel
+    ]:
+        return updated_node
+
+    @mark_no_op
+    def leave_TypeParam(
+        self, original_node: "TypeParam", updated_node: "TypeParam"
+    ) -> Union["TypeParam", FlattenSentinel["TypeParam"], RemovalSentinel]:
+        return updated_node
+
+    @mark_no_op
+    def leave_TypeParameters(
+        self, original_node: "TypeParameters", updated_node: "TypeParameters"
+    ) -> "TypeParameters":
+        return updated_node
+
+    @mark_no_op
+    def leave_TypeVar(
+        self, original_node: "TypeVar", updated_node: "TypeVar"
+    ) -> "TypeVar":
+        return updated_node
+
+    @mark_no_op
+    def leave_TypeVarTuple(
+        self, original_node: "TypeVarTuple", updated_node: "TypeVarTuple"
+    ) -> "TypeVarTuple":
         return updated_node
 
     @mark_no_op

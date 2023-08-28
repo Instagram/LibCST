@@ -8,6 +8,7 @@ from typing import Any, Callable
 import libcst as cst
 from libcst import parse_statement
 from libcst._nodes.tests.base import CSTNodeTest
+from libcst._parser.entrypoints import is_native
 from libcst.metadata import CodeRange
 from libcst.testing.utils import data_provider
 
@@ -110,6 +111,107 @@ class ClassDefCreationTest(CSTNodeTest):
         )
     )
     def test_valid(self, **kwargs: Any) -> None:
+        self.validate_node(**kwargs)
+
+    @data_provider(
+        (
+            {
+                "node": cst.ClassDef(
+                    cst.Name("Foo"),
+                    cst.SimpleStatementSuite((cst.Pass(),)),
+                    type_parameters=cst.TypeParameters(
+                        (
+                            cst.TypeParam(
+                                cst.TypeVar(
+                                    cst.Name("T"),
+                                    bound=cst.Name("int"),
+                                    colon=cst.Colon(
+                                        whitespace_after=cst.SimpleWhitespace(" ")
+                                    ),
+                                ),
+                                cst.Comma(whitespace_after=cst.SimpleWhitespace(" ")),
+                            ),
+                            cst.TypeParam(
+                                cst.TypeVarTuple(cst.Name("Ts")),
+                                cst.Comma(whitespace_after=cst.SimpleWhitespace(" ")),
+                            ),
+                            cst.TypeParam(cst.ParamSpec(cst.Name("KW"))),
+                        )
+                    ),
+                ),
+                "code": "class Foo[T: int, *Ts, **KW]: pass\n",
+            },
+            {
+                "node": cst.ClassDef(
+                    cst.Name("Foo"),
+                    cst.SimpleStatementSuite((cst.Pass(),)),
+                    type_parameters=cst.TypeParameters(
+                        params=(
+                            cst.TypeParam(
+                                param=cst.TypeVar(
+                                    cst.Name("T"),
+                                    bound=cst.Name("str"),
+                                    colon=cst.Colon(
+                                        whitespace_before=cst.SimpleWhitespace(" "),
+                                        whitespace_after=cst.ParenthesizedWhitespace(
+                                            empty_lines=(cst.EmptyLine(),),
+                                            indent=True,
+                                        ),
+                                    ),
+                                ),
+                                comma=cst.Comma(cst.SimpleWhitespace(" ")),
+                            ),
+                            cst.TypeParam(
+                                cst.ParamSpec(
+                                    cst.Name("PS"), cst.SimpleWhitespace("  ")
+                                ),
+                                cst.Comma(cst.SimpleWhitespace("  ")),
+                            ),
+                        )
+                    ),
+                    whitespace_after_type_parameters=cst.SimpleWhitespace("  "),
+                ),
+                "code": "class Foo[T :\n\nstr ,**  PS  ,]  : pass\n",
+            },
+            {
+                "node": cst.ClassDef(
+                    cst.Name("Foo"),
+                    cst.SimpleStatementSuite((cst.Pass(),)),
+                    type_parameters=cst.TypeParameters(
+                        params=(
+                            cst.TypeParam(
+                                param=cst.TypeVar(
+                                    cst.Name("T"),
+                                    bound=cst.Name("str"),
+                                    colon=cst.Colon(
+                                        whitespace_before=cst.SimpleWhitespace(" "),
+                                        whitespace_after=cst.ParenthesizedWhitespace(
+                                            empty_lines=(cst.EmptyLine(),),
+                                            indent=True,
+                                        ),
+                                    ),
+                                ),
+                                comma=cst.Comma(cst.SimpleWhitespace(" ")),
+                            ),
+                            cst.TypeParam(
+                                cst.ParamSpec(
+                                    cst.Name("PS"), cst.SimpleWhitespace("  ")
+                                ),
+                                cst.Comma(cst.SimpleWhitespace("  ")),
+                            ),
+                        )
+                    ),
+                    lpar=cst.LeftParen(),
+                    rpar=cst.RightParen(),
+                    whitespace_after_type_parameters=cst.SimpleWhitespace("  "),
+                ),
+                "code": "class Foo[T :\n\nstr ,**  PS  ,]  (): pass\n",
+            },
+        )
+    )
+    def test_valid_native(self, **kwargs: Any) -> None:
+        if not is_native():
+            self.skipTest("Disabled for pure python parser")
         self.validate_node(**kwargs)
 
     @data_provider(

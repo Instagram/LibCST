@@ -131,6 +131,7 @@ parser! {
         #[cache]
         rule simple_stmt() -> SmallStatement<'input, 'a>
             = assignment()
+            / &lit("type") s: type_stmt() {SmallStatement::TypeAlias(s)}
             / e:star_expressions() { SmallStatement::Expr(Expr { value: e, semicolon: None }) }
             / &lit("return") s:return_stmt() { SmallStatement::Return(s) }
             // this is expanded from the original grammar's import_stmt rule
@@ -320,9 +321,9 @@ parser! {
             / class_def_raw()
 
         rule class_def_raw() -> ClassDef<'input, 'a>
-            = kw:lit("class") n:name() arg:(l:lpar() a:arguments()? r:rpar() {(l, a, r)})?
+            = kw:lit("class") n:name() t:type_params()? arg:(l:lpar() a:arguments()? r:rpar() {(l, a, r)})?
                 col:lit(":") b:block() {?
-                    make_class_def(kw, n, arg, col, b)
+                    make_class_def(kw, n, t, arg, col, b)
             }
 
         // Function definitions
@@ -337,13 +338,13 @@ parser! {
             }
 
         rule function_def_raw() -> FunctionDef<'input, 'a>
-            = def:lit("def") n:name() op:lit("(") params:params()?
+            = def:lit("def") n:name() t:type_params()? op:lit("(") params:params()?
                 cp:lit(")") ty:_returns()? c:lit(":") b:block() {
-                    make_function_def(None, def, n, op, params, cp, ty, c, b)
+                    make_function_def(None, def, n, t, op, params, cp, ty, c, b)
             }
-            / asy:tok(Async, "ASYNC") def:lit("def") n:name() op:lit("(") params:params()?
+            / asy:tok(Async, "ASYNC") def:lit("def") n:name() t:type_params()? op:lit("(") params:params()?
                 cp:lit(")") ty:_returns()? c:lit(":") b:block() {
-                    make_function_def(Some(asy), def, n, op, params, cp, ty, c, b)
+                    make_function_def(Some(asy), def, n, t, op, params, cp, ty, c, b)
             }
 
         // Function parameters
@@ -776,6 +777,27 @@ parser! {
                 make_match_keyword_element(arg, eq, value)
             }
 
+        // Type statement
+
+        rule type_stmt() -> TypeAlias<'input, 'a>
+            = t:lit("type") n:name() ps:type_params()? eq:lit("=") v:expression() {
+                make_type_alias(t, n, ps, eq, v)
+            }
+
+        // Type parameter declaration
+
+        rule type_params() -> TypeParameters<'input, 'a>
+            = lb:lbrak() ps:separated_trailer(<type_param()>, <comma()>) rb:rbrak() {
+                make_type_parameters(lb, comma_separate(ps.0, ps.1, ps.2), rb)
+            }
+
+        rule type_param() -> TypeParam<'input, 'a>
+            = n:name() b:type_param_bound()? { make_type_var(n, b) }
+            / s:lit("*") n:name() { make_type_var_tuple(s, n) }
+            / s:lit("**") n:name() { make_param_spec(s, n) }
+
+        rule type_param_bound() -> TypeParamBound<'input, 'a>
+            = c:lit(":") e:expression() { make_type_param_bound(c, e) }
         // Expressions
 
         #[cache]
@@ -1511,6 +1533,7 @@ fn make_function_def<'input, 'a>(
     async_tok: Option<TokenRef<'input, 'a>>,
     def_tok: TokenRef<'input, 'a>,
     name: Name<'input, 'a>,
+    type_parameters: Option<TypeParameters<'input, 'a>>,
     open_paren_tok: TokenRef<'input, 'a>,
     params: Option<Parameters<'input, 'a>>,
     close_paren_tok: TokenRef<'input, 'a>,
@@ -1521,6 +1544,7 @@ fn make_function_def<'input, 'a>(
     let asynchronous = async_tok.as_ref().map(|_| make_async());
     FunctionDef {
         name,
+        type_parameters,
         params: params.unwrap_or_default(),
         body,
         decorators: Default::default(),
@@ -2761,6 +2785,7 @@ fn make_await<'input, 'a>(
 fn make_class_def<'input, 'a>(
     class_tok: TokenRef<'input, 'a>,
     name: Name<'input, 'a>,
+    type_parameters: Option<TypeParameters<'input, 'a>>,
     args: Option<(
         LeftParen<'input, 'a>,
         Option<Vec<Arg<'input, 'a>>>,
@@ -2801,6 +2826,7 @@ fn make_class_def<'input, 'a>(
     }
     Ok(ClassDef {
         name,
+        type_parameters,
         body,
         bases,
         keywords,
@@ -3337,5 +3363,83 @@ fn make_match_keyword_element<'input, 'a>(
         pattern,
         comma: Default::default(),
         equal_tok,
+    }
+}
+
+struct TypeParamBound<'input, 'a>(TokenRef<'input, 'a>, Expression<'input, 'a>);
+
+fn make_type_param_bound<'input, 'a>(
+    colon_tok: TokenRef<'input, 'a>,
+    e: Expression<'input, 'a>,
+) -> TypeParamBound<'input, 'a> {
+    TypeParamBound(colon_tok, e)
+}
+
+fn make_param_spec<'input, 'a>(
+    star_tok: TokenRef<'input, 'a>,
+    name: Name<'input, 'a>,
+) -> TypeParam<'input, 'a> {
+    TypeParam {
+        param: TypeParamItem::ParamSpec(ParamSpec { name, star_tok }),
+        comma: Default::default(),
+    }
+}
+
+fn make_type_var_tuple<'input, 'a>(
+    star_tok: TokenRef<'input, 'a>,
+    name: Name<'input, 'a>,
+) -> TypeParam<'input, 'a> {
+    TypeParam {
+        param: TypeParamItem::TypeVarTuple(TypeVarTuple { name, star_tok }),
+        comma: Default::default(),
+    }
+}
+
+fn make_type_var<'input, 'a>(
+    name: Name<'input, 'a>,
+    bound: Option<TypeParamBound<'input, 'a>>,
+) -> TypeParam<'input, 'a> {
+    let (bound, colon) = match bound {
+        Some(TypeParamBound(c, e)) => (Some(Box::new(e)), Some(make_colon(c))),
+        _ => (None, None),
+    };
+    TypeParam {
+        param: TypeParamItem::TypeVar(TypeVar { name, bound, colon }),
+        comma: Default::default(),
+    }
+}
+
+fn make_type_parameters<'input, 'a>(
+    lbracket: LeftSquareBracket<'input, 'a>,
+    params: Vec<TypeParam<'input, 'a>>,
+    rbracket: RightSquareBracket<'input, 'a>,
+) -> TypeParameters<'input, 'a> {
+    TypeParameters {
+        lbracket,
+        params,
+        rbracket,
+    }
+}
+
+fn make_type_alias<'input, 'a>(
+    type_tok: TokenRef<'input, 'a>,
+    name: Name<'input, 'a>,
+    type_parameters: Option<TypeParameters<'input, 'a>>,
+    equals_tok: TokenRef<'input, 'a>,
+    value: Expression<'input, 'a>,
+) -> TypeAlias<'input, 'a> {
+    let lbracket_tok = if let Some(tp) = &type_parameters {
+        Some(tp.lbracket.tok)
+    } else {
+        None
+    };
+    TypeAlias {
+        type_tok,
+        name,
+        type_parameters,
+        equals_tok,
+        value: Box::new(value),
+        semicolon: Default::default(),
+        lbracket_tok,
     }
 }
