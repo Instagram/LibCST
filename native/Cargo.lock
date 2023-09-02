@@ -356,6 +356,7 @@ dependencies = [
  "difference",
  "itertools 0.11.0",
  "libcst_derive",
+ "memchr",
  "paste",
  "peg",
  "pyo3",
