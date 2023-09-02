@@ -83,7 +83,7 @@ impl<'a> Config<'a> {
             let newline_character = input.as_bytes()[newline_position] as char;
 
             let len = if newline_character == '\r'
-                && input.as_bytes().get(newline_position + 1).copied() == Some(b'\n')
+                && input.as_bytes().get(newline_position + 1) == Some(&b'\n')
             {
                 // Skip the next '\n'
                 newline_positions.next();
@@ -431,5 +431,25 @@ pub fn parse_parenthesized_whitespace<'a>(
         }))
     } else {
         Ok(None)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{tokenize, Config, Result};
+
+    #[test]
+    fn config_mixed_newlines() -> Result<'static, ()> {
+        let source = "'' % {\n'test1': '',\r  'test2': '',\r\n}";
+        let tokens = tokenize(source)?;
+
+        let config = Config::new(source, &tokens);
+
+        assert_eq!(
+            &config.lines,
+            &["'' % {\n", "'test1': '',\r", "  'test2': '',\r\n", "}"]
+        );
+
+        Ok(())
     }
 }
