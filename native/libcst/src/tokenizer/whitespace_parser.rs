@@ -7,6 +7,7 @@ use crate::nodes::{
     Comment, EmptyLine, Fakeness, Newline, ParenthesizableWhitespace, ParenthesizedWhitespace,
     SimpleWhitespace, TrailingWhitespace,
 };
+use memchr::memchr2_iter;
 use regex::Regex;
 use thiserror::Error;
 
@@ -16,9 +17,8 @@ use super::TokType;
 
 thread_local! {
     static SIMPLE_WHITESPACE_RE: Regex = Regex::new(r"\A([ \f\t]|\\(\r\n?|\n))*").expect("regex");
-static NEWLINE_RE: Regex = Regex::new(r"\A(\r\n?|\n)").expect("regex");
-static COMMENT_RE: Regex = Regex::new(r"\A#[^\r\n]*").expect("regex");
-static NEWLINE_RE_2: Regex = Regex::new(r"\r\n?|\n").expect("regex");
+    static NEWLINE_RE: Regex = Regex::new(r"\A(\r\n?|\n)").expect("regex");
+    static COMMENT_RE: Regex = Regex::new(r"\A#[^\r\n]*").expect("regex");
 }
 
 #[allow(clippy::upper_case_acronyms, clippy::enum_variant_names)]
@@ -74,12 +74,44 @@ impl<'a> Config<'a> {
                 break;
             }
         }
-        let default_newline =
-            NEWLINE_RE_2.with(|r| r.find(input).map(|m| m.as_str()).unwrap_or("\n"));
+
+        let mut lines = Vec::new();
+        let mut start = 0;
+        let mut newline_positions = memchr2_iter(b'\n', b'\r', input.as_bytes());
+
+        while let Some(newline_position) = newline_positions.next() {
+            let newline_character = input.as_bytes()[newline_position] as char;
+
+            let len = if newline_character == '\r'
+                && input.as_bytes().get(newline_position + 1) == Some(&b'\n')
+            {
+                // Skip the next '\n'
+                newline_positions.next();
+                2
+            } else {
+                1
+            };
+
+            let end = newline_position + len;
+            lines.push(&input[start..end]);
+            start = end;
+        }
+
+        // Push the last line if it isn't terminated by a newline character
+        if start < input.len() {
+            lines.push(&input[start..]);
+        }
+
+        let default_newline = match lines.first().map(|line| line.as_bytes()).unwrap_or(&[]) {
+            [.., b'\r', b'\n'] => "\r\n",
+            [.., b'\n'] => "\n",
+            [.., b'\r'] => "\r",
+            _ => "\n",
+        };
 
         Self {
             input,
-            lines: input.split_inclusive(default_newline).collect(),
+            lines,
             default_newline,
             default_indent,
         }
@@ -399,5 +431,25 @@ pub fn parse_parenthesized_whitespace<'a>(
         }))
     } else {
         Ok(None)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{tokenize, Config, Result};
+
+    #[test]
+    fn config_mixed_newlines() -> Result<'static, ()> {
+        let source = "'' % {\n'test1': '',\r  'test2': '',\r\n}";
+        let tokens = tokenize(source)?;
+
+        let config = Config::new(source, &tokens);
+
+        assert_eq!(
+            &config.lines,
+            &["'' % {\n", "'test1': '',\r", "  'test2': '',\r\n", "}"]
+        );
+
+        Ok(())
     }
 }
