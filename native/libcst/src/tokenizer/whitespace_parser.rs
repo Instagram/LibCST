@@ -7,19 +7,12 @@ use crate::nodes::{
     Comment, EmptyLine, Fakeness, Newline, ParenthesizableWhitespace, ParenthesizedWhitespace,
     SimpleWhitespace, TrailingWhitespace,
 };
-use memchr::memchr2_iter;
-use regex::Regex;
+use memchr::{memchr2, memchr2_iter};
 use thiserror::Error;
 
 use crate::Token;
 
 use super::TokType;
-
-thread_local! {
-    static SIMPLE_WHITESPACE_RE: Regex = Regex::new(r"\A([ \f\t]|\\(\r\n?|\n))*").expect("regex");
-    static NEWLINE_RE: Regex = Regex::new(r"\A(\r\n?|\n)").expect("regex");
-    static COMMENT_RE: Regex = Regex::new(r"\A#[^\r\n]*").expect("regex");
-}
 
 #[allow(clippy::upper_case_acronyms, clippy::enum_variant_names)]
 #[derive(Error, Debug, PartialEq, Eq)]
@@ -231,29 +224,34 @@ pub fn parse_empty_lines<'a>(
 
 pub fn parse_comment<'a>(config: &Config<'a>, state: &mut State) -> Result<Option<Comment<'a>>> {
     let newline_after = config.get_line_after_column(state.line, state.column_byte)?;
-    if let Some(comment_match) = COMMENT_RE.with(|r| r.find(newline_after)) {
-        let comment_str = comment_match.as_str();
-        advance_this_line(
-            config,
-            state,
-            comment_str.chars().count(),
-            comment_str.len(),
-        )?;
-        return Ok(Some(Comment(comment_str)));
+    if newline_after.is_empty() || newline_after.as_bytes()[0] != b'#' {
+        return Ok(None);
     }
-    Ok(None)
+    let comment_str = if let Some(idx) = memchr2(b'\n', b'\r', newline_after.as_bytes()) {
+        &newline_after[..idx]
+    } else {
+        newline_after
+    };
+    advance_this_line(
+        config,
+        state,
+        comment_str.chars().count(),
+        comment_str.len(),
+    )?;
+    Ok(Some(Comment(comment_str)))
 }
 
 pub fn parse_newline<'a>(config: &Config<'a>, state: &mut State) -> Result<Option<Newline<'a>>> {
     let newline_after = config.get_line_after_column(state.line, state.column_byte)?;
-    if let Some(newline_match) = NEWLINE_RE.with(|r| r.find(newline_after)) {
-        let newline_str = newline_match.as_str();
-        advance_this_line(
-            config,
-            state,
-            newline_str.chars().count(),
-            newline_str.len(),
-        )?;
+    let len = match newline_after.as_bytes() {
+        [b'\n', ..] => 1,
+        [b'\r', b'\n', ..] => 2,
+        [b'\r', ..] => 1,
+        _ => 0,
+    };
+    if len > 0 {
+        let newline_str = &newline_after[..len];
+        advance_this_line(config, state, len, len)?;
         if state.column_byte != config.get_line(state.line)?.len() {
             return Err(WhitespaceError::InternalError(format!(
                 "Found newline at ({}, {}) but it's not EOL",
@@ -376,13 +374,18 @@ pub fn parse_simple_whitespace<'a>(
     state: &mut State,
 ) -> Result<SimpleWhitespace<'a>> {
     let capture_ws = |line, col| -> Result<&'a str> {
-        let x = config.get_line_after_column(line, col);
-        let x = x?;
-        Ok(SIMPLE_WHITESPACE_RE.with(|r| {
-            r.find(x)
-                .expect("SIMPLE_WHITESPACE_RE supports 0-length matches, so it must always match")
-                .as_str()
-        }))
+        let line = config.get_line_after_column(line, col)?;
+        let bytes = line.as_bytes();
+        let mut idx = 0;
+        while idx < bytes.len() {
+            match bytes[idx..] {
+                [b' ' | b'\t' | b'\x0c', ..] => idx += 1,
+                [b'\\', b'\r', b'\n', ..] => idx += 3,
+                [b'\\', b'\r' | b'\n', ..] => idx += 2,
+                _ => break,
+            }
+        }
+        Ok(&line[..idx])
     };
     let start_offset = state.byte_offset;
     let mut prev_line: &str;
@@ -436,7 +439,9 @@ pub fn parse_parenthesized_whitespace<'a>(
 
 #[cfg(test)]
 mod tests {
-    use crate::{tokenize, Config, Result};
+    use crate::{tokenize, Comment, Config, Result, SimpleWhitespace};
+
+    use super::{parse_comment, parse_simple_whitespace};
 
     #[test]
     fn config_mixed_newlines() -> Result<'static, ()> {
@@ -450,6 +455,73 @@ mod tests {
             &["'' % {\n", "'test1': '',\r", "  'test2': '',\r\n", "}"]
         );
 
+        Ok(())
+    }
+
+    fn _parse_simple_whitespace(src: &str) -> Result<SimpleWhitespace> {
+        let tokens = tokenize(src)?;
+        let config = Config::new(src, &tokens);
+        let mut state = Default::default();
+        Ok(parse_simple_whitespace(&config, &mut state)?)
+    }
+
+    #[test]
+    fn simple_whitespace_line_continuations() -> Result<'static, ()> {
+        assert_eq!(
+            _parse_simple_whitespace("  \\\n  # foo")?,
+            SimpleWhitespace("  \\\n  ")
+        );
+
+        assert_eq!(
+            _parse_simple_whitespace("  \\\r  # foo")?,
+            SimpleWhitespace("  \\\r  ")
+        );
+        assert_eq!(
+            _parse_simple_whitespace("  \\\r\n  # foo")?,
+            SimpleWhitespace("  \\\r\n  ")
+        );
+
+        assert_eq!(
+            _parse_simple_whitespace("  \\\r\n\\\n  # foo")?,
+            SimpleWhitespace("  \\\r\n\\\n  ")
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn simple_whitespace_mixed() -> Result<'static, ()> {
+        assert_eq!(
+            _parse_simple_whitespace(" \t\x0clol")?,
+            SimpleWhitespace(" \t\x0c"),
+        );
+
+        Ok(())
+    }
+
+    fn _parse_comment(src: &str) -> Result<Option<Comment>> {
+        let tokens = tokenize(src)?;
+        let config = Config::new(src, &tokens);
+        let mut state = Default::default();
+        Ok(parse_comment(&config, &mut state)?)
+    }
+
+    #[test]
+    fn single_comment() -> Result<'static, ()> {
+        assert_eq!(_parse_comment("# foo\n# bar")?, Some(Comment("# foo")));
+        Ok(())
+    }
+
+    #[test]
+    fn comment_until_eof() -> Result<'static, ()> {
+        assert_eq!(_parse_comment("#")?, Some(Comment("#")));
+        Ok(())
+    }
+
+    #[test]
+    fn no_comment() -> Result<'static, ()> {
+        assert_eq!(_parse_comment("foo")?, None);
+        assert_eq!(_parse_comment("\n")?, None);
         Ok(())
     }
 }
