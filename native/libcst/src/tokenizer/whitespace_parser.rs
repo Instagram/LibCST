@@ -439,7 +439,9 @@ pub fn parse_parenthesized_whitespace<'a>(
 
 #[cfg(test)]
 mod tests {
-    use crate::{tokenize, Config, Result};
+    use crate::{tokenize, Comment, Config, Result, SimpleWhitespace};
+
+    use super::{parse_comment, parse_simple_whitespace};
 
     #[test]
     fn config_mixed_newlines() -> Result<'static, ()> {
@@ -453,6 +455,73 @@ mod tests {
             &["'' % {\n", "'test1': '',\r", "  'test2': '',\r\n", "}"]
         );
 
+        Ok(())
+    }
+
+    fn _parse_simple_whitespace(src: &str) -> Result<SimpleWhitespace> {
+        let tokens = tokenize(src)?;
+        let config = Config::new(src, &tokens);
+        let mut state = Default::default();
+        Ok(parse_simple_whitespace(&config, &mut state)?)
+    }
+
+    #[test]
+    fn simple_whitespace_line_continuations() -> Result<'static, ()> {
+        assert_eq!(
+            _parse_simple_whitespace("  \\\n  # foo")?,
+            SimpleWhitespace("  \\\n  ")
+        );
+
+        assert_eq!(
+            _parse_simple_whitespace("  \\\r  # foo")?,
+            SimpleWhitespace("  \\\r  ")
+        );
+        assert_eq!(
+            _parse_simple_whitespace("  \\\r\n  # foo")?,
+            SimpleWhitespace("  \\\r\n  ")
+        );
+
+        assert_eq!(
+            _parse_simple_whitespace("  \\\r\n\\\n  # foo")?,
+            SimpleWhitespace("  \\\r\n\\\n  ")
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn simple_whitespace_mixed() -> Result<'static, ()> {
+        assert_eq!(
+            _parse_simple_whitespace(" \t\x0clol")?,
+            SimpleWhitespace(" \t\x0c"),
+        );
+
+        Ok(())
+    }
+
+    fn _parse_comment(src: &str) -> Result<Option<Comment>> {
+        let tokens = tokenize(src)?;
+        let config = Config::new(src, &tokens);
+        let mut state = Default::default();
+        Ok(parse_comment(&config, &mut state)?)
+    }
+
+    #[test]
+    fn single_comment() -> Result<'static, ()> {
+        assert_eq!(_parse_comment("# foo\n# bar")?, Some(Comment("# foo")));
+        Ok(())
+    }
+
+    #[test]
+    fn comment_until_eof() -> Result<'static, ()> {
+        assert_eq!(_parse_comment("#")?, Some(Comment("#")));
+        Ok(())
+    }
+
+    #[test]
+    fn no_comment() -> Result<'static, ()> {
+        assert_eq!(_parse_comment("foo")?, None);
+        assert_eq!(_parse_comment("\n")?, None);
         Ok(())
     }
 }
