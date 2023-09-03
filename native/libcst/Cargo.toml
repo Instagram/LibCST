@@ -9,6 +9,12 @@ version = "0.1.0"
 authors = ["LibCST Developers"]
 edition = "2018"
 rust-version = "1.70"
+description = "A Python parser and Concrete Syntax Tree library."
+license-file = "../../LICENSE"
+homepage = "https://github.com/Instagram/LibCST"
+documentation = "https://libcst.rtfd.org"
+keywords = ["python", "cst", "ast"]
+categories = ["parser-implementations"]
 
 [lib]
 name = "libcst_native"
@@ -25,7 +31,7 @@ path = "src/bin.rs"
 # Once https://github.com/PyO3/pyo3/pull/1123 lands, it may be better to use
 # `-Zextra-link-arg` for this instead.
 default = ["py"]
-py = ["pyo3","pyo3/extension-module"]
+py = ["pyo3", "pyo3/extension-module"]
 trace = ["peg/trace"]
 
 [dependencies]
@@ -36,7 +42,7 @@ peg = "0.8.1"
 chic = "1.2.2"
 regex = "1.9.3"
 memchr = "2.5.0"
-libcst_derive = { path = "../libcst_derive" }
+libcst_derive = { path = "../libcst_derive", version = "0.1.0" }
 
 [dev-dependencies]
 criterion = { version = "0.5.1", features = ["html_reports"] }
