@@ -1,0 +1,43 @@
+name: crates_upload
+
+on:
+  release:
+    types: [published]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  upload_release:
+    name: Upload release to crates.io
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v3
+
+      - name: Install stable toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+
+      - name: Publish libcst_derive to crates.io
+        uses: actions-rs/cargo@v1
+        with:
+          command: publish
+          args: >
+            --manifest-path ./native/libcst_derive/Cargo.toml
+            --allow-dirty
+            --locked
+            --token ${{ secrets.CRATES_IO_TOKEN }}
+
+      - name: Publish libsct to crates.io
+        uses: actions-rs/cargo@v1
+        with:
+          command: publish
+          args: >
+            --manifest-path ./native/libcst/Cargo.toml
+            --allow-dirty
+            --locked
+            --token ${{ secrets.CRATES_IO_TOKEN }}
