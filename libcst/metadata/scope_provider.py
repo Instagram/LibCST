@@ -33,6 +33,7 @@ from libcst.metadata.expression_context_provider import (
     ExpressionContext,
     ExpressionContextProvider,
 )
+from libcst.metadata.position_provider import PositionProvider
 
 # Comprehensions are handled separately in _visit_comp_alike due to
 # the complexity of the semantics
@@ -754,6 +755,21 @@ class ComprehensionScope(LocalScope):
         # filter falsey strings out
         return ".".join(filter(None, [self.parent._name_prefix, "<comprehension>"]))
 
+class AnnotationScope(LocalScope):
+    """
+    Scopes used for type aliases and type parameters as defined by PEP-695.
+
+    These scopes are created for type parameters using the special syntax, as well as
+    type aliases. See https://peps.python.org/pep-0695/#scoping-behavior for more.
+    """
+    
+    def _make_name_prefix(self) -> str:
+        # these scopes are transparent for the purposes of qualified names
+        return self.parent._name_prefix
+    
+    def _next_visible_parent(self, first: Optional[Scope] = None) -> "Scope":
+        # ignore _is_visible_from_children explicitly
+        return first if first is not None else self.parent
 
 # Generates dotted names from an Attribute or Name node:
 # Attribute(value=Name(value="a"), attr=Name(value="b")) -> ("a.b", "a")
@@ -820,6 +836,7 @@ class DeferredAccess:
 
 
 class ScopeVisitor(cst.CSTVisitor):
+    METADATA_DEPENDENCIES = (PositionProvider, )
     # since it's probably not useful. That can makes this visitor cleaner.
     def __init__(self, provider: "ScopeProvider") -> None:
         self.provider: ScopeProvider = provider
@@ -1146,6 +1163,8 @@ class ScopeVisitor(cst.CSTVisitor):
                 def_access.enclosing_string_annotation,
             )
             name = ensure_type(access.node, cst.Name).value
+            if name == "Nested":
+                breakpoint()
             if enclosing_attribute is not None:
                 # if _gen_dotted_names doesn't generate any values, fall back to
                 # the original name node above
@@ -1173,6 +1192,27 @@ class ScopeVisitor(cst.CSTVisitor):
         if isinstance(original_node, _ASSIGNMENT_LIKE_NODES):
             self.scope._assignment_count += 1
         super().on_leave(original_node)
+
+    def visit_TypeAlias(self, node: cst.TypeAlias) -> Optional[bool]:
+        self.scope.record_assignment(node.name.value, node)
+        
+        with self._new_scope(AnnotationScope, node, None):
+            if node.type_parameters is not None:
+                node.type_parameters.visit(self)
+            node.value.visit(self)
+        
+        return False
+    
+    def visit_TypeVar(self, node: cst.TypeVar) -> Optional[bool]:
+        self.scope.record_assignment(node.name.value, node)
+        
+        if node.bound is not None:
+            with self._new_scope(AnnotationScope, node, None):
+                node.bound.visit(self)
+
+        return False
+        
+
 
 
 class ScopeProvider(BatchableMetadataProvider[Optional[Scope]]):
