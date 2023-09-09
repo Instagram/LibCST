@@ -436,20 +436,35 @@ class Scope(abc.ABC):
     def _find_assignment_target(self, name: str) -> "Scope":
         return self
 
-    def _find_assignment_target_parent(self, name: str) -> "Scope":
-        return self
-
     def record_access(self, name: str, access: Access) -> None:
         self._accesses_by_name[name].add(access)
         self._accesses_by_node[access.node].add(access)
 
-    def _getitem_from_self_or_parent(self, name: str) -> Set[BaseAssignment]:
-        """Overridden by ClassScope to hide it's assignments from child scopes."""
-        return self[name]
+    def _is_visible_from_children(self) -> bool:
+        """Returns if the assignments in this scope can be accessed from children.
+        
+        This is normally True, except for class scopes::
 
-    def _contains_in_self_or_parent(self, name: str) -> bool:
-        """Overridden by ClassScope to hide it's assignments from child scopes."""
-        return name in self
+            def outer_fn():
+                v = ...  # outer_fn's declaration
+                class InnerCls:
+                    v = ...  # shadows outer_fn's declaration
+                    class InnerInnerCls:
+                        v = ...  # shadows all previous declarations of v
+                        def inner_fn():
+                            nonlocal v
+                            v = ...  # this refers to outer_fn's declaration
+                                     # and not to any of the inner classes' as those are
+                                     # hidden from their children.
+        """
+        return True
+    
+    def _next_visible_parent(self, first: Optional["Scope"] = None) -> "Scope":
+        parent = first if first is not None else self.parent
+        while not parent._is_visible_from_children():
+            parent = parent.parent
+        return parent
+
 
     @abc.abstractmethod
     def __contains__(self, name: str) -> bool:
@@ -630,13 +645,14 @@ class GlobalScope(Scope):
     def __contains__(self, name: str) -> bool:
         if name in self._assignments:
             return len(self._assignments[name]) > 0
-        return self.parent._contains_in_self_or_parent(name)
+        return name in self._next_visible_parent()
 
     def __getitem__(self, name: str) -> Set[BaseAssignment]:
         if name in self._assignments:
             return self._assignments[name]
-        else:
-            return self.parent._getitem_from_self_or_parent(name)
+        
+        parent = self._next_visible_parent()
+        return parent[name]
 
     def record_global_overwrite(self, name: str) -> None:
         pass
@@ -672,7 +688,8 @@ class LocalScope(Scope, abc.ABC):
 
     def _find_assignment_target(self, name: str) -> "Scope":
         if name in self._scope_overwrites:
-            return self._scope_overwrites[name]._find_assignment_target_parent(name)
+            scope = self._scope_overwrites[name]
+            return self._next_visible_parent(scope)._find_assignment_target(name)
         else:
             return super()._find_assignment_target(name)
 
@@ -681,15 +698,16 @@ class LocalScope(Scope, abc.ABC):
             return name in self._scope_overwrites[name]
         if name in self._assignments:
             return len(self._assignments[name]) > 0
-        return self.parent._contains_in_self_or_parent(name)
+        return name in self._next_visible_parent()
 
     def __getitem__(self, name: str) -> Set[BaseAssignment]:
         if name in self._scope_overwrites:
-            return self._scope_overwrites[name]._getitem_from_self_or_parent(name)
+            scope = self._scope_overwrites[name]
+            return self._next_visible_parent(scope)[name]
         if name in self._assignments:
             return self._assignments[name]
         else:
-            return self.parent._getitem_from_self_or_parent(name)
+            return self._next_visible_parent()[name]
 
     def _make_name_prefix(self) -> str:
         # filter falsey strings out
@@ -711,35 +729,8 @@ class ClassScope(LocalScope):
     When a class is defined, it creates a ClassScope.
     """
 
-    def _find_assignment_target_parent(self, name: str) -> "Scope":
-        """
-        Forward the assignment to parent.
-
-            def outer_fn():
-                v = ...  # outer_fn's declaration
-                class InnerCls:
-                    v = ...  # shadows outer_fn's declaration
-                    def inner_fn():
-                        nonlocal v
-                        v = ...  # this should actually refer to outer_fn's declaration
-                                 # and not to InnerCls's, because InnerCls's scope is
-                                 # hidden from its children.
-
-        """
-        return self.parent._find_assignment_target_parent(name)
-
-    def _getitem_from_self_or_parent(self, name: str) -> Set[BaseAssignment]:
-        """
-        Class variables are only accessible using ClassName.attribute, cls.attribute, or
-        self.attribute in child scopes. They cannot be accessed with their bare names.
-        """
-        return self.parent._getitem_from_self_or_parent(name)
-
-    def _contains_in_self_or_parent(self, name: str) -> bool:
-        """
-        See :meth:`_getitem_from_self_or_parent`
-        """
-        return self.parent._contains_in_self_or_parent(name)
+    def _is_visible_from_children(self) -> bool:
+        return False
 
     def _make_name_prefix(self) -> str:
         # filter falsey strings out
