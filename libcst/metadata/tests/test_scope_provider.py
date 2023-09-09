@@ -27,6 +27,7 @@ from libcst.metadata.scope_provider import (
     QualifiedNameSource,
     Scope,
     ScopeProvider,
+    AnnotationScope,
 )
 from libcst.testing.utils import data_provider, UnitTest
 
@@ -1982,3 +1983,28 @@ class ScopeProviderTest(UnitTest):
             scope.get_qualified_names_for(cst.Name("something_else")),
             set(),
         )
+
+    def test_annotation_refers_to_nested_class(self) -> None:
+        m, scopes = get_scope_metadata_provider(
+            """
+                class Outer:
+                    class Nested:
+                        pass
+                    
+                    type Alias = Nested
+
+                    def meth1[T: Nested](self): pass
+                    def meth2[T](self, arg: Nested): pass
+            """
+        )
+        outer = ensure_type(m.body[0], cst.ClassDef)
+        nested = ensure_type(outer.body.body[0], cst.ClassDef)
+        alias = ensure_type(ensure_type(outer.body.body[1], cst.SimpleStatementLine).body[0], cst.TypeAlias)
+        self.assertIsInstance(scopes[alias.value], AnnotationScope)
+        nested_refs_within_alias = list(scopes[alias.value].accesses["Nested"])
+        self.assertEqual(len(nested_refs_within_alias), 1)
+        self.assertEqual(nested_refs_within_alias[0].referents, {nested.name})
+
+        meth1 = ensure_type(outer.body.body[2], cst.FunctionDef)
+        meth1_scope = scopes[meth1]
+        self.assertIsInstance(meth1_scope, AnnotationScope)
