@@ -7,7 +7,7 @@
 import abc
 import builtins
 from collections import defaultdict
-from contextlib import contextmanager
+from contextlib import contextmanager, ExitStack
 from dataclasses import dataclass
 from enum import auto, Enum
 from typing import (
@@ -33,6 +33,7 @@ from libcst.metadata.expression_context_provider import (
     ExpressionContext,
     ExpressionContextProvider,
 )
+from libcst.metadata.position_provider import PositionProvider
 
 # Comprehensions are handled separately in _visit_comp_alike due to
 # the complexity of the semantics
@@ -51,6 +52,10 @@ _ASSIGNMENT_LIKE_NODES = (
     cst.Nonlocal,
     cst.Parameters,
     cst.WithItem,
+    cst.TypeVar,
+    cst.TypeAlias,
+    cst.TypeVarTuple,
+    cst.ParamSpec,
 )
 
 
@@ -755,6 +760,23 @@ class ComprehensionScope(LocalScope):
         return ".".join(filter(None, [self.parent._name_prefix, "<comprehension>"]))
 
 
+class AnnotationScope(LocalScope):
+    """
+    Scopes used for type aliases and type parameters as defined by PEP-695.
+
+    These scopes are created for type parameters using the special syntax, as well as
+    type aliases. See https://peps.python.org/pep-0695/#scoping-behavior for more.
+    """
+
+    def _make_name_prefix(self) -> str:
+        # these scopes are transparent for the purposes of qualified names
+        return self.parent._name_prefix
+
+    def _next_visible_parent(self, first: Optional[Scope] = None) -> "Scope":
+        # ignore _is_visible_from_children explicitly
+        return first if first is not None else self.parent
+
+
 # Generates dotted names from an Attribute or Name node:
 # Attribute(value=Name(value="a"), attr=Name(value="b")) -> ("a.b", "a")
 # each string has the corresponding CSTNode attached to it
@@ -822,6 +844,7 @@ class DeferredAccess:
 class ScopeVisitor(cst.CSTVisitor):
     # since it's probably not useful. That can makes this visitor cleaner.
     def __init__(self, provider: "ScopeProvider") -> None:
+        super().__init__()
         self.provider: ScopeProvider = provider
         self.scope: Scope = GlobalScope()
         self.__deferred_accesses: List[DeferredAccess] = []
@@ -992,15 +1015,22 @@ class ScopeVisitor(cst.CSTVisitor):
         self.scope.record_assignment(node.name.value, node)
         self.provider.set_metadata(node.name, self.scope)
 
-        with self._new_scope(FunctionScope, node, get_full_name_for_node(node.name)):
-            node.params.visit(self)
-            node.body.visit(self)
+        with ExitStack() as stack:
+            if node.type_parameters:
+                stack.enter_context(self._new_scope(AnnotationScope, node, None))
+                node.type_parameters.visit(self)
 
-        for decorator in node.decorators:
-            decorator.visit(self)
-        returns = node.returns
-        if returns:
-            returns.visit(self)
+            with self._new_scope(
+                FunctionScope, node, get_full_name_for_node(node.name)
+            ):
+                node.params.visit(self)
+                node.body.visit(self)
+
+            for decorator in node.decorators:
+                decorator.visit(self)
+            returns = node.returns
+            if returns:
+                returns.visit(self)
 
         return False
 
@@ -1032,14 +1062,20 @@ class ScopeVisitor(cst.CSTVisitor):
         self.provider.set_metadata(node.name, self.scope)
         for decorator in node.decorators:
             decorator.visit(self)
-        for base in node.bases:
-            base.visit(self)
-        for keyword in node.keywords:
-            keyword.visit(self)
 
-        with self._new_scope(ClassScope, node, get_full_name_for_node(node.name)):
-            for statement in node.body.body:
-                statement.visit(self)
+        with ExitStack() as stack:
+            if node.type_parameters:
+                stack.enter_context(self._new_scope(AnnotationScope, node, None))
+                node.type_parameters.visit(self)
+
+            for base in node.bases:
+                base.visit(self)
+            for keyword in node.keywords:
+                keyword.visit(self)
+
+            with self._new_scope(ClassScope, node, get_full_name_for_node(node.name)):
+                for statement in node.body.body:
+                    statement.visit(self)
         return False
 
     def visit_ClassDef_bases(self, node: cst.ClassDef) -> None:
@@ -1173,6 +1209,32 @@ class ScopeVisitor(cst.CSTVisitor):
         if isinstance(original_node, _ASSIGNMENT_LIKE_NODES):
             self.scope._assignment_count += 1
         super().on_leave(original_node)
+
+    def visit_TypeAlias(self, node: cst.TypeAlias) -> Optional[bool]:
+        self.scope.record_assignment(node.name.value, node)
+
+        with self._new_scope(AnnotationScope, node, None):
+            if node.type_parameters is not None:
+                node.type_parameters.visit(self)
+            node.value.visit(self)
+
+        return False
+
+    def visit_TypeVar(self, node: cst.TypeVar) -> Optional[bool]:
+        self.scope.record_assignment(node.name.value, node)
+
+        if node.bound is not None:
+            node.bound.visit(self)
+
+        return False
+
+    def visit_TypeVarTuple(self, node: cst.TypeVarTuple) -> Optional[bool]:
+        self.scope.record_assignment(node.name.value, node)
+        return False
+
+    def visit_ParamSpec(self, node: cst.ParamSpec) -> Optional[bool]:
+        self.scope.record_assignment(node.name.value, node)
+        return False
 
 
 class ScopeProvider(BatchableMetadataProvider[Optional[Scope]]):

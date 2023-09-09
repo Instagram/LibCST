@@ -3,12 +3,12 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 #
-from typing import Type
+from typing import Type, TypeVar
 
-from libcst._types import CSTNodeT
+T = TypeVar("T")
 
 
-def ensure_type(node: object, nodetype: Type[CSTNodeT]) -> CSTNodeT:
+def ensure_type(node: object, nodetype: Type[T]) -> T:
     """
     Takes any python object, and a LibCST :class:`~libcst.CSTNode` subclass and
     refines the type of the python object. This is most useful when you already
