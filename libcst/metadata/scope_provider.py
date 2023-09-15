@@ -362,12 +362,16 @@ class _NameUtil:
             return node.value
         elif isinstance(node, str):
             return node
+        elif isinstance(node, cst.Attribute):
+            return f"{_NameUtil.get_name_for(node.value)}.{node.attr.value}"
         elif isinstance(node, cst.Call):
             return _NameUtil.get_name_for(node.func)
         elif isinstance(node, cst.Subscript):
             return _NameUtil.get_name_for(node.value)
         elif isinstance(node, (cst.FunctionDef, cst.ClassDef)):
             return _NameUtil.get_name_for(node.name)
+        elif isinstance(node, cst.Decorator):
+            return get_full_name_for_node(node.decorator)
         return None
 
 
