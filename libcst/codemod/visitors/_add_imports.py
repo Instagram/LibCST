@@ -282,17 +282,30 @@ class AddImportsVisitor(ContextAwareTransformer):
         # we have yet to modify the number of statements. So we can match on the
         # original tree but break up the statements of the modified tree. If we
         # change this assumption in this visitor, we will have to change this code.
-        for i, statement in enumerate(orig_module.body):
-            if i == 0 and m.matches(
-                statement, m.SimpleStatementLine(body=[m.Expr(value=m.SimpleString())])
+
+        # Finds the location to add imports. It is the end of the first import block that occurs before any other statement (save for docstrings)
+
+        # Does it have a docstring at start?
+        if m.matches(
+            orig_module,
+            m.Module(
+                body=[
+                    m.SimpleStatementLine(body=[m.Expr(value=m.SimpleString())]),
+                    m.ZeroOrMore(),
+                ]
+            ),
+        ):
+            statement_before_import_location = import_add_location = 1
+
+        for i, statement in enumerate(
+            orig_module.body[statement_before_import_location:]
+        ):
+            if m.matches(
+                statement, m.SimpleStatementLine(body=[m.ImportFrom() | m.Import()])
             ):
-                statement_before_import_location = import_add_location = 1
-            elif isinstance(statement, libcst.SimpleStatementLine):
-                for possible_import in statement.body:
-                    for last_import in self.all_imports:
-                        if possible_import is last_import:
-                            import_add_location = i + 1
-                            break
+                import_add_location = i + statement_before_import_location + 1
+            else:
+                break
 
         return (
             list(updated_module.body[:statement_before_import_location]),

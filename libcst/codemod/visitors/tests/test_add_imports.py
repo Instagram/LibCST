@@ -923,3 +923,54 @@ class TestAddImportsCodemod(CodemodTest):
                 full_module_name="a.b.foobar", full_package_name="a.b"
             ),
         )
+
+    def test_add_at_first_block(self) -> None:
+        """
+        Should add the import only at the end of the first import block.
+        """
+
+        before = """
+            import a
+            import b
+
+            e()
+
+            import c
+            import d
+        """
+
+        after = """
+            import a
+            import b
+            import e
+
+            e()
+
+            import c
+            import d
+        """
+
+        self.assertCodemod(before, after, [ImportItem("e", None, None)])
+
+    def test_add_no_import_block_before_statement(self) -> None:
+        """
+        Should add the import before the call.
+        """
+
+        before = """
+            '''docstring'''
+            e()
+            import a
+            import b
+        """
+
+        after = """
+            '''docstring'''
+            import c
+
+            e()
+            import a
+            import b
+        """
+
+        self.assertCodemod(before, after, [ImportItem("c", None, None)])
