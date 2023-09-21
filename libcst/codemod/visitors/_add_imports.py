@@ -8,11 +8,112 @@ from typing import Dict, List, Optional, Sequence, Set, Tuple, Union
 
 import libcst
 from libcst import matchers as m, parse_statement
+from libcst._nodes.statement import Import, ImportFrom, SimpleStatementLine
 from libcst.codemod._context import CodemodContext
-from libcst.codemod._visitor import ContextAwareTransformer
-from libcst.codemod.visitors._gather_imports import GatherImportsVisitor
+from libcst.codemod._visitor import ContextAwareTransformer, ContextAwareVisitor
 from libcst.codemod.visitors._imports import ImportItem
 from libcst.helpers import get_absolute_module_from_package_for_import
+from libcst.helpers.common import ensure_type
+
+
+class _GatherTopImportsBeforeStatements(ContextAwareVisitor):
+    """
+    Works similarly to GatherImportsVisitor, but only considers imports
+    declared before any other statements of the module with the exception
+    of docstrings and __strict__ flag.
+    """
+
+    def __init__(self, context: CodemodContext) -> None:
+        super().__init__(context)
+        # Track the available imports in this transform
+        self.module_imports: Set[str] = set()
+        self.object_mapping: Dict[str, Set[str]] = {}
+        # Track the aliased imports in this transform
+        self.module_aliases: Dict[str, str] = {}
+        self.alias_mapping: Dict[str, List[Tuple[str, str]]] = {}
+        # Track all of the imports found in this transform
+        self.all_imports: Set[Union[libcst.Import, libcst.ImportFrom]] = set()
+        # Track the import for every symbol introduced into the module
+        self.symbol_mapping: Dict[str, ImportItem] = {}
+
+    def leave_Module(self, original_node: libcst.Module) -> None:
+        start = 1 if _skip_first(original_node) else 0
+        for stmt in original_node.body[start:]:
+            if m.matches(
+                stmt,
+                m.SimpleStatementLine(body=[m.ImportFrom() | m.Import()]),
+            ):
+                stmt = ensure_type(stmt, SimpleStatementLine)
+                imp = ensure_type(stmt.body[0], Union[ImportFrom, Import])
+                self.all_imports.add(imp)
+            else:
+                break
+        for imp in self.all_imports:
+            if m.matches(imp, m.Import()):
+                imp = ensure_type(imp, Import)
+                self.handle_Import(imp)
+            else:
+                imp = ensure_type(imp, ImportFrom)
+                self.handle_ImportFrom(imp)
+
+    def handle_Import(self, node: libcst.Import) -> None:
+        for name in node.names:
+            alias = name.evaluated_alias
+            imp = ImportItem(name.evaluated_name, alias=alias)
+            if alias is not None:
+                # Track this as an aliased module
+                self.module_aliases[name.evaluated_name] = alias
+                self.symbol_mapping[alias] = imp
+            else:
+                # Get the module we're importing as a string.
+                self.module_imports.add(name.evaluated_name)
+                self.symbol_mapping[name.evaluated_name] = imp
+
+    def handle_ImportFrom(self, node: libcst.ImportFrom) -> None:
+        # Get the module we're importing as a string.
+        module = get_absolute_module_from_package_for_import(
+            self.context.full_package_name, node
+        )
+        if module is None:
+            # Can't get the absolute import from relative, so we can't
+            # support this.
+            return
+        nodenames = node.names
+        if isinstance(nodenames, libcst.ImportStar):
+            # We cover everything, no need to bother tracking other things
+            self.object_mapping[module] = set("*")
+            return
+        elif isinstance(nodenames, Sequence):
+            # Get the list of imports we're aliasing in this import
+            new_aliases = [
+                (ia.evaluated_name, ia.evaluated_alias)
+                for ia in nodenames
+                if ia.asname is not None
+            ]
+            if new_aliases:
+                if module not in self.alias_mapping:
+                    self.alias_mapping[module] = []
+                # pyre-ignore We know that aliases are not None here.
+                self.alias_mapping[module].extend(new_aliases)
+
+            # Get the list of imports we're importing in this import
+            new_objects = {ia.evaluated_name for ia in nodenames if ia.asname is None}
+            if new_objects:
+                if module not in self.object_mapping:
+                    self.object_mapping[module] = set()
+
+                # Make sure that we don't add to a '*' module
+                if "*" in self.object_mapping[module]:
+                    self.object_mapping[module] = set("*")
+                    return
+
+                self.object_mapping[module].update(new_objects)
+            for ia in nodenames:
+                imp = ImportItem(
+                    module, obj_name=ia.evaluated_name, alias=ia.evaluated_alias
+                )
+                key = ia.evaluated_alias or ia.evaluated_name
+                self.symbol_mapping[key] = imp
 
 
 class AddImportsVisitor(ContextAwareTransformer):
@@ -169,12 +270,12 @@ class AddImportsVisitor(ContextAwareTransformer):
             for module in sorted(from_imports_aliases)
         }
 
-        # Track the list of imports found in the file
-        self.all_imports: List[Union[libcst.Import, libcst.ImportFrom]] = []
+        # Track the list of imports found at the top of the file
+        self.all_imports: Set[Union[libcst.Import, libcst.ImportFrom]] = set()
 
     def visit_Module(self, node: libcst.Module) -> None:
-        # Do a preliminary pass to gather the imports we already have
-        gatherer = GatherImportsVisitor(self.context)
+        # Do a preliminary pass to gather the imports we already have at the top
+        gatherer = _GatherTopImportsBeforeStatements(self.context)
         node.visit(gatherer)
         self.all_imports = gatherer.all_imports
 
@@ -211,6 +312,10 @@ class AddImportsVisitor(ContextAwareTransformer):
     ) -> libcst.ImportFrom:
         if isinstance(updated_node.names, libcst.ImportStar):
             # There's nothing to do here!
+            return updated_node
+
+        # Ensure this is on of the imports at the top
+        if original_node not in self.all_imports:
             return updated_node
 
         # Get the module we're importing as a string, see if we have work to do.
@@ -260,24 +365,6 @@ class AddImportsVisitor(ContextAwareTransformer):
         statement_before_import_location = 0
         import_add_location = 0
 
-        # never insert an import before initial __strict__ flag
-        if m.matches(
-            orig_module,
-            m.Module(
-                body=[
-                    m.SimpleStatementLine(
-                        body=[
-                            m.Assign(
-                                targets=[m.AssignTarget(target=m.Name("__strict__"))]
-                            )
-                        ]
-                    ),
-                    m.ZeroOrMore(),
-                ]
-            ),
-        ):
-            statement_before_import_location = import_add_location = 1
-
         # This works under the principle that while we might modify node contents,
         # we have yet to modify the number of statements. So we can match on the
         # original tree but break up the statements of the modified tree. If we
@@ -285,16 +372,8 @@ class AddImportsVisitor(ContextAwareTransformer):
 
         # Finds the location to add imports. It is the end of the first import block that occurs before any other statement (save for docstrings)
 
-        # Does it have a docstring at start?
-        if m.matches(
-            orig_module,
-            m.Module(
-                body=[
-                    m.SimpleStatementLine(body=[m.Expr(value=m.SimpleString())]),
-                    m.ZeroOrMore(),
-                ]
-            ),
-        ):
+        # Never insert an import before initial __strict__ flag or docstring
+        if _skip_first(orig_module):
             statement_before_import_location = import_add_location = 1
 
         for i, statement in enumerate(
@@ -427,3 +506,28 @@ class AddImportsVisitor(ContextAwareTransformer):
                 *statements_after_imports,
             )
         )
+
+
+def _skip_first(orig_module: libcst.Module) -> bool:
+    # Is there a __strict__ flag or docstring at the top?
+    if m.matches(
+        orig_module,
+        m.Module(
+            body=[
+                m.SimpleStatementLine(
+                    body=[
+                        m.Assign(targets=[m.AssignTarget(target=m.Name("__strict__"))])
+                    ]
+                ),
+                m.ZeroOrMore(),
+            ]
+        )
+        | m.Module(
+            body=[
+                m.SimpleStatementLine(body=[m.Expr(value=m.SimpleString())]),
+                m.ZeroOrMore(),
+            ]
+        ),
+    ):
+        return True
+    return False
