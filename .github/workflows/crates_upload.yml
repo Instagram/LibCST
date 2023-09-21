@@ -13,6 +13,12 @@ jobs:
   upload_release:
     name: Upload release to crates.io
     runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        package:
+          - libcst_derive
+          - libcst
     steps:
       - name: Checkout sources
         uses: actions/checkout@v3
@@ -22,22 +28,46 @@ jobs:
         with:
           toolchain: stable
 
-      - name: Publish libcst_derive to crates.io
+      - name: Get version from Cargo.toml
+        id: get_cargo_version
+        run: >
+          echo
+          "CARGO_VERSION=$(grep -oP '(?<=^version = ").*(?="$)'
+          ./native/${{ matrix.package }}/Cargo.toml)"
+          >> $GITHUB_ENV
+
+      - name: Get version from Git tag
+        id: get_git_version
+        run: >
+          echo
+          "GIT_VERSION=$(git describe --tags --abbrev=0 | tail -c +2)"
+          >> $GITHUB_ENV
+
+      - name: Replace version
+        id: replace_version
+        run: >
+          sed -i "s/${CARGO_VERSION}/${GIT_VERSION}/g"
+          ./native/${{ matrix.package }}/Cargo.toml
+
+      - name: Dry run publish ${{ matrix.package }}
+        if: github.event_name == 'push'
         uses: actions-rs/cargo@v1
         with:
           command: publish
           args: >
-            --manifest-path ./native/libcst_derive/Cargo.toml
+            --manifest-path ./native/${{ matrix.package }}/Cargo.toml
             --allow-dirty
             --locked
+            --dry-run
             --token ${{ secrets.CRATES_IO_TOKEN }}
 
-      - name: Publish libsct to crates.io
+      - name: Publish ${{ matrix.package }} to crates.io
+        if: github.event_name == 'release'
         uses: actions-rs/cargo@v1
         with:
           command: publish
           args: >
-            --manifest-path ./native/libcst/Cargo.toml
+            --manifest-path ./native/${{ matrix.package }}/Cargo.toml
             --allow-dirty
             --locked
             --token ${{ secrets.CRATES_IO_TOKEN }}
