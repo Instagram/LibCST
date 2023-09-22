@@ -974,3 +974,55 @@ class TestAddImportsCodemod(CodemodTest):
         """
 
         self.assertCodemod(before, after, [ImportItem("c", None, None)])
+
+    def test_do_not_add_existing(self) -> None:
+        """
+        Should not add the new object import at existing import since it's not at the top
+        """
+
+        before = """
+            '''docstring'''
+            e()
+            import a
+            import b
+            from c import f
+        """
+
+        after = """
+            '''docstring'''
+            from c import e
+
+            e()
+            import a
+            import b
+            from c import f
+        """
+
+        self.assertCodemod(before, after, [ImportItem("c", "e", None)])
+
+    def test_add_existing_at_top(self) -> None:
+        """
+        Should add new import at exisitng from import at top
+        """
+
+        before = """
+            '''docstring'''
+            from c import d
+            e()
+            import a
+            import b
+            from c import f
+        """
+
+        after = """
+            '''docstring'''
+            from c import e, x, d
+            e()
+            import a
+            import b
+            from c import f
+        """
+
+        self.assertCodemod(
+            before, after, [ImportItem("c", "x", None), ImportItem("c", "e", None)]
+        )
