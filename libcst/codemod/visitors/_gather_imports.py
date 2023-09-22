@@ -67,7 +67,9 @@ class GatherImportsVisitor(ContextAwareVisitor):
     def visit_Import(self, node: libcst.Import) -> None:
         # Track this import statement for later analysis.
         self.all_imports.append(node)
+        self._handle_Import(node)
 
+    def _handle_Import(self, node: libcst.Import) -> None:
         for name in node.names:
             alias = name.evaluated_alias
             imp = ImportItem(name.evaluated_name, alias=alias)
@@ -83,7 +85,9 @@ class GatherImportsVisitor(ContextAwareVisitor):
     def visit_ImportFrom(self, node: libcst.ImportFrom) -> None:
         # Track this import statement for later analysis.
         self.all_imports.append(node)
+        self._handle_ImportFrom(node)
 
+    def _handle_ImportFrom(self, node: libcst.ImportFrom) -> None:
         # Get the module we're importing as a string.
         module = get_absolute_module_from_package_for_import(
             self.context.full_package_name, node
