@@ -19,9 +19,19 @@ jobs:
         package:
           - libcst_derive
           - libcst
+
     steps:
       - name: Checkout sources
         uses: actions/checkout@v3
+
+      - name: Cache Cargo registry
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Install stable toolchain
         uses: actions-rs/toolchain@v1
@@ -29,24 +39,21 @@ jobs:
           toolchain: stable
 
       - name: Get version from Cargo.toml
-        id: get_cargo_version
         run: >
           echo
-          "CARGO_VERSION=$(grep -oP '(?<=^version = ").*(?="$)'
+          "CARGO_VERSION=$(grep -oP '(?<=^version = ")[^"]*'
           ./native/${{ matrix.package }}/Cargo.toml)"
           >> $GITHUB_ENV
 
       - name: Get version from Git tag
-        id: get_git_version
         run: >
           echo
           "GIT_VERSION=$(git describe --tags --abbrev=0 | tail -c +2)"
           >> $GITHUB_ENV
 
       - name: Replace version
-        id: replace_version
         run: >
-          sed -i "s/${CARGO_VERSION}/${GIT_VERSION}/g"
+          sed -i "0,/${CARGO_VERSION}/s//${GIT_VERSION}/"
           ./native/${{ matrix.package }}/Cargo.toml
 
       - name: Dry run publish ${{ matrix.package }}
@@ -57,7 +64,6 @@ jobs:
           args: >
             --manifest-path ./native/${{ matrix.package }}/Cargo.toml
             --allow-dirty
-            --locked
             --dry-run
             --token ${{ secrets.CRATES_IO_TOKEN }}
 
