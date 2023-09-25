@@ -11,18 +11,23 @@ from libcst import matchers as m, parse_statement
 from libcst._nodes.statement import Import, ImportFrom, SimpleStatementLine
 from libcst.codemod._context import CodemodContext
 from libcst.codemod._visitor import ContextAwareTransformer
-from libcst.codemod.visitors._gather_imports import GatherImportsVisitor
+from libcst.codemod.visitors._gather_imports import _GatherImportsMixin
 from libcst.codemod.visitors._imports import ImportItem
 from libcst.helpers import get_absolute_module_from_package_for_import
 from libcst.helpers.common import ensure_type
 
 
-class _GatherTopImportsBeforeStatements(GatherImportsVisitor):
+class _GatherTopImportsBeforeStatements(_GatherImportsMixin):
     """
     Works similarly to GatherImportsVisitor, but only considers imports
     declared before any other statements of the module with the exception
     of docstrings and __strict__ flag.
     """
+
+    def __init__(self, context: CodemodContext) -> None:
+        super().__init__(context)
+        # Track all of the imports found in this transform
+        self.all_imports: List[Union[libcst.Import, libcst.ImportFrom]] = []
 
     def leave_Module(self, original_node: libcst.Module) -> None:
         start = 1 if _skip_first(original_node) else 0
@@ -32,8 +37,13 @@ class _GatherTopImportsBeforeStatements(GatherImportsVisitor):
                 m.SimpleStatementLine(body=[m.ImportFrom() | m.Import()]),
             ):
                 stmt = ensure_type(stmt, SimpleStatementLine)
-                imp = ensure_type(stmt.body[0], Union[ImportFrom, Import])
-                self.all_imports.append(imp)
+                # Workaround for python 3.8 and 3.9, won't accept Union for isinstance
+                if m.matches(stmt.body[0], m.ImportFrom()):
+                    imp = ensure_type(stmt.body[0], ImportFrom)
+                    self.all_imports.append(imp)
+                if m.matches(stmt.body[0], m.Import()):
+                    imp = ensure_type(stmt.body[0], Import)
+                    self.all_imports.append(imp)
             else:
                 break
         for imp in self.all_imports:
@@ -43,12 +53,6 @@ class _GatherTopImportsBeforeStatements(GatherImportsVisitor):
             else:
                 imp = ensure_type(imp, ImportFrom)
                 self._handle_ImportFrom(imp)
-
-    def visit_ImportFrom(self, node: libcst.ImportFrom) -> None:
-        pass
-
-    def visit_Import(self, node: libcst.Import) -> None:
-        pass
 
 
 class AddImportsVisitor(ContextAwareTransformer):
@@ -206,13 +210,13 @@ class AddImportsVisitor(ContextAwareTransformer):
         }
 
         # Track the list of imports found at the top of the file
-        self.all_imports: Set[Union[libcst.Import, libcst.ImportFrom]] = set()
+        self.all_imports: List[Union[libcst.Import, libcst.ImportFrom]] = []
 
     def visit_Module(self, node: libcst.Module) -> None:
         # Do a preliminary pass to gather the imports we already have at the top
         gatherer = _GatherTopImportsBeforeStatements(self.context)
         node.visit(gatherer)
-        self.all_imports = set(gatherer.all_imports)
+        self.all_imports = gatherer.all_imports
 
         self.module_imports = self.module_imports - gatherer.module_imports
         for module, alias in gatherer.module_aliases.items():
@@ -249,7 +253,7 @@ class AddImportsVisitor(ContextAwareTransformer):
             # There's nothing to do here!
             return updated_node
 
-        # Ensure this is on of the imports at the top
+        # Ensure this is one of the imports at the top
         if original_node not in self.all_imports:
             return updated_node
 
