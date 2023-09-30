@@ -7,13 +7,15 @@
 import sys
 from textwrap import dedent
 from typing import cast, Mapping, Sequence, Tuple
-from unittest import mock
+from unittest import mock, skipUnless
 
 import libcst as cst
 from libcst import ensure_type
+from libcst._parser.entrypoints import is_native
 from libcst.metadata import MetadataWrapper
 from libcst.metadata.scope_provider import (
     _gen_dotted_names,
+    AnnotationScope,
     Assignment,
     BuiltinAssignment,
     BuiltinScope,
@@ -1982,3 +1984,221 @@ class ScopeProviderTest(UnitTest):
             scope.get_qualified_names_for(cst.Name("something_else")),
             set(),
         )
+
+    @skipUnless(is_native(), "type aliases are only supported in the native parser")
+    def test_type_alias_scope(self) -> None:
+        m, scopes = get_scope_metadata_provider(
+            """
+                type A = C
+                lol: A
+            """
+        )
+        alias = ensure_type(
+            ensure_type(m.body[0], cst.SimpleStatementLine).body[0], cst.TypeAlias
+        )
+        self.assertIsInstance(scopes[alias], GlobalScope)
+        a_assignments = list(scopes[alias]["A"])
+        self.assertEqual(len(a_assignments), 1)
+        lol = ensure_type(
+            ensure_type(m.body[1], cst.SimpleStatementLine).body[0], cst.AnnAssign
+        )
+        self.assertEqual(len(a_references := list(a_assignments[0].references)), 1)
+        self.assertEqual(a_references[0].node, lol.annotation.annotation)
+
+        self.assertIsInstance(scopes[alias.value], AnnotationScope)
+
+    @skipUnless(is_native(), "type aliases are only supported in the native parser")
+    def test_type_alias_param(self) -> None:
+        m, scopes = get_scope_metadata_provider(
+            """
+                B = int
+                type A[T: B] = T
+                lol: T
+            """
+        )
+        alias = ensure_type(
+            ensure_type(m.body[1], cst.SimpleStatementLine).body[0], cst.TypeAlias
+        )
+        assert alias.type_parameters
+        param_scope = scopes[alias.type_parameters]
+        self.assertEqual(len(t_assignments := list(param_scope["T"])), 1)
+        self.assertEqual(len(t_refs := list(t_assignments[0].references)), 1)
+        self.assertEqual(t_refs[0].node, alias.value)
+
+        b = (
+            ensure_type(
+                ensure_type(m.body[0], cst.SimpleStatementLine).body[0], cst.Assign
+            )
+            .targets[0]
+            .target
+        )
+        b_assignment = list(scopes[b]["B"])[0]
+        self.assertEqual(
+            {ref.node for ref in b_assignment.references},
+            {ensure_type(alias.type_parameters.params[0].param, cst.TypeVar).bound},
+        )
+
+    @skipUnless(is_native(), "type aliases are only supported in the native parser")
+    def test_type_alias_tuple_and_paramspec(self) -> None:
+        m, scopes = get_scope_metadata_provider(
+            """
+            type A[*T] = T
+            lol: T
+            type A[**T] = T
+            lol: T
+            """
+        )
+        alias_tuple = ensure_type(
+            ensure_type(m.body[0], cst.SimpleStatementLine).body[0], cst.TypeAlias
+        )
+        assert alias_tuple.type_parameters
+        param_scope = scopes[alias_tuple.type_parameters]
+        self.assertEqual(len(t_assignments := list(param_scope["T"])), 1)
+        self.assertEqual(len(t_refs := list(t_assignments[0].references)), 1)
+        self.assertEqual(t_refs[0].node, alias_tuple.value)
+
+        alias_paramspec = ensure_type(
+            ensure_type(m.body[2], cst.SimpleStatementLine).body[0], cst.TypeAlias
+        )
+        assert alias_paramspec.type_parameters
+        param_scope = scopes[alias_paramspec.type_parameters]
+        self.assertEqual(len(t_assignments := list(param_scope["T"])), 1)
+        self.assertEqual(len(t_refs := list(t_assignments[0].references)), 1)
+        self.assertEqual(t_refs[0].node, alias_paramspec.value)
+
+    @skipUnless(is_native(), "type aliases are only supported in the native parser")
+    def test_class_type_params(self) -> None:
+        m, scopes = get_scope_metadata_provider(
+            """
+            class W[T]:
+                def f() -> T: pass
+                def g[T]() -> T: pass
+            """
+        )
+        cls = ensure_type(m.body[0], cst.ClassDef)
+        cls_scope = scopes[cls.body.body[0]]
+        self.assertEqual(len(t_assignments_in_cls := list(cls_scope["T"])), 1)
+        assert cls.type_parameters
+        self.assertEqual(
+            ensure_type(t_assignments_in_cls[0], Assignment).node,
+            cls.type_parameters.params[0].param,
+        )
+        self.assertEqual(
+            len(t_refs_in_cls := list(t_assignments_in_cls[0].references)), 1
+        )
+        f = ensure_type(cls.body.body[0], cst.FunctionDef)
+        assert f.returns
+        self.assertEqual(t_refs_in_cls[0].node, f.returns.annotation)
+
+        g = ensure_type(cls.body.body[1], cst.FunctionDef)
+        assert g.type_parameters
+        assert g.returns
+        self.assertEqual(len(t_assignments_in_g := list(scopes[g.body]["T"])), 1)
+        self.assertEqual(
+            ensure_type(t_assignments_in_g[0], Assignment).node,
+            g.type_parameters.params[0].param,
+        )
+        self.assertEqual(len(t_refs_in_g := list(t_assignments_in_g[0].references)), 1)
+        self.assertEqual(t_refs_in_g[0].node, g.returns.annotation)
+
+    @skipUnless(is_native(), "type aliases are only supported in the native parser")
+    def test_nested_class_type_params(self) -> None:
+        m, scopes = get_scope_metadata_provider(
+            """
+            class Outer:
+                class Nested[T: Outer]: pass
+            """
+        )
+        outer = ensure_type(m.body[0], cst.ClassDef)
+        outer_refs = list(list(scopes[outer]["Outer"])[0].references)
+        self.assertEqual(len(outer_refs), 1)
+        inner = ensure_type(outer.body.body[0], cst.ClassDef)
+        assert inner.type_parameters
+        self.assertEqual(
+            outer_refs[0].node,
+            ensure_type(inner.type_parameters.params[0].param, cst.TypeVar).bound,
+        )
+
+    @skipUnless(is_native(), "type aliases are only supported in the native parser")
+    def test_annotation_refers_to_nested_class(self) -> None:
+        m, scopes = get_scope_metadata_provider(
+            """
+                class Outer:
+                    class Nested:
+                        pass
+                    
+                    type Alias = Nested
+
+                    def meth1[T: Nested](self): pass
+                    def meth2[T](self, arg: Nested): pass
+            """
+        )
+        outer = ensure_type(m.body[0], cst.ClassDef)
+        nested = ensure_type(outer.body.body[0], cst.ClassDef)
+        alias = ensure_type(
+            ensure_type(outer.body.body[1], cst.SimpleStatementLine).body[0],
+            cst.TypeAlias,
+        )
+        self.assertIsInstance(scopes[alias.value], AnnotationScope)
+        nested_refs_within_alias = list(scopes[alias.value].accesses["Nested"])
+        self.assertEqual(len(nested_refs_within_alias), 1)
+        self.assertEqual(
+            {
+                ensure_type(ref, Assignment).node
+                for ref in nested_refs_within_alias[0].referents
+            },
+            {nested},
+        )
+
+        meth1 = ensure_type(outer.body.body[2], cst.FunctionDef)
+        self.assertIsInstance(scopes[meth1], ClassScope)
+        assert meth1.type_parameters
+        meth1_typevar = ensure_type(meth1.type_parameters.params[0].param, cst.TypeVar)
+        meth1_typevar_scope = scopes[meth1_typevar]
+        self.assertIsInstance(meth1_typevar_scope, AnnotationScope)
+        nested_refs_within_meth1 = list(meth1_typevar_scope.accesses["Nested"])
+        self.assertEqual(len(nested_refs_within_meth1), 1)
+        self.assertEqual(
+            {
+                ensure_type(ref, Assignment).node
+                for ref in nested_refs_within_meth1[0].referents
+            },
+            {nested},
+        )
+
+        meth2 = ensure_type(outer.body.body[3], cst.FunctionDef)
+        meth2_annotation = meth2.params.params[1].annotation
+        assert meth2_annotation
+        nested_refs_within_meth2 = list(scopes[meth2_annotation].accesses["Nested"])
+        self.assertEqual(len(nested_refs_within_meth2), 1)
+        self.assertEqual(
+            {
+                ensure_type(ref, Assignment).node
+                for ref in nested_refs_within_meth2[0].referents
+            },
+            {nested},
+        )
+
+    @skipUnless(is_native(), "type aliases are only supported in the native parser")
+    def test_body_isnt_subject_to_special_annotation_rule(self) -> None:
+        m, scopes = get_scope_metadata_provider(
+            """
+            class Outer:
+                class Inner: pass
+                def f[T: Inner](self): Inner
+            """
+        )
+        outer = ensure_type(m.body[0], cst.ClassDef)
+        # note: this is different from global scope
+        outer_scope = scopes[outer.body.body[0]]
+        inner_assignment = list(outer_scope["Inner"])[0]
+        self.assertEqual(len(inner_assignment.references), 1)
+        f = ensure_type(outer.body.body[1], cst.FunctionDef)
+        assert f.type_parameters
+        T = ensure_type(f.type_parameters.params[0].param, cst.TypeVar)
+        self.assertIs(list(inner_assignment.references)[0].node, T.bound)
+
+        inner_in_func_body = ensure_type(f.body.body[0], cst.Expr)
+        f_scope = scopes[inner_in_func_body]
+        self.assertIn(inner_in_func_body.value, f_scope.accesses)
+        self.assertEqual(list(f_scope.accesses)[0].referents, set())
