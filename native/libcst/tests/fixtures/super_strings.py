@@ -32,3 +32,10 @@ f"regexp_like(path, '.*\{file_type}$')"
 f"\lfoo"
 
 f"{_:{_:}{a}}"
+
+f"foo {f"bar {x}"} baz"
+f'some words {a+b:.3f} more words {c+d=} final words'
+f"{'':*^{1:{1}}}"
+f"{'':*^{1:{1:{1}}}}"
+f"{f"{f"{f"{f"{f"{1+1}"}"}"}"}"}"
+
