@@ -13,8 +13,8 @@ PSF). These files are:
 - libcst/_parser/parso/tests/test_fstring.py
 - libcst/_parser/parso/tests/test_tokenize.py
 - libcst/_parser/parso/tests/test_utils.py
-- libcst_native/src/tokenize/core/mod.rs
-- libcst_native/src/tokenize/core/string_types.rs
+- native/libcst/src/tokenizer/core/mod.rs
+- native/libcst/src/tokenizer/core/string_types.rs
 
 Some Python files have been taken from dataclasses and are therefore Apache
 licensed. Modifications on these files are licensed under Apache 2.0 license.
