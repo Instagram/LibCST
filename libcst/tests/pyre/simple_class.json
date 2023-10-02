@@ -79,7 +79,7 @@
       }
     },
     {
-      "annotation": "None",
+      "annotation": "typing.Type[None]",
       "location": {
         "start": {
           "column": 34,
@@ -209,19 +209,6 @@
       }
     },
     {
-      "annotation": "BoundMethod[typing.Callable(typing.GenericMeta.__getitem__)[[Named(self, unknown), typing.Type[Variable[typing._T_co](covariant)]], typing.Type[typing.Sequence[Variable[typing._T_co](covariant)]]], typing.Type[typing.Sequence]]",
-      "location": {
-        "start": {
-          "column": 35,
-          "line": 16
-        },
-        "stop": {
-          "column": 43,
-          "line": 16
-        }
-      }
-    },
-    {
       "annotation": "typing.Type[typing.Sequence[simple_class.Item]]",
       "location": {
         "start": {
@@ -230,19 +217,6 @@
         },
         "stop": {
           "column": 49,
-          "line": 16
-        }
-      }
-    },
-    {
-      "annotation": "typing.Type[simple_class.Item]",
-      "location": {
-        "start": {
-          "column": 44,
-          "line": 16
-        },
-        "stop": {
-          "column": 48,
           "line": 16
         }
       }
@@ -469,7 +443,7 @@
       }
     },
     {
-      "annotation": "typing.Sequence[simple_class.Item]",
+      "annotation": "simple_class.Item",
       "location": {
         "start": {
           "column": 12,

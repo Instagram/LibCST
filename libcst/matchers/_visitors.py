@@ -132,7 +132,6 @@ def _verify_return_annotation(
         # it is "None".
         if type_hints.get("return", type(None)) is not type(None):  # noqa: E721
             raise MatchDecoratorMismatch(
-                # pyre-fixme[16]: Anonymous callable has no attribute `__qualname__`.
                 meth.__qualname__,
                 f"@{decorator_name} should only decorate functions that do "
                 + "not return.",
@@ -181,7 +180,6 @@ def _verify_parameter_annotations(
     meth_signature = signature(meth)
     if len(meth_signature.parameters) != expected_param_count:
         raise MatchDecoratorMismatch(
-            # pyre-fixme[16]: Anonymous callable has no attribute `__qualname__`.
             meth.__qualname__,
             f"@{decorator_name} should decorate functions which take "
             + f"{expected_param_count} parameter"
@@ -238,8 +236,6 @@ def _check_types(
             # First thing first, make sure this isn't wrapping an inner class.
             if not ismethod(meth):
                 raise MatchDecoratorMismatch(
-                    # pyre-fixme[16]: Anonymous callable has no attribute
-                    #  `__qualname__`.
                     meth.__qualname__,
                     "Matcher decorators should only be used on methods of "
                     + "MatcherDecoratableTransformer or "
@@ -292,7 +288,6 @@ def _assert_not_concrete(
 ) -> None:
     if func.__name__ in CONCRETE_METHODS:
         raise MatchDecoratorMismatch(
-            # pyre-ignore This anonymous method has a qualname.
             func.__qualname__,
             f"@{decorator_name} should not decorate functions that are concrete "
             + "visit or leave methods.",
