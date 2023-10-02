@@ -853,3 +853,25 @@ fn test_nested_f_string_specs() {
         ])
     )
 }
+
+#[test]
+fn test_nested_f_strings() {
+    let config = TokConfig {
+        split_fstring: true,
+        ..default_config()
+    };
+    assert_eq!(
+        tokenize_all("f'{f'{2}'}'", &config),
+        Ok(vec![
+            (TokType::FStringStart, "f'"),
+            (TokType::Op, "{"),
+            (TokType::FStringStart, "f'"),
+            (TokType::Op, "{"),
+            (TokType::Number, "2"),
+            (TokType::Op, "}"),
+            (TokType::FStringEnd, "'"),
+            (TokType::Op, "}"),
+            (TokType::FStringEnd, "'")
+        ])
+    )
+}
