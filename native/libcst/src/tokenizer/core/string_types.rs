@@ -105,7 +105,7 @@ impl FStringNode {
     }
 
     pub fn allow_multiline(&self) -> bool {
-        self.quote_size == StringQuoteSize::Triple
+        self.quote_size == StringQuoteSize::Triple || self.is_in_expr()
     }
 
     pub fn is_in_expr(&self) -> bool {
