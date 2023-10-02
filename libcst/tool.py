@@ -85,6 +85,8 @@ def _node_repr_recursive(  # noqa: C901
 
             def _get_default(fld: "dataclasses.Field[object]") -> object:
                 if fld.default_factory is not dataclasses.MISSING:
+                    # pyre-fixme[29]: `Union[dataclasses._MISSING_TYPE,
+                    #  dataclasses._DefaultFactory[object]]` is not a function.
                     return fld.default_factory()
                 return fld.default
 
@@ -783,6 +785,8 @@ def _list_impl(proc_name: str, command_args: List[str]) -> int:  # noqa: C901
             continue
 
         # Grab the path, try to import all of the files inside of it.
+        # pyre-fixme[6]: For 1st argument expected `PathLike[Variable[AnyStr <:
+        #  [str, bytes]]]` but got `Optional[str]`.
         path = os.path.dirname(os.path.abspath(imported_module.__file__))
         for name, imported_module in _recursive_find(path, module):
             for objname in dir(imported_module):

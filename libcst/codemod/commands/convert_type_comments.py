@@ -52,7 +52,6 @@ def _parse_type_comment(
     if type_comment is None:
         return None
     try:
-        # pyre-ignore[16]: the ast module stubs do not have full details
         return ast.parse(type_comment, "<type_comment>", "eval").body
     except SyntaxError:
         return None
@@ -69,10 +68,7 @@ def _parse_func_type_comment(
 ) -> Optional["ast.FunctionType"]:
     if func_type_comment is None:
         return None
-    return cast(
-        ast.FunctionType,
-        ast.parse(func_type_comment, "<func_type_comment>", "func_type"),
-    )
+    return ast.parse(func_type_comment, "<func_type_comment>", "func_type")
 
 
 @functools.lru_cache()
