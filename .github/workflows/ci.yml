@@ -14,7 +14,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [macos-latest, ubuntu-latest, windows-latest]
-        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12-dev"]
+        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -55,7 +55,7 @@ jobs:
         with:
           cache: pip
           cache-dependency-path: "pyproject.toml"
-          python-version: "3.10"
+          python-version: "3.12"
       - name: Install hatch
         run: pip install -U hatch
       - run: hatch run lint
@@ -72,7 +72,7 @@ jobs:
         with:
           cache: pip
           cache-dependency-path: "pyproject.toml"
-          python-version: "3.10"
+          python-version: "3.12"
       - name: Install hatch
         run: pip install -U hatch
       - run: hatch run typecheck
@@ -88,7 +88,7 @@ jobs:
         with:
           cache: pip
           cache-dependency-path: "pyproject.toml"
-          python-version: "3.10"
+          python-version: "3.12"
       - name: Install hatch
         run: pip install -U hatch
       - name: Generate Coverage
@@ -117,7 +117,7 @@ jobs:
         with:
           cache: pip
           cache-dependency-path: "pyproject.toml"
-          python-version: "3.10"
+          python-version: "3.12"
       - name: Install hatch
         run: pip install -U hatch
       - uses: ts-graphviz/setup-graphviz@v1
@@ -151,7 +151,7 @@ jobs:
         with:
           cache: pip
           cache-dependency-path: "pyproject.toml"
-          python-version: "3.10"
+          python-version: "3.12"
       - name: test
         uses: actions-rs/cargo@v1
         with:
