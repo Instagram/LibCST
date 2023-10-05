@@ -10,7 +10,7 @@ import libcst as cst
 from libcst.metadata.base_provider import BatchableMetadataProvider
 
 
-class FilePathProvider(BatchableMetadataProvider[Collection[Path]]):
+class FilePathProvider(BatchableMetadataProvider[Path]):
     """
     Provides the path to the current file on disk as metadata for the root
     :class:`~libcst.Module` node. Requires a :class:`~libcst.metadata.FullRepoManager`.
