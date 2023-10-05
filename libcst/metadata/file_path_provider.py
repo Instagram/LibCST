@@ -4,7 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 from pathlib import Path
-from typing import Collection, List, Mapping, Optional
+from typing import List, Mapping, Optional
 
 import libcst as cst
 from libcst.metadata.base_provider import BatchableMetadataProvider
