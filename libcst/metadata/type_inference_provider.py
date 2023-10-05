@@ -39,7 +39,7 @@ class PyreData(TypedDict, total=False):
 class TypeInferenceProvider(BatchableMetadataProvider[str]):
     """
     Access inferred type annotation through `Pyre Query API <https://pyre-check.org/docs/querying-pyre.html>`_.
-    It requires `setup watchman <https://pyre-check.org/docs/watchman-integration.html>`_
+    It requires `setup watchman <https://pyre-check.org/docs/getting-started/>`_
     and start pyre server by running ``pyre`` command.
     The inferred type is a string of `type annotation <https://docs.python.org/3/library/typing.html>`_.
     E.g. ``typing.List[libcst._nodes.expression.Name]``
