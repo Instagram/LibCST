@@ -3,7 +3,7 @@ requires = ["setuptools", "wheel", "setuptools-rust"]
 
 [project]
 name = "libcst"
-description = "A concrete syntax tree with AST-like properties for Python 3.8, 3.9, 3.10, 3.11, and 3.12 programs."
+description = "A concrete syntax tree with AST-like properties for Python 3.0 through 3.12 programs."
 readme = "README.rst"
 dynamic = ["version"]
 license = { file = "LICENSE" }
