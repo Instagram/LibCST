@@ -29,7 +29,7 @@ dev = [
     "coverage>=4.5.4",
     "build>=0.10.0",
     "fixit==2.0.0.post1",
-    "flake8>=3.7.8,<5",
+    "flake8==6.1.0",
     "Sphinx>=5.1.1",
     "hypothesis>=4.36.0",
     "hypothesmith>=0.0.4",
