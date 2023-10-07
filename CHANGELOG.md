@@ -1,3 +1,28 @@
+# 1.1.0 - 2023-10-05
+
+## Added
+* PEP 695 support
+  * parser: PEP 695 - Type Parameter Syntax #1004
+  * Scope provider: support for type annotations #1014
+* PEP 701 support
+  * parser: support arbitrarily nested f-strings #1026
+  * parser: Parse multiline expressions in f-strings #1027
+* parser: Support files with mixed newlines #1007
+* [libcst](https://crates.io/crates/libcst) is now published to crates.io
+
+## Fixed
+* codemod/ApplyTypeAnnotationsVisitor: Do not annotate the same variable multiple times #956
+* parser: Don't swallow trailing whitespace #976
+* codemod/rename: Avoid duplicating import statements when the module name doesn't change #981
+
+## Updated
+* cli: Don't gather dirs ending .py #994
+* drop support for Python 3.7 #997
+* A few parser performance improvements:
+  * Switch to using thread_local regular expressions to stop mutext contention #996
+  * Remove need for regex in TextPosition::matches #1002
+  * Remove Regexes from whitespace parser #1008
+
 # 1.0.1 - 2023-06-07
 
 ## Fixed

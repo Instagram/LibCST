@@ -7,7 +7,7 @@
 import abc
 import builtins
 from collections import defaultdict
-from contextlib import contextmanager
+from contextlib import contextmanager, ExitStack
 from dataclasses import dataclass
 from enum import auto, Enum
 from typing import (
@@ -51,6 +51,10 @@ _ASSIGNMENT_LIKE_NODES = (
     cst.Nonlocal,
     cst.Parameters,
     cst.WithItem,
+    cst.TypeVar,
+    cst.TypeAlias,
+    cst.TypeVarTuple,
+    cst.ParamSpec,
 )
 
 
@@ -116,7 +120,7 @@ class Access:
             self.__assignments.add(assignment)
 
     def record_assignments(self, name: str) -> None:
-        assignments = self.scope[name]
+        assignments = self.scope._resolve_scope_for_access(name, self.scope)
         # filter out assignments that happened later than this access
         previous_assignments = {
             assignment
@@ -124,7 +128,9 @@ class Access:
             if assignment.scope != self.scope or assignment._index < self.__index
         }
         if not previous_assignments and assignments and self.scope.parent != self.scope:
-            previous_assignments = self.scope.parent[name]
+            previous_assignments = self.scope.parent._resolve_scope_for_access(
+                name, self.scope
+            )
         self.__assignments |= previous_assignments
 
 
@@ -324,7 +330,7 @@ class Assignments:
 
     def __getitem__(self, node: Union[str, cst.CSTNode]) -> Collection[BaseAssignment]:
         """Get assignments given a name str or :class:`~libcst.CSTNode` by ``scope.assignments[node]``"""
-        name = _NameUtil.get_name_for(node)
+        name = get_full_name_for_node(node)
         return set(self._assignments[name]) if name in self._assignments else set()
 
     def __contains__(self, node: Union[str, cst.CSTNode]) -> bool:
@@ -346,29 +352,12 @@ class Accesses:
 
     def __getitem__(self, node: Union[str, cst.CSTNode]) -> Collection[Access]:
         """Get accesses given a name str or :class:`~libcst.CSTNode` by ``scope.accesses[node]``"""
-        name = _NameUtil.get_name_for(node)
+        name = get_full_name_for_node(node)
         return self._accesses[name] if name in self._accesses else set()
 
     def __contains__(self, node: Union[str, cst.CSTNode]) -> bool:
         """Check if a name str or :class:`~libcst.CSTNode` has any access by ``node in scope.accesses``"""
         return len(self[node]) > 0
-
-
-class _NameUtil:
-    @staticmethod
-    def get_name_for(node: Union[str, cst.CSTNode]) -> Optional[str]:
-        """A helper function to retrieve simple name str from a CSTNode or str"""
-        if isinstance(node, cst.Name):
-            return node.value
-        elif isinstance(node, str):
-            return node
-        elif isinstance(node, cst.Call):
-            return _NameUtil.get_name_for(node.func)
-        elif isinstance(node, cst.Subscript):
-            return _NameUtil.get_name_for(node.value)
-        elif isinstance(node, (cst.FunctionDef, cst.ClassDef)):
-            return _NameUtil.get_name_for(node.name)
-        return None
 
 
 class Scope(abc.ABC):
@@ -440,7 +429,7 @@ class Scope(abc.ABC):
         self._accesses_by_name[name].add(access)
         self._accesses_by_node[access.node].add(access)
 
-    def _is_visible_from_children(self) -> bool:
+    def _is_visible_from_children(self, from_scope: "Scope") -> bool:
         """Returns if the assignments in this scope can be accessed from children.
 
         This is normally True, except for class scopes::
@@ -459,9 +448,11 @@ class Scope(abc.ABC):
         """
         return True
 
-    def _next_visible_parent(self, first: Optional["Scope"] = None) -> "Scope":
+    def _next_visible_parent(
+        self, from_scope: "Scope", first: Optional["Scope"] = None
+    ) -> "Scope":
         parent = first if first is not None else self.parent
-        while not parent._is_visible_from_children():
+        while not parent._is_visible_from_children(from_scope):
             parent = parent.parent
         return parent
 
@@ -470,7 +461,6 @@ class Scope(abc.ABC):
         """Check if the name str exist in current scope by ``name in scope``."""
         ...
 
-    @abc.abstractmethod
     def __getitem__(self, name: str) -> Set[BaseAssignment]:
         """
         Get assignments given a name str by ``scope[name]``.
@@ -508,6 +498,12 @@ class Scope(abc.ABC):
            defined a given name by the time a piece of code is executed.
            For the above example, value would resolve to a set of both assignments.
         """
+        return self._resolve_scope_for_access(name, self)
+
+    @abc.abstractmethod
+    def _resolve_scope_for_access(
+        self, name: str, from_scope: "Scope"
+    ) -> Set[BaseAssignment]:
         ...
 
     def __hash__(self) -> int:
@@ -612,7 +608,9 @@ class BuiltinScope(Scope):
     def __contains__(self, name: str) -> bool:
         return hasattr(builtins, name)
 
-    def __getitem__(self, name: str) -> Set[BaseAssignment]:
+    def _resolve_scope_for_access(
+        self, name: str, from_scope: "Scope"
+    ) -> Set[BaseAssignment]:
         if name in self._assignments:
             return self._assignments[name]
         if hasattr(builtins, name):
@@ -644,13 +642,15 @@ class GlobalScope(Scope):
     def __contains__(self, name: str) -> bool:
         if name in self._assignments:
             return len(self._assignments[name]) > 0
-        return name in self._next_visible_parent()
+        return name in self._next_visible_parent(self)
 
-    def __getitem__(self, name: str) -> Set[BaseAssignment]:
+    def _resolve_scope_for_access(
+        self, name: str, from_scope: "Scope"
+    ) -> Set[BaseAssignment]:
         if name in self._assignments:
             return self._assignments[name]
 
-        parent = self._next_visible_parent()
+        parent = self._next_visible_parent(from_scope)
         return parent[name]
 
     def record_global_overwrite(self, name: str) -> None:
@@ -688,7 +688,7 @@ class LocalScope(Scope, abc.ABC):
     def _find_assignment_target(self, name: str) -> "Scope":
         if name in self._scope_overwrites:
             scope = self._scope_overwrites[name]
-            return self._next_visible_parent(scope)._find_assignment_target(name)
+            return self._next_visible_parent(self, scope)._find_assignment_target(name)
         else:
             return super()._find_assignment_target(name)
 
@@ -697,16 +697,22 @@ class LocalScope(Scope, abc.ABC):
             return name in self._scope_overwrites[name]
         if name in self._assignments:
             return len(self._assignments[name]) > 0
-        return name in self._next_visible_parent()
+        return name in self._next_visible_parent(self)
 
-    def __getitem__(self, name: str) -> Set[BaseAssignment]:
+    def _resolve_scope_for_access(
+        self, name: str, from_scope: "Scope"
+    ) -> Set[BaseAssignment]:
         if name in self._scope_overwrites:
             scope = self._scope_overwrites[name]
-            return self._next_visible_parent(scope)[name]
+            return self._next_visible_parent(
+                from_scope, scope
+            )._resolve_scope_for_access(name, from_scope)
         if name in self._assignments:
             return self._assignments[name]
         else:
-            return self._next_visible_parent()[name]
+            return self._next_visible_parent(from_scope)._resolve_scope_for_access(
+                name, from_scope
+            )
 
     def _make_name_prefix(self) -> str:
         # filter falsey strings out
@@ -728,8 +734,8 @@ class ClassScope(LocalScope):
     When a class is defined, it creates a ClassScope.
     """
 
-    def _is_visible_from_children(self) -> bool:
-        return False
+    def _is_visible_from_children(self, from_scope: "Scope") -> bool:
+        return from_scope.parent is self and isinstance(from_scope, AnnotationScope)
 
     def _make_name_prefix(self) -> str:
         # filter falsey strings out
@@ -753,6 +759,19 @@ class ComprehensionScope(LocalScope):
     def _make_name_prefix(self) -> str:
         # filter falsey strings out
         return ".".join(filter(None, [self.parent._name_prefix, "<comprehension>"]))
+
+
+class AnnotationScope(LocalScope):
+    """
+    Scopes used for type aliases and type parameters as defined by PEP-695.
+
+    These scopes are created for type parameters using the special syntax, as well as
+    type aliases. See https://peps.python.org/pep-0695/#scoping-behavior for more.
+    """
+
+    def _make_name_prefix(self) -> str:
+        # these scopes are transparent for the purposes of qualified names
+        return self.parent._name_prefix
 
 
 # Generates dotted names from an Attribute or Name node:
@@ -822,6 +841,7 @@ class DeferredAccess:
 class ScopeVisitor(cst.CSTVisitor):
     # since it's probably not useful. That can makes this visitor cleaner.
     def __init__(self, provider: "ScopeProvider") -> None:
+        super().__init__()
         self.provider: ScopeProvider = provider
         self.scope: Scope = GlobalScope()
         self.__deferred_accesses: List[DeferredAccess] = []
@@ -992,15 +1012,22 @@ class ScopeVisitor(cst.CSTVisitor):
         self.scope.record_assignment(node.name.value, node)
         self.provider.set_metadata(node.name, self.scope)
 
-        with self._new_scope(FunctionScope, node, get_full_name_for_node(node.name)):
-            node.params.visit(self)
-            node.body.visit(self)
+        with ExitStack() as stack:
+            if node.type_parameters:
+                stack.enter_context(self._new_scope(AnnotationScope, node, None))
+                node.type_parameters.visit(self)
 
-        for decorator in node.decorators:
-            decorator.visit(self)
-        returns = node.returns
-        if returns:
-            returns.visit(self)
+            with self._new_scope(
+                FunctionScope, node, get_full_name_for_node(node.name)
+            ):
+                node.params.visit(self)
+                node.body.visit(self)
+
+            for decorator in node.decorators:
+                decorator.visit(self)
+            returns = node.returns
+            if returns:
+                returns.visit(self)
 
         return False
 
@@ -1032,14 +1059,20 @@ class ScopeVisitor(cst.CSTVisitor):
         self.provider.set_metadata(node.name, self.scope)
         for decorator in node.decorators:
             decorator.visit(self)
-        for base in node.bases:
-            base.visit(self)
-        for keyword in node.keywords:
-            keyword.visit(self)
 
-        with self._new_scope(ClassScope, node, get_full_name_for_node(node.name)):
-            for statement in node.body.body:
-                statement.visit(self)
+        with ExitStack() as stack:
+            if node.type_parameters:
+                stack.enter_context(self._new_scope(AnnotationScope, node, None))
+                node.type_parameters.visit(self)
+
+            for base in node.bases:
+                base.visit(self)
+            for keyword in node.keywords:
+                keyword.visit(self)
+
+            with self._new_scope(ClassScope, node, get_full_name_for_node(node.name)):
+                for statement in node.body.body:
+                    statement.visit(self)
         return False
 
     def visit_ClassDef_bases(self, node: cst.ClassDef) -> None:
@@ -1163,7 +1196,7 @@ class ScopeVisitor(cst.CSTVisitor):
             access.scope.record_access(name, access)
 
         for (scope, name), accesses in scope_name_accesses.items():
-            for assignment in scope[name]:
+            for assignment in scope._resolve_scope_for_access(name, scope):
                 assignment.record_accesses(accesses)
 
         self.__deferred_accesses = []
@@ -1173,6 +1206,32 @@ class ScopeVisitor(cst.CSTVisitor):
         if isinstance(original_node, _ASSIGNMENT_LIKE_NODES):
             self.scope._assignment_count += 1
         super().on_leave(original_node)
+
+    def visit_TypeAlias(self, node: cst.TypeAlias) -> Optional[bool]:
+        self.scope.record_assignment(node.name.value, node)
+
+        with self._new_scope(AnnotationScope, node, None):
+            if node.type_parameters is not None:
+                node.type_parameters.visit(self)
+            node.value.visit(self)
+
+        return False
+
+    def visit_TypeVar(self, node: cst.TypeVar) -> Optional[bool]:
+        self.scope.record_assignment(node.name.value, node)
+
+        if node.bound is not None:
+            node.bound.visit(self)
+
+        return False
+
+    def visit_TypeVarTuple(self, node: cst.TypeVarTuple) -> Optional[bool]:
+        self.scope.record_assignment(node.name.value, node)
+        return False
+
+    def visit_ParamSpec(self, node: cst.ParamSpec) -> Optional[bool]:
+        self.scope.record_assignment(node.name.value, node)
+        return False
 
 
 class ScopeProvider(BatchableMetadataProvider[Optional[Scope]]):

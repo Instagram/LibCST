@@ -363,7 +363,8 @@ impl<'t> TokState<'t> {
                     self.text_pos.next();
                     self.at_bol = true;
                     if self.split_fstring
-                        && !self.fstring_stack.iter().all(|node| node.allow_multiline())
+                        && self.fstring_stack.last().map(|node| node.allow_multiline())
+                            == Some(false)
                     {
                         Err(TokError::UnterminatedString)
                     } else if self.blank_line || !self.paren_stack.is_empty() {
@@ -895,7 +896,8 @@ impl<'t> TokState<'t> {
         is_in_format_spec: bool,
         is_raw_string: bool,
     ) -> Result<Option<TokType>, TokError<'t>> {
-        let allow_multiline = self.fstring_stack.iter().all(|node| node.allow_multiline());
+        let allow_multiline =
+            self.fstring_stack.last().map(|node| node.allow_multiline()) == Some(true);
         let mut in_named_unicode: bool = false;
         let mut ok_result = Ok(None); // value to return if we reach the end and don't error out
         'outer: loop {
@@ -907,8 +909,8 @@ impl<'t> TokState<'t> {
                     return Err(TokError::UnterminatedString);
                 }
                 (ch @ Some('\''), _) | (ch @ Some('"'), _) => {
-                    // see if this actually terminates something in fstring_stack
-                    for node in self.fstring_stack.iter() {
+                    // see if this actually terminates the most recent fstring
+                    if let Some(node) = self.fstring_stack.last() {
                         if ch == Some(node.quote_char.into()) {
                             match node.quote_size {
                                 StringQuoteSize::Single => {
@@ -1004,27 +1006,18 @@ impl<'t> TokState<'t> {
 
     fn maybe_consume_fstring_end(&mut self) -> Option<TokType> {
         let ch = self.text_pos.peek();
-        let mut match_idx = None;
-        for (idx, node) in self.fstring_stack.iter().enumerate() {
+        if let Some(node) = self.fstring_stack.last() {
             if ch == Some(node.quote_char.into()) {
                 if node.quote_size == StringQuoteSize::Triple {
-                    if self.text_pos.consume(node.quote_char.triple_str()) {
-                        match_idx = Some(idx);
-                        break;
-                    }
+                    self.text_pos.consume(node.quote_char.triple_str());
                 } else {
                     self.text_pos.next(); // already matched
-                    match_idx = Some(idx);
-                    break;
                 }
+                self.fstring_stack.pop();
+                return Some(TokType::FStringEnd);
             }
         }
-        if let Some(match_idx) = match_idx {
-            self.fstring_stack.truncate(match_idx);
-            Some(TokType::FStringEnd)
-        } else {
-            None
-        }
+        None
     }
 }
 

@@ -4,13 +4,13 @@
 # LICENSE file in the root directory of this source tree.
 
 from pathlib import Path
-from typing import Collection, List, Mapping, Optional
+from typing import List, Mapping, Optional
 
 import libcst as cst
 from libcst.metadata.base_provider import BatchableMetadataProvider
 
 
-class FilePathProvider(BatchableMetadataProvider[Collection[Path]]):
+class FilePathProvider(BatchableMetadataProvider[Path]):
     """
     Provides the path to the current file on disk as metadata for the root
     :class:`~libcst.Module` node. Requires a :class:`~libcst.metadata.FullRepoManager`.

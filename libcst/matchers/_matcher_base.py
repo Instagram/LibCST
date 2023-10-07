@@ -69,7 +69,6 @@ class AbstractBaseMatcherNodeMeta(ABCMeta):
     matcher.
     """
 
-    # pyre-fixme[14]: `__or__` overrides method defined in `type` inconsistently.
     # pyre-fixme[15]: `__or__` overrides method defined in `type` inconsistently.
     def __or__(self, node: Type["BaseMatcherNode"]) -> "TypeOf[Type[BaseMatcherNode]]":
         return TypeOf(self, node)
@@ -84,25 +83,16 @@ class BaseMatcherNode:
     several concrete matchers as options.
     """
 
-    # pyre-fixme[14]: `__or__` overrides method defined in `type` inconsistently.
     # pyre-fixme[15]: `__or__` overrides method defined in `type` inconsistently.
     def __or__(
         self: _BaseMatcherNodeSelfT, other: _OtherNodeT
     ) -> "OneOf[Union[_BaseMatcherNodeSelfT, _OtherNodeT]]":
-        # Without a cast, pyre thinks that the below OneOf is type OneOf[object]
-        # even though it has the types passed into it.
-        return cast(
-            OneOf[Union[_BaseMatcherNodeSelfT, _OtherNodeT]], OneOf(self, other)
-        )
+        return OneOf(self, other)
 
     def __and__(
         self: _BaseMatcherNodeSelfT, other: _OtherNodeT
     ) -> "AllOf[Union[_BaseMatcherNodeSelfT, _OtherNodeT]]":
-        # Without a cast, pyre thinks that the below AllOf is type AllOf[object]
-        # even though it has the types passed into it.
-        return cast(
-            AllOf[Union[_BaseMatcherNodeSelfT, _OtherNodeT]], AllOf(self, other)
-        )
+        return AllOf(self, other)
 
     def __invert__(self: _BaseMatcherNodeSelfT) -> "_BaseMatcherNodeSelfT":
         return cast(_BaseMatcherNodeSelfT, _InverseOf(self))
@@ -180,7 +170,6 @@ class TypeOf(Generic[_MatcherTypeT], BaseMatcherNode):
         self._call_items = (args, kwargs)
         return self
 
-    # pyre-fixme[14]: `__or__` overrides method defined in `type` inconsistently.
     # pyre-fixme[15]: `__or__` overrides method defined in `type` inconsistently.
     def __or__(
         self, other: _OtherNodeMatcherTypeT
@@ -240,19 +229,16 @@ class OneOf(Generic[_MatcherT], BaseMatcherNode):
         """
         return self._options
 
-    # pyre-fixme[14]: `__or__` overrides method defined in `type` inconsistently.
     # pyre-fixme[15]: `__or__` overrides method defined in `type` inconsistently.
     def __or__(self, other: _OtherNodeT) -> "OneOf[Union[_MatcherT, _OtherNodeT]]":
-        # Without a cast, pyre thinks that the below OneOf is type OneOf[object]
-        # even though it has the types passed into it.
-        return cast(OneOf[Union[_MatcherT, _OtherNodeT]], OneOf(self, other))
+        return OneOf(self, other)
 
     def __and__(self, other: _OtherNodeT) -> NoReturn:
         raise Exception("Cannot use AllOf and OneOf in combination!")
 
     def __invert__(self) -> "AllOf[_MatcherT]":
         # Invert using De Morgan's Law so we don't have to complicate types.
-        return cast(AllOf[_MatcherT], AllOf(*[DoesNotMatch(m) for m in self._options]))
+        return AllOf(*[DoesNotMatch(m) for m in self._options])
 
     def __repr__(self) -> str:
         return f"OneOf({', '.join([repr(o) for o in self._options])})"
@@ -318,19 +304,16 @@ class AllOf(Generic[_MatcherT], BaseMatcherNode):
         """
         return self._options
 
-    # pyre-fixme[14]: `__or__` overrides method defined in `type` inconsistently.
     # pyre-fixme[15]: `__or__` overrides method defined in `type` inconsistently.
     def __or__(self, other: _OtherNodeT) -> NoReturn:
         raise Exception("Cannot use AllOf and OneOf in combination!")
 
     def __and__(self, other: _OtherNodeT) -> "AllOf[Union[_MatcherT, _OtherNodeT]]":
-        # Without a cast, pyre thinks that the below AllOf is type AllOf[object]
-        # even though it has the types passed into it.
-        return cast(AllOf[Union[_MatcherT, _OtherNodeT]], AllOf(self, other))
+        return AllOf(self, other)
 
     def __invert__(self) -> "OneOf[_MatcherT]":
         # Invert using De Morgan's Law so we don't have to complicate types.
-        return cast(OneOf[_MatcherT], OneOf(*[DoesNotMatch(m) for m in self._options]))
+        return OneOf(*[DoesNotMatch(m) for m in self._options])
 
     def __repr__(self) -> str:
         return f"AllOf({', '.join([repr(o) for o in self._options])})"
@@ -367,7 +350,6 @@ class _InverseOf(Generic[_MatcherT]):
         """
         return self._matcher
 
-    # pyre-fixme[14]: `__or__` overrides method defined in `type` inconsistently.
     # pyre-fixme[15]: `__or__` overrides method defined in `type` inconsistently.
     def __or__(self, other: _OtherNodeT) -> "OneOf[Union[_MatcherT, _OtherNodeT]]":
         # Without a cast, pyre thinks that the below OneOf is type OneOf[object]
@@ -438,7 +420,6 @@ class _ExtractMatchingNode(Generic[_MatcherT]):
         """
         return self._name
 
-    # pyre-fixme[14]: `__or__` overrides method defined in `type` inconsistently.
     # pyre-fixme[15]: `__or__` overrides method defined in `type` inconsistently.
     def __or__(self, other: _OtherNodeT) -> "OneOf[Union[_MatcherT, _OtherNodeT]]":
         # Without a cast, pyre thinks that the below OneOf is type OneOf[object]
@@ -512,25 +493,16 @@ class MatchIfTrue(Generic[_MatchIfTrueT]):
         """
         return self._func
 
-    # pyre-fixme[14]: `__or__` overrides method defined in `type` inconsistently.
     # pyre-fixme[15]: `__or__` overrides method defined in `type` inconsistently.
     def __or__(
         self, other: _OtherNodeT
     ) -> "OneOf[Union[MatchIfTrue[_MatchIfTrueT], _OtherNodeT]]":
-        # Without a cast, pyre thinks that the below OneOf is type OneOf[object]
-        # even though it has the types passed into it.
-        return cast(
-            OneOf[Union[MatchIfTrue[_MatchIfTrueT], _OtherNodeT]], OneOf(self, other)
-        )
+        return OneOf(self, other)
 
     def __and__(
         self, other: _OtherNodeT
     ) -> "AllOf[Union[MatchIfTrue[_MatchIfTrueT], _OtherNodeT]]":
-        # Without a cast, pyre thinks that the below AllOf is type AllOf[object]
-        # even though it has the types passed into it.
-        return cast(
-            AllOf[Union[MatchIfTrue[_MatchIfTrueT], _OtherNodeT]], AllOf(self, other)
-        )
+        return AllOf(self, other)
 
     def __invert__(self) -> "MatchIfTrue[_MatchIfTrueT]":
         # Construct a wrapped version of MatchIfTrue for typing simplicity.
@@ -560,7 +532,6 @@ def MatchRegex(regex: Union[str, Pattern[str]]) -> MatchIfTrue[str]:
 
     def _match_func(value: object) -> bool:
         if isinstance(value, str):
-            # pyre-ignore Pyre doesn't think a 'Pattern' can be passed to fullmatch.
             return bool(re.fullmatch(regex, value))
         else:
             return False
@@ -642,15 +613,12 @@ class MatchMetadata(_BaseMetadataMatcher):
         """
         return self._value
 
-    # pyre-fixme[14]: `__or__` overrides method defined in `type` inconsistently.
     # pyre-fixme[15]: `__or__` overrides method defined in `type` inconsistently.
     def __or__(self, other: _OtherNodeT) -> "OneOf[Union[MatchMetadata, _OtherNodeT]]":
-        # Without the cast, pyre doesn't know this is valid
-        return cast(OneOf[Union[MatchMetadata, _OtherNodeT]], OneOf(self, other))
+        return OneOf(self, other)
 
     def __and__(self, other: _OtherNodeT) -> "AllOf[Union[MatchMetadata, _OtherNodeT]]":
-        # Without the cast, pyre doesn't know this is valid
-        return cast(AllOf[Union[MatchMetadata, _OtherNodeT]], AllOf(self, other))
+        return AllOf(self, other)
 
     def __invert__(self) -> "MatchMetadata":
         # We intentionally lie here, for the same reason given in the documentation
@@ -728,19 +696,16 @@ class MatchMetadataIfTrue(_BaseMetadataMatcher):
         """
         return self._func
 
-    # pyre-fixme[14]: `__or__` overrides method defined in `type` inconsistently.
     # pyre-fixme[15]: `__or__` overrides method defined in `type` inconsistently.
     def __or__(
         self, other: _OtherNodeT
     ) -> "OneOf[Union[MatchMetadataIfTrue, _OtherNodeT]]":
-        # Without the cast, pyre doesn't know this is valid
-        return cast(OneOf[Union[MatchMetadataIfTrue, _OtherNodeT]], OneOf(self, other))
+        return OneOf(self, other)
 
     def __and__(
         self, other: _OtherNodeT
     ) -> "AllOf[Union[MatchMetadataIfTrue, _OtherNodeT]]":
-        # Without the cast, pyre doesn't know this is valid
-        return cast(AllOf[Union[MatchMetadataIfTrue, _OtherNodeT]], AllOf(self, other))
+        return AllOf(self, other)
 
     def __invert__(self) -> "MatchMetadataIfTrue":
         # Construct a wrapped version of MatchMetadataIfTrue for typing simplicity.
@@ -817,7 +782,6 @@ class AtLeastN(Generic[_MatcherT], _BaseWildcardNode):
         """
         return self._matcher
 
-    # pyre-fixme[14]: `__or__` overrides method defined in `type` inconsistently.
     # pyre-fixme[15]: `__or__` overrides method defined in `type` inconsistently.
     def __or__(self, other: object) -> NoReturn:
         raise Exception("AtLeastN cannot be used in a OneOf matcher")
@@ -921,7 +885,6 @@ class AtMostN(Generic[_MatcherT], _BaseWildcardNode):
         """
         return self._matcher
 
-    # pyre-fixme[14]: `__or__` overrides method defined in `type` inconsistently.
     # pyre-fixme[15]: `__or__` overrides method defined in `type` inconsistently.
     def __or__(self, other: object) -> NoReturn:
         raise Exception("AtMostN cannot be used in a OneOf matcher")
