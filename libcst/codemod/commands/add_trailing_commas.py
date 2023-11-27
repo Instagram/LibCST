@@ -10,7 +10,6 @@ from typing import Dict, Optional
 import libcst as cst
 from libcst.codemod import CodemodContext, VisitorBasedCodemodCommand
 
-
 presets_per_formatter: Dict[str, Dict[str, int]] = {
     "black": {
         "parameter_count": 1,

@@ -1017,7 +1017,7 @@ def _matches_zero_nodes(
         MatchIfTrue[libcst.CSTNode],
         _BaseMetadataMatcher,
         DoNotCareSentinel,
-    ]
+    ],
 ) -> bool:
     if isinstance(matcher, AtLeastN) and matcher.n == 0:
         return True

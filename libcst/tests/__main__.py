@@ -7,7 +7,6 @@ from unittest import main
 
 from libcst._parser.entrypoints import is_native
 
-
 if __name__ == "__main__":
     parser_type = "native" if is_native() else "pure"
     print(f"running tests with {parser_type!r} parser")

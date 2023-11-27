@@ -26,7 +26,7 @@ from libcst.codegen.transforms import (
 
 def format_file(fname: str) -> None:
     subprocess.check_call(
-        ["ufmt", "format", fname],
+        ["ruff", "format", fname],
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
     )

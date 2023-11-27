@@ -12,7 +12,6 @@ from libcst._maybe_sentinel import MaybeSentinel
 from libcst._removal_sentinel import RemovalSentinel
 from libcst._typed_visitor_base import mark_no_op
 
-
 if TYPE_CHECKING:
     from libcst._nodes.expression import (  # noqa: F401
         Annotation,
