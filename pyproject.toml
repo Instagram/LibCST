@@ -25,11 +25,10 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    "black==23.9.1",
+    "black==23.9.1",  # required for testing formatting
     "coverage>=4.5.4",
     "build>=0.10.0",
     "fixit==2.0.0.post1",
-    "flake8==6.1.0",
     "Sphinx>=5.1.1",
     "hypothesis>=4.36.0",
     "hypothesmith>=0.0.4",
@@ -40,8 +39,7 @@ dev = [
     "pyre-check==0.9.18; platform_system != 'Windows'",
     "setuptools_scm>=6.0.1",
     "sphinx-rtd-theme>=0.4.3",
-    "ufmt==2.2.0",
-    "usort==1.0.7",
+    "ruff==0.1.6",
     "setuptools-rust>=1.5.2",
     "slotscheck>=0.7.1",
     "jinja2==3.1.2",
@@ -62,10 +60,9 @@ features = ["dev"]
 [tool.hatch.envs.default.scripts]
 docs = "sphinx-build -ab html docs/source docs/build"
 fixtures = ["python scripts/regenerate-fixtures.py", "git diff --exit-code"]
-format = "ufmt format libcst scripts"
+format = "ruff format ."
 lint = [
-    "flake8 libcst",
-    "ufmt check libcst scripts",
+    "ruff .",
     "python -m slotscheck libcst",
     "python scripts/check_copyright.py",
 ]
@@ -75,5 +72,34 @@ typecheck = ["pyre --version", "pyre check"]
 [tool.slotscheck]
 exclude-modules = '^libcst\.(testing|tests)'
 
-[tool.ufmt]
-excludes = ["native/", "stubs/"]
+[tool.ruff]
+exclude = [
+    ".pyre",
+    "__pycache__",
+    ".tox",
+    "native",
+    "stubs",
+]
+ignore = [
+    "E101",
+    "E401",
+    "E501",
+    "F811",
+    "W292",
+    "W293",
+    "W505",
+]
+extend-select = [
+    "C9",
+    "E",
+    "F",
+    "I",
+    "W",
+]
+
+[tool.ruff.isort]
+order-by-type = false
+combine-as-imports = true
+
+[tool.ruff.mccabe]
+max-complexity = 12
