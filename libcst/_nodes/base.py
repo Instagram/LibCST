@@ -341,7 +341,7 @@ class CSTNode(ABC):
         True
         """
         cloned_fields: Dict[str, object] = {}
-        for field in fields(self):
+        for field in fields(self):  # noqa: F402
             key = field.name
             if key[0] == "_":
                 continue
