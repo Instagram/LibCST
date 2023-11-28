@@ -74,7 +74,9 @@ if TYPE_CHECKING:
         UnaryOperation,
         Yield,
     )
-    from libcst._nodes.module import Module  # noqa: F401
+    from libcst._nodes.module import (  # noqa: F401
+        Module,
+    )
     from libcst._nodes.op import (  # noqa: F401
         Add,
         AddAssign,
