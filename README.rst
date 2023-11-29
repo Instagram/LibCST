@@ -252,7 +252,7 @@ Privacy Policy and Terms of Use
 
 .. fb-docs-end
 
-Acknowledgements
+Acknowledgments
 ================
 
 - Guido van Rossum for creating the parser generator pgen2 (originally used in lib2to3 and forked into parso).
