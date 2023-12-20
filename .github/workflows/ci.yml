@@ -27,12 +27,9 @@ jobs:
       - name: Install hatch
         run: |
           pip install -U hatch
-      - uses: dtolnay/rust-toolchain@stable
-      - name: Rust Cache
-        uses: Swatinem/rust-cache@v2.7.0
+      - uses: actions-rs/toolchain@v1
         with:
-          shared-key: "shared"
-          workspaces: native
+          toolchain: stable
       - name: Build LibCST
         run: hatch env create
       - name: Tests
@@ -139,11 +136,6 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
-      - name: Rust Cache
-        uses: Swatinem/rust-cache@v2.7.0
-        with:
-          shared-key: "shared"
-          workspaces: native
       - uses: actions/setup-python@v4
         with:
           cache: pip
