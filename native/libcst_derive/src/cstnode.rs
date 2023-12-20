@@ -13,8 +13,8 @@ use syn::{
     spanned::Spanned,
     token::Comma,
     AngleBracketedGenericArguments, Attribute, Data, DataEnum, DataStruct, DeriveInput, Field,
-    Fields, FieldsNamed, FieldsUnnamed, GenericArgument, Generics, Ident, Meta, MetaList,
-    NestedMeta, Path, PathArguments, PathSegment, Token, Type, TypePath, Visibility,
+    Fields, FieldsNamed, FieldsUnnamed, GenericArgument, Generics, Ident, Meta, Path,
+    PathArguments, PathSegment, Token, Type, TypePath, Visibility,
 };
 
 pub(crate) struct CSTNodeParams {
@@ -68,7 +68,7 @@ impl Parse for SupportedTrait {
 impl Parse for CSTNodeParams {
     fn parse(input: ParseStream) -> syn::Result<Self> {
         Ok(Self {
-            traits: input.parse_terminated(SupportedTrait::parse)?,
+            traits: input.parse_terminated(SupportedTrait::parse, Token![,])?,
         })
     }
 }
@@ -239,12 +239,8 @@ fn impl_unnamed_fields(mut deflated_fields: FieldsUnnamed) -> FieldsUnnamed {
 
     // Make sure all Deflated* types have 'r 'a lifetime params
     if !added_lifetime {
-        deflated_fields.unnamed.push(Field {
-            vis: Visibility::Inherited,
-            ty: parse_quote!(std::marker::PhantomData<&'r &'a ()>),
-            attrs: Default::default(),
-            colon_token: Default::default(),
-            ident: Default::default(),
+        deflated_fields.unnamed.push(parse_quote! {
+            std::marker::PhantomData<&'r &'a ()>
         });
     }
     deflated_fields
@@ -284,12 +280,8 @@ fn impl_named_fields(mut fields: FieldsNamed) -> (Fields, Fields) {
 
     // Make sure all Deflated* types have 'r 'a lifetime params
     if !added_lifetime {
-        deflated_fields.named.push(Field {
-            attrs: Default::default(),
-            vis: Visibility::Inherited,
-            ident: Some(parse_quote!(_phantom)),
-            colon_token: Default::default(),
-            ty: parse_quote!(std::marker::PhantomData<&'r &'a ()>),
+        deflated_fields.named.push(parse_quote! {
+            _phantom: std::marker::PhantomData<&'r &'a ()>
         });
     }
 
@@ -411,19 +403,19 @@ fn rightmost_path_segment_mut(ty: &mut Type) -> Option<&mut PathSegment> {
 }
 
 fn is_not_intopy_attr(attr: &Attribute) -> bool {
-    let path = &attr.path;
-    // support #[cfg_attr(feature="py", skip_py)]
+    let path = attr.path();
+    // support #[cfg_attr(feature = "py", skip_py)]
     if path.is_ident("cfg_attr") {
-        match attr.parse_meta() {
-            Ok(Meta::List(MetaList { nested, .. })) => {
-                for meta in nested {
-                    if let NestedMeta::Meta(Meta::Path(path)) = meta {
-                        return !is_intopy_attr_path(&path);
-                    }
-                }
-            }
-            _ => return false,
-        }
+        return match attr.parse_args_with(|input: ParseStream| {
+            let _: Meta = input.parse()?;
+            let _: Token![,] = input.parse()?;
+            let nested_path: Path = input.parse()?;
+            let _: Option<Token![,]> = input.parse()?;
+            Ok(nested_path)
+        }) {
+            Ok(nested_path) => !is_intopy_attr_path(&nested_path),
+            Err(_) => false,
+        };
     }
     !is_intopy_attr_path(path)
 }
