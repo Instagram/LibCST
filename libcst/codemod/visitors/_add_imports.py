@@ -8,11 +8,51 @@ from typing import Dict, List, Optional, Sequence, Set, Tuple, Union
 
 import libcst
 from libcst import matchers as m, parse_statement
+from libcst._nodes.statement import Import, ImportFrom, SimpleStatementLine
 from libcst.codemod._context import CodemodContext
 from libcst.codemod._visitor import ContextAwareTransformer
-from libcst.codemod.visitors._gather_imports import GatherImportsVisitor
+from libcst.codemod.visitors._gather_imports import _GatherImportsMixin
 from libcst.codemod.visitors._imports import ImportItem
 from libcst.helpers import get_absolute_module_from_package_for_import
+from libcst.helpers.common import ensure_type
+
+
+class _GatherTopImportsBeforeStatements(_GatherImportsMixin):
+    """
+    Works similarly to GatherImportsVisitor, but only considers imports
+    declared before any other statements of the module with the exception
+    of docstrings and __strict__ flag.
+    """
+
+    def __init__(self, context: CodemodContext) -> None:
+        super().__init__(context)
+        # Track all of the imports found in this transform
+        self.all_imports: List[Union[libcst.Import, libcst.ImportFrom]] = []
+
+    def leave_Module(self, original_node: libcst.Module) -> None:
+        start = 1 if _skip_first(original_node) else 0
+        for stmt in original_node.body[start:]:
+            if m.matches(
+                stmt,
+                m.SimpleStatementLine(body=[m.ImportFrom() | m.Import()]),
+            ):
+                stmt = ensure_type(stmt, SimpleStatementLine)
+                # Workaround for python 3.8 and 3.9, won't accept Union for isinstance
+                if m.matches(stmt.body[0], m.ImportFrom()):
+                    imp = ensure_type(stmt.body[0], ImportFrom)
+                    self.all_imports.append(imp)
+                if m.matches(stmt.body[0], m.Import()):
+                    imp = ensure_type(stmt.body[0], Import)
+                    self.all_imports.append(imp)
+            else:
+                break
+        for imp in self.all_imports:
+            if m.matches(imp, m.Import()):
+                imp = ensure_type(imp, Import)
+                self._handle_Import(imp)
+            else:
+                imp = ensure_type(imp, ImportFrom)
+                self._handle_ImportFrom(imp)
 
 
 class AddImportsVisitor(ContextAwareTransformer):
@@ -169,12 +209,12 @@ class AddImportsVisitor(ContextAwareTransformer):
             for module in sorted(from_imports_aliases)
         }
 
-        # Track the list of imports found in the file
+        # Track the list of imports found at the top of the file
         self.all_imports: List[Union[libcst.Import, libcst.ImportFrom]] = []
 
     def visit_Module(self, node: libcst.Module) -> None:
-        # Do a preliminary pass to gather the imports we already have
-        gatherer = GatherImportsVisitor(self.context)
+        # Do a preliminary pass to gather the imports we already have at the top
+        gatherer = _GatherTopImportsBeforeStatements(self.context)
         node.visit(gatherer)
         self.all_imports = gatherer.all_imports
 
@@ -211,6 +251,10 @@ class AddImportsVisitor(ContextAwareTransformer):
     ) -> libcst.ImportFrom:
         if isinstance(updated_node.names, libcst.ImportStar):
             # There's nothing to do here!
+            return updated_node
+
+        # Ensure this is one of the imports at the top
+        if original_node not in self.all_imports:
             return updated_node
 
         # Get the module we're importing as a string, see if we have work to do.
@@ -260,39 +304,26 @@ class AddImportsVisitor(ContextAwareTransformer):
         statement_before_import_location = 0
         import_add_location = 0
 
-        # never insert an import before initial __strict__ flag
-        if m.matches(
-            orig_module,
-            m.Module(
-                body=[
-                    m.SimpleStatementLine(
-                        body=[
-                            m.Assign(
-                                targets=[m.AssignTarget(target=m.Name("__strict__"))]
-                            )
-                        ]
-                    ),
-                    m.ZeroOrMore(),
-                ]
-            ),
-        ):
-            statement_before_import_location = import_add_location = 1
-
         # This works under the principle that while we might modify node contents,
         # we have yet to modify the number of statements. So we can match on the
         # original tree but break up the statements of the modified tree. If we
         # change this assumption in this visitor, we will have to change this code.
-        for i, statement in enumerate(orig_module.body):
-            if i == 0 and m.matches(
-                statement, m.SimpleStatementLine(body=[m.Expr(value=m.SimpleString())])
+
+        # Finds the location to add imports. It is the end of the first import block that occurs before any other statement (save for docstrings)
+
+        # Never insert an import before initial __strict__ flag or docstring
+        if _skip_first(orig_module):
+            statement_before_import_location = import_add_location = 1
+
+        for i, statement in enumerate(
+            orig_module.body[statement_before_import_location:]
+        ):
+            if m.matches(
+                statement, m.SimpleStatementLine(body=[m.ImportFrom() | m.Import()])
             ):
-                statement_before_import_location = import_add_location = 1
-            elif isinstance(statement, libcst.SimpleStatementLine):
-                for possible_import in statement.body:
-                    for last_import in self.all_imports:
-                        if possible_import is last_import:
-                            import_add_location = i + 1
-                            break
+                import_add_location = i + statement_before_import_location + 1
+            else:
+                break
 
         return (
             list(updated_module.body[:statement_before_import_location]),
@@ -414,3 +445,28 @@ class AddImportsVisitor(ContextAwareTransformer):
                 *statements_after_imports,
             )
         )
+
+
+def _skip_first(orig_module: libcst.Module) -> bool:
+    # Is there a __strict__ flag or docstring at the top?
+    if m.matches(
+        orig_module,
+        m.Module(
+            body=[
+                m.SimpleStatementLine(
+                    body=[
+                        m.Assign(targets=[m.AssignTarget(target=m.Name("__strict__"))])
+                    ]
+                ),
+                m.ZeroOrMore(),
+            ]
+        )
+        | m.Module(
+            body=[
+                m.SimpleStatementLine(body=[m.Expr(value=m.SimpleString())]),
+                m.ZeroOrMore(),
+            ]
+        ),
+    ):
+        return True
+    return False

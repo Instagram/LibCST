@@ -253,6 +253,45 @@ class ScopeProviderTest(UnitTest):
         self.assertEqual(list(scope_of_module["x.y"])[0].references, set())
         self.assertEqual(scope_of_module.accesses["x.y"], set())
 
+    def test_dotted_import_access_reference_by_node(self) -> None:
+        m, scopes = get_scope_metadata_provider(
+            """
+            import a.b.c
+            a.b.c()
+            """
+        )
+        scope_of_module = scopes[m]
+        first_statement = ensure_type(m.body[1], cst.SimpleStatementLine)
+        call = ensure_type(
+            ensure_type(first_statement.body[0], cst.Expr).value, cst.Call
+        )
+
+        a_b_c_assignment = cast(ImportAssignment, list(scope_of_module["a.b.c"])[0])
+        a_b_c_access = list(a_b_c_assignment.references)[0]
+        self.assertEqual(scope_of_module.accesses[call], {a_b_c_access})
+        self.assertEqual(a_b_c_access.node, call.func)
+
+    def test_decorator_access_reference_by_node(self) -> None:
+        m, scopes = get_scope_metadata_provider(
+            """
+            import decorator
+
+            @decorator
+            def f():
+                pass
+            """
+        )
+        scope_of_module = scopes[m]
+        function_def = ensure_type(m.body[1], cst.FunctionDef)
+        decorator = function_def.decorators[0]
+        self.assertTrue("decorator" in scope_of_module)
+
+        decorator_assignment = cast(
+            ImportAssignment, list(scope_of_module["decorator"])[0]
+        )
+        decorator_access = list(decorator_assignment.references)[0]
+        self.assertEqual(scope_of_module.accesses[decorator], {decorator_access})
+
     def test_dotted_import_with_call_access(self) -> None:
         m, scopes = get_scope_metadata_provider(
             """

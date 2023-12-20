@@ -176,5 +176,5 @@ fn fields_to_kwargs(fields: &Fields, is_enum: bool) -> quote::__private::TokenSt
 }
 
 fn has_attr(attrs: &[Attribute], name: &'static str) -> bool {
-    attrs.iter().any(|attr| attr.path.is_ident(name))
+    attrs.iter().any(|attr| attr.path().is_ident(name))
 }

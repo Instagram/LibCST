@@ -330,7 +330,7 @@ class Assignments:
 
     def __getitem__(self, node: Union[str, cst.CSTNode]) -> Collection[BaseAssignment]:
         """Get assignments given a name str or :class:`~libcst.CSTNode` by ``scope.assignments[node]``"""
-        name = _NameUtil.get_name_for(node)
+        name = get_full_name_for_node(node)
         return set(self._assignments[name]) if name in self._assignments else set()
 
     def __contains__(self, node: Union[str, cst.CSTNode]) -> bool:
@@ -352,29 +352,12 @@ class Accesses:
 
     def __getitem__(self, node: Union[str, cst.CSTNode]) -> Collection[Access]:
         """Get accesses given a name str or :class:`~libcst.CSTNode` by ``scope.accesses[node]``"""
-        name = _NameUtil.get_name_for(node)
+        name = get_full_name_for_node(node)
         return self._accesses[name] if name in self._accesses else set()
 
     def __contains__(self, node: Union[str, cst.CSTNode]) -> bool:
         """Check if a name str or :class:`~libcst.CSTNode` has any access by ``node in scope.accesses``"""
         return len(self[node]) > 0
-
-
-class _NameUtil:
-    @staticmethod
-    def get_name_for(node: Union[str, cst.CSTNode]) -> Optional[str]:
-        """A helper function to retrieve simple name str from a CSTNode or str"""
-        if isinstance(node, cst.Name):
-            return node.value
-        elif isinstance(node, str):
-            return node
-        elif isinstance(node, cst.Call):
-            return _NameUtil.get_name_for(node.func)
-        elif isinstance(node, cst.Subscript):
-            return _NameUtil.get_name_for(node.value)
-        elif isinstance(node, (cst.FunctionDef, cst.ClassDef)):
-            return _NameUtil.get_name_for(node.name)
-        return None
 
 
 class Scope(abc.ABC):
