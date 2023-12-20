@@ -32,6 +32,7 @@ jobs:
         uses: Swatinem/rust-cache@v2.7.0
         with:
           shared-key: "shared"
+          key: "${{runner.os}}"
           workspaces: native
       - name: Build LibCST
         run: hatch env create
@@ -143,6 +144,7 @@ jobs:
         uses: Swatinem/rust-cache@v2.7.0
         with:
           shared-key: "shared"
+          key: "${{runner.os}}"
           workspaces: native
       - uses: actions/setup-python@v4
         with:
