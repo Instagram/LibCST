@@ -30,11 +30,6 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
-      - name: Rust Cache
-        uses: Swatinem/rust-cache@v2.7.0
-        with:
-          shared-key: "shared"
-          workspaces: native
       - name: Build LibCST
         run: hatch env create
       - name: Tests
@@ -142,11 +137,6 @@ jobs:
         with:
           toolchain: stable
           components: rustfmt, clippy
-      - name: Rust Cache
-        uses: Swatinem/rust-cache@v2.7.0
-        with:
-          shared-key: "shared"
-          workspaces: native
       - uses: actions/setup-python@v4
         with:
           cache: pip
