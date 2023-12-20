@@ -29,7 +29,7 @@ jobs:
           pip install -U hatch
       - uses: dtolnay/rust-toolchain@stable
       - name: Rust Cache
-        uses: Swatinem/rust-cache@v2.7.0
+        uses: Swatinem/rust-cache@v2.7.1
         with:
           shared-key: "shared"
           workspaces: native
@@ -140,7 +140,7 @@ jobs:
         with:
           components: rustfmt, clippy
       - name: Rust Cache
-        uses: Swatinem/rust-cache@v2.7.0
+        uses: Swatinem/rust-cache@v2.7.1
         with:
           shared-key: "shared"
           workspaces: native
