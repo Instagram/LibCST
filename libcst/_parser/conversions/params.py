@@ -102,7 +102,7 @@ def convert_argslist(  # noqa: C901
     kwonly_params: List[Param] = []
     star_kwarg: Optional[Param] = None
 
-    def add_param(
+    def add_param(  # noqa: C901
         current_param: Optional[List[Param]], param: Union[Param, ParamStar]
     ) -> Optional[List[Param]]:
         nonlocal star_arg

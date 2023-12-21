@@ -71,7 +71,6 @@ from libcst._nodes.expression import (
     Yield,
 )
 from libcst._nodes.module import Module
-
 from libcst._nodes.op import (
     Add,
     AddAssign,
@@ -201,7 +200,6 @@ from libcst._nodes.whitespace import (
     TrailingWhitespace,
 )
 from libcst._removal_sentinel import RemovalSentinel
-
 
 TYPED_FUNCTION_RETURN_MAPPING: TypingDict[Type[CSTNode], object] = {
     Add: BaseBinaryOp,

@@ -183,7 +183,7 @@ We have multiple linters, including copyright checks and
 
     hatch run lint
 
-We use `ufmt <https://ufmt.omnilib.dev/en/stable/>`_ to format code. To format
+We use `ruff <https://beta.ruff.rs/>`_ to format code. To format
 changes to be conformant, run the following in the root:
 
 .. code-block:: shell

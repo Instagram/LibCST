@@ -331,5 +331,6 @@ class WithTest(CSTNodeTest):
         )
         module = cst.Module([])
         self.assertEqual(
-            module.code_for_node(node), ("with ( foo(),\n" "bar(), ): pass\n")  # noqa
+            module.code_for_node(node),
+            ("with ( foo(),\n" "bar(), ): pass\n"),  # noqa
         )
