@@ -58,8 +58,15 @@ class TestFixPyreDirectivesCommand(CodemodTest):
         """
         Tests that we correctly address poor spelling of a comment.
         """
-        after = before = """
+        before = """
             # pyre strict
+            from typing import List
+
+            def baz() -> List[Foo]:
+                pass
+        """
+        after = """
+            # pyre-strict
             from typing import List
 
             def baz() -> List[Foo]:
