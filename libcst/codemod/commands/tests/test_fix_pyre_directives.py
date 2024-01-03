@@ -14,14 +14,9 @@ class TestFixPyreDirectivesCommand(CodemodTest):
         """
         Tests that a pyre-strict inside the module header doesn't get touched.
         """
-        before = """
-            # pyre-strict
-            from typing import List
-
-            def baz() -> List[Foo]:
-                pass
-        """
-        after = """
+        after = (
+            before
+        ) = """
             # pyre-strict
             from typing import List
 
@@ -34,16 +29,9 @@ class TestFixPyreDirectivesCommand(CodemodTest):
         """
         Tests that a pyre-strict inside the module header doesn't get touched.
         """
-        before = """
-            # This is some header comment.
-            #
-            # pyre-strict
-            from typing import List
-
-            def baz() -> List[Foo]:
-                pass
-        """
-        after = """
+        after = (
+            before
+        ) = """
             # This is some header comment.
             #
             # pyre-strict
@@ -58,17 +46,9 @@ class TestFixPyreDirectivesCommand(CodemodTest):
         """
         Tests that a pyre-strict inside the module header doesn't get touched.
         """
-        before = """
-            # pyre-strict
-            #
-            # This is some header comment.
-
-            from typing import List
-
-            def baz() -> List[Foo]:
-                pass
-        """
-        after = """
+        after = (
+            before
+        ) = """
             # pyre-strict
             #
             # This is some header comment.
