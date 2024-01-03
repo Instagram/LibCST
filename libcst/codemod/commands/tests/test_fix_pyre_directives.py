@@ -84,8 +84,15 @@ class TestFixPyreDirectivesCommand(CodemodTest):
         """
         Tests that we correctly remove a duplicate, even with a mistake.
         """
-        after = before = """
+        before = """
             # pyre-strict
+            # pyre-strict
+            from typing import List
+
+            def baz() -> List[Foo]:
+                pass
+        """
+        after = """
             # pyre-strict
             from typing import List
 
@@ -98,7 +105,7 @@ class TestFixPyreDirectivesCommand(CodemodTest):
         """
         Tests that we correctly remove a duplicate, even with a mistake.
         """
-        after = before = """
+        before = """
             # This is a comment.
             #
             # pyre-strict
@@ -108,15 +115,31 @@ class TestFixPyreDirectivesCommand(CodemodTest):
             def baz() -> List[Foo]:
                 pass
         """
+        after = """
+            # This is a comment.
+            #
+            # pyre-strict
+            from typing import List
+
+            def baz() -> List[Foo]:
+                pass
+        """
         self.assertCodemod(before, after)
 
     def test_fix_misspelled_header_duplicate(self) -> None:
         """
         Tests that we correctly remove a duplicate, even with a mistake.
         """
-        after = before = """
+        before = """
             # pyre-strict
             # pyre strict
+            from typing import List
+
+            def baz() -> List[Foo]:
+                pass
+        """
+        after = """
+            # pyre-strict
             from typing import List
 
             def baz() -> List[Foo]:
@@ -128,10 +151,17 @@ class TestFixPyreDirectivesCommand(CodemodTest):
         """
         Tests that we correctly remove a duplicate, even with a mistake.
         """
-        after = before = """
+        before = """
             # pyre-strict
             from typing import List
             # pyre strict
+
+            def baz() -> List[Foo]:
+                pass
+        """
+        after = """
+            # pyre-strict
+            from typing import List
 
             def baz() -> List[Foo]:
                 pass
@@ -142,10 +172,17 @@ class TestFixPyreDirectivesCommand(CodemodTest):
         """
         Tests that we correctly move a badly-located pyre-strict.
         """
-        after = before = """
+        before = """
             from typing import List
 
             # pyre-strict
+            def baz() -> List[Foo]:
+                pass
+        """
+        after = """
+            # pyre-strict
+            from typing import List
+
             def baz() -> List[Foo]:
                 pass
         """
