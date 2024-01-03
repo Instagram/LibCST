@@ -20,3 +20,4 @@ libcst/_version.py
 target/
 venv/
 .venv/
+.idea/
