@@ -40,7 +40,7 @@ dev = [
     "pyre-check==0.9.18; platform_system != 'Windows'",
     "setuptools_scm>=6.0.1",
     "sphinx-rtd-theme>=0.4.3",
-    "ufmt==2.2.0",
+    "ufmt==2.3.0",
     "usort==1.0.7",
     "setuptools-rust>=1.5.2",
     "slotscheck>=0.7.1",
