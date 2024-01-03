@@ -96,7 +96,7 @@ jobs:
           fail_ci_if_error: true
           verbose: true
       - name: Archive Coverage
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: coverage
           path: coverage.xml
@@ -118,7 +118,7 @@ jobs:
       - uses: ts-graphviz/setup-graphviz@v1
       - run: hatch run docs
       - name: Archive Docs
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: sphinx-docs
           path: docs/build
