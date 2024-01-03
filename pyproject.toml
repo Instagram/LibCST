@@ -37,7 +37,7 @@ dev = [
     "maturin>=0.8.3,<0.16",
     "nbsphinx>=0.4.2",
     "prompt-toolkit>=2.0.9",
-    "pyre-check==0.9.18; platform_system != 'Windows'",
+    "pyre-check==0.9.19; platform_system != 'Windows'",
     "setuptools_scm>=6.0.1",
     "sphinx-rtd-theme>=0.4.3",
     "ufmt==2.2.0",
