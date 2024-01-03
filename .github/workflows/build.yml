@@ -42,7 +42,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         if: ${{ !contains(matrix.os, 'self-hosted') }}
         with:
           cache: pip
