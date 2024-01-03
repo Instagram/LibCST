@@ -42,7 +42,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         if: ${{ !contains(matrix.os, 'self-hosted') }}
         with:
           cache: pip
@@ -54,7 +54,7 @@ jobs:
           echo LIBCST_NO_LOCAL_SCHEME=1 >> $GITHUB_ENV
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.16.2
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           path: wheelhouse/*.whl
           name: wheels

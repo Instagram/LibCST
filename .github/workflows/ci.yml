@@ -19,7 +19,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         with:
           cache: pip
           cache-dependency-path: "pyproject.toml"
@@ -46,7 +46,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         with:
           cache: pip
           cache-dependency-path: "pyproject.toml"
@@ -63,7 +63,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         with:
           cache: pip
           cache-dependency-path: "pyproject.toml"
@@ -79,7 +79,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         with:
           cache: pip
           cache-dependency-path: "pyproject.toml"
@@ -96,7 +96,7 @@ jobs:
           fail_ci_if_error: true
           verbose: true
       - name: Archive Coverage
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: coverage
           path: coverage.xml
@@ -108,7 +108,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         with:
           cache: pip
           cache-dependency-path: "pyproject.toml"
@@ -118,7 +118,7 @@ jobs:
       - uses: ts-graphviz/setup-graphviz@v1
       - run: hatch run docs
       - name: Archive Docs
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: sphinx-docs
           path: docs/build
@@ -136,7 +136,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         with:
           cache: pip
           cache-dependency-path: "pyproject.toml"
