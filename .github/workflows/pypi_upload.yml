@@ -24,8 +24,9 @@ jobs:
         id: download
         uses: actions/download-artifact@v4
         with:
-          name: wheels
+          pattern: wheels-*
           path: wheelhouse
+          merge-multiple: true
       - uses: actions/setup-python@v5
         with:
           cache: pip
