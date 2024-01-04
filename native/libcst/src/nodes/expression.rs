@@ -937,7 +937,7 @@ pub enum Element<'a> {
 }
 
 impl<'a> Element<'a> {
-    fn codegen(
+    pub fn codegen(
         &self,
         state: &mut CodegenState<'a>,
         default_comma: bool,
