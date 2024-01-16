@@ -43,7 +43,7 @@ dev = [
     "usort==1.0.7",
     "setuptools-rust>=1.5.2",
     "slotscheck>=0.7.1",
-    "jinja2==3.1.2",
+    "jinja2==3.1.3",
 ]
 
 [project.urls]
