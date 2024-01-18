@@ -62,7 +62,9 @@ Example expression::
 
     1 + 2
 
-CST representation::
+CST representation:
+
+.. code-block:: python
 
     BinaryOperation(
         left=Integer(
