@@ -10,11 +10,11 @@
 
 import argparse
 import dataclasses
-import distutils.spawn
 import importlib
 import inspect
 import os
 import os.path
+import shutil
 import sys
 import textwrap
 from abc import ABC, abstractmethod
@@ -375,10 +375,7 @@ def _find_and_load_config(proc_name: str) -> Dict[str, Any]:
 
     # Make sure that the formatter is findable.
     if config["formatter"]:
-        exe = (
-            distutils.spawn.find_executable(config["formatter"][0])
-            or config["formatter"][0]
-        )
+        exe = shutil.which(config["formatter"][0]) or config["formatter"][0]
         config["formatter"] = [os.path.abspath(exe), *config["formatter"][1:]]
 
     return config
