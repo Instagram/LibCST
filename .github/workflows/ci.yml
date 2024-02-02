@@ -31,7 +31,7 @@ jobs:
         with:
           toolchain: stable
       - name: Build LibCST
-        run: hatch env create
+        run: hatch -vv env create
       - name: Tests
         run: hatch run test
       - name: Pure Parser Tests
