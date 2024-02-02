@@ -52,7 +52,7 @@ Github = "https://github.com/Instagram/LibCST"
 Changelog = "https://github.com/Instagram/LibCST/blob/main/CHANGELOG.md"
 
 [tool.black]
-target-version = ["py38"]
+target-version = ["py39"]
 extend-exclude = '^/native/' # Prepend "^/" to specify root file/folder. See https://black.readthedocs.io/en/stable/usage_and_configuration/the_basics.html#configuration-format
 
 [tool.hatch.envs.default]
@@ -68,7 +68,7 @@ lint = [
     "python -m slotscheck libcst",
     "python scripts/check_copyright.py",
 ]
-test = "python -m libcst.tests"
+test = ["python --version", "python -m libcst.tests"]
 typecheck = ["pyre --version", "pyre check"]
 
 [tool.slotscheck]
