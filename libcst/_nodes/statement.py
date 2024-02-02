@@ -3071,10 +3071,10 @@ class MatchList(MatchSequence):
     patterns: Sequence[Union[MatchSequenceElement, MatchStar]]
 
     #: An optional left bracket. If missing, this is an open sequence pattern.
-    lbracket: Optional[LeftSquareBracket] = LeftSquareBracket.field()
+    lbracket: Optional[LeftSquareBracket] = None
 
     #: An optional left bracket. If missing, this is an open sequence pattern.
-    rbracket: Optional[RightSquareBracket] = RightSquareBracket.field()
+    rbracket: Optional[RightSquareBracket] = None
 
     #: Parenthesis at the beginning of the node
     lpar: Sequence[LeftParen] = ()
