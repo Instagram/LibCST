@@ -4,29 +4,13 @@ on:
 
 jobs:
   # Build python wheels
-  build_matrix:
-    name: Prepare job matrix for build job
-    runs-on: ubuntu-latest
-    outputs:
-      matrix: ${{ steps.set-matrix.outputs.matrix }}
-    steps:
-      - uses: actions/checkout@v4
-      - id: set-matrix
-        # match github.ref to the on_ref_regex field in the json
-        # to skip running linux/aarch64 builds on PRs
-        run: |
-          matrix=$(jq --arg ref "${{ github.ref }}" \
-            'map(select(.on_ref_regex as $pat | $pat == null or ($ref | test($pat))) | del(.on_ref_regex))' \
-            .github/build-matrix.json)
-          echo matrix={\"include\":$(echo $matrix)}\" >> $GITHUB_OUTPUT
-
   build:
-    name: Build wheels on ${{ join(matrix.os, '/') }}/${{ matrix.vers }}
-    needs: build_matrix
+    name: Build wheels on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
-      matrix: ${{fromJson(needs.build_matrix.outputs.matrix)}}
+      matrix:
+        os: [macos-latest, ubuntu-latest, windows-latest]
     env:
       SCCACHE_VERSION: 0.2.13
       CIBW_BEFORE_ALL_LINUX: "curl https://sh.rustup.rs -sSf | env -u CARGO_HOME sh -s -- --default-toolchain stable --profile minimal -y"
@@ -36,22 +20,27 @@ jobs:
       CIBW_BEFORE_ALL_WINDOWS: "rustup target add x86_64-pc-windows-msvc i686-pc-windows-msvc"
       CIBW_ENVIRONMENT: 'PATH="$PATH:$HOME/.cargo/bin" LIBCST_NO_LOCAL_SCHEME=$LIBCST_NO_LOCAL_SCHEME'
       CIBW_SKIP: "cp27-* cp34-* cp35-* pp* *-win32 *-win_arm64 *-musllinux_*"
-      CIBW_ARCHS: ${{ matrix.vers }}
+      CIBW_ARCHS_LINUX: auto aarch64
+      CIBW_ARCHS_MACOS: x86_64 arm64
       CIBW_BUILD_VERBOSITY: 1
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - uses: actions/setup-python@v5
-        if: ${{ !contains(matrix.os, 'self-hosted') }}
         with:
           cache: pip
           cache-dependency-path: "pyproject.toml"
-          python-version: "3.10"
+          python-version: "3.12"
       - name: Disable scmtools local scheme
         if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         run: >-
           echo LIBCST_NO_LOCAL_SCHEME=1 >> $GITHUB_ENV
+      - name: Set up QEMU
+        if: runner.os == 'Linux'
+        uses: docker/setup-quemu-action@v3
+        with:
+          platforms: all
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.16.5
       - uses: actions/upload-artifact@v4
