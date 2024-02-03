@@ -7,7 +7,6 @@ on:
   pull_request:
 
 jobs:
-  # Run unittests
   test:
     runs-on: ${{ matrix.os }}
     strategy:
