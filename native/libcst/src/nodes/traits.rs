@@ -118,7 +118,7 @@ impl<'a, T: Inflate<'a>> Inflate<'a> for Vec<T> {
 }
 #[cfg(feature = "py")]
 pub mod py {
-    use pyo3::{types::PyTuple, AsPyPointer, IntoPy, PyObject, PyResult, Python};
+    use pyo3::{types::PyAny, types::PyTuple, IntoPy, PyObject, PyResult, Python};
 
     // TODO: replace with upstream implementation once
     // https://github.com/PyO3/pyo3/issues/1813 is resolved
@@ -188,7 +188,7 @@ pub mod py {
 
     impl<T> TryIntoPy<PyObject> for &'_ T
     where
-        T: AsPyPointer,
+        T: AsRef<PyAny>,
     {
         fn try_into_py(self, py: Python) -> PyResult<PyObject> {
             Ok(self.into_py(py))
