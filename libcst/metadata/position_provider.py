@@ -9,7 +9,6 @@ from contextlib import contextmanager
 from dataclasses import dataclass, field
 from typing import Iterator, List, Optional, Pattern
 
-from libcst._add_slots import add_slots
 from libcst._nodes.base import CSTNode
 from libcst._nodes.internal import CodegenState
 from libcst._nodes.module import Module
@@ -19,8 +18,7 @@ from libcst.metadata.base_provider import BaseMetadataProvider
 NEWLINE_RE: Pattern[str] = re.compile(r"\r\n?|\n")
 
 
-@add_slots
-@dataclass(frozen=False)
+@dataclass(slots=True, frozen=False)
 class WhitespaceInclusivePositionProvidingCodegenState(CodegenState):
     # These are derived from a Module
     default_indent: str
@@ -88,8 +86,7 @@ class WhitespaceInclusivePositionProvider(BaseMetadataProvider[CodeRange]):
         module._codegen(state)
 
 
-@add_slots
-@dataclass(frozen=False)
+@dataclass(slots=True, frozen=False)
 class PositionProvidingCodegenState(WhitespaceInclusivePositionProvidingCodegenState):
     @contextmanager
     def record_syntactic_position(

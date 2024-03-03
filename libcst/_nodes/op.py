@@ -7,7 +7,6 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Tuple
 
-from libcst._add_slots import add_slots
 from libcst._nodes.base import BaseLeaf, CSTNode, CSTValidationError
 from libcst._nodes.internal import CodegenState, visit_required
 from libcst._nodes.whitespace import BaseParenthesizableWhitespace, SimpleWhitespace
@@ -155,8 +154,7 @@ class BaseAugOp(CSTNode, ABC):
     __slots__ = ()
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class Semicolon(_BaseOneTokenOp):
     """
     Used by any small statement (any subclass of :class:`BaseSmallStatement`
@@ -174,8 +172,7 @@ class Semicolon(_BaseOneTokenOp):
         return ";"
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class Colon(_BaseOneTokenOp):
     """
     Used by :class:`Slice` as a separator between subsequent expressions,
@@ -192,8 +189,7 @@ class Colon(_BaseOneTokenOp):
         return ":"
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class Comma(_BaseOneTokenOp):
     """
     Syntactic trivia used as a separator between subsequent items in various
@@ -216,8 +212,7 @@ class Comma(_BaseOneTokenOp):
         return ","
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class Dot(_BaseOneTokenOp):
     """
     Used by :class:`Attribute` as a separator between subsequent :class:`Name` nodes.
@@ -233,8 +228,7 @@ class Dot(_BaseOneTokenOp):
         return "."
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class ImportStar(BaseLeaf):
     """
     Used by :class:`ImportFrom` to denote a star import instead of a list
@@ -245,8 +239,7 @@ class ImportStar(BaseLeaf):
         state.add_token("*")
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class AssignEqual(_BaseOneTokenOp):
     """
     Used by :class:`AnnAssign` to denote a single equal character when doing an
@@ -266,8 +259,7 @@ class AssignEqual(_BaseOneTokenOp):
         return "="
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class Plus(BaseUnaryOp):
     """
     A unary operator that can be used in a :class:`UnaryOperation`
@@ -281,8 +273,7 @@ class Plus(BaseUnaryOp):
         return "+"
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class Minus(BaseUnaryOp):
     """
     A unary operator that can be used in a :class:`UnaryOperation`
@@ -296,8 +287,7 @@ class Minus(BaseUnaryOp):
         return "-"
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class BitInvert(BaseUnaryOp):
     """
     A unary operator that can be used in a :class:`UnaryOperation`
@@ -311,8 +301,7 @@ class BitInvert(BaseUnaryOp):
         return "~"
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class Not(BaseUnaryOp):
     """
     A unary operator that can be used in a :class:`UnaryOperation`
@@ -326,8 +315,7 @@ class Not(BaseUnaryOp):
         return "not"
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class And(BaseBooleanOp):
     """
     A boolean operator that can be used in a :class:`BooleanOperation`
@@ -344,8 +332,7 @@ class And(BaseBooleanOp):
         return "and"
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class Or(BaseBooleanOp):
     """
     A boolean operator that can be used in a :class:`BooleanOperation`
@@ -362,8 +349,7 @@ class Or(BaseBooleanOp):
         return "or"
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class Add(BaseBinaryOp, _BaseOneTokenOp):
     """
     A binary operator that can be used in a :class:`BinaryOperation`
@@ -380,8 +366,7 @@ class Add(BaseBinaryOp, _BaseOneTokenOp):
         return "+"
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class Subtract(BaseBinaryOp, _BaseOneTokenOp):
     """
     A binary operator that can be used in a :class:`BinaryOperation`
@@ -398,8 +383,7 @@ class Subtract(BaseBinaryOp, _BaseOneTokenOp):
         return "-"
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class Multiply(BaseBinaryOp, _BaseOneTokenOp):
     """
     A binary operator that can be used in a :class:`BinaryOperation`
@@ -416,8 +400,7 @@ class Multiply(BaseBinaryOp, _BaseOneTokenOp):
         return "*"
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class Divide(BaseBinaryOp, _BaseOneTokenOp):
     """
     A binary operator that can be used in a :class:`BinaryOperation`
@@ -434,8 +417,7 @@ class Divide(BaseBinaryOp, _BaseOneTokenOp):
         return "/"
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class FloorDivide(BaseBinaryOp, _BaseOneTokenOp):
     """
     A binary operator that can be used in a :class:`BinaryOperation`
@@ -452,8 +434,7 @@ class FloorDivide(BaseBinaryOp, _BaseOneTokenOp):
         return "//"
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class Modulo(BaseBinaryOp, _BaseOneTokenOp):
     """
     A binary operator that can be used in a :class:`BinaryOperation`
@@ -470,8 +451,7 @@ class Modulo(BaseBinaryOp, _BaseOneTokenOp):
         return "%"
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class Power(BaseBinaryOp, _BaseOneTokenOp):
     """
     A binary operator that can be used in a :class:`BinaryOperation`
@@ -488,8 +468,7 @@ class Power(BaseBinaryOp, _BaseOneTokenOp):
         return "**"
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class LeftShift(BaseBinaryOp, _BaseOneTokenOp):
     """
     A binary operator that can be used in a :class:`BinaryOperation`
@@ -506,8 +485,7 @@ class LeftShift(BaseBinaryOp, _BaseOneTokenOp):
         return "<<"
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class RightShift(BaseBinaryOp, _BaseOneTokenOp):
     """
     A binary operator that can be used in a :class:`BinaryOperation`
@@ -524,8 +502,7 @@ class RightShift(BaseBinaryOp, _BaseOneTokenOp):
         return ">>"
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class BitOr(BaseBinaryOp, _BaseOneTokenOp):
     """
     A binary operator that can be used in a :class:`BinaryOperation`
@@ -542,8 +519,7 @@ class BitOr(BaseBinaryOp, _BaseOneTokenOp):
         return "|"
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class BitAnd(BaseBinaryOp, _BaseOneTokenOp):
     """
     A binary operator that can be used in a :class:`BinaryOperation`
@@ -560,8 +536,7 @@ class BitAnd(BaseBinaryOp, _BaseOneTokenOp):
         return "&"
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class BitXor(BaseBinaryOp, _BaseOneTokenOp):
     """
     A binary operator that can be used in a :class:`BinaryOperation`
@@ -578,8 +553,7 @@ class BitXor(BaseBinaryOp, _BaseOneTokenOp):
         return "^"
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class MatrixMultiply(BaseBinaryOp, _BaseOneTokenOp):
     """
     A binary operator that can be used in a :class:`BinaryOperation`
@@ -596,8 +570,7 @@ class MatrixMultiply(BaseBinaryOp, _BaseOneTokenOp):
         return "@"
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class LessThan(BaseCompOp, _BaseOneTokenOp):
     """
     A comparision operator that can be used in a :class:`Comparison` expression.
@@ -613,8 +586,7 @@ class LessThan(BaseCompOp, _BaseOneTokenOp):
         return "<"
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class GreaterThan(BaseCompOp, _BaseOneTokenOp):
     """
     A comparision operator that can be used in a :class:`Comparison` expression.
@@ -630,8 +602,7 @@ class GreaterThan(BaseCompOp, _BaseOneTokenOp):
         return ">"
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class Equal(BaseCompOp, _BaseOneTokenOp):
     """
     A comparision operator that can be used in a :class:`Comparison` expression.
@@ -647,8 +618,7 @@ class Equal(BaseCompOp, _BaseOneTokenOp):
         return "=="
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class LessThanEqual(BaseCompOp, _BaseOneTokenOp):
     """
     A comparision operator that can be used in a :class:`Comparison` expression.
@@ -664,8 +634,7 @@ class LessThanEqual(BaseCompOp, _BaseOneTokenOp):
         return "<="
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class GreaterThanEqual(BaseCompOp, _BaseOneTokenOp):
     """
     A comparision operator that can be used in a :class:`Comparison` expression.
@@ -681,8 +650,7 @@ class GreaterThanEqual(BaseCompOp, _BaseOneTokenOp):
         return ">="
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class NotEqual(BaseCompOp, _BaseOneTokenOp):
     """
     A comparison operator that can be used in a :class:`Comparison` expression.
@@ -720,8 +688,7 @@ class NotEqual(BaseCompOp, _BaseOneTokenOp):
         return self.value
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class In(BaseCompOp, _BaseOneTokenOp):
     """
     A comparision operator that can be used in a :class:`Comparison` expression.
@@ -737,8 +704,7 @@ class In(BaseCompOp, _BaseOneTokenOp):
         return "in"
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class NotIn(BaseCompOp, _BaseTwoTokenOp):
     """
     A comparision operator that can be used in a :class:`Comparison` expression.
@@ -760,8 +726,7 @@ class NotIn(BaseCompOp, _BaseTwoTokenOp):
         return ("not", "in")
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class Is(BaseCompOp, _BaseOneTokenOp):
     """
     A comparision operator that can be used in a :class:`Comparison` expression.
@@ -777,8 +742,7 @@ class Is(BaseCompOp, _BaseOneTokenOp):
         return "is"
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class IsNot(BaseCompOp, _BaseTwoTokenOp):
     """
     A comparision operator that can be used in a :class:`Comparison` expression.
@@ -800,8 +764,7 @@ class IsNot(BaseCompOp, _BaseTwoTokenOp):
         return ("is", "not")
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class AddAssign(BaseAugOp, _BaseOneTokenOp):
     """
     An augmented assignment operator that can be used in a :class:`AugAssign`
@@ -818,8 +781,7 @@ class AddAssign(BaseAugOp, _BaseOneTokenOp):
         return "+="
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class SubtractAssign(BaseAugOp, _BaseOneTokenOp):
     """
     An augmented assignment operator that can be used in a :class:`AugAssign`
@@ -836,8 +798,7 @@ class SubtractAssign(BaseAugOp, _BaseOneTokenOp):
         return "-="
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class MultiplyAssign(BaseAugOp, _BaseOneTokenOp):
     """
     An augmented assignment operator that can be used in a :class:`AugAssign`
@@ -854,8 +815,7 @@ class MultiplyAssign(BaseAugOp, _BaseOneTokenOp):
         return "*="
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class MatrixMultiplyAssign(BaseAugOp, _BaseOneTokenOp):
     """
     An augmented assignment operator that can be used in a :class:`AugAssign`
@@ -872,8 +832,7 @@ class MatrixMultiplyAssign(BaseAugOp, _BaseOneTokenOp):
         return "@="
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class DivideAssign(BaseAugOp, _BaseOneTokenOp):
     """
     An augmented assignment operator that can be used in a :class:`AugAssign`
@@ -890,8 +849,7 @@ class DivideAssign(BaseAugOp, _BaseOneTokenOp):
         return "/="
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class ModuloAssign(BaseAugOp, _BaseOneTokenOp):
     """
     An augmented assignment operator that can be used in a :class:`AugAssign`
@@ -908,8 +866,7 @@ class ModuloAssign(BaseAugOp, _BaseOneTokenOp):
         return "%="
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class BitAndAssign(BaseAugOp, _BaseOneTokenOp):
     """
     An augmented assignment operator that can be used in a :class:`AugAssign`
@@ -926,8 +883,7 @@ class BitAndAssign(BaseAugOp, _BaseOneTokenOp):
         return "&="
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class BitOrAssign(BaseAugOp, _BaseOneTokenOp):
     """
     An augmented assignment operator that can be used in a :class:`AugAssign`
@@ -944,8 +900,7 @@ class BitOrAssign(BaseAugOp, _BaseOneTokenOp):
         return "|="
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class BitXorAssign(BaseAugOp, _BaseOneTokenOp):
     """
     An augmented assignment operator that can be used in a :class:`AugAssign`
@@ -962,8 +917,7 @@ class BitXorAssign(BaseAugOp, _BaseOneTokenOp):
         return "^="
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class LeftShiftAssign(BaseAugOp, _BaseOneTokenOp):
     """
     An augmented assignment operator that can be used in a :class:`AugAssign`
@@ -980,8 +934,7 @@ class LeftShiftAssign(BaseAugOp, _BaseOneTokenOp):
         return "<<="
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class RightShiftAssign(BaseAugOp, _BaseOneTokenOp):
     """
     An augmented assignment operator that can be used in a :class:`AugAssign`
@@ -998,8 +951,7 @@ class RightShiftAssign(BaseAugOp, _BaseOneTokenOp):
         return ">>="
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class PowerAssign(BaseAugOp, _BaseOneTokenOp):
     """
     An augmented assignment operator that can be used in a :class:`AugAssign`
@@ -1016,8 +968,7 @@ class PowerAssign(BaseAugOp, _BaseOneTokenOp):
         return "**="
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class FloorDivideAssign(BaseAugOp, _BaseOneTokenOp):
     """
     An augmented assignment operator that can be used in a :class:`AugAssign`

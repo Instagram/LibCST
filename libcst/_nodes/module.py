@@ -6,7 +6,6 @@
 from dataclasses import dataclass
 from typing import cast, Optional, Sequence, TYPE_CHECKING, TypeVar, Union
 
-from libcst._add_slots import add_slots
 from libcst._nodes.base import CSTNode
 from libcst._nodes.internal import CodegenState, visit_body_sequence, visit_sequence
 from libcst._nodes.statement import (
@@ -29,8 +28,7 @@ _ModuleSelfT = TypeVar("_ModuleSelfT", bound="Module")
 builtin_bytes = bytes
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class Module(CSTNode):
     """
     Contains some top-level information inferred from the file letting us set correct

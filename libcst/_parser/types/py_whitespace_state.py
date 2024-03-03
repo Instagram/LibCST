@@ -5,11 +5,9 @@
 
 from dataclasses import dataclass
 
-from libcst._add_slots import add_slots
 
 
-@add_slots
-@dataclass(frozen=False)
+@dataclass(slots=True, frozen=False)
 class WhitespaceState:
     """
     A frequently mutated store of the whitespace parser's current state. This object
