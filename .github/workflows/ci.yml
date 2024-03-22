@@ -114,7 +114,7 @@ jobs:
           python-version: "3.10"
       - name: Install hatch
         run: pip install -U hatch
-      - uses: ts-graphviz/setup-graphviz@v1
+      - uses: ts-graphviz/setup-graphviz@v2
       - run: hatch run docs
       - name: Archive Docs
         uses: actions/upload-artifact@v4
