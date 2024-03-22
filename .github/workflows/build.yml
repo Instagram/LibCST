@@ -22,7 +22,6 @@ jobs:
       CIBW_ENVIRONMENT: 'PATH="$PATH:$HOME/.cargo/bin" LIBCST_NO_LOCAL_SCHEME=$LIBCST_NO_LOCAL_SCHEME'
       CIBW_SKIP: "cp27-* cp34-* cp35-* pp* *-win32 *-win_arm64 *-musllinux_*"
       CIBW_ARCHS_LINUX: auto aarch64
-      CIBW_ARCHS_MACOS: x86_64 arm64
       CIBW_BUILD_VERBOSITY: 1
     steps:
       - uses: actions/checkout@v4
