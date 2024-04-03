@@ -1,3 +1,30 @@
+# 1.2.0 - 2024-02-19
+
+## Updated
+* Support running LibCST on Python 3.12 and drop support for running it on 3.8
+  * remove 3.8 support by @zsol in https://github.com/Instagram/LibCST/pull/1073
+  * Remove reference to distutils by @zsol in https://github.com/Instagram/LibCST/pull/1099
+  * Update pyproject.toml for Python 3.12 support by @itamaro in https://github.com/Instagram/LibCST/pull/1038
+
+## Added
+* Allow `Element::codegen` to be used by external users by @Wilfred in https://github.com/Instagram/LibCST/pull/1071
+
+## Fixed
+* Fix parsing list matchers without explicit brackets by @zsol in https://github.com/Instagram/LibCST/pull/1097
+* installing rustc/cargo for mybinder demo by @aleivag in https://github.com/Instagram/LibCST/pull/1083
+* fix filepathprovider generic type by @kinto0 in https://github.com/Instagram/LibCST/pull/1036
+
+## New Contributors
+* @itamaro made their first contribution in https://github.com/Instagram/LibCST/pull/1039
+* @kinto0 made their first contribution in https://github.com/Instagram/LibCST/pull/1036
+* @dtolnay made their first contribution in https://github.com/Instagram/LibCST/pull/1063
+* @anonymousdouble made their first contribution in https://github.com/Instagram/LibCST/pull/1082
+* @aleivag made their first contribution in https://github.com/Instagram/LibCST/pull/1083
+* @Wilfred made their first contribution in https://github.com/Instagram/LibCST/pull/1071
+* @diliop made their first contribution in https://github.com/Instagram/LibCST/pull/1106
+
+**Full Changelog**: https://github.com/Instagram/LibCST/compare/v1.1.0...v1.2.0
+
 # 1.1.0 - 2023-10-05
 
 ## Added

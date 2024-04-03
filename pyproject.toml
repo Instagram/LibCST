@@ -16,11 +16,7 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
 ]
 requires-python = ">=3.9"
-dependencies = [
-    "typing_extensions>=3.7.4.2",
-    "typing_inspect>=0.4.0",
-    "pyyaml>=5.2",
-]
+dependencies = ["pyyaml>=5.2"]
 
 [project.optional-dependencies]
 dev = [
@@ -39,7 +35,7 @@ dev = [
     "pyre-check==0.9.18; platform_system != 'Windows'",
     "setuptools_scm>=6.0.1",
     "sphinx-rtd-theme>=0.4.3",
-    "ufmt==2.3.0",
+    "ufmt==2.5.1",
     "usort==1.0.7",
     "setuptools-rust>=1.5.2",
     "slotscheck>=0.7.1",
