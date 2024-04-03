@@ -1,3 +1,8 @@
+# 1.3.1 - 2024-04-03
+
+## Fixed
+* ImportError due to missing `mypy_extensions` dependency by @zsol in https://github.com/Instagram/LibCST/pull/1128
+
 # 1.3.0 - 2024-04-03
 
 ## Updated
