@@ -15,9 +15,7 @@ from tokenize import (
     Imagnumber as IMAGNUMBER_RE,
     Intnumber as INTNUMBER_RE,
 )
-from typing import Callable, Generator, Optional, Sequence, Union
-
-from typing_extensions import Literal
+from typing import Callable, Generator, Literal, Optional, Sequence, Union
 
 from libcst._add_slots import add_slots
 from libcst._maybe_sentinel import MaybeSentinel
