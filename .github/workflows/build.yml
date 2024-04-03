@@ -10,7 +10,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-latest, ubuntu-latest, windows-latest]
+        # macos-13 is an intel runner, macos-14 is apple silicon
+        os: [macos-13, macos-14, ubuntu-latest, windows-latest]
     env:
       SCCACHE_VERSION: 0.2.13
       CIBW_BEFORE_ALL_LINUX: "curl https://sh.rustup.rs -sSf | env -u CARGO_HOME sh -s -- --default-toolchain stable --profile minimal -y"
@@ -21,7 +22,6 @@ jobs:
       CIBW_ENVIRONMENT: 'PATH="$PATH:$HOME/.cargo/bin" LIBCST_NO_LOCAL_SCHEME=$LIBCST_NO_LOCAL_SCHEME'
       CIBW_SKIP: "cp27-* cp34-* cp35-* pp* *-win32 *-win_arm64 *-musllinux_*"
       CIBW_ARCHS_LINUX: auto aarch64
-      CIBW_ARCHS_MACOS: x86_64 arm64
       CIBW_BUILD_VERBOSITY: 1
     steps:
       - uses: actions/checkout@v4
@@ -42,7 +42,7 @@ jobs:
         with:
           platforms: all
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.16.5
+        uses: pypa/cibuildwheel@v2.17.0
       - uses: actions/upload-artifact@v4
         with:
           path: wheelhouse/*.whl

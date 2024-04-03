@@ -1,3 +1,8 @@
+# 1.3.0 - 2024-04-03
+
+## Updated
+* Removed dependencies on `typing_extensions` and `typing_inspect` by @zsol in https://github.com/Instagram/LibCST/pull/1126
+
 # 1.2.0 - 2024-02-19
 
 ## Updated
