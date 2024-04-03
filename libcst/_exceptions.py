@@ -4,9 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 from enum import auto, Enum
-from typing import Any, Callable, Iterable, Optional, Sequence, Tuple, Union
-
-from typing_extensions import final
+from typing import Any, Callable, final, Iterable, Optional, Sequence, Tuple, Union
 
 from libcst._parser.parso.pgen2.generator import ReservedString
 from libcst._parser.parso.python.token import PythonTokenTypes, TokenType
