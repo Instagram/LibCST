@@ -11,6 +11,7 @@ from typing import (
     Dict,
     Iterable,
     List,
+    Literal,
     Mapping,
     MutableMapping,
     NamedTuple,
@@ -22,8 +23,6 @@ from typing import (
     TYPE_CHECKING,
     Union,
 )
-
-from typing_extensions import Literal
 
 from libcst._type_enforce import is_value_of_type
 from libcst.testing.utils import data_provider, UnitTest

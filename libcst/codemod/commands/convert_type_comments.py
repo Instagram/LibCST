@@ -11,8 +11,6 @@ import functools
 import sys
 from typing import cast, Dict, List, Optional, Sequence, Set, Tuple, Union
 
-from typing_extensions import TypeAlias
-
 import libcst as cst
 import libcst.matchers as m
 from libcst.codemod import CodemodContext, VisitorBasedCodemodCommand
@@ -143,9 +141,9 @@ class _ArityError(Exception):
     pass
 
 
-UnpackedBindings: TypeAlias = Union[cst.BaseExpression, List["UnpackedBindings"]]
-UnpackedAnnotations: TypeAlias = Union[str, List["UnpackedAnnotations"]]
-TargetAnnotationPair: TypeAlias = Tuple[cst.BaseExpression, str]
+UnpackedBindings = Union[cst.BaseExpression, List["UnpackedBindings"]]
+UnpackedAnnotations = Union[str, List["UnpackedAnnotations"]]
+TargetAnnotationPair = Tuple[cst.BaseExpression, str]
 
 
 class AnnotationSpreader:
