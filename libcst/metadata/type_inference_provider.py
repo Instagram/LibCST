@@ -6,9 +6,7 @@
 import json
 import subprocess
 from pathlib import Path
-from typing import Dict, List, Mapping, Optional, Sequence, Tuple
-
-from mypy_extensions import TypedDict
+from typing import Dict, List, Mapping, Optional, Sequence, Tuple, TypedDict
 
 import libcst as cst
 from libcst._position import CodePosition, CodeRange
