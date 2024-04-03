@@ -5,16 +5,19 @@
 
 from typing import (
     Any,
+    ClassVar,
     ForwardRef,
     Iterable,
     Mapping,
     MutableMapping,
     MutableSequence,
     Tuple,
+    TypeVar,
+    Literal,
+    Union,
+    get_origin, get_args
 )
 
-from typing_extensions import Literal
-from typing_inspect import get_args, get_origin, is_classvar, is_typevar, is_union_type
 
 
 def is_value_of_type(  # noqa: C901 "too complex"
@@ -48,11 +51,11 @@ def is_value_of_type(  # noqa: C901 "too complex"
     - Forward Refs -- use `typing.get_type_hints` to resolve these
     - Type[...]
     """
-    if is_classvar(expected_type):
+    if expected_type is ClassVar or get_origin(expected_type) is ClassVar:
         classvar_args = get_args(expected_type)
         expected_type = (classvar_args[0] or Any) if classvar_args else Any
 
-    if is_typevar(expected_type):
+    if type(expected_type) is TypeVar:
         # treat this the same as Any
         # TODO: evaluate bounds
         return True
@@ -62,13 +65,13 @@ def is_value_of_type(  # noqa: C901 "too complex"
     if expected_origin_type == Any:
         return True
 
-    elif is_union_type(expected_type):
+    elif expected_type is Union or get_origin(expected_type) is Union:
         return any(
             is_value_of_type(value, subtype) for subtype in expected_type.__args__
         )
 
     elif isinstance(expected_origin_type, type(Literal)):
-        literal_values = get_args(expected_type, evaluate=True)
+        literal_values = get_args(expected_type)
         return any(value == literal for literal in literal_values)
 
     elif isinstance(expected_origin_type, ForwardRef):
@@ -82,12 +85,9 @@ def is_value_of_type(  # noqa: C901 "too complex"
         if not isinstance(value, tuple):
             return False
 
-        type_args = get_args(expected_type, evaluate=True)
+        type_args = get_args(expected_type)
         if len(type_args) == 0:
             # `Tuple` (no subscript) is implicitly `Tuple[Any, ...]`
-            return True
-
-        if type_args is None:
             return True
 
         if len(value) != len(type_args):
@@ -106,7 +106,7 @@ def is_value_of_type(  # noqa: C901 "too complex"
         if not issubclass(type(value), expected_origin_type):
             return False
 
-        type_args = get_args(expected_type, evaluate=True)
+        type_args = get_args(expected_type)
         if len(type_args) == 0:
             # `Mapping` (no subscript) is implicitly `Mapping[Any, Any]`.
             return True
@@ -143,7 +143,7 @@ def is_value_of_type(  # noqa: C901 "too complex"
         if not issubclass(type(value), expected_origin_type):
             return False
 
-        type_args = get_args(expected_type, evaluate=True)
+        type_args = get_args(expected_type)
         if len(type_args) == 0:
             # `Iterable` (no subscript) is implicitly `Iterable[Any]`.
             return True

@@ -9,9 +9,7 @@ import builtins
 import dataclasses
 import functools
 import sys
-from typing import cast, Dict, List, Optional, Sequence, Set, Tuple, Union
-
-from typing_extensions import TypeAlias
+from typing import cast, Dict, List, Optional, Sequence, Set, Tuple,TypeAlias, Union
 
 import libcst as cst
 import libcst.matchers as m
