@@ -952,17 +952,10 @@ class ScopeVisitor(cst.CSTVisitor):
     ) -> bool:
         """Returns whether it successfully handled the string annotation"""
         if self.__in___all___stack[-1]:
-            name: str | bytes | None = None
+            name = node.evaluated_value
 
-            if isinstance(node, cst.SimpleString):
-                name = node.value
-
-            if isinstance(node, cst.ConcatenatedString):
-                name = node.evaluated_value
-
-            assert isinstance(name, str), f"Expected str, got {type(name)}"
-
-            name = name.replace('"', "")
+            if isinstance(name, bytes):
+                name = name.decode("utf-8")
 
             access = Access(
                 cst.Name(name),
