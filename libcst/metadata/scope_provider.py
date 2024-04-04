@@ -958,7 +958,7 @@ class ScopeVisitor(cst.CSTVisitor):
                 name = name.decode("utf-8")
 
             access = Access(
-                cst.Name(name),
+                node,
                 self.scope,
                 is_annotation=False,
                 is_type_hint=False,
