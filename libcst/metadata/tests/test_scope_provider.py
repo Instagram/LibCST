@@ -2171,7 +2171,7 @@ class ScopeProviderTest(UnitTest):
                 class Outer:
                     class Nested:
                         pass
-                    
+
                     type Alias = Nested
 
                     def meth1[T: Nested](self): pass
@@ -2248,3 +2248,16 @@ class ScopeProviderTest(UnitTest):
         f_scope = scopes[inner_in_func_body]
         self.assertIn(inner_in_func_body.value, f_scope.accesses)
         self.assertEqual(list(f_scope.accesses)[0].referents, set())
+
+    def test___all___assignment(self) -> None:
+        m, scopes = get_scope_metadata_provider(
+            """
+            import a
+            import b
+
+            __all__ = ["a", "b"]
+            """
+        )
+        all_assignment = list(scopes[m]["__all__"])[0]
+        self.assertIsInstance(all_assignment, Assignment)
+        self.assertEqual(len(all_assignment.references), 2)

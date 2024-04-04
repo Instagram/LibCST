@@ -166,8 +166,8 @@ class BaseAssignment(abc.ABC):
         self.scope = scope
         self.__accesses = set()
 
-    def record_access(self, access: Access) -> None:
-        if access.scope != self.scope or self._index < access._index:
+    def record_access(self, access: Access, bypass: bool | None = None) -> None:
+        if bypass or access.scope != self.scope or self._index < access._index:
             self.__accesses.add(access)
 
     def record_accesses(self, accesses: Set[Access]) -> None:
@@ -846,6 +846,7 @@ class ScopeVisitor(cst.CSTVisitor):
         self.scope: Scope = GlobalScope()
         self.__deferred_accesses: List[DeferredAccess] = []
         self.__top_level_attribute_stack: List[Optional[cst.Attribute]] = [None]
+        self.__in___all___stack: List[bool] = [False]
         self.__in_annotation_stack: List[bool] = [False]
         self.__in_type_hint_stack: List[bool] = [False]
         self.__in_ignored_subscript: Set[cst.Subscript] = set()
@@ -950,6 +951,32 @@ class ScopeVisitor(cst.CSTVisitor):
         self, node: Union[cst.SimpleString, cst.ConcatenatedString]
     ) -> bool:
         """Returns whether it successfully handled the string annotation"""
+        if self.__in___all___stack[-1]:
+            name: str | bytes | None = None
+
+            if isinstance(node, cst.SimpleString):
+                name = node.value
+
+            if isinstance(node, cst.ConcatenatedString):
+                name = node.evaluated_value
+
+            assert isinstance(name, str), f"Expected str, got {type(name)}"
+
+            name = name.replace('"', "")
+
+            access = Access(
+                cst.Name(name),
+                self.scope,
+                is_annotation=False,
+                is_type_hint=False,
+            )
+
+            self.scope.record_access("__all__", access)
+            assignment = next(iter(self.scope.assignments["__all__"]))
+            assignment.record_access(access, True)
+
+            return True
+
         if (
             self.__in_type_hint_stack[-1] or self.__in_annotation_stack[-1]
         ) and not self.__in_ignored_subscript:
@@ -1090,6 +1117,22 @@ class ScopeVisitor(cst.CSTVisitor):
         for name_item in node.names:
             self.scope.record_nonlocal_overwrite(name_item.name.value)
         return False
+
+    def is__all___assignment(self, node: cst.Assign) -> bool:
+        target = next(
+            (t.target for t in node.targets if isinstance(t.target, cst.Name)), None
+        )
+        if target is None:
+            return False
+        return target.value == "__all__"
+
+    def visit_Assign(self, node: cst.Assign) -> Optional[bool]:
+        if self.is__all___assignment(node):
+            self.__in___all___stack.append(True)
+
+    def leave_Assign(self, node: cst.Assign) -> None:
+        if self.is__all___assignment(node):
+            self.__in___all___stack.pop()
 
     def visit_ListComp(self, node: cst.ListComp) -> Optional[bool]:
         return self._visit_comp_alike(node)
