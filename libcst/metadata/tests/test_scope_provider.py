@@ -2258,6 +2258,8 @@ class ScopeProviderTest(UnitTest):
             __all__ = ["a", "b"]
             """
         )
-        all_assignment = list(scopes[m]["__all__"])[0]
-        self.assertIsInstance(all_assignment, Assignment)
-        self.assertEqual(len(all_assignment.references), 2)
+        import_a_assignment = list(scopes[m]["a"])[0]
+        import_b_assignment = list(scopes[m]["b"])[0]
+
+        self.assertEqual(len(import_a_assignment.references), 1)
+        self.assertEqual(len(import_b_assignment.references), 1)

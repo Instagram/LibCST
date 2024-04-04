@@ -166,8 +166,8 @@ class BaseAssignment(abc.ABC):
         self.scope = scope
         self.__accesses = set()
 
-    def record_access(self, access: Access, bypass: bool | None = None) -> None:
-        if bypass or access.scope != self.scope or self._index < access._index:
+    def record_access(self, access: Access) -> None:
+        if access.scope != self.scope or self._index < access._index:
             self.__accesses.add(access)
 
     def record_accesses(self, accesses: Set[Access]) -> None:
@@ -971,9 +971,7 @@ class ScopeVisitor(cst.CSTVisitor):
                 is_type_hint=False,
             )
 
-            self.scope.record_access("__all__", access)
-            assignment = next(iter(self.scope.assignments["__all__"]))
-            assignment.record_access(access, True)
+            list(self.scope.assignments[name])[0].record_access(access)
 
             return True
 
