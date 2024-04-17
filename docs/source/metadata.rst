@@ -134,7 +134,7 @@ New scopes are created for classes, functions, and comprehensions. Other block
 constructs like conditional statements, loops, and try…except don't create their
 own scope.
 
-There are five different type of scope in Python:
+There are five different types of scopes in Python:
 :class:`~libcst.metadata.BuiltinScope`,
 :class:`~libcst.metadata.GlobalScope`,
 :class:`~libcst.metadata.ClassScope`,
