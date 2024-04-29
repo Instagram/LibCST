@@ -44,6 +44,98 @@ from libcst.codemod import (
 _DEFAULT_INDENT: str = "  "
 
 
+def filter_node_fields(
+    node: CSTNode,
+    *,
+    show_defaults: bool,
+    show_syntax: bool,
+    show_whitespace: bool,
+) -> Sequence["dataclasses.Field[CSTNode]"]:
+    """
+    Returns a filtered sequence of a node's fields.
+
+    Setting ``show_whitespace`` to ``False`` will filter whitespace fields.
+
+    Setting ``show_defaults`` to ``False`` will filter fields if their value is equal to
+    the default value ;  while respecting  the value of ``show_whitespace``.
+
+    Setting ``show_syntax``  to ``False`` will filter syntax fields ; while respecting
+    the value of ``show_whitespace`` & ``show_defaults``.
+    """
+
+    fields: Sequence["dataclasses.Field[CSTNode]"] = dataclasses.fields(node)
+
+    # Hide all fields prefixed with "_"
+    fields = [f for f in fields if f.name[0] != "_"]
+
+    # Filter whitespace nodes if needed
+    if not show_whitespace:
+
+        def _is_whitespace(field: "dataclasses.Field[object]") -> bool:
+            if "whitespace" in field.name:
+                return True
+            if "leading_lines" in field.name:
+                return True
+            if "lines_after_decorators" in field.name:
+                return True
+            if isinstance(node, (IndentedBlock, Module)) and field.name in [
+                "header",
+                "footer",
+            ]:
+                return True
+            if isinstance(node, IndentedBlock) and field.name == "indent":
+                return True
+            return False
+
+        fields = [f for f in fields if not _is_whitespace(f)]
+    # Filter values which aren't changed from their defaults
+    if not show_defaults:
+
+        def _get_default(fld: "dataclasses.Field[object]") -> object:
+            if fld.default_factory is not dataclasses.MISSING:
+                # pyre-fixme[29]: `Union[dataclasses._MISSING_TYPE,
+                #  dataclasses._DefaultFactory[object]]` is not a function.
+                return fld.default_factory()
+            return fld.default
+
+        fields = [
+            f
+            for f in fields
+            if not deep_equals(getattr(node, f.name), _get_default(f))
+        ]
+    # Filter out values which aren't interesting if needed
+    if not show_syntax:
+
+        def _is_syntax(field: "dataclasses.Field[object]") -> bool:
+            if isinstance(node, Module) and field.name in [
+                "encoding",
+                "default_indent",
+                "default_newline",
+                "has_trailing_newline",
+            ]:
+                return True
+            type_str = repr(field.type)
+            if (
+                "Sentinel" in type_str
+                and field.name not in ["star_arg", "star", "posonly_ind"]
+                and "whitespace" not in field.name
+            ):
+                # This is a value that can optionally be specified, so its
+                # definitely syntax.
+                return True
+
+            for name in ["Semicolon", "Colon", "Comma", "Dot", "AssignEqual"]:
+                # These are all nodes that exist for separation syntax
+                if name in type_str:
+                    return True
+
+            return False
+
+        fields = [f for f in fields if not _is_syntax(f)]
+
+    return fields
+
+
 def _node_repr_recursive(  # noqa: C901
     node: object,
     *,
@@ -54,76 +146,14 @@ def _node_repr_recursive(  # noqa: C901
 ) -> List[str]:
     if isinstance(node, CSTNode):
         # This is a CSTNode, we must pretty-print it.
+        fields: Sequence["dataclasses.Field[object]"] = filter_node_fields(
+            node=node,
+            show_defaults=show_defaults,
+            show_syntax=show_syntax,
+            show_whitespace=show_whitespace,
+        )
+
         tokens: List[str] = [node.__class__.__name__]
-        fields: Sequence["dataclasses.Field[object]"] = dataclasses.fields(node)
-
-        # Hide all fields prefixed with "_"
-        fields = [f for f in fields if f.name[0] != "_"]
-
-        # Filter whitespace nodes if needed
-        if not show_whitespace:
-
-            def _is_whitespace(field: "dataclasses.Field[object]") -> bool:
-                if "whitespace" in field.name:
-                    return True
-                if "leading_lines" in field.name:
-                    return True
-                if "lines_after_decorators" in field.name:
-                    return True
-                if isinstance(node, (IndentedBlock, Module)) and field.name in [
-                    "header",
-                    "footer",
-                ]:
-                    return True
-                if isinstance(node, IndentedBlock) and field.name == "indent":
-                    return True
-                return False
-
-            fields = [f for f in fields if not _is_whitespace(f)]
-        # Filter values which aren't changed from their defaults
-        if not show_defaults:
-
-            def _get_default(fld: "dataclasses.Field[object]") -> object:
-                if fld.default_factory is not dataclasses.MISSING:
-                    # pyre-fixme[29]: `Union[dataclasses._MISSING_TYPE,
-                    #  dataclasses._DefaultFactory[object]]` is not a function.
-                    return fld.default_factory()
-                return fld.default
-
-            fields = [
-                f
-                for f in fields
-                if not deep_equals(getattr(node, f.name), _get_default(f))
-            ]
-        # Filter out values which aren't interesting if needed
-        if not show_syntax:
-
-            def _is_syntax(field: "dataclasses.Field[object]") -> bool:
-                if isinstance(node, Module) and field.name in [
-                    "encoding",
-                    "default_indent",
-                    "default_newline",
-                    "has_trailing_newline",
-                ]:
-                    return True
-                type_str = repr(field.type)
-                if (
-                    "Sentinel" in type_str
-                    and field.name not in ["star_arg", "star", "posonly_ind"]
-                    and "whitespace" not in field.name
-                ):
-                    # This is a value that can optionally be specified, so its
-                    # definitely syntax.
-                    return True
-
-                for name in ["Semicolon", "Colon", "Comma", "Dot", "AssignEqual"]:
-                    # These are all nodes that exist for separation syntax
-                    if name in type_str:
-                        return True
-
-                return False
-
-            fields = [f for f in fields if not _is_syntax(f)]
 
         if len(fields) == 0:
             tokens.append("()")
@@ -204,12 +234,12 @@ def dump(
     from the default contruction of the node while also hiding whitespace and
     syntax fields.
 
-    Setting ``show_default`` to ``True`` will add fields regardless if their
+    Setting ``show_defaults`` to ``True`` will add fields regardless if their
     value is different from the default value.
 
     Setting ``show_whitespace`` will add whitespace fields and setting
     ``show_syntax`` will add syntax fields while respecting the value of
-    ``show_default``.
+    ``show_defaults``.
 
     When all keyword args are set to true, the output of this function is
     indentical to the __repr__ method of the node.
