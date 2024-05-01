@@ -6,9 +6,9 @@
 import dataclasses
 from typing import Sequence
 
-from _nodes.deep_equals import deep_equals
-
 from libcst import CSTNode, IndentedBlock, Module
+
+from libcst._nodes.deep_equals import deep_equals
 
 
 def get_node_fields(node: CSTNode) -> Sequence["dataclasses.Field[CSTNode]"]:

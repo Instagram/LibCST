@@ -22,8 +22,6 @@ from typing import Any, Callable, Dict, List, Sequence, Tuple, Type
 
 import yaml
 
-from helpers import filter_node_fields
-
 from libcst import CSTNode, LIBCST_VERSION, parse_module, PartialParserConfig
 from libcst._parser.parso.utils import parse_version_string
 from libcst.codemod import (
@@ -34,6 +32,7 @@ from libcst.codemod import (
     gather_files,
     parallel_exec_transform_with_prettyprint,
 )
+from libcst.helpers import filter_node_fields
 
 _DEFAULT_INDENT: str = "  "
 
