@@ -25,6 +25,14 @@ from libcst.helpers.module import (
     insert_header_comments,
     ModuleNameAndPackage,
 )
+from libcst.helpers.node_fields import (
+    filter_node_fields,
+    get_field_default_value,
+    get_node_fields,
+    is_default_node_field,
+    is_syntax_node_field,
+    is_whitespace_node_field,
+)
 
 __all__ = [
     "calculate_module_and_package",
@@ -42,4 +50,10 @@ __all__ = [
     "parse_template_statement",
     "parse_template_expression",
     "ModuleNameAndPackage",
+    "get_node_fields",
+    "get_field_default_value",
+    "is_whitespace_node_field",
+    "is_syntax_node_field",
+    "is_default_node_field",
+    "filter_node_fields",
 ]
