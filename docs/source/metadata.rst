@@ -243,7 +243,7 @@ In Python, type checkers like `Mypy <https://github.com/python/mypy>`_ or
 and infer types for expressions.
 :class:`~libcst.metadata.TypeInferenceProvider` is provided by `Pyre Query API <https://pyre-check.org/docs/querying-pyre.html>`__
 which requires `setup watchman <https://pyre-check.org/docs/getting-started/>`_ for incremental typechecking.
-:class:`~libcst.metadata.FullRepoManger` is built for manage the inter process communication to Pyre.
+:class:`~libcst.metadata.FullRepoManager` is built for manage the inter process communication to Pyre.
 
 .. autoclass:: libcst.metadata.TypeInferenceProvider
    :no-undoc-members:
