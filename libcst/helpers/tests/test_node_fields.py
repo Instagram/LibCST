@@ -1,7 +1,5 @@
 from unittest import TestCase
 
-from helpers import get_node_fields, is_default_node_field, is_syntax_node_field
-
 from libcst import (
     Annotation,
     CSTNode,
@@ -14,7 +12,13 @@ from libcst import (
     Semicolon,
     SimpleStatementLine,
 )
-from libcst.helpers import is_whitespace_node_field
+
+from libcst.helpers import (
+    get_node_fields,
+    is_default_node_field,
+    is_syntax_node_field,
+    is_whitespace_node_field,
+)
 
 
 class _NodeFieldsTest(TestCase):
