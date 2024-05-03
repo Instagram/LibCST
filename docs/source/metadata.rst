@@ -94,7 +94,7 @@ declaring one of :class:`~libcst.metadata.PositionProvider` or
 most cases, :class:`~libcst.metadata.PositionProvider` is what you probably
 want.
 
-Node positions are is represented with :class:`~libcst.metadata.CodeRange`
+Node positions are represented with :class:`~libcst.metadata.CodeRange`
 objects. See :ref:`the above example<libcst-metadata-position-example>`.
 
 .. autoclass:: libcst.metadata.PositionProvider
@@ -134,7 +134,7 @@ New scopes are created for classes, functions, and comprehensions. Other block
 constructs like conditional statements, loops, and try…except don't create their
 own scope.
 
-There are five different type of scope in Python:
+There are five different types of scopes in Python:
 :class:`~libcst.metadata.BuiltinScope`,
 :class:`~libcst.metadata.GlobalScope`,
 :class:`~libcst.metadata.ClassScope`,
