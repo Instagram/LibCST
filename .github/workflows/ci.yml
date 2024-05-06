@@ -90,6 +90,8 @@ jobs:
           hatch run coverage run setup.py test
           hatch run coverage xml -i
       - uses: codecov/codecov-action@v4
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
           files: coverage.xml
           fail_ci_if_error: true
