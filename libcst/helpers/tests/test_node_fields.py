@@ -1,3 +1,9 @@
+# Copyright (c) Meta Platforms, Inc. and affiliates.
+#
+# This source code is licensed under the MIT license found in the
+# LICENSE file in the root directory of this source tree.
+# pyre-unsafe
+
 from unittest import TestCase
 
 from libcst import (
@@ -39,9 +45,9 @@ class _NodeFieldsTest(TestCase):
         cls.module = parse_module(
             "def foo(a: str) -> None:\n    pass ; pass\n    return\n"
         )
-        # Direct access to nodes
+        # /!\ Direct access to nodes
         # This is done for test purposes on a known CST
-        # Use visitors to do this "the correct way"
+        # -> For "real code", use visitors to do this "the correct way"
         cls.function = cls.module.body[0]
         cls.param = cls.function.params.params[0]
         cls.annotation = cls.param.annotation
@@ -78,6 +84,7 @@ class IsWhitespaceNodeFieldTest(_NodeFieldsTest):
             )
 
     def test_module(self) -> None:
+        """Check if a CST Module node is correctly filtered."""
         is_filtered_field = {
             "body": False,
             "header": True,
@@ -90,6 +97,7 @@ class IsWhitespaceNodeFieldTest(_NodeFieldsTest):
         self._check_fields(is_filtered_field, self.module)
 
     def test_annotation(self) -> None:
+        """Check if a CST Annotation node is correctly filtered."""
         is_filtered_field = {
             "annotation": False,
             "whitespace_before_indicator": True,
@@ -98,6 +106,7 @@ class IsWhitespaceNodeFieldTest(_NodeFieldsTest):
         self._check_fields(is_filtered_field, self.annotation)
 
     def test_param(self) -> None:
+        """Check if a CST Param node is correctly filtered."""
         is_filtered_field = {
             "name": False,
             "annotation": False,
@@ -111,6 +120,7 @@ class IsWhitespaceNodeFieldTest(_NodeFieldsTest):
         self._check_fields(is_filtered_field, self.param)
 
     def test_semicolon(self) -> None:
+        """Check if a CST Semicolon node is correctly filtered."""
         is_filtered_field = {
             "whitespace_before": True,
             "whitespace_after": True,
@@ -118,6 +128,7 @@ class IsWhitespaceNodeFieldTest(_NodeFieldsTest):
         self._check_fields(is_filtered_field, self.semicolon)
 
     def test_statement(self) -> None:
+        """Check if a CST SimpleStatementLine node is correctly filtered."""
         is_filtered_field = {
             "body": False,
             "leading_lines": True,
@@ -126,6 +137,7 @@ class IsWhitespaceNodeFieldTest(_NodeFieldsTest):
         self._check_fields(is_filtered_field, self.statement)
 
     def test_indent(self) -> None:
+        """Check if a CST IndentedBlock node is correctly filtered."""
         is_filtered_field = {
             "body": False,
             "header": True,
@@ -135,6 +147,7 @@ class IsWhitespaceNodeFieldTest(_NodeFieldsTest):
         self._check_fields(is_filtered_field, self.indent)
 
     def test_function(self) -> None:
+        """Check if a CST FunctionDef node is correctly filtered."""
         is_filtered_field = {
             "name": False,
             "params": False,
@@ -170,6 +183,7 @@ class IsSyntaxNodeFieldTest(_NodeFieldsTest):
             )
 
     def test_module(self) -> None:
+        """Check if a CST Module node is correctly filtered."""
         is_filtered_field = {
             "body": False,
             "header": False,
@@ -182,6 +196,7 @@ class IsSyntaxNodeFieldTest(_NodeFieldsTest):
         self._check_fields(is_filtered_field, self.module)
 
     def test_param(self) -> None:
+        """Check if a CST Param node is correctly filtered."""
         is_filtered_field = {
             "name": False,
             "annotation": False,
@@ -195,6 +210,7 @@ class IsSyntaxNodeFieldTest(_NodeFieldsTest):
         self._check_fields(is_filtered_field, self.param)
 
     def test_pass(self) -> None:
+        """Check if a CST Pass node is correctly filtered."""
         is_filtered_field = {
             "semicolon": True,
         }
@@ -217,6 +233,7 @@ class IsDefaultNodeFieldTest(_NodeFieldsTest):
             )
 
     def test_module(self) -> None:
+        """Check if a CST Module node is correctly filtered."""
         is_filtered_field = {
             "body": False,
             "header": True,
@@ -229,6 +246,7 @@ class IsDefaultNodeFieldTest(_NodeFieldsTest):
         self._check_fields(is_filtered_field, self.module)
 
     def test_annotation(self) -> None:
+        """Check if a CST Annotation node is correctly filtered."""
         is_filtered_field = {
             "annotation": False,
             "whitespace_before_indicator": False,
@@ -237,6 +255,7 @@ class IsDefaultNodeFieldTest(_NodeFieldsTest):
         self._check_fields(is_filtered_field, self.annotation)
 
     def test_param(self) -> None:
+        """Check if a CST Param node is correctly filtered."""
         is_filtered_field = {
             "name": False,
             "annotation": False,
@@ -250,6 +269,7 @@ class IsDefaultNodeFieldTest(_NodeFieldsTest):
         self._check_fields(is_filtered_field, self.param)
 
     def test_statement(self) -> None:
+        """Check if a CST SimpleStatementLine node is correctly filtered."""
         is_filtered_field = {
             "body": False,
             "leading_lines": True,
@@ -258,6 +278,7 @@ class IsDefaultNodeFieldTest(_NodeFieldsTest):
         self._check_fields(is_filtered_field, self.statement)
 
     def test_indent(self) -> None:
+        """Check if a CST IndentedBlock node is correctly filtered."""
         is_filtered_field = {
             "body": False,
             "header": True,
@@ -267,6 +288,7 @@ class IsDefaultNodeFieldTest(_NodeFieldsTest):
         self._check_fields(is_filtered_field, self.indent)
 
     def test_function(self) -> None:
+        """Check if a CST FunctionDef node is correctly filtered."""
         is_filtered_field = {
             "name": False,
             "params": False,

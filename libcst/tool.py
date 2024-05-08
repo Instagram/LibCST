@@ -47,7 +47,7 @@ def _node_repr_recursive(  # noqa: C901
 ) -> List[str]:
     if isinstance(node, CSTNode):
         # This is a CSTNode, we must pretty-print it.
-        fields: Sequence["dataclasses.Field[object]"] = filter_node_fields(
+        fields: Sequence["dataclasses.Field[CSTNode]"] = filter_node_fields(
             node=node,
             show_defaults=show_defaults,
             show_syntax=show_syntax,
@@ -567,7 +567,8 @@ class _SerializerBase(ABC):
         return f"{comments}{os.linesep}{self._serialize_impl(key, value)}{os.linesep}"
 
     @abstractmethod
-    def _serialize_impl(self, key: str, value: object) -> str: ...
+    def _serialize_impl(self, key: str, value: object) -> str:
+        ...
 
 
 class _StrSerializer(_SerializerBase):

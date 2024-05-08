@@ -3,22 +3,28 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+from __future__ import annotations
+
 import dataclasses
-from typing import Sequence
+from typing import TYPE_CHECKING
 
-from libcst import CSTNode, IndentedBlock, Module
-
+from libcst import IndentedBlock, Module
 from libcst._nodes.deep_equals import deep_equals
 
+if TYPE_CHECKING:
+    from typing import Sequence
 
-def get_node_fields(node: CSTNode) -> Sequence["dataclasses.Field[CSTNode]"]:
+    from libcst import CSTNode
+
+
+def get_node_fields(node: CSTNode) -> Sequence[dataclasses.Field[CSTNode]]:
     """
     Returns the sequence of a given CST-node's fields.
     """
     return dataclasses.fields(node)
 
 
-def is_whitespace_node_field(node: CSTNode, field: "dataclasses.Field[object]") -> bool:
+def is_whitespace_node_field(node: CSTNode, field: dataclasses.Field[CSTNode]) -> bool:
     """
     Returns True if a given CST-node's field is a whitespace-related field
     (whitespace, indent, header, footer, etc.).
@@ -39,7 +45,7 @@ def is_whitespace_node_field(node: CSTNode, field: "dataclasses.Field[object]") 
     return False
 
 
-def is_syntax_node_field(node: CSTNode, field: "dataclasses.Field[object]") -> bool:
+def is_syntax_node_field(node: CSTNode, field: dataclasses.Field[CSTNode]) -> bool:
     """
     Returns True if a given CST-node's field is a syntax-related field
     (colon, semicolon, dot, encoding, etc.).
@@ -69,7 +75,7 @@ def is_syntax_node_field(node: CSTNode, field: "dataclasses.Field[object]") -> b
     return False
 
 
-def get_field_default_value(field: "dataclasses.Field[object]") -> Sequence[str]:
+def get_field_default_value(field: dataclasses.Field[object]) -> object:
     """
     Returns the default value of a CST-node's field.
     """
@@ -80,7 +86,7 @@ def get_field_default_value(field: "dataclasses.Field[object]") -> Sequence[str]
     return field.default
 
 
-def is_default_node_field(node: CSTNode, field: "dataclasses.Field[object]") -> bool:
+def is_default_node_field(node: CSTNode, field: dataclasses.Field[CSTNode]) -> bool:
     """
     Returns True if a given CST-node's field has its default value.
     """
@@ -93,7 +99,7 @@ def filter_node_fields(
     show_defaults: bool,
     show_syntax: bool,
     show_whitespace: bool,
-) -> Sequence["dataclasses.Field[CSTNode]"]:
+) -> Sequence[dataclasses.Field[CSTNode]]:
     """
     Returns a filtered sequence of a CST-node's fields.
 
@@ -106,7 +112,7 @@ def filter_node_fields(
     the value of ``show_whitespace`` & ``show_defaults``.
     """
 
-    fields: Sequence["dataclasses.Field[CSTNode]"] = dataclasses.fields(node)
+    fields: Sequence[dataclasses.Field[CSTNode]] = dataclasses.fields(node)
     # Hide all fields prefixed with "_"
     fields = [f for f in fields if f.name[0] != "_"]
     # Filter whitespace nodes if needed
