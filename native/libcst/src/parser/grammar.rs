@@ -2152,9 +2152,8 @@ fn make_kwarg<'input, 'a>(
         star_tok: None,
     }
 }
-// fn make_assign_equal<'input, 'a>(
-//     eq
-// )
+
+
 fn make_star_arg<'input, 'a>(
     star: TokenRef<'input, 'a>,
     expr: Expression<'input, 'a>,
