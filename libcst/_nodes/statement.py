@@ -3653,6 +3653,12 @@ class TypeParam(CSTNode):
     #: with a comma only if a comma is required.
     comma: Union[Comma, MaybeSentinel] = MaybeSentinel.DEFAULT
 
+    #: The equal sign used to denote assignment if there is a default.
+    equal: Union[AssignEqual, MaybeSentinel] = MaybeSentinel.DEFAULT
+
+    #: Any optional default value, used when the argument is not supplied.
+    default: Optional[BaseExpression] = None
+
     def _codegen_impl(self, state: CodegenState, default_comma: bool = False) -> None:
         self.param._codegen(state)
         comma = self.comma
@@ -3662,11 +3668,26 @@ class TypeParam(CSTNode):
         else:
             comma._codegen(state)
 
+        equal = self.equal
+        if equal is MaybeSentinel.DEFAULT and self.default is not None:
+            state.add_token(" = ")
+
+        default = self.default
+        if default is not None:
+            default._codegen(state)
+
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "TypeParam":
         return TypeParam(
             param=visit_required(self, "param", self.param, visitor),
             comma=visit_sentinel(self, "comma", self.comma, visitor),
+            default=visit_optional(self, "default", self.default, visitor),
         )
+
+    def _validate(self) -> None:
+        if self.default is None and isinstance(self.equal, AssignEqual):
+            raise CSTValidationError(
+                "Must have a default when specifying an AssignEqual."
+            )
 
 
 @add_slots

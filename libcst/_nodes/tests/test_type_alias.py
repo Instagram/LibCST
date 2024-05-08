@@ -56,6 +56,42 @@ class TypeAliasCreationTest(CSTNodeTest):
                 "code": "type foo[T: str, *Ts, **KW] = bar | baz",
                 "expected_position": CodeRange((1, 0), (1, 39)),
             },
+            {
+                "node": cst.TypeAlias(
+                    cst.Name("foo"),
+                    type_parameters=cst.TypeParameters(
+                        [
+                            cst.TypeParam(
+                                cst.TypeVar(cst.Name("T")), default=cst.Name("str")
+                            ),
+                        ]
+                    ),
+                    value=cst.Name("bar"),
+                ),
+                "code": "type foo[T = str] = bar",
+                "expected_position": CodeRange((1, 0), (1, 23)),
+            },
+            {
+                "node": cst.TypeAlias(
+                    cst.Name("foo"),
+                    type_parameters=cst.TypeParameters(
+                        [
+                            cst.TypeParam(
+                                cst.ParamSpec(cst.Name("P")),
+                                default=cst.List(
+                                    elements=[
+                                        cst.Element(cst.Name("int")),
+                                        cst.Element(cst.Name("str")),
+                                    ]
+                                ),
+                            ),
+                        ]
+                    ),
+                    value=cst.Name("bar"),
+                ),
+                "code": "type foo[**P = [int, str]] = bar",
+                "expected_position": CodeRange((1, 0), (1, 32)),
+            },
         )
     )
     def test_valid(self, **kwargs: Any) -> None:
