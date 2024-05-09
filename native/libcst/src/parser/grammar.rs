@@ -2153,7 +2153,6 @@ fn make_kwarg<'input, 'a>(
     }
 }
 
-
 fn make_star_arg<'input, 'a>(
     star: TokenRef<'input, 'a>,
     expr: Expression<'input, 'a>,
