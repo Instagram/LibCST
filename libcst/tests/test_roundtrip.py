@@ -3,6 +3,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import difflib
 from pathlib import Path
 from unittest import TestCase
 
@@ -23,4 +24,13 @@ class RoundTripTests(TestCase):
             with self.subTest(file=str(file)):
                 src = file.read_text(encoding="utf-8")
                 mod = parse_module(src)
+                diff = difflib.ndiff(
+                    mod.code,
+                    src,
+                )
+                if mod.code != src:
+                    print("-----")
+                    print(src)
+                    print("++++++")
+                    print(mod.code)
                 self.assertEqual(mod.code, src)

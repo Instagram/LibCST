@@ -50,6 +50,7 @@ def codegen_visitors() -> None:
     # valid nodes for visitors, but doing so means that we depend on ourselves.
     # So, this attempts to keep the repo in a working state for as many operations
     # as possible.
+    print(__file__)
     base = os.path.abspath(
         os.path.join(os.path.dirname(os.path.abspath(__file__)), "../")
     )
@@ -70,7 +71,7 @@ def codegen_visitors() -> None:
         # by attempting to run codegen again in a new process.
         subprocess.check_call(
             [sys.executable, "-m", "libcst.codegen.gen_visitor_functions"],
-            cwd=base,
+            cwd=base + "/..",
             stdout=subprocess.DEVNULL,
         )
 

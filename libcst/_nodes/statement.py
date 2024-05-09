@@ -3664,12 +3664,6 @@ class TypeParam(CSTNode):
 
     def _codegen_impl(self, state: CodegenState, default_comma: bool = False) -> None:
         self.param._codegen(state)
-        comma = self.comma
-        if isinstance(comma, MaybeSentinel):
-            if default_comma:
-                state.add_token(", ")
-        else:
-            comma._codegen(state)
 
         equal = self.equal
         if equal is MaybeSentinel.DEFAULT and self.default is not None:
@@ -3684,6 +3678,13 @@ class TypeParam(CSTNode):
         default = self.default
         if default is not None:
             default._codegen(state)
+
+        comma = self.comma
+        if isinstance(comma, MaybeSentinel):
+            if default_comma:
+                state.add_token(", ")
+        else:
+            comma._codegen(state)
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "TypeParam":
         return TypeParam(
