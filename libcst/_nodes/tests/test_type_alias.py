@@ -92,6 +92,23 @@ class TypeAliasCreationTest(CSTNodeTest):
                 "code": "type foo[**P = [int, str]] = bar",
                 "expected_position": CodeRange((1, 0), (1, 32)),
             },
+            {
+                "node": cst.TypeAlias(
+                    cst.Name("foo"),
+                    type_parameters=cst.TypeParameters(
+                        [
+                            cst.TypeParam(
+                                cst.TypeVarTuple(cst.Name("T")),
+                                default=cst.Name("default"),
+                                star="*",
+                            ),
+                        ]
+                    ),
+                    value=cst.Name("bar"),
+                ),
+                "code": "type foo[*T = *default] = bar",
+                "expected_position": CodeRange((1, 0), (1, 29)),
+            },
         )
     )
     def test_valid(self, **kwargs: Any) -> None:
@@ -159,6 +176,28 @@ class TypeAliasParserTest(CSTNodeTest):
                     ]
                 ),
                 "code": "type  foo [T:str,**  KW , ]  =  bar ; \n",
+                "parser": parse_statement,
+            },
+            {
+                "node": cst.SimpleStatementLine(
+                    [
+                        cst.TypeAlias(
+                            cst.Name("foo"),
+                            type_parameters=cst.TypeParameters(
+                                [
+                                    cst.TypeParam(
+                                        cst.TypeVarTuple(cst.Name("P")),
+                                        star="*",
+                                        default=cst.Name("default"),
+                                    ),
+                                ]
+                            ),
+                            value=cst.Name("bar"),
+                            whitespace_after_name=cst.SimpleWhitespace(" "),
+                        )
+                    ]
+                ),
+                "code": "type foo [*P = *default] = bar\n",
                 "parser": parse_statement,
             },
         )

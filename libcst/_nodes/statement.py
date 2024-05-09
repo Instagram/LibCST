@@ -7,7 +7,7 @@ import inspect
 import re
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Optional, Pattern, Sequence, Union
+from typing import Literal, Optional, Pattern, Sequence, Union
 
 from libcst._add_slots import add_slots
 from libcst._maybe_sentinel import MaybeSentinel
@@ -3656,6 +3656,9 @@ class TypeParam(CSTNode):
     #: The equal sign used to denote assignment if there is a default.
     equal: Union[AssignEqual, MaybeSentinel] = MaybeSentinel.DEFAULT
 
+    #: The star used to denote a variadic default
+    star: Union[str, MaybeSentinel] = MaybeSentinel.DEFAULT
+
     #: Any optional default value, used when the argument is not supplied.
     default: Optional[BaseExpression] = None
 
@@ -3672,6 +3675,10 @@ class TypeParam(CSTNode):
         if equal is MaybeSentinel.DEFAULT and self.default is not None:
             state.add_token(" = ")
 
+        star = self.star
+        if isinstance(star, str):
+            state.add_token("*")
+
         default = self.default
         if default is not None:
             default._codegen(state)
@@ -3680,6 +3687,7 @@ class TypeParam(CSTNode):
         return TypeParam(
             param=visit_required(self, "param", self.param, visitor),
             comma=visit_sentinel(self, "comma", self.comma, visitor),
+            star=self.star,
             default=visit_optional(self, "default", self.default, visitor),
         )
 
@@ -3688,6 +3696,15 @@ class TypeParam(CSTNode):
             raise CSTValidationError(
                 "Must have a default when specifying an AssignEqual."
             )
+        if isinstance(self.star, str) and not (
+            self.default or isinstance(self.equal, AssignEqual)
+        ):
+            print(self.star)
+            print(self.default)
+            print(self.equal)
+            raise CSTValidationError("Star can only be present if a default")
+        if isinstance(self.star, str) and self.star not in ("", "*"):
+            raise CSTValidationError("Must specify either '', '*' or '**' for star.")
 
 
 @add_slots
