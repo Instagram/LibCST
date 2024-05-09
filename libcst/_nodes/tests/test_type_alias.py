@@ -99,6 +99,7 @@ class TypeAliasCreationTest(CSTNodeTest):
                         [
                             cst.TypeParam(
                                 cst.TypeVarTuple(cst.Name("T")),
+                                equal=cst.AssignEqual(),
                                 default=cst.Name("default"),
                                 star="*",
                             ),
@@ -188,12 +189,14 @@ class TypeAliasParserTest(CSTNodeTest):
                                     cst.TypeParam(
                                         cst.TypeVarTuple(cst.Name("P")),
                                         star="*",
+                                        equal=cst.AssignEqual(),
                                         default=cst.Name("default"),
                                     ),
                                 ]
                             ),
                             value=cst.Name("bar"),
                             whitespace_after_name=cst.SimpleWhitespace(" "),
+                            whitespace_after_type_parameters=cst.SimpleWhitespace(" "),
                         )
                     ]
                 ),
