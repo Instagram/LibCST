@@ -15104,6 +15104,35 @@ class TypeParam(BaseMatcherNode):
     comma: Union[
         CommaMatchType, DoNotCareSentinel, OneOf[CommaMatchType], AllOf[CommaMatchType]
     ] = DoNotCare()
+    equal: Union[
+        AssignEqualMatchType,
+        DoNotCareSentinel,
+        OneOf[AssignEqualMatchType],
+        AllOf[AssignEqualMatchType],
+    ] = DoNotCare()
+    star: Union[
+        strMatchType, DoNotCareSentinel, OneOf[strMatchType], AllOf[strMatchType]
+    ] = DoNotCare()
+    default: Union[
+        Optional["BaseExpression"],
+        MetadataMatchType,
+        MatchIfTrue[Optional[cst.BaseExpression]],
+        DoNotCareSentinel,
+        OneOf[
+            Union[
+                Optional["BaseExpression"],
+                MetadataMatchType,
+                MatchIfTrue[Optional[cst.BaseExpression]],
+            ]
+        ],
+        AllOf[
+            Union[
+                Optional["BaseExpression"],
+                MetadataMatchType,
+                MatchIfTrue[Optional[cst.BaseExpression]],
+            ]
+        ],
+    ] = DoNotCare()
     metadata: Union[
         MetadataMatchType,
         DoNotCareSentinel,
