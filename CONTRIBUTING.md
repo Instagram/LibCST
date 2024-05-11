@@ -14,7 +14,7 @@ We actively welcome your pull requests.
 1. Install a [Rust toolchain](https://rustup.rs) and [hatch](https://hatch.pypa.io)
 2. Fork the repo on your side
 3. Clone the repo
-   > git clone git@github.com:Instagram/LibCST.git libcst  
+   > git clone [your fork.git] libcst
    > cd libcst
 4. Sync with the main libcst version package
    > git fetch --tags https://github.com/instagram/libcst
