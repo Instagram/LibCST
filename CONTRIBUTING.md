@@ -9,12 +9,30 @@ pull requests.
 ## Pull Requests
 We actively welcome your pull requests.
 
-1. Fork the repo and create your branch from `main`.
-2. If you've added code that should be tested, add tests.
-3. If you've changed APIs, update the documentation.
-4. Ensure the test suite passes by `python -m unittest`.
-5. Make sure your code lints.
-6. If you haven't already, complete the Contributor License Agreement ("CLA").
+### Setup Your Environment
+
+1. Install a [Rust toolchain](https://rustup.rs) and [hatch](https://hatch.pypa.io)
+2. Fork the repo on your side
+3. Clone the repo
+   > git clone [your fork.git] libcst  
+   > cd libcst
+4. Sync with the main libcst version package
+   > git fetch --tags https://github.com/instagram/libcst
+5. Setup the env
+   > hatch env create
+
+You are now ready to create your own branch from main, and contribute.
+Please provide tests (using unittest), and update the documentation (both docstrings
+and sphinx doc), if applicable.
+
+### Before Submitting Your Pull Request
+
+1. Format your code
+   > hatch run format
+2. Test your changes
+   > hatch run test
+3. Check linters
+   > hatch run lint
 
 ## Contributor License Agreement ("CLA")
 In order to accept your pull request, we need you to submit a CLA. You only need
