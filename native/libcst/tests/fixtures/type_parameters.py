@@ -64,3 +64,6 @@ type Alias[T = int, **U = float, *V = None] = int
 
 default = tuple[int, str]
 type Alias[*Ts = *default] = Ts
+type Foo[  * T = * default  ] = int
+type Foo[*T=*default ]=int
+type Foo [     *  T   =     *   default ] = int

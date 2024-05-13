@@ -7,7 +7,7 @@ import inspect
 import re
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Optional, Pattern, Sequence, Union
+from typing import Literal, Optional, Pattern, Sequence, Union
 
 from libcst._add_slots import add_slots
 from libcst._maybe_sentinel import MaybeSentinel
@@ -3657,7 +3657,10 @@ class TypeParam(CSTNode):
     equal: Union[AssignEqual, MaybeSentinel] = MaybeSentinel.DEFAULT
 
     #: The star used to denote a variadic default
-    star: str = ""
+    star: Literal["", "*"] = ""
+
+    #: The whitespace between the star and the type.
+    whitespace_after_star: SimpleWhitespace = SimpleWhitespace.field("")
 
     #: Any optional default value, used when the argument is not supplied.
     default: Optional[BaseExpression] = None
@@ -3671,9 +3674,8 @@ class TypeParam(CSTNode):
         elif isinstance(equal, AssignEqual):
             equal._codegen(state)
 
-        star = self.star
-        if star:
-            state.add_token("*")
+        state.add_token(self.star)
+        self.whitespace_after_star._codegen(state)
 
         default = self.default
         if default is not None:
@@ -3687,13 +3689,17 @@ class TypeParam(CSTNode):
             comma._codegen(state)
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "TypeParam":
-        return TypeParam(
+        ret = TypeParam(
             param=visit_required(self, "param", self.param, visitor),
-            comma=visit_sentinel(self, "comma", self.comma, visitor),
-            star=self.star,
             equal=visit_sentinel(self, "equal", self.equal, visitor),
+            star=self.star,
+            whitespace_after_star=visit_required(
+                self, "whitespace_after_star", self.whitespace_after_star, visitor
+            ),
             default=visit_optional(self, "default", self.default, visitor),
+            comma=visit_sentinel(self, "comma", self.comma, visitor),
         )
+        return ret
 
     def _validate(self) -> None:
         if self.default is None and isinstance(self.equal, AssignEqual):
@@ -3703,7 +3709,7 @@ class TypeParam(CSTNode):
         if self.star and not (self.default or isinstance(self.equal, AssignEqual)):
             raise CSTValidationError("Star can only be present if a default")
         if isinstance(self.star, str) and self.star not in ("", "*"):
-            raise CSTValidationError("Must specify either '', '*' or '**' for star.")
+            raise CSTValidationError("Must specify either '' or '*' for star.")
 
 
 @add_slots

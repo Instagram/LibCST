@@ -23,4 +23,5 @@ class RoundTripTests(TestCase):
             with self.subTest(file=str(file)):
                 src = file.read_text(encoding="utf-8")
                 mod = parse_module(src)
+                self.maxDiff = None
                 self.assertEqual(mod.code, src)
