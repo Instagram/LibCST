@@ -2,6 +2,9 @@
 #
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
+
+from __future__ import annotations
+
 import argparse
 import dataclasses
 import os
@@ -24,7 +27,7 @@ def _node_repr_recursive(  # noqa: C901
 ) -> List[str]:
     if isinstance(node, CSTNode):
         # This is a CSTNode, we must pretty-print it.
-        fields: Sequence["dataclasses.Field[CSTNode]"] = filter_node_fields(
+        fields: Sequence[dataclasses.Field[CSTNode]] = filter_node_fields(
             node=node,
             show_defaults=show_defaults,
             show_syntax=show_syntax,
