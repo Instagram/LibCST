@@ -80,3 +80,14 @@ class TestGatherNamesFromStringAnnotationsVisitor(UnitTest):
             visitor.names,
             {"api", "api.http_exceptions", "api.http_exceptions.HttpException"},
         )
+
+    def test_literals(self) -> None:
+        visitor = self.gather_names(
+            """
+            from typing import Literal
+            a: Literal["in"]
+            b: list[Literal["1x"]]
+            c: Literal["Any"]
+            """
+        )
+        self.assertEqual(visitor.names, set())

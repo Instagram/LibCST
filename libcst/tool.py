@@ -9,6 +9,7 @@
 # python -m libcst.tool print python_file.py
 
 import argparse
+import dataclasses
 import importlib
 import inspect
 import os
@@ -17,11 +18,11 @@ import shutil
 import sys
 import textwrap
 from abc import ABC, abstractmethod
-from typing import Any, Callable, Dict, List, Tuple, Type
+from typing import Any, Callable, Dict, List, Sequence, Tuple, Type
 
 import yaml
 
-from libcst import LIBCST_VERSION
+from libcst import CSTNode, LIBCST_VERSION, parse_module, PartialParserConfig
 from libcst._parser.parso.utils import parse_version_string
 from libcst.codemod import (
     CodemodCommand,

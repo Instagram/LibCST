@@ -75,7 +75,7 @@ def is_syntax_node_field(node: CSTNode, field: dataclasses.Field[CSTNode]) -> bo
     return False
 
 
-def get_field_default_value(field: dataclasses.Field[object]) -> object:
+def get_field_default_value(field: dataclasses.Field[CSTNode]) -> object:
     """
     Returns the default value of a CST-node's field.
     """
