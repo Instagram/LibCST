@@ -29,9 +29,11 @@ and sphinx doc), if applicable.
 
 1. Format your code
    > hatch run format
-2. Test your changes
+2. Run the type checker
+   > hatch run typecheck
+3. Test your changes
    > hatch run test
-3. Check linters
+4. Check linters
    > hatch run lint
 
 ## Contributor License Agreement ("CLA")
