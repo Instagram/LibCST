@@ -3478,7 +3478,7 @@ pub struct TypeParam<'a> {
     pub comma: Option<Comma<'a>>,
     pub equal: Option<AssignEqual<'a>>,
     pub star: &'a str,
-    pub whitespace_after_star: ParenthesizableWhitespace<'a>,
+    pub whitespace_after_star: SimpleWhitespace<'a>,
     pub default: Option<Expression<'a>>,
     pub star_tok: Option<TokenRef<'a>>,
 }
@@ -3498,7 +3498,7 @@ impl<'r, 'a> Inflate<'a> for DeflatedTypeParam<'r, 'a> {
     type Inflated = TypeParam<'a>;
     fn inflate(mut self, config: &Config<'a>) -> Result<Self::Inflated> {
         let whitespace_after_star = if let Some(star_tok) = self.star_tok.as_mut() {
-            parse_parenthesizable_whitespace(config, &mut star_tok.whitespace_after.borrow_mut())?
+            parse_simple_whitespace(config, &mut star_tok.whitespace_after.borrow_mut())?
         } else {
             Default::default()
         };
