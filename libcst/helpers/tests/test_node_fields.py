@@ -2,7 +2,6 @@
 #
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
-# pyre-unsafe
 
 from unittest import TestCase
 
@@ -48,12 +47,19 @@ class _NodeFieldsTest(TestCase):
         # /!\ Direct access to nodes
         # This is done for test purposes on a known CST
         # -> For "real code", use visitors to do this "the correct way"
+
+        # pyre-ignore[8]: direct access for tests
         cls.function = cls.module.body[0]
         cls.param = cls.function.params.params[0]
+        # pyre-ignore[8]: direct access for tests
         cls.annotation = cls.param.annotation
+        # pyre-ignore[8]: direct access for tests
         cls.indent = cls.function.body
+        # pyre-ignore[8]: direct access for tests
         cls.statement = cls.indent.body[0]
+        # pyre-ignore[8]: direct access for tests
         cls._pass = cls.statement.body[0]
+        # pyre-ignore[8]: direct access for tests
         cls.semicolon = cls.statement.body[0].semicolon
 
     def test__cst_correctness(self) -> None:
