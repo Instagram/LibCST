@@ -15111,7 +15111,22 @@ class TypeParam(BaseMatcherNode):
         AllOf[AssignEqualMatchType],
     ] = DoNotCare()
     star: Union[
-        strMatchType, DoNotCareSentinel, OneOf[strMatchType], AllOf[strMatchType]
+        Literal["", "*"],
+        MetadataMatchType,
+        MatchIfTrue[Literal["", "*"]],
+        DoNotCareSentinel,
+        OneOf[
+            Union[Literal["", "*"], MetadataMatchType, MatchIfTrue[Literal["", "*"]]]
+        ],
+        AllOf[
+            Union[Literal["", "*"], MetadataMatchType, MatchIfTrue[Literal["", "*"]]]
+        ],
+    ] = DoNotCare()
+    whitespace_after_star: Union[
+        SimpleWhitespaceMatchType,
+        DoNotCareSentinel,
+        OneOf[SimpleWhitespaceMatchType],
+        AllOf[SimpleWhitespaceMatchType],
     ] = DoNotCare()
     default: Union[
         Optional["BaseExpression"],
