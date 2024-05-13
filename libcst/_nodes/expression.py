@@ -2207,7 +2207,7 @@ class Arg(CSTNode):
 
     #: Whitespace after the ``star`` (if it exists), but before the ``keyword`` or
     #: ``value`` (if no keyword is provided).
-    whitespace_after_star: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
+    whitespace_after_star: BaseParenthesizableWhitespace = SimpleWhitespace.field("")
     #: Whitespace after this entire node. The :class:`Comma` node (if it exists) may
     #: also store some trailing whitespace.
     whitespace_after_arg: BaseParenthesizableWhitespace = SimpleWhitespace.field("")
