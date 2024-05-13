@@ -4,4 +4,4 @@
 # LICENSE file in the root directory of this source tree.
 
 from libcst.display.text import dump
-from libcst.display.graphviz import graphviz_repr
+from libcst.display.graphviz import dump_graphviz

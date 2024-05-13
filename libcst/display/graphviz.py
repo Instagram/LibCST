@@ -124,7 +124,7 @@ def _node_repr_recursive(
     return graphviz_lines
 
 
-def graphviz_repr(
+def dump_graphviz(
     node: object,
     *,
     show_defaults: bool = False,
@@ -249,7 +249,7 @@ def print_tree_graphviz(proc_name: str, command_args: list[str]) -> int:
     output_file = args.outfile
     if output_file == "-":
         print(
-            graphviz_repr(
+            dump_graphviz(
                 tree,
                 show_defaults=args.show_defaults,
                 show_syntax=args.show_syntax,
@@ -261,7 +261,7 @@ def print_tree_graphviz(proc_name: str, command_args: list[str]) -> int:
         out_path_dir.mkdir(parents=True, exist_ok=True)
         with open(output_file, "w", encoding='utf-8') as out_file:
             out_file.write(
-                graphviz_repr(
+                dump_graphviz(
                     tree,
                     show_defaults=args.show_defaults,
                     show_syntax=args.show_syntax,
