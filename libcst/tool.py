@@ -9,7 +9,6 @@
 # python -m libcst.tool print python_file.py
 
 import argparse
-import dataclasses
 import importlib
 import inspect
 import os
@@ -18,11 +17,11 @@ import shutil
 import sys
 import textwrap
 from abc import ABC, abstractmethod
-from typing import Any, Callable, Dict, List, Sequence, Tuple, Type
+from typing import Any, Callable, Dict, List, Tuple, Type
 
 import yaml
 
-from libcst import CSTNode, LIBCST_VERSION, parse_module, PartialParserConfig
+from libcst import LIBCST_VERSION, parse_module, PartialParserConfig
 from libcst._parser.parso.utils import parse_version_string
 from libcst.codemod import (
     CodemodCommand,
@@ -32,8 +31,96 @@ from libcst.codemod import (
     gather_files,
     parallel_exec_transform_with_prettyprint,
 )
-from libcst.display.text import print_tree_impl, dump
-from libcst.display.graphviz import print_tree_graphviz
+from libcst.display.text import dump, _DEFAULT_INDENT
+from libcst.display.graphviz import dump_graphviz
+
+
+def _print_tree_impl(proc_name: str, command_args: List[str]) -> int:
+    parser = argparse.ArgumentParser(
+        description="Print the LibCST tree representation of a file.",
+        prog=f"{proc_name} print",
+        fromfile_prefix_chars="@",
+    )
+    parser.add_argument(
+        "infile",
+        metavar="INFILE",
+        help='File to print tree for. Use "-" for stdin',
+        type=str,
+    )
+    parser.add_argument(
+        "--show-whitespace",
+        action="store_true",
+        help="Show whitespace nodes in printed tree",
+    )
+    parser.add_argument(
+        "--show-defaults",
+        action="store_true",
+        help="Show values that are unchanged from the default",
+    )
+    parser.add_argument(
+        "--show-syntax",
+        action="store_true",
+        help="Show values that exist only for syntax, like commas or semicolons",
+    )
+    parser.add_argument(
+        "--graphviz",
+        action="store_true",
+        help="Displays the graph in .dot format, compatible with Graphviz",
+    )
+    parser.add_argument(
+        "--indent-string",
+        default=_DEFAULT_INDENT,
+        help=f"String to use for indenting levels, defaults to {_DEFAULT_INDENT!r}",
+    )
+    parser.add_argument(
+        "-p",
+        "--python-version",
+        metavar="VERSION",
+        help=(
+            "Override the version string used for parsing Python source files. Defaults "
+            + "to the version of python used to run this tool."
+        ),
+        type=str,
+        default=None,
+    )
+    args = parser.parse_args(command_args)
+    infile = args.infile
+
+    # Grab input file
+    if infile == "-":
+        code = sys.stdin.read()
+    else:
+        with open(infile, "rb") as fp:
+            code = fp.read()
+
+    tree = parse_module(
+        code,
+        config=(
+            PartialParserConfig(python_version=args.python_version)
+            if args.python_version is not None
+            else PartialParserConfig()
+        ),
+    )
+    if not args.graphviz:
+        print(
+            dump(
+                tree,
+                indent=args.indent_string,
+                show_defaults=args.show_defaults,
+                show_syntax=args.show_syntax,
+                show_whitespace=args.show_whitespace,
+            )
+        )
+    else:
+        print(
+            dump_graphviz(
+                tree,
+                show_defaults=args.show_defaults,
+                show_syntax=args.show_syntax,
+                show_whitespace=args.show_whitespace,
+            )
+        )
+    return 0
 
 
 def _default_config() -> Dict[str, Any]:
@@ -560,15 +647,6 @@ def main(proc_name: str, cli_args: List[str]) -> int:
     first_arg = cli_args[0] if cli_args else "--help"
     add_help = first_arg in {"--help", "-h"}
 
-    # Look up the command and delegate parsing/running.
-    commands: Dict[str, Callable[[str, List[str]], int]] = {
-        "print": print_tree_impl,
-        "print-graphviz": print_tree_graphviz,
-        "codemod": _codemod_impl,
-        "initialize": _initialize_impl,
-        "list": _list_impl,
-    }
-
     # Create general parser to determine which command we are invoking.
     parser: argparse.ArgumentParser = argparse.ArgumentParser(
         description="Collection of utilities that ship with LibCST.",
@@ -585,7 +663,7 @@ def main(proc_name: str, cli_args: List[str]) -> int:
     parser.add_argument(
         "action",
         help="Action to take. Valid options include: print, codemod, list, initialize.",
-        choices=list(commands.keys()),
+        choices=["print", "codemod", "list", "initialize"],
     )
     args, command_args = parser.parse_known_args(cli_args)
 
@@ -596,7 +674,14 @@ def main(proc_name: str, cli_args: List[str]) -> int:
         parser.print_help(sys.stderr)
         return 1
 
-    return commands.get(args.action or None, _invalid_command)(proc_name, command_args)
+    # Look up the command and delegate parsing/running.
+    lookup: Dict[str, Callable[[str, List[str]], int]] = {
+        "print": _print_tree_impl,
+        "codemod": _codemod_impl,
+        "initialize": _initialize_impl,
+        "list": _list_impl,
+    }
+    return lookup.get(args.action or None, _invalid_command)(proc_name, command_args)
 
 
 if __name__ == "__main__":

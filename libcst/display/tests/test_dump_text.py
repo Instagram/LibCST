@@ -10,7 +10,7 @@ from libcst.testing.utils import UnitTest
 from libcst.tool import dump
 
 
-class PrettyPrintNodesTest(UnitTest):
+class CSTDumpTextTest(UnitTest):
     def test_full_tree(self) -> None:
         module = r"""
             Module(

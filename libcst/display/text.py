@@ -5,13 +5,10 @@
 
 from __future__ import annotations
 
-import argparse
 import dataclasses
-import os
-import sys
 from typing import List, Sequence
 
-from libcst import CSTNode, parse_module, PartialParserConfig
+from libcst import CSTNode
 from libcst.helpers import filter_node_fields
 
 _DEFAULT_INDENT: str = "  "
@@ -134,80 +131,3 @@ def dump(
             show_whitespace=show_whitespace,
         )
     )
-
-
-def print_tree_impl(proc_name: str, command_args: List[str]) -> int:
-    parser = argparse.ArgumentParser(
-        description="Print the LibCST tree representation of a file.",
-        prog=f"{proc_name} print",
-        fromfile_prefix_chars="@",
-    )
-    parser.add_argument(
-        "infile",
-        metavar="INFILE",
-        help='File to print tree for. Use "-" for stdin',
-        type=str,
-    )
-    parser.add_argument(
-        "--show-whitespace",
-        action="store_true",
-        help="Show whitespace nodes in printed tree",
-    )
-    parser.add_argument(
-        "--show-defaults",
-        action="store_true",
-        help="Show values that are unchanged from the default",
-    )
-    parser.add_argument(
-        "--show-syntax",
-        action="store_true",
-        help="Show values that exist only for syntax, like commas or semicolons",
-    )
-    parser.add_argument(
-        "--indent-string",
-        default=_DEFAULT_INDENT,
-        help=f"String to use for indenting levels, defaults to {_DEFAULT_INDENT!r}",
-    )
-    parser.add_argument(
-        "-p",
-        "--python-version",
-        metavar="VERSION",
-        help=(
-            "Override the version string used for parsing Python source files. Defaults "
-            + "to the version of python used to run this tool."
-        ),
-        type=str,
-        default=None,
-    )
-    args = parser.parse_args(command_args)
-    infile = args.infile
-
-    # Grab input file
-    if infile == "-":
-        code = sys.stdin.read()
-    else:
-        with open(infile, "rb") as fp:
-            code = fp.read()
-
-    tree = parse_module(
-        code,
-        config=(
-            PartialParserConfig(python_version=args.python_version)
-            if args.python_version is not None
-            else PartialParserConfig()
-        ),
-    )
-    print(
-        dump(
-            tree,
-            indent=args.indent_string,
-            show_defaults=args.show_defaults,
-            show_syntax=args.show_syntax,
-            show_whitespace=args.show_whitespace,
-        )
-    )
-    return 0
-
-
-if __name__ == '__main__':
-    print_tree_impl(os.environ.get("LIBCST_TOOL_COMMAND_NAME", "libcst.tool"), sys.argv[1:])
