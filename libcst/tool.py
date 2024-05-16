@@ -31,8 +31,8 @@ from libcst.codemod import (
     gather_files,
     parallel_exec_transform_with_prettyprint,
 )
-from libcst.display.text import dump, _DEFAULT_INDENT
-from libcst.display.graphviz import dump_graphviz
+from libcst.display import dump, dump_graphviz
+from libcst.display.text import _DEFAULT_INDENT
 
 
 def _print_tree_impl(proc_name: str, command_args: List[str]) -> int:
