@@ -9,8 +9,8 @@ from textwrap import dedent
 from typing import TYPE_CHECKING
 
 from libcst import parse_module
-from libcst.testing.utils import UnitTest
 from libcst.display import dump_graphviz
+from libcst.testing.utils import UnitTest
 
 if TYPE_CHECKING:
     from libcst import Module
