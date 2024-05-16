@@ -58,6 +58,7 @@ def _create_node_graphviz(node: CSTNode) -> str:
     else:
         style = node_style["__default__"]
 
+    # pyre-ignore[16]: the existence of node.value is checked before usage
     if hasattr(node, "value") and isinstance(node.value, str):
         line_break = r"\n"
         quote = '"'
@@ -144,7 +145,8 @@ def dump_graphviz(
     ``show_defaults``.
     """
 
-    graphviz_settings = textwrap.dedent(r"""
+    graphviz_settings = textwrap.dedent(
+        r"""
         layout=dot;
         rankdir=TB;
         splines=line;
@@ -168,8 +170,10 @@ def dump_graphviz(
             fontsize=12,
             penwidth=2,
         ];
-        """[1:]
-        )
+        """[
+            1:
+        ]
+    )
 
     return "\n".join(
         ["digraph {", graphviz_settings]
