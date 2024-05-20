@@ -56,6 +56,79 @@ class TypeAliasCreationTest(CSTNodeTest):
                 "code": "type foo[T: str, *Ts, **KW] = bar | baz",
                 "expected_position": CodeRange((1, 0), (1, 39)),
             },
+            {
+                "node": cst.TypeAlias(
+                    cst.Name("foo"),
+                    type_parameters=cst.TypeParameters(
+                        [
+                            cst.TypeParam(
+                                cst.TypeVar(cst.Name("T")), default=cst.Name("str")
+                            ),
+                        ]
+                    ),
+                    value=cst.Name("bar"),
+                ),
+                "code": "type foo[T = str] = bar",
+                "expected_position": CodeRange((1, 0), (1, 23)),
+            },
+            {
+                "node": cst.TypeAlias(
+                    cst.Name("foo"),
+                    type_parameters=cst.TypeParameters(
+                        [
+                            cst.TypeParam(
+                                cst.ParamSpec(cst.Name("P")),
+                                default=cst.List(
+                                    elements=[
+                                        cst.Element(cst.Name("int")),
+                                        cst.Element(cst.Name("str")),
+                                    ]
+                                ),
+                            ),
+                        ]
+                    ),
+                    value=cst.Name("bar"),
+                ),
+                "code": "type foo[**P = [int, str]] = bar",
+                "expected_position": CodeRange((1, 0), (1, 32)),
+            },
+            {
+                "node": cst.TypeAlias(
+                    cst.Name("foo"),
+                    type_parameters=cst.TypeParameters(
+                        [
+                            cst.TypeParam(
+                                cst.TypeVarTuple(cst.Name("T")),
+                                equal=cst.AssignEqual(),
+                                default=cst.Name("default"),
+                                star="*",
+                            ),
+                        ]
+                    ),
+                    value=cst.Name("bar"),
+                ),
+                "code": "type foo[*T = *default] = bar",
+                "expected_position": CodeRange((1, 0), (1, 29)),
+            },
+            {
+                "node": cst.TypeAlias(
+                    cst.Name("foo"),
+                    type_parameters=cst.TypeParameters(
+                        [
+                            cst.TypeParam(
+                                cst.TypeVarTuple(cst.Name("T")),
+                                equal=cst.AssignEqual(),
+                                default=cst.Name("default"),
+                                star="*",
+                                whitespace_after_star=cst.SimpleWhitespace("  "),
+                            ),
+                        ]
+                    ),
+                    value=cst.Name("bar"),
+                ),
+                "code": "type foo[*T = *  default] = bar",
+                "expected_position": CodeRange((1, 0), (1, 31)),
+            },
         )
     )
     def test_valid(self, **kwargs: Any) -> None:
@@ -123,6 +196,57 @@ class TypeAliasParserTest(CSTNodeTest):
                     ]
                 ),
                 "code": "type  foo [T:str,**  KW , ]  =  bar ; \n",
+                "parser": parse_statement,
+            },
+            {
+                "node": cst.SimpleStatementLine(
+                    [
+                        cst.TypeAlias(
+                            cst.Name("foo"),
+                            type_parameters=cst.TypeParameters(
+                                [
+                                    cst.TypeParam(
+                                        cst.TypeVarTuple(cst.Name("P")),
+                                        star="*",
+                                        equal=cst.AssignEqual(),
+                                        default=cst.Name("default"),
+                                    ),
+                                ]
+                            ),
+                            value=cst.Name("bar"),
+                            whitespace_after_name=cst.SimpleWhitespace(" "),
+                            whitespace_after_type_parameters=cst.SimpleWhitespace(" "),
+                        )
+                    ]
+                ),
+                "code": "type foo [*P = *default] = bar\n",
+                "parser": parse_statement,
+            },
+            {
+                "node": cst.SimpleStatementLine(
+                    [
+                        cst.TypeAlias(
+                            cst.Name("foo"),
+                            type_parameters=cst.TypeParameters(
+                                [
+                                    cst.TypeParam(
+                                        cst.TypeVarTuple(cst.Name("P")),
+                                        star="*",
+                                        whitespace_after_star=cst.SimpleWhitespace(
+                                            "   "
+                                        ),
+                                        equal=cst.AssignEqual(),
+                                        default=cst.Name("default"),
+                                    ),
+                                ]
+                            ),
+                            value=cst.Name("bar"),
+                            whitespace_after_name=cst.SimpleWhitespace(" "),
+                            whitespace_after_type_parameters=cst.SimpleWhitespace(" "),
+                        )
+                    ]
+                ),
+                "code": "type foo [*P = *   default] = bar\n",
                 "parser": parse_statement,
             },
         )

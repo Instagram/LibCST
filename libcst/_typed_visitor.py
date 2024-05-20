@@ -5434,6 +5434,38 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_TypeParam_equal(self, node: "TypeParam") -> None:
+        pass
+
+    @mark_no_op
+    def leave_TypeParam_equal(self, node: "TypeParam") -> None:
+        pass
+
+    @mark_no_op
+    def visit_TypeParam_star(self, node: "TypeParam") -> None:
+        pass
+
+    @mark_no_op
+    def leave_TypeParam_star(self, node: "TypeParam") -> None:
+        pass
+
+    @mark_no_op
+    def visit_TypeParam_whitespace_after_star(self, node: "TypeParam") -> None:
+        pass
+
+    @mark_no_op
+    def leave_TypeParam_whitespace_after_star(self, node: "TypeParam") -> None:
+        pass
+
+    @mark_no_op
+    def visit_TypeParam_default(self, node: "TypeParam") -> None:
+        pass
+
+    @mark_no_op
+    def leave_TypeParam_default(self, node: "TypeParam") -> None:
+        pass
+
+    @mark_no_op
     def visit_TypeParameters(self, node: "TypeParameters") -> Optional[bool]:
         pass
 
