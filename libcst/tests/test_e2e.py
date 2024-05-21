@@ -2,7 +2,7 @@ import contextlib
 import os
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Generator
+from typing import Dict, Generator
 from unittest import TestCase
 
 from libcst import BaseExpression, Call, matchers as m, Name
@@ -16,7 +16,14 @@ from libcst.codemod.visitors import AddImportsVisitor
 
 
 class PrintToPPrintCommand(VisitorBasedCodemodCommand):
+    def __init__(self, context: CodemodContext, **kwargs: Dict[str, object]) -> None:
+        super().__init__(context, **kwargs)
+        self.context.scratch["PPRINT_WAS_HERE"] = True
+
     def leave_Call(self, original_node: Call, updated_node: Call) -> BaseExpression:
+        if not self.context.scratch["PPRINT_WAS_HERE"]:
+            raise AssertionError("Scratch space lost")
+
         if m.matches(updated_node, m.Call(func=m.Name("print"))):
             AddImportsVisitor.add_needed_import(
                 self.context,

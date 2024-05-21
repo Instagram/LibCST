@@ -14,6 +14,7 @@ import subprocess
 import sys
 import time
 import traceback
+from copy import deepcopy
 from dataclasses import dataclass, replace
 from multiprocessing import cpu_count, Pool
 from pathlib import Path
@@ -214,6 +215,7 @@ def _execute_transform(  # noqa: C901
     transformer: Codemod,
     filename: str,
     config: ExecutionConfig,
+    scratch: Dict[str, object],
 ) -> ExecutionResult:
     for pattern in config.blacklist_patterns:
         if re.fullmatch(pattern, filename):
@@ -251,7 +253,7 @@ def _execute_transform(  # noqa: C901
         transformer.context = replace(
             transformer.context,
             filename=filename,
-            scratch={},
+            scratch=deepcopy(scratch),
         )
 
         # determine the module and package name for this file
@@ -634,6 +636,7 @@ def parallel_exec_transform_with_prettyprint(  # noqa: C901
                 "transformer": transform,
                 "filename": filename,
                 "config": config,
+                "scratch": transform.context.scratch,
             }
             for filename in files
         ]
