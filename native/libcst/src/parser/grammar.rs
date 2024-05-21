@@ -448,9 +448,18 @@ parser! {
                 make_annotation(col, e)
             }
 
-        rule default() -> (AssignEqual<'input, 'a>, Expression<'input, 'a>)
+        rule default() -> (AssignEqual<'input, 'a>,  Expression<'input, 'a>)
             = eq:lit("=") ex:expression() {
                 (make_assign_equal(eq), ex)
+            }
+
+        rule default_or_starred() -> (AssignEqual<'input, 'a>,Option<TokenRef<'input, 'a>>,  Expression<'input, 'a>)
+            = eq:lit("=") ex:expression() {
+                (make_assign_equal(eq), None , ex)
+            }
+            / eq:lit("=") star:lit("*") ex:expression() {
+                // make_star_default(eq, star, ex)
+                (make_assign_equal(eq), Some(star) , ex)
             }
 
         // If statement
@@ -792,9 +801,10 @@ parser! {
             }
 
         rule type_param() -> TypeParam<'input, 'a>
-            = n:name() b:type_param_bound()? { make_type_var(n, b) }
-            / s:lit("*") n:name() { make_type_var_tuple(s, n) }
-            / s:lit("**") n:name() { make_param_spec(s, n) }
+            = n:name() b:type_param_bound()? def:default()? { make_type_var(n, b, def) }
+            / s:lit("*") n:name() def:default_or_starred()? { make_type_var_tuple(s, n, def)  }
+            / s:lit("**") n:name() def:default()? { make_param_spec(s, n, def) }
+
 
         rule type_param_bound() -> TypeParamBound<'input, 'a>
             = c:lit(":") e:expression() { make_type_param_bound(c, e) }
@@ -3378,34 +3388,70 @@ fn make_type_param_bound<'input, 'a>(
 fn make_param_spec<'input, 'a>(
     star_tok: TokenRef<'input, 'a>,
     name: Name<'input, 'a>,
+    def: Option<(AssignEqual<'input, 'a>, Expression<'input, 'a>)>,
 ) -> TypeParam<'input, 'a> {
+    let (equal, default) = match def {
+        Some((a, b)) => (Some(a), Some(b)),
+        None => (None, None),
+    };
     TypeParam {
         param: TypeVarLike::ParamSpec(ParamSpec { name, star_tok }),
         comma: Default::default(),
+        equal: equal,
+        star: "",
+        default: default,
+        star_tok: None,
     }
 }
 
 fn make_type_var_tuple<'input, 'a>(
     star_tok: TokenRef<'input, 'a>,
     name: Name<'input, 'a>,
+    def: Option<(
+        AssignEqual<'input, 'a>,
+        Option<TokenRef<'input, 'a>>,
+        Expression<'input, 'a>,
+    )>,
 ) -> TypeParam<'input, 'a> {
+    let (equal, default_star, default) = match def {
+        Some((a, b, c)) => (Some(a), b, Some(c)),
+        None => (None, None, None),
+    };
+    let star = match default_star {
+        Some(a) => a.string,
+        None => "",
+    };
+
     TypeParam {
         param: TypeVarLike::TypeVarTuple(TypeVarTuple { name, star_tok }),
         comma: Default::default(),
+        equal: equal,
+        star: star,
+        default: default,
+        star_tok: default_star,
     }
 }
 
 fn make_type_var<'input, 'a>(
     name: Name<'input, 'a>,
     bound: Option<TypeParamBound<'input, 'a>>,
+    def: Option<(AssignEqual<'input, 'a>, Expression<'input, 'a>)>,
 ) -> TypeParam<'input, 'a> {
     let (bound, colon) = match bound {
         Some(TypeParamBound(c, e)) => (Some(Box::new(e)), Some(make_colon(c))),
         _ => (None, None),
     };
+    let (equal, default) = match def {
+        Some((a, b)) => (Some(a), Some(b)),
+        None => (None, None),
+    };
     TypeParam {
         param: TypeVarLike::TypeVar(TypeVar { name, bound, colon }),
         comma: Default::default(),
+        equal: equal,
+        star: "",
+        default: default,
+        star_tok: None,
     }
 }
 

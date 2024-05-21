@@ -3476,21 +3476,44 @@ pub enum TypeVarLike<'a> {
 pub struct TypeParam<'a> {
     pub param: TypeVarLike<'a>,
     pub comma: Option<Comma<'a>>,
+    pub equal: Option<AssignEqual<'a>>,
+    pub star: &'a str,
+    pub whitespace_after_star: SimpleWhitespace<'a>,
+    pub default: Option<Expression<'a>>,
+    pub star_tok: Option<TokenRef<'a>>,
 }
 
 impl<'a> Codegen<'a> for TypeParam<'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {
         self.param.codegen(state);
+        self.equal.codegen(state);
+        state.add_token(self.star);
+        self.whitespace_after_star.codegen(state);
+        self.default.codegen(state);
         self.comma.codegen(state);
     }
 }
 
 impl<'r, 'a> Inflate<'a> for DeflatedTypeParam<'r, 'a> {
     type Inflated = TypeParam<'a>;
-    fn inflate(self, config: &Config<'a>) -> Result<Self::Inflated> {
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self::Inflated> {
+        let whitespace_after_star = if let Some(star_tok) = self.star_tok.as_mut() {
+            parse_simple_whitespace(config, &mut star_tok.whitespace_after.borrow_mut())?
+        } else {
+            Default::default()
+        };
         let param = self.param.inflate(config)?;
+        let equal = self.equal.inflate(config)?;
+        let default = self.default.inflate(config)?;
         let comma = self.comma.inflate(config)?;
-        Ok(Self::Inflated { param, comma })
+        Ok(Self::Inflated {
+            param,
+            comma,
+            equal,
+            star: self.star,
+            whitespace_after_star,
+            default,
+        })
     }
 }
 

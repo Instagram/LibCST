@@ -44,6 +44,11 @@ class GatherNamesFromStringAnnotationsVisitor(ContextAwareVisitor):
     def leave_Annotation(self, original_node: cst.Annotation) -> None:
         self._annotation_stack.pop()
 
+    def visit_Subscript(self, node: cst.Subscript) -> bool:
+        qnames = self.get_metadata(QualifiedNameProvider, node)
+        # A Literal["foo"] should not be interpreted as a use of the symbol "foo".
+        return not any(qn.name == "typing.Literal" for qn in qnames)
+
     def visit_Call(self, node: cst.Call) -> bool:
         qnames = self.get_metadata(QualifiedNameProvider, node)
         if any(qn.name in self._typing_functions for qn in qnames):
@@ -71,7 +76,11 @@ class GatherNamesFromStringAnnotationsVisitor(ContextAwareVisitor):
         value = node.evaluated_value
         if value is None:
             return
-        mod = cst.parse_module(value)
+        try:
+            mod = cst.parse_module(value)
+        except cst.ParserSyntaxError:
+            # Not all strings inside a type annotation are meant to be valid Python code.
+            return
         extracted_nodes = m.extractall(
             mod,
             m.Name(

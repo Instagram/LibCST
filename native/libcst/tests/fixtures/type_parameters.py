@@ -55,3 +55,15 @@ def AAAAAAAAAAAAAAAAAA [  T :  int  ,*Ts  ,  ** TT  ]  ():pass
 class AAAAAAAAAAAAAAAAAA [  T :  int  ,*Ts  ,  ** TT  ] :pass
 
 def yikes[A:int,*B,**C](*d:*tuple[A,*B,...])->A:pass
+
+def func[T=int, **U=float, *V=None](): pass
+
+class C[T=int, **U=float, *V=None]: pass
+
+type Alias[T = int, **U = float, *V = None] = int
+
+default = tuple[int, str]
+type Alias[*Ts = *default] = Ts
+type Foo[  * T = * default  ] = int
+type Foo[*T=*default ]=int
+type Foo [     *  T   =     *   default ] = int
