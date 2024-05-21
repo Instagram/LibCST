@@ -14,6 +14,7 @@ import subprocess
 import sys
 import time
 import traceback
+from copy import deepcopy
 from dataclasses import dataclass, replace
 from multiprocessing import cpu_count, Pool
 from pathlib import Path
@@ -251,7 +252,7 @@ def _execute_transform(  # noqa: C901
         transformer.context = replace(
             transformer.context,
             filename=filename,
-            scratch={},
+            scratch=deepcopy(transformer.context.scratch),
         )
 
         # determine the module and package name for this file
