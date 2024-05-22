@@ -1,3 +1,28 @@
+# 1.4.0 - 2024-05-22
+
+## Fixed
+* Fix Literal parse error in RemoveImportsVisitor by @camillol in https://github.com/Instagram/LibCST/pull/1130
+* Don't reset context.scratch between files by @zsol in https://github.com/Instagram/LibCST/pull/1151
+* Various documentation fixes
+  * Typo fix FullRepoManager by @kit1980 in https://github.com/Instagram/LibCST/pull/1138
+  * ✏️ Fix tiny typo in `docs/source/metadata.rst` by @tiangolo in https://github.com/Instagram/LibCST/pull/1134
+  * ✏️ Fix typo in `docs/source/scope_tutorial.ipynb` by @tiangolo in https://github.com/Instagram/LibCST/pull/1135
+  * Update CONTRIBUTING.md by @zaicruvoir1rominet in https://github.com/Instagram/LibCST/pull/1142
+
+## Added
+
+* Add helper functions for common ways of filtering nodes by @zaicruvoir1rominet in https://github.com/Instagram/LibCST/pull/1137
+* Dump CST to .dot (graphviz) files by @zaicruvoir1rominet in https://github.com/Instagram/LibCST/pull/1147
+* Implement PEP-696 by @thereversiblewheel in https://github.com/Instagram/LibCST/pull/1141
+
+## New Contributors
+* @tiangolo made their first contribution in https://github.com/Instagram/LibCST/pull/1134
+* @camillol made their first contribution in https://github.com/Instagram/LibCST/pull/1130
+* @zaicruvoir1rominet made their first contribution in https://github.com/Instagram/LibCST/pull/1142
+* @thereversiblewheel made their first contribution in https://github.com/Instagram/LibCST/pull/1141
+
+**Full Changelog**: https://github.com/Instagram/LibCST/compare/v1.3.1...v1.4.0
+
 # 1.3.1 - 2024-04-03
 
 ## Fixed

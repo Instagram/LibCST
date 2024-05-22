@@ -355,7 +355,7 @@ checksum = "a08173bc88b7955d1b3145aa561539096c421ac8debde8cbc3612ec635fee29b"
 
 [[package]]
 name = "libcst"
-version = "1.3.1"
+version = "1.4.0"
 dependencies = [
  "chic",
  "criterion",
@@ -373,7 +373,7 @@ dependencies = [
 
 [[package]]
 name = "libcst_derive"
-version = "1.3.1"
+version = "1.4.0"
 dependencies = [
  "quote",
  "syn 2.0.41",
