@@ -262,6 +262,10 @@ class ModuleTest(UnitTest):
                 ModuleNameAndPackage("foo.sub.subfile", "foo.sub"),
             ),
             ("libs/bar/bar/thing.py", ModuleNameAndPackage("bar.thing", "bar")),
+            (
+                "noproj/some/file.py",
+                ModuleNameAndPackage("noproj.some.file", "noproj.some"),
+            ),
         )
     )
     def test_calculate_module_and_package_using_pyproject_toml(
@@ -290,6 +294,11 @@ class ModuleTest(UnitTest):
                                     "__init__.py": "content",
                                     "thing.py": "content",
                                 },
+                            }
+                        },
+                        "noproj": {
+                            "some": {
+                                "file.py": "content",
                             }
                         },
                     },
