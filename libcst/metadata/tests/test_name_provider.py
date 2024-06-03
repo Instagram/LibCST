@@ -20,7 +20,7 @@ from libcst.metadata import (
 )
 from libcst.metadata.full_repo_manager import FullRepoManager
 from libcst.metadata.name_provider import FullyQualifiedNameVisitor
-from libcst.testing.utils import data_provider, UnitTest
+from libcst.testing.utils import UnitTest, data_provider
 
 
 class QNameVisitor(cst.CSTVisitor):

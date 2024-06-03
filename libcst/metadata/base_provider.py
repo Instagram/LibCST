@@ -40,7 +40,7 @@ MaybeLazyMetadataT = Union[LazyValue[_ProvidedMetadataT], _ProvidedMetadataT]
 
 class GenCacheMethod(Protocol):
     def __call__(
-        self, root_path: Path, paths: List[str], *, timeout: Optional[int] = None
+        self, root_path: Path, paths: List[str], *, timeout: Optional[int] = None, use_pyproject_toml: bool = False
     ) -> Mapping[str, object]:
         ...
 
