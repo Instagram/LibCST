@@ -106,9 +106,9 @@ class FullyQualifiedNameProvider(BatchableMetadataProvider[Collection[QualifiedN
 
     METADATA_DEPENDENCIES = (QualifiedNameProvider,)
 
-    @classmethod
+    @staticmethod
     def gen_cache(
-        cls, root_path: Path, paths: List[str], **kwargs: Any
+        root_path: Path, paths: List[str], *, **kwargs: Any
     ) -> Mapping[str, ModuleNameAndPackage]:
         cache = {path: calculate_module_and_package(root_path, path) for path in paths}
         return cache
