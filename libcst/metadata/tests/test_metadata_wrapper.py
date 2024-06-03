@@ -49,7 +49,7 @@ class MetadataWrapperTest(UnitTest):
         self.assertNotEqual(hash(mw2), hash(mw3))
 
     @staticmethod
-    def ignore_args(*args: object, **kwargs: object) -> tuple[Any, ...]:
+    def ignore_args(*args: object, **kwargs: object) -> tuple[object, ...]:
         return (args, kwargs)
 
     def test_metadata_cache(self) -> None:
