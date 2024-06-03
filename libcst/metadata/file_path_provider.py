@@ -4,7 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 from pathlib import Path
-from typing import List, Mapping, Optional
+from typing import Any, List, Mapping, Optional
 
 import libcst as cst
 from libcst.metadata.base_provider import BatchableMetadataProvider
@@ -41,7 +41,7 @@ class FilePathProvider(BatchableMetadataProvider[Path]):
 
     @classmethod
     def gen_cache(
-        cls, root_path: Path, paths: List[str], timeout: Optional[int] = None
+        cls, root_path: Path, paths: List[str], **kwargs: Any
     ) -> Mapping[str, Path]:
         cache = {path: (root_path / path).resolve() for path in paths}
         return cache

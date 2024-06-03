@@ -5,7 +5,7 @@
 
 
 from pathlib import Path
-from typing import Collection, Dict, List, Mapping, TYPE_CHECKING
+from typing import TYPE_CHECKING, Collection, Dict, List, Mapping
 
 import libcst as cst
 from libcst._types import StrPath
@@ -65,7 +65,7 @@ class FullRepoManager:
                 handler = provider.gen_cache
                 if handler:
                     cache[provider] = handler(
-                        self.root_path, self._paths, self._timeout
+                        self.root_path, self._paths, timeout=self._timeout
                     )
             self._cache = cache
 

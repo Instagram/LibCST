@@ -54,7 +54,7 @@ def get_fully_qualified_names(file_path: str, module_str: str) -> Set[QualifiedN
         cst.parse_module(dedent(module_str)),
         cache={
             FullyQualifiedNameProvider: FullyQualifiedNameProvider.gen_cache(
-                Path(""), [file_path], None
+                Path(""), [file_path], timeout=None
             ).get(file_path, "")
         },
     )

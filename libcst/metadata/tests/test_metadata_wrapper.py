@@ -4,15 +4,11 @@
 # LICENSE file in the root directory of this source tree.
 
 
-from typing import Optional
+from typing import Any, Optional
 from unittest.mock import Mock
 
 import libcst as cst
-from libcst.metadata import (
-    BatchableMetadataProvider,
-    MetadataWrapper,
-    VisitorMetadataProvider,
-)
+from libcst.metadata import BatchableMetadataProvider, MetadataWrapper, VisitorMetadataProvider
 from libcst.testing.utils import UnitTest
 
 
@@ -48,9 +44,13 @@ class MetadataWrapperTest(UnitTest):
         self.assertNotEqual(hash(mw1), hash(mw3))
         self.assertNotEqual(hash(mw2), hash(mw3))
 
+    @staticmethod
+    def ignore_args(*args: object, **kwargs: object) -> Any:
+        pass
+
     def test_metadata_cache(self) -> None:
         class DummyMetadataProvider(BatchableMetadataProvider[None]):
-            gen_cache = tuple
+            gen_cache = self.ignore_args
 
         m = cst.parse_module("pass")
         mw = MetadataWrapper(m)
@@ -60,7 +60,7 @@ class MetadataWrapperTest(UnitTest):
             mw.resolve(DummyMetadataProvider)
 
         class SimpleCacheMetadataProvider(BatchableMetadataProvider[object]):
-            gen_cache = tuple
+            gen_cache = self.ignore_args
 
             def __init__(self, cache: object) -> None:
                 super().__init__(cache)

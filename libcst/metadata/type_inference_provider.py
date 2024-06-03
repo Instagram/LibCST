@@ -6,7 +6,7 @@
 import json
 import subprocess
 from pathlib import Path
-from typing import Dict, List, Mapping, Optional, Sequence, Tuple, TypedDict
+from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple, TypedDict
 
 import libcst as cst
 from libcst._position import CodePosition, CodeRange
@@ -54,7 +54,7 @@ class TypeInferenceProvider(BatchableMetadataProvider[str]):
     # pyre-fixme[40]: Static method `gen_cache` cannot override a non-static method
     #  defined in `cst.metadata.base_provider.BaseMetadataProvider`.
     def gen_cache(
-        root_path: Path, paths: List[str], timeout: Optional[int]
+        root_path: Path, paths: List[str], timeout: Optional[int] = None, **kwargs: Any
     ) -> Mapping[str, object]:
         params = ",".join(f"path='{root_path / path}'" for path in paths)
         cmd_args = ["pyre", "--noninteractive", "query", f"types({params})"]

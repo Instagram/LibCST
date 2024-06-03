@@ -6,30 +6,28 @@
 from pathlib import Path
 from types import MappingProxyType
 from typing import (
+    TYPE_CHECKING,
     Callable,
     Generic,
     List,
     Mapping,
     MutableMapping,
     Optional,
+    Protocol,
     Type,
-    TYPE_CHECKING,
     TypeVar,
     Union,
 )
 
 from libcst._batched_visitor import BatchableCSTVisitor
-from libcst._metadata_dependent import (
-    _T as _MetadataT,
-    _UNDEFINED_DEFAULT,
-    LazyValue,
-    MetadataDependent,
-)
+from libcst._metadata_dependent import _T as _MetadataT
+from libcst._metadata_dependent import _UNDEFINED_DEFAULT, LazyValue, MetadataDependent
 from libcst._visitors import CSTVisitor
 
 if TYPE_CHECKING:
     from libcst._nodes.base import CSTNode
-    from libcst._nodes.module import _ModuleSelfT as _ModuleT, Module
+    from libcst._nodes.module import Module
+    from libcst._nodes.module import _ModuleSelfT as _ModuleT
     from libcst.metadata.wrapper import MetadataWrapper
 
 
@@ -38,6 +36,13 @@ ProviderT = Type["BaseMetadataProvider[object]"]
 # typevar is covariant.
 _ProvidedMetadataT = TypeVar("_ProvidedMetadataT", covariant=True)
 MaybeLazyMetadataT = Union[LazyValue[_ProvidedMetadataT], _ProvidedMetadataT]
+
+
+class GenCacheMethod(Protocol):
+    def __call__(
+        self, root_path: Path, paths: List[str], *, timeout: Optional[int] = None
+    ) -> Mapping[str, object]:
+        ...
 
 
 # We can't use an ABCMeta here, because of metaclass conflicts
@@ -59,7 +64,7 @@ class BaseMetadataProvider(MetadataDependent, Generic[_ProvidedMetadataT]):
     #: Implement gen_cache to indicate the metadata provider depends on cache from external
     #: system. This function will be called by :class:`~libcst.metadata.FullRepoManager`
     #: to compute required cache object per file path.
-    gen_cache: Optional[Callable[[Path, List[str], int], Mapping[str, object]]] = None
+    gen_cache: Optional[GenCacheMethod] = None
 
     def __init__(self, cache: object = None) -> None:
         super().__init__()

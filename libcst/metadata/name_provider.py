@@ -5,17 +5,13 @@
 
 import dataclasses
 from pathlib import Path
-from typing import Collection, List, Mapping, Optional, Union
+from typing import Any, Collection, List, Mapping, Optional, Union
 
 import libcst as cst
 from libcst._metadata_dependent import LazyValue, MetadataDependent
-from libcst.helpers.module import calculate_module_and_package, ModuleNameAndPackage
+from libcst.helpers.module import ModuleNameAndPackage, calculate_module_and_package
 from libcst.metadata.base_provider import BatchableMetadataProvider
-from libcst.metadata.scope_provider import (
-    QualifiedName,
-    QualifiedNameSource,
-    ScopeProvider,
-)
+from libcst.metadata.scope_provider import QualifiedName, QualifiedNameSource, ScopeProvider
 
 
 class QualifiedNameProvider(BatchableMetadataProvider[Collection[QualifiedName]]):
@@ -112,7 +108,7 @@ class FullyQualifiedNameProvider(BatchableMetadataProvider[Collection[QualifiedN
 
     @classmethod
     def gen_cache(
-        cls, root_path: Path, paths: List[str], timeout: Optional[int] = None
+        cls, root_path: Path, paths: List[str], **kwargs: Any
     ) -> Mapping[str, ModuleNameAndPackage]:
         cache = {path: calculate_module_and_package(root_path, path) for path in paths}
         return cache
