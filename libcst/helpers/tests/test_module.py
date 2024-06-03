@@ -4,7 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 #
 from pathlib import Path, PurePath
-from typing import Optional
+from typing import Any, Optional
 from unittest.mock import patch
 
 import libcst as cst
@@ -265,7 +265,7 @@ class ModuleTest(UnitTest):
         rel_path: str,
         module_and_package: Optional[ModuleNameAndPackage],
     ) -> None:
-        mock_tree = {
+        mock_tree: dict[str, Any] = {
             "home": {
                 "user": {
                     "root": {

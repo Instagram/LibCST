@@ -46,7 +46,7 @@ class MetadataWrapperTest(UnitTest):
 
     @staticmethod
     def ignore_args(*args: object, **kwargs: object) -> Any:
-        pass
+        return (args, kwargs)
 
     def test_metadata_cache(self) -> None:
         class DummyMetadataProvider(BatchableMetadataProvider[None]):

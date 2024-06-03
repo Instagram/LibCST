@@ -7,7 +7,6 @@ from pathlib import Path
 from types import MappingProxyType
 from typing import (
     TYPE_CHECKING,
-    Callable,
     Generic,
     List,
     Mapping,
