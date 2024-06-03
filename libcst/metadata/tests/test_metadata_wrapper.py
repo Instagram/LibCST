@@ -4,7 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 
-from typing import Any, Optional
+from typing import Optional
 from unittest.mock import Mock
 
 import libcst as cst

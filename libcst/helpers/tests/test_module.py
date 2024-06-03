@@ -297,7 +297,7 @@ class ModuleTest(UnitTest):
             },
         }
         repo_root = Path("/home/user/root").resolve()
-        fake_root = repo_root.parent.parent.parent
+        fake_root: Path = repo_root.parent.parent.parent
 
         def mock_exists(path: PurePath) -> bool:
             parts = path.relative_to(fake_root).parts
