@@ -253,7 +253,18 @@ class ModuleTest(UnitTest):
             calculate_module_and_package(repo_root, filename), module_and_package
         )
 
-    def test_calculate_module_and_package_using_pyproject_toml(self) -> None:
+    @data_provider(
+        (
+            ("foo/foo/__init__.py", ModuleNameAndPackage("foo", "foo")),
+            ("foo/foo/file.py", ModuleNameAndPackage("foo.file", "foo")),
+            ("foo/foo/sub/subfile.py", ModuleNameAndPackage("foo.sub.subfile", "foo.sub")),
+            ("libs/bar/bar/thing.py", ModuleNameAndPackage("bar.thing", "bar")),
+        )
+    )
+    def test_calculate_module_and_package_using_pyproject_toml(self,
+        rel_path: str,
+        module_and_package: Optional[ModuleNameAndPackage],
+    ) -> None:
         mock_tree = {
             "home": {
                 "user": {
@@ -295,16 +306,7 @@ class ModuleTest(UnitTest):
         with patch("pathlib.Path.exists", new=mock_exists), patch("pathlib.Path.resolve", new=lambda p: p):
             repo_root = Path("/home/user/root")
             self.assertEqual(
-                calculate_module_and_package(repo_root, repo_root / "foo/foo/__init__.py", use_pyproject_toml=True), ModuleNameAndPackage("foo", "foo")
-            )
-            self.assertEqual(
-                calculate_module_and_package(repo_root, repo_root / "foo/foo/file.py", use_pyproject_toml=True), ModuleNameAndPackage("foo.file", "foo")
-            )
-            self.assertEqual(
-                calculate_module_and_package(repo_root, repo_root / "foo/foo/sub/subfile.py", use_pyproject_toml=True), ModuleNameAndPackage("foo.sub.subfile", "foo.sub")
-            )
-            self.assertEqual(
-                calculate_module_and_package(repo_root, repo_root / "libs/bar/bar/thing.py", use_pyproject_toml=True), ModuleNameAndPackage("bar.thing", "bar")
+                calculate_module_and_package(repo_root, repo_root / rel_path, use_pyproject_toml=True), module_and_package
             )
 
 
