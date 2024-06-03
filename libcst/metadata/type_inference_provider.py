@@ -50,9 +50,9 @@ class TypeInferenceProvider(BatchableMetadataProvider[str]):
 
     METADATA_DEPENDENCIES = (PositionProvider,)
 
-    @staticmethod
+    @classmethod
     def gen_cache(
-        root_path: Path, paths: List[str], timeout: Optional[int] = None, **kwargs: Any
+        cls, root_path: Path, paths: List[str], timeout: Optional[int] = None, **kwargs: Any
     ) -> Mapping[str, object]:
         params = ",".join(f"path='{root_path / path}'" for path in paths)
         cmd_args = ["pyre", "--noninteractive", "query", f"types({params})"]

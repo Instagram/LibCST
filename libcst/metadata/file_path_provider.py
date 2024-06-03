@@ -39,9 +39,9 @@ class FilePathProvider(BatchableMetadataProvider[Path]):
 
     """
 
-    @staticmethod
+    @classmethod
     def gen_cache(
-        root_path: Path, paths: List[str], **kwargs: Any
+        cls, root_path: Path, paths: List[str], **kwargs: Any
     ) -> Mapping[str, Path]:
         cache = {path: (root_path / path).resolve() for path in paths}
         return cache
