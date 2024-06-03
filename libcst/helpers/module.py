@@ -142,7 +142,7 @@ def calculate_module_and_package(
         abs_filename = Path(filename).resolve()
         package_root = abs_filename.parent
         while package_root != abs_repo_root:
-            if (package_root / 'pyproject.toml').exists():
+            if (package_root / "pyproject.toml").exists():
                 break
             if package_root == package_root.parent:
                 break

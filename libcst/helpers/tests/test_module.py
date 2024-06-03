@@ -10,15 +10,15 @@ from unittest.mock import patch
 import libcst as cst
 from libcst.helpers.common import ensure_type
 from libcst.helpers.module import (
-    ModuleNameAndPackage,
     calculate_module_and_package,
     get_absolute_module_for_import,
     get_absolute_module_for_import_or_raise,
     get_absolute_module_from_package_for_import,
     get_absolute_module_from_package_for_import_or_raise,
     insert_header_comments,
+    ModuleNameAndPackage,
 )
-from libcst.testing.utils import UnitTest, data_provider
+from libcst.testing.utils import data_provider, UnitTest
 
 
 class ModuleTest(UnitTest):
@@ -257,11 +257,15 @@ class ModuleTest(UnitTest):
         (
             ("foo/foo/__init__.py", ModuleNameAndPackage("foo", "foo")),
             ("foo/foo/file.py", ModuleNameAndPackage("foo.file", "foo")),
-            ("foo/foo/sub/subfile.py", ModuleNameAndPackage("foo.sub.subfile", "foo.sub")),
+            (
+                "foo/foo/sub/subfile.py",
+                ModuleNameAndPackage("foo.sub.subfile", "foo.sub"),
+            ),
             ("libs/bar/bar/thing.py", ModuleNameAndPackage("bar.thing", "bar")),
         )
     )
-    def test_calculate_module_and_package_using_pyproject_toml(self,
+    def test_calculate_module_and_package_using_pyproject_toml(
+        self,
         rel_path: str,
         module_and_package: Optional[ModuleNameAndPackage],
     ) -> None:
@@ -277,7 +281,7 @@ class ModuleTest(UnitTest):
                                 "sub": {
                                     "subfile.py": "content",
                                 },
-                            }
+                            },
                         },
                         "libs": {
                             "bar": {
@@ -285,9 +289,9 @@ class ModuleTest(UnitTest):
                                 "bar": {
                                     "__init__.py": "content",
                                     "thing.py": "content",
-                                }
+                                },
                             }
-                        }
+                        },
                     },
                 },
             },
@@ -303,12 +307,16 @@ class ModuleTest(UnitTest):
                     return False
             return True
 
-        with patch("pathlib.Path.exists", new=mock_exists), patch("pathlib.Path.resolve", new=lambda p: p):
+        with patch("pathlib.Path.exists", new=mock_exists), patch(
+            "pathlib.Path.resolve", new=lambda p: p
+        ):
             repo_root = Path("/home/user/root")
             self.assertEqual(
-                calculate_module_and_package(repo_root, repo_root / rel_path, use_pyproject_toml=True), module_and_package
+                calculate_module_and_package(
+                    repo_root, repo_root / rel_path, use_pyproject_toml=True
+                ),
+                module_and_package,
             )
-
 
     @data_provider(
         (

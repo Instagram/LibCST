@@ -9,9 +9,13 @@ from typing import Any, Collection, List, Mapping, Optional, Union
 
 import libcst as cst
 from libcst._metadata_dependent import LazyValue, MetadataDependent
-from libcst.helpers.module import ModuleNameAndPackage, calculate_module_and_package
+from libcst.helpers.module import calculate_module_and_package, ModuleNameAndPackage
 from libcst.metadata.base_provider import BatchableMetadataProvider
-from libcst.metadata.scope_provider import QualifiedName, QualifiedNameSource, ScopeProvider
+from libcst.metadata.scope_provider import (
+    QualifiedName,
+    QualifiedNameSource,
+    ScopeProvider,
+)
 
 
 class QualifiedNameProvider(BatchableMetadataProvider[Collection[QualifiedName]]):
@@ -108,9 +112,19 @@ class FullyQualifiedNameProvider(BatchableMetadataProvider[Collection[QualifiedN
 
     @classmethod
     def gen_cache(
-        cls, root_path: Path, paths: List[str], *, use_pyproject_toml: bool = False, **kwargs: Any
+        cls,
+        root_path: Path,
+        paths: List[str],
+        *,
+        use_pyproject_toml: bool = False,
+        **kwargs: Any,
     ) -> Mapping[str, ModuleNameAndPackage]:
-        cache = {path: calculate_module_and_package(root_path, path, use_pyproject_toml=use_pyproject_toml) for path in paths}
+        cache = {
+            path: calculate_module_and_package(
+                root_path, path, use_pyproject_toml=use_pyproject_toml
+            )
+            for path in paths
+        }
         return cache
 
     def __init__(self, cache: ModuleNameAndPackage) -> None:

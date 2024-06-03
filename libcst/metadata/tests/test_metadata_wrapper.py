@@ -8,7 +8,11 @@ from typing import Any, Optional
 from unittest.mock import Mock
 
 import libcst as cst
-from libcst.metadata import BatchableMetadataProvider, MetadataWrapper, VisitorMetadataProvider
+from libcst.metadata import (
+    BatchableMetadataProvider,
+    MetadataWrapper,
+    VisitorMetadataProvider,
+)
 from libcst.testing.utils import UnitTest
 
 

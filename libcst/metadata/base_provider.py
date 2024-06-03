@@ -6,7 +6,6 @@
 from pathlib import Path
 from types import MappingProxyType
 from typing import (
-    TYPE_CHECKING,
     Generic,
     List,
     Mapping,
@@ -14,19 +13,23 @@ from typing import (
     Optional,
     Protocol,
     Type,
+    TYPE_CHECKING,
     TypeVar,
     Union,
 )
 
 from libcst._batched_visitor import BatchableCSTVisitor
-from libcst._metadata_dependent import _T as _MetadataT
-from libcst._metadata_dependent import _UNDEFINED_DEFAULT, LazyValue, MetadataDependent
+from libcst._metadata_dependent import (
+    _T as _MetadataT,
+    _UNDEFINED_DEFAULT,
+    LazyValue,
+    MetadataDependent,
+)
 from libcst._visitors import CSTVisitor
 
 if TYPE_CHECKING:
     from libcst._nodes.base import CSTNode
-    from libcst._nodes.module import Module
-    from libcst._nodes.module import _ModuleSelfT as _ModuleT
+    from libcst._nodes.module import _ModuleSelfT as _ModuleT, Module
     from libcst.metadata.wrapper import MetadataWrapper
 
 
@@ -39,7 +42,12 @@ MaybeLazyMetadataT = Union[LazyValue[_ProvidedMetadataT], _ProvidedMetadataT]
 
 class GenCacheMethod(Protocol):
     def __call__(
-        self, root_path: Path, paths: List[str], *, timeout: Optional[int] = None, use_pyproject_toml: bool = False
+        self,
+        root_path: Path,
+        paths: List[str],
+        *,
+        timeout: Optional[int] = None,
+        use_pyproject_toml: bool = False,
     ) -> Mapping[str, object]:
         ...
 
