@@ -3,20 +3,22 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 #
+from pathlib import Path, PurePath
 from typing import Optional
+from unittest.mock import patch
 
 import libcst as cst
 from libcst.helpers.common import ensure_type
 from libcst.helpers.module import (
+    ModuleNameAndPackage,
     calculate_module_and_package,
     get_absolute_module_for_import,
     get_absolute_module_for_import_or_raise,
     get_absolute_module_from_package_for_import,
     get_absolute_module_from_package_for_import_or_raise,
     insert_header_comments,
-    ModuleNameAndPackage,
 )
-from libcst.testing.utils import data_provider, UnitTest
+from libcst.testing.utils import UnitTest, data_provider
 
 
 class ModuleTest(UnitTest):
@@ -250,6 +252,61 @@ class ModuleTest(UnitTest):
         self.assertEqual(
             calculate_module_and_package(repo_root, filename), module_and_package
         )
+
+    def test_calculate_module_and_package_using_pyproject_toml(self) -> None:
+        mock_tree = {
+            "home": {
+                "user": {
+                    "root": {
+                        "foo": {
+                            "pyproject.toml": "content",
+                            "foo": {
+                                "__init__.py": "content",
+                                "file.py": "content",
+                                "sub": {
+                                    "subfile.py": "content",
+                                },
+                            }
+                        },
+                        "libs": {
+                            "bar": {
+                                "pyproject.toml": "content",
+                                "bar": {
+                                    "__init__.py": "content",
+                                    "thing.py": "content",
+                                }
+                            }
+                        }
+                    },
+                },
+            },
+        }
+
+        def mock_exists(path: PurePath) -> bool:
+            parts = path.parts
+            subtree = mock_tree
+            if parts[0] == "/":
+                parts = parts[1:]
+            for part in parts:
+                if (subtree := subtree.get(part)) is None:
+                    return False
+            return True
+
+        with patch("pathlib.Path.exists", new=mock_exists), patch("pathlib.Path.resolve", new=lambda p: p):
+            repo_root = Path("/home/user/root")
+            self.assertEqual(
+                calculate_module_and_package(repo_root, repo_root / "foo/foo/__init__.py", use_pyproject_toml=True), ModuleNameAndPackage("foo", "foo")
+            )
+            self.assertEqual(
+                calculate_module_and_package(repo_root, repo_root / "foo/foo/file.py", use_pyproject_toml=True), ModuleNameAndPackage("foo.file", "foo")
+            )
+            self.assertEqual(
+                calculate_module_and_package(repo_root, repo_root / "foo/foo/sub/subfile.py", use_pyproject_toml=True), ModuleNameAndPackage("foo.sub.subfile", "foo.sub")
+            )
+            self.assertEqual(
+                calculate_module_and_package(repo_root, repo_root / "libs/bar/bar/thing.py", use_pyproject_toml=True), ModuleNameAndPackage("bar.thing", "bar")
+            )
+
 
     @data_provider(
         (
