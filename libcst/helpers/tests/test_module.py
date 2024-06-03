@@ -300,7 +300,7 @@ class ModuleTest(UnitTest):
         def mock_exists(path: PurePath) -> bool:
             parts = path.parts
             subtree = mock_tree
-            if parts[0] == "/":
+            if path.is_absolute():
                 parts = parts[1:]
             for part in parts:
                 if (subtree := subtree.get(part)) is None:
