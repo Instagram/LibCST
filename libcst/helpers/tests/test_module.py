@@ -296,21 +296,18 @@ class ModuleTest(UnitTest):
                 },
             },
         }
+        repo_root = Path("/home/user/root").resolve()
+        fake_root = repo_root.parent.parent.parent
 
         def mock_exists(path: PurePath) -> bool:
-            parts = path.parts
+            parts = path.relative_to(fake_root).parts
             subtree = mock_tree
-            if path.is_absolute():
-                parts = parts[1:]
             for part in parts:
                 if (subtree := subtree.get(part)) is None:
                     return False
             return True
 
-        with patch("pathlib.Path.exists", new=mock_exists), patch(
-            "pathlib.Path.resolve", new=lambda p: p
-        ):
-            repo_root = Path("/home/user/root")
+        with patch("pathlib.Path.exists", new=mock_exists):
             self.assertEqual(
                 calculate_module_and_package(
                     repo_root, repo_root / rel_path, use_pyproject_toml=True
