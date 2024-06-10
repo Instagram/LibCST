@@ -29,7 +29,7 @@ dev = [
     "hypothesis>=4.36.0",
     "hypothesmith>=0.0.4",
     "jupyter>=1.0.0",
-    "maturin>=0.8.3,<1.6",
+    "maturin>=0.8.3,<1.7",
     "nbsphinx>=0.4.2",
     "prompt-toolkit>=2.0.9",
     "pyre-check==0.9.18; platform_system != 'Windows'",
