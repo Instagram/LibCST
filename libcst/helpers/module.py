@@ -5,7 +5,7 @@
 #
 from dataclasses import dataclass
 from itertools import islice
-from pathlib import PurePath
+from pathlib import Path, PurePath
 from typing import List, Optional
 
 from libcst import Comment, EmptyLine, ImportFrom, Module
@@ -132,11 +132,25 @@ class ModuleNameAndPackage:
 
 
 def calculate_module_and_package(
-    repo_root: StrPath, filename: StrPath
+    repo_root: StrPath, filename: StrPath, use_pyproject_toml: bool = False
 ) -> ModuleNameAndPackage:
     # Given an absolute repo_root and an absolute filename, calculate the
     # python module name for the file.
-    relative_filename = PurePath(filename).relative_to(repo_root)
+    if use_pyproject_toml:
+        # But also look for pyproject.toml files, indicating nested packages in the repo.
+        abs_repo_root = Path(repo_root).resolve()
+        abs_filename = Path(filename).resolve()
+        package_root = abs_filename.parent
+        while package_root != abs_repo_root:
+            if (package_root / "pyproject.toml").exists():
+                break
+            if package_root == package_root.parent:
+                break
+            package_root = package_root.parent
+
+        relative_filename = abs_filename.relative_to(package_root)
+    else:
+        relative_filename = PurePath(filename).relative_to(repo_root)
     relative_filename = relative_filename.with_suffix("")
 
     # handle special cases

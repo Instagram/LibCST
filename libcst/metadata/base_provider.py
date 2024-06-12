@@ -6,12 +6,12 @@
 from pathlib import Path
 from types import MappingProxyType
 from typing import (
-    Callable,
     Generic,
     List,
     Mapping,
     MutableMapping,
     Optional,
+    Protocol,
     Type,
     TYPE_CHECKING,
     TypeVar,
@@ -40,6 +40,18 @@ _ProvidedMetadataT = TypeVar("_ProvidedMetadataT", covariant=True)
 MaybeLazyMetadataT = Union[LazyValue[_ProvidedMetadataT], _ProvidedMetadataT]
 
 
+class GenCacheMethod(Protocol):
+    def __call__(
+        self,
+        root_path: Path,
+        paths: List[str],
+        *,
+        timeout: Optional[int] = None,
+        use_pyproject_toml: bool = False,
+    ) -> Mapping[str, object]:
+        ...
+
+
 # We can't use an ABCMeta here, because of metaclass conflicts
 class BaseMetadataProvider(MetadataDependent, Generic[_ProvidedMetadataT]):
     """
@@ -59,7 +71,7 @@ class BaseMetadataProvider(MetadataDependent, Generic[_ProvidedMetadataT]):
     #: Implement gen_cache to indicate the metadata provider depends on cache from external
     #: system. This function will be called by :class:`~libcst.metadata.FullRepoManager`
     #: to compute required cache object per file path.
-    gen_cache: Optional[Callable[[Path, List[str], int], Mapping[str, object]]] = None
+    gen_cache: Optional[GenCacheMethod] = None
 
     def __init__(self, cache: object = None) -> None:
         super().__init__()
