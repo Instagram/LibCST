@@ -37,4 +37,6 @@ match x:
     case x,y  ,  * more   :pass
     case y.z: pass
     case 1, 2: pass
+    case ( Foo  (   )    ) : pass
+    case (lol)  if (  True , )  :pass
 

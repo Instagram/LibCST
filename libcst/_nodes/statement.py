@@ -2854,17 +2854,16 @@ class MatchCase(CSTNode):
                 self, "whitespace_after_case", self.whitespace_after_case, visitor
             ),
             pattern=visit_required(self, "pattern", self.pattern, visitor),
-            # pyre-fixme[6]: Expected `SimpleWhitespace` for 4th param but got
-            #  `Optional[SimpleWhitespace]`.
-            whitespace_before_if=visit_optional(
+            whitespace_before_if=visit_required(
                 self, "whitespace_before_if", self.whitespace_before_if, visitor
             ),
-            # pyre-fixme[6]: Expected `SimpleWhitespace` for 5th param but got
-            #  `Optional[SimpleWhitespace]`.
-            whitespace_after_if=visit_optional(
+            whitespace_after_if=visit_required(
                 self, "whitespace_after_if", self.whitespace_after_if, visitor
             ),
             guard=visit_optional(self, "guard", self.guard, visitor),
+            whitespace_before_colon=visit_required(
+                self, "whitespace_before_colon", self.whitespace_before_colon, visitor
+            ),
             body=visit_required(self, "body", self.body, visitor),
         )
 
@@ -3382,6 +3381,7 @@ class MatchClass(MatchPattern):
             whitespace_after_kwds=visit_required(
                 self, "whitespace_after_kwds", self.whitespace_after_kwds, visitor
             ),
+            rpar=visit_sequence(self, "rpar", self.rpar, visitor),
         )
 
     def _codegen_impl(self, state: CodegenState) -> None:
