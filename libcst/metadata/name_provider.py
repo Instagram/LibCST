@@ -5,7 +5,7 @@
 
 import dataclasses
 from pathlib import Path
-from typing import Collection, List, Mapping, Optional, Union
+from typing import Any, Collection, List, Mapping, Optional, Union
 
 import libcst as cst
 from libcst._metadata_dependent import LazyValue, MetadataDependent
@@ -112,9 +112,19 @@ class FullyQualifiedNameProvider(BatchableMetadataProvider[Collection[QualifiedN
 
     @classmethod
     def gen_cache(
-        cls, root_path: Path, paths: List[str], timeout: Optional[int] = None
+        cls,
+        root_path: Path,
+        paths: List[str],
+        *,
+        use_pyproject_toml: bool = False,
+        **kwargs: Any,
     ) -> Mapping[str, ModuleNameAndPackage]:
-        cache = {path: calculate_module_and_package(root_path, path) for path in paths}
+        cache = {
+            path: calculate_module_and_package(
+                root_path, path, use_pyproject_toml=use_pyproject_toml
+            )
+            for path in paths
+        }
         return cache
 
     def __init__(self, cache: ModuleNameAndPackage) -> None:

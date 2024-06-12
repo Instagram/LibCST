@@ -22,6 +22,7 @@ class FullRepoManager:
         paths: Collection[str],
         providers: Collection["ProviderT"],
         timeout: int = 5,
+        use_pyproject_toml: bool = False,
     ) -> None:
         """
         Given project root directory with pyre and watchman setup, :class:`~libcst.metadata.FullRepoManager`
@@ -38,6 +39,7 @@ class FullRepoManager:
         self.root_path: Path = Path(repo_root_dir)
         self._cache: Dict["ProviderT", Mapping[str, object]] = {}
         self._timeout = timeout
+        self._use_pyproject_toml = use_pyproject_toml
         self._providers = providers
         self._paths: List[str] = list(paths)
 
@@ -65,7 +67,10 @@ class FullRepoManager:
                 handler = provider.gen_cache
                 if handler:
                     cache[provider] = handler(
-                        self.root_path, self._paths, self._timeout
+                        self.root_path,
+                        self._paths,
+                        timeout=self._timeout,
+                        use_pyproject_toml=self._use_pyproject_toml,
                     )
             self._cache = cache
 

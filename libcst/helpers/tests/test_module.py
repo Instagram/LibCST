@@ -3,7 +3,9 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 #
-from typing import Optional
+from pathlib import Path, PurePath
+from typing import Any, Optional
+from unittest.mock import patch
 
 import libcst as cst
 from libcst.helpers.common import ensure_type
@@ -250,6 +252,77 @@ class ModuleTest(UnitTest):
         self.assertEqual(
             calculate_module_and_package(repo_root, filename), module_and_package
         )
+
+    @data_provider(
+        (
+            ("foo/foo/__init__.py", ModuleNameAndPackage("foo", "foo")),
+            ("foo/foo/file.py", ModuleNameAndPackage("foo.file", "foo")),
+            (
+                "foo/foo/sub/subfile.py",
+                ModuleNameAndPackage("foo.sub.subfile", "foo.sub"),
+            ),
+            ("libs/bar/bar/thing.py", ModuleNameAndPackage("bar.thing", "bar")),
+            (
+                "noproj/some/file.py",
+                ModuleNameAndPackage("noproj.some.file", "noproj.some"),
+            ),
+        )
+    )
+    def test_calculate_module_and_package_using_pyproject_toml(
+        self,
+        rel_path: str,
+        module_and_package: Optional[ModuleNameAndPackage],
+    ) -> None:
+        mock_tree: dict[str, Any] = {
+            "home": {
+                "user": {
+                    "root": {
+                        "foo": {
+                            "pyproject.toml": "content",
+                            "foo": {
+                                "__init__.py": "content",
+                                "file.py": "content",
+                                "sub": {
+                                    "subfile.py": "content",
+                                },
+                            },
+                        },
+                        "libs": {
+                            "bar": {
+                                "pyproject.toml": "content",
+                                "bar": {
+                                    "__init__.py": "content",
+                                    "thing.py": "content",
+                                },
+                            }
+                        },
+                        "noproj": {
+                            "some": {
+                                "file.py": "content",
+                            }
+                        },
+                    },
+                },
+            },
+        }
+        repo_root = Path("/home/user/root").resolve()
+        fake_root: Path = repo_root.parent.parent.parent
+
+        def mock_exists(path: PurePath) -> bool:
+            parts = path.relative_to(fake_root).parts
+            subtree = mock_tree
+            for part in parts:
+                if (subtree := subtree.get(part)) is None:
+                    return False
+            return True
+
+        with patch("pathlib.Path.exists", new=mock_exists):
+            self.assertEqual(
+                calculate_module_and_package(
+                    repo_root, repo_root / rel_path, use_pyproject_toml=True
+                ),
+                module_and_package,
+            )
 
     @data_provider(
         (
