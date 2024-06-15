@@ -56,3 +56,14 @@ class CodeRange:
             end = cast(CodePosition, end)
             object.__setattr__(self, "start", start)
             object.__setattr__(self, "end", end)
+
+    def __contains__(self, pos: _CodePositionT, /) -> bool:
+        if isinstance(pos, tuple):
+            line, column = pos
+        else:
+            line, column = pos.line, pos.column
+
+        return (
+            self.start.line <= line <= self.end.line
+            and self.start.column <= column <= self.end.column
+        )
