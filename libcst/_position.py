@@ -15,13 +15,10 @@ locations.
 from dataclasses import dataclass
 from typing import cast, overload, Tuple, Union
 
-from libcst._add_slots import add_slots
-
 _CodePositionT = Union[Tuple[int, int], "CodePosition"]
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class CodePosition:
     #: Line numbers are 1-indexed.
     line: int
@@ -29,8 +26,7 @@ class CodePosition:
     column: int
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 # pyre-fixme[13]: Attribute `end` is never initialized.
 # pyre-fixme[13]: Attribute `start` is never initialized.
 class CodeRange:

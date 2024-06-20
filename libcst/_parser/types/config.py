@@ -10,7 +10,6 @@ from dataclasses import dataclass, field, fields
 from enum import Enum
 from typing import Any, Callable, FrozenSet, List, Mapping, Optional, Pattern, Union
 
-from libcst._add_slots import add_slots
 from libcst._nodes.whitespace import NEWLINE_RE
 from libcst._parser.parso.utils import parse_version_string, PythonVersionInfo
 
@@ -47,8 +46,7 @@ class AutoConfig(Enum):
 KNOWN_PYTHON_VERSION_STRINGS = ["3.0", "3.1", "3.3", "3.5", "3.6", "3.7", "3.8"]
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class PartialParserConfig:
     r"""
     An optional object that can be supplied to the parser entrypoints (e.g.
