@@ -226,5 +226,3 @@ class ParserSyntaxError(Exception):
 
 class MetadataException(Exception):
     pass
-
-
