@@ -29,7 +29,7 @@ from typing import (
 
 import libcst
 import libcst.metadata as meta
-from libcst import FlattenSentinel, MaybeSentinel, RemovalSentinel, CSTLogicError
+from libcst import CSTLogicError, FlattenSentinel, MaybeSentinel, RemovalSentinel
 from libcst._metadata_dependent import LazyValue
 
 
@@ -761,7 +761,9 @@ class AtLeastN(Generic[_MatcherT], _BaseWildcardNode):
         n: int,
     ) -> None:
         if n < 0:
-            raise ValueError(f"{self.__class__.__qualname__} n attribute must be positive")
+            raise ValueError(
+                f"{self.__class__.__qualname__} n attribute must be positive"
+            )
         self._n: int = n
         self._matcher: Union[_MatcherT, DoNotCareSentinel] = matcher
 
@@ -863,7 +865,9 @@ class AtMostN(Generic[_MatcherT], _BaseWildcardNode):
         n: int,
     ) -> None:
         if n < 0:
-            raise ValueError(f"{self.__class__.__qualname__} n attribute must be positive")
+            raise ValueError(
+                f"{self.__class__.__qualname__} n attribute must be positive"
+            )
         self._n: int = n
         self._matcher: Union[_MatcherT, DoNotCareSentinel] = matcher
 

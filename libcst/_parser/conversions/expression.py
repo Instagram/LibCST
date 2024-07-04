@@ -13,7 +13,7 @@ from tokenize import (
 )
 
 from libcst._excep import CSTLogicError
-from libcst._exceptions import PartialParserSyntaxError, ParserSyntaxError
+from libcst._exceptions import ParserSyntaxError, PartialParserSyntaxError
 from libcst._maybe_sentinel import MaybeSentinel
 from libcst._nodes.expression import (
     Arg,
@@ -332,7 +332,7 @@ def convert_boolop(
                 f"Unexpected token '{op.string}'!",
                 lines=config.lines,
                 raw_line=0,
-                raw_column=0
+                raw_column=0,
             )
         leftexpr = BooleanOperation(
             left=leftexpr,
@@ -430,7 +430,7 @@ def convert_comp_op(
                 f"Unexpected token '{op.string}'!",
                 lines=config.lines,
                 raw_line=0,
-                raw_column=0
+                raw_column=0,
             )
     else:
         # A two-token comparison
@@ -466,7 +466,7 @@ def convert_comp_op(
                 f"Unexpected token '{leftcomp.string} {rightcomp.string}'!",
                 lines=config.lines,
                 raw_line=0,
-                raw_column=0
+                raw_column=0,
             )
 
 
@@ -513,7 +513,7 @@ def convert_binop(
                 f"Unexpected token '{op.string}'!",
                 lines=config.lines,
                 raw_line=0,
-                raw_column=0
+                raw_column=0,
             )
         leftexpr = BinaryOperation(
             left=leftexpr,
@@ -565,7 +565,7 @@ def convert_factor(
             f"Unexpected token '{op.string}'!",
             lines=config.lines,
             raw_line=0,
-            raw_column=0
+            raw_column=0,
         )
 
     return WithLeadingWhitespace(
@@ -900,14 +900,14 @@ def convert_atom_basic(
                 f"Unparseable number {child.string}",
                 lines=config.lines,
                 raw_line=0,
-                raw_column=0
+                raw_column=0,
             )
     else:
         raise ParserSyntaxError(
             f"unexpected token {child.type.name}",
             lines=config.lines,
             raw_line=0,
-            raw_column=0
+            raw_column=0,
         )
 
 

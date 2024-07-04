@@ -73,7 +73,9 @@ class RemovedNodeVisitor(ContextAwareVisitor):
         # Look up the scope for this node, remove the import that caused it to exist.
         metadata_wrapper = self.context.wrapper
         if metadata_wrapper is None:
-            raise ImportError("Cannot look up import, metadata is not computed for node!")
+            raise ImportError(
+                "Cannot look up import, metadata is not computed for node!"
+            )
         scope_provider = metadata_wrapper.resolve(ScopeProvider)
         try:
             scope = scope_provider[node]
@@ -256,7 +258,9 @@ class RemoveImportsVisitor(ContextAwareTransformer):
                 context.full_package_name, node
             )
             if module_name is None:
-                raise ImportError("Cannot look up absolute module from relative import!")
+                raise ImportError(
+                    "Cannot look up absolute module from relative import!"
+                )
             for import_alias in names:
                 RemoveImportsVisitor.remove_unused_import(
                     context,

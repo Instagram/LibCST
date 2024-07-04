@@ -10,9 +10,9 @@ from dataclasses import dataclass, field
 from typing import Literal, Optional, Pattern, Sequence, Union
 
 from libcst._add_slots import add_slots
+from libcst._excep import CSTLogicError
 from libcst._maybe_sentinel import MaybeSentinel
 from libcst._nodes.base import CSTNode, CSTValidationError
-from libcst._excep import CSTLogicError
 from libcst._nodes.expression import (
     _BaseParenthesizedNode,
     Annotation,

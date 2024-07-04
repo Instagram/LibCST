@@ -5,7 +5,7 @@
 
 from typing import List, Optional, Sequence, Tuple, Union
 
-from libcst import ParserSyntaxError, CSTLogicError
+from libcst import CSTLogicError, ParserSyntaxError
 from libcst._nodes.whitespace import (
     Comment,
     COMMENT_RE,
@@ -110,7 +110,7 @@ def parse_trailing_whitespace(
             + "so this error should've been caught by parso first.",
             lines=config.lines,
             raw_line=state.line,
-            raw_column=state.column
+            raw_column=state.column,
         )
     return trailing_whitespace
 
@@ -181,7 +181,9 @@ def _parse_indent(
         if state.column == len(line_str) and state.line == len(config.lines):
             # We're at EOF, treat this as a failed speculative parse
             return False
-        raise CSTLogicError("Internal Error: Column should be 0 when parsing an indent.")
+        raise CSTLogicError(
+            "Internal Error: Column should be 0 when parsing an indent."
+        )
     if line_str.startswith(absolute_indent, state.column):
         state.column += len(absolute_indent)
         return True
@@ -214,7 +216,7 @@ def _parse_newline(
                 "Internal Error: Found a newline, but it wasn't the EOL.",
                 lines=config.lines,
                 raw_line=state.line,
-                raw_column=state.column
+                raw_column=state.column,
             )
         if state.line < len(config.lines):
             # this newline was the end of a line, and there's another line,

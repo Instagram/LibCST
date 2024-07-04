@@ -8,7 +8,7 @@ from __future__ import annotations
 import dataclasses
 from typing import List, Sequence
 
-from libcst import CSTNode, CSTLogicError
+from libcst import CSTLogicError, CSTNode
 from libcst.helpers import filter_node_fields
 
 _DEFAULT_INDENT: str = "  "

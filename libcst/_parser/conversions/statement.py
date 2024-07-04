@@ -7,7 +7,7 @@
 from typing import Any, Dict, List, Optional, Sequence, Tuple, Type
 
 from libcst._excep import CSTLogicError
-from libcst._exceptions import PartialParserSyntaxError, ParserSyntaxError
+from libcst._exceptions import ParserSyntaxError, PartialParserSyntaxError
 from libcst._maybe_sentinel import MaybeSentinel
 from libcst._nodes.expression import (
     Annotation,
@@ -285,10 +285,7 @@ def convert_annassign(config: ParserConfig, children: Sequence[Any]) -> Any:
         )
     else:
         raise ParserSyntaxError(
-            "Invalid parser state!",
-            lines=config.lines,
-            raw_line=0,
-            raw_column=0
+            "Invalid parser state!", lines=config.lines, raw_line=0, raw_column=0
         )
 
     return AnnAssignPartial(
@@ -329,7 +326,7 @@ def convert_augassign(config: ParserConfig, children: Sequence[Any]) -> Any:
             f"Unexpected token '{op.string}'!",
             lines=config.lines,
             raw_line=0,
-            raw_column=0
+            raw_column=0,
         )
 
     return AugAssignPartial(

@@ -7,7 +7,7 @@ from collections import defaultdict
 from typing import Dict, List, Optional, Sequence, Set, Tuple, Union
 
 import libcst
-from libcst import matchers as m, parse_statement, CSTLogicError
+from libcst import CSTLogicError, matchers as m, parse_statement
 from libcst._nodes.statement import Import, ImportFrom, SimpleStatementLine
 from libcst.codemod._context import CodemodContext
 from libcst.codemod._visitor import ContextAwareTransformer

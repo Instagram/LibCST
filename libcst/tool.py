@@ -21,7 +21,7 @@ from typing import Any, Callable, Dict, List, Tuple, Type
 
 import yaml
 
-from libcst import LIBCST_VERSION, parse_module, PartialParserConfig, CSTLogicError
+from libcst import CSTLogicError, LIBCST_VERSION, parse_module, PartialParserConfig
 from libcst._parser.parso.utils import parse_version_string
 from libcst.codemod import (
     CodemodCommand,

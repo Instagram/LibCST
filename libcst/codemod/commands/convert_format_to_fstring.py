@@ -161,10 +161,7 @@ def _get_tokens(  # noqa: C901
 
     if in_brackets > 0:
         raise ParserSyntaxError(
-            "Stray { in format string!",
-            lines=[string],
-            raw_line=0,
-            raw_column=0
+            "Stray { in format string!", lines=[string], raw_line=0, raw_column=0
         )
     if format_accum:
         raise CSTLogicError()

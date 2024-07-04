@@ -8,7 +8,7 @@ from dataclasses import dataclass, fields
 from typing import Generator, List, Optional, Sequence, Set, Tuple, Type, Union
 
 import libcst as cst
-from libcst import ensure_type, parse_expression, CSTLogicError
+from libcst import CSTLogicError, ensure_type, parse_expression
 from libcst.codegen.gather import all_libcst_nodes, typeclasses
 
 CST_DIR: Set[str] = set(dir(cst))

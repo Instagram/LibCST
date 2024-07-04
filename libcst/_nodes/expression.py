@@ -18,13 +18,9 @@ from tokenize import (
 from typing import Callable, Generator, Literal, Optional, Sequence, Union
 
 from libcst._add_slots import add_slots
-from libcst._maybe_sentinel import MaybeSentinel
-from libcst._nodes.base import (
-    CSTCodegenError,
-    CSTNode,
-    CSTValidationError,
-)
 from libcst._excep import CSTLogicError
+from libcst._maybe_sentinel import MaybeSentinel
+from libcst._nodes.base import CSTCodegenError, CSTNode, CSTValidationError
 from libcst._nodes.internal import (
     CodegenState,
     visit_optional,
