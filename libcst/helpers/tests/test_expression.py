@@ -41,8 +41,8 @@ class ExpressionTest(UnitTest):
     ) -> None:
         self.assertEqual(get_full_name_for_node(input), output)
         if output is None:
-            # with self.assertRaises(Exception):
-            get_full_name_for_node_or_raise(input)
+            with self.assertRaises(Exception):
+                get_full_name_for_node_or_raise(input)
         else:
             self.assertEqual(get_full_name_for_node_or_raise(input), output)
 
