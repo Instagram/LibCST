@@ -12,6 +12,7 @@ from typing import Literal, Optional, Pattern, Sequence, Union
 from libcst._add_slots import add_slots
 from libcst._maybe_sentinel import MaybeSentinel
 from libcst._nodes.base import CSTNode, CSTValidationError
+from libcst._excep import CSTLogicError
 from libcst._nodes.expression import (
     _BaseParenthesizedNode,
     Annotation,
@@ -1161,12 +1162,10 @@ class ImportAlias(CSTNode):
                 )
         try:
             self.evaluated_name
-        except Exception as e:
-            if str(e) == "Logic error!":
-                raise CSTValidationError(
-                    "The imported name must be a valid qualified name."
-                )
-            raise e
+        except CSTLogicError as e:
+            raise CSTValidationError(
+                "The imported name must be a valid qualified name."
+            ) from e
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "ImportAlias":
         return ImportAlias(
@@ -1195,7 +1194,7 @@ class ImportAlias(CSTNode):
         elif isinstance(node, Attribute):
             return f"{self._name(node.value)}.{node.attr.value}"
         else:
-            raise Exception("Logic error!")
+            raise CSTLogicError()
 
     @property
     def evaluated_name(self) -> str:

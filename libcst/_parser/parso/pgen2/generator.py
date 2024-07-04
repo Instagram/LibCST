@@ -259,7 +259,7 @@ def generate_grammar(bnf_grammar: str, token_namespace: Any) -> Grammar[Any]:
 
     _calculate_tree_traversal(rule_to_dfas)
     if start_nonterminal is None:
-        raise Exception("could not find starting nonterminal!")
+        raise ValueError("could not find starting nonterminal!")
     return Grammar(start_nonterminal, rule_to_dfas, reserved_strings)
 
 

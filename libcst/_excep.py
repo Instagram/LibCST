@@ -1,0 +1,2 @@
+class CSTLogicError(Exception):
+    pass

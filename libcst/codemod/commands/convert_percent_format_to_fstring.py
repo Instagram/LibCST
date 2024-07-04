@@ -53,12 +53,12 @@ class EscapeStringQuote(cst.CSTTransformer):
                         original_node.prefix + quo + original_node.raw_value + quo
                     )
                     if escaped_string.evaluated_value != original_node.evaluated_value:
-                        raise Exception(
+                        raise ValueError(
                             f"Failed to escape string:\n  original:{original_node.value}\n  escaped:{escaped_string.value}"
                         )
                     else:
                         return escaped_string
-            raise Exception(
+            raise ValueError(
                 f"Cannot find a good quote for escaping the SimpleString: {original_node.value}"
             )
         return original_node

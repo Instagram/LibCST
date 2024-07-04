@@ -39,7 +39,7 @@ def with_production(
         # pyre-ignore: Pyre doesn't think that fn has a __name__ attribute
         fn_name = fn.__name__
         if not fn_name.startswith("convert_"):
-            raise Exception(
+            raise ValueError(
                 "A function with a production must be named 'convert_X', not "
                 + f"'{fn_name}'."
             )

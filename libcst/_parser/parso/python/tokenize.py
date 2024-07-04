@@ -36,6 +36,7 @@ from collections import namedtuple
 from dataclasses import dataclass
 from typing import Dict, Generator, Iterable, Optional, Pattern, Set, Tuple
 
+from libcst._excep import CSTLogicError
 from libcst._parser.parso.python.token import PythonTokenTypes
 from libcst._parser.parso.utils import PythonVersionInfo, split_lines
 
@@ -522,14 +523,14 @@ def _tokenize_lines_py36_or_below(  # noqa: C901
 
         if contstr:  # continued string
             if endprog is None:
-                raise Exception("Logic error!")
+                raise CSTLogicError()
             endmatch = endprog.match(line)
             if endmatch:
                 pos = endmatch.end(0)
                 if contstr_start is None:
-                    raise Exception("Logic error!")
+                    raise CSTLogicError()
                 if stashed is not None:
-                    raise Exception("Logic error!")
+                    raise CSTLogicError()
                 yield PythonToken(STRING, contstr + line[:pos], contstr_start, prefix)
                 contstr = ""
                 contline = None
@@ -547,7 +548,7 @@ def _tokenize_lines_py36_or_below(  # noqa: C901
                     )
                     if string:
                         if stashed is not None:
-                            raise Exception("Logic error!")
+                            raise CSTLogicError()
                         yield PythonToken(
                             FSTRING_STRING,
                             string,
@@ -572,7 +573,7 @@ def _tokenize_lines_py36_or_below(  # noqa: C901
                 pos += quote_length
                 if fstring_end_token is not None:
                     if stashed is not None:
-                        raise Exception("Logic error!")
+                        raise CSTLogicError()
                     yield fstring_end_token
                     continue
 
@@ -885,12 +886,12 @@ def _tokenize_lines_py37_or_above(  # noqa: C901
 
         if contstr:  # continued string
             if endprog is None:
-                raise Exception("Logic error!")
+                raise CSTLogicError()
             endmatch = endprog.match(line)
             if endmatch:
                 pos = endmatch.end(0)
                 if contstr_start is None:
-                    raise Exception("Logic error!")
+                    raise CSTLogicError()
                 yield PythonToken(STRING, contstr + line[:pos], contstr_start, prefix)
                 contstr = ""
                 contline = None
