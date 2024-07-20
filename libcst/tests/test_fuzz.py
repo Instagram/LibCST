@@ -50,6 +50,9 @@ class FuzzTest(unittest.TestCase):
     @unittest.skipUnless(
         bool(os.environ.get("HYPOTHESIS", False)), "Hypothesis not requested"
     )
+    # pyre-fixme[56]: Pyre was not able to infer the type of the decorator
+    #  `hypothesis.given($parameter$source_code =
+    #  hypothesmith.from_grammar($parameter$start = "file_input"))`.
     @hypothesis.given(source_code=from_grammar(start="file_input"))
     def test_parsing_compilable_module_strings(self, source_code: str) -> None:
         """The `from_grammar()` strategy generates strings from Python's grammar.
@@ -77,6 +80,9 @@ class FuzzTest(unittest.TestCase):
     @unittest.skipUnless(
         bool(os.environ.get("HYPOTHESIS", False)), "Hypothesis not requested"
     )
+    # pyre-fixme[56]: Pyre was not able to infer the type of the decorator
+    #  `hypothesis.given($parameter$source_code =
+    #  hypothesmith.from_grammar($parameter$start = "eval_input").map(str.strip))`.
     @hypothesis.given(source_code=from_grammar(start="eval_input").map(str.strip))
     def test_parsing_compilable_expression_strings(self, source_code: str) -> None:
         """Much like statements, but for expressions this time.
@@ -105,6 +111,10 @@ class FuzzTest(unittest.TestCase):
     @unittest.skipUnless(
         bool(os.environ.get("HYPOTHESIS", False)), "Hypothesis not requested"
     )
+    # pyre-fixme[56]: Pyre was not able to infer the type of the decorator
+    #  `hypothesis.given($parameter$source_code =
+    #  hypothesmith.from_grammar($parameter$start = "single_input").map(lambda
+    #  ($parameter$s) (s.replace("
     @hypothesis.given(
         source_code=from_grammar(start="single_input").map(
             lambda s: s.replace("\n", "") + "\n"
