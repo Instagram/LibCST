@@ -599,7 +599,12 @@ class If(BaseCompoundStatement):
     #: The whitespace appearing after the test expression but before the colon.
     whitespace_after_test: SimpleWhitespace = SimpleWhitespace.field("")
 
-    # TODO: _validate
+    def _validate(self) -> None:
+        if (
+            self.whitespace_before_test.empty
+            and not self.test._safe_to_use_with_word_operator(ExpressionPosition.RIGHT)
+        ):
+            raise CSTValidationError("Must have at least one space after 'if' keyword.")
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "If":
         return If(
