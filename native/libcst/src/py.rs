@@ -8,7 +8,7 @@ use pyo3::prelude::*;
 
 #[pymodule]
 #[pyo3(name = "native")]
-pub fn libcst_native(_py: Python, m: &PyModule) -> PyResult<()> {
+pub fn libcst_native(_py: Python, m: &Bound<PyModule>) -> PyResult<()> {
     #[pyfn(m)]
     fn parse_module(source: String, encoding: Option<&str>) -> PyResult<PyObject> {
         let m = crate::parse_module(source.as_str(), encoding)?;

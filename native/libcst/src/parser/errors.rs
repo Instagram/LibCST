@@ -28,7 +28,7 @@ pub enum ParserError<'a> {
 #[cfg(feature = "py")]
 mod py_error {
 
-    use pyo3::types::{IntoPyDict, PyModule};
+    use pyo3::types::{IntoPyDict, PyAnyMethods, PyModule};
     use pyo3::{IntoPy, PyErr, PyErrArguments, Python};
 
     use super::ParserError;
@@ -65,13 +65,14 @@ mod py_error {
                     ("raw_line", (line + 1).into_py(py)),
                     ("raw_column", col.into_py(py)),
                 ]
-                .into_py_dict(py);
-                let libcst = PyModule::import(py, "libcst").expect("libcst cannot be imported");
-                PyErr::from_value(
+                .into_py_dict_bound(py);
+                let libcst =
+                    PyModule::import_bound(py, "libcst").expect("libcst cannot be imported");
+                PyErr::from_value_bound(
                     libcst
                         .getattr("ParserSyntaxError")
                         .expect("ParserSyntaxError not found")
-                        .call((), Some(kwargs))
+                        .call((), Some(&kwargs))
                         .expect("failed to instantiate"),
                 )
             })
@@ -86,7 +87,7 @@ mod py_error {
                 ("raw_line", self.raw_line.into_py(py)),
                 ("raw_column", self.raw_column.into_py(py)),
             ]
-            .into_py_dict(py)
+            .into_py_dict_bound(py)
             .into_py(py)
         }
     }

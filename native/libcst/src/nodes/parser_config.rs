@@ -125,7 +125,7 @@ fn parser_config_asdict<'py>(py: Python<'py>, config: PyRef<'py, ParserConfig>) 
         ("version", config.version.clone_ref(py)),
         ("future_imports", config.future_imports.clone_ref(py)),
     ]
-    .into_py_dict(py)
+    .into_py_dict_bound(py)
 }
 
 pub fn init_module(_py: Python, m: &PyModule) -> PyResult<()> {
