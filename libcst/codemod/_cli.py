@@ -423,7 +423,7 @@ class Progress:
         operations still to do.
         """
 
-        if files_finished <= 0:
+        if files_finished <= 0 or elapsed_seconds == 0:
             # Technically infinite but calculating sounds better.
             return "[calculating]"
 
