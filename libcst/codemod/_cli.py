@@ -250,10 +250,13 @@ def _execute_transform(  # noqa: C901
         # We do this after the fork so that a context that was initialized with
         # some defaults before calling parallel_exec_transform_with_prettyprint
         # will be updated per-file.
+        # Clean the warnings as well, otherwise they will be
+        # passed from the previous file
         transformer.context = replace(
             transformer.context,
             filename=filename,
             scratch=deepcopy(scratch),
+            warnings=[],
         )
 
         # determine the module and package name for this file
