@@ -121,7 +121,7 @@ class RenameCommand(VisitorBasedCodemodCommand):
             import_alias_name = import_alias.name
             import_alias_full_name = get_full_name_for_node(import_alias_name)
             if import_alias_full_name is None:
-                raise Exception("Could not parse full name for ImportAlias.name node.")
+                raise ValueError("Could not parse full name for ImportAlias.name node.")
 
             if isinstance(import_alias_name, cst.Name) and self.old_name.startswith(
                 import_alias_full_name + "."
@@ -249,7 +249,7 @@ class RenameCommand(VisitorBasedCodemodCommand):
     ) -> Union[cst.Name, cst.Attribute]:
         full_name_for_node = get_full_name_for_node(original_node)
         if full_name_for_node is None:
-            raise Exception("Could not parse full name for Attribute node.")
+            raise ValueError("Could not parse full name for Attribute node.")
         full_replacement_name = self.gen_replacement(full_name_for_node)
 
         # If a node has no associated QualifiedName, we are still inside an import statement.
@@ -320,7 +320,7 @@ class RenameCommand(VisitorBasedCodemodCommand):
     ) -> Union[cst.Attribute, cst.Name]:
         name_or_attr_node: cst.BaseExpression = cst.parse_expression(dotted_expression)
         if not isinstance(name_or_attr_node, (cst.Name, cst.Attribute)):
-            raise Exception(
+            raise ValueError(
                 "`parse_expression()` on dotted path returned non-Attribute-or-Name."
             )
         return name_or_attr_node
