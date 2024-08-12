@@ -136,7 +136,7 @@ class AddImportsVisitor(ContextAwareTransformer):
         """
 
         if module == "__future__" and obj is None:
-            raise ImportError("Cannot import __future__ directly!")
+            raise ValueError("Cannot import __future__ directly!")
         imports = AddImportsVisitor._get_imports_from_context(context)
         imports.append(ImportItem(module, obj, asname, relative))
         context.scratch[AddImportsVisitor.CONTEXT_KEY] = imports
@@ -157,9 +157,9 @@ class AddImportsVisitor(ContextAwareTransformer):
         # Verify that the imports are valid
         for imp in imps:
             if imp.module == "__future__" and imp.obj_name is None:
-                raise ImportError("Cannot import __future__ directly!")
+                raise ValueError("Cannot import __future__ directly!")
             if imp.module == "__future__" and imp.alias is not None:
-                raise ImportError("Cannot import __future__ objects with aliases!")
+                raise ValueError("Cannot import __future__ objects with aliases!")
 
         # Resolve relative imports if we have a module name
         imps = [imp.resolve_relative(self.context.full_package_name) for imp in imps]
