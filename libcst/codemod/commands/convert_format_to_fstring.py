@@ -50,7 +50,7 @@ def _find_expr_from_field_name(
     if isinstance(lhs, cst.Integer):
         index = int(lhs.value)
         if index < 0 or index >= len(args):
-            raise CSTLogicError(f"Arg sequence {index} out of bounds!")
+            raise CSTLogicError(f"Logic error, arg sequence {index} out of bounds!")
     elif isinstance(lhs, cst.Name):
         for i, arg in enumerate(args):
             kw = arg.keyword
@@ -60,10 +60,12 @@ def _find_expr_from_field_name(
                 index = i
                 break
         if index is None:
-            raise CSTLogicError(f"Arg name {lhs.value} out of bounds!")
+            raise CSTLogicError(f"Logic error, arg name {lhs.value} out of bounds!")
 
     if index is None:
-        raise CSTLogicError(f"Unsupported fieldname expression {fieldname}!")
+        raise CSTLogicError(
+            f"Logic error, unsupported fieldname expression {fieldname}!"
+        )
 
     # Format it!
     return field_expr.deep_replace(lhs, args[index].value)
@@ -164,7 +166,7 @@ def _get_tokens(  # noqa: C901
             "Stray { in format string!", lines=[string], raw_line=0, raw_column=0
         )
     if format_accum:
-        raise CSTLogicError()
+        raise CSTLogicError("Logic error!")
 
     # Yield the last bit of information
     yield (prefix, None, None, None)
@@ -300,7 +302,7 @@ class ConvertFormatStringCommand(VisitorBasedCodemodCommand):
                     ) in format_spec_tokens:
                         if spec_format_spec is not None:
                             # This shouldn't be possible, we don't allow it in the spec!
-                            raise CSTLogicError()
+                            raise CSTLogicError("Logic error!")
                         if spec_literal_text:
                             format_spec_parts.append(
                                 cst.FormattedStringText(spec_literal_text)

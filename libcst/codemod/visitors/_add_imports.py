@@ -107,7 +107,7 @@ class AddImportsVisitor(ContextAwareTransformer):
     ) -> List[ImportItem]:
         imports = context.scratch.get(AddImportsVisitor.CONTEXT_KEY, [])
         if not isinstance(imports, list):
-            raise CSTLogicError()
+            raise CSTLogicError("Logic error!")
         return imports
 
     @staticmethod

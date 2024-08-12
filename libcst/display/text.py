@@ -84,7 +84,7 @@ def _node_repr_recursive(  # noqa: C901
                     else:
                         child_tokens.append("[]")
                 else:
-                    raise CSTLogicError()
+                    raise CSTLogicError("Logic error!")
 
                 # Handle indentation and trailing comma.
                 split_by_line = "".join(child_tokens).split("\n")

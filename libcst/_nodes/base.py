@@ -384,7 +384,7 @@ class CSTNode(ABC):
         new_tree = self.visit(_ChildReplacementTransformer(old_node, new_node))
         if isinstance(new_tree, (FlattenSentinel, RemovalSentinel)):
             # The above transform never returns *Sentinel, so this isn't possible
-            raise CSTLogicError("Cannot get a *Sentinel here!")
+            raise CSTLogicError("Logic error, cannot get a *Sentinel here!")
         return new_tree
 
     def deep_remove(
@@ -401,7 +401,7 @@ class CSTNode(ABC):
 
         if isinstance(new_tree, FlattenSentinel):
             # The above transform never returns FlattenSentinel, so this isn't possible
-            raise CSTLogicError("Cannot get a FlattenSentinel here!")
+            raise CSTLogicError("Logic error, cannot get a FlattenSentinel here!")
 
         return new_tree
 
@@ -423,7 +423,7 @@ class CSTNode(ABC):
         new_tree = self.visit(_ChildWithChangesTransformer(old_node, changes))
         if isinstance(new_tree, (FlattenSentinel, RemovalSentinel)):
             # This is impossible with the above transform.
-            raise CSTLogicError("Cannot get a *Sentinel here!")
+            raise CSTLogicError("Logic error, cannot get a *Sentinel here!")
         return new_tree
 
     def __eq__(self: _CSTNodeSelfT, other: object) -> bool:

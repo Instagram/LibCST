@@ -346,10 +346,14 @@ def _get_clean_type_from_subscript(
     if typecst.value.deep_equals(cst.Name("Sequence")):
         # Lets attempt to widen the sequence type and alias it.
         if len(typecst.slice) != 1:
-            raise CSTLogicError("Sequence shouldn't have more than one param!")
+            raise CSTLogicError(
+                "Logic error, Sequence shouldn't have more than one param!"
+            )
         inner_type = typecst.slice[0].slice
         if not isinstance(inner_type, cst.Index):
-            raise CSTLogicError("Expecting Index for only Sequence element!")
+            raise CSTLogicError(
+                "Logic error, expecting Index for only Sequence element!"
+            )
         inner_type = inner_type.value
 
         if isinstance(inner_type, cst.Subscript):
@@ -357,7 +361,7 @@ def _get_clean_type_from_subscript(
         elif isinstance(inner_type, (cst.Name, cst.SimpleString)):
             clean_inner_type = _get_clean_type_from_expression(aliases, inner_type)
         else:
-            raise CSTLogicError("Unexpected type in Sequence!")
+            raise CSTLogicError("Logic error, unexpected type in Sequence!")
 
         return _get_wrapped_union_type(
             typecst.deep_replace(inner_type, clean_inner_type),
@@ -397,7 +401,7 @@ def _get_clean_type_and_aliases(
     elif isinstance(typecst, (cst.Name, cst.SimpleString)):
         clean_type = _get_clean_type_from_expression(aliases, typecst)
     else:
-        raise CSTLogicError("Unexpected top level type!")
+        raise CSTLogicError("Logic error, unexpected top level type!")
 
     # Now, insert OneOf/AllOf and MatchIfTrue into unions so we can typecheck their usage.
     # This allows us to put OneOf[SomeType] or MatchIfTrue[cst.SomeType] into any

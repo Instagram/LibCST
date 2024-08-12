@@ -204,7 +204,7 @@ def convert_argslist(  # noqa: C901
                 )
         else:
             # The state machine should never end up here.
-            raise CSTLogicError()
+            raise CSTLogicError("Logic error!")
 
         return current_param
 

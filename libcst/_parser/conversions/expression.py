@@ -904,7 +904,7 @@ def convert_atom_basic(
             )
     else:
         raise ParserSyntaxError(
-            f"unexpected token {child.type.name}",
+            f"Logic error, unexpected token {child.type.name}",
             lines=config.lines,
             raw_line=0,
             raw_column=0,

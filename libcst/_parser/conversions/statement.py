@@ -902,7 +902,7 @@ def convert_try_stmt(config: ParserConfig, children: Sequence[Any]) -> Any:
         if isinstance(clause, Token):
             if clause.string == "else":
                 if orelse is not None:
-                    raise CSTLogicError()
+                    raise CSTLogicError("Logic error!")
                 orelse = Else(
                     leading_lines=parse_empty_lines(config, clause.whitespace_before),
                     whitespace_before_colon=parse_simple_whitespace(
@@ -912,7 +912,7 @@ def convert_try_stmt(config: ParserConfig, children: Sequence[Any]) -> Any:
                 )
             elif clause.string == "finally":
                 if finalbody is not None:
-                    raise CSTLogicError()
+                    raise CSTLogicError("Logic error!")
                 finalbody = Finally(
                     leading_lines=parse_empty_lines(config, clause.whitespace_before),
                     whitespace_before_colon=parse_simple_whitespace(
@@ -921,7 +921,7 @@ def convert_try_stmt(config: ParserConfig, children: Sequence[Any]) -> Any:
                     body=suite,
                 )
             else:
-                raise CSTLogicError()
+                raise CSTLogicError("Logic error!")
         elif isinstance(clause, ExceptClausePartial):
             handlers.append(
                 ExceptHandler(
@@ -936,7 +936,7 @@ def convert_try_stmt(config: ParserConfig, children: Sequence[Any]) -> Any:
                 )
             )
         else:
-            raise CSTLogicError()
+            raise CSTLogicError("Logic error!")
 
     return Try(
         leading_lines=parse_empty_lines(config, trytoken.whitespace_before),
@@ -1342,7 +1342,7 @@ def convert_asyncable_stmt(config: ParserConfig, children: Sequence[Any]) -> Any
             asynchronous=asyncnode, leading_lines=leading_lines
         )
     else:
-        raise CSTLogicError()
+        raise CSTLogicError("Logic error!")
 
 
 @with_production("suite", "simple_stmt_suite | indented_suite")

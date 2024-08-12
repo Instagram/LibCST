@@ -30,12 +30,12 @@ class FixPyreDirectivesCommand(VisitorBasedCodemodCommand):
 
     def visit_Module_header(self, node: libcst.Module) -> None:
         if self.in_module_header:
-            raise CSTLogicError()
+            raise CSTLogicError("Logic error!")
         self.in_module_header = True
 
     def leave_Module_header(self, node: libcst.Module) -> None:
         if not self.in_module_header:
-            raise CSTLogicError()
+            raise CSTLogicError("Logic error!")
         self.in_module_header = False
 
     def leave_EmptyLine(

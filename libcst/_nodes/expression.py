@@ -1011,7 +1011,7 @@ class ConcatenatedString(BaseString):
         elif isinstance(right, FormattedString):
             rightbytes = "b" in right.prefix
         else:
-            raise CSTLogicError()
+            raise CSTLogicError("Logic error!")
         if leftbytes != rightbytes:
             raise CSTValidationError("Cannot concatenate string and bytes.")
 
@@ -1689,7 +1689,7 @@ class Annotation(CSTNode):
             if default_indicator == "->":
                 state.add_token(" ")
         else:
-            raise CSTLogicError()
+            raise CSTLogicError("Logic error!")
 
         # Now, output the indicator and the rest of the annotation
         state.add_token(default_indicator)

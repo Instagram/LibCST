@@ -1194,7 +1194,7 @@ class ImportAlias(CSTNode):
         elif isinstance(node, Attribute):
             return f"{self._name(node.value)}.{node.attr.value}"
         else:
-            raise CSTLogicError()
+            raise CSTLogicError("Logic error!")
 
     @property
     def evaluated_name(self) -> str:

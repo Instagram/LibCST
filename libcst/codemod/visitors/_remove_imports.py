@@ -188,7 +188,7 @@ class RemoveImportsVisitor(ContextAwareTransformer):
     ) -> List[Tuple[str, Optional[str], Optional[str]]]:
         unused_imports = context.scratch.get(RemoveImportsVisitor.CONTEXT_KEY, [])
         if not isinstance(unused_imports, list):
-            raise CSTLogicError()
+            raise CSTLogicError("Logic error!")
         return unused_imports
 
     @staticmethod

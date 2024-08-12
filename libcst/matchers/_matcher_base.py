@@ -1162,7 +1162,7 @@ def _sequence_matches(  # noqa: C901
         else:
             # There are no other types of wildcard consumers, but we're making
             # pyre happy with that fact.
-            raise CSTLogicError(f"Unrecognized wildcard {type(matcher)}!")
+            raise CSTLogicError(f"Logic error unrecognized wildcard {type(matcher)}!")
     elif isinstance(matcher, _ExtractMatchingNode):
         # See if the raw matcher matches. If it does, capture the sequence we matched and store it.
         result = _sequence_matches(
@@ -1358,7 +1358,7 @@ def _metadata_matches(  # noqa: C901
             return None
         return {} if actual_value == metadata.value else None
     else:
-        raise CSTLogicError()
+        raise CSTLogicError("Logic error!")
 
 
 def _node_matches(  # noqa: C901
@@ -1922,7 +1922,7 @@ def replace(
         elif isinstance(tree, meta.MetadataWrapper):
             return tree.module.deep_clone()
         else:
-            raise CSTLogicError()
+            raise CSTLogicError("Logic error!")
 
     if isinstance(tree, meta.MetadataWrapper) and metadata_resolver is None:
         # Provide a convenience for calling replace directly on a MetadataWrapper.
@@ -1939,5 +1939,5 @@ def replace(
     new_tree = tree.visit(replacer)
     if isinstance(new_tree, FlattenSentinel):
         # The above transform never returns FlattenSentinel, so this isn't possible
-        raise CSTLogicError("Cannot get a FlattenSentinel here!")
+        raise CSTLogicError("Logic error, cannot get a FlattenSentinel here!")
     return new_tree
