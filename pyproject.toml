@@ -21,7 +21,7 @@ dependencies = ["pyyaml>=5.2"]
 [project.optional-dependencies]
 dev = [
     "black==23.12.1",
-    "coverage>=4.5.4",
+    "coverage[toml]>=4.5.4",
     "build>=0.10.0",
     "fixit==2.1.0",
     "flake8==7.0.0",
@@ -51,6 +51,12 @@ Changelog = "https://github.com/Instagram/LibCST/blob/main/CHANGELOG.md"
 target-version = ["py39"]
 extend-exclude = '^/native/' # Prepend "^/" to specify root file/folder. See https://black.readthedocs.io/en/stable/usage_and_configuration/the_basics.html#configuration-format
 
+[tool.coverage.report]
+fail_under = 93
+precision = 1
+show_missing = true
+skip_covered = true
+
 [tool.hatch.envs.default]
 features = ["dev"]
 
@@ -64,7 +70,7 @@ lint = [
     "python -m slotscheck libcst",
     "python scripts/check_copyright.py",
 ]
-test = ["python --version", "python -m libcst.tests"]
+test = ["python --version", "python -m coverage run -m libcst.tests"]
 typecheck = ["pyre --version", "pyre check"]
 
 [tool.slotscheck]
