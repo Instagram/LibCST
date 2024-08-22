@@ -129,11 +129,9 @@ class BaseParser(Generic[_TokenT, _TokenTypeT, _NodeT]):
 
     def convert_nonterminal(
         self, nonterminal: str, children: Sequence[_NodeT]
-    ) -> _NodeT:
-        ...
+    ) -> _NodeT: ...
 
-    def convert_terminal(self, token: _TokenT) -> _NodeT:
-        ...
+    def convert_terminal(self, token: _TokenT) -> _NodeT: ...
 
     def _add_token(self, token: _TokenT) -> None:
         """

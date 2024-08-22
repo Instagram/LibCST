@@ -207,6 +207,7 @@ if TYPE_CHECKING:
 
 
 class CSTTypedBaseFunctions:
+
     @mark_no_op
     def visit_Add(self, node: "Add") -> Optional[bool]:
         pass
@@ -5763,6 +5764,7 @@ class CSTTypedBaseFunctions:
 
 
 class CSTTypedVisitorFunctions(CSTTypedBaseFunctions):
+
     @mark_no_op
     def leave_Add(self, original_node: "Add") -> None:
         pass
@@ -6441,6 +6443,7 @@ class CSTTypedVisitorFunctions(CSTTypedBaseFunctions):
 
 
 class CSTTypedTransformerFunctions(CSTTypedBaseFunctions):
+
     @mark_no_op
     def leave_Add(self, original_node: "Add", updated_node: "Add") -> "BaseBinaryOp":
         return updated_node
