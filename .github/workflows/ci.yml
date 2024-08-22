@@ -31,12 +31,17 @@ jobs:
           toolchain: stable
       - name: Build LibCST
         run: hatch -vv env create
-      - name: Tests
+      - name: Native Parser Tests
         run: hatch run test
       - name: Pure Parser Tests
         env:
+          COVERAGE_FILE: .coverage.pure
           LIBCST_PARSER_TYPE: pure
         run: hatch run test
+      - name: Coverage
+        run: |
+          hatch run coverage combine .coverage.pure
+          hatch run coverage report
 
   # Run linters
   lint:
@@ -70,37 +75,6 @@ jobs:
       - name: Install hatch
         run: pip install -U hatch
       - run: hatch run typecheck
-
-  # Upload test coverage
-  coverage:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - uses: actions/setup-python@v5
-        with:
-          cache: pip
-          cache-dependency-path: "pyproject.toml"
-          python-version: "3.10"
-      - name: Install hatch
-        run: pip install -U hatch
-      - name: Generate Coverage
-        run: |
-          hatch run coverage run setup.py test
-          hatch run coverage xml -i
-      - uses: codecov/codecov-action@v4
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-        with:
-          files: coverage.xml
-          fail_ci_if_error: true
-          verbose: true
-      - name: Archive Coverage
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage
-          path: coverage.xml
 
   # Build the docs
   docs:
