@@ -1647,9 +1647,9 @@ class Annotation(CSTNode):
     #: colon or arrow.
     annotation: BaseExpression
 
-    whitespace_before_indicator: Union[
-        BaseParenthesizableWhitespace, MaybeSentinel
-    ] = MaybeSentinel.DEFAULT
+    whitespace_before_indicator: Union[BaseParenthesizableWhitespace, MaybeSentinel] = (
+        MaybeSentinel.DEFAULT
+    )
     whitespace_after_indicator: BaseParenthesizableWhitespace = SimpleWhitespace.field(
         " "
     )
@@ -2101,9 +2101,9 @@ class Lambda(BaseExpression):
     rpar: Sequence[RightParen] = ()
 
     #: Whitespace after the lambda keyword, but before any argument or the colon.
-    whitespace_after_lambda: Union[
-        BaseParenthesizableWhitespace, MaybeSentinel
-    ] = MaybeSentinel.DEFAULT
+    whitespace_after_lambda: Union[BaseParenthesizableWhitespace, MaybeSentinel] = (
+        MaybeSentinel.DEFAULT
+    )
 
     def _safe_to_use_with_word_operator(self, position: ExpressionPosition) -> bool:
         if position == ExpressionPosition.LEFT:
@@ -2601,9 +2601,9 @@ class From(CSTNode):
     item: BaseExpression
 
     #: The whitespace at the very start of this node.
-    whitespace_before_from: Union[
-        BaseParenthesizableWhitespace, MaybeSentinel
-    ] = MaybeSentinel.DEFAULT
+    whitespace_before_from: Union[BaseParenthesizableWhitespace, MaybeSentinel] = (
+        MaybeSentinel.DEFAULT
+    )
 
     #: The whitespace after the ``from`` keyword, but before the ``item``.
     whitespace_after_from: BaseParenthesizableWhitespace = SimpleWhitespace.field(" ")
@@ -2662,9 +2662,9 @@ class Yield(BaseExpression):
     rpar: Sequence[RightParen] = ()
 
     #: Whitespace after the ``yield`` keyword, but before the ``value``.
-    whitespace_after_yield: Union[
-        BaseParenthesizableWhitespace, MaybeSentinel
-    ] = MaybeSentinel.DEFAULT
+    whitespace_after_yield: Union[BaseParenthesizableWhitespace, MaybeSentinel] = (
+        MaybeSentinel.DEFAULT
+    )
 
     def _validate(self) -> None:
         # Paren rules and such
@@ -2748,8 +2748,7 @@ class _BaseElementImpl(CSTNode, ABC):
         state: CodegenState,
         default_comma: bool = False,
         default_comma_whitespace: bool = False,  # False for a single-item collection
-    ) -> None:
-        ...
+    ) -> None: ...
 
 
 class BaseElement(_BaseElementImpl, ABC):

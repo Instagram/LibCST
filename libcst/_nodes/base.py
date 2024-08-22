@@ -292,8 +292,7 @@ class CSTNode(ABC):
         return False
 
     @abstractmethod
-    def _codegen_impl(self, state: CodegenState) -> None:
-        ...
+    def _codegen_impl(self, state: CodegenState) -> None: ...
 
     def _codegen(self, state: CodegenState, **kwargs: Any) -> None:
         state.before_codegen(self)

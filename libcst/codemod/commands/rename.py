@@ -144,9 +144,9 @@ class RenameCommand(VisitorBasedCodemodCommand):
                 self.bypass_import = True
                 if replacement_module != import_alias_full_name:
                     self.scheduled_removals.add(original_node)
-                    new_name_node: Union[
-                        cst.Attribute, cst.Name
-                    ] = self.gen_name_or_attr_node(replacement_module)
+                    new_name_node: Union[cst.Attribute, cst.Name] = (
+                        self.gen_name_or_attr_node(replacement_module)
+                    )
                     new_names.append(cst.ImportAlias(name=new_name_node))
             else:
                 new_names.append(import_alias)
@@ -198,9 +198,9 @@ class RenameCommand(VisitorBasedCodemodCommand):
                             self.scheduled_removals.add(original_node)
                             continue
 
-                        new_import_alias_name: Union[
-                            cst.Attribute, cst.Name
-                        ] = self.gen_name_or_attr_node(replacement_obj)
+                        new_import_alias_name: Union[cst.Attribute, cst.Name] = (
+                            self.gen_name_or_attr_node(replacement_obj)
+                        )
                         # Rename on the spot only if this is the only imported name under the module.
                         if len(names) == 1:
                             updated_node = updated_node.with_changes(
