@@ -24,7 +24,7 @@ dev = [
     "coverage[toml]>=4.5.4",
     "build>=0.10.0",
     "fixit==2.1.0",
-    "flake8==7.0.0",
+    "flake8==7.1.1",
     "Sphinx>=5.1.1",
     "hypothesis>=4.36.0",
     "hypothesmith>=0.0.4",
