@@ -47,7 +47,7 @@ libcst_derive = { path = "../libcst_derive", version = "1.4.0" }
 [dev-dependencies]
 criterion = { version = "0.5.1", features = ["html_reports"] }
 difference = "2.0.0"
-rayon = "1.7.0"
+rayon = "1.10.0"
 itertools = "0.13.0"
 
 [[bench]]
