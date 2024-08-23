@@ -35,7 +35,7 @@ py = ["pyo3", "pyo3/extension-module"]
 trace = ["peg/trace"]
 
 [dependencies]
-paste = "1.0.9"
+paste = "1.0.15"
 pyo3 = { version = "0.20", optional = true }
 thiserror = "1.0.37"
 peg = "0.8.1"
