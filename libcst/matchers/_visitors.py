@@ -60,6 +60,11 @@ CONCRETE_METHODS: Set[str] = {
 }
 
 
+def is_property(obj: object, attr_name: str) -> bool:
+    """Check if obj.attr is a property without evaluating it."""
+    return isinstance(getattr(type(obj), attr_name, None), property)
+
+
 # pyre-ignore We don't care about Any here, its not exposed.
 def _match_decorator_unpickler(kwargs: Any) -> "MatchDecoratorMismatch":
     return MatchDecoratorMismatch(**kwargs)
@@ -302,16 +307,12 @@ def _gather_constructed_visit_funcs(
     ] = {}
 
     for funcname in dir(obj):
-        try:
-            possible_func = getattr(obj, funcname)
-            if not ismethod(possible_func):
-                continue
-            func = cast(Callable[[cst.CSTNode], None], possible_func)
-        except Exception:
-            # This could be a caculated property, and calling getattr() evaluates it.
-            # We have no control over the implementation detail, so if it raises, we
-            # should not crash.
+        if is_property(obj, funcname):
             continue
+        possible_func = getattr(obj, funcname)
+        if not ismethod(possible_func):
+            continue
+        func = cast(Callable[[cst.CSTNode], None], possible_func)
         matchers = getattr(func, CONSTRUCTED_VISIT_MATCHER_ATTR, [])
         if matchers:
             # Make sure that we aren't accidentally putting a @visit on a visit_Node.
@@ -337,16 +338,12 @@ def _gather_constructed_leave_funcs(
     ] = {}
 
     for funcname in dir(obj):
-        try:
-            possible_func = getattr(obj, funcname)
-            if not ismethod(possible_func):
-                continue
-            func = cast(Callable[[cst.CSTNode], None], possible_func)
-        except Exception:
-            # This could be a caculated property, and calling getattr() evaluates it.
-            # We have no control over the implementation detail, so if it raises, we
-            # should not crash.
+        if is_property(obj, funcname):
             continue
+        possible_func = getattr(obj, funcname)
+        if not ismethod(possible_func):
+            continue
+        func = cast(Callable[[cst.CSTNode], None], possible_func)
         matchers = getattr(func, CONSTRUCTED_LEAVE_MATCHER_ATTR, [])
         if matchers:
             # Make sure that we aren't accidentally putting a @leave on a leave_Node.
