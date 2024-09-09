@@ -10,6 +10,7 @@ use pyo3::prelude::*;
 #[pyo3(name = "native")]
 pub fn libcst_native(_py: Python, m: &Bound<PyModule>) -> PyResult<()> {
     #[pyfn(m)]
+    #[pyo3(signature = (source, encoding=None))]
     fn parse_module(source: String, encoding: Option<&str>) -> PyResult<PyObject> {
         let m = crate::parse_module(source.as_str(), encoding)?;
         Python::with_gil(|py| m.try_into_py(py))
