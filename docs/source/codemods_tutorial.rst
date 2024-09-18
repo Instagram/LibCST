@@ -26,7 +26,7 @@ then edit the produced ``.libcst.codemod.yaml`` file::
     python3 -m libcst.tool initialize .
 
 The file includes provisions for customizing any generated code marker, calling an
-external code formatter such as `black <https://pypi.org/project/black/>`_, blackisting
+external code formatter such as `black <https://pypi.org/project/black/>`_, blacklisting
 patterns of files you never wish to touch and a list of modules that contain valid
 codemods that can be executed. If you want to write and run codemods specific to your
 repository or organization, you can add an in-repo module location to the list of
