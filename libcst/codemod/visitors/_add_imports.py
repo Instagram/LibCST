@@ -7,7 +7,7 @@ from collections import defaultdict
 from typing import Dict, List, Optional, Sequence, Set, Tuple, Union
 
 import libcst
-from libcst import matchers as m, parse_statement
+from libcst import CSTLogicError, matchers as m, parse_statement
 from libcst._nodes.statement import Import, ImportFrom, SimpleStatementLine
 from libcst.codemod._context import CodemodContext
 from libcst.codemod._visitor import ContextAwareTransformer
@@ -107,7 +107,7 @@ class AddImportsVisitor(ContextAwareTransformer):
     ) -> List[ImportItem]:
         imports = context.scratch.get(AddImportsVisitor.CONTEXT_KEY, [])
         if not isinstance(imports, list):
-            raise Exception("Logic error!")
+            raise CSTLogicError("Logic error!")
         return imports
 
     @staticmethod
@@ -136,7 +136,7 @@ class AddImportsVisitor(ContextAwareTransformer):
         """
 
         if module == "__future__" and obj is None:
-            raise Exception("Cannot import __future__ directly!")
+            raise ValueError("Cannot import __future__ directly!")
         imports = AddImportsVisitor._get_imports_from_context(context)
         imports.append(ImportItem(module, obj, asname, relative))
         context.scratch[AddImportsVisitor.CONTEXT_KEY] = imports
@@ -157,9 +157,9 @@ class AddImportsVisitor(ContextAwareTransformer):
         # Verify that the imports are valid
         for imp in imps:
             if imp.module == "__future__" and imp.obj_name is None:
-                raise Exception("Cannot import __future__ directly!")
+                raise ValueError("Cannot import __future__ directly!")
             if imp.module == "__future__" and imp.alias is not None:
-                raise Exception("Cannot import __future__ objects with aliases!")
+                raise ValueError("Cannot import __future__ objects with aliases!")
 
         # Resolve relative imports if we have a module name
         imps = [imp.resolve_relative(self.context.full_package_name) for imp in imps]

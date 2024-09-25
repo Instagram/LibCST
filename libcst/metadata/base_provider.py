@@ -77,7 +77,7 @@ class BaseMetadataProvider(MetadataDependent, Generic[_ProvidedMetadataT]):
         self._computed: MutableMapping["CSTNode", MaybeLazyMetadataT] = {}
         if self.gen_cache and cache is None:
             # The metadata provider implementation is responsible to store and use cache.
-            raise Exception(
+            raise ValueError(
                 f"Cache is required for initializing {self.__class__.__name__}."
             )
         self.cache = cache
