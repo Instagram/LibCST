@@ -3242,7 +3242,7 @@ class MatchMapping(MatchPattern):
     rpar: Sequence[RightParen] = ()
 
     def _validate(self) -> None:
-        if isinstance(self.trailing_comma, Comma) and self.rest is not None:
+        if isinstance(self.trailing_comma, Comma) and self.rest is None:
             raise CSTValidationError("Cannot have a trailing comma without **rest")
         super(MatchMapping, self)._validate()
 
