@@ -653,12 +653,16 @@ class ScopeProviderTest(UnitTest):
                     for assignment in scope_of_outer_f["var"]
                 },
                 {
-                    outer_f_body_var.targets[0].target
-                    if isinstance(outer_f_body_var, cst.Assign)
-                    else outer_f_body_var,
-                    inner_f_body_var.targets[0].target
-                    if isinstance(inner_f_body_var, cst.Assign)
-                    else inner_f_body_var,
+                    (
+                        outer_f_body_var.targets[0].target
+                        if isinstance(outer_f_body_var, cst.Assign)
+                        else outer_f_body_var
+                    ),
+                    (
+                        inner_f_body_var.targets[0].target
+                        if isinstance(inner_f_body_var, cst.Assign)
+                        else inner_f_body_var
+                    ),
                 },
             )
 

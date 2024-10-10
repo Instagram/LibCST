@@ -113,8 +113,7 @@ class BaseSmallStatement(CSTNode, ABC):
     @abstractmethod
     def _codegen_impl(
         self, state: CodegenState, default_semicolon: bool = False
-    ) -> None:
-        ...
+    ) -> None: ...
 
 
 @add_slots
@@ -273,9 +272,9 @@ class Return(BaseSmallStatement):
 
     #: Optional whitespace after the ``return`` keyword before the optional
     #: value expression.
-    whitespace_after_return: Union[
-        SimpleWhitespace, MaybeSentinel
-    ] = MaybeSentinel.DEFAULT
+    whitespace_after_return: Union[SimpleWhitespace, MaybeSentinel] = (
+        MaybeSentinel.DEFAULT
+    )
 
     #: Optional semicolon when this is used in a statement line. This semicolon
     #: owns the whitespace on both sides of it when it is used.
@@ -599,7 +598,12 @@ class If(BaseCompoundStatement):
     #: The whitespace appearing after the test expression but before the colon.
     whitespace_after_test: SimpleWhitespace = SimpleWhitespace.field("")
 
-    # TODO: _validate
+    def _validate(self) -> None:
+        if (
+            self.whitespace_before_test.empty
+            and not self.test._safe_to_use_with_word_operator(ExpressionPosition.RIGHT)
+        ):
+            raise CSTValidationError("Must have at least one space after 'if' keyword.")
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "If":
         return If(
@@ -2398,9 +2402,9 @@ class Raise(BaseSmallStatement):
     cause: Optional[From] = None
 
     #: Any whitespace appearing between the ``raise`` keyword and the exception.
-    whitespace_after_raise: Union[
-        SimpleWhitespace, MaybeSentinel
-    ] = MaybeSentinel.DEFAULT
+    whitespace_after_raise: Union[SimpleWhitespace, MaybeSentinel] = (
+        MaybeSentinel.DEFAULT
+    )
 
     #: Optional semicolon when this is used in a statement line. This semicolon
     #: owns the whitespace on both sides of it when it is used.
@@ -3418,15 +3422,15 @@ class MatchAs(MatchPattern):
 
     #: Whitespace between ``pattern`` and the ``as`` keyword (if ``pattern`` is not
     #: ``None``)
-    whitespace_before_as: Union[
-        BaseParenthesizableWhitespace, MaybeSentinel
-    ] = MaybeSentinel.DEFAULT
+    whitespace_before_as: Union[BaseParenthesizableWhitespace, MaybeSentinel] = (
+        MaybeSentinel.DEFAULT
+    )
 
     #: Whitespace between the ``as`` keyword and ``name`` (if ``pattern`` is not
     #: ``None``)
-    whitespace_after_as: Union[
-        BaseParenthesizableWhitespace, MaybeSentinel
-    ] = MaybeSentinel.DEFAULT
+    whitespace_after_as: Union[BaseParenthesizableWhitespace, MaybeSentinel] = (
+        MaybeSentinel.DEFAULT
+    )
 
     #: Parenthesis at the beginning of the node
     lpar: Sequence[LeftParen] = ()
@@ -3769,16 +3773,16 @@ class TypeAlias(BaseSmallStatement):
     #: Whitespace between the name and the type parameters (if they exist) or the ``=``.
     #: If not specified, :class:`MaybeSentinel` will be replaced with a single space if
     #: there are no type parameters, otherwise no spaces.
-    whitespace_after_name: Union[
-        SimpleWhitespace, MaybeSentinel
-    ] = MaybeSentinel.DEFAULT
+    whitespace_after_name: Union[SimpleWhitespace, MaybeSentinel] = (
+        MaybeSentinel.DEFAULT
+    )
 
     #: Whitespace between the type parameters and the ``=``. Always empty if there are
     #: no type parameters. If not specified, :class:`MaybeSentinel` will be replaced
     #: with a single space if there are type parameters.
-    whitespace_after_type_parameters: Union[
-        SimpleWhitespace, MaybeSentinel
-    ] = MaybeSentinel.DEFAULT
+    whitespace_after_type_parameters: Union[SimpleWhitespace, MaybeSentinel] = (
+        MaybeSentinel.DEFAULT
+    )
 
     #: Whitespace between the ``=`` and the value.
     whitespace_after_equals: SimpleWhitespace = SimpleWhitespace.field(" ")

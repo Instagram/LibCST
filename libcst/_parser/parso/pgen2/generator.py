@@ -72,9 +72,9 @@ class DFAState(Generic[_TokenTypeT]):
     def __init__(self, from_rule: str, nfa_set: Set[NFAState], final: NFAState) -> None:
         self.from_rule = from_rule
         self.nfa_set = nfa_set
-        self.arcs: Mapping[
-            str, DFAState
-        ] = {}  # map from terminals/nonterminals to DFAState
+        self.arcs: Mapping[str, DFAState] = (
+            {}
+        )  # map from terminals/nonterminals to DFAState
         # In an intermediary step we set these nonterminal arcs (which has the
         # same structure as arcs). These don't contain terminals anymore.
         self.nonterminal_arcs: Mapping[str, DFAState] = {}

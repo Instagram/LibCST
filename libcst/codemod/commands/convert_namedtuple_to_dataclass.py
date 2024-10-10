@@ -25,7 +25,9 @@ class ConvertNamedTupleToDataclassCommand(VisitorBasedCodemodCommand):
     NamedTuple-specific attributes and methods.
     """
 
-    DESCRIPTION: str = "Convert NamedTuple class declarations to Python 3.7 dataclasses using the @dataclass decorator."
+    DESCRIPTION: str = (
+        "Convert NamedTuple class declarations to Python 3.7 dataclasses using the @dataclass decorator."
+    )
     METADATA_DEPENDENCIES: Sequence[ProviderT] = (QualifiedNameProvider,)
 
     # The 'NamedTuple' we are interested in

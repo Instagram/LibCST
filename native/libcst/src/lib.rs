@@ -5,7 +5,7 @@
 
 use std::cmp::{max, min};
 
-mod tokenizer;
+pub mod tokenizer;
 
 pub use tokenizer::whitespace_parser::Config;
 use tokenizer::{whitespace_parser, TokConfig, Token, TokenIterator};

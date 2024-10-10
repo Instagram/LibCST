@@ -43,8 +43,7 @@ class _BaseOneTokenOp(CSTNode, ABC):
         self.whitespace_after._codegen(state)
 
     @abstractmethod
-    def _get_token(self) -> str:
-        ...
+    def _get_token(self) -> str: ...
 
 
 class _BaseTwoTokenOp(CSTNode, ABC):
@@ -88,8 +87,7 @@ class _BaseTwoTokenOp(CSTNode, ABC):
         self.whitespace_after._codegen(state)
 
     @abstractmethod
-    def _get_tokens(self) -> Tuple[str, str]:
-        ...
+    def _get_tokens(self) -> Tuple[str, str]: ...
 
 
 class BaseUnaryOp(CSTNode, ABC):
@@ -115,8 +113,7 @@ class BaseUnaryOp(CSTNode, ABC):
         self.whitespace_after._codegen(state)
 
     @abstractmethod
-    def _get_token(self) -> str:
-        ...
+    def _get_token(self) -> str: ...
 
 
 class BaseBooleanOp(_BaseOneTokenOp, ABC):

@@ -199,8 +199,7 @@ class BaseAssignment(abc.ABC):
         return -1
 
     @abc.abstractmethod
-    def get_qualified_names_for(self, full_name: str) -> Set[QualifiedName]:
-        ...
+    def get_qualified_names_for(self, full_name: str) -> Set[QualifiedName]: ...
 
 
 class Assignment(BaseAssignment):
@@ -225,9 +224,11 @@ class Assignment(BaseAssignment):
     def get_qualified_names_for(self, full_name: str) -> Set[QualifiedName]:
         return {
             QualifiedName(
-                f"{self.scope._name_prefix}.{full_name}"
-                if self.scope._name_prefix
-                else full_name,
+                (
+                    f"{self.scope._name_prefix}.{full_name}"
+                    if self.scope._name_prefix
+                    else full_name
+                ),
                 QualifiedNameSource.LOCAL,
             )
         }
@@ -306,9 +307,11 @@ class ImportAssignment(Assignment):
                         remaining_name = remaining_name.lstrip(".")
                         results.add(
                             QualifiedName(
-                                f"{real_name}.{remaining_name}"
-                                if remaining_name
-                                else real_name,
+                                (
+                                    f"{real_name}.{remaining_name}"
+                                    if remaining_name
+                                    else real_name
+                                ),
                                 QualifiedNameSource.IMPORT,
                             )
                         )
@@ -503,19 +506,16 @@ class Scope(abc.ABC):
     @abc.abstractmethod
     def _resolve_scope_for_access(
         self, name: str, from_scope: "Scope"
-    ) -> Set[BaseAssignment]:
-        ...
+    ) -> Set[BaseAssignment]: ...
 
     def __hash__(self) -> int:
         return id(self)
 
     @abc.abstractmethod
-    def record_global_overwrite(self, name: str) -> None:
-        ...
+    def record_global_overwrite(self, name: str) -> None: ...
 
     @abc.abstractmethod
-    def record_nonlocal_overwrite(self, name: str) -> None:
-        ...
+    def record_nonlocal_overwrite(self, name: str) -> None: ...
 
     def get_qualified_names_for(
         self, node: Union[str, cst.CSTNode]

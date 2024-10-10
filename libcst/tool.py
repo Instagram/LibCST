@@ -461,8 +461,7 @@ class _SerializerBase(ABC):
         return f"{comments}{os.linesep}{self._serialize_impl(key, value)}{os.linesep}"
 
     @abstractmethod
-    def _serialize_impl(self, key: str, value: object) -> str:
-        ...
+    def _serialize_impl(self, key: str, value: object) -> str: ...
 
 
 class _StrSerializer(_SerializerBase):

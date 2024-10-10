@@ -22,6 +22,7 @@ from typing import Any, AnyStr, cast, Dict, List, Optional, Sequence, Union
 
 from libcst import parse_module, PartialParserConfig
 from libcst.codemod._codemod import Codemod
+from libcst.codemod._context import CodemodContext
 from libcst.codemod._dummy_pool import DummyPool
 from libcst.codemod._runner import (
     SkipFile,
@@ -246,30 +247,28 @@ def _execute_transform(  # noqa: C901
                 ),
             )
 
-        # Somewhat gross hack to provide the filename in the transform's context.
-        # We do this after the fork so that a context that was initialized with
-        # some defaults before calling parallel_exec_transform_with_prettyprint
-        # will be updated per-file.
-        transformer.context = replace(
-            transformer.context,
-            filename=filename,
-            scratch=deepcopy(scratch),
-        )
-
         # determine the module and package name for this file
         try:
             module_name_and_package = calculate_module_and_package(
                 config.repo_root or ".", filename
             )
-            transformer.context = replace(
-                transformer.context,
-                full_module_name=module_name_and_package.name,
-                full_package_name=module_name_and_package.package,
-            )
+            mod_name = module_name_and_package.name
+            pkg_name = module_name_and_package.package
         except ValueError as ex:
             print(
                 f"Failed to determine module name for {filename}: {ex}", file=sys.stderr
             )
+            mod_name = None
+            pkg_name = None
+
+        # Apart from metadata_manager, every field of context should be reset per file
+        transformer.context = CodemodContext(
+            scratch=deepcopy(scratch),
+            filename=filename,
+            full_module_name=mod_name,
+            full_package_name=pkg_name,
+            metadata_manager=transformer.context.metadata_manager,
+        )
 
         # Run the transform, bail if we failed or if we aren't formatting code
         try:
@@ -420,7 +419,7 @@ class Progress:
         operations still to do.
         """
 
-        if files_finished <= 0:
+        if files_finished <= 0 or elapsed_seconds == 0:
             # Technically infinite but calculating sounds better.
             return "[calculating]"
 

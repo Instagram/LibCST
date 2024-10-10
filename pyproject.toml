@@ -3,7 +3,7 @@ requires = ["setuptools", "setuptools-scm", "setuptools-rust", "wheel"]
 
 [project]
 name = "libcst"
-description = "A concrete syntax tree with AST-like properties for Python 3.0 through 3.12 programs."
+description = "A concrete syntax tree with AST-like properties for Python 3.0 through 3.13 programs."
 readme = "README.rst"
 dynamic = ["version"]
 license = { file = "LICENSE" }
@@ -14,28 +14,29 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
 ]
 requires-python = ">=3.9"
 dependencies = ["pyyaml>=5.2"]
 
 [project.optional-dependencies]
 dev = [
-    "black==23.12.1",
-    "coverage>=4.5.4",
+    "black==24.8.0",
+    "coverage[toml]>=4.5.4",
     "build>=0.10.0",
     "fixit==2.1.0",
-    "flake8==7.0.0",
+    "flake8==7.1.1",
     "Sphinx>=5.1.1",
     "hypothesis>=4.36.0",
     "hypothesmith>=0.0.4",
     "jupyter>=1.0.0",
-    "maturin>=0.8.3,<1.7",
+    "maturin>=1.7.0,<1.8",
     "nbsphinx>=0.4.2",
     "prompt-toolkit>=2.0.9",
     "pyre-check==0.9.18; platform_system != 'Windows'",
     "setuptools_scm>=6.0.1",
     "sphinx-rtd-theme>=0.4.3",
-    "ufmt==2.6.0",
+    "ufmt==2.7.0",
     "usort==1.0.8.post1",
     "setuptools-rust>=1.5.2",
     "slotscheck>=0.7.1",
@@ -51,6 +52,12 @@ Changelog = "https://github.com/Instagram/LibCST/blob/main/CHANGELOG.md"
 target-version = ["py39"]
 extend-exclude = '^/native/' # Prepend "^/" to specify root file/folder. See https://black.readthedocs.io/en/stable/usage_and_configuration/the_basics.html#configuration-format
 
+[tool.coverage.report]
+fail_under = 93
+precision = 1
+show_missing = true
+skip_covered = true
+
 [tool.hatch.envs.default]
 features = ["dev"]
 
@@ -64,7 +71,7 @@ lint = [
     "python -m slotscheck libcst",
     "python scripts/check_copyright.py",
 ]
-test = ["python --version", "python -m libcst.tests"]
+test = ["python --version", "python -m coverage run -m libcst.tests"]
 typecheck = ["pyre --version", "pyre check"]
 
 [tool.slotscheck]
