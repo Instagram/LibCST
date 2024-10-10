@@ -1,3 +1,32 @@
+# 1.5.0 - 2024-10-10
+
+## Added
+* FullyQualifiedNameProvider: Optionally consider pyproject.toml files when determining a file's module name and package by @camillol in https://github.com/Instagram/LibCST/pull/1148
+* Add validation for If node by @kiri11 in https://github.com/Instagram/LibCST/pull/1177
+* include python 3.13 in build by @khameeteman in https://github.com/Instagram/LibCST/pull/1203
+
+## Fixed
+* fix various Match statement visitation errors by @zsol in https://github.com/Instagram/LibCST/pull/1161
+* Mention codemod -x flag in docs by @kiri11 in https://github.com/Instagram/LibCST/pull/1169
+* Clear warnings for each file in codemod cli by @kiri11 in https://github.com/Instagram/LibCST/pull/1184
+* Typo fix in codemods_tutorial.rst (trivial) by @wimglenn in https://github.com/Instagram/LibCST/pull/1208
+* fix certain matchers breaking under multiprocessing by initializing them late by @kiri11 in https://github.com/Instagram/LibCST/pull/1204
+
+## Updated
+* make libcst_native::tokenizer public by @zsol in https://github.com/Instagram/LibCST/pull/1182
+* Use `license` instead of `license-file` by @michel-slm in https://github.com/Instagram/LibCST/pull/1189
+* Drop codecov from CI and readme by @amyreese in https://github.com/Instagram/LibCST/pull/1192
+
+
+## New Contributors
+* @kiri11 made their first contribution in https://github.com/Instagram/LibCST/pull/1169
+* @grievejia made their first contribution in https://github.com/Instagram/LibCST/pull/1174
+* @michel-slm made their first contribution in https://github.com/Instagram/LibCST/pull/1189
+* @wimglenn made their first contribution in https://github.com/Instagram/LibCST/pull/1208
+* @khameeteman made their first contribution in https://github.com/Instagram/LibCST/pull/1203
+
+**Full Changelog**: https://github.com/Instagram/LibCST/compare/v1.4.0...v1.5.0
+
 # 1.4.0 - 2024-05-22
 
 ## Fixed

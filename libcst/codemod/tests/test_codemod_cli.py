@@ -93,3 +93,34 @@ class TestCodemodCLI(UnitTest):
                 "- 3 warnings were generated.",
                 output.stderr,
             )
+
+    def test_matcher_decorators_multiprocessing(self) -> None:
+        file_count = 5
+        code = """
+        def baz(): # type: int
+            return 5
+        """
+        with tempfile.TemporaryDirectory() as tmpdir:
+            p = Path(tmpdir)
+            # Using more than chunksize=4 files to trigger multiprocessing
+            for i in range(file_count):
+                (p / f"mod{i}.py").write_text(CodemodTest.make_fixture_data(code))
+            output = subprocess.run(
+                [
+                    sys.executable,
+                    "-m",
+                    "libcst.tool",
+                    "codemod",
+                    # Good candidate since it uses matcher decorators
+                    "convert_type_comments.ConvertTypeComments",
+                    str(p),
+                    "--jobs",
+                    str(file_count),
+                ],
+                encoding="utf-8",
+                stderr=subprocess.PIPE,
+            )
+            self.assertIn(
+                f"Transformed {file_count} files successfully.",
+                output.stderr,
+            )
