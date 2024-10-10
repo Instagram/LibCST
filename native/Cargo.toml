@@ -4,3 +4,9 @@ members = [
     "libcst",
     "libcst_derive",
 ]
+
+# needed for reproducible builds from some hard-to-grasp issue in rust or LLVM
+# = https://github.com/rust-lang/rust/issues/128675
+[profile.release]
+codegen-units = 1
+lto = false
