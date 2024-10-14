@@ -21,7 +21,7 @@ dependencies = ["pyyaml>=5.2"]
 
 [project.optional-dependencies]
 dev = [
-    "black==24.8.0",
+    "black==24.10.0",
     "coverage[toml]>=4.5.4",
     "build>=0.10.0",
     "fixit==2.1.0",
