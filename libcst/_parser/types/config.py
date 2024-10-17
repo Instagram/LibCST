@@ -44,7 +44,7 @@ class AutoConfig(Enum):
 
 
 # This list should be kept in sorted order.
-KNOWN_PYTHON_VERSION_STRINGS = ["3.0", "3.1", "3.3", "3.5", "3.6", "3.7", "3.8"]
+KNOWN_PYTHON_VERSION_STRINGS = ["3.0", "3.1", "3.3"] + [f"3.{v}" for v in range(5, 14)]
 
 
 @add_slots
