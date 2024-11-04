@@ -37,7 +37,7 @@ trace = ["peg/trace"]
 [dependencies]
 paste = "1.0.15"
 pyo3 = { version = "0.20", optional = true }
-thiserror = "1.0.63"
+thiserror = "1.0.67"
 peg = "0.8.4"
 chic = "1.2.2"
 regex = "1.10.6"
