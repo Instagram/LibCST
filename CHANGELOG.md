@@ -1,3 +1,14 @@
+# 1.5.1 - 2024-11-18
+
+## Added
+
+* build wheels for musllinux by @MrMino in https://github.com/Instagram/LibCST/pull/1243
+
+## New Contributors
+* @MrMino made their first contribution in https://github.com/Instagram/LibCST/pull/1243
+
+**Full Changelog**: https://github.com/Instagram/LibCST/compare/v1.5.0...v1.5.1
+
 # 1.5.0 - 2024-10-10
 
 ## Added
