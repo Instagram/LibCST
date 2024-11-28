@@ -705,3 +705,39 @@ class TestRenameCommand(CodemodTest):
             old_name="a.b.qux",
             new_name="a:b.qux",
         )
+
+    def test_import_parent_module(self) -> None:
+        before = """
+            import a
+            a.b.c(a.b.c.d)
+        """
+        after = """
+            from z import c
+
+            c(c.d)
+        """
+        self.assertCodemod(before, after, old_name="a.b.c", new_name="z.c")
+
+    def test_import_parent_module_2(self) -> None:
+        before = """
+            import a.b
+            a.b.c.d(a.b.c.d.x)
+        """
+        after = """
+            from z import c
+            
+            c(c.x)
+        """
+        self.assertCodemod(before, after, old_name="a.b.c.d", new_name="z.c")
+
+    def test_import_parent_module_3(self) -> None:
+        before = """
+            import a
+            a.b.c(a.b.c.d)
+        """
+        after = """
+            import z.c
+
+            z.c(z.c.d)
+        """
+        self.assertCodemod(before, after, old_name="a.b.c", new_name="z.c:")
