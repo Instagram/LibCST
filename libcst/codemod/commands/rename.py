@@ -142,29 +142,23 @@ class RenameCommand(VisitorBasedCodemodCommand):
     ) -> cst.Import:
         new_names = []
         for import_alias in updated_node.names:
+            # We keep the original import_alias here in case it's used by other symbols.
+            # It will be removed later in RemoveImportsVisitor if it's unused.
+            new_names.append(import_alias)
             import_alias_name = import_alias.name
             import_alias_full_name = get_full_name_for_node(import_alias_name)
             if import_alias_full_name is None:
                 raise Exception("Could not parse full name for ImportAlias.name node.")
 
-            if isinstance(import_alias_name, cst.Name) and self.old_name.startswith(
-                import_alias_full_name + "."
-            ):
-                # Might, be in use elsewhere in the code, so schedule a potential removal, and add another alias.
-                new_names.append(import_alias)
-                replacement_module = self.gen_replacement_module(import_alias_full_name)
-                self.bypass_import = True
-                if replacement_module != import_alias_name.value:
-                    self.scheduled_removals.add(original_node)
-                    new_names.append(
-                        cst.ImportAlias(name=cst.Name(value=replacement_module))
-                    )
-            elif isinstance(
-                import_alias_name, cst.Attribute
+            if isinstance(
+                import_alias_name, (cst.Name, cst.Attribute)
             ) and self.old_name.startswith(import_alias_full_name + "."):
-                # Same idea as above.
-                new_names.append(import_alias)
                 replacement_module = self.gen_replacement_module(import_alias_full_name)
+                if not replacement_module:
+                    # here import_alias_full_name isn't an exact match for old_name
+                    # don't add an import here, it will be handled either in more
+                    # specific import aliases or at the very end
+                    continue
                 self.bypass_import = True
                 if replacement_module != import_alias_full_name:
                     self.scheduled_removals.add(original_node)
@@ -172,8 +166,6 @@ class RenameCommand(VisitorBasedCodemodCommand):
                         self.gen_name_or_attr_node(replacement_module)
                     )
                     new_names.append(cst.ImportAlias(name=new_name_node))
-            else:
-                new_names.append(import_alias)
 
         return updated_node.with_changes(names=new_names)
 
@@ -289,10 +281,14 @@ class RenameCommand(VisitorBasedCodemodCommand):
             if not inside_import_statement:
                 self.scheduled_removals.add(original_node.value)
             if full_replacement_name == self.new_name:
-                return updated_node.with_changes(
-                    value=cst.parse_expression(new_value),
-                    attr=cst.Name(value=new_attr.rstrip(".")),
-                )
+                value = cst.parse_expression(new_value)
+                if new_attr:
+                    return updated_node.with_changes(
+                        value=value,
+                        attr=cst.Name(value=new_attr.rstrip(".")),
+                    )
+                assert isinstance(value, (cst.Name, cst.Attribute))
+                return value
 
             return self.gen_name_or_attr_node(new_attr)
 
@@ -329,8 +325,12 @@ class RenameCommand(VisitorBasedCodemodCommand):
 
         if original_name == self.old_mod_or_obj:
             return self.new_mod_or_obj
-        elif original_name == ".".join([self.old_module, self.old_mod_or_obj]):
-            return self.new_name
+        elif original_name == self.old_name:
+            return (
+                self.new_mod_or_obj
+                if (not self.bypass_import and self.new_mod_or_obj)
+                else self.new_name
+            )
         elif original_name.endswith("." + self.old_mod_or_obj):
             return self.new_mod_or_obj
         else:
