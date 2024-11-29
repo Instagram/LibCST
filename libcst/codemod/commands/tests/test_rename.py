@@ -111,6 +111,27 @@ class TestRenameCommand(CodemodTest):
             new_name="baz.quux",
         )
 
+    def test_rename_attr_asname_2(self) -> None:
+        before = """
+            import foo.qux as bar
+
+            def test() -> None:
+                bar.z(5)
+        """
+        after = """
+            import baz.quux
+
+            def test() -> None:
+                baz.quux.z(5)
+        """
+
+        self.assertCodemod(
+            before,
+            after,
+            old_name="foo.qux",
+            new_name="baz.quux",
+        )
+
     def test_rename_module_import(self) -> None:
         before = """
             import a.b
@@ -741,3 +762,14 @@ class TestRenameCommand(CodemodTest):
             z.c(z.c.d)
         """
         self.assertCodemod(before, after, old_name="a.b.c", new_name="z.c:")
+
+    def test_import_parent_module_asname(self) -> None:
+        before = """
+            import a.b as alias
+            alias.c(alias.c.d)
+        """
+        after = """
+            import z
+            z.c(z.c.d)
+        """
+        self.assertCodemod(before, after, old_name="a.b.c", new_name="z.c")

@@ -150,9 +150,7 @@ class RenameCommand(VisitorBasedCodemodCommand):
             if import_alias_full_name is None:
                 raise Exception("Could not parse full name for ImportAlias.name node.")
 
-            if isinstance(
-                import_alias_name, (cst.Name, cst.Attribute)
-            ) and self.old_name.startswith(import_alias_full_name + "."):
+            if self.old_name.startswith(import_alias_full_name + "."):
                 replacement_module = self.gen_replacement_module(import_alias_full_name)
                 if not replacement_module:
                     # here import_alias_full_name isn't an exact match for old_name
@@ -166,6 +164,18 @@ class RenameCommand(VisitorBasedCodemodCommand):
                         self.gen_name_or_attr_node(replacement_module)
                     )
                     new_names.append(cst.ImportAlias(name=new_name_node))
+            elif (
+                import_alias_full_name == self.new_name
+                and import_alias.asname is not None
+            ):
+                self.bypass_import = True
+                # TODO: put this into self.scheduled_removals
+                RemoveImportsVisitor.remove_unused_import(
+                    self.context,
+                    import_alias.evaluated_name,
+                    asname=import_alias.evaluated_alias,
+                )
+                new_names.append(import_alias.with_changes(asname=None))
 
         return updated_node.with_changes(names=new_names)
 
