@@ -382,6 +382,28 @@ class TestRenameCommand(CodemodTest):
             new_name="d.z",
         )
 
+    def test_comma_import(self) -> None:
+        before = """
+            import a, b, c
+
+            class Foo(a.z):
+                bar: b.bar
+                baz: c.baz
+        """
+        after = """
+            import a, b, d
+
+            class Foo(a.z):
+                bar: b.bar
+                baz: d.baz
+        """
+        self.assertCodemod(
+            before,
+            after,
+            old_name="c.baz",
+            new_name="d.baz",
+        )
+
     def test_other_import_froms_untouched(self) -> None:
         before = """
             from a import b, c, d
@@ -403,6 +425,29 @@ class TestRenameCommand(CodemodTest):
             after,
             old_name="a.b",
             new_name="f.b",
+        )
+
+    def test_comma_import_from(self) -> None:
+        before = """
+            from a import b, c, d
+
+            class Foo(b):
+                bar: c.bar
+                baz: d.baz
+        """
+        after = """
+            from a import b, c
+            from f import d
+
+            class Foo(b):
+                bar: c.bar
+                baz: d.baz
+        """
+        self.assertCodemod(
+            before,
+            after,
+            old_name="a.d",
+            new_name="f.d",
         )
 
     def test_no_removal_of_import_in_use(self) -> None:

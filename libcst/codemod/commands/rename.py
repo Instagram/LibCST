@@ -214,7 +214,7 @@ class RenameCommand(VisitorBasedCodemodCommand):
             return updated_node
 
         else:
-            new_names = []
+            new_names: list[cst.ImportAlias] = []
             for import_alias in names:
                 alias_name = get_full_name_for_node(import_alias.name)
                 if alias_name is not None:
@@ -252,6 +252,10 @@ class RenameCommand(VisitorBasedCodemodCommand):
                             # This import might be in use elsewhere in the code, so schedule a potential removal.
                             self.scheduled_removals.add(original_node)
                         new_names.append(import_alias)
+            if isinstance(new_names[-1].comma, cst.Comma):
+                new_names[-1] = new_names[-1].with_changes(
+                    comma=cst.MaybeSentinel.DEFAULT
+                )
 
             return updated_node.with_changes(names=new_names)
         return updated_node
