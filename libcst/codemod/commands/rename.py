@@ -103,15 +103,20 @@ class RenameCommand(VisitorBasedCodemodCommand):
         self.context.scratch["as_name"] = value
 
     @property
-    def scheduled_removals(self) -> Set[cst.CSTNode]:
+    def scheduled_removals(
+        self,
+    ) -> Set[Union[cst.CSTNode, Tuple[str, Optional[str], Optional[str]]]]:
         """A set of nodes that have been renamed to help with the cleanup of now potentially unused
-        imports, during import cleanup in `leave_Module`."""
+        imports, during import cleanup in `leave_Module`. Can also contain tuples that can be passed
+        directly to RemoveImportsVisitor.remove_unused_import()."""
         if "scheduled_removals" not in self.context.scratch:
             self.context.scratch["scheduled_removals"] = set()
         return self.context.scratch["scheduled_removals"]
 
     @scheduled_removals.setter
-    def scheduled_removals(self, value: Set[cst.CSTNode]) -> None:
+    def scheduled_removals(
+        self, value: Set[Union[cst.CSTNode, Tuple[str, Optional[str], Optional[str]]]]
+    ) -> None:
         self.context.scratch["scheduled_removals"] = value
 
     @property
@@ -169,11 +174,13 @@ class RenameCommand(VisitorBasedCodemodCommand):
                 and import_alias.asname is not None
             ):
                 self.bypass_import = True
-                # TODO: put this into self.scheduled_removals
-                RemoveImportsVisitor.remove_unused_import(
-                    self.context,
-                    import_alias.evaluated_name,
-                    asname=import_alias.evaluated_alias,
+                # Add removal tuple instead of calling directly
+                self.scheduled_removals.add(
+                    (
+                        import_alias.evaluated_name,
+                        None,
+                        import_alias.evaluated_alias,
+                    )
                 )
                 new_names.append(import_alias.with_changes(asname=None))
 
@@ -307,10 +314,13 @@ class RenameCommand(VisitorBasedCodemodCommand):
     def leave_Module(
         self, original_node: cst.Module, updated_node: cst.Module
     ) -> cst.Module:
-        for removal_node in self.scheduled_removals:
-            RemoveImportsVisitor.remove_unused_import_by_node(
-                self.context, removal_node
-            )
+        for removal in self.scheduled_removals:
+            if isinstance(removal, tuple):
+                RemoveImportsVisitor.remove_unused_import(
+                    self.context, removal[0], removal[1], removal[2]
+                )
+            else:
+                RemoveImportsVisitor.remove_unused_import_by_node(self.context, removal)
         # If bypass_import is False, we know that no import statements were directly renamed, and the fact
         # that we have any `self.scheduled_removals` tells us we encountered a matching `old_name` in the code.
         if not self.bypass_import and self.scheduled_removals:
