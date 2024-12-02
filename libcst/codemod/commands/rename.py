@@ -252,7 +252,7 @@ class RenameCommand(VisitorBasedCodemodCommand):
                             # This import might be in use elsewhere in the code, so schedule a potential removal.
                             self.scheduled_removals.add(original_node)
                         new_names.append(import_alias)
-            if isinstance(new_names[-1].comma, cst.Comma):
+            if isinstance(new_names[-1].comma, cst.Comma) and updated_node.rpar is None:
                 new_names[-1] = new_names[-1].with_changes(
                     comma=cst.MaybeSentinel.DEFAULT
                 )
