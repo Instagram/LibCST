@@ -450,6 +450,38 @@ class TestRenameCommand(CodemodTest):
             new_name="f.d",
         )
 
+    def test_comma_import_from_parens(self) -> None:
+        before = """
+            from a import (
+                b,
+                c,
+                d,
+            )
+            from x import (y,)
+
+            class Foo(b):
+                bar: c.bar
+                baz: d.baz
+        """
+        after = """
+            from a import (
+                b,
+                c,
+                )
+            from x import (y,)
+            from f import d
+
+            class Foo(b):
+                bar: c.bar
+                baz: d.baz
+        """
+        self.assertCodemod(
+            before,
+            after,
+            old_name="a.d",
+            new_name="f.d",
+        )
+
     def test_no_removal_of_import_in_use(self) -> None:
         before = """
             import a
