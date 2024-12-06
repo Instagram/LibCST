@@ -19,7 +19,7 @@ def ensure_type(node: object, nodetype: Type[T]) -> T:
     """
 
     if not isinstance(node, nodetype):
-        raise Exception(
-            f"Expected a {nodetype.__name__} but got a {node.__class__.__name__}!"
+        raise ValueError(
+            f"Expected a {nodetype.__name__} but got a {node.__class__.__qualname__}!"
         )
     return node

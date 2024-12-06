@@ -103,7 +103,7 @@ class BaseParser(Generic[_TokenT, _TokenTypeT, _NodeT]):
     def parse(self) -> _NodeT:
         # Ensure that we don't re-use parsers.
         if self.__was_parse_called:
-            raise Exception("Each parser object may only be used to parse once.")
+            raise ValueError("Each parser object may only be used to parse once.")
         self.__was_parse_called = True
 
         for token in self.tokens:
