@@ -347,7 +347,7 @@ class RenameCommand(VisitorBasedCodemodCommand):
                     module_as_name[0] + ".", module_as_name[1] + ".", 1
                 )
 
-        if original_name == self.old_mod_or_obj:
+        if self.old_module and original_name == self.old_mod_or_obj:
             return self.new_mod_or_obj
         elif original_name == self.old_name:
             return (
