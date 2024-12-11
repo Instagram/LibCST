@@ -850,3 +850,25 @@ class TestRenameCommand(CodemodTest):
             z.c(z.c.d)
         """
         self.assertCodemod(before, after, old_name="a.b.c", new_name="z.c")
+
+    def test_push_down_toplevel_names(self) -> None:
+        before = """
+            import foo
+            foo.baz()
+        """
+        after = """
+            import quux.foo
+            quux.foo.baz()
+        """
+        self.assertCodemod(before, after, old_name="foo", new_name="quux.foo")
+
+    def test_push_down_toplevel_names_with_asname(self) -> None:
+        before = """
+            import foo as bar
+            bar.baz()
+        """
+        after = """
+            import quux.foo
+            quux.foo.baz()
+        """
+        self.assertCodemod(before, after, old_name="foo", new_name="quux.foo")
