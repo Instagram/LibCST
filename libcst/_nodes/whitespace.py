@@ -9,7 +9,6 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Optional, Pattern, Sequence
 
-from libcst._add_slots import add_slots
 from libcst._nodes.base import BaseLeaf, BaseValueToken, CSTNode, CSTValidationError
 from libcst._nodes.internal import (
     CodegenState,
@@ -62,8 +61,7 @@ class BaseParenthesizableWhitespace(CSTNode, ABC):
         ...
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class SimpleWhitespace(BaseParenthesizableWhitespace, BaseValueToken):
     """
     This is the kind of whitespace you might see inside the body of a statement or
@@ -104,8 +102,7 @@ class SimpleWhitespace(BaseParenthesizableWhitespace, BaseValueToken):
         return len(self.value) == 0
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class Newline(BaseLeaf):
     """
     Represents the newline that ends an :class:`EmptyLine` or a statement (as part of
@@ -138,8 +135,7 @@ class Newline(BaseLeaf):
         state.add_token(state.default_newline if value is None else value)
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class Comment(BaseValueToken):
     """
     A comment including the leading pound (``#``) character.
@@ -165,8 +161,7 @@ class Comment(BaseValueToken):
             )
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class TrailingWhitespace(CSTNode):
     """
     The whitespace at the end of a line after a statement. If a line contains only
@@ -197,8 +192,7 @@ class TrailingWhitespace(CSTNode):
         self.newline._codegen(state)
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class EmptyLine(CSTNode):
     """
     Represents a line with only whitespace/comments. Usually statements will own any
@@ -238,8 +232,7 @@ class EmptyLine(CSTNode):
         self.newline._codegen(state)
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class ParenthesizedWhitespace(BaseParenthesizableWhitespace):
     """
     This is the kind of whitespace you might see inside a parenthesized expression
