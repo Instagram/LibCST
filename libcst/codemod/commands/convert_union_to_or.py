@@ -6,7 +6,6 @@
 # pyre-strict
 
 import libcst as cst
-import libcst.matchers as m
 from libcst.codemod import VisitorBasedCodemodCommand
 from libcst.codemod.visitors import RemoveImportsVisitor
 from libcst.metadata import QualifiedName, QualifiedNameProvider, QualifiedNameSource
