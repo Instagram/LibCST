@@ -6,9 +6,7 @@
 # pyre-strict
 
 from libcst.codemod import CodemodTest
-from libcst.codemod.commands.fix_variadic_callable import (
-    FixVariadicCallableCommmand,
-)
+from libcst.codemod.commands.fix_variadic_callable import FixVariadicCallableCommmand
 
 
 class TestFixVariadicCallableCommmand(CodemodTest):

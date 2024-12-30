@@ -12,7 +12,9 @@ from libcst.metadata import QualifiedName, QualifiedNameProvider, QualifiedNameS
 
 
 class FixVariadicCallableCommmand(VisitorBasedCodemodCommand):
-    DESCRIPTION: str = "Fix incorrect variadic callable type annotations from `Callable[[...], T]` to `Callable[..., T]``"
+    DESCRIPTION: str = (
+        "Fix incorrect variadic callable type annotations from `Callable[[...], T]` to `Callable[..., T]``"
+    )
 
     METADATA_DEPENDENCIES = (QualifiedNameProvider,)
 
