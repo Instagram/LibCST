@@ -6,7 +6,9 @@
 # pyre-strict
 
 from libcst.codemod import CodemodTest
-from libcst.codemod.commands.rename_typing_generic_aliases import RenameTypingGenericAliases
+from libcst.codemod.commands.rename_typing_generic_aliases import (
+    RenameTypingGenericAliases,
+)
 
 
 class TestRenameCommand(CodemodTest):
