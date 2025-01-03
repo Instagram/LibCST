@@ -28,6 +28,19 @@ class TestRenameCommand(CodemodTest):
 
         self.assertCodemod(before, after, old_name="foo.bar", new_name="baz.qux")
 
+    def test_rename_to_builtin(self) -> None:
+        before = """
+            from typing import List
+            x: List[int] = []
+        """
+        after = """
+            x: list[int] = []
+        """
+
+        self.assertCodemod(
+            before, after, old_name="typing.List", new_name="builtins.list"
+        )
+
     def test_rename_name_asname(self) -> None:
         before = """
             from foo import bar as bla
