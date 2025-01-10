@@ -45,12 +45,12 @@ def unmangled_name(var: str) -> Optional[str]:
 
 def mangle_template(template: str, template_vars: Set[str]) -> str:
     if TEMPLATE_PREFIX in template or TEMPLATE_SUFFIX in template:
-        raise Exception("Cannot parse a template containing reserved strings")
+        raise ValueError("Cannot parse a template containing reserved strings")
 
     for var in template_vars:
         original = f"{{{var}}}"
         if original not in template:
-            raise Exception(
+            raise ValueError(
                 f'Template string is missing a reference to "{var}" referred to in kwargs'
             )
         template = template.replace(original, mangled_name(var))
@@ -142,7 +142,7 @@ class TemplateTransformer(cst.CSTTransformer):
             name for name in template_replacements if name not in supported_vars
         }
         if unsupported_vars:
-            raise Exception(
+            raise ValueError(
                 f'Template replacement for "{next(iter(unsupported_vars))}" is unsupported'
             )
 
@@ -350,7 +350,7 @@ class TemplateChecker(cst.CSTVisitor):
     def visit_Name(self, node: cst.Name) -> None:
         for var in self.template_vars:
             if node.value == mangled_name(var):
-                raise Exception(f'Template variable "{var}" was not replaced properly')
+                raise ValueError(f'Template variable "{var}" was not replaced properly')
 
 
 def unmangle_nodes(
@@ -424,8 +424,8 @@ def parse_template_statement(
     if not isinstance(
         new_statement, (cst.SimpleStatementLine, cst.BaseCompoundStatement)
     ):
-        raise Exception(
-            f"Expected a statement but got a {new_statement.__class__.__name__}!"
+        raise TypeError(
+            f"Expected a statement but got a {new_statement.__class__.__qualname__}!"
         )
     new_statement.visit(TemplateChecker({name for name in template_replacements}))
     return new_statement

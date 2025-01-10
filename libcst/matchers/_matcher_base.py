@@ -29,7 +29,7 @@ from typing import (
 
 import libcst
 import libcst.metadata as meta
-from libcst import FlattenSentinel, MaybeSentinel, RemovalSentinel
+from libcst import CSTLogicError, FlattenSentinel, MaybeSentinel, RemovalSentinel
 from libcst._metadata_dependent import LazyValue
 
 
@@ -143,7 +143,7 @@ class TypeOf(Generic[_MatcherTypeT], BaseMatcherNode):
         for option in options:
             if isinstance(option, TypeOf):
                 if option.initalized:
-                    raise Exception(
+                    raise ValueError(
                         "Cannot chain an uninitalized TypeOf with an initalized one"
                     )
                 actual_options.extend(option._raw_options)
@@ -213,7 +213,7 @@ class OneOf(Generic[_MatcherT], BaseMatcherNode):
         actual_options: List[_MatcherT] = []
         for option in options:
             if isinstance(option, AllOf):
-                raise Exception("Cannot use AllOf and OneOf in combination!")
+                raise ValueError("Cannot use AllOf and OneOf in combination!")
             elif isinstance(option, (OneOf, TypeOf)):
                 actual_options.extend(option.options)
             else:
@@ -234,7 +234,7 @@ class OneOf(Generic[_MatcherT], BaseMatcherNode):
         return OneOf(self, other)
 
     def __and__(self, other: _OtherNodeT) -> NoReturn:
-        raise Exception("Cannot use AllOf and OneOf in combination!")
+        raise ValueError("Cannot use AllOf and OneOf in combination!")
 
     def __invert__(self) -> "AllOf[_MatcherT]":
         # Invert using De Morgan's Law so we don't have to complicate types.
@@ -286,9 +286,9 @@ class AllOf(Generic[_MatcherT], BaseMatcherNode):
         actual_options: List[_MatcherT] = []
         for option in options:
             if isinstance(option, OneOf):
-                raise Exception("Cannot use AllOf and OneOf in combination!")
+                raise ValueError("Cannot use AllOf and OneOf in combination!")
             elif isinstance(option, TypeOf):
-                raise Exception("Cannot use AllOf and TypeOf in combination!")
+                raise ValueError("Cannot use AllOf and TypeOf in combination!")
             elif isinstance(option, AllOf):
                 actual_options.extend(option.options)
             else:
@@ -306,7 +306,7 @@ class AllOf(Generic[_MatcherT], BaseMatcherNode):
 
     # pyre-fixme[15]: `__or__` overrides method defined in `type` inconsistently.
     def __or__(self, other: _OtherNodeT) -> NoReturn:
-        raise Exception("Cannot use AllOf and OneOf in combination!")
+        raise ValueError("Cannot use AllOf and OneOf in combination!")
 
     def __and__(self, other: _OtherNodeT) -> "AllOf[Union[_MatcherT, _OtherNodeT]]":
         return AllOf(self, other)
@@ -431,7 +431,7 @@ class _ExtractMatchingNode(Generic[_MatcherT]):
         # that are captured with an and, either all of them will be assigned the
         # same node, or none of them. It makes more sense to move the SaveMatchedNode
         # up to wrap the AllOf.
-        raise Exception(
+        raise ValueError(
             (
                 "Cannot use AllOf with SavedMatchedNode children! Instead, you should "
                 + "use SaveMatchedNode(AllOf(options...))."
@@ -447,10 +447,10 @@ class _ExtractMatchingNode(Generic[_MatcherT]):
     def __invert__(self) -> "_MatcherT":
         # This doesn't make sense. We don't want to capture a node only if it
         # doesn't match, since this will never capture anything.
-        raise Exception(
+        raise ValueError(
             (
                 "Cannot invert a SaveMatchedNode. Instead you should wrap SaveMatchedNode "
-                + "around your inversion itself"
+                "around your inversion itself"
             )
         )
 
@@ -761,7 +761,9 @@ class AtLeastN(Generic[_MatcherT], _BaseWildcardNode):
         n: int,
     ) -> None:
         if n < 0:
-            raise Exception(f"{self.__class__.__name__} n attribute must be positive")
+            raise ValueError(
+                f"{self.__class__.__qualname__} n attribute must be positive"
+            )
         self._n: int = n
         self._matcher: Union[_MatcherT, DoNotCareSentinel] = matcher
 
@@ -784,13 +786,13 @@ class AtLeastN(Generic[_MatcherT], _BaseWildcardNode):
 
     # pyre-fixme[15]: `__or__` overrides method defined in `type` inconsistently.
     def __or__(self, other: object) -> NoReturn:
-        raise Exception("AtLeastN cannot be used in a OneOf matcher")
+        raise ValueError("AtLeastN cannot be used in a OneOf matcher")
 
     def __and__(self, other: object) -> NoReturn:
-        raise Exception("AtLeastN cannot be used in an AllOf matcher")
+        raise ValueError("AtLeastN cannot be used in an AllOf matcher")
 
     def __invert__(self) -> NoReturn:
-        raise Exception("Cannot invert an AtLeastN matcher!")
+        raise ValueError("Cannot invert an AtLeastN matcher!")
 
     def __repr__(self) -> str:
         if self._n == 0:
@@ -863,7 +865,9 @@ class AtMostN(Generic[_MatcherT], _BaseWildcardNode):
         n: int,
     ) -> None:
         if n < 0:
-            raise Exception(f"{self.__class__.__name__} n attribute must be positive")
+            raise ValueError(
+                f"{self.__class__.__qualname__} n attribute must be positive"
+            )
         self._n: int = n
         self._matcher: Union[_MatcherT, DoNotCareSentinel] = matcher
 
@@ -887,13 +891,13 @@ class AtMostN(Generic[_MatcherT], _BaseWildcardNode):
 
     # pyre-fixme[15]: `__or__` overrides method defined in `type` inconsistently.
     def __or__(self, other: object) -> NoReturn:
-        raise Exception("AtMostN cannot be used in a OneOf matcher")
+        raise ValueError("AtMostN cannot be used in a OneOf matcher")
 
     def __and__(self, other: object) -> NoReturn:
-        raise Exception("AtMostN cannot be used in an AllOf matcher")
+        raise ValueError("AtMostN cannot be used in an AllOf matcher")
 
     def __invert__(self) -> NoReturn:
-        raise Exception("Cannot invert an AtMostN matcher!")
+        raise ValueError("Cannot invert an AtMostN matcher!")
 
     def __repr__(self) -> str:
         if self._n == 1:
@@ -1158,7 +1162,7 @@ def _sequence_matches(  # noqa: C901
         else:
             # There are no other types of wildcard consumers, but we're making
             # pyre happy with that fact.
-            raise Exception(f"Logic error unrecognized wildcard {type(matcher)}!")
+            raise CSTLogicError(f"Logic error unrecognized wildcard {type(matcher)}!")
     elif isinstance(matcher, _ExtractMatchingNode):
         # See if the raw matcher matches. If it does, capture the sequence we matched and store it.
         result = _sequence_matches(
@@ -1354,7 +1358,7 @@ def _metadata_matches(  # noqa: C901
             return None
         return {} if actual_value == metadata.value else None
     else:
-        raise Exception("Logic error!")
+        raise CSTLogicError("Logic error!")
 
 
 def _node_matches(  # noqa: C901
@@ -1918,7 +1922,7 @@ def replace(
         elif isinstance(tree, meta.MetadataWrapper):
             return tree.module.deep_clone()
         else:
-            raise Exception("Logic error!")
+            raise CSTLogicError("Logic error!")
 
     if isinstance(tree, meta.MetadataWrapper) and metadata_resolver is None:
         # Provide a convenience for calling replace directly on a MetadataWrapper.
@@ -1935,5 +1939,5 @@ def replace(
     new_tree = tree.visit(replacer)
     if isinstance(new_tree, FlattenSentinel):
         # The above transform never returns FlattenSentinel, so this isn't possible
-        raise Exception("Logic error, cannot get a FlattenSentinel here!")
+        raise CSTLogicError("Logic error, cannot get a FlattenSentinel here!")
     return new_tree

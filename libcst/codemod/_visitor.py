@@ -6,7 +6,7 @@
 from typing import Mapping
 
 import libcst as cst
-from libcst import MetadataDependent
+from libcst import MetadataDependent, MetadataException
 from libcst.codemod._codemod import Codemod
 from libcst.codemod._context import CodemodContext
 from libcst.matchers import MatcherDecoratableTransformer, MatcherDecoratableVisitor
@@ -69,14 +69,14 @@ class ContextAwareVisitor(MatcherDecoratableVisitor, MetadataDependent):
         if dependencies:
             wrapper = self.context.wrapper
             if wrapper is None:
-                raise Exception(
+                raise MetadataException(
                     f"Attempting to instantiate {self.__class__.__name__} outside of "
                     + "an active transform. This means that metadata hasn't been "
                     + "calculated and we cannot successfully create this visitor."
                 )
             for dep in dependencies:
                 if dep not in wrapper._metadata:
-                    raise Exception(
+                    raise MetadataException(
                         f"Attempting to access metadata {dep.__name__} that was not a "
                         + "declared dependency of parent transform! This means it is "
                         + "not possible to compute this value. Please ensure that all "
@@ -101,7 +101,7 @@ class ContextAwareVisitor(MatcherDecoratableVisitor, MetadataDependent):
         """
         module = self.context.module
         if module is None:
-            raise Exception(
+            raise ValueError(
                 f"Attempted access of {self.__class__.__name__}.module outside of "
                 + "transform_module()."
             )

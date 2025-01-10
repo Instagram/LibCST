@@ -56,9 +56,9 @@ class Codemod(MetadataDependent, ABC):
         """
         module = self.context.module
         if module is None:
-            raise Exception(
+            raise ValueError(
                 f"Attempted access of {self.__class__.__name__}.module outside of "
-                + "transform_module()."
+                "transform_module()."
             )
         return module
 
