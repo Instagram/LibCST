@@ -2524,6 +2524,7 @@ impl<'r, 'a> Inflate<'a> for DeflatedNamedExpr<'r, 'a> {
 #[cfg(feature = "py")]
 mod py {
 
+    use pyo3::types::PyAnyMethods;
     use pyo3::types::PyModule;
 
     use super::*;
@@ -2535,7 +2536,7 @@ mod py {
             match self {
                 Self::Starred(s) => s.try_into_py(py),
                 Self::Simple { value, comma } => {
-                    let libcst = PyModule::import(py, "libcst")?;
+                    let libcst = PyModule::import_bound(py, "libcst")?;
                     let kwargs = [
                         Some(("value", value.try_into_py(py)?)),
                         comma
@@ -2547,11 +2548,11 @@ mod py {
                     .filter(|x| x.is_some())
                     .map(|x| x.as_ref().unwrap())
                     .collect::<Vec<_>>()
-                    .into_py_dict(py);
+                    .into_py_dict_bound(py);
                     Ok(libcst
                         .getattr("Element")
                         .expect("no Element found in libcst")
-                        .call((), Some(kwargs))?
+                        .call((), Some(&kwargs))?
                         .into())
                 }
             }
@@ -2571,7 +2572,7 @@ mod py {
                     whitespace_before_colon,
                     ..
                 } => {
-                    let libcst = PyModule::import(py, "libcst")?;
+                    let libcst = PyModule::import_bound(py, "libcst")?;
                     let kwargs = [
                         Some(("key", key.try_into_py(py)?)),
                         Some(("value", value.try_into_py(py)?)),
@@ -2592,11 +2593,11 @@ mod py {
                     .filter(|x| x.is_some())
                     .map(|x| x.as_ref().unwrap())
                     .collect::<Vec<_>>()
-                    .into_py_dict(py);
+                    .into_py_dict_bound(py);
                     Ok(libcst
                         .getattr("DictElement")
                         .expect("no Element found in libcst")
-                        .call((), Some(kwargs))?
+                        .call((), Some(&kwargs))?
                         .into())
                 }
             }

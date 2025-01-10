@@ -328,7 +328,7 @@ class RenameCommand(VisitorBasedCodemodCommand):
         # If bypass_import is False, we know that no import statements were directly renamed, and the fact
         # that we have any `self.scheduled_removals` tells us we encountered a matching `old_name` in the code.
         if not self.bypass_import and self.scheduled_removals:
-            if self.new_module:
+            if self.new_module and self.new_module != "builtins":
                 new_obj: Optional[str] = (
                     self.new_mod_or_obj.split(".")[0] if self.new_mod_or_obj else None
                 )

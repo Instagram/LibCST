@@ -1,3 +1,33 @@
+# 1.6.0 - 2024-01-09
+
+## Fixed
+
+* rename: store state in scratch by @zsol in https://github.com/Instagram/LibCST/pull/1250
+* rename: handle imports via a parent module by @zsol in https://github.com/Instagram/LibCST/pull/1251
+* rename: Fix imports with aliases by @zsol in https://github.com/Instagram/LibCST/pull/1252
+* rename: don't leave trailing commas by @zsol in https://github.com/Instagram/LibCST/pull/1254
+* rename: don't eat commas unnecessarily by @zsol in https://github.com/Instagram/LibCST/pull/1256
+* rename: fix renaming toplevel names by @zsol in https://github.com/Instagram/LibCST/pull/1260
+* bump 3.12 to 3.13 in readme by @khameeteman in https://github.com/Instagram/LibCST/pull/1228
+
+## Added
+
+* Add codemod to convert `typing.Union` to `|` by @yangdanny97 in https://github.com/Instagram/LibCST/pull/1270
+* Add codemod to fix variadic callable annotations by @yangdanny97 in https://github.com/Instagram/LibCST/pull/1269
+* Add codemod to rename typing aliases of builtins by @yangdanny97 in https://github.com/Instagram/LibCST/pull/1267
+* Add typing classifier to pyproject.toml and badge to README by @yangdanny97 in https://github.com/Instagram/LibCST/pull/1272
+* Expose TypeAlias and TypeVar related structs in rust library by @Crozzers in https://github.com/Instagram/LibCST/pull/1274
+
+## Updated
+* Upgrade pyo3 to 0.22 by @jelmer in https://github.com/Instagram/LibCST/pull/1180
+
+## New Contributors
+* @yangdanny97 made their first contribution in https://github.com/Instagram/LibCST/pull/1270
+* @Crozzers made their first contribution in https://github.com/Instagram/LibCST/pull/1274
+* @jelmer made their first contribution in https://github.com/Instagram/LibCST/pull/1180
+
+**Full Changelog**: https://github.com/Instagram/LibCST/compare/v1.5.1...v1.6.0
+
 # 1.5.1 - 2024-11-18
 
 ## Added
