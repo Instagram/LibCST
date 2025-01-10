@@ -4,7 +4,7 @@ on:
   release:
     types: [published]
   push:
-    branches: [main]
+    branches: [main, pr1277]
 
 permissions:
   contents: read
@@ -45,12 +45,12 @@ jobs:
           build
           --sdist
           --outdir ${{ steps.download.outputs.download-path }}
-      - name: Publish distribution 📦 to Test PyPI
-        if: github.event_name == 'push'
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          repository-url: https://test.pypi.org/legacy/
-          packages-dir: ${{ steps.download.outputs.download-path }}
+      # - name: Publish distribution 📦 to Test PyPI
+      #   if: github.event_name == 'push'
+      #   uses: pypa/gh-action-pypi-publish@release/v1
+      #   with:
+      #     repository-url: https://test.pypi.org/legacy/
+      #     packages-dir: ${{ steps.download.outputs.download-path }}
       - name: Publish distribution 📦 to PyPI
         if: github.event_name == 'release'
         uses: pypa/gh-action-pypi-publish@release/v1
