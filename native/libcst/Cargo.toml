@@ -39,7 +39,7 @@ paste = "1.0.15"
 pyo3 = { version = "0.22", optional = true }
 thiserror = "1.0.63"
 peg = "0.8.4"
-annotate-snippets = "0.6.1"
+annotate-snippets = "0.9.1"
 regex = "1.10.6"
 memchr = "2.7.4"
 libcst_derive = { path = "../libcst_derive", version = "1.6.0" }

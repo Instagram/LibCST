@@ -120,7 +120,8 @@ pub fn prettify_error(err: ParserError, label: &str) -> std::string::String {
                     format!(
                         "expected {} {} -> {}",
                         e.expected, loc.start_pos, loc.end_pos
-                    ),
+                    )
+                    .as_str(),
                 )
                 .to_string()
         }
