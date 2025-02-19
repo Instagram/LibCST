@@ -54,16 +54,6 @@ impl Error {
         self
     }
 
-    /// Create a new footer.
-    pub(crate) fn help(mut self, label: impl ToString) -> Self {
-        self.snippet.footer.push(Annotation {
-            label: Some(label.to_string()),
-            id: None,
-            annotation_type: AnnotationType::Help,
-        });
-        self
-    }
-
     pub(crate) fn to_string(self) -> String {
         let dl = DisplayList::from(self.snippet);
         let dlf = DisplayListFormatter::new(true, false);
