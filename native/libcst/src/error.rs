@@ -5,27 +5,18 @@
 
 // The following is vendored from `chic` by Yoshua Wuyts which is licensed under the MIT and
 // Apache-2.0 licenses.
-use annotate_snippets::Renderer;
-use annotate_snippets::{Annotation, AnnotationType, Slice, Snippet, SourceAnnotation};
+use annotate_snippets::{Annotation, Level, Message, Snippet};
 
 /// An error formatter.
 pub struct Error<'a> {
-    snippet: Snippet<'a>,
+    message: Message<'a>,
 }
 
 impl<'a> Error<'a> {
     /// Create a new `Error` formatter.
     pub fn new(label: &'a str) -> Self {
         Self {
-            snippet: Snippet {
-                title: Some(Annotation {
-                    label: Some(label),
-                    id: None,
-                    annotation_type: AnnotationType::Error,
-                }),
-                slices: vec![],
-                footer: vec![],
-            },
+            message: Level::Error.title(label),
         }
     }
 
@@ -38,21 +29,16 @@ impl<'a> Error<'a> {
         source: &'a str,
         label: &'a str,
     ) -> Self {
-        self.snippet.slices.push(Slice {
-            source: source,
-            line_start,
-            origin: None,
-            fold: false,
-            annotations: vec![SourceAnnotation {
-                label: label,
-                annotation_type: AnnotationType::Error,
-                range: (start, end),
-            }],
-        });
+        self.message = self.message.snippet(
+            Snippet::source(source)
+                .line_start(line_start)
+                .fold(false)
+                .annotations(vec![Level::Error.span(start..end).label(label)]),
+        );
         self
     }
 
     pub fn to_string(self) -> String {
-        Renderer::styled().render(self.snippet).to_string()
+        Renderer::styled().render(self.message).to_string()
     }
 }
