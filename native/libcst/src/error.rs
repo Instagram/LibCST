@@ -5,8 +5,8 @@
 
 // The following is vendored from `chic` by Yoshua Wuyts which is licensed under the MIT and
 // Apache-2.0 licenses.
-use annotate_snippets::display_list::{DisplayList, FormatOptions};
-use annotate_snippets::snippet::{Annotation, AnnotationType, Slice, Snippet, SourceAnnotation};
+use annotate_snippets::Renderer;
+use annotate_snippets::{Annotation, AnnotationType, Slice, Snippet, SourceAnnotation};
 
 /// An error formatter.
 pub struct Error<'a> {
@@ -25,10 +25,6 @@ impl<'a> Error<'a> {
                 }),
                 slices: vec![],
                 footer: vec![],
-                opt: FormatOptions {
-                    color: true,
-                    ..Default::default()
-                },
             },
         }
     }
@@ -57,6 +53,6 @@ impl<'a> Error<'a> {
     }
 
     pub fn to_string(self) -> String {
-        DisplayList::from(self.snippet).to_string()
+        Renderer::styled().render(self.snippet).to_string()
     }
 }
