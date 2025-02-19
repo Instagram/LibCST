@@ -10,6 +10,9 @@ pub mod tokenizer;
 pub use tokenizer::whitespace_parser::Config;
 use tokenizer::{whitespace_parser, TokConfig, Token, TokenIterator};
 
+mod error;
+use error::Error;
+
 mod nodes;
 use nodes::deflated::Module as DeflatedModule;
 pub use nodes::*;
@@ -98,7 +101,7 @@ pub fn prettify_error(err: ParserError, label: &str) -> std::string::String {
             let source = &module_text[start_offset..end_offset];
             let start = loc.start_pos.offset - start_offset;
             let end = loc.end_pos.offset - start_offset;
-            chic::Error::new(label)
+            Error::new(label)
                 .error(
                     max(
                         1,
