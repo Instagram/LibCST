@@ -91,32 +91,37 @@ fn bol_offset(source: &str, n: i32) -> usize {
 pub fn prettify_error(err: ParserError, label: &str) -> std::string::String {
     match err {
         ParserError::ParserError(e, module_text) => {
+            use annotate_snippets::{Level, Renderer, Snippet};
+
             let loc = e.location;
             let context = 1;
+            let line_start = max(
+                1,
+                loc.start_pos
+                    .line
+                    .checked_sub(context as usize)
+                    .unwrap_or(1),
+            );
             let start_offset = bol_offset(module_text, loc.start_pos.line as i32 - context);
             let end_offset = bol_offset(module_text, loc.end_pos.line as i32 + context + 1);
             let source = &module_text[start_offset..end_offset];
             let start = loc.start_pos.offset - start_offset;
             let end = loc.end_pos.offset - start_offset;
-            chic::Error::new(label)
-                .error(
-                    max(
-                        1,
-                        loc.start_pos
-                            .line
-                            .checked_sub(context as usize)
-                            .unwrap_or(1),
-                    ),
-                    start,
-                    if start == end {
-                        min(end + 1, end_offset - start_offset + 1)
-                    } else {
-                        end
-                    },
-                    source,
-                    format!(
-                        "expected {} {} -> {}",
-                        e.expected, loc.start_pos, loc.end_pos
+            let end = if start == end {
+                min(end + 1, end_offset - start_offset + 1)
+            } else {
+                end
+            };
+            Renderer::styled()
+                .render(
+                    Level::Error.title(label).snippet(
+                        Snippet::source(source)
+                            .line_start(line_start)
+                            .fold(false)
+                            .annotations(vec![Level::Error.span(start..end).label(&format!(
+                                "expected {} {} -> {}",
+                                e.expected, loc.start_pos, loc.end_pos
+                            ))]),
                     ),
                 )
                 .to_string()
