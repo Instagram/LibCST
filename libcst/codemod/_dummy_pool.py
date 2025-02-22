@@ -3,31 +3,37 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+from concurrent.futures import Future, Executor
 from types import TracebackType
-from typing import Callable, Generator, Iterable, Optional, Type, TypeVar
+from typing import Callable, Optional, Type, TypeVar, ParamSpec
 
-RetT = TypeVar("RetT")
-ArgT = TypeVar("ArgT")
+Return = TypeVar("Return")
+ParamSpec = ParamSpec("ParamSpec")
 
 
-class DummyPool:
+class DummyExecutor(Executor):
     """
-    Synchronous dummy `multiprocessing.Pool` analogue.
+    Synchronous dummy `concurrent.futures.Executor` analogue.
     """
 
-    def __init__(self, processes: Optional[int] = None) -> None:
+    def __init__(self, max_workers: Optional[int] = None) -> None:
         pass
 
-    def imap_unordered(
+    def submit(
         self,
-        func: Callable[[ArgT], RetT],
-        iterable: Iterable[ArgT],
-        chunksize: Optional[int] = None,
-    ) -> Generator[RetT, None, None]:
-        for args in iterable:
-            yield func(args)
+        fn: Callable[ParamSpec, Return],
+        *args: ParamSpec.args,
+        **kwargs: ParamSpec.kwargs,
+    ) -> Future[Return]:
+        future: Future[Return] = Future()
+        try:
+            result = fn(*args, **kwargs)
+            future.set_result(result)
+        except Exception as exc:
+            future.set_exception(exc)
+        return future
 
-    def __enter__(self) -> "DummyPool":
+    def __enter__(self) -> "DummyExecutor":
         return self
 
     def __exit__(
