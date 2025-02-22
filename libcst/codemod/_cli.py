@@ -10,20 +10,22 @@ Provides helpers for CLI interaction.
 import difflib
 import os.path
 import re
+import functools
 import subprocess
 import sys
 import time
 import traceback
+from concurrent.futures import as_completed, Executor
 from copy import deepcopy
 from dataclasses import dataclass, replace
-from multiprocessing import cpu_count, Pool
+from multiprocessing import cpu_count
 from pathlib import Path
-from typing import Any, AnyStr, cast, Dict, List, Optional, Sequence, Union
+from typing import Any, AnyStr, cast, Dict, List, Optional, Sequence, Union, Callable
 
 from libcst import parse_module, PartialParserConfig
 from libcst.codemod._codemod import Codemod
 from libcst.codemod._context import CodemodContext
-from libcst.codemod._dummy_pool import DummyPool
+from libcst.codemod._dummy_pool import DummyExecutor
 from libcst.codemod._runner import (
     SkipFile,
     SkipReason,
@@ -607,13 +609,20 @@ def parallel_exec_transform_with_prettyprint(  # noqa: C901
         python_version=python_version,
     )
 
+    pool_impl: Callable[[], Executor]
     if total == 1 or jobs == 1:
         # Simple case, we should not pay for process overhead.
-        # Let's just use a dummy synchronous pool.
+        # Let's just use a dummy synchronous executor.
         jobs = 1
-        pool_impl = DummyPool
+        pool_impl = DummyExecutor
+    elif getattr(sys, "_is_gil_enabled", lambda: False)():
+        from concurrent.futures import ThreadPoolExecutor
+
+        pool_impl = functools.partial(ThreadPoolExecutor, max_workers=jobs)
     else:
-        pool_impl = Pool
+        from concurrent.futures import ProcessPoolExecutor
+
+        pool_impl = functools.partial(ProcessPoolExecutor, max_workers=jobs)
         # Warm the parser, pre-fork.
         parse_module(
             "",
@@ -629,7 +638,7 @@ def parallel_exec_transform_with_prettyprint(  # noqa: C901
     warnings: int = 0
     skips: int = 0
 
-    with pool_impl(processes=jobs) as p:  # type: ignore
+    with pool_impl() as executor:  # type: ignore
         args = [
             {
                 "transformer": transform,
@@ -640,9 +649,9 @@ def parallel_exec_transform_with_prettyprint(  # noqa: C901
             for filename in files
         ]
         try:
-            for result in p.imap_unordered(
-                _execute_transform_wrap, args, chunksize=chunksize
-            ):
+            futures = [executor.submit(_execute_transform_wrap, arg) for arg in args]
+            for future in as_completed(futures):
+                result = future.result()
                 # Print an execution result, keep track of failures
                 _print_parallel_result(
                     result,
