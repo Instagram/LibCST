@@ -28,17 +28,10 @@ pub enum ParserError<'a> {
 #[cfg(feature = "py")]
 mod py_error {
 
-    use pyo3::types::{IntoPyDict, PyAnyMethods, PyModule};
-    use pyo3::{IntoPy, PyErr, PyErrArguments, Python};
+    use pyo3::types::{IntoPyDict, PyAny, PyAnyMethods, PyModule};
+    use pyo3::{Bound, IntoPyObject, PyErr, PyResult, Python};
 
     use super::ParserError;
-
-    struct Details {
-        message: String,
-        lines: Vec<String>,
-        raw_line: u32,
-        raw_column: u32,
-    }
 
     impl<'a> From<ParserError<'a>> for PyErr {
         fn from(e: ParserError) -> Self {
@@ -59,36 +52,21 @@ mod py_error {
                     line = lines.len() - 1;
                     col = 0;
                 }
-                let kwargs = [
-                    ("message", e.to_string().into_py(py)),
-                    ("lines", lines.into_py(py)),
-                    ("raw_line", (line + 1).into_py(py)),
-                    ("raw_column", col.into_py(py)),
-                ]
-                .into_py_dict_bound(py);
-                let libcst =
-                    PyModule::import_bound(py, "libcst").expect("libcst cannot be imported");
-                PyErr::from_value_bound(
-                    libcst
-                        .getattr("ParserSyntaxError")
-                        .expect("ParserSyntaxError not found")
-                        .call((), Some(&kwargs))
-                        .expect("failed to instantiate"),
-                )
+                match || -> PyResult<Bound<'_, PyAny>> {
+                    let kwargs = [
+                        ("message", e.to_string().into_pyobject(py)?.into_any()),
+                        ("lines", lines.into_pyobject(py)?.into_any()),
+                        ("raw_line", (line + 1).into_pyobject(py)?.into_any()),
+                        ("raw_column", col.into_pyobject(py)?.into_any()),
+                    ]
+                    .into_py_dict(py)?;
+                    let libcst = PyModule::import(py, "libcst")?;
+                    libcst.getattr("ParserSyntaxError")?.call((), Some(&kwargs))
+                }() {
+                    Ok(py_err_value) => PyErr::from_value(py_err_value),
+                    Err(e) => e,
+                }
             })
-        }
-    }
-
-    impl<'a> PyErrArguments for Details {
-        fn arguments(self, py: pyo3::Python) -> pyo3::PyObject {
-            [
-                ("message", self.message.into_py(py)),
-                ("lines", self.lines.into_py(py)),
-                ("raw_line", self.raw_line.into_py(py)),
-                ("raw_column", self.raw_column.into_py(py)),
-            ]
-            .into_py_dict_bound(py)
-            .into_py(py)
         }
     }
 }
