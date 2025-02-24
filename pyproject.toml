@@ -80,3 +80,32 @@ exclude-modules = '^libcst\.(testing|tests)'
 
 [tool.ufmt]
 excludes = ["native/", "stubs/"]
+
+[tool.cibuildwheel]
+build-verbosity = 1
+environment = { PATH = "$PATH:$HOME/.cargo/bin" }
+skip = [
+    "pp*",
+    "*-win32",
+    "*-win_arm64",
+    "*-musllinux_i686",
+    "*-musllinux_ppc64le",
+    "*-musllinux_s390x",
+    "*-musllinux_armv7l",
+]
+
+[tool.cibuildwheel.linux]
+archs = ["auto", "aarch64"]
+environment-pass = ["LIBCST_NO_LOCAL_SCHEME", "GITHUB_WORKSPACE"]
+before-all = "curl https://sh.rustup.rs -sSf | env -u CARGO_HOME sh -s -- --default-toolchain stable --profile minimal -y"
+before-build = [
+    "rm -rf native/target",
+    "ln -s /host/${GITHUB_WORKSPACE}/native/target native/target",
+    "[ -d /host/${GITHUB_WORKSPACE}/native/target ] ||  mkdir /host/${GITHUB_WORKSPACE}/native/target",
+]
+
+[tool.cibuildwheel.macos]
+before-all = "rustup target add aarch64-apple-darwin x86_64-apple-darwin"
+
+[tool.cibuildwheel.windows]
+before-all = "rustup target add x86_64-pc-windows-msvc i686-pc-windows-msvc"
