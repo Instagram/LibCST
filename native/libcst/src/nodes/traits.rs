@@ -170,7 +170,7 @@ pub mod py {
                 .map(|x| x.try_into_py(py))
                 .collect::<PyResult<Vec<_>>>()?
                 .into_iter();
-            PyTuple::new(py, converted).unwrap().into_py_any(py)
+            PyTuple::new(py, converted)?.into_py_any(py)
         }
     }
 
