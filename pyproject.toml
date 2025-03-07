@@ -96,6 +96,7 @@ skip = [
 ]
 
 [tool.cibuildwheel.linux]
+environment-pass = ["LIBCST_NO_LOCAL_SCHEME"]
 before-all = "yum install -y libatomic; curl https://sh.rustup.rs -sSf | env -u CARGO_HOME sh -s -- --default-toolchain stable --profile minimal -y"
 
 [tool.cibuildwheel.macos]
