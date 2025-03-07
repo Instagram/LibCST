@@ -1,6 +1,7 @@
 name: build
 on:
   workflow_call:
+  workflow_dispatch:
 
 jobs:
   # Build python wheels
@@ -10,7 +11,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-latest, ubuntu-latest, windows-latest]
+        os: [macos-latest, ubuntu-latest, ubuntu-24.04-arm, windows-latest]
     env:
       SCCACHE_VERSION: 0.2.13
       GITHUB_WORKSPACE: "${{github.workspace}}"
@@ -28,11 +29,6 @@ jobs:
         if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         run: >-
           echo LIBCST_NO_LOCAL_SCHEME=1 >> $GITHUB_ENV
-      - name: Set up QEMU
-        if: runner.os == 'Linux'
-        uses: docker/setup-qemu-action@v3
-        with:
-          platforms: all
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.23.0
       - uses: actions/upload-artifact@v4
