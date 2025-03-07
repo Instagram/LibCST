@@ -83,8 +83,7 @@ excludes = ["native/", "stubs/"]
 
 [tool.cibuildwheel]
 build-verbosity = 1
-environment = { PATH = "$PATH:$HOME/.cargo/bin" }
-environment-pass = ["LIBCST_NO_LOCAL_SCHEME"]
+environment = { PATH = "$PATH:$HOME/.cargo/bin", LIBCST_NO_LOCAL_SCHEME="1" }
 skip = [
     "pp*",
     "*-win32",
