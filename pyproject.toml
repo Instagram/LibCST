@@ -95,14 +95,7 @@ skip = [
 ]
 
 [tool.cibuildwheel.linux]
-archs = ["auto", "aarch64"]
-environment-pass = ["LIBCST_NO_LOCAL_SCHEME", "GITHUB_WORKSPACE"]
 before-all = "yum install -y libatomic; curl https://sh.rustup.rs -sSf | env -u CARGO_HOME sh -s -- --default-toolchain stable --profile minimal -y"
-before-build = [
-    "rm -rf native/target",
-    "ln -s /host/${GITHUB_WORKSPACE}/native/target native/target",
-    "[ -d /host/${GITHUB_WORKSPACE}/native/target ] ||  mkdir /host/${GITHUB_WORKSPACE}/native/target",
-]
 
 [tool.cibuildwheel.macos]
 before-all = "rustup target add aarch64-apple-darwin x86_64-apple-darwin"
