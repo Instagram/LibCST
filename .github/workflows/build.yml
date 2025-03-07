@@ -13,15 +13,7 @@ jobs:
         os: [macos-latest, ubuntu-latest, windows-latest]
     env:
       SCCACHE_VERSION: 0.2.13
-      CIBW_BEFORE_ALL_LINUX: "curl https://sh.rustup.rs -sSf | env -u CARGO_HOME sh -s -- --default-toolchain stable --profile minimal -y"
-      CIBW_BEFORE_BUILD_LINUX: "rm -rf native/target; ln -s /host/${{github.workspace}}/native/target native/target; [ -d /host/${{github.workspace}}/native/target ] ||  mkdir /host/${{github.workspace}}/native/target"
-      CIBW_ENVIRONMENT_LINUX: 'PATH="$PATH:$HOME/.cargo/bin" LIBCST_NO_LOCAL_SCHEME=$LIBCST_NO_LOCAL_SCHEME CARGO_HOME=/host/home/runner/.cargo'
-      CIBW_BEFORE_ALL_MACOS: "rustup target add aarch64-apple-darwin x86_64-apple-darwin"
-      CIBW_BEFORE_ALL_WINDOWS: "rustup target add x86_64-pc-windows-msvc i686-pc-windows-msvc"
-      CIBW_ENVIRONMENT: 'PATH="$PATH:$HOME/.cargo/bin" LIBCST_NO_LOCAL_SCHEME=$LIBCST_NO_LOCAL_SCHEME'
-      CIBW_SKIP: "cp27-* cp34-* cp35-* pp* *-win32 *-win_arm64 *-musllinux_i686 *-musllinux_ppc64le *-musllinux_s390x *-musllinux_armv7l"
-      CIBW_ARCHS_LINUX: auto aarch64
-      CIBW_BUILD_VERBOSITY: 1
+      GITHUB_WORKSPACE: "${{github.workspace}}"
     steps:
       - uses: actions/checkout@v4
         with:
@@ -42,7 +34,7 @@ jobs:
         with:
           platforms: all
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.22.0
+        uses: pypa/cibuildwheel@v2.23.0
       - uses: actions/upload-artifact@v4
         with:
           path: wheelhouse/*.whl
