@@ -22,6 +22,11 @@ dependencies = ["pyyaml>=5.2"]
 
 [project.optional-dependencies]
 dev = [
+    "libcst[dev-without-jupyter]",
+    "jupyter>=1.0.0",
+    "nbsphinx>=0.4.2",
+]
+dev-without-jupyter = [
     "black==24.8.0",
     "coverage[toml]>=4.5.4",
     "build>=0.10.0",
@@ -30,9 +35,7 @@ dev = [
     "Sphinx>=5.1.1",
     "hypothesis>=4.36.0",
     "hypothesmith>=0.0.4",
-    "jupyter>=1.0.0",
     "maturin>=1.7.0,<1.8",
-    "nbsphinx>=0.4.2",
     "prompt-toolkit>=2.0.9",
     "pyre-check==0.9.18; platform_system != 'Windows'",
     "setuptools_scm>=6.0.1",
