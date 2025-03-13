@@ -70,7 +70,7 @@ jobs:
           # Install build-system.requires dependencies
           pip install setuptools setuptools-scm setuptools-rust wheel
           # Jupyter is annoying to install on free-threaded Python
-          pip install -e .[dev-without-jupyter] --no-build-isolation
+          pip install -e .[dev-without-jupyter]
       - name: Native Parser Tests
         # TODO: remove when native modules declare free-threaded support
         env:
