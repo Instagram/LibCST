@@ -1,4 +1,21 @@
-# 1.6.0 - 2024-01-09
+# 1.7.0 - 2025-03-13
+
+## Added
+* add free-threaded CI by @ngoldbaum in https://github.com/Instagram/LibCST/pull/1312
+
+## Updated
+* Remove dependency on `chic` and upgrade `annotate-snippets` by @zanieb in https://github.com/Instagram/LibCST/pull/1293
+* Update for Pyo3 0.23 by @ngoldbaum in https://github.com/Instagram/LibCST/pull/1289
+* Bump PyO3 to 0.23.5 by @mgorny in https://github.com/Instagram/LibCST/pull/1311
+
+## New Contributors
+* @zanieb made their first contribution in https://github.com/Instagram/LibCST/pull/1293
+* @ngoldbaum made their first contribution in https://github.com/Instagram/LibCST/pull/1289
+* @mgorny made their first contribution in https://github.com/Instagram/LibCST/pull/1311
+
+**Full Changelog**: https://github.com/Instagram/LibCST/compare/v1.6.0...v1.7.0
+
+# 1.6.0 - 2025-01-09
 
 ## Fixed
 
