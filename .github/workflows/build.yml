@@ -28,7 +28,7 @@ jobs:
       - name: Set MACOSX_DEPLOYMENT_TARGET for Intel MacOS
         if: matrix.os == 'macos-13'
         run: >-
-          echo MACOSX_DEPLOYMENT_TARGET=10.13 >> $GITHUB_ENV
+          echo MACOSX_DEPLOYMENT_TARGET=10.12 >> $GITHUB_ENV
       - name: Disable scmtools local scheme
         if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         run: >-
