@@ -15,7 +15,6 @@ jobs:
     env:
       SCCACHE_VERSION: 0.2.13
       GITHUB_WORKSPACE: "${{github.workspace}}"
-      MACOSX_DEPLOYMENT_TARGET: "10.12"
     steps:
       - uses: actions/checkout@v4
         with:
@@ -26,6 +25,10 @@ jobs:
           cache: pip
           cache-dependency-path: "pyproject.toml"
           python-version: "3.12"
+      - name: Set MACOSX_DEPLOYMENT_TARGET for Intel MacOS
+        if: matrix.os == 'macos-13'
+        run: >-
+          echo MACOSX_DEPLOYMENT_TARGET=10.13 >> $GITHUB_ENV
       - name: Disable scmtools local scheme
         if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         run: >-
