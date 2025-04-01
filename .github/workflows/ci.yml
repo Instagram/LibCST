@@ -59,8 +59,7 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
-      # TODO: update to tagged release when there is one
-      - uses: actions/setup-python@9e62be81b28222addecf85e47571213eb7680449
+      - uses: actions/setup-python@v5
         with:
           cache: pip
           cache-dependency-path: "pyproject.toml"
@@ -163,8 +162,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
-      # TODO: update to tagged release when there is one
-      - uses: actions/setup-python@9e62be81b28222addecf85e47571213eb7680449
+      - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
       - name: test
