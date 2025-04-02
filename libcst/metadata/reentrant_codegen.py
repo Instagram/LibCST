@@ -8,7 +8,6 @@ from dataclasses import dataclass, field
 from typing import List, Optional, Sequence
 
 from libcst import BaseStatement, CSTNode, Module
-from libcst._add_slots import add_slots
 from libcst._nodes.internal import CodegenState
 from libcst.metadata import BaseMetadataProvider
 
@@ -98,8 +97,7 @@ class CodegenPartial:
         )
 
 
-@add_slots
-@dataclass(frozen=False)
+@dataclass(slots=True, frozen=False)
 class _ReentrantCodegenState(CodegenState):
     provider: BaseMetadataProvider[CodegenPartial]
     encoding: str = "utf-8"

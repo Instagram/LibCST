@@ -7,7 +7,6 @@
 from dataclasses import dataclass
 from typing import Generic, Optional, Sequence, TypeVar, Union
 
-from libcst._add_slots import add_slots
 from libcst._nodes.expression import (
     Annotation,
     Arg,
@@ -32,51 +31,44 @@ from libcst._parser.types.whitespace_state import WhitespaceState
 _T = TypeVar("_T")
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class WithLeadingWhitespace(Generic[_T]):
     value: _T
     whitespace_before: WhitespaceState
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class SimpleStatementPartial:
     body: Sequence[BaseSmallStatement]
     whitespace_before: WhitespaceState
     trailing_whitespace: TrailingWhitespace
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class SlicePartial:
     second_colon: Colon
     step: Optional[BaseExpression]
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class AttributePartial:
     dot: Dot
     attr: Name
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class ArglistPartial:
     args: Sequence[Arg]
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class CallPartial:
     lpar: WithLeadingWhitespace[LeftParen]
     args: Sequence[Arg]
     rpar: RightParen
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class SubscriptPartial:
     slice: Union[Index, Slice, Sequence[SubscriptElement]]
     lbracket: LeftSquareBracket
@@ -84,23 +76,20 @@ class SubscriptPartial:
     whitespace_before: WhitespaceState
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class AnnAssignPartial:
     annotation: Annotation
     equal: Optional[AssignEqual]
     value: Optional[BaseExpression]
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class AugAssignPartial:
     operator: BaseAugOp
     value: BaseExpression
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class AssignPartial:
     equal: AssignEqual
     value: BaseExpression
@@ -110,49 +99,42 @@ class ParamStarPartial:
     pass
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class FuncdefPartial:
     lpar: LeftParen
     params: Parameters
     rpar: RightParen
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class DecoratorPartial:
     decorators: Sequence[Decorator]
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class ImportPartial:
     names: Sequence[ImportAlias]
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class ImportRelativePartial:
     relative: Sequence[Dot]
     module: Optional[Union[Attribute, Name]]
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class FormattedStringConversionPartial:
     value: str
     whitespace_before: WhitespaceState
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class FormattedStringFormatSpecPartial:
     values: Sequence[BaseFormattedStringContent]
     whitespace_before: WhitespaceState
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class ExceptClausePartial:
     leading_lines: Sequence[EmptyLine]
     whitespace_after_except: SimpleWhitespace
