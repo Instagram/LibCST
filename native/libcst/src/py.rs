@@ -6,7 +6,7 @@
 use crate::nodes::traits::py::TryIntoPy;
 use pyo3::prelude::*;
 
-#[pymodule]
+#[pymodule(gil_used = false)]
 #[pyo3(name = "native")]
 pub fn libcst_native(_py: Python, m: &Bound<PyModule>) -> PyResult<()> {
     #[pyfn(m)]
