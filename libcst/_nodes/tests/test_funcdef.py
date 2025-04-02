@@ -1052,7 +1052,9 @@ def _parse_statement_force_38(code: str) -> cst.BaseCompoundStatement:
         code, config=cst.PartialParserConfig(python_version="3.8")
     )
     if not isinstance(statement, cst.BaseCompoundStatement):
-        raise Exception("This function is expecting to parse compound statements only!")
+        raise ValueError(
+            "This function is expecting to parse compound statements only!"
+        )
     return statement
 
 

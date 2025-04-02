@@ -8,7 +8,7 @@ from __future__ import annotations
 import dataclasses
 from typing import List, Sequence
 
-from libcst import CSTNode
+from libcst import CSTLogicError, CSTNode
 from libcst.helpers import filter_node_fields
 
 _DEFAULT_INDENT: str = "  "
@@ -84,7 +84,7 @@ def _node_repr_recursive(  # noqa: C901
                     else:
                         child_tokens.append("[]")
                 else:
-                    raise Exception("Logic error!")
+                    raise CSTLogicError("Logic error!")
 
                 # Handle indentation and trailing comma.
                 split_by_line = "".join(child_tokens).split("\n")
