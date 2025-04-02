@@ -615,7 +615,7 @@ def parallel_exec_transform_with_prettyprint(  # noqa: C901
         # Let's just use a dummy synchronous executor.
         jobs = 1
         pool_impl = DummyExecutor
-    elif getattr(sys, "_is_gil_enabled", lambda: False)():
+    elif not getattr(sys, "_is_gil_enabled", lambda: True)():
         from concurrent.futures import ThreadPoolExecutor
 
         pool_impl = functools.partial(ThreadPoolExecutor, max_workers=jobs)
