@@ -215,11 +215,13 @@ class ExecutionConfig:
 
 
 def _execute_transform(  # noqa: C901
-    transformer: Codemod,
+    codemod_class,
+    codemod_args,
     filename: str,
     config: ExecutionConfig,
-    scratch: Dict[str, object],
 ) -> ExecutionResult:
+    transformer = codemod_class(CodemodContext(), **codemod_args)
+    scratch = transformer.context.scratch
     for pattern in config.blacklist_patterns:
         if re.fullmatch(pattern, filename):
             return ExecutionResult(
@@ -513,7 +515,8 @@ def _execute_transform_wrap(
 
 
 def parallel_exec_transform_with_prettyprint(  # noqa: C901
-    transform: Codemod,
+    codemod_class: Codemod,
+    codemod_args: dict[str, str],
     files: Sequence[str],
     *,
     jobs: Optional[int] = None,
@@ -579,23 +582,19 @@ def parallel_exec_transform_with_prettyprint(  # noqa: C901
 
     if total == 0:
         return ParallelTransformResult(successes=0, failures=0, skips=0, warnings=0)
-
     if repo_root is not None:
         # Make sure if there is a root that we have the absolute path to it.
         repo_root = os.path.abspath(repo_root)
         # Spin up a full repo metadata manager so that we can provide metadata
         # like type inference to individual forked processes.
         print("Calculating full-repo metadata...", file=sys.stderr)
+        dummy_transform = codemod_class(CodemodContext(), **codemod_args)
         metadata_manager = FullRepoManager(
             repo_root,
             files,
-            transform.get_inherited_dependencies(),
+            dummy_transform.get_inherited_dependencies(),
         )
         metadata_manager.resolve_cache()
-        transform.context = replace(
-            transform.context,
-            metadata_manager=metadata_manager,
-        )
     print("Executing codemod...", file=sys.stderr)
 
     config = ExecutionConfig(
@@ -641,10 +640,10 @@ def parallel_exec_transform_with_prettyprint(  # noqa: C901
     with pool_impl() as executor:  # type: ignore
         args = [
             {
-                "transformer": transform,
+                "codemod_class": codemod_class,
+                "codemod_args": codemod_args,
                 "filename": filename,
                 "config": config,
-                "scratch": transform.context.scratch,
             }
             for filename in files
         ]
