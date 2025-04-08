@@ -8,19 +8,30 @@ Provides helpers for CLI interaction.
 """
 
 import difflib
+import functools
 import os.path
 import re
-import functools
 import subprocess
 import sys
 import time
 import traceback
 from concurrent.futures import as_completed, Executor
 from copy import deepcopy
-from dataclasses import dataclass, replace
+from dataclasses import dataclass
 from multiprocessing import cpu_count
 from pathlib import Path
-from typing import Any, AnyStr, cast, Dict, List, Optional, Sequence, Union, Callable
+from typing import (
+    Any,
+    AnyStr,
+    Callable,
+    cast,
+    Dict,
+    List,
+    Optional,
+    Sequence,
+    Type,
+    Union,
+)
 
 from libcst import parse_module, PartialParserConfig
 from libcst.codemod._codemod import Codemod
@@ -215,8 +226,8 @@ class ExecutionConfig:
 
 
 def _execute_transform(  # noqa: C901
-    codemod_class,
-    codemod_args,
+    codemod_class: Type[Codemod],
+    codemod_args: Dict[str, object],
     filename: str,
     config: ExecutionConfig,
 ) -> ExecutionResult:
@@ -515,7 +526,7 @@ def _execute_transform_wrap(
 
 
 def parallel_exec_transform_with_prettyprint(  # noqa: C901
-    codemod_class: Codemod,
+    codemod_class: Type[Codemod],
     codemod_args: dict[str, str],
     files: Sequence[str],
     *,
