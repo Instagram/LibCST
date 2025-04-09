@@ -40,7 +40,7 @@ fn impl_into_py_enum(ast: &DeriveInput, e: &DataEnum) -> TokenStream {
                     Self::#varname { #(#fieldnames,)* .. } => {
                         use pyo3::types::PyAnyMethods;
 
-                        let libcst = pyo3::types::PyModule::import_bound(py, "libcst")?;
+                        let libcst = pyo3::types::PyModule::import(py, "libcst")?;
                         let kwargs = #kwargs_toks ;
                         Ok(libcst
                             .getattr(stringify!(#varname))
@@ -90,7 +90,7 @@ fn impl_into_py_struct(ast: &DeriveInput, e: &DataStruct) -> TokenStream {
         impl#generics crate::nodes::traits::py::TryIntoPy<pyo3::PyObject> for #ident #generics {
             fn try_into_py(self, py: pyo3::Python) -> pyo3::PyResult<pyo3::PyObject> {
                 use pyo3::types::PyAnyMethods;
-                let libcst = pyo3::types::PyModule::import_bound(py, "libcst")?;
+                let libcst = pyo3::types::PyModule::import(py, "libcst")?;
                 let kwargs = #kwargs_toks ;
                 Ok(libcst
                     .getattr(stringify!(#ident))
@@ -165,7 +165,7 @@ fn fields_to_kwargs(fields: &Fields, is_enum: bool) -> quote::__private::TokenSt
         #(#optional_rust_varnames.map(|x| x.try_into_py(py)).transpose()?.map(|x| (stringify!(#optional_py_varnames), x)),)*
     };
     if empty_kwargs {
-        quote! { pyo3::types::PyDict::new_bound(py) }
+        quote! { pyo3::types::PyDict::new(py) }
     } else {
         quote! {
             [ #kwargs_pairs #optional_pairs ]
@@ -173,7 +173,7 @@ fn fields_to_kwargs(fields: &Fields, is_enum: bool) -> quote::__private::TokenSt
                 .filter(|x| x.is_some())
                 .map(|x| x.as_ref().unwrap())
                 .collect::<Vec<_>>()
-                .into_py_dict_bound(py)
+                .into_py_dict(py)?
         }
     }
 }
