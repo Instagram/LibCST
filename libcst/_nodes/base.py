@@ -8,7 +8,7 @@ from copy import deepcopy
 from dataclasses import dataclass, field, fields, replace
 from typing import Any, cast, ClassVar, Dict, List, Mapping, Sequence, TypeVar, Union
 
-from libcst._excep import CSTLogicError
+from libcst import CSTLogicError
 from libcst._flatten_sentinel import FlattenSentinel
 from libcst._nodes.internal import CodegenState
 from libcst._removal_sentinel import RemovalSentinel

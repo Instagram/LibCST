@@ -12,7 +12,7 @@ from tokenize import (
     Intnumber as INTNUMBER_RE,
 )
 
-from libcst._excep import CSTLogicError
+from libcst import CSTLogicError
 from libcst._exceptions import ParserSyntaxError, PartialParserSyntaxError
 from libcst._maybe_sentinel import MaybeSentinel
 from libcst._nodes.expression import (

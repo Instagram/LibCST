@@ -36,7 +36,7 @@ from collections import namedtuple
 from dataclasses import dataclass
 from typing import Dict, Generator, Iterable, Optional, Pattern, Set, Tuple
 
-from libcst._excep import CSTLogicError
+from libcst import CSTLogicError
 from libcst._parser.parso.python.token import PythonTokenTypes
 from libcst._parser.parso.utils import PythonVersionInfo, split_lines
 

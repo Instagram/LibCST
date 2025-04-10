@@ -7,7 +7,7 @@ from typing import Dict, Sequence, Union
 
 import libcst
 import libcst.matchers as m
-from libcst._excep import CSTLogicError
+from libcst import CSTLogicError
 from libcst.codemod import CodemodContext, VisitorBasedCodemodCommand
 from libcst.helpers import insert_header_comments
 

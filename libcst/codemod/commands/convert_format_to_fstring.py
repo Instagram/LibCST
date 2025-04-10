@@ -9,7 +9,7 @@ from typing import Generator, List, Optional, Sequence, Set, Tuple
 
 import libcst as cst
 import libcst.matchers as m
-from libcst._excep import CSTLogicError
+from libcst import CSTLogicError
 from libcst._exceptions import ParserSyntaxError
 from libcst.codemod import (
     CodemodContext,

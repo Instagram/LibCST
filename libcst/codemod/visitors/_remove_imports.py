@@ -6,7 +6,7 @@
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Set, Tuple, Union
 
 import libcst as cst
-from libcst._excep import CSTLogicError
+from libcst import CSTLogicError
 from libcst.codemod._context import CodemodContext
 from libcst.codemod._visitor import ContextAwareTransformer, ContextAwareVisitor
 from libcst.codemod.visitors._gather_unused_imports import GatherUnusedImportsVisitor

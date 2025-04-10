@@ -6,7 +6,7 @@
 
 from typing import Any, List, Optional, Sequence, Union
 
-from libcst._excep import CSTLogicError
+from libcst import CSTLogicError
 from libcst._exceptions import PartialParserSyntaxError
 from libcst._maybe_sentinel import MaybeSentinel
 from libcst._nodes.expression import (
