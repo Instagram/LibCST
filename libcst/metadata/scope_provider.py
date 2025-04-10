@@ -778,7 +778,7 @@ class AnnotationScope(LocalScope):
 # Attribute(value=Name(value="a"), attr=Name(value="b")) -> ("a.b", "a")
 # each string has the corresponding CSTNode attached to it
 def _gen_dotted_names(
-    node: Union[cst.Attribute, cst.Name]
+    node: Union[cst.Attribute, cst.Name],
 ) -> Iterator[Tuple[str, Union[cst.Attribute, cst.Name]]]:
     if isinstance(node, cst.Name):
         yield node.value, node
