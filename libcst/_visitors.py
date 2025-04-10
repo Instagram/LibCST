@@ -21,11 +21,15 @@ if TYPE_CHECKING:
 CSTVisitorT = Union["CSTTransformer", "CSTVisitor"]
 
 cache = threading.local()
+marker = object()
 
 def type_lookup(tp, name, default=None):
     if not hasattr(cache, "_cache"):
         cache._cache = {}
-    return cache._cache.setdefault((tp, name, default), getattr(tp, name, default))
+    value = cache._cache.get((tp, name, default), marker)
+    if value is marker:
+        value = cache._cache.setdefault((tp, name, default), getattr(tp, name, default))
+    return value
 
 
 class CSTTransformer(CSTTypedTransformerFunctions, MetadataDependent):
