@@ -40,12 +40,10 @@ class CodeRange:
     end: CodePosition
 
     @overload
-    def __init__(self, start: CodePosition, end: CodePosition) -> None:
-        ...
+    def __init__(self, start: CodePosition, end: CodePosition) -> None: ...
 
     @overload
-    def __init__(self, start: Tuple[int, int], end: Tuple[int, int]) -> None:
-        ...
+    def __init__(self, start: Tuple[int, int], end: Tuple[int, int]) -> None: ...
 
     def __init__(self, start: _CodePositionT, end: _CodePositionT) -> None:
         if isinstance(start, tuple) and isinstance(end, tuple):

@@ -26,7 +26,7 @@ then edit the produced ``.libcst.codemod.yaml`` file::
     python3 -m libcst.tool initialize .
 
 The file includes provisions for customizing any generated code marker, calling an
-external code formatter such as `black <https://pypi.org/project/black/>`_, blackisting
+external code formatter such as `black <https://pypi.org/project/black/>`_, blacklisting
 patterns of files you never wish to touch and a list of modules that contain valid
 codemods that can be executed. If you want to write and run codemods specific to your
 repository or organization, you can add an in-repo module location to the list of
@@ -135,15 +135,17 @@ replaces any string which matches our string command-line argument with a consta
 It also takes care of adding the import required for the constant to be defined properly.
 
 Cool! Let's look at the command-line help for this codemod. Let's assume you saved it
-as ``constant_folding.py`` inside ``libcst.codemod.commands``. You can get help for the
+as ``constant_folding.py``. You can get help for the
 codemod by running the following command::
 
-    python3 -m libcst.tool codemod constant_folding.ConvertConstantCommand --help
+    python3 -m libcst.tool codemod -x constant_folding.ConvertConstantCommand --help
 
 Notice that along with the default arguments, the ``--string`` and ``--constant``
 arguments are present in the help, and the command-line description has been updated
 with the codemod's description string. You'll notice that the codemod also shows up
 on ``libcst.tool list``.
+
+And ``-x`` flag allows to load any module as a codemod in addition to the standard ones.
 
 ----------------
 Testing Codemods

@@ -48,8 +48,7 @@ class GenCacheMethod(Protocol):
         *,
         timeout: Optional[int] = None,
         use_pyproject_toml: bool = False,
-    ) -> Mapping[str, object]:
-        ...
+    ) -> Mapping[str, object]: ...
 
 
 # We can't use an ABCMeta here, because of metaclass conflicts

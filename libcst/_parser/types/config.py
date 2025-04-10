@@ -27,9 +27,9 @@ except ImportError:
 
 BaseWhitespaceParserConfig = config_mod.BaseWhitespaceParserConfig
 ParserConfig = config_mod.ParserConfig
-parser_config_asdict: Callable[
-    [ParserConfig], Mapping[str, Any]
-] = config_mod.parser_config_asdict
+parser_config_asdict: Callable[[ParserConfig], Mapping[str, Any]] = (
+    config_mod.parser_config_asdict
+)
 
 
 class AutoConfig(Enum):

@@ -10,39 +10,31 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # macos-13 is an intel runner, macos-14 is apple silicon
-        os: [macos-13, macos-14, ubuntu-latest, windows-latest]
+        # macos-13 is an intel runner, macos-latest is apple silicon
+        os: [macos-13, macos-latest, ubuntu-latest, ubuntu-24.04-arm, windows-latest]
     env:
       SCCACHE_VERSION: 0.2.13
-      CIBW_BEFORE_ALL_LINUX: "curl https://sh.rustup.rs -sSf | env -u CARGO_HOME sh -s -- --default-toolchain stable --profile minimal -y"
-      CIBW_BEFORE_BUILD_LINUX: "rm -rf native/target; ln -s /host/${{github.workspace}}/native/target native/target; [ -d /host/${{github.workspace}}/native/target ] ||  mkdir /host/${{github.workspace}}/native/target"
-      CIBW_ENVIRONMENT_LINUX: 'PATH="$PATH:$HOME/.cargo/bin" LIBCST_NO_LOCAL_SCHEME=$LIBCST_NO_LOCAL_SCHEME CARGO_HOME=/host/home/runner/.cargo'
-      CIBW_BEFORE_ALL_MACOS: "rustup target add aarch64-apple-darwin x86_64-apple-darwin"
-      CIBW_BEFORE_ALL_WINDOWS: "rustup target add x86_64-pc-windows-msvc i686-pc-windows-msvc"
-      CIBW_ENVIRONMENT: 'PATH="$PATH:$HOME/.cargo/bin" LIBCST_NO_LOCAL_SCHEME=$LIBCST_NO_LOCAL_SCHEME'
-      CIBW_SKIP: "cp27-* cp34-* cp35-* pp* *-win32 *-win_arm64 *-musllinux_*"
-      CIBW_ARCHS_LINUX: auto aarch64
-      CIBW_BUILD_VERBOSITY: 1
+      GITHUB_WORKSPACE: "${{github.workspace}}"
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          persist-credentials: false
       - uses: actions/setup-python@v5
         with:
           cache: pip
           cache-dependency-path: "pyproject.toml"
           python-version: "3.12"
+      - name: Set MACOSX_DEPLOYMENT_TARGET for Intel MacOS
+        if: matrix.os == 'macos-13'
+        run: >-
+          echo MACOSX_DEPLOYMENT_TARGET=10.12 >> $GITHUB_ENV
       - name: Disable scmtools local scheme
         if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         run: >-
           echo LIBCST_NO_LOCAL_SCHEME=1 >> $GITHUB_ENV
-      - name: Set up QEMU
-        if: runner.os == 'Linux'
-        uses: docker/setup-qemu-action@v3
-        with:
-          platforms: all
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.18.1
+        uses: pypa/cibuildwheel@v2.23.2
       - uses: actions/upload-artifact@v4
         with:
           path: wheelhouse/*.whl

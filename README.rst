@@ -4,7 +4,7 @@
 
 A Concrete Syntax Tree (CST) parser and serializer library for Python
 
-|support-ukraine| |readthedocs-badge| |ci-badge| |codecov-badge| |pypi-badge| |pypi-download| |notebook-badge|
+|support-ukraine| |readthedocs-badge| |ci-badge| |pypi-badge| |pypi-download| |notebook-badge| |types-badge|
 
 .. |support-ukraine| image:: https://img.shields.io/badge/Support-Ukraine-FFD500?style=flat&labelColor=005BBB
    :alt: Support Ukraine - Help Provide Humanitarian Aid to Ukraine.
@@ -17,10 +17,6 @@ A Concrete Syntax Tree (CST) parser and serializer library for Python
 .. |ci-badge| image:: https://github.com/Instagram/LibCST/actions/workflows/build.yml/badge.svg
    :target: https://github.com/Instagram/LibCST/actions/workflows/build.yml?query=branch%3Amain
    :alt: Github Actions
-
-.. |codecov-badge| image:: https://codecov.io/gh/Instagram/LibCST/branch/main/graph/badge.svg
-   :target: https://codecov.io/gh/Instagram/LibCST/branch/main
-   :alt: CodeCov
 
 .. |pypi-badge| image:: https://img.shields.io/pypi/v/libcst.svg
    :target: https://pypi.org/project/libcst
@@ -35,9 +31,13 @@ A Concrete Syntax Tree (CST) parser and serializer library for Python
    :target: https://mybinder.org/v2/gh/Instagram/LibCST/main?filepath=docs%2Fsource%2Ftutorial.ipynb
    :alt: Notebook
 
+.. |types-badge| image:: https://img.shields.io/pypi/types/libcst
+   :target: https://pypi.org/project/libcst
+   :alt: PYPI - Types
+
 .. intro-start
 
-LibCST parses Python 3.0 -> 3.12 source code as a CST tree that keeps
+LibCST parses Python 3.0 -> 3.13 source code as a CST tree that keeps
 all formatting details (comments, whitespaces, parentheses, etc). It's useful for
 building automated refactoring (codemod) applications and linters.
 

@@ -28,6 +28,19 @@ class TestRenameCommand(CodemodTest):
 
         self.assertCodemod(before, after, old_name="foo.bar", new_name="baz.qux")
 
+    def test_rename_to_builtin(self) -> None:
+        before = """
+            from typing import List
+            x: List[int] = []
+        """
+        after = """
+            x: list[int] = []
+        """
+
+        self.assertCodemod(
+            before, after, old_name="typing.List", new_name="builtins.list"
+        )
+
     def test_rename_name_asname(self) -> None:
         before = """
             from foo import bar as bla
@@ -102,6 +115,27 @@ class TestRenameCommand(CodemodTest):
 
             def test() -> None:
                 baz.quux(5)
+        """
+
+        self.assertCodemod(
+            before,
+            after,
+            old_name="foo.qux",
+            new_name="baz.quux",
+        )
+
+    def test_rename_attr_asname_2(self) -> None:
+        before = """
+            import foo.qux as bar
+
+            def test() -> None:
+                bar.z(5)
+        """
+        after = """
+            import baz.quux
+
+            def test() -> None:
+                baz.quux.z(5)
         """
 
         self.assertCodemod(
@@ -361,6 +395,28 @@ class TestRenameCommand(CodemodTest):
             new_name="d.z",
         )
 
+    def test_comma_import(self) -> None:
+        before = """
+            import a, b, c
+
+            class Foo(a.z):
+                bar: b.bar
+                baz: c.baz
+        """
+        after = """
+            import a, b, d
+
+            class Foo(a.z):
+                bar: b.bar
+                baz: d.baz
+        """
+        self.assertCodemod(
+            before,
+            after,
+            old_name="c.baz",
+            new_name="d.baz",
+        )
+
     def test_other_import_froms_untouched(self) -> None:
         before = """
             from a import b, c, d
@@ -382,6 +438,61 @@ class TestRenameCommand(CodemodTest):
             after,
             old_name="a.b",
             new_name="f.b",
+        )
+
+    def test_comma_import_from(self) -> None:
+        before = """
+            from a import b, c, d
+
+            class Foo(b):
+                bar: c.bar
+                baz: d.baz
+        """
+        after = """
+            from a import b, c
+            from f import d
+
+            class Foo(b):
+                bar: c.bar
+                baz: d.baz
+        """
+        self.assertCodemod(
+            before,
+            after,
+            old_name="a.d",
+            new_name="f.d",
+        )
+
+    def test_comma_import_from_parens(self) -> None:
+        before = """
+            from a import (
+                b,
+                c,
+                d,
+            )
+            from x import (y,)
+
+            class Foo(b):
+                bar: c.bar
+                baz: d.baz
+        """
+        after = """
+            from a import (
+                b,
+                c,
+                )
+            from x import (y,)
+            from f import d
+
+            class Foo(b):
+                bar: c.bar
+                baz: d.baz
+        """
+        self.assertCodemod(
+            before,
+            after,
+            old_name="a.d",
+            new_name="f.d",
         )
 
     def test_no_removal_of_import_in_use(self) -> None:
@@ -705,3 +816,72 @@ class TestRenameCommand(CodemodTest):
             old_name="a.b.qux",
             new_name="a:b.qux",
         )
+
+    def test_import_parent_module(self) -> None:
+        before = """
+            import a
+            a.b.c(a.b.c.d)
+        """
+        after = """
+            from z import c
+
+            c(c.d)
+        """
+        self.assertCodemod(before, after, old_name="a.b.c", new_name="z.c")
+
+    def test_import_parent_module_2(self) -> None:
+        before = """
+            import a.b
+            a.b.c.d(a.b.c.d.x)
+        """
+        after = """
+            from z import c
+            
+            c(c.x)
+        """
+        self.assertCodemod(before, after, old_name="a.b.c.d", new_name="z.c")
+
+    def test_import_parent_module_3(self) -> None:
+        before = """
+            import a
+            a.b.c(a.b.c.d)
+        """
+        after = """
+            import z.c
+
+            z.c(z.c.d)
+        """
+        self.assertCodemod(before, after, old_name="a.b.c", new_name="z.c:")
+
+    def test_import_parent_module_asname(self) -> None:
+        before = """
+            import a.b as alias
+            alias.c(alias.c.d)
+        """
+        after = """
+            import z
+            z.c(z.c.d)
+        """
+        self.assertCodemod(before, after, old_name="a.b.c", new_name="z.c")
+
+    def test_push_down_toplevel_names(self) -> None:
+        before = """
+            import foo
+            foo.baz()
+        """
+        after = """
+            import quux.foo
+            quux.foo.baz()
+        """
+        self.assertCodemod(before, after, old_name="foo", new_name="quux.foo")
+
+    def test_push_down_toplevel_names_with_asname(self) -> None:
+        before = """
+            import foo as bar
+            bar.baz()
+        """
+        after = """
+            import quux.foo
+            quux.foo.baz()
+        """
+        self.assertCodemod(before, after, old_name="foo", new_name="quux.foo")

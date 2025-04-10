@@ -18,7 +18,8 @@ pub use statement::{
     MatchPattern, MatchSequence, MatchSequenceElement, MatchSingleton, MatchStar, MatchTuple,
     MatchValue, NameItem, Nonlocal, OrElse, Pass, Raise, Return, SimpleStatementLine,
     SimpleStatementSuite, SmallStatement, StarrableMatchSequenceElement, Statement, Suite, Try,
-    TryStar, While, With, WithItem,
+    TryStar, TypeAlias, TypeParam, TypeParameters, TypeVar, TypeVarLike, TypeVarTuple, While, With,
+    WithItem,
 };
 
 pub(crate) mod expression;

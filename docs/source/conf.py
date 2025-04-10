@@ -196,6 +196,7 @@ intersphinx_mapping = {"python": ("https://docs.python.org/3", None)}
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = True
 
+
 # -- autodoc customization
 def strip_class_signature(app, what, name, obj, options, signature, return_annotation):
     if what == "class":
@@ -218,7 +219,7 @@ def setup(app):
 
 
 nbsphinx_prolog = r"""
-{% set docname = 'docs/source/' + env.doc2path(env.docname, base=None) %}
+{% set docname = 'docs/source/' + env.doc2path(env.docname, base=None)|string%}
 
 .. only:: html
 

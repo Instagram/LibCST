@@ -97,9 +97,11 @@ class ConvertPercentFormatStringCommand(VisitorBasedCodemodCommand):
                 parts.append(cst.FormattedStringText(value=token))
             expressions: List[cst.CSTNode] = list(
                 *itertools.chain(
-                    [elm.value for elm in expr.elements]
-                    if isinstance(expr, cst.Tuple)
-                    else [expr]
+                    (
+                        [elm.value for elm in expr.elements]
+                        if isinstance(expr, cst.Tuple)
+                        else [expr]
+                    )
                     for expr in exprs
                 )
             )

@@ -2524,6 +2524,7 @@ impl<'r, 'a> Inflate<'a> for DeflatedNamedExpr<'r, 'a> {
 #[cfg(feature = "py")]
 mod py {
 
+    use pyo3::types::PyAnyMethods;
     use pyo3::types::PyModule;
 
     use super::*;
@@ -2547,11 +2548,11 @@ mod py {
                     .filter(|x| x.is_some())
                     .map(|x| x.as_ref().unwrap())
                     .collect::<Vec<_>>()
-                    .into_py_dict(py);
+                    .into_py_dict(py)?;
                     Ok(libcst
                         .getattr("Element")
                         .expect("no Element found in libcst")
-                        .call((), Some(kwargs))?
+                        .call((), Some(&kwargs))?
                         .into())
                 }
             }
@@ -2592,11 +2593,11 @@ mod py {
                     .filter(|x| x.is_some())
                     .map(|x| x.as_ref().unwrap())
                     .collect::<Vec<_>>()
-                    .into_py_dict(py);
+                    .into_py_dict(py)?;
                     Ok(libcst
                         .getattr("DictElement")
                         .expect("no Element found in libcst")
-                        .call((), Some(kwargs))?
+                        .call((), Some(&kwargs))?
                         .into())
                 }
             }

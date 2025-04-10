@@ -13,11 +13,12 @@ jobs:
       fail-fast: false
       matrix:
         os: [macos-latest, ubuntu-latest, windows-latest]
-        python-version: ["3.9", "3.10", "3.11", "3.12"]
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          persist-credentials: false
       - uses: actions/setup-python@v5
         with:
           cache: pip
@@ -31,12 +32,61 @@ jobs:
           toolchain: stable
       - name: Build LibCST
         run: hatch -vv env create
-      - name: Tests
+      - name: Native Parser Tests
         run: hatch run test
       - name: Pure Parser Tests
         env:
+          COVERAGE_FILE: .coverage.pure
           LIBCST_PARSER_TYPE: pure
         run: hatch run test
+      - name: Coverage
+        run: |
+          hatch run coverage combine .coverage.pure
+          hatch run coverage report
+
+  # TODO:
+  # merge into regular CI once hatch has support for creating environments on
+  # the free-threaded build: https://github.com/pypa/hatch/issues/1931
+  free-threaded-tests:
+    name: "test (${{ matrix.os }}, 3.13t)"
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, ubuntu-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          cache: pip
+          cache-dependency-path: "pyproject.toml"
+          python-version: '3.13t'
+      - name: Build LibCST
+        run: |
+          # Install build-system.requires dependencies
+          pip install setuptools setuptools-scm setuptools-rust wheel
+          # Jupyter is annoying to install on free-threaded Python
+          pip install -e .[dev-without-jupyter]
+      - name: Native Parser Tests
+        # TODO: remove when native modules declare free-threaded support
+        env:
+          PYTHON_GIL: '0'
+        run: |
+          python -m coverage run -m libcst.tests
+      - name: Pure Parser Tests
+        env:
+          COVERAGE_FILE: .coverage.pure
+          LIBCST_PARSER_TYPE: pure
+        run: |
+          python -m coverage run -m libcst.tests
+      - name: Coverage
+        run: |
+          python -m coverage combine .coverage.pure
+          python -m coverage report
+
 
   # Run linters
   lint:
@@ -45,6 +95,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          persist-credentials: false
       - uses: actions/setup-python@v5
         with:
           cache: pip
@@ -62,6 +113,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          persist-credentials: false
       - uses: actions/setup-python@v5
         with:
           cache: pip
@@ -71,37 +123,6 @@ jobs:
         run: pip install -U hatch
       - run: hatch run typecheck
 
-  # Upload test coverage
-  coverage:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - uses: actions/setup-python@v5
-        with:
-          cache: pip
-          cache-dependency-path: "pyproject.toml"
-          python-version: "3.10"
-      - name: Install hatch
-        run: pip install -U hatch
-      - name: Generate Coverage
-        run: |
-          hatch run coverage run setup.py test
-          hatch run coverage xml -i
-      - uses: codecov/codecov-action@v4
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-        with:
-          files: coverage.xml
-          fail_ci_if_error: true
-          verbose: true
-      - name: Archive Coverage
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage
-          path: coverage.xml
-
   # Build the docs
   docs:
     runs-on: ubuntu-latest
@@ -109,6 +130,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          persist-credentials: false
       - uses: actions/setup-python@v5
         with:
           cache: pip
@@ -116,7 +138,7 @@ jobs:
           python-version: "3.10"
       - name: Install hatch
         run: pip install -U hatch
-      - uses: ts-graphviz/setup-graphviz@v1
+      - uses: ts-graphviz/setup-graphviz@v2
       - run: hatch run docs
       - name: Archive Docs
         uses: actions/upload-artifact@v4
@@ -132,14 +154,17 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: ["3.10", "3.13t"]
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.10"
+          python-version: ${{ matrix.python-version }}
       - name: test
         uses: actions-rs/cargo@v1
         with:
@@ -167,6 +192,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt

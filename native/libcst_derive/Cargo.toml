@@ -1,9 +1,9 @@
 [package]
 name = "libcst_derive"
-version = "1.4.0"
+version = "1.7.0"
 edition = "2018"
 description = "Proc macro helpers for libcst."
-license-file = "LICENSE"
+license = "MIT"
 repository = "https://github.com/Instagram/LibCST"
 documentation = "https://libcst.rtfd.org"
 keywords = ["macros", "python"]

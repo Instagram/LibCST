@@ -3,7 +3,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from typing import Any
+from typing import Any, Callable
 
 import libcst as cst
 from libcst import parse_statement
@@ -129,3 +129,21 @@ class IfTest(CSTNodeTest):
     )
     def test_valid(self, **kwargs: Any) -> None:
         self.validate_node(**kwargs)
+
+    @data_provider(
+        (
+            # Validate whitespace handling
+            (
+                lambda: cst.If(
+                    cst.Name("conditional"),
+                    cst.SimpleStatementSuite((cst.Pass(),)),
+                    whitespace_before_test=cst.SimpleWhitespace(""),
+                ),
+                "Must have at least one space after 'if' keyword.",
+            ),
+        )
+    )
+    def test_invalid(
+        self, get_node: Callable[[], cst.CSTNode], expected_re: str
+    ) -> None:
+        self.assert_invalid(get_node, expected_re)
