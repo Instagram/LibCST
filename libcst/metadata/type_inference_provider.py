@@ -14,6 +14,11 @@ from libcst.metadata.base_provider import BatchableMetadataProvider
 from libcst.metadata.position_provider import PositionProvider
 
 
+class TypeInferenceError(Exception):
+    """An attempt to access inferred type annotation
+    (through Pyre Query API) failed."""
+
+
 class Position(TypedDict):
     line: int
     column: int
@@ -60,17 +65,19 @@ class TypeInferenceProvider(BatchableMetadataProvider[str]):
     ) -> Mapping[str, object]:
         params = ",".join(f"path='{root_path / path}'" for path in paths)
         cmd_args = ["pyre", "--noninteractive", "query", f"types({params})"]
-        try:
-            stdout, stderr, return_code = run_command(cmd_args, timeout=timeout)
-        except subprocess.TimeoutExpired as exc:
-            raise exc
 
-        if return_code != 0:
-            raise Exception(f"stderr:\n {stderr}\nstdout:\n {stdout}")
+        result = subprocess.run(
+            cmd_args, capture_output=True, timeout=timeout, text=True
+        )
+
         try:
-            resp = json.loads(stdout)["response"]
+            result.check_returncode()
+            resp = json.loads(result.stdout)["response"]
         except Exception as e:
-            raise Exception(f"{e}\n\nstderr:\n {stderr}\nstdout:\n {stdout}")
+            raise TypeInferenceError(
+                f"{e}\n\nstderr:\n {result.stderr}\nstdout:\n {result.stdout}"
+            ) from e
+
         return {path: _process_pyre_data(data) for path, data in zip(paths, resp)}
 
     def __init__(self, cache: PyreData) -> None:
@@ -102,13 +109,6 @@ class TypeInferenceProvider(BatchableMetadataProvider[str]):
 
     def visit_Call(self, node: cst.Call) -> Optional[bool]:
         self._parse_metadata(node)
-
-
-def run_command(
-    cmd_args: List[str], timeout: Optional[int] = None
-) -> Tuple[str, str, int]:
-    process = subprocess.run(cmd_args, capture_output=True, timeout=timeout)
-    return process.stdout.decode(), process.stderr.decode(), process.returncode
 
 
 class RawPyreData(TypedDict):

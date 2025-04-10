@@ -4,7 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 from libcst._batched_visitor import BatchableCSTVisitor, visit_batched
-from libcst._exceptions import MetadataException, ParserSyntaxError
+from libcst._exceptions import CSTLogicError, MetadataException, ParserSyntaxError
 from libcst._flatten_sentinel import FlattenSentinel
 from libcst._maybe_sentinel import MaybeSentinel
 from libcst._metadata_dependent import MetadataDependent
@@ -242,6 +242,7 @@ __all__ = [
     "CSTVisitorT",
     "FlattenSentinel",
     "MaybeSentinel",
+    "CSTLogicError",
     "MetadataException",
     "ParserSyntaxError",
     "PartialParserConfig",

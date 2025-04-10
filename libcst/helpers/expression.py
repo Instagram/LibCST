@@ -38,5 +38,5 @@ def get_full_name_for_node_or_raise(node: Union[str, cst.CSTNode]) -> str:
     """
     full_name = get_full_name_for_node(node)
     if full_name is None:
-        raise Exception(f"Not able to parse full name for: {node}")
+        raise ValueError(f"Not able to parse full name for: {node}")
     return full_name

@@ -39,8 +39,8 @@ class ParsoUtilsTest(UnitTest):
             # Invalid line breaks
             ("a\vb", ["a\vb"], False),
             ("a\vb", ["a\vb"], True),
-            ("\x1C", ["\x1C"], False),
-            ("\x1C", ["\x1C"], True),
+            ("\x1c", ["\x1c"], False),
+            ("\x1c", ["\x1c"], True),
         )
     )
     def test_split_lines(self, string, expected_result, keepends):

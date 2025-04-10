@@ -17,6 +17,8 @@ from tokenize import (
 )
 from typing import Callable, Generator, Literal, Optional, Sequence, Union
 
+from libcst import CSTLogicError
+
 from libcst._add_slots import add_slots
 from libcst._maybe_sentinel import MaybeSentinel
 from libcst._nodes.base import CSTCodegenError, CSTNode, CSTValidationError
@@ -666,7 +668,7 @@ class SimpleString(_BasePrefixedString):
         if len(quote) not in {1, 3}:
             # We shouldn't get here due to construction validation logic,
             # but handle the case anyway.
-            raise Exception(f"Invalid string {self.value}")
+            raise CSTLogicError(f"Invalid string {self.value}")
 
         # pyre-ignore We know via the above validation that we will only
         # ever return one of the four string literals.
@@ -1010,7 +1012,7 @@ class ConcatenatedString(BaseString):
         elif isinstance(right, FormattedString):
             rightbytes = "b" in right.prefix
         else:
-            raise Exception("Logic error!")
+            raise CSTLogicError("Logic error!")
         if leftbytes != rightbytes:
             raise CSTValidationError("Cannot concatenate string and bytes.")
 
@@ -1688,7 +1690,7 @@ class Annotation(CSTNode):
             if default_indicator == "->":
                 state.add_token(" ")
         else:
-            raise Exception("Logic error!")
+            raise CSTLogicError("Logic error!")
 
         # Now, output the indicator and the rest of the annotation
         state.add_token(default_indicator)
