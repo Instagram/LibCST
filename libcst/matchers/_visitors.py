@@ -44,6 +44,7 @@ from libcst.matchers._matcher_base import (
     replace,
 )
 from libcst.matchers._return_types import TYPED_FUNCTION_RETURN_MAPPING
+from libcst._visitors import type_lookup
 
 try:
     # PEP 604 unions, in Python 3.10+
@@ -62,7 +63,7 @@ CONCRETE_METHODS: Set[str] = {
 
 def is_property(obj: object, attr_name: str) -> bool:
     """Check if obj.attr is a property without evaluating it."""
-    return isinstance(getattr(type(obj), attr_name, None), property)
+    return isinstance(type_lookup(type(obj), attr_name, None), property)
 
 
 # pyre-ignore We don't care about Any here, its not exposed.
@@ -499,7 +500,7 @@ class MatcherDecoratableTransformer(CSTTransformer):
 
         # Now, evaluate whether this current function has any matchers it requires.
         if not _should_allow_visit(
-            self._matchers, getattr(self, f"visit_{type(node).__name__}", None)
+            self._matchers, type_lookup(self, f"visit_{type(node).__name__}", None)
         ):
             # We shouldn't visit this directly. However, we should continue
             # visiting its children.
@@ -514,7 +515,7 @@ class MatcherDecoratableTransformer(CSTTransformer):
     ) -> Union[CSTNodeT, cst.RemovalSentinel]:
         # First, evaluate whether this current function has a decorator on it.
         if _should_allow_visit(
-            self._matchers, getattr(self, f"leave_{type(original_node).__name__}", None)
+            self._matchers, type_lookup(self, f"leave_{type(original_node).__name__}", None)
         ):
             retval = CSTTransformer.on_leave(self, original_node, updated_node)
         else:
@@ -543,7 +544,7 @@ class MatcherDecoratableTransformer(CSTTransformer):
         # Evaluate whether this current function has a decorator on it.
         if _should_allow_visit(
             self._matchers,
-            getattr(self, f"visit_{type(node).__name__}_{attribute}", None),
+            type_lookup(self, f"visit_{type(node).__name__}_{attribute}", None),
         ):
             # Either the visit_func doesn't exist, we have no matchers, or we passed all
             # matchers. In either case, just call the superclass behavior.
@@ -553,7 +554,7 @@ class MatcherDecoratableTransformer(CSTTransformer):
         # Evaluate whether this current function has a decorator on it.
         if _should_allow_visit(
             self._matchers,
-            getattr(self, f"leave_{type(original_node).__name__}_{attribute}", None),
+            type_lookup(self, f"leave_{type(original_node).__name__}_{attribute}", None),
         ):
             # Either the visit_func doesn't exist, we have no matchers, or we passed all
             # matchers. In either case, just call the superclass behavior.
@@ -711,7 +712,7 @@ class MatcherDecoratableVisitor(CSTVisitor):
 
         # Now, evaluate whether this current function has a decorator on it.
         if not _should_allow_visit(
-            self._matchers, getattr(self, f"visit_{type(node).__name__}", None)
+            self._matchers, type_lookup(self, f"visit_{type(node).__name__}", None)
         ):
             # We shouldn't visit this directly. However, we should continue
             # visiting its children.
@@ -724,7 +725,7 @@ class MatcherDecoratableVisitor(CSTVisitor):
     def on_leave(self, original_node: cst.CSTNode) -> None:
         # First, evaluate whether this current function has a decorator on it.
         if _should_allow_visit(
-            self._matchers, getattr(self, f"leave_{type(original_node).__name__}", None)
+            self._matchers, type_lookup(self, f"leave_{type(original_node).__name__}", None)
         ):
             CSTVisitor.on_leave(self, original_node)
 
@@ -743,7 +744,7 @@ class MatcherDecoratableVisitor(CSTVisitor):
         # Evaluate whether this current function has a decorator on it.
         if _should_allow_visit(
             self._matchers,
-            getattr(self, f"visit_{type(node).__name__}_{attribute}", None),
+            type_lookup(self, f"visit_{type(node).__name__}_{attribute}", None),
         ):
             # Either the visit_func doesn't exist, we have no matchers, or we passed all
             # matchers. In either case, just call the superclass behavior.
@@ -753,7 +754,7 @@ class MatcherDecoratableVisitor(CSTVisitor):
         # Evaluate whether this current function has a decorator on it.
         if _should_allow_visit(
             self._matchers,
-            getattr(self, f"leave_{type(original_node).__name__}_{attribute}", None),
+            type_lookup(self, f"leave_{type(original_node).__name__}_{attribute}", None),
         ):
             # Either the visit_func doesn't exist, we have no matchers, or we passed all
             # matchers. In either case, just call the superclass behavior.

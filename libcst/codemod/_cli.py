@@ -8,22 +8,35 @@ Provides helpers for CLI interaction.
 """
 
 import difflib
+import functools
 import os.path
 import re
 import subprocess
 import sys
 import time
 import traceback
+from concurrent.futures import as_completed, Executor
 from copy import deepcopy
-from dataclasses import dataclass, replace
-from multiprocessing import cpu_count, Pool
+from dataclasses import dataclass
+from multiprocessing import cpu_count
 from pathlib import Path
-from typing import Any, AnyStr, cast, Dict, List, Optional, Sequence, Union
+from typing import (
+    Any,
+    AnyStr,
+    Callable,
+    cast,
+    Dict,
+    List,
+    Optional,
+    Sequence,
+    Type,
+    Union,
+)
 
 from libcst import parse_module, PartialParserConfig
 from libcst.codemod._codemod import Codemod
 from libcst.codemod._context import CodemodContext
-from libcst.codemod._dummy_pool import DummyPool
+from libcst.codemod._dummy_pool import DummyExecutor
 from libcst.codemod._runner import (
     SkipFile,
     SkipReason,
@@ -213,11 +226,13 @@ class ExecutionConfig:
 
 
 def _execute_transform(  # noqa: C901
-    transformer: Codemod,
+    codemod_class: Type[Codemod],
+    codemod_args: Dict[str, object],
     filename: str,
     config: ExecutionConfig,
-    scratch: Dict[str, object],
 ) -> ExecutionResult:
+    transformer = codemod_class(CodemodContext(), **codemod_args)
+    scratch = transformer.context.scratch
     for pattern in config.blacklist_patterns:
         if re.fullmatch(pattern, filename):
             return ExecutionResult(
@@ -511,7 +526,8 @@ def _execute_transform_wrap(
 
 
 def parallel_exec_transform_with_prettyprint(  # noqa: C901
-    transform: Codemod,
+    codemod_class: Type[Codemod],
+    codemod_args: dict[str, str],
     files: Sequence[str],
     *,
     jobs: Optional[int] = None,
@@ -577,23 +593,19 @@ def parallel_exec_transform_with_prettyprint(  # noqa: C901
 
     if total == 0:
         return ParallelTransformResult(successes=0, failures=0, skips=0, warnings=0)
-
     if repo_root is not None:
         # Make sure if there is a root that we have the absolute path to it.
         repo_root = os.path.abspath(repo_root)
         # Spin up a full repo metadata manager so that we can provide metadata
         # like type inference to individual forked processes.
         print("Calculating full-repo metadata...", file=sys.stderr)
+        dummy_transform = codemod_class(CodemodContext(), **codemod_args)
         metadata_manager = FullRepoManager(
             repo_root,
             files,
-            transform.get_inherited_dependencies(),
+            dummy_transform.get_inherited_dependencies(),
         )
         metadata_manager.resolve_cache()
-        transform.context = replace(
-            transform.context,
-            metadata_manager=metadata_manager,
-        )
     print("Executing codemod...", file=sys.stderr)
 
     config = ExecutionConfig(
@@ -607,13 +619,19 @@ def parallel_exec_transform_with_prettyprint(  # noqa: C901
         python_version=python_version,
     )
 
+    pool_impl: Callable[[], Executor]
     if total == 1 or jobs == 1:
         # Simple case, we should not pay for process overhead.
-        # Let's just use a dummy synchronous pool.
+        # Let's just use a dummy synchronous executor.
         jobs = 1
-        pool_impl = DummyPool
+        pool_impl = DummyExecutor
+    elif not getattr(sys, "_is_gil_enabled", lambda: True)():
+        from concurrent.futures import ThreadPoolExecutor
+        pool_impl = functools.partial(ThreadPoolExecutor, max_workers=jobs)
     else:
-        pool_impl = Pool
+        from concurrent.futures import ProcessPoolExecutor
+
+        pool_impl = functools.partial(ProcessPoolExecutor, max_workers=jobs)
         # Warm the parser, pre-fork.
         parse_module(
             "",
@@ -629,20 +647,20 @@ def parallel_exec_transform_with_prettyprint(  # noqa: C901
     warnings: int = 0
     skips: int = 0
 
-    with pool_impl(processes=jobs) as p:  # type: ignore
+    with pool_impl() as executor:  # type: ignore
         args = [
             {
-                "transformer": transform,
+                "codemod_class": codemod_class,
+                "codemod_args": codemod_args,
                 "filename": filename,
                 "config": config,
-                "scratch": transform.context.scratch,
             }
             for filename in files
         ]
         try:
-            for result in p.imap_unordered(
-                _execute_transform_wrap, args, chunksize=chunksize
-            ):
+            futures = [executor.submit(_execute_transform_wrap, arg) for arg in args]
+            for future in as_completed(futures):
+                result = future.result()
                 # Print an execution result, keep track of failures
                 _print_parallel_result(
                     result,
