@@ -9,8 +9,9 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Literal, Optional, Pattern, Sequence, Union
 
-from libcst._add_slots import add_slots
 from libcst import CSTLogicError
+
+from libcst._add_slots import add_slots
 from libcst._maybe_sentinel import MaybeSentinel
 from libcst._nodes.base import CSTNode, CSTValidationError
 from libcst._nodes.expression import (

@@ -6,7 +6,6 @@
 from enum import auto, Enum
 from typing import Any, Callable, final, Optional, Sequence, Tuple
 
-
 from libcst._tabs import expand_tabs
 
 
@@ -19,6 +18,7 @@ class EOFSentinel(Enum):
 
 class CSTLogicError(Exception):
     """General purpose internal error within LibCST itself."""
+
     pass
 
 

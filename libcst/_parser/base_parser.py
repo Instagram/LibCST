@@ -26,11 +26,7 @@
 from dataclasses import dataclass, field
 from typing import Generic, Iterable, List, Sequence, TypeVar, Union
 
-from libcst._exceptions import (
-    EOFSentinel,
-    ParserSyntaxError,
-    PartialParserSyntaxError,
-)
+from libcst._exceptions import EOFSentinel, ParserSyntaxError, PartialParserSyntaxError
 from libcst._parser._parsing_check import get_expected_str
 from libcst._parser.parso.pgen2.generator import DFAState, Grammar, ReservedString
 from libcst._parser.parso.python.token import TokenType
