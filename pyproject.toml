@@ -27,7 +27,7 @@ dev = [
     "nbsphinx>=0.4.2",
 ]
 dev-without-jupyter = [
-    "black==24.8.0",
+    "black==25.1.0",
     "coverage[toml]>=4.5.4",
     "build>=0.10.0",
     "fixit==2.1.0",
