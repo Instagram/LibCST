@@ -800,7 +800,7 @@ class AtLeastN(Generic[_MatcherT], _BaseWildcardNode):
 
 
 def ZeroOrMore(
-    matcher: Union[_MatcherT, DoNotCareSentinel] = DoNotCareSentinel.DEFAULT
+    matcher: Union[_MatcherT, DoNotCareSentinel] = DoNotCareSentinel.DEFAULT,
 ) -> AtLeastN[Union[_MatcherT, DoNotCareSentinel]]:
     """
     Used as a convenience wrapper to :class:`AtLeastN` when ``n`` is equal to ``0``.
@@ -903,7 +903,7 @@ class AtMostN(Generic[_MatcherT], _BaseWildcardNode):
 
 
 def ZeroOrOne(
-    matcher: Union[_MatcherT, DoNotCareSentinel] = DoNotCareSentinel.DEFAULT
+    matcher: Union[_MatcherT, DoNotCareSentinel] = DoNotCareSentinel.DEFAULT,
 ) -> AtMostN[Union[_MatcherT, DoNotCareSentinel]]:
     """
     Used as a convenience wrapper to :class:`AtMostN` when ``n`` is equal to ``1``.
@@ -1017,7 +1017,7 @@ def _matches_zero_nodes(
         MatchIfTrue[libcst.CSTNode],
         _BaseMetadataMatcher,
         DoNotCareSentinel,
-    ]
+    ],
 ) -> bool:
     if isinstance(matcher, AtLeastN) and matcher.n == 0:
         return True
