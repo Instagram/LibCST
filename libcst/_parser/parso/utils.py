@@ -29,9 +29,9 @@ from typing import Optional, Sequence, Tuple, Union
 _NON_LINE_BREAKS = (
     "\v",  # Vertical Tabulation 0xB
     "\f",  # Form Feed 0xC
-    "\x1C",  # File Separator
-    "\x1D",  # Group Separator
-    "\x1E",  # Record Separator
+    "\x1c",  # File Separator
+    "\x1d",  # Group Separator
+    "\x1e",  # Record Separator
     "\x85",  # Next Line (NEL - Equivalent to CR+LF.
     # Used to mark end-of-line on some IBM mainframes.)
     "\u2028",  # Line Separator

@@ -12,7 +12,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-latest, ubuntu-latest, ubuntu-24.04-arm, windows-latest]
+        # macos-13 is an intel runner, macos-latest is apple silicon
+        os: [macos-13, macos-latest, ubuntu-latest, ubuntu-24.04-arm, windows-latest]
     env:
       SCCACHE_VERSION: 0.2.13
       GITHUB_WORKSPACE: "${{github.workspace}}"
@@ -26,12 +27,16 @@ jobs:
           cache: pip
           cache-dependency-path: "pyproject.toml"
           python-version: "3.12"
+      - name: Set MACOSX_DEPLOYMENT_TARGET for Intel MacOS
+        if: matrix.os == 'macos-13'
+        run: >-
+          echo MACOSX_DEPLOYMENT_TARGET=10.12 >> $GITHUB_ENV
       - name: Disable scmtools local scheme
         if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         run: >-
           echo LIBCST_NO_LOCAL_SCHEME=1 >> $GITHUB_ENV
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.23.0
+        uses: pypa/cibuildwheel@v2.23.2
       - uses: actions/upload-artifact@v4
         with:
           path: wheelhouse/*.whl

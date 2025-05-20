@@ -15,7 +15,7 @@ from libcst.metadata import QualifiedNameProvider
 
 
 def leave_import_decorator(
-    method: Callable[..., Union[cst.Import, cst.ImportFrom]]
+    method: Callable[..., Union[cst.Import, cst.ImportFrom]],
 ) -> Callable[..., Union[cst.Import, cst.ImportFrom]]:
     # We want to record any 'as name' that is relevant but only after we leave the corresponding Import/ImportFrom node since
     # we don't want the 'as name' to interfere with children 'Name' and 'Attribute' nodes.

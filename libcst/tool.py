@@ -377,7 +377,10 @@ def _codemod_impl(proc_name: str, command_args: List[str]) -> int:  # noqa: C901
     command_instance = command_class(CodemodContext(), **codemod_args)
 
     # Sepcify target version for black formatter
-    if os.path.basename(config["formatter"][0]) in ("black", "black.exe"):
+    if any(config["formatter"]) and os.path.basename(config["formatter"][0]) in (
+        "black",
+        "black.exe",
+    ):
         parsed_version = parse_version_string(args.python_version)
 
         config["formatter"] = [
