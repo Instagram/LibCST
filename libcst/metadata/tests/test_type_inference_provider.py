@@ -63,17 +63,11 @@ class TypeInferenceProviderTest(UnitTest):
     @classmethod
     def setUpClass(cls) -> None:
         os.chdir(TEST_SUITE_PATH)
-        try:
-            subprocess.run(["pyre", "-n", "start", "--no-watchman"])
-        except subprocess.TimeoutExpired as exc:
-            raise exc
+        subprocess.run(["pyre", "-n", "start", "--no-watchman"])
 
     @classmethod
     def tearDownClass(cls) -> None:
-        try:
-            subprocess.run(["pyre", "-n", "stop"], cwd=TEST_SUITE_PATH)
-        except subprocess.TimeoutExpired as exc:
-            raise exc
+        subprocess.run(["pyre", "-n", "stop"], cwd=TEST_SUITE_PATH)
 
     @data_provider(
         ((TEST_SUITE_PATH / "simple_class.py", TEST_SUITE_PATH / "simple_class.json"),)

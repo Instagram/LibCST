@@ -319,7 +319,7 @@ def validate_grammar() -> None:
             production_name = fn_productions[0].name
             expected_name = f"convert_{production_name}"
             if fn.__name__ != expected_name:
-                raise Exception(
+                raise ValueError(
                     f"The conversion function for '{production_name}' "
                     + f"must be called '{expected_name}', not '{fn.__name__}'."
                 )
@@ -330,7 +330,7 @@ def _get_version_comparison(version: str) -> Tuple[str, PythonVersionInfo]:
         return (version[:2], parse_version_string(version[2:].strip()))
     if version[:1] in (">", "<"):
         return (version[:1], parse_version_string(version[1:].strip()))
-    raise Exception(f"Invalid version comparison specifier '{version}'")
+    raise ValueError(f"Invalid version comparison specifier '{version}'")
 
 
 def _compare_versions(
@@ -350,7 +350,7 @@ def _compare_versions(
         return actual_version > requested_version
     if comparison == "<":
         return actual_version < requested_version
-    raise Exception(f"Invalid version comparison specifier '{comparison}'")
+    raise ValueError(f"Invalid version comparison specifier '{comparison}'")
 
 
 def _should_include(
@@ -405,7 +405,7 @@ def get_nonterminal_conversions(
             if not _should_include_future(fn_production.future, future_imports):
                 continue
             if fn_production.name in conversions:
-                raise Exception(
+                raise ValueError(
                     f"Found duplicate '{fn_production.name}' production in grammar"
                 )
             conversions[fn_production.name] = fn

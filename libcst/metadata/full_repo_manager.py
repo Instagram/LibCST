@@ -85,7 +85,7 @@ class FullRepoManager:
             MetadataWrapper(module, cache=manager.get_cache_for_path("a.py"))
         """
         if path not in self._paths:
-            raise Exception(
+            raise ValueError(
                 "The path needs to be in paths parameter when constructing FullRepoManager for efficient batch processing."
             )
         # Make sure that the cache is available to us. If the user called
