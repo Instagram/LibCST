@@ -90,7 +90,6 @@ environment = { PATH = "$PATH:$HOME/.cargo/bin", LIBCST_NO_LOCAL_SCHEME="1" }
 skip = [
     "pp*",
     "*-win32",
-    "*-win_arm64",
     "*-musllinux_i686",
     "*-musllinux_ppc64le",
     "*-musllinux_s390x",
@@ -105,4 +104,5 @@ before-all = "yum install -y libatomic; curl https://sh.rustup.rs -sSf | env -u 
 before-all = "rustup target add aarch64-apple-darwin x86_64-apple-darwin"
 
 [tool.cibuildwheel.windows]
-before-all = "rustup target add x86_64-pc-windows-msvc i686-pc-windows-msvc"
+archs = ["auto", "ARM64"]
+before-all = "rustup target add x86_64-pc-windows-msvc i686-pc-windows-msvc aarch64-pc-windows-msvc"
