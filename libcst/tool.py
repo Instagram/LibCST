@@ -607,11 +607,16 @@ def _list_impl(proc_name: str, command_args: List[str]) -> int:  # noqa: C901
                 file=sys.stderr,
             )
             continue
+        path = imported_module.__file__
+        if path is None:
+            print(
+                f"Module {module} doesn't have a path, cannot list codemods inside it",
+                file=sys.stderr,
+            )
+            continue
 
         # Grab the path, try to import all of the files inside of it.
-        # pyre-fixme[6]: For 1st argument expected `PathLike[Variable[AnyStr <:
-        #  [str, bytes]]]` but got `Optional[str]`.
-        path = os.path.dirname(os.path.abspath(imported_module.__file__))
+        path = os.path.dirname(os.path.abspath(path))
         for name, imported_module in _recursive_find(path, module):
             for objname in dir(imported_module):
                 try:
@@ -683,7 +688,7 @@ def main(proc_name: str, cli_args: List[str]) -> int:
         "initialize": _initialize_impl,
         "list": _list_impl,
     }
-    return lookup.get(args.action or None, _invalid_command)(proc_name, command_args)
+    return lookup.get(args.action or "", _invalid_command)(proc_name, command_args)
 
 
 if __name__ == "__main__":
