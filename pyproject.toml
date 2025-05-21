@@ -106,3 +106,11 @@ before-all = "rustup target add aarch64-apple-darwin x86_64-apple-darwin"
 
 [tool.cibuildwheel.windows]
 before-all = "rustup target add x86_64-pc-windows-msvc i686-pc-windows-msvc"
+[tool.pyrefly]
+search_path = ["stubs", "."]
+project_includes = ["**/*"]
+project_excludes = [
+    "**/.[!/.]*",
+    "native/**",
+    "setup.py",
+]
