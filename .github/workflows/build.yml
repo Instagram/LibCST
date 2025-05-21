@@ -35,6 +35,7 @@ jobs:
           cache: pip
           cache-dependency-path: "pyproject.toml"
           python-version: "3.12"
+      - uses: dtolnay/rust-toolchain@stable
       - name: Set MACOSX_DEPLOYMENT_TARGET for Intel MacOS
         if: matrix.os == 'macos-13'
         run: >-
