@@ -374,7 +374,6 @@ def _codemod_impl(proc_name: str, command_args: List[str]) -> int:  # noqa: C901
             "unified_diff",
         }
     }
-    command_instance = command_class(CodemodContext(), **codemod_args)
 
     # Sepcify target version for black formatter
     if any(config["formatter"]) and os.path.basename(config["formatter"][0]) in (
@@ -397,6 +396,7 @@ def _codemod_impl(proc_name: str, command_args: List[str]) -> int:  # noqa: C901
 
         print("Codemodding from stdin", file=sys.stderr)
         oldcode = sys.stdin.read()
+        command_instance = command_class(CodemodContext(), **codemod_args)
         newcode = exec_transform_with_prettyprint(
             command_instance,
             oldcode,
@@ -421,7 +421,8 @@ def _codemod_impl(proc_name: str, command_args: List[str]) -> int:  # noqa: C901
     files = gather_files(args.path, include_stubs=args.include_stubs)
     try:
         result = parallel_exec_transform_with_prettyprint(
-            command_instance,
+            command_class,
+            codemod_args,
             files,
             jobs=args.jobs,
             unified_diff=args.unified_diff,

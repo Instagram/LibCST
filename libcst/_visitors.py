@@ -3,6 +3,8 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import threading
+
 from typing import TYPE_CHECKING, Union
 
 from libcst._flatten_sentinel import FlattenSentinel
@@ -17,6 +19,17 @@ if TYPE_CHECKING:
 
 
 CSTVisitorT = Union["CSTTransformer", "CSTVisitor"]
+
+cache = threading.local()
+marker = object()
+
+def type_lookup(tp, name, default=None):
+    if not hasattr(cache, "_cache"):
+        cache._cache = {}
+    value = cache._cache.get((tp, name, default), marker)
+    if value is marker:
+        value = cache._cache.setdefault((tp, name, default), getattr(tp, name, default))
+    return value
 
 
 class CSTTransformer(CSTTypedTransformerFunctions, MetadataDependent):
@@ -39,7 +52,7 @@ class CSTTransformer(CSTTypedTransformerFunctions, MetadataDependent):
         Returns ``True`` if children should be visited, and returns ``False``
         otherwise.
         """
-        visit_func = getattr(self, f"visit_{type(node).__name__}", None)
+        visit_func = type_lookup(self, f"visit_{type(node).__name__}", None)
         if visit_func is not None:
             retval = visit_func(node)
         else:
@@ -66,7 +79,7 @@ class CSTTransformer(CSTTypedTransformerFunctions, MetadataDependent):
         exception if this node is required. As a convenience, you can use
         :func:`RemoveFromParent` as an alias to :attr:`RemovalSentinel.REMOVE`.
         """
-        leave_func = getattr(self, f"leave_{type(original_node).__name__}", None)
+        leave_func = type_lookup(self, f"leave_{type(original_node).__name__}", None)
         if leave_func is not None:
             updated_node = leave_func(original_node, updated_node)
 
@@ -79,7 +92,7 @@ class CSTTransformer(CSTTypedTransformerFunctions, MetadataDependent):
         attributes are visited in the order that they appear in source that this
         node originates from.
         """
-        visit_func = getattr(self, f"visit_{type(node).__name__}_{attribute}", None)
+        visit_func = type_lookup(self, f"visit_{type(node).__name__}_{attribute}", None)
         if visit_func is not None:
             visit_func(node)
 
@@ -92,7 +105,7 @@ class CSTTransformer(CSTTypedTransformerFunctions, MetadataDependent):
         not allow modifications to the tree and is provided solely for state
         management.
         """
-        leave_func = getattr(
+        leave_func = type_lookup(
             self, f"leave_{type(original_node).__name__}_{attribute}", None
         )
         if leave_func is not None:
@@ -118,7 +131,7 @@ class CSTVisitor(CSTTypedVisitorFunctions, MetadataDependent):
         Returns ``True`` if children should be visited, and returns ``False``
         otherwise.
         """
-        visit_func = getattr(self, f"visit_{type(node).__name__}", None)
+        visit_func = type_lookup(self, f"visit_{type(node).__name__}", None)
         if visit_func is not None:
             retval = visit_func(node)
         else:
@@ -132,7 +145,7 @@ class CSTVisitor(CSTTypedVisitorFunctions, MetadataDependent):
         the :func:`~libcst.CSTVisitor.on_visit` function for this node returns
         ``False``, this function will still be called on that node.
         """
-        leave_func = getattr(self, f"leave_{type(original_node).__name__}", None)
+        leave_func = type_lookup(self, f"leave_{type(original_node).__name__}", None)
         if leave_func is not None:
             leave_func(original_node)
 
@@ -143,7 +156,7 @@ class CSTVisitor(CSTTypedVisitorFunctions, MetadataDependent):
         attributes are visited in the order that they appear in source that this
         node originates from.
         """
-        visit_func = getattr(self, f"visit_{type(node).__name__}_{attribute}", None)
+        visit_func = type_lookup(self, f"visit_{type(node).__name__}_{attribute}", None)
         if visit_func is not None:
             visit_func(node)
 
@@ -152,7 +165,7 @@ class CSTVisitor(CSTTypedVisitorFunctions, MetadataDependent):
         Called after a node's child attribute is visited and before we have called
         :func:`~libcst.CSTVisitor.on_leave` on the node.
         """
-        leave_func = getattr(
+        leave_func = type_lookup(
             self, f"leave_{type(original_node).__name__}_{attribute}", None
         )
         if leave_func is not None:

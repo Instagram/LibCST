@@ -60,10 +60,10 @@ class ToolE2ETest(TestCase):
             adir.mkdir()
 
             # Run command
-            command_instance = PrintToPPrintCommand(CodemodContext())
             files = gather_files(".")
             result = parallel_exec_transform_with_prettyprint(
-                command_instance,
+                PrintToPPrintCommand,
+                {},
                 files,
                 format_code=False,
                 hide_progress=True,
