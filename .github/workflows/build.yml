@@ -13,7 +13,15 @@ jobs:
       fail-fast: false
       matrix:
         # macos-13 is an intel runner, macos-latest is apple silicon
-        os: [macos-13, macos-latest, ubuntu-latest, ubuntu-24.04-arm, windows-latest]
+        os:
+          [
+            macos-13,
+            macos-latest,
+            ubuntu-latest,
+            ubuntu-24.04-arm,
+            windows-latest,
+            windows-11-arm,
+          ]
     env:
       SCCACHE_VERSION: 0.2.13
       GITHUB_WORKSPACE: "${{github.workspace}}"
