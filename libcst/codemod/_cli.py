@@ -8,18 +8,19 @@ Provides helpers for CLI interaction.
 """
 
 import difflib
+import functools
 import os.path
 import re
 import subprocess
 import sys
 import time
 import traceback
-from concurrent.futures import as_completed, Executor, ProcessPoolExecutor
+from concurrent.futures import as_completed, Executor
 from copy import deepcopy
 from dataclasses import dataclass, replace
 from multiprocessing import cpu_count
 from pathlib import Path
-from typing import Any, AnyStr, cast, Dict, List, Optional, Sequence, Union
+from typing import Any, AnyStr, Callable, cast, Dict, List, Optional, Sequence, Union
 
 from libcst import parse_module, PartialParserConfig
 from libcst.codemod._codemod import Codemod
@@ -608,14 +609,20 @@ def parallel_exec_transform_with_prettyprint(  # noqa: C901
         python_version=python_version,
     )
 
-    pool_impl: type[Executor]
+    pool_impl: Callable[[], Executor]
     if total == 1 or jobs == 1:
         # Simple case, we should not pay for process overhead.
         # Let's just use a dummy synchronous executor.
         jobs = 1
         pool_impl = DummyExecutor
+    elif getattr(sys, "_is_gil_enabled", lambda: False)():  # pyre-ignore[16]
+        from concurrent.futures import ThreadPoolExecutor
+
+        pool_impl = functools.partial(ThreadPoolExecutor, max_workers=jobs)
     else:
-        pool_impl = ProcessPoolExecutor
+        from concurrent.futures import ProcessPoolExecutor
+
+        pool_impl = functools.partial(ProcessPoolExecutor, max_workers=jobs)
         # Warm the parser, pre-fork.
         parse_module(
             "",
@@ -631,7 +638,7 @@ def parallel_exec_transform_with_prettyprint(  # noqa: C901
     warnings: int = 0
     skips: int = 0
 
-    with pool_impl(max_workers=jobs) as executor:  # type: ignore
+    with pool_impl() as executor:  # type: ignore
         args = [
             {
                 "transformer": transform,
