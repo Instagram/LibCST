@@ -64,6 +64,7 @@ skip_covered = true
 
 [tool.hatch.envs.default]
 features = ["dev"]
+installer = "uv"
 
 [tool.hatch.envs.default.scripts]
 docs = "sphinx-build -ab html docs/source docs/build"
