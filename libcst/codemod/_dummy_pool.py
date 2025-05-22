@@ -22,9 +22,6 @@ class DummyExecutor(Executor):
     Synchronous dummy `concurrent.futures.Executor` analogue.
     """
 
-    def __init__(self, max_workers: Optional[int] = None) -> None:
-        pass
-
     def submit(
         self,
         fn: Callable[Params, Return],
