@@ -1,6 +1,8 @@
 name: build
 on:
   workflow_call:
+  push:
+    branches: [pr1333]
 
 jobs:
   # Build python wheels
