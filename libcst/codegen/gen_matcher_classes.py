@@ -16,6 +16,45 @@ CLASS_RE = r"<class \'(.*?)\'>"
 OPTIONAL_RE = r"typing\.Union\[([^,]*?), NoneType]"
 
 
+def _convert_bit_or_to_union(typecst: cst.BinaryOperation) -> cst.Subscript:
+    """
+    Convert a binary operation with | operators into a Union type.
+    For example, converts `foo | bar | baz` into `typing.Union[foo, bar, baz]`.
+    Special case: converts `foo | None` or `None | foo` into `typing.Optional[foo]`.
+    """
+    # Collect all operands from the binary operation chain
+    operands: List[cst.BaseExpression] = []
+    current: cst.BaseExpression = typecst
+    while isinstance(current, cst.BinaryOperation) and current.operator.deep_equals(
+        cst.BitOr()
+    ):
+        operands.append(current.right)
+        current = current.left
+    operands.append(current)
+    operands.reverse()  # Reverse to get original order
+
+    # Check for Optional case (None in union)
+    none_count = sum(
+        1 for op in operands if isinstance(op, cst.Name) and op.value == "None"
+    )
+    if none_count == 1 and len(operands) == 2:
+        # This is an Optional case - find the non-None operand
+        non_none = next(
+            op
+            for op in operands
+            if not (isinstance(op, cst.Name) and op.value == "None")
+        )
+        return cst.Subscript(
+            cst.Name("Optional"), [cst.SubscriptElement(cst.Index(non_none))]
+        )
+
+    # Regular Union case
+    return cst.Subscript(
+        cst.Name("Union"),
+        [cst.SubscriptElement(cst.Index(operand)) for operand in operands],
+    )
+
+
 class CleanseFullTypeNames(cst.CSTTransformer):
     def leave_Call(
         self, original_node: cst.Call, updated_node: cst.Call
@@ -59,6 +98,13 @@ class CleanseFullTypeNames(cst.CSTTransformer):
                     return cst.RemoveFromParent()
         # Simple trick to kill trailing commas
         return updated_node.with_changes(comma=cst.MaybeSentinel.DEFAULT)
+
+    def leave_BinaryOperation(
+        self, original_node: cst.BinaryOperation, updated_node: cst.BinaryOperation
+    ) -> Union[cst.BinaryOperation, cst.Subscript]:
+        if original_node.operator.deep_equals(cst.BitOr()):
+            return _convert_bit_or_to_union(updated_node)
+        return updated_node
 
 
 class RemoveTypesFromGeneric(cst.CSTTransformer):
@@ -357,7 +403,9 @@ def _get_clean_type_from_subscript(
         elif isinstance(inner_type, (cst.Name, cst.SimpleString)):
             clean_inner_type = _get_clean_type_from_expression(aliases, inner_type)
         else:
-            raise Exception("Logic error, unexpected type in Sequence!")
+            raise Exception(
+                f"Logic error, unexpected type in Sequence: {type(inner_type)}!"
+            )
 
         return _get_wrapped_union_type(
             typecst.deep_replace(inner_type, clean_inner_type),
@@ -391,13 +439,18 @@ def _get_clean_type_and_aliases(
     typecst = typecst.visit(cleanser)
     aliases: List[Alias] = []
 
+    if isinstance(typecst, cst.BinaryOperation) and typecst.operator.deep_equals(
+        cst.BitOr()
+    ):
+        typecst = _convert_bit_or_to_union(typecst)
+
     # Now, convert the type to allow for MetadataMatchType and MatchIfTrue values.
     if isinstance(typecst, cst.Subscript):
         clean_type = _get_clean_type_from_subscript(aliases, typecst)
     elif isinstance(typecst, (cst.Name, cst.SimpleString)):
         clean_type = _get_clean_type_from_expression(aliases, typecst)
     else:
-        raise Exception("Logic error, unexpected top level type!")
+        raise Exception(f"Logic error, unexpected top level type: {type(typecst)}!")
 
     # Now, insert OneOf/AllOf and MatchIfTrue into unions so we can typecheck their usage.
     # This allows us to put OneOf[SomeType] or MatchIfTrue[cst.SomeType] into any
