@@ -16,6 +16,109 @@ CLASS_RE = r"<class \'(.*?)\'>"
 OPTIONAL_RE = r"typing\.Union\[([^,]*?), NoneType]"
 
 
+class NormalizeUnions(cst.CSTTransformer):
+    """
+    Convert a binary operation with | operators into a Union type.
+    For example, converts `foo | bar | baz` into `typing.Union[foo, bar, baz]`.
+    Special case: converts `foo | None` or `None | foo` into `typing.Optional[foo]`.
+    Also flattens nested typing.Union types.
+    """
+
+    def leave_Subscript(
+        self, original_node: cst.Subscript, updated_node: cst.Subscript
+    ) -> cst.Subscript:
+        # Check if this is a typing.Union
+        if (
+            isinstance(updated_node.value, cst.Attribute)
+            and isinstance(updated_node.value.value, cst.Name)
+            and updated_node.value.attr.value == "Union"
+            and updated_node.value.value.value == "typing"
+        ):
+            # Collect all operands from any nested Unions
+            operands: List[cst.BaseExpression] = []
+            for slc in updated_node.slice:
+                if not isinstance(slc.slice, cst.Index):
+                    continue
+                value = slc.slice.value
+                # If this is a nested Union, add its elements
+                if (
+                    isinstance(value, cst.Subscript)
+                    and isinstance(value.value, cst.Attribute)
+                    and isinstance(value.value.value, cst.Name)
+                    and value.value.attr.value == "Union"
+                    and value.value.value.value == "typing"
+                ):
+                    operands.extend(
+                        nested_slc.slice.value
+                        for nested_slc in value.slice
+                        if isinstance(nested_slc.slice, cst.Index)
+                    )
+                else:
+                    operands.append(value)
+
+            # flatten operands into a Union type
+            return cst.Subscript(
+                cst.Attribute(cst.Name("typing"), cst.Name("Union")),
+                [cst.SubscriptElement(cst.Index(operand)) for operand in operands],
+            )
+        return updated_node
+
+    def leave_BinaryOperation(
+        self, original_node: cst.BinaryOperation, updated_node: cst.BinaryOperation
+    ) -> Union[cst.BinaryOperation, cst.Subscript]:
+        if not updated_node.operator.deep_equals(cst.BitOr()):
+            return updated_node
+
+        def flatten_binary_op(node: cst.BaseExpression) -> List[cst.BaseExpression]:
+            """Flatten a binary operation tree into a list of operands."""
+            if not isinstance(node, cst.BinaryOperation):
+                # If it's a Union type, extract its elements
+                if (
+                    isinstance(node, cst.Subscript)
+                    and isinstance(node.value, cst.Attribute)
+                    and isinstance(node.value.value, cst.Name)
+                    and node.value.attr.value == "Union"
+                    and node.value.value.value == "typing"
+                ):
+                    return [
+                        slc.slice.value
+                        for slc in node.slice
+                        if isinstance(slc.slice, cst.Index)
+                    ]
+                return [node]
+            if not node.operator.deep_equals(cst.BitOr()):
+                return [node]
+
+            left_operands = flatten_binary_op(node.left)
+            right_operands = flatten_binary_op(node.right)
+            return left_operands + right_operands
+
+        # Flatten the binary operation tree into a list of operands
+        operands = flatten_binary_op(updated_node)
+
+        # Check for Optional case (None in union)
+        none_count = sum(
+            1 for op in operands if isinstance(op, cst.Name) and op.value == "None"
+        )
+        if none_count == 1 and len(operands) == 2:
+            # This is an Optional case - find the non-None operand
+            non_none = next(
+                op
+                for op in operands
+                if not (isinstance(op, cst.Name) and op.value == "None")
+            )
+            return cst.Subscript(
+                cst.Attribute(cst.Name("typing"), cst.Name("Optional")),
+                [cst.SubscriptElement(cst.Index(non_none))],
+            )
+
+        # Regular Union case
+        return cst.Subscript(
+            cst.Attribute(cst.Name("typing"), cst.Name("Union")),
+            [cst.SubscriptElement(cst.Index(operand)) for operand in operands],
+        )
+
+
 class CleanseFullTypeNames(cst.CSTTransformer):
     def leave_Call(
         self, original_node: cst.Call, updated_node: cst.Call
@@ -357,7 +460,9 @@ def _get_clean_type_from_subscript(
         elif isinstance(inner_type, (cst.Name, cst.SimpleString)):
             clean_inner_type = _get_clean_type_from_expression(aliases, inner_type)
         else:
-            raise Exception("Logic error, unexpected type in Sequence!")
+            raise Exception(
+                f"Logic error, unexpected type in Sequence: {type(inner_type)}!"
+            )
 
         return _get_wrapped_union_type(
             typecst.deep_replace(inner_type, clean_inner_type),
@@ -386,9 +491,12 @@ def _get_clean_type_and_aliases(
     typestr = re.sub(OPTIONAL_RE, r"typing.Optional[\1]", typestr)
 
     # Now, parse the expression with LibCST.
-    cleanser = CleanseFullTypeNames()
+
     typecst = parse_expression(typestr)
-    typecst = typecst.visit(cleanser)
+    typecst = typecst.visit(NormalizeUnions())
+    assert isinstance(typecst, cst.BaseExpression)
+    typecst = typecst.visit(CleanseFullTypeNames())
+    assert isinstance(typecst, cst.BaseExpression)
     aliases: List[Alias] = []
 
     # Now, convert the type to allow for MetadataMatchType and MatchIfTrue values.
@@ -397,7 +505,7 @@ def _get_clean_type_and_aliases(
     elif isinstance(typecst, (cst.Name, cst.SimpleString)):
         clean_type = _get_clean_type_from_expression(aliases, typecst)
     else:
-        raise Exception("Logic error, unexpected top level type!")
+        raise Exception(f"Logic error, unexpected top level type: {type(typecst)}!")
 
     # Now, insert OneOf/AllOf and MatchIfTrue into unions so we can typecheck their usage.
     # This allows us to put OneOf[SomeType] or MatchIfTrue[cst.SomeType] into any

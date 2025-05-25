@@ -5,6 +5,7 @@
 
 import os
 import os.path
+import difflib
 
 import libcst.codegen.gen_matcher_classes as matcher_codegen
 import libcst.codegen.gen_type_mapping as type_codegen
@@ -20,6 +21,14 @@ class TestCodegenClean(UnitTest):
         new_code: str,
         module_name: str,
     ) -> None:
+        if old_code != new_code:
+            diff = difflib.unified_diff(
+                old_code.splitlines(keepends=True),
+                new_code.splitlines(keepends=True),
+                fromfile="old_code",
+                tofile="new_code",
+            )
+            self.fail("".join(diff))
         self.assertTrue(
             old_code == new_code,
             f"{module_name} needs new codegen, see "
@@ -123,3 +132,50 @@ class TestCodegenClean(UnitTest):
 
         # Now that we've done simple codegen, verify that it matches.
         self.assert_code_matches(old_code, new_code, "libcst.matchers._return_types")
+
+    def test_normalize_unions(self) -> None:
+        """
+        Verifies that NormalizeUnions correctly converts binary operations with |
+        into Union types, with special handling for Optional cases.
+        """
+        import libcst as cst
+        from libcst.codegen.gen_matcher_classes import NormalizeUnions
+
+        def assert_transforms_to(input_code: str, expected_code: str) -> None:
+            input_cst = cst.parse_expression(input_code)
+            expected_cst = cst.parse_expression(expected_code)
+
+            result = input_cst.visit(NormalizeUnions())
+            assert isinstance(
+                result, cst.BaseExpression
+            ), f"Expected BaseExpression, got {type(result)}"
+
+            result_code = cst.Module(body=()).code_for_node(result)
+            expected_code_str = cst.Module(body=()).code_for_node(expected_cst)
+
+            self.assertEqual(
+                result_code,
+                expected_code_str,
+                f"Expected {expected_code_str}, got {result_code}",
+            )
+
+        # Test regular union case
+        assert_transforms_to("foo | bar | baz", "typing.Union[foo, bar, baz]")
+
+        # Test Optional case (None on right)
+        assert_transforms_to("foo | None", "typing.Optional[foo]")
+
+        # Test Optional case (None on left)
+        assert_transforms_to("None | foo", "typing.Optional[foo]")
+
+        # Test case with more than 2 operands including None (should remain Union)
+        assert_transforms_to("foo | bar | None", "typing.Union[foo, bar, None]")
+
+        # Flatten existing Union types
+        assert_transforms_to(
+            "typing.Union[foo, typing.Union[bar, baz]]", "typing.Union[foo, bar, baz]"
+        )
+        # Merge two kinds of union types
+        assert_transforms_to(
+            "foo | typing.Union[bar, baz]", "typing.Union[foo, bar, baz]"
+        )
