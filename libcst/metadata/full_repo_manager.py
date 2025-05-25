@@ -5,6 +5,7 @@
 
 
 from pathlib import Path
+from threading import RLock
 from typing import Collection, Dict, List, Mapping, TYPE_CHECKING
 
 import libcst as cst
@@ -38,6 +39,7 @@ class FullRepoManager:
         """
         self.root_path: Path = Path(repo_root_dir)
         self._cache: Dict["ProviderT", Mapping[str, object]] = {}
+        self._cache_lock = RLock()
         self._timeout = timeout
         self._use_pyproject_toml = use_pyproject_toml
         self._providers = providers
@@ -61,7 +63,11 @@ class FullRepoManager:
         forking, it is a good idea to call this explicitly to control when cache
         resolution happens.
         """
-        if not self._cache:
+        if self._cache:
+            return
+        with self._cache_lock:
+            if self._cache:
+                return
             cache: Dict["ProviderT", Mapping[str, object]] = {}
             for provider in self._providers:
                 handler = provider.gen_cache
