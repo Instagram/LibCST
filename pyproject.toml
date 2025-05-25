@@ -98,6 +98,7 @@ skip = [
     "*-musllinux_s390x",
     "*-musllinux_armv7l",
 ]
+enable = ["cpython-freethreading"]
 
 [tool.cibuildwheel.linux]
 environment-pass = ["LIBCST_NO_LOCAL_SCHEME"]
