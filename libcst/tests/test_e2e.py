@@ -48,42 +48,45 @@ def temp_workspace() -> Generator[Path, None, None]:
 
 class ToolE2ETest(TestCase):
     def test_leaky_codemod(self) -> None:
-        with temp_workspace() as tmp:
-            # File to trigger codemod
-            example: Path = tmp / "example.py"
-            example.write_text("""print("Hello")""")
-            # File that should not be modified
-            other = tmp / "other.py"
-            other.touch()
-            # Just a dir named "dir.py", should be ignored
-            adir = tmp / "dir.py"
-            adir.mkdir()
+        for msg, command in [
+            ("instantiated", PrintToPPrintCommand(CodemodContext())),
+            ("class", PrintToPPrintCommand),
+        ]:
+            with self.subTest(msg), temp_workspace() as tmp:
+                # File to trigger codemod
+                example: Path = tmp / "example.py"
+                example.write_text("""print("Hello")""")
+                # File that should not be modified
+                other = tmp / "other.py"
+                other.touch()
+                # Just a dir named "dir.py", should be ignored
+                adir = tmp / "dir.py"
+                adir.mkdir()
 
-            # Run command
-            command_instance = PrintToPPrintCommand(CodemodContext())
-            files = gather_files(".")
-            result = parallel_exec_transform_with_prettyprint(
-                command_instance,
-                files,
-                format_code=False,
-                hide_progress=True,
-            )
+                # Run command
+                files = gather_files(".")
+                result = parallel_exec_transform_with_prettyprint(
+                    command,
+                    files,
+                    format_code=False,
+                    hide_progress=True,
+                )
 
-            print(result)
+                print(result)
 
-            # Check results
-            self.assertEqual(2, result.successes)
-            self.assertEqual(0, result.skips)
-            self.assertEqual(0, result.failures)
-            # Expect example.py to be modified
-            self.assertIn(
-                "from pprint import pprint",
-                example.read_text(),
-                "import missing in example.py",
-            )
-            # Expect other.py to NOT be modified
-            self.assertNotIn(
-                "from pprint import pprint",
-                other.read_text(),
-                "import found in other.py",
-            )
+                # Check results
+                self.assertEqual(2, result.successes)
+                self.assertEqual(0, result.skips)
+                self.assertEqual(0, result.failures)
+                # Expect example.py to be modified
+                self.assertIn(
+                    "from pprint import pprint",
+                    example.read_text(),
+                    "import missing in example.py",
+                )
+                # Expect other.py to NOT be modified
+                self.assertNotIn(
+                    "from pprint import pprint",
+                    other.read_text(),
+                    "import found in other.py",
+                )
