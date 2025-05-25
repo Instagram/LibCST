@@ -631,11 +631,7 @@ def parallel_exec_transform_with_prettyprint(  # noqa: C901
         # Let's just use a dummy synchronous executor.
         jobs = 1
         pool_impl = DummyExecutor
-    elif getattr(sys, "_is_gil_enabled", lambda: False)():  # pyre-ignore[16]
-        from concurrent.futures import ThreadPoolExecutor
-
-        pool_impl = functools.partial(ThreadPoolExecutor, max_workers=jobs)
-    else:
+    elif getattr(sys, "_is_gil_enabled", lambda: True)():  # pyre-ignore[16]
         from concurrent.futures import ProcessPoolExecutor
 
         pool_impl = functools.partial(ProcessPoolExecutor, max_workers=jobs)
@@ -648,6 +644,10 @@ def parallel_exec_transform_with_prettyprint(  # noqa: C901
                 else PartialParserConfig()
             ),
         )
+    else:
+        from concurrent.futures import ThreadPoolExecutor
+
+        pool_impl = functools.partial(ThreadPoolExecutor, max_workers=jobs)
 
     successes: int = 0
     failures: int = 0
