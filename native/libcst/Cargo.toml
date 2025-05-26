@@ -38,7 +38,7 @@ trace = ["peg/trace"]
 paste = "1.0.15"
 pyo3 = { version = "0.25", optional = true }
 thiserror = "2.0.12"
-peg = "0.8.4"
+peg = "0.8.5"
 annotate-snippets = "0.11.5"
 regex = "1.11.1"
 memchr = "2.7.4"
