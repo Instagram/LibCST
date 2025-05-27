@@ -7,5 +7,5 @@
     1. Group related PRs into one bullet point if it makes sense
 2. manually bump versions in `Cargo.toml` files in the repo
 3. make a new PR with the above changes, get it reviewed and landed
-4. make a new release on Github, create a new tag on publish
+4. make a new release on Github, create a new tag on publish, and copy the contents of the changelog entry in there
 5. after publishing, check out the repo at the new tag, and run `cd native; cargo +nightly publish -Z package-workspace -p libcst_derive -p libcst`
