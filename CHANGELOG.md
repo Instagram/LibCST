@@ -6,7 +6,7 @@
   * macos intel by @hadialqattan in https://github.com/Instagram/LibCST/pull/1316
   * windows arm64 by @zsol in https://github.com/Instagram/LibCST/pull/1304
   * 3.13 CPython free-threaded by @zsol in https://github.com/Instagram/LibCST/pull/1333
-  * (only on [test.pypi.org](https://test.pypi.org/project/libcst/#history) 3.14 and 3.14 CPython free-threaded by @amyreese and @zsol in https://github.com/Instagram/LibCST/pull/1345 and https://github.com/Instagram/LibCST/pull/1331
+  * (only on [test.pypi.org](https://test.pypi.org/project/libcst/#history)) 3.14 and 3.14 CPython free-threaded by @amyreese and @zsol in https://github.com/Instagram/LibCST/pull/1345 and https://github.com/Instagram/LibCST/pull/1331
 * Enable support for free-threaded CPython by @zsol in https://github.com/Instagram/LibCST/pull/1295 and https://github.com/Instagram/LibCST/pull/1335
 
 ## Updated
