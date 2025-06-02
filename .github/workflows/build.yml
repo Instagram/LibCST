@@ -44,7 +44,7 @@ jobs:
         if: github.event_name != 'release'
         run: echo CIBW_ENABLE=cpython-prerelease >> $GITHUB_ENV
       - name: Build wheels
-        uses: pypa/cibuildwheel@v3.0.0b2
+        uses: pypa/cibuildwheel@v3.0.0b4
       - uses: actions/upload-artifact@v4
         with:
           path: wheelhouse/*.whl
