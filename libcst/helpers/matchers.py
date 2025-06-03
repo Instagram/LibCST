@@ -27,6 +27,7 @@ def node_to_matcher(
             child = matchers.DoNotCare()
         elif field.default is not MISSING and child == field.default:
             child = matchers.DoNotCare()
+        # pyre-ignore[29]: Union[MISSING_TYPE, ...] is not a function.
         elif field.default_factory is not MISSING and child == field.default_factory():
             child = matchers.DoNotCare()
         elif isinstance(child, (list, tuple)):
