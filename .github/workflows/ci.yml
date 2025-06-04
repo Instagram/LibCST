@@ -138,7 +138,7 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         run: cargo test --manifest-path=native/Cargo.toml --release --no-default-features
       - name: clippy
-        run: cargo clippy --all-targets --all-features
+        run: cargo clippy --manifest-path=native/Cargo.toml --all-targets --all-features
       - name: compile-benchmarks
         run: cargo bench --manifest-path=native/Cargo.toml --no-run
 
