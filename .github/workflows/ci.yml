@@ -40,9 +40,7 @@ jobs:
           cache-dependency-path: "pyproject.toml"
           python-version: ${{ matrix.python-version }}
           allow-prereleases: true
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
+      - uses: dtolnay/rust-toolchain@stable
       - name: Build LibCST
         run: hatch -vv env create
       - name: Native Parser Tests
@@ -135,26 +133,14 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: test
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: --manifest-path=native/Cargo.toml --release
+        run: cargo test --manifest-path=native/Cargo.toml --release
       - name: test without python
         if: matrix.os == 'ubuntu-latest'
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: --manifest-path=native/Cargo.toml --release --no-default-features
+        run: cargo test --manifest-path=native/Cargo.toml --release --no-default-features
       - name: clippy
-        uses: actions-rs/clippy-check@v1
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          args: --manifest-path=native/Cargo.toml --all-features
+        run: cargo clippy --all-targets --all-features
       - name: compile-benchmarks
-        uses: actions-rs/cargo@v1
-        with:
-          command: bench
-          args: --manifest-path=native/Cargo.toml --no-run
+        run: cargo bench --manifest-path=native/Cargo.toml --no-run
 
   rustfmt:
     name: Rustfmt
@@ -167,7 +153,5 @@ jobs:
         with:
           components: rustfmt
       - run: rustup component add rustfmt
-      - uses: actions-rs/cargo@v1
-        with:
-          command: fmt
-          args: --all --manifest-path=native/Cargo.toml -- --check
+      - name: format
+        run: cargo fmt --all --manifest-path=native/Cargo.toml -- --check
