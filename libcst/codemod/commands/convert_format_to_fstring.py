@@ -145,7 +145,7 @@ def _get_tokens(  # noqa: C901
                 in_brackets -= 1
 
                 if in_brackets < 0:
-                    raise Exception("Stray } in format string!")
+                    raise ValueError("Stray } in format string!")
 
                 if in_brackets == 0:
                     field_name, format_spec, conversion = _get_field(format_accum)
