@@ -8,22 +8,25 @@ Provides helpers for CLI interaction.
 """
 
 import difflib
+import functools
 import os.path
 import re
 import subprocess
 import sys
 import time
 import traceback
+from concurrent.futures import as_completed, Executor
 from copy import deepcopy
-from dataclasses import dataclass, replace
-from multiprocessing import cpu_count, Pool
+from dataclasses import dataclass
+from multiprocessing import cpu_count
 from pathlib import Path
-from typing import Any, AnyStr, cast, Dict, List, Optional, Sequence, Union
+from typing import AnyStr, Callable, cast, Dict, List, Optional, Sequence, Type, Union
+from warnings import warn
 
 from libcst import parse_module, PartialParserConfig
 from libcst.codemod._codemod import Codemod
 from libcst.codemod._context import CodemodContext
-from libcst.codemod._dummy_pool import DummyPool
+from libcst.codemod._dummy_pool import DummyExecutor
 from libcst.codemod._runner import (
     SkipFile,
     SkipReason,
@@ -212,12 +215,52 @@ class ExecutionConfig:
     unified_diff: Optional[int] = None
 
 
-def _execute_transform(  # noqa: C901
-    transformer: Codemod,
+def _prepare_context(
+    repo_root: str,
     filename: str,
-    config: ExecutionConfig,
     scratch: Dict[str, object],
-) -> ExecutionResult:
+    repo_manager: Optional[FullRepoManager],
+) -> CodemodContext:
+    # determine the module and package name for this file
+    try:
+        module_name_and_package = calculate_module_and_package(repo_root, filename)
+        mod_name = module_name_and_package.name
+        pkg_name = module_name_and_package.package
+    except ValueError as ex:
+        print(f"Failed to determine module name for {filename}: {ex}", file=sys.stderr)
+        mod_name = None
+        pkg_name = None
+    return CodemodContext(
+        scratch=scratch,
+        filename=filename,
+        full_module_name=mod_name,
+        full_package_name=pkg_name,
+        metadata_manager=repo_manager,
+    )
+
+
+def _instantiate_transformer(
+    transformer: Union[Codemod, Type[Codemod]],
+    repo_root: str,
+    filename: str,
+    original_scratch: Dict[str, object],
+    codemod_kwargs: Dict[str, object],
+    repo_manager: Optional[FullRepoManager],
+) -> Codemod:
+    if isinstance(transformer, type):
+        return transformer(  # type: ignore
+            context=_prepare_context(repo_root, filename, {}, repo_manager),
+            **codemod_kwargs,
+        )
+    transformer.context = _prepare_context(
+        repo_root, filename, deepcopy(original_scratch), repo_manager
+    )
+    return transformer
+
+
+def _check_for_skip(
+    filename: str, config: ExecutionConfig
+) -> Union[ExecutionResult, bytes]:
     for pattern in config.blacklist_patterns:
         if re.fullmatch(pattern, filename):
             return ExecutionResult(
@@ -229,45 +272,46 @@ def _execute_transform(  # noqa: C901
                 ),
             )
 
-    try:
-        with open(filename, "rb") as fp:
-            oldcode = fp.read()
+    with open(filename, "rb") as fp:
+        oldcode = fp.read()
 
-        # Skip generated files
-        if (
-            not config.include_generated
-            and config.generated_code_marker.encode("utf-8") in oldcode
-        ):
-            return ExecutionResult(
-                filename=filename,
-                changed=False,
-                transform_result=TransformSkip(
-                    skip_reason=SkipReason.GENERATED,
-                    skip_description="Generated file.",
-                ),
-            )
-
-        # determine the module and package name for this file
-        try:
-            module_name_and_package = calculate_module_and_package(
-                config.repo_root or ".", filename
-            )
-            mod_name = module_name_and_package.name
-            pkg_name = module_name_and_package.package
-        except ValueError as ex:
-            print(
-                f"Failed to determine module name for {filename}: {ex}", file=sys.stderr
-            )
-            mod_name = None
-            pkg_name = None
-
-        # Apart from metadata_manager, every field of context should be reset per file
-        transformer.context = CodemodContext(
-            scratch=deepcopy(scratch),
+    # Skip generated files
+    if (
+        not config.include_generated
+        and config.generated_code_marker.encode("utf-8") in oldcode
+    ):
+        return ExecutionResult(
             filename=filename,
-            full_module_name=mod_name,
-            full_package_name=pkg_name,
-            metadata_manager=transformer.context.metadata_manager,
+            changed=False,
+            transform_result=TransformSkip(
+                skip_reason=SkipReason.GENERATED,
+                skip_description="Generated file.",
+            ),
+        )
+    return oldcode
+
+
+def _execute_transform(
+    transformer: Union[Codemod, Type[Codemod]],
+    filename: str,
+    config: ExecutionConfig,
+    original_scratch: Dict[str, object],
+    codemod_args: Optional[Dict[str, object]],
+    repo_manager: Optional[FullRepoManager],
+) -> ExecutionResult:
+    warnings: list[str] = []
+    try:
+        oldcode = _check_for_skip(filename, config)
+        if isinstance(oldcode, ExecutionResult):
+            return oldcode
+
+        transformer_instance = _instantiate_transformer(
+            transformer,
+            config.repo_root or ".",
+            filename,
+            original_scratch,
+            codemod_args or {},
+            repo_manager,
         )
 
         # Run the transform, bail if we failed or if we aren't formatting code
@@ -280,55 +324,26 @@ def _execute_transform(  # noqa: C901
                     else PartialParserConfig()
                 ),
             )
-            output_tree = transformer.transform_module(input_tree)
+            output_tree = transformer_instance.transform_module(input_tree)
             newcode = output_tree.bytes
             encoding = output_tree.encoding
-        except KeyboardInterrupt:
-            return ExecutionResult(
-                filename=filename, changed=False, transform_result=TransformExit()
-            )
+            warnings.extend(transformer_instance.context.warnings)
         except SkipFile as ex:
+            warnings.extend(transformer_instance.context.warnings)
             return ExecutionResult(
                 filename=filename,
                 changed=False,
                 transform_result=TransformSkip(
                     skip_reason=SkipReason.OTHER,
                     skip_description=str(ex),
-                    warning_messages=transformer.context.warnings,
-                ),
-            )
-        except Exception as ex:
-            return ExecutionResult(
-                filename=filename,
-                changed=False,
-                transform_result=TransformFailure(
-                    error=ex,
-                    traceback_str=traceback.format_exc(),
-                    warning_messages=transformer.context.warnings,
+                    warning_messages=warnings,
                 ),
             )
 
         # Call formatter if needed, but only if we actually changed something in this
         # file
         if config.format_code and newcode != oldcode:
-            try:
-                newcode = invoke_formatter(config.formatter_args, newcode)
-            except KeyboardInterrupt:
-                return ExecutionResult(
-                    filename=filename,
-                    changed=False,
-                    transform_result=TransformExit(),
-                )
-            except Exception as ex:
-                return ExecutionResult(
-                    filename=filename,
-                    changed=False,
-                    transform_result=TransformFailure(
-                        error=ex,
-                        traceback_str=traceback.format_exc(),
-                        warning_messages=transformer.context.warnings,
-                    ),
-                )
+            newcode = invoke_formatter(config.formatter_args, newcode)
 
         # Format as unified diff if needed, otherwise save it back
         changed = oldcode != newcode
@@ -351,13 +366,14 @@ def _execute_transform(  # noqa: C901
         return ExecutionResult(
             filename=filename,
             changed=changed,
-            transform_result=TransformSuccess(
-                warning_messages=transformer.context.warnings, code=newcode
-            ),
+            transform_result=TransformSuccess(warning_messages=warnings, code=newcode),
         )
+
     except KeyboardInterrupt:
         return ExecutionResult(
-            filename=filename, changed=False, transform_result=TransformExit()
+            filename=filename,
+            changed=False,
+            transform_result=TransformExit(warning_messages=warnings),
         )
     except Exception as ex:
         return ExecutionResult(
@@ -366,7 +382,7 @@ def _execute_transform(  # noqa: C901
             transform_result=TransformFailure(
                 error=ex,
                 traceback_str=traceback.format_exc(),
-                warning_messages=transformer.context.warnings,
+                warning_messages=warnings,
             ),
         )
 
@@ -503,15 +519,8 @@ class ParallelTransformResult:
     skips: int
 
 
-# Unfortunate wrapper required since there is no `istarmap_unordered`...
-def _execute_transform_wrap(
-    job: Dict[str, Any],
-) -> ExecutionResult:
-    return _execute_transform(**job)
-
-
 def parallel_exec_transform_with_prettyprint(  # noqa: C901
-    transform: Codemod,
+    transform: Union[Codemod, Type[Codemod]],
     files: Sequence[str],
     *,
     jobs: Optional[int] = None,
@@ -527,37 +536,48 @@ def parallel_exec_transform_with_prettyprint(  # noqa: C901
     blacklist_patterns: Sequence[str] = (),
     python_version: Optional[str] = None,
     repo_root: Optional[str] = None,
+    codemod_args: Optional[Dict[str, object]] = None,
 ) -> ParallelTransformResult:
     """
-    Given a list of files and an instantiated codemod we should apply to them,
-    fork and apply the codemod in parallel to all of the files, including any
-    configured formatter. The ``jobs`` parameter controls the maximum number of
-    in-flight transforms, and needs to be at least 1. If not included, the number
-    of jobs will automatically be set to the number of CPU cores. If ``unified_diff``
-    is set to a number, changes to files will be printed to stdout with
-    ``unified_diff`` lines of context. If it is set to ``None`` or left out, files
-    themselves will be updated with changes and formatting. If a
-    ``python_version`` is provided, then we will parse each source file using
-    this version. Otherwise, we will use the version of the currently executing python
+    Given a list of files and a codemod we should apply to them, fork and apply the
+    codemod in parallel to all of the files, including any configured formatter. The
+    ``jobs`` parameter controls the maximum number of in-flight transforms, and needs to
+    be at least 1. If not included, the number of jobs will automatically be set to the
+    number of CPU cores. If ``unified_diff`` is set to a number, changes to files will
+    be printed to stdout with ``unified_diff`` lines of context. If it is set to
+    ``None`` or left out, files themselves will be updated with changes and formatting.
+    If a ``python_version`` is provided, then we will parse each source file using this
+    version. Otherwise, we will use the version of the currently executing python
     binary.
 
-    A progress indicator as well as any generated warnings will be printed to stderr.
-    To supress the interactive progress indicator, set ``hide_progress`` to ``True``.
-    Files that include the generated code marker will be skipped unless the
-    ``include_generated`` parameter is set to ``True``. Similarly, files that match
-    a supplied blacklist of regex patterns will be skipped. Warnings for skipping
-    both blacklisted and generated files will be printed to stderr along with
-    warnings generated by the codemod unless ``hide_blacklisted`` and
-    ``hide_generated`` are set to ``True``. Files that were successfully codemodded
-    will not be printed to stderr unless ``show_successes`` is set to ``True``.
+    A progress indicator as well as any generated warnings will be printed to stderr. To
+    supress the interactive progress indicator, set ``hide_progress`` to ``True``. Files
+    that include the generated code marker will be skipped unless the
+    ``include_generated`` parameter is set to ``True``. Similarly, files that match a
+    supplied blacklist of regex patterns will be skipped. Warnings for skipping both
+    blacklisted and generated files will be printed to stderr along with warnings
+    generated by the codemod unless ``hide_blacklisted`` and ``hide_generated`` are set
+    to ``True``. Files that were successfully codemodded will not be printed to stderr
+    unless ``show_successes`` is set to ``True``.
 
-    To make this API possible, we take an instantiated transform. This is due to
-    the fact that lambdas are not pickleable and pickling functions is undefined.
-    This means we're implicitly relying on fork behavior on UNIX-like systems, and
-    this function will not work on Windows systems. To create a command-line utility
-    that runs on Windows, please instead see
-    :func:`~libcst.codemod.exec_transform_with_prettyprint`.
+    We take a :class:`~libcst.codemod._codemod.Codemod` class, or an instantiated
+    :class:`~libcst.codemod._codemod.Codemod`. In the former case, the codemod will be
+    instantiated for each file, with ``codemod_args`` passed in to the constructor.
+    Passing an already instantiated :class:`~libcst.codemod._codemod.Codemod` is
+    deprecated, because it leads to sharing of the
+    :class:`~libcst.codemod._codemod.Codemod` instance across files, which is a common
+    source of hard-to-track-down bugs when the :class:`~libcst.codemod._codemod.Codemod`
+    tracks its state on the instance.
     """
+
+    if isinstance(transform, Codemod):
+        warn(
+            "Passing transformer instances to `parallel_exec_transform_with_prettyprint` "
+            "is deprecated and will break in a future version. "
+            "Please pass the transformer class instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
 
     # Ensure that we have no duplicates, otherwise we might get race conditions
     # on write.
@@ -578,6 +598,7 @@ def parallel_exec_transform_with_prettyprint(  # noqa: C901
     if total == 0:
         return ParallelTransformResult(successes=0, failures=0, skips=0, warnings=0)
 
+    metadata_manager: Optional[FullRepoManager] = None
     if repo_root is not None:
         # Make sure if there is a root that we have the absolute path to it.
         repo_root = os.path.abspath(repo_root)
@@ -590,10 +611,7 @@ def parallel_exec_transform_with_prettyprint(  # noqa: C901
             transform.get_inherited_dependencies(),
         )
         metadata_manager.resolve_cache()
-        transform.context = replace(
-            transform.context,
-            metadata_manager=metadata_manager,
-        )
+
     print("Executing codemod...", file=sys.stderr)
 
     config = ExecutionConfig(
@@ -607,13 +625,16 @@ def parallel_exec_transform_with_prettyprint(  # noqa: C901
         python_version=python_version,
     )
 
+    pool_impl: Callable[[], Executor]
     if total == 1 or jobs == 1:
         # Simple case, we should not pay for process overhead.
-        # Let's just use a dummy synchronous pool.
+        # Let's just use a dummy synchronous executor.
         jobs = 1
-        pool_impl = DummyPool
-    else:
-        pool_impl = Pool
+        pool_impl = DummyExecutor
+    elif getattr(sys, "_is_gil_enabled", lambda: True)():  # pyre-ignore[16]
+        from concurrent.futures import ProcessPoolExecutor
+
+        pool_impl = functools.partial(ProcessPoolExecutor, max_workers=jobs)
         # Warm the parser, pre-fork.
         parse_module(
             "",
@@ -623,26 +644,35 @@ def parallel_exec_transform_with_prettyprint(  # noqa: C901
                 else PartialParserConfig()
             ),
         )
+    else:
+        from concurrent.futures import ThreadPoolExecutor
+
+        pool_impl = functools.partial(ThreadPoolExecutor, max_workers=jobs)
 
     successes: int = 0
     failures: int = 0
     warnings: int = 0
     skips: int = 0
+    original_scratch = (
+        deepcopy(transform.context.scratch) if isinstance(transform, Codemod) else {}
+    )
 
-    with pool_impl(processes=jobs) as p:  # type: ignore
-        args = [
-            {
-                "transformer": transform,
-                "filename": filename,
-                "config": config,
-                "scratch": transform.context.scratch,
-            }
-            for filename in files
-        ]
+    with pool_impl() as executor:  # type: ignore
         try:
-            for result in p.imap_unordered(
-                _execute_transform_wrap, args, chunksize=chunksize
-            ):
+            futures = [
+                executor.submit(
+                    _execute_transform,
+                    transformer=transform,
+                    filename=filename,
+                    config=config,
+                    original_scratch=original_scratch,
+                    codemod_args=codemod_args,
+                    repo_manager=metadata_manager,
+                )
+                for filename in files
+            ]
+            for future in as_completed(futures):
+                result = future.result()
                 # Print an execution result, keep track of failures
                 _print_parallel_result(
                     result,

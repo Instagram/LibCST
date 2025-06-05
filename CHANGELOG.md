@@ -1,3 +1,24 @@
+# 1.8.0 - 2025-05-27
+
+## Added
+* Allow configuring empty formatter lists in codemod CLI by @ngoldbaum in https://github.com/Instagram/LibCST/pull/1319
+* Publish several new binary wheels
+  * macos intel by @hadialqattan in https://github.com/Instagram/LibCST/pull/1316
+  * windows arm64 by @zsol in https://github.com/Instagram/LibCST/pull/1304
+  * 3.13 CPython free-threaded by @zsol in https://github.com/Instagram/LibCST/pull/1333
+  * (only on [test.pypi.org](https://test.pypi.org/project/libcst/#history)) 3.14 and 3.14 CPython free-threaded by @amyreese and @zsol in https://github.com/Instagram/LibCST/pull/1345 and https://github.com/Instagram/LibCST/pull/1331
+* Enable support for free-threaded CPython by @zsol in https://github.com/Instagram/LibCST/pull/1295 and https://github.com/Instagram/LibCST/pull/1335
+
+## Updated
+* update pyo3 to 0.25 by @ngoldbaum in https://github.com/Instagram/LibCST/pull/1324
+* Replace multiprocessing with ProcessPoolExecutor by @zsol in https://github.com/Instagram/LibCST/pull/1294
+* Support pipe syntax for Union types in codegen by @zsol in https://github.com/Instagram/LibCST/pull/1336
+
+## New Contributors
+* @hadialqattan made their first contribution in https://github.com/Instagram/LibCST/pull/1316
+
+**Full Changelog**: https://github.com/Instagram/LibCST/compare/v1.7.0...v1.8.0
+
 # 1.7.0 - 2025-03-13
 
 ## Added

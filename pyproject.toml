@@ -18,33 +18,9 @@ classifiers = [
     "Typing :: Typed",
 ]
 requires-python = ">=3.9"
-dependencies = ["pyyaml>=5.2"]
-
-[project.optional-dependencies]
-dev = [
-    "libcst[dev-without-jupyter]",
-    "jupyter>=1.0.0",
-    "nbsphinx>=0.4.2",
-]
-dev-without-jupyter = [
-    "black==24.8.0",
-    "coverage[toml]>=4.5.4",
-    "build>=0.10.0",
-    "fixit==2.1.0",
-    "flake8==7.1.2",
-    "Sphinx>=5.1.1",
-    "hypothesis>=4.36.0",
-    "hypothesmith>=0.0.4",
-    "maturin>=1.7.0,<1.8",
-    "prompt-toolkit>=2.0.9",
-    "pyre-check==0.9.18; platform_system != 'Windows'",
-    "setuptools_scm>=6.0.1",
-    "sphinx-rtd-theme>=0.4.3",
-    "ufmt==2.8.0",
-    "usort==1.0.8.post1",
-    "setuptools-rust>=1.5.2",
-    "slotscheck>=0.7.1",
-    "jinja2==3.1.5",
+dependencies = [
+    "pyyaml>=5.2; python_version < '3.13'",
+    "pyyaml-ft; python_version >= '3.13'",
 ]
 
 [project.urls]
@@ -63,10 +39,26 @@ show_missing = true
 skip_covered = true
 
 [tool.hatch.envs.default]
-features = ["dev"]
+installer = "uv"
+dependencies = [
+    "black==25.1.0",
+    "coverage[toml]>=4.5.4",
+    "build>=0.10.0",
+    "fixit==2.1.0",
+    "flake8==7.2.0",
+    "hypothesis>=4.36.0",
+    "hypothesmith>=0.0.4",
+    "maturin>=1.7.0,<1.8",
+    "prompt-toolkit>=2.0.9",
+    "pyre-check==0.9.18; platform_system != 'Windows'",
+    "setuptools_scm>=6.0.1",
+    "ufmt==2.8.0",
+    "usort==1.0.8.post1",
+    "setuptools-rust>=1.5.2",
+    "slotscheck>=0.7.1",
+]
 
 [tool.hatch.envs.default.scripts]
-docs = "sphinx-build -ab html docs/source docs/build"
 fixtures = ["python scripts/regenerate-fixtures.py", "git diff --exit-code"]
 format = "ufmt format libcst scripts"
 lint = [
@@ -77,6 +69,17 @@ lint = [
 ]
 test = ["python --version", "python -m coverage run -m libcst.tests"]
 typecheck = ["pyre --version", "pyre check"]
+
+[tool.hatch.envs.docs]
+extra-dependencies = [
+    "Sphinx>=5.1.1",
+    "sphinx-rtd-theme>=0.4.3",
+    "jupyter>=1.0.0",
+    "nbsphinx>=0.4.2",
+    "jinja2==3.1.6",
+]
+[tool.hatch.envs.docs.scripts]
+docs = "sphinx-build -ab html docs/source docs/build"
 
 [tool.slotscheck]
 exclude-modules = '^libcst\.(testing|tests)'
@@ -90,12 +93,12 @@ environment = { PATH = "$PATH:$HOME/.cargo/bin", LIBCST_NO_LOCAL_SCHEME="1" }
 skip = [
     "pp*",
     "*-win32",
-    "*-win_arm64",
     "*-musllinux_i686",
     "*-musllinux_ppc64le",
     "*-musllinux_s390x",
     "*-musllinux_armv7l",
 ]
+enable = ["cpython-freethreading"]
 
 [tool.cibuildwheel.linux]
 environment-pass = ["LIBCST_NO_LOCAL_SCHEME"]
@@ -105,4 +108,4 @@ before-all = "yum install -y libatomic; curl https://sh.rustup.rs -sSf | env -u 
 before-all = "rustup target add aarch64-apple-darwin x86_64-apple-darwin"
 
 [tool.cibuildwheel.windows]
-before-all = "rustup target add x86_64-pc-windows-msvc i686-pc-windows-msvc"
+before-all = "rustup target add x86_64-pc-windows-msvc i686-pc-windows-msvc aarch64-pc-windows-msvc"

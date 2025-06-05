@@ -44,7 +44,7 @@ class TestCodemodCLI(UnitTest):
             )
         else:
             self.assertIn(
-                "error: cannot format -: Cannot parse: 13:10:     async with AsyncExitStack() as stack:",
+                "error: cannot format -: Cannot parse for target version Python 3.6: 13:10:     async with AsyncExitStack() as stack:",
                 rlt.stderr.decode("utf-8"),
             )
 

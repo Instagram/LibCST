@@ -6,6 +6,8 @@ on:
       - main
   pull_request:
 
+permissions: {}
+
 jobs:
   test:
     runs-on: ${{ matrix.os }}
@@ -13,8 +15,21 @@ jobs:
       fail-fast: false
       matrix:
         os: [macos-latest, ubuntu-latest, windows-latest]
-        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+        python-version:
+          - "3.9"
+          - "3.10"
+          - "3.11"
+          - "3.12"
+          - "3.13"
+          - "3.13t"
+          - "3.14"
+          - "3.14t"
     steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+      - name: Install hatch
+        run: pip install -U hatch
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
@@ -24,12 +39,8 @@ jobs:
           cache: pip
           cache-dependency-path: "pyproject.toml"
           python-version: ${{ matrix.python-version }}
-      - name: Install hatch
-        run: |
-          pip install -U hatch
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
+          allow-prereleases: true
+      - uses: dtolnay/rust-toolchain@stable
       - name: Build LibCST
         run: hatch -vv env create
       - name: Native Parser Tests
@@ -43,50 +54,6 @@ jobs:
         run: |
           hatch run coverage combine .coverage.pure
           hatch run coverage report
-
-  # TODO:
-  # merge into regular CI once hatch has support for creating environments on
-  # the free-threaded build: https://github.com/pypa/hatch/issues/1931
-  free-threaded-tests:
-    name: "test (${{ matrix.os }}, 3.13t)"
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [macos-latest, ubuntu-latest, windows-latest]
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          persist-credentials: false
-      - uses: actions/setup-python@v5
-        with:
-          cache: pip
-          cache-dependency-path: "pyproject.toml"
-          python-version: '3.13t'
-      - name: Build LibCST
-        run: |
-          # Install build-system.requires dependencies
-          pip install setuptools setuptools-scm setuptools-rust wheel
-          # Jupyter is annoying to install on free-threaded Python
-          pip install -e .[dev-without-jupyter]
-      - name: Native Parser Tests
-        # TODO: remove when native modules declare free-threaded support
-        env:
-          PYTHON_GIL: '0'
-        run: |
-          python -m coverage run -m libcst.tests
-      - name: Pure Parser Tests
-        env:
-          COVERAGE_FILE: .coverage.pure
-          LIBCST_PARSER_TYPE: pure
-        run: |
-          python -m coverage run -m libcst.tests
-      - name: Coverage
-        run: |
-          python -m coverage combine .coverage.pure
-          python -m coverage report
-
 
   # Run linters
   lint:
@@ -139,7 +106,7 @@ jobs:
       - name: Install hatch
         run: pip install -U hatch
       - uses: ts-graphviz/setup-graphviz@v2
-      - run: hatch run docs
+      - run: hatch run docs:docs
       - name: Archive Docs
         uses: actions/upload-artifact@v4
         with:
@@ -166,26 +133,14 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: test
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: --manifest-path=native/Cargo.toml --release
+        run: cargo test --manifest-path=native/Cargo.toml --release
       - name: test without python
         if: matrix.os == 'ubuntu-latest'
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: --manifest-path=native/Cargo.toml --release --no-default-features
+        run: cargo test --manifest-path=native/Cargo.toml --release --no-default-features
       - name: clippy
-        uses: actions-rs/clippy-check@v1
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          args: --manifest-path=native/Cargo.toml --all-features
+        run: cargo clippy --manifest-path=native/Cargo.toml --all-targets --all-features
       - name: compile-benchmarks
-        uses: actions-rs/cargo@v1
-        with:
-          command: bench
-          args: --manifest-path=native/Cargo.toml --no-run
+        run: cargo bench --manifest-path=native/Cargo.toml --no-run
 
   rustfmt:
     name: Rustfmt
@@ -198,7 +153,5 @@ jobs:
         with:
           components: rustfmt
       - run: rustup component add rustfmt
-      - uses: actions-rs/cargo@v1
-        with:
-          command: fmt
-          args: --all --manifest-path=native/Cargo.toml -- --check
+      - name: format
+        run: cargo fmt --all --manifest-path=native/Cargo.toml -- --check
