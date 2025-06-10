@@ -27,33 +27,30 @@ jobs:
     steps:
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.10"
-      - name: Install hatch
-        run: pip install -U hatch
+          python-version: ${{ matrix.python-version }}
+          allow-prereleases: true
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "0.6.3"
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-python@v5
-        with:
-          cache: pip
-          cache-dependency-path: "pyproject.toml"
-          python-version: ${{ matrix.python-version }}
-          allow-prereleases: true
       - uses: dtolnay/rust-toolchain@stable
       - name: Build LibCST
-        run: hatch -vv env create
+        run: uv sync --locked --dev
       - name: Native Parser Tests
-        run: hatch run test
+        run: uv run poe test
       - name: Pure Parser Tests
         env:
           COVERAGE_FILE: .coverage.pure
           LIBCST_PARSER_TYPE: pure
-        run: hatch run test
+        run: uv run poe test
       - name: Coverage
         run: |
-          hatch run coverage combine .coverage.pure
-          hatch run coverage report
+          uv run coverage combine .coverage.pure
+          uv run coverage report
 
   # Run linters
   lint:
@@ -63,15 +60,13 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-python@v5
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
         with:
-          cache: pip
-          cache-dependency-path: "pyproject.toml"
+          version: "0.6.3"
           python-version: "3.10"
-      - name: Install hatch
-        run: pip install -U hatch
-      - run: hatch run lint
-      - run: hatch run fixtures
+      - run: uv run poe lint
+      - run: uv run poe fixtures
 
   # Run pyre typechecker
   typecheck:
@@ -81,14 +76,12 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-python@v5
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
         with:
-          cache: pip
-          cache-dependency-path: "pyproject.toml"
+          version: "0.6.3"
           python-version: "3.10"
-      - name: Install hatch
-        run: pip install -U hatch
-      - run: hatch run typecheck
+      - run: uv run poe typecheck
 
   # Build the docs
   docs:
@@ -103,10 +96,12 @@ jobs:
           cache: pip
           cache-dependency-path: "pyproject.toml"
           python-version: "3.10"
-      - name: Install hatch
-        run: pip install -U hatch
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "0.6.3"
       - uses: ts-graphviz/setup-graphviz@v2
-      - run: hatch run docs:docs
+      - run: uv run --group docs poe docs
       - name: Archive Docs
         uses: actions/upload-artifact@v4
         with:
