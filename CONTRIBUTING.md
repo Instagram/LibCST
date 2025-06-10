@@ -11,7 +11,7 @@ We actively welcome your pull requests.
 
 ### Setup Your Environment
 
-1. Install a [Rust toolchain](https://rustup.rs) and [hatch](https://hatch.pypa.io)
+1. Install a [Rust toolchain](https://rustup.rs) and [uv](https://docs.astral.sh/uv/)
 2. Fork the repo on your side
 3. Clone the repo
    > git clone [your fork.git] libcst  
@@ -19,7 +19,7 @@ We actively welcome your pull requests.
 4. Sync with the main libcst version package
    > git fetch --tags https://github.com/instagram/libcst
 5. Setup the env
-   > hatch env create
+   > uv sync
 
 You are now ready to create your own branch from main, and contribute.
 Please provide tests (using unittest), and update the documentation (both docstrings
@@ -28,13 +28,13 @@ and sphinx doc), if applicable.
 ### Before Submitting Your Pull Request
 
 1. Format your code
-   > hatch run format
+   > uv run poe format
 2. Run the type checker
-   > hatch run typecheck
+   > uv run poe typecheck
 3. Test your changes
-   > hatch run test
+   > uv run poe test
 4. Check linters
-   > hatch run lint
+   > uv run poe lint
 
 ## Contributor License Agreement ("CLA")
 In order to accept your pull request, we need you to submit a CLA. You only need
