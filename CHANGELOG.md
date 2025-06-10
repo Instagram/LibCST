@@ -1,3 +1,17 @@
+# 1.8.1 - 2025-06-10
+
+## Added
+* add helper to convert nodes to matchers by @zsol in https://github.com/Instagram/LibCST/pull/1351
+
+## Updated
+* Avoid raising bare Exception by @zaicruvoir1rominet in https://github.com/Instagram/LibCST/pull/1168
+* Upgrade PyYAML-ft version and use new module name by @lysnikolaou in https://github.com/Instagram/LibCST/pull/1353
+
+## New Contributors
+* @lysnikolaou made their first contribution in https://github.com/Instagram/LibCST/pull/1353
+
+**Full Changelog**: https://github.com/Instagram/LibCST/compare/v1.8.0...v1.8.1
+
 # 1.8.0 - 2025-05-27
 
 ## Added
