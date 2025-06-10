@@ -8,7 +8,7 @@ from dataclasses import dataclass, fields
 from typing import Generator, List, Optional, Sequence, Set, Tuple, Type, Union
 
 import libcst as cst
-from libcst import ensure_type, parse_expression
+from libcst import CSTLogicError, ensure_type, parse_expression
 from libcst.codegen.gather import all_libcst_nodes, typeclasses
 
 CST_DIR: Set[str] = set(dir(cst))
@@ -283,9 +283,9 @@ class AddWildcardsToSequenceUnions(cst.CSTTransformer):
                 # type blocks, even for sequence types.
                 return
             if len(node.slice) != 1:
-                raise Exception(
+                raise ValueError(
                     "Unexpected number of sequence elements inside Sequence type "
-                    + "annotation!"
+                    "annotation!"
                 )
             nodeslice = node.slice[0].slice
             if isinstance(nodeslice, cst.Index):
@@ -449,10 +449,14 @@ def _get_clean_type_from_subscript(
     if typecst.value.deep_equals(cst.Name("Sequence")):
         # Lets attempt to widen the sequence type and alias it.
         if len(typecst.slice) != 1:
-            raise Exception("Logic error, Sequence shouldn't have more than one param!")
+            raise CSTLogicError(
+                "Logic error, Sequence shouldn't have more than one param!"
+            )
         inner_type = typecst.slice[0].slice
         if not isinstance(inner_type, cst.Index):
-            raise Exception("Logic error, expecting Index for only Sequence element!")
+            raise CSTLogicError(
+                "Logic error, expecting Index for only Sequence element!"
+            )
         inner_type = inner_type.value
 
         if isinstance(inner_type, cst.Subscript):
@@ -460,7 +464,7 @@ def _get_clean_type_from_subscript(
         elif isinstance(inner_type, (cst.Name, cst.SimpleString)):
             clean_inner_type = _get_clean_type_from_expression(aliases, inner_type)
         else:
-            raise Exception(
+            raise CSTLogicError(
                 f"Logic error, unexpected type in Sequence: {type(inner_type)}!"
             )
 
@@ -505,7 +509,7 @@ def _get_clean_type_and_aliases(
     elif isinstance(typecst, (cst.Name, cst.SimpleString)):
         clean_type = _get_clean_type_from_expression(aliases, typecst)
     else:
-        raise Exception(f"Logic error, unexpected top level type: {type(typecst)}!")
+        raise CSTLogicError(f"Logic error, unexpected top level type: {type(typecst)}!")
 
     # Now, insert OneOf/AllOf and MatchIfTrue into unions so we can typecheck their usage.
     # This allows us to put OneOf[SomeType] or MatchIfTrue[cst.SomeType] into any

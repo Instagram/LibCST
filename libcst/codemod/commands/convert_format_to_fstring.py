@@ -9,6 +9,8 @@ from typing import Generator, List, Optional, Sequence, Set, Tuple
 
 import libcst as cst
 import libcst.matchers as m
+from libcst import CSTLogicError
+from libcst._exceptions import ParserSyntaxError
 from libcst.codemod import (
     CodemodContext,
     ContextAwareTransformer,
@@ -23,7 +25,7 @@ def _get_lhs(field: cst.BaseExpression) -> cst.BaseExpression:
     elif isinstance(field, (cst.Attribute, cst.Subscript)):
         return _get_lhs(field.value)
     else:
-        raise Exception("Unsupported node type!")
+        raise TypeError("Unsupported node type!")
 
 
 def _find_expr_from_field_name(
@@ -48,7 +50,7 @@ def _find_expr_from_field_name(
     if isinstance(lhs, cst.Integer):
         index = int(lhs.value)
         if index < 0 or index >= len(args):
-            raise Exception(f"Logic error, arg sequence {index} out of bounds!")
+            raise CSTLogicError(f"Logic error, arg sequence {index} out of bounds!")
     elif isinstance(lhs, cst.Name):
         for i, arg in enumerate(args):
             kw = arg.keyword
@@ -58,10 +60,12 @@ def _find_expr_from_field_name(
                 index = i
                 break
         if index is None:
-            raise Exception(f"Logic error, arg name {lhs.value} out of bounds!")
+            raise CSTLogicError(f"Logic error, arg name {lhs.value} out of bounds!")
 
     if index is None:
-        raise Exception(f"Logic error, unsupported fieldname expression {fieldname}!")
+        raise CSTLogicError(
+            f"Logic error, unsupported fieldname expression {fieldname}!"
+        )
 
     # Format it!
     return field_expr.deep_replace(lhs, args[index].value)
@@ -141,7 +145,7 @@ def _get_tokens(  # noqa: C901
                 in_brackets -= 1
 
                 if in_brackets < 0:
-                    raise Exception("Stray } in format string!")
+                    raise ValueError("Stray } in format string!")
 
                 if in_brackets == 0:
                     field_name, format_spec, conversion = _get_field(format_accum)
@@ -158,9 +162,11 @@ def _get_tokens(  # noqa: C901
             format_accum += char
 
     if in_brackets > 0:
-        raise Exception("Stray { in format string!")
+        raise ParserSyntaxError(
+            "Stray { in format string!", lines=[string], raw_line=0, raw_column=0
+        )
     if format_accum:
-        raise Exception("Logic error!")
+        raise CSTLogicError("Logic error!")
 
     # Yield the last bit of information
     yield (prefix, None, None, None)
@@ -188,7 +194,7 @@ class SwitchStringQuotesTransformer(ContextAwareTransformer):
     def __init__(self, context: CodemodContext, avoid_quote: str) -> None:
         super().__init__(context)
         if avoid_quote not in {'"', "'"}:
-            raise Exception("Must specify either ' or \" single quote to avoid.")
+            raise ValueError("Must specify either ' or \" single quote to avoid.")
         self.avoid_quote: str = avoid_quote
         self.replace_quote: str = '"' if avoid_quote == "'" else "'"
 
@@ -296,7 +302,7 @@ class ConvertFormatStringCommand(VisitorBasedCodemodCommand):
                     ) in format_spec_tokens:
                         if spec_format_spec is not None:
                             # This shouldn't be possible, we don't allow it in the spec!
-                            raise Exception("Logic error!")
+                            raise CSTLogicError("Logic error!")
                         if spec_literal_text:
                             format_spec_parts.append(
                                 cst.FormattedStringText(spec_literal_text)

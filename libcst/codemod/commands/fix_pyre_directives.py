@@ -7,6 +7,7 @@ from typing import Dict, Sequence, Union
 
 import libcst
 import libcst.matchers as m
+from libcst import CSTLogicError
 from libcst.codemod import CodemodContext, VisitorBasedCodemodCommand
 from libcst.helpers import insert_header_comments
 
@@ -29,12 +30,12 @@ class FixPyreDirectivesCommand(VisitorBasedCodemodCommand):
 
     def visit_Module_header(self, node: libcst.Module) -> None:
         if self.in_module_header:
-            raise Exception("Logic error!")
+            raise CSTLogicError("Logic error!")
         self.in_module_header = True
 
     def leave_Module_header(self, node: libcst.Module) -> None:
         if not self.in_module_header:
-            raise Exception("Logic error!")
+            raise CSTLogicError("Logic error!")
         self.in_module_header = False
 
     def leave_EmptyLine(

@@ -24,7 +24,7 @@ try:
 except ModuleNotFoundError:
     import yaml
 
-from libcst import LIBCST_VERSION, parse_module, PartialParserConfig
+from libcst import CSTLogicError, LIBCST_VERSION, parse_module, PartialParserConfig
 from libcst._parser.parso.utils import parse_version_string
 from libcst.codemod import (
     CodemodCommand,
@@ -194,7 +194,7 @@ def _find_and_load_config(proc_name: str) -> Dict[str, Any]:
 
     requires_config = bool(os.environ.get("LIBCST_TOOL_REQUIRE_CONFIG", ""))
     if requires_config and not found_config:
-        raise Exception(
+        raise FileNotFoundError(
             f"Did not find a {CONFIG_FILE_NAME} in current directory or any "
             + "parent directory! Perhaps you meant to run this command from a "
             + "configured subdirectory, or you need to initialize a new project "
@@ -394,7 +394,7 @@ def _codemod_impl(proc_name: str, command_args: List[str]) -> int:  # noqa: C901
     # full-repo metadata since there is no path.
     if any(p == "-" for p in args.path):
         if len(args.path) > 1:
-            raise Exception("Cannot specify multiple paths when reading from stdin!")
+            raise ValueError("Cannot specify multiple paths when reading from stdin!")
 
         print("Codemodding from stdin", file=sys.stderr)
         oldcode = sys.stdin.read()
@@ -481,7 +481,7 @@ class _ListSerializer(_SerializerBase):
 
     def _serialize_impl(self, key: str, value: object) -> str:
         if not isinstance(value, list):
-            raise Exception("Can only serialize lists!")
+            raise ValueError("Can only serialize lists!")
         if self.newlines:
             values = [f"- {v!r}" for v in value]
             return f"{key}:{os.linesep}{os.linesep.join(values)}"
@@ -542,7 +542,7 @@ def _initialize_impl(proc_name: str, command_args: List[str]) -> int:
     # For safety, verify that it parses to the identical file.
     actual_config = yaml.safe_load(config_str)
     if actual_config != default_config:
-        raise Exception("Logic error, serialization is invalid!")
+        raise CSTLogicError("Logic error, serialization is invalid!")
 
     config_file = os.path.abspath(os.path.join(args.path, CONFIG_FILE_NAME))
     with open(config_file, "w") as fp:

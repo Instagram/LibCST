@@ -6,6 +6,7 @@
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Set, Tuple, Union
 
 import libcst as cst
+from libcst import CSTLogicError
 from libcst.codemod._context import CodemodContext
 from libcst.codemod._visitor import ContextAwareTransformer, ContextAwareVisitor
 from libcst.codemod.visitors._gather_unused_imports import GatherUnusedImportsVisitor
@@ -45,7 +46,7 @@ class RemovedNodeVisitor(ContextAwareVisitor):
             self.context.full_package_name, import_node
         )
         if module_name is None:
-            raise Exception("Cannot look up absolute module from relative import!")
+            raise ValueError("Cannot look up absolute module from relative import!")
 
         # We know any local names will refer to this as an alias if
         # there is one, and as the original name if there is not one
@@ -72,7 +73,9 @@ class RemovedNodeVisitor(ContextAwareVisitor):
         # Look up the scope for this node, remove the import that caused it to exist.
         metadata_wrapper = self.context.wrapper
         if metadata_wrapper is None:
-            raise Exception("Cannot look up import, metadata is not computed for node!")
+            raise ValueError(
+                "Cannot look up import, metadata is not computed for node!"
+            )
         scope_provider = metadata_wrapper.resolve(ScopeProvider)
         try:
             scope = scope_provider[node]
@@ -185,7 +188,7 @@ class RemoveImportsVisitor(ContextAwareTransformer):
     ) -> List[Tuple[str, Optional[str], Optional[str]]]:
         unused_imports = context.scratch.get(RemoveImportsVisitor.CONTEXT_KEY, [])
         if not isinstance(unused_imports, list):
-            raise Exception("Logic error!")
+            raise CSTLogicError("Logic error!")
         return unused_imports
 
     @staticmethod
@@ -255,7 +258,7 @@ class RemoveImportsVisitor(ContextAwareTransformer):
                 context.full_package_name, node
             )
             if module_name is None:
-                raise Exception("Cannot look up absolute module from relative import!")
+                raise ValueError("Cannot look up absolute module from relative import!")
             for import_alias in names:
                 RemoveImportsVisitor.remove_unused_import(
                     context,

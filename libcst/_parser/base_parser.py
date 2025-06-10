@@ -26,12 +26,8 @@
 from dataclasses import dataclass, field
 from typing import Generic, Iterable, List, Sequence, TypeVar, Union
 
-from libcst._exceptions import (
-    EOFSentinel,
-    get_expected_str,
-    ParserSyntaxError,
-    PartialParserSyntaxError,
-)
+from libcst._exceptions import EOFSentinel, ParserSyntaxError, PartialParserSyntaxError
+from libcst._parser._parsing_check import get_expected_str
 from libcst._parser.parso.pgen2.generator import DFAState, Grammar, ReservedString
 from libcst._parser.parso.python.token import TokenType
 from libcst._parser.types.token import Token
@@ -103,7 +99,7 @@ class BaseParser(Generic[_TokenT, _TokenTypeT, _NodeT]):
     def parse(self) -> _NodeT:
         # Ensure that we don't re-use parsers.
         if self.__was_parse_called:
-            raise Exception("Each parser object may only be used to parse once.")
+            raise ValueError("Each parser object may only be used to parse once.")
         self.__was_parse_called = True
 
         for token in self.tokens:

@@ -51,7 +51,7 @@ def invoke_formatter(formatter_args: Sequence[str], code: AnyStr) -> AnyStr:
 
     # Make sure there is something to run
     if len(formatter_args) == 0:
-        raise Exception("No formatter configured but code formatting requested.")
+        raise ValueError("No formatter configured but code formatting requested.")
 
     # Invoke the formatter, giving it the code as stdin and assuming the formatted
     # code comes from stdout.
@@ -593,7 +593,7 @@ def parallel_exec_transform_with_prettyprint(  # noqa: C901
     )
 
     if jobs < 1:
-        raise Exception("Must have at least one job to process!")
+        raise ValueError("Must have at least one job to process!")
 
     if total == 0:
         return ParallelTransformResult(successes=0, failures=0, skips=0, warnings=0)

@@ -49,6 +49,7 @@ dependencies = [
     "hypothesis>=4.36.0",
     "hypothesmith>=0.0.4",
     "maturin>=1.7.0,<1.8",
+    "poethepoet>=0.35.0",
     "prompt-toolkit>=2.0.9",
     "pyre-check==0.9.18; platform_system != 'Windows'",
     "setuptools_scm>=6.0.1",
@@ -58,17 +59,27 @@ dependencies = [
     "slotscheck>=0.7.1",
 ]
 
-[tool.hatch.envs.default.scripts]
-fixtures = ["python scripts/regenerate-fixtures.py", "git diff --exit-code"]
+[tool.poe.tasks]
+fixtures = ["regenerate-fixtures", "_assert_no_changes"]
+regenerate-fixtures = "python scripts/regenerate-fixtures.py"
+_assert_no_changes = "git diff --exit-code"
+
 format = "ufmt format libcst scripts"
-lint = [
-    "flake8 libcst",
-    "ufmt check libcst scripts",
-    "python -m slotscheck libcst",
-    "python scripts/check_copyright.py",
-]
-test = ["python --version", "python -m coverage run -m libcst.tests"]
-typecheck = ["pyre --version", "pyre check"]
+_flake8 = "flake8 libcst"
+_ufmt = "ufmt check libcst scripts"
+_slotscheck = "python -m slotscheck libcst"
+_check_copyright = "python scripts/check_copyright.py"
+lint = ["_flake8", "_ufmt", "_slotscheck", "_check_copyright"]
+test = "python -m coverage run -m libcst.tests"
+typecheck = "pyre check"
+docs = "sphinx-build -ab html docs/source docs/build"
+
+[tool.hatch.envs.default.scripts]
+fixtures = "poe fixtures"
+format = "poe format"
+lint = "poe lint"
+test = "poe test"
+typecheck = "poe typecheck"
 
 [tool.hatch.envs.docs]
 extra-dependencies = [
@@ -79,7 +90,7 @@ extra-dependencies = [
     "jinja2==3.1.6",
 ]
 [tool.hatch.envs.docs.scripts]
-docs = "sphinx-build -ab html docs/source docs/build"
+docs = "poe docs"
 
 [tool.slotscheck]
 exclude-modules = '^libcst\.(testing|tests)'
