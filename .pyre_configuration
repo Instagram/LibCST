@@ -3,6 +3,9 @@
         ".*\/native\/.*",
         ".*\/\\.venv\/.*"
     ],
+    "ignore_all_errors": [
+        ".venv"
+    ],
     "source_directories": [
         "."
     ],

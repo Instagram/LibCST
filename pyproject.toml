@@ -20,7 +20,7 @@ classifiers = [
 requires-python = ">=3.9"
 dependencies = [
     "pyyaml>=5.2; python_version < '3.13'",
-    "pyyaml-ft; python_version >= '3.13'",
+    "pyyaml-ft>=8.0.0; python_version >= '3.13'",
 ]
 
 [project.urls]
