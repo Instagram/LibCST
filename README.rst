@@ -148,49 +148,7 @@ Further Reading
 Development
 -----------
 
-You'll need a recent `Rust toolchain <https://rustup.rs>`_ for developing.
-
-We recommend using `hatch <https://hatch.pypa.io/>` for running tests, linters,
-etc.
-
-Then, start by setting up and building the project:
-
-.. code-block:: shell
-
-    git clone git@github.com:Instagram/LibCST.git libcst
-    cd libcst
-    hatch env create
-
-To run the project's test suite, you can:
-
-.. code-block:: shell
-
-    hatch run test
-
-You can also run individual tests by using unittest and specifying a module like
-this:
-
-.. code-block:: shell
-
-    hatch run python -m unittest libcst.tests.test_batched_visitor
-
-See the `unittest documentation <https://docs.python.org/3/library/unittest.html>`_
-for more examples of how to run tests.
-
-We have multiple linters, including copyright checks and
-`slotscheck <https://slotscheck.rtfd.io>`_ to check the correctness of class
-``__slots__``. To run all of the linters:
-
-.. code-block:: shell
-
-    hatch run lint
-
-We use `ufmt <https://ufmt.omnilib.dev/en/stable/>`_ to format code. To format
-changes to be conformant, run the following in the root:
-
-.. code-block:: shell
-
-    hatch run format
+See `CONTRIBUTING.md <CONTRIBUTING.md>`_ for more details.
 
 Building
 ~~~~~~~~
@@ -208,11 +166,11 @@ directory:
 
     cargo build
 
-To rebuild the ``libcst.native`` module, from the repo root:
+The ``libcst.native`` module should be rebuilt automatically, but to force it:
 
 .. code-block:: shell
 
-    hatch env prune && hatch env create
+    uv sync --reinstall-package libcst
 
 Type Checking
 ~~~~~~~~~~~~~
@@ -223,7 +181,7 @@ To verify types for the library, do the following in the root:
 
 .. code-block:: shell
 
-    hatch run typecheck
+    uv run poe typecheck
 
 Generating Documents
 ~~~~~~~~~~~~~~~~~~~~
@@ -232,7 +190,7 @@ To generate documents, do the following in the root:
 
 .. code-block:: shell
 
-    hatch run docs
+    uv run --group docs poe docs
 
 Future
 ======
