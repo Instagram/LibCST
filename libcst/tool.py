@@ -20,7 +20,7 @@ from abc import ABC, abstractmethod
 from typing import Any, Callable, Dict, List, Tuple, Type
 
 try:
-    import yaml_ft as yaml
+    import yaml_ft as yaml  # pyre-ignore
 except ModuleNotFoundError:
     import yaml
 
