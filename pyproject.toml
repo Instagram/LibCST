@@ -110,8 +110,9 @@ skip = [
 ]
 enable = ["cpython-freethreading"]
 test-command = [
+    "python --version",
     "python -m libcst.tool list",
-    "python -m libcst.tool codemod remove_unused_imports.RemoveUnusedImportsCommand {project}/libcst",
+    "python -m libcst.tool codemod remove_unused_imports.RemoveUnusedImportsCommand {project}/libcst/nodes",
 ]
 
 [tool.cibuildwheel.linux]
