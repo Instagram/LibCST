@@ -143,3 +143,7 @@ jobs:
       - run: rustup component add rustfmt
       - name: format
         run: cargo fmt --all --manifest-path=native/Cargo.toml -- --check
+  build:
+    # only trigger here for pull requests - regular pushes are handled in pypi_upload
+    if: ${{ github.event_name == 'pull_request' }}
+    uses: Instagram/LibCST/.github/workflows/build.yml@main
