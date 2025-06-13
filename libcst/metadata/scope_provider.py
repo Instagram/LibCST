@@ -26,7 +26,6 @@ from typing import (
 
 import libcst as cst
 from libcst import ensure_type
-from libcst._add_slots import add_slots
 from libcst.helpers import get_full_name_for_node
 from libcst.metadata.base_provider import BatchableMetadataProvider
 from libcst.metadata.expression_context_provider import (
@@ -58,8 +57,7 @@ _ASSIGNMENT_LIKE_NODES = (
 )
 
 
-@add_slots
-@dataclass(frozen=False)
+@dataclass(slots=True, frozen=False)
 class Access:
     """
     An Access records an access of an assignment.
@@ -140,8 +138,7 @@ class QualifiedNameSource(Enum):
     LOCAL = auto()
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class QualifiedName:
     #: Qualified name, e.g. ``a.b.c`` or ``fn.<locals>.var``.
     name: str

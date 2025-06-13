@@ -19,7 +19,6 @@ from typing import Callable, Generator, Literal, Optional, Sequence, Union
 
 from libcst import CSTLogicError
 
-from libcst._add_slots import add_slots
 from libcst._maybe_sentinel import MaybeSentinel
 from libcst._nodes.base import CSTCodegenError, CSTNode, CSTValidationError
 from libcst._nodes.internal import (
@@ -48,8 +47,7 @@ from libcst._nodes.whitespace import BaseParenthesizableWhitespace, SimpleWhites
 from libcst._visitors import CSTVisitorT
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class LeftSquareBracket(CSTNode):
     """
     Used by various nodes to denote a subscript or list section. This doesn't own
@@ -71,8 +69,7 @@ class LeftSquareBracket(CSTNode):
         self.whitespace_after._codegen(state)
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class RightSquareBracket(CSTNode):
     """
     Used by various nodes to denote a subscript or list section. This doesn't own
@@ -94,8 +91,7 @@ class RightSquareBracket(CSTNode):
         state.add_token("]")
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class LeftCurlyBrace(CSTNode):
     """
     Used by various nodes to denote a dict or set. This doesn't own the whitespace to
@@ -117,8 +113,7 @@ class LeftCurlyBrace(CSTNode):
         self.whitespace_after._codegen(state)
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class RightCurlyBrace(CSTNode):
     """
     Used by various nodes to denote a dict or set. This doesn't own the whitespace to
@@ -140,8 +135,7 @@ class RightCurlyBrace(CSTNode):
         state.add_token("}")
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class LeftParen(CSTNode):
     """
     Used by various nodes to denote a parenthesized section. This doesn't own
@@ -163,8 +157,7 @@ class LeftParen(CSTNode):
         self.whitespace_after._codegen(state)
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class RightParen(CSTNode):
     """
     Used by various nodes to denote a parenthesized section. This doesn't own
@@ -186,8 +179,7 @@ class RightParen(CSTNode):
         state.add_token(")")
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class Asynchronous(CSTNode):
     """
     Used by asynchronous function definitions, as well as ``async for`` and
@@ -323,8 +315,7 @@ class BaseDelTargetExpression(BaseExpression, ABC):
     __slots__ = ()
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class Name(BaseAssignTargetExpression, BaseDelTargetExpression):
     """
     A simple variable name. Names are typically used in the context of a variable
@@ -361,8 +352,7 @@ class Name(BaseAssignTargetExpression, BaseDelTargetExpression):
             state.add_token(self.value)
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class Ellipsis(BaseExpression):
     """
     An ellipsis ``...``. When used as an expression, it evaluates to the
@@ -410,8 +400,7 @@ class BaseNumber(BaseExpression, ABC):
         return super(BaseNumber, self)._safe_to_use_with_word_operator(position)
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class Integer(BaseNumber):
     #: A string representation of the integer, such as ``"100000"`` or ``100_000``.
     #:
@@ -447,8 +436,7 @@ class Integer(BaseNumber):
         return literal_eval(self.value)
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class Float(BaseNumber):
     #: A string representation of the floating point number, such as ``"0.05"``,
     #: ``".050"``, or ``"5e-2"``.
@@ -485,8 +473,7 @@ class Float(BaseNumber):
         return literal_eval(self.value)
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class Imaginary(BaseNumber):
     #: A string representation of the imaginary (complex) number, such as ``"2j"``.
     #:
@@ -572,8 +559,7 @@ class _BasePrefixedString(BaseString, ABC):
             )
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class SimpleString(_BasePrefixedString):
     """
     Any sort of literal string expression that is not a :class:`FormattedString`
@@ -716,8 +702,7 @@ class BaseFormattedStringContent(CSTNode, ABC):
     __slots__ = ()
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class FormattedStringText(BaseFormattedStringContent):
     """
     Part of a :class:`FormattedString` that is not inside curly braces (``{`` or ``}``).
@@ -742,8 +727,7 @@ class FormattedStringText(BaseFormattedStringContent):
         state.add_token(self.value)
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class FormattedStringExpression(BaseFormattedStringContent):
     """
     Part of a :class:`FormattedString` that is inside curly braces (``{`` or ``}``),
@@ -839,8 +823,7 @@ class FormattedStringExpression(BaseFormattedStringContent):
         state.add_token("}")
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class FormattedString(_BasePrefixedString):
     """
     An "f-string". These formatted strings are string literals prefixed by the letter
@@ -958,8 +941,7 @@ class FormattedString(_BasePrefixedString):
             state.add_token(self.end)
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class ConcatenatedString(BaseString):
     """
     Represents an implicitly concatenated string, such as::
@@ -1055,8 +1037,7 @@ class ConcatenatedString(BaseString):
         return None
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class ComparisonTarget(CSTNode):
     """
     A target for a :class:`Comparison`. Owns the comparison operator and the value to
@@ -1094,8 +1075,7 @@ class ComparisonTarget(CSTNode):
         self.comparator._codegen(state)
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class Comparison(BaseExpression):
     """
     A comparison between multiple values such as ``x < y``, ``x < y < z``, or
@@ -1183,8 +1163,7 @@ class Comparison(BaseExpression):
                 comp._codegen(state)
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class UnaryOperation(BaseExpression):
     """
     Any generic unary expression, such as ``not x`` or ``-x``. :class:`UnaryOperation`
@@ -1245,8 +1224,7 @@ class UnaryOperation(BaseExpression):
             self.expression._codegen(state)
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class BinaryOperation(BaseExpression):
     """
     An operation that combines two expression such as ``x << y`` or ``y + z``.
@@ -1298,8 +1276,7 @@ class BinaryOperation(BaseExpression):
             self.right._codegen(state)
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class BooleanOperation(BaseExpression):
     """
     An operation that combines two booleans such as ``x or y`` or ``z and w``
@@ -1370,8 +1347,7 @@ class BooleanOperation(BaseExpression):
             self.right._codegen(state)
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class Attribute(BaseAssignTargetExpression, BaseDelTargetExpression):
     """
     An attribute reference, such as ``x.y``.
@@ -1436,8 +1412,7 @@ class BaseSlice(CSTNode, ABC):
     __slots__ = ()
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class Index(BaseSlice):
     """
     Any index as passed to a :class:`Subscript`. In ``x[2]``, this would be the ``2``
@@ -1473,8 +1448,7 @@ class Index(BaseSlice):
         self.value._codegen(state)
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class Slice(BaseSlice):
     """
     Any slice operation in a :class:`Subscript`, such as ``1:``, ``2:3:4``, etc.
@@ -1527,8 +1501,7 @@ class Slice(BaseSlice):
             step._codegen(state)
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class SubscriptElement(CSTNode):
     """
     Part of a sequence of slices in a :class:`Subscript`, such as ``1:2, 3``. This is
@@ -1561,8 +1534,7 @@ class SubscriptElement(CSTNode):
             comma._codegen(state)
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class Subscript(BaseAssignTargetExpression, BaseDelTargetExpression):
     """
     A indexed subscript reference (:class:`Index`) such as ``x[2]``, a :class:`Slice`
@@ -1626,8 +1598,7 @@ class Subscript(BaseAssignTargetExpression, BaseDelTargetExpression):
             self.rbracket._codegen(state)
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class Annotation(CSTNode):
     """
     An annotation for a function (`PEP 3107`_) or on a variable (`PEP 526`_). Typically
@@ -1700,8 +1671,7 @@ class Annotation(CSTNode):
             self.annotation._codegen(state)
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class ParamStar(CSTNode):
     """
     A sentinel indicator on a :class:`Parameters` list to denote that the subsequent
@@ -1723,8 +1693,7 @@ class ParamStar(CSTNode):
         self.comma._codegen(state)
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class ParamSlash(CSTNode):
     """
     A sentinel indicator on a :class:`Parameters` list to denote that the previous
@@ -1762,8 +1731,7 @@ class ParamSlash(CSTNode):
             comma._codegen(state)
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class Param(CSTNode):
     """
     A positional or keyword argument in a :class:`Parameters` list. May contain an
@@ -1861,8 +1829,7 @@ class Param(CSTNode):
         self.whitespace_after_param._codegen(state)
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class Parameters(CSTNode):
     """
     A function or lambda parameter list.
@@ -2067,8 +2034,7 @@ class Parameters(CSTNode):
             star_kwarg._codegen(state, default_star="**", default_comma=False)
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class Lambda(BaseExpression):
     """
     A lambda expression that creates an anonymous function.
@@ -2180,8 +2146,7 @@ class Lambda(BaseExpression):
             self.body._codegen(state)
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class Arg(CSTNode):
     """
     A single argument to a :class:`Call`.
@@ -2364,8 +2329,7 @@ class _BaseExpressionWithArgs(BaseExpression, ABC):
             validator = validator(arg) or validator
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class Call(_BaseExpressionWithArgs):
     """
     An expression representing a function call, such as ``do_math(1, 2)`` or
@@ -2436,8 +2400,7 @@ class Call(_BaseExpressionWithArgs):
             state.add_token(")")
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class Await(BaseExpression):
     """
     An await expression. Await expressions are only valid inside the body of an
@@ -2485,8 +2448,7 @@ class Await(BaseExpression):
             self.expression._codegen(state)
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class IfExp(BaseExpression):
     """
     An if expression of the form ``body if test else orelse``.
@@ -2592,8 +2554,7 @@ class IfExp(BaseExpression):
             self.orelse._codegen(state)
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class From(CSTNode):
     """
     A ``from x`` stanza in a :class:`Yield` or :class:`Raise`.
@@ -2644,8 +2605,7 @@ class From(CSTNode):
             self.item._codegen(state)
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class Yield(BaseExpression):
     """
     A yield expression similar to ``yield x`` or ``yield from fun()``.
@@ -2771,8 +2731,7 @@ class BaseDictElement(_BaseElementImpl, ABC):
     __slots__ = ()
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class Element(BaseElement):
     """
     A simple value in a literal :class:`List`, :class:`Tuple`, or :class:`Set`.
@@ -2803,8 +2762,7 @@ class Element(BaseElement):
         self._codegen_comma(state, default_comma, default_comma_whitespace)
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class DictElement(BaseDictElement):
     """
     A simple ``key: value`` pair that represents a single entry in a literal
@@ -2854,8 +2812,7 @@ class DictElement(BaseDictElement):
         self._codegen_comma(state, default_comma, default_comma_whitespace)
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class StarredElement(BaseElement, BaseExpression, _BaseParenthesizedNode):
     """
     A starred ``*value`` element that expands to represent multiple values in a literal
@@ -2915,8 +2872,7 @@ class StarredElement(BaseElement, BaseExpression, _BaseParenthesizedNode):
         self._codegen_comma(state, default_comma, default_comma_whitespace)
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class StarredDictElement(BaseDictElement):
     """
     A starred ``**value`` element that expands to represent multiple values in a literal
@@ -2960,8 +2916,7 @@ class StarredDictElement(BaseDictElement):
         self._codegen_comma(state, default_comma, default_comma_whitespace)
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class Tuple(BaseAssignTargetExpression, BaseDelTargetExpression):
     """
     An immutable literal tuple. Tuples are often (but not always) parenthesized.
@@ -3072,8 +3027,7 @@ class BaseList(BaseExpression, ABC):
         self.rbracket._codegen(state)
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class List(BaseList, BaseAssignTargetExpression, BaseDelTargetExpression):
     """
     A mutable literal list.
@@ -3164,8 +3118,7 @@ class BaseSet(_BaseSetOrDict, ABC):
     __slots__ = ()
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class Set(BaseSet):
     """
     A mutable literal set.
@@ -3235,8 +3188,7 @@ class BaseDict(_BaseSetOrDict, ABC):
     __slots__ = ()
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class Dict(BaseDict):
     """
     A literal dictionary. Key-value pairs are stored in ``elements`` using
@@ -3284,8 +3236,7 @@ class Dict(BaseDict):
                 )
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class CompFor(CSTNode):
     """
     One ``for`` clause in a :class:`BaseComp`, or a nested hierarchy of
@@ -3460,8 +3411,7 @@ class CompFor(CSTNode):
             inner_for_in._codegen(state)
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class CompIf(CSTNode):
     """
     A conditional clause in a :class:`CompFor`, used as part of a generator or
@@ -3548,8 +3498,7 @@ class BaseSimpleComp(BaseComp, ABC):
             )
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class GeneratorExp(BaseSimpleComp):
     """
     A generator expression. ``elt`` represents the value yielded for each item in
@@ -3599,8 +3548,7 @@ class GeneratorExp(BaseSimpleComp):
             self.for_in._codegen(state)
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class ListComp(BaseList, BaseSimpleComp):
     """
     A list comprehension. ``elt`` represents the value stored for each item in
@@ -3641,8 +3589,7 @@ class ListComp(BaseList, BaseSimpleComp):
             self.for_in._codegen(state)
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class SetComp(BaseSet, BaseSimpleComp):
     """
     A set comprehension. ``elt`` represents the value stored for each item in
@@ -3683,8 +3630,7 @@ class SetComp(BaseSet, BaseSimpleComp):
             self.for_in._codegen(state)
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class DictComp(BaseDict, BaseComp):
     """
     A dictionary comprehension. ``key`` and ``value`` represent the dictionary entry
@@ -3758,8 +3704,7 @@ class DictComp(BaseDict, BaseComp):
             self.for_in._codegen(state)
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class NamedExpr(BaseExpression):
     """
     An expression that is also an assignment, such as ``x := y + z``. Affectionately
