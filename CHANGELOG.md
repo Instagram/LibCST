@@ -1,13 +1,3 @@
-# 1.8.2 - 2025-06-13
-
-# Fixed
-* fix(dependency): add back typing-extensions for 3.9 by @Lee-W in https://github.com/Instagram/LibCST/pull/1358
-
-## New Contributors
-* @Lee-W made their first contribution in https://github.com/Instagram/LibCST/pull/1358
-
-**Full Changelog**: https://github.com/Instagram/LibCST/compare/v1.8.1...v1.8.2
-
 # 1.8.1 - 2025-06-10
 
 ## Added
