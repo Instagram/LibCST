@@ -36,7 +36,7 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v5
         with:
-          version: "0.7.12"
+          version: "0.7.13"
           enable-cache: false
       - name: Build a source tarball
         env:
