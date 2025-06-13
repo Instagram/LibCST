@@ -28,7 +28,7 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v5
         with:
-          version: "0.7.12"
+          version: "0.7.13"
           python-version: ${{ matrix.python-version }}
       - uses: actions/checkout@v4
         with:
@@ -60,7 +60,7 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v5
         with:
-          version: "0.7.12"
+          version: "0.7.13"
           python-version: "3.10"
       - run: uv run poe lint
       - run: uv run poe fixtures
@@ -76,7 +76,7 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v5
         with:
-          version: "0.7.12"
+          version: "0.7.13"
           python-version: "3.10"
       - run: uv run poe typecheck
 
@@ -91,7 +91,7 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v5
         with:
-          version: "0.7.12"
+          version: "0.7.13"
           python-version: "3.10"
       - uses: ts-graphviz/setup-graphviz@v2
       - run: uv run --group docs poe docs
