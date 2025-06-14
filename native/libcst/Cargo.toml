@@ -36,7 +36,7 @@ trace = ["peg/trace"]
 
 [dependencies]
 paste = "1.0.15"
-pyo3 = { version = "0.25", optional = true }
+pyo3 = { version = "0.25.1", optional = true }
 thiserror = "2.0.12"
 peg = "0.8.5"
 annotate-snippets = "0.11.5"
