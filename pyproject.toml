@@ -112,7 +112,8 @@ enable = ["cpython-freethreading"]
 test-command = [
     "python --version",
     "python -m libcst.tool list",
-    "python -m libcst.tool codemod remove_unused_imports.RemoveUnusedImportsCommand {project}/libcst/_nodes",
+    # TODO: remove the gil once thread-safety issues are resolved
+    "python -X gil=1 -m libcst.tool codemod remove_unused_imports.RemoveUnusedImportsCommand {project}/libcst/_nodes",
 ]
 
 [tool.cibuildwheel.linux]
