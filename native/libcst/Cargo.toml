@@ -41,7 +41,7 @@ thiserror = "2.0.12"
 peg = "0.8.5"
 annotate-snippets = "0.11.5"
 regex = "1.11.1"
-memchr = "2.7.4"
+memchr = "2.7.5"
 libcst_derive = { path = "../libcst_derive", version = "1.8.2" }
 
 [dev-dependencies]
