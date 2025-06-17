@@ -121,7 +121,7 @@ class CSTNode(ABC):
     def __init_subclass__(cls, **kwargs: Any) -> None:
         """
         HACK: Add our implementation of `__repr__`, `__hash__`, and `__eq__` to the
-        class's __dict__ to prevent dataclass from generating it's own `__repr__`,
+        class's __dict__ to prevent dataclass from generating its own `__repr__`,
         `__hash__`, and `__eq__`.
 
         The alternative is to require each implementation of a node to remember to add
@@ -153,7 +153,7 @@ class CSTNode(ABC):
         Compares the type annotations on a node's fields with those field's actual
         values at runtime. Raises a TypeError is a mismatch is found.
 
-        Only validates the current node, not any of it's children. For a recursive
+        Only validates the current node, not any of its children. For a recursive
         version, see :func:`validate_types_deep`.
 
         If you're using a static type checker (highly recommended), this is useless.
