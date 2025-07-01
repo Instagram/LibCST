@@ -83,6 +83,56 @@ class PositionProviderTest(UnitTest):
         wrapper = MetadataWrapper(parse_module("pass"))
         wrapper.visit_batched([ABatchable()])
 
+    def test_match_statement_position_metadata(self) -> None:
+        test = self
+
+        class MatchPositionVisitor(CSTVisitor):
+            METADATA_DEPENDENCIES = (PositionProvider,)
+
+            def visit_Match(self, node: cst.Match) -> None:
+                # Test that match statement has correct position
+                test.assertEqual(
+                    self.get_metadata(PositionProvider, node),
+                    CodeRange((2, 0), (5, 16)),
+                )
+
+            def visit_MatchCase(self, node: cst.MatchCase) -> None:
+                # Test that match cases have correct positions
+                if (
+                    isinstance(node.pattern, cst.MatchAs)
+                    and node.pattern.name
+                    and node.pattern.name.value == "b"
+                ):
+                    test.assertEqual(
+                        self.get_metadata(PositionProvider, node),
+                        CodeRange((3, 4), (3, 16)),
+                    )
+                elif (
+                    isinstance(node.pattern, cst.MatchAs)
+                    and node.pattern.name
+                    and node.pattern.name.value == "c"
+                ):
+                    test.assertEqual(
+                        self.get_metadata(PositionProvider, node),
+                        CodeRange((4, 4), (4, 16)),
+                    )
+                elif isinstance(node.pattern, cst.MatchAs) and not node.pattern.name:
+                    # This is the wildcard case `case _: pass`
+                    test.assertEqual(
+                        self.get_metadata(PositionProvider, node),
+                        CodeRange((5, 4), (5, 16)),
+                    )
+
+        code = """
+match status:
+    case b: pass
+    case c: pass
+    case _: pass
+"""
+
+        wrapper = MetadataWrapper(parse_module(code))
+        wrapper.visit(MatchPositionVisitor())
+
 
 class PositionProvidingCodegenStateTest(UnitTest):
     def test_codegen_initial_position(self) -> None:
@@ -166,25 +216,3 @@ class PositionProvidingCodegenStateTest(UnitTest):
 
         # check syntactic position ignores whitespace
         self.assertEqual(state.provider._computed[node], CodeRange((1, 1), (1, 5)))
-
-
-class MatchProviderTest(UnitTest):
-    def test_match_provider(self) -> None:
-        class Visitor(cst.CSTVisitor):
-            METADATA_DEPENDENCIES = (PositionProvider,)
-
-            def on_visit(self, node):
-                print(self.get_metadata(PositionProvider, node).start.line)
-                return super().on_visit(node)
-
-
-        code = """
-match status:
-    case b: pass
-    case c: pass
-    case _: pass
-"""
-        
-        wrapper = MetadataWrapper(parse_module(code))
-        visitor = Visitor()
-        module = wrapper.visit(visitor)
