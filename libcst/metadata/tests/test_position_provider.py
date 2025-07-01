@@ -166,3 +166,25 @@ class PositionProvidingCodegenStateTest(UnitTest):
 
         # check syntactic position ignores whitespace
         self.assertEqual(state.provider._computed[node], CodeRange((1, 1), (1, 5)))
+
+
+class MatchProviderTest(UnitTest):
+    def test_match_provider(self) -> None:
+        class Visitor(cst.CSTVisitor):
+            METADATA_DEPENDENCIES = (PositionProvider,)
+
+            def on_visit(self, node):
+                print(self.get_metadata(PositionProvider, node).start.line)
+                return super().on_visit(node)
+
+
+        code = """
+match status:
+    case b: pass
+    case c: pass
+    case _: pass
+"""
+        
+        wrapper = MetadataWrapper(parse_module(code))
+        visitor = Visitor()
+        module = wrapper.visit(visitor)
