@@ -90,14 +90,12 @@ class PositionProviderTest(UnitTest):
             METADATA_DEPENDENCIES = (PositionProvider,)
 
             def visit_Match(self, node: cst.Match) -> None:
-                # Test that match statement has correct position
                 test.assertEqual(
                     self.get_metadata(PositionProvider, node),
                     CodeRange((2, 0), (5, 16)),
                 )
 
             def visit_MatchCase(self, node: cst.MatchCase) -> None:
-                # Test that match cases have correct positions
                 if (
                     isinstance(node.pattern, cst.MatchAs)
                     and node.pattern.name
@@ -117,7 +115,6 @@ class PositionProviderTest(UnitTest):
                         CodeRange((4, 4), (4, 16)),
                     )
                 elif isinstance(node.pattern, cst.MatchAs) and not node.pattern.name:
-                    # This is the wildcard case `case _: pass`
                     test.assertEqual(
                         self.get_metadata(PositionProvider, node),
                         CodeRange((5, 4), (5, 16)),
