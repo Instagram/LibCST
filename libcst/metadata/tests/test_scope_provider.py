@@ -11,7 +11,7 @@ from unittest import mock
 
 import libcst as cst
 from libcst import ensure_type
-from libcst._parser.entrypoints import is_native
+
 from libcst.metadata import MetadataWrapper
 from libcst.metadata.scope_provider import (
     _gen_dotted_names,
@@ -2029,8 +2029,6 @@ class ScopeProviderTest(UnitTest):
         )
 
     def test_type_alias_scope(self) -> None:
-        if not is_native():
-            self.skipTest("type aliases are only supported in the native parser")
         m, scopes = get_scope_metadata_provider(
             """
                 type A = C
@@ -2052,8 +2050,6 @@ class ScopeProviderTest(UnitTest):
         self.assertIsInstance(scopes[alias.value], AnnotationScope)
 
     def test_type_alias_param(self) -> None:
-        if not is_native():
-            self.skipTest("type parameters are only supported in the native parser")
         m, scopes = get_scope_metadata_provider(
             """
                 B = int
@@ -2084,8 +2080,6 @@ class ScopeProviderTest(UnitTest):
         )
 
     def test_type_alias_tuple_and_paramspec(self) -> None:
-        if not is_native():
-            self.skipTest("type parameters are only supported in the native parser")
         m, scopes = get_scope_metadata_provider(
             """
             type A[*T] = T
@@ -2113,8 +2107,6 @@ class ScopeProviderTest(UnitTest):
         self.assertEqual(t_refs[0].node, alias_paramspec.value)
 
     def test_class_type_params(self) -> None:
-        if not is_native():
-            self.skipTest("type parameters are only supported in the native parser")
         m, scopes = get_scope_metadata_provider(
             """
             class W[T]:
@@ -2149,8 +2141,6 @@ class ScopeProviderTest(UnitTest):
         self.assertEqual(t_refs_in_g[0].node, g.returns.annotation)
 
     def test_nested_class_type_params(self) -> None:
-        if not is_native():
-            self.skipTest("type parameters are only supported in the native parser")
         m, scopes = get_scope_metadata_provider(
             """
             class Outer:
@@ -2168,8 +2158,6 @@ class ScopeProviderTest(UnitTest):
         )
 
     def test_annotation_refers_to_nested_class(self) -> None:
-        if not is_native():
-            self.skipTest("type parameters are only supported in the native parser")
         m, scopes = get_scope_metadata_provider(
             """
                 class Outer:
@@ -2229,8 +2217,6 @@ class ScopeProviderTest(UnitTest):
         )
 
     def test_body_isnt_subject_to_special_annotation_rule(self) -> None:
-        if not is_native():
-            self.skipTest("type parameters are only supported in the native parser")
         m, scopes = get_scope_metadata_provider(
             """
             class Outer:
