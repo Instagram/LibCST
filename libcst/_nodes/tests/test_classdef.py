@@ -8,7 +8,6 @@ from typing import Any, Callable
 import libcst as cst
 from libcst import parse_statement
 from libcst._nodes.tests.base import CSTNodeTest
-from libcst._parser.entrypoints import is_native
 from libcst.metadata import CodeRange
 from libcst.testing.utils import data_provider
 
@@ -210,8 +209,6 @@ class ClassDefCreationTest(CSTNodeTest):
         )
     )
     def test_valid_native(self, **kwargs: Any) -> None:
-        if not is_native():
-            self.skipTest("Disabled for pure python parser")
         self.validate_node(**kwargs)
 
     @data_provider(

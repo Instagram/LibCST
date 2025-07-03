@@ -11,7 +11,6 @@ from libcst._nodes.tests.base import (
     parse_expression_as,
     parse_statement_as,
 )
-from libcst._parser.entrypoints import is_native
 from libcst.testing.utils import data_provider
 
 
@@ -70,6 +69,6 @@ class NamedExprTest(CSTNodeTest):
         )
     )
     def test_versions(self, **kwargs: Any) -> None:
-        if is_native() and not kwargs.get("expect_success", True):
+        if not kwargs.get("expect_success", True):
             self.skipTest("parse errors are disabled for native parser")
         self.assert_parses(**kwargs)
