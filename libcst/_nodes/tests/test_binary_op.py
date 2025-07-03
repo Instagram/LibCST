@@ -188,4 +188,4 @@ class BinaryOperationTest(CSTNodeTest):
         )
     )
     def test_parse_error(self, **kwargs: Any) -> None:
-        self.assert_parses(**kwargs, expect_success=False )
+        self.assert_parses(**kwargs, expect_success=False)

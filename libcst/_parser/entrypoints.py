@@ -24,6 +24,7 @@ _DEFAULT_PARTIAL_PARSER_CONFIG: PartialParserConfig = PartialParserConfig()
 
 from libcst import native
 
+
 def _parse(
     entrypoint: str,
     source: Union[str, bytes],
