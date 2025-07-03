@@ -7,7 +7,6 @@ from typing import Any
 
 import libcst as cst
 from libcst import parse_statement, PartialParserConfig
-from libcst._maybe_sentinel import MaybeSentinel
 from libcst._nodes.tests.base import CSTNodeTest, DummyIndentedBlock, parse_statement_as
 from libcst.metadata import CodeRange
 from libcst.testing.utils import data_provider
