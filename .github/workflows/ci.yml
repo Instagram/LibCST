@@ -40,9 +40,7 @@ jobs:
       - name: Native Parser Tests
         run: uv run poe test
       - name: Coverage
-        run: |
-          uv run coverage combine .coverage.pure
-          uv run coverage report
+        run: uv run coverage report
 
   # Run linters
   lint:
