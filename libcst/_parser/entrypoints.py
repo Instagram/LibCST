@@ -9,7 +9,6 @@ parser. A parser entrypoint should take the source code and some configuration
 information
 """
 
-import os
 from functools import partial
 from typing import Union
 
@@ -17,18 +16,13 @@ from libcst._nodes.base import CSTNode
 from libcst._nodes.expression import BaseExpression
 from libcst._nodes.module import Module
 from libcst._nodes.statement import BaseCompoundStatement, SimpleStatementLine
-from libcst._parser.detect_config import convert_to_utf8, detect_config
-from libcst._parser.grammar import get_grammar, validate_grammar
-from libcst._parser.python_parser import PythonCSTParser
+from libcst._parser.detect_config import convert_to_utf8
 from libcst._parser.types.config import PartialParserConfig
 
 _DEFAULT_PARTIAL_PARSER_CONFIG: PartialParserConfig = PartialParserConfig()
 
 
-def is_native() -> bool:
-    typ = os.environ.get("LIBCST_PARSER_TYPE")
-    return typ != "pure"
-
+from libcst import native
 
 def _parse(
     entrypoint: str,
@@ -38,57 +32,19 @@ def _parse(
     detect_trailing_newline: bool,
     detect_default_newline: bool,
 ) -> CSTNode:
-    if is_native():
-        from libcst.native import parse_expression, parse_module, parse_statement
 
-        encoding, source_str = convert_to_utf8(source, partial=config)
+    encoding, source_str = convert_to_utf8(source, partial=config)
 
-        if entrypoint == "file_input":
-            parse = partial(parse_module, encoding=encoding)
-        elif entrypoint == "stmt_input":
-            parse = parse_statement
-        elif entrypoint == "expression_input":
-            parse = parse_expression
-        else:
-            raise ValueError(f"Unknown parser entry point: {entrypoint}")
+    if entrypoint == "file_input":
+        parse = partial(native.parse_module, encoding=encoding)
+    elif entrypoint == "stmt_input":
+        parse = native.parse_statement
+    elif entrypoint == "expression_input":
+        parse = native.parse_expression
+    else:
+        raise ValueError(f"Unknown parser entry point: {entrypoint}")
 
-        return parse(source_str)
-    return _pure_python_parse(
-        entrypoint,
-        source,
-        config,
-        detect_trailing_newline=detect_trailing_newline,
-        detect_default_newline=detect_default_newline,
-    )
-
-
-def _pure_python_parse(
-    entrypoint: str,
-    source: Union[str, bytes],
-    config: PartialParserConfig,
-    *,
-    detect_trailing_newline: bool,
-    detect_default_newline: bool,
-) -> CSTNode:
-    detection_result = detect_config(
-        source,
-        partial=config,
-        detect_trailing_newline=detect_trailing_newline,
-        detect_default_newline=detect_default_newline,
-    )
-    validate_grammar()
-    grammar = get_grammar(config.parsed_python_version, config.future_imports)
-
-    parser = PythonCSTParser(
-        tokens=detection_result.tokens,
-        config=detection_result.config,
-        pgen_grammar=grammar,
-        start_nonterminal=entrypoint,
-    )
-    # The parser has an Any return type, we can at least refine it to CSTNode here.
-    result = parser.parse()
-    assert isinstance(result, CSTNode)
-    return result
+    return parse(source_str)
 
 
 def parse_module(
