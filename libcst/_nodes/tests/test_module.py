@@ -8,7 +8,7 @@ from typing import cast, Tuple
 import libcst as cst
 from libcst import parse_module, parse_statement
 from libcst._nodes.tests.base import CSTNodeTest
-from libcst._parser.entrypoints import is_native
+
 from libcst.metadata import CodeRange, MetadataWrapper, PositionProvider
 from libcst.testing.utils import data_provider
 
@@ -117,7 +117,7 @@ class ModuleTest(CSTNodeTest):
     def test_parser(
         self, *, code: str, expected: cst.Module, enabled_for_native: bool = True
     ) -> None:
-        if is_native() and not enabled_for_native:
+        if not enabled_for_native:
             self.skipTest("Disabled for native parser")
         self.assertEqual(parse_module(code), expected)
 

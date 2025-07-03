@@ -10,7 +10,7 @@ from unittest.mock import patch
 
 import libcst as cst
 from libcst._nodes.base import CSTValidationError
-from libcst._parser.entrypoints import is_native
+
 from libcst.testing.utils import data_provider, UnitTest
 
 
@@ -174,8 +174,6 @@ class ParseErrorsTest(UnitTest):
             parse_fn()
         # make sure str() doesn't blow up
         self.assertIn("Syntax Error", str(cm.exception))
-        if not is_native():
-            self.assertEqual(str(cm.exception), expected)
 
     def test_native_fallible_into_py(self) -> None:
         with patch("libcst._nodes.expression.Name._validate") as await_validate:
