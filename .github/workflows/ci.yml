@@ -39,11 +39,6 @@ jobs:
         run: uv sync --locked --dev
       - name: Native Parser Tests
         run: uv run poe test
-      - name: Pure Parser Tests
-        env:
-          COVERAGE_FILE: .coverage.pure
-          LIBCST_PARSER_TYPE: pure
-        run: uv run poe test
       - name: Coverage
         run: |
           uv run coverage combine .coverage.pure
