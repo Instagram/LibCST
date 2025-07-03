@@ -11,7 +11,6 @@ from typing import Tuple, Union
 from libcst._parser.types.config import AutoConfig, PartialParserConfig
 
 
-
 def _detect_encoding(source: Union[str, bytes]) -> str:
     """
     Detects the encoding from the presence of a UTF-8 BOM or an encoding cookie as
@@ -40,4 +39,3 @@ def convert_to_utf8(
 
     source_str = source if isinstance(source, str) else source.decode(encoding)
     return (encoding, source_str)
-
