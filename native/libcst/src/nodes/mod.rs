@@ -31,7 +31,7 @@ pub use expression::{
     Integer, Lambda, LeftCurlyBrace, LeftParen, LeftSquareBracket, List, ListComp, Name,
     NameOrAttribute, NamedExpr, Param, ParamSlash, ParamStar, Parameters, RightCurlyBrace,
     RightParen, RightSquareBracket, Set, SetComp, SimpleString, Slice, StarArg, StarredDictElement,
-    StarredElement, String, Subscript, SubscriptElement, Tuple, UnaryOperation, Yield, YieldValue,
+    StarredElement, String, Subscript, SubscriptElement, TemplatedString, TemplatedStringContent, TemplatedStringExpression, Tuple, UnaryOperation, Yield, YieldValue,
 };
 
 pub(crate) mod op;
@@ -78,7 +78,9 @@ pub(crate) mod deflated {
         DeflatedSlice as Slice, DeflatedStarArg as StarArg,
         DeflatedStarredDictElement as StarredDictElement, DeflatedStarredElement as StarredElement,
         DeflatedString as String, DeflatedSubscript as Subscript,
-        DeflatedSubscriptElement as SubscriptElement, DeflatedTuple as Tuple,
+        DeflatedSubscriptElement as SubscriptElement, DeflatedTemplatedString as TemplatedString,
+        DeflatedTemplatedStringText as TemplatedStringText, DeflatedTemplatedStringExpression as TemplatedStringExpression,
+        DeflatedTemplatedStringContent as TemplatedStringContent, DeflatedTuple as Tuple,
         DeflatedUnaryOperation as UnaryOperation, DeflatedYield as Yield,
         DeflatedYieldValue as YieldValue,
     };

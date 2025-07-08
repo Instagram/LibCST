@@ -66,8 +66,9 @@ use std::fmt::Debug;
 use std::fmt::Formatter;
 use std::rc::Rc;
 
+use crate::tokenizer::core::string_types::FTStringType;
 use crate::tokenizer::{
-    core::string_types::{FStringNode, StringQuoteChar, StringQuoteSize},
+    core::string_types::{FTStringNode, StringQuoteChar, StringQuoteSize},
     operators::OPERATOR_RE,
     text_position::{TextPosition, TextPositionSnapshot},
     whitespace_parser::State as WhitespaceState,
@@ -86,7 +87,7 @@ thread_local! {
     static SPACE_TAB_FORMFEED_RE: Regex = Regex::new(r"\A[ \f\t]+").expect("regex");
     static ANY_NON_NEWLINE_RE: Regex = Regex::new(r"\A[^\r\n]+").expect("regex");
     static STRING_PREFIX_RE: Regex =
-        Regex::new(r"\A(?i)(u|[bf]r|r[bf]|r|b|f)").expect("regex");
+        Regex::new(r"\A(?i)(u|[bf]r|r[bft]|r|b|f|t)").expect("regex");
     static POTENTIAL_IDENTIFIER_TAIL_RE: Regex =
         Regex::new(r"\A([a-zA-Z0-9_]|[^\x00-\x7f])+").expect("regex");
     static DECIMAL_DOT_DIGIT_RE: Regex = Regex::new(r"\A\.[0-9]").expect("regex");
@@ -118,6 +119,9 @@ pub enum TokType {
     FStringStart,
     FStringString,
     FStringEnd,
+    TStringStart,
+    TStringString,
+    TStringEnd,
     EndMarker,
 }
 
@@ -222,8 +226,8 @@ pub struct TokState<'t> {
     ///
     /// Supporting this at the tokenizer-level is pretty nasty and adds a lot of complexity.
     /// Eventually, we should probably support this at the parser-level instead.
-    split_fstring: bool,
-    fstring_stack: Vec<FStringNode>,
+    split_ftstring: bool,
+    ftstring_stack: Vec<FTStringNode>,
 
     missing_nl_before_eof: bool,
 }
@@ -233,7 +237,7 @@ pub struct TokConfig {
     /// identifiers, depending on if they're being used in the context of an async function. This
     /// breaks async comprehensions outside of async functions.
     pub async_hacks: bool,
-    pub split_fstring: bool,
+    pub split_ftstring: bool,
     // Not currently supported:
     // type_comments: bool,
 }
@@ -272,8 +276,8 @@ impl<'t> TokState<'t> {
             async_def: false,
             async_def_indent: 0,
             async_def_nl: false,
-            split_fstring: config.split_fstring,
-            fstring_stack: Vec::new(),
+            split_ftstring: config.split_ftstring,
+            ftstring_stack: Vec::new(),
             missing_nl_before_eof: text.is_empty() || text.as_bytes()[text.len() - 1] != b'\n',
         }
     }
@@ -285,18 +289,18 @@ impl<'t> TokState<'t> {
     /// Implementation of `next()`, wrapped by next() to allow for easier error handling. Roughly
     /// equivalent to `tok_get` in the C source code.
     fn next_inner(&mut self) -> Result<TokType, TokError<'t>> {
-        if self.split_fstring {
-            if let Some(tos) = self.fstring_stack.last() {
+        if self.split_ftstring {
+            if let Some(tos) = self.ftstring_stack.last() {
                 if !tos.is_in_expr() {
                     self.start_pos = (&self.text_pos).into();
                     let is_in_format_spec = tos.is_in_format_spec();
                     let is_raw_string = tos.is_raw_string;
                     if let Some(tok) =
-                        self.maybe_consume_fstring_string(is_in_format_spec, is_raw_string)?
+                        self.maybe_consume_ftstring_string(is_in_format_spec, is_raw_string)?
                     {
                         return Ok(tok);
                     }
-                    if let Some(tok) = self.maybe_consume_fstring_end() {
+                    if let Some(tok) = self.maybe_consume_ftstring_end() {
                         return Ok(tok);
                     }
                 }
@@ -362,8 +366,8 @@ impl<'t> TokState<'t> {
                 Some('\n') => {
                     self.text_pos.next();
                     self.at_bol = true;
-                    if self.split_fstring
-                        && self.fstring_stack.last().map(|node| node.allow_multiline())
+                    if self.split_ftstring
+                        && self.ftstring_stack.last().map(|node| node.allow_multiline())
                             == Some(false)
                     {
                         Err(TokError::UnterminatedString)
@@ -420,7 +424,7 @@ impl<'t> TokState<'t> {
 
                 Some(ch @ '(') | Some(ch @ '[') | Some(ch @ '{') => {
                     self.text_pos.next();
-                    if let Some(tos) = self.fstring_stack.last_mut() {
+                    if let Some(tos) = self.ftstring_stack.last_mut() {
                         tos.open_parentheses();
                     }
                     self.paren_stack.push((ch, self.text_pos.line_number()));
@@ -429,7 +433,7 @@ impl<'t> TokState<'t> {
 
                 Some(closing @ ')') | Some(closing @ ']') | Some(closing @ '}') => {
                     self.text_pos.next();
-                    if let Some(tos) = self.fstring_stack.last_mut() {
+                    if let Some(tos) = self.ftstring_stack.last_mut() {
                         tos.close_parentheses();
                     }
                     if let Some((opening, line_number)) = self.paren_stack.pop() {
@@ -454,7 +458,7 @@ impl<'t> TokState<'t> {
 
                 Some(':')
                     if self
-                        .fstring_stack
+                        .ftstring_stack
                         .last()
                         .map(|tos| tos.parentheses_count - tos.format_spec_count == 1)
                         .unwrap_or(false) =>
@@ -465,9 +469,9 @@ impl<'t> TokState<'t> {
                     //
                     // >>> f'{x:=10}'    # Valid, passes '=10' to formatter
                     let tos = self
-                        .fstring_stack
+                        .ftstring_stack
                         .last_mut()
-                        .expect("fstring_stack is not empty");
+                        .expect("ftstring_stack is not empty");
                     tos.format_spec_count += 1;
                     self.text_pos.next();
                     Ok(TokType::Op)
@@ -624,20 +628,24 @@ impl<'t> TokState<'t> {
     }
 
     fn consume_identifier_or_prefixed_string(&mut self) -> Result<TokType, TokError<'t>> {
-        // Process the various legal combinations of b"", r"", u"", and f"".
+        // Process the various legal combinations of b"", r"", u"",f"", and t"".
         if STRING_PREFIX_RE.with(|r| self.text_pos.consume(r)) {
             if let Some('"') | Some('\'') = self.text_pos.peek() {
                 // We found a string, not an identifier. Bail!
-                if self.split_fstring
-                    && self
-                        .text_pos
-                        .slice_from_start_pos(&self.start_pos)
-                        .contains(&['f', 'F'][..])
+                if self.split_ftstring // TODO(@martinli) rename this to be generic to tstrings and fstrings
                 {
-                    return self.consume_fstring_start();
-                } else {
-                    return self.consume_string();
+                    let res = match self.text_pos.slice_from_start_pos(&self.start_pos).chars().find(|c| matches!(c, 'f' | 'F' | 't' | 'T')) {
+                        Some('f' | 'F') => Some(FTStringType::FString),
+                        Some('t' | 'T') => Some(FTStringType::TString),
+                        _ => None
+                    };
+                    if let Some(str_type) = res {
+                        // Consume the prefix and return the start token
+                        return self.consume_prefixed_string_start(str_type)
+                    }
+
                 }
+                return self.consume_string();
             }
         } else {
             // the next character must be a potential identifier start, aka `[a-zA-Z_]|[^\x00-\x7f]`
@@ -880,24 +888,31 @@ impl<'t> TokState<'t> {
         Ok(TokType::String)
     }
 
-    fn consume_fstring_start(&mut self) -> Result<TokType, TokError<'t>> {
+    fn consume_prefixed_string_start(&mut self, str_type: FTStringType) -> Result< TokType, TokError<'t>> {
+        // Consumes everything after the (f|t) but before the actual string.
         let (quote_char, quote_size) = self.consume_open_quote();
         let is_raw_string = self
             .text_pos
             .slice_from_start_pos(&self.start_pos)
             .contains(&['r', 'R'][..]);
-        self.fstring_stack
-            .push(FStringNode::new(quote_char, quote_size, is_raw_string));
-        Ok(TokType::FStringStart)
+        self.ftstring_stack
+            .push(FTStringNode::new(quote_char, quote_size, is_raw_string,str_type.clone()));
+
+        match str_type {
+            FTStringType::FString => Ok(TokType::FStringStart),
+            FTStringType::TString => Ok(TokType::TStringStart),
+        }
     }
 
-    fn maybe_consume_fstring_string(
+
+    fn maybe_consume_ftstring_string(
         &mut self,
         is_in_format_spec: bool,
         is_raw_string: bool,
     ) -> Result<Option<TokType>, TokError<'t>> {
         let allow_multiline =
-            self.fstring_stack.last().map(|node| node.allow_multiline()) == Some(true);
+            self.ftstring_stack.last().map(|node| node.allow_multiline()) == Some(true);
+        let str_type = self.ftstring_stack.last().map(|node| node.string_type.clone());
         let mut in_named_unicode: bool = false;
         let mut ok_result = Ok(None); // value to return if we reach the end and don't error out
         'outer: loop {
@@ -910,7 +925,7 @@ impl<'t> TokState<'t> {
                 }
                 (ch @ Some('\''), _) | (ch @ Some('"'), _) => {
                     // see if this actually terminates the most recent fstring
-                    if let Some(node) = self.fstring_stack.last() {
+                    if let Some(node) = self.ftstring_stack.last() {
                         if ch == Some(node.quote_char.into()) {
                             match node.quote_size {
                                 StringQuoteSize::Single => {
@@ -999,22 +1014,30 @@ impl<'t> TokState<'t> {
                     self.text_pos.next();
                 }
             }
-            ok_result = Ok(Some(TokType::FStringString));
+            ok_result = match str_type {
+                Some(FTStringType::FString) => Ok(Some(TokType::FStringString)),
+                Some(FTStringType::TString) => Ok(Some(TokType::TStringString)),
+                None => unreachable!("We should always have a string type"),
+            };
         }
         ok_result
     }
 
-    fn maybe_consume_fstring_end(&mut self) -> Option<TokType> {
+    fn maybe_consume_ftstring_end(&mut self) -> Option<TokType> {
         let ch = self.text_pos.peek();
-        if let Some(node) = self.fstring_stack.last() {
+        if let Some(node) = self.ftstring_stack.last() {
             if ch == Some(node.quote_char.into()) {
                 if node.quote_size == StringQuoteSize::Triple {
                     self.text_pos.consume(node.quote_char.triple_str());
                 } else {
                     self.text_pos.next(); // already matched
                 }
-                self.fstring_stack.pop();
-                return Some(TokType::FStringEnd);
+                let tok_type =   match node.string_type {
+                    FTStringType::FString => TokType::FStringEnd,
+                    FTStringType::TString => TokType::TStringEnd,
+                };
+                self.ftstring_stack.pop();
+                return Some(tok_type);
             }
         }
         None

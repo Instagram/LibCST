@@ -1044,7 +1044,7 @@ parser! {
             / n:lit("True") { Expression::Name(Box::new(make_name(n))) }
             / n:lit("False") { Expression::Name(Box::new(make_name(n))) }
             / n:lit("None") { Expression::Name(Box::new(make_name(n))) }
-            / &(tok(STRING, "") / tok(FStringStart, "")) s:strings() {s.into()}
+            / &(tok(STRING, "") / tok(FStringStart, "") / tok(TStringStart, "")) s:strings() {s.into()}
             / n:tok(Number, "NUMBER") { make_number(n) }
             / &lit("(") e:(tuple() / group() / (g:genexp() {Expression::GeneratorExp(Box::new(g))})) {e}
             / &lit("[") e:(list() / listcomp()) {e}
@@ -1152,7 +1152,7 @@ parser! {
 
         rule strings() -> String<'input, 'a>
             = s:(str:tok(STRING, "STRING") t:&_ {(make_string(str), t)}
-                / str:fstring() t:&_ {(String::Formatted(str), t)})+ {?
+                / str:fstring() t:&_ {(String::Formatted(str), t)} / str:tstring() t:&_ {(String::Templated(str), t)})+ {?
                 make_strings(s)
             }
 
@@ -1478,10 +1478,11 @@ parser! {
                 TemplatedStringContent::Text(make_tstringtext(t.string))
             }
 
+
         rule _t_replacement() -> TemplatedStringContent<'input, 'a>
             = lb:lit("{") e:annotated_rhs() eq:lit("=")?
                 conv:(t:lit("!") c:_f_conversion() {(t,c)})?
-                spec:(t:lit(":") s:_f_spec() {(t,s)})?
+                spec:(t:lit(":") s:_t_spec() {(t,s)})?
                 rb:lit("}") {
                     TemplatedStringContent::Expression(Box::new(
                         make_tstring_expression(lb, e, eq, conv, spec, rb)
@@ -1490,7 +1491,7 @@ parser! {
 
         rule _t_spec() -> Vec<TemplatedStringContent<'input, 'a>>
             = (_t_string() / _t_replacement())*
-        
+
         // CST helpers
 
         rule comma() -> Comma<'input, 'a>
@@ -2912,7 +2913,7 @@ fn make_tstring_expression<'input, 'a>(
     conversion_pair: Option<(TokenRef<'input, 'a>, &'a str)>,
     format_pair: Option<(
         TokenRef<'input, 'a>,
-        Vec<FormattedStringContent<'input, 'a>>,
+        Vec<TemplatedStringContent<'input, 'a>>,
     )>,
     rbrace_tok: TokenRef<'input, 'a>,
 ) -> TemplatedStringExpression<'input, 'a> {
@@ -3008,6 +3009,7 @@ fn make_tstring<'input, 'a>(
     parts: Vec<TemplatedStringContent<'input, 'a>>,
     end: &'a str,
 ) -> TemplatedString<'input, 'a> {
+    eprintln!("make_tstring: start: {}, end: {}", start, end);
     TemplatedString {
         start,
         parts,

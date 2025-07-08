@@ -474,6 +474,7 @@ pub enum Expression<'a> {
     SimpleString(Box<SimpleString<'a>>),
     ConcatenatedString(Box<ConcatenatedString<'a>>),
     FormattedString(Box<FormattedString<'a>>),
+    TemplatedString(Box<TemplatedString<'a>>),
     NamedExpr(Box<NamedExpr<'a>>),
 }
 
@@ -2249,6 +2250,7 @@ pub enum String<'a> {
     Simple(SimpleString<'a>),
     Concatenated(ConcatenatedString<'a>),
     Formatted(FormattedString<'a>),
+    Templated(TemplatedString<'a>),
 }
 
 impl<'r, 'a> std::convert::From<DeflatedString<'r, 'a>> for DeflatedExpression<'r, 'a> {
@@ -2257,6 +2259,7 @@ impl<'r, 'a> std::convert::From<DeflatedString<'r, 'a>> for DeflatedExpression<'
             DeflatedString::Simple(s) => Self::SimpleString(Box::new(s)),
             DeflatedString::Concatenated(s) => Self::ConcatenatedString(Box::new(s)),
             DeflatedString::Formatted(s) => Self::FormattedString(Box::new(s)),
+            DeflatedString::Templated(s) => Self::TemplatedString(Box::new(s)),
         }
     }
 }
@@ -2334,6 +2337,144 @@ impl<'a> Codegen<'a> for SimpleString<'a> {
     }
 }
 
+#[cst_node]
+pub struct TemplatedStringText<'a> {
+    pub value: &'a str,
+}
+
+impl<'r, 'a> Inflate<'a> for DeflatedTemplatedStringText<'r, 'a> {
+    type Inflated = TemplatedStringText<'a>;
+    fn inflate(self, _config: &Config<'a>) -> Result<Self::Inflated> {
+        Ok(Self::Inflated { value: self.value })
+    }
+}
+
+impl<'a> Codegen<'a> for TemplatedStringText<'a> {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
+        state.add_token(self.value);
+    }
+}
+
+
+pub(crate) fn make_tstringtext<'r, 'a>(value: &'a str) -> DeflatedTemplatedStringText<'r, 'a> {
+    DeflatedTemplatedStringText {
+        value,
+        _phantom: Default::default(),
+    }
+}
+
+#[cst_node]
+pub struct TemplatedStringExpression<'a> {
+    // This represents the part of a t-string that is insde the brackets '{' and '}'.
+    pub expression: Expression<'a>,
+    pub conversion: Option<&'a str>,
+    pub format_spec: Option<Vec<TemplatedStringContent<'a>>>,
+    pub whitespace_before_expression: ParenthesizableWhitespace<'a>,
+    pub whitespace_after_expression: ParenthesizableWhitespace<'a>,
+    pub equal: Option<AssignEqual<'a>>,
+
+    pub(crate) lbrace_tok: TokenRef<'a>,
+    // This is None if there's an equal sign, otherwise it's the first token of
+    // (conversion, format spec, right brace) in that order
+    pub(crate) after_expr_tok: Option<TokenRef<'a>>,
+}
+
+impl<'r, 'a> Inflate<'a> for DeflatedTemplatedStringExpression<'r, 'a> {
+    type Inflated = TemplatedStringExpression<'a>;
+    fn inflate(mut self, config: &Config<'a>) -> Result<Self::Inflated> {
+        let whitespace_before_expression = parse_parenthesizable_whitespace(
+            config,
+            &mut (*self.lbrace_tok).whitespace_after.borrow_mut(),
+        )?;
+        let expression = self.expression.inflate(config)?;
+        let equal = self.equal.inflate(config)?;
+        let whitespace_after_expression = if let Some(after_expr_tok) = self.after_expr_tok.as_mut()
+        {
+            parse_parenthesizable_whitespace(
+                config,
+                &mut after_expr_tok.whitespace_before.borrow_mut(),
+            )?
+        } else {
+            Default::default()
+        };
+        let format_spec = self.format_spec.inflate(config)?;
+        Ok(Self::Inflated {
+            expression,
+            conversion: self.conversion,
+            format_spec,
+            whitespace_before_expression,
+            whitespace_after_expression,
+            equal,
+        })
+    }
+}
+
+impl<'a> Codegen<'a> for TemplatedStringExpression<'a> {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
+        state.add_token("{");
+        self.whitespace_before_expression.codegen(state);
+        self.expression.codegen(state);
+        if let Some(eq) = &self.equal {
+            eq.codegen(state);
+        }
+        self.whitespace_after_expression.codegen(state);
+        if let Some(conv) = &self.conversion {
+            state.add_token("!");
+            state.add_token(conv);
+        }
+        if let Some(specs) = &self.format_spec {
+            state.add_token(":");
+            for spec in specs {
+                spec.codegen(state);
+            }
+        }
+        state.add_token("}");
+    }
+}
+
+#[cst_node(ParenthesizedNode)]
+pub struct TemplatedString<'a> {
+    pub parts: Vec<TemplatedStringContent<'a>>,
+    pub start: &'a str,
+    pub end: &'a str,
+    pub lpar: Vec<LeftParen<'a>>,
+    pub rpar: Vec<RightParen<'a>>,
+}
+
+impl<'r, 'a> Inflate<'a> for DeflatedTemplatedString<'r, 'a> {
+    type Inflated = TemplatedString<'a>;
+    fn inflate(self, config: &Config<'a>) -> Result<Self::Inflated> {
+        let lpar = self.lpar.inflate(config)?;
+        let parts = self.parts.inflate(config)?;
+        let rpar = self.rpar.inflate(config)?;
+        Ok(Self::Inflated {
+            parts,
+            start: self.start,
+            end: self.end,
+            lpar,
+            rpar,
+        })
+    }
+}
+
+impl<'a> Codegen<'a> for TemplatedString<'a> {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
+        self.parenthesize(state, |state| {
+            state.add_token(self.start);
+            for part in &self.parts {
+                part.codegen(state);
+            }
+            state.add_token(self.end);
+        })
+    }
+}
+
+
+#[cst_node(Codegen, Inflate)]
+pub enum TemplatedStringContent<'a> {
+    Text(TemplatedStringText<'a>),
+    Expression(Box<TemplatedStringExpression<'a>>),
+}
 #[cst_node]
 pub struct FormattedStringText<'a> {
     pub value: &'a str,
