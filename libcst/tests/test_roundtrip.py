@@ -8,7 +8,7 @@ from pathlib import Path
 from unittest import TestCase
 
 from libcst import CSTTransformer, parse_module
-from libcst._parser.entrypoints import is_native
+
 
 fixtures: Path = Path(__file__).parent.parent.parent / "native/libcst/tests/fixtures"
 
@@ -19,8 +19,6 @@ class NOOPTransformer(CSTTransformer):
 
 class RoundTripTests(TestCase):
     def _get_fixtures(self) -> list[Path]:
-        if not is_native():
-            self.skipTest("pure python parser doesn't work with this")
         self.assertTrue(fixtures.exists(), f"{fixtures} should exist")
         files = list(fixtures.iterdir())
         self.assertGreater(len(files), 0)

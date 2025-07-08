@@ -8,7 +8,6 @@ from typing import Any
 import libcst as cst
 from libcst import parse_expression
 from libcst._nodes.tests.base import CSTNodeTest
-from libcst._parser.entrypoints import is_native
 from libcst.metadata import CodeRange
 from libcst.testing.utils import data_provider
 
@@ -189,4 +188,4 @@ class BinaryOperationTest(CSTNodeTest):
         )
     )
     def test_parse_error(self, **kwargs: Any) -> None:
-        self.assert_parses(**kwargs, expect_success=not is_native())
+        self.assert_parses(**kwargs, expect_success=False)

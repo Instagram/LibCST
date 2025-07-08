@@ -8,7 +8,6 @@ from typing import Any, Callable
 import libcst as cst
 from libcst import parse_expression
 from libcst._nodes.tests.base import CSTNodeTest, parse_expression_as
-from libcst._parser.entrypoints import is_native
 from libcst.testing.utils import data_provider
 
 
@@ -133,6 +132,6 @@ class ListTest(CSTNodeTest):
         )
     )
     def test_versions(self, **kwargs: Any) -> None:
-        if is_native() and not kwargs.get("expect_success", True):
+        if not kwargs.get("expect_success", True):
             self.skipTest("parse errors are disabled for native parser")
         self.assert_parses(**kwargs)

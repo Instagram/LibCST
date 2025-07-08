@@ -7,9 +7,7 @@ from typing import Any
 
 import libcst as cst
 from libcst import parse_statement, PartialParserConfig
-from libcst._maybe_sentinel import MaybeSentinel
 from libcst._nodes.tests.base import CSTNodeTest, DummyIndentedBlock, parse_statement_as
-from libcst._parser.entrypoints import is_native
 from libcst.metadata import CodeRange
 from libcst.testing.utils import data_provider
 
@@ -187,14 +185,14 @@ class WithTest(CSTNodeTest):
                         cst.WithItem(
                             cst.Call(
                                 cst.Name("context_mgr"),
-                                lpar=() if is_native() else (cst.LeftParen(),),
-                                rpar=() if is_native() else (cst.RightParen(),),
+                                lpar=(),
+                                rpar=(),
                             )
                         ),
                     ),
                     cst.SimpleStatementSuite((cst.Pass(),)),
-                    lpar=(cst.LeftParen() if is_native() else MaybeSentinel.DEFAULT),
-                    rpar=(cst.RightParen() if is_native() else MaybeSentinel.DEFAULT),
+                    lpar=(cst.LeftParen()),
+                    rpar=(cst.RightParen()),
                     whitespace_after_with=cst.SimpleWhitespace(""),
                 ),
                 "code": "with(context_mgr()): pass\n",
@@ -233,7 +231,7 @@ class WithTest(CSTNodeTest):
                     rpar=cst.RightParen(whitespace_before=cst.SimpleWhitespace(" ")),
                 ),
                 "code": ("with ( foo(),\n" "       bar(), ): pass\n"),  # noqa
-                "parser": parse_statement if is_native() else None,
+                "parser": parse_statement,
                 "expected_position": CodeRange((1, 0), (2, 21)),
             },
         )
@@ -310,7 +308,7 @@ class WithTest(CSTNodeTest):
         )
     )
     def test_versions(self, **kwargs: Any) -> None:
-        if is_native() and not kwargs.get("expect_success", True):
+        if not kwargs.get("expect_success", True):
             self.skipTest("parse errors are disabled for native parser")
         self.assert_parses(**kwargs)
 
