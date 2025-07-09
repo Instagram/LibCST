@@ -12,7 +12,6 @@ import tempfile
 from pathlib import Path
 from unittest import skipIf
 
-
 from libcst.codemod import CodemodTest
 from libcst.testing.utils import UnitTest
 

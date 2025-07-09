@@ -12,6 +12,7 @@ information
 from functools import partial
 from typing import Union
 
+from libcst import native
 from libcst._nodes.base import CSTNode
 from libcst._nodes.expression import BaseExpression
 from libcst._nodes.module import Module
@@ -21,8 +22,6 @@ from libcst._parser.types.config import PartialParserConfig
 
 _DEFAULT_PARTIAL_PARSER_CONFIG: PartialParserConfig = PartialParserConfig()
 
-
-from libcst import native
 
 def _parse(
     entrypoint: str,
