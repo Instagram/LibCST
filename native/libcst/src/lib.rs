@@ -193,8 +193,21 @@ mod test {
     }
     #[test]
     fn test_tstring_basic() {
-        assert!(parse_module("t'hello'", None).is_ok(), "Failed to parse tstring 1");
-        assert!(parse_module("t'{hello}'", None).is_ok(), "Failed to parse tstring 2");
-        assert!(parse_module("t'{hello:r}'", None).is_ok(), "Failed to parse tstring 3");
+        assert!(
+            parse_module("t'hello'", None).is_ok(),
+            "Failed to parse t'hello'"
+        );
+        assert!(
+            parse_module("t'{hello}'", None).is_ok(),
+            "Failed to parse t'{{hello}}'"
+        );
+        assert!(
+            parse_module("t'{hello:r}'", None).is_ok(),
+            "Failed to parse t'{{hello:r}}'"
+        );
+        assert!(
+            parse_module("f'line1\\n{hello:r}\\nline2'", None).is_ok(),
+            "Failed to parse t'line1\\n{{hello:r}}\\nline2'"
+        );
     }
 }
