@@ -60,7 +60,7 @@ pub const OPERATORS: &[&str] = &[
     "->",  // RARROW
     "...", // ELLIPSIS
     ":=",  // COLONEQUAL
-    // Not a real operator, but needed to support the split_fstring feature
+    // Not a real operator, but needed to support the split_ftstring feature
     "!",
     // The fake operator added by PEP 401. Technically only valid if used with:
     //
