@@ -2355,7 +2355,6 @@ impl<'a> Codegen<'a> for TemplatedStringText<'a> {
     }
 }
 
-
 pub(crate) fn make_tstringtext<'r, 'a>(value: &'a str) -> DeflatedTemplatedStringText<'r, 'a> {
     DeflatedTemplatedStringText {
         value,
@@ -2468,7 +2467,6 @@ impl<'a> Codegen<'a> for TemplatedString<'a> {
         })
     }
 }
-
 
 #[cst_node(Codegen, Inflate)]
 pub enum TemplatedStringContent<'a> {

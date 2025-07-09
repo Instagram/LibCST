@@ -367,7 +367,10 @@ impl<'t> TokState<'t> {
                     self.text_pos.next();
                     self.at_bol = true;
                     if self.split_ftstring
-                        && self.ftstring_stack.last().map(|node| node.allow_multiline())
+                        && self
+                            .ftstring_stack
+                            .last()
+                            .map(|node| node.allow_multiline())
                             == Some(false)
                     {
                         Err(TokError::UnterminatedString)
@@ -632,18 +635,23 @@ impl<'t> TokState<'t> {
         if STRING_PREFIX_RE.with(|r| self.text_pos.consume(r)) {
             if let Some('"') | Some('\'') = self.text_pos.peek() {
                 // We found a string, not an identifier. Bail!
-                if self.split_ftstring // TODO(@martinli) rename this to be generic to tstrings and fstrings
+                if self.split_ftstring
+                // TODO(@martinli) rename this to be generic to tstrings and fstrings
                 {
-                    let res = match self.text_pos.slice_from_start_pos(&self.start_pos).chars().find(|c| matches!(c, 'f' | 'F' | 't' | 'T')) {
+                    let res = match self
+                        .text_pos
+                        .slice_from_start_pos(&self.start_pos)
+                        .chars()
+                        .find(|c| matches!(c, 'f' | 'F' | 't' | 'T'))
+                    {
                         Some('f' | 'F') => Some(FTStringType::FString),
                         Some('t' | 'T') => Some(FTStringType::TString),
-                        _ => None
+                        _ => None,
                     };
                     if let Some(str_type) = res {
                         // Consume the prefix and return the start token
-                        return self.consume_prefixed_string_start(str_type)
+                        return self.consume_prefixed_string_start(str_type);
                     }
-
                 }
                 return self.consume_string();
             }
@@ -888,15 +896,22 @@ impl<'t> TokState<'t> {
         Ok(TokType::String)
     }
 
-    fn consume_prefixed_string_start(&mut self, str_type: FTStringType) -> Result< TokType, TokError<'t>> {
+    fn consume_prefixed_string_start(
+        &mut self,
+        str_type: FTStringType,
+    ) -> Result<TokType, TokError<'t>> {
         // Consumes everything after the (f|t) but before the actual string.
         let (quote_char, quote_size) = self.consume_open_quote();
         let is_raw_string = self
             .text_pos
             .slice_from_start_pos(&self.start_pos)
             .contains(&['r', 'R'][..]);
-        self.ftstring_stack
-            .push(FTStringNode::new(quote_char, quote_size, is_raw_string,str_type.clone()));
+        self.ftstring_stack.push(FTStringNode::new(
+            quote_char,
+            quote_size,
+            is_raw_string,
+            str_type.clone(),
+        ));
 
         match str_type {
             FTStringType::FString => Ok(TokType::FStringStart),
@@ -904,15 +919,20 @@ impl<'t> TokState<'t> {
         }
     }
 
-
     fn maybe_consume_ftstring_string(
         &mut self,
         is_in_format_spec: bool,
         is_raw_string: bool,
     ) -> Result<Option<TokType>, TokError<'t>> {
-        let allow_multiline =
-            self.ftstring_stack.last().map(|node| node.allow_multiline()) == Some(true);
-        let str_type = self.ftstring_stack.last().map(|node| node.string_type.clone());
+        let allow_multiline = self
+            .ftstring_stack
+            .last()
+            .map(|node| node.allow_multiline())
+            == Some(true);
+        let str_type = self
+            .ftstring_stack
+            .last()
+            .map(|node| node.string_type.clone());
         let mut in_named_unicode: bool = false;
         let mut ok_result = Ok(None); // value to return if we reach the end and don't error out
         'outer: loop {
@@ -1032,7 +1052,7 @@ impl<'t> TokState<'t> {
                 } else {
                     self.text_pos.next(); // already matched
                 }
-                let tok_type =   match node.string_type {
+                let tok_type = match node.string_type {
                     FTStringType::FString => TokType::FStringEnd,
                     FTStringType::TString => TokType::TStringEnd,
                 };

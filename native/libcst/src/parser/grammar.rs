@@ -18,7 +18,8 @@ use peg::str::LineCol;
 use peg::{parser, Parse, ParseElem, RuleResult};
 use TokType::{
     Async, Await as AWAIT, Dedent, EndMarker, FStringEnd, FStringStart, FStringString, Indent,
-    Name as NameTok, Newline as NL, Number, String as STRING, TStringStart, TStringEnd, TStringString
+    Name as NameTok, Newline as NL, Number, String as STRING, TStringEnd, TStringStart,
+    TStringString,
 };
 
 pub type Result<'a, T> = std::result::Result<T, ParserError<'a>>;
@@ -1463,7 +1464,7 @@ parser! {
 
         rule _f_spec() -> Vec<FormattedStringContent<'input, 'a>>
             = (_f_string() / _f_replacement())*
-        
+
         // T-strings
 
         rule tstring() -> TemplatedString<'input, 'a>

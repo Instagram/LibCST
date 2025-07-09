@@ -876,8 +876,8 @@ fn test_nested_f_strings() {
     )
 }
 #[test]
-fn test_can_tokenize_t_string_basic(){
- let config = TokConfig {
+fn test_can_tokenize_t_string_basic() {
+    let config = TokConfig {
         split_ftstring: true,
         ..default_config()
     };
@@ -891,7 +891,7 @@ fn test_can_tokenize_t_string_basic(){
     )
 }
 #[test]
-fn test_can_tokenize_f_and_t_strings(){
+fn test_can_tokenize_f_and_t_strings() {
     let config = TokConfig {
         split_ftstring: true,
         ..default_config()
