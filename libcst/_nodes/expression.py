@@ -1131,8 +1131,8 @@ class TemplatedString(_BasePrefixedString):
     >>>
     """
 
-    #: A templated string is composed as a series of :class:`FormattedStringText` and
-    #: :class:`FormattedStringExpression` parts.
+    #: A templated string is composed as a series of :class:`TemplatedStringText` and
+    #: :class:`TemplatedStringExpression` parts.
     parts: Sequence[BaseTemplatedStringContent]
 
     #: The string prefix and the leading quote, such as ``t"``, ``T'``, ``tr"``, or
