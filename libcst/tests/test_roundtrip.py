@@ -28,8 +28,6 @@ class RoundTripTests(TestCase):
 
     def test_clean_roundtrip(self) -> None:
         for file in self._get_fixtures():
-            if not "super_strings" in str(file):
-                continue
             with self.subTest(file=str(file)):
                 src = file.read_text(encoding="utf-8")
                 mod = parse_module(src)

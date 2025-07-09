@@ -271,6 +271,7 @@ __all__ = [
     "BaseElement",
     "BaseExpression",
     "BaseFormattedStringContent",
+    "BaseTemplatedStringContent",
     "BaseList",
     "BaseNumber",
     "BaseSet",
