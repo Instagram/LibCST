@@ -75,7 +75,7 @@ class TemplatedStringTest(CSTNodeTest):
                         cst.TemplatedStringExpression(
                             whitespace_before_expression=cst.SimpleWhitespace(" "),
                             expression=cst.Name("x"),
-                            whitespace_after_expression=cst.SimpleWhitespace(" ")
+                            whitespace_after_expression=cst.SimpleWhitespace(" "),
                         ),
                     ),
                 ),
@@ -85,9 +85,7 @@ class TemplatedStringTest(CSTNodeTest):
             # t-string with escaped braces
             (
                 cst.TemplatedString(
-                    parts=(
-                        cst.TemplatedStringText("{{foo}}"),
-                    ),
+                    parts=(cst.TemplatedStringText("{{foo}}"),),
                 ),
                 't"{{foo}}"',
                 True,

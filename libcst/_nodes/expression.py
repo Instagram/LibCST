@@ -836,6 +836,7 @@ class FormattedStringExpression(BaseFormattedStringContent):
                 spec._codegen(state)
         state.add_token("}")
 
+
 @add_slots
 @dataclass(frozen=True)
 class FormattedString(_BasePrefixedString):
@@ -954,6 +955,7 @@ class FormattedString(_BasePrefixedString):
                 part._codegen(state)
             state.add_token(self.end)
 
+
 class BaseTemplatedStringContent(CSTNode, ABC):
     """
     The base type for :class:`TemplatedStringText` and
@@ -962,6 +964,7 @@ class BaseTemplatedStringContent(CSTNode, ABC):
     """
 
     __slots__ = ()
+
 
 @add_slots
 @dataclass(frozen=True)
@@ -1082,12 +1085,13 @@ class TemplatedStringExpression(BaseTemplatedStringContent):
                 spec._codegen(state)
         state.add_token("}")
 
+
 @add_slots
 @dataclass(frozen=True)
 class TemplatedString(_BasePrefixedString):
     """
     An "t-string". Template strings are a generalization of f-strings,
-    using a t in place of the f prefix. Instead of evaluating to str, 
+    using a t in place of the f prefix. Instead of evaluating to str,
     t-strings evaluate to a new type: Template
 
     T-Strings are defined in 'PEP 750'
@@ -1124,7 +1128,7 @@ class TemplatedString(_BasePrefixedString):
         lpar=[],
         rpar=[],
     )
-    >>> 
+    >>>
     """
 
     #: A templated string is composed as a series of :class:`FormattedStringText` and
@@ -1197,7 +1201,6 @@ class TemplatedString(_BasePrefixedString):
             for part in self.parts:
                 part._codegen(state)
             state.add_token(self.end)
-
 
 
 @add_slots
