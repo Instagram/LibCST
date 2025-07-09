@@ -142,6 +142,10 @@ class BaseSuite(_NodeABC):
     pass
 
 
+class BaseTemplatedStringContent(_NodeABC):
+    pass
+
+
 class BaseUnaryOp(_NodeABC):
     pass
 
@@ -14284,6 +14288,368 @@ class SubtractAssign(BaseAugOp, BaseMatcherNode):
 
 
 @dataclass(frozen=True, eq=False, unsafe_hash=False)
+class TemplatedString(BaseExpression, BaseString, BaseMatcherNode):
+    parts: Union[
+        Sequence[
+            Union[
+                BaseFormattedStringContentMatchType,
+                DoNotCareSentinel,
+                OneOf[BaseFormattedStringContentMatchType],
+                AllOf[BaseFormattedStringContentMatchType],
+                AtLeastN[
+                    Union[
+                        BaseFormattedStringContentMatchType,
+                        DoNotCareSentinel,
+                        OneOf[BaseFormattedStringContentMatchType],
+                        AllOf[BaseFormattedStringContentMatchType],
+                    ]
+                ],
+                AtMostN[
+                    Union[
+                        BaseFormattedStringContentMatchType,
+                        DoNotCareSentinel,
+                        OneOf[BaseFormattedStringContentMatchType],
+                        AllOf[BaseFormattedStringContentMatchType],
+                    ]
+                ],
+            ]
+        ],
+        DoNotCareSentinel,
+        MatchIfTrue[Sequence[cst.BaseFormattedStringContent]],
+        OneOf[
+            Union[
+                Sequence[
+                    Union[
+                        BaseFormattedStringContentMatchType,
+                        OneOf[BaseFormattedStringContentMatchType],
+                        AllOf[BaseFormattedStringContentMatchType],
+                        AtLeastN[
+                            Union[
+                                BaseFormattedStringContentMatchType,
+                                OneOf[BaseFormattedStringContentMatchType],
+                                AllOf[BaseFormattedStringContentMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                BaseFormattedStringContentMatchType,
+                                OneOf[BaseFormattedStringContentMatchType],
+                                AllOf[BaseFormattedStringContentMatchType],
+                            ]
+                        ],
+                    ]
+                ],
+                MatchIfTrue[Sequence[cst.BaseFormattedStringContent]],
+            ]
+        ],
+        AllOf[
+            Union[
+                Sequence[
+                    Union[
+                        BaseFormattedStringContentMatchType,
+                        OneOf[BaseFormattedStringContentMatchType],
+                        AllOf[BaseFormattedStringContentMatchType],
+                        AtLeastN[
+                            Union[
+                                BaseFormattedStringContentMatchType,
+                                OneOf[BaseFormattedStringContentMatchType],
+                                AllOf[BaseFormattedStringContentMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                BaseFormattedStringContentMatchType,
+                                OneOf[BaseFormattedStringContentMatchType],
+                                AllOf[BaseFormattedStringContentMatchType],
+                            ]
+                        ],
+                    ]
+                ],
+                MatchIfTrue[Sequence[cst.BaseFormattedStringContent]],
+            ]
+        ],
+    ] = DoNotCare()
+    start: Union[
+        strMatchType, DoNotCareSentinel, OneOf[strMatchType], AllOf[strMatchType]
+    ] = DoNotCare()
+    end: Union[
+        Literal['"', "'", '"""', "'''"],
+        MetadataMatchType,
+        MatchIfTrue[Literal['"', "'", '"""', "'''"]],
+        DoNotCareSentinel,
+        OneOf[
+            Union[
+                Literal['"', "'", '"""', "'''"],
+                MetadataMatchType,
+                MatchIfTrue[Literal['"', "'", '"""', "'''"]],
+            ]
+        ],
+        AllOf[
+            Union[
+                Literal['"', "'", '"""', "'''"],
+                MetadataMatchType,
+                MatchIfTrue[Literal['"', "'", '"""', "'''"]],
+            ]
+        ],
+    ] = DoNotCare()
+    lpar: Union[
+        Sequence[
+            Union[
+                LeftParenMatchType,
+                DoNotCareSentinel,
+                OneOf[LeftParenMatchType],
+                AllOf[LeftParenMatchType],
+                AtLeastN[
+                    Union[
+                        LeftParenMatchType,
+                        DoNotCareSentinel,
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                    ]
+                ],
+                AtMostN[
+                    Union[
+                        LeftParenMatchType,
+                        DoNotCareSentinel,
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                    ]
+                ],
+            ]
+        ],
+        DoNotCareSentinel,
+        MatchIfTrue[Sequence[cst.LeftParen]],
+        OneOf[
+            Union[
+                Sequence[
+                    Union[
+                        LeftParenMatchType,
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                        AtLeastN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                    ]
+                ],
+                MatchIfTrue[Sequence[cst.LeftParen]],
+            ]
+        ],
+        AllOf[
+            Union[
+                Sequence[
+                    Union[
+                        LeftParenMatchType,
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                        AtLeastN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                    ]
+                ],
+                MatchIfTrue[Sequence[cst.LeftParen]],
+            ]
+        ],
+    ] = DoNotCare()
+    rpar: Union[
+        Sequence[
+            Union[
+                RightParenMatchType,
+                DoNotCareSentinel,
+                OneOf[RightParenMatchType],
+                AllOf[RightParenMatchType],
+                AtLeastN[
+                    Union[
+                        RightParenMatchType,
+                        DoNotCareSentinel,
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                    ]
+                ],
+                AtMostN[
+                    Union[
+                        RightParenMatchType,
+                        DoNotCareSentinel,
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                    ]
+                ],
+            ]
+        ],
+        DoNotCareSentinel,
+        MatchIfTrue[Sequence[cst.RightParen]],
+        OneOf[
+            Union[
+                Sequence[
+                    Union[
+                        RightParenMatchType,
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                        AtLeastN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                    ]
+                ],
+                MatchIfTrue[Sequence[cst.RightParen]],
+            ]
+        ],
+        AllOf[
+            Union[
+                Sequence[
+                    Union[
+                        RightParenMatchType,
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                        AtLeastN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                    ]
+                ],
+                MatchIfTrue[Sequence[cst.RightParen]],
+            ]
+        ],
+    ] = DoNotCare()
+    metadata: Union[
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
+    ] = DoNotCare()
+
+
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
+class TemplatedStringExpression(BaseTemplatedStringContent, BaseMatcherNode):
+    expression: Union[
+        BaseExpressionMatchType,
+        DoNotCareSentinel,
+        OneOf[BaseExpressionMatchType],
+        AllOf[BaseExpressionMatchType],
+    ] = DoNotCare()
+    conversion: Union[
+        Optional[str],
+        MetadataMatchType,
+        MatchIfTrue[Optional[str]],
+        DoNotCareSentinel,
+        OneOf[Union[Optional[str], MetadataMatchType, MatchIfTrue[Optional[str]]]],
+        AllOf[Union[Optional[str], MetadataMatchType, MatchIfTrue[Optional[str]]]],
+    ] = DoNotCare()
+    format_spec: Union[
+        Optional[Sequence["BaseTemplatedStringContent"]],
+        MetadataMatchType,
+        MatchIfTrue[Optional[Sequence[cst.BaseTemplatedStringContent]]],
+        DoNotCareSentinel,
+        OneOf[
+            Union[
+                Optional[Sequence["BaseTemplatedStringContent"]],
+                MetadataMatchType,
+                MatchIfTrue[Optional[Sequence[cst.BaseTemplatedStringContent]]],
+            ]
+        ],
+        AllOf[
+            Union[
+                Optional[Sequence["BaseTemplatedStringContent"]],
+                MetadataMatchType,
+                MatchIfTrue[Optional[Sequence[cst.BaseTemplatedStringContent]]],
+            ]
+        ],
+    ] = DoNotCare()
+    whitespace_before_expression: Union[
+        BaseParenthesizableWhitespaceMatchType,
+        DoNotCareSentinel,
+        OneOf[BaseParenthesizableWhitespaceMatchType],
+        AllOf[BaseParenthesizableWhitespaceMatchType],
+    ] = DoNotCare()
+    whitespace_after_expression: Union[
+        BaseParenthesizableWhitespaceMatchType,
+        DoNotCareSentinel,
+        OneOf[BaseParenthesizableWhitespaceMatchType],
+        AllOf[BaseParenthesizableWhitespaceMatchType],
+    ] = DoNotCare()
+    equal: Union[
+        Optional["AssignEqual"],
+        MetadataMatchType,
+        MatchIfTrue[Optional[cst.AssignEqual]],
+        DoNotCareSentinel,
+        OneOf[
+            Union[
+                Optional["AssignEqual"],
+                MetadataMatchType,
+                MatchIfTrue[Optional[cst.AssignEqual]],
+            ]
+        ],
+        AllOf[
+            Union[
+                Optional["AssignEqual"],
+                MetadataMatchType,
+                MatchIfTrue[Optional[cst.AssignEqual]],
+            ]
+        ],
+    ] = DoNotCare()
+    metadata: Union[
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
+    ] = DoNotCare()
+
+
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
+class TemplatedStringText(BaseTemplatedStringContent, BaseMatcherNode):
+    value: Union[
+        strMatchType, DoNotCareSentinel, OneOf[strMatchType], AllOf[strMatchType]
+    ] = DoNotCare()
+    metadata: Union[
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
+    ] = DoNotCare()
+
+
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class TrailingWhitespace(BaseMatcherNode):
     whitespace: Union[
         SimpleWhitespaceMatchType,
@@ -16122,6 +16488,7 @@ __all__ = [
     "BaseStatement",
     "BaseString",
     "BaseSuite",
+    "BaseTemplatedStringContent",
     "BaseUnaryOp",
     "BinaryOperation",
     "BitAnd",
@@ -16274,6 +16641,9 @@ __all__ = [
     "SubscriptElement",
     "Subtract",
     "SubtractAssign",
+    "TemplatedString",
+    "TemplatedStringExpression",
+    "TemplatedStringText",
     "TrailingWhitespace",
     "Try",
     "TryStar",

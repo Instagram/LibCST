@@ -1094,13 +1094,42 @@ class TemplatedString(_BasePrefixedString):
 
     >>> import libcst as cst
     >>> cst.parse_expression('t"ab{cd}ef"')
-    CHANGE ME BEFORE YOU OPEN A PR
-    # TODO(@martinli): add the result here
+    TemplatedString(
+        parts=[
+            TemplatedStringText(
+                value='ab',
+            ),
+            TemplatedStringExpression(
+                expression=Name(
+                    value='cd',
+                    lpar=[],
+                    rpar=[],
+                ),
+                conversion=None,
+                format_spec=None,
+                whitespace_before_expression=SimpleWhitespace(
+                    value='',
+                ),
+                whitespace_after_expression=SimpleWhitespace(
+                    value='',
+                ),
+                equal=None,
+            ),
+            TemplatedStringText(
+                value='ef',
+            ),
+        ],
+        start='t"',
+        end='"',
+        lpar=[],
+        rpar=[],
+    )
+    >>> 
     """
 
     #: A templated string is composed as a series of :class:`FormattedStringText` and
     #: :class:`FormattedStringExpression` parts.
-    parts: Sequence[BaseFormattedStringContent]
+    parts: Sequence[BaseTemplatedStringContent]
 
     #: The string prefix and the leading quote, such as ``t"``, ``T'``, ``tr"``, or
     #: ``t"""``.
@@ -1114,7 +1143,7 @@ class TemplatedString(_BasePrefixedString):
     rpar: Sequence[RightParen] = ()
 
     def _validate(self) -> None:
-        super()._validate()
+        super(_BasePrefixedString, self)._validate()
 
         # Validate any prefix
         prefix = self.prefix
