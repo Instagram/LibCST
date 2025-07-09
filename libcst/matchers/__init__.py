@@ -14287,85 +14287,92 @@ class SubtractAssign(BaseAugOp, BaseMatcherNode):
     ] = DoNotCare()
 
 
+BaseTemplatedStringContentMatchType = Union[
+    "BaseTemplatedStringContent",
+    MetadataMatchType,
+    MatchIfTrue[cst.BaseTemplatedStringContent],
+]
+
+
 @dataclass(frozen=True, eq=False, unsafe_hash=False)
 class TemplatedString(BaseExpression, BaseString, BaseMatcherNode):
     parts: Union[
         Sequence[
             Union[
-                BaseFormattedStringContentMatchType,
+                BaseTemplatedStringContentMatchType,
                 DoNotCareSentinel,
-                OneOf[BaseFormattedStringContentMatchType],
-                AllOf[BaseFormattedStringContentMatchType],
+                OneOf[BaseTemplatedStringContentMatchType],
+                AllOf[BaseTemplatedStringContentMatchType],
                 AtLeastN[
                     Union[
-                        BaseFormattedStringContentMatchType,
+                        BaseTemplatedStringContentMatchType,
                         DoNotCareSentinel,
-                        OneOf[BaseFormattedStringContentMatchType],
-                        AllOf[BaseFormattedStringContentMatchType],
+                        OneOf[BaseTemplatedStringContentMatchType],
+                        AllOf[BaseTemplatedStringContentMatchType],
                     ]
                 ],
                 AtMostN[
                     Union[
-                        BaseFormattedStringContentMatchType,
+                        BaseTemplatedStringContentMatchType,
                         DoNotCareSentinel,
-                        OneOf[BaseFormattedStringContentMatchType],
-                        AllOf[BaseFormattedStringContentMatchType],
+                        OneOf[BaseTemplatedStringContentMatchType],
+                        AllOf[BaseTemplatedStringContentMatchType],
                     ]
                 ],
             ]
         ],
         DoNotCareSentinel,
-        MatchIfTrue[Sequence[cst.BaseFormattedStringContent]],
+        MatchIfTrue[Sequence[cst.BaseTemplatedStringContent]],
         OneOf[
             Union[
                 Sequence[
                     Union[
-                        BaseFormattedStringContentMatchType,
-                        OneOf[BaseFormattedStringContentMatchType],
-                        AllOf[BaseFormattedStringContentMatchType],
+                        BaseTemplatedStringContentMatchType,
+                        OneOf[BaseTemplatedStringContentMatchType],
+                        AllOf[BaseTemplatedStringContentMatchType],
                         AtLeastN[
                             Union[
-                                BaseFormattedStringContentMatchType,
-                                OneOf[BaseFormattedStringContentMatchType],
-                                AllOf[BaseFormattedStringContentMatchType],
+                                BaseTemplatedStringContentMatchType,
+                                OneOf[BaseTemplatedStringContentMatchType],
+                                AllOf[BaseTemplatedStringContentMatchType],
                             ]
                         ],
                         AtMostN[
                             Union[
-                                BaseFormattedStringContentMatchType,
-                                OneOf[BaseFormattedStringContentMatchType],
-                                AllOf[BaseFormattedStringContentMatchType],
+                                BaseTemplatedStringContentMatchType,
+                                OneOf[BaseTemplatedStringContentMatchType],
+                                AllOf[BaseTemplatedStringContentMatchType],
                             ]
                         ],
                     ]
                 ],
-                MatchIfTrue[Sequence[cst.BaseFormattedStringContent]],
+                MatchIfTrue[Sequence[cst.BaseTemplatedStringContent]],
             ]
         ],
         AllOf[
             Union[
                 Sequence[
                     Union[
-                        BaseFormattedStringContentMatchType,
-                        OneOf[BaseFormattedStringContentMatchType],
-                        AllOf[BaseFormattedStringContentMatchType],
+                        BaseTemplatedStringContentMatchType,
+                        OneOf[BaseTemplatedStringContentMatchType],
+                        AllOf[BaseTemplatedStringContentMatchType],
                         AtLeastN[
                             Union[
-                                BaseFormattedStringContentMatchType,
-                                OneOf[BaseFormattedStringContentMatchType],
-                                AllOf[BaseFormattedStringContentMatchType],
+                                BaseTemplatedStringContentMatchType,
+                                OneOf[BaseTemplatedStringContentMatchType],
+                                AllOf[BaseTemplatedStringContentMatchType],
                             ]
                         ],
                         AtMostN[
                             Union[
-                                BaseFormattedStringContentMatchType,
-                                OneOf[BaseFormattedStringContentMatchType],
-                                AllOf[BaseFormattedStringContentMatchType],
+                                BaseTemplatedStringContentMatchType,
+                                OneOf[BaseTemplatedStringContentMatchType],
+                                AllOf[BaseTemplatedStringContentMatchType],
                             ]
                         ],
                     ]
                 ],
-                MatchIfTrue[Sequence[cst.BaseFormattedStringContent]],
+                MatchIfTrue[Sequence[cst.BaseTemplatedStringContent]],
             ]
         ],
     ] = DoNotCare()
