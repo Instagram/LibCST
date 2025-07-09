@@ -42,13 +42,9 @@ pub fn parse_module<'a>(
         module_text = stripped;
     }
     let tokens = tokenize(module_text)?;
-    let for_print = tokens.clone().into_iter().map(|t| t.r#type).collect::<Vec<_>>();
-    println!("Martin 1 {for_print:?}");
     let conf = whitespace_parser::Config::new(module_text, &tokens);
     let tokvec = tokens.into();
-    println!("hiii");
     let m = parse_tokens_without_whitespace(&tokvec, module_text, encoding)?;
-    println!("Martin 2 {m:?}");
     Ok(m.inflate(&conf)?)
 }
 
@@ -57,7 +53,6 @@ pub fn parse_tokens_without_whitespace<'r, 'a>(
     module_text: &'a str,
     encoding: Option<&str>,
 ) -> Result<'a, DeflatedModule<'r, 'a>> {
-    print!("byeeee");
     let m = parser::python::file(tokens, module_text, encoding)
         .map_err(|err| ParserError::ParserError(err, module_text))?;
     Ok(m)

@@ -66,7 +66,6 @@ impl TryFrom<Option<char>> for StringQuoteChar {
     }
 }
 
-// TODO(@martinli): we can probably reuse toktype
 #[derive(Clone)]
 pub enum FTStringType {
     FString,

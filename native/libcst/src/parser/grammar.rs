@@ -3009,7 +3009,6 @@ fn make_tstring<'input, 'a>(
     parts: Vec<TemplatedStringContent<'input, 'a>>,
     end: &'a str,
 ) -> TemplatedString<'input, 'a> {
-    eprintln!("make_tstring: start: {}, end: {}", start, end);
     TemplatedString {
         start,
         parts,
