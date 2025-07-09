@@ -636,7 +636,6 @@ impl<'t> TokState<'t> {
             if let Some('"') | Some('\'') = self.text_pos.peek() {
                 // We found a string, not an identifier. Bail!
                 if self.split_ftstring
-                // TODO(@martinli) rename this to be generic to tstrings and fstrings
                 {
                     let res = match self
                         .text_pos
