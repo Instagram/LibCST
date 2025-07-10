@@ -11,7 +11,6 @@ from unittest import mock
 
 import libcst as cst
 from libcst import ensure_type
-
 from libcst.metadata import MetadataWrapper
 from libcst.metadata.scope_provider import (
     _gen_dotted_names,

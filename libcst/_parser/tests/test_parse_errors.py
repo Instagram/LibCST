@@ -10,7 +10,6 @@ from unittest.mock import patch
 
 import libcst as cst
 from libcst._nodes.base import CSTValidationError
-
 from libcst.testing.utils import data_provider, UnitTest
 
 
