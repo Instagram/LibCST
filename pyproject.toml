@@ -66,6 +66,7 @@ fail_under = 93
 precision = 1
 show_missing = true
 skip_covered = true
+omit = ["*/_parser/*"] # temporary while I remove the parser
 
 [tool.uv]
 cache-keys = [
