@@ -9,4 +9,4 @@ try:
 
     Token = tokenize.Token
 except ImportError:
-    from libcst._parser.types.py_token import Token  # noqa F401
+    from libcst._parser.types.py_token import Token  # noqa: F401
