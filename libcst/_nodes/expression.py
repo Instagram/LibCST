@@ -958,6 +958,253 @@ class FormattedString(_BasePrefixedString):
             state.add_token(self.end)
 
 
+class BaseTemplatedStringContent(CSTNode, ABC):
+    """
+    The base type for :class:`TemplatedStringText` and
+    :class:`TemplatedStringExpression`. A :class:`TemplatedString` is composed of a
+    sequence of :class:`BaseTemplatedStringContent` parts.
+    """
+
+    __slots__ = ()
+
+
+@add_slots
+@dataclass(frozen=True)
+class TemplatedStringText(BaseTemplatedStringContent):
+    """
+    Part of a :class:`TemplatedString` that is not inside curly braces (``{`` or ``}``).
+    For example, in::
+
+        f"ab{cd}ef"
+
+    ``ab`` and ``ef`` are :class:`TemplatedStringText` nodes, but ``{cd}`` is a
+    :class:`TemplatedStringExpression`.
+    """
+
+    #: The raw string value, including any escape characters present in the source
+    #: code, not including any enclosing quotes.
+    value: str
+
+    def _visit_and_replace_children(
+        self, visitor: CSTVisitorT
+    ) -> "TemplatedStringText":
+        return TemplatedStringText(value=self.value)
+
+    def _codegen_impl(self, state: CodegenState) -> None:
+        state.add_token(self.value)
+
+
+@add_slots
+@dataclass(frozen=True)
+class TemplatedStringExpression(BaseTemplatedStringContent):
+    """
+    Part of a :class:`TemplatedString` that is inside curly braces (``{`` or ``}``),
+    including the surrounding curly braces. For example, in::
+
+        f"ab{cd}ef"
+
+    ``{cd}`` is a :class:`TemplatedStringExpression`, but ``ab`` and ``ef`` are
+    :class:`TemplatedStringText` nodes.
+
+    An t-string expression may contain ``conversion`` and ``format_spec`` suffixes that
+    control how the expression is converted to a string.
+    """
+
+    #: The expression we will evaluate and render when generating the string.
+    expression: BaseExpression
+
+    #: An optional conversion specifier, such as ``!s``, ``!r`` or ``!a``.
+    conversion: Optional[str] = None
+
+    #: An optional format specifier following the `format specification mini-language
+    #: <https://docs.python.org/3/library/string.html#formatspec>`_.
+    format_spec: Optional[Sequence[BaseTemplatedStringContent]] = None
+
+    #: Whitespace after the opening curly brace (``{``), but before the ``expression``.
+    whitespace_before_expression: BaseParenthesizableWhitespace = (
+        SimpleWhitespace.field("")
+    )
+
+    #: Whitespace after the ``expression``, but before the ``conversion``,
+    #: ``format_spec`` and the closing curly brace (``}``). Python does not
+    #: allow whitespace inside or after a ``conversion`` or ``format_spec``.
+    whitespace_after_expression: BaseParenthesizableWhitespace = SimpleWhitespace.field(
+        ""
+    )
+
+    #: Equal sign for Templated string expression uses self-documenting expressions,
+    #: such as ``f"{x=}"``. See the `Python 3.8 release notes
+    #: <https://docs.python.org/3/whatsnew/3.8.html#f-strings-support-for-self-documenting-expressions-and-debugging>`_.
+    equal: Optional[AssignEqual] = None
+
+    def _validate(self) -> None:
+        if self.conversion is not None and self.conversion not in ("s", "r", "a"):
+            raise CSTValidationError("Invalid t-string conversion.")
+
+    def _visit_and_replace_children(
+        self, visitor: CSTVisitorT
+    ) -> "TemplatedStringExpression":
+        format_spec = self.format_spec
+        return TemplatedStringExpression(
+            whitespace_before_expression=visit_required(
+                self,
+                "whitespace_before_expression",
+                self.whitespace_before_expression,
+                visitor,
+            ),
+            expression=visit_required(self, "expression", self.expression, visitor),
+            equal=visit_optional(self, "equal", self.equal, visitor),
+            whitespace_after_expression=visit_required(
+                self,
+                "whitespace_after_expression",
+                self.whitespace_after_expression,
+                visitor,
+            ),
+            conversion=self.conversion,
+            format_spec=(
+                visit_sequence(self, "format_spec", format_spec, visitor)
+                if format_spec is not None
+                else None
+            ),
+        )
+
+    def _codegen_impl(self, state: CodegenState) -> None:
+        state.add_token("{")
+        self.whitespace_before_expression._codegen(state)
+        self.expression._codegen(state)
+        equal = self.equal
+        if equal is not None:
+            equal._codegen(state)
+        self.whitespace_after_expression._codegen(state)
+        conversion = self.conversion
+        if conversion is not None:
+            state.add_token("!")
+            state.add_token(conversion)
+        format_spec = self.format_spec
+        if format_spec is not None:
+            state.add_token(":")
+            for spec in format_spec:
+                spec._codegen(state)
+        state.add_token("}")
+
+
+@add_slots
+@dataclass(frozen=True)
+class TemplatedString(_BasePrefixedString):
+    """
+    An "t-string". Template strings are a generalization of f-strings,
+    using a t in place of the f prefix. Instead of evaluating to str,
+    t-strings evaluate to a new type: Template
+
+    T-Strings are defined in 'PEP 750'
+
+    >>> import libcst as cst
+    >>> cst.parse_expression('t"ab{cd}ef"')
+    TemplatedString(
+        parts=[
+            TemplatedStringText(
+                value='ab',
+            ),
+            TemplatedStringExpression(
+                expression=Name(
+                    value='cd',
+                    lpar=[],
+                    rpar=[],
+                ),
+                conversion=None,
+                format_spec=None,
+                whitespace_before_expression=SimpleWhitespace(
+                    value='',
+                ),
+                whitespace_after_expression=SimpleWhitespace(
+                    value='',
+                ),
+                equal=None,
+            ),
+            TemplatedStringText(
+                value='ef',
+            ),
+        ],
+        start='t"',
+        end='"',
+        lpar=[],
+        rpar=[],
+    )
+    >>>
+    """
+
+    #: A templated string is composed as a series of :class:`TemplatedStringText` and
+    #: :class:`TemplatedStringExpression` parts.
+    parts: Sequence[BaseTemplatedStringContent]
+
+    #: The string prefix and the leading quote, such as ``t"``, ``T'``, ``tr"``, or
+    #: ``t"""``.
+    start: str = 't"'
+
+    #: The trailing quote. This must match the type of quote used in ``start``.
+    end: Literal['"', "'", '"""', "'''"] = '"'
+
+    lpar: Sequence[LeftParen] = ()
+    #: Sequence of parenthesis for precidence dictation.
+    rpar: Sequence[RightParen] = ()
+
+    def _validate(self) -> None:
+        super(_BasePrefixedString, self)._validate()
+
+        # Validate any prefix
+        prefix = self.prefix
+        if prefix not in ("t", "tr", "rt"):
+            raise CSTValidationError("Invalid t-string prefix.")
+
+        # Validate wrapping quotes
+        starttoken = self.start[len(prefix) :]
+        if starttoken != self.end:
+            raise CSTValidationError("t-string must have matching enclosing quotes.")
+
+        # Validate valid wrapping quote usage
+        if starttoken not in ('"', "'", '"""', "'''"):
+            raise CSTValidationError("Invalid t-string enclosing quotes.")
+
+    @property
+    def prefix(self) -> str:
+        """
+        Returns the string's prefix, if any exists. The prefix can be ``t``,
+        ``tr``, or ``rt``.
+        """
+
+        prefix = ""
+        for c in self.start:
+            if c in ['"', "'"]:
+                break
+            prefix += c
+        return prefix.lower()
+
+    @property
+    def quote(self) -> StringQuoteLiteral:
+        """
+        Returns the quotation used to denote the string. Can be either ``'``,
+        ``"``, ``'''`` or ``\"\"\"``.
+        """
+
+        return self.end
+
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "TemplatedString":
+        return TemplatedString(
+            lpar=visit_sequence(self, "lpar", self.lpar, visitor),
+            start=self.start,
+            parts=visit_sequence(self, "parts", self.parts, visitor),
+            end=self.end,
+            rpar=visit_sequence(self, "rpar", self.rpar, visitor),
+        )
+
+    def _codegen_impl(self, state: CodegenState) -> None:
+        with self._parenthesize(state):
+            state.add_token(self.start)
+            for part in self.parts:
+                part._codegen(state)
+            state.add_token(self.end)
+
+
 @add_slots
 @dataclass(frozen=True)
 class ConcatenatedString(BaseString):
