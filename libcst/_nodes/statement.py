@@ -712,14 +712,29 @@ class IndentedBlock(BaseSuite):
         state.increase_indent(state.default_indent if indent is None else indent)
 
         if self.body:
-            with state.record_syntactic_position(
-                self, start_node=self.body[0], end_node=self.body[-1]
+            if (
+                isinstance(self.body[0], (FunctionDef, ClassDef))
+                and self.body[0].decorators
             ):
-                for stmt in self.body:
-                    # IndentedBlock is responsible for adjusting the current indentation level,
-                    # but its children are responsible for actually adding that indentation to
-                    # the token list.
-                    stmt._codegen(state)
+                # If the first statement is a function or class definition, we need to
+                # use the position of the first decorator instead of the function/class definition.
+                with state.record_syntactic_position(
+                    self, start_node=self.body[0].decorators[0], end_node=self.body[-1]
+                ):
+                    for stmt in self.body:
+                        # IndentedBlock is responsible for adjusting the current indentation level,
+                        # but its children are responsible for actually adding that indentation to
+                        # the token list.
+                        stmt._codegen(state)
+            else:
+                with state.record_syntactic_position(
+                    self, start_node=self.body[0], end_node=self.body[-1]
+                ):
+                    for stmt in self.body:
+                        # IndentedBlock is responsible for adjusting the current indentation level,
+                        # but its children are responsible for actually adding that indentation to
+                        # the token list.
+                        stmt._codegen(state)
         else:
             # Empty indented blocks are not syntactically valid in Python unless
             # they contain a 'pass' statement, so add one here.
