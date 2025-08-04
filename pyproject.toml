@@ -41,7 +41,7 @@ dev = [
     "maturin>=1.7.0,<1.8",
     "poethepoet>=0.35.0",
     "prompt-toolkit>=2.0.9",
-    "pyre-check==0.9.18; platform_system != 'Windows'",
+    "pyre-check==0.9.25; platform_system != 'Windows'",
     "setuptools_scm>=6.0.1",
     "ufmt==2.8.0",
     "usort==1.0.8.post1",
