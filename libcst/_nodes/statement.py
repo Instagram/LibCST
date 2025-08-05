@@ -2902,6 +2902,9 @@ class MatchCase(CSTNode):
                 state.add_token("if")
                 self.whitespace_after_if._codegen(state)
                 guard._codegen(state)
+            else:
+                self.whitespace_before_if._codegen(state)
+                self.whitespace_after_if._codegen(state)
 
             self.whitespace_before_colon._codegen(state)
             state.add_token(":")
@@ -3488,6 +3491,13 @@ class MatchAs(MatchPattern):
                 if ws_after is MaybeSentinel.DEFAULT:
                     state.add_token(" ")
                 elif isinstance(ws_after, BaseParenthesizableWhitespace):
+                    ws_after._codegen(state)
+            else:
+                ws_before = self.whitespace_before_as
+                if isinstance(ws_before, BaseParenthesizableWhitespace):
+                    ws_before._codegen(state)
+                ws_after = self.whitespace_after_as
+                if isinstance(ws_after, BaseParenthesizableWhitespace):
                     ws_after._codegen(state)
             if name is None:
                 state.add_token("_")

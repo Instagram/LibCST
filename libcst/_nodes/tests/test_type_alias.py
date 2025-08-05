@@ -8,7 +8,6 @@ from typing import Any
 import libcst as cst
 from libcst import parse_statement
 from libcst._nodes.tests.base import CSTNodeTest
-from libcst._parser.entrypoints import is_native
 from libcst.metadata import CodeRange
 from libcst.testing.utils import data_provider
 
@@ -132,8 +131,6 @@ class TypeAliasCreationTest(CSTNodeTest):
         )
     )
     def test_valid(self, **kwargs: Any) -> None:
-        if not is_native():
-            self.skipTest("Disabled in the old parser")
         self.validate_node(**kwargs)
 
 
@@ -252,6 +249,4 @@ class TypeAliasParserTest(CSTNodeTest):
         )
     )
     def test_valid(self, **kwargs: Any) -> None:
-        if not is_native():
-            self.skipTest("Disabled in the old parser")
         self.validate_node(**kwargs)

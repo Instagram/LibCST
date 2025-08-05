@@ -3,17 +3,14 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from typing import Any, Callable, Optional
+from typing import Any, Callable
 
 import libcst as cst
 from libcst import parse_statement
 from libcst._nodes.tests.base import CSTNodeTest
-from libcst._parser.entrypoints import is_native
 from libcst.testing.utils import data_provider
 
-parser: Optional[Callable[[str], cst.CSTNode]] = (
-    parse_statement if is_native() else None
-)
+parser: Callable[[str], cst.CSTNode] = parse_statement
 
 
 class MatchTest(CSTNodeTest):

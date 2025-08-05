@@ -27,7 +27,7 @@ try:
         ERROR_DEDENT: TokenType = native_token_type.ERROR_DEDENT
 
 except ImportError:
-    from libcst._parser.parso.python.py_token import (  # noqa F401
+    from libcst._parser.parso.python.py_token import (  # noqa: F401
         PythonTokenTypes,
         TokenType,
     )
