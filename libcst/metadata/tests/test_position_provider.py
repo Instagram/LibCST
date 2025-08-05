@@ -83,6 +83,62 @@ class PositionProviderTest(UnitTest):
         wrapper = MetadataWrapper(parse_module("pass"))
         wrapper.visit_batched([ABatchable()])
 
+    def test_indented_block_starting_with_decorated_function_def(self) -> None:
+        """
+        Tests that the position provider correctly computes positions in an indented block
+        starting with a decorated function definition.
+        """
+        test = self
+
+        class IndentedBlockVisitor(CSTVisitor):
+            METADATA_DEPENDENCIES = (PositionProvider,)
+
+            def visit_IndentedBlock(self, node: cst.IndentedBlock) -> None:
+                test.assertEqual(
+                    self.get_metadata(PositionProvider, node),
+                    CodeRange((3, 4), (5, 15)),
+                )
+
+        wrapper = MetadataWrapper(
+            parse_module(
+                """ # Empty line
+def foo():
+    @decorator
+    def func(): return 42
+    return func
+"""
+            )
+        )
+        wrapper.visit(IndentedBlockVisitor())
+
+    def test_indented_block_starting_with_decorated_class_def(self) -> None:
+        """
+        Tests that the position provider correctly computes positions in an indented block
+        starting with a decorated class definition.
+        """
+        test = self
+
+        class IndentedBlockVisitor(CSTVisitor):
+            METADATA_DEPENDENCIES = (PositionProvider,)
+
+            def visit_IndentedBlock(self, node: cst.IndentedBlock) -> None:
+                test.assertEqual(
+                    self.get_metadata(PositionProvider, node),
+                    CodeRange((3, 4), (5, 18)),
+                )
+
+        wrapper = MetadataWrapper(
+            parse_module(
+                """ # Empty line
+def foo():
+    @decorator
+    class MyClass: pass
+    return MyClass
+"""
+            )
+        )
+        wrapper.visit(IndentedBlockVisitor())
+
     def test_match_statement_position_metadata(self) -> None:
         test = self
 
