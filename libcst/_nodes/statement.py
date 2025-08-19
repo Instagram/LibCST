@@ -11,7 +11,6 @@ from typing import Literal, Optional, Pattern, Sequence, Union
 
 from libcst import CSTLogicError
 
-from libcst._add_slots import add_slots
 from libcst._maybe_sentinel import MaybeSentinel
 from libcst._nodes.base import CSTNode, CSTValidationError
 from libcst._nodes.expression import (
@@ -118,8 +117,7 @@ class BaseSmallStatement(CSTNode, ABC):
     ) -> None: ...
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class Del(BaseSmallStatement):
     """
     Represents a ``del`` statement. ``del`` is always followed by a target.
@@ -170,8 +168,7 @@ class Del(BaseSmallStatement):
             semicolon._codegen(state)
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class Pass(BaseSmallStatement):
     """
     Represents a ``pass`` statement.
@@ -200,8 +197,7 @@ class Pass(BaseSmallStatement):
             semicolon._codegen(state)
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class Break(BaseSmallStatement):
     """
     Represents a ``break`` statement, which is used to break out of a :class:`For`
@@ -231,8 +227,7 @@ class Break(BaseSmallStatement):
             semicolon._codegen(state)
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class Continue(BaseSmallStatement):
     """
     Represents a ``continue`` statement, which is used to skip to the next iteration
@@ -262,8 +257,7 @@ class Continue(BaseSmallStatement):
             semicolon._codegen(state)
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class Return(BaseSmallStatement):
     """
     Represents a ``return`` or a ``return x`` statement.
@@ -327,8 +321,7 @@ class Return(BaseSmallStatement):
             semicolon._codegen(state)
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class Expr(BaseSmallStatement):
     """
     An expression used as a statement, where the result is unused and unassigned.
@@ -412,8 +405,7 @@ class _BaseSimpleStatement(CSTNode, ABC):
         self.trailing_whitespace._codegen(state)
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class SimpleStatementLine(_BaseSimpleStatement, BaseStatement):
     """
     A simple statement that's part of an IndentedBlock or Module. A simple statement is
@@ -459,8 +451,7 @@ class SimpleStatementLine(_BaseSimpleStatement, BaseStatement):
         _BaseSimpleStatement._codegen_impl(self, state)
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class SimpleStatementSuite(_BaseSimpleStatement, BaseSuite):
     """
     A simple statement that's used as a suite. A simple statement is a series of small
@@ -504,8 +495,7 @@ class SimpleStatementSuite(_BaseSimpleStatement, BaseSuite):
         _BaseSimpleStatement._codegen_impl(self, state)
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class Else(CSTNode):
     """
     An ``else`` clause that appears optionally after an :class:`If`, :class:`While`,
@@ -570,8 +560,7 @@ class BaseCompoundStatement(BaseStatement, ABC):
     leading_lines: Sequence[EmptyLine]
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class If(BaseCompoundStatement):
     """
     An ``if`` statement. ``test`` holds a single test expression.
@@ -644,8 +633,7 @@ class If(BaseCompoundStatement):
                     orelse._codegen(state)
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class IndentedBlock(BaseSuite):
     """
     Represents a block of statements beginning with an ``INDENT`` token and ending in a
@@ -734,8 +722,7 @@ class IndentedBlock(BaseSuite):
         state.decrease_indent()
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class AsName(CSTNode):
     """
     An ``as name`` clause inside an :class:`ExceptHandler`, :class:`ImportAlias` or
@@ -778,8 +765,7 @@ class AsName(CSTNode):
         self.name._codegen(state)
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class ExceptHandler(CSTNode):
     """
     An ``except`` clause that appears optionally after a :class:`Try` statement.
@@ -868,8 +854,7 @@ class ExceptHandler(CSTNode):
             self.body._codegen(state)
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class ExceptStarHandler(CSTNode):
     """
     An ``except*`` clause that appears after a :class:`TryStar` statement.
@@ -944,8 +929,7 @@ class ExceptStarHandler(CSTNode):
             self.body._codegen(state)
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class Finally(CSTNode):
     """
     A ``finally`` clause that appears optionally after a :class:`Try` statement.
@@ -984,8 +968,7 @@ class Finally(CSTNode):
             self.body._codegen(state)
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class Try(BaseCompoundStatement):
     """
     A regular ``try`` statement that cannot contain :class:`ExceptStar` blocks. For
@@ -1065,8 +1048,7 @@ class Try(BaseCompoundStatement):
                 finalbody._codegen(state)
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class TryStar(BaseCompoundStatement):
     """
     A ``try`` statement with ``except*`` blocks.
@@ -1134,8 +1116,7 @@ class TryStar(BaseCompoundStatement):
                 finalbody._codegen(state)
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class ImportAlias(CSTNode):
     """
     An import, with an optional :class:`AsName`. Used in both :class:`Import` and
@@ -1220,8 +1201,7 @@ class ImportAlias(CSTNode):
         return None
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class Import(BaseSmallStatement):
     """
     An ``import`` statement.
@@ -1277,8 +1257,7 @@ class Import(BaseSmallStatement):
             semicolon._codegen(state)
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class ImportFrom(BaseSmallStatement):
     """
     A ``from x import y`` statement.
@@ -1424,8 +1403,7 @@ class ImportFrom(BaseSmallStatement):
             semicolon._codegen(state)
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class AssignTarget(CSTNode):
     """
     A target for an :class:`Assign`. Owns the equals sign and the whitespace around it.
@@ -1460,8 +1438,7 @@ class AssignTarget(CSTNode):
         self.whitespace_after_equal._codegen(state)
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class Assign(BaseSmallStatement):
     """
     An assignment statement such as ``x = y`` or ``x = y = z``. Unlike
@@ -1508,8 +1485,7 @@ class Assign(BaseSmallStatement):
             semicolon._codegen(state)
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class AnnAssign(BaseSmallStatement):
     """
     An assignment statement such as ``x: int = 5`` or ``x: int``. This only
@@ -1573,8 +1549,7 @@ class AnnAssign(BaseSmallStatement):
             semicolon._codegen(state)
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class AugAssign(BaseSmallStatement):
     """
     An augmented assignment statement, such as ``x += 5``.
@@ -1617,8 +1592,7 @@ class AugAssign(BaseSmallStatement):
             semicolon._codegen(state)
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class Decorator(CSTNode):
     """
     A single decorator that decorates a :class:`FunctionDef` or a :class:`ClassDef`.
@@ -1702,8 +1676,7 @@ def get_docstring_impl(
     return evaluated_value
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class FunctionDef(BaseCompoundStatement):
     """
     A function definition.
@@ -1858,8 +1831,7 @@ class FunctionDef(BaseCompoundStatement):
         return get_docstring_impl(self.body, clean)
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class ClassDef(BaseCompoundStatement):
     """
     A class definition.
@@ -2034,8 +2006,7 @@ class ClassDef(BaseCompoundStatement):
         return get_docstring_impl(self.body, clean)
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class WithItem(CSTNode):
     """
     A single context manager in a :class:`With` block, with an optional variable name.
@@ -2082,8 +2053,7 @@ class WithItem(CSTNode):
             comma._codegen(state)
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class With(BaseCompoundStatement):
     """
     A ``with`` statement.
@@ -2204,8 +2174,7 @@ class With(BaseCompoundStatement):
             self.body._codegen(state)
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class For(BaseCompoundStatement):
     """
     A ``for target in iter`` statement.
@@ -2318,8 +2287,7 @@ class For(BaseCompoundStatement):
                 orelse._codegen(state)
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class While(BaseCompoundStatement):
     """
     A ``while`` statement.
@@ -2387,8 +2355,7 @@ class While(BaseCompoundStatement):
                 orelse._codegen(state)
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class Raise(BaseSmallStatement):
     """
     A ``raise exc`` or ``raise exc from cause`` statement.
@@ -2479,8 +2446,7 @@ class Raise(BaseSmallStatement):
             semicolon._codegen(state)
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class Assert(BaseSmallStatement):
     """
     An assert statement such as ``assert x > 5`` or ``assert x > 5, 'Uh oh!'``
@@ -2551,8 +2517,7 @@ class Assert(BaseSmallStatement):
             semicolon._codegen(state)
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class NameItem(CSTNode):
     """
     A single identifier name inside a :class:`Global` or :class:`Nonlocal` statement.
@@ -2591,8 +2556,7 @@ class NameItem(CSTNode):
             comma._codegen(state)
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class Global(BaseSmallStatement):
     """
     A ``global`` statement.
@@ -2649,8 +2613,7 @@ class Global(BaseSmallStatement):
             semicolon._codegen(state)
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class Nonlocal(BaseSmallStatement):
     """
     A ``nonlocal`` statement.
@@ -2719,8 +2682,7 @@ class MatchPattern(_BaseParenthesizedNode, ABC):
     __slots__ = ()
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 # pyre-fixme[13]: Attribute `body` is never initialized.
 class Match(BaseCompoundStatement):
     """
@@ -2817,8 +2779,7 @@ class Match(BaseCompoundStatement):
             state.decrease_indent()
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class MatchCase(CSTNode):
     """
     A single ``case`` block of a :class:`Match` statement.
@@ -2895,8 +2856,7 @@ class MatchCase(CSTNode):
             self.body._codegen(state)
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class MatchValue(MatchPattern):
     """
     A match literal or value pattern that compares by equality.
@@ -2929,8 +2889,7 @@ class MatchValue(MatchPattern):
         self.value.rpar = value
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class MatchSingleton(MatchPattern):
     """
     A match literal pattern that compares by identity.
@@ -2971,8 +2930,7 @@ class MatchSingleton(MatchPattern):
         self.value.rpar = value
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class MatchSequenceElement(CSTNode):
     """
     An element in a sequence match pattern.
@@ -3006,8 +2964,7 @@ class MatchSequenceElement(CSTNode):
                 comma._codegen(state)
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class MatchStar(CSTNode):
     """
     A starred element in a sequence match pattern. Matches the rest of the sequence.
@@ -3065,8 +3022,7 @@ class MatchSequence(MatchPattern, ABC):
     patterns: Sequence[Union[MatchSequenceElement, MatchStar]]
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class MatchList(MatchSequence):
     """
     A list match pattern. It's either an "open sequence pattern" (without brackets) or a
@@ -3122,8 +3078,7 @@ class MatchList(MatchSequence):
                 rbracket._codegen(state)
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class MatchTuple(MatchSequence):
     """
     A tuple match pattern.
@@ -3164,8 +3119,7 @@ class MatchTuple(MatchSequence):
                 )
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class MatchMappingElement(CSTNode):
     """
     A ``key: value`` pair in a match mapping pattern.
@@ -3214,8 +3168,7 @@ class MatchMappingElement(CSTNode):
                 comma._codegen(state)
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class MatchMapping(MatchPattern):
     """
     A match mapping pattern.
@@ -3286,8 +3239,7 @@ class MatchMapping(MatchPattern):
             self.rbrace._codegen(state)
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class MatchKeywordElement(CSTNode):
     """
     A key=value pair in a :class:`MatchClass`.
@@ -3336,8 +3288,7 @@ class MatchKeywordElement(CSTNode):
                 comma._codegen(state)
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class MatchClass(MatchPattern):
     """
     A match class pattern.
@@ -3407,8 +3358,7 @@ class MatchClass(MatchPattern):
             state.add_token(")")
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class MatchAs(MatchPattern):
     """
     A match "as-pattern", capture pattern, or wildcard pattern.
@@ -3489,8 +3439,7 @@ class MatchAs(MatchPattern):
                 name._codegen(state)
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class MatchOrElement(CSTNode):
     """
     An element in a :class:`MatchOr` node.
@@ -3519,8 +3468,7 @@ class MatchOrElement(CSTNode):
                 sep._codegen(state)
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class MatchOr(MatchPattern):
     """
     A match "or-pattern". It matches each of its subpatterns in turn to the subject,
@@ -3550,8 +3498,7 @@ class MatchOr(MatchPattern):
                 pat._codegen(state, default_separator=idx + 1 < len(pats))
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class TypeVar(CSTNode):
     """
     A simple (non-variadic) type variable.
@@ -3592,8 +3539,7 @@ class TypeVar(CSTNode):
         )
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class TypeVarTuple(CSTNode):
     """
     A variadic type variable.
@@ -3621,8 +3567,7 @@ class TypeVarTuple(CSTNode):
         )
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class ParamSpec(CSTNode):
     """
     A parameter specification.
@@ -3653,8 +3598,7 @@ class ParamSpec(CSTNode):
         )
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class TypeParam(CSTNode):
     """
     A single type parameter that is contained in a :class:`TypeParameters` list.
@@ -3726,8 +3670,7 @@ class TypeParam(CSTNode):
             raise CSTValidationError("Must specify either '' or '*' for star.")
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class TypeParameters(CSTNode):
     """
     Type parameters when specified with PEP-695 syntax.
@@ -3758,8 +3701,7 @@ class TypeParameters(CSTNode):
         )
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class TypeAlias(BaseSmallStatement):
     """
     A type alias statement.

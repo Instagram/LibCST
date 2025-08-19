@@ -7,13 +7,11 @@
 from dataclasses import dataclass
 from typing import Optional, Tuple
 
-from libcst._add_slots import add_slots
 from libcst._parser.parso.python.token import TokenType
 from libcst._parser.types.whitespace_state import WhitespaceState
 
 
-@add_slots
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class Token:
     type: TokenType
     string: str

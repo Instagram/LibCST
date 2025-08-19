@@ -24,7 +24,6 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Generator, Iterator, List, Optional, Sequence
 
-from libcst._add_slots import add_slots
 from libcst._exceptions import ParserSyntaxError
 from libcst._parser.parso.python.token import PythonTokenTypes, TokenType
 from libcst._parser.parso.python.tokenize import (
@@ -61,8 +60,7 @@ _FSTRING_STACK_ENTRY: _ParenthesisOrFStringStackEntry = (
 )
 
 
-@add_slots
-@dataclass(frozen=False)
+@dataclass(slots=True, frozen=False)
 class _TokenizeState:
     lines: Sequence[str]
     previous_whitespace_state: WhitespaceState = field(
