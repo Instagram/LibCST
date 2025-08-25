@@ -61,6 +61,28 @@ class TestApplyAnnotationsVisitor(CodemodTest):
         )
         self.assertCodemod(before, after, context_override=context)
 
+    def run_test_case_twice(
+        self,
+        stub: str,
+        before: str,
+        after: str,
+    ) -> None:
+        context = CodemodContext()
+        ApplyTypeAnnotationsVisitor.store_stub_in_context(
+            context, parse_module(textwrap.dedent(stub.rstrip()))
+        )
+        r1 = ApplyTypeAnnotationsVisitor(context).transform_module(
+            parse_module(textwrap.dedent(before.rstrip()))
+        )
+
+        context = CodemodContext()
+        ApplyTypeAnnotationsVisitor.store_stub_in_context(
+            context, parse_module(textwrap.dedent(stub.rstrip()))
+        )
+        r2 = ApplyTypeAnnotationsVisitor(context).transform_module(r1)
+        assert r1.code == textwrap.dedent(after.rstrip())
+        assert r2.code == textwrap.dedent(after.rstrip())
+
     @data_provider(
         {
             "simple": (
@@ -1965,3 +1987,29 @@ class TestApplyAnnotationsVisitor(CodemodTest):
     )
     def test_no_duplicate_annotations(self, stub: str, before: str, after: str) -> None:
         self.run_simple_test_case(stub=stub, before=before, after=after)
+
+    @data_provider(
+        {
+            "qualifier_jank": (
+                """
+                from module.submodule import B
+                M: B
+                class Foo: ...
+                """,
+                """
+                from module import B
+                M = B()
+                class Foo: pass
+                """,
+                """
+                from module import B
+                import module.submodule
+
+                M: module.submodule.B = B()
+                class Foo: pass
+                """,
+            ),
+        }
+    )
+    def test_idempotent(self, stub: str, before: str, after: str) -> None:
+        self.run_test_case_twice(stub=stub, before=before, after=after)
