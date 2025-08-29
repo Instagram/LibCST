@@ -286,7 +286,7 @@ checksum = "a08173bc88b7955d1b3145aa561539096c421ac8debde8cbc3612ec635fee29b"
 
 [[package]]
 name = "libcst"
-version = "1.8.2"
+version = "1.8.3"
 dependencies = [
  "annotate-snippets",
  "criterion",
@@ -304,7 +304,7 @@ dependencies = [
 
 [[package]]
 name = "libcst_derive"
-version = "1.8.2"
+version = "1.8.3"
 dependencies = [
  "quote",
  "syn",
