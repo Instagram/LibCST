@@ -1,3 +1,16 @@
+# 1.8.3 - 2025-08-29
+## What's Changed
+* removed: remove entry points to pure parser by @drinkmorewaterr in https://github.com/Instagram/LibCST/pull/1375
+* fixed: fixes match statements to work with PositionProvider by @imsut in https://github.com/Instagram/LibCST/pull/1389
+
+
+## New Contributors
+* @hunterhogan made their first contribution in https://github.com/Instagram/LibCST/pull/1378
+* @thomas-serre-sonarsource made their first contribution in https://github.com/Instagram/LibCST/pull/1379
+* @imsut made their first contribution in https://github.com/Instagram/LibCST/pull/1389
+
+**Full Changelog**: https://github.com/Instagram/LibCST/compare/v1.8.2...v1.8.3
+
 # 1.8.2 - 2025-06-13
 
 # Fixed
