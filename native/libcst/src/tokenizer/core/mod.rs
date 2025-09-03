@@ -635,8 +635,7 @@ impl<'t> TokState<'t> {
         if STRING_PREFIX_RE.with(|r| self.text_pos.consume(r)) {
             if let Some('"') | Some('\'') = self.text_pos.peek() {
                 // We found a string, not an identifier. Bail!
-                if self.split_ftstring
-                {
+                if self.split_ftstring {
                     let res = match self
                         .text_pos
                         .slice_from_start_pos(&self.start_pos)
