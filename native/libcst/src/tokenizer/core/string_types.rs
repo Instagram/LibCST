@@ -67,7 +67,13 @@ impl TryFrom<Option<char>> for StringQuoteChar {
 }
 
 #[derive(Clone)]
-pub struct FStringNode {
+pub enum FTStringType {
+    FString,
+    TString,
+}
+
+#[derive(Clone)]
+pub struct FTStringNode {
     pub quote_char: StringQuoteChar,
     pub quote_size: StringQuoteSize,
     pub parentheses_count: usize,
@@ -75,13 +81,16 @@ pub struct FStringNode {
     // In the syntax there can be multiple format_spec's nested: {x:{y:3}}
     pub format_spec_count: usize,
     pub is_raw_string: bool,
+    // ftstring type; either f-string or a t-string
+    pub string_type: FTStringType,
 }
 
-impl FStringNode {
+impl FTStringNode {
     pub fn new(
         quote_char: StringQuoteChar,
         quote_size: StringQuoteSize,
         is_raw_string: bool,
+        string_type: FTStringType,
     ) -> Self {
         Self {
             quote_char,
@@ -90,6 +99,7 @@ impl FStringNode {
             string_start: None,
             format_spec_count: 0,
             is_raw_string,
+            string_type,
         }
     }
 
