@@ -554,11 +554,20 @@ parser! {
             }
 
         // Except statement
-
         rule except_block() -> ExceptHandler<'input, 'a>
             = kw:lit("except") e:expression() a:(k:lit("as") n:name() {(k, n)})?
                 col:lit(":") b:block() {
                     make_except(kw, Some(e), a, col, b)
+            }
+            / kw:lit("except") e:expression() other:(c:comma() ex:expression() {(c, ex)})+ tc:(c:comma())?
+                col:lit(":") b:block() {
+                    let tuple = Expression::Tuple(Box::new(Tuple {
+                        elements: comma_separate(expr_to_element(e), other.into_iter().map(|(comma, expr)| (comma, expr_to_element(expr))).collect(), tc),
+                        lpar: vec![],
+                        rpar: vec![],
+                    }));
+
+                    make_except(kw, Some(tuple), None, col, b)
             }
             / kw:lit("except") col:lit(":") b:block() {
                 make_except(kw, None, None, col, b)
@@ -568,6 +577,16 @@ parser! {
             = kw:lit("except") star:lit("*") e:expression()
                 a:(k:lit("as") n:name() {(k, n)})? col:lit(":") b:block() {
                     make_except_star(kw, star, e, a, col, b)
+            }
+            / kw:lit("except") star:lit("*") e:expression() other:(c:comma() ex:expression() {(c, ex)})+ tc:(c:comma())?
+                col:lit(":") b:block() {
+                    let tuple = Expression::Tuple(Box::new(Tuple {
+                        elements: comma_separate(expr_to_element(e), other.into_iter().map(|(comma, expr)| (comma, expr_to_element(expr))).collect(), tc),
+                        lpar: vec![],
+                        rpar: vec![],
+                    }));
+
+                    make_except_star(kw, star, tuple, None, col, b)
             }
 
         rule finally_block() -> Finally<'input, 'a>
@@ -1550,22 +1569,22 @@ parser! {
         rule separated<El, Sep>(el: rule<El>, sep: rule<Sep>) -> (El, Vec<(Sep, El)>)
             = e:el() rest:(s:sep() e:el() {(s, e)})* {(e, rest)}
 
-        rule traced<T>(e: rule<T>) -> T =
-            &(_* {
+                rule traced<T>(e: rule<T>) -> T =
+                    &(_* {
                 #[cfg(feature = "trace")]
                 {
                     println!("[PEG_INPUT_START]");
                     println!("{}", input);
                     println!("[PEG_TRACE_START]");
                 }
-            })
-            e:e()? {?
+                    })
+                    e:e()? {?
                 #[cfg(feature = "trace")]
-                println!("[PEG_TRACE_STOP]");
-                e.ok_or("")
-            }
+                    println!("[PEG_TRACE_STOP]");
+                    e.ok_or("")
+                    }
 
-    }
+                }
 }
 
 #[allow(clippy::too_many_arguments)]
