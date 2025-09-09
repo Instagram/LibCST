@@ -25,7 +25,7 @@ pub fn tokenize(text: &str) -> Result<Vec<Token>> {
         text,
         &TokConfig {
             async_hacks: false,
-            split_fstring: true,
+            split_ftstring: true,
         },
     );
 
@@ -190,5 +190,24 @@ mod test {
         assert_eq!(5, bol_offset("hello", 3));
         assert_eq!(11, bol_offset("hello\nhello", 3));
         assert_eq!(12, bol_offset("hello\nhello\nhello", 3));
+    }
+    #[test]
+    fn test_tstring_basic() {
+        assert!(
+            parse_module("t'hello'", None).is_ok(),
+            "Failed to parse t'hello'"
+        );
+        assert!(
+            parse_module("t'{hello}'", None).is_ok(),
+            "Failed to parse t'{{hello}}'"
+        );
+        assert!(
+            parse_module("t'{hello:r}'", None).is_ok(),
+            "Failed to parse t'{{hello:r}}'"
+        );
+        assert!(
+            parse_module("f'line1\\n{hello:r}\\nline2'", None).is_ok(),
+            "Failed to parse t'line1\\n{{hello:r}}\\nline2'"
+        );
     }
 }
