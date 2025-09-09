@@ -1,3 +1,15 @@
+# 1.8.4 - 2025-09-09
+
+## What's Changed
+* fixed: generate Attribute nodes when applying type annotations by @tungol in https://github.com/Instagram/LibCST/pull/1396
+* added: Support parsing of t-strings #1374  by @drinkmorewaterr in https://github.com/Instagram/LibCST/pull/1398
+* added: add support for PEP758 by @drinkmorewaterr in https://github.com/Instagram/LibCST/pull/1401
+
+## New Contributors
+* @tungol made their first contribution in https://github.com/Instagram/LibCST/pull/1396
+
+**Full Changelog**: https://github.com/Instagram/LibCST/compare/v1.8.2...v1.8.4
+
 # 1.8.3 - 2025-08-29
 ## What's Changed
 * removed: remove entry points to pure parser by @drinkmorewaterr in https://github.com/Instagram/LibCST/pull/1375
