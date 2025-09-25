@@ -9,4 +9,4 @@ from unittest import TestCase
 
 class TestImport(TestCase):
     def test_import_libcst(self) -> None:
-        import libcst
+        import libcst  # noqa: F401
