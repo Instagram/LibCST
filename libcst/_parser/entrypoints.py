@@ -12,7 +12,6 @@ information
 from functools import partial
 from typing import Union
 
-from libcst import native
 from libcst._nodes.base import CSTNode
 from libcst._nodes.expression import BaseExpression
 from libcst._nodes.module import Module
@@ -33,6 +32,8 @@ def _parse(
 ) -> CSTNode:
 
     encoding, source_str = convert_to_utf8(source, partial=config)
+
+    from libcst import native
 
     if entrypoint == "file_input":
         parse = partial(native.parse_module, encoding=encoding)
