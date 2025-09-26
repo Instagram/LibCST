@@ -5,7 +5,7 @@
 
 [package]
 name = "libcst"
-version = "1.8.4"
+version = "1.8.5"
 authors = ["LibCST Developers"]
 edition = "2018"
 rust-version = "1.70"
@@ -42,7 +42,7 @@ peg = "0.8.5"
 annotate-snippets = "0.11.5"
 regex = "1.11.2"
 memchr = "2.7.4"
-libcst_derive = { path = "../libcst_derive", version = "1.8.4" }
+libcst_derive = { path = "../libcst_derive", version = "1.8.5" }
 
 [dev-dependencies]
 criterion = { version = "0.6.0", features = ["html_reports"] }
