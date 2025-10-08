@@ -3,7 +3,7 @@ requires = ["setuptools", "setuptools-scm", "setuptools-rust", "wheel"]
 
 [project]
 name = "libcst"
-description = "A concrete syntax tree with AST-like properties for Python 3.0 through 3.13 programs."
+description = "A concrete syntax tree with AST-like properties for Python 3.0 through 3.14 programs."
 readme = "README.rst"
 dynamic = ["version"]
 license = { file = "LICENSE" }
@@ -15,6 +15,7 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Typing :: Typed",
 ]
 requires-python = ">=3.9"
