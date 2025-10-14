@@ -17,8 +17,8 @@ macro_rules! py_import {
     ( $module_name:expr, $member_name:expr, $getter_fn:ident ) => {
         paste::paste! {
             static [<IMPORT_CELL_ $getter_fn:snake:upper>]
-                : pyo3::once_cell::GILOnceCell<pyo3::PyResult<pyo3::PyObject>>
-                = pyo3::once_cell::GILOnceCell::new();
+                : pyo3::once_cell::PyOnceLock<pyo3::PyResult<pyo3::Py<pyo3::PyAny>>>
+                = pyo3::once_cell::PyOnceLock::new();
 
             fn $getter_fn<'py>(py: pyo3::Python<'py>) -> pyo3::PyResult<&'py pyo3::PyAny> {
                 Ok([<IMPORT_CELL_ $getter_fn:snake:upper>].get_or_init(py, || {

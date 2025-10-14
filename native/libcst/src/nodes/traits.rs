@@ -118,7 +118,7 @@ impl<'a, T: Inflate<'a>> Inflate<'a> for Vec<T> {
 }
 #[cfg(feature = "py")]
 pub mod py {
-    use pyo3::{types::PyTuple, IntoPyObjectExt, PyObject, PyResult, Python};
+    use pyo3::{types::PyTuple, IntoPyObjectExt, Py, PyAny, PyResult, Python};
 
     // TODO: replace with upstream implementation once
     // https://github.com/PyO3/pyo3/issues/1813 is resolved
@@ -133,26 +133,26 @@ pub mod py {
     //     }
     // }
 
-    impl TryIntoPy<PyObject> for bool {
-        fn try_into_py(self, py: Python) -> PyResult<PyObject> {
+    impl TryIntoPy<Py<PyAny>> for bool {
+        fn try_into_py(self, py: Python) -> PyResult<Py<PyAny>> {
             self.into_py_any(py)
         }
     }
 
-    impl<T: TryIntoPy<PyObject>> TryIntoPy<PyObject> for Box<T>
+    impl<T: TryIntoPy<Py<PyAny>>> TryIntoPy<Py<PyAny>> for Box<T>
     where
-        T: TryIntoPy<PyObject>,
+        T: TryIntoPy<Py<PyAny>>,
     {
-        fn try_into_py(self, py: Python) -> PyResult<PyObject> {
+        fn try_into_py(self, py: Python) -> PyResult<Py<PyAny>> {
             (*self).try_into_py(py)
         }
     }
 
-    impl<T> TryIntoPy<PyObject> for Option<T>
+    impl<T> TryIntoPy<Py<PyAny>> for Option<T>
     where
-        T: TryIntoPy<PyObject>,
+        T: TryIntoPy<Py<PyAny>>,
     {
-        fn try_into_py(self, py: Python) -> PyResult<PyObject> {
+        fn try_into_py(self, py: Python) -> PyResult<Py<PyAny>> {
             Ok(match self {
                 None => py.None(),
                 Some(x) => x.try_into_py(py)?,
@@ -160,11 +160,11 @@ pub mod py {
         }
     }
 
-    impl<T> TryIntoPy<PyObject> for Vec<T>
+    impl<T> TryIntoPy<Py<PyAny>> for Vec<T>
     where
-        T: TryIntoPy<PyObject>,
+        T: TryIntoPy<Py<PyAny>>,
     {
-        fn try_into_py(self, py: Python) -> PyResult<PyObject> {
+        fn try_into_py(self, py: Python) -> PyResult<Py<PyAny>> {
             let converted = self
                 .into_iter()
                 .map(|x| x.try_into_py(py))
@@ -174,8 +174,8 @@ pub mod py {
         }
     }
 
-    impl<'a> TryIntoPy<PyObject> for &'a str {
-        fn try_into_py(self, py: Python) -> PyResult<PyObject> {
+    impl<'a> TryIntoPy<Py<PyAny>> for &'a str {
+        fn try_into_py(self, py: Python) -> PyResult<Py<PyAny>> {
             self.into_py_any(py)
         }
     }

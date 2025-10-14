@@ -35,7 +35,7 @@ mod py_error {
 
     impl<'a> From<ParserError<'a>> for PyErr {
         fn from(e: ParserError) -> Self {
-            Python::with_gil(|py| {
+            Python::attach(|py| {
                 let lines = match &e {
                     ParserError::TokenizerError(_, text) | ParserError::ParserError(_, text) => {
                         text.lines().collect::<Vec<_>>()

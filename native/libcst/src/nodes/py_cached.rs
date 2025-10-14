@@ -7,11 +7,11 @@ use pyo3::prelude::*;
 use std::convert::AsRef;
 use std::ops::Deref;
 
-/// An immutable wrapper around a rust type T and it's PyObject equivalent. Caches the conversion
-/// to and from the PyObject.
+/// An immutable wrapper around a rust type T and its Py<PyAny> equivalent. Caches the conversion
+/// to and from the Py<PyAny>.
 pub struct PyCached<T> {
     native: T,
-    py_object: PyObject,
+    py_object: Py<PyAny>,
 }
 
 impl<T> PyCached<T>
@@ -31,7 +31,7 @@ where
     T: FromPyObject<'source>,
 {
     fn extract(ob: &'source PyAny) -> PyResult<Self> {
-        Python::with_gil(|py| {
+        Python::attach(|py| {
             Ok(PyCached {
                 native: ob.extract()?,
                 py_object: ob.to_object(py),
@@ -40,14 +40,14 @@ where
     }
 }
 
-impl<T> IntoPy<PyObject> for PyCached<T> {
-    fn into_py(self, _py: Python) -> PyObject {
+impl<T> IntoPy<Py<PyAny>> for PyCached<T> {
+    fn into_py(self, _py: Python) -> Py<PyAny> {
         self.py_object
     }
 }
 
 impl<T> ToPyObject for PyCached<T> {
-    fn to_object(&self, py: Python) -> PyObject {
+    fn to_object(&self, py: Python) -> Py<PyAny> {
         self.py_object.clone_ref(py)
     }
 }
@@ -71,6 +71,6 @@ where
     T: ToPyObject,
 {
     fn from(val: T) -> Self {
-        Python::with_gil(|py| Self::new(py, val))
+        Python::attach(|py| Self::new(py, val))
     }
 }
