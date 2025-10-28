@@ -2670,8 +2670,8 @@ mod py {
     use crate::nodes::traits::py::TryIntoPy;
 
     // TODO: this could be a derive helper attribute to override the python class name
-    impl<'a> TryIntoPy<pyo3::PyObject> for Element<'a> {
-        fn try_into_py(self, py: pyo3::Python) -> pyo3::PyResult<pyo3::PyObject> {
+    impl<'a> TryIntoPy<pyo3::Py<pyo3::PyAny>> for Element<'a> {
+        fn try_into_py(self, py: pyo3::Python) -> pyo3::PyResult<pyo3::Py<pyo3::PyAny>> {
             match self {
                 Self::Starred(s) => s.try_into_py(py),
                 Self::Simple { value, comma } => {
@@ -2699,8 +2699,8 @@ mod py {
     }
 
     // TODO: this could be a derive helper attribute to override the python class name
-    impl<'a> TryIntoPy<pyo3::PyObject> for DictElement<'a> {
-        fn try_into_py(self, py: pyo3::Python) -> pyo3::PyResult<pyo3::PyObject> {
+    impl<'a> TryIntoPy<pyo3::Py<pyo3::PyAny>> for DictElement<'a> {
+        fn try_into_py(self, py: pyo3::Python) -> pyo3::PyResult<pyo3::Py<pyo3::PyAny>> {
             match self {
                 Self::Starred(s) => s.try_into_py(py),
                 Self::Simple {
