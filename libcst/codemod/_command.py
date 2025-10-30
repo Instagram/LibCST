@@ -6,7 +6,7 @@
 import argparse
 import inspect
 from abc import ABC, abstractmethod
-from typing import Dict, Generator, List, Type, TypeVar
+from typing import Dict, Generator, List, Tuple, Type, TypeVar
 
 from libcst import Module
 from libcst.codemod._codemod import Codemod
@@ -75,13 +75,13 @@ class CodemodCommand(Codemod, ABC):
         # have a static method that other transforms can use which takes
         # a context and other optional args and modifies its own context key
         # accordingly. We import them here so that we don't have circular imports.
-        supported_transforms: Dict[str, Type[Codemod]] = {
-            AddImportsVisitor.CONTEXT_KEY: AddImportsVisitor,
-            RemoveImportsVisitor.CONTEXT_KEY: RemoveImportsVisitor,
-        }
+        supported_transforms: List[Tuple[str, Type[Codemod]]] = [
+            (AddImportsVisitor.CONTEXT_KEY, AddImportsVisitor),
+            (RemoveImportsVisitor.CONTEXT_KEY, RemoveImportsVisitor),
+        ]
 
         # For any visitors that we support auto-running, run them here if needed.
-        for key, transform in supported_transforms.items():
+        for key, transform in supported_transforms:
             if key in self.context.scratch:
                 # We have work to do, so lets run this.
                 tree = self._instantiate_and_run(transform, tree)
