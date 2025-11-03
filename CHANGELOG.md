@@ -1,3 +1,16 @@
+# 1.8.6 - 2025-11-03
+
+## What's Changed
+* Update pyproject.toml for 3.14t by @itamaro in https://github.com/Instagram/LibCST/pull/1417
+* Update PyO3 to 0.26 by @cjwatson in https://github.com/Instagram/LibCST/pull/1413
+* Make CodemodCommand's supported_transforms order deterministic by @frvnkliu in https://github.com/Instagram/LibCST/pull/1424
+
+## New Contributors
+* @cjwatson made their first contribution in https://github.com/Instagram/LibCST/pull/1413
+* @frvnkliu made their first contribution in https://github.com/Instagram/LibCST/pull/1424
+
+**Full Changelog**: https://github.com/Instagram/LibCST/compare/v1.8.5...v1.8.6
+
 # 1.8.5 - 2025-09-25
 
 ## What's Changed
