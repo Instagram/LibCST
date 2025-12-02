@@ -6,9 +6,9 @@
 import argparse
 import inspect
 from abc import ABC, abstractmethod
-from typing import Dict, Generator, List, Tuple, Type, TypeVar
+from typing import Dict, Generator, List, Optional, Tuple, Type, TypeVar
 
-from libcst import Module
+from libcst import CSTNode, Module
 from libcst.codemod._codemod import Codemod
 from libcst.codemod._context import CodemodContext
 from libcst.codemod._visitor import ContextAwareTransformer
@@ -64,6 +64,18 @@ class CodemodCommand(Codemod, ABC):
         calculated metadata are available for the lifetime of this function.
         """
         ...
+
+    # Lightweight wrappers for RemoveImportsVisitor static functions
+    def remove_unused_import(
+        self,
+        module: str,
+        obj: Optional[str] = None,
+        asname: Optional[str] = None,
+    ) -> None:
+        RemoveImportsVisitor.remove_unused_import(self.context, module, obj, asname)
+
+    def remove_unused_import_by_node(self, node: CSTNode) -> None:
+        RemoveImportsVisitor.remove_unused_import_by_node(self.context, node)
 
     def transform_module(self, tree: Module) -> Module:
         # Overrides (but then calls) Codemod's transform_module to provide
