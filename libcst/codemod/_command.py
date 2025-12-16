@@ -79,6 +79,16 @@ class CodemodCommand(Codemod, ABC):
     def remove_unused_import_by_node(self, node: CSTNode) -> None:
         RemoveImportsVisitor.remove_unused_import_by_node(self.context, node)
 
+    # Lightweight wrappers for AddImportsVisitor static functions
+    def add_needed_import(
+        self,
+        module: str,
+        obj: str | None = None,
+        asname: str | None = None,
+        relative: int = 0,
+    ) -> None:
+        AddImportsVisitor.add_needed_import(self.context, module, obj, asname, relative)
+
     def transform_module(self, tree: Module) -> Module:
         # Overrides (but then calls) Codemod's transform_module to provide
         # a spot where additional supported transforms can be attached and run.
