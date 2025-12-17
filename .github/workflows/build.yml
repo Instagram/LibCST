@@ -13,7 +13,6 @@ jobs:
         # macos-13 is an intel runner, macos-latest is apple silicon
         os:
           [
-            macos-13,
             macos-latest,
             ubuntu-latest,
             ubuntu-24.04-arm,
