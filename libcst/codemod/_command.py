@@ -3,12 +3,14 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 #
+from __future__ import annotations
+
 import argparse
 import inspect
 from abc import ABC, abstractmethod
 from typing import Dict, Generator, List, Tuple, Type, TypeVar
 
-from libcst import Module
+from libcst import CSTNode, Module
 from libcst.codemod._codemod import Codemod
 from libcst.codemod._context import CodemodContext
 from libcst.codemod._visitor import ContextAwareTransformer
@@ -64,6 +66,28 @@ class CodemodCommand(Codemod, ABC):
         calculated metadata are available for the lifetime of this function.
         """
         ...
+
+    # Lightweight wrappers for RemoveImportsVisitor static functions
+    def remove_unused_import(
+        self,
+        module: str,
+        obj: str | None = None,
+        asname: str | None = None,
+    ) -> None:
+        RemoveImportsVisitor.remove_unused_import(self.context, module, obj, asname)
+
+    def remove_unused_import_by_node(self, node: CSTNode) -> None:
+        RemoveImportsVisitor.remove_unused_import_by_node(self.context, node)
+
+    # Lightweight wrappers for AddImportsVisitor static functions
+    def add_needed_import(
+        self,
+        module: str,
+        obj: str | None = None,
+        asname: str | None = None,
+        relative: int = 0,
+    ) -> None:
+        AddImportsVisitor.add_needed_import(self.context, module, obj, asname, relative)
 
     def transform_module(self, tree: Module) -> Module:
         # Overrides (but then calls) Codemod's transform_module to provide
