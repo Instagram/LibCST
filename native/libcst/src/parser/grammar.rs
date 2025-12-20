@@ -252,23 +252,23 @@ parser! {
 
         rule import_from() -> ImportFrom<'input, 'a>
             = from:lit("from") dots:dots()? m:dotted_name()
-                import:lit("import") als:import_from_targets() {
-                    make_import_from(from, dots.unwrap_or_default(), Some(m), import, als)
+                import:lit("import") also:import_from_targets() {
+                    make_import_from(from, dots.unwrap_or_default(), Some(m), import, also)
             }
             / from:lit("from") dots:dots()
-                import:lit("import") als:import_from_targets() {
-                    make_import_from(from, dots, None, import, als)
+                import:lit("import") also:import_from_targets() {
+                    make_import_from(from, dots, None, import, also)
             }
 
         rule import_from_targets() -> ParenthesizedImportNames<'input, 'a>
-            = lpar:lpar() als:import_from_as_names() c:comma()? rpar:rpar() {
-                let mut als = als;
-                if let (comma@Some(_), Some(mut last)) = (c, als.last_mut()) {
+            = lpar:lpar() also:import_from_as_names() c:comma()? rpar:rpar() {
+                let mut also = also;
+                if let (comma@Some(_), Some(mut last)) = (c, also.last_mut()) {
                     last.comma = comma;
                 }
-                (Some(lpar), ImportNames::Aliases(als), Some(rpar))
+                (Some(lpar), ImportNames::Aliases(also), Some(rpar))
             }
-            / als:import_from_as_names() !lit(",") { (None, ImportNames::Aliases(als), None)}
+            / also:import_from_as_names() !lit(",") { (None, ImportNames::Aliases(also), None)}
             / star:lit("*") { (None, ImportNames::Star(make_importstar()), None) }
 
         rule import_from_as_names() -> Vec<ImportAlias<'input, 'a>>
@@ -304,8 +304,8 @@ parser! {
 
         #[cache]
         rule block() -> Suite<'input, 'a>
-            = n:tok(NL, "NEWLINE") ind:tok(Indent, "INDENT") s:statements() ded:tok(Dedent, "DEDENT") {
-                make_indented_block(n, ind, s, ded)
+            = n:tok(NL, "NEWLINE") ind:tok(Indent, "INDENT") s:statements() dead:tok(Dedent, "DEDENT") {
+                make_indented_block(n, ind, s, dead)
             }
             / s:simple_stmts() {
                 make_simple_statement_suite(s)

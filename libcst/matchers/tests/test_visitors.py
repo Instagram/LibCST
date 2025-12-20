@@ -446,7 +446,7 @@ class MatchersVisitLeaveDecoratorTypingTest(UnitTest):
         ):
             TestVisitor()
 
-    def test_bad_visit_collecter_decorator(self) -> None:
+    def test_bad_visit_collector_decorator(self) -> None:
         class TestVisitor(MatcherDecoratableVisitor):
             @visit(m.SimpleString())
             def visit_SimpleString(self, node: cst.SimpleString) -> None:
@@ -459,7 +459,7 @@ class MatchersVisitLeaveDecoratorTypingTest(UnitTest):
         ):
             TestVisitor()
 
-    def test_bad_leave_collecter_decorator(self) -> None:
+    def test_bad_leave_collector_decorator(self) -> None:
         class TestVisitor(MatcherDecoratableVisitor):
             @leave(m.SimpleString())
             def leave_SimpleString(

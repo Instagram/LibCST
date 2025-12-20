@@ -195,7 +195,7 @@ def _verify_parameter_annotations(
     # each of the classes that might appear given the match string. This
     # can be done in the simple case by just specifying the correct cst node
     # type. For complex matches that use OneOf/AllOf, this could be a base class
-    # that encompases all possible matches, or a union.
+    # that encompasses all possible matches, or a union.
     params = [v for k, v in get_type_hints(meth).items() if k != "return"]
     for param in params:
         # Go through each possible matcher, and make sure that the annotation

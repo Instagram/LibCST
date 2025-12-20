@@ -67,7 +67,7 @@ class Access:
     .. note::
        This scope analysis only analyzes access via a :class:`~libcst.Name` or  a :class:`~libcst.Name`
        node embedded in other node like :class:`~libcst.Call` or :class:`~libcst.Attribute`.
-       It doesn't support type annontation using :class:`~libcst.SimpleString` literal for forward
+       It doesn't support type annotation using :class:`~libcst.SimpleString` literal for forward
        references. E.g. in this example, the ``"Tree"`` isn't parsed as an access::
 
            class Tree:
@@ -152,7 +152,7 @@ class QualifiedName:
 
 
 class BaseAssignment(abc.ABC):
-    """Abstract base class of :class:`Assignment` and :class:`BuitinAssignment`."""
+    """Abstract base class of :class:`Assignment` and :class:`BuiltinAssignment`."""
 
     #: The name of assignment.
     name: str
@@ -587,7 +587,7 @@ class Scope(abc.ABC):
 
     @property
     def assignments(self) -> Assignments:
-        """Return an :class:`~libcst.metadata.Assignments` contains all assignmens in current scope."""
+        """Return an :class:`~libcst.metadata.Assignments` contains all assignments in current scope."""
         return Assignments(self._assignments)
 
     @property
@@ -1133,7 +1133,7 @@ class ScopeVisitor(cst.CSTVisitor):
 
             # This will give a "NameError: name 'x' is not defined":
             flat = [y for x in x for y in x]
-            # x isn't defined, because the first iter is evaluted outside the scope.
+            # x isn't defined, because the first iter is evaluated outside the scope.
 
             # This will give an UnboundLocalError, indicating that the second
             # comprehension's iter value is evaluated inside the scope as its elt.
