@@ -392,7 +392,7 @@ class _BaseSimpleStatement(CSTNode, ABC):
                 raise CSTValidationError(
                     "All but the last SmallStatement in a SimpleStatementLine or "
                     + "SimpleStatementSuite must have a trailing semicolon. Otherwise, "
-                    + "there's no way to syntatically disambiguate each SmallStatement "
+                    + "there's no way to syntactically disambiguate each SmallStatement "
                     + "on the same line."
                 )
 

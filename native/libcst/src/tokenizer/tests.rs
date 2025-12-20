@@ -45,7 +45,7 @@ fn tokenize_all<'t>(
 }
 
 #[test]
-fn test_indentifier() {
+fn test_identifier() {
     assert_eq!(
         tokenize_all("test input", &default_config()),
         Ok(vec![(TokType::Name, "test"), (TokType::Name, "input")])

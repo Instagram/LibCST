@@ -79,7 +79,7 @@ use crate::tokenizer::{
 /// necessary, but we're keeping it to maintain compatibility.
 const MAX_INDENT: usize = 100;
 
-// MAX_CHAR should be std::char::MAX once assoc_char_consts is stablized.
+// MAX_CHAR should be std::char::MAX once assoc_char_consts is stabilized.
 // https://github.com/rust-lang/rust/issues/71763
 const MAX_CHAR: char = '\u{10ffff}';
 

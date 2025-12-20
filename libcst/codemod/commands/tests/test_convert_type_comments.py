@@ -208,7 +208,7 @@ class TestConvertTypeComments_AssignForWith(TestConvertTypeCommentsBase):
             # a commented type comment (per PEP 484) is not a type comment
             z = 15  # # type: int
 
-            # ignore unparseable type comments
+            # ignore unparsable type comments
             var = "var"  # type: this is not a python type!
 
             # a type comment in an illegal location won't be used
@@ -255,7 +255,7 @@ class TestConvertTypeComments_FunctionDef(TestConvertTypeCommentsBase):
       and is well-covered by TestConvertTypeComments_AssignForWith, so we
       can stick to just simple builtin types.
     - The application of types is independent of where they came from.
-    - Type comment removal is indepenent of type application, other
+    - Type comment removal is independent of type application, other
       than in the case where we give up entirely.
     - The rules for which type gets used (existing annotation, inline comment,
       or func type comment) is independent of the location of a parameter.
@@ -419,7 +419,7 @@ class TestConvertTypeComments_FunctionDef(TestConvertTypeCommentsBase):
         def f(x, y):  # type: (int) -> float
             pass
 
-        # unparseable function type
+        # unparsable function type
         def f(x, y):  # type: this is not a type!
             pass
 

@@ -101,7 +101,7 @@ class BaseMatcherNode:
 def DoNotCare() -> DoNotCareSentinel:
     """
     Used when you want to match exactly one node, but you do not care what node it is.
-    Useful inside sequences such as a :class:`libcst.matchers.Call`'s args attribte.
+    Useful inside sequences such as a :class:`libcst.matchers.Call`'s args attribute.
     You do not need to use this for concrete matcher attributes since :func:`DoNotCare`
     is already the default.
 
@@ -128,7 +128,7 @@ class TypeOf(Generic[_MatcherTypeT], BaseMatcherNode):
 
         (m.BinaryOperation | m.BooleanOperation)(left = m.Name("foo"))
 
-    Also :class:`TypeOf` matchers can be used with initalizing in the default
+    Also :class:`TypeOf` matchers can be used with initializing in the default
     state of other node matchers (without passing any extra patterns)::
 
         m.Name | m.SimpleString
@@ -142,21 +142,21 @@ class TypeOf(Generic[_MatcherTypeT], BaseMatcherNode):
         actual_options: List[_MatcherTypeT] = []
         for option in options:
             if isinstance(option, TypeOf):
-                if option.initalized:
+                if option.initialized:
                     raise ValueError(
-                        "Cannot chain an uninitalized TypeOf with an initalized one"
+                        "Cannot chain an uninitialized TypeOf with an initialized one"
                     )
                 actual_options.extend(option._raw_options)
             else:
                 actual_options.append(option)
 
-        self._initalized = False
+        self._initialized = False
         self._call_items: Tuple[Tuple[object, ...], Dict[str, object]] = ((), {})
         self._raw_options: Tuple[_MatcherTypeT, ...] = tuple(actual_options)
 
     @property
-    def initalized(self) -> bool:
-        return self._initalized
+    def initialized(self) -> bool:
+        return self._initialized
 
     @property
     def options(self) -> Iterator[BaseMatcherNode]:
@@ -166,7 +166,7 @@ class TypeOf(Generic[_MatcherTypeT], BaseMatcherNode):
             yield matcher_pattern
 
     def __call__(self, *args: object, **kwargs: object) -> BaseMatcherNode:
-        self._initalized = True
+        self._initialized = True
         self._call_items = (args, kwargs)
         return self
 
@@ -189,7 +189,7 @@ class TypeOf(Generic[_MatcherTypeT], BaseMatcherNode):
 
     def __repr__(self) -> str:
         types = ", ".join(repr(option) for option in self._raw_options)
-        return f"TypeOf({types}, initalized = {self.initalized})"
+        return f"TypeOf({types}, initialized = {self.initialized})"
 
 
 class OneOf(Generic[_MatcherT], BaseMatcherNode):

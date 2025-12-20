@@ -2310,7 +2310,7 @@ impl<'a> Codegen<'a> for ConcatenatedString<'a> {
 
 #[cst_node(ParenthesizedNode, Default)]
 pub struct SimpleString<'a> {
-    /// The texual representation of the string, including quotes, prefix
+    /// The textual representation of the string, including quotes, prefix
     /// characters, and any escape characters present in the original source code,
     /// such as ``r"my string\n"``.
     pub value: &'a str,
@@ -2364,7 +2364,7 @@ pub(crate) fn make_tstringtext<'r, 'a>(value: &'a str) -> DeflatedTemplatedStrin
 
 #[cst_node]
 pub struct TemplatedStringExpression<'a> {
-    // This represents the part of a t-string that is insde the brackets '{' and '}'.
+    // This represents the part of a t-string that is inside the brackets '{' and '}'.
     pub expression: Expression<'a>,
     pub conversion: Option<&'a str>,
     pub format_spec: Option<Vec<TemplatedStringContent<'a>>>,

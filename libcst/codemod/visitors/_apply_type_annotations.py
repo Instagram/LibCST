@@ -126,7 +126,7 @@ def _find_generic_base(
 @dataclass(frozen=True)
 class FunctionKey:
     """
-    Class representing a funciton name and signature.
+    Class representing a function name and signature.
 
     This exists to ensure we do not attempt to apply stubs to functions whose
     definition is incompatible.
@@ -619,7 +619,7 @@ class AnnotationCounts:
 
 class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
     """
-    Apply type annotations to a source module using the given stub mdules.
+    Apply type annotations to a source module using the given stub modules.
     You can also pass in explicit annotations for functions and attributes and
     pass in new class definitions that need to be added to the source module.
 

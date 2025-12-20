@@ -291,6 +291,6 @@ class ParenthesizedWhitespace(BaseParenthesizableWhitespace):
         :class:`ParenthesizedWhitespace` this will always be ``False``.
         """
 
-        # Its not possible to have a ParenthesizedWhitespace with zero characers.
+        # Its not possible to have a ParenthesizedWhitespace with zero characters.
         # If we did, the TrailingWhitespace would not have parsed.
         return False

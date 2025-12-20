@@ -210,7 +210,7 @@ def _find_and_load_config(proc_name: str) -> Dict[str, Any]:
 
 
 def _codemod_impl(proc_name: str, command_args: List[str]) -> int:  # noqa: C901
-    # Grab the configuration for running this, if it exsts.
+    # Grab the configuration for running this, if it exists.
     config = _find_and_load_config(proc_name)
 
     # First, try to grab the command with a first pass. We aren't going to react
@@ -377,7 +377,7 @@ def _codemod_impl(proc_name: str, command_args: List[str]) -> int:  # noqa: C901
             "unified_diff",
         }
     }
-    # Sepcify target version for black formatter
+    # Specify target version for black formatter
     if any(config["formatter"]) and os.path.basename(config["formatter"][0]) in (
         "black",
         "black.exe",

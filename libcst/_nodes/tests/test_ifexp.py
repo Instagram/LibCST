@@ -15,7 +15,7 @@ from libcst.testing.utils import data_provider
 class IfExpTest(CSTNodeTest):
     @data_provider(
         (
-            # Simple if experessions
+            # Simple if expressions
             (
                 cst.IfExp(
                     body=cst.Name("foo"), test=cst.Name("bar"), orelse=cst.Name("baz")

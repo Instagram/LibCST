@@ -49,7 +49,7 @@ class _BaseOneTokenOp(CSTNode, ABC):
 class _BaseTwoTokenOp(CSTNode, ABC):
     """
     Any node that ends up as two tokens, so we must preserve the whitespace
-    in beteween them.
+    in between them.
     """
 
     __slots__ = ()
@@ -597,7 +597,7 @@ class MatrixMultiply(BaseBinaryOp, _BaseOneTokenOp):
 @dataclass(frozen=True)
 class LessThan(BaseCompOp, _BaseOneTokenOp):
     """
-    A comparision operator that can be used in a :class:`Comparison` expression.
+    A comparison operator that can be used in a :class:`Comparison` expression.
     """
 
     #: Any space that appears directly before this operator.
@@ -614,7 +614,7 @@ class LessThan(BaseCompOp, _BaseOneTokenOp):
 @dataclass(frozen=True)
 class GreaterThan(BaseCompOp, _BaseOneTokenOp):
     """
-    A comparision operator that can be used in a :class:`Comparison` expression.
+    A comparison operator that can be used in a :class:`Comparison` expression.
     """
 
     #: Any space that appears directly before this operator.
@@ -631,7 +631,7 @@ class GreaterThan(BaseCompOp, _BaseOneTokenOp):
 @dataclass(frozen=True)
 class Equal(BaseCompOp, _BaseOneTokenOp):
     """
-    A comparision operator that can be used in a :class:`Comparison` expression.
+    A comparison operator that can be used in a :class:`Comparison` expression.
     """
 
     #: Any space that appears directly before this operator.
@@ -648,7 +648,7 @@ class Equal(BaseCompOp, _BaseOneTokenOp):
 @dataclass(frozen=True)
 class LessThanEqual(BaseCompOp, _BaseOneTokenOp):
     """
-    A comparision operator that can be used in a :class:`Comparison` expression.
+    A comparison operator that can be used in a :class:`Comparison` expression.
     """
 
     #: Any space that appears directly before this operator.
@@ -665,7 +665,7 @@ class LessThanEqual(BaseCompOp, _BaseOneTokenOp):
 @dataclass(frozen=True)
 class GreaterThanEqual(BaseCompOp, _BaseOneTokenOp):
     """
-    A comparision operator that can be used in a :class:`Comparison` expression.
+    A comparison operator that can be used in a :class:`Comparison` expression.
     """
 
     #: Any space that appears directly before this operator.
@@ -721,7 +721,7 @@ class NotEqual(BaseCompOp, _BaseOneTokenOp):
 @dataclass(frozen=True)
 class In(BaseCompOp, _BaseOneTokenOp):
     """
-    A comparision operator that can be used in a :class:`Comparison` expression.
+    A comparison operator that can be used in a :class:`Comparison` expression.
     """
 
     #: Any space that appears directly before this operator.
@@ -738,7 +738,7 @@ class In(BaseCompOp, _BaseOneTokenOp):
 @dataclass(frozen=True)
 class NotIn(BaseCompOp, _BaseTwoTokenOp):
     """
-    A comparision operator that can be used in a :class:`Comparison` expression.
+    A comparison operator that can be used in a :class:`Comparison` expression.
 
     This operator spans two tokens that must be separated by at least one space,
     so there is a third whitespace attribute to represent this.
@@ -761,7 +761,7 @@ class NotIn(BaseCompOp, _BaseTwoTokenOp):
 @dataclass(frozen=True)
 class Is(BaseCompOp, _BaseOneTokenOp):
     """
-    A comparision operator that can be used in a :class:`Comparison` expression.
+    A comparison operator that can be used in a :class:`Comparison` expression.
     """
 
     #: Any space that appears directly before this operator.
@@ -778,7 +778,7 @@ class Is(BaseCompOp, _BaseOneTokenOp):
 @dataclass(frozen=True)
 class IsNot(BaseCompOp, _BaseTwoTokenOp):
     """
-    A comparision operator that can be used in a :class:`Comparison` expression.
+    A comparison operator that can be used in a :class:`Comparison` expression.
 
     This operator spans two tokens that must be separated by at least one space,
     so there is a third whitespace attribute to represent this.
