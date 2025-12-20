@@ -552,7 +552,7 @@ class MatchMetadata(_BaseMetadataMatcher):
     Matcher that looks up the metadata on the current node using the provided
     metadata provider and compares the value on the node against the value provided
     to :class:`MatchMetadata`.
-    If the metadata provider is unresolved, a :class:`LookupError` exeption will be
+    If the metadata provider is unresolved, a :class:`LookupError` exception will be
     raised and ask you to provide a :class:`~libcst.metadata.MetadataWrapper`.
     If the metadata value does not exist for a particular node, :class:`MatchMetadata`
     will be considered not a match.
@@ -634,7 +634,7 @@ class MatchMetadataIfTrue(_BaseMetadataMatcher):
     Matcher that looks up the metadata on the current node using the provided
     metadata provider and passes it to a callable which can inspect the metadata
     further, returning ``True`` if the matcher should be considered a match.
-    If the metadata provider is unresolved, a :class:`LookupError` exeption will be
+    If the metadata provider is unresolved, a :class:`LookupError` exception will be
     raised and ask you to provide a :class:`~libcst.metadata.MetadataWrapper`.
     If the metadata value does not exist for a particular node,
     :class:`MatchMetadataIfTrue` will be considered not a match.
@@ -1171,7 +1171,7 @@ def _sequence_matches(  # noqa: C901
         if result.sequence_capture is not None:
             return _SequenceMatchesResult(
                 {
-                    # Our own match capture comes first, since we wnat to allow the same
+                    # Our own match capture comes first, since we want to allow the same
                     # name later in the sequence to override us.
                     matcher.name: result.matched_nodes,
                     **result.sequence_capture,

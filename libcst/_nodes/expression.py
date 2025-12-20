@@ -2133,7 +2133,7 @@ class Parameters(CSTNode):
     #: parameters with defaults must all be after those without defaults.
     posonly_params: Sequence[Param] = ()
 
-    #: Optional sentinel that dictates parameters preceeding are positional-only
+    #: Optional sentinel that dictates parameters preceding are positional-only
     #: args.
     posonly_ind: Union[ParamSlash, MaybeSentinel] = MaybeSentinel.DEFAULT
 
