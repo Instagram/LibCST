@@ -34,7 +34,7 @@ Changelog = "https://github.com/Instagram/LibCST/blob/main/CHANGELOG.md"
 
 [dependency-groups]
 dev = [
-    "black==25.1.0",
+    "black==25.11.0",
     "coverage[toml]>=4.5.4",
     "build>=0.10.0",
     "fixit==2.1.0",
