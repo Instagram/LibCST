@@ -269,7 +269,7 @@ class MatchersGatingDecoratorsTest(UnitTest):
         self.assertEqual(visitor.visits, ['"foo"', '"bar"', '"foobar"'])
         self.assertEqual(visitor.leaves, ['"foo"', '"bar"'])
 
-    def test_visit_if_inot_inside_verify_original_transform(self) -> None:
+    def test_visit_if_into_inside_verify_original_transform(self) -> None:
         # Set up a simple visitor with a call_if_inside decorator.
         class TestVisitor(MatcherDecoratableTransformer):
             def __init__(self) -> None:
@@ -340,7 +340,7 @@ class MatchersGatingDecoratorsTest(UnitTest):
         self.assertEqual(visitor.visits, ['"foo"', '"bar"', '"foobar"'])
         self.assertEqual(visitor.leaves, ['"foo"', '"bar"'])
 
-    def test_visit_if_inot_inside_verify_original_collect(self) -> None:
+    def test_visit_if_into_inside_verify_original_collect(self) -> None:
         # Set up a simple visitor with a call_if_inside decorator.
         class TestVisitor(MatcherDecoratableVisitor):
             def __init__(self) -> None:

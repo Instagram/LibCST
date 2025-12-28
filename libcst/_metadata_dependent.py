@@ -40,7 +40,7 @@ class _UNDEFINED_DEFAULT:
 class LazyValue(Generic[_T]):
     """
     The class for implementing a lazy metadata loading mechanism that improves the
-    performance when retriving expensive metadata (e.g., qualified names). Providers
+    performance when retrieving expensive metadata (e.g., qualified names). Providers
     including :class:`~libcst.metadata.QualifiedNameProvider` use this class to load
     the metadata of a certain node lazily when calling
     :func:`~libcst.MetadataDependent.get_metadata`.

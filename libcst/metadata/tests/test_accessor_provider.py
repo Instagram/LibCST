@@ -63,6 +63,6 @@ class AccessorProviderTest(UnitTest):
             ),
         )
     )
-    def test_accessor_provier(self, code: str) -> None:
+    def test_accessor_provider(self, code: str) -> None:
         wrapper = MetadataWrapper(cst.parse_module(dedent(code)))
         wrapper.visit(DependentVisitor(test=self))

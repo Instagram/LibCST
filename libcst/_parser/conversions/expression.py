@@ -897,7 +897,7 @@ def convert_atom_basic(
             )
         else:
             raise ParserSyntaxError(
-                f"Unparseable number {child.string}",
+                f"Unparsable number {child.string}",
                 lines=config.lines,
                 raw_line=0,
                 raw_column=0,

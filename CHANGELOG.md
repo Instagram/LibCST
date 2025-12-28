@@ -265,7 +265,7 @@
 
 ## Fixed
 * Fix type of `evaluated_value` on string to allow bytes by @ljodal in https://github.com/Instagram/LibCST/pull/721
-* Fix Sentinal typo by @kit1980 in https://github.com/Instagram/LibCST/pull/948
+* Fix Sentinel typo by @kit1980 in https://github.com/Instagram/LibCST/pull/948
 * Allow no whitespace after lambda body in certain cases by @zsol in https://github.com/Instagram/LibCST/pull/939
 * Fix whitespace, fstring, walrus related parse errors (#939, #938, #937,
 #936, #935, #934, #933, #932, #931) by @zsol in https://github.com/Instagram/LibCST/pull/940
@@ -346,7 +346,7 @@ the `LIBCST_PARSER_TYPE` environment variable set to `pure`.
 
 
 ## Added
-* Python 3.11 rutime support
+* Python 3.11 runtime support
   * test using python 3.11 beta versions by @zsol in https://github.com/Instagram/LibCST/pull/723
   * Python 3.11 wheels by @vfazio in https://github.com/Instagram/LibCST/pull/801
 * Raise informative exception when metadata is unresolved in a metadata-based match by @MapleCCC in https://github.com/Instagram/LibCST/pull/757
@@ -682,7 +682,7 @@ wheels from now on.
 ## Fixed
 
 -   Spaces around walrus operator are not required [#368](https://github.com/Instagram/LibCST/pull/368)
--   SaveMachedNode now matches with trailing empty wildcards [#356](https://github.com/Instagram/LibCST/pull/356)
+-   SaveMatchedNode now matches with trailing empty wildcards [#356](https://github.com/Instagram/LibCST/pull/356)
 -   Correctly extract wildcard matchers [#355](https://github.com/Instagram/LibCST/pull/355)
 
 # 0.3.9 - 2020-09-07
@@ -857,7 +857,7 @@ wheels from now on.
 ## Updated
 
 -   Codemod command can now discover codemods in subdirectories of configured modules.
--   Updgraded Pyre dependency to 0.0.39.
+-   Upgraded Pyre dependency to 0.0.39.
 
 ## Fixed
 
