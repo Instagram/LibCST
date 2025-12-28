@@ -424,7 +424,7 @@ def _find_fstring_string(endpats, fstring_stack, line, lnum, pos):
 def tokenize(
     code: str, version_info: PythonVersionInfo, start_pos: Tuple[int, int] = (1, 0)
 ) -> Generator[PythonToken, None, None]:
-    """Generate tokens from a the source code (string)."""
+    """Generate tokens from a source code (string)."""
     lines = split_lines(code, keepends=True)
     return tokenize_lines(lines, version_info, start_pos=start_pos)
 
