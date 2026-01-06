@@ -116,7 +116,7 @@ class YieldConstructionTest(CSTNodeTest):
                 ),
                 "Must have at least one space after 'yield' keyword",
             ),
-            # MAke sure we have adequate space after from
+            # Make sure we have adequate space after from
             (
                 lambda: cst.Yield(
                     cst.From(

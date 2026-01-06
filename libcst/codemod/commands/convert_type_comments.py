@@ -107,7 +107,7 @@ def _is_type_comment(comment: Optional[cst.Comment]) -> bool:
 
     Unfortunately, to strip type comments in a location-invariant way requires
     finding them from pure libcst data. We only use this in function defs, where
-    the precise cst location of the type comment cna be hard to predict.
+    the precise cst location of the type comment can be hard to predict.
     """
     if comment is None:
         return False
@@ -623,7 +623,7 @@ class ConvertTypeComments(VisitorBasedCodemodCommand):
             )
         except _ArityError:
             return updated_node
-        # There is no arity error, so we can add the type delaration(s)
+        # There is no arity error, so we can add the type declaration(s)
         return cst.FlattenSentinel(
             [
                 *type_declarations,
@@ -674,7 +674,7 @@ class ConvertTypeComments(VisitorBasedCodemodCommand):
             )
         except _ArityError:
             return updated_node
-        # There is no arity error, so we can add the type delaration(s)
+        # There is no arity error, so we can add the type declaration(s)
         return cst.FlattenSentinel(
             [
                 *type_declarations,

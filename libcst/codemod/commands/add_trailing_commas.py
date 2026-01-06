@@ -69,7 +69,7 @@ class AddTrailingCommas(VisitorBasedCodemodCommand):
             default="black",
         )
         arg_parser.add_argument(
-            "--paramter-count",
+            "--parameter-count",
             dest="parameter_count",
             metavar="PARAMETER_COUNT",
             help="Minimal number of parameters for us to add trailing comma",

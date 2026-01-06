@@ -1002,7 +1002,7 @@ class TestAddImportsCodemod(CodemodTest):
 
     def test_add_existing_at_top(self) -> None:
         """
-        Should add new import at exisitng from import at top
+        Should add new import at existing from import at top
         """
 
         before = """

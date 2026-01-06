@@ -310,7 +310,7 @@ class ComparisonTest(CSTNodeTest):
                 ),
                 "at least one space around comparison operator",
             ),
-            # whitespace around the comparision itself
+            # whitespace around the comparison itself
             # a ifb > c else d
             (
                 lambda: cst.IfExp(
