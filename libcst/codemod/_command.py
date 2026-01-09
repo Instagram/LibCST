@@ -74,9 +74,46 @@ class CodemodCommand(Codemod, ABC):
         obj: str | None = None,
         asname: str | None = None,
     ) -> None:
+        """
+        Schedule an import to be removed after the codemod completes.
+
+        This is a convenience wrapper around the :class:`~libcst.codemod.visitors.RemoveImportsVisitor` static function
+        :meth:`~libcst.codemod.visitors.RemoveImportsVisitor.remove_unused_import`
+        that automatically passes the codemod context. The import will only be
+        removed if it is not referenced elsewhere in the module.
+
+        For example, to remove ``from typing import Optional``::
+
+            self.remove_unused_import("typing", "Optional")
+
+        To remove ``import os``::
+
+            self.remove_unused_import("os")
+        """
         RemoveImportsVisitor.remove_unused_import(self.context, module, obj, asname)
 
     def remove_unused_import_by_node(self, node: CSTNode) -> None:
+        """
+        Schedule removal of all imports referenced by a node and its children.
+
+        This is a convenience wrapper around the :class:`~libcst.codemod.visitors.RemoveImportsVisitor` static function
+        :meth:`~libcst.codemod.visitors.RemoveImportsVisitor.remove_unused_import_by_node`
+        that automatically passes the codemod context. This is especially useful
+        when you are removing a node using :func:`~libcst.RemoveFromParent` and want
+        to clean up any imports that were only used by that node.
+
+        For example::
+
+            def leave_AnnAssign(
+                self, original_node: cst.AnnAssign, updated_node: cst.AnnAssign,
+            ) -> cst.RemovalSentinel:
+                # Remove annotated assignment and clean up imports
+                self.remove_unused_import_by_node(original_node)
+                return cst.RemoveFromParent()
+
+        Note that you should pass the ``original_node`` rather than ``updated_node``
+        since scope analysis is computed on the original tree.
+        """
         RemoveImportsVisitor.remove_unused_import_by_node(self.context, node)
 
     # Lightweight wrappers for AddImportsVisitor static functions
@@ -87,6 +124,26 @@ class CodemodCommand(Codemod, ABC):
         asname: str | None = None,
         relative: int = 0,
     ) -> None:
+        """
+        Schedule an import to be added after the codemod completes.
+
+        This is a convenience wrapper around the :class:`~libcst.codemod.visitors.AddImportsVisitor` static function
+        :meth:`~libcst.codemod.visitors.AddImportsVisitor.add_needed_import`
+        that automatically passes the codemod context. The import will only be
+        added if it does not already exist in the module.
+
+        For example, to add ``from typing import Optional``::
+
+            self.add_needed_import("typing", "Optional")
+
+        To add ``import os``::
+
+            self.add_needed_import("os")
+
+        To add ``from typing import List as L``::
+
+            self.add_needed_import("typing", "List", asname="L")
+        """
         AddImportsVisitor.add_needed_import(self.context, module, obj, asname, relative)
 
     def transform_module(self, tree: Module) -> Module:
