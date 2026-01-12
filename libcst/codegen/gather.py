@@ -15,7 +15,7 @@ import libcst as cst
 def _get_bases() -> Iterator[Type[cst.CSTNode]]:
     """
     Get all base classes that are subclasses of CSTNode but not an actual
-    node itself. This allows us to keep our types sane by refering to the
+    node itself. This allows us to keep our types sane by referring to the
     base classes themselves.
     """
 

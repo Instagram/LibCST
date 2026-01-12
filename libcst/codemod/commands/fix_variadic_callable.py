@@ -11,7 +11,7 @@ from libcst.codemod import VisitorBasedCodemodCommand
 from libcst.metadata import QualifiedName, QualifiedNameProvider, QualifiedNameSource
 
 
-class FixVariadicCallableCommmand(VisitorBasedCodemodCommand):
+class FixVariadicCallableCommand(VisitorBasedCodemodCommand):
     DESCRIPTION: str = (
         "Fix incorrect variadic callable type annotations from `Callable[[...], T]` to `Callable[..., T]``"
     )

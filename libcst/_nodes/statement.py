@@ -392,7 +392,7 @@ class _BaseSimpleStatement(CSTNode, ABC):
                 raise CSTValidationError(
                     "All but the last SmallStatement in a SimpleStatementLine or "
                     + "SimpleStatementSuite must have a trailing semicolon. Otherwise, "
-                    + "there's no way to syntatically disambiguate each SmallStatement "
+                    + "there's no way to syntactically disambiguate each SmallStatement "
                     + "on the same line."
                 )
 
@@ -678,7 +678,7 @@ class IndentedBlock(BaseSuite):
     indent: Optional[str] = None
 
     #: Any trailing comments or lines after the dedent that are owned by this indented
-    #: block. Statements own preceeding and same-line trailing comments, but not
+    #: block. Statements own preceding and same-line trailing comments, but not
     #: trailing lines, so it falls on :class:`IndentedBlock` to own it. In the case
     #: that a statement follows an :class:`IndentedBlock`, that statement will own the
     #: comments and lines that are at the same indent as the statement, and this
@@ -2751,7 +2751,7 @@ class Match(BaseCompoundStatement):
     indent: Optional[str] = None
 
     #: Any trailing comments or lines after the dedent that are owned by this match
-    #: block. Statements own preceeding and same-line trailing comments, but not
+    #: block. Statements own preceding and same-line trailing comments, but not
     #: trailing lines, so it falls on :class:`Match` to own it. In the case
     #: that a statement follows a :class:`Match` block, that statement will own the
     #: comments and lines that are at the same indent as the statement, and this

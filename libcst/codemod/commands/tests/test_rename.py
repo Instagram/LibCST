@@ -417,7 +417,7 @@ class TestRenameCommand(CodemodTest):
             new_name="d.baz",
         )
 
-    def test_other_import_froms_untouched(self) -> None:
+    def test_other_import_forms_untouched(self) -> None:
         before = """
             from a import b, c, d
 

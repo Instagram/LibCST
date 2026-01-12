@@ -1085,7 +1085,7 @@ def convert_asyncable_funcdef(config: ParserConfig, children: Sequence[Any]) -> 
 def convert_funcdef(config: ParserConfig, children: Sequence[Any]) -> Any:
     defnode, namenode, param_partial, *annotation, colon, suite = children
 
-    # If the trailing paremeter doesn't have a comma, then it owns the trailing
+    # If the trailing parameter doesn't have a comma, then it owns the trailing
     # whitespace before the rpar. Otherwise, the comma owns it (and will have
     # already parsed it). We don't check/update ParamStar because if it exists
     # then we are guaranteed have at least one kwonly_param.

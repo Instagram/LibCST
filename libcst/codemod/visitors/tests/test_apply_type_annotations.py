@@ -232,7 +232,7 @@ class TestApplyAnnotationsVisitor(CodemodTest):
                     pass
                 """,
             ),
-            "param_with_existng_return": (
+            "param_with_existing_return": (
                 """
                 def foo(x: int) -> int: ...
                 """,
@@ -604,7 +604,7 @@ class TestApplyAnnotationsVisitor(CodemodTest):
             # happen to align well, but none of these cases are guaranteed to work
             # in general - for example duplicate type names will generally result in
             # incorrect codemod.
-            "REQURIES_PREEXISTING_new_import_okay_if_existing_aliased": (
+            "REQUIRES_PREEXISTING_new_import_okay_if_existing_aliased": (
                 """
                 def foo() -> b.b.A: ...
                 """,
@@ -637,7 +637,7 @@ class TestApplyAnnotationsVisitor(CodemodTest):
                   return db.Connection()
                 """,
             ),
-            "REQURIRES_PREEXISTING_fully_qualified_typing": (
+            "REQUIRES_PREEXISTING_fully_qualified_typing": (
                 """
                 def foo() -> typing.Sequence[int]: ...
                 """,
