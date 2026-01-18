@@ -226,6 +226,20 @@ class MatchTest(CSTNodeTest):
                             ),
                             body=cst.SimpleStatementSuite((cst.Pass(),)),
                         ),
+                        cst.MatchCase(  # rest with trailing comma - valid syntax (issue #1436)
+                            pattern=cst.MatchMapping(
+                                [
+                                    cst.MatchMappingElement(
+                                        key=cst.SimpleString('"a"'),
+                                        pattern=cst.MatchValue(cst.Integer("1")),
+                                        comma=cst.Comma(whitespace_after=cst.SimpleWhitespace(" ")),
+                                    ),
+                                ],
+                                rest=cst.Name("keys"),
+                                trailing_comma=cst.Comma(),
+                            ),
+                            body=cst.SimpleStatementSuite((cst.Pass(),)),
+                        ),
                     ],
                 ),
                 "code": (
@@ -234,6 +248,7 @@ class MatchTest(CSTNodeTest):
                     + '    case {"a": None,"b": None}: pass\n'
                     + '    case {"a": None,}: pass\n'
                     + "    case {**rest}: pass\n"
+                    + '    case {"a": 1, **keys,}: pass\n'
                 ),
                 "parser": parser,
             },
