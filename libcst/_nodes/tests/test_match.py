@@ -232,7 +232,9 @@ class MatchTest(CSTNodeTest):
                                     cst.MatchMappingElement(
                                         key=cst.SimpleString('"a"'),
                                         pattern=cst.MatchValue(cst.Integer("1")),
-                                        comma=cst.Comma(whitespace_after=cst.SimpleWhitespace(" ")),
+                                        comma=cst.Comma(
+                                            whitespace_after=cst.SimpleWhitespace(" ")
+                                        ),
                                     ),
                                 ],
                                 rest=cst.Name("keys"),
