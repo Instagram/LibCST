@@ -1179,18 +1179,24 @@ class ImportAlias(CSTNode):
             comma=visit_sentinel(self, "comma", self.comma, visitor),
         )
 
-    def _codegen_impl(self, state: CodegenState, default_comma: bool = False) -> None:
+    def _codegen_impl(
+        self,
+        state: CodegenState,
+        default_comma: bool = False,
+        comma_is_valid: bool = True,
+    ) -> None:
         with state.record_syntactic_position(self):
             self.name._codegen(state)
             asname = self.asname
             if asname is not None:
                 asname._codegen(state)
 
-        comma = self.comma
-        if comma is MaybeSentinel.DEFAULT and default_comma:
-            state.add_token(", ")
-        elif isinstance(comma, Comma):
-            comma._codegen(state)
+        if comma_is_valid:
+            comma = self.comma
+            if default_comma and comma is MaybeSentinel.DEFAULT:
+                state.add_token(", ")
+            elif isinstance(comma, Comma):
+                comma._codegen(state)
 
     def _name(self, node: CSTNode) -> str:
         # Unrolled version of get_full_name_for_node to avoid circular imports.
@@ -1407,9 +1413,17 @@ class ImportFrom(BaseSmallStatement):
             if lpar is not None:
                 lpar._codegen(state)
             if isinstance(names, Sequence):
-                lastname = len(names) - 1
+                has_parens = self.rpar is not None
+                last_i = len(names) - 1
                 for i, name in enumerate(names):
-                    name._codegen(state, default_comma=(i != lastname))
+                    is_last = i == last_i
+                    name._codegen(
+                        state,
+                        # Unless we're wrappend in parens we can't output a trailing
+                        # comma because that would be invalid code
+                        comma_is_valid=has_parens or not is_last,
+                        default_comma=not is_last,
+                    )
             if isinstance(names, ImportStar):
                 names._codegen(state)
             rpar = self.rpar
