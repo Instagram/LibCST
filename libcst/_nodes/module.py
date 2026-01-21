@@ -3,12 +3,18 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import io
 from dataclasses import dataclass
 from typing import cast, Optional, Sequence, TYPE_CHECKING, TypeVar, Union
 
 from libcst._add_slots import add_slots
 from libcst._nodes.base import CSTNode
-from libcst._nodes.internal import CodegenState, visit_body_sequence, visit_sequence
+from libcst._nodes.internal import (
+    CodegenState,
+    CodegenWriter,
+    visit_body_sequence,
+    visit_sequence,
+)
 from libcst._nodes.statement import (
     BaseCompoundStatement,
     get_docstring_impl,
@@ -135,6 +141,24 @@ class Module(CSTNode):
         )
         node._codegen(state)
         return "".join(state.tokens)
+
+    def write_code(self, writer: io.TextIOBase):
+        """
+        Like :meth:`code`, but writes the code to the given file-like object.
+        """
+        self.write_code_for_node(self, writer)
+
+    def write_code_for_node(self, node: CSTNode, writer: io.TextIOBase):
+        """
+        Like :meth:`code_for_node`, but writes the code to the given file-like object.
+        """
+
+        state = CodegenWriter(
+            default_indent=self.default_indent,
+            default_newline=self.default_newline,
+            writer=writer,
+        )
+        node._codegen(state)
 
     @property
     def config_for_parsing(self) -> "PartialParserConfig":
