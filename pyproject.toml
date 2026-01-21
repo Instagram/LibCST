@@ -41,7 +41,7 @@ dev = [
     "flake8==7.2.0",
     "hypothesis>=4.36.0",
     "hypothesmith>=0.0.4",
-    "maturin>=1.7.0,<1.8",
+    "maturin>=1.7.0,<1.10",
     "poethepoet>=0.35.0",
     "prompt-toolkit>=2.0.9",
     "pyre-check==0.9.18; platform_system != 'Windows'",
