@@ -3,12 +3,14 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 #
+from __future__ import annotations
+
 import argparse
 import inspect
 from abc import ABC, abstractmethod
-from typing import Dict, Generator, List, Type, TypeVar
+from typing import Dict, Generator, List, Tuple, Type, TypeVar
 
-from libcst import Module
+from libcst import CSTNode, Module
 from libcst.codemod._codemod import Codemod
 from libcst.codemod._context import CodemodContext
 from libcst.codemod._visitor import ContextAwareTransformer
@@ -65,6 +67,85 @@ class CodemodCommand(Codemod, ABC):
         """
         ...
 
+    # Lightweight wrappers for RemoveImportsVisitor static functions
+    def remove_unused_import(
+        self,
+        module: str,
+        obj: str | None = None,
+        asname: str | None = None,
+    ) -> None:
+        """
+        Schedule an import to be removed after the codemod completes.
+
+        This is a convenience wrapper around the :class:`~libcst.codemod.visitors.RemoveImportsVisitor` static function
+        :meth:`~libcst.codemod.visitors.RemoveImportsVisitor.remove_unused_import`
+        that automatically passes the codemod context. The import will only be
+        removed if it is not referenced elsewhere in the module.
+
+        For example, to remove ``from typing import Optional``::
+
+            self.remove_unused_import("typing", "Optional")
+
+        To remove ``import os``::
+
+            self.remove_unused_import("os")
+        """
+        RemoveImportsVisitor.remove_unused_import(self.context, module, obj, asname)
+
+    def remove_unused_import_by_node(self, node: CSTNode) -> None:
+        """
+        Schedule removal of all imports referenced by a node and its children.
+
+        This is a convenience wrapper around the :class:`~libcst.codemod.visitors.RemoveImportsVisitor` static function
+        :meth:`~libcst.codemod.visitors.RemoveImportsVisitor.remove_unused_import_by_node`
+        that automatically passes the codemod context. This is especially useful
+        when you are removing a node using :func:`~libcst.RemoveFromParent` and want
+        to clean up any imports that were only used by that node.
+
+        For example::
+
+            def leave_AnnAssign(
+                self, original_node: cst.AnnAssign, updated_node: cst.AnnAssign,
+            ) -> cst.RemovalSentinel:
+                # Remove annotated assignment and clean up imports
+                self.remove_unused_import_by_node(original_node)
+                return cst.RemoveFromParent()
+
+        Note that you should pass the ``original_node`` rather than ``updated_node``
+        since scope analysis is computed on the original tree.
+        """
+        RemoveImportsVisitor.remove_unused_import_by_node(self.context, node)
+
+    # Lightweight wrappers for AddImportsVisitor static functions
+    def add_needed_import(
+        self,
+        module: str,
+        obj: str | None = None,
+        asname: str | None = None,
+        relative: int = 0,
+    ) -> None:
+        """
+        Schedule an import to be added after the codemod completes.
+
+        This is a convenience wrapper around the :class:`~libcst.codemod.visitors.AddImportsVisitor` static function
+        :meth:`~libcst.codemod.visitors.AddImportsVisitor.add_needed_import`
+        that automatically passes the codemod context. The import will only be
+        added if it does not already exist in the module.
+
+        For example, to add ``from typing import Optional``::
+
+            self.add_needed_import("typing", "Optional")
+
+        To add ``import os``::
+
+            self.add_needed_import("os")
+
+        To add ``from typing import List as L``::
+
+            self.add_needed_import("typing", "List", asname="L")
+        """
+        AddImportsVisitor.add_needed_import(self.context, module, obj, asname, relative)
+
     def transform_module(self, tree: Module) -> Module:
         # Overrides (but then calls) Codemod's transform_module to provide
         # a spot where additional supported transforms can be attached and run.
@@ -75,13 +156,13 @@ class CodemodCommand(Codemod, ABC):
         # have a static method that other transforms can use which takes
         # a context and other optional args and modifies its own context key
         # accordingly. We import them here so that we don't have circular imports.
-        supported_transforms: Dict[str, Type[Codemod]] = {
-            AddImportsVisitor.CONTEXT_KEY: AddImportsVisitor,
-            RemoveImportsVisitor.CONTEXT_KEY: RemoveImportsVisitor,
-        }
+        supported_transforms: List[Tuple[str, Type[Codemod]]] = [
+            (AddImportsVisitor.CONTEXT_KEY, AddImportsVisitor),
+            (RemoveImportsVisitor.CONTEXT_KEY, RemoveImportsVisitor),
+        ]
 
         # For any visitors that we support auto-running, run them here if needed.
-        for key, transform in supported_transforms.items():
+        for key, transform in supported_transforms:
             if key in self.context.scratch:
                 # We have work to do, so lets run this.
                 tree = self._instantiate_and_run(transform, tree)

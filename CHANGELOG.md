@@ -1,3 +1,47 @@
+# 1.8.6 - 2025-11-03
+
+## What's Changed
+* Update pyproject.toml for 3.14t by @itamaro in https://github.com/Instagram/LibCST/pull/1417
+* Update PyO3 to 0.26 by @cjwatson in https://github.com/Instagram/LibCST/pull/1413
+* Make CodemodCommand's supported_transforms order deterministic by @frvnkliu in https://github.com/Instagram/LibCST/pull/1424
+
+## New Contributors
+* @cjwatson made their first contribution in https://github.com/Instagram/LibCST/pull/1413
+* @frvnkliu made their first contribution in https://github.com/Instagram/LibCST/pull/1424
+
+**Full Changelog**: https://github.com/Instagram/LibCST/compare/v1.8.5...v1.8.6
+
+# 1.8.5 - 2025-09-25
+
+## What's Changed
+* fixed: circular import error by @drinkmorewaterr in https://github.com/Instagram/LibCST/pull/1406
+
+
+# 1.8.4 - 2025-09-09
+
+## What's Changed
+* fixed: generate Attribute nodes when applying type annotations by @tungol in https://github.com/Instagram/LibCST/pull/1396
+* added: Support parsing of t-strings #1374  by @drinkmorewaterr in https://github.com/Instagram/LibCST/pull/1398
+* added: add support for PEP758 by @drinkmorewaterr in https://github.com/Instagram/LibCST/pull/1401
+
+## New Contributors
+* @tungol made their first contribution in https://github.com/Instagram/LibCST/pull/1396
+
+**Full Changelog**: https://github.com/Instagram/LibCST/compare/v1.8.2...v1.8.4
+
+# 1.8.3 - 2025-08-29
+## What's Changed
+* removed: remove entry points to pure parser by @drinkmorewaterr in https://github.com/Instagram/LibCST/pull/1375
+* fixed: fixes match statements to work with PositionProvider by @imsut in https://github.com/Instagram/LibCST/pull/1389
+
+
+## New Contributors
+* @hunterhogan made their first contribution in https://github.com/Instagram/LibCST/pull/1378
+* @thomas-serre-sonarsource made their first contribution in https://github.com/Instagram/LibCST/pull/1379
+* @imsut made their first contribution in https://github.com/Instagram/LibCST/pull/1389
+
+**Full Changelog**: https://github.com/Instagram/LibCST/compare/v1.8.2...v1.8.3
+
 # 1.8.2 - 2025-06-13
 
 # Fixed

@@ -25,16 +25,16 @@ jobs:
           persist-credentials: false
       - name: Download binary wheels
         id: download
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           pattern: wheels-*
           path: wheelhouse
           merge-multiple: true
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.10"
       - name: Install uv
-        uses: astral-sh/setup-uv@v6
+        uses: astral-sh/setup-uv@v7
         with:
           version: "0.7.13"
           enable-cache: false
