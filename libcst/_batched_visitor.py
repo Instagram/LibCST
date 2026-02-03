@@ -3,7 +3,6 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-import inspect
 from typing import (
     Callable,
     cast,
@@ -44,20 +43,19 @@ class BatchableCSTVisitor(CSTTypedVisitorFunctions, MetadataDependent):
         excluding all empty stubs.
         """
 
-        methods = inspect.getmembers(
-            self,
-            lambda m: (
-                inspect.ismethod(m)
-                and (m.__name__.startswith("visit_") or m.__name__.startswith("leave_"))
-                and not getattr(m, "_is_no_op", False)
-            ),
-        )
+        methods = {
+            name: method
+            for name in dir(self)
+            if name.startswith(("visit_", "leave_"))
+            and callable(method := getattr(self, name))
+            and not getattr(method, "_is_no_op", False)
+        }
 
         # TODO: verify all visitor methods reference valid node classes.
         # for name, __ in methods:
         #     ...
 
-        return dict(methods)
+        return methods
 
 
 def visit_batched(
