@@ -9,6 +9,8 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Literal, Optional, Pattern, Sequence, Union
 
+from libcst import CSTLogicError
+
 from libcst._add_slots import add_slots
 from libcst._maybe_sentinel import MaybeSentinel
 from libcst._nodes.base import CSTNode, CSTValidationError
@@ -1165,12 +1167,10 @@ class ImportAlias(CSTNode):
                 )
         try:
             self.evaluated_name
-        except Exception as e:
-            if str(e) == "Logic error!":
-                raise CSTValidationError(
-                    "The imported name must be a valid qualified name."
-                )
-            raise e
+        except CSTLogicError as e:
+            raise CSTValidationError(
+                "The imported name must be a valid qualified name."
+            ) from e
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "ImportAlias":
         return ImportAlias(
@@ -1199,7 +1199,7 @@ class ImportAlias(CSTNode):
         elif isinstance(node, Attribute):
             return f"{self._name(node.value)}.{node.attr.value}"
         else:
-            raise Exception("Logic error!")
+            raise CSTLogicError("Logic error!")
 
     @property
     def evaluated_name(self) -> str:
@@ -2886,6 +2886,9 @@ class MatchCase(CSTNode):
                 state.add_token("if")
                 self.whitespace_after_if._codegen(state)
                 guard._codegen(state)
+            else:
+                self.whitespace_before_if._codegen(state)
+                self.whitespace_after_if._codegen(state)
 
             self.whitespace_before_colon._codegen(state)
             state.add_token(":")
@@ -3242,8 +3245,6 @@ class MatchMapping(MatchPattern):
     rpar: Sequence[RightParen] = ()
 
     def _validate(self) -> None:
-        if isinstance(self.trailing_comma, Comma) and self.rest is not None:
-            raise CSTValidationError("Cannot have a trailing comma without **rest")
         super(MatchMapping, self)._validate()
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "MatchMapping":
@@ -3472,6 +3473,13 @@ class MatchAs(MatchPattern):
                 if ws_after is MaybeSentinel.DEFAULT:
                     state.add_token(" ")
                 elif isinstance(ws_after, BaseParenthesizableWhitespace):
+                    ws_after._codegen(state)
+            else:
+                ws_before = self.whitespace_before_as
+                if isinstance(ws_before, BaseParenthesizableWhitespace):
+                    ws_before._codegen(state)
+                ws_after = self.whitespace_after_as
+                if isinstance(ws_after, BaseParenthesizableWhitespace):
                     ws_after._codegen(state)
             if name is None:
                 state.add_token("_")

@@ -12,7 +12,8 @@ from tokenize import (
     Intnumber as INTNUMBER_RE,
 )
 
-from libcst._exceptions import PartialParserSyntaxError
+from libcst import CSTLogicError
+from libcst._exceptions import ParserSyntaxError, PartialParserSyntaxError
 from libcst._maybe_sentinel import MaybeSentinel
 from libcst._nodes.expression import (
     Arg,
@@ -327,7 +328,12 @@ def convert_boolop(
     # Convert all of the operations that have no precedence in a loop
     for op, rightexpr in grouper(rightexprs, 2):
         if op.string not in BOOLOP_TOKEN_LUT:
-            raise Exception(f"Unexpected token '{op.string}'!")
+            raise ParserSyntaxError(
+                f"Unexpected token '{op.string}'!",
+                lines=config.lines,
+                raw_line=0,
+                raw_column=0,
+            )
         leftexpr = BooleanOperation(
             left=leftexpr,
             # pyre-ignore Pyre thinks that the type of the LUT is CSTNode.
@@ -420,7 +426,12 @@ def convert_comp_op(
             )
         else:
             # this should be unreachable
-            raise Exception(f"Unexpected token '{op.string}'!")
+            raise ParserSyntaxError(
+                f"Unexpected token '{op.string}'!",
+                lines=config.lines,
+                raw_line=0,
+                raw_column=0,
+            )
     else:
         # A two-token comparison
         leftcomp, rightcomp = children
@@ -451,7 +462,12 @@ def convert_comp_op(
             )
         else:
             # this should be unreachable
-            raise Exception(f"Unexpected token '{leftcomp.string} {rightcomp.string}'!")
+            raise ParserSyntaxError(
+                f"Unexpected token '{leftcomp.string} {rightcomp.string}'!",
+                lines=config.lines,
+                raw_line=0,
+                raw_column=0,
+            )
 
 
 @with_production("star_expr", "'*' expr")
@@ -493,7 +509,12 @@ def convert_binop(
     # Convert all of the operations that have no precedence in a loop
     for op, rightexpr in grouper(rightexprs, 2):
         if op.string not in BINOP_TOKEN_LUT:
-            raise Exception(f"Unexpected token '{op.string}'!")
+            raise ParserSyntaxError(
+                f"Unexpected token '{op.string}'!",
+                lines=config.lines,
+                raw_line=0,
+                raw_column=0,
+            )
         leftexpr = BinaryOperation(
             left=leftexpr,
             # pyre-ignore Pyre thinks that the type of the LUT is CSTNode.
@@ -540,7 +561,12 @@ def convert_factor(
             )
         )
     else:
-        raise Exception(f"Unexpected token '{op.string}'!")
+        raise ParserSyntaxError(
+            f"Unexpected token '{op.string}'!",
+            lines=config.lines,
+            raw_line=0,
+            raw_column=0,
+        )
 
     return WithLeadingWhitespace(
         UnaryOperation(operator=opnode, expression=factor.value), op.whitespace_before
@@ -651,7 +677,7 @@ def convert_atom_expr_trailer(
             )
         else:
             # This is an invalid trailer, so lets give up
-            raise Exception("Logic error!")
+            raise CSTLogicError()
     return WithLeadingWhitespace(atom, whitespace_before)
 
 
@@ -870,9 +896,19 @@ def convert_atom_basic(
                 Imaginary(child.string), child.whitespace_before
             )
         else:
-            raise Exception(f"Unparseable number {child.string}")
+            raise ParserSyntaxError(
+                f"Unparseable number {child.string}",
+                lines=config.lines,
+                raw_line=0,
+                raw_column=0,
+            )
     else:
-        raise Exception(f"Logic error, unexpected token {child.type.name}")
+        raise ParserSyntaxError(
+            f"Logic error, unexpected token {child.type.name}",
+            lines=config.lines,
+            raw_line=0,
+            raw_column=0,
+        )
 
 
 @with_production("atom_squarebrackets", "'[' [testlist_comp_list] ']'")
@@ -1447,7 +1483,7 @@ def convert_arg_assign_comp_for(
         if equal.string == ":=":
             val = convert_namedexpr_test(config, children)
             if not isinstance(val, WithLeadingWhitespace):
-                raise Exception(
+                raise TypeError(
                     f"convert_namedexpr_test returned {val!r}, not WithLeadingWhitespace"
                 )
             return Arg(value=val.value)

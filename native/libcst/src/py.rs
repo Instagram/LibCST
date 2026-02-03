@@ -6,25 +6,26 @@
 use crate::nodes::traits::py::TryIntoPy;
 use pyo3::prelude::*;
 
-#[pymodule]
+#[pymodule(gil_used = false)]
 #[pyo3(name = "native")]
-pub fn libcst_native(_py: Python, m: &PyModule) -> PyResult<()> {
+pub fn libcst_native(_py: Python, m: &Bound<PyModule>) -> PyResult<()> {
     #[pyfn(m)]
-    fn parse_module(source: String, encoding: Option<&str>) -> PyResult<PyObject> {
+    #[pyo3(signature = (source, encoding=None))]
+    fn parse_module(source: String, encoding: Option<&str>) -> PyResult<Py<PyAny>> {
         let m = crate::parse_module(source.as_str(), encoding)?;
-        Python::with_gil(|py| m.try_into_py(py))
+        Python::attach(|py| m.try_into_py(py))
     }
 
     #[pyfn(m)]
-    fn parse_expression(source: String) -> PyResult<PyObject> {
+    fn parse_expression(source: String) -> PyResult<Py<PyAny>> {
         let expr = crate::parse_expression(source.as_str())?;
-        Python::with_gil(|py| expr.try_into_py(py))
+        Python::attach(|py| expr.try_into_py(py))
     }
 
     #[pyfn(m)]
-    fn parse_statement(source: String) -> PyResult<PyObject> {
+    fn parse_statement(source: String) -> PyResult<Py<PyAny>> {
         let stm = crate::parse_statement(source.as_str())?;
-        Python::with_gil(|py| stm.try_into_py(py))
+        Python::attach(|py| stm.try_into_py(py))
     }
 
     Ok(())

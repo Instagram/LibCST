@@ -11,7 +11,7 @@ use crate::tokenizer::core::{TokConfig, TokError, TokState, TokType};
 fn default_config() -> TokConfig {
     TokConfig {
         async_hacks: false,
-        split_fstring: false,
+        split_ftstring: false,
     }
 }
 
@@ -534,7 +534,7 @@ fn test_string_prefix() {
         Ok(vec![(TokType::String, r#"r'\\'"#)]),
     );
     let config = TokConfig {
-        split_fstring: true,
+        split_ftstring: true,
         ..default_config()
     };
     assert_eq!(
@@ -564,9 +564,9 @@ fn test_string_prefix() {
 }
 
 #[test]
-fn test_split_fstring() {
+fn test_split_ftstring() {
     let config = TokConfig {
-        split_fstring: true,
+        split_ftstring: true,
         ..default_config()
     };
 
@@ -662,7 +662,7 @@ fn test_split_fstring() {
 #[test]
 fn test_fstring_escapes() {
     let config = TokConfig {
-        split_fstring: true,
+        split_ftstring: true,
         ..default_config()
     };
     assert_eq!(
@@ -831,7 +831,7 @@ fn test_inconsistent_indentation_at_eof() {
 #[test]
 fn test_nested_f_string_specs() {
     let config = TokConfig {
-        split_fstring: true,
+        split_ftstring: true,
         ..default_config()
     };
     assert_eq!(
@@ -857,7 +857,7 @@ fn test_nested_f_string_specs() {
 #[test]
 fn test_nested_f_strings() {
     let config = TokConfig {
-        split_fstring: true,
+        split_ftstring: true,
         ..default_config()
     };
     assert_eq!(
@@ -872,6 +872,48 @@ fn test_nested_f_strings() {
             (TokType::FStringEnd, "'"),
             (TokType::Op, "}"),
             (TokType::FStringEnd, "'")
+        ])
+    )
+}
+#[test]
+fn test_can_tokenize_t_string_basic() {
+    let config = TokConfig {
+        split_ftstring: true,
+        ..default_config()
+    };
+    assert_eq!(
+        tokenize_all("t'Nothing to see here, move along'", &config),
+        Ok(vec![
+            (TokType::TStringStart, "t'"),
+            (TokType::TStringString, "Nothing to see here, move along"),
+            (TokType::TStringEnd, "'")
+        ])
+    )
+}
+#[test]
+fn test_can_tokenize_f_and_t_strings() {
+    let config = TokConfig {
+        split_ftstring: true,
+        ..default_config()
+    };
+    assert_eq!(
+        tokenize_all("t\"TMiddle{f'FMiddle{t'{2}'}'}\"", &config),
+        Ok(vec![
+            (TokType::TStringStart, "t\""),
+            (TokType::TStringString, "TMiddle"),
+            (TokType::Op, "{"),
+            (TokType::FStringStart, "f'"),
+            (TokType::FStringString, "FMiddle"),
+            (TokType::Op, "{"),
+            (TokType::TStringStart, "t'"),
+            (TokType::Op, "{"),
+            (TokType::Number, "2"),
+            (TokType::Op, "}"),
+            (TokType::TStringEnd, "'"),
+            (TokType::Op, "}"),
+            (TokType::FStringEnd, "'"),
+            (TokType::Op, "}"),
+            (TokType::TStringEnd, "\"")
         ])
     )
 }

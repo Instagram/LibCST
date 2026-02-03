@@ -6,6 +6,8 @@ on:
       - main
   pull_request:
 
+permissions: {}
+
 jobs:
   test:
     runs-on: ${{ matrix.os }}
@@ -13,35 +15,32 @@ jobs:
       fail-fast: false
       matrix:
         os: [macos-latest, ubuntu-latest, windows-latest]
-        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+        python-version:
+          - "3.9"
+          - "3.10"
+          - "3.11"
+          - "3.12"
+          - "3.13"
+          - "3.13t"
+          - "3.14"
+          - "3.14t"
     steps:
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          version: "0.7.13"
+          python-version: ${{ matrix.python-version }}
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: actions/setup-python@v5
-        with:
-          cache: pip
-          cache-dependency-path: "pyproject.toml"
-          python-version: ${{ matrix.python-version }}
-      - name: Install hatch
-        run: |
-          pip install -U hatch
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@stable
       - name: Build LibCST
-        run: hatch -vv env create
+        run: uv sync --locked --dev
       - name: Native Parser Tests
-        run: hatch run test
-      - name: Pure Parser Tests
-        env:
-          COVERAGE_FILE: .coverage.pure
-          LIBCST_PARSER_TYPE: pure
-        run: hatch run test
+        run: uv run poe test
       - name: Coverage
-        run: |
-          hatch run coverage combine .coverage.pure
-          hatch run coverage report
+        run: uv run coverage report
 
   # Run linters
   lint:
@@ -50,15 +49,14 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: actions/setup-python@v5
+          persist-credentials: false
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
         with:
-          cache: pip
-          cache-dependency-path: "pyproject.toml"
+          version: "0.7.13"
           python-version: "3.10"
-      - name: Install hatch
-        run: pip install -U hatch
-      - run: hatch run lint
-      - run: hatch run fixtures
+      - run: uv run poe lint
+      - run: uv run poe fixtures
 
   # Run pyre typechecker
   typecheck:
@@ -67,14 +65,13 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: actions/setup-python@v5
+          persist-credentials: false
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
         with:
-          cache: pip
-          cache-dependency-path: "pyproject.toml"
+          version: "0.7.13"
           python-version: "3.10"
-      - name: Install hatch
-        run: pip install -U hatch
-      - run: hatch run typecheck
+      - run: uv run poe typecheck
 
   # Build the docs
   docs:
@@ -83,15 +80,14 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: actions/setup-python@v5
+          persist-credentials: false
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
         with:
-          cache: pip
-          cache-dependency-path: "pyproject.toml"
+          version: "0.7.13"
           python-version: "3.10"
-      - name: Install hatch
-        run: pip install -U hatch
       - uses: ts-graphviz/setup-graphviz@v2
-      - run: hatch run docs
+      - run: uv run --group docs poe docs
       - name: Archive Docs
         uses: actions/upload-artifact@v4
         with:
@@ -106,46 +102,41 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: ["3.10", "3.13t"]
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
-          python-version: "3.10"
+          python-version: ${{ matrix.python-version }}
       - name: test
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: --manifest-path=native/Cargo.toml --release
+        run: cargo test --manifest-path=native/Cargo.toml --release
       - name: test without python
         if: matrix.os == 'ubuntu-latest'
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: --manifest-path=native/Cargo.toml --release --no-default-features
+        run: cargo test --manifest-path=native/Cargo.toml --release --no-default-features
       - name: clippy
-        uses: actions-rs/clippy-check@v1
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          args: --manifest-path=native/Cargo.toml --all-features
+        run: cargo clippy --manifest-path=native/Cargo.toml --all-targets --all-features
       - name: compile-benchmarks
-        uses: actions-rs/cargo@v1
-        with:
-          command: bench
-          args: --manifest-path=native/Cargo.toml --no-run
+        run: cargo bench --manifest-path=native/Cargo.toml --no-run
 
   rustfmt:
     name: Rustfmt
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt
       - run: rustup component add rustfmt
-      - uses: actions-rs/cargo@v1
-        with:
-          command: fmt
-          args: --all --manifest-path=native/Cargo.toml -- --check
+      - name: format
+        run: cargo fmt --all --manifest-path=native/Cargo.toml -- --check
+  build:
+    # only trigger here for pull requests - regular pushes are handled in pypi_upload
+    if: ${{ github.event_name == 'pull_request' }}
+    uses: Instagram/LibCST/.github/workflows/build.yml@main

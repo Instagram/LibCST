@@ -29,12 +29,12 @@ impl BaseWhitespaceParserConfig {
     }
 
     #[getter]
-    fn get_lines(&self, py: Python) -> PyObject {
+    fn get_lines(&self, py: Python) -> Py<PyAny> {
         self.lines.to_object(py)
     }
 
     #[getter]
-    fn get_default_newline(&self, py: Python) -> PyObject {
+    fn get_default_newline(&self, py: Python) -> Py<PyAny> {
         self.default_newline.to_object(py)
     }
 }
@@ -62,23 +62,23 @@ impl BaseWhitespaceParserConfig {
     }
 }
 
-// These fields are private and PyObject, since we don't currently care about using them from
+// These fields are private and Py<PyAny>, since we don't currently care about using them from
 // within rust.
 #[pyclass(extends=BaseWhitespaceParserConfig, module="libcst_native.parser_config")]
 #[text_signature = "(*, lines, encoding, default_indent, default_newline, has_trailing_newline, version, future_imports)"]
 pub struct ParserConfig {
     // lines is inherited
     #[pyo3(get)]
-    encoding: PyObject,
+    encoding: Py<PyAny>,
     #[pyo3(get)]
-    default_indent: PyObject,
+    default_indent: Py<PyAny>,
     // default_newline is inherited
     #[pyo3(get)]
-    has_trailing_newline: PyObject,
+    has_trailing_newline: Py<PyAny>,
     #[pyo3(get)]
-    version: PyObject,
+    version: Py<PyAny>,
     #[pyo3(get)]
-    future_imports: PyObject,
+    future_imports: Py<PyAny>,
 }
 
 #[pymethods]
@@ -86,12 +86,12 @@ impl ParserConfig {
     #[new]
     fn new(
         lines: &PySequence,
-        encoding: PyObject,
-        default_indent: PyObject,
+        encoding: Py<PyAny>,
+        default_indent: Py<PyAny>,
         default_newline: &PyString,
-        has_trailing_newline: PyObject,
-        version: PyObject,
-        future_imports: PyObject,
+        has_trailing_newline: Py<PyAny>,
+        version: Py<PyAny>,
+        future_imports: Py<PyAny>,
     ) -> PyResult<(Self, BaseWhitespaceParserConfig)> {
         Ok((
             Self {
@@ -126,6 +126,7 @@ fn parser_config_asdict<'py>(py: Python<'py>, config: PyRef<'py, ParserConfig>) 
         ("future_imports", config.future_imports.clone_ref(py)),
     ]
     .into_py_dict(py)
+    .unwrap()
 }
 
 pub fn init_module(_py: Python, m: &PyModule) -> PyResult<()> {

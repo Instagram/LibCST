@@ -8,6 +8,7 @@ use std::rc::Rc;
 use crate::expression::make_async;
 use crate::nodes::deflated::*;
 use crate::nodes::expression::make_fstringtext;
+use crate::nodes::expression::make_tstringtext;
 use crate::nodes::op::make_importstar;
 use crate::nodes::traits::ParenthesizedDeflatedNode;
 use crate::parser::ParserError;
@@ -17,7 +18,8 @@ use peg::str::LineCol;
 use peg::{parser, Parse, ParseElem, RuleResult};
 use TokType::{
     Async, Await as AWAIT, Dedent, EndMarker, FStringEnd, FStringStart, FStringString, Indent,
-    Name as NameTok, Newline as NL, Number, String as STRING,
+    Name as NameTok, Newline as NL, Number, String as STRING, TStringEnd, TStringStart,
+    TStringString,
 };
 
 pub type Result<'a, T> = std::result::Result<T, ParserError<'a>>;
@@ -552,11 +554,20 @@ parser! {
             }
 
         // Except statement
-
         rule except_block() -> ExceptHandler<'input, 'a>
             = kw:lit("except") e:expression() a:(k:lit("as") n:name() {(k, n)})?
                 col:lit(":") b:block() {
                     make_except(kw, Some(e), a, col, b)
+            }
+            / kw:lit("except") e:expression() other:(c:comma() ex:expression() {(c, ex)})+ tc:(c:comma())?
+                col:lit(":") b:block() {
+                    let tuple = Expression::Tuple(Box::new(Tuple {
+                        elements: comma_separate(expr_to_element(e), other.into_iter().map(|(comma, expr)| (comma, expr_to_element(expr))).collect(), tc),
+                        lpar: vec![],
+                        rpar: vec![],
+                    }));
+
+                    make_except(kw, Some(tuple), None, col, b)
             }
             / kw:lit("except") col:lit(":") b:block() {
                 make_except(kw, None, None, col, b)
@@ -566,6 +577,16 @@ parser! {
             = kw:lit("except") star:lit("*") e:expression()
                 a:(k:lit("as") n:name() {(k, n)})? col:lit(":") b:block() {
                     make_except_star(kw, star, e, a, col, b)
+            }
+            / kw:lit("except") star:lit("*") e:expression() other:(c:comma() ex:expression() {(c, ex)})+ tc:(c:comma())?
+                col:lit(":") b:block() {
+                    let tuple = Expression::Tuple(Box::new(Tuple {
+                        elements: comma_separate(expr_to_element(e), other.into_iter().map(|(comma, expr)| (comma, expr_to_element(expr))).collect(), tc),
+                        lpar: vec![],
+                        rpar: vec![],
+                    }));
+
+                    make_except_star(kw, star, tuple, None, col, b)
             }
 
         rule finally_block() -> Finally<'input, 'a>
@@ -1043,7 +1064,7 @@ parser! {
             / n:lit("True") { Expression::Name(Box::new(make_name(n))) }
             / n:lit("False") { Expression::Name(Box::new(make_name(n))) }
             / n:lit("None") { Expression::Name(Box::new(make_name(n))) }
-            / &(tok(STRING, "") / tok(FStringStart, "")) s:strings() {s.into()}
+            / &(tok(STRING, "") / tok(FStringStart, "") / tok(TStringStart, "")) s:strings() {s.into()}
             / n:tok(Number, "NUMBER") { make_number(n) }
             / &lit("(") e:(tuple() / group() / (g:genexp() {Expression::GeneratorExp(Box::new(g))})) {e}
             / &lit("[") e:(list() / listcomp()) {e}
@@ -1151,7 +1172,7 @@ parser! {
 
         rule strings() -> String<'input, 'a>
             = s:(str:tok(STRING, "STRING") t:&_ {(make_string(str), t)}
-                / str:fstring() t:&_ {(String::Formatted(str), t)})+ {?
+                / str:fstring() t:&_ {(String::Formatted(str), t)} / str:tstring() t:&_ {(String::Templated(str), t)})+ {?
                 make_strings(s)
             }
 
@@ -1463,6 +1484,34 @@ parser! {
         rule _f_spec() -> Vec<FormattedStringContent<'input, 'a>>
             = (_f_string() / _f_replacement())*
 
+        // T-strings
+
+        rule tstring() -> TemplatedString<'input, 'a>
+            = start:tok(TStringStart, "t\"")
+                parts:(_t_string() / _t_replacement())*
+                end:tok(TStringEnd, "\"") {
+                    make_tstring(start.string, parts, end.string)
+            }
+
+        rule _t_string() -> TemplatedStringContent<'input, 'a>
+            = t:tok(TStringString, "t-string contents") {
+                TemplatedStringContent::Text(make_tstringtext(t.string))
+            }
+
+
+        rule _t_replacement() -> TemplatedStringContent<'input, 'a>
+            = lb:lit("{") e:annotated_rhs() eq:lit("=")?
+                conv:(t:lit("!") c:_f_conversion() {(t,c)})?
+                spec:(t:lit(":") s:_t_spec() {(t,s)})?
+                rb:lit("}") {
+                    TemplatedStringContent::Expression(Box::new(
+                        make_tstring_expression(lb, e, eq, conv, spec, rb)
+                    ))
+            }
+
+        rule _t_spec() -> Vec<TemplatedStringContent<'input, 'a>>
+            = (_t_string() / _t_replacement())*
+
         // CST helpers
 
         rule comma() -> Comma<'input, 'a>
@@ -1520,22 +1569,22 @@ parser! {
         rule separated<El, Sep>(el: rule<El>, sep: rule<Sep>) -> (El, Vec<(Sep, El)>)
             = e:el() rest:(s:sep() e:el() {(s, e)})* {(e, rest)}
 
-        rule traced<T>(e: rule<T>) -> T =
-            &(_* {
+                rule traced<T>(e: rule<T>) -> T =
+                    &(_* {
                 #[cfg(feature = "trace")]
                 {
                     println!("[PEG_INPUT_START]");
                     println!("{}", input);
                     println!("[PEG_TRACE_START]");
                 }
-            })
-            e:e()? {?
+                    })
+                    e:e()? {?
                 #[cfg(feature = "trace")]
-                println!("[PEG_TRACE_STOP]");
-                e.ok_or("")
-            }
+                    println!("[PEG_TRACE_STOP]");
+                    e.ok_or("")
+                    }
 
-    }
+                }
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -2877,6 +2926,48 @@ fn make_strings<'input, 'a>(
     }))
 }
 
+fn make_tstring_expression<'input, 'a>(
+    lbrace_tok: TokenRef<'input, 'a>,
+    expression: Expression<'input, 'a>,
+    eq: Option<TokenRef<'input, 'a>>,
+    conversion_pair: Option<(TokenRef<'input, 'a>, &'a str)>,
+    format_pair: Option<(
+        TokenRef<'input, 'a>,
+        Vec<TemplatedStringContent<'input, 'a>>,
+    )>,
+    rbrace_tok: TokenRef<'input, 'a>,
+) -> TemplatedStringExpression<'input, 'a> {
+    let equal: Option<AssignEqual<'_, '_>> = eq.map(make_assign_equal);
+    let (conversion_tok, conversion) = if let Some((t, c)) = conversion_pair {
+        (Some(t), Some(c))
+    } else {
+        (None, None)
+    };
+    let (format_tok, format_spec) = if let Some((t, f)) = format_pair {
+        (Some(t), Some(f))
+    } else {
+        (None, None)
+    };
+    let after_expr_tok = if equal.is_some() {
+        None
+    } else if let Some(tok) = conversion_tok {
+        Some(tok)
+    } else if let Some(tok) = format_tok {
+        Some(tok)
+    } else {
+        Some(rbrace_tok)
+    };
+
+    TemplatedStringExpression {
+        expression,
+        conversion,
+        format_spec,
+        equal,
+        lbrace_tok,
+        after_expr_tok,
+    }
+}
+
 fn make_fstring_expression<'input, 'a>(
     lbrace_tok: TokenRef<'input, 'a>,
     expression: Expression<'input, 'a>,
@@ -2925,6 +3016,20 @@ fn make_fstring<'input, 'a>(
     end: &'a str,
 ) -> FormattedString<'input, 'a> {
     FormattedString {
+        start,
+        parts,
+        end,
+        lpar: Default::default(),
+        rpar: Default::default(),
+    }
+}
+
+fn make_tstring<'input, 'a>(
+    start: &'a str,
+    parts: Vec<TemplatedStringContent<'input, 'a>>,
+    end: &'a str,
+) -> TemplatedString<'input, 'a> {
+    TemplatedString {
         start,
         parts,
         end,

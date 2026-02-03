@@ -95,7 +95,7 @@ class RemovalBehavior(CSTNodeTest):
         self, before: str, after: str, visitor: Type[CSTTransformer]
     ) -> None:
         if before.endswith("\n") or after.endswith("\n"):
-            raise Exception("Test cases should not be newline-terminated!")
+            raise ValueError("Test cases should not be newline-terminated!")
 
         # Test doesn't have newline termination case
         before_module = parse_module(before)

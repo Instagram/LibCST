@@ -8,7 +8,6 @@ from typing import Any, Callable
 import libcst as cst
 from libcst import parse_statement
 from libcst._nodes.tests.base import CSTNodeTest, DummyIndentedBlock, parse_statement_as
-from libcst._parser.entrypoints import is_native
 from libcst.metadata import CodeRange
 from libcst.testing.utils import data_provider
 
@@ -741,8 +740,6 @@ class FunctionDefCreationTest(CSTNodeTest):
         )
     )
     def test_valid(self, **kwargs: Any) -> None:
-        if not is_native() and kwargs.get("native_only", False):
-            self.skipTest("Disabled for native parser")
         if "native_only" in kwargs:
             kwargs.pop("native_only")
         self.validate_node(**kwargs)
@@ -891,8 +888,6 @@ class FunctionDefCreationTest(CSTNodeTest):
         )
     )
     def test_valid_native(self, **kwargs: Any) -> None:
-        if not is_native():
-            self.skipTest("Disabled for pure python parser")
         self.validate_node(**kwargs)
 
     @data_provider(
@@ -1052,7 +1047,9 @@ def _parse_statement_force_38(code: str) -> cst.BaseCompoundStatement:
         code, config=cst.PartialParserConfig(python_version="3.8")
     )
     if not isinstance(statement, cst.BaseCompoundStatement):
-        raise Exception("This function is expecting to parse compound statements only!")
+        raise ValueError(
+            "This function is expecting to parse compound statements only!"
+        )
     return statement
 
 
@@ -2221,8 +2218,6 @@ class FunctionDefParserTest(CSTNodeTest):
         )
     )
     def test_valid_38(self, node: cst.CSTNode, code: str, **kwargs: Any) -> None:
-        if not is_native() and kwargs.get("native_only", False):
-            self.skipTest("disabled for pure python parser")
         self.validate_node(node, code, _parse_statement_force_38)
 
     @data_provider(
@@ -2250,7 +2245,7 @@ class FunctionDefParserTest(CSTNodeTest):
         )
     )
     def test_versions(self, **kwargs: Any) -> None:
-        if is_native() and not kwargs.get("expect_success", True):
+        if not kwargs.get("expect_success", True):
             self.skipTest("parse errors are disabled for native parser")
         self.assert_parses(**kwargs)
 
@@ -2269,6 +2264,4 @@ class FunctionDefParserTest(CSTNodeTest):
         )
     )
     def test_parse_error(self, **kwargs: Any) -> None:
-        if not is_native():
-            self.skipTest("Skipped for non-native parser")
         self.assert_parses(**kwargs, expect_success=False, parser=parse_statement)

@@ -3,17 +3,14 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from typing import Any, Callable, Optional
+from typing import Any, Callable
 
 import libcst as cst
 from libcst import parse_statement
 from libcst._nodes.tests.base import CSTNodeTest
-from libcst._parser.entrypoints import is_native
 from libcst.testing.utils import data_provider
 
-parser: Optional[Callable[[str], cst.CSTNode]] = (
-    parse_statement if is_native() else None
-)
+parser: Callable[[str], cst.CSTNode] = parse_statement
 
 
 class MatchTest(CSTNodeTest):
@@ -229,6 +226,22 @@ class MatchTest(CSTNodeTest):
                             ),
                             body=cst.SimpleStatementSuite((cst.Pass(),)),
                         ),
+                        cst.MatchCase(  # rest with trailing comma - valid syntax (issue #1436)
+                            pattern=cst.MatchMapping(
+                                [
+                                    cst.MatchMappingElement(
+                                        key=cst.SimpleString('"a"'),
+                                        pattern=cst.MatchValue(cst.Integer("1")),
+                                        comma=cst.Comma(
+                                            whitespace_after=cst.SimpleWhitespace(" ")
+                                        ),
+                                    ),
+                                ],
+                                rest=cst.Name("keys"),
+                                trailing_comma=cst.Comma(),
+                            ),
+                            body=cst.SimpleStatementSuite((cst.Pass(),)),
+                        ),
                     ],
                 ),
                 "code": (
@@ -237,6 +250,7 @@ class MatchTest(CSTNodeTest):
                     + '    case {"a": None,"b": None}: pass\n'
                     + '    case {"a": None,}: pass\n'
                     + "    case {**rest}: pass\n"
+                    + '    case {"a": 1, **keys,}: pass\n'
                 ),
                 "parser": parser,
             },

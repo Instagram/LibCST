@@ -5,7 +5,7 @@
 
 [package]
 name = "libcst"
-version = "1.5.0"
+version = "1.8.6"
 authors = ["LibCST Developers"]
 edition = "2018"
 rust-version = "1.70"
@@ -36,19 +36,19 @@ trace = ["peg/trace"]
 
 [dependencies]
 paste = "1.0.15"
-pyo3 = { version = "0.20", optional = true }
-thiserror = "1.0.63"
-peg = "0.8.4"
-chic = "1.2.2"
-regex = "1.10.6"
+pyo3 = { version = "0.26", optional = true }
+thiserror = "2.0.12"
+peg = "0.8.5"
+annotate-snippets = "0.11.5"
+regex = "1.11.2"
 memchr = "2.7.4"
-libcst_derive = { path = "../libcst_derive", version = "1.4.0" }
+libcst_derive = { path = "../libcst_derive", version = "1.8.6" }
 
 [dev-dependencies]
-criterion = { version = "0.5.1", features = ["html_reports"] }
+criterion = { version = "0.6.0", features = ["html_reports"] }
 difference = "2.0.0"
-rayon = "1.10.0"
-itertools = "0.13.0"
+rayon = "1.11.0"
+itertools = "0.14.0"
 
 [[bench]]
 name = "parser_benchmark"

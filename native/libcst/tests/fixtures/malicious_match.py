@@ -39,4 +39,6 @@ match x:
     case 1, 2: pass
     case ( Foo  (   )    ) : pass
     case (lol)  if (  True , )  :pass
+    case {"a": 1, **keys,} : pass
+    case {**rest,} : pass
 

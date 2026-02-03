@@ -12,7 +12,6 @@ import tempfile
 from pathlib import Path
 from unittest import skipIf
 
-from libcst._parser.entrypoints import is_native
 from libcst.codemod import CodemodTest
 from libcst.testing.utils import UnitTest
 
@@ -37,16 +36,10 @@ class TestCodemodCLI(UnitTest):
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
         )
-        if not is_native():
-            self.assertIn(
-                "ParserSyntaxError: Syntax Error @ 14:11.",
-                rlt.stderr.decode("utf-8"),
-            )
-        else:
-            self.assertIn(
-                "error: cannot format -: Cannot parse: 13:10:     async with AsyncExitStack() as stack:",
-                rlt.stderr.decode("utf-8"),
-            )
+        self.assertIn(
+            "error: cannot format -: Cannot parse for target version Python 3.6: 13:10:     async with AsyncExitStack() as stack:",
+            rlt.stderr.decode("utf-8"),
+        )
 
     def test_codemod_external(self) -> None:
         # Test running the NOOP command as an "external command"

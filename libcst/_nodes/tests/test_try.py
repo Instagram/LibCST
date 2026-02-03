@@ -3,18 +3,15 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from typing import Any, Callable, Optional
+from typing import Any, Callable
 
 import libcst as cst
 from libcst import parse_statement
 from libcst._nodes.tests.base import CSTNodeTest, DummyIndentedBlock
-from libcst._parser.entrypoints import is_native
 from libcst.metadata import CodeRange
 from libcst.testing.utils import data_provider
 
-native_parse_statement: Optional[Callable[[str], cst.CSTNode]] = (
-    parse_statement if is_native() else None
-)
+native_parse_statement: Callable[[str], cst.CSTNode] = parse_statement
 
 
 class TryTest(CSTNodeTest):
@@ -347,6 +344,34 @@ class TryTest(CSTNodeTest):
                 ),
                 "code": "try: pass\nexcept foo()as bar: pass\n",
             },
+            # PEP758 - Multiple exceptions with no parentheses
+            {
+                "node": cst.Try(
+                    cst.SimpleStatementSuite((cst.Pass(),)),
+                    handlers=[
+                        cst.ExceptHandler(
+                            cst.SimpleStatementSuite((cst.Pass(),)),
+                            type=cst.Tuple(
+                                elements=[
+                                    cst.Element(
+                                        value=cst.Name(
+                                            value="ValueError",
+                                        ),
+                                    ),
+                                    cst.Element(
+                                        value=cst.Name(
+                                            value="RuntimeError",
+                                        ),
+                                    ),
+                                ],
+                                lpar=[],
+                                rpar=[],
+                            ),
+                        )
+                    ],
+                ),
+                "code": "try: pass\nexcept ValueError, RuntimeError: pass\n",
+            },
         )
     )
     def test_valid(self, **kwargs: Any) -> None:
@@ -578,6 +603,38 @@ class TryStarTest(CSTNodeTest):
                 + "finally: pass\n",
                 "parser": native_parse_statement,
                 "expected_position": CodeRange((1, 0), (5, 13)),
+            },
+            # PEP758 - Multiple exceptions with no parentheses
+            {
+                "node": cst.TryStar(
+                    cst.SimpleStatementSuite((cst.Pass(),)),
+                    handlers=[
+                        cst.ExceptStarHandler(
+                            cst.SimpleStatementSuite((cst.Pass(),)),
+                            type=cst.Tuple(
+                                elements=[
+                                    cst.Element(
+                                        value=cst.Name(
+                                            value="ValueError",
+                                        ),
+                                        comma=cst.Comma(
+                                            whitespace_after=cst.SimpleWhitespace(" ")
+                                        ),
+                                    ),
+                                    cst.Element(
+                                        value=cst.Name(
+                                            value="RuntimeError",
+                                        ),
+                                    ),
+                                ],
+                                lpar=[],
+                                rpar=[],
+                            ),
+                        )
+                    ],
+                ),
+                "code": "try: pass\nexcept* ValueError, RuntimeError: pass\n",
+                "parser": native_parse_statement,
             },
         )
     )

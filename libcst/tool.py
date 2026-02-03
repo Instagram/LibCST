@@ -19,9 +19,12 @@ import textwrap
 from abc import ABC, abstractmethod
 from typing import Any, Callable, Dict, List, Tuple, Type
 
-import yaml
+try:
+    import yaml_ft as yaml  # pyre-ignore
+except ModuleNotFoundError:
+    import yaml
 
-from libcst import LIBCST_VERSION, parse_module, PartialParserConfig
+from libcst import CSTLogicError, LIBCST_VERSION, parse_module, PartialParserConfig
 from libcst._parser.parso.utils import parse_version_string
 from libcst.codemod import (
     CodemodCommand,
@@ -191,7 +194,7 @@ def _find_and_load_config(proc_name: str) -> Dict[str, Any]:
 
     requires_config = bool(os.environ.get("LIBCST_TOOL_REQUIRE_CONFIG", ""))
     if requires_config and not found_config:
-        raise Exception(
+        raise FileNotFoundError(
             f"Did not find a {CONFIG_FILE_NAME} in current directory or any "
             + "parent directory! Perhaps you meant to run this command from a "
             + "configured subdirectory, or you need to initialize a new project "
@@ -374,10 +377,11 @@ def _codemod_impl(proc_name: str, command_args: List[str]) -> int:  # noqa: C901
             "unified_diff",
         }
     }
-    command_instance = command_class(CodemodContext(), **codemod_args)
-
     # Sepcify target version for black formatter
-    if os.path.basename(config["formatter"][0]) in ("black", "black.exe"):
+    if any(config["formatter"]) and os.path.basename(config["formatter"][0]) in (
+        "black",
+        "black.exe",
+    ):
         parsed_version = parse_version_string(args.python_version)
 
         config["formatter"] = [
@@ -390,12 +394,12 @@ def _codemod_impl(proc_name: str, command_args: List[str]) -> int:  # noqa: C901
     # full-repo metadata since there is no path.
     if any(p == "-" for p in args.path):
         if len(args.path) > 1:
-            raise Exception("Cannot specify multiple paths when reading from stdin!")
+            raise ValueError("Cannot specify multiple paths when reading from stdin!")
 
         print("Codemodding from stdin", file=sys.stderr)
         oldcode = sys.stdin.read()
         newcode = exec_transform_with_prettyprint(
-            command_instance,
+            command_class(CodemodContext(), **codemod_args),  # type: ignore
             oldcode,
             include_generated=args.include_generated,
             generated_code_marker=config["generated_code_marker"],
@@ -418,7 +422,7 @@ def _codemod_impl(proc_name: str, command_args: List[str]) -> int:  # noqa: C901
     files = gather_files(args.path, include_stubs=args.include_stubs)
     try:
         result = parallel_exec_transform_with_prettyprint(
-            command_instance,
+            command_class,
             files,
             jobs=args.jobs,
             unified_diff=args.unified_diff,
@@ -433,6 +437,7 @@ def _codemod_impl(proc_name: str, command_args: List[str]) -> int:  # noqa: C901
             blacklist_patterns=config["blacklist_patterns"],
             python_version=args.python_version,
             repo_root=config["repo_root"],
+            codemod_args=codemod_args,
         )
     except KeyboardInterrupt:
         print("Interrupted!", file=sys.stderr)
@@ -476,7 +481,7 @@ class _ListSerializer(_SerializerBase):
 
     def _serialize_impl(self, key: str, value: object) -> str:
         if not isinstance(value, list):
-            raise Exception("Can only serialize lists!")
+            raise ValueError("Can only serialize lists!")
         if self.newlines:
             values = [f"- {v!r}" for v in value]
             return f"{key}:{os.linesep}{os.linesep.join(values)}"
@@ -537,7 +542,7 @@ def _initialize_impl(proc_name: str, command_args: List[str]) -> int:
     # For safety, verify that it parses to the identical file.
     actual_config = yaml.safe_load(config_str)
     if actual_config != default_config:
-        raise Exception("Logic error, serialization is invalid!")
+        raise CSTLogicError("Logic error, serialization is invalid!")
 
     config_file = os.path.abspath(os.path.join(args.path, CONFIG_FILE_NAME))
     with open(config_file, "w") as fp:

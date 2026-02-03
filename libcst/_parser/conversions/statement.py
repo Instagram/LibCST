@@ -6,7 +6,8 @@
 
 from typing import Any, Dict, List, Optional, Sequence, Tuple, Type
 
-from libcst._exceptions import PartialParserSyntaxError
+from libcst import CSTLogicError
+from libcst._exceptions import ParserSyntaxError, PartialParserSyntaxError
 from libcst._maybe_sentinel import MaybeSentinel
 from libcst._nodes.expression import (
     Annotation,
@@ -283,7 +284,9 @@ def convert_annassign(config: ParserConfig, children: Sequence[Any]) -> Any:
             whitespace_after=parse_simple_whitespace(config, equal.whitespace_after),
         )
     else:
-        raise Exception("Invalid parser state!")
+        raise ParserSyntaxError(
+            "Invalid parser state!", lines=config.lines, raw_line=0, raw_column=0
+        )
 
     return AnnAssignPartial(
         annotation=Annotation(
@@ -319,7 +322,13 @@ def convert_annassign(config: ParserConfig, children: Sequence[Any]) -> Any:
 def convert_augassign(config: ParserConfig, children: Sequence[Any]) -> Any:
     op, expr = children
     if op.string not in AUGOP_TOKEN_LUT:
-        raise Exception(f"Unexpected token '{op.string}'!")
+        raise ParserSyntaxError(
+            f"Unexpected token '{op.string}'!",
+            lines=config.lines,
+            raw_line=0,
+            raw_column=0,
+        )
+
     return AugAssignPartial(
         # pyre-ignore Pyre seems to think that the value of this LUT is CSTNode
         operator=AUGOP_TOKEN_LUT[op.string](
@@ -447,7 +456,7 @@ def convert_import_relative(config: ParserConfig, children: Sequence[Any]) -> An
             # This should be the dotted name, and we can't get more than
             # one, but lets be sure anyway
             if dotted_name is not None:
-                raise Exception("Logic error!")
+                raise CSTLogicError()
             dotted_name = child
 
     return ImportRelativePartial(relative=tuple(dots), module=dotted_name)
@@ -644,7 +653,7 @@ def convert_raise_stmt(config: ParserConfig, children: Sequence[Any]) -> Any:
             item=source.value,
         )
     else:
-        raise Exception("Logic error!")
+        raise CSTLogicError()
 
     return WithLeadingWhitespace(
         Raise(whitespace_after_raise=whitespace_after_raise, exc=exc, cause=cause),
@@ -893,7 +902,7 @@ def convert_try_stmt(config: ParserConfig, children: Sequence[Any]) -> Any:
         if isinstance(clause, Token):
             if clause.string == "else":
                 if orelse is not None:
-                    raise Exception("Logic error!")
+                    raise CSTLogicError("Logic error!")
                 orelse = Else(
                     leading_lines=parse_empty_lines(config, clause.whitespace_before),
                     whitespace_before_colon=parse_simple_whitespace(
@@ -903,7 +912,7 @@ def convert_try_stmt(config: ParserConfig, children: Sequence[Any]) -> Any:
                 )
             elif clause.string == "finally":
                 if finalbody is not None:
-                    raise Exception("Logic error!")
+                    raise CSTLogicError("Logic error!")
                 finalbody = Finally(
                     leading_lines=parse_empty_lines(config, clause.whitespace_before),
                     whitespace_before_colon=parse_simple_whitespace(
@@ -912,7 +921,7 @@ def convert_try_stmt(config: ParserConfig, children: Sequence[Any]) -> Any:
                     body=suite,
                 )
             else:
-                raise Exception("Logic error!")
+                raise CSTLogicError("Logic error!")
         elif isinstance(clause, ExceptClausePartial):
             handlers.append(
                 ExceptHandler(
@@ -927,7 +936,7 @@ def convert_try_stmt(config: ParserConfig, children: Sequence[Any]) -> Any:
                 )
             )
         else:
-            raise Exception("Logic error!")
+            raise CSTLogicError("Logic error!")
 
     return Try(
         leading_lines=parse_empty_lines(config, trytoken.whitespace_before),
@@ -1333,7 +1342,7 @@ def convert_asyncable_stmt(config: ParserConfig, children: Sequence[Any]) -> Any
             asynchronous=asyncnode, leading_lines=leading_lines
         )
     else:
-        raise Exception("Logic error!")
+        raise CSTLogicError("Logic error!")
 
 
 @with_production("suite", "simple_stmt_suite | indented_suite")

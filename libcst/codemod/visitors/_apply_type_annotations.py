@@ -534,15 +534,20 @@ class _TypeCollectorDequalifier(cst.CSTTransformer):
     def __init__(self, type_collector: "TypeCollector") -> None:
         self.type_collector = type_collector
 
-    def leave_Name(self, original_node: cst.Name, updated_node: cst.Name) -> cst.Name:
+    def leave_Name(
+        self, original_node: cst.Name, updated_node: cst.Name
+    ) -> NameOrAttribute:
         qualified_name = _get_unique_qualified_name(self.type_collector, original_node)
         should_qualify = self.type_collector._handle_qualification_and_should_qualify(
             qualified_name, original_node
         )
         self.type_collector.annotations.names.add(qualified_name)
         if should_qualify:
-            qualified_node = cst.parse_module(qualified_name)
-            return qualified_node  # pyre-ignore[7]
+            parts = qualified_name.split(".")
+            qualified_node = cst.Name(parts[0])
+            for p in parts[1:]:
+                qualified_node = cst.Attribute(qualified_node, cst.Name(p))
+            return qualified_node
         else:
             return original_node
 

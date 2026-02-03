@@ -48,3 +48,11 @@ f'some words {a+b:.3f} more words {c+d=} final words'
 f"{'':*^{1:{1}}}"
 f"{'':*^{1:{1:{1}}}}"
 f"{f"{f"{f"{f"{f"{1+1}"}"}"}"}"}"
+
+
+t'Nothing to see here, move along'
+t"User {action}: {amount:.2f} {item}"
+t"<p>HTML is code {too}</p>"
+t"value={value!r}"
+t"This wrinkles my brain {value:.{precision}f}"
+_ = t"everything" + t" is {tstrings}"

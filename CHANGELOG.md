@@ -1,3 +1,150 @@
+# 1.8.6 - 2025-11-03
+
+## What's Changed
+* Update pyproject.toml for 3.14t by @itamaro in https://github.com/Instagram/LibCST/pull/1417
+* Update PyO3 to 0.26 by @cjwatson in https://github.com/Instagram/LibCST/pull/1413
+* Make CodemodCommand's supported_transforms order deterministic by @frvnkliu in https://github.com/Instagram/LibCST/pull/1424
+
+## New Contributors
+* @cjwatson made their first contribution in https://github.com/Instagram/LibCST/pull/1413
+* @frvnkliu made their first contribution in https://github.com/Instagram/LibCST/pull/1424
+
+**Full Changelog**: https://github.com/Instagram/LibCST/compare/v1.8.5...v1.8.6
+
+# 1.8.5 - 2025-09-25
+
+## What's Changed
+* fixed: circular import error by @drinkmorewaterr in https://github.com/Instagram/LibCST/pull/1406
+
+
+# 1.8.4 - 2025-09-09
+
+## What's Changed
+* fixed: generate Attribute nodes when applying type annotations by @tungol in https://github.com/Instagram/LibCST/pull/1396
+* added: Support parsing of t-strings #1374  by @drinkmorewaterr in https://github.com/Instagram/LibCST/pull/1398
+* added: add support for PEP758 by @drinkmorewaterr in https://github.com/Instagram/LibCST/pull/1401
+
+## New Contributors
+* @tungol made their first contribution in https://github.com/Instagram/LibCST/pull/1396
+
+**Full Changelog**: https://github.com/Instagram/LibCST/compare/v1.8.2...v1.8.4
+
+# 1.8.3 - 2025-08-29
+## What's Changed
+* removed: remove entry points to pure parser by @drinkmorewaterr in https://github.com/Instagram/LibCST/pull/1375
+* fixed: fixes match statements to work with PositionProvider by @imsut in https://github.com/Instagram/LibCST/pull/1389
+
+
+## New Contributors
+* @hunterhogan made their first contribution in https://github.com/Instagram/LibCST/pull/1378
+* @thomas-serre-sonarsource made their first contribution in https://github.com/Instagram/LibCST/pull/1379
+* @imsut made their first contribution in https://github.com/Instagram/LibCST/pull/1389
+
+**Full Changelog**: https://github.com/Instagram/LibCST/compare/v1.8.2...v1.8.3
+
+# 1.8.2 - 2025-06-13
+
+# Fixed
+* fix(dependency): add back typing-extensions for 3.9 by @Lee-W in https://github.com/Instagram/LibCST/pull/1358
+
+## New Contributors
+* @Lee-W made their first contribution in https://github.com/Instagram/LibCST/pull/1358
+
+**Full Changelog**: https://github.com/Instagram/LibCST/compare/v1.8.1...v1.8.2
+
+# 1.8.1 - 2025-06-10
+
+## Added
+* add helper to convert nodes to matchers by @zsol in https://github.com/Instagram/LibCST/pull/1351
+
+## Updated
+* Avoid raising bare Exception by @zaicruvoir1rominet in https://github.com/Instagram/LibCST/pull/1168
+* Upgrade PyYAML-ft version and use new module name by @lysnikolaou in https://github.com/Instagram/LibCST/pull/1353
+
+## New Contributors
+* @lysnikolaou made their first contribution in https://github.com/Instagram/LibCST/pull/1353
+
+**Full Changelog**: https://github.com/Instagram/LibCST/compare/v1.8.0...v1.8.1
+
+# 1.8.0 - 2025-05-27
+
+## Added
+* Allow configuring empty formatter lists in codemod CLI by @ngoldbaum in https://github.com/Instagram/LibCST/pull/1319
+* Publish several new binary wheels
+  * macos intel by @hadialqattan in https://github.com/Instagram/LibCST/pull/1316
+  * windows arm64 by @zsol in https://github.com/Instagram/LibCST/pull/1304
+  * 3.13 CPython free-threaded by @zsol in https://github.com/Instagram/LibCST/pull/1333
+  * (only on [test.pypi.org](https://test.pypi.org/project/libcst/#history)) 3.14 and 3.14 CPython free-threaded by @amyreese and @zsol in https://github.com/Instagram/LibCST/pull/1345 and https://github.com/Instagram/LibCST/pull/1331
+* Enable support for free-threaded CPython by @zsol in https://github.com/Instagram/LibCST/pull/1295 and https://github.com/Instagram/LibCST/pull/1335
+
+## Updated
+* update pyo3 to 0.25 by @ngoldbaum in https://github.com/Instagram/LibCST/pull/1324
+* Replace multiprocessing with ProcessPoolExecutor by @zsol in https://github.com/Instagram/LibCST/pull/1294
+* Support pipe syntax for Union types in codegen by @zsol in https://github.com/Instagram/LibCST/pull/1336
+
+## New Contributors
+* @hadialqattan made their first contribution in https://github.com/Instagram/LibCST/pull/1316
+
+**Full Changelog**: https://github.com/Instagram/LibCST/compare/v1.7.0...v1.8.0
+
+# 1.7.0 - 2025-03-13
+
+## Added
+* add free-threaded CI by @ngoldbaum in https://github.com/Instagram/LibCST/pull/1312
+
+## Updated
+* Remove dependency on `chic` and upgrade `annotate-snippets` by @zanieb in https://github.com/Instagram/LibCST/pull/1293
+* Update for Pyo3 0.23 by @ngoldbaum in https://github.com/Instagram/LibCST/pull/1289
+* Bump PyO3 to 0.23.5 by @mgorny in https://github.com/Instagram/LibCST/pull/1311
+
+## New Contributors
+* @zanieb made their first contribution in https://github.com/Instagram/LibCST/pull/1293
+* @ngoldbaum made their first contribution in https://github.com/Instagram/LibCST/pull/1289
+* @mgorny made their first contribution in https://github.com/Instagram/LibCST/pull/1311
+
+**Full Changelog**: https://github.com/Instagram/LibCST/compare/v1.6.0...v1.7.0
+
+# 1.6.0 - 2025-01-09
+
+## Fixed
+
+* rename: store state in scratch by @zsol in https://github.com/Instagram/LibCST/pull/1250
+* rename: handle imports via a parent module by @zsol in https://github.com/Instagram/LibCST/pull/1251
+* rename: Fix imports with aliases by @zsol in https://github.com/Instagram/LibCST/pull/1252
+* rename: don't leave trailing commas by @zsol in https://github.com/Instagram/LibCST/pull/1254
+* rename: don't eat commas unnecessarily by @zsol in https://github.com/Instagram/LibCST/pull/1256
+* rename: fix renaming toplevel names by @zsol in https://github.com/Instagram/LibCST/pull/1260
+* bump 3.12 to 3.13 in readme by @khameeteman in https://github.com/Instagram/LibCST/pull/1228
+
+## Added
+
+* Add codemod to convert `typing.Union` to `|` by @yangdanny97 in https://github.com/Instagram/LibCST/pull/1270
+* Add codemod to fix variadic callable annotations by @yangdanny97 in https://github.com/Instagram/LibCST/pull/1269
+* Add codemod to rename typing aliases of builtins by @yangdanny97 in https://github.com/Instagram/LibCST/pull/1267
+* Add typing classifier to pyproject.toml and badge to README by @yangdanny97 in https://github.com/Instagram/LibCST/pull/1272
+* Expose TypeAlias and TypeVar related structs in rust library by @Crozzers in https://github.com/Instagram/LibCST/pull/1274
+
+## Updated
+* Upgrade pyo3 to 0.22 by @jelmer in https://github.com/Instagram/LibCST/pull/1180
+
+## New Contributors
+* @yangdanny97 made their first contribution in https://github.com/Instagram/LibCST/pull/1270
+* @Crozzers made their first contribution in https://github.com/Instagram/LibCST/pull/1274
+* @jelmer made their first contribution in https://github.com/Instagram/LibCST/pull/1180
+
+**Full Changelog**: https://github.com/Instagram/LibCST/compare/v1.5.1...v1.6.0
+
+# 1.5.1 - 2024-11-18
+
+## Added
+
+* build wheels for musllinux by @MrMino in https://github.com/Instagram/LibCST/pull/1243
+
+## New Contributors
+* @MrMino made their first contribution in https://github.com/Instagram/LibCST/pull/1243
+
+**Full Changelog**: https://github.com/Instagram/LibCST/compare/v1.5.0...v1.5.1
+
 # 1.5.0 - 2024-10-10
 
 ## Added

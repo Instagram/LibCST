@@ -25,6 +25,7 @@ if TYPE_CHECKING:
         BaseExpression,
         BaseFormattedStringContent,
         BaseSlice,
+        BaseTemplatedStringContent,
         BinaryOperation,
         BooleanOperation,
         Call,
@@ -71,6 +72,9 @@ if TYPE_CHECKING:
         StarredElement,
         Subscript,
         SubscriptElement,
+        TemplatedString,
+        TemplatedStringExpression,
+        TemplatedStringText,
         Tuple,
         UnaryOperation,
         Yield,
@@ -5183,6 +5187,140 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_TemplatedString(self, node: "TemplatedString") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_TemplatedString_parts(self, node: "TemplatedString") -> None:
+        pass
+
+    @mark_no_op
+    def leave_TemplatedString_parts(self, node: "TemplatedString") -> None:
+        pass
+
+    @mark_no_op
+    def visit_TemplatedString_start(self, node: "TemplatedString") -> None:
+        pass
+
+    @mark_no_op
+    def leave_TemplatedString_start(self, node: "TemplatedString") -> None:
+        pass
+
+    @mark_no_op
+    def visit_TemplatedString_end(self, node: "TemplatedString") -> None:
+        pass
+
+    @mark_no_op
+    def leave_TemplatedString_end(self, node: "TemplatedString") -> None:
+        pass
+
+    @mark_no_op
+    def visit_TemplatedString_lpar(self, node: "TemplatedString") -> None:
+        pass
+
+    @mark_no_op
+    def leave_TemplatedString_lpar(self, node: "TemplatedString") -> None:
+        pass
+
+    @mark_no_op
+    def visit_TemplatedString_rpar(self, node: "TemplatedString") -> None:
+        pass
+
+    @mark_no_op
+    def leave_TemplatedString_rpar(self, node: "TemplatedString") -> None:
+        pass
+
+    @mark_no_op
+    def visit_TemplatedStringExpression(
+        self, node: "TemplatedStringExpression"
+    ) -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_TemplatedStringExpression_expression(
+        self, node: "TemplatedStringExpression"
+    ) -> None:
+        pass
+
+    @mark_no_op
+    def leave_TemplatedStringExpression_expression(
+        self, node: "TemplatedStringExpression"
+    ) -> None:
+        pass
+
+    @mark_no_op
+    def visit_TemplatedStringExpression_conversion(
+        self, node: "TemplatedStringExpression"
+    ) -> None:
+        pass
+
+    @mark_no_op
+    def leave_TemplatedStringExpression_conversion(
+        self, node: "TemplatedStringExpression"
+    ) -> None:
+        pass
+
+    @mark_no_op
+    def visit_TemplatedStringExpression_format_spec(
+        self, node: "TemplatedStringExpression"
+    ) -> None:
+        pass
+
+    @mark_no_op
+    def leave_TemplatedStringExpression_format_spec(
+        self, node: "TemplatedStringExpression"
+    ) -> None:
+        pass
+
+    @mark_no_op
+    def visit_TemplatedStringExpression_whitespace_before_expression(
+        self, node: "TemplatedStringExpression"
+    ) -> None:
+        pass
+
+    @mark_no_op
+    def leave_TemplatedStringExpression_whitespace_before_expression(
+        self, node: "TemplatedStringExpression"
+    ) -> None:
+        pass
+
+    @mark_no_op
+    def visit_TemplatedStringExpression_whitespace_after_expression(
+        self, node: "TemplatedStringExpression"
+    ) -> None:
+        pass
+
+    @mark_no_op
+    def leave_TemplatedStringExpression_whitespace_after_expression(
+        self, node: "TemplatedStringExpression"
+    ) -> None:
+        pass
+
+    @mark_no_op
+    def visit_TemplatedStringExpression_equal(
+        self, node: "TemplatedStringExpression"
+    ) -> None:
+        pass
+
+    @mark_no_op
+    def leave_TemplatedStringExpression_equal(
+        self, node: "TemplatedStringExpression"
+    ) -> None:
+        pass
+
+    @mark_no_op
+    def visit_TemplatedStringText(self, node: "TemplatedStringText") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_TemplatedStringText_value(self, node: "TemplatedStringText") -> None:
+        pass
+
+    @mark_no_op
+    def leave_TemplatedStringText_value(self, node: "TemplatedStringText") -> None:
+        pass
+
+    @mark_no_op
     def visit_TrailingWhitespace(self, node: "TrailingWhitespace") -> Optional[bool]:
         pass
 
@@ -6386,6 +6524,20 @@ class CSTTypedVisitorFunctions(CSTTypedBaseFunctions):
         pass
 
     @mark_no_op
+    def leave_TemplatedString(self, original_node: "TemplatedString") -> None:
+        pass
+
+    @mark_no_op
+    def leave_TemplatedStringExpression(
+        self, original_node: "TemplatedStringExpression"
+    ) -> None:
+        pass
+
+    @mark_no_op
+    def leave_TemplatedStringText(self, original_node: "TemplatedStringText") -> None:
+        pass
+
+    @mark_no_op
     def leave_TrailingWhitespace(self, original_node: "TrailingWhitespace") -> None:
         pass
 
@@ -7400,6 +7552,34 @@ class CSTTypedTransformerFunctions(CSTTypedBaseFunctions):
     def leave_SubtractAssign(
         self, original_node: "SubtractAssign", updated_node: "SubtractAssign"
     ) -> "BaseAugOp":
+        return updated_node
+
+    @mark_no_op
+    def leave_TemplatedString(
+        self, original_node: "TemplatedString", updated_node: "TemplatedString"
+    ) -> "BaseExpression":
+        return updated_node
+
+    @mark_no_op
+    def leave_TemplatedStringExpression(
+        self,
+        original_node: "TemplatedStringExpression",
+        updated_node: "TemplatedStringExpression",
+    ) -> Union[
+        "BaseTemplatedStringContent",
+        FlattenSentinel["BaseTemplatedStringContent"],
+        RemovalSentinel,
+    ]:
+        return updated_node
+
+    @mark_no_op
+    def leave_TemplatedStringText(
+        self, original_node: "TemplatedStringText", updated_node: "TemplatedStringText"
+    ) -> Union[
+        "BaseTemplatedStringContent",
+        FlattenSentinel["BaseTemplatedStringContent"],
+        RemovalSentinel,
+    ]:
         return updated_node
 
     @mark_no_op

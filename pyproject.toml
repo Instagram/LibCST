@@ -3,7 +3,7 @@ requires = ["setuptools", "setuptools-scm", "setuptools-rust", "wheel"]
 
 [project]
 name = "libcst"
-description = "A concrete syntax tree with AST-like properties for Python 3.0 through 3.13 programs."
+description = "A concrete syntax tree with AST-like properties for Python 3.0 through 3.14 programs."
 readme = "README.rst"
 dynamic = ["version"]
 license = { file = "LICENSE" }
@@ -15,38 +15,50 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: Free Threading",
+    "Typing :: Typed",
 ]
 requires-python = ">=3.9"
-dependencies = ["pyyaml>=5.2"]
-
-[project.optional-dependencies]
-dev = [
-    "black==24.8.0",
-    "coverage[toml]>=4.5.4",
-    "build>=0.10.0",
-    "fixit==2.1.0",
-    "flake8==7.1.1",
-    "Sphinx>=5.1.1",
-    "hypothesis>=4.36.0",
-    "hypothesmith>=0.0.4",
-    "jupyter>=1.0.0",
-    "maturin>=1.7.0,<1.8",
-    "nbsphinx>=0.4.2",
-    "prompt-toolkit>=2.0.9",
-    "pyre-check==0.9.18; platform_system != 'Windows'",
-    "setuptools_scm>=6.0.1",
-    "sphinx-rtd-theme>=0.4.3",
-    "ufmt==2.7.3",
-    "usort==1.0.8.post1",
-    "setuptools-rust>=1.5.2",
-    "slotscheck>=0.7.1",
-    "jinja2==3.1.4",
+dependencies = [
+    "pyyaml>=5.2; python_version < '3.13'",
+    "pyyaml-ft>=8.0.0; python_version == '3.13'",
+    "pyyaml>=6.0.3; python_version >= '3.14'",
+    "typing-extensions; python_version < '3.10'",
 ]
 
 [project.urls]
 Documentation = "https://libcst.readthedocs.io/en/latest/"
 Github = "https://github.com/Instagram/LibCST"
 Changelog = "https://github.com/Instagram/LibCST/blob/main/CHANGELOG.md"
+
+[dependency-groups]
+dev = [
+    "black==25.1.0",
+    "coverage[toml]>=4.5.4",
+    "build>=0.10.0",
+    "fixit==2.1.0",
+    "flake8==7.2.0",
+    "hypothesis>=4.36.0",
+    "hypothesmith>=0.0.4",
+    "maturin>=1.7.0,<1.8",
+    "poethepoet>=0.35.0",
+    "prompt-toolkit>=2.0.9",
+    "pyre-check==0.9.18; platform_system != 'Windows'",
+    "setuptools_scm>=6.0.1",
+    "ufmt==2.8.0",
+    "usort==1.0.8.post1",
+    "setuptools-rust>=1.5.2",
+    "slotscheck>=0.7.1",
+]
+docs = [
+    {include-group = "dev"},
+    "Sphinx>=5.1.1",
+    "sphinx-rtd-theme>=0.4.3",
+    "jupyter>=1.0.0",
+    "nbsphinx>=0.4.2",
+    "jinja2==3.1.6",
+]
 
 [tool.black]
 target-version = ["py39"]
@@ -57,25 +69,63 @@ fail_under = 93
 precision = 1
 show_missing = true
 skip_covered = true
+omit = ["*/_parser/*"] # temporary while I remove the parser
 
-[tool.hatch.envs.default]
-features = ["dev"]
-
-[tool.hatch.envs.default.scripts]
-docs = "sphinx-build -ab html docs/source docs/build"
-fixtures = ["python scripts/regenerate-fixtures.py", "git diff --exit-code"]
-format = "ufmt format libcst scripts"
-lint = [
-    "flake8 libcst",
-    "ufmt check libcst scripts",
-    "python -m slotscheck libcst",
-    "python scripts/check_copyright.py",
+[tool.uv]
+cache-keys = [
+    { file = "pyproject.toml" },
+    { git = {commit = true, tags = true}},
+    { file = "**/*.rs"},
+    { file = "**/Cargo.toml"},
+    { file = "**/Cargo.lock"},
 ]
-test = ["python --version", "python -m coverage run -m libcst.tests"]
-typecheck = ["pyre --version", "pyre check"]
+
+[tool.poe.tasks]
+fixtures = ["regenerate-fixtures", "_assert_no_changes"]
+regenerate-fixtures = "python scripts/regenerate-fixtures.py"
+_assert_no_changes = "git diff --exit-code"
+
+format = "ufmt format libcst scripts"
+_flake8 = "flake8 libcst"
+_ufmt = "ufmt check libcst scripts"
+_slotscheck = "python -m slotscheck libcst"
+_check_copyright = "python scripts/check_copyright.py"
+lint = ["_flake8", "_ufmt", "_slotscheck", "_check_copyright"]
+test = "python -m coverage run -m libcst.tests"
+typecheck = "pyre check"
+docs = "sphinx-build -ab html docs/source docs/build"
 
 [tool.slotscheck]
 exclude-modules = '^libcst\.(testing|tests)'
 
 [tool.ufmt]
 excludes = ["native/", "stubs/"]
+
+[tool.cibuildwheel]
+build-verbosity = 1
+environment = { PATH = "$PATH:$HOME/.cargo/bin", LIBCST_NO_LOCAL_SCHEME="1" }
+skip = [
+    "pp*",
+    "*-win32",
+    "*-musllinux_i686",
+    "*-musllinux_ppc64le",
+    "*-musllinux_s390x",
+    "*-musllinux_armv7l",
+]
+enable = ["cpython-freethreading"]
+test-command = [
+    "python --version",
+    "python -m libcst.tool list",
+    # TODO: remove the gil once thread-safety issues are resolved
+    "python -X gil=1 -m libcst.tool codemod remove_unused_imports.RemoveUnusedImportsCommand {project}/libcst/_nodes",
+]
+
+[tool.cibuildwheel.linux]
+environment-pass = ["LIBCST_NO_LOCAL_SCHEME"]
+before-all = "yum install -y libatomic; curl https://sh.rustup.rs -sSf | env -u CARGO_HOME sh -s -- --default-toolchain stable --profile minimal -y"
+
+[tool.cibuildwheel.macos]
+before-all = "rustup target add aarch64-apple-darwin x86_64-apple-darwin"
+
+[tool.cibuildwheel.windows]
+before-all = "rustup target add x86_64-pc-windows-msvc i686-pc-windows-msvc aarch64-pc-windows-msvc"

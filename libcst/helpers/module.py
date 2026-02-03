@@ -80,7 +80,7 @@ def get_absolute_module_for_import_or_raise(
 ) -> str:
     module = get_absolute_module_for_import(current_module, import_node)
     if module is None:
-        raise Exception(f"Unable to compute absolute module for {import_node}")
+        raise ValueError(f"Unable to compute absolute module for {import_node}")
     return module
 
 
@@ -121,7 +121,7 @@ def get_absolute_module_from_package_for_import_or_raise(
 ) -> str:
     module = get_absolute_module_from_package_for_import(current_package, import_node)
     if module is None:
-        raise Exception(f"Unable to compute absolute module for {import_node}")
+        raise ValueError(f"Unable to compute absolute module for {import_node}")
     return module
 
 

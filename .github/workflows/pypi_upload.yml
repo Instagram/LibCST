@@ -22,28 +22,31 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          persist-credentials: false
       - name: Download binary wheels
         id: download
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           pattern: wheels-*
           path: wheelhouse
           merge-multiple: true
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
-          cache: pip
-          cache-dependency-path: "pyproject.toml"
           python-version: "3.10"
-      - name: Install hatch
-        run: pip install -U hatch
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          version: "0.7.13"
+          enable-cache: false
       - name: Build a source tarball
         env:
           LIBCST_NO_LOCAL_SCHEME: 1
+          OUTDIR: ${{ steps.download.outputs.download-path }}
         run: >-
-          hatch run python -m
+          uv run python -m
           build
           --sdist
-          --outdir ${{ steps.download.outputs.download-path }}
+          --outdir "$OUTDIR"
       - name: Publish distribution 📦 to Test PyPI
         if: github.event_name == 'push'
         uses: pypa/gh-action-pypi-publish@release/v1

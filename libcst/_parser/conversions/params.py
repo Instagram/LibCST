@@ -6,6 +6,7 @@
 
 from typing import Any, List, Optional, Sequence, Union
 
+from libcst import CSTLogicError
 from libcst._exceptions import PartialParserSyntaxError
 from libcst._maybe_sentinel import MaybeSentinel
 from libcst._nodes.expression import (
@@ -121,7 +122,7 @@ def convert_argslist(  # noqa: C901
                 # Example code:
                 #     def fn(*abc, *): ...
                 # This should be unreachable, the grammar already disallows it.
-                raise Exception(
+                raise ValueError(
                     "Cannot have multiple star ('*') markers in a single argument "
                     + "list."
                 )
@@ -136,7 +137,7 @@ def convert_argslist(  # noqa: C901
                 # Example code:
                 # def fn(foo, /, *, /, bar): ...
                 # This should be unreachable, the grammar already disallows it.
-                raise Exception(
+                raise ValueError(
                     "Cannot have multiple slash ('/') markers in a single argument "
                     + "list."
                 )
@@ -168,7 +169,7 @@ def convert_argslist(  # noqa: C901
                 # Example code:
                 #     def fn(**kwargs, trailing=None)
                 # This should be unreachable, the grammar already disallows it.
-                raise Exception("Cannot have any arguments after a kwargs expansion.")
+                raise ValueError("Cannot have any arguments after a kwargs expansion.")
         elif (
             isinstance(param.star, str) and param.star == "*" and param.default is None
         ):
@@ -181,7 +182,7 @@ def convert_argslist(  # noqa: C901
                 # Example code:
                 #     def fn(*first, *second): ...
                 # This should be unreachable, the grammar already disallows it.
-                raise Exception(
+                raise ValueError(
                     "Expected a keyword argument but found a starred positional "
                     + "argument expansion."
                 )
@@ -197,13 +198,13 @@ def convert_argslist(  # noqa: C901
                 # Example code:
                 #     def fn(**first, **second)
                 # This should be unreachable, the grammar already disallows it.
-                raise Exception(
+                raise ValueError(
                     "Multiple starred keyword argument expansions are not allowed in a "
                     + "single argument list"
                 )
         else:
             # The state machine should never end up here.
-            raise Exception("Logic error!")
+            raise CSTLogicError("Logic error!")
 
         return current_param
 

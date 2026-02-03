@@ -69,3 +69,25 @@ except foo:
     pass
 
     #9
+
+try:
+    pass
+except (foo, bar):
+    pass
+
+try:
+    pass
+except foo, bar:
+    pass
+
+try:
+    pass
+except (foo, bar), baz:
+    pass
+else:
+    pass
+
+try:
+    pass
+except* something, somethingelse:
+    pass
