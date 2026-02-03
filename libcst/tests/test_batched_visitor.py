@@ -70,3 +70,20 @@ class BatchedVisitorTest(UnitTest):
         self.assertEqual(
             object.__getattribute__(if_, "whitespace_before_test"), mock.leave_If()
         )
+
+    def test_no_property_access(self) -> None:
+        mock = Mock()
+
+        class Batchable(BatchableCSTVisitor):
+            @property
+            def evil_property(self) -> str:
+                mock.evil_property()
+                return "evil"
+
+            def visit_Module(self, node: cst.Module) -> None:
+                mock.visit_Module()
+
+        _ = visit_batched(parse_module("if True: pass"), [Batchable()])
+
+        mock.visit_Module.assert_called_once()
+        mock.evil_property.assert_not_called()
