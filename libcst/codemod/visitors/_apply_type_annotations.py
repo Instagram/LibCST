@@ -9,7 +9,6 @@ from typing import Dict, List, Optional, Sequence, Set, Tuple, Union
 
 import libcst as cst
 import libcst.matchers as m
-
 from libcst.codemod._context import CodemodContext
 from libcst.codemod._visitor import ContextAwareTransformer
 from libcst.codemod.visitors._add_imports import AddImportsVisitor
@@ -18,7 +17,6 @@ from libcst.codemod.visitors._gather_imports import GatherImportsVisitor
 from libcst.codemod.visitors._imports import ImportItem
 from libcst.helpers import get_full_name_for_node
 from libcst.metadata import PositionProvider, QualifiedNameProvider
-
 
 NameOrAttribute = Union[cst.Name, cst.Attribute]
 NAME_OR_ATTRIBUTE = (cst.Name, cst.Attribute)

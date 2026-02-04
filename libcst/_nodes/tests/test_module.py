@@ -8,7 +8,6 @@ from typing import cast, Tuple
 import libcst as cst
 from libcst import parse_module, parse_statement
 from libcst._nodes.tests.base import CSTNodeTest
-
 from libcst.metadata import CodeRange, MetadataWrapper, PositionProvider
 from libcst.testing.utils import data_provider
 

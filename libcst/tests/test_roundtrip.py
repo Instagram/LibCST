@@ -9,7 +9,6 @@ from unittest import TestCase
 
 from libcst import CSTTransformer, parse_module
 
-
 fixtures: Path = Path(__file__).parent.parent.parent / "native/libcst/tests/fixtures"
 
 

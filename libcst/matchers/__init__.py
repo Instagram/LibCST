@@ -10,7 +10,6 @@ from typing import Literal, Optional, Sequence, Union
 
 import libcst as cst
 from libcst.matchers._decorators import call_if_inside, call_if_not_inside, leave, visit
-
 from libcst.matchers._matcher_base import (
     AbstractBaseMatcherNodeMeta,
     AllOf,

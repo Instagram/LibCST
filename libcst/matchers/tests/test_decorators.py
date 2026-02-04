@@ -47,8 +47,7 @@ class MatchersGatingDecoratorsTest(UnitTest):
                 return updated_node
 
         # Parse a module and verify we visited correctly.
-        module = fixture(
-            """
+        module = fixture("""
             a = "foo"
             b = "bar"
 
@@ -57,8 +56,7 @@ class MatchersGatingDecoratorsTest(UnitTest):
 
             def bar() -> None:
                 return "foobar"
-        """
-        )
+        """)
         visitor = TestVisitor()
         module.visit(visitor)
 
@@ -82,8 +80,7 @@ class MatchersGatingDecoratorsTest(UnitTest):
                 self.func_visits.append(node.name.value)
 
         # Parse a module and verify we visited correctly.
-        module = fixture(
-            """
+        module = fixture("""
             a = "foo"
             b = "bar"
 
@@ -92,8 +89,7 @@ class MatchersGatingDecoratorsTest(UnitTest):
 
             def bar() -> None:
                 return "foobar"
-        """
-        )
+        """)
         visitor = TestVisitor()
         module.visit(visitor)
 
@@ -118,8 +114,7 @@ class MatchersGatingDecoratorsTest(UnitTest):
                 self.leaves.append(original_node.value)
 
         # Parse a module and verify we visited correctly.
-        module = fixture(
-            """
+        module = fixture("""
             a = "foo"
             b = "bar"
 
@@ -128,8 +123,7 @@ class MatchersGatingDecoratorsTest(UnitTest):
 
             def bar() -> None:
                 return "foobar"
-        """
-        )
+        """)
         visitor = TestVisitor()
         module.visit(visitor)
 
@@ -153,8 +147,7 @@ class MatchersGatingDecoratorsTest(UnitTest):
                 self.func_visits.append(node.name.value)
 
         # Parse a module and verify we visited correctly.
-        module = fixture(
-            """
+        module = fixture("""
             a = "foo"
             b = "bar"
 
@@ -163,8 +156,7 @@ class MatchersGatingDecoratorsTest(UnitTest):
 
             def bar() -> None:
                 return "foobar"
-        """
-        )
+        """)
         visitor = TestVisitor()
         module.visit(visitor)
 
@@ -185,16 +177,14 @@ class MatchersGatingDecoratorsTest(UnitTest):
                 self.visits.append(node.value)
 
         # Parse a module and verify we visited correctly.
-        module = fixture(
-            """
+        module = fixture("""
             def foo() -> None:
                 return "foo"
 
             class A:
                 def foo(self) -> None:
                     return "baz"
-            """
-        )
+            """)
         visitor = TestVisitor()
         module.visit(visitor)
 
@@ -214,16 +204,14 @@ class MatchersGatingDecoratorsTest(UnitTest):
                 self.visits.append(node.value)
 
         # Parse a module and verify we visited correctly.
-        module = fixture(
-            """
+        module = fixture("""
             def foo() -> None:
                 return "foo"
 
             class A:
                 def foo(self) -> None:
                     return "baz"
-            """
-        )
+            """)
         visitor = TestVisitor()
         module.visit(visitor)
 
@@ -250,8 +238,7 @@ class MatchersGatingDecoratorsTest(UnitTest):
                 return updated_node
 
         # Parse a module and verify we visited correctly.
-        module = fixture(
-            """
+        module = fixture("""
             a = "foo"
             b = "bar"
 
@@ -260,8 +247,7 @@ class MatchersGatingDecoratorsTest(UnitTest):
 
             def bar() -> None:
                 return "foobar"
-        """
-        )
+        """)
         visitor = TestVisitor()
         module.visit(visitor)
 
@@ -285,8 +271,7 @@ class MatchersGatingDecoratorsTest(UnitTest):
                 self.func_visits.append(node.name.value)
 
         # Parse a module and verify we visited correctly.
-        module = fixture(
-            """
+        module = fixture("""
             a = "foo"
             b = "bar"
 
@@ -295,8 +280,7 @@ class MatchersGatingDecoratorsTest(UnitTest):
 
             def bar() -> None:
                 return "foobar"
-        """
-        )
+        """)
         visitor = TestVisitor()
         module.visit(visitor)
 
@@ -321,8 +305,7 @@ class MatchersGatingDecoratorsTest(UnitTest):
                 self.leaves.append(original_node.value)
 
         # Parse a module and verify we visited correctly.
-        module = fixture(
-            """
+        module = fixture("""
             a = "foo"
             b = "bar"
 
@@ -331,8 +314,7 @@ class MatchersGatingDecoratorsTest(UnitTest):
 
             def bar() -> None:
                 return "foobar"
-        """
-        )
+        """)
         visitor = TestVisitor()
         module.visit(visitor)
 
@@ -356,8 +338,7 @@ class MatchersGatingDecoratorsTest(UnitTest):
                 self.func_visits.append(node.name.value)
 
         # Parse a module and verify we visited correctly.
-        module = fixture(
-            """
+        module = fixture("""
             a = "foo"
             b = "bar"
 
@@ -366,8 +347,7 @@ class MatchersGatingDecoratorsTest(UnitTest):
 
             def bar() -> None:
                 return "foobar"
-        """
-        )
+        """)
         visitor = TestVisitor()
         module.visit(visitor)
 
@@ -397,8 +377,7 @@ class MatchersVisitLeaveDecoratorsTest(UnitTest):
                 return updated_node
 
         # Parse a module and verify we visited correctly.
-        module = fixture(
-            """
+        module = fixture("""
             a = "foo"
             b = "bar"
 
@@ -410,8 +389,7 @@ class MatchersVisitLeaveDecoratorsTest(UnitTest):
 
             def baz() -> None:
                 return "foobar"
-        """
-        )
+        """)
         visitor = TestVisitor()
         module.visit(visitor)
 
@@ -436,8 +414,7 @@ class MatchersVisitLeaveDecoratorsTest(UnitTest):
                 self.leaves.append(original_node.name.value)
 
         # Parse a module and verify we visited correctly.
-        module = fixture(
-            """
+        module = fixture("""
             a = "foo"
             b = "bar"
 
@@ -449,8 +426,7 @@ class MatchersVisitLeaveDecoratorsTest(UnitTest):
 
             def baz() -> None:
                 return "foobar"
-        """
-        )
+        """)
         visitor = TestVisitor()
         module.visit(visitor)
 
@@ -480,8 +456,7 @@ class MatchersVisitLeaveDecoratorsTest(UnitTest):
                 return updated_node
 
         # Parse a module and verify we visited correctly.
-        module = fixture(
-            """
+        module = fixture("""
             a = "foo"
             b = "bar"
 
@@ -493,8 +468,7 @@ class MatchersVisitLeaveDecoratorsTest(UnitTest):
 
             def baz() -> None:
                 return "foobar"
-        """
-        )
+        """)
         visitor = TestVisitor()
         module.visit(visitor)
 
@@ -521,8 +495,7 @@ class MatchersVisitLeaveDecoratorsTest(UnitTest):
                 self.leaves.append(original_node.name.value)
 
         # Parse a module and verify we visited correctly.
-        module = fixture(
-            """
+        module = fixture("""
             a = "foo"
             b = "bar"
 
@@ -534,8 +507,7 @@ class MatchersVisitLeaveDecoratorsTest(UnitTest):
 
             def baz() -> None:
                 return "foobar"
-        """
-        )
+        """)
         visitor = TestVisitor()
         module.visit(visitor)
 
@@ -575,8 +547,7 @@ class MatchersVisitLeaveDecoratorsTest(UnitTest):
                 return updated_node
 
         # Parse a module and verify we visited correctly.
-        module = fixture(
-            """
+        module = fixture("""
             a = "foo"
             b = "bar"
 
@@ -588,8 +559,7 @@ class MatchersVisitLeaveDecoratorsTest(UnitTest):
 
             def baz() -> None:
                 return "foobar"
-        """
-        )
+        """)
         visitor = TestVisitor()
         module.visit(visitor)
 
@@ -622,8 +592,7 @@ class MatchersVisitLeaveDecoratorsTest(UnitTest):
                 self.leaves.add(original_node.name.value + "2")
 
         # Parse a module and verify we visited correctly.
-        module = fixture(
-            """
+        module = fixture("""
             a = "foo"
             b = "bar"
 
@@ -635,8 +604,7 @@ class MatchersVisitLeaveDecoratorsTest(UnitTest):
 
             def baz() -> None:
                 return "foobar"
-        """
-        )
+        """)
         visitor = TestVisitor()
         module.visit(visitor)
 
@@ -679,8 +647,7 @@ class MatchersVisitLeaveDecoratorsTest(UnitTest):
                 return updated_node
 
         # Parse a module and verify we visited correctly.
-        module = fixture(
-            """
+        module = fixture("""
             a = "foo"
             b = "bar"
 
@@ -692,8 +659,7 @@ class MatchersVisitLeaveDecoratorsTest(UnitTest):
 
             def baz() -> None:
                 return "foobarbaz"
-        """
-        )
+        """)
         visitor = TestVisitor()
         module.visit(visitor)
 
@@ -732,8 +698,7 @@ class MatchersVisitLeaveDecoratorsTest(UnitTest):
                 self.leaves.add(literal_eval(original_node.value) + "2")
 
         # Parse a module and verify we visited correctly.
-        module = fixture(
-            """
+        module = fixture("""
             a = "foo"
             b = "bar"
 
@@ -745,8 +710,7 @@ class MatchersVisitLeaveDecoratorsTest(UnitTest):
 
             def baz() -> None:
                 return "foobarbaz"
-        """
-        )
+        """)
         visitor = TestVisitor()
         module.visit(visitor)
 
@@ -786,8 +750,7 @@ class MatchersVisitLeaveDecoratorsTest(UnitTest):
                 )
 
         # Parse a module and verify we visited correctly.
-        module = fixture(
-            """
+        module = fixture("""
             a = "foo"
             b = "bar"
 
@@ -799,12 +762,10 @@ class MatchersVisitLeaveDecoratorsTest(UnitTest):
 
             def baz() -> None:
                 return "foobarbaz"
-            """
-        )
+            """)
         visitor = TestVisitor()
         actual = module.visit(visitor)
-        expected = fixture(
-            """
+        expected = fixture("""
             a = "foo"
             b = "bar"
 
@@ -816,8 +777,7 @@ class MatchersVisitLeaveDecoratorsTest(UnitTest):
 
             def baz() -> None:
                 return "foobarbaz"
-            """
-        )
+            """)
         self.assertTrue(expected.deep_equals(actual))
 
     def test_call_if_inside_visitor_attribute(self) -> None:
@@ -837,8 +797,7 @@ class MatchersVisitLeaveDecoratorsTest(UnitTest):
                 self.leaves.append(node.value)
 
         # Parse a module and verify we visited correctly.
-        module = fixture(
-            """
+        module = fixture("""
             a = "foo"
             b = "bar"
 
@@ -847,8 +806,7 @@ class MatchersVisitLeaveDecoratorsTest(UnitTest):
 
             def bar() -> None:
                 return "foobar"
-        """
-        )
+        """)
         visitor = TestVisitor()
         module.visit(visitor)
 
@@ -873,8 +831,7 @@ class MatchersVisitLeaveDecoratorsTest(UnitTest):
                 self.leaves.append(node.value)
 
         # Parse a module and verify we visited correctly.
-        module = fixture(
-            """
+        module = fixture("""
             a = "foo"
             b = "bar"
 
@@ -883,8 +840,7 @@ class MatchersVisitLeaveDecoratorsTest(UnitTest):
 
             def bar() -> None:
                 return "foobar"
-        """
-        )
+        """)
         visitor = TestVisitor()
         module.visit(visitor)
 
@@ -909,8 +865,7 @@ class MatchersVisitLeaveDecoratorsTest(UnitTest):
                 self.leaves.append(node.value)
 
         # Parse a module and verify we visited correctly.
-        module = fixture(
-            """
+        module = fixture("""
             a = "foo"
             b = "bar"
 
@@ -919,8 +874,7 @@ class MatchersVisitLeaveDecoratorsTest(UnitTest):
 
             def bar() -> None:
                 return "foobar"
-        """
-        )
+        """)
         visitor = TestVisitor()
         module.visit(visitor)
 
@@ -945,8 +899,7 @@ class MatchersVisitLeaveDecoratorsTest(UnitTest):
                 self.leaves.append(node.value)
 
         # Parse a module and verify we visited correctly.
-        module = fixture(
-            """
+        module = fixture("""
             a = "foo"
             b = "bar"
 
@@ -955,8 +908,7 @@ class MatchersVisitLeaveDecoratorsTest(UnitTest):
 
             def bar() -> None:
                 return "foobar"
-        """
-        )
+        """)
         visitor = TestVisitor()
         module.visit(visitor)
 
@@ -978,8 +930,7 @@ class MatchersVisitLeaveDecoratorsTest(UnitTest):
                 self.visits.append(node.value)
 
         # Parse a module and verify we visited correctly.
-        module = fixture(
-            """
+        module = fixture("""
             a = "foo"
             b = "bar"
 
@@ -988,8 +939,7 @@ class MatchersVisitLeaveDecoratorsTest(UnitTest):
 
             def bar() -> None:
                 return "foobar"
-        """
-        )
+        """)
         visitor = TestVisitor()
         module.visit(visitor)
 

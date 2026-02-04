@@ -23,36 +23,29 @@ class TestGatherUnusedImportsVisitor(UnitTest):
         }
 
     def test_no_imports(self) -> None:
-        imports = self.gather_imports(
-            """
+        imports = self.gather_imports("""
             foo = 1
-            """
-        )
+            """)
         self.assertEqual(imports, set())
 
     def test_dotted_imports(self) -> None:
-        imports = self.gather_imports(
-            """
+        imports = self.gather_imports("""
             import a.b.c, d
             import x.y
             a.b(d)
-            """
-        )
+            """)
         self.assertEqual(imports, {"x.y"})
 
     def test_alias(self) -> None:
-        imports = self.gather_imports(
-            """
+        imports = self.gather_imports("""
             from bar import baz as baz_alias
             import bar as bar_alias
             bar_alias()
-            """
-        )
+            """)
         self.assertEqual(imports, {"baz_alias"})
 
     def test_import_complex(self) -> None:
-        imports = self.gather_imports(
-            """
+        imports = self.gather_imports("""
             import bar
             import baz, qux
             import a.b
@@ -65,13 +58,11 @@ class TestGatherUnusedImportsVisitor(UnitTest):
                 c.d(qux)
                 x.u
                 j()
-            """
-        )
+            """)
         self.assertEqual(imports, {"bar", "baz", "a.b", "g"})
 
     def test_import_from_complex(self) -> None:
-        imports = self.gather_imports(
-            """
+        imports = self.gather_imports("""
             from bar import qux, quux
             from a.b import c
             from d.e import f
@@ -82,22 +73,18 @@ class TestGatherUnusedImportsVisitor(UnitTest):
             def foo() -> None:
                 f(qux)
                 k()
-            """
-        )
+            """)
         self.assertEqual(imports, {"quux", "c", "o"})
 
     def test_exports(self) -> None:
-        imports = self.gather_imports(
-            """
+        imports = self.gather_imports("""
             import a
             __all__ = ["a"]
-            """
-        )
+            """)
         self.assertEqual(imports, set())
 
     def test_string_annotation(self) -> None:
-        imports = self.gather_imports(
-            """
+        imports = self.gather_imports("""
             from a import b
             from c import d
             import m, n.blah
@@ -105,24 +92,19 @@ class TestGatherUnusedImportsVisitor(UnitTest):
             bar: List["d"]
             quux: List["m.blah"]
             alma: List["n.blah"]
-            """
-        )
+            """)
         self.assertEqual(imports, set())
 
     def test_typevars(self) -> None:
-        imports = self.gather_imports(
-            """
+        imports = self.gather_imports("""
             from typing import TypeVar as Sneaky
             from a import b
             t = Sneaky("t", bound="b")
-            """
-        )
+            """)
         self.assertEqual(imports, set())
 
     def test_future(self) -> None:
-        imports = self.gather_imports(
-            """
+        imports = self.gather_imports("""
             from __future__ import cool_feature
-            """
-        )
+            """)
         self.assertEqual(imports, set())

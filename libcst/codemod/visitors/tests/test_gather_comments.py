@@ -20,25 +20,21 @@ class TestGatherCommentsVisitor(UnitTest):
         return instance
 
     def test_no_comments(self) -> None:
-        visitor = self.gather_comments(
-            """
+        visitor = self.gather_comments("""
             def foo() -> None:
                 pass
-            """
-        )
+            """)
         self.assertEqual(visitor.comments, {})
 
     def test_noqa_comments(self) -> None:
-        visitor = self.gather_comments(
-            """
+        visitor = self.gather_comments("""
             import a.b.c # noqa
             import d  # somethingelse
             # noqa
             def foo() -> None:
                 pass
 
-            """
-        )
+            """)
         self.assertEqual(visitor.comments.keys(), {1, 4})
         self.assertTrue(isinstance(visitor.comments[1], Comment))
         self.assertEqual(visitor.comments[1].value, "# noqa")

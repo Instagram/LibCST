@@ -33,27 +33,23 @@ class TemplateTest(UnitTest):
 
     def test_simple_module(self) -> None:
         module = parse_template_module(
-            self.dedent(
-                """
+            self.dedent("""
                 from {module} import {obj}
 
                 def foo() -> {obj}:
                     return {obj}()
-                """
-            ),
+                """),
             module=cst.Name("foo"),
             obj=cst.Name("Bar"),
         )
         self.assertEqual(
             module.code,
-            self.dedent(
-                """
+            self.dedent("""
                 from foo import Bar
 
                 def foo() -> Bar:
                     return Bar()
-                """
-            ),
+                """),
         )
 
     def test_simple_statement(self) -> None:

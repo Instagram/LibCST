@@ -10,7 +10,6 @@ from typing import Dict, Optional
 import libcst as cst
 from libcst.codemod import CodemodContext, VisitorBasedCodemodCommand
 
-
 presets_per_formatter: Dict[str, Dict[str, int]] = {
     "black": {
         "parameter_count": 1,
@@ -24,8 +23,7 @@ presets_per_formatter: Dict[str, Dict[str, int]] = {
 
 
 class AddTrailingCommas(VisitorBasedCodemodCommand):
-    DESCRIPTION: str = textwrap.dedent(
-        """
+    DESCRIPTION: str = textwrap.dedent("""
         Codemod that adds trailing commas to arguments in function
         headers and function calls.
 
@@ -38,8 +36,7 @@ class AddTrailingCommas(VisitorBasedCodemodCommand):
 
         Applying this codemod (and then an autoformatter) may make
         it easier to read function definitions and calls
-        """
-    )
+        """)
 
     def __init__(
         self,

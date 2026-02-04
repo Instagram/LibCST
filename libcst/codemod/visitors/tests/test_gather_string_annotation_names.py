@@ -18,44 +18,35 @@ class TestGatherNamesFromStringAnnotationsVisitor(UnitTest):
         return instance
 
     def test_no_annotations(self) -> None:
-        visitor = self.gather_names(
-            """
+        visitor = self.gather_names("""
             def foo() -> None:
                 pass
-            """
-        )
+            """)
         self.assertEqual(visitor.names, set())
 
     def test_simple_string_annotations(self) -> None:
-        visitor = self.gather_names(
-            """
+        visitor = self.gather_names("""
             def foo() -> "None":
                 pass
-            """
-        )
+            """)
         self.assertEqual(visitor.names, {"None"})
 
     def test_concatenated_string_annotations(self) -> None:
-        visitor = self.gather_names(
-            """
+        visitor = self.gather_names("""
             def foo() -> "No" "ne":
                 pass
-            """
-        )
+            """)
         self.assertEqual(visitor.names, {"None"})
 
     def test_typevars(self) -> None:
-        visitor = self.gather_names(
-            """
+        visitor = self.gather_names("""
             from typing import TypeVar as SneakyBastard
             V = SneakyBastard("V", bound="int")
-            """
-        )
+            """)
         self.assertEqual(visitor.names, {"V", "int"})
 
     def test_complex(self) -> None:
-        visitor = self.gather_names(
-            """
+        visitor = self.gather_names("""
             from typing import TypeVar, TYPE_CHECKING
             if TYPE_CHECKING:
                 from a import Container, Item
@@ -64,30 +55,25 @@ class TestGatherNamesFromStringAnnotationsVisitor(UnitTest):
             A = TypeVar("A", bound="Container[Item]")
             class X:
                 var: "ThisIsExpensiveToImport"  # noqa
-            """
-        )
+            """)
         self.assertEqual(
             visitor.names, {"A", "Item", "Container", "ThisIsExpensiveToImport"}
         )
 
     def test_dotted_names(self) -> None:
-        visitor = self.gather_names(
-            """
+        visitor = self.gather_names("""
             a: "api.http_exceptions.HttpException"
-            """
-        )
+            """)
         self.assertEqual(
             visitor.names,
             {"api", "api.http_exceptions", "api.http_exceptions.HttpException"},
         )
 
     def test_literals(self) -> None:
-        visitor = self.gather_names(
-            """
+        visitor = self.gather_names("""
             from typing import Literal
             a: Literal["in"]
             b: list[Literal["1x"]]
             c: Literal["Any"]
-            """
-        )
+            """)
         self.assertEqual(visitor.names, set())
