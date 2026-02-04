@@ -25,7 +25,7 @@ except ModuleNotFoundError:
     import yaml
 
 from libcst import CSTLogicError, LIBCST_VERSION, parse_module, PartialParserConfig
-from libcst._parser.parso.utils import parse_version_string
+from libcst._parser.utils import parse_version_string
 from libcst.codemod import (
     CodemodCommand,
     CodemodContext,

@@ -12,18 +12,13 @@ from typing import Any, Callable, FrozenSet, List, Mapping, Optional, Pattern, U
 
 from libcst._add_slots import add_slots
 from libcst._nodes.whitespace import NEWLINE_RE
-from libcst._parser.parso.utils import parse_version_string, PythonVersionInfo
+from libcst._parser.utils import parse_version_string, PythonVersionInfo
 
 _INDENT_RE: Pattern[str] = re.compile(r"[ \t]+")
 
-try:
-    from libcst_native import parser_config as config_mod
+from libcst._parser.types import py_config as config_mod
 
-    MockWhitespaceParserConfig = config_mod.BaseWhitespaceParserConfig
-except ImportError:
-    from libcst._parser.types import py_config as config_mod
-
-    MockWhitespaceParserConfig = config_mod.MockWhitespaceParserConfig
+MockWhitespaceParserConfig = config_mod.MockWhitespaceParserConfig
 
 BaseWhitespaceParserConfig = config_mod.BaseWhitespaceParserConfig
 ParserConfig = config_mod.ParserConfig
@@ -168,7 +163,10 @@ class PartialParserConfig:
 
 
 def _pick_compatible_python_version(version: Optional[str] = None) -> PythonVersionInfo:
-    max_version = parse_version_string(version)
+    if version is None:
+        max_version = sys.version_info[:2]
+    else:
+        max_version = parse_version_string(version)
     for v in KNOWN_PYTHON_VERSION_STRINGS[::-1]:
         tmp = parse_version_string(v)
         if tmp <= max_version:
