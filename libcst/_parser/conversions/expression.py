@@ -159,7 +159,7 @@ COMPOP_TOKEN_LUT: typing.Dict[str, typing.Type[BaseCompOp]] = {
 def convert_expression_input(
     config: ParserConfig, children: typing.Sequence[typing.Any]
 ) -> typing.Any:
-    (child, endmarker) = children
+    child, endmarker = children
     # HACK: UGLY! REMOVE THIS SOON!
     # Unwrap WithLeadingWhitespace if it exists. It shouldn't exist by this point, but
     # testlist isn't fully implemented, and we currently leak these partial objects.
@@ -177,7 +177,7 @@ def convert_namedexpr_test(
         return test
 
     # Convert all of the operations that have no precedence in a loop
-    (walrus, value) = assignment
+    walrus, value = assignment
     return WithLeadingWhitespace(
         NamedExpr(
             target=test.value,
@@ -201,7 +201,7 @@ def convert_test(
         (child,) = children
         return child
     else:
-        (body, if_token, test, else_token, orelse) = children
+        body, if_token, test, else_token, orelse = children
         return WithLeadingWhitespace(
             IfExp(
                 body=body.value,
@@ -718,7 +718,7 @@ def convert_trailer_arglist(
 def convert_trailer_subscriptlist(
     config: ParserConfig, children: typing.Sequence[typing.Any]
 ) -> typing.Any:
-    (lbracket, subscriptlist, rbracket) = children
+    lbracket, subscriptlist, rbracket = children
     return SubscriptPartial(
         lbracket=LeftSquareBracket(
             whitespace_after=parse_parenthesizable_whitespace(
@@ -1556,7 +1556,7 @@ def convert_comp_for(
         (sync_comp_for,) = children
         return sync_comp_for
     else:
-        (async_tok, sync_comp_for) = children
+        async_tok, sync_comp_for = children
         return sync_comp_for.with_changes(
             # asynchronous steals the `CompFor`'s `whitespace_before`.
             asynchronous=Asynchronous(whitespace_after=sync_comp_for.whitespace_before),
@@ -1594,7 +1594,7 @@ def convert_yield_expr(
         yield_node = Yield(value=None)
     else:
         # Yielding explicit value
-        (yield_token, yield_arg) = children
+        yield_token, yield_arg = children
         yield_node = Yield(
             value=yield_arg.value,
             whitespace_after_yield=parse_parenthesizable_whitespace(
@@ -1617,7 +1617,7 @@ def convert_yield_arg(
         return child
     else:
         # Its a yield from
-        (from_token, test) = children
+        from_token, test = children
 
         return WithLeadingWhitespace(
             From(

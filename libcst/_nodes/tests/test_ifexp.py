@@ -114,8 +114,8 @@ class IfExpTest(CSTNodeTest):
         (
             (
                 lambda: cst.IfExp(
-                    cst.Name("bar"),
                     cst.Name("foo"),
+                    cst.Name("bar"),
                     cst.Name("baz"),
                     lpar=(cst.LeftParen(),),
                 ),
@@ -123,8 +123,8 @@ class IfExpTest(CSTNodeTest):
             ),
             (
                 lambda: cst.IfExp(
-                    cst.Name("bar"),
                     cst.Name("foo"),
+                    cst.Name("bar"),
                     cst.Name("baz"),
                     rpar=(cst.RightParen(),),
                 ),

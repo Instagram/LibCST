@@ -8,7 +8,6 @@ from typing import Any, Callable, final, Optional, Sequence, Tuple
 
 from libcst._tabs import expand_tabs
 
-
 _NEWLINE_CHARS: str = "\r\n"
 
 
