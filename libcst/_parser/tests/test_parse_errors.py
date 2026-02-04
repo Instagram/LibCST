@@ -19,150 +19,126 @@ class ParseErrorsTest(UnitTest):
             # _wrapped_tokenize raises these exceptions
             "wrapped_tokenize__invalid_token": (
                 lambda: cst.parse_module("'"),
-                dedent(
-                    """
+                dedent("""
                     Syntax Error @ 1:1.
                     "'" is not a valid token.
 
                     '
                     ^
-                    """
-                ).strip(),
+                    """).strip(),
             ),
             "wrapped_tokenize__expected_dedent": (
                 lambda: cst.parse_module("if False:\n    pass\n  pass"),
-                dedent(
-                    """
+                dedent("""
                     Syntax Error @ 3:1.
                     Inconsistent indentation. Expected a dedent.
 
                       pass
                     ^
-                    """
-                ).strip(),
+                    """).strip(),
             ),
             "wrapped_tokenize__mismatched_braces": (
                 lambda: cst.parse_module("abcd)"),
-                dedent(
-                    """
+                dedent("""
                     Syntax Error @ 1:5.
                     Encountered a closing brace without a matching opening brace.
 
                     abcd)
                         ^
-                    """
-                ).strip(),
+                    """).strip(),
             ),
             # _base_parser raises these exceptions
             "base_parser__unexpected_indent": (
                 lambda: cst.parse_module("    abcd"),
-                dedent(
-                    """
+                dedent("""
                     Syntax Error @ 1:5.
                     Incomplete input. Unexpectedly encountered an indent.
 
                         abcd
                         ^
-                    """
-                ).strip(),
+                    """).strip(),
             ),
             "base_parser__unexpected_dedent": (
                 lambda: cst.parse_module("if False:\n    (el for el\n"),
-                dedent(
-                    """
+                dedent("""
                     Syntax Error @ 3:1.
                     Incomplete input. Encountered a dedent, but expected 'in'.
 
                         (el for el
                                   ^
-                    """
-                ).strip(),
+                    """).strip(),
             ),
             "base_parser__multiple_possibilities": (
                 lambda: cst.parse_module("try: pass"),
-                dedent(
-                    """
+                dedent("""
                     Syntax Error @ 2:1.
                     Incomplete input. Encountered end of file (EOF), but expected 'except', or 'finally'.
 
                     try: pass
                              ^
-                    """
-                ).strip(),
+                    """).strip(),
             ),
             # conversion functions raise these exceptions.
             # `_base_parser` is responsible for attaching location information.
             "convert_nonterminal__dict_unpacking": (
                 lambda: cst.parse_expression("{**el for el in []}"),
-                dedent(
-                    """
+                dedent("""
                     Syntax Error @ 1:19.
                     dict unpacking cannot be used in dict comprehension
 
                     {**el for el in []}
                                       ^
-                    """
-                ).strip(),
+                    """).strip(),
             ),
             "convert_nonterminal__arglist_non_default_after_default": (
                 lambda: cst.parse_statement("def fn(first=None, second): ..."),
-                dedent(
-                    """
+                dedent("""
                     Syntax Error @ 1:26.
                     Cannot have a non-default argument following a default argument.
 
                     def fn(first=None, second): ...
                                              ^
-                    """
-                ).strip(),
+                    """).strip(),
             ),
             "convert_nonterminal__arglist_trailing_param_star_without_comma": (
                 lambda: cst.parse_statement("def fn(abc, *): ..."),
-                dedent(
-                    """
+                dedent("""
                     Syntax Error @ 1:14.
                     Named (keyword) arguments must follow a bare *.
 
                     def fn(abc, *): ...
                                  ^
-                    """
-                ).strip(),
+                    """).strip(),
             ),
             "convert_nonterminal__arglist_trailing_param_star_with_comma": (
                 lambda: cst.parse_statement("def fn(abc, *,): ..."),
-                dedent(
-                    """
+                dedent("""
                     Syntax Error @ 1:15.
                     Named (keyword) arguments must follow a bare *.
 
                     def fn(abc, *,): ...
                                   ^
-                    """
-                ).strip(),
+                    """).strip(),
             ),
             "convert_nonterminal__class_arg_positional_after_keyword": (
                 lambda: cst.parse_statement("class Cls(first=None, second): ..."),
-                dedent(
-                    """
+                dedent("""
                     Syntax Error @ 2:1.
                     Positional argument follows keyword argument.
 
                     class Cls(first=None, second): ...
                                                       ^
-                    """
-                ).strip(),
+                    """).strip(),
             ),
             "convert_nonterminal__class_arg_positional_expansion_after_keyword": (
                 lambda: cst.parse_statement("class Cls(first=None, *second): ..."),
-                dedent(
-                    """
+                dedent("""
                     Syntax Error @ 2:1.
                     Positional argument follows keyword argument.
 
                     class Cls(first=None, *second): ...
                                                        ^
-                    """
-                ).strip(),
+                    """).strip(),
             ),
         }
     )

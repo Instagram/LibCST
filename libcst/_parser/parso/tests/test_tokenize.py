@@ -68,14 +68,12 @@ class ParsoTokenizerTest(UnitTest):
 
     def test_function_whitespace(self):
         # Test function definition whitespace identification
-        fundef = dedent(
-            """
+        fundef = dedent("""
         def test_whitespace(*args, **kwargs):
             x = 1
             if x > 0:
                 print(True)
-        """
-        )
+        """)
         token_list = _get_token_list(fundef)
         for _, value, _, prefix in token_list:
             if value == "test_whitespace":
@@ -122,12 +120,10 @@ class ParsoTokenizerTest(UnitTest):
         ]
 
     def test_identifier_contains_unicode(self):
-        fundef = dedent(
-            """
+        fundef = dedent("""
         def 我あφ():
             pass
-        """
-        )
+        """)
         token_list = _get_token_list(fundef)
         unicode_token = token_list[1]
         assert unicode_token[0] == NAME
@@ -237,13 +233,11 @@ class ParsoTokenizerTest(UnitTest):
         assert endmarker.string == ""
 
     def test_indent_error_recovery(self):
-        code = dedent(
-            """\
+        code = dedent("""\
                             str(
             from x import a
             def
-            """
-        )
+            """)
         lst = _get_token_list(code)
         expected = [
             # `str(`
@@ -268,13 +262,11 @@ class ParsoTokenizerTest(UnitTest):
         assert [t.type for t in lst] == expected
 
     def test_error_token_after_dedent(self):
-        code = dedent(
-            """\
+        code = dedent("""\
             class C:
                 pass
             $foo
-            """
-        )
+            """)
         lst = _get_token_list(code)
         expected = [
             NAME,
@@ -298,23 +290,17 @@ class ParsoTokenizerTest(UnitTest):
         There used to be an issue that the parentheses counting would go below
         zero. This should not happen.
         """
-        code = dedent(
-            """\
+        code = dedent("""\
             }
             {
               }
-            """
-        )
+            """)
         lst = _get_token_list(code)
         assert [t.type for t in lst] == [OP, NEWLINE, OP, OP, NEWLINE, ENDMARKER]
 
     def test_form_feed(self):
-        error_token, endmarker = _get_token_list(
-            dedent(
-                '''\
-            \f"""'''
-            )
-        )
+        error_token, endmarker = _get_token_list(dedent('''\
+            \f"""'''))
         assert error_token.prefix == "\f"
         assert error_token.string == '"""'
         assert endmarker.prefix == ""

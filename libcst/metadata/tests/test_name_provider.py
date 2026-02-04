@@ -67,22 +67,18 @@ def get_fully_qualified_names(file_path: str, module_str: str) -> Set[QualifiedN
 
 class QualifiedNameProviderTest(UnitTest):
     def test_imports(self) -> None:
-        qnames = get_qualified_names(
-            """
+        qnames = get_qualified_names("""
             from a.b import c as d
             d
-            """
-        )
+            """)
         self.assertEqual({"a.b.c"}, {qname.name for qname in qnames})
         for qname in qnames:
             self.assertEqual(qname.source, QualifiedNameSource.IMPORT, msg=f"{qname}")
 
     def test_builtins(self) -> None:
-        qnames = get_qualified_names(
-            """
+        qnames = get_qualified_names("""
             int(None)
-            """
-        )
+            """)
         self.assertEqual(
             {"builtins.int", "builtins.None"}, {qname.name for qname in qnames}
         )
@@ -90,19 +86,16 @@ class QualifiedNameProviderTest(UnitTest):
             self.assertEqual(qname.source, QualifiedNameSource.BUILTIN, msg=f"{qname}")
 
     def test_locals(self) -> None:
-        qnames = get_qualified_names(
-            """
+        qnames = get_qualified_names("""
             class X:
                 a: "X"
-            """
-        )
+            """)
         self.assertEqual({"X", "X.a"}, {qname.name for qname in qnames})
         for qname in qnames:
             self.assertEqual(qname.source, QualifiedNameSource.LOCAL, msg=f"{qname}")
 
     def test_simple_qualified_names(self) -> None:
-        m, names = get_qualified_name_metadata_provider(
-            """
+        m, names = get_qualified_name_metadata_provider("""
             from a.b import c
             class Cls:
                 def f(self) -> "c":
@@ -112,8 +105,7 @@ class QualifiedNameProviderTest(UnitTest):
             def g():
                 pass
             g()
-            """
-        )
+            """)
         cls = ensure_type(m.body[1], cst.ClassDef)
         f = ensure_type(cls.body.body[0], cst.FunctionDef)
         self.assertEqual(
@@ -159,8 +151,7 @@ class QualifiedNameProviderTest(UnitTest):
         )
 
     def test_nested_qualified_names(self) -> None:
-        m, names = get_qualified_name_metadata_provider(
-            """
+        m, names = get_qualified_name_metadata_provider("""
             class A:
                 def f1(self):
                     def f2():
@@ -177,8 +168,7 @@ class QualifiedNameProviderTest(UnitTest):
                         pass
                     C()
                 f5()
-            """
-        )
+            """)
 
         cls_a = ensure_type(m.body[0], cst.ClassDef)
         self.assertEqual(names[cls_a], {QualifiedName("A", QualifiedNameSource.LOCAL)})
@@ -218,15 +208,13 @@ class QualifiedNameProviderTest(UnitTest):
         )
 
     def test_multiple_assignments(self) -> None:
-        m, names = get_qualified_name_metadata_provider(
-            """
+        m, names = get_qualified_name_metadata_provider("""
             if 1:
                 from a import b as c
             elif 2:
                 from d import e as c
             c()
-            """
-        )
+            """)
         call = ensure_type(
             ensure_type(m.body[1], cst.SimpleStatementLine).body[0], cst.Expr
         ).value
@@ -239,8 +227,7 @@ class QualifiedNameProviderTest(UnitTest):
         )
 
     def test_comprehension(self) -> None:
-        m, names = get_qualified_name_metadata_provider(
-            """
+        m, names = get_qualified_name_metadata_provider("""
             class C:
                 def fn(self) -> None:
                     [[k for k in i] for i in [j for j in range(10)]]
@@ -250,8 +237,7 @@ class QualifiedNameProviderTest(UnitTest):
                     # so j has qualified name "C.fn.<locals>.<comprehension>.j".
                     # ListComp k is evaluated inside ListComp i.
                     # so k has qualified name "C.fn.<locals>.<comprehension>.<comprehension>.k".
-            """
-        )
+            """)
         cls_def = ensure_type(m.body[0], cst.ClassDef)
         fn_def = ensure_type(cls_def.body.body[0], cst.FunctionDef)
         outer_comp = ensure_type(
@@ -320,12 +306,10 @@ class QualifiedNameProviderTest(UnitTest):
         MetadataWrapper(cst.parse_module("import a;a.b.c()")).visit(TestVisitor(self))
 
     def test_name_in_attribute(self) -> None:
-        m, names = get_qualified_name_metadata_provider(
-            """
+        m, names = get_qualified_name_metadata_provider("""
             obj = object()
             obj.eval
-            """
-        )
+            """)
         attr = ensure_type(
             ensure_type(
                 ensure_type(m.body[1], cst.SimpleStatementLine).body[0], cst.Expr
@@ -340,13 +324,11 @@ class QualifiedNameProviderTest(UnitTest):
         self.assertEqual(names[eval], set())
 
     def test_repeated_values_in_qualified_name(self) -> None:
-        m, names = get_qualified_name_metadata_provider(
-            """
+        m, names = get_qualified_name_metadata_provider("""
             import a
             class Foo:
                 bar: a.aa.aaa
-            """
-        )
+            """)
         foo = ensure_type(m.body[1], cst.ClassDef)
         bar = ensure_type(
             ensure_type(
@@ -364,8 +346,7 @@ class QualifiedNameProviderTest(UnitTest):
         )
 
     def test_multiple_qualified_names(self) -> None:
-        m, names = get_qualified_name_metadata_provider(
-            """
+        m, names = get_qualified_name_metadata_provider("""
             if False:
                 def f(): pass
             elif False:
@@ -375,8 +356,7 @@ class QualifiedNameProviderTest(UnitTest):
             import a.b as f
 
             f()
-            """
-        )
+            """)
         if_ = ensure_type(m.body[0], cst.If)
         first_f = ensure_type(if_.body.body[0], cst.FunctionDef)
         second_f_alias = ensure_type(
@@ -431,16 +411,14 @@ class QualifiedNameProviderTest(UnitTest):
         )
 
     def test_shadowed_assignments(self) -> None:
-        m, names = get_qualified_name_metadata_provider(
-            """
+        m, names = get_qualified_name_metadata_provider("""
                 from lib import a,b,c
                 a = a
                 class Test:
                     b = b
                 def func():
                     c = c
-            """
-        )
+            """)
 
         # pyre-fixme[53]: Captured variable `names` is not annotated.
         def test_name(node: cst.CSTNode, qnames: Set[QualifiedName]) -> None:
@@ -568,7 +546,7 @@ class FullyQualifiedNameIntegrationTest(UnitTest):
             mgr = FullRepoManager(root, [file_path_str], [FullyQualifiedNameProvider])
             wrapper = mgr.get_metadata_wrapper_for_path(file_path_str)
             fqnames = wrapper.resolve(FullyQualifiedNameProvider)
-            (mod, names) = next(iter(fqnames.items()))
+            mod, names = next(iter(fqnames.items()))
             self.assertIsInstance(mod, cst.Module)
             self.assertEqual(
                 names, {QualifiedName(name="pkg.mod", source=QualifiedNameSource.LOCAL)}

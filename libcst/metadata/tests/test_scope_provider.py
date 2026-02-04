@@ -50,25 +50,21 @@ def get_scope_metadata_provider(
 
 class ScopeProviderTest(UnitTest):
     def test_not_in_scope(self) -> None:
-        m, scopes = get_scope_metadata_provider(
-            """
+        m, scopes = get_scope_metadata_provider("""
             pass
-            """
-        )
+            """)
         global_scope = scopes[m]
         self.assertEqual(global_scope["not_in_scope"], set())
 
     def test_accesses(self) -> None:
-        m, scopes = get_scope_metadata_provider(
-            """
+        m, scopes = get_scope_metadata_provider("""
             foo = 'toplevel'
             fn1(foo)
             fn2(foo)
             def fn_def():
                 foo = 'shadow'
                 fn3(foo)
-            """
-        )
+            """)
         scope_of_module = scopes[m]
         self.assertIsInstance(scope_of_module, GlobalScope)
         global_foo_assignments = list(scope_of_module["foo"])
@@ -118,12 +114,10 @@ class ScopeProviderTest(UnitTest):
         wrapper.visit(DependentVisitor())
 
     def test_fstring_accesses(self) -> None:
-        m, scopes = get_scope_metadata_provider(
-            """
+        m, scopes = get_scope_metadata_provider("""
             from a import b
             f"{b}" "hello"
-            """
-        )
+            """)
         global_scope = scopes[m]
         self.assertIsInstance(global_scope, GlobalScope)
         global_accesses = list(global_scope.accesses)
@@ -138,12 +132,10 @@ class ScopeProviderTest(UnitTest):
 
     @data_provider((("any",), ("True",), ("Exception",), ("__name__",)))
     def test_builtins(self, builtin: str) -> None:
-        m, scopes = get_scope_metadata_provider(
-            """
+        m, scopes = get_scope_metadata_provider("""
             def fn():
                 pass
-            """
-        )
+            """)
         scope_of_module = scopes[m]
         self.assertIsInstance(scope_of_module, GlobalScope)
         self.assertEqual(len(scope_of_module[builtin]), 1)
@@ -162,14 +154,12 @@ class ScopeProviderTest(UnitTest):
         self.assertEqual(len(scope_of_func_statement["something_not_a_builtin"]), 0)
 
     def test_import(self) -> None:
-        m, scopes = get_scope_metadata_provider(
-            """
+        m, scopes = get_scope_metadata_provider("""
             import foo.bar
             import fizz.buzz as fizzbuzz
             import a.b.c
             import d.e.f as g
-            """
-        )
+            """)
         scope_of_module = scopes[m]
 
         import_0 = cst.ensure_type(
@@ -221,12 +211,10 @@ class ScopeProviderTest(UnitTest):
                 )
 
     def test_dotted_import_access(self) -> None:
-        m, scopes = get_scope_metadata_provider(
-            """
+        m, scopes = get_scope_metadata_provider("""
             import a.b.c, x.y
             a.b.c(x.z)
-            """
-        )
+            """)
         scope_of_module = scopes[m]
         first_statement = ensure_type(m.body[1], cst.SimpleStatementLine)
         call = ensure_type(
@@ -253,12 +241,10 @@ class ScopeProviderTest(UnitTest):
         self.assertEqual(scope_of_module.accesses["x.y"], set())
 
     def test_dotted_import_access_reference_by_node(self) -> None:
-        m, scopes = get_scope_metadata_provider(
-            """
+        m, scopes = get_scope_metadata_provider("""
             import a.b.c
             a.b.c()
-            """
-        )
+            """)
         scope_of_module = scopes[m]
         first_statement = ensure_type(m.body[1], cst.SimpleStatementLine)
         call = ensure_type(
@@ -271,15 +257,13 @@ class ScopeProviderTest(UnitTest):
         self.assertEqual(a_b_c_access.node, call.func)
 
     def test_decorator_access_reference_by_node(self) -> None:
-        m, scopes = get_scope_metadata_provider(
-            """
+        m, scopes = get_scope_metadata_provider("""
             import decorator
 
             @decorator
             def f():
                 pass
-            """
-        )
+            """)
         scope_of_module = scopes[m]
         function_def = ensure_type(m.body[1], cst.FunctionDef)
         decorator = function_def.decorators[0]
@@ -292,12 +276,10 @@ class ScopeProviderTest(UnitTest):
         self.assertEqual(scope_of_module.accesses[decorator], {decorator_access})
 
     def test_dotted_import_with_call_access(self) -> None:
-        m, scopes = get_scope_metadata_provider(
-            """
+        m, scopes = get_scope_metadata_provider("""
             import os.path
             os.path.join("A", "B").lower()
-            """
-        )
+            """)
         scope_of_module = scopes[m]
         first_statement = ensure_type(m.body[1], cst.SimpleStatementLine)
         attr = ensure_type(
@@ -327,13 +309,11 @@ class ScopeProviderTest(UnitTest):
         self.assertEqual(os_path_join_access.node, attr)
 
     def test_import_from(self) -> None:
-        m, scopes = get_scope_metadata_provider(
-            """
+        m, scopes = get_scope_metadata_provider("""
             from foo.bar import a, b as b_renamed
             from . import c
             from .foo import d
-            """
-        )
+            """)
         scope_of_module = scopes[m]
 
         import_from = cst.ensure_type(
@@ -391,13 +371,11 @@ class ScopeProviderTest(UnitTest):
             )
 
     def test_function_scope(self) -> None:
-        m, scopes = get_scope_metadata_provider(
-            """
+        m, scopes = get_scope_metadata_provider("""
             global_var = None
             def foo(arg, **kwargs):
                 local_var = 5
-            """
-        )
+            """)
         scope_of_module = scopes[m]
         func_def = ensure_type(m.body[1], cst.FunctionDef)
         self.assertEqual(scopes[func_def], scopes[func_def.name])
@@ -414,16 +392,14 @@ class ScopeProviderTest(UnitTest):
         self.assertTrue("local_var" in scope_of_func)
 
     def test_class_scope(self) -> None:
-        m, scopes = get_scope_metadata_provider(
-            """
+        m, scopes = get_scope_metadata_provider("""
             global_var = None
             @cls_attr
             class Cls(cls_attr, kwarg=cls_attr):
                 cls_attr = 5
                 def f():
                     pass
-            """
-        )
+            """)
         scope_of_module = scopes[m]
         self.assertIsInstance(scope_of_module, GlobalScope)
         cls_assignments = list(scope_of_module["Cls"])
@@ -451,16 +427,14 @@ class ScopeProviderTest(UnitTest):
         self.assertTrue("cls_attr" not in scope_of_func)
 
     def test_comprehension_scope(self) -> None:
-        m, scopes = get_scope_metadata_provider(
-            """
+        m, scopes = get_scope_metadata_provider("""
             iterator = None
             condition = None
             [elt for target in iterator if condition]
             {elt for target in iterator if condition}
             {elt: target for target in iterator if condition}
             (elt for target in iterator if condition)
-            """
-        )
+            """)
         scope_of_module = scopes[m]
         self.assertIsInstance(scope_of_module, GlobalScope)
 
@@ -525,11 +499,9 @@ class ScopeProviderTest(UnitTest):
         self.assertTrue("target" in scope_of_generator_expr)
 
     def test_nested_comprehension_scope(self) -> None:
-        m, scopes = get_scope_metadata_provider(
-            """
+        m, scopes = get_scope_metadata_provider("""
             [y for x in iterator for y in x]
-            """
-        )
+            """)
         scope_of_module = scopes[m]
         self.assertIsInstance(scope_of_module, GlobalScope)
 
@@ -666,13 +638,11 @@ class ScopeProviderTest(UnitTest):
             )
 
     def test_local_scope_shadowing_with_functions(self) -> None:
-        m, scopes = get_scope_metadata_provider(
-            """
+        m, scopes = get_scope_metadata_provider("""
             def f():
                 def f():
                     f = ...
-            """
-        )
+            """)
         scope_of_module = scopes[m]
         self.assertIsInstance(scope_of_module, GlobalScope)
         self.assertTrue("f" in scope_of_module)
@@ -692,13 +662,11 @@ class ScopeProviderTest(UnitTest):
         self.assertEqual(cast(Assignment, inner_f_assignment).node, inner_f)
 
     def test_func_param_scope(self) -> None:
-        m, scopes = get_scope_metadata_provider(
-            """
+        m, scopes = get_scope_metadata_provider("""
             @decorator
             def f(x: T=1, *vararg, y: T=2, z, **kwarg) -> RET:
                 pass
-            """
-        )
+            """)
         scope_of_module = scopes[m]
         self.assertIsInstance(scope_of_module, GlobalScope)
         self.assertTrue("f" in scope_of_module)
@@ -749,11 +717,9 @@ class ScopeProviderTest(UnitTest):
         self.assertEqual(cast(Assignment, list(scope_of_f["kwarg"])[0]).node, kwarg)
 
     def test_lambda_param_scope(self) -> None:
-        m, scopes = get_scope_metadata_provider(
-            """
+        m, scopes = get_scope_metadata_provider("""
             lambda x=1, *vararg, y=2, z, **kwarg:x
-            """
-        )
+            """)
         scope_of_module = scopes[m]
         self.assertIsInstance(scope_of_module, GlobalScope)
 
@@ -806,14 +772,12 @@ class ScopeProviderTest(UnitTest):
         See https://docs.python.org/3.4/reference/compound_stmts.html#except
         We don't create a new block for except body because we don't handle del in our Scope Analysis.
         """
-        m, scopes = get_scope_metadata_provider(
-            """
+        m, scopes = get_scope_metadata_provider("""
             try:
                 ...
             except Exception as ex:
                 ...
-            """
-        )
+            """)
         scope_of_module = scopes[m]
         self.assertIsInstance(scope_of_module, GlobalScope)
         self.assertTrue("ex" in scope_of_module)
@@ -825,12 +789,10 @@ class ScopeProviderTest(UnitTest):
         )
 
     def test_with_asname(self) -> None:
-        m, scopes = get_scope_metadata_provider(
-            """
+        m, scopes = get_scope_metadata_provider("""
             with open(file_name) as f:
                 ...
-            """
-        )
+            """)
         scope_of_module = scopes[m]
         self.assertIsInstance(scope_of_module, GlobalScope)
         self.assertTrue("f" in scope_of_module)
@@ -842,8 +804,7 @@ class ScopeProviderTest(UnitTest):
         )
 
     def test_get_qualified_names_for(self) -> None:
-        m, scopes = get_scope_metadata_provider(
-            """
+        m, scopes = get_scope_metadata_provider("""
             from a.b import c
             class Cls:
                 def f(self) -> "c":
@@ -853,8 +814,7 @@ class ScopeProviderTest(UnitTest):
             def g():
                 pass
             g()
-            """
-        )
+            """)
         cls = ensure_type(m.body[1], cst.ClassDef)
         f = ensure_type(cls.body.body[0], cst.FunctionDef)
         scope_of_module = scopes[m]
@@ -925,8 +885,7 @@ class ScopeProviderTest(UnitTest):
         )
 
     def test_get_qualified_names_for_nested_cases(self) -> None:
-        m, scopes = get_scope_metadata_provider(
-            """
+        m, scopes = get_scope_metadata_provider("""
             class A:
                 def f1(self):
                     def f2():
@@ -943,8 +902,7 @@ class ScopeProviderTest(UnitTest):
                         pass
                     C()
                 f5()
-            """
-        )
+            """)
         cls_a = ensure_type(m.body[0], cst.ClassDef)
         func_f1 = ensure_type(cls_a.body.body[0], cst.FunctionDef)
         scope_of_cls_a = scopes[func_f1]
@@ -989,12 +947,10 @@ class ScopeProviderTest(UnitTest):
         )
 
     def test_get_qualified_names_for_the_same_prefix(self) -> None:
-        m, scopes = get_scope_metadata_provider(
-            """
+        m, scopes = get_scope_metadata_provider("""
                 from a import b, bc
                 bc()
-            """
-        )
+            """)
         call = ensure_type(
             ensure_type(
                 ensure_type(m.body[1], cst.SimpleStatementLine).body[0], cst.Expr
@@ -1008,12 +964,10 @@ class ScopeProviderTest(UnitTest):
         )
 
     def test_get_qualified_names_for_dotted_imports(self) -> None:
-        m, scopes = get_scope_metadata_provider(
-            """
+        m, scopes = get_scope_metadata_provider("""
                 import a.b.c
                 a(a.b.d)
-            """
-        )
+            """)
         call = ensure_type(
             ensure_type(
                 ensure_type(m.body[1], cst.SimpleStatementLine).body[0], cst.Expr
@@ -1050,15 +1004,13 @@ class ScopeProviderTest(UnitTest):
         )
 
     def test_multiple_assignments(self) -> None:
-        m, scopes = get_scope_metadata_provider(
-            """
+        m, scopes = get_scope_metadata_provider("""
                 if 1:
                     from a import b as c
                 elif 2:
                     from d import e as c
                 c()
-            """
-        )
+            """)
         call = ensure_type(
             ensure_type(m.body[1], cst.SimpleStatementLine).body[0], cst.Expr
         ).value
@@ -1080,8 +1032,7 @@ class ScopeProviderTest(UnitTest):
         )
 
     def test_assignments_and_accesses(self) -> None:
-        m, scopes = get_scope_metadata_provider(
-            """
+        m, scopes = get_scope_metadata_provider("""
                 a = 1
                 def f():
                     a = 2
@@ -1089,8 +1040,7 @@ class ScopeProviderTest(UnitTest):
                     def g():
                         b = a
                 a
-            """
-        )
+            """)
         a_outer_assign = (
             ensure_type(
                 ensure_type(m.body[0], cst.SimpleStatementLine).body[0], cst.Assign
@@ -1176,8 +1126,7 @@ class ScopeProviderTest(UnitTest):
         self.assertEqual(len(set(scopes.values())), 3)
 
     def test_annotation_access(self) -> None:
-        m, scopes = get_scope_metadata_provider(
-            """
+        m, scopes = get_scope_metadata_provider("""
                 from typing import Literal, NewType, Optional, TypeVar, Callable, cast
                 from a import A, B, C, D, D2, E, E2, F, G, G2, H, I, J, K, K2, L, M
                 def x(a: A):
@@ -1197,8 +1146,7 @@ class ScopeProviderTest(UnitTest):
                     pass
                 castedK = cast("K", "K2")
                 castedL = cast("L", M)
-            """
-        )
+            """)
         imp = ensure_type(
             ensure_type(m.body[1], cst.SimpleStatementLine).body[0], cst.ImportFrom
         )
@@ -1321,13 +1269,11 @@ class ScopeProviderTest(UnitTest):
         references = list(assignment.references)
 
     def test_insane_annotation_access(self) -> None:
-        m, scopes = get_scope_metadata_provider(
-            r"""
+        m, scopes = get_scope_metadata_provider(r"""
                 from typing import TypeVar, Optional
                 from a import G
                 TypeVar("G2", bound="Optional[\"G\"]")
-            """
-        )
+            """)
         imp = ensure_type(
             ensure_type(m.body[1], cst.SimpleStatementLine).body[0], cst.ImportFrom
         )
@@ -1345,13 +1291,11 @@ class ScopeProviderTest(UnitTest):
         self.assertEqual(list(assignment.references)[0].node, bound)
 
     def test_dotted_annotation_access(self) -> None:
-        m, scopes = get_scope_metadata_provider(
-            r"""
+        m, scopes = get_scope_metadata_provider(r"""
                 from typing import TypeVar
                 import a.G
                 TypeVar("G2", bound="a.G")
-            """
-        )
+            """)
         imp = ensure_type(
             ensure_type(m.body[1], cst.SimpleStatementLine).body[0], cst.Import
         )
@@ -1369,15 +1313,13 @@ class ScopeProviderTest(UnitTest):
         self.assertEqual(list(assignment.references)[0].node, bound)
 
     def test_node_of_scopes(self) -> None:
-        m, scopes = get_scope_metadata_provider(
-            """
+        m, scopes = get_scope_metadata_provider("""
                 def f1():
                     target()
 
                 class C:
                     attr = target()
-            """
-        )
+            """)
         f1 = ensure_type(m.body[0], cst.FunctionDef)
         target_call = ensure_type(
             ensure_type(f1.body.body[0], cst.SimpleStatementLine).body[0], cst.Expr
@@ -1394,16 +1336,14 @@ class ScopeProviderTest(UnitTest):
         self.assertEqual(cast(ClassScope, c_scope).node, c)
 
     def test_with_statement(self) -> None:
-        m, scopes = get_scope_metadata_provider(
-            """
+        m, scopes = get_scope_metadata_provider("""
                 import unittest.mock
 
                 with unittest.mock.patch("something") as obj:
                     obj.f1()
 
                 unittest.mock
-            """
-        )
+            """)
         import_ = ensure_type(m.body[0], cst.SimpleStatementLine).body[0]
         assignments = scopes[import_]["unittest"]
         self.assertEqual(len(assignments), 1)
@@ -1427,15 +1367,13 @@ class ScopeProviderTest(UnitTest):
         )
 
     def test_del_context_names(self) -> None:
-        m, scopes = get_scope_metadata_provider(
-            """
+        m, scopes = get_scope_metadata_provider("""
                 import a
                 dic = {}
                 del dic
                 del dic["key"]
                 del a.b
-            """
-        )
+            """)
         dic = ensure_type(
             ensure_type(
                 ensure_type(m.body[1], cst.SimpleStatementLine).body[0], cst.Assign
@@ -1530,12 +1468,10 @@ class ScopeProviderTest(UnitTest):
             get_scope_metadata_provider(f.read())
 
     def test_get_qualified_names_for_is_read_only(self) -> None:
-        m, scopes = get_scope_metadata_provider(
-            """
+        m, scopes = get_scope_metadata_provider("""
                 import a
                 import b
-            """
-        )
+            """)
         a = m.body[0]
         scope = scopes[a]
         assignments_before = list(scope.assignments)
@@ -1576,15 +1512,13 @@ class ScopeProviderTest(UnitTest):
         self.assertEqual(names, {"a.b.c", "a.b", "a"})
 
     def test_ordering(self) -> None:
-        m, scopes = get_scope_metadata_provider(
-            """
+        m, scopes = get_scope_metadata_provider("""
             from a import b
             class X:
                 x = b
                 b = b
                 y = b
-            """
-        )
+            """)
         global_scope = scopes[m]
         import_stmt = ensure_type(
             ensure_type(m.body[0], cst.SimpleStatementLine).body[0], cst.ImportFrom
@@ -1625,15 +1559,13 @@ class ScopeProviderTest(UnitTest):
         self.assertIn(y.value, [access.node for access in class_accesses])
 
     def test_ordering_between_scopes(self) -> None:
-        m, scopes = get_scope_metadata_provider(
-            """
+        m, scopes = get_scope_metadata_provider("""
             def f(a):
                 print(a)
                 print(b)
             a = 1
             b = 1
-            """
-        )
+            """)
         f = cst.ensure_type(m.body[0], cst.FunctionDef)
         a_param = f.params.params[0].name
         a_param_assignment = list(scopes[a_param]["a"])[0]
@@ -1679,15 +1611,13 @@ class ScopeProviderTest(UnitTest):
         self.assertEqual(b_global_refs[0].node, second_print.args[0].value)
 
     def test_ordering_comprehension(self) -> None:
-        m, scopes = get_scope_metadata_provider(
-            """
+        m, scopes = get_scope_metadata_provider("""
             def f(a):
                 [a for a in [] for b in a]
                 [b for a in [] for b in a]
                 [a for a in [] for a in []]
             a = 1
-            """
-        )
+            """)
         f = cst.ensure_type(m.body[0], cst.FunctionDef)
         a_param = f.params.params[0].name
         a_param_assignment = list(scopes[a_param]["a"])[0]
@@ -1756,13 +1686,11 @@ class ScopeProviderTest(UnitTest):
         self.assertEqual(a_global_refs, [])
 
     def test_ordering_comprehension_confusing(self) -> None:
-        m, scopes = get_scope_metadata_provider(
-            """
+        m, scopes = get_scope_metadata_provider("""
             def f(a):
                 [a for a in a]
             a = 1
-            """
-        )
+            """)
         f = cst.ensure_type(m.body[0], cst.FunctionDef)
         a_param = f.params.params[0].name
         a_param_assignment = list(scopes[a_param]["a"])[0]
@@ -1781,8 +1709,7 @@ class ScopeProviderTest(UnitTest):
         self.assertEqual(list(a_comp_assignment.references)[0].node, comp.elt)
 
     def test_for_scope_ordering(self) -> None:
-        m, scopes = get_scope_metadata_provider(
-            """
+        m, scopes = get_scope_metadata_provider("""
             def f():
                 for x in []:
                     x
@@ -1790,8 +1717,7 @@ class ScopeProviderTest(UnitTest):
                 def f():
                     for x in []:
                         x
-            """
-        )
+            """)
         for scope in scopes.values():
             for acc in scope.accesses:
                 self.assertEqual(
@@ -1804,12 +1730,10 @@ class ScopeProviderTest(UnitTest):
                 )
 
     def test_no_out_of_order_references_in_global_scope(self) -> None:
-        m, scopes = get_scope_metadata_provider(
-            """
+        m, scopes = get_scope_metadata_provider("""
             x = y
             y = 1
-            """
-        )
+            """)
         for scope in scopes.values():
             for acc in scope.accesses:
                 self.assertEqual(
@@ -1824,13 +1748,11 @@ class ScopeProviderTest(UnitTest):
     def test_walrus_accesses(self) -> None:
         if sys.version_info < (3, 8):
             self.skipTest("This python version doesn't support :=")
-        m, scopes = get_scope_metadata_provider(
-            """
+        m, scopes = get_scope_metadata_provider("""
             if x := y:
                 y = 1
                 x
-            """
-        )
+            """)
         for scope in scopes.values():
             for acc in scope.accesses:
                 self.assertEqual(
@@ -1925,13 +1847,11 @@ class ScopeProviderTest(UnitTest):
             parse_mock.assert_has_calls(calls)
 
     def test_builtin_scope(self) -> None:
-        m, scopes = get_scope_metadata_provider(
-            """
+        m, scopes = get_scope_metadata_provider("""
             a = pow(1, 2)
             def foo():
                 b = pow(2, 3)
-            """
-        )
+            """)
         scope_of_module = scopes[m]
         self.assertIsInstance(scope_of_module, GlobalScope)
         self.assertEqual(len(scope_of_module["pow"]), 1)
@@ -1957,16 +1877,14 @@ class ScopeProviderTest(UnitTest):
         self.assertEqual(len(builtin_pow_accesses), 2)
 
     def test_override_builtin_scope(self) -> None:
-        m, scopes = get_scope_metadata_provider(
-            """
+        m, scopes = get_scope_metadata_provider("""
             def pow(x, y):
                 return x ** y
 
             a = pow(1, 2)
             def foo():
                 b = pow(2, 3)
-            """
-        )
+            """)
         scope_of_module = scopes[m]
         self.assertIsInstance(scope_of_module, GlobalScope)
         self.assertEqual(len(scope_of_module["pow"]), 1)
@@ -1992,13 +1910,11 @@ class ScopeProviderTest(UnitTest):
         self.assertEqual(len(global_pow_accesses), 2)
 
     def test_annotation_access_in_typevar_bound(self) -> None:
-        m, scopes = get_scope_metadata_provider(
-            """
+        m, scopes = get_scope_metadata_provider("""
                 from typing import TypeVar
                 class Test:
                     var: TypeVar("T", bound="Test")
-            """
-        )
+            """)
         imp = ensure_type(
             ensure_type(m.body[0], cst.SimpleStatementLine).body[0], cst.ImportFrom
         )
@@ -2011,12 +1927,10 @@ class ScopeProviderTest(UnitTest):
 
     def test_prefix_match(self) -> None:
         """Verify that a name doesn't overmatch on prefix"""
-        m, scopes = get_scope_metadata_provider(
-            """
+        m, scopes = get_scope_metadata_provider("""
                 def something():
                     ...
-            """
-        )
+            """)
         scope = scopes[m]
         self.assertEqual(
             scope.get_qualified_names_for(cst.Name("something")),
@@ -2028,12 +1942,10 @@ class ScopeProviderTest(UnitTest):
         )
 
     def test_type_alias_scope(self) -> None:
-        m, scopes = get_scope_metadata_provider(
-            """
+        m, scopes = get_scope_metadata_provider("""
                 type A = C
                 lol: A
-            """
-        )
+            """)
         alias = ensure_type(
             ensure_type(m.body[0], cst.SimpleStatementLine).body[0], cst.TypeAlias
         )
@@ -2049,13 +1961,11 @@ class ScopeProviderTest(UnitTest):
         self.assertIsInstance(scopes[alias.value], AnnotationScope)
 
     def test_type_alias_param(self) -> None:
-        m, scopes = get_scope_metadata_provider(
-            """
+        m, scopes = get_scope_metadata_provider("""
                 B = int
                 type A[T: B] = T
                 lol: T
-            """
-        )
+            """)
         alias = ensure_type(
             ensure_type(m.body[1], cst.SimpleStatementLine).body[0], cst.TypeAlias
         )
@@ -2079,14 +1989,12 @@ class ScopeProviderTest(UnitTest):
         )
 
     def test_type_alias_tuple_and_paramspec(self) -> None:
-        m, scopes = get_scope_metadata_provider(
-            """
+        m, scopes = get_scope_metadata_provider("""
             type A[*T] = T
             lol: T
             type A[**T] = T
             lol: T
-            """
-        )
+            """)
         alias_tuple = ensure_type(
             ensure_type(m.body[0], cst.SimpleStatementLine).body[0], cst.TypeAlias
         )
@@ -2106,13 +2014,11 @@ class ScopeProviderTest(UnitTest):
         self.assertEqual(t_refs[0].node, alias_paramspec.value)
 
     def test_class_type_params(self) -> None:
-        m, scopes = get_scope_metadata_provider(
-            """
+        m, scopes = get_scope_metadata_provider("""
             class W[T]:
                 def f() -> T: pass
                 def g[T]() -> T: pass
-            """
-        )
+            """)
         cls = ensure_type(m.body[0], cst.ClassDef)
         cls_scope = scopes[cls.body.body[0]]
         self.assertEqual(len(t_assignments_in_cls := list(cls_scope["T"])), 1)
@@ -2140,12 +2046,10 @@ class ScopeProviderTest(UnitTest):
         self.assertEqual(t_refs_in_g[0].node, g.returns.annotation)
 
     def test_nested_class_type_params(self) -> None:
-        m, scopes = get_scope_metadata_provider(
-            """
+        m, scopes = get_scope_metadata_provider("""
             class Outer:
                 class Nested[T: Outer]: pass
-            """
-        )
+            """)
         outer = ensure_type(m.body[0], cst.ClassDef)
         outer_refs = list(list(scopes[outer]["Outer"])[0].references)
         self.assertEqual(len(outer_refs), 1)
@@ -2157,8 +2061,7 @@ class ScopeProviderTest(UnitTest):
         )
 
     def test_annotation_refers_to_nested_class(self) -> None:
-        m, scopes = get_scope_metadata_provider(
-            """
+        m, scopes = get_scope_metadata_provider("""
                 class Outer:
                     class Nested:
                         pass
@@ -2167,8 +2070,7 @@ class ScopeProviderTest(UnitTest):
 
                     def meth1[T: Nested](self): pass
                     def meth2[T](self, arg: Nested): pass
-            """
-        )
+            """)
         outer = ensure_type(m.body[0], cst.ClassDef)
         nested = ensure_type(outer.body.body[0], cst.ClassDef)
         alias = ensure_type(
@@ -2216,13 +2118,11 @@ class ScopeProviderTest(UnitTest):
         )
 
     def test_body_isnt_subject_to_special_annotation_rule(self) -> None:
-        m, scopes = get_scope_metadata_provider(
-            """
+        m, scopes = get_scope_metadata_provider("""
             class Outer:
                 class Inner: pass
                 def f[T: Inner](self): Inner
-            """
-        )
+            """)
         outer = ensure_type(m.body[0], cst.ClassDef)
         # note: this is different from global scope
         outer_scope = scopes[outer.body.body[0]]

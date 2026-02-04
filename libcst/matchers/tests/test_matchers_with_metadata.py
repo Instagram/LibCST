@@ -498,8 +498,7 @@ class MatchersVisitorMetadataTest(UnitTest):
                 ):
                     self.match_names.add(node.value)
 
-        module = self._make_fixture(
-            """
+        module = self._make_fixture("""
             a = 1 + 2
             b = 3 + 4 + d + e
             def foo() -> str:
@@ -509,8 +508,7 @@ class MatchersVisitorMetadataTest(UnitTest):
                 return b
             del foo
             del bar
-        """
-        )
+        """)
         visitor = TestVisitor()
         module.visit(visitor)
 
@@ -539,8 +537,7 @@ class MatchersVisitorMetadataTest(UnitTest):
                 ):
                     self.match_names.add(node.value)
 
-        module = self._make_fixture(
-            """
+        module = self._make_fixture("""
             a = 1 + 2
             b = 3 + 4 + d + e
             def foo() -> str:
@@ -550,8 +547,7 @@ class MatchersVisitorMetadataTest(UnitTest):
                 return b
             del foo
             del bar
-        """
-        )
+        """)
         visitor = TestTransformer()
         module.visit(visitor)
 
@@ -579,8 +575,7 @@ class MatchersVisitorMetadataTest(UnitTest):
                 # Only match name nodes that are being assigned to.
                 self.match_names.add(node.value)
 
-        module = self._make_fixture(
-            """
+        module = self._make_fixture("""
             a = 1 + 2
             b = 3 + 4 + d + e
             def foo() -> str:
@@ -590,8 +585,7 @@ class MatchersVisitorMetadataTest(UnitTest):
                 return b
             del foo
             del bar
-        """
-        )
+        """)
         visitor = TestVisitor()
         module.visit(visitor)
 
@@ -619,8 +613,7 @@ class MatchersVisitorMetadataTest(UnitTest):
                 # Only match name nodes that are being assigned to.
                 self.match_names.add(node.value)
 
-        module = self._make_fixture(
-            """
+        module = self._make_fixture("""
             a = 1 + 2
             b = 3 + 4 + d + e
             def foo() -> str:
@@ -630,8 +623,7 @@ class MatchersVisitorMetadataTest(UnitTest):
                 return b
             del foo
             del bar
-        """
-        )
+        """)
         visitor = TestTransformer()
         module.visit(visitor)
 

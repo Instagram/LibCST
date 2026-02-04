@@ -37,7 +37,7 @@ class TestCodemodCLI(UnitTest):
             stderr=subprocess.PIPE,
         )
         self.assertIn(
-            "error: cannot format -: Cannot parse for target version Python 3.6: 13:10:     async with AsyncExitStack() as stack:",
+            "error: cannot format -: Cannot parse for target version Python 3.6: 12:10:     match x:",
             rlt.stderr.decode("utf-8"),
         )
 

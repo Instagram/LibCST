@@ -17,7 +17,6 @@ from libcst import (
     Semicolon,
     SimpleStatementLine,
 )
-
 from libcst.helpers import (
     get_node_fields,
     is_default_node_field,

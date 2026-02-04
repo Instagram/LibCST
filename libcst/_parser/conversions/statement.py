@@ -121,7 +121,7 @@ AUGOP_TOKEN_LUT: Dict[str, Type[BaseAugOp]] = {
 
 @with_production("stmt_input", "stmt ENDMARKER")
 def convert_stmt_input(config: ParserConfig, children: Sequence[Any]) -> Any:
-    (child, endmarker) = children
+    child, endmarker = children
     return child
 
 
@@ -359,7 +359,7 @@ def convert_pass_stmt(config: ParserConfig, children: Sequence[Any]) -> Any:
 
 @with_production("del_stmt", "'del' exprlist")
 def convert_del_stmt(config: ParserConfig, children: Sequence[Any]) -> Any:
-    (del_name, exprlist) = children
+    del_name, exprlist = children
     return WithLeadingWhitespace(
         Del(
             target=exprlist.value,
@@ -393,7 +393,7 @@ def convert_return_stmt(config: ParserConfig, children: Sequence[Any]) -> Any:
             keyword.whitespace_before,
         )
     else:
-        (keyword, testlist) = children
+        keyword, testlist = children
         return WithLeadingWhitespace(
             Return(
                 value=testlist.value,
@@ -635,12 +635,12 @@ def convert_raise_stmt(config: ParserConfig, children: Sequence[Any]) -> Any:
         exc = None
         cause = None
     elif len(children) == 2:
-        (raise_token, test) = children
+        raise_token, test = children
         whitespace_after_raise = parse_simple_whitespace(config, test.whitespace_before)
         exc = test.value
         cause = None
     elif len(children) == 4:
-        (raise_token, test, from_token, source) = children
+        raise_token, test, from_token, source = children
         whitespace_after_raise = parse_simple_whitespace(config, test.whitespace_before)
         exc = test.value
         cause = From(
@@ -685,7 +685,7 @@ def _construct_nameitems(config: ParserConfig, names: Sequence[Any]) -> List[Nam
 
 @with_production("global_stmt", "'global' NAME (',' NAME)*")
 def convert_global_stmt(config: ParserConfig, children: Sequence[Any]) -> Any:
-    (global_token, *names) = children
+    global_token, *names = children
     return WithLeadingWhitespace(
         Global(
             names=tuple(_construct_nameitems(config, names)),
@@ -699,7 +699,7 @@ def convert_global_stmt(config: ParserConfig, children: Sequence[Any]) -> Any:
 
 @with_production("nonlocal_stmt", "'nonlocal' NAME (',' NAME)*")
 def convert_nonlocal_stmt(config: ParserConfig, children: Sequence[Any]) -> Any:
-    (nonlocal_token, *names) = children
+    nonlocal_token, *names = children
     return WithLeadingWhitespace(
         Nonlocal(
             names=tuple(_construct_nameitems(config, names)),
@@ -714,7 +714,7 @@ def convert_nonlocal_stmt(config: ParserConfig, children: Sequence[Any]) -> Any:
 @with_production("assert_stmt", "'assert' test [',' test]")
 def convert_assert_stmt(config: ParserConfig, children: Sequence[Any]) -> Any:
     if len(children) == 2:
-        (assert_token, test) = children
+        assert_token, test = children
         assert_node = Assert(
             whitespace_after_assert=parse_simple_whitespace(
                 config, test.whitespace_before
@@ -723,7 +723,7 @@ def convert_assert_stmt(config: ParserConfig, children: Sequence[Any]) -> Any:
             msg=None,
         )
     else:
-        (assert_token, test, comma_token, msg) = children
+        assert_token, test, comma_token, msg = children
         assert_node = Assert(
             whitespace_after_assert=parse_simple_whitespace(
                 config, test.whitespace_before
@@ -814,7 +814,7 @@ def convert_while_stmt(config: ParserConfig, children: Sequence[Any]) -> Any:
     while_token, test, while_colon_token, while_suite, *else_block = children
 
     if len(else_block) > 0:
-        (else_token, else_colon_token, else_suite) = else_block
+        else_token, else_colon_token, else_suite = else_block
         orelse = Else(
             leading_lines=parse_empty_lines(config, else_token.whitespace_before),
             whitespace_before_colon=parse_simple_whitespace(
@@ -854,7 +854,7 @@ def convert_for_stmt(config: ParserConfig, children: Sequence[Any]) -> Any:
     ) = children
 
     if len(else_block) > 0:
-        (else_token, else_colon_token, else_suite) = else_block
+        else_token, else_colon_token, else_suite = else_block
         orelse = Else(
             leading_lines=parse_empty_lines(config, else_token.whitespace_before),
             whitespace_before_colon=parse_simple_whitespace(
@@ -958,14 +958,14 @@ def convert_except_clause(config: ParserConfig, children: Sequence[Any]) -> Any:
         test = None
         name = None
     elif len(children) == 2:
-        (except_token, test_node) = children
+        except_token, test_node = children
         whitespace_after_except = parse_simple_whitespace(
             config, except_token.whitespace_after
         )
         test = test_node.value
         name = None
     else:
-        (except_token, test_node, as_token, name_token) = children
+        except_token, test_node, as_token, name_token = children
         whitespace_after_except = parse_simple_whitespace(
             config, except_token.whitespace_after
         )
@@ -993,7 +993,7 @@ def convert_except_clause(config: ParserConfig, children: Sequence[Any]) -> Any:
 )
 @with_production("with_stmt", "'with' with_item ':' suite", version="<3.1")
 def convert_with_stmt(config: ParserConfig, children: Sequence[Any]) -> Any:
-    (with_token, *items, colon_token, suite) = children
+    with_token, *items, colon_token, suite = children
     item_nodes: List[WithItem] = []
 
     for with_item, maybe_comma in grouper(items, 2):
@@ -1031,7 +1031,7 @@ def convert_with_stmt(config: ParserConfig, children: Sequence[Any]) -> Any:
 @with_production("with_item", "test ['as' expr]")
 def convert_with_item(config: ParserConfig, children: Sequence[Any]) -> Any:
     if len(children) == 3:
-        (test, as_token, expr_node) = children
+        test, as_token, expr_node = children
         test_node = test.value
         asname = AsName(
             whitespace_before_as=parse_simple_whitespace(

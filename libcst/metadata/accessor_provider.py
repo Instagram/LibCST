@@ -7,7 +7,6 @@
 import dataclasses
 
 import libcst as cst
-
 from libcst.metadata.base_provider import VisitorMetadataProvider
 
 

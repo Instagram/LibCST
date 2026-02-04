@@ -18,29 +18,25 @@ class ExceptionsTest(UnitTest):
                 cst.ParserSyntaxError(
                     "some message", lines=["abcd"], raw_line=1, raw_column=0
                 ),
-                dedent(
-                    """
+                dedent("""
                     Syntax Error @ 1:1.
                     some message
 
                     abcd
                     ^
-                    """
-                ).strip(),
+                    """).strip(),
             ),
             "tab_expansion": (
                 cst.ParserSyntaxError(
                     "some message", lines=["\tabcd\r\n"], raw_line=1, raw_column=2
                 ),
-                dedent(
-                    """
+                dedent("""
                     Syntax Error @ 1:10.
                     some message
 
                             abcd
                              ^
-                    """
-                ).strip(),
+                    """).strip(),
             ),
             "shows_last_line_with_text": (
                 cst.ParserSyntaxError(
@@ -49,15 +45,13 @@ class ExceptionsTest(UnitTest):
                     raw_line=5,
                     raw_column=0,
                 ),
-                dedent(
-                    """
+                dedent("""
                     Syntax Error @ 5:1.
                     some message
 
                     efgh
                         ^
-                    """
-                ).strip(),
+                    """).strip(),
             ),
             "empty_file": (
                 cst.ParserSyntaxError(
