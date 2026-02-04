@@ -14,9 +14,7 @@ class TestFixPyreDirectivesCommand(CodemodTest):
         """
         Tests that a pyre-strict inside the module header doesn't get touched.
         """
-        after = (
-            before
-        ) = """
+        after = before = """
             # pyre-strict
             from typing import List
 
@@ -29,9 +27,7 @@ class TestFixPyreDirectivesCommand(CodemodTest):
         """
         Tests that a pyre-strict inside the module header doesn't get touched.
         """
-        after = (
-            before
-        ) = """
+        after = before = """
             # This is some header comment.
             #
             # pyre-strict
@@ -46,9 +42,7 @@ class TestFixPyreDirectivesCommand(CodemodTest):
         """
         Tests that a pyre-strict inside the module header doesn't get touched.
         """
-        after = (
-            before
-        ) = """
+        after = before = """
             # pyre-strict
             #
             # This is some header comment.

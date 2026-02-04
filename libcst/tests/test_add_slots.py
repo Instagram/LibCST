@@ -8,7 +8,6 @@ from dataclasses import dataclass
 from typing import ClassVar
 
 from libcst._add_slots import add_slots
-
 from libcst.testing.utils import UnitTest
 
 

@@ -11,7 +11,6 @@ from collections.abc import Sequence
 from libcst import CSTNode
 from libcst.helpers import filter_node_fields
 
-
 _syntax_style = ', color="#777777", fillcolor="#eeeeee"'
 _value_style = ', color="#3e99ed", fillcolor="#b8d9f8"'
 
@@ -145,8 +144,7 @@ def dump_graphviz(
     ``show_defaults``.
     """
 
-    graphviz_settings = textwrap.dedent(
-        r"""
+    graphviz_settings = textwrap.dedent(r"""
         layout=dot;
         rankdir=TB;
         splines=line;
@@ -170,10 +168,7 @@ def dump_graphviz(
             fontsize=12,
             penwidth=2,
         ];
-        """[
-            1:
-        ]
-    )
+        """[1:])
 
     return "\n".join(
         ["digraph {", graphviz_settings]

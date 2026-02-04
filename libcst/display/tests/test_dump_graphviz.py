@@ -19,16 +19,12 @@ if TYPE_CHECKING:
 class CSTDumpGraphvizTest(UnitTest):
     """Check dump_graphviz contains CST nodes."""
 
-    source_code: str = dedent(
-        r"""
+    source_code: str = dedent(r"""
         def foo(a: str) -> None:
             pass ;
             pass
             return
-        """[
-            1:
-        ]
-    )
+        """[1:])
     cst: Module
 
     @classmethod

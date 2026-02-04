@@ -146,8 +146,7 @@ class CSTNodeTest(UnitTest):
                     ),
                 )
             ),
-            dedent(
-                """
+            dedent("""
                 SimpleStatementLine(
                     body=[
                         Pass(
@@ -188,8 +187,7 @@ class CSTNodeTest(UnitTest):
                         ),
                     ),
                 )
-                """
-            ).strip(),
+                """).strip(),
         )
 
     def test_visit(self) -> None:

@@ -10,7 +10,6 @@ from typing import Literal, Optional, Sequence, Union
 
 import libcst as cst
 from libcst.matchers._decorators import call_if_inside, call_if_not_inside, leave, visit
-
 from libcst.matchers._matcher_base import (
     AbstractBaseMatcherNodeMeta,
     AllOf,
@@ -6218,13 +6217,13 @@ class If(BaseCompoundStatement, BaseStatement, BaseMatcherNode):
 
 @dataclass(frozen=True, eq=False, unsafe_hash=False)
 class IfExp(BaseExpression, BaseMatcherNode):
-    test: Union[
+    body: Union[
         BaseExpressionMatchType,
         DoNotCareSentinel,
         OneOf[BaseExpressionMatchType],
         AllOf[BaseExpressionMatchType],
     ] = DoNotCare()
-    body: Union[
+    test: Union[
         BaseExpressionMatchType,
         DoNotCareSentinel,
         OneOf[BaseExpressionMatchType],
