@@ -39,7 +39,7 @@ jobs:
         run: echo CIBW_ENABLE=cpython-prerelease >> $GITHUB_ENV
       - name: Build wheels
         uses: pypa/cibuildwheel@v3.2.1
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           path: wheelhouse/*.whl
           name: wheels-${{matrix.os}}
