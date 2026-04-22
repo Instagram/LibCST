@@ -112,7 +112,6 @@ skip = [
     "*-musllinux_s390x",
     "*-musllinux_armv7l",
 ]
-enable = ["cpython-freethreading"]
 test-command = [
     "python --version",
     "python -m libcst.tool list",
