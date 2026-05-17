@@ -7,7 +7,9 @@ import inspect
 import re
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Literal, Optional, Pattern, Sequence, Union
+from typing import TYPE_CHECKING, Literal, Optional, Pattern, Sequence, Union
+
+from typing_extensions import Self
 
 from libcst import CSTLogicError
 
@@ -1134,6 +1136,20 @@ class TryStar(BaseCompoundStatement):
                 finalbody._codegen(state)
 
 
+if TYPE_CHECKING:
+    @add_slots
+    @dataclass(frozen=True)
+    class ImportAttribute(Attribute):
+        """An :class:`Attribute` narrowed to import module paths.
+
+        ``value`` is restricted to :class:`Name` or :class:`ImportAttribute`.
+        """
+
+        value: Union[Name, Self]
+
+else:
+    ImportAttribute = Attribute
+
 @add_slots
 @dataclass(frozen=True)
 class ImportAlias(CSTNode):
@@ -1143,7 +1159,7 @@ class ImportAlias(CSTNode):
     """
 
     #: Name or Attribute node representing the object we are importing.
-    name: Union[Attribute, Name]
+    name: Union[ImportAttribute, Name]
 
     #: Local alias we will import the above object as.
     asname: Optional[AsName] = None
@@ -1286,7 +1302,7 @@ class ImportFrom(BaseSmallStatement):
 
     #: Name or Attribute node representing the module we're importing from.
     #: This is optional as :class:`ImportFrom` allows purely relative imports.
-    module: Optional[Union[Attribute, Name]]
+    module: Optional[Union[ImportAttribute, Name]]
 
     #: One or more names that are being imported from the specified module,
     #: with optional local aliases.
