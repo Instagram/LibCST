@@ -206,6 +206,59 @@ class TestApplyAnnotationsVisitor(CodemodTest):
 
     @data_provider(
         {
+            "global": (
+                """
+                bar: int = ...
+                """,
+                """
+                bar: str = foo()
+                """,
+                """
+                bar: int = foo()
+                """,
+            ),
+            "class_attribute": (
+                """
+                class X:
+                    x: int
+                """,
+                """
+                class X:
+                    x: str
+                """,
+                """
+                class X:
+                    x: int
+                """,
+            ),
+            "class_attribute_with_value": (
+                """
+                class X:
+                    x: int
+                """,
+                """
+                class X:
+                    x: str = "value"
+                """,
+                """
+                class X:
+                    x: int = "value"
+                """,
+            ),
+        }
+    )
+    def test_overwrite_existing_attribute_annotations(
+        self, stub: str, before: str, after: str
+    ) -> None:
+        self.run_test_case_with_flags(
+            stub=stub,
+            before=before,
+            after=after,
+            overwrite_existing_annotations=True,
+        )
+
+    @data_provider(
+        {
             "basic_return": (
                 """
                 def foo() -> int: ...

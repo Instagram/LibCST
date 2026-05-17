@@ -911,6 +911,16 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
             value,
         )
 
+    def _replace_annotation_on_attribute_or_global(
+        self,
+        annotation: cst.Annotation,
+    ) -> cst.Annotation:
+        if len(self.qualifier) == 0:
+            self.annotation_counts.global_annotations += 1
+        else:
+            self.annotation_counts.attribute_annotations += 1
+        return self._quote_future_annotations(annotation)
+
     def _apply_annotation_to_parameter(
         self,
         parameter: cst.Param,
@@ -967,8 +977,7 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
                             annotation=annotation,
                             value=node.value,
                         )
-                else:
-                    self.qualifier.pop()
+                self.qualifier.pop()
         return updated_node
 
     def _split_module(
@@ -1265,6 +1274,40 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
             return updated_node
         else:
             return self._annotate_single_target(original_node, updated_node)
+
+    def leave_AnnAssign(
+        self,
+        original_node: cst.AnnAssign,
+        updated_node: cst.AnnAssign,
+    ) -> cst.AnnAssign:
+        if not self.overwrite_existing_annotations:
+            return updated_node
+
+        target = original_node.target
+
+        if isinstance(target, (cst.Attribute, cst.Subscript)):
+            return updated_node
+
+        name = get_full_name_for_node(target)
+
+        if name is None:
+            return updated_node
+
+        self.qualifier.append(name)
+        qualifier_name = self._qualifier_name()
+        self.qualifier.pop()
+
+        if (
+            qualifier_name not in self.annotations.attributes
+            or qualifier_name in self.already_annotated
+        ):
+            return updated_node
+
+        self.already_annotated.add(qualifier_name)
+        annotation = self.annotations.attributes[qualifier_name]
+        return updated_node.with_changes(
+            annotation=self._replace_annotation_on_attribute_or_global(annotation)
+        )
 
     def leave_ImportFrom(
         self,
