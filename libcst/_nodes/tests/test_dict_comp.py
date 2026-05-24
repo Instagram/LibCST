@@ -167,3 +167,101 @@ class DictCompTest(CSTNodeTest):
     )
     def test_invalid(self, **kwargs: Any) -> None:
         self.assert_invalid(**kwargs)
+
+
+class StarredDictCompTest(CSTNodeTest):
+    @data_provider(
+        [
+            # simple StarredDictComp
+            {
+                "node": cst.StarredDictComp(
+                    cst.Name("d"),
+                    cst.CompFor(target=cst.Name("d"), iter=cst.Name("dicts")),
+                ),
+                "code": "{**d for d in dicts}",
+                "parser": parse_expression,
+                "expected_position": CodeRange((1, 0), (1, 20)),
+            },
+            # whitespace before value
+            {
+                "node": cst.StarredDictComp(
+                    cst.Name("d"),
+                    cst.CompFor(target=cst.Name("d"), iter=cst.Name("dicts")),
+                    whitespace_before_value=cst.SimpleWhitespace(" "),
+                ),
+                "code": "{** d for d in dicts}",
+                "parser": parse_expression,
+                "expected_position": CodeRange((1, 0), (1, 21)),
+            },
+            # with if clause
+            {
+                "node": cst.StarredDictComp(
+                    cst.Name("d"),
+                    cst.CompFor(
+                        target=cst.Name("d"),
+                        iter=cst.Name("dicts"),
+                        ifs=[cst.CompIf(cst.Name("d"))],
+                    ),
+                ),
+                "code": "{**d for d in dicts if d}",
+                "parser": parse_expression,
+                "expected_position": CodeRange((1, 0), (1, 25)),
+            },
+            # parenthesized
+            {
+                "node": cst.StarredDictComp(
+                    cst.Name("d"),
+                    cst.CompFor(target=cst.Name("d"), iter=cst.Name("dicts")),
+                    lpar=[cst.LeftParen()],
+                    rpar=[cst.RightParen()],
+                ),
+                "code": "({**d for d in dicts})",
+                "parser": parse_expression,
+                "expected_position": CodeRange((1, 1), (1, 21)),
+            },
+            # value safe to use without space before for
+            {
+                "node": cst.StarredDictComp(
+                    cst.Name("d", lpar=[cst.LeftParen()], rpar=[cst.RightParen()]),
+                    cst.CompFor(
+                        target=cst.Name("d"),
+                        iter=cst.Name("dicts"),
+                        whitespace_before=cst.SimpleWhitespace(""),
+                    ),
+                ),
+                "code": "{**(d)for d in dicts}",
+                "parser": parse_expression,
+                "expected_position": CodeRange((1, 0), (1, 21)),
+            },
+        ]
+    )
+    def test_valid(self, **kwargs: Any) -> None:
+        self.validate_node(**kwargs)
+
+    @data_provider(
+        [
+            # unbalanced parens
+            {
+                "get_node": lambda: cst.StarredDictComp(
+                    cst.Name("d"),
+                    cst.CompFor(target=cst.Name("d"), iter=cst.Name("dicts")),
+                    lpar=[cst.LeftParen()],
+                ),
+                "expected_re": "left paren without right paren",
+            },
+            # no space before `for` keyword
+            {
+                "get_node": lambda: cst.StarredDictComp(
+                    cst.Name("d"),
+                    cst.CompFor(
+                        target=cst.Name("d"),
+                        iter=cst.Name("dicts"),
+                        whitespace_before=cst.SimpleWhitespace(""),
+                    ),
+                ),
+                "expected_re": "Must have at least one space before 'for' keyword.",
+            },
+        ]
+    )
+    def test_invalid(self, **kwargs: Any) -> None:
+        self.assert_invalid(**kwargs)

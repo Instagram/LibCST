@@ -753,3 +753,148 @@ class ImportFromParseTest(CSTNodeTest):
             ).body[0],
             **kwargs,
         )
+
+
+# ---------------------------------------------------------------------------
+# PEP 810 – lazy import tests
+# ---------------------------------------------------------------------------
+
+
+class LazyImportCreateTest(CSTNodeTest):
+    @data_provider(
+        (
+            # Simple lazy import
+            {
+                "node": cst.LazyImport(names=(cst.ImportAlias(cst.Name("json")),)),
+                "code": "lazy import json",
+                "parser": lambda code: ensure_type(
+                    parse_statement(code), cst.SimpleStatementLine
+                ).body[0],
+            },
+            # Multiple names
+            {
+                "node": cst.LazyImport(
+                    names=(
+                        cst.ImportAlias(
+                            cst.Name("os"),
+                            comma=cst.Comma(whitespace_after=cst.SimpleWhitespace(" ")),
+                        ),
+                        cst.ImportAlias(cst.Name("sys")),
+                    )
+                ),
+                "code": "lazy import os, sys",
+                "parser": lambda code: ensure_type(
+                    parse_statement(code), cst.SimpleStatementLine
+                ).body[0],
+            },
+            # With alias
+            {
+                "node": cst.LazyImport(
+                    names=(
+                        cst.ImportAlias(
+                            cst.Name("os"),
+                            asname=cst.AsName(cst.Name("operating_system")),
+                        ),
+                    )
+                ),
+                "code": "lazy import os as operating_system",
+                "parser": lambda code: ensure_type(
+                    parse_statement(code), cst.SimpleStatementLine
+                ).body[0],
+            },
+            # Extra whitespace is preserved
+            {
+                "node": cst.LazyImport(
+                    names=(cst.ImportAlias(cst.Name("os")),),
+                    whitespace_after_lazy=cst.SimpleWhitespace("  "),
+                    whitespace_after_import=cst.SimpleWhitespace("  "),
+                ),
+                "code": "lazy  import  os",
+                "parser": lambda code: ensure_type(
+                    parse_statement(code), cst.SimpleStatementLine
+                ).body[0],
+            },
+        )
+    )
+    def test_valid(self, **kwargs: Any) -> None:
+        self.validate_node(**kwargs)
+
+
+class LazyImportFromCreateTest(CSTNodeTest):
+    @data_provider(
+        (
+            # Simple lazy from-import
+            {
+                "node": cst.LazyImportFrom(
+                    module=cst.Attribute(cst.Name("pathlib"), cst.Name("Path")),
+                    names=(cst.ImportAlias(cst.Name("Path")),),
+                ),
+                "code": "lazy from pathlib.Path import Path",
+                "parser": lambda code: ensure_type(
+                    parse_statement(code), cst.SimpleStatementLine
+                ).body[0],
+            },
+            # Multiple names
+            {
+                "node": cst.LazyImportFrom(
+                    module=cst.Name("pathlib"),
+                    names=(
+                        cst.ImportAlias(
+                            cst.Name("Path"),
+                            comma=cst.Comma(whitespace_after=cst.SimpleWhitespace(" ")),
+                        ),
+                        cst.ImportAlias(cst.Name("PurePath")),
+                    ),
+                ),
+                "code": "lazy from pathlib import Path, PurePath",
+                "parser": lambda code: ensure_type(
+                    parse_statement(code), cst.SimpleStatementLine
+                ).body[0],
+            },
+            # Relative import
+            {
+                "node": cst.LazyImportFrom(
+                    module=None,
+                    names=(cst.ImportAlias(cst.Name("sibling")),),
+                    relative=(cst.Dot(),),
+                ),
+                "code": "lazy from . import sibling",
+                "parser": lambda code: ensure_type(
+                    parse_statement(code), cst.SimpleStatementLine
+                ).body[0],
+            },
+            # Double-relative import
+            {
+                "node": cst.LazyImportFrom(
+                    module=None,
+                    names=(cst.ImportAlias(cst.Name("parent")),),
+                    relative=(cst.Dot(), cst.Dot()),
+                ),
+                "code": "lazy from .. import parent",
+                "parser": lambda code: ensure_type(
+                    parse_statement(code), cst.SimpleStatementLine
+                ).body[0],
+            },
+            # Parenthesised names
+            {
+                "node": cst.LazyImportFrom(
+                    module=cst.Name("pathlib"),
+                    names=(
+                        cst.ImportAlias(
+                            cst.Name("Path"),
+                            comma=cst.Comma(whitespace_after=cst.SimpleWhitespace(" ")),
+                        ),
+                        cst.ImportAlias(cst.Name("PurePath")),
+                    ),
+                    lpar=cst.LeftParen(),
+                    rpar=cst.RightParen(),
+                ),
+                "code": "lazy from pathlib import (Path, PurePath)",
+                "parser": lambda code: ensure_type(
+                    parse_statement(code), cst.SimpleStatementLine
+                ).body[0],
+            },
+        )
+    )
+    def test_valid(self, **kwargs: Any) -> None:
+        self.validate_node(**kwargs)

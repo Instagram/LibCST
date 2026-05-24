@@ -462,6 +462,7 @@ pub enum Expression<'a> {
     ListComp(Box<ListComp<'a>>),
     SetComp(Box<SetComp<'a>>),
     DictComp(Box<DictComp<'a>>),
+    StarredDictComp(Box<StarredDictComp<'a>>),
     List(Box<List<'a>>),
     Set(Box<Set<'a>>),
     Dict(Box<Dict<'a>>),
@@ -1261,6 +1262,57 @@ impl<'a> Codegen<'a> for DictComp<'a> {
             self.whitespace_before_colon.codegen(state);
             state.add_token(":");
             self.whitespace_after_colon.codegen(state);
+            self.value.codegen(state);
+            self.for_in.codegen(state);
+            self.rbrace.codegen(state);
+        })
+    }
+}
+
+#[cst_node(ParenthesizedNode)]
+pub struct StarredDictComp<'a> {
+    pub value: Box<Expression<'a>>,
+    pub for_in: Box<CompFor<'a>>,
+    pub lbrace: LeftCurlyBrace<'a>,
+    pub rbrace: RightCurlyBrace<'a>,
+    pub lpar: Vec<LeftParen<'a>>,
+    pub rpar: Vec<RightParen<'a>>,
+    pub whitespace_before_value: ParenthesizableWhitespace<'a>,
+
+    pub(crate) doublestar_tok: TokenRef<'a>,
+}
+
+impl<'r, 'a> Inflate<'a> for DeflatedStarredDictComp<'r, 'a> {
+    type Inflated = StarredDictComp<'a>;
+    fn inflate(self, config: &Config<'a>) -> Result<Self::Inflated> {
+        let lpar = self.lpar.inflate(config)?;
+        let lbrace = self.lbrace.inflate(config)?;
+        let whitespace_before_value = parse_parenthesizable_whitespace(
+            config,
+            &mut (*self.doublestar_tok).whitespace_after.borrow_mut(),
+        )?;
+        let value = self.value.inflate(config)?;
+        let for_in = self.for_in.inflate(config)?;
+        let rbrace = self.rbrace.inflate(config)?;
+        let rpar = self.rpar.inflate(config)?;
+        Ok(Self::Inflated {
+            value,
+            for_in,
+            lbrace,
+            rbrace,
+            lpar,
+            rpar,
+            whitespace_before_value,
+        })
+    }
+}
+
+impl<'a> Codegen<'a> for StarredDictComp<'a> {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
+        self.parenthesize(state, |state| {
+            self.lbrace.codegen(state);
+            state.add_token("**");
+            self.whitespace_before_value.codegen(state);
             self.value.codegen(state);
             self.for_in.codegen(state);
             self.rbrace.codegen(state);

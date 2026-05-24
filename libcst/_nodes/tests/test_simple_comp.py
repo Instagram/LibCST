@@ -519,3 +519,53 @@ class SimpleCompTest(CSTNodeTest):
         self, get_node: Callable[[], cst.CSTNode], expected_re: str
     ) -> None:
         self.assert_invalid(get_node, expected_re)
+
+
+# ---------------------------------------------------------------------------
+# PEP 798 – unpacking in comprehensions
+# ---------------------------------------------------------------------------
+
+
+class UnpackCompTest(CSTNodeTest):
+    @data_provider(
+        [
+            # ListComp with starred element
+            {
+                "node": cst.ListComp(
+                    cst.StarredElement(cst.Name("L")),
+                    cst.CompFor(target=cst.Name("L"), iter=cst.Name("lists")),
+                ),
+                "code": "[*L for L in lists]",
+                "parser": parse_expression,
+            },
+            # SetComp with starred element
+            {
+                "node": cst.SetComp(
+                    cst.StarredElement(cst.Name("s")),
+                    cst.CompFor(target=cst.Name("s"), iter=cst.Name("sets")),
+                ),
+                "code": "{*s for s in sets}",
+                "parser": parse_expression,
+            },
+            # GeneratorExp with starred element
+            {
+                "node": cst.GeneratorExp(
+                    cst.StarredElement(cst.Name("L")),
+                    cst.CompFor(target=cst.Name("L"), iter=cst.Name("lists")),
+                ),
+                "code": "(*L for L in lists)",
+                "parser": parse_expression,
+            },
+            # ListComp: starred, round-trips via parser
+            {
+                "node": cst.ListComp(
+                    cst.StarredElement(cst.Name("x")),
+                    cst.CompFor(target=cst.Name("x"), iter=cst.Name("xs")),
+                ),
+                "code": "[*x for x in xs]",
+                "parser": parse_expression,
+            },
+        ]
+    )
+    def test_valid(self, **kwargs: Any) -> None:
+        self.validate_node(**kwargs)

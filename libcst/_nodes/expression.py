@@ -3475,8 +3475,8 @@ class Set(BaseSet):
 
 class BaseDict(_BaseSetOrDict, ABC):
     """
-    An abstract base class for :class:`Dict` and :class:`DictComp`, which both result in
-    a dict object when evaluated.
+    An abstract base class for :class:`Dict`, :class:`DictComp`, and
+    :class:`StarredDictComp`, which all result in a dict object when evaluated.
     """
 
     __slots__ = ()
@@ -3754,7 +3754,8 @@ class CompIf(CSTNode):
 class BaseComp(BaseExpression, ABC):
     """
     A base class for all comprehension and generator expressions, including
-    :class:`GeneratorExp`, :class:`ListComp`, :class:`SetComp`, and :class:`DictComp`.
+    :class:`GeneratorExp`, :class:`ListComp`, :class:`SetComp`, :class:`DictComp`,
+    and :class:`StarredDictComp`.
     """
 
     __slots__ = ()
@@ -4001,6 +4002,68 @@ class DictComp(BaseDict, BaseComp):
             self.whitespace_before_colon._codegen(state)
             state.add_token(":")
             self.whitespace_after_colon._codegen(state)
+            self.value._codegen(state)
+            self.for_in._codegen(state)
+
+
+@add_slots
+@dataclass(frozen=True)
+class StarredDictComp(BaseDict, BaseComp):
+    """
+    A dict comprehension that unpacks a mapping for each item, such as
+    ``{**d for d in dicts}``. Introduced in :pep:`798`.
+
+    The expression after ``**`` is stored in ``value``. All ``for ... in ...`` and
+    ``if ...`` clauses are stored as a recursive :class:`CompFor` in ``for_in``.
+    """
+
+    #: The expression being unpacked during each iteration (the ``d`` in ``**d``).
+    value: BaseExpression
+
+    #: The ``for ... in ... if ...`` clause after the element expression.
+    for_in: CompFor
+
+    lbrace: LeftCurlyBrace = LeftCurlyBrace.field()
+    #: Braces surrounding the comprehension.
+    rbrace: RightCurlyBrace = RightCurlyBrace.field()
+
+    lpar: Sequence[LeftParen] = ()
+    #: Sequence of parentheses for precedence grouping.
+    rpar: Sequence[RightParen] = ()
+
+    #: Whitespace between ``**`` and the value expression.
+    whitespace_before_value: BaseParenthesizableWhitespace = SimpleWhitespace.field("")
+
+    def _validate(self) -> None:
+        super(StarredDictComp, self)._validate()
+
+        for_in = self.for_in
+        if (
+            for_in.whitespace_before.empty
+            and not self.value._safe_to_use_with_word_operator(ExpressionPosition.LEFT)
+        ):
+            keyword = "async" if for_in.asynchronous else "for"
+            raise CSTValidationError(
+                f"Must have at least one space before '{keyword}' keyword."
+            )
+
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "StarredDictComp":
+        return StarredDictComp(
+            lpar=visit_sequence(self, "lpar", self.lpar, visitor),
+            lbrace=visit_required(self, "lbrace", self.lbrace, visitor),
+            whitespace_before_value=visit_required(
+                self, "whitespace_before_value", self.whitespace_before_value, visitor
+            ),
+            value=visit_required(self, "value", self.value, visitor),
+            for_in=visit_required(self, "for_in", self.for_in, visitor),
+            rbrace=visit_required(self, "rbrace", self.rbrace, visitor),
+            rpar=visit_sequence(self, "rpar", self.rpar, visitor),
+        )
+
+    def _codegen_impl(self, state: CodegenState) -> None:
+        with self._parenthesize(state), self._braceize(state):
+            state.add_token("**")
+            self.whitespace_before_value._codegen(state)
             self.value._codegen(state)
             self.for_in._codegen(state)
 

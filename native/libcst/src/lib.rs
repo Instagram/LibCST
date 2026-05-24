@@ -191,6 +191,63 @@ mod test {
         assert_eq!(11, bol_offset("hello\nhello", 3));
         assert_eq!(12, bol_offset("hello\nhello\nhello", 3));
     }
+    // ----- Python 3.15 syntax (PEP 810, PEP 798, unary + in match) -----
+
+    #[test]
+    fn test_match_unary_plus() {
+        for src in &[
+            "match x:\n    case +1: pass\n",
+            "match x:\n    case +42: pass\n",
+            "match x:\n    case +3.14: pass\n",
+            "match x:\n    case +1+2j: pass\n",
+            "match x:\n    case +1-2j: pass\n",
+        ] {
+            parse_module(src, None)
+                .unwrap_or_else(|e| panic!("failed to parse '{}': {}", src, e));
+        }
+    }
+
+    #[test]
+    fn test_unpack_comprehensions() {
+        for src in &[
+            "[*L for L in lists]\n",
+            "{*s for s in sets}\n",
+            "(*L for L in lists)\n",
+            "[*range(3) for _ in range(3)]\n",
+        ] {
+            parse_module(src, None)
+                .unwrap_or_else(|e| panic!("failed to parse '{}': {}", src, e));
+        }
+    }
+
+    #[test]
+    fn test_dict_unpack_comprehension() {
+        for src in &[
+            "{**d for d in dicts}\n",
+            "{**d for d in dicts if d}\n",
+            "{**d.items() for d in sources}\n",
+        ] {
+            parse_module(src, None)
+                .unwrap_or_else(|e| panic!("failed to parse '{}': {}", src, e));
+        }
+    }
+
+    #[test]
+    fn test_lazy_imports() {
+        for src in &[
+            "lazy import json\n",
+            "lazy import os, sys\n",
+            "lazy from pathlib import Path\n",
+            "lazy from pathlib import Path, PurePath\n",
+            "lazy from . import sibling\n",
+            "lazy from .. import parent\n",
+            "lazy from ..utils import helper\n",
+        ] {
+            parse_module(src, None)
+                .unwrap_or_else(|e| panic!("failed to parse '{}': {}", src, e));
+        }
+    }
+
     #[test]
     fn test_tstring_basic() {
         assert!(

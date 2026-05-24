@@ -134,11 +134,16 @@ parser! {
         rule simple_stmt() -> SmallStatement<'input, 'a>
             = assignment()
             / &lit("type") s: type_stmt() {SmallStatement::TypeAlias(s)}
-            / e:star_expressions() { SmallStatement::Expr(Expr { value: e, semicolon: None }) }
             / &lit("return") s:return_stmt() { SmallStatement::Return(s) }
             // this is expanded from the original grammar's import_stmt rule
             / &lit("import") i:import_name() { SmallStatement::Import(i) }
             / &lit("from") i:import_from() { SmallStatement::ImportFrom(i) }
+            // PEP 810: lazy imports (lazy is a soft keyword, tokenised as NAME).
+            // These lookaheads must precede star_expressions() so `lazy import …`
+            // is not consumed as an expression statement.
+            / &(lit("lazy") lit("import")) i:lazy_import_name() { SmallStatement::LazyImport(i) }
+            / &(lit("lazy") lit("from")) i:lazy_import_from() { SmallStatement::LazyImportFrom(i) }
+            / e:star_expressions() { SmallStatement::Expr(Expr { value: e, semicolon: None }) }
             / &lit("raise") r:raise_stmt() { SmallStatement::Raise(r) }
             / lit("pass") { SmallStatement::Pass(Pass { semicolon: None }) }
             / &lit("del") s:del_stmt() { SmallStatement::Del(s) }
@@ -258,6 +263,22 @@ parser! {
             / from:lit("from") dots:dots()
                 import:lit("import") als:import_from_targets() {
                     make_import_from(from, dots, None, import, als)
+            }
+
+        // PEP 810: lazy import forms.  `lazy` is a soft keyword (NAME token).
+        rule lazy_import_name() -> LazyImport<'input, 'a>
+            = kw:lit("lazy") import:lit("import") names:dotted_as_names() {
+                make_lazy_import(kw, import, names)
+            }
+
+        rule lazy_import_from() -> LazyImportFrom<'input, 'a>
+            = kw:lit("lazy") from:lit("from") dots:dots()? m:dotted_name()
+                import:lit("import") als:import_from_targets() {
+                    make_lazy_import_from(kw, from, dots.unwrap_or_default(), Some(m), import, als)
+            }
+            / kw:lit("lazy") from:lit("from") dots:dots()
+                import:lit("import") als:import_from_targets() {
+                    make_lazy_import_from(kw, from, dots, None, import, als)
             }
 
         rule import_from_targets() -> ParenthesizedImportNames<'input, 'a>
@@ -675,10 +696,16 @@ parser! {
             / op:lit("-") n:tok(Number, "number") {?
                 make_unary_op(op, make_number(n)).map_err(|_| "signed number")
             }
+            / op:lit("+") n:tok(Number, "number") {?
+                make_unary_op(op, make_number(n)).map_err(|_| "signed number")
+            }
 
         rule signed_real_number() -> Expression<'input, 'a>
             = real_number()
             / op:lit("-") n:real_number() {?
+                make_unary_op(op, n).map_err(|_| "signed real number")
+            }
+            / op:lit("+") n:real_number() {?
                 make_unary_op(op, n).map_err(|_| "signed real number")
             }
 
@@ -1068,7 +1095,7 @@ parser! {
             / n:tok(Number, "NUMBER") { make_number(n) }
             / &lit("(") e:(tuple() / group() / (g:genexp() {Expression::GeneratorExp(Box::new(g))})) {e}
             / &lit("[") e:(list() / listcomp()) {e}
-            / &lit("{") e:(dict() / set() / dictcomp() / setcomp()) {e}
+            / &lit("{") e:(dict() / set() / starred_dictcomp() / dictcomp() / setcomp()) {e}
             / lit("...") { Expression::Ellipsis(Box::new(Ellipsis {lpar: vec![], rpar: vec![]}))}
 
         rule group() -> Expression<'input, 'a>
@@ -1243,13 +1270,22 @@ parser! {
                 make_comp_if(kw, cond)
             }
 
+        /// PEP 798: element of a list/set/generator comprehension.
+        /// Accepts `*expr` (starred unpacking) or a regular `named_expression`
+        /// (which includes walrus `:=`).
+        rule star_or_named_expression() -> Expression<'input, 'a>
+            = star:lit("*") e:bitwise_or() {
+                Expression::StarredElement(Box::new(make_starred_element(star, expr_to_element(e))))
+            }
+            / named_expression()
+
         rule listcomp() -> Expression<'input, 'a>
-            = lbrak:lbrak() elt:named_expression() comp:for_if_clauses() rbrak:rbrak() {
+            = lbrak:lbrak() elt:star_or_named_expression() comp:for_if_clauses() rbrak:rbrak() {
                 Expression::ListComp(Box::new(make_list_comp(lbrak, elt, comp, rbrak)))
             }
 
         rule setcomp() -> Expression<'input, 'a>
-            = l:lbrace() elt:named_expression() comp:for_if_clauses() r:rbrace() {
+            = l:lbrace() elt:star_or_named_expression() comp:for_if_clauses() r:rbrace() {
                 Expression::SetComp(Box::new(make_set_comp(l, elt, comp, r)))
             }
 
@@ -1259,13 +1295,18 @@ parser! {
             }
 
         rule _bare_genexp() -> GeneratorExp<'input, 'a>
-            = elt:named_expression() comp:for_if_clauses() {
+            = elt:star_or_named_expression() comp:for_if_clauses() {
                 make_bare_genexp(elt, comp)
             }
 
         rule dictcomp() -> Expression<'input, 'a>
             = lbrace:lbrace() elt:kvpair() comp:for_if_clauses() rbrace:rbrace() {
                 Expression::DictComp(Box::new(make_dict_comp(lbrace, elt, comp, rbrace)))
+            }
+
+        rule starred_dictcomp() -> Expression<'input, 'a>
+            = lbrace:lbrace() s:lit("**") val:bitwise_or() comp:for_if_clauses() rbrace:rbrace() {
+                Expression::StarredDictComp(Box::new(make_starred_dict_comp(lbrace, s, val, comp, rbrace)))
             }
 
         // Function call arguments
@@ -2032,6 +2073,41 @@ fn make_import<'input, 'a>(
     }
 }
 
+fn make_lazy_import<'input, 'a>(
+    lazy_tok: TokenRef<'input, 'a>,
+    import_tok: TokenRef<'input, 'a>,
+    names: Vec<ImportAlias<'input, 'a>>,
+) -> LazyImport<'input, 'a> {
+    LazyImport {
+        names,
+        semicolon: None,
+        lazy_tok,
+        import_tok,
+    }
+}
+
+fn make_lazy_import_from<'input, 'a>(
+    lazy_tok: TokenRef<'input, 'a>,
+    from_tok: TokenRef<'input, 'a>,
+    dots: Vec<Dot<'input, 'a>>,
+    module: Option<NameOrAttribute<'input, 'a>>,
+    import_tok: TokenRef<'input, 'a>,
+    aliases: ParenthesizedImportNames<'input, 'a>,
+) -> LazyImportFrom<'input, 'a> {
+    let (lpar, names, rpar) = aliases;
+    LazyImportFrom {
+        module,
+        names,
+        relative: dots,
+        lpar,
+        rpar,
+        semicolon: None,
+        lazy_tok,
+        from_tok,
+        import_tok,
+    }
+}
+
 fn make_import_from_as_names<'input, 'a>(
     first: ImportAlias<'input, 'a>,
     tail: Vec<(Comma<'input, 'a>, ImportAlias<'input, 'a>)>,
@@ -2409,6 +2485,24 @@ fn make_dict_comp<'input, 'a>(
         lpar: vec![],
         rpar: vec![],
         colon_tok,
+    }
+}
+
+fn make_starred_dict_comp<'input, 'a>(
+    lbrace: LeftCurlyBrace<'input, 'a>,
+    doublestar_tok: TokenRef<'input, 'a>,
+    value: Expression<'input, 'a>,
+    for_in: CompFor<'input, 'a>,
+    rbrace: RightCurlyBrace<'input, 'a>,
+) -> StarredDictComp<'input, 'a> {
+    StarredDictComp {
+        value: Box::new(value),
+        for_in: Box::new(for_in),
+        lbrace,
+        rbrace,
+        lpar: vec![],
+        rpar: vec![],
+        doublestar_tok,
     }
 }
 

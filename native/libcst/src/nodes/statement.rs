@@ -297,6 +297,8 @@ pub enum SmallStatement<'a> {
     Assert(Assert<'a>),
     Import(Import<'a>),
     ImportFrom(ImportFrom<'a>),
+    LazyImport(LazyImport<'a>),
+    LazyImportFrom(LazyImportFrom<'a>),
     Assign(Assign<'a>),
     AnnAssign(AnnAssign<'a>),
     Raise(Raise<'a>),
@@ -316,6 +318,8 @@ impl<'r, 'a> DeflatedSmallStatement<'r, 'a> {
             Self::Expr(p) => Self::Expr(p.with_semicolon(semicolon)),
             Self::Import(i) => Self::Import(i.with_semicolon(semicolon)),
             Self::ImportFrom(i) => Self::ImportFrom(i.with_semicolon(semicolon)),
+            Self::LazyImport(i) => Self::LazyImport(i.with_semicolon(semicolon)),
+            Self::LazyImportFrom(i) => Self::LazyImportFrom(i.with_semicolon(semicolon)),
             Self::Assign(a) => Self::Assign(a.with_semicolon(semicolon)),
             Self::AnnAssign(a) => Self::AnnAssign(a.with_semicolon(semicolon)),
             Self::Return(r) => Self::Return(r.with_semicolon(semicolon)),
@@ -687,6 +691,165 @@ fn inflate_dots<'r, 'a>(
 }
 
 impl<'r, 'a> DeflatedImportFrom<'r, 'a> {
+    pub fn with_semicolon(self, semicolon: Option<DeflatedSemicolon<'r, 'a>>) -> Self {
+        Self { semicolon, ..self }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// PEP 810 – lazy import statements
+// ---------------------------------------------------------------------------
+
+/// A ``lazy import x`` statement (PEP 810).
+#[cst_node]
+pub struct LazyImport<'a> {
+    pub names: Vec<ImportAlias<'a>>,
+    pub semicolon: Option<Semicolon<'a>>,
+    pub whitespace_after_lazy: SimpleWhitespace<'a>,
+    pub whitespace_after_import: SimpleWhitespace<'a>,
+
+    pub(crate) lazy_tok: TokenRef<'a>,
+    pub(crate) import_tok: TokenRef<'a>,
+}
+
+impl<'a> Codegen<'a> for LazyImport<'a> {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
+        state.add_token("lazy");
+        self.whitespace_after_lazy.codegen(state);
+        state.add_token("import");
+        self.whitespace_after_import.codegen(state);
+        for (i, name) in self.names.iter().enumerate() {
+            name.codegen(state);
+            if name.comma.is_none() && i < self.names.len() - 1 {
+                state.add_token(", ");
+            }
+        }
+        if let Some(semi) = &self.semicolon {
+            semi.codegen(state);
+        }
+    }
+}
+
+impl<'r, 'a> Inflate<'a> for DeflatedLazyImport<'r, 'a> {
+    type Inflated = LazyImport<'a>;
+    fn inflate(self, config: &Config<'a>) -> Result<Self::Inflated> {
+        let whitespace_after_lazy =
+            parse_simple_whitespace(config, &mut (*self.lazy_tok).whitespace_after.borrow_mut())?;
+        let whitespace_after_import =
+            parse_simple_whitespace(config, &mut (*self.import_tok).whitespace_after.borrow_mut())?;
+        let names = self.names.inflate(config)?;
+        let semicolon = self.semicolon.inflate(config)?;
+        Ok(Self::Inflated {
+            names,
+            semicolon,
+            whitespace_after_lazy,
+            whitespace_after_import,
+        })
+    }
+}
+
+impl<'r, 'a> DeflatedLazyImport<'r, 'a> {
+    pub fn with_semicolon(self, semicolon: Option<DeflatedSemicolon<'r, 'a>>) -> Self {
+        Self { semicolon, ..self }
+    }
+}
+
+/// A ``lazy from x import y`` statement (PEP 810).
+#[cst_node]
+pub struct LazyImportFrom<'a> {
+    #[cfg_attr(feature = "py", no_py_default)]
+    pub module: Option<NameOrAttribute<'a>>,
+    pub names: ImportNames<'a>,
+    pub relative: Vec<Dot<'a>>,
+    pub lpar: Option<LeftParen<'a>>,
+    pub rpar: Option<RightParen<'a>>,
+    pub semicolon: Option<Semicolon<'a>>,
+    pub whitespace_after_lazy: SimpleWhitespace<'a>,
+    pub whitespace_after_from: SimpleWhitespace<'a>,
+    pub whitespace_before_import: SimpleWhitespace<'a>,
+    pub whitespace_after_import: SimpleWhitespace<'a>,
+
+    pub(crate) lazy_tok: TokenRef<'a>,
+    pub(crate) from_tok: TokenRef<'a>,
+    pub(crate) import_tok: TokenRef<'a>,
+}
+
+impl<'a> Codegen<'a> for LazyImportFrom<'a> {
+    fn codegen(&self, state: &mut CodegenState<'a>) {
+        state.add_token("lazy");
+        self.whitespace_after_lazy.codegen(state);
+        state.add_token("from");
+        self.whitespace_after_from.codegen(state);
+        for dot in &self.relative {
+            dot.codegen(state);
+        }
+        if let Some(module) = &self.module {
+            module.codegen(state);
+        }
+        self.whitespace_before_import.codegen(state);
+        state.add_token("import");
+        self.whitespace_after_import.codegen(state);
+        if let Some(lpar) = &self.lpar {
+            lpar.codegen(state);
+        }
+        self.names.codegen(state);
+        if let Some(rpar) = &self.rpar {
+            rpar.codegen(state);
+        }
+        if let Some(semi) = &self.semicolon {
+            semi.codegen(state);
+        }
+    }
+}
+
+impl<'r, 'a> Inflate<'a> for DeflatedLazyImportFrom<'r, 'a> {
+    type Inflated = LazyImportFrom<'a>;
+    fn inflate(self, config: &Config<'a>) -> Result<Self::Inflated> {
+        let whitespace_after_lazy =
+            parse_simple_whitespace(config, &mut (*self.lazy_tok).whitespace_after.borrow_mut())?;
+        let whitespace_after_from =
+            parse_simple_whitespace(config, &mut (*self.from_tok).whitespace_after.borrow_mut())?;
+        let module = self.module.inflate(config)?;
+        let whitespace_after_import = parse_simple_whitespace(
+            config,
+            &mut (*self.import_tok).whitespace_after.borrow_mut(),
+        )?;
+        let mut relative = inflate_dots(self.relative, config)?;
+        let mut whitespace_before_import = Default::default();
+        if !relative.is_empty() && module.is_none() {
+            if let Some(Dot {
+                whitespace_after: ParenthesizableWhitespace::SimpleWhitespace(dot_ws),
+                ..
+            }) = relative.last_mut()
+            {
+                swap(dot_ws, &mut whitespace_before_import);
+            }
+        } else {
+            whitespace_before_import = parse_simple_whitespace(
+                config,
+                &mut (*self.import_tok).whitespace_before.borrow_mut(),
+            )?;
+        }
+        let lpar = self.lpar.inflate(config)?;
+        let names = self.names.inflate(config)?;
+        let rpar = self.rpar.inflate(config)?;
+        let semicolon = self.semicolon.inflate(config)?;
+        Ok(Self::Inflated {
+            module,
+            names,
+            relative,
+            lpar,
+            rpar,
+            semicolon,
+            whitespace_after_lazy,
+            whitespace_after_from,
+            whitespace_before_import,
+            whitespace_after_import,
+        })
+    }
+}
+
+impl<'r, 'a> DeflatedLazyImportFrom<'r, 'a> {
     pub fn with_semicolon(self, semicolon: Option<DeflatedSemicolon<'r, 'a>>) -> Self {
         Self { semicolon, ..self }
     }

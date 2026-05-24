@@ -92,18 +92,6 @@ class ParseErrorsTest(UnitTest):
             ),
             # conversion functions raise these exceptions.
             # `_base_parser` is responsible for attaching location information.
-            "convert_nonterminal__dict_unpacking": (
-                lambda: cst.parse_expression("{**el for el in []}"),
-                dedent(
-                    """
-                    Syntax Error @ 1:19.
-                    dict unpacking cannot be used in dict comprehension
-
-                    {**el for el in []}
-                                      ^
-                    """
-                ).strip(),
-            ),
             "convert_nonterminal__arglist_non_default_after_default": (
                 lambda: cst.parse_statement("def fn(first=None, second): ..."),
                 dedent(

@@ -1426,6 +1426,220 @@ class ImportFrom(BaseSmallStatement):
 
 @add_slots
 @dataclass(frozen=True)
+class LazyImport(BaseSmallStatement):
+    """
+    A ``lazy import x`` statement (PEP 810).
+
+    Lazy imports defer loading of the imported module until first use.
+    ``lazy`` is a soft keyword that is only special immediately before
+    ``import`` or ``from``.
+    """
+
+    #: One or more names that are being imported lazily, with optional local aliases.
+    names: Sequence[ImportAlias]
+
+    #: Optional semicolon when this is used in a statement line.
+    semicolon: Union[Semicolon, MaybeSentinel] = MaybeSentinel.DEFAULT
+
+    #: The whitespace between ``lazy`` and ``import``.
+    whitespace_after_lazy: SimpleWhitespace = SimpleWhitespace.field(" ")
+
+    #: The whitespace after ``import`` and before the first alias.
+    whitespace_after_import: SimpleWhitespace = SimpleWhitespace.field(" ")
+
+    def _validate(self) -> None:
+        if len(self.names) == 0:
+            raise CSTValidationError("A LazyImport must have at least one ImportAlias")
+        if isinstance(self.names[-1].comma, Comma):
+            raise CSTValidationError("A LazyImport does not allow a trailing comma")
+        if self.whitespace_after_lazy.empty:
+            raise CSTValidationError("Must have at least one space after lazy.")
+        if self.whitespace_after_import.empty:
+            raise CSTValidationError("Must have at least one space after import.")
+
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "LazyImport":
+        return LazyImport(
+            whitespace_after_lazy=visit_required(
+                self, "whitespace_after_lazy", self.whitespace_after_lazy, visitor
+            ),
+            whitespace_after_import=visit_required(
+                self, "whitespace_after_import", self.whitespace_after_import, visitor
+            ),
+            names=visit_sequence(self, "names", self.names, visitor),
+            semicolon=visit_sentinel(self, "semicolon", self.semicolon, visitor),
+        )
+
+    def _codegen_impl(
+        self, state: CodegenState, default_semicolon: bool = False
+    ) -> None:
+        with state.record_syntactic_position(self):
+            state.add_token("lazy")
+            self.whitespace_after_lazy._codegen(state)
+            state.add_token("import")
+            self.whitespace_after_import._codegen(state)
+            lastname = len(self.names) - 1
+            for i, name in enumerate(self.names):
+                name._codegen(state, default_comma=(i != lastname))
+
+        semicolon = self.semicolon
+        if isinstance(semicolon, MaybeSentinel):
+            if default_semicolon:
+                state.add_token("; ")
+        elif isinstance(semicolon, Semicolon):
+            semicolon._codegen(state)
+
+
+@add_slots
+@dataclass(frozen=True)
+class LazyImportFrom(BaseSmallStatement):
+    """
+    A ``lazy from x import y`` statement (PEP 810).
+
+    Lazy imports defer loading of the imported names until first use.
+    ``lazy`` is a soft keyword that is only special immediately before ``from``.
+    """
+
+    #: Name or Attribute node representing the module we're importing from.
+    module: Optional[Union[Attribute, Name]]
+
+    #: One or more names being imported lazily.
+    names: Union[Sequence[ImportAlias], ImportStar]
+
+    #: Sequence of :class:`Dot` nodes indicating relative import level.
+    relative: Sequence[Dot] = ()
+
+    #: Optional open parenthesis for multi-line import continuation.
+    lpar: Optional[LeftParen] = None
+
+    #: Optional close parenthesis for multi-line import continuation.
+    rpar: Optional[RightParen] = None
+
+    #: Optional semicolon when this is used in a statement line.
+    semicolon: Union[Semicolon, MaybeSentinel] = MaybeSentinel.DEFAULT
+
+    #: The whitespace between ``lazy`` and ``from``.
+    whitespace_after_lazy: SimpleWhitespace = SimpleWhitespace.field(" ")
+
+    #: The whitespace after ``from`` and before the module / dots.
+    whitespace_after_from: SimpleWhitespace = SimpleWhitespace.field(" ")
+
+    #: The whitespace before ``import``.
+    whitespace_before_import: SimpleWhitespace = SimpleWhitespace.field(" ")
+
+    #: The whitespace after ``import`` and before the first name or left paren.
+    whitespace_after_import: SimpleWhitespace = SimpleWhitespace.field(" ")
+
+    def _validate_module(self) -> None:
+        if self.module is None and len(self.relative) == 0:
+            raise CSTValidationError(
+                "Must have a module specified if there is no relative import."
+            )
+
+    def _validate_names(self) -> None:
+        names = self.names
+        if isinstance(names, Sequence):
+            if len(names) == 0:
+                raise CSTValidationError(
+                    "A LazyImportFrom must have at least one ImportAlias"
+                )
+            for name in names[:-1]:
+                if name.comma is None:
+                    raise CSTValidationError("Non-final ImportAliases require a comma")
+            if self.lpar is not None and self.rpar is None:
+                raise CSTValidationError("Cannot have left paren without right paren.")
+            if self.lpar is None and self.rpar is not None:
+                raise CSTValidationError("Cannot have right paren without left paren.")
+
+    def _validate_whitespace(self) -> None:
+        if self.whitespace_after_lazy.empty:
+            raise CSTValidationError("Must have at least one space after lazy.")
+        if self.whitespace_after_from.empty and not self.relative:
+            raise CSTValidationError("Must have at least one space after from.")
+        if self.whitespace_before_import.empty and not (
+            self.relative and self.module is None
+        ):
+            raise CSTValidationError("Must have at least one space before import.")
+        if (
+            self.whitespace_after_import.empty
+            and self.lpar is None
+            and not isinstance(self.names, ImportStar)
+        ):
+            raise CSTValidationError("Must have at least one space after import.")
+
+    def _validate(self) -> None:
+        self._validate_module()
+        self._validate_names()
+        self._validate_whitespace()
+
+    def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "LazyImportFrom":
+        names = self.names
+        return LazyImportFrom(
+            whitespace_after_lazy=visit_required(
+                self, "whitespace_after_lazy", self.whitespace_after_lazy, visitor
+            ),
+            whitespace_after_from=visit_required(
+                self, "whitespace_after_from", self.whitespace_after_from, visitor
+            ),
+            relative=visit_sequence(self, "relative", self.relative, visitor),
+            module=visit_optional(self, "module", self.module, visitor),
+            whitespace_before_import=visit_required(
+                self, "whitespace_before_import", self.whitespace_before_import, visitor
+            ),
+            whitespace_after_import=visit_required(
+                self, "whitespace_after_import", self.whitespace_after_import, visitor
+            ),
+            lpar=visit_optional(self, "lpar", self.lpar, visitor),
+            names=(
+                visit_required(self, "names", names, visitor)
+                if isinstance(names, ImportStar)
+                else visit_sequence(self, "names", names, visitor)
+            ),
+            rpar=visit_optional(self, "rpar", self.rpar, visitor),
+            semicolon=visit_sentinel(self, "semicolon", self.semicolon, visitor),
+        )
+
+    def _codegen_impl(
+        self, state: CodegenState, default_semicolon: bool = False
+    ) -> None:
+        names = self.names
+        end_node = names[-1] if isinstance(names, Sequence) else names
+        end_node = end_node if self.rpar is None else self.rpar
+        with state.record_syntactic_position(self, end_node=end_node):
+            state.add_token("lazy")
+            self.whitespace_after_lazy._codegen(state)
+            state.add_token("from")
+            self.whitespace_after_from._codegen(state)
+            for dot in self.relative:
+                dot._codegen(state)
+            module = self.module
+            if module is not None:
+                module._codegen(state)
+            self.whitespace_before_import._codegen(state)
+            state.add_token("import")
+            self.whitespace_after_import._codegen(state)
+            lpar = self.lpar
+            if lpar is not None:
+                lpar._codegen(state)
+            if isinstance(names, Sequence):
+                lastname = len(names) - 1
+                for i, name in enumerate(names):
+                    name._codegen(state, default_comma=(i != lastname))
+            if isinstance(names, ImportStar):
+                names._codegen(state)
+            rpar = self.rpar
+            if rpar is not None:
+                rpar._codegen(state)
+
+        semicolon = self.semicolon
+        if isinstance(semicolon, MaybeSentinel):
+            if default_semicolon:
+                state.add_token("; ")
+        elif isinstance(semicolon, Semicolon):
+            semicolon._codegen(state)
+
+
+@add_slots
+@dataclass(frozen=True)
 class AssignTarget(CSTNode):
     """
     A target for an :class:`Assign`. Owns the equals sign and the whitespace around it.
