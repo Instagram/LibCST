@@ -44,7 +44,24 @@ class AutoConfig(Enum):
 
 
 # This list should be kept in sorted order.
-KNOWN_PYTHON_VERSION_STRINGS = ["3.0", "3.1", "3.3", "3.5", "3.6", "3.7", "3.8"]
+# Versions with no syntax changes relative to the prior version are omitted (e.g. 3.2, 3.4).
+# The native Rust parser supports all versions listed here through 3.15.
+KNOWN_PYTHON_VERSION_STRINGS = [
+    "3.0",
+    "3.1",
+    "3.3",
+    "3.5",
+    "3.6",
+    "3.7",
+    "3.8",
+    "3.9",
+    "3.10",
+    "3.11",
+    "3.12",
+    "3.13",
+    "3.14",
+    "3.15",
+]
 
 
 @add_slots
@@ -75,8 +92,8 @@ class PartialParserConfig:
     #: If unspecified, it will default to the syntax of the running interpreter
     #: (rounding down from among the following list).
     #:
-    #: Currently, only Python 3.0, 3.1, 3.3, 3.5, 3.6, 3.7 and 3.8 syntax is supported.
-    #: The gaps did not have any syntax changes from the version prior.
+    #: The native parser supports Python 3.0 through 3.15. Versions with no new syntax
+    #: relative to the prior version are omitted (e.g. 3.2, 3.4).
     python_version: Union[str, AutoConfig] = AutoConfig.token
 
     #: A named tuple with the ``major`` and ``minor`` Python version numbers. This is
