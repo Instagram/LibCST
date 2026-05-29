@@ -8,7 +8,7 @@ name = "libcst"
 version = "1.8.6"
 authors = ["LibCST Developers"]
 edition = "2018"
-rust-version = "1.70"
+rust-version = "1.83"
 description = "A Python parser and Concrete Syntax Tree library."
 license = "MIT AND (MIT AND PSF-2.0)"
 repository = "https://github.com/Instagram/LibCST"
@@ -36,7 +36,7 @@ trace = ["peg/trace"]
 
 [dependencies]
 paste = "1.0.15"
-pyo3 = { version = "0.26", optional = true }
+pyo3 = { version = "0.29", optional = true }
 thiserror = "2.0.12"
 peg = "0.8.5"
 annotate-snippets = "0.11.5"
