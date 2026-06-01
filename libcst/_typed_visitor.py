@@ -68,6 +68,7 @@ if TYPE_CHECKING:
         SetComp,
         SimpleString,
         Slice,
+        StarredDictComp,
         StarredDictElement,
         StarredElement,
         Subscript,
@@ -163,6 +164,8 @@ if TYPE_CHECKING:
         ImportAlias,
         ImportFrom,
         IndentedBlock,
+        LazyImport,
+        LazyImportFrom,
         Match,
         MatchAs,
         MatchCase,
@@ -2999,6 +3002,142 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_LazyImport(self, node: "LazyImport") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_LazyImport_names(self, node: "LazyImport") -> None:
+        pass
+
+    @mark_no_op
+    def leave_LazyImport_names(self, node: "LazyImport") -> None:
+        pass
+
+    @mark_no_op
+    def visit_LazyImport_semicolon(self, node: "LazyImport") -> None:
+        pass
+
+    @mark_no_op
+    def leave_LazyImport_semicolon(self, node: "LazyImport") -> None:
+        pass
+
+    @mark_no_op
+    def visit_LazyImport_whitespace_after_lazy(self, node: "LazyImport") -> None:
+        pass
+
+    @mark_no_op
+    def leave_LazyImport_whitespace_after_lazy(self, node: "LazyImport") -> None:
+        pass
+
+    @mark_no_op
+    def visit_LazyImport_whitespace_after_import(self, node: "LazyImport") -> None:
+        pass
+
+    @mark_no_op
+    def leave_LazyImport_whitespace_after_import(self, node: "LazyImport") -> None:
+        pass
+
+    @mark_no_op
+    def visit_LazyImportFrom(self, node: "LazyImportFrom") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_LazyImportFrom_module(self, node: "LazyImportFrom") -> None:
+        pass
+
+    @mark_no_op
+    def leave_LazyImportFrom_module(self, node: "LazyImportFrom") -> None:
+        pass
+
+    @mark_no_op
+    def visit_LazyImportFrom_names(self, node: "LazyImportFrom") -> None:
+        pass
+
+    @mark_no_op
+    def leave_LazyImportFrom_names(self, node: "LazyImportFrom") -> None:
+        pass
+
+    @mark_no_op
+    def visit_LazyImportFrom_relative(self, node: "LazyImportFrom") -> None:
+        pass
+
+    @mark_no_op
+    def leave_LazyImportFrom_relative(self, node: "LazyImportFrom") -> None:
+        pass
+
+    @mark_no_op
+    def visit_LazyImportFrom_lpar(self, node: "LazyImportFrom") -> None:
+        pass
+
+    @mark_no_op
+    def leave_LazyImportFrom_lpar(self, node: "LazyImportFrom") -> None:
+        pass
+
+    @mark_no_op
+    def visit_LazyImportFrom_rpar(self, node: "LazyImportFrom") -> None:
+        pass
+
+    @mark_no_op
+    def leave_LazyImportFrom_rpar(self, node: "LazyImportFrom") -> None:
+        pass
+
+    @mark_no_op
+    def visit_LazyImportFrom_semicolon(self, node: "LazyImportFrom") -> None:
+        pass
+
+    @mark_no_op
+    def leave_LazyImportFrom_semicolon(self, node: "LazyImportFrom") -> None:
+        pass
+
+    @mark_no_op
+    def visit_LazyImportFrom_whitespace_after_lazy(
+        self, node: "LazyImportFrom"
+    ) -> None:
+        pass
+
+    @mark_no_op
+    def leave_LazyImportFrom_whitespace_after_lazy(
+        self, node: "LazyImportFrom"
+    ) -> None:
+        pass
+
+    @mark_no_op
+    def visit_LazyImportFrom_whitespace_after_from(
+        self, node: "LazyImportFrom"
+    ) -> None:
+        pass
+
+    @mark_no_op
+    def leave_LazyImportFrom_whitespace_after_from(
+        self, node: "LazyImportFrom"
+    ) -> None:
+        pass
+
+    @mark_no_op
+    def visit_LazyImportFrom_whitespace_before_import(
+        self, node: "LazyImportFrom"
+    ) -> None:
+        pass
+
+    @mark_no_op
+    def leave_LazyImportFrom_whitespace_before_import(
+        self, node: "LazyImportFrom"
+    ) -> None:
+        pass
+
+    @mark_no_op
+    def visit_LazyImportFrom_whitespace_after_import(
+        self, node: "LazyImportFrom"
+    ) -> None:
+        pass
+
+    @mark_no_op
+    def leave_LazyImportFrom_whitespace_after_import(
+        self, node: "LazyImportFrom"
+    ) -> None:
+        pass
+
+    @mark_no_op
     def visit_LeftCurlyBrace(self, node: "LeftCurlyBrace") -> Optional[bool]:
         pass
 
@@ -4987,6 +5126,70 @@ class CSTTypedBaseFunctions:
         pass
 
     @mark_no_op
+    def visit_StarredDictComp(self, node: "StarredDictComp") -> Optional[bool]:
+        pass
+
+    @mark_no_op
+    def visit_StarredDictComp_value(self, node: "StarredDictComp") -> None:
+        pass
+
+    @mark_no_op
+    def leave_StarredDictComp_value(self, node: "StarredDictComp") -> None:
+        pass
+
+    @mark_no_op
+    def visit_StarredDictComp_for_in(self, node: "StarredDictComp") -> None:
+        pass
+
+    @mark_no_op
+    def leave_StarredDictComp_for_in(self, node: "StarredDictComp") -> None:
+        pass
+
+    @mark_no_op
+    def visit_StarredDictComp_lbrace(self, node: "StarredDictComp") -> None:
+        pass
+
+    @mark_no_op
+    def leave_StarredDictComp_lbrace(self, node: "StarredDictComp") -> None:
+        pass
+
+    @mark_no_op
+    def visit_StarredDictComp_rbrace(self, node: "StarredDictComp") -> None:
+        pass
+
+    @mark_no_op
+    def leave_StarredDictComp_rbrace(self, node: "StarredDictComp") -> None:
+        pass
+
+    @mark_no_op
+    def visit_StarredDictComp_lpar(self, node: "StarredDictComp") -> None:
+        pass
+
+    @mark_no_op
+    def leave_StarredDictComp_lpar(self, node: "StarredDictComp") -> None:
+        pass
+
+    @mark_no_op
+    def visit_StarredDictComp_rpar(self, node: "StarredDictComp") -> None:
+        pass
+
+    @mark_no_op
+    def leave_StarredDictComp_rpar(self, node: "StarredDictComp") -> None:
+        pass
+
+    @mark_no_op
+    def visit_StarredDictComp_whitespace_before_value(
+        self, node: "StarredDictComp"
+    ) -> None:
+        pass
+
+    @mark_no_op
+    def leave_StarredDictComp_whitespace_before_value(
+        self, node: "StarredDictComp"
+    ) -> None:
+        pass
+
+    @mark_no_op
     def visit_StarredDictElement(self, node: "StarredDictElement") -> Optional[bool]:
         pass
 
@@ -6226,6 +6429,14 @@ class CSTTypedVisitorFunctions(CSTTypedBaseFunctions):
         pass
 
     @mark_no_op
+    def leave_LazyImport(self, original_node: "LazyImport") -> None:
+        pass
+
+    @mark_no_op
+    def leave_LazyImportFrom(self, original_node: "LazyImportFrom") -> None:
+        pass
+
+    @mark_no_op
     def leave_LeftCurlyBrace(self, original_node: "LeftCurlyBrace") -> None:
         pass
 
@@ -6497,6 +6708,10 @@ class CSTTypedVisitorFunctions(CSTTypedBaseFunctions):
 
     @mark_no_op
     def leave_Slice(self, original_node: "Slice") -> None:
+        pass
+
+    @mark_no_op
+    def leave_StarredDictComp(self, original_node: "StarredDictComp") -> None:
         pass
 
     @mark_no_op
@@ -7095,6 +7310,22 @@ class CSTTypedTransformerFunctions(CSTTypedBaseFunctions):
         return updated_node
 
     @mark_no_op
+    def leave_LazyImport(
+        self, original_node: "LazyImport", updated_node: "LazyImport"
+    ) -> Union[
+        "BaseSmallStatement", FlattenSentinel["BaseSmallStatement"], RemovalSentinel
+    ]:
+        return updated_node
+
+    @mark_no_op
+    def leave_LazyImportFrom(
+        self, original_node: "LazyImportFrom", updated_node: "LazyImportFrom"
+    ) -> Union[
+        "BaseSmallStatement", FlattenSentinel["BaseSmallStatement"], RemovalSentinel
+    ]:
+        return updated_node
+
+    @mark_no_op
     def leave_LeftCurlyBrace(
         self, original_node: "LeftCurlyBrace", updated_node: "LeftCurlyBrace"
     ) -> "LeftCurlyBrace":
@@ -7514,6 +7745,12 @@ class CSTTypedTransformerFunctions(CSTTypedBaseFunctions):
 
     @mark_no_op
     def leave_Slice(self, original_node: "Slice", updated_node: "Slice") -> "BaseSlice":
+        return updated_node
+
+    @mark_no_op
+    def leave_StarredDictComp(
+        self, original_node: "StarredDictComp", updated_node: "StarredDictComp"
+    ) -> "BaseExpression":
         return updated_node
 
     @mark_no_op

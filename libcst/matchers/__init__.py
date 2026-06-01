@@ -7877,6 +7877,545 @@ class Lambda(BaseExpression, BaseMatcherNode):
 
 
 @dataclass(frozen=True, eq=False, unsafe_hash=False)
+class LazyImport(BaseSmallStatement, BaseMatcherNode):
+    names: Union[
+        Sequence[
+            Union[
+                ImportAliasMatchType,
+                DoNotCareSentinel,
+                OneOf[ImportAliasMatchType],
+                AllOf[ImportAliasMatchType],
+                AtLeastN[
+                    Union[
+                        ImportAliasMatchType,
+                        DoNotCareSentinel,
+                        OneOf[ImportAliasMatchType],
+                        AllOf[ImportAliasMatchType],
+                    ]
+                ],
+                AtMostN[
+                    Union[
+                        ImportAliasMatchType,
+                        DoNotCareSentinel,
+                        OneOf[ImportAliasMatchType],
+                        AllOf[ImportAliasMatchType],
+                    ]
+                ],
+            ]
+        ],
+        DoNotCareSentinel,
+        MatchIfTrue[Sequence[cst.ImportAlias]],
+        OneOf[
+            Union[
+                Sequence[
+                    Union[
+                        ImportAliasMatchType,
+                        OneOf[ImportAliasMatchType],
+                        AllOf[ImportAliasMatchType],
+                        AtLeastN[
+                            Union[
+                                ImportAliasMatchType,
+                                OneOf[ImportAliasMatchType],
+                                AllOf[ImportAliasMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                ImportAliasMatchType,
+                                OneOf[ImportAliasMatchType],
+                                AllOf[ImportAliasMatchType],
+                            ]
+                        ],
+                    ]
+                ],
+                MatchIfTrue[Sequence[cst.ImportAlias]],
+            ]
+        ],
+        AllOf[
+            Union[
+                Sequence[
+                    Union[
+                        ImportAliasMatchType,
+                        OneOf[ImportAliasMatchType],
+                        AllOf[ImportAliasMatchType],
+                        AtLeastN[
+                            Union[
+                                ImportAliasMatchType,
+                                OneOf[ImportAliasMatchType],
+                                AllOf[ImportAliasMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                ImportAliasMatchType,
+                                OneOf[ImportAliasMatchType],
+                                AllOf[ImportAliasMatchType],
+                            ]
+                        ],
+                    ]
+                ],
+                MatchIfTrue[Sequence[cst.ImportAlias]],
+            ]
+        ],
+    ] = DoNotCare()
+    semicolon: Union[
+        SemicolonMatchType,
+        DoNotCareSentinel,
+        OneOf[SemicolonMatchType],
+        AllOf[SemicolonMatchType],
+    ] = DoNotCare()
+    whitespace_after_lazy: Union[
+        SimpleWhitespaceMatchType,
+        DoNotCareSentinel,
+        OneOf[SimpleWhitespaceMatchType],
+        AllOf[SimpleWhitespaceMatchType],
+    ] = DoNotCare()
+    whitespace_after_import: Union[
+        SimpleWhitespaceMatchType,
+        DoNotCareSentinel,
+        OneOf[SimpleWhitespaceMatchType],
+        AllOf[SimpleWhitespaceMatchType],
+    ] = DoNotCare()
+    metadata: Union[
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
+    ] = DoNotCare()
+
+
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
+class LazyImportFrom(BaseSmallStatement, BaseMatcherNode):
+    module: Union[
+        AttributeOrNameOrNoneMatchType,
+        DoNotCareSentinel,
+        OneOf[AttributeOrNameOrNoneMatchType],
+        AllOf[AttributeOrNameOrNoneMatchType],
+    ] = DoNotCare()
+    names: Union[
+        Union[
+            Sequence[
+                Union[
+                    ImportAliasMatchType,
+                    DoNotCareSentinel,
+                    OneOf[ImportAliasMatchType],
+                    AllOf[ImportAliasMatchType],
+                    AtLeastN[
+                        Union[
+                            ImportAliasMatchType,
+                            DoNotCareSentinel,
+                            OneOf[ImportAliasMatchType],
+                            AllOf[ImportAliasMatchType],
+                        ]
+                    ],
+                    AtMostN[
+                        Union[
+                            ImportAliasMatchType,
+                            DoNotCareSentinel,
+                            OneOf[ImportAliasMatchType],
+                            AllOf[ImportAliasMatchType],
+                        ]
+                    ],
+                ]
+            ],
+            DoNotCareSentinel,
+            MatchIfTrue[Sequence[cst.ImportAlias]],
+            OneOf[
+                Union[
+                    Sequence[
+                        Union[
+                            ImportAliasMatchType,
+                            OneOf[ImportAliasMatchType],
+                            AllOf[ImportAliasMatchType],
+                            AtLeastN[
+                                Union[
+                                    ImportAliasMatchType,
+                                    OneOf[ImportAliasMatchType],
+                                    AllOf[ImportAliasMatchType],
+                                ]
+                            ],
+                            AtMostN[
+                                Union[
+                                    ImportAliasMatchType,
+                                    OneOf[ImportAliasMatchType],
+                                    AllOf[ImportAliasMatchType],
+                                ]
+                            ],
+                        ]
+                    ],
+                    MatchIfTrue[Sequence[cst.ImportAlias]],
+                ]
+            ],
+            AllOf[
+                Union[
+                    Sequence[
+                        Union[
+                            ImportAliasMatchType,
+                            OneOf[ImportAliasMatchType],
+                            AllOf[ImportAliasMatchType],
+                            AtLeastN[
+                                Union[
+                                    ImportAliasMatchType,
+                                    OneOf[ImportAliasMatchType],
+                                    AllOf[ImportAliasMatchType],
+                                ]
+                            ],
+                            AtMostN[
+                                Union[
+                                    ImportAliasMatchType,
+                                    OneOf[ImportAliasMatchType],
+                                    AllOf[ImportAliasMatchType],
+                                ]
+                            ],
+                        ]
+                    ],
+                    MatchIfTrue[Sequence[cst.ImportAlias]],
+                ]
+            ],
+        ],
+        "ImportStar",
+        MetadataMatchType,
+        MatchIfTrue[
+            Union[
+                Sequence[cst.ImportAlias],
+                cst.ImportStar,
+                OneOf[Union[Sequence[cst.ImportAlias], cst.ImportStar]],
+                AllOf[Union[Sequence[cst.ImportAlias], cst.ImportStar]],
+            ]
+        ],
+        DoNotCareSentinel,
+        OneOf[
+            Union[
+                Union[
+                    Sequence[
+                        Union[
+                            ImportAliasMatchType,
+                            OneOf[ImportAliasMatchType],
+                            AllOf[ImportAliasMatchType],
+                            AtLeastN[
+                                Union[
+                                    ImportAliasMatchType,
+                                    OneOf[ImportAliasMatchType],
+                                    AllOf[ImportAliasMatchType],
+                                ]
+                            ],
+                            AtMostN[
+                                Union[
+                                    ImportAliasMatchType,
+                                    OneOf[ImportAliasMatchType],
+                                    AllOf[ImportAliasMatchType],
+                                ]
+                            ],
+                        ]
+                    ],
+                    MatchIfTrue[Sequence[cst.ImportAlias]],
+                    OneOf[
+                        Union[
+                            Sequence[
+                                Union[
+                                    ImportAliasMatchType,
+                                    OneOf[ImportAliasMatchType],
+                                    AllOf[ImportAliasMatchType],
+                                    AtLeastN[
+                                        Union[
+                                            ImportAliasMatchType,
+                                            OneOf[ImportAliasMatchType],
+                                            AllOf[ImportAliasMatchType],
+                                        ]
+                                    ],
+                                    AtMostN[
+                                        Union[
+                                            ImportAliasMatchType,
+                                            OneOf[ImportAliasMatchType],
+                                            AllOf[ImportAliasMatchType],
+                                        ]
+                                    ],
+                                ]
+                            ],
+                            MatchIfTrue[Sequence[cst.ImportAlias]],
+                        ]
+                    ],
+                    AllOf[
+                        Union[
+                            Sequence[
+                                Union[
+                                    ImportAliasMatchType,
+                                    OneOf[ImportAliasMatchType],
+                                    AllOf[ImportAliasMatchType],
+                                    AtLeastN[
+                                        Union[
+                                            ImportAliasMatchType,
+                                            OneOf[ImportAliasMatchType],
+                                            AllOf[ImportAliasMatchType],
+                                        ]
+                                    ],
+                                    AtMostN[
+                                        Union[
+                                            ImportAliasMatchType,
+                                            OneOf[ImportAliasMatchType],
+                                            AllOf[ImportAliasMatchType],
+                                        ]
+                                    ],
+                                ]
+                            ],
+                            MatchIfTrue[Sequence[cst.ImportAlias]],
+                        ]
+                    ],
+                ],
+                "ImportStar",
+                MetadataMatchType,
+                MatchIfTrue[
+                    Union[
+                        Sequence[cst.ImportAlias],
+                        cst.ImportStar,
+                        OneOf[Union[Sequence[cst.ImportAlias], cst.ImportStar]],
+                        AllOf[Union[Sequence[cst.ImportAlias], cst.ImportStar]],
+                    ]
+                ],
+            ]
+        ],
+        AllOf[
+            Union[
+                Union[
+                    Sequence[
+                        Union[
+                            ImportAliasMatchType,
+                            OneOf[ImportAliasMatchType],
+                            AllOf[ImportAliasMatchType],
+                            AtLeastN[
+                                Union[
+                                    ImportAliasMatchType,
+                                    OneOf[ImportAliasMatchType],
+                                    AllOf[ImportAliasMatchType],
+                                ]
+                            ],
+                            AtMostN[
+                                Union[
+                                    ImportAliasMatchType,
+                                    OneOf[ImportAliasMatchType],
+                                    AllOf[ImportAliasMatchType],
+                                ]
+                            ],
+                        ]
+                    ],
+                    MatchIfTrue[Sequence[cst.ImportAlias]],
+                    OneOf[
+                        Union[
+                            Sequence[
+                                Union[
+                                    ImportAliasMatchType,
+                                    OneOf[ImportAliasMatchType],
+                                    AllOf[ImportAliasMatchType],
+                                    AtLeastN[
+                                        Union[
+                                            ImportAliasMatchType,
+                                            OneOf[ImportAliasMatchType],
+                                            AllOf[ImportAliasMatchType],
+                                        ]
+                                    ],
+                                    AtMostN[
+                                        Union[
+                                            ImportAliasMatchType,
+                                            OneOf[ImportAliasMatchType],
+                                            AllOf[ImportAliasMatchType],
+                                        ]
+                                    ],
+                                ]
+                            ],
+                            MatchIfTrue[Sequence[cst.ImportAlias]],
+                        ]
+                    ],
+                    AllOf[
+                        Union[
+                            Sequence[
+                                Union[
+                                    ImportAliasMatchType,
+                                    OneOf[ImportAliasMatchType],
+                                    AllOf[ImportAliasMatchType],
+                                    AtLeastN[
+                                        Union[
+                                            ImportAliasMatchType,
+                                            OneOf[ImportAliasMatchType],
+                                            AllOf[ImportAliasMatchType],
+                                        ]
+                                    ],
+                                    AtMostN[
+                                        Union[
+                                            ImportAliasMatchType,
+                                            OneOf[ImportAliasMatchType],
+                                            AllOf[ImportAliasMatchType],
+                                        ]
+                                    ],
+                                ]
+                            ],
+                            MatchIfTrue[Sequence[cst.ImportAlias]],
+                        ]
+                    ],
+                ],
+                "ImportStar",
+                MetadataMatchType,
+                MatchIfTrue[
+                    Union[
+                        Sequence[cst.ImportAlias],
+                        cst.ImportStar,
+                        OneOf[Union[Sequence[cst.ImportAlias], cst.ImportStar]],
+                        AllOf[Union[Sequence[cst.ImportAlias], cst.ImportStar]],
+                    ]
+                ],
+            ]
+        ],
+    ] = DoNotCare()
+    relative: Union[
+        Sequence[
+            Union[
+                DotMatchType,
+                DoNotCareSentinel,
+                OneOf[DotMatchType],
+                AllOf[DotMatchType],
+                AtLeastN[
+                    Union[
+                        DotMatchType,
+                        DoNotCareSentinel,
+                        OneOf[DotMatchType],
+                        AllOf[DotMatchType],
+                    ]
+                ],
+                AtMostN[
+                    Union[
+                        DotMatchType,
+                        DoNotCareSentinel,
+                        OneOf[DotMatchType],
+                        AllOf[DotMatchType],
+                    ]
+                ],
+            ]
+        ],
+        DoNotCareSentinel,
+        MatchIfTrue[Sequence[cst.Dot]],
+        OneOf[
+            Union[
+                Sequence[
+                    Union[
+                        DotMatchType,
+                        OneOf[DotMatchType],
+                        AllOf[DotMatchType],
+                        AtLeastN[
+                            Union[
+                                DotMatchType, OneOf[DotMatchType], AllOf[DotMatchType]
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                DotMatchType, OneOf[DotMatchType], AllOf[DotMatchType]
+                            ]
+                        ],
+                    ]
+                ],
+                MatchIfTrue[Sequence[cst.Dot]],
+            ]
+        ],
+        AllOf[
+            Union[
+                Sequence[
+                    Union[
+                        DotMatchType,
+                        OneOf[DotMatchType],
+                        AllOf[DotMatchType],
+                        AtLeastN[
+                            Union[
+                                DotMatchType, OneOf[DotMatchType], AllOf[DotMatchType]
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                DotMatchType, OneOf[DotMatchType], AllOf[DotMatchType]
+                            ]
+                        ],
+                    ]
+                ],
+                MatchIfTrue[Sequence[cst.Dot]],
+            ]
+        ],
+    ] = DoNotCare()
+    lpar: Union[
+        Optional["LeftParen"],
+        MetadataMatchType,
+        MatchIfTrue[Optional[cst.LeftParen]],
+        DoNotCareSentinel,
+        OneOf[
+            Union[
+                Optional["LeftParen"],
+                MetadataMatchType,
+                MatchIfTrue[Optional[cst.LeftParen]],
+            ]
+        ],
+        AllOf[
+            Union[
+                Optional["LeftParen"],
+                MetadataMatchType,
+                MatchIfTrue[Optional[cst.LeftParen]],
+            ]
+        ],
+    ] = DoNotCare()
+    rpar: Union[
+        Optional["RightParen"],
+        MetadataMatchType,
+        MatchIfTrue[Optional[cst.RightParen]],
+        DoNotCareSentinel,
+        OneOf[
+            Union[
+                Optional["RightParen"],
+                MetadataMatchType,
+                MatchIfTrue[Optional[cst.RightParen]],
+            ]
+        ],
+        AllOf[
+            Union[
+                Optional["RightParen"],
+                MetadataMatchType,
+                MatchIfTrue[Optional[cst.RightParen]],
+            ]
+        ],
+    ] = DoNotCare()
+    semicolon: Union[
+        SemicolonMatchType,
+        DoNotCareSentinel,
+        OneOf[SemicolonMatchType],
+        AllOf[SemicolonMatchType],
+    ] = DoNotCare()
+    whitespace_after_lazy: Union[
+        SimpleWhitespaceMatchType,
+        DoNotCareSentinel,
+        OneOf[SimpleWhitespaceMatchType],
+        AllOf[SimpleWhitespaceMatchType],
+    ] = DoNotCare()
+    whitespace_after_from: Union[
+        SimpleWhitespaceMatchType,
+        DoNotCareSentinel,
+        OneOf[SimpleWhitespaceMatchType],
+        AllOf[SimpleWhitespaceMatchType],
+    ] = DoNotCare()
+    whitespace_before_import: Union[
+        SimpleWhitespaceMatchType,
+        DoNotCareSentinel,
+        OneOf[SimpleWhitespaceMatchType],
+        AllOf[SimpleWhitespaceMatchType],
+    ] = DoNotCare()
+    whitespace_after_import: Union[
+        SimpleWhitespaceMatchType,
+        DoNotCareSentinel,
+        OneOf[SimpleWhitespaceMatchType],
+        AllOf[SimpleWhitespaceMatchType],
+    ] = DoNotCare()
+    metadata: Union[
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
+    ] = DoNotCare()
+
+
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class LeftCurlyBrace(BaseMatcherNode):
     whitespace_after: Union[
         BaseParenthesizableWhitespaceMatchType,
@@ -13731,6 +14270,206 @@ class Slice(BaseSlice, BaseMatcherNode):
 
 
 @dataclass(frozen=True, eq=False, unsafe_hash=False)
+class StarredDictComp(BaseComp, BaseDict, BaseExpression, BaseMatcherNode):
+    value: Union[
+        BaseExpressionMatchType,
+        DoNotCareSentinel,
+        OneOf[BaseExpressionMatchType],
+        AllOf[BaseExpressionMatchType],
+    ] = DoNotCare()
+    for_in: Union[
+        CompForMatchType,
+        DoNotCareSentinel,
+        OneOf[CompForMatchType],
+        AllOf[CompForMatchType],
+    ] = DoNotCare()
+    lbrace: Union[
+        LeftCurlyBraceMatchType,
+        DoNotCareSentinel,
+        OneOf[LeftCurlyBraceMatchType],
+        AllOf[LeftCurlyBraceMatchType],
+    ] = DoNotCare()
+    rbrace: Union[
+        RightCurlyBraceMatchType,
+        DoNotCareSentinel,
+        OneOf[RightCurlyBraceMatchType],
+        AllOf[RightCurlyBraceMatchType],
+    ] = DoNotCare()
+    lpar: Union[
+        Sequence[
+            Union[
+                LeftParenMatchType,
+                DoNotCareSentinel,
+                OneOf[LeftParenMatchType],
+                AllOf[LeftParenMatchType],
+                AtLeastN[
+                    Union[
+                        LeftParenMatchType,
+                        DoNotCareSentinel,
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                    ]
+                ],
+                AtMostN[
+                    Union[
+                        LeftParenMatchType,
+                        DoNotCareSentinel,
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                    ]
+                ],
+            ]
+        ],
+        DoNotCareSentinel,
+        MatchIfTrue[Sequence[cst.LeftParen]],
+        OneOf[
+            Union[
+                Sequence[
+                    Union[
+                        LeftParenMatchType,
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                        AtLeastN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                    ]
+                ],
+                MatchIfTrue[Sequence[cst.LeftParen]],
+            ]
+        ],
+        AllOf[
+            Union[
+                Sequence[
+                    Union[
+                        LeftParenMatchType,
+                        OneOf[LeftParenMatchType],
+                        AllOf[LeftParenMatchType],
+                        AtLeastN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                LeftParenMatchType,
+                                OneOf[LeftParenMatchType],
+                                AllOf[LeftParenMatchType],
+                            ]
+                        ],
+                    ]
+                ],
+                MatchIfTrue[Sequence[cst.LeftParen]],
+            ]
+        ],
+    ] = DoNotCare()
+    rpar: Union[
+        Sequence[
+            Union[
+                RightParenMatchType,
+                DoNotCareSentinel,
+                OneOf[RightParenMatchType],
+                AllOf[RightParenMatchType],
+                AtLeastN[
+                    Union[
+                        RightParenMatchType,
+                        DoNotCareSentinel,
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                    ]
+                ],
+                AtMostN[
+                    Union[
+                        RightParenMatchType,
+                        DoNotCareSentinel,
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                    ]
+                ],
+            ]
+        ],
+        DoNotCareSentinel,
+        MatchIfTrue[Sequence[cst.RightParen]],
+        OneOf[
+            Union[
+                Sequence[
+                    Union[
+                        RightParenMatchType,
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                        AtLeastN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                    ]
+                ],
+                MatchIfTrue[Sequence[cst.RightParen]],
+            ]
+        ],
+        AllOf[
+            Union[
+                Sequence[
+                    Union[
+                        RightParenMatchType,
+                        OneOf[RightParenMatchType],
+                        AllOf[RightParenMatchType],
+                        AtLeastN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                        AtMostN[
+                            Union[
+                                RightParenMatchType,
+                                OneOf[RightParenMatchType],
+                                AllOf[RightParenMatchType],
+                            ]
+                        ],
+                    ]
+                ],
+                MatchIfTrue[Sequence[cst.RightParen]],
+            ]
+        ],
+    ] = DoNotCare()
+    whitespace_before_value: Union[
+        BaseParenthesizableWhitespaceMatchType,
+        DoNotCareSentinel,
+        OneOf[BaseParenthesizableWhitespaceMatchType],
+        AllOf[BaseParenthesizableWhitespaceMatchType],
+    ] = DoNotCare()
+    metadata: Union[
+        MetadataMatchType,
+        DoNotCareSentinel,
+        OneOf[MetadataMatchType],
+        AllOf[MetadataMatchType],
+    ] = DoNotCare()
+
+
+@dataclass(frozen=True, eq=False, unsafe_hash=False)
 class StarredDictElement(BaseDictElement, BaseMatcherNode):
     value: Union[
         BaseExpressionMatchType,
@@ -16565,6 +17304,8 @@ __all__ = [
     "Is",
     "IsNot",
     "Lambda",
+    "LazyImport",
+    "LazyImportFrom",
     "LeftCurlyBrace",
     "LeftParen",
     "LeftShift",
@@ -16642,6 +17383,7 @@ __all__ = [
     "SimpleString",
     "SimpleWhitespace",
     "Slice",
+    "StarredDictComp",
     "StarredDictElement",
     "StarredElement",
     "Subscript",
