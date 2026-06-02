@@ -735,8 +735,10 @@ impl<'r, 'a> Inflate<'a> for DeflatedLazyImport<'r, 'a> {
     fn inflate(self, config: &Config<'a>) -> Result<Self::Inflated> {
         let whitespace_after_lazy =
             parse_simple_whitespace(config, &mut (*self.lazy_tok).whitespace_after.borrow_mut())?;
-        let whitespace_after_import =
-            parse_simple_whitespace(config, &mut (*self.import_tok).whitespace_after.borrow_mut())?;
+        let whitespace_after_import = parse_simple_whitespace(
+            config,
+            &mut (*self.import_tok).whitespace_after.borrow_mut(),
+        )?;
         let names = self.names.inflate(config)?;
         let semicolon = self.semicolon.inflate(config)?;
         Ok(Self::Inflated {

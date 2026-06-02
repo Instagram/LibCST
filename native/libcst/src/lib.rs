@@ -202,8 +202,7 @@ mod test {
             "match x:\n    case +1+2j: pass\n",
             "match x:\n    case +1-2j: pass\n",
         ] {
-            parse_module(src, None)
-                .unwrap_or_else(|e| panic!("failed to parse '{}': {}", src, e));
+            parse_module(src, None).unwrap_or_else(|e| panic!("failed to parse '{}': {}", src, e));
         }
     }
 
@@ -215,8 +214,7 @@ mod test {
             "(*L for L in lists)\n",
             "[*range(3) for _ in range(3)]\n",
         ] {
-            parse_module(src, None)
-                .unwrap_or_else(|e| panic!("failed to parse '{}': {}", src, e));
+            parse_module(src, None).unwrap_or_else(|e| panic!("failed to parse '{}': {}", src, e));
         }
     }
 
@@ -227,8 +225,7 @@ mod test {
             "{**d for d in dicts if d}\n",
             "{**d.items() for d in sources}\n",
         ] {
-            parse_module(src, None)
-                .unwrap_or_else(|e| panic!("failed to parse '{}': {}", src, e));
+            parse_module(src, None).unwrap_or_else(|e| panic!("failed to parse '{}': {}", src, e));
         }
     }
 
@@ -243,8 +240,7 @@ mod test {
             "lazy from .. import parent\n",
             "lazy from ..utils import helper\n",
         ] {
-            parse_module(src, None)
-                .unwrap_or_else(|e| panic!("failed to parse '{}': {}", src, e));
+            parse_module(src, None).unwrap_or_else(|e| panic!("failed to parse '{}': {}", src, e));
         }
     }
 
