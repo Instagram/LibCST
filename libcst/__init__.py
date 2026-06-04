@@ -166,6 +166,7 @@ from libcst._nodes.statement import (
     If,
     Import,
     ImportAlias,
+    ImportAttribute,
     ImportFrom,
     IndentedBlock,
     Match,
@@ -203,7 +204,6 @@ from libcst._nodes.statement import (
     While,
     With,
     WithItem,
-    ImportAttribute,
 )
 from libcst._nodes.whitespace import (
     BaseParenthesizableWhitespace,
@@ -411,8 +411,8 @@ __all__ = [
     "If",
     "Import",
     "ImportAlias",
-    "ImportFrom",
     "ImportAttribute",
+    "ImportFrom",
     "IndentedBlock",
     "Match",
     "MatchCase",
