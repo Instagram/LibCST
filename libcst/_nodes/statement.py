@@ -1236,6 +1236,22 @@ class ImportAlias(CSTNode):
         return None
 
 
+if TYPE_CHECKING:
+    @add_slots
+    @dataclass(frozen=True)
+    class FromImportAlias(ImportAlias):
+        """An :class:`ImportAlias` narrowed to the ``from X import Y`` context.
+
+        In ``from X import Y``, ``Y`` is always a simple :class:`Name` — dotted
+        names like ``from X import a.b`` are a syntax error in Python.
+        """
+
+        name: Name
+
+else:
+    FromImportAlias = ImportAlias
+
+
 @add_slots
 @dataclass(frozen=True)
 class Import(BaseSmallStatement):
@@ -1306,7 +1322,7 @@ class ImportFrom(BaseSmallStatement):
 
     #: One or more names that are being imported from the specified module,
     #: with optional local aliases.
-    names: Union[Sequence[ImportAlias], ImportStar]
+    names: Union[Sequence[FromImportAlias], ImportStar]
 
     #: Sequence of :class:`Dot` nodes indicating relative import level.
     relative: Sequence[Dot] = ()
