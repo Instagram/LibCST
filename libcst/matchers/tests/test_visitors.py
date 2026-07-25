@@ -508,3 +508,22 @@ class MatchersVisitLeaveDecoratorTypingTest(UnitTest):
         unserialized = pickle.loads(serialized)
         self.assertEqual(original.message, unserialized.message)
         self.assertEqual(original.func, unserialized.func)
+
+    def test_inaccessible_attribute_is_skipped(self) -> None:
+        # Names reported by dir() are not necessarily retrievable: zope.interface
+        # installs a __provides__ descriptor that raises AttributeError on access.
+        # Constructing a visitor must not propagate that error.
+        class RaisingDescriptor:
+            def __get__(self, obj: object, objtype: object = None) -> object:
+                raise AttributeError("__provides__")
+
+        class TestVisitor(MatcherDecoratableTransformer):
+            __provides__ = RaisingDescriptor()
+
+            @visit(m.SimpleString())
+            def _string_visit(self, node: cst.SimpleString) -> None:
+                pass
+
+        visitor = TestVisitor()
+        self.assertIn("__provides__", dir(visitor))
+        self.assertEqual(len(visitor._matchers), 0)
