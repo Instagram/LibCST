@@ -5,6 +5,12 @@ on:
     types: [published]
   push:
     branches: [main]
+  workflow_dispatch:
+    inputs:
+      release_ref:
+        description: Git tag or commit containing the release sources
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -12,6 +18,8 @@ permissions:
 jobs:
   build:
     uses: Instagram/LibCST/.github/workflows/build.yml@main
+    with:
+      checkout_ref: ${{ inputs.release_ref || github.ref }}
   upload_release:
     name: Upload wheels to pypi
     runs-on: ubuntu-latest
@@ -23,6 +31,7 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
+          ref: ${{ inputs.release_ref || github.ref }}
       - name: Download binary wheels
         id: download
         uses: actions/download-artifact@v5
@@ -55,7 +64,7 @@ jobs:
           packages-dir: ${{ steps.download.outputs.download-path }}
           skip-existing: true
       - name: Publish distribution 📦 to PyPI
-        if: github.event_name == 'release'
+        if: github.event_name == 'release' || github.event_name == 'workflow_dispatch'
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages-dir: ${{ steps.download.outputs.download-path }}
