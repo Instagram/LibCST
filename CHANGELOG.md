@@ -1,3 +1,25 @@
+# 1.9.0 - 2026-07-29
+
+## Added
+* Add support for Python 3.15 by @AlexWaygood and @thatch in https://github.com/Instagram/LibCST/pull/1454 and https://github.com/Instagram/LibCST/pull/1456
+* Add `CodemodCommand` helpers for adding and removing imports by @frvnkliu in https://github.com/Instagram/LibCST/pull/1432
+
+## Fixed
+* Recognize Python 3.14 parser configurations by @bowiechen in https://github.com/Instagram/LibCST/pull/1452
+* Allow a trailing comma after `**rest` in class patterns by @itamaro in https://github.com/Instagram/LibCST/pull/1438
+
+## Updated
+* Document the new `CodemodCommand` import helpers by @frvnkliu in https://github.com/Instagram/LibCST/pull/1437
+* Fix the `tokenize` function's docstring grammar by @galenseilis in https://github.com/Instagram/LibCST/pull/1434
+* Remove the retired macOS 13 runner from CI by @drinkmorewaterr in https://github.com/Instagram/LibCST/pull/1433
+
+## New Contributors
+* @AlexWaygood made their first contribution in https://github.com/Instagram/LibCST/pull/1454
+* @bowiechen made their first contribution in https://github.com/Instagram/LibCST/pull/1452
+* @galenseilis made their first contribution in https://github.com/Instagram/LibCST/pull/1434
+
+**Full Changelog**: https://github.com/Instagram/LibCST/compare/v1.8.6...v1.9.0
+
 # 1.8.6 - 2025-11-03
 
 ## What's Changed
