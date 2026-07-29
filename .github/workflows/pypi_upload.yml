@@ -53,8 +53,10 @@ jobs:
         with:
           repository-url: https://test.pypi.org/legacy/
           packages-dir: ${{ steps.download.outputs.download-path }}
+          skip-existing: true
       - name: Publish distribution 📦 to PyPI
         if: github.event_name == 'release'
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages-dir: ${{ steps.download.outputs.download-path }}
+          skip-existing: true
