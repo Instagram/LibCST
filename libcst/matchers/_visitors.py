@@ -65,6 +65,23 @@ def is_property(obj: object, attr_name: str) -> bool:
     return isinstance(getattr(type(obj), attr_name, None), property)
 
 
+_ATTR_MISSING = object()
+
+
+def _safe_getattr(obj: object, attr_name: str) -> object:
+    """Fetch obj.attr, returning a sentinel if the descriptor refuses access.
+
+    Names reported by ``dir()`` are not guaranteed to be retrievable: a
+    descriptor may raise ``AttributeError`` on access (zope.interface's
+    ``__provides__`` does this). Such names cannot be visit/leave methods,
+    so they are skipped instead of crashing the visitor construction.
+    """
+    try:
+        return getattr(obj, attr_name)
+    except AttributeError:
+        return _ATTR_MISSING
+
+
 # pyre-ignore We don't care about Any here, its not exposed.
 def _match_decorator_unpickler(kwargs: Any) -> "MatchDecoratorMismatch":
     return MatchDecoratorMismatch(**kwargs)
@@ -281,7 +298,9 @@ def _gather_matchers(obj: object) -> Dict[BaseMatcherNode, Optional[cst.CSTNode]
 
     for attr_name in dir(obj):
         if not is_property(obj, attr_name):
-            func = getattr(obj, attr_name)
+            func = _safe_getattr(obj, attr_name)
+            if func is _ATTR_MISSING:
+                continue
             for matcher in getattr(func, VISIT_POSITIVE_MATCHER_ATTR, []):
                 visit_matchers[cast(BaseMatcherNode, matcher)] = None
             for matcher in getattr(func, VISIT_NEGATIVE_MATCHER_ATTR, []):
@@ -311,7 +330,7 @@ def _gather_constructed_visit_funcs(
     for funcname in dir(obj):
         if is_property(obj, funcname):
             continue
-        possible_func = getattr(obj, funcname)
+        possible_func = _safe_getattr(obj, funcname)
         if not ismethod(possible_func):
             continue
         func = cast(Callable[[cst.CSTNode], None], possible_func)
@@ -342,7 +361,7 @@ def _gather_constructed_leave_funcs(
     for funcname in dir(obj):
         if is_property(obj, funcname):
             continue
-        possible_func = getattr(obj, funcname)
+        possible_func = _safe_getattr(obj, funcname)
         if not ismethod(possible_func):
             continue
         func = cast(Callable[[cst.CSTNode], None], possible_func)
