@@ -80,7 +80,7 @@ class DFAState(Generic[_TokenTypeT]):
         self.nonterminal_arcs: Mapping[str, DFAState] = {}
 
         # Transitions are basically the only thing that  the parser is using
-        # with is_final. Everyting else is purely here to create a parser.
+        # with is_final. Everything else is purely here to create a parser.
         self.transitions: Mapping[Union[_TokenTypeT, ReservedString], DFAPlan] = {}
         self.is_final = final in nfa_set
 

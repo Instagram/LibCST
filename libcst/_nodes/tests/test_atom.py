@@ -240,14 +240,14 @@ class AtomTest(CSTNodeTest):
                 "parser": parse_expression,
                 "expected_position": CodeRange((1, 1), (1, 7)),
             },
-            # Simple elipses
+            # Simple ellipses
             {
                 "node": cst.Ellipsis(),
                 "code": "...",
                 "parser": parse_expression,
                 "expected_position": None,
             },
-            # Parenthesized elipses
+            # Parenthesized ellipses
             {
                 "node": cst.Ellipsis(lpar=(cst.LeftParen(),), rpar=(cst.RightParen(),)),
                 "code": "(...)",

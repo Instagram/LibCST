@@ -109,7 +109,7 @@ def dump(
 ) -> str:
     """
     Returns a string representation of the node that contains minimal differences
-    from the default contruction of the node while also hiding whitespace and
+    from the default construction of the node while also hiding whitespace and
     syntax fields.
 
     Setting ``show_defaults`` to ``True`` will add fields regardless if their
@@ -120,7 +120,7 @@ def dump(
     ``show_defaults``.
 
     When all keyword args are set to true, the output of this function is
-    indentical to the __repr__ method of the node.
+    identical to the __repr__ method of the node.
     """
     return "".join(
         _node_repr_recursive(

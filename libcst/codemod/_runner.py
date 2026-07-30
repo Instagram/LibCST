@@ -128,7 +128,7 @@ def transform_module(
     the reason for skipping as well as any warnings that were generated before
     the codemod decided to skip. If the codemod throws an unexpected exception,
     this will return a :class:`~libcst.codemod.TransformFailure` containing the
-    exception that occured as well as any warnings that were generated before the
+    exception that occurred as well as any warnings that were generated before the
     codemod crashed.
     """
     try:

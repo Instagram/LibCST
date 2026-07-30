@@ -346,7 +346,7 @@ checks.
 Augmented Assignment Operators
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Nodes that are used with :class:`~libcst.AugAssign` to perform some agumented
+Nodes that are used with :class:`~libcst.AugAssign` to perform some augmented
 assignment.
 
 .. class:: libcst.AddAssign
@@ -371,7 +371,7 @@ checks.
 Miscellaneous
 -------------
 
-Miscelaneous nodes that are purely syntactic trivia. While python requires these nodes
+Miscellaneous nodes that are purely syntactic trivia. While python requires these nodes
 in order to parse a module, statement or expression they do not carry any meaning on
 their own.
 

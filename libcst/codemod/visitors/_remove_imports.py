@@ -235,7 +235,7 @@ class RemoveImportsVisitor(ContextAwareTransformer):
         under modification with an instance of this class after performing your
         transform. Note that all imports that are referenced by this ``node``
         or its children will only be removed if they are not in use at the time
-        of exeucting :meth:`~libcst.codemod.Codemod.transform_module`
+        of executing :meth:`~libcst.codemod.Codemod.transform_module`
         on an instance of :class:`~libcst.codemod.visitors.AddImportsVisitor`
         in order to avoid removing an in-use import.
         """

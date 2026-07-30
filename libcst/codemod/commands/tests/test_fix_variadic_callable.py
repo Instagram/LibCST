@@ -6,11 +6,11 @@
 # pyre-strict
 
 from libcst.codemod import CodemodTest
-from libcst.codemod.commands.fix_variadic_callable import FixVariadicCallableCommmand
+from libcst.codemod.commands.fix_variadic_callable import FixVariadicCallableCommand
 
 
-class TestFixVariadicCallableCommmand(CodemodTest):
-    TRANSFORM = FixVariadicCallableCommmand
+class TestFixVariadicCallableCommand(CodemodTest):
+    TRANSFORM = FixVariadicCallableCommand
 
     def test_callable_typing(self) -> None:
         before = """

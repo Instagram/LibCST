@@ -551,7 +551,7 @@ def parallel_exec_transform_with_prettyprint(  # noqa: C901
     binary.
 
     A progress indicator as well as any generated warnings will be printed to stderr. To
-    supress the interactive progress indicator, set ``hide_progress`` to ``True``. Files
+    suppress the interactive progress indicator, set ``hide_progress`` to ``True``. Files
     that include the generated code marker will be skipped unless the
     ``include_generated`` parameter is set to ``True``. Similarly, files that match a
     supplied blacklist of regex patterns will be skipped. Warnings for skipping both

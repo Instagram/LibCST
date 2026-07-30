@@ -264,7 +264,7 @@ class BaseExpression(_BaseParenthesizedNode, ABC):
         such as "not" without space between the operator an ourselves. Examples
         where this is true are "not(True)", "(1)in[1,2,3]", etc. This base
         function handles parenthesized nodes, but certain nodes such as tuples,
-        dictionaries and lists will override this to signifiy that they're always
+        dictionaries and lists will override this to signify that they're always
         safe.
         """
 
@@ -580,14 +580,14 @@ class SimpleString(_BasePrefixedString):
     (f-string), including triple-quoted multi-line strings.
     """
 
-    #: The texual representation of the string, including quotes, prefix characters, and
+    #: The textual representation of the string, including quotes, prefix characters, and
     #: any escape characters present in the original source code , such as
     #: ``r"my string\n"``. To remove the quotes and interpret any escape characters,
     #: use the calculated property :attr:`~SimpleString.evaluated_value`.
     value: str
 
     lpar: Sequence[LeftParen] = ()
-    #: Sequence of parenthesis for precidence dictation.
+    #: Sequence of parenthesis for precedence dictation.
     rpar: Sequence[RightParen] = ()
 
     def _validate(self) -> None:
@@ -898,7 +898,7 @@ class FormattedString(_BasePrefixedString):
     end: Literal['"', "'", '"""', "'''"] = '"'
 
     lpar: Sequence[LeftParen] = ()
-    #: Sequence of parenthesis for precidence dictation.
+    #: Sequence of parenthesis for precedence dictation.
     rpar: Sequence[RightParen] = ()
 
     def _validate(self) -> None:
@@ -1145,7 +1145,7 @@ class TemplatedString(_BasePrefixedString):
     end: Literal['"', "'", '"""', "'''"] = '"'
 
     lpar: Sequence[LeftParen] = ()
-    #: Sequence of parenthesis for precidence dictation.
+    #: Sequence of parenthesis for precedence dictation.
     rpar: Sequence[RightParen] = ()
 
     def _validate(self) -> None:
@@ -1226,7 +1226,7 @@ class ConcatenatedString(BaseString):
     right: Union[SimpleString, FormattedString, "ConcatenatedString"]
 
     lpar: Sequence[LeftParen] = ()
-    #: Sequence of parenthesis for precidence dictation.
+    #: Sequence of parenthesis for precedence dictation.
     rpar: Sequence[RightParen] = ()
 
     #: Whitespace between the ``left`` and ``right`` substrings.
@@ -1346,7 +1346,7 @@ class ComparisonTarget(CSTNode):
 class Comparison(BaseExpression):
     """
     A comparison between multiple values such as ``x < y``, ``x < y < z``, or
-    ``x in [y, z]``. These comparisions typically result in boolean values.
+    ``x in [y, z]``. These comparisons typically result in boolean values.
 
     Unlike :class:`BinaryOperation` and :class:`BooleanOperation`, comparisons are not
     restricted to a left and right child. Instead they can contain an arbitrary number
@@ -1372,7 +1372,7 @@ class Comparison(BaseExpression):
     """
 
     #: The first value in the full sequence of values to compare. This value will be
-    #: compared against the first value in ``comparisions``.
+    #: compared against the first value in ``comparisons``.
     left: BaseExpression
 
     #: Pairs of :class:`BaseCompOp` operators and expression values to compare. These
@@ -1503,7 +1503,7 @@ class BinaryOperation(BaseExpression):
     nodes, such as ``and`` or ``or``. Instead, those operations are provided by
     :class:`BooleanOperation`.
 
-    It also does not include support for comparision operators performed with
+    It also does not include support for comparison operators performed with
     :class:`BaseCompOp`, such as ``<``, ``>=``, ``==``, ``is``, or ``in``. Instead,
     those operations are provided by :class:`Comparison`.
     """
@@ -1556,7 +1556,7 @@ class BooleanOperation(BaseExpression):
     nodes, such as ``+`` or ``<<``. Instead, those operations are provided by
     :class:`BinaryOperation`.
 
-    It also does not include support for comparision operators performed with
+    It also does not include support for comparison operators performed with
     :class:`BaseCompOp`, such as ``<``, ``>=``, ``==``, ``is``, or ``in``. Instead,
     those operations are provided by :class:`Comparison`.
     """
@@ -2133,7 +2133,7 @@ class Parameters(CSTNode):
     #: parameters with defaults must all be after those without defaults.
     posonly_params: Sequence[Param] = ()
 
-    #: Optional sentinel that dictates parameters preceeding are positional-only
+    #: Optional sentinel that dictates parameters preceding are positional-only
     #: args.
     posonly_ind: Union[ParamSlash, MaybeSentinel] = MaybeSentinel.DEFAULT
 
@@ -3450,7 +3450,7 @@ class Set(BaseSet):
         if len(self.elements) == 0:
             raise CSTValidationError(
                 "A literal set must have at least one element. A zero-element set "
-                + "would be syntatically ambiguous with an empty dict, `{}`."
+                + "would be syntactically ambiguous with an empty dict, `{}`."
             )
 
     def _visit_and_replace_children(self, visitor: CSTVisitorT) -> "Set":

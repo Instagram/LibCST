@@ -459,7 +459,7 @@ await_primary[expr_ty] (memo):
     | AWAIT a=primary { CHECK_VERSION(5, "Await expressions are", _Py_Await(a, EXTRA)) }
     | primary
 primary[expr_ty]:
-    | invalid_primary  # must be before 'primay genexp' because of invalid_genexp
+    | invalid_primary  # must be before 'primary genexp' because of invalid_genexp
     | a=primary '.' b=NAME { _Py_Attribute(a, b->v.Name.id, Load, EXTRA) }
     | a=primary b=genexp { _Py_Call(a, CHECK(_PyPegen_singleton_seq(p, b)), NULL, EXTRA) }
     | a=primary '(' b=[arguments] ')' {

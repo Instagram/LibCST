@@ -283,7 +283,7 @@ class TemplateTest(UnitTest):
 
     def test_subscript(self) -> None:
         # Test that we can insert various subscript slices into an
-        # acceptible spot.
+        # acceptable spot.
         expression = parse_template_expression(
             "Optional[{type}]",
             type=cst.Name("int"),
