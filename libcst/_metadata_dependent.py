@@ -82,17 +82,21 @@ class MetadataDependent(ABC):
 
         Recursively searches the MRO of the subclass for metadata dependencies.
         """
-        try:
-            # pyre-fixme[16]: use a hidden attribute to cache the property
-            return cls._INHERITED_METADATA_DEPENDENCIES_CACHE
-        except AttributeError:
-            dependencies = set()
-            for c in inspect.getmro(cls):
-                if issubclass(c, MetadataDependent):
-                    dependencies.update(c.METADATA_DEPENDENCIES)
-            # pyre-fixme[16]: use a hidden attribute to cache the property
-            cls._INHERITED_METADATA_DEPENDENCIES_CACHE = frozenset(dependencies)
-            return cls._INHERITED_METADATA_DEPENDENCIES_CACHE
+        # Read the cache out of ``cls.__dict__`` rather than with attribute
+        # lookup: a plain attribute read walks the MRO, so a value cached on a
+        # base class would be returned for every subclass that has not computed
+        # its own cache yet.
+        cache = cls.__dict__.get("_INHERITED_METADATA_DEPENDENCIES_CACHE")
+        if cache is not None:
+            return cache
+        dependencies = set()
+        for c in inspect.getmro(cls):
+            if issubclass(c, MetadataDependent):
+                dependencies.update(c.METADATA_DEPENDENCIES)
+        cache = frozenset(dependencies)
+        # pyre-fixme[16]: use a hidden attribute to cache the property
+        cls._INHERITED_METADATA_DEPENDENCIES_CACHE = cache
+        return cache
 
     @contextmanager
     def resolve(self, wrapper: "MetadataWrapper") -> Iterator[None]:

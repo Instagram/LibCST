@@ -330,6 +330,29 @@ class MetadataProviderTest(UnitTest):
         ):
             MetadataWrapper(cst.Module([])).visit(AVisitor())
 
+    def test_bare_visitor_does_not_poison_subclass_dependencies(self) -> None:
+        """
+        Tests that resolving a bare CSTTransformer does not cache an empty
+        dependency set that subclasses would then inherit through the MRO.
+        """
+
+        class ProviderA(VisitorMetadataProvider[bool]):
+            def visit_Pass(self, node: cst.Pass) -> None:
+                self.set_metadata(node, True)
+
+        class AVisitor(CSTTransformer):
+            METADATA_DEPENDENCIES = (ProviderA,)
+
+            def visit_Pass(self, node: cst.Pass) -> None:
+                self.get_metadata(ProviderA, node)
+
+        module = cst.parse_module("pass\n")
+        # Resolving the bare base class first caches its (empty) dependencies.
+        MetadataWrapper(module).visit(CSTTransformer())
+
+        self.assertEqual(AVisitor.get_inherited_dependencies(), {ProviderA})
+        MetadataWrapper(module).visit(AVisitor())
+
     def test_circular_dependency(self) -> None:
         """
         Tests that circular dependencies are detected.
