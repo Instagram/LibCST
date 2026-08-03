@@ -7,7 +7,7 @@ import abc
 from dataclasses import asdict, dataclass
 from typing import Any, FrozenSet, Mapping, Sequence
 
-from libcst._parser.parso.utils import PythonVersionInfo
+from libcst._parser.utils import PythonVersionInfo
 
 
 class BaseWhitespaceParserConfig(abc.ABC):
