@@ -7,6 +7,8 @@ import dataclasses
 
 from textwrap import dedent
 
+from typing import Sequence
+
 import libcst as cst
 from libcst.metadata import AccessorProvider, MetadataWrapper
 from libcst.testing.utils import data_provider, UnitTest
@@ -22,8 +24,13 @@ class DependentVisitor(cst.CSTVisitor):
         for f in dataclasses.fields(node):
             child = getattr(node, f.name)
             if type(child) is cst.CSTNode:
-                accessor = self.get_metadata(AccessorProvider, child)
+                accessor = self.get_metadata(AccessorProvider, child, None)
                 self.test.assertEqual(accessor, f.name)
+            elif isinstance(child, Sequence):
+                for idx, subchild in enumerate(child):
+                    if type(subchild) is cst.CSTNode:
+                        accessor = self.get_metadata(AccessorProvider, subchild, None)
+                        self.test.assertEqual(accessor, f.name + "[" + str(idx) + "]")
 
         return True
 
