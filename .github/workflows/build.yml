@@ -20,6 +20,7 @@ jobs:
             macos-latest,
             ubuntu-latest,
             ubuntu-24.04-arm,
+            ubuntu-24.04-riscv,
             windows-latest,
             windows-11-arm,
           ]
