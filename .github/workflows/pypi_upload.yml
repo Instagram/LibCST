@@ -34,7 +34,7 @@ jobs:
           ref: ${{ inputs.release_ref || github.ref }}
       - name: Download binary wheels
         id: download
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v6
         with:
           pattern: wheels-*
           path: wheelhouse
