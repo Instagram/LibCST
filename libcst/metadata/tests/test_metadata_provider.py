@@ -200,6 +200,28 @@ class MetadataProviderTest(UnitTest):
         # Check each visitor is called once
         mock.visited_simple.assert_called_once()
 
+    def test_bare_base_class_does_not_poison_inherited_metadata(self) -> None:
+        """
+        Tests that resolving a bare base class first does not hide the
+        dependencies declared by a subclass.
+        """
+        test_runner = self
+
+        class SimpleProvider(VisitorMetadataProvider[int]):
+            def visit_Pass(self, node: cst.Pass) -> None:
+                self.set_metadata(node, 1)
+
+        class DependentVisitor(CSTTransformer):
+            METADATA_DEPENDENCIES = (SimpleProvider,)
+
+            def visit_Pass(self, node: cst.Pass) -> None:
+                test_runner.assertEqual(self.get_metadata(SimpleProvider, node), 1)
+
+        wrapper = MetadataWrapper(parse_module("pass"))
+        # Resolving the bare base class caches an empty dependency set on it.
+        wrapper.visit(CSTTransformer())
+        wrapper.visit(DependentVisitor())
+
     def test_provider_inherited_metadata(self) -> None:
         """
         Tests that providers inherit access to metadata declared by their base
