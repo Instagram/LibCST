@@ -4,6 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 
+import io
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from typing import Iterable, Iterator, List, Optional, Sequence, TYPE_CHECKING, Union
@@ -68,6 +69,30 @@ class CodegenState:
         end_node: Optional["CSTNode"] = None,
     ) -> Iterator[None]:
         yield
+
+
+@add_slots
+@dataclass(frozen=False)
+class CodegenWriter(CodegenState):
+    """
+    A CodegenState that writes to a file-like object.
+    """
+
+    writer: io.TextIOBase = None  # need a default value for dataclass
+
+    def __post_init__(self) -> None:
+        if self.writer is None:
+            raise TypeError("writer must be provided")
+
+    def add_indent_tokens(self) -> None:
+        for token in self.indent_tokens:
+            self.writer.write(token)
+
+    def add_token(self, value: str) -> None:
+        self.writer.write(value)
+
+    def pop_trailing_newline(self) -> None:
+        pass
 
 
 def visit_required(
