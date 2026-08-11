@@ -4,7 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 # pyre-strict
-from libcst._parser.parso.utils import PythonVersionInfo
+from libcst._parser.utils import PythonVersionInfo
 from libcst._parser.types.config import _pick_compatible_python_version
 from libcst.testing.utils import UnitTest
 

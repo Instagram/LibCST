@@ -7,9 +7,6 @@
 Defines the state object used by the whitespace parser.
 """
 
-try:
-    from libcst_native import whitespace_state as mod
-except ImportError:
-    from libcst._parser.types import py_whitespace_state as mod
+from libcst.native import whitespace_state as mod
 
 WhitespaceState = mod.WhitespaceState
