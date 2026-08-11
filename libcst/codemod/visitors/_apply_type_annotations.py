@@ -1266,6 +1266,35 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
         else:
             return self._annotate_single_target(original_node, updated_node)
 
+    def leave_AnnAssign(
+        self,
+        original_node: cst.AnnAssign,
+        updated_node: cst.AnnAssign,
+    ) -> cst.AnnAssign:
+        # An attribute or global that already carries an annotation is only
+        # touched when we are explicitly told to overwrite existing annotations.
+        if not self.overwrite_existing_annotations:
+            return updated_node
+        target = original_node.target
+        if not isinstance(target, cst.Name):
+            return updated_node
+        self.qualifier.append(target.value)
+        qualifier_name = self._qualifier_name()
+        self.qualifier.pop()
+        annotation = self.annotations.attributes.get(qualifier_name)
+        if annotation is None or annotation.annotation.deep_equals(
+            updated_node.annotation.annotation
+        ):
+            return updated_node
+        self.already_annotated.add(qualifier_name)
+        if len(self.qualifier) == 0:
+            self.annotation_counts.global_annotations += 1
+        else:
+            self.annotation_counts.attribute_annotations += 1
+        return updated_node.with_changes(
+            annotation=self._quote_future_annotations(annotation),
+        )
+
     def leave_ImportFrom(
         self,
         original_node: cst.ImportFrom,

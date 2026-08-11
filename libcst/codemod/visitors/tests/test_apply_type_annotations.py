@@ -1143,6 +1143,59 @@ class TestApplyAnnotationsVisitor(CodemodTest):
 
     @data_provider(
         {
+            "attribute": (
+                """
+                class X:
+                    x: int
+                """,
+                """
+                class X:
+                    x: str
+                """,
+                """
+                class X:
+                    x: int
+                """,
+            ),
+            "attribute_with_value": (
+                """
+                class X:
+                    x: int
+                """,
+                """
+                class X:
+                    x: str = 5
+                """,
+                """
+                class X:
+                    x: int = 5
+                """,
+            ),
+            "global": (
+                """
+                x: int
+                """,
+                """
+                x: str
+                """,
+                """
+                x: int
+                """,
+            ),
+        }
+    )
+    def test_annotate_attributes_with_existing_annotations(
+        self, stub: str, before: str, after: str
+    ) -> None:
+        self.run_test_case_with_flags(
+            stub=stub,
+            before=before,
+            after=after,
+            overwrite_existing_annotations=True,
+        )
+
+    @data_provider(
+        {
             "pep_604": (
                 """
                 def f(a: int | str, b: int | list[int | list[int | str]]) -> str: ...
