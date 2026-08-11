@@ -160,6 +160,28 @@ class MatchersVisitLeaveDecoratorTypingTest(UnitTest):
         # Instantiating this class should not raise any errors
         TestVisitor()
 
+    def test_valid_transformer_leave_return_flatten(self) -> None:
+        class TestVisitor(MatcherDecoratableTransformer):
+            @leave(m.FunctionDef())
+            def _function_def_leave(
+                self, original_node: cst.FunctionDef, updated_node: cst.FunctionDef
+            ) -> Union[cst.BaseStatement, cst.FlattenSentinel[cst.BaseStatement]]:
+                return updated_node
+
+        # Instantiating this class should not raise any errors
+        TestVisitor()
+
+    def test_valid_transformer_leave_return_bare_flatten(self) -> None:
+        class TestVisitor(MatcherDecoratableTransformer):
+            @leave(m.FunctionDef())
+            def _function_def_leave(
+                self, original_node: cst.FunctionDef, updated_node: cst.FunctionDef
+            ) -> Union[cst.BaseStatement, cst.FlattenSentinel]:
+                return updated_node
+
+        # Instantiating this class should not raise any errors
+        TestVisitor()
+
     def test_invalid_collector_visit_return(self) -> None:
         class TestVisitor(MatcherDecoratableVisitor):
             @visit(m.SimpleString())

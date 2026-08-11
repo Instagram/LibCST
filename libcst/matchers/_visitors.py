@@ -99,11 +99,23 @@ def _annotation_is_union(annotation: object) -> bool:
     )
 
 
+def _unwrap_generic_alias(annotation: object) -> Type[object]:
+    # A parameterized generic such as FlattenSentinel[BaseStatement] is not a
+    # class, so issubclass() would raise TypeError on it. Fall back to the
+    # generic's origin class, which is what we actually want to compare.
+    origin = getattr(annotation, "__origin__", None)
+    if isinstance(origin, type):
+        return origin
+    return cast(Type[object], annotation)
+
+
 def _get_possible_annotated_classes(annotation: object) -> List[Type[object]]:
     if _annotation_is_union(annotation):
-        return getattr(annotation, "__args__", [])
+        return [
+            _unwrap_generic_alias(arg) for arg in getattr(annotation, "__args__", [])
+        ]
     else:
-        return [cast(Type[object], annotation)]
+        return [_unwrap_generic_alias(annotation)]
 
 
 def _get_valid_leave_annotations_for_classes(
