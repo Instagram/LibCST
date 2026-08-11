@@ -180,7 +180,7 @@ mod tests {
         // beginning of text
         assert_eq!(cw.previous(), None);
 
-        // try going foward again
+        // try going forward again
         assert_eq!(cw.peek_character(), Some('i'));
         assert_eq!(
             cw.next(),

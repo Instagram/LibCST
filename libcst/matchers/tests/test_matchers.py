@@ -730,7 +730,7 @@ class MatchersMatcherTest(UnitTest):
 
     def test_zero_or_more_matcher_args_true(self) -> None:
         # Match a function call to "foo" where the first argument is the integer
-        # value 1, and the rest of the arguements are wildcards.
+        # value 1, and the rest of the arguments are wildcards.
         self.assertTrue(
             matches(
                 cst.Call(
@@ -748,7 +748,7 @@ class MatchersMatcherTest(UnitTest):
             )
         )
         # Match a function call to "foo" where the first argument is the integer
-        # value 1, and the rest of the arguements are integers of any value.
+        # value 1, and the rest of the arguments are integers of any value.
         self.assertTrue(
             matches(
                 cst.Call(
@@ -790,7 +790,7 @@ class MatchersMatcherTest(UnitTest):
             )
         )
         # Match a function call to "foo" where the first argument is the integer
-        # value 1, and the rest of the arguements are integers with the value
+        # value 1, and the rest of the arguments are integers with the value
         # 2 or 3.
         self.assertTrue(
             matches(
@@ -832,7 +832,7 @@ class MatchersMatcherTest(UnitTest):
             )
         )
         # Fail to match a function call to "foo" where the first argument is the
-        # integer value 1, and the rest of the arguements are integers with the
+        # integer value 1, and the rest of the arguments are integers with the
         # value 2.
         self.assertFalse(
             matches(
@@ -871,7 +871,7 @@ class MatchersMatcherTest(UnitTest):
             )
         )
         # Match a function call to "foo" where the first argument is the integer
-        # value 1, and there are at least two arguements are integers of any value
+        # value 1, and there are at least two arguments are integers of any value
         # after.
         self.assertTrue(
             matches(
@@ -890,7 +890,7 @@ class MatchersMatcherTest(UnitTest):
             )
         )
         # Match a function call to "foo" where the first argument is the integer
-        # value 1, and there are at least two arguements that are integers with the
+        # value 1, and there are at least two arguments that are integers with the
         # value 2 or 3 after.
         self.assertTrue(
             matches(
@@ -954,7 +954,7 @@ class MatchersMatcherTest(UnitTest):
             )
         )
         # Fail to match a function call to "foo" where the first argument is the
-        # integer value 1, and there are at least two arguements that are integers with
+        # integer value 1, and there are at least two arguments that are integers with
         # the value 2 after.
         self.assertFalse(
             matches(

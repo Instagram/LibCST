@@ -36,7 +36,7 @@ class CodemodCommand(Codemod, ABC):
      - :class:`~libcst.codemod.visitors.RemoveImportsVisitor` (removes unreferenced imports from a module).
     """
 
-    #: An overrideable description attribute so that codemods can provide
+    #: An overridable description attribute so that codemods can provide
     #: a short summary of what they do. This description will show up in
     #: command-line help as well as when listing available codemods.
     DESCRIPTION: str = "No description."

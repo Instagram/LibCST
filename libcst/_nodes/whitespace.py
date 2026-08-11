@@ -70,7 +70,7 @@ class SimpleWhitespace(BaseParenthesizableWhitespace, BaseValueToken):
     expression between two tokens. This is the most common type of whitespace.
 
     A simple whitespace cannot contain a newline character unless it is directly
-    preceeded by a line continuation character (``\\``). It can contain zero or
+    preceded by a line continuation character (``\\``). It can contain zero or
     more spaces or tabs. If you need a newline character without a line continuation
     character, use :class:`ParenthesizedWhitespace` instead.
 
@@ -291,6 +291,6 @@ class ParenthesizedWhitespace(BaseParenthesizableWhitespace):
         :class:`ParenthesizedWhitespace` this will always be ``False``.
         """
 
-        # Its not possible to have a ParenthesizedWhitespace with zero characers.
+        # Its not possible to have a ParenthesizedWhitespace with zero characters.
         # If we did, the TrailingWhitespace would not have parsed.
         return False

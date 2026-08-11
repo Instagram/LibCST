@@ -41,7 +41,7 @@ impl BaseWhitespaceParserConfig {
 
 impl BaseWhitespaceParserConfig {
     /// Equivalent to `config.lines.unwrap()[line_number - 1]`, but it return a PyErr when we get
-    /// an index that's out of range, instead of panicing.
+    /// an index that's out of range, instead of panicking.
     pub fn get_line(&self, line_number: usize) -> PyResult<&str> {
         let err_fn =
             || PyIndexError::new_err(format!("line number of {} is out of range", line_number));
@@ -52,7 +52,7 @@ impl BaseWhitespaceParserConfig {
     }
 
     /// Equivalent to `config.get_line(line_number)[column_index..]`, but it return a PyErr when
-    /// we get an column index that's out of range, instead of panicing.
+    /// we get an column index that's out of range, instead of panicking.
     pub fn get_line_after_column(&self, line_number: usize, column_index: usize) -> PyResult<&str> {
         self.get_line(line_number)?
             .get(column_index..)

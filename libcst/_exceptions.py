@@ -70,11 +70,11 @@ class ParserSyntaxError(Exception):
     # syntax error occurred in the code.
     _lines: Sequence[str]
 
-    #: The one-indexed line where the error occured.
+    #: The one-indexed line where the error occurred.
     raw_line: int
 
     #: The zero-indexed column as a number of characters from the start of the line
-    #: where the error occured.
+    #: where the error occurred.
     raw_column: int
 
     def __init__(

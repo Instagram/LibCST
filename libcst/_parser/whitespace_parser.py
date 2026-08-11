@@ -5,7 +5,7 @@
 
 """
 Parso doesn't attempt to parse (or even emit tokens for) whitespace or comments that
-aren't syntatically important. Instead, we're just given the whitespace as a "prefix" of
+aren't syntactically important. Instead, we're just given the whitespace as a "prefix" of
 the token.
 
 However, in our CST, whitespace is gathered into far more detailed objects than a simple
