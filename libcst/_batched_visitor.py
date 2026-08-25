@@ -3,15 +3,17 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-import inspect
+from functools import cache
 from typing import (
     Callable,
     cast,
+    Dict,
     Iterable,
     List,
     Mapping,
     MutableMapping,
     Optional,
+    Tuple,
     TYPE_CHECKING,
 )
 
@@ -36,6 +38,23 @@ class BatchableCSTVisitor(CSTTypedVisitorFunctions, MetadataDependent):
     Instances of this class cannot modify the tree.
     """
 
+    @classmethod
+    @cache
+    def _get_visitor_method_names(cls) -> Tuple[str, ...]:
+        methods: Dict[str, object] = {}
+        for base in cls.__mro__:
+            for name, method in base.__dict__.items():
+                if name not in methods and name.startswith(("visit_", "leave_")):
+                    methods[name] = method
+
+        return tuple(
+            sorted(
+                name
+                for name, method in methods.items()
+                if callable(method) and not getattr(method, "_is_no_op", False)
+            )
+        )
+
     def get_visitors(self) -> Mapping[str, VisitorMethod]:
         """
         Returns a mapping of all the ``visit_<Type[CSTNode]>``,
@@ -44,20 +63,11 @@ class BatchableCSTVisitor(CSTTypedVisitorFunctions, MetadataDependent):
         excluding all empty stubs.
         """
 
-        methods = inspect.getmembers(
-            self,
-            lambda m: (
-                inspect.ismethod(m)
-                and (m.__name__.startswith("visit_") or m.__name__.startswith("leave_"))
-                and not getattr(m, "_is_no_op", False)
-            ),
-        )
-
         # TODO: verify all visitor methods reference valid node classes.
         # for name, __ in methods:
         #     ...
 
-        return dict(methods)
+        return {name: getattr(self, name) for name in self._get_visitor_method_names()}
 
 
 def visit_batched(
@@ -106,7 +116,6 @@ class _BatchedCSTVisitor(CSTVisitor):
     Internal visitor class to perform batched traversal over a tree.
     """
 
-    visitor_methods: _VisitorMethodCollection
     before_visit: Optional[VisitorMethod]
     after_leave: Optional[VisitorMethod]
 
@@ -118,7 +127,27 @@ class _BatchedCSTVisitor(CSTVisitor):
         after_leave: Optional[VisitorMethod] = None,
     ) -> None:
         super().__init__()
-        self.visitor_methods = visitor_methods
+        self.visit_methods: MutableMapping[str, List[VisitorMethod]] = {}
+        self.leave_methods: MutableMapping[str, List[VisitorMethod]] = {}
+        self.visit_attribute_methods: MutableMapping[
+            str, MutableMapping[str, List[VisitorMethod]]
+        ] = {}
+        self.leave_attribute_methods: MutableMapping[
+            str, MutableMapping[str, List[VisitorMethod]]
+        ] = {}
+        for name, methods in visitor_methods.items():
+            is_visit = name.startswith("visit_")
+            node_name, separator, attribute = name[6:].partition("_")
+            if separator:
+                attribute_methods = (
+                    self.visit_attribute_methods
+                    if is_visit
+                    else self.leave_attribute_methods
+                )
+                attribute_methods.setdefault(node_name, {})[attribute] = methods
+            else:
+                node_methods = self.visit_methods if is_visit else self.leave_methods
+                node_methods[node_name] = methods
         self.before_visit = before_visit
         self.after_leave = after_leave
 
@@ -130,7 +159,7 @@ class _BatchedCSTVisitor(CSTVisitor):
         if before_visit is not None:
             before_visit(node)
         type_name = type(node).__name__
-        for v in self.visitor_methods.get(f"visit_{type_name}", []):
+        for v in self.visit_methods.get(type_name, []):
             v(node)
         return True
 
@@ -139,7 +168,7 @@ class _BatchedCSTVisitor(CSTVisitor):
         Call appropriate leave methods on node after visiting children.
         """
         type_name = type(original_node).__name__
-        for v in self.visitor_methods.get(f"leave_{type_name}", []):
+        for v in self.leave_methods.get(type_name, []):
             v(original_node)
         after_leave = self.after_leave
         if after_leave is not None:
@@ -151,7 +180,10 @@ class _BatchedCSTVisitor(CSTVisitor):
         attribute's children.
         """
         type_name = type(node).__name__
-        for v in self.visitor_methods.get(f"visit_{type_name}_{attribute}", []):
+        methods_by_attribute = self.visit_attribute_methods.get(type_name)
+        if methods_by_attribute is None:
+            return
+        for v in methods_by_attribute.get(attribute, []):
             v(node)
 
     def on_leave_attribute(self, original_node: "CSTNode", attribute: str) -> None:
@@ -160,5 +192,8 @@ class _BatchedCSTVisitor(CSTVisitor):
         attribute's children.
         """
         type_name = type(original_node).__name__
-        for v in self.visitor_methods.get(f"leave_{type_name}_{attribute}", []):
+        methods_by_attribute = self.leave_attribute_methods.get(type_name)
+        if methods_by_attribute is None:
+            return
+        for v in methods_by_attribute.get(attribute, []):
             v(original_node)
