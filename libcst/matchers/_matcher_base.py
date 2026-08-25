@@ -7,8 +7,9 @@ import collections.abc
 import inspect
 import re
 from abc import ABCMeta
-from dataclasses import dataclass, fields
+from dataclasses import dataclass, Field, fields
 from enum import auto, Enum
+from functools import cache
 from typing import (
     Callable,
     cast,
@@ -60,6 +61,11 @@ _OtherNodeMatcherTypeT = TypeVar(
 
 
 _METADATA_MISSING_SENTINEL = object()
+
+
+@cache
+def _get_matcher_fields(matcher_type: Type[object]) -> Tuple[Field, ...]:
+    return fields(matcher_type)
 
 
 class AbstractBaseMatcherNodeMeta(ABCMeta):
@@ -1418,7 +1424,7 @@ def _node_matches(  # noqa: C901
 
     # Now, check that the children match for each attribute.
     all_captures = {}
-    for field in fields(matcher):
+    for field in _get_matcher_fields(type(matcher)):
         if field.name == "_metadata":
             # We don't care about this field, its a dataclasses implementation detail.
             continue
