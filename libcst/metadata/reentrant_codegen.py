@@ -10,7 +10,7 @@ from typing import List, Optional, Sequence
 from libcst import BaseStatement, CSTNode, Module
 from libcst._add_slots import add_slots
 from libcst._nodes.internal import CodegenState
-from libcst.metadata import BaseMetadataProvider
+from libcst.metadata.base_provider import BaseMetadataProvider
 
 
 class CodegenPartial:

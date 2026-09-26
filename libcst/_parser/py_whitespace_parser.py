@@ -5,7 +5,7 @@
 
 from typing import List, Optional, Sequence, Tuple, Union
 
-from libcst import CSTLogicError, ParserSyntaxError
+from libcst._exceptions import CSTLogicError, ParserSyntaxError
 from libcst._nodes.whitespace import (
     Comment,
     COMMENT_RE,
