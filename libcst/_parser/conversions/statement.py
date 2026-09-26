@@ -6,8 +6,11 @@
 
 from typing import Any, Dict, List, Optional, Sequence, Tuple, Type
 
-from libcst import CSTLogicError
-from libcst._exceptions import ParserSyntaxError, PartialParserSyntaxError
+from libcst._exceptions import (
+    CSTLogicError,
+    ParserSyntaxError,
+    PartialParserSyntaxError,
+)
 from libcst._maybe_sentinel import MaybeSentinel
 from libcst._nodes.expression import (
     Annotation,
