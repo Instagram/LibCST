@@ -77,6 +77,19 @@ except (foo, bar):
 
 try:
     pass
+except foo  :
+    pass
+except (foo, bar) :
+    pass
+except foo, bar :
+    pass
+except foo  as  bar :
+    pass
+except  :
+    pass
+
+try:
+    pass
 except foo, bar:
     pass
 

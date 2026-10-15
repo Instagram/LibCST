@@ -30,6 +30,17 @@ except*f:
 finally:
     pass
 
+try:
+    pass
+except* foo  :
+    pass
+except* (foo, bar) :
+    pass
+except* foo, bar :
+    pass
+except* foo  as  bar :
+    pass
+
 
 try:
 

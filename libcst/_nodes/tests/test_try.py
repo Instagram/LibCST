@@ -372,6 +372,60 @@ class TryTest(CSTNodeTest):
                 ),
                 "code": "try: pass\nexcept ValueError, RuntimeError: pass\n",
             },
+            # Whitespace before the colon without an as name
+            {
+                "node": cst.Try(
+                    cst.SimpleStatementSuite((cst.Pass(),)),
+                    handlers=(
+                        cst.ExceptHandler(
+                            cst.SimpleStatementSuite((cst.Pass(),)),
+                            type=cst.Name("Exception"),
+                            whitespace_before_colon=cst.SimpleWhitespace("  "),
+                        ),
+                    ),
+                ),
+                "code": "try: pass\nexcept Exception  : pass\n",
+                "parser": parse_statement,
+            },
+            # Whitespace before the colon after a parenthesized tuple
+            {
+                "node": cst.Try(
+                    cst.SimpleStatementSuite((cst.Pass(),)),
+                    handlers=(
+                        cst.ExceptHandler(
+                            cst.SimpleStatementSuite((cst.Pass(),)),
+                            type=cst.Tuple(
+                                [
+                                    cst.Element(
+                                        cst.Name("IOError"),
+                                        comma=cst.Comma(
+                                            whitespace_after=cst.SimpleWhitespace(" ")
+                                        ),
+                                    ),
+                                    cst.Element(cst.Name("ImportError")),
+                                ]
+                            ),
+                            whitespace_before_colon=cst.SimpleWhitespace(" "),
+                        ),
+                    ),
+                ),
+                "code": "try: pass\nexcept (IOError, ImportError) : pass\n",
+                "parser": parse_statement,
+            },
+            # A bare except keeps its space in whitespace_after_except
+            {
+                "node": cst.Try(
+                    cst.SimpleStatementSuite((cst.Pass(),)),
+                    handlers=(
+                        cst.ExceptHandler(
+                            cst.SimpleStatementSuite((cst.Pass(),)),
+                            whitespace_after_except=cst.SimpleWhitespace(" "),
+                        ),
+                    ),
+                ),
+                "code": "try: pass\nexcept : pass\n",
+                "parser": parse_statement,
+            },
         )
     )
     def test_valid(self, **kwargs: Any) -> None:
@@ -634,6 +688,46 @@ class TryStarTest(CSTNodeTest):
                     ],
                 ),
                 "code": "try: pass\nexcept* ValueError, RuntimeError: pass\n",
+                "parser": native_parse_statement,
+            },
+            # Whitespace before the colon without an as name
+            {
+                "node": cst.TryStar(
+                    cst.SimpleStatementSuite((cst.Pass(),)),
+                    handlers=(
+                        cst.ExceptStarHandler(
+                            cst.SimpleStatementSuite((cst.Pass(),)),
+                            type=cst.Name("Exception"),
+                            whitespace_before_colon=cst.SimpleWhitespace("  "),
+                        ),
+                    ),
+                ),
+                "code": "try: pass\nexcept* Exception  : pass\n",
+                "parser": native_parse_statement,
+            },
+            # Whitespace before the colon after a parenthesized tuple
+            {
+                "node": cst.TryStar(
+                    cst.SimpleStatementSuite((cst.Pass(),)),
+                    handlers=(
+                        cst.ExceptStarHandler(
+                            cst.SimpleStatementSuite((cst.Pass(),)),
+                            type=cst.Tuple(
+                                [
+                                    cst.Element(
+                                        cst.Name("IOError"),
+                                        comma=cst.Comma(
+                                            whitespace_after=cst.SimpleWhitespace(" ")
+                                        ),
+                                    ),
+                                    cst.Element(cst.Name("ImportError")),
+                                ]
+                            ),
+                            whitespace_before_colon=cst.SimpleWhitespace(" "),
+                        ),
+                    ),
+                ),
+                "code": "try: pass\nexcept* (IOError, ImportError) : pass\n",
                 "parser": native_parse_statement,
             },
         )
