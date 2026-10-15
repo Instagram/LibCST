@@ -139,3 +139,21 @@ class ExceptionsTest(UnitTest):
         self.assertEqual(err.raw_column, 8)
         # No tabs on line 1, so column should not be clamped
         self.assertEqual(err.editor_column, 9)
+
+    def test_parser_error_eof_clamping(self) -> None:
+        """
+        Regression test for issue #1472: EOF clamping logic should correctly
+        handle errors reported past the end of file.
+        """
+        # When parser reports an error past EOF, it should be clamped to the last line
+        example = "if True:\n"
+        with self.assertRaises(cst.ParserSyntaxError) as cm:
+            cst.parse_module(example)
+        err = cm.exception
+        lines = example.splitlines()
+        # Parser expects more content after "if True:", reports error at line 2
+        # But file only has 1 line, so it should be clamped to line 1, column 0
+        self.assertEqual(err.raw_line, len(lines), "Error past EOF should be clamped to last line")
+        self.assertEqual(err.raw_column, 0, "Column should be 0 when clamped")
+        self.assertEqual(err.editor_line, len(lines))
+        self.assertEqual(err.editor_column, 1)
