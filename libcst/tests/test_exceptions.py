@@ -91,3 +91,69 @@ class ExceptionsTest(UnitTest):
         new_exception = pickle.loads(pickled_blob)
         self.assertEqual(repr(orig_exception), repr(new_exception))
         self.assertEqual(str(orig_exception), str(new_exception))
+
+    def test_parser_error_line_numbers(self) -> None:
+        """
+        Regression test for issue #1472: parser syntax errors should report
+        the correct line number and column position.
+        """
+        # Test case 1: error on first line of multi-line input
+        example1 = "x = (1 2)\ny = 3\nz = 4\n"
+        with self.assertRaises(cst.ParserSyntaxError) as cm:
+            cst.parse_module(example1)
+        err = cm.exception
+        # The error is at line 1, column 8 (0-indexed)
+        self.assertEqual(err.raw_line, 1, "Error should be on line 1")
+        self.assertEqual(err.raw_column, 8, "Error should be at column 8")
+        # editor_line and editor_column should be 1-indexed
+        self.assertEqual(err.editor_line, 1)
+        self.assertEqual(err.editor_column, 9)
+        # The error message should show the correct location
+        self.assertIn("Syntax Error @ 1:9", str(err))
+
+        # Test case 2: error on last line
+        example2 = "x = 1\ny = (1 2)\n"
+        with self.assertRaises(cst.ParserSyntaxError) as cm:
+            cst.parse_module(example2)
+        err = cm.exception
+        # The error is at line 2, column 8 (0-indexed)
+        self.assertEqual(err.raw_line, 2, "Error should be on line 2")
+        self.assertEqual(err.raw_column, 8, "Error should be at column 8")
+        # editor_line and editor_column should be 1-indexed
+        self.assertEqual(err.editor_line, 2)
+        self.assertEqual(err.editor_column, 9)
+        # The error message should show the correct location
+        self.assertIn("Syntax Error @ 2:9", str(err))
+
+    def test_parser_error_tab_adjustment_on_correct_line(self) -> None:
+        """
+        Regression test for issue #1472: tab adjustment logic should use the
+        correct line to calculate the column offset.
+        """
+        # Error on line 1 with tabs - should not be affected by tabs on other lines
+        example = "x = (1 2)\n\t\ty = 3\n"
+        with self.assertRaises(cst.ParserSyntaxError) as cm:
+            cst.parse_module(example)
+        err = cm.exception
+        self.assertEqual(err.raw_line, 1)
+        self.assertEqual(err.raw_column, 8)
+        # No tabs on line 1, so column should not be clamped
+        self.assertEqual(err.editor_column, 9)
+
+    def test_parser_error_eof_clamping(self) -> None:
+        """
+        Regression test for issue #1472: EOF clamping logic should correctly
+        handle errors reported past the end of file.
+        """
+        # When parser reports an error past EOF, it should be clamped to the last line
+        example = "if True:\n"
+        with self.assertRaises(cst.ParserSyntaxError) as cm:
+            cst.parse_module(example)
+        err = cm.exception
+        lines = example.splitlines()
+        # Parser expects more content after "if True:", reports error at line 2
+        # But file only has 1 line, so it should be clamped to line 1, column 0
+        self.assertEqual(err.raw_line, len(lines), "Error past EOF should be clamped to last line")
+        self.assertEqual(err.raw_column, 0, "Column should be 0 when clamped")
+        self.assertEqual(err.editor_line, len(lines))
+        self.assertEqual(err.editor_column, 1)
