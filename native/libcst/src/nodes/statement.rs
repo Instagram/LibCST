@@ -2100,14 +2100,12 @@ impl<'r, 'a> Inflate<'a> for DeflatedExceptHandler<'r, 'a> {
 
         let r#type = self.r#type.inflate(config)?;
         let name = self.name.inflate(config)?;
-        let whitespace_before_colon = if name.is_some() {
-            parse_simple_whitespace(
-                config,
-                &mut (*self.colon_tok).whitespace_before.borrow_mut(),
-            )?
-        } else {
-            Default::default()
-        };
+        // In a bare `except :`, whitespace_after_except has already consumed this
+        // whitespace, so it parses as empty here.
+        let whitespace_before_colon = parse_simple_whitespace(
+            config,
+            &mut (*self.colon_tok).whitespace_before.borrow_mut(),
+        )?;
 
         let body = self.body.inflate(config)?;
         Ok(Self::Inflated {
@@ -2172,11 +2170,8 @@ impl<'r, 'a> Inflate<'a> for DeflatedExceptStarHandler<'r, 'a> {
 
         let r#type = self.r#type.inflate(config)?;
         let name = self.name.inflate(config)?;
-        let whitespace_before_colon = if name.is_some() {
-            parse_simple_whitespace(config, &mut self.colon_tok.whitespace_before.borrow_mut())?
-        } else {
-            Default::default()
-        };
+        let whitespace_before_colon =
+            parse_simple_whitespace(config, &mut self.colon_tok.whitespace_before.borrow_mut())?;
 
         let body = self.body.inflate(config)?;
         Ok(Self::Inflated {
