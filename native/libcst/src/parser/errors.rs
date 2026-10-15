@@ -48,15 +48,15 @@ mod py_error {
                     }
                     _ => (0, 0),
                 };
-                if line + 1 > lines.len() {
-                    line = lines.len() - 1;
+                if line > lines.len() {
+                    line = lines.len();
                     col = 0;
                 }
                 match || -> PyResult<Bound<'_, PyAny>> {
                     let kwargs = [
                         ("message", e.to_string().into_pyobject(py)?.into_any()),
                         ("lines", lines.into_pyobject(py)?.into_any()),
-                        ("raw_line", (line + 1).into_pyobject(py)?.into_any()),
+                        ("raw_line", line.into_pyobject(py)?.into_any()),
                         ("raw_column", col.into_pyobject(py)?.into_any()),
                     ]
                     .into_py_dict(py)?;
