@@ -87,6 +87,23 @@ class IfExpTest(CSTNodeTest):
                 "(foo if bar else''for _ in _)",
                 CodeRange((1, 1), (1, 28)),
             ),
+            # Parenthesized lambda directly after a keyword
+            (
+                cst.IfExp(
+                    body=cst.Name("foo"),
+                    test=cst.Name("bar"),
+                    whitespace_after_else=cst.SimpleWhitespace(""),
+                    orelse=cst.Lambda(
+                        params=cst.Parameters(),
+                        body=cst.Name("baz"),
+                        colon=cst.Colon(),
+                        lpar=(cst.LeftParen(),),
+                        rpar=(cst.RightParen(),),
+                    ),
+                ),
+                "foo if bar else(lambda:baz)",
+                CodeRange((1, 0), (1, 27)),
+            ),
             # Make sure that spacing works
             (
                 cst.IfExp(
@@ -129,6 +146,15 @@ class IfExpTest(CSTNodeTest):
                     rpar=(cst.RightParen(),),
                 ),
                 "right paren without left paren",
+            ),
+            (
+                lambda: cst.IfExp(
+                    body=cst.Name("foo"),
+                    test=cst.Name("bar"),
+                    whitespace_after_else=cst.SimpleWhitespace(""),
+                    orelse=cst.Lambda(params=cst.Parameters(), body=cst.Name("baz")),
+                ),
+                "Must have at least one space after 'else' keyword.",
             ),
         )
     )
