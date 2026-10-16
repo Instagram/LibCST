@@ -2359,7 +2359,7 @@ class Lambda(BaseExpression):
             return len(self.rpar) > 0 or self.body._safe_to_use_with_word_operator(
                 position
             )
-        return super()._safe_to_use_with_word_operator(position)
+        return super(Lambda, self)._safe_to_use_with_word_operator(position)
 
     def _validate(self) -> None:
         # Validate parents
