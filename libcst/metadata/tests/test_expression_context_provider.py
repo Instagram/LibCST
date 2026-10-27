@@ -431,3 +431,18 @@ class ExpressionContextProviderTest(UnitTest):
                 },
             )
         )
+
+    def test_call_keyword_argument(self) -> None:
+        code = "fn(kwarg=x, other=1)"
+        wrapper = MetadataWrapper(parse_module(code))
+        wrapper.visit(
+            DependentVisitor(
+                test=self,
+                name_to_context={
+                    "fn": ExpressionContext.LOAD,
+                    "kwarg": None,
+                    "x": ExpressionContext.LOAD,
+                    "other": None,
+                },
+            )
+        )

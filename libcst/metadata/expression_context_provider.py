@@ -200,6 +200,11 @@ class ExpressionContextVisitor(cst.CSTVisitor):
             default.visit(self)
         return False
 
+    def visit_Arg(self, node: cst.Arg) -> bool:
+        node.value.visit(self)
+        # don't visit keyword (Name), so keyword has no context
+        return False
+
 
 class ExpressionContextProvider(BatchableMetadataProvider[ExpressionContext]):
     """
