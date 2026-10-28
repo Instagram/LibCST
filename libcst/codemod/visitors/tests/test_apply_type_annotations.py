@@ -1983,6 +1983,50 @@ class TestApplyAnnotationsVisitor(CodemodTest):
                     x = 2
                 """,
             ),
+            "toplevel_then_function": (
+                """
+                x: int
+                def f() -> int: ...
+                """,
+                """
+                x = 1
+                x = 2
+                def f():
+                    return 1
+                """,
+                """
+                x: int = 1
+                x = 2
+                def f() -> int:
+                    return 1
+                """,
+            ),
+            "class_then_method_and_function": (
+                """
+                class A:
+                    x: int
+                    def f(self) -> int: ...
+                def g() -> int: ...
+                """,
+                """
+                class A:
+                    x = 1
+                    x = 2
+                    def f(self):
+                        return 1
+                def g():
+                    return 1
+                """,
+                """
+                class A:
+                    x: int = 1
+                    x = 2
+                    def f(self) -> int:
+                        return 1
+                def g() -> int:
+                    return 1
+                """,
+            ),
         }
     )
     def test_no_duplicate_annotations(self, stub: str, before: str, after: str) -> None:

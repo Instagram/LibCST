@@ -958,10 +958,10 @@ class ApplyTypeAnnotationsVisitor(ContextAwareTransformer):
                 if qualifier_name in self.annotations.attributes and not isinstance(
                     only_target, (cst.Attribute, cst.Subscript)
                 ):
+                    self.qualifier.pop()
                     if qualifier_name not in self.already_annotated:
                         self.already_annotated.add(qualifier_name)
                         annotation = self.annotations.attributes[qualifier_name]
-                        self.qualifier.pop()
                         return self._apply_annotation_to_attribute_or_global(
                             name=name,
                             annotation=annotation,
