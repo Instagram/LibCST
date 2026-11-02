@@ -176,7 +176,11 @@ parser! {
                     SmallStatement::AnnAssign(make_ann_assignment(
                         AssignTargetExpression::Name(Box::new(a)), col, ann, rhs))
             }
-            // TODO: there's an extra '(' single_target ')' clause here in upstream
+            / lpar:lpar() a:single_target() rpar:rpar() col:lit(":") ann:expression()
+                rhs:(eq:lit("=") d:annotated_rhs() {(eq, d)})? {
+                    SmallStatement::AnnAssign(make_ann_assignment(
+                        a.with_parens(lpar, rpar), col, ann, rhs))
+            }
             / a:single_subscript_attribute_target() col:lit(":") ann:expression()
                 rhs:(eq:lit("=") d:annotated_rhs() {(eq, d)})? {
                     SmallStatement::AnnAssign(make_ann_assignment(a, col, ann, rhs))
