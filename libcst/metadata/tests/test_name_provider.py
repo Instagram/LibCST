@@ -11,6 +11,7 @@ from typing import Collection, Dict, Mapping, Optional, Set, Tuple
 import libcst as cst
 from libcst import ensure_type
 from libcst._nodes.base import CSTNode
+from libcst.helpers.paths import chdir
 from libcst.metadata import (
     FullyQualifiedNameProvider,
     MetadataWrapper,
@@ -573,3 +574,86 @@ class FullyQualifiedNameIntegrationTest(UnitTest):
             self.assertEqual(
                 names, {QualifiedName(name="pkg.mod", source=QualifiedNameSource.LOCAL)}
             )
+
+    def test_with_repo_relative_paths(self) -> None:
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            relative_path = "pkg/mod.py"
+            file_path = root / relative_path
+            file_path.parent.mkdir()
+            file_path.write_text("from .sibling import value\nvalue\n")
+            manager = FullRepoManager(
+                root, [relative_path], [FullyQualifiedNameProvider]
+            )
+
+            wrapper = manager.get_metadata_wrapper_for_path(relative_path)
+            names = wrapper.resolve(FullyQualifiedNameProvider)
+
+            self.assertEqual(
+                set(manager.cache[FullyQualifiedNameProvider]), {relative_path}
+            )
+            self.assertEqual(
+                names[wrapper.module],
+                {QualifiedName("pkg.mod", QualifiedNameSource.LOCAL)},
+            )
+            self.assertIn(
+                QualifiedName("pkg.sibling.value", QualifiedNameSource.IMPORT),
+                {
+                    name
+                    for qualified_names in names.values()
+                    for name in qualified_names
+                },
+            )
+
+    def test_with_relative_repository_root(self) -> None:
+        with TemporaryDirectory() as directory:
+            with chdir(directory):
+                root = Path("repo")
+                file_path = root / "pkg/mod.py"
+                file_path.parent.mkdir(parents=True)
+                file_path.touch()
+                for path in ["pkg/mod.py", str(file_path.absolute())]:
+                    with self.subTest(path=path):
+                        manager = FullRepoManager(
+                            root, [path], [FullyQualifiedNameProvider]
+                        )
+                        wrapper = manager.get_metadata_wrapper_for_path(path)
+                        self.assertEqual(
+                            wrapper.resolve(FullyQualifiedNameProvider)[wrapper.module],
+                            {QualifiedName("pkg.mod", QualifiedNameSource.LOCAL)},
+                        )
+
+    def test_with_repo_relative_paths_and_nested_pyproject(self) -> None:
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            relative_path = "project/pkg/mod.py"
+            file_path = root / relative_path
+            file_path.parent.mkdir(parents=True)
+            file_path.touch()
+            (root / "project/pyproject.toml").touch()
+            for use_pyproject, module_name in [
+                (False, "project.pkg.mod"),
+                (True, "pkg.mod"),
+            ]:
+                with self.subTest(use_pyproject=use_pyproject):
+                    manager = FullRepoManager(
+                        root,
+                        [relative_path],
+                        [FullyQualifiedNameProvider],
+                        use_pyproject_toml=use_pyproject,
+                    )
+                    wrapper = manager.get_metadata_wrapper_for_path(relative_path)
+                    self.assertEqual(
+                        wrapper.resolve(FullyQualifiedNameProvider)[wrapper.module],
+                        {QualifiedName(module_name, QualifiedNameSource.LOCAL)},
+                    )
+
+    def test_absolute_path_outside_repository_is_rejected(self) -> None:
+        with TemporaryDirectory() as directory:
+            root = Path(directory) / "repo"
+            root.mkdir()
+            outside = str(Path(directory) / "outside.py")
+            manager = FullRepoManager(root, [outside], [FullyQualifiedNameProvider])
+
+            with self.assertRaises(ValueError):
+                manager.get_cache_for_path(outside)
