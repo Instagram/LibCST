@@ -16,6 +16,46 @@ class RemoveUnusedImportsCommandTest(CodemodTest):
         after = "import a\na()"
         self.assertCodemod(before, after)
 
+    def test_imports_exported_through_methods_are_preserved(self) -> None:
+        for export in [
+            '__all__.append("public")',
+            '__all__.extend(["public"])',
+            '__all__.extend(("public",))',
+        ]:
+            with self.subTest(export=export):
+                code = f"from package import public\n__all__ = []\n{export}\n"
+                self.assertCodemod(code, code)
+
+    def test_exports_with_removals_are_preserved_conservatively(self) -> None:
+        for declarations in [
+            '__all__ = ["public"]',
+            'exports = ["public"]\n__all__ = ["public"]\n__all__.extend(exports)',
+            '__all__ = ["public"]\nif condition:\n    __all__.append("public")',
+            '__all__ = exports = ["public"]\nexports.append("public")',
+        ]:
+            with self.subTest(declarations=declarations):
+                code = (
+                    f"from package import public\n{declarations}\n"
+                    '__all__.remove("public")\n'
+                )
+                self.assertCodemod(code, code)
+
+    def test_deferred_export_removal_does_not_remove_the_import(self) -> None:
+        for statement in [
+            'def later():\n    __all__.remove("public")',
+            'f = lambda: __all__.remove("public")',
+            'lambda: __all__.remove("public")',
+            'g = (__all__.remove("public") for _ in [])',
+            '(__all__.remove("public") for _ in [])',
+            '__all__.remove("public") if condition else None',
+        ]:
+            with self.subTest(statement=statement):
+                code = (
+                    'from package import public\n__all__ = ["public"]\n'
+                    f"{statement}\n"
+                )
+                self.assertCodemod(code, code)
+
     def test_double_import(self) -> None:
         before = "import a\nimport a\na()"
         self.assertCodemod(before, before)
