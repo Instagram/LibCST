@@ -119,9 +119,12 @@ class FullyQualifiedNameProvider(BatchableMetadataProvider[Collection[QualifiedN
         use_pyproject_toml: bool = False,
         **kwargs: Any,
     ) -> Mapping[str, ModuleNameAndPackage]:
+        # Resolve source paths against the root just as FullRepoManager does
+        # when reading them, while preserving the caller's paths as cache keys.
+        root_path = root_path.absolute()
         cache = {
             path: calculate_module_and_package(
-                root_path, path, use_pyproject_toml=use_pyproject_toml
+                root_path, root_path / path, use_pyproject_toml=use_pyproject_toml
             )
             for path in paths
         }

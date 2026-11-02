@@ -30,6 +30,8 @@ class FullRepoManager:
         metadata provider like :class:`~libcst.metadata.TypeInferenceProvider`.
 
         :param paths: a collection of paths to access full repository data.
+            Relative paths are interpreted relative to ``repo_root_dir``;
+            absolute paths are also accepted.
         :param providers: a collection of metadata provider classes require accessing full repository data, currently supports
             :class:`~libcst.metadata.TypeInferenceProvider` and
             :class:`~libcst.metadata.FullyQualifiedNameProvider`.
@@ -101,7 +103,9 @@ class FullRepoManager:
     def get_metadata_wrapper_for_path(self, path: str) -> MetadataWrapper:
         """
         Create a :class:`~libcst.metadata.MetadataWrapper` given a source file path.
-        The path needs to be a path relative to project root directory.
+        Relative paths are interpreted relative to the project root directory;
+        absolute paths are also accepted. The path must match an entry in the
+        ``paths`` parameter used to construct the manager.
         The source code is read and parsed as :class:`~libcst.Module` for
         :class:`~libcst.metadata.MetadataWrapper`.
 
