@@ -19,6 +19,12 @@ class GatherExportsVisitor(ContextAwareVisitor):
     :meth:`~libcst.CSTNode.visit` method in order to gather up information about
     exports specified in an ``__all__`` variable inside a module.
 
+    In addition to literal assignments and ``+=``, recognizes unconditional
+    module-level ``append`` and ``extend`` expression statements on ``__all__``
+    with literal arguments. Dynamically computed exports, including other
+    modules' ``__all__`` values, are not resolved. Removals are ignored
+    conservatively because unresolved additions may contain the same name.
+
     After visiting a module the following attributes will be populated:
 
      explicit_exported_objects
@@ -35,6 +41,7 @@ class GatherExportsVisitor(ContextAwareVisitor):
         # Track any re-exported objects in an __all__ reference and whether
         # they're defined or not
         self.explicit_exported_objects: Set[str] = set()
+        self._module_level_calls: Set[cst.Call] = set()
 
         # Presumably at some point in the future it would be useful to grab
         # a list of all implicitly exported objects. That would go here as
@@ -46,6 +53,18 @@ class GatherExportsVisitor(ContextAwareVisitor):
         # Internal bookkeeping
         self._is_assigned_export: Set[Union[cst.Tuple, cst.List, cst.Set]] = set()
         self._in_assigned_export: Set[Union[cst.Tuple, cst.List, cst.Set]] = set()
+
+    def visit_Module(self, node: cst.Module) -> None:
+        # A call in an uncalled function does not initialize module exports.
+        # Restrict new method handling to direct module-level statements.
+        self._module_level_calls = {
+            expression.value
+            for statement in node.body
+            if isinstance(statement, cst.SimpleStatementLine)
+            for expression in statement.body
+            if isinstance(expression, cst.Expr)
+            and isinstance(expression.value, cst.Call)
+        }
 
     def visit_AnnAssign(self, node: cst.AnnAssign) -> bool:
         value = node.value
@@ -67,6 +86,45 @@ class GatherExportsVisitor(ContextAwareVisitor):
             if isinstance(value, (cst.List, cst.Tuple)):
                 self._is_assigned_export.add(value)
             return True
+        return False
+
+    def visit_Call(self, node: cst.Call) -> bool:
+        if node not in self._module_level_calls:
+            return True
+        function = node.func
+        if not (
+            isinstance(function, cst.Attribute)
+            and isinstance(function.value, cst.Name)
+            and function.value.value == "__all__"
+        ):
+            return True
+        method = function.attr.value
+        if method not in {"append", "extend"}:
+            return True
+        if len(node.args) != 1:
+            return False
+        argument = node.args[0]
+        if argument.keyword is not None or argument.star:
+            return False
+
+        value = argument.value
+        if method == "extend":
+            if not isinstance(value, (cst.List, cst.Tuple)):
+                return False
+            values = [
+                element.value
+                for element in value.elements
+                if isinstance(element, cst.Element)
+            ]
+        else:
+            values = [value]
+        for value in values:
+            if not isinstance(value, (cst.SimpleString, cst.ConcatenatedString)):
+                continue
+            name = value.evaluated_value
+            if not isinstance(name, str):
+                continue
+            self.explicit_exported_objects.add(name)
         return False
 
     def visit_Assign(self, node: cst.Assign) -> bool:

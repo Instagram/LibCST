@@ -94,6 +94,54 @@ class TestGatherExportsVisitor(UnitTest):
         gatherer = self.gather_exports(code)
         self.assertEqual(gatherer.explicit_exported_objects, {"bar", "baz"})
 
+    def test_gather_exports_append_and_extend(self) -> None:
+        cases = [
+            ('__all__ = []\n__all__.append("added")', {"added"}),
+            ('__all__.append("joined" "name")', {"joinedname"}),
+            ('__all__.extend(["first", "second"])', {"first", "second"}),
+            ('__all__.extend(("joined" "name", b"bytes"))', {"joinedname"}),
+            ('__all__.append("a")\n__all__.append("a")', {"a"}),
+            ('__all__.extend(["a", "a"])', {"a"}),
+            (
+                '__all__ = ["a"]\n__all__ += ["b"]\n__all__.append("c")\n__all__.extend(("d",))',
+                {"a", "b", "c", "d"},
+            ),
+        ]
+        for code, expected in cases:
+            with self.subTest(code=code):
+                gatherer = self.gather_exports(code)
+                self.assertEqual(gatherer.explicit_exported_objects, expected)
+
+    def test_gather_exports_ignores_dynamic_or_invalid_method_calls(self) -> None:
+        code = """
+            __all__ = []
+            other.append("other")
+            __all__().append("call_result")
+            __all__[0].append("item")
+            module.__all__.append("attribute")
+            __all__.append(b"bytes")
+            __all__.append(name)
+            __all__.append(value="keyword")
+            __all__.append("one", "two")
+            __all__.append(*["starred"])
+            __all__.extend(module.__all__)
+            __all__.extend([name, ["nested"]])
+        """
+        self.assertEqual(self.gather_exports(code).explicit_exported_objects, set())
+
+    def test_gather_exports_ignores_deferred_or_conditional_mutations(self) -> None:
+        for code in [
+            '__all__ = ["public"]\ndef later():\n    __all__.remove("public")',
+            '__all__ = ["public"]\ndef later():\n    __all__.append("private")',
+            '__all__ = ["public"]\nif condition:\n    __all__.extend(["private"])',
+            '__all__ = ["public"]\nif condition:\n    __all__.remove("public")',
+            '__all__ = ["public"]\nclass Other:\n    __all__ = []\n    __all__.remove("public")',
+        ]:
+            with self.subTest(code=code):
+                self.assertEqual(
+                    self.gather_exports(code).explicit_exported_objects, {"public"}
+                )
+
     def test_gather_exports_ignore_invalid_1(self) -> None:
         code = """
             from foo import bar
