@@ -284,6 +284,85 @@ class AnnAssignTest(CSTNodeTest):
                 "parser": parse_statement,
                 "expected_position": None,
             },
+            # Parenthesized target with a value
+            {
+                "node": cst.SimpleStatementLine(
+                    (
+                        cst.AnnAssign(
+                            target=cst.Name(
+                                "foo",
+                                lpar=(cst.LeftParen(),),
+                                rpar=(cst.RightParen(),),
+                            ),
+                            annotation=cst.Annotation(
+                                annotation=cst.Name("str"),
+                                whitespace_before_indicator=cst.SimpleWhitespace(""),
+                            ),
+                            equal=cst.AssignEqual(),
+                            value=cst.Integer("5"),
+                        ),
+                    )
+                ),
+                "code": "(foo): str = 5\n",
+                "parser": parse_statement,
+                "expected_position": None,
+            },
+            # Parenthesized target without a value
+            {
+                "node": cst.SimpleStatementLine(
+                    (
+                        cst.AnnAssign(
+                            target=cst.Name(
+                                "foo",
+                                lpar=(cst.LeftParen(),),
+                                rpar=(cst.RightParen(),),
+                            ),
+                            annotation=cst.Annotation(
+                                annotation=cst.Name("str"),
+                                whitespace_before_indicator=cst.SimpleWhitespace(""),
+                            ),
+                            value=None,
+                        ),
+                    )
+                ),
+                "code": "(foo): str\n",
+                "parser": parse_statement,
+                "expected_position": None,
+            },
+            # Doubly parenthesized attribute target with whitespace
+            {
+                "node": cst.SimpleStatementLine(
+                    (
+                        cst.AnnAssign(
+                            target=cst.Attribute(
+                                cst.Name("foo"),
+                                cst.Name("bar"),
+                                lpar=(
+                                    cst.LeftParen(
+                                        whitespace_after=cst.SimpleWhitespace(" ")
+                                    ),
+                                    cst.LeftParen(),
+                                ),
+                                rpar=(
+                                    cst.RightParen(),
+                                    cst.RightParen(
+                                        whitespace_before=cst.SimpleWhitespace(" ")
+                                    ),
+                                ),
+                            ),
+                            annotation=cst.Annotation(
+                                annotation=cst.Name("str"),
+                                whitespace_before_indicator=cst.SimpleWhitespace(" "),
+                            ),
+                            equal=cst.AssignEqual(),
+                            value=cst.Integer("5"),
+                        ),
+                    )
+                ),
+                "code": "( (foo.bar) ) : str = 5\n",
+                "parser": parse_statement,
+                "expected_position": None,
+            },
         )
     )
     def test_valid(self, **kwargs: Any) -> None:
