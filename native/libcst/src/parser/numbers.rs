@@ -40,7 +40,7 @@ thread_local! {
         .expect("regex");
 }
 
-pub(crate) fn parse_number(raw: &str) -> Expression {
+pub(crate) fn parse_number(raw: &str) -> Expression<'_, '_> {
     if INTEGER_RE.with(|r| r.is_match(raw)) {
         Expression::Integer(Box::new(Integer {
             value: raw,

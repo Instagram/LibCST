@@ -174,7 +174,7 @@ pub mod py {
         }
     }
 
-    impl<'a> TryIntoPy<Py<PyAny>> for &'a str {
+    impl TryIntoPy<Py<PyAny>> for &str {
         fn try_into_py(self, py: Python) -> PyResult<Py<PyAny>> {
             self.into_py_any(py)
         }

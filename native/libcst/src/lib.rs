@@ -20,7 +20,7 @@ use parser::{ParserError, Result, TokVec};
 #[cfg(feature = "py")]
 pub mod py;
 
-pub fn tokenize(text: &str) -> Result<Vec<Token>> {
+pub fn tokenize(text: &str) -> Result<'_, Vec<Token<'_>>> {
     let iter = TokenIterator::new(
         text,
         &TokConfig {
@@ -58,7 +58,7 @@ pub fn parse_tokens_without_whitespace<'r, 'a>(
     Ok(m)
 }
 
-pub fn parse_statement(text: &str) -> Result<Statement> {
+pub fn parse_statement(text: &str) -> Result<'_, Statement<'_>> {
     let tokens = tokenize(text)?;
     let conf = whitespace_parser::Config::new(text, &tokens);
     let tokvec = tokens.into();
@@ -67,7 +67,7 @@ pub fn parse_statement(text: &str) -> Result<Statement> {
     Ok(stm.inflate(&conf)?)
 }
 
-pub fn parse_expression(text: &str) -> Result<Expression> {
+pub fn parse_expression(text: &str) -> Result<'_, Expression<'_>> {
     let tokens = tokenize(text)?;
     let conf = whitespace_parser::Config::new(text, &tokens);
     let tokvec = tokens.into();

@@ -413,7 +413,7 @@ impl<'t> TokState<'t> {
                 Some('\\') => {
                     self.text_pos.next();
                     if let Some('\n') = self.text_pos.next() {
-                        if self.text_pos.peek() == None {
+                        if self.text_pos.peek().is_none() {
                             Err(TokError::LineContinuationEof)
                         } else {
                             self.cont_line = true;

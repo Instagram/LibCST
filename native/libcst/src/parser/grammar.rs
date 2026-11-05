@@ -1985,7 +1985,7 @@ fn make_comma<'input, 'a>(tok: TokenRef<'input, 'a>) -> Comma<'input, 'a> {
 }
 
 fn concat<T>(a: Vec<T>, b: Vec<T>) -> Vec<T> {
-    a.into_iter().chain(b.into_iter()).collect()
+    a.into_iter().chain(b).collect()
 }
 
 fn make_name_or_attr<'input, 'a>(
@@ -1994,13 +1994,13 @@ fn make_name_or_attr<'input, 'a>(
 ) -> NameOrAttribute<'input, 'a> {
     if let Some((dot, name)) = tail.pop() {
         let dot = make_dot(dot);
-        return NameOrAttribute::A(Box::new(Attribute {
+        NameOrAttribute::A(Box::new(Attribute {
             attr: name,
             dot,
             lpar: Default::default(),
             rpar: Default::default(),
             value: Box::new(make_name_or_attr(first_tok, tail).into()),
-        }));
+        }))
     } else {
         NameOrAttribute::N(Box::new(first_tok))
     }
@@ -3596,9 +3596,9 @@ fn make_param_spec<'input, 'a>(
     TypeParam {
         param: TypeVarLike::ParamSpec(ParamSpec { name, star_tok }),
         comma: Default::default(),
-        equal: equal,
+        equal,
         star: "",
-        default: default,
+        default,
         star_tok: None,
     }
 }
@@ -3624,9 +3624,9 @@ fn make_type_var_tuple<'input, 'a>(
     TypeParam {
         param: TypeVarLike::TypeVarTuple(TypeVarTuple { name, star_tok }),
         comma: Default::default(),
-        equal: equal,
-        star: star,
-        default: default,
+        equal,
+        star,
+        default,
         star_tok: default_star,
     }
 }
@@ -3647,9 +3647,9 @@ fn make_type_var<'input, 'a>(
     TypeParam {
         param: TypeVarLike::TypeVar(TypeVar { name, bound, colon }),
         comma: Default::default(),
-        equal: equal,
+        equal,
         star: "",
-        default: default,
+        default,
         star_tok: None,
     }
 }
@@ -3673,11 +3673,7 @@ fn make_type_alias<'input, 'a>(
     equals_tok: TokenRef<'input, 'a>,
     value: Expression<'input, 'a>,
 ) -> TypeAlias<'input, 'a> {
-    let lbracket_tok = if let Some(tp) = &type_parameters {
-        Some(tp.lbracket.tok)
-    } else {
-        None
-    };
+    let lbracket_tok = type_parameters.as_ref().map(|tp| tp.lbracket.tok);
     TypeAlias {
         type_tok,
         name,
