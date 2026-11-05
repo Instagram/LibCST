@@ -60,7 +60,7 @@ impl<'r, 'a> Inflate<'a> for DeflatedModule<'r, 'a> {
         let mut body = self.body.inflate(config)?;
         let mut footer = parse_empty_lines(
             config,
-            &mut (*self.eof_tok).whitespace_before.borrow_mut(),
+            &mut self.eof_tok.whitespace_before.borrow_mut(),
             Some(""),
         )?;
         let mut header = vec![];

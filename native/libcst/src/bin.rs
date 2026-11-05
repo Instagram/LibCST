@@ -19,14 +19,14 @@ pub fn main() {
             exit(1);
         }
         Ok(m) => {
-            let first_arg = env::args().nth(1).unwrap_or_else(|| "".to_string());
+            let first_arg = env::args().nth(1).unwrap_or_default();
             if first_arg == "-d" {
                 println!("{:#?}", m);
             }
             if first_arg != "-n" {
                 let mut state = Default::default();
                 m.codegen(&mut state);
-                print!("{}", state.to_string());
+                print!("{}", state);
             }
         }
     };

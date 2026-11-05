@@ -39,16 +39,13 @@ impl<'a> Codegen<'a> for Comment<'a> {
 pub struct Newline<'a>(pub Option<&'a str>, pub Fakeness);
 
 #[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Default)]
 pub enum Fakeness {
     Fake,
+    #[default]
     Real,
 }
 
-impl Default for Fakeness {
-    fn default() -> Self {
-        Self::Real
-    }
-}
 
 impl<'a> Codegen<'a> for Newline<'a> {
     fn codegen(&self, state: &mut CodegenState<'a>) {

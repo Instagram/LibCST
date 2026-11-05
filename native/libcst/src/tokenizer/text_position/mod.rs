@@ -95,7 +95,7 @@ impl<'t> TextPosition<'t> {
         match match_len {
             Some(match_len) => {
                 assert!(
-                    !rest_of_text[..match_len].contains(|x| x == '\r' || x == '\n'),
+                    !rest_of_text[..match_len].contains(['\r', '\n']),
                     "matches pattern must not match a newline",
                 );
                 true
