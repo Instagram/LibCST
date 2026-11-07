@@ -298,8 +298,6 @@ a newer Python construct does not guarantee that Jedi can infer its definitions.
     :members: gen_cache
 
 .. autoclass:: libcst.metadata.JediDefinition
-
-
    :no-undoc-members:
 
 .. autoclass:: libcst.metadata.FullRepoManager
