@@ -9,7 +9,7 @@
         "."
     ],
     "search_path": [
-        "stubs", {"site-package": "setuptools_rust"}
+        "stubs", {"site-package": "setuptools_rust"}, {"site-package": "jedi"}
     ],
     "workers": 3,
     "strict": true

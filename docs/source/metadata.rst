@@ -78,7 +78,8 @@ Metadata Providers
 :class:`~libcst.metadata.ScopeProvider`,
 :class:`~libcst.metadata.QualifiedNameProvider`,
 :class:`~libcst.metadata.ParentNodeProvider`, and
-:class:`~libcst.metadata.TypeInferenceProvider`
+:class:`~libcst.metadata.TypeInferenceProvider`, and
+:class:`~libcst.metadata.JediDefinitionProvider`
 are currently provided. Each metadata provider may has its own custom data structure.
 
 Position Metadata
@@ -246,6 +247,57 @@ which requires `setup watchman <https://pyre-check.org/docs/getting-started/>`_ 
 :class:`~libcst.metadata.FullRepoManager` is built for manage the inter process communication to Pyre.
 
 .. autoclass:: libcst.metadata.TypeInferenceProvider
+    :no-undoc-members:
+
+Jedi Definition Metadata
+------------------------
+
+Install the optional dependency with ``pip install "libcst[jedi]"`` to resolve
+Python definitions without a running Pyre server. This provider follows imports
+and assignments using ``jedi.Script.infer()``. Its results identify inferred
+definitions; they are not type annotations and do not describe a call's return
+type. For example, ``factory()`` maps to the definition of ``factory``, while a
+variable assigned an integer can map to ``builtins.int``.
+
+Use the project's root directory and relative file paths::
+
+    from libcst.metadata import FullRepoManager, JediDefinitionProvider
+
+    manager = FullRepoManager(
+        "project", ["package/main.py"], {JediDefinitionProvider}
+    )
+    wrapper = manager.get_metadata_wrapper_for_path("package/main.py")
+    definitions = wrapper.resolve(JediDefinitionProvider)
+    for node, candidates in definitions.items():
+        for definition in candidates:
+            print(definition.full_name, definition.module_path, definition.position)
+
+``Name`` and ``Attribute`` nodes receive a tuple of zero or more
+:class:`~libcst.metadata.JediDefinition` snapshots. Calls whose callee is a
+``Name`` or ``Attribute`` receive the same tuple as that callee. Calls on other
+expressions, such as ``functions[0]()`` or a lambda, have no call metadata.
+``position`` points at the definition's identifier, with one-based lines and
+zero-based Unicode character columns. Paths, positions, and full names can be
+absent, depending on the definition and backend.
+
+To analyze an edited module, use ``MetadataWrapper(module,
+cache=manager.get_cache_for_path(path))``. Jedi receives that module's current
+text; imported files still come from the project's environment and filesystem.
+The manager cache contains only paths, and both the cache and definition tuples
+can be pickled. No Jedi objects are placed in the metadata results. A wrapper
+without the required per-file cache raises ``ValueError``.
+
+Provider instances serialize their Jedi work within a process because Jedi's
+parser caches are not thread-safe. This does not coordinate other code that
+calls Jedi directly, and it does not change Jedi's global settings. The
+``FullRepoManager`` timeout does not interrupt this in-process inference.
+Jedi's parser and environment determine supported source syntax; LibCST accepting
+a newer Python construct does not guarantee that Jedi can infer its definitions.
+
+.. autoclass:: libcst.metadata.JediDefinitionProvider
+    :members: gen_cache
+
+.. autoclass:: libcst.metadata.JediDefinition
    :no-undoc-members:
 
 .. autoclass:: libcst.metadata.FullRepoManager

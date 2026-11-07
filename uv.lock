@@ -964,7 +964,7 @@ dependencies = [
     { name = "colorama", marker = "python_full_version < '3.10' and sys_platform == 'win32'" },
     { name = "decorator", marker = "python_full_version < '3.10'" },
     { name = "exceptiongroup", marker = "python_full_version < '3.10'" },
-    { name = "jedi", marker = "python_full_version < '3.10'" },
+    { name = "jedi", version = "0.19.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
     { name = "matplotlib-inline", marker = "python_full_version < '3.10'" },
     { name = "pexpect", marker = "python_full_version < '3.10' and sys_platform != 'win32'" },
     { name = "prompt-toolkit", marker = "python_full_version < '3.10'" },
@@ -989,7 +989,7 @@ dependencies = [
     { name = "colorama", marker = "python_full_version == '3.10.*' and sys_platform == 'win32'" },
     { name = "decorator", marker = "python_full_version == '3.10.*'" },
     { name = "exceptiongroup", marker = "python_full_version == '3.10.*'" },
-    { name = "jedi", marker = "python_full_version == '3.10.*'" },
+    { name = "jedi", version = "0.20.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.10.*'" },
     { name = "matplotlib-inline", marker = "python_full_version == '3.10.*'" },
     { name = "pexpect", marker = "python_full_version == '3.10.*' and sys_platform != 'emscripten' and sys_platform != 'win32'" },
     { name = "prompt-toolkit", marker = "python_full_version == '3.10.*'" },
@@ -1016,7 +1016,7 @@ dependencies = [
     { name = "colorama", marker = "python_full_version >= '3.11' and sys_platform == 'win32'" },
     { name = "decorator", marker = "python_full_version >= '3.11'" },
     { name = "ipython-pygments-lexers", marker = "python_full_version >= '3.11'" },
-    { name = "jedi", marker = "python_full_version >= '3.11'" },
+    { name = "jedi", version = "0.20.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "matplotlib-inline", marker = "python_full_version >= '3.11'" },
     { name = "pexpect", marker = "python_full_version >= '3.11' and sys_platform != 'emscripten' and sys_platform != 'win32'" },
     { name = "prompt-toolkit", marker = "python_full_version >= '3.11'" },
@@ -1076,12 +1076,33 @@ wheels = [
 name = "jedi"
 version = "0.19.2"
 source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "python_full_version < '3.10'",
+]
 dependencies = [
-    { name = "parso" },
+    { name = "parso", marker = "python_full_version < '3.10'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/72/3a/79a912fbd4d8dd6fbb02bf69afd3bb72cf0c729bb3063c6f4498603db17a/jedi-0.19.2.tar.gz", hash = "sha256:4770dc3de41bde3966b02eb84fbcf557fb33cce26ad23da12c742fb50ecb11f0", size = 1231287, upload-time = "2024-11-11T01:41:42.873Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/c0/5a/9cac0c82afec3d09ccd97c8b6502d48f165f9124db81b4bcb90b4af974ee/jedi-0.19.2-py2.py3-none-any.whl", hash = "sha256:a8ef22bde8490f57fe5c7681a3c83cb58874daf72b4784de3cce5b6ef6edb5b9", size = 1572278, upload-time = "2024-11-11T01:41:40.175Z" },
+]
+
+[[package]]
+name = "jedi"
+version = "0.20.1"
+source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "python_full_version >= '3.14'",
+    "python_full_version == '3.13.*'",
+    "python_full_version >= '3.11' and python_full_version < '3.13'",
+    "python_full_version == '3.10.*'",
+]
+dependencies = [
+    { name = "parso", marker = "python_full_version >= '3.10'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/a3/a4/4692ecd7fa700ac1066b1c1f6cadef60aa2e01e5e364710235137d823e0a/jedi-0.20.1.tar.gz", hash = "sha256:2f71208c3f9c1bca057c0e90d3f272aba44ace88fc4067d7587e9e069331b7e5", size = 3121738, upload-time = "2026-10-12T17:42:24.361Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/be/c7/71eb0d51cdcbb63b857c931aa4e9218b078b5d9f8ecd383b234f28fe7b0f/jedi-0.20.1-py2.py3-none-any.whl", hash = "sha256:0fb16d86c4a4c73c37ba518c77419975e30fcc620658a8d14fbb5720cdd34142", size = 4885980, upload-time = "2026-10-12T17:42:21.585Z" },
 ]
 
 [[package]]
@@ -1380,6 +1401,12 @@ dependencies = [
     { name = "typing-extensions", marker = "python_full_version < '3.10'" },
 ]
 
+[package.optional-dependencies]
+jedi = [
+    { name = "jedi", version = "0.19.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
+    { name = "jedi", version = "0.20.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
+]
+
 [package.dev-dependencies]
 dev = [
     { name = "black" },
@@ -1390,6 +1417,8 @@ dev = [
     { name = "flake8" },
     { name = "hypothesis" },
     { name = "hypothesmith" },
+    { name = "jedi", version = "0.19.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
+    { name = "jedi", version = "0.20.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
     { name = "maturin" },
     { name = "poethepoet" },
     { name = "prompt-toolkit" },
@@ -1409,6 +1438,8 @@ docs = [
     { name = "flake8" },
     { name = "hypothesis" },
     { name = "hypothesmith" },
+    { name = "jedi", version = "0.19.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
+    { name = "jedi", version = "0.20.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
     { name = "jinja2" },
     { name = "jupyter" },
     { name = "maturin" },
@@ -1428,11 +1459,14 @@ docs = [
 
 [package.metadata]
 requires-dist = [
+    { name = "jedi", marker = "python_full_version >= '3.10' and extra == 'jedi'", specifier = ">=0.20.1" },
+    { name = "jedi", marker = "python_full_version < '3.10' and extra == 'jedi'", specifier = ">=0.19.2" },
     { name = "pyyaml", marker = "python_full_version < '3.13'", specifier = ">=5.2" },
     { name = "pyyaml", marker = "python_full_version >= '3.14'", specifier = ">=6.0.3" },
     { name = "pyyaml-ft", marker = "python_full_version == '3.13.*'", specifier = ">=8.0.0" },
     { name = "typing-extensions", marker = "python_full_version < '3.10'" },
 ]
+provides-extras = ["jedi"]
 
 [package.metadata.requires-dev]
 dev = [
@@ -1443,6 +1477,8 @@ dev = [
     { name = "flake8", specifier = "==7.2.0" },
     { name = "hypothesis", specifier = ">=4.36.0" },
     { name = "hypothesmith", specifier = ">=0.0.4" },
+    { name = "jedi", marker = "python_full_version < '3.10'", specifier = ">=0.19.2" },
+    { name = "jedi", marker = "python_full_version >= '3.10'", specifier = ">=0.20.1" },
     { name = "maturin", specifier = ">=1.7.0,<1.8" },
     { name = "poethepoet", specifier = ">=0.35.0" },
     { name = "prompt-toolkit", specifier = ">=2.0.9" },
@@ -1461,6 +1497,8 @@ docs = [
     { name = "flake8", specifier = "==7.2.0" },
     { name = "hypothesis", specifier = ">=4.36.0" },
     { name = "hypothesmith", specifier = ">=0.0.4" },
+    { name = "jedi", marker = "python_full_version < '3.10'", specifier = ">=0.19.2" },
+    { name = "jedi", marker = "python_full_version >= '3.10'", specifier = ">=0.20.1" },
     { name = "jinja2", specifier = "==3.1.6" },
     { name = "jupyter", specifier = ">=1.0.0" },
     { name = "maturin", specifier = ">=1.7.0,<1.8" },
@@ -1775,11 +1813,11 @@ wheels = [
 
 [[package]]
 name = "parso"
-version = "0.8.4"
+version = "0.8.7"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/66/94/68e2e17afaa9169cf6412ab0f28623903be73d1b32e208d9e8e541bb086d/parso-0.8.4.tar.gz", hash = "sha256:eb3a7b58240fb99099a345571deecc0f9540ea5f4dd2fe14c2a99d6b281ab92d", size = 400609, upload-time = "2024-04-05T09:43:55.897Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/30/4b/90c937815137d43ce71ba043cd3566221e9df6b9c805f24b5d138c9d40a7/parso-0.8.7.tar.gz", hash = "sha256:eaaac4c9fdd5e9e8852dc778d2d7405897ec510f2a298071453e5e3a07914bb1", size = 401824, upload-time = "2026-05-01T23:13:02.138Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/c6/ac/dac4a63f978e4dcb3c6d3a78c4d8e0192a113d288502a1216950c41b1027/parso-0.8.4-py2.py3-none-any.whl", hash = "sha256:a418670a20291dacd2dddc80c377c5c3791378ee1e8d12bffc35420643d43f18", size = 103650, upload-time = "2024-04-05T09:43:53.299Z" },
+    { url = "https://files.pythonhosted.org/packages/99/5d/8268b644392ee874ee82a635cd0df1773de230bde356c38de28e298392cc/parso-0.8.7-py2.py3-none-any.whl", hash = "sha256:a8926eb2a1b915486941fdbd31e86a4baf88fe8c210f25f2f35ecec5b574ca1c", size = 107025, upload-time = "2026-05-01T23:12:58.867Z" },
 ]
 
 [[package]]

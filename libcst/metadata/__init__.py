@@ -18,6 +18,10 @@ from libcst.metadata.expression_context_provider import (
 )
 from libcst.metadata.file_path_provider import FilePathProvider
 from libcst.metadata.full_repo_manager import FullRepoManager
+from libcst.metadata.jedi_definition_provider import (
+    JediDefinition,
+    JediDefinitionProvider,
+)
 from libcst.metadata.name_provider import (
     FullyQualifiedNameProvider,
     QualifiedNameProvider,
@@ -87,6 +91,8 @@ __all__ = [
     "Assignments",
     "Accesses",
     "TypeInferenceProvider",
+    "JediDefinition",
+    "JediDefinitionProvider",
     "FullRepoManager",
     "AccessorProvider",
     "FilePathProvider",
