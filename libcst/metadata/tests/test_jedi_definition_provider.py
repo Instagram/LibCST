@@ -14,7 +14,7 @@ import unittest
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from types import SimpleNamespace
-from typing import Dict, List, Mapping, Optional, Sequence, Tuple
+from typing import Callable, Dict, List, Mapping, Optional, Sequence, Tuple
 from unittest.mock import patch
 
 import libcst as cst
@@ -167,8 +167,19 @@ class JediDefinitionProviderTest(unittest.TestCase):
                 wrapper.resolve(JediDefinitionProvider)
 
     def test_dependency_import_failure_is_not_reported_as_missing_jedi(self) -> None:
-        original_import = builtins.__import__
-        error = ModuleNotFoundError("missing Jedi dependency", name="parso")
+        original_import: Callable[
+            [
+                str,
+                Optional[Mapping[str, object]],
+                Optional[Mapping[str, object]],
+                Sequence[str],
+                int,
+            ],
+            object,
+        ] = builtins.__import__
+        error: ModuleNotFoundError = ModuleNotFoundError(
+            "missing Jedi dependency", name="parso"
+        )
 
         def import_module(
             name: str,

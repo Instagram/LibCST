@@ -104,8 +104,8 @@ class JediDefinitionProvider(VisitorMetadataProvider[Tuple[JediDefinition, ...]]
 
     def __init__(self, cache: _JediCache) -> None:
         super().__init__(cache)
-        self._root_path = cache.root_path
-        self._path = cache.path
+        self._root_path: Path = cache.root_path
+        self._path: Path = cache.path
         self._script: Optional[_JediScript] = None
         self._definitions: Dict[CodePosition, Tuple[JediDefinition, ...]] = {}
 
