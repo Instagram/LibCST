@@ -5,7 +5,17 @@
 
 from pathlib import Path
 from threading import RLock
-from typing import Any, Dict, List, Mapping, NamedTuple, Optional, Tuple
+from typing import (
+    cast,
+    Dict,
+    List,
+    Mapping,
+    NamedTuple,
+    Optional,
+    Protocol,
+    Sequence,
+    Tuple,
+)
 
 import libcst as cst
 from libcst._position import CodePosition
@@ -32,6 +42,20 @@ class JediDefinition(NamedTuple):
     module_name: str
     module_path: Optional[Path]
     position: Optional[CodePosition]
+
+
+class _JediName(Protocol):
+    name: str
+    full_name: Optional[str]
+    type: str
+    module_name: str
+    module_path: Optional[Path]
+    line: Optional[int]
+    column: Optional[int]
+
+
+class _JediScript(Protocol):
+    def infer(self, line: int, column: int) -> Sequence[_JediName]: ...
 
 
 class _JediCache(NamedTuple):
@@ -74,7 +98,7 @@ class JediDefinitionProvider(VisitorMetadataProvider[Tuple[JediDefinition, ...]]
         *,
         timeout: Optional[int] = None,
         use_pyproject_toml: bool = False,
-    ) -> Mapping[str, object]:
+    ) -> Mapping[str, _JediCache]:
         root = root_path.resolve()
         return {path: _JediCache(root, (root / path).resolve()) for path in paths}
 
@@ -82,7 +106,7 @@ class JediDefinitionProvider(VisitorMetadataProvider[Tuple[JediDefinition, ...]]
         super().__init__(cache)
         self._root_path = cache.root_path
         self._path = cache.path
-        self._script: Any = None
+        self._script: Optional[_JediScript] = None
         self._definitions: Dict[CodePosition, Tuple[JediDefinition, ...]] = {}
 
     def _gen_impl(self, module: cst.Module) -> None:
@@ -98,10 +122,13 @@ class JediDefinitionProvider(VisitorMetadataProvider[Tuple[JediDefinition, ...]]
         # whole resolutions, including snapshots, across provider instances.
         with _JEDI_LOCK:
             self._definitions.clear()
-            self._script = jedi.Script(
-                code=module.code,
-                path=self._path,
-                project=jedi.Project(path=self._root_path),
+            self._script = cast(
+                _JediScript,
+                jedi.Script(
+                    code=module.code,
+                    path=self._path,
+                    project=jedi.Project(path=self._root_path),
+                ),
             )
             try:
                 module.visit(self)
@@ -113,8 +140,10 @@ class JediDefinitionProvider(VisitorMetadataProvider[Tuple[JediDefinition, ...]]
         # An Attribute's start instead points at its receiver.
         position = self.get_metadata(PositionProvider, name).end
         if position not in self._definitions:
-            definitions = []
-            for definition in self._script.infer(position.line, position.column):
+            definitions: List[JediDefinition] = []
+            script = self._script
+            assert script is not None
+            for definition in script.infer(position.line, position.column):
                 location = (
                     CodePosition(definition.line, definition.column)
                     if definition.line is not None and definition.column is not None
