@@ -33,6 +33,9 @@ Documentation = "https://libcst.readthedocs.io/en/latest/"
 Github = "https://github.com/Instagram/LibCST"
 Changelog = "https://github.com/Instagram/LibCST/blob/main/CHANGELOG.md"
 
+[project.optional-dependencies]
+jedi = ["jedi>=0.19.2"]
+
 [dependency-groups]
 dev = [
     "black==25.1.0",
@@ -42,6 +45,7 @@ dev = [
     "flake8==7.2.0",
     "hypothesis>=4.36.0",
     "hypothesmith>=0.0.4",
+    "jedi>=0.19.2",
     "maturin>=1.7.0,<1.8",
     "poethepoet>=0.35.0",
     "prompt-toolkit>=2.0.9",
