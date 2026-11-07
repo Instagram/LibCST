@@ -4,12 +4,16 @@
 # LICENSE file in the root directory of this source tree.
 
 from pathlib import Path
+from threading import RLock
 from typing import Any, Dict, List, Mapping, NamedTuple, Optional, Tuple
 
 import libcst as cst
 from libcst._position import CodePosition
-from libcst.metadata.base_provider import BatchableMetadataProvider
+from libcst.metadata.base_provider import VisitorMetadataProvider
 from libcst.metadata.position_provider import PositionProvider
+
+
+_JEDI_LOCK = RLock()
 
 
 class JediDefinition(NamedTuple):
@@ -35,7 +39,7 @@ class _JediCache(NamedTuple):
     path: Path
 
 
-class JediDefinitionProvider(BatchableMetadataProvider[Tuple[JediDefinition, ...]]):
+class JediDefinitionProvider(VisitorMetadataProvider[Tuple[JediDefinition, ...]]):
     """
     Resolve definitions with the optional Jedi dependency.
 
@@ -81,7 +85,7 @@ class JediDefinitionProvider(BatchableMetadataProvider[Tuple[JediDefinition, ...
         self._script: Any = None
         self._definitions: Dict[CodePosition, Tuple[JediDefinition, ...]] = {}
 
-    def visit_Module(self, node: cst.Module) -> None:
+    def _gen_impl(self, module: cst.Module) -> None:
         try:
             import jedi
         except ModuleNotFoundError as error:
@@ -90,12 +94,19 @@ class JediDefinitionProvider(BatchableMetadataProvider[Tuple[JediDefinition, ...
             raise ImportError(
                 'JediDefinitionProvider requires Jedi: install "libcst[jedi]".'
             ) from error
-        self._definitions.clear()
-        self._script = jedi.Script(
-            code=node.code,
-            path=self._path,
-            project=jedi.Project(path=self._root_path),
-        )
+        # Jedi uses process-global caches and mutable parser state. Serialize
+        # whole resolutions, including snapshots, across provider instances.
+        with _JEDI_LOCK:
+            self._definitions.clear()
+            self._script = jedi.Script(
+                code=module.code,
+                path=self._path,
+                project=jedi.Project(path=self._root_path),
+            )
+            try:
+                module.visit(self)
+            finally:
+                self._script = None
 
     def _infer(self, name: cst.Name) -> Tuple[JediDefinition, ...]:
         # Query at the identifier's end, a cursor position within its token.

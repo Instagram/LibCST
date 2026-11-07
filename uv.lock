@@ -1380,6 +1380,11 @@ dependencies = [
     { name = "typing-extensions", marker = "python_full_version < '3.10'" },
 ]
 
+[package.optional-dependencies]
+jedi = [
+    { name = "jedi" },
+]
+
 [package.dev-dependencies]
 dev = [
     { name = "black" },
@@ -1390,6 +1395,7 @@ dev = [
     { name = "flake8" },
     { name = "hypothesis" },
     { name = "hypothesmith" },
+    { name = "jedi" },
     { name = "maturin" },
     { name = "poethepoet" },
     { name = "prompt-toolkit" },
@@ -1409,6 +1415,7 @@ docs = [
     { name = "flake8" },
     { name = "hypothesis" },
     { name = "hypothesmith" },
+    { name = "jedi" },
     { name = "jinja2" },
     { name = "jupyter" },
     { name = "maturin" },
@@ -1428,11 +1435,13 @@ docs = [
 
 [package.metadata]
 requires-dist = [
+    { name = "jedi", marker = "extra == 'jedi'", specifier = ">=0.19.2" },
     { name = "pyyaml", marker = "python_full_version < '3.13'", specifier = ">=5.2" },
     { name = "pyyaml", marker = "python_full_version >= '3.14'", specifier = ">=6.0.3" },
     { name = "pyyaml-ft", marker = "python_full_version == '3.13.*'", specifier = ">=8.0.0" },
     { name = "typing-extensions", marker = "python_full_version < '3.10'" },
 ]
+provides-extras = ["jedi"]
 
 [package.metadata.requires-dev]
 dev = [
@@ -1443,6 +1452,7 @@ dev = [
     { name = "flake8", specifier = "==7.2.0" },
     { name = "hypothesis", specifier = ">=4.36.0" },
     { name = "hypothesmith", specifier = ">=0.0.4" },
+    { name = "jedi", specifier = ">=0.19.2" },
     { name = "maturin", specifier = ">=1.7.0,<1.8" },
     { name = "poethepoet", specifier = ">=0.35.0" },
     { name = "prompt-toolkit", specifier = ">=2.0.9" },
@@ -1461,6 +1471,7 @@ docs = [
     { name = "flake8", specifier = "==7.2.0" },
     { name = "hypothesis", specifier = ">=4.36.0" },
     { name = "hypothesmith", specifier = ">=0.0.4" },
+    { name = "jedi", specifier = ">=0.19.2" },
     { name = "jinja2", specifier = "==3.1.6" },
     { name = "jupyter", specifier = ">=1.0.0" },
     { name = "maturin", specifier = ">=1.7.0,<1.8" },
