@@ -23,7 +23,7 @@ from libcst.metadata.base_provider import VisitorMetadataProvider
 from libcst.metadata.position_provider import PositionProvider
 
 
-_JEDI_LOCK = RLock()
+_JEDI_LOCK: RLock = RLock()
 
 
 class JediDefinition(NamedTuple):
