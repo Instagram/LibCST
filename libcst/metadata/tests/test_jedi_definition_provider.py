@@ -3,6 +3,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import builtins
 import importlib
 import pickle
 import sys
@@ -13,7 +14,7 @@ import unittest
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from types import SimpleNamespace
-from typing import Any
+from typing import Dict, List, Mapping, Optional, Sequence, Tuple
 from unittest.mock import patch
 
 import libcst as cst
@@ -38,11 +39,18 @@ class JediDefinitionProviderTest(unittest.TestCase):
             cst.parse_module(code), cache={JediDefinitionProvider: cache[path]}
         )
 
+    def call(
+        self, wrapper: MetadataWrapper, index: int = -1, expression_index: int = 0
+    ) -> cst.Call:
+        statement = cst.ensure_type(wrapper.module.body[index], cst.SimpleStatementLine)
+        expression = cst.ensure_type(statement.body[expression_index], cst.Expr)
+        return cst.ensure_type(expression.value, cst.Call)
+
     def test_function_and_call_resolve_to_definition(self) -> None:
         wrapper = self.wrapper("def produce():\n    return 1\nproduce()\n")
         data = wrapper.resolve(JediDefinitionProvider)
-        function = wrapper.module.body[0]
-        call = wrapper.module.body[1].body[0].value
+        function = cst.ensure_type(wrapper.module.body[0], cst.FunctionDef)
+        call = self.call(wrapper, 1)
         expected = (
             JediDefinition(
                 "produce",
@@ -65,12 +73,13 @@ class JediDefinitionProviderTest(unittest.TestCase):
             "        return 1\n"
             "Factory().build()\n"
         )
-        call = wrapper.module.body[-1].body[0].value
+        call = self.call(wrapper)
         data = wrapper.resolve(JediDefinitionProvider)
         self.assertEqual(data[call][0].full_name, "example.Factory.build")
         self.assertEqual(data[call.func], data[call])
-        self.assertEqual(data[call.func.attr], data[call])
-        self.assertEqual(data[call.func.value][0].full_name, "example.Factory")
+        attribute = cst.ensure_type(call.func, cst.Attribute)
+        self.assertEqual(data[attribute.attr], data[call])
+        self.assertEqual(data[attribute.value][0].full_name, "example.Factory")
 
     def test_relative_import_and_alias_with_full_repo_manager(self) -> None:
         package = self.root / "pkg"
@@ -84,14 +93,14 @@ class JediDefinitionProviderTest(unittest.TestCase):
             self.root, ["pkg/caller.py"], {JediDefinitionProvider}
         )
         wrapper = manager.get_metadata_wrapper_for_path("pkg/caller.py")
-        call = wrapper.module.body[-1].body[0].value
+        call = self.call(wrapper)
         definition = wrapper.resolve(JediDefinitionProvider)[call][0]
         self.assertEqual(definition.full_name, "pkg.helper.target")
         self.assertEqual(definition.module_path, package / "helper.py")
         self.assertEqual(definition.position, CodePosition(1, 4))
         cached = pickle.loads(pickle.dumps(manager.get_cache_for_path("pkg/caller.py")))
         second = MetadataWrapper(wrapper.module, cache=cached)
-        second_call = second.module.body[-1].body[0].value
+        second_call = self.call(second)
         self.assertEqual(
             second.resolve(JediDefinitionProvider)[second_call], (definition,)
         )
@@ -100,7 +109,7 @@ class JediDefinitionProviderTest(unittest.TestCase):
         (self.root / "example.py").write_text("def stale(): pass\nstale()\n")
         for name in ("fresh", "newer"):
             wrapper = self.wrapper(f"def {name}(): pass\n{name}()\n")
-            call = wrapper.module.body[-1].body[0].value
+            call = self.call(wrapper)
             self.assertEqual(
                 wrapper.resolve(JediDefinitionProvider)[call][0].name, name
             )
@@ -109,7 +118,7 @@ class JediDefinitionProviderTest(unittest.TestCase):
         wrapper = self.wrapper(
             "def caf\u00e9():\r\n    return 1\r\n\u00e9 = 'text'; caf\u00e9()\r\n"
         )
-        call = wrapper.module.body[-1].body[-1].value
+        call = self.call(wrapper, expression_index=-1)
         definition = wrapper.resolve(JediDefinitionProvider)[call][0]
         self.assertEqual(definition.name, "caf\u00e9")
         self.assertEqual(definition.position, CodePosition(1, 4))
@@ -121,15 +130,15 @@ class JediDefinitionProviderTest(unittest.TestCase):
             "choice()\nmissing()\n"
         )
         data = wrapper.resolve(JediDefinitionProvider)
-        choice = wrapper.module.body[-2].body[0].value
-        missing = wrapper.module.body[-1].body[0].value
+        choice = self.call(wrapper, -2)
+        missing = self.call(wrapper)
         self.assertEqual({item.name for item in data[choice]}, {"left", "right"})
         self.assertEqual(data[missing], ())
         self.assertEqual(data[missing.func], ())
 
     def test_builtin_is_definition_not_expression_type(self) -> None:
         wrapper = self.wrapper("len('value')\n")
-        call = wrapper.module.body[0].body[0].value
+        call = self.call(wrapper, 0)
         definitions = wrapper.resolve(JediDefinitionProvider)[call]
         self.assertEqual(len(definitions), 1)
         self.assertEqual(definitions[0].full_name, "builtins.len")
@@ -138,8 +147,8 @@ class JediDefinitionProviderTest(unittest.TestCase):
     def test_other_call_expression_is_not_assigned_metadata(self) -> None:
         wrapper = self.wrapper("(lambda: 1)()\n[print][0]()\n")
         data = wrapper.resolve(JediDefinitionProvider)
-        for statement in wrapper.module.body:
-            self.assertNotIn(statement.body[0].value, data)
+        for index in range(len(wrapper.module.body)):
+            self.assertNotIn(self.call(wrapper, index), data)
 
     def test_cache_keys_and_resolved_paths(self) -> None:
         cache = JediDefinitionProvider.gen_cache(
@@ -157,10 +166,30 @@ class JediDefinitionProviderTest(unittest.TestCase):
             with self.assertRaisesRegex(ImportError, r'install "libcst\[jedi\]"'):
                 wrapper.resolve(JediDefinitionProvider)
 
+    def test_dependency_import_failure_is_not_reported_as_missing_jedi(self) -> None:
+        original_import = builtins.__import__
+        error = ModuleNotFoundError("missing Jedi dependency", name="parso")
+
+        def import_module(
+            name: str,
+            globals: Optional[Mapping[str, object]] = None,
+            locals: Optional[Mapping[str, object]] = None,
+            fromlist: Sequence[str] = (),
+            level: int = 0,
+        ) -> object:
+            if name == "jedi":
+                raise error
+            return original_import(name, globals, locals, fromlist, level)
+
+        with patch("builtins.__import__", import_module):
+            with self.assertRaises(ModuleNotFoundError) as raised:
+                self.wrapper("x\n").resolve(JediDefinitionProvider)
+        self.assertIs(raised.exception, error)
+
     def test_shared_position_is_inferred_once_and_missing_location_is_supported(
         self,
     ) -> None:
-        queries = []
+        queries: List[Tuple[int, int]] = []
         result = SimpleNamespace(
             name="target",
             full_name=None,
@@ -172,17 +201,17 @@ class JediDefinitionProviderTest(unittest.TestCase):
         )
 
         class Script:
-            def __init__(self, **kwargs: Any) -> None:
+            def __init__(self, **kwargs: object) -> None:
                 pass
 
-            def infer(self, line: int, column: int) -> list:
+            def infer(self, line: int, column: int) -> List[SimpleNamespace]:
                 queries.append((line, column))
                 return [result]
 
         wrapper = self.wrapper("obj.target()\n")
         with patch("jedi.Script", Script):
             data = wrapper.resolve(JediDefinitionProvider)
-        call = wrapper.module.body[0].body[0].value
+        call = self.call(wrapper, 0)
         self.assertEqual(queries.count((1, 10)), 1)
         self.assertEqual(data[call], data[call.func])
         self.assertIsNone(data[call][0].position)
@@ -192,16 +221,16 @@ class JediDefinitionProviderTest(unittest.TestCase):
         )
 
     def test_serializes_jedi_resolutions_between_threads(self) -> None:
-        state = {"active": 0, "maximum": 0}
+        state: Dict[str, int] = {"active": 0, "maximum": 0}
         gate = threading.Lock()
 
         class Script:
-            def __init__(self, **kwargs: Any) -> None:
+            def __init__(self, **kwargs: object) -> None:
                 with gate:
                     state["active"] += 1
                     state["maximum"] = max(state["maximum"], state["active"])
 
-            def infer(self, line: int, column: int) -> list:
+            def infer(self, line: int, column: int) -> List[SimpleNamespace]:
                 time.sleep(0.01)
                 with gate:
                     state["active"] -= 1

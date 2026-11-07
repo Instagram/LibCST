@@ -247,6 +247,7 @@ which requires `setup watchman <https://pyre-check.org/docs/getting-started/>`_ 
 :class:`~libcst.metadata.FullRepoManager` is built for manage the inter process communication to Pyre.
 
 .. autoclass:: libcst.metadata.TypeInferenceProvider
+    :no-undoc-members:
 
 Jedi Definition Metadata
 ------------------------
