@@ -23,10 +23,14 @@ classifiers = [
 requires-python = ">=3.9"
 dependencies = [
     "pyyaml>=5.2; python_version < '3.13'",
-    "pyyaml-ft>=8.0.0; python_version == '3.13'",
-    "pyyaml>=6.0.3; python_version >= '3.14'",
+    "pyyaml>=6.0.3; python_version >= '3.13'",
     "typing-extensions; python_version < '3.10'",
 ]
+
+[project.optional-dependencies]
+# pyyaml-ft is a free-threading-compatible fork of pyyaml. When installed it is
+# preferred over pyyaml by ``libcst.tool``, but pyyaml>=6.0.3 is sufficient.
+yaml-ft = ["pyyaml-ft>=8.0.0; python_version == '3.13'"]
 
 [project.urls]
 Documentation = "https://libcst.readthedocs.io/en/latest/"

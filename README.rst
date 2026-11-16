@@ -135,6 +135,12 @@ packaging tools. We recommend installing the latest stable release from
 
     pip install libcst
 
+On free-threaded Python 3.13, you can optionally install
+`pyyaml-ft <https://pypi.org/project/PyYAML-ft/>`_, which ``libcst.tool``
+will prefer over ``pyyaml`` when present::
+
+    pip install "libcst[yaml-ft]"
+
 For parsing, LibCST ships with a native extension, so releases are distributed as binary
 wheels as well as the source code. If a binary wheel is not available for your system
 (Linux/Windows x86/x64 and Mac x64/arm are covered), you'll need a recent

@@ -20,6 +20,8 @@ from abc import ABC, abstractmethod
 from typing import Any, Callable, Dict, List, Tuple, Type
 
 try:
+    # Optional: prefer pyyaml-ft (``pip install libcst[yaml-ft]``) when available,
+    # otherwise fall back to the regular pyyaml dependency.
     import yaml_ft as yaml  # pyre-ignore
 except ModuleNotFoundError:
     import yaml
