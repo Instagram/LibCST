@@ -2898,34 +2898,47 @@ class ComparisonTarget(BaseMatcherNode):
     ] = DoNotCare()
 
 
-SimpleStringOrFormattedStringMatchType = Union[
+SimpleStringOrFormattedStringOrTemplatedStringMatchType = Union[
     "SimpleString",
     "FormattedString",
+    "TemplatedString",
     MetadataMatchType,
-    MatchIfTrue[Union[cst.SimpleString, cst.FormattedString]],
+    MatchIfTrue[Union[cst.SimpleString, cst.FormattedString, cst.TemplatedString]],
 ]
-SimpleStringOrFormattedStringOrConcatenatedStringMatchType = Union[
+SimpleStringOrFormattedStringOrTemplatedStringOrConcatenatedStringMatchType = Union[
     "SimpleString",
     "FormattedString",
+    "TemplatedString",
     "ConcatenatedString",
     MetadataMatchType,
-    MatchIfTrue[Union[cst.SimpleString, cst.FormattedString, cst.ConcatenatedString]],
+    MatchIfTrue[
+        Union[
+            cst.SimpleString,
+            cst.FormattedString,
+            cst.TemplatedString,
+            cst.ConcatenatedString,
+        ]
+    ],
 ]
 
 
 @dataclass(frozen=True, eq=False, unsafe_hash=False)
 class ConcatenatedString(BaseExpression, BaseString, BaseMatcherNode):
     left: Union[
-        SimpleStringOrFormattedStringMatchType,
+        SimpleStringOrFormattedStringOrTemplatedStringMatchType,
         DoNotCareSentinel,
-        OneOf[SimpleStringOrFormattedStringMatchType],
-        AllOf[SimpleStringOrFormattedStringMatchType],
+        OneOf[SimpleStringOrFormattedStringOrTemplatedStringMatchType],
+        AllOf[SimpleStringOrFormattedStringOrTemplatedStringMatchType],
     ] = DoNotCare()
     right: Union[
-        SimpleStringOrFormattedStringOrConcatenatedStringMatchType,
+        SimpleStringOrFormattedStringOrTemplatedStringOrConcatenatedStringMatchType,
         DoNotCareSentinel,
-        OneOf[SimpleStringOrFormattedStringOrConcatenatedStringMatchType],
-        AllOf[SimpleStringOrFormattedStringOrConcatenatedStringMatchType],
+        OneOf[
+            SimpleStringOrFormattedStringOrTemplatedStringOrConcatenatedStringMatchType
+        ],
+        AllOf[
+            SimpleStringOrFormattedStringOrTemplatedStringOrConcatenatedStringMatchType
+        ],
     ] = DoNotCare()
     lpar: Union[
         Sequence[

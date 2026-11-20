@@ -841,6 +841,34 @@ class AtomTest(CSTNodeTest):
                 "parser": parse_expression,
                 "expected_position": None,
             },
+            # Concatenated t-strings
+            {
+                "node": cst.ConcatenatedString(
+                    cst.TemplatedString([cst.TemplatedStringText("ab")]),
+                    cst.TemplatedString(
+                        [
+                            cst.TemplatedStringText("c"),
+                            cst.TemplatedStringExpression(cst.Name("d")),
+                        ]
+                    ),
+                    whitespace_between=cst.SimpleWhitespace(" "),
+                ),
+                "code": 't"ab" t"c{d}"',
+                "parser": parse_expression,
+                "expected_position": None,
+            },
+            {
+                "node": cst.ConcatenatedString(
+                    cst.TemplatedString([cst.TemplatedStringText("ab")]),
+                    cst.ConcatenatedString(
+                        cst.TemplatedString([cst.TemplatedStringText("c")]),
+                        cst.TemplatedString([cst.TemplatedStringText("d")]),
+                    ),
+                ),
+                "code": 't"ab"t"c"t"d"',
+                "parser": parse_expression,
+                "expected_position": None,
+            },
             # Concatenated parenthesized strings
             {
                 "node": cst.ConcatenatedString(
@@ -1130,6 +1158,35 @@ class AtomTest(CSTNodeTest):
                     )
                 ),
                 "expected_re": "Cannot concatenate string and bytes",
+            },
+            {
+                "get_node": (
+                    lambda: cst.ConcatenatedString(
+                        cst.SimpleString('"ab"'),
+                        cst.TemplatedString([cst.TemplatedStringText("c")]),
+                    )
+                ),
+                "expected_re": "Cannot concatenate t-string and non-t-string",
+            },
+            {
+                "get_node": (
+                    lambda: cst.ConcatenatedString(
+                        cst.TemplatedString([cst.TemplatedStringText("ab")]),
+                        cst.FormattedString([cst.FormattedStringText("c")]),
+                    )
+                ),
+                "expected_re": "Cannot concatenate t-string and non-t-string",
+            },
+            {
+                "get_node": (
+                    lambda: cst.ConcatenatedString(
+                        cst.TemplatedString([cst.TemplatedStringText("ab")]),
+                        cst.ConcatenatedString(
+                            cst.SimpleString('"c"'), cst.SimpleString('"d"')
+                        ),
+                    )
+                ),
+                "expected_re": "Cannot concatenate t-string and non-t-string",
             },
             # This isn't valid code: `"a" inb"abc"`
             {
