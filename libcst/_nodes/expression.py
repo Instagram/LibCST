@@ -1220,10 +1220,10 @@ class ConcatenatedString(BaseString):
     """
 
     #: String on the left of the concatenation.
-    left: Union[SimpleString, FormattedString]
+    left: Union[SimpleString, FormattedString, TemplatedString]
 
     #: String on the right of the concatenation.
-    right: Union[SimpleString, FormattedString, "ConcatenatedString"]
+    right: Union[SimpleString, FormattedString, TemplatedString, "ConcatenatedString"]
 
     lpar: Sequence[LeftParen] = ()
     #: Sequence of parenthesis for precidence dictation.
@@ -1249,17 +1249,25 @@ class ConcatenatedString(BaseString):
         if bool(self.right.lpar) or bool(self.right.rpar):
             raise CSTValidationError("Cannot concatenate parenthesized strings.")
 
-        # Cannot concatenate str and bytes
-        leftbytes = "b" in self.left.prefix
         right = self.right
         if isinstance(right, ConcatenatedString):
-            rightbytes = "b" in right.left.prefix
-        elif isinstance(right, SimpleString):
-            rightbytes = "b" in right.prefix
-        elif isinstance(right, FormattedString):
-            rightbytes = "b" in right.prefix
+            rightfirst = right.left
         else:
+            rightfirst = right
+        if not isinstance(rightfirst, (SimpleString, FormattedString, TemplatedString)):
             raise CSTLogicError("Logic error!")
+
+        # A t-string can only be concatenated with other t-strings
+        if isinstance(self.left, TemplatedString) != isinstance(
+            rightfirst, TemplatedString
+        ):
+            raise CSTValidationError(
+                "Cannot concatenate t-string and non-t-string literals."
+            )
+
+        # Cannot concatenate str and bytes
+        leftbytes = "b" in self.left.prefix
+        rightbytes = "b" in rightfirst.prefix
         if leftbytes != rightbytes:
             raise CSTValidationError("Cannot concatenate string and bytes.")
 
@@ -1285,11 +1293,13 @@ class ConcatenatedString(BaseString):
         """
         Return an :func:`ast.literal_eval` evaluated str of recursively concatenated :py:attr:`left` and :py:attr:`right`
         if and only if both :py:attr:`left` and :py:attr:`right` are composed by :class:`SimpleString` or :class:`ConcatenatedString`
-        (:class:`FormattedString` cannot be evaluated).
+        (:class:`FormattedString` and :class:`TemplatedString` cannot be evaluated).
         """
         left = self.left
         right = self.right
-        if isinstance(left, FormattedString) or isinstance(right, FormattedString):
+        if isinstance(left, (FormattedString, TemplatedString)) or isinstance(
+            right, (FormattedString, TemplatedString)
+        ):
             return None
         left_val = left.evaluated_value
         right_val = right.evaluated_value
